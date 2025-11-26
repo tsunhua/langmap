@@ -8,6 +8,11 @@
   }
 }
 
+/* Fix for Leaflet icons */
+.leaflet-marker-icon, .leaflet-marker-shadow {
+  display: block;
+}
+
 @layer utilities {
   @keyframes blob {
     0% {

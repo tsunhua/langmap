@@ -66,72 +66,21 @@
         </h2>
         <p class="text-slate-600 mb-12 text-center max-w-2xl mx-auto">
           Explore the richness of linguistic expressions across different regions. 
-          Larger and brighter circles indicate more expressions in that area.
+          Larger circles indicate more expressions in that area.
         </p>
         
         <!-- Map Container -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-          <div class="relative" style="height: 600px;">
-            <!-- SVG World Map Visualization -->
-            <svg 
-              viewBox="0 0 1000 500" 
-              class="w-full h-full"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              <!-- Background -->
-              <rect width="1000" height="500" fill="#f8fafc" />
-              
-              <!-- Simplified world map outline -->
-              <g class="continents" stroke="#cbd5e1" stroke-width="1" fill="#e2e8f0">
-                <!-- Simplified continent shapes (placeholder) -->
-                <path d="M 100 150 Q 150 120, 200 150 L 250 180 Q 280 200, 250 230 L 200 250 Q 150 240, 120 220 Z" opacity="0.3" />
-                <path d="M 300 100 L 450 90 L 480 150 L 460 200 L 380 220 L 320 180 Z" opacity="0.3" />
-                <path d="M 500 180 Q 550 160, 600 180 L 650 220 Q 680 250, 650 280 L 580 300 Q 520 290, 500 260 Z" opacity="0.3" />
-                <path d="M 150 280 L 220 270 L 250 320 L 230 370 L 170 380 L 140 340 Z" opacity="0.3" />
-                <path d="M 700 200 Q 750 180, 800 200 L 850 240 L 820 290 L 760 310 L 710 280 Z" opacity="0.3" />
-              </g>
-              
-              <!-- Data points (circles representing language richness) -->
-              <g class="data-points">
-                <circle 
-                  v-for="point in heatmapData" 
-                  :key="point.id"
-                  :cx="point.x" 
-                  :cy="point.y" 
-                  :r="point.size"
-                  :fill="getHeatColor(point.count)"
-                  :opacity="0.6"
-                  class="cursor-pointer hover:opacity-90 transition-opacity"
-                  @click="selectRegion(point)"
-                >
-                  <title>{{ point.region }}: {{ point.count }} expressions</title>
-                </circle>
-              </g>
-              
-              <!-- Labels for major regions -->
-              <g class="labels" fill="#475569" font-size="14" font-weight="500">
-                <text 
-                  v-for="point in heatmapData.filter(p => p.count > 5)" 
-                  :key="'label-' + point.id"
-                  :x="point.x" 
-                  :y="point.y - point.size - 5"
-                  text-anchor="middle"
-                  class="pointer-events-none"
-                >
-                  {{ point.region }}
-                </text>
-              </g>
-            </svg>
-            
-            <!-- Loading overlay -->
-            <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-              <div class="text-center">
-                <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="text-slate-600">Loading data...</p>
-              </div>
+          <div id="map" class="w-full" style="height: 600px;"></div>
+          
+          <!-- Loading overlay -->
+          <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+            <div class="text-center">
+              <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p class="text-slate-600">Loading map...</p>
             </div>
           </div>
           
@@ -225,8 +174,9 @@ export default {
       totalRegions: 0
     })
     
-    // Heatmap data with geographic coordinates (normalized to SVG viewBox)
-    const heatmapData = ref([])
+    let map = null
+    let markers = []
+    let L
     
     // Generate heat color based on count
     const getHeatColor = (count) => {
@@ -244,11 +194,57 @@ export default {
       }
     }
     
-    const selectRegion = (point) => {
-      console.log('Selected region:', point)
+    const selectRegion = (region) => {
+      console.log('Selected region:', region)
       // Could navigate to filtered search or show details
-      router.push({ name: 'search', query: { region: point.region } })
+      router.push({ name: 'search', query: { region: region } })
     }
+    
+    // Create map markers for each region
+    const createMarkers = (regionData) => {
+      if (!map || !L) return
+      
+      // Clear existing markers
+      markers.forEach(marker => map.removeLayer(marker))
+      markers = []
+      
+      // Add new markers
+      regionData.forEach(point => {
+        if (point.lat && point.lng) {
+          const marker = L.circleMarker([point.lat, point.lng], {
+            radius: Math.min(Math.sqrt(point.count) * 3 + 5, 30),
+            fillColor: getHeatColor(point.count),
+            color: "#1e40af",
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.6
+          }).addTo(map)
+          
+          marker.bindPopup(`<b>${point.region}</b><br>${point.count} expressions`)
+          marker.on('click', () => selectRegion(point.region))
+          
+          markers.push(marker)
+        }
+      })
+    }
+    
+    // Initialize the map
+    const initMap = () => {
+      if (typeof window === 'undefined' || !window.L) return
+      
+      L = window.L
+      
+      // Create map instance
+      map = L.map('map').setView([20, 0], 2)
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map)
+    }
+    
+    // Heatmap data with geographic coordinates
+    const heatmapData = ref([])
     
     // Load statistics and heatmap data
     const loadData = async () => {
@@ -276,20 +272,24 @@ export default {
             regionCounts[region] = (regionCounts[region] || 0) + 1
           })
           
-          // Generate heatmap points with pseudo-geographic distribution
+          // Generate heatmap points with real geographic coordinates
           const regionPositions = generateRegionPositions(Object.keys(regionCounts))
           
           heatmapData.value = Object.entries(regionCounts).map(([region, count], idx) => {
-            const pos = regionPositions[region] || { x: 500, y: 250 }
+            const pos = regionPositions[region] || { lat: 0, lng: 0 }
             return {
               id: idx,
               region,
               count,
-              x: pos.x,
-              y: pos.y,
-              size: Math.min(Math.sqrt(count) * 8 + 10, 50)
+              lat: pos.lat,
+              lng: pos.lng
             }
           })
+          
+          // Create markers on the map
+          if (map) {
+            createMarkers(heatmapData.value)
+          }
         }
       } catch (e) {
         console.error('Failed to load data:', e)
@@ -298,36 +298,33 @@ export default {
       }
     }
     
-    // Generate pseudo-geographic positions for regions
+    // Generate geographic positions for regions
     const generateRegionPositions = (regions) => {
       const positions = {}
       const regionMap = {
-        'China': { x: 700, y: 200 },
-        'Spain': { x: 350, y: 180 },
-        'Global': { x: 500, y: 250 },
-        'USA': { x: 200, y: 180 },
-        'UK': { x: 350, y: 140 },
-        'France': { x: 370, y: 170 },
-        'Germany': { x: 400, y: 150 },
-        'Japan': { x: 820, y: 200 },
-        'Korea': { x: 780, y: 190 },
-        'India': { x: 650, y: 240 },
-        'Brazil': { x: 250, y: 320 },
-        'Mexico': { x: 150, y: 220 },
-        'Canada': { x: 180, y: 120 },
-        'Australia': { x: 800, y: 380 },
-        'Russia': { x: 600, y: 120 },
+        'China': { lat: 35.8617, lng: 104.1954 },
+        'Spain': { lat: 40.4637, lng: -3.7492 },
+        'Global': { lat: 0, lng: 0 },
+        'USA': { lat: 37.0902, lng: -95.7129 },
+        'UK': { lat: 55.3781, lng: -3.4360 },
+        'France': { lat: 46.6034, lng: 1.8883 },
+        'Germany': { lat: 51.1657, lng: 10.4515 },
+        'Japan': { lat: 36.2048, lng: 138.2529 },
+        'Korea': { lat: 35.9078, lng: 127.7669 },
+        'India': { lat: 20.5937, lng: 78.9629 },
+        'Brazil': { lat: -14.2350, lng: -51.9253 },
+        'Mexico': { lat: 23.6345, lng: -102.5528 },
+        'Canada': { lat: 56.1304, lng: -106.3468 },
+        'Australia': { lat: -25.2744, lng: 133.7751 },
+        'Russia': { lat: 61.5240, lng: 105.3188 },
       }
       
-      regions.forEach((region, idx) => {
+      regions.forEach((region) => {
         if (regionMap[region]) {
           positions[region] = regionMap[region]
         } else {
-          // Random position for unknown regions
-          positions[region] = {
-            x: 200 + (idx * 73) % 600,
-            y: 150 + (idx * 97) % 250
-          }
+          // Default position for unknown regions
+          positions[region] = { lat: 0, lng: 0 }
         }
       })
       
@@ -335,7 +332,37 @@ export default {
     }
     
     onMounted(() => {
-      loadData()
+      // Check if Leaflet is loaded, if not load it dynamically
+      const checkLeaflet = () => {
+        if (window.L) {
+          initMap()
+          loadData()
+        } else {
+          // Try to load Leaflet from CDN
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          document.head.appendChild(link)
+          
+          const script = document.createElement('script')
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+          script.onload = () => {
+            initMap()
+            loadData()
+          }
+          document.body.appendChild(script)
+        }
+      }
+      
+      // Initialize map after DOM is ready
+      setTimeout(checkLeaflet, 100)
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (map) {
+          map.invalidateSize()
+        }
+      })
     })
     
     return {
