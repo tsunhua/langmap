@@ -24,7 +24,7 @@
           <div class="border-b border-slate-200 px-6 py-4">
             <h3 class="text-xl font-bold text-slate-800">Expression Details</h3>
           </div>
-          <div class="p-6">
+          <div class="p-3">
             <ExpressionCard :item="item" :key="item.id" />
           </div>
         </div>
@@ -54,7 +54,7 @@
             </button>
           </div>
           
-          <div class="p-6">
+          <div class="p-3">
             <div v-if="associateMode" class="bg-slate-50 rounded-lg p-5 mb-6">
               <div class="flex items-center gap-3 mb-4">
                 <div class="flex-1">
@@ -86,11 +86,11 @@
                   No expressions found. Try different search terms.
                 </div>
                 
-                <div v-else class="space-y-4">
+                <div v-else class="space-y-2">
                   <div 
                     v-for="c in assocResults" 
                     :key="c && c.id" 
-                    class="flex gap-3 items-center p-3 bg-white rounded-lg border border-slate-200"
+                    class="flex gap-3 items-center p-3 bg-white rounded-lg"
                   >
                     <div v-if="c && item && c.id !== item.id" class="flex-1">
                       <ExpressionCard :item="c" />
@@ -189,13 +189,13 @@
                     <div v-if="!m.members || m.members.length === 0" class="text-slate-500 py-2">
                       No associated expressions.
                     </div>
-                    <div v-else class="space-y-3">
+                    <div v-else class="space-y-2">
                       <div 
-                        v-for="mem in m.members" 
+                        v-for="mem in m.members.filter(m => item && m && m.id !== item.id)" 
                         :key="mem.id" 
-                        class="flex items-center gap-3 p-3 rounded-lg border border-slate-200"
+                        class="flex items-center gap-3 py-1 rounded-lg"
                       >
-                        <div v-if="item && mem && mem.id !== item.id"  class="flex-1">
+                        <div class="flex-1">
                           <ExpressionCard :item="mem" />
                         </div>
                       </div>
