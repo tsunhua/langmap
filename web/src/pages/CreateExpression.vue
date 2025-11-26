@@ -16,7 +16,7 @@
         <textarea 
           v-model="text" 
           rows="3" 
-          class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+          class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
           placeholder="Enter the linguistic expression"
         ></textarea>
         <p class="text-sm text-slate-500 mt-1">The actual word or phrase in the language</p>
@@ -28,7 +28,7 @@
           <input 
             v-model="language" 
             placeholder="e.g. en, zh-CN, es-ES" 
-            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
           />
           <p class="text-sm text-slate-500 mt-1">Standard language code</p>
         </div>
@@ -38,7 +38,7 @@
           <input 
             v-model="region" 
             placeholder="e.g. China, Spain, Global" 
-            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
           />
           <p class="text-sm text-slate-500 mt-1">Geographic region or area</p>
         </div>
@@ -49,7 +49,7 @@
         <input 
           v-model="source_ref" 
           placeholder="e.g. Wiktionary, Dictionary.com, or a URL" 
-          class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+          class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
         />
         <p class="text-sm text-slate-500 mt-1">Origin or reference for this expression</p>
       </div>
