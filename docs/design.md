@@ -31,6 +31,8 @@
 - `expressions`：id, language_id, region_id, text, normalized_text, source_type (`authoritative`/`ai`/`user`), source_ref (书名/媒体/链接), audio_url, pronunciation_meta, context, created_by, created_at, review_status (`pending`/`approved`/`rejected`), trust_score
 - `users`：id, username, role (`user`/`moderator`/`admin`), reputation
 - `votes`：id, expression_id, user_id, vote_type (`up`/`down`), created_at
+- `meanings`：id, gloss, description, created_by, created_at
+- `expression_meanings`：id, expression_id, meaning_id, created_by, created_at, note, parent_version_id
 - `audit_logs`：记录 AI 补全来源、审核决策与溯源信息
 
 备注：地域层级仅保留到乡镇（admin_level 最小），`regions` 可通过外部地理数据（如 GADM、OpenStreetMap）导入并裁剪。
@@ -94,44 +96,48 @@
 
 ## 编辑与版本历史（修订控制）
 
-为了保证可追溯性与数据质量，`expressions` 必须支持可编辑的版本历史。下面是推荐的设计要点与 API：
+根据实际实现，`expressions` 表达式系统已实现版本历史功能，但与最初设计存在若干关键差异。以下是基于代码库真实状态的更新设计文档：
 
-数据模型扩展：
-- `expressions`（主表）：保持当前最新通过审核的版本引用 `current_version_id`（nullable，当被删除时置空）。
-- `expression_versions`（版本表）：id, expression_id, language_id, region_id, text, normalized_text, source_type, source_ref, audio_url, context, created_by, created_at, review_status, change_summary, parent_version_id
-- `version_votes`：对某个版本的赞/踩（用于信任评分）。
-- `audit_logs`：记录谁在何时做了什么修改（包括 AI 自动生成的写入）。
+### 数据模型实现
 
- 版本策略：
- - 用户编辑：每次用户编辑都会创建一个新的 `expression_versions` 行；只有通过人工审核并达到信任阈值后，`expressions.current_version_id` 才会被更新为该版本。
- - AI 生成的版本：AI 自动生成且通过自动检测的版本也会创建 `expression_versions` 行，但可以被设计为**自动成为当前版本**（即立即更新 `expressions.current_version_id` 指向该 AI 版本），并在元数据中记录 `auto_approved=true` 与 `source_type=ai`，以便溯源与界面展示。
- - 保持历史版本不可变（append-only），并允许管理员或有权限的用户回滚到任意历史版本（在 `expressions` 表中把 `current_version_id` 指向所选版本并写入审计日志）。
- - 支持草稿模式：用户在前端提交修改时先生成 `pending` 版本，不会立即替换当前版本，除非是高信誉用户或经过审核。
+- `Expression`（主表）：存储当前活动的表达式版本。**注意**：实际实现中**没有** `current_version_id` 字段，当前版本的数据直接存储在 `Expression` 表中，而所有历史快照（包括当前版本）均记录在 `ExpressionVersion` 表中。
+- `ExpressionVersion`（版本表）：采用追加写（append-only）模式记录每次变更。字段包括：`id`, `expression_id`, `language`, `region`, `text`, `source_type`, `created_by`, `created_at`, `review_status`, `auto_approved`。**注意**：`parent_version_id` 字段未在此表中实现。
+- `Meaning`（语义表）：存储表达式的语义信息，包括简短的词汇解释（gloss）和详细描述（description）。
+- `ExpressionMeaning`（表达式-语义关联表）：实现表达式与语义之间的多对多关系。包含关联创建者、创建时间和备注信息。**注意**：意外地包含了 `parent_version_id` 字段，这可能是一个设计偏差或未来扩展点，但当前版本系统未使用此字段进行版本链追踪。
 
-并发与冲突处理：
-- 使用乐观锁或在前端显示“基于版本 X 编辑”的元信息；提交时若当前最新版本已变更，提示用户合并或重新编辑。
+### 版本策略与工作流
 
-API 示例：
-- `GET /api/v1/expressions/{id}/versions`：列出该表达的版本历史（分页），返回每个版本的元数据（id, created_by, created_at, review_status, change_summary）。
-- `GET /api/v1/expressions/{id}/versions/{vid}`：获取指定版本的完整内容。
-- `PATCH /api/v1/expressions/{id}`：提交编辑（作为新版本创建），请求体可包含 `change_summary`，返回新版本 id 和审核状态。
-- `POST /api/v1/expressions/{id}/versions/{vid}/revert`：管理员/有权限用户将当前版本回滚到 `vid`（生成一次新的版本记录，说明为回滚操作）。
-- `GET /api/v1/expressions/{id}/diff?from=vid1&to=vid2`：返回两个版本之间的差异摘要（可选，供 UI 显示）。
+- **版本创建**：每当创建或更新一个表达式时，系统会同时更新 `Expression` 主记录并创建一条新的 `ExpressionVersion` 记录，形成完整的变更历史。
+- **审核状态**：版本的 `review_status` 和 `auto_approved` 标志在创建时确定。AI 生成的内容通过 `/ai/suggest` 端点创建，并自动设置 `auto_approved=True` 和 `review_status="approved"`，无需人工审核。
+- **版本存储**：严格遵循追加写原则，历史版本不可变，确保了完整的数据可追溯性。
+- **无显式回滚机制**：当前实现未提供 API 端点来将某个历史版本恢复为当前版本。这需要后续开发支持。
 
-前端交互建议：
-- 在条目详情页展示“版本历史”按钮，弹窗或侧栏列出历史版本与差异预览，并允许投票、评论或提交争议。
-- 在编辑界面显示当前基准版本号与变更摘要框，鼓励贡献者填写 `change_summary`（例如“修正拼写/改进例句/补充音频”）。
- - 对于 AI 补全生成的版本，UI 必须明显标注为 `AI`；AI 生成的版本不强制进入人工审核流程，但应当经过自动检测并允许社区投票/报告与管理员回滚或删除。
+### API 端点实现
 
-权限与审核：
-- 普通注册用户可以提交并创建 `pending` 版本；高信誉用户或 `moderator` 可以直接标记为 `approved`（或在通过审核后自动提升）。
-- 所有版本修改都写入 `audit_logs`，并可导出以满足学术或合规要求。
+- `GET /api/v1/expressions/{expr_id}/versions`：**已实现**。分页返回指定表达式的所有版本，按创建时间倒序排列。这是前端 `VersionHistory.vue` 组件的数据来源。
+- `GET /api/v1/expressions/{expr_id}/versions/{vid}`：**未实现**。无法通过 API 获取单个特定版本的详细信息。
+- `PATCH /api/v1/expressions/{id}`：**未实现**。当前 API 使用 `POST` 方法创建新表达式，但没有专门的 `PATCH` 端点来处理编辑和版本创建。
+- `POST /api/v1/expressions/{id}/versions/{vid}/revert`：**未实现**。缺少版本回滚功能。
+- `GET /api/v1/expressions/{id}/diff?from=vid1&to=vid2`：**未实现**。没有提供版本间差异比较的 API。
 
-隐私与合规延伸：
-- 在版本历史中对用户信息做最小化展示（例如匿名化用户 ID），并提供用户删除其个人数据的流程（删除请求仅影响可标识数据，不删除学术审计所需的元数据）。
+### 前端实现
 
-实现要点总结：
-- 采用 append-only 的版本存储保证可追溯；
-- 明确审核流（pending -> approved -> current）；
-- 前端展示清晰的出处与变更摘要；
-- 提供回滚、diff 与导出功能以支持研究需求。
+- `VersionHistory.vue` 组件：在 `Detail.vue` 页面中渲染，通过调用 `/api/v1/expressions/{id}/versions` 获取数据，并以列表形式展示每个版本的文本、创建时间和审核状态。
+- **变更摘要缺失**：前端和后端均未实现 `change_summary` 功能，无法记录每次修改的具体原因。
+- **无差异预览**：由于缺少 diff API，前端无法展示版本间的具体文字差异。
+
+### 关键差异总结
+
+| 设计预期 | 实际实现 |
+| :--- | :--- |
+| `Expression` 表包含 `current_version_id` 外键 | `Expression` 表直接存储当前数据，`expression_id` 在 `ExpressionVersion` 中关联 | 
+| `ExpressionVersion` 包含 `parent_version_id` | `parent_version_id` 字段不存在于 `ExpressionVersion` 表中 |
+| 支持版本回滚和 diff 比较 | 相关 API 端点和功能尚未实现 |
+| 用户编辑需审核后才成为当前版本 | 当前实现中，任何编辑都会立即成为当前版本，审核状态 (`review_status`) 是版本属性而非决定是否生效的开关 |
+
+### 后续改进建议
+
+1. **实现版本回滚**：添加 `POST /api/v1/expressions/{id}/versions/{vid}/revert` 端点，允许将历史版本恢复为当前状态。
+2. **增加变更摘要**：在 `ExpressionVersion` 模型中添加 `change_summary` 字段，并在 API 中接收该参数，以提高版本历史的可读性。
+3. **开发 Diff API**：实现一个端点来计算并返回两个版本之间的文本差异。
+4. **完善版本关系**：如果需要构建版本树（如分支编辑），应将 `parent_version_id` 移至 `ExpressionVersion` 表并正确维护。
