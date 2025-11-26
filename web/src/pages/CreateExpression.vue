@@ -1,26 +1,77 @@
 <template>
-  <div>
-    <h2 class="text-xl font-bold mb-4">Add New Expression</h2>
+  <div class="max-w-2xl mx-auto">
+    <div class="flex items-center mb-6">
+      <button @click="$router.back()" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 px-4 py-2 flex items-center mr-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back
+      </button>
+      <h2 class="text-2xl font-bold text-slate-800">Add New Expression</h2>
+    </div>
 
-    <div style="max-width:700px">
-      <label class="block mb-2">Text</label>
-      <textarea v-model="text" rows="3" style="width:100%; padding:8px"></textarea>
-
-      <label class="block mt-3 mb-2">Language (BCP-47)</label>
-      <input v-model="language" placeholder="e.g. en, zh-CN" style="width:100%; padding:8px" />
-
-      <label class="block mt-3 mb-2">Region (optional)</label>
-      <input v-model="region" placeholder="e.g. China, Spain" style="width:100%; padding:8px" />
-
-      <label class="block mt-3 mb-2">Source reference (optional)</label>
-      <input v-model="source_ref" placeholder="e.g. 'Wiktionary' or a URL" style="width:100%; padding:8px" />
-
-      <div style="margin-top:12px">
-        <button @click="submit" style="padding:8px 12px">Create</button>
-        <button @click="$router.back()" style="padding:8px 12px; margin-left:8px">Cancel</button>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Text *</label>
+        <textarea 
+          v-model="text" 
+          rows="3" 
+          class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+          placeholder="Enter the linguistic expression"
+        ></textarea>
+        <p class="text-sm text-slate-500 mt-1">The actual word or phrase in the language</p>
       </div>
 
-      <div v-if="error" style="color:#b00; margin-top:8px">{{ error }}</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Language (BCP-47) *</label>
+          <input 
+            v-model="language" 
+            placeholder="e.g. en, zh-CN, es-ES" 
+            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+          />
+          <p class="text-sm text-slate-500 mt-1">Standard language code</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Region (optional)</label>
+          <input 
+            v-model="region" 
+            placeholder="e.g. China, Spain, Global" 
+            class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+          />
+          <p class="text-sm text-slate-500 mt-1">Geographic region or area</p>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Source reference (optional)</label>
+        <input 
+          v-model="source_ref" 
+          placeholder="e.g. Wiktionary, Dictionary.com, or a URL" 
+          class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+        />
+        <p class="text-sm text-slate-500 mt-1">Origin or reference for this expression</p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button @click="submit" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Create Expression
+        </button>
+        <button @click="$router.back()" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
+          Cancel
+        </button>
+      </div>
+
+      <div v-if="error" class="mt-4 p-3 bg-red-50 text-red-700 rounded-lg flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ error }}
+      </div>
     </div>
   </div>
 </template>
@@ -30,6 +81,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 export default {
+  name: 'CreateExpression',
   setup () {
     const route = useRoute()
     const router = useRouter()

@@ -1,15 +1,73 @@
 <template>
-  <div>
-    <div v-if="loading">Loading versions…</div>
-    <div v-else>
-      <div v-if="versions.length === 0">No versions available.</div>
-      <ul class="mt-2 space-y-2">
-        <li v-for="v in versions" :key="v.id" class="p-3 border rounded">
-          <div class="text-sm text-gray-700"><strong>{{ v.text }}</strong></div>
-          <div class="text-xs text-gray-500">{{ v.created_at }} · {{ v.review_status }} <span v-if="v.auto_approved">(auto)</span></div>
-          <div class="mt-2 text-sm text-gray-600">{{ v.change_summary || '' }}</div>
-        </li>
-      </ul>
+  <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+    <div class="border-b border-slate-200 px-4 py-3">
+      <h4 class="font-semibold text-slate-800">Version History</h4>
+    </div>
+    
+    <div class="p-4">
+      <div v-if="loading" class="flex items-center justify-center py-8">
+        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-2 text-slate-600">Loading versions...</span>
+      </div>
+      
+      <div v-else>
+        <div v-if="versions.length === 0" class="text-center py-6 text-slate-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="mt-2">No versions available</p>
+        </div>
+        
+        <ul class="space-y-3">
+          <li 
+            v-for="v in versions" 
+            :key="v.id" 
+            class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors"
+          >
+            <div class="flex justify-between items-start">
+              <div class="text-slate-800 font-medium">{{ v.text }}</div>
+              <span :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                v.review_status === 'approved' ? 'bg-green-100 text-green-800' : 
+                v.review_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+              ]">
+                {{ v.review_status }}
+                <span v-if="v.auto_approved" class="ml-1">(auto)</span>
+              </span>
+            </div>
+            
+            <div class="mt-2 text-xs text-slate-500 flex flex-wrap items-center">
+              <span class="inline-flex items-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ formatDate(v.created_at) }}
+              </span>
+              
+              <span class="inline-flex items-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {{ v.created_by || 'Anonymous' }}
+              </span>
+              
+              <span class="inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                {{ v.source_type }}
+              </span>
+            </div>
+            
+            <div v-if="v.change_summary" class="mt-3 p-2 bg-slate-50 rounded text-sm text-slate-600">
+              {{ v.change_summary }}
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -18,10 +76,17 @@
 import { ref, onMounted } from 'vue'
 
 export default {
+  name: 'VersionHistory',
   props: ['expressionId'],
   setup (props) {
     const versions = ref([])
     const loading = ref(false)
+
+    // Simple date formatter
+    const formatDate = (dateString) => {
+      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+      return new Date(dateString).toLocaleDateString(undefined, options)
+    }
 
     async function load () {
       loading.value = true
@@ -40,7 +105,7 @@ export default {
     }
 
     onMounted(load)
-    return { versions, loading }
+    return { versions, loading, formatDate }
   }
 }
 </script>
