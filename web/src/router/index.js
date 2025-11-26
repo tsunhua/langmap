@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Home from '../pages/Home.vue'
 import Search from '../pages/Search.vue'
 import Detail from '../pages/Detail.vue'
 import CreateExpression from '../pages/CreateExpression.vue'
 
 const routes = [
-  { path: '/', name: 'home', component: Search },
+  { path: '/', name: 'home', component: Home },
+  { path: '/search', name: 'search', component: Search },
   { path: '/expressions/new', name: 'create', component: CreateExpression },
   { path: '/expressions/:id', name: 'detail', component: Detail, props: true }
 ]
