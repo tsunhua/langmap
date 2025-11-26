@@ -29,6 +29,8 @@ def ai_suggest(payload: schemas.ExpressionCreate, db: Session = Depends(get_db))
 
 @router.get("/search")
 def search(q: Optional[str] = None, from_lang: Optional[str] = None, region: Optional[str] = None, skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+    if not q:
+        return []
     items = crud.search_expressions(db, q=q, from_lang=from_lang, region=region, skip=skip, limit=limit)
     return items
 
