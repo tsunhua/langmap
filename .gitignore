@@ -1,0 +1,46 @@
+# Global ignores for this workspace
+.DS_Store
+.vscode/
+.idea/
+.ropeproject/
+.cache/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+
+# Virtual environment (backend)
+/backend/.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Tests
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Coverage
+.coverage
+coverage.xml
+
+# Database
+*.db
+*.sqlite3
+/backend/backend_dev.db
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store

@@ -1,0 +1,20 @@
+# Backend-specific ignores
+# Virtualenv
+.venv/
+venv/
+
+# Local DB
+backend_dev.db
+*.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Env files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
