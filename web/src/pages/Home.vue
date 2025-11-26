@@ -143,7 +143,7 @@
           <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <h3 class="text-xl font-semibold text-slate-800 mb-2">Explore Map</h3>
@@ -188,6 +188,7 @@ export default {
     
     const goToSearch = () => {
       if (searchQuery.value.trim()) {
+        // 使用查询参数而不是路径参数
         router.push({ name: 'search', query: { q: searchQuery.value } })
       } else {
         router.push({ name: 'search' })
@@ -301,30 +302,49 @@ export default {
     // Generate geographic positions for regions
     const generateRegionPositions = (regions) => {
       const positions = {}
-      const regionMap = {
-        'China': { lat: 35.8617, lng: 104.1954 },
-        'Spain': { lat: 40.4637, lng: -3.7492 },
-        'Global': { lat: 0, lng: 0 },
-        'USA': { lat: 37.0902, lng: -95.7129 },
-        'UK': { lat: 55.3781, lng: -3.4360 },
-        'France': { lat: 46.6034, lng: 1.8883 },
-        'Germany': { lat: 51.1657, lng: 10.4515 },
-        'Japan': { lat: 36.2048, lng: 138.2529 },
-        'Korea': { lat: 35.9078, lng: 127.7669 },
-        'India': { lat: 20.5937, lng: 78.9629 },
-        'Brazil': { lat: -14.2350, lng: -51.9253 },
-        'Mexico': { lat: 23.6345, lng: -102.5528 },
-        'Canada': { lat: 56.1304, lng: -106.3468 },
-        'Australia': { lat: -25.2744, lng: 133.7751 },
-        'Russia': { lat: 61.5240, lng: 105.3188 },
-      }
       
-      regions.forEach((region) => {
-        if (regionMap[region]) {
-          positions[region] = regionMap[region]
-        } else {
-          // Default position for unknown regions
-          positions[region] = { lat: 0, lng: 0 }
+      regions.forEach(region => {
+        // Simplified geographic positioning - in a real app, you'd use a geocoding service
+        switch (region.toLowerCase()) {
+          case 'global':
+            positions[region] = { lat: 0, lng: 0 }
+            break
+          case 'china':
+            positions[region] = { lat: 35.8617, lng: 104.1954 }
+            break
+          case 'spain':
+            positions[region] = { lat: 40.4637, lng: -3.7492 }
+            break
+          case 'france':
+            positions[region] = { lat: 46.6034, lng: 1.8883 }
+            break
+          case 'germany':
+            positions[region] = { lat: 51.1657, lng: 10.4515 }
+            break
+          case 'japan':
+            positions[region] = { lat: 36.2048, lng: 138.2529 }
+            break
+          case 'korea':
+            positions[region] = { lat: 35.9078, lng: 127.7669 }
+            break
+          case 'russia':
+            positions[region] = { lat: 61.5240, lng: 105.3188 }
+            break
+          case 'arabic':
+            positions[region] = { lat: 27.0000, lng: 30.0000 }
+            break
+          case 'india':
+            positions[region] = { lat: 20.5937, lng: 78.9629 }
+            break
+          case 'portugal':
+            positions[region] = { lat: 39.3999, lng: -8.2245 }
+            break
+          default:
+            // Random position near equator for unknown regions
+            positions[region] = { 
+              lat: -10 + Math.random() * 20, 
+              lng: -180 + Math.random() * 360 
+            }
         }
       })
       
@@ -332,37 +352,11 @@ export default {
     }
     
     onMounted(() => {
-      // Check if Leaflet is loaded, if not load it dynamically
-      const checkLeaflet = () => {
-        if (window.L) {
-          initMap()
-          loadData()
-        } else {
-          // Try to load Leaflet from CDN
-          const link = document.createElement('link')
-          link.rel = 'stylesheet'
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-          document.head.appendChild(link)
-          
-          const script = document.createElement('script')
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-          script.onload = () => {
-            initMap()
-            loadData()
-          }
-          document.body.appendChild(script)
-        }
-      }
+      initMap()
+      loadData()
       
-      // Initialize map after DOM is ready
-      setTimeout(checkLeaflet, 100)
-      
-      // Handle window resize
-      window.addEventListener('resize', () => {
-        if (map) {
-          map.invalidateSize()
-        }
-      })
+      // Clean up map on unmount
+      // Note: In a production app, you'd want to properly dispose of the map instance
     })
     
     return {
@@ -370,7 +364,6 @@ export default {
       loading,
       stats,
       heatmapData,
-      getHeatColor,
       goToSearch,
       selectRegion
     }

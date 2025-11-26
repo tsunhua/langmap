@@ -63,13 +63,16 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ExpressionCard from '../components/ExpressionCard.vue'
 
 export default {
   name: 'Search',
   components: { ExpressionCard },
   setup () {
+    const route = useRoute()
+    const router = useRouter()
     const q = ref('')
     const items = ref([])
     const loading = ref(false)
@@ -80,6 +83,9 @@ export default {
       if (!q.value || q.value.trim() === '') {
         return
       }
+      
+      // 更新URL查询参数
+      router.replace({ name: 'search', query: { q: q.value } })
       
       hasSearched.value = true
       loading.value = true
@@ -98,6 +104,14 @@ export default {
         loading.value = false
       }
     }
+
+    // Watch for route query changes
+    watch(() => route.query, (newQuery) => {
+      if (newQuery.q) {
+        q.value = newQuery.q
+        search()
+      }
+    }, { immediate: true })
 
     return { q, items, loading, hasSearched, search }
   }
