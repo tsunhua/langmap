@@ -24,7 +24,7 @@ class ExpressionOut(ExpressionBase):
     created_by: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class VersionOut(BaseModel):
@@ -40,7 +40,7 @@ class VersionOut(BaseModel):
     created_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MeaningCreate(BaseModel):
@@ -55,4 +55,4 @@ class MeaningOut(BaseModel):
     created_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
