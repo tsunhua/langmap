@@ -1,7 +1,7 @@
 <template>
-  <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
-    <header class="py-6">
-      <div class="flex items-center justify-between">
+  <div id="app" class="flex-1 flex flex-col">
+    <header class="py-6 px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
         <router-link to="/" class="no-underline">
           <h1 class="text-3xl font-bold text-slate-800 hover:text-blue-600 transition-colors">Langmap</h1>
         </router-link>
@@ -29,7 +29,7 @@
         </nav>
       </div>
     </header>
-    <main class="py-6">
+    <main class="py-6 flex-1">
       <router-view />
     </main>
   </div>
