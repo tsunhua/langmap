@@ -70,11 +70,11 @@
         </p>
         
         <!-- Map Container -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-          <div id="map" class="w-full" style="height: 600px;"></div>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 mx-4">
+          <div id="map" class="w-full rounded-xl" style="height: 600px;"></div>
           
           <!-- Loading overlay -->
-          <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+          <div v-if="loading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-xl">
             <div class="text-center">
               <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -85,7 +85,7 @@
           </div>
           
           <!-- Legend -->
-          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+          <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
             <div class="flex items-center justify-center gap-6 text-sm">
               <span class="text-slate-600 font-medium">Expression Density:</span>
               <div class="flex items-center gap-2">
@@ -159,7 +159,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -188,7 +188,6 @@ export default {
     
     const goToSearch = () => {
       if (searchQuery.value.trim()) {
-        // 使用查询参数而不是路径参数
         router.push({ name: 'search', query: { q: searchQuery.value } })
       } else {
         router.push({ name: 'search' })
@@ -231,7 +230,7 @@ export default {
     
     // Initialize the map
     const initMap = () => {
-      if (typeof window === 'undefined' || !window.L) return
+      if (typeof window === 'undefined' || !window.L) return false
       
       L = window.L
       
@@ -242,6 +241,8 @@ export default {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map)
+      
+      return true
     }
     
     // Heatmap data with geographic coordinates
@@ -351,12 +352,42 @@ export default {
       return positions
     }
     
-    onMounted(() => {
-      initMap()
-      loadData()
-      
-      // Clean up map on unmount
-      // Note: In a production app, you'd want to properly dispose of the map instance
+    // Load Leaflet from CDN if not already loaded
+    const loadLeaflet = () => {
+      return new Promise((resolve) => {
+        if (window.L) {
+          resolve()
+          return
+        }
+        
+        // Load CSS
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(link)
+        
+        // Load JS
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = () => {
+          resolve()
+        }
+        document.body.appendChild(script)
+      })
+    }
+    
+    onMounted(async () => {
+      await loadLeaflet()
+      if (initMap()) {
+        loadData()
+      }
+    })
+    
+    onUnmounted(() => {
+      // Clean up map instance
+      if (map) {
+        map.remove()
+      }
     })
     
     return {
