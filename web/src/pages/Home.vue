@@ -234,12 +234,19 @@ export default {
       
       L = window.L
       
-      // Create map instance
-      map = L.map('map').setView([20, 0], 2)
+      // Create map instance with zoom constraints
+      map = L.map('map', {
+        minZoom: 2,  // Prevent zooming out too far
+        maxBounds: L.latLngBounds(
+          L.latLng(-85, -180), // Southwest corner
+          L.latLng(85, 180)    // Northeast corner
+        )
+      }).setView([20, 0], 2)
       
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        minZoom: 2
       }).addTo(map)
       
       return true
