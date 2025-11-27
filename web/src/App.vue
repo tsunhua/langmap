@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="flex-1 flex flex-col">
+  <div id="app" class="min-h-screen flex flex-col">
     <header class="py-6 px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between max-w-7xl mx-auto">
         <router-link to="/" class="no-underline">
@@ -68,12 +68,12 @@
     <main class="py-6 flex-1">
       <router-view />
     </main>
+    <footer class="py-6 border-t border-slate-200 text-center text-slate-500 text-sm mt-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p>{{ $t('footer.copyright', { year: new Date().getFullYear() }) }}</p>
+      </div>
+    </footer>
   </div>
-  <footer class="py-6 border-t border-slate-200 text-center text-slate-500 text-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p>{{ $t('footer.copyright', { year: new Date().getFullYear() }) }}</p>
-    </div>
-  </footer>
 </template>
 
 <script>
