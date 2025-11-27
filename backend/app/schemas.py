@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -9,6 +9,7 @@ class ExpressionBase(BaseModel):
     text: str
     source_ref: Optional[str] = None
     audio_url: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class ExpressionCreate(ExpressionBase):
@@ -53,6 +54,27 @@ class MeaningOut(BaseModel):
     gloss: Optional[str] = None
     description: Optional[str] = None
     created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class LanguageBase(BaseModel):
+    code: str
+    name: str
+    native_name: Optional[str] = None
+    direction: str = "ltr"
+
+
+class LanguageCreate(LanguageBase):
+    pass
+
+
+class Language(LanguageBase):
+    id: int
+    is_active: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

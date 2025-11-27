@@ -549,7 +549,7 @@ const staticMessages = {
       button: '検索',
       searching: '表現を検索中...',
       noResults: '結果が見つかりません',
-      tryDifferent: '別の検索語を試すか、新しい表現を追加してください',
+      tryDifferent: '別の検語を試すか、新しい表現を追加してください',
       addExpression: '"{expression}" を追加',
       newExpression: '新しい表現',
       foundExpressions: '{count} 件の表現が見つかりました',

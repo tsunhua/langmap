@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from app import crud, schemas
 from app.db.session import get_db
 
@@ -8,8 +8,18 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/expressions")
-def list_expressions(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    items = crud.get_expressions(db, skip=skip, limit=limit)
+def list_expressions(
+    skip: int = 0, 
+    limit: int = 50, 
+    language: Optional[str] = None,
+    tags: Optional[List[str]] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # If language and tags are provided, use the specialized function
+    if language and tags is not None:
+        items = crud.get_expressions_by_tags(db, language=language, tags=tags, skip=skip, limit=limit)
+    else:
+        items = crud.get_expressions(db, skip=skip, limit=limit)
     return items
 
 
@@ -85,3 +95,10 @@ def get_meaning(mid: int, db: Session = Depends(get_db)):
 def get_meaning_members(mid: int, db: Session = Depends(get_db)):
     members = crud.get_meaning_members(db, meaning_id=mid)
     return members
+
+
+@router.get("/ui-translations/{language}")
+def get_ui_translations(language: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Get UI translations for a specific language by meaning tags"""
+    translations = crud.get_ui_translations_by_meaning_tags(db, language=language, skip=skip, limit=limit)
+    return translations

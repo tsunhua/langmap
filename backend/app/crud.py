@@ -1,11 +1,35 @@
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.db import models
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, text
 
 
 def get_expressions(db: Session, skip: int = 0, limit: int = 50):
     return db.query(models.Expression).offset(skip).limit(limit).all()
+
+
+def get_expressions_by_tags(db: Session, language: str, tags: List[str], skip: int = 0, limit: int = 50):
+    """Get expressions filtered by language and tags for UI translations"""
+    query = db.query(models.Expression).filter(models.Expression.language == language)
+    
+    # If tags are provided, filter by them
+    if tags:
+        # For SQLite compatibility, we need to handle array queries differently
+        if db.bind.dialect.name == 'sqlite':
+            # Use JSON operations for SQLite
+            tag_conditions = []
+            for tag in tags:
+                tag_conditions.append(text("tags LIKE '%{}%'".format(tag)))
+            if tag_conditions:
+                query = query.filter(or_(*tag_conditions))
+        else:
+            # For PostgreSQL, use native array operations
+            tag_conditions = []
+            for tag in tags:
+                tag_conditions.append(models.Expression.tags.contains([tag]))
+            query = query.filter(or_(*tag_conditions))
+    
+    return query.order_by(models.Expression.created_at.desc()).offset(skip).limit(limit).all()
 
 
 def create_expression(db: Session, payload, source_type: str = "user", auto_approve: bool = False):
@@ -17,6 +41,7 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
         source_type=source_type,
         source_ref=payload.source_ref,
         audio_url=payload.audio_url,
+        tags=payload.tags,
         review_status="approved" if auto_approve else "pending",
         auto_approved=bool(auto_approve),
     )
@@ -144,3 +169,87 @@ def search_expressions(db: Session, q: str = None, from_lang: str = None, region
     if region:
         query = query.filter(models.Expression.region == region)
     return query.order_by(models.Expression.created_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_languages(db: Session):
+    """Get all languages from the database"""
+    return db.query(models.Language).all()
+
+
+def get_language_by_code(db: Session, code: str):
+    """Get a language by its code"""
+    return db.query(models.Language).filter(models.Language.code == code).first()
+
+
+def create_language(db: Session, language):
+    """Create a new language"""
+    db_language = models.Language(
+        code=language.code,
+        name=language.name,
+        native_name=language.native_name,
+        direction=language.direction
+    )
+    db.add(db_language)
+    db.commit()
+    db.refresh(db_language)
+    return db_language
+
+
+def get_ui_translations_by_meaning(db: Session, language: str, skip: int = 0, limit: int = 100):
+    """Get UI translations for a specific language by joining expressions with meanings that have 'langmap.' glosses"""
+    # Query expressions that are linked to meanings with gloss starting with 'langmap.'
+    # and match the specified language
+    query = (
+        db.query(models.Expression, models.Meaning.gloss)
+        .join(models.ExpressionMeaning, models.Expression.id == models.ExpressionMeaning.expression_id)
+        .join(models.Meaning, models.Meaning.id == models.ExpressionMeaning.meaning_id)
+        .filter(models.Expression.language == language)
+        .filter(models.Meaning.gloss.like('langmap.%'))
+    )
+    
+    results = query.offset(skip).limit(limit).all()
+    
+    # Transform to the format expected by the frontend
+    translations = []
+    for expression, gloss in results:
+        translations.append({
+            'id': expression.id,
+            'text': expression.text,
+            'language': expression.language,
+            'gloss': gloss
+        })
+    
+    return translations
+
+
+def get_ui_translations_by_meaning_tags(db: Session, language: str, skip: int = 0, limit: int = 100):
+    """Get UI translations for a specific language by querying meanings with 'langmap' tag 
+    and finding linked expressions in the specified language"""
+    
+    # For SQLite compatibility, we need to handle array queries differently
+    if db.bind.dialect.name == 'sqlite':
+        # Use JSON operations for SQLite
+        meanings_query = db.query(models.Meaning).filter(text("tags LIKE '%langmap%'"))
+    else:
+        # For PostgreSQL, use native array operations
+        meanings_query = db.query(models.Meaning).filter(models.Meaning.tags.contains(['langmap']))
+    
+    # Get meanings with langmap tag
+    meanings = meanings_query.all()
+    
+    # For each meaning, find the expression in the specified language
+    translations = []
+    for meaning in meanings:
+        # Look for expressions linked to this meaning in the specified language
+        for expression in meaning.expressions:
+            if expression.language == language:
+                translations.append({
+                    'id': expression.id,
+                    'text': expression.text,
+                    'language': expression.language,
+                    'gloss': meaning.gloss
+                })
+                break  # Take the first expression we find in this language
+    
+    # Apply pagination
+    return translations[skip:skip+limit]

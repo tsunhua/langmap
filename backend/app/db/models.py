@@ -1,7 +1,32 @@
 import datetime
+import json
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import TypeDecorator, TEXT
 from .base import Base
+
+
+class ArrayType(TypeDecorator):
+    """Platform-independent array type that serializes to JSON for SQLite and uses native arrays for PostgreSQL."""
+    impl = TEXT
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if dialect.name == 'sqlite':
+                return json.dumps(value)
+            # For PostgreSQL, we can use the native array type
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            if dialect.name == 'sqlite':
+                try:
+                    return json.loads(value)
+                except (ValueError, TypeError):
+                    return []
+            # For PostgreSQL, return the native array
+        return value
 
 
 class User(Base):
@@ -9,6 +34,19 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False)
     role = Column(String(20), default="user")
+
+
+class Language(Base):
+    __tablename__ = "languages"
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(50), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    native_name = Column(String(100), nullable=True)
+    direction = Column(String(3), default="ltr")
+    is_active = Column(Boolean, default=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 class Expression(Base):
@@ -24,6 +62,7 @@ class Expression(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     review_status = Column(String(20), default="pending")
     auto_approved = Column(Boolean, default=False)
+    tags = Column(ArrayType, nullable=True)  # Add tags field for UI translations
     # many-to-many via ExpressionMeaning
     meanings = relationship("Meaning", secondary="expression_meanings", back_populates="expressions")
 
@@ -49,6 +88,7 @@ class Meaning(Base):
     id = Column(Integer, primary_key=True, index=True)
     gloss = Column(String(255), nullable=True)  # short gloss or label, e.g. 'hello'
     description = Column(Text, nullable=True)
+    tags = Column(ArrayType, nullable=True)  # Add tags field for identifying UI translations
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     # expressions linked (many-to-many)
