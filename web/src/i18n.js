@@ -31,8 +31,7 @@ const messages = {
     },
     nav: {
       home: 'Home',
-      search: 'Search',
-      addExpression: 'Add Expression'
+      search: 'Search'
     },
     footer: {
       copyright: '© {year} langmap - Linguistic Expression Mapping Platform'
@@ -133,8 +132,7 @@ const messages = {
     },
     nav: {
       home: '首页',
-      search: '搜索',
-      addExpression: '添加表达式'
+      search: '搜索'
     },
     footer: {
       copyright: '© {year} langmap - 语言表达映射平台'
@@ -235,8 +233,7 @@ const messages = {
     },
     nav: {
       home: '首頁',
-      search: '搜尋',
-      addExpression: '新增表示式'
+      search: '搜尋'
     },
     footer: {
       copyright: '© {year} langmap - 語言表示對映平台'
@@ -337,8 +334,7 @@ const messages = {
     },
     nav: {
       home: 'Inicio',
-      search: 'Buscar',
-      addExpression: 'Agregar Expresión'
+      search: 'Buscar'
     },
     footer: {
       copyright: '© {year} langmap - Plataforma de Mapeo de Expresiones Lingüísticas'
@@ -439,8 +435,7 @@ const messages = {
     },
     nav: {
       home: 'Accueil',
-      search: 'Recherche',
-      addExpression: 'Ajouter Expression'
+      search: 'Recherche'
     },
     footer: {
       copyright: '© {year} langmap - Plateforme de Cartographie des Expressions Linguistiques'
@@ -541,8 +536,7 @@ const messages = {
     },
     nav: {
       home: 'ホーム',
-      search: '検索',
-      addExpression: '表現を追加'
+      search: '検索'
     },
     footer: {
       copyright: '© {year} langmap - 言語表現マッピングプラットフォーム'

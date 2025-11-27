@@ -23,7 +23,7 @@
           <div class="flex gap-3 bg-white rounded-2xl shadow-xl p-2">
             <input 
               v-model="searchQuery"
-              @keydown.enter="goToSearch"
+              @keyup.enter.prevent="goToSearch"
               :placeholder="$t('home.searchPlaceholder')"
               class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none"
             />
@@ -189,7 +189,7 @@ export default {
     
     const goToSearch = () => {
       if (searchQuery.value.trim()) {
-        router.push({ name: 'search', query: { q: searchQuery.value } })
+        router.push({ name: 'search', query: { q: searchQuery.value.trim() } })
       } else {
         router.push({ name: 'search' })
       }

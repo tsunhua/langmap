@@ -3,9 +3,28 @@
     <header class="py-6 px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between max-w-7xl mx-auto">
         <router-link to="/" class="no-underline">
-          <h1 class="text-3xl font-bold text-slate-800 hover:text-blue-600 transition-colors">Langmap</h1>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+            LangMap
+          </h1>
         </router-link>
         <div class="flex items-center gap-6">
+          <nav class="flex items-center gap-6">
+            <router-link 
+              to="/" 
+              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600"
+            >
+              {{ $t('nav.home') }}
+            </router-link>
+            <router-link 
+              to="/search" 
+              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600"
+            >
+              {{ $t('nav.search') }}
+            </router-link>
+          </nav>
+          
           <!-- Language selector dropdown -->
           <div class="relative" ref="langDropdown">
             <button 
@@ -43,29 +62,6 @@
               </button>
             </div>
           </div>
-          
-          <nav class="flex items-center gap-6">
-            <router-link 
-              to="/" 
-              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600"
-            >
-              {{ $t('nav.home') }}
-            </router-link>
-            <router-link 
-              to="/search" 
-              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600"
-            >
-              {{ $t('nav.search') }}
-            </router-link>
-            <router-link 
-              to="/expressions/new" 
-              class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 font-medium transition-colors"
-            >
-              {{ $t('nav.addExpression') }}
-            </router-link>
-          </nav>
         </div>
       </div>
     </header>
