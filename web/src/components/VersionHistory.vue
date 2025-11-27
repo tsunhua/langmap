@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-slate-200">
     <div class="border-b border-slate-200 px-4 py-3">
-      <h4 class="font-semibold text-slate-800">Version History</h4>
+      <h4 class="font-semibold text-slate-800">{{ $t('versionHistory.title') }}</h4>
     </div>
     
     <div class="p-3">
@@ -10,7 +10,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span class="ml-2 text-slate-600">Loading versions...</span>
+        <span class="ml-2 text-slate-600">{{ $t('versionHistory.loading') }}</span>
       </div>
       
       <div v-else>
@@ -18,7 +18,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="mt-2">No versions available</p>
+          <p class="mt-2">{{ $t('versionHistory.noVersions') }}</p>
         </div>
         
         <ul class="space-y-3">
@@ -35,7 +35,7 @@
                 v.review_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ v.review_status }}
-                <span v-if="v.auto_approved" class="ml-1">(auto)</span>
+                <span v-if="v.auto_approved" class="ml-1">({{ $t('versionHistory.auto') }})</span>
               </span>
             </div>
             
@@ -51,7 +51,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                {{ v.created_by || 'Anonymous' }}
+                {{ v.created_by || $t('versionHistory.anonymous') }}
               </span>
               
               <span class="inline-flex items-center">
@@ -74,11 +74,13 @@
 
 <script>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'VersionHistory',
   props: ['expressionId'],
   setup (props) {
+    const { t } = useI18n()
     const versions = ref([])
     const loading = ref(false)
 
@@ -105,7 +107,7 @@ export default {
     }
 
     onMounted(load)
-    return { versions, loading, formatDate }
+    return { versions, loading, formatDate, t }
   }
 }
 </script>

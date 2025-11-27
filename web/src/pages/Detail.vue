@@ -5,7 +5,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Back to Search
+        {{ $t('detail.backToSearch') }}
       </button>
     </div>
     
@@ -14,7 +14,7 @@
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
-      <span class="ml-2 text-slate-600">Loading expression details...</span>
+      <span class="ml-2 text-slate-600">{{ $t('detail.loading') }}</span>
     </div>
     
     <div v-else-if="item" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -22,7 +22,7 @@
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4">
-            <h3 class="text-xl font-bold text-slate-800">Expression Details</h3>
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.expressionDetails') }}</h3>
           </div>
           <div class="p-3">
             <ExpressionCard :item="item" :key="item.id" />
@@ -31,7 +31,7 @@
         
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-slate-800">Associated Meanings</h3>
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedMeanings') }}</h3>
             <button 
               v-if="!associateMode" 
               @click="associateMode = true" 
@@ -40,7 +40,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Associate Expressions
+              {{ $t('detail.associateExpressions') }}
             </button>
             <button 
               v-else 
@@ -50,7 +50,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Cancel
+              {{ $t('detail.cancel') }}
             </button>
           </div>
           
@@ -60,7 +60,7 @@
                 <div class="flex-1">
                   <input 
                     v-model="assocQuery" 
-                    placeholder="Search expressions to associate..." 
+                    :placeholder="$t('detail.searchPlaceholder')" 
                     class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4" 
                     @keydown.enter="searchAssociate" 
                   />
@@ -69,7 +69,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Search
+                  {{ $t('detail.search') }}
                 </button>
               </div>
               
@@ -79,11 +79,11 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span class="ml-2 text-slate-600">Searching...</span>
+                  <span class="ml-2 text-slate-600">{{ $t('detail.searching') }}</span>
                 </div>
                 
                 <div v-else-if="assocResults.length === 0" class="text-center py-4 text-slate-500">
-                  No expressions found. Try different search terms.
+                  {{ $t('detail.noExpressionsFound') }}
                 </div>
                 
                 <div v-else class="space-y-2">
@@ -101,10 +101,10 @@
                         @click="associateWith(c)" 
                         class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2"
                       >
-                        Link
+                        {{ $t('detail.link') }}
                       </button>
                       <span v-else class="text-slate-500 px-4 py-2">
-                        Already linked
+                        {{ $t('detail.alreadyLinked') }}
                       </span>
                     </div>
                   </div>
@@ -113,31 +113,31 @@
                     {{ assocMsg }}
                   </div>
                   <div v-if="assocHasCurrent" class="p-3 rounded-lg bg-amber-50 text-amber-700">
-                    Search results include the current expression.
+                    {{ $t('detail.includesCurrent') }}
                   </div>
                   
                   <div class="pt-4 border-t border-slate-200 mt-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-1 font-semibold">Link to meaning:</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1 font-semibold">{{ $t('detail.linkToMeaning') }}</label>
                     <div class="flex flex-wrap gap-3 mt-2">
                       <select v-model="selectedMeaningId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 flex-1">
-                        <option :value="null">-- Select meaning --</option>
+                        <option :value="null">{{ $t('detail.selectMeaning') }}</option>
                         <option v-for="m in meanings" :key="m.id" :value="m.id">
                           {{ m.gloss }} — {{ m.description }}
                         </option>
-                        <option :value="'__new'">Create new meaning…</option>
+                        <option :value="'__new'">{{ $t('detail.createNew') }}</option>
                       </select>
                       
                       <div v-if="selectedMeaningId === '__new'" class="flex-1">
                         <input 
                           v-model="newMeaningGloss" 
-                          placeholder="New meaning gloss" 
+                          :placeholder="$t('detail.newMeaningGloss')" 
                           class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
                         />
                         <button 
                           @click="createMeaning" 
                           class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-2 w-full"
                         >
-                          Create Meaning
+                          {{ $t('detail.createMeaning') }}
                         </button>
                       </div>
                     </div>
@@ -152,12 +152,12 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                <p class="mt-2">No meanings associated with this expression</p>
+                <p class="mt-2">{{ $t('detail.noMeanings') }}</p>
                 <button 
                   @click="associateMode = true" 
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-3"
                 >
-                  Associate with meanings
+                  {{ $t('detail.associateWithMeanings') }}
                 </button>
               </div>
               
@@ -231,27 +231,37 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue'
-import VersionHistory from '../components/VersionHistory.vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
+import VersionHistory from '../components/VersionHistory.vue'
 
 export default {
   name: 'Detail',
-  components: { VersionHistory, ExpressionCard },
+  components: { ExpressionCard, VersionHistory },
   props: ['id'],
   setup (props) {
+    const route = useRoute()
+    const router = useRouter()
+    const { t } = useI18n()
     const item = ref(null)
     const loading = ref(false)
-    const translations = ref([])
     const transLoading = ref(false)
+    const translations = ref([])
+    const meanings = ref([])
+    const expandedMeanings = ref(new Set())
+    
+    // Association mode
     const associateMode = ref(false)
     const assocQuery = ref('')
     const assocResults = ref([])
     const assocLoading = ref(false)
     const assocMsg = ref('')
-    const meanings = ref([])
+    const assocHasCurrent = ref(false)
     const selectedMeaningId = ref(null)
     const newMeaningGloss = ref('')
+    
     const linkedIds = computed(() => {
       const s = new Set()
       if (item.value && item.value.id) s.add(item.value.id)
@@ -265,16 +275,6 @@ export default {
       return s
     })
 
-    // whether the assoc search returned the current item
-    const assocHasCurrent = computed(() => {
-      try {
-        if (!assocResults.value || !item.value) return false
-        return assocResults.value.some(r => r && r.id === item.value.id)
-      } catch (e) {
-        return false
-      }
-    })
-
     // safe helper to check if an id is linked
     function isLinked (id) {
       try {
@@ -285,14 +285,15 @@ export default {
     }
 
     // collapse/expand state for meanings (object map for reactivity)
-    const expanded = ref({})
     function toggleMeaning (mid) {
-      const m = expanded.value || {}
-      m[mid] = !m[mid]
-      expanded.value = { ...m }
+      if (expandedMeanings.value.has(mid)) {
+        expandedMeanings.value.delete(mid)
+      } else {
+        expandedMeanings.value.add(mid)
+      }
     }
     function isExpanded (mid) {
-      return !!(expanded.value && expanded.value[mid])
+      return expandedMeanings.value.has(mid)
     }
 
     async function load () {

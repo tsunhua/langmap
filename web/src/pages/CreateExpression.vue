@@ -5,53 +5,53 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Back
+        {{ $t('create.back') }}
       </button>
-      <h2 class="text-2xl font-bold text-slate-800">Add New Expression</h2>
+      <h2 class="text-2xl font-bold text-slate-800">{{ $t('create.title') }}</h2>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div class="mb-6">
-        <label class="block text-sm font-medium text-slate-700 mb-1">Text *</label>
+        <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.text') }} *</label>
         <textarea 
           v-model="text" 
           rows="3" 
           class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
-          placeholder="Enter the linguistic expression"
+          :placeholder="$t('create.textPlaceholder')"
         ></textarea>
-        <p class="text-sm text-slate-500 mt-1">The actual word or phrase in the language</p>
+        <p class="text-sm text-slate-500 mt-1">{{ $t('create.textHelp') }}</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Language (BCP-47) *</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.language') }} *</label>
           <input 
             v-model="language" 
-            placeholder="e.g. en, zh-CN, es-ES" 
+            :placeholder="$t('create.languagePlaceholder')" 
             class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
           />
-          <p class="text-sm text-slate-500 mt-1">Standard language code</p>
+          <p class="text-sm text-slate-500 mt-1">{{ $t('create.languageHelp') }}</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Region (optional)</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.region') }}</label>
           <input 
             v-model="region" 
-            placeholder="e.g. China, Spain, Global" 
+            :placeholder="$t('create.regionPlaceholder')" 
             class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
           />
-          <p class="text-sm text-slate-500 mt-1">Geographic region or area</p>
+          <p class="text-sm text-slate-500 mt-1">{{ $t('create.regionHelp') }}</p>
         </div>
       </div>
 
       <div class="mb-6">
-        <label class="block text-sm font-medium text-slate-700 mb-1">Source reference (optional)</label>
+        <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.source') }}</label>
         <input 
           v-model="source_ref" 
-          placeholder="e.g. Wiktionary, Dictionary.com, or a URL" 
+          :placeholder="$t('create.sourcePlaceholder')" 
           class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
         />
-        <p class="text-sm text-slate-500 mt-1">Origin or reference for this expression</p>
+        <p class="text-sm text-slate-500 mt-1">{{ $t('create.sourceHelp') }}</p>
       </div>
 
       <div class="flex flex-wrap gap-3">
@@ -59,10 +59,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
-          Create Expression
+          {{ $t('create.submit') }}
         </button>
         <button @click="$router.back()" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
-          Cancel
+          {{ $t('create.cancel') }}
         </button>
       </div>
 
@@ -79,12 +79,14 @@
 <script>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'CreateExpression',
   setup () {
     const route = useRoute()
     const router = useRouter()
+    const { t } = useI18n()
     const text = ref(route.query.text || '')
     const language = ref(route.query.language || '')
     const region = ref(route.query.region || '')
@@ -94,7 +96,7 @@ export default {
     async function submit () {
       error.value = null
       if (!text.value || !language.value) {
-        error.value = 'Language and text are required.'
+        error.value = t('create.requiredError')
         return
       }
       try {
@@ -121,7 +123,7 @@ export default {
       }
     }
 
-    return { text, language, region, source_ref, submit, error }
+    return { text, language, region, source_ref, submit, error, t }
   }
 }
 </script>

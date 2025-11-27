@@ -18,7 +18,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                {{ item.region || 'Global' }}
+                {{ item.region || $t('expressionCard.global') }}
               </span>
             </div>
           </div>
@@ -41,7 +41,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
-              Play
+              {{ $t('expressionCard.play') }}
             </button>
             
             <span :class="[
@@ -50,7 +50,7 @@
               item.review_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
             ]">
               {{ item.review_status }}
-              <span v-if="item.auto_approved" class="ml-1">(auto)</span>
+              <span v-if="item.auto_approved" class="ml-1">({{ $t('expressionCard.auto') }})</span>
             </span>
           </div>
           
@@ -64,6 +64,8 @@
 </template>
 
 <script>
+import { useI18n } from 'vue-i18n'
+
 export default {
   name: 'ExpressionCard',
   props: { 
@@ -71,6 +73,10 @@ export default {
       type: Object, 
       required: true 
     } 
+  },
+  setup() {
+    const { t } = useI18n()
+    return { t }
   },
   methods: {
     playAudio () {
