@@ -62,7 +62,8 @@
     "sourceHelp": "Origin or reference for this expression",
     "submit": "Create Expression",
     "cancel": "Cancel",
-    "requiredError": "Language and text are required."
+    "requiredError": "Language and text are required.",
+    "associateWithExistingMeaning": "Associate with Existing Meaning"
   },
   "detail": {
     "backToSearch": "Back to Search",

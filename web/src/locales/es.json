@@ -62,7 +62,8 @@
     "sourceHelp": "Origen o referencia para esta expresión",
     "submit": "Crear Expresión",
     "cancel": "Cancelar",
-    "requiredError": "El idioma y el texto son obligatorios."
+    "requiredError": "El idioma y el texto son obligatorios.",
+    "associateWithExistingMeaning": "Asociar con significado existente"
   },
   "detail": {
     "backToSearch": "Volver a la búsqueda",

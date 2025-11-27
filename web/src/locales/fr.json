@@ -62,7 +62,8 @@
     "sourceHelp": "Origine ou référence pour cette expression",
     "submit": "Créer l'Expression",
     "cancel": "Annuler",
-    "requiredError": "La langue et le texte sont requis."
+    "requiredError": "La langue et le texte sont requis.",
+    "associateWithExistingMeaning": "Associer à une signification existante"
   },
   "detail": {
     "backToSearch": "Retour à la recherche",

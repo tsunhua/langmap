@@ -62,7 +62,8 @@
     "sourceHelp": "この表現の出典または参照",
     "submit": "表現を作成",
     "cancel": "キャンセル",
-    "requiredError": "言語とテキストは必須です。"
+    "requiredError": "言語とテキストは必須です。",
+    "associateWithExistingMeaning": "既存の意味に関連付ける"
   },
   "detail": {
     "backToSearch": "検索に戻る",

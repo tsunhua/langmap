@@ -62,7 +62,8 @@
     "sourceHelp": "此詞句的來源或參考",
     "submit": "建立詞句",
     "cancel": "取消",
-    "requiredError": "語言和文字是必填項。"
+    "requiredError": "語言和文字是必填項。",
+    "associateWithExistingMeaning": "關聯到現有含義"
   },
   "detail": {
     "backToSearch": "返回搜尋",
