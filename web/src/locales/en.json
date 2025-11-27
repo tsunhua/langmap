@@ -1,0 +1,101 @@
+{
+  "home": {
+    "title": "Explore the World of Languages",
+    "subtitle": "Discover how expressions vary across regions and cultures",
+    "searchPlaceholder": "Search for an expression...",
+    "searchButton": "Search",
+    "totalExpressions": "Total Expressions",
+    "languages": "Languages",
+    "regions": "Regions",
+    "mapTitle": "Global Language Distribution",
+    "mapDescription": "Explore the richness of linguistic expressions across different regions. Larger circles indicate more expressions in that area.",
+    "expressionDensity": "Expression Density",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "getStarted": "Get Started",
+    "searchExpressions": "Search Expressions",
+    "searchExpressionsDesc": "Find how words and sentences are expressed across different languages and regions.",
+    "startSearching": "Start Searching →",
+    "addExpression": "Add Expression",
+    "addExpressionDesc": "Contribute to our database by adding expressions from your language or region.",
+    "addNew": "Add New →",
+    "exploreMap": "Explore Map",
+    "exploreMapDesc": "Visualize linguistic diversity on an interactive world map.",
+    "viewMap": "View Map →",
+    "loadingMap": "Loading map..."
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search"
+  },
+  "footer": {
+    "copyright": "© {year} langmap - Linguistic Expression Mapping Platform"
+  },
+  "search": {
+    "title": "Search Expressions",
+    "description": "Find linguistic expressions across languages and regions",
+    "placeholder": "Enter a word or sentence...",
+    "button": "Search",
+    "searching": "Searching expressions...",
+    "noResults": "No results found",
+    "tryDifferent": "Try different search terms or add a new expression",
+    "addExpression": "Add \"{expression}\"",
+    "newExpression": "new expression",
+    "foundExpressions": "Found {count} expression{plural}",
+    "plural": "s"
+  },
+  "create": {
+    "back": "Back",
+    "title": "Add New Expression",
+    "text": "Text",
+    "textPlaceholder": "Enter the linguistic expression",
+    "textHelp": "The actual word or sentence in the language",
+    "language": "Language (BCP-47)",
+    "languagePlaceholder": "e.g. en, zh-CN, es-ES",
+    "languageHelp": "Standard language code",
+    "region": "Region (optional)",
+    "regionPlaceholder": "e.g. China, Spain, Global",
+    "regionHelp": "Geographic region or area",
+    "source": "Source reference (optional)",
+    "sourcePlaceholder": "e.g. Wiktionary, Dictionary.com, or a URL",
+    "sourceHelp": "Origin or reference for this expression",
+    "submit": "Create Expression",
+    "cancel": "Cancel",
+    "requiredError": "Language and text are required."
+  },
+  "detail": {
+    "backToSearch": "Back to Search",
+    "loading": "Loading expression details...",
+    "expressionDetails": "Expression Details",
+    "associatedMeanings": "Associated Meanings",
+    "associateExpressions": "Associate Expressions",
+    "cancel": "Cancel",
+    "searchPlaceholder": "Search expressions to associate...",
+    "search": "Search",
+    "searching": "Searching...",
+    "noExpressionsFound": "No expressions found. Try different search terms.",
+    "link": "Link",
+    "alreadyLinked": "Already linked",
+    "includesCurrent": "Search results include the current expression.",
+    "linkToMeaning": "Link to meaning:",
+    "selectMeaning": "-- Select meaning --",
+    "createNew": "Create new meaning…",
+    "newMeaningGloss": "New meaning gloss",
+    "createMeaning": "Create Meaning",
+    "noMeanings": "No meanings associated with this expression",
+    "associateWithMeanings": "Associate with meanings"
+  },
+  "expressionCard": {
+    "global": "Global",
+    "play": "Play",
+    "auto": "auto"
+  },
+  "versionHistory": {
+    "title": "Version History",
+    "loading": "Loading versions...",
+    "noVersions": "No versions available",
+    "auto": "auto",
+    "anonymous": "Anonymous"
+  }
+}

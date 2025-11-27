@@ -2,12 +2,12 @@ import { createI18n } from 'vue-i18n'
 import { fetchUITranslations, transformTranslations } from './services/languageService.js'
 
 // Import static messages for default languages
-import enMessages from './locales/en.js'
-import zhCNMessages from './locales/zh-CN.js'
-import zhTWMessages from './locales/zh-TW.js'
-import esMessages from './locales/es.js'
-import frMessages from './locales/fr.js'
-import jaMessages from './locales/ja.js'
+import enMessages from './locales/en.json'
+import zhCNMessages from './locales/zh-CN.json'
+import zhTWMessages from './locales/zh-TW.json'
+import esMessages from './locales/es.json'
+import frMessages from './locales/fr.json'
+import jaMessages from './locales/ja.json'
 
 // Define static messages for default languages
 const staticMessages = {

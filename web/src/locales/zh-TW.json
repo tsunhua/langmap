@@ -1,0 +1,101 @@
+{
+  "home": {
+    "title": "探索世界語言",
+    "subtitle": "發現不同地區和文化中的表達方式",
+    "searchPlaceholder": "搜尋詞句...",
+    "searchButton": "搜尋",
+    "totalExpressions": "總詞句",
+    "languages": "語言",
+    "regions": "地區",
+    "mapTitle": "全球語言分佈",
+    "mapDescription": "探索不同地區的語言詞句豐富度。較大的圓圈表示該區域有更多的詞句。",
+    "expressionDensity": "詞句密度",
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "getStarted": "開始使用",
+    "searchExpressions": "搜尋詞句",
+    "searchExpressionsDesc": "尋找詞句在不同語言和地區中的表達方式。",
+    "startSearching": "開始搜尋 →",
+    "addExpression": "新增詞句",
+    "addExpressionDesc": "透過新增您語言或地區的詞句為我們的資料庫做貢獻。",
+    "addNew": "新增新詞句 →",
+    "exploreMap": "探索地圖",
+    "exploreMapDesc": "在互動式世界地圖上視覺化語言多樣性。",
+    "viewMap": "檢視地圖 →",
+    "loadingMap": "載入地圖中..."
+  },
+  "nav": {
+    "home": "首頁",
+    "search": "搜尋"
+  },
+  "footer": {
+    "copyright": "© {year} langmap - 語言表示對映平台"
+  },
+  "search": {
+    "title": "搜尋詞句",
+    "description": "跨語言和地區尋找語言詞句",
+    "placeholder": "輸入詞句...",
+    "button": "搜尋",
+    "searching": "正在搜尋詞句...",
+    "noResults": "未找到結果",
+    "tryDifferent": "嘗試不同的搜尋詞或新增新詞句",
+    "addExpression": "新增 \"{expression}\"",
+    "newExpression": "新詞句",
+    "foundExpressions": "找到 {count} 個詞句",
+    "plural": ""
+  },
+  "create": {
+    "back": "返回",
+    "title": "新增新詞句",
+    "text": "文字",
+    "textPlaceholder": "輸入語言詞句",
+    "textHelp": "語言中的實際詞句",
+    "language": "語言 (BCP-47)",
+    "languagePlaceholder": "例如 en, zh-TW, es-ES",
+    "languageHelp": "標準語言代碼",
+    "region": "地區 (可選)",
+    "regionPlaceholder": "例如 中國, 西班牙, 全球",
+    "regionHelp": "地理區域",
+    "source": "來源參考 (可選)",
+    "sourcePlaceholder": "例如 Wiktionary, Dictionary.com, 或 URL",
+    "sourceHelp": "此詞句的來源或參考",
+    "submit": "建立詞句",
+    "cancel": "取消",
+    "requiredError": "語言和文字是必填項。"
+  },
+  "detail": {
+    "backToSearch": "返回搜尋",
+    "loading": "正在載入詞句詳情...",
+    "expressionDetails": "詞句詳情",
+    "associatedMeanings": "關聯含義",
+    "associateExpressions": "關聯詞句",
+    "cancel": "取消",
+    "searchPlaceholder": "搜尋要關聯的詞句...",
+    "search": "搜尋",
+    "searching": "搜尋中...",
+    "noExpressionsFound": "未找到詞句。請嘗試不同的搜尋詞。",
+    "link": "連結",
+    "alreadyLinked": "已連結",
+    "includesCurrent": "搜尋結果包含目前詞句。",
+    "linkToMeaning": "連結到含義:",
+    "selectMeaning": "-- 選擇含義 --",
+    "createNew": "建立新含義…",
+    "newMeaningGloss": "新含義詞彙",
+    "createMeaning": "建立含義",
+    "noMeanings": "沒有與此詞句關聯的含義",
+    "associateWithMeanings": "與含義關聯"
+  },
+  "expressionCard": {
+    "global": "全球",
+    "play": "播放",
+    "auto": "自動"
+  },
+  "versionHistory": {
+    "title": "版本歷史",
+    "loading": "正在載入版本...",
+    "noVersions": "無可用版本",
+    "auto": "自動",
+    "anonymous": "匿名"
+  }
+}
