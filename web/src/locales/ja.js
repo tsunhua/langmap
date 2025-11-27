@@ -1,0 +1,101 @@
+export default {
+  home: {
+    title: '世界の言語を探索する',
+    subtitle: '地域や文化によって表現方法がどのように異なるかを発見する',
+    searchPlaceholder: '表現を検索...',
+    searchButton: '検索',
+    totalExpressions: '総表現数',
+    languages: '言語',
+    regions: '地域',
+    mapTitle: 'グローバル言語分布',
+    mapDescription: 'さまざまな地域における言語表現の豊かさを探求します。大きな円はその地域の表現が多いことを示します。',
+    expressionDensity: '表現密度',
+    low: '低',
+    medium: '中',
+    high: '高',
+    getStarted: '始めましょう',
+    searchExpressions: '表現を検索',
+    searchExpressionsDesc: 'さまざまな言語や地域で単語や文がどのように表現されているかを見つけます。',
+    startSearching: '検索開始 →',
+    addExpression: '表現を追加',
+    addExpressionDesc: 'あなたの言語や地域からの表現を追加してデータベースに貢献してください。',
+    addNew: '新規追加 →',
+    exploreMap: '地図を探索',
+    exploreMapDesc: 'インタラクティブな世界地図で言語の多様性を可視化します。',
+    viewMap: '地図を表示 →',
+    loadingMap: '地図を読み込み中...'
+  },
+  nav: {
+    home: 'ホーム',
+    search: '検索'
+  },
+  footer: {
+    copyright: '© {year} langmap - 言語表現マッピングプラットフォーム'
+  },
+  search: {
+    title: '表現を検索',
+    description: '言語や地域にまたがる言語表現を見つける',
+    placeholder: '単語や文を入力...',
+    button: '検索',
+    searching: '表現を検索中...',
+    noResults: '結果が見つかりません',
+    tryDifferent: '別の検語を試すか、新しい表現を追加してください',
+    addExpression: '"{expression}" を追加',
+    newExpression: '新しい表現',
+    foundExpressions: '{count} 件の表現が見つかりました',
+    plural: ''
+  },
+  create: {
+    back: '戻る',
+    title: '新しい表現を追加',
+    text: 'テキスト',
+    textPlaceholder: '言語表現を入力',
+    textHelp: '言語における実際の単語や文',
+    language: '言語 (BCP-47)',
+    languagePlaceholder: '例: en, zh-CN, es-ES',
+    languageHelp: '標準言語コード',
+    region: '地域 (任意)',
+    regionPlaceholder: '例: 中国, スペイン, グローバル',
+    regionHelp: '地理的地域またはエリア',
+    source: 'ソース参照 (任意)',
+    sourcePlaceholder: '例: Wiktionary, Dictionary.com, またはURL',
+    sourceHelp: 'この表現の出典または参照',
+    submit: '表現を作成',
+    cancel: 'キャンセル',
+    requiredError: '言語とテキストは必須です。'
+  },
+  detail: {
+    backToSearch: '検索に戻る',
+    loading: '表現の詳細を読み込み中...',
+    expressionDetails: '表現の詳細',
+    associatedMeanings: '関連する意味',
+    associateExpressions: '表現を関連付ける',
+    cancel: 'キャンセル',
+    searchPlaceholder: '関連付ける表現を検索...',
+    search: '検索',
+    searching: '検索中...',
+    noExpressionsFound: '表現が見つかりません。別の検索語を試してください。',
+    link: 'リンク',
+    alreadyLinked: 'すでにリンク済み',
+    includesCurrent: '検索結果に現在の表現が含まれています。',
+    linkToMeaning: '意味にリンク:',
+    selectMeaning: '-- 意味を選択 --',
+    createNew: '新しい意味を作成…',
+    newMeaningGloss: '新しい意味の語彙',
+    createMeaning: '意味を作成',
+    noMeanings: 'この表現に関連する意味はありません',
+    associateWithMeanings: '意味と関連付ける'
+  },
+  expressionCard: {
+    global: 'グローバル',
+    play: '再生',
+    auto: '自動'
+  },
+  versionHistory: {
+    title: 'バージョン履歴',
+    loading: 'バージョンを読み込み中...',
+    noVersions: '利用可能なバージョンがありません',
+    auto: '自動',
+    anonymous: '匿名'
+  }
+}

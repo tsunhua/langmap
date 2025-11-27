@@ -1,0 +1,101 @@
+export default {
+  home: {
+    title: 'Explorer le Monde des Langues',
+    subtitle: 'Découvrez comment les expressions varient selon les régions et les cultures',
+    searchPlaceholder: 'Rechercher une expression...',
+    searchButton: 'Rechercher',
+    totalExpressions: 'Expressions Totales',
+    languages: 'Langues',
+    regions: 'Régions',
+    mapTitle: 'Distribution Linguistique Mondiale',
+    mapDescription: 'Explorez la richesse des expressions linguistiques dans différentes régions. Les cercles plus grands indiquent davantage d\'expressions dans cette zone.',
+    expressionDensity: 'Densité d\'Expressions',
+    low: 'Faible',
+    medium: 'Moyenne',
+    high: 'Élevée',
+    getStarted: 'Commencer',
+    searchExpressions: 'Rechercher des Expressions',
+    searchExpressionsDesc: 'Trouvez comment les mots et les phrases sont exprimés dans différentes langues et régions.',
+    startSearching: 'Commencer la Recherche →',
+    addExpression: 'Ajouter une Expression',
+    addExpressionDesc: 'Contribuez à notre base de données en ajoutant des expressions de votre langue ou région.',
+    addNew: 'Ajouter Nouvelle →',
+    exploreMap: 'Explorer la Carte',
+    exploreMapDesc: 'Visualisez la diversité linguistique sur une carte mondiale interactive.',
+    viewMap: 'Voir la Carte →',
+    loadingMap: 'Chargement de la carte...'
+  },
+  nav: {
+    home: 'Accueil',
+    search: 'Recherche'
+  },
+  footer: {
+    copyright: '© {year} langmap - Plateforme de Cartographie des Expressions Linguistiques'
+  },
+  search: {
+    title: 'Rechercher des Expressions',
+    description: 'Trouvez des expressions linguistiques dans différentes langues et régions',
+    placeholder: 'Entrez un mot ou une phrase...',
+    button: 'Rechercher',
+    searching: 'Recherche d\'expressions...',
+    noResults: 'Aucun résultat trouvé',
+    tryDifferent: 'Essayez des termes de recherche différents ou ajoutez une nouvelle expression',
+    addExpression: 'Ajouter "{expression}"',
+    newExpression: 'nouvelle expression',
+    foundExpressions: 'Trouvé {count} expression{plural}',
+    plural: 's'
+  },
+  create: {
+    back: 'Retour',
+    title: 'Ajouter une Nouvelle Expression',
+    text: 'Texte',
+    textPlaceholder: 'Entrez l\'expression linguistique',
+    textHelp: 'Le mot ou la phrase réelle dans la langue',
+    language: 'Langue (BCP-47)',
+    languagePlaceholder: 'ex. en, zh-CN, es-ES',
+    languageHelp: 'Code de langue standard',
+    region: 'Région (facultatif)',
+    regionPlaceholder: 'ex. Chine, Espagne, Global',
+    regionHelp: 'Région géographique ou zone',
+    source: 'Référence de source (facultatif)',
+    sourcePlaceholder: 'ex. Wiktionary, Dictionary.com, ou une URL',
+    sourceHelp: 'Origine ou référence pour cette expression',
+    submit: 'Créer l\'Expression',
+    cancel: 'Annuler',
+    requiredError: 'La langue et le texte sont requis.'
+  },
+  detail: {
+    backToSearch: 'Retour à la recherche',
+    loading: 'Chargement des détails de l\'expression...',
+    expressionDetails: 'Détails de l\'Expression',
+    associatedMeanings: 'Significations Associées',
+    associateExpressions: 'Associer des Expressions',
+    cancel: 'Annuler',
+    searchPlaceholder: 'Rechercher des expressions à associer...',
+    search: 'Rechercher',
+    searching: 'Recherche en cours...',
+    noExpressionsFound: 'Aucune expression trouvée. Essayez des termes de recherche différents.',
+    link: 'Lier',
+    alreadyLinked: 'Déjà lié',
+    includesCurrent: 'Les résultats de recherche incluent l\'expression actuelle.',
+    linkToMeaning: 'Lier à la signification:',
+    selectMeaning: '-- Sélectionner une signification --',
+    createNew: 'Créer une nouvelle signification…',
+    newMeaningGloss: 'Glose de la nouvelle signification',
+    createMeaning: 'Créer une Signification',
+    noMeanings: 'Aucune signification associée à cette expression',
+    associateWithMeanings: 'Associer avec des significations'
+  },
+  expressionCard: {
+    global: 'Global',
+    play: 'Jouer',
+    auto: 'auto'
+  },
+  versionHistory: {
+    title: 'Historique des Versions',
+    loading: 'Chargement des versions...',
+    noVersions: 'Aucune version disponible',
+    auto: 'auto',
+    anonymous: 'Anonyme'
+  }
+}

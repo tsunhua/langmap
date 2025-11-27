@@ -1,0 +1,101 @@
+export default {
+  home: {
+    title: '探索世界语言',
+    subtitle: '发现不同地区和文化中的表达方式',
+    searchPlaceholder: '搜索词句...',
+    searchButton: '搜索',
+    totalExpressions: '总词句',
+    languages: '语言',
+    regions: '地区',
+    mapTitle: '全球语言分布',
+    mapDescription: '探索不同地区的语言词句丰富度。较大的圆圈表示该区域有更多的词句。',
+    expressionDensity: '词句密度',
+    low: '低',
+    medium: '中',
+    high: '高',
+    getStarted: '开始使用',
+    searchExpressions: '搜索词句',
+    searchExpressionsDesc: '查找词句在不同语言和地区中的表达方式。',
+    startSearching: '开始搜索 →',
+    addExpression: '添加词句',
+    addExpressionDesc: '通过添加您语言或地区的词句为我们的数据库做贡献。',
+    addNew: '添加新词句 →',
+    exploreMap: '探索地图',
+    exploreMapDesc: '在交互式世界地图上可视化语言多样性。',
+    viewMap: '查看地图 →',
+    loadingMap: '加载地图中...'
+  },
+  nav: {
+    home: '首页',
+    search: '搜索'
+  },
+  footer: {
+    copyright: '© {year} langmap - 语言表达映射平台'
+  },
+  search: {
+    title: '搜索词句',
+    description: '跨语言和地区查找语言词句',
+    placeholder: '输入词句...',
+    button: '搜索',
+    searching: '正在搜索词句...',
+    noResults: '未找到结果',
+    tryDifferent: '尝试不同的搜索词或添加新词句',
+    addExpression: '添加 "{expression}"',
+    newExpression: '新词句',
+    foundExpressions: '找到 {count} 个词句',
+    plural: ''
+  },
+  create: {
+    back: '返回',
+    title: '添加新词句',
+    text: '文本',
+    textPlaceholder: '输入语言词句',
+    textHelp: '语言中的实际词句',
+    language: '语言 (BCP-47)',
+    languagePlaceholder: '例如 en, zh-CN, es-ES',
+    languageHelp: '标准语言代码',
+    region: '地区 (可选)',
+    regionPlaceholder: '例如 中国, 西班牙, 全球',
+    regionHelp: '地理区域',
+    source: '来源参考 (可选)',
+    sourcePlaceholder: '例如 Wiktionary, Dictionary.com, 或 URL',
+    sourceHelp: '此词句的来源或参考',
+    submit: '创建词句',
+    cancel: '取消',
+    requiredError: '语言和文本是必填项。'
+  },
+  detail: {
+    backToSearch: '返回搜索',
+    loading: '正在加载词句详情...',
+    expressionDetails: '词句详情',
+    associatedMeanings: '关联含义',
+    associateExpressions: '关联词句',
+    cancel: '取消',
+    searchPlaceholder: '搜索要关联的词句...',
+    search: '搜索',
+    searching: '搜索中...',
+    noExpressionsFound: '未找到词句。请尝试不同的搜索词。',
+    link: '链接',
+    alreadyLinked: '已链接',
+    includesCurrent: '搜索结果包含当前词句。',
+    linkToMeaning: '链接到含义:',
+    selectMeaning: '-- 选择含义 --',
+    createNew: '创建新含义…',
+    newMeaningGloss: '新含义词汇',
+    createMeaning: '创建含义',
+    noMeanings: '没有与此词句关联的含义',
+    associateWithMeanings: '与含义关联'
+  },
+  expressionCard: {
+    global: '全球',
+    play: '播放',
+    auto: '自动'
+  },
+  versionHistory: {
+    title: '版本历史',
+    loading: '正在加载版本...',
+    noVersions: '无可用版本',
+    auto: '自动',
+    anonymous: '匿名'
+  }
+}
