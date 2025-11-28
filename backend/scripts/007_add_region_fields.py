@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app'))
 
 from sqlalchemy import create_engine, text
-from app.db.session import DATABASE_URL
+from backend.app.db.session import DATABASE_URL
 
 def upgrade():
     """Add region_name, region_latitude, region_longitude, country_code, and country_name columns to expressions and expression_versions tables"""
