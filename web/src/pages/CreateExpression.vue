@@ -268,7 +268,7 @@ export default {
   setup () {
     const route = useRoute()
     const router = useRouter()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const text = ref(route.query.text || '')
     const language = ref(route.query.language || '')
     
@@ -393,14 +393,29 @@ export default {
     // Reverse geocode coordinates to get detailed location info
     const reverseGeocode = async (lat, lon) => {
       try {
-        // Get user's preferred language, fallback to 'en'
-        const userLang = navigator.language || 'en';
-        const langCode = userLang.split('-')[0]; // Extract language code (e.g., 'zh' from 'zh-CN')
+        // Prioritize form language, fallback to app language, then to browser language, and finally to 'en'
+        let langCode = 'en';
+        if (language.value) {
+          // Use the language selected in the form
+          langCode = language.value;
+        } else {
+          // Fallback to the app-level language
+          if (locale.value) {
+            langCode = locale.value;
+          } else {
+            // Fallback to browser language
+            const userLang = navigator.language || 'en';
+            langCode = userLang.split('-')[0]; // Extract language code (e.g., 'zh' from 'zh-CN')
+          }
+        }
         
-        console.log(`Requesting location name in language: ${langCode}`);
+        // For Nominatim, we need just the language part, not the region
+        const nominatimLangCode = langCode.split('-')[0];
+        
+        console.log(`Requesting location name in language: ${nominatimLangCode}`);
         
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=${langCode}`
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=${nominatimLangCode}`
         )
         
         if (response.ok) {
