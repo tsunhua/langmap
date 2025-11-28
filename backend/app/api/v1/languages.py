@@ -33,7 +33,7 @@ def list_languages(db: Session = Depends(get_db)):
         },
         {
             "id": 2,
-            "code": "zh-CN", 
+            "code": "zh-Hans", 
             "name": "Simplified Chinese", 
             "native_name": "简体中文", 
             "direction": "ltr",
@@ -43,7 +43,7 @@ def list_languages(db: Session = Depends(get_db)):
         },
         {
             "id": 3,
-            "code": "zh-TW", 
+            "code": "zh-Hant", 
             "name": "Traditional Chinese", 
             "native_name": "傳統中文", 
             "direction": "ltr",

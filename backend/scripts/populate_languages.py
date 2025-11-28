@@ -20,8 +20,8 @@ def populate_languages():
     # Initial languages to populate
     initial_languages = [
         {"code": "en", "name": "English", "native_name": "English", "direction": "ltr"},
-        {"code": "zh-CN", "name": "Simplified Chinese", "native_name": "简体中文", "direction": "ltr"},
-        {"code": "zh-TW", "name": "Traditional Chinese", "native_name": "傳統中文", "direction": "ltr"},
+        {"code": "zh-Hans", "name": "Simplified Chinese", "native_name": "简体中文", "direction": "ltr"},
+        {"code": "zh-Hant", "name": "Traditional Chinese", "native_name": "傳統中文", "direction": "ltr"},
         {"code": "es", "name": "Spanish", "native_name": "Español", "direction": "ltr"},
         {"code": "fr", "name": "French", "native_name": "Français", "direction": "ltr"},
         {"code": "ja", "name": "Japanese", "native_name": "日本語", "direction": "ltr"},

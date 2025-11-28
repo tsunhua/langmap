@@ -6,7 +6,7 @@ from app.db import models
 
 SAMPLES = [
     ("en", "Hello", "Global"),
-    ("zh-CN", "你好", "China"),
+    ("zh-Hans", "你好", "China"),
     ("es", "Hola", "Spain"),
     ("fr", "Bonjour", "France"),
     ("de", "Hallo", "Germany"),

@@ -3,8 +3,8 @@ import { fetchUITranslations, transformTranslations } from './services/languageS
 
 // Import static messages for default languages
 import enMessages from './locales/en.json'
-import zhCNMessages from './locales/zh-CN.json'
-import zhTWMessages from './locales/zh-TW.json'
+import zhHansMessages from './locales/zh-Hans.json'
+import zhHantMessages from './locales/zh-Hant.json'
 import esMessages from './locales/es.json'
 import frMessages from './locales/fr.json'
 import jaMessages from './locales/ja.json'
@@ -12,8 +12,8 @@ import jaMessages from './locales/ja.json'
 // Define static messages for default languages
 const staticMessages = {
   en: enMessages,
-  'zh-CN': zhCNMessages,
-  'zh-TW': zhTWMessages,
+  'zh-Hans': zhHansMessages,
+  'zh-Hant': zhHantMessages,
   es: esMessages,
   fr: frMessages,
   ja: jaMessages

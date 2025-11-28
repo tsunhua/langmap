@@ -405,12 +405,11 @@ export default {
           } else {
             // Fallback to browser language
             const userLang = navigator.language || 'en';
-            langCode = userLang.split('-')[0]; // Extract language code (e.g., 'zh' from 'zh-CN')
+            langCode = userLang
           }
         }
         
-        // For Nominatim, we need just the language part, not the region
-        const nominatimLangCode = langCode.split('-')[0];
+        const nominatimLangCode = langCode;
         
         console.log(`Requesting location name in language: ${nominatimLangCode}`);
         
