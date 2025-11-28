@@ -55,12 +55,14 @@ class VersionOut(BaseModel):
 class MeaningCreate(BaseModel):
     gloss: Optional[str] = None
     description: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class MeaningOut(BaseModel):
     id: int
     gloss: Optional[str] = None
     description: Optional[str] = None
+    tags: Optional[List[str]] = None
     created_at: Optional[datetime] = None
 
     class Config:

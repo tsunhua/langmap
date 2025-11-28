@@ -123,10 +123,10 @@
         <p class="text-sm text-slate-500 mt-1">{{ $t('create.sourceHelp') }}</p>
       </div>
 
-      <!-- Associate with existing meaning section -->
+      <!-- Associate with meaning section -->
       <div class="mb-6 bg-slate-50 rounded-lg p-5">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-medium text-slate-800">{{ $t('create.associateWithExistingMeaning') }}</h3>
+          <h3 class="text-lg font-medium text-slate-800">{{ $t('create.associateWithMeaning') }}</h3>
           <button 
             @click="toggleAssociationMode" 
             class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-200 text-slate-700 hover:bg-slate-300 focus:ring-slate-500 px-3 py-1 text-sm"
@@ -136,88 +136,180 @@
         </div>
 
         <div v-if="associateMode">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="flex-1">
-              <input 
-                v-model="assocQuery" 
-                :placeholder="$t('detail.searchPlaceholder')" 
-                class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4" 
-                @keydown.enter="searchAssociate" 
-              />
-            </div>
-            <button @click="searchAssociate" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2.5">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              {{ $t('detail.search') }}
-            </button>
-          </div>
-
-          <div>
-            <div v-if="assocLoading" class="flex items-center justify-center py-4">
-              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span class="ml-2 text-slate-600">{{ $t('detail.searching') }}</span>
-            </div>
-
-            <div v-else-if="assocResults.length === 0" class="text-center py-4 text-slate-500">
-              {{ $t('detail.noExpressionsFound') }}
-            </div>
-
-            <div v-else class="space-y-2 max-h-60 overflow-y-auto">
-              <div 
-                v-for="c in assocResults" 
-                :key="c && c.id" 
-                class="flex gap-3 items-center p-3 bg-white rounded-lg"
-              >
-                <div class="flex-1">
-                  <ExpressionCard :item="c" />
-                </div>
-                <div>
-                  <button 
-                    @click="selectExpression(c)" 
-                    class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2"
-                  >
-                    {{ $t('detail.link') }}
-                  </button>
-                </div>
-              </div>
+          <!-- Tab navigation for association type -->
+          <div class="mb-6">
+            <div class="border-b border-slate-200">
+              <nav class="-mb-px flex space-x-8">
+                <button
+                  @click="associationType = 'existing'"
+                  :class="[
+                    'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
+                    associationType === 'existing' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ]"
+                >
+                  {{ $t('create.associateWithExistingMeaning') }}
+                </button>
+                <button
+                  @click="associationType = 'new'"
+                  :class="[
+                    'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
+                    associationType === 'new' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ]"
+                >
+                  {{ $t('create.associateWithNewMeaning') }}
+                </button>
+              </nav>
             </div>
           </div>
 
-          <div v-if="selectedExpression" class="mt-4 p-3 bg-blue-50 rounded-lg">
-            <div class="flex justify-between items-start">
-              <div>
-                <h4 class="font-medium text-slate-800">Selected expression:</h4>
-                <ExpressionCard :item="selectedExpression" />
+          <!-- Associate with existing meaning -->
+          <div v-if="associationType === 'existing'">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="flex-1">
+                <input 
+                  v-model="assocQuery" 
+                  :placeholder="$t('detail.searchPlaceholder')" 
+                  class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4" 
+                  @keydown.enter="searchAssociate" 
+                />
               </div>
-              <button @click="clearSelection" class="text-slate-500 hover:text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <button @click="searchAssociate" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                {{ $t('detail.search') }}
               </button>
             </div>
-            
-            <div class="mt-3">
-              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('detail.linkToMeaning') }}</label>
-              <div class="flex flex-wrap gap-3 mt-2">
-                <select v-model="selectedMeaningId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 flex-1">
-                  <option :value="null">{{ $t('detail.selectMeaning') }}</option>
-                  <option v-for="m in selectedExpressionMeanings" :key="m.id" :value="m.id">
-                    {{ m.gloss }} — {{ m.description }}
-                  </option>
-                  <option :value="'__new'">{{ $t('detail.createNew') }}</option>
-                </select>
-                
-                <div v-if="selectedMeaningId === '__new'" class="flex-1">
-                  <input 
-                    v-model="newMeaningGloss" 
-                    :placeholder="$t('detail.newMeaningGloss')" 
-                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
-                  />
+
+            <div>
+              <div v-if="assocLoading" class="flex items-center justify-center py-4">
+                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="ml-2 text-slate-600">{{ $t('detail.searching') }}</span>
+              </div>
+
+              <div v-else-if="assocResults.length === 0" class="text-center py-4 text-slate-500">
+                {{ $t('detail.noExpressionsFound') }}
+              </div>
+
+              <div v-else class="space-y-2 max-h-60 overflow-y-auto">
+                <div 
+                  v-for="c in assocResults" 
+                  :key="c && c.id" 
+                  class="flex gap-3 items-center p-3 bg-white rounded-lg"
+                >
+                  <div class="flex-1">
+                    <ExpressionCard :item="c" />
+                  </div>
+                  <div>
+                    <button 
+                      @click="selectExpression(c)" 
+                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2"
+                    >
+                      {{ $t('detail.link') }}
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <div v-if="selectedExpression" class="mt-4 p-3 bg-blue-50 rounded-lg">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-medium text-slate-800">{{ $t('create.selectedExpression') }}</h4>
+                  <ExpressionCard :item="selectedExpression" />
+                </div>
+                <button @click="clearSelection" class="text-slate-500 hover:text-slate-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="mt-3">
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('detail.linkToMeaning') }}</label>
+                <div class="flex flex-wrap gap-3 mt-2">
+                  <select v-model="selectedMeaningId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 flex-1">
+                    <option :value="null">{{ $t('detail.selectMeaning') }}</option>
+                    <option v-for="m in selectedExpressionMeanings" :key="m.id" :value="m.id">
+                      {{ m.gloss }} — {{ m.description }}
+                    </option>
+                    <option :value="'__new'">{{ $t('detail.createNew') }}</option>
+                  </select>
+                  
+                  <div v-if="selectedMeaningId === '__new'" class="flex-1">
+                    <input 
+                      v-model="newMeaningGloss" 
+                      :placeholder="$t('detail.newMeaningGloss')" 
+                      class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Associate with new meaning -->
+          <div v-else-if="associationType === 'new'">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.meaningGloss') }} *</label>
+                <input 
+                  v-model="newMeaningGloss" 
+                  :placeholder="$t('create.meaningGlossPlaceholder')" 
+                  class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4" 
+                />
+                <p class="text-sm text-slate-500 mt-1">{{ $t('create.meaningGlossHelp') }}</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.meaningDescription') }}</label>
+                <textarea 
+                  v-model="newMeaningDescription" 
+                  rows="3" 
+                  :placeholder="$t('create.meaningDescriptionPlaceholder')" 
+                  class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4"
+                ></textarea>
+                <p class="text-sm text-slate-500 mt-1">{{ $t('create.meaningDescriptionHelp') }}</p>
+              </div>
+
+              <!-- Tags input for new meaning -->
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.meaningTags') }}</label>
+                <div class="border border-slate-300 rounded-md shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                  <div class="flex flex-wrap gap-2 p-2">
+                    <span 
+                      v-for="tag in newMeaningTags" 
+                      :key="tag"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {{ tag }}
+                      <button 
+                        @click="removeTag(tag)"
+                        type="button"
+                        class="flex-shrink-0 ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none"
+                      >
+                        <span class="sr-only">Remove tag</span>
+                        <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                          <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
+                        </svg>
+                      </button>
+                    </span>
+                    <input 
+                      v-model="newMeaningTagInput"
+                      @keydown="handleTagInputKeydown"
+                      :placeholder="$t('create.meaningTagsPlaceholder')"
+                      class="flex-grow border-0 focus:ring-0 focus:outline-none py-1 px-2 text-sm"
+                    />
+                  </div>
+                </div>
+                <p class="text-sm text-slate-500 mt-1">{{ $t('create.meaningTagsHelp') }}</p>
               </div>
             </div>
           </div>
@@ -296,6 +388,7 @@ export default {
     
     // Association mode
     const associateMode = ref(false)
+    const associationType = ref('existing') // 'existing' or 'new'
     const assocQuery = ref('')
     const assocResults = ref([])
     const assocLoading = ref(false)
@@ -303,6 +396,9 @@ export default {
     const selectedExpressionMeanings = ref([])
     const selectedMeaningId = ref(null)
     const newMeaningGloss = ref('')
+    const newMeaningDescription = ref('')
+    const newMeaningTags = ref([]) // For new meaning tags
+    const newMeaningTagInput = ref('') // For new meaning tag input
 
     // Geo info structure: { name: string, latitude: number, longitude: number }
     const parseGeoInfo = (geoString) => {
@@ -622,6 +718,10 @@ export default {
         selectedExpressionMeanings.value = []
         selectedMeaningId.value = null
         newMeaningGloss.value = ''
+        newMeaningDescription.value = ''
+        newMeaningTags.value = []
+        newMeaningTagInput.value = ''
+        associationType.value = 'existing'
       }
     }
 
@@ -668,6 +768,28 @@ export default {
       newMeaningGloss.value = ''
     }
 
+    // Tag management functions
+    function addTag() {
+      if (newMeaningTagInput.value.trim() && !newMeaningTags.value.includes(newMeaningTagInput.value.trim())) {
+        newMeaningTags.value.push(newMeaningTagInput.value.trim())
+        newMeaningTagInput.value = ''
+      }
+    }
+
+    function removeTag(tag) {
+      newMeaningTags.value = newMeaningTags.value.filter(t => t !== tag)
+    }
+
+    function handleTagInputKeydown(event) {
+      if (event.key === 'Enter' || event.key === ',') {
+        event.preventDefault()
+        addTag()
+      } else if (event.key === 'Backspace' && !newMeaningTagInput.value && newMeaningTags.value.length > 0) {
+        // Remove the last tag when backspace is pressed on empty input
+        newMeaningTags.value.pop()
+      }
+    }
+
     async function submit () {
       error.value = null
       if (!text.value || !language.value) {
@@ -712,12 +834,51 @@ export default {
         
         const created = await res.json()
         
-        // If user wants to associate with an existing meaning
-        if (selectedExpression.value && selectedMeaningId.value) {
-          let mid = selectedMeaningId.value
-          
-          // If user wants to create a new meaning
-          if (mid === '__new') {
+        // Handle meaning association based on user choice
+        if (associateMode.value) {
+          if (associationType.value === 'existing' && selectedExpression.value && selectedMeaningId.value) {
+            // Associate with existing meaning
+            let mid = selectedMeaningId.value
+            
+            // If user wants to create a new meaning
+            if (mid === '__new') {
+              if (!newMeaningGloss.value || newMeaningGloss.value.trim() === '') {
+                error.value = 'Please enter a gloss for the new meaning.'
+                return
+              }
+              
+              try {
+                const pm = await fetch('/api/v1/meanings', {
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    gloss: newMeaningGloss.value.trim(), 
+                    description: 'Created via UI during expression creation' 
+                  })
+                })
+                
+                if (!pm.ok) throw new Error('failed to create meaning')
+                const newm = await pm.json()
+                mid = newm.id
+              } catch (e) {
+                error.value = String(e)
+                return
+              }
+            }
+            
+            // Link the newly created expression with the selected meaning
+            try {
+              const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
+                method: 'POST' 
+              })
+              
+              if (!linkRes.ok) throw new Error('failed to link expression with meaning')
+            } catch (e) {
+              error.value = String(e)
+              return
+            }
+          } else if (associationType.value === 'new') {
+            // Associate with new meaning
             if (!newMeaningGloss.value || newMeaningGloss.value.trim() === '') {
               error.value = 'Please enter a gloss for the new meaning.'
               return
@@ -729,29 +890,25 @@ export default {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                   gloss: newMeaningGloss.value.trim(), 
-                  description: 'Created via UI during expression creation' 
+                  description: newMeaningDescription.value || '',
+                  tags: newMeaningTags.value.length > 0 ? newMeaningTags.value : undefined
                 })
               })
               
               if (!pm.ok) throw new Error('failed to create meaning')
               const newm = await pm.json()
-              mid = newm.id
+              const mid = newm.id
+              
+              // Link the newly created expression with the new meaning
+              const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
+                method: 'POST' 
+              })
+              
+              if (!linkRes.ok) throw new Error('failed to link expression with meaning')
             } catch (e) {
               error.value = String(e)
               return
             }
-          }
-          
-          // Link the newly created expression with the selected meaning
-          try {
-            const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
-              method: 'POST' 
-            })
-            
-            if (!linkRes.ok) throw new Error('failed to link expression with meaning')
-          } catch (e) {
-            error.value = String(e)
-            return
           }
         }
         
@@ -811,6 +968,7 @@ export default {
       toggleMapSelector,
       // Association properties
       associateMode,
+      associationType,
       assocQuery,
       assocResults,
       assocLoading,
@@ -818,11 +976,18 @@ export default {
       selectedExpressionMeanings,
       selectedMeaningId,
       newMeaningGloss,
+      newMeaningDescription,
+      newMeaningTags,
+      newMeaningTagInput,
       // Association methods
       toggleAssociationMode,
       searchAssociate,
       selectExpression,
-      clearSelection
+      clearSelection,
+      // Tag management methods
+      addTag,
+      removeTag,
+      handleTagInputKeydown
     }
   }
 }

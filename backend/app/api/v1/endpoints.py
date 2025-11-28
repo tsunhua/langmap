@@ -73,7 +73,7 @@ def get_expression_meanings(expr_id: int, db: Session = Depends(get_db)):
 
 @router.post("/meanings", status_code=201)
 def create_meaning(payload: schemas.MeaningCreate, db: Session = Depends(get_db)):
-    m = crud.create_meaning(db, gloss=payload.gloss, description=payload.description)
+    m = crud.create_meaning(db, gloss=payload.gloss, description=payload.description, tags=payload.tags)
     return m
 
 

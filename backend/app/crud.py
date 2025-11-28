@@ -71,8 +71,8 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
     return expr
 
 
-def create_meaning(db: Session, gloss: Optional[str] = None, description: Optional[str] = None, created_by: Optional[int] = None):
-    m = models.Meaning(gloss=gloss, description=description, created_by=created_by)
+def create_meaning(db: Session, gloss: Optional[str] = None, description: Optional[str] = None, tags: Optional[List[str]] = None, created_by: Optional[int] = None):
+    m = models.Meaning(gloss=gloss, description=description, tags=tags, created_by=created_by)
     db.add(m)
     db.commit()
     db.refresh(m)
@@ -167,6 +167,7 @@ def get_meanings_by_expression(db: Session, expression_id: int):
             "id": m.id,
             "gloss": m.gloss,
             "description": m.description,
+            "tags": m.tags
         })
     return out
 

@@ -141,3 +141,79 @@
 2. **增加变更摘要**：在 `ExpressionVersion` 模型中添加 `change_summary` 字段，并在 API 中接收该参数，以提高版本历史的可读性。
 3. **开发 Diff API**：实现一个端点来计算并返回两个版本之间的文本差异。
 4. **完善版本关系**：如果需要构建版本树（如分支编辑），应将 `parent_version_id` 移至 `ExpressionVersion` 表并正确维护。
+
+## 添加新含义功能设计（新增）
+
+### 当前实现分析
+
+目前在"Add New Expression"页面中已有"Associate with Existing Meaning"功能，允许用户：
+1. 搜索现有表达式
+2. 选择一个表达式
+3. 从该表达式关联的含义中选择一个，或者创建一个新的含义
+4. 将新建的表达式与选定的含义关联
+
+### 功能增强建议
+
+为了更好地支持用户在创建表达式时添加新含义，建议进行以下改进：
+
+#### 方案一：提供明确的选择选项（已实现）
+
+在现有功能基础上，为用户提供明确的选项来选择关联类型：
+1. **Associate with Existing Meaning** - 关联到现有含义
+2. **Associate with New Meaning** - 关联到新含义
+
+具体实现细节：
+- 在界面中提供两个清晰的选项按钮，让用户选择关联类型
+- 如果选择"Associate with Existing Meaning"，则显示当前的搜索和选择流程
+- 如果选择"Associate with New Meaning"，则直接显示新含义创建表单
+- 两种情况下，都将在表达式创建完成后进行含义关联
+
+#### 方案二：扩展现有关联功能
+
+在现有"Associate with Existing Meaning"功能基础上进行增强：
+1. 保留在创建表达式时关联现有含义的能力
+2. 增强UI，允许用户直接创建全新的含义（不需要先关联一个表达式）
+3. 简化流程，让用户可以在同一界面完成表达式创建和新含义定义
+
+#### 方案三：独立的新含义创建功能
+
+添加一个完全独立的"Create New Meaning"功能：
+1. 在UI上与"Associate with Existing Meaning"并列
+2. 允许用户直接创建不关联任何表达式的独立含义
+3. 可以在后续步骤中将表达式与该含义关联
+
+#### 实现状态
+
+方案一已经实现，具有以下特点：
+1. **清晰的用户选择**：用户可以明确知道自己是要创建新含义还是关联现有含义
+2. **直观的操作流程**：不同的关联类型有不同的界面展示，避免混淆
+3. **符合当前系统设计**：含义主要是作为表达式之间的语义桥梁存在
+4. **更好的用户体验**：提供清晰的选择路径，减少用户思考时间
+
+### API 端点增强
+
+当前API已经支持所需功能：
+- `POST /api/v1/meanings` 可用于创建新含义
+- `POST /api/v1/meanings/{mid}/link?expression_id={eid}` 可用于关联表达式和含义
+- `GET /api/v1/search` 可用于搜索现有表达式及其含义
+
+在创建表达式页面，流程将是：
+1. 用户填写表达式信息并选择关联类型
+2. 系统创建表达式（`POST /api/v1/expressions`）
+3. 根据用户选择执行相应操作：
+   - 如果选择了"Associate with Existing Meaning"：
+     * 用户从现有含义中选择一个
+     * 系统将表达式与选定含义关联（`POST /api/v1/meanings/{mid}/link?expression_id={eid}`）
+   - 如果选择了"Associate with New Meaning"：
+     * 系统创建新含义（`POST /api/v1/meanings`）
+     * 系统将表达式与新含义关联（`POST /api/v1/meanings/{mid}/link?expression_id={eid}`）
+
+### 前端实现
+
+在`CreateExpression.vue`组件中已经实现：
+1. 添加了一个新的状态变量[associationType](file:///Users/share.lim/Documents/code/lshare/langmap/web/src/pages/CreateExpression.vue#L585-L585)来跟踪用户选择的关联类型
+2. 在UI中添加选项按钮，让用户选择关联类型
+3. 根据用户选择显示相应的界面元素
+4. 在提交函数中根据用户选择执行不同的逻辑
+
+这种实现充分利用了现有代码基础，只需要添加选择逻辑和调整UI展示即可实现功能增强。
