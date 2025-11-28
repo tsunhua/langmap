@@ -77,71 +77,12 @@
     </header>
     
     <!-- Add Language Modal -->
-    <div v-if="showAddLanguageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div class="px-6 py-4 border-b border-slate-200">
-          <h3 class="text-lg font-medium text-slate-900">Add New Language</h3>
-        </div>
-        <form @submit.prevent="addNewLanguage" class="px-6 py-4">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Language Code</label>
-            <input 
-              v-model="newLanguage.code" 
-              type="text" 
-              class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. custom-lang, toki-pona"
-              required
-            >
-            <p class="mt-1 text-xs text-slate-500">Custom code for your language (can be non-standard)</p>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Language Name</label>
-            <input 
-              v-model="newLanguage.name" 
-              type="text" 
-              class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. Custom Language"
-              required
-            >
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Native Name</label>
-            <input 
-              v-model="newLanguage.native_name" 
-              type="text" 
-              class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. Native Language Name"
-            >
-          </div>
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Text Direction</label>
-            <select 
-              v-model="newLanguage.direction" 
-              class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ltr">Left to Right (LTR)</option>
-              <option value="rtl">Right to Left (RTL)</option>
-            </select>
-          </div>
-          <div class="flex justify-end gap-3">
-            <button 
-              type="button" 
-              @click="showAddLanguageModal = false"
-              class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-              :disabled="addingLanguage"
-            >
-              {{ addingLanguage ? 'Adding...' : 'Add Language' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <AddLanguageModal 
+      :visible="showAddLanguageModal"
+      :adding-language="addingLanguage"
+      @close="showAddLanguageModal = false"
+      @add-language="handleAddLanguage"
+    />
     
     <main class="py-6 flex-1">
       <router-view />
@@ -158,9 +99,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchLanguages, createLanguage } from './services/languageService.js'
+import AddLanguageModal from './components/AddLanguageModal.vue'
 
 export default {
   name: 'App',
+  components: {
+    AddLanguageModal
+  },
   setup() {
     const { locale } = useI18n()
     const langDropdownOpen = ref(false)
@@ -169,12 +114,6 @@ export default {
     // Language management
     const showAddLanguageModal = ref(false)
     const addingLanguage = ref(false)
-    const newLanguage = ref({
-      code: '',
-      name: '',
-      native_name: '',
-      direction: 'ltr'
-    })
     
     // Available languages - start with static ones
     const availableLanguages = ref({
@@ -214,33 +153,20 @@ export default {
       }
     }
     
-    // Add new language
-    const addNewLanguage = async () => {
-      if (!newLanguage.value.code || !newLanguage.value.name) return
-      
-      addingLanguage.value = true
+    // Handle add language
+    const handleAddLanguage = async (language) => {
       try {
-        const language = await createLanguage(newLanguage.value)
-        
         // Add to available languages
         availableLanguages.value[language.code] = language.native_name || language.name
         
         // Switch to the new language
         await switchLanguage(language.code)
         
-        // Reset form and close modal
-        newLanguage.value = {
-          code: '',
-          name: '',
-          native_name: '',
-          direction: 'ltr'
-        }
+        // Close modal
         showAddLanguageModal.value = false
       } catch (error) {
-        console.error('Error adding language:', error)
-        alert('Failed to add language. Please try again.')
-      } finally {
-        addingLanguage.value = false
+        console.error('Error handling added language:', error)
+        alert('Failed to process the new language. Please try again.')
       }
     }
     
@@ -283,12 +209,11 @@ export default {
       toggleLangDropdown,
       switchLanguage,
       currentLanguage: locale,
+      handleAddLanguage,
       
       // Language management
       showAddLanguageModal,
-      addingLanguage,
-      newLanguage,
-      addNewLanguage
+      addingLanguage
     }
   }
 }

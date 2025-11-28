@@ -72,7 +72,20 @@
     "submit": "Create Expression",
     "cancel": "Cancel",
     "requiredError": "Language and text are required.",
-    "associateWithExistingMeaning": "Associate with Existing Meaning"
+    "associateWithExistingMeaning": "Associate with Existing Meaning",
+    "addLanguage": "Add Language",
+    "languageCode": "Language Code",
+    "languageCodePlaceholder": "e.g. custom-lang, toki-pona",
+    "languageCodeHelp": "Custom code for your language (can be non-standard)",
+    "languageName": "Language Name",
+    "languageNamePlaceholder": "e.g. Custom Language",
+    "nativeName": "Native Name",
+    "nativeNamePlaceholder": "e.g. Native Language Name",
+    "textDirection": "Text Direction",
+    "ltr": "Left to Right (LTR)",
+    "rtl": "Right to Left (RTL)",
+    "addingLanguage": "Adding...",
+    "addLanguageFailed": "Failed to add language. Please try again."
   },
   "detail": {
     "backToSearch": "Back to Search",

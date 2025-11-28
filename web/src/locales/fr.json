@@ -94,7 +94,20 @@
     "newMeaningGloss": "Glose de la nouvelle signification",
     "createMeaning": "Créer une Signification",
     "noMeanings": "Aucune signification associée à cette expression",
-    "associateWithMeanings": "Associer avec des significations"
+    "associateWithMeanings": "Associer avec des significations",
+    "addLanguage": "Ajouter une langue",
+    "languageCode": "Code de langue",
+    "languageCodePlaceholder": "ex. custom-lang, toki-pona",
+    "languageCodeHelp": "Code personnalisé pour votre langue (peut être non standard)",
+    "languageName": "Nom de la langue",
+    "languageNamePlaceholder": "ex. Langue personnalisée",
+    "nativeName": "Nom natif",
+    "nativeNamePlaceholder": "ex. Nom de la langue maternelle",
+    "textDirection": "Direction du texte",
+    "ltr": "De gauche à droite (LTR)",
+    "rtl": "De droite à gauche (RTL)",
+    "addingLanguage": "Ajout en cours...",
+    "addLanguageFailed": "Échec de l'ajout de la langue. Veuillez réessayer."
   },
   "expressionCard": {
     "global": "Global",

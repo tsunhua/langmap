@@ -94,7 +94,20 @@
     "newMeaningGloss": "新しい意味の語彙",
     "createMeaning": "意味を作成",
     "noMeanings": "この表現に関連する意味はありません",
-    "associateWithMeanings": "意味と関連付ける"
+    "associateWithMeanings": "意味と関連付ける",
+    "addLanguage": "言語を追加",
+    "languageCode": "言語コード",
+    "languageCodePlaceholder": "例: custom-lang, toki-pona",
+    "languageCodeHelp": "言語のカスタムコード（非標準でも可）",
+    "languageName": "言語名",
+    "languageNamePlaceholder": "例: カスタム言語",
+    "nativeName": "ネイティブ名",
+    "nativeNamePlaceholder": "例: ネイティブ言語名",
+    "textDirection": "文字方向",
+    "ltr": "左から右 (LTR)",
+    "rtl": "右から左 (RTL)",
+    "addingLanguage": "追加中...",
+    "addLanguageFailed": "言語の追加に失敗しました。もう一度お試しください。"
   },
   "expressionCard": {
     "global": "グローバル",
