@@ -29,10 +29,10 @@ def populate_languages():
     
     try:
         # Check if languages already exist
-        existing_count = db.query(Language).count()
-        if existing_count > 0:
-            print(f"Database already contains {existing_count} languages. Skipping population.")
-            return
+        # existing_count = db.query(Language).count()
+        # if existing_count > 0:
+        #     print(f"Database already contains {existing_count} languages. Skipping population.")
+        #     return
             
         # Insert initial languages
         for lang_data in initial_languages:

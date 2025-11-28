@@ -25,11 +25,24 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.language') }} *</label>
-          <input 
-            v-model="language" 
-            :placeholder="$t('create.languagePlaceholder')" 
-            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
-          />
+          <div class="relative">
+            <select 
+              v-model="language" 
+              class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-3 appearance-none"
+              :disabled="languagesLoading"
+            >
+              <option v-if="languagesLoading" value="" disabled>{{ $t('create.loadingLanguages') }}</option>
+              <option v-else value="" disabled>{{ $t('create.selectLanguage') }}</option>
+              <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                {{ lang.native_name || lang.name }} ({{ lang.code }})
+              </option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
           <p class="text-sm text-slate-500 mt-1">{{ $t('create.languageHelp') }}</p>
         </div>
 
@@ -227,6 +240,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
+import { fetchLanguages } from '../services/languageService.js'
 
 export default {
   name: 'CreateExpression',
@@ -237,6 +251,10 @@ export default {
     const { t } = useI18n()
     const text = ref(route.query.text || '')
     const language = ref(route.query.language || '')
+    
+    // Languages data
+    const languages = ref([])
+    const languagesLoading = ref(false)
     
     // Region is now stored as a JSON string containing name, latitude, and longitude
     const regionInput = ref(route.query.region || '')
@@ -285,6 +303,20 @@ export default {
         regionInput.value = JSON.stringify({ ...geoInfo, name: value })
       }
     })
+
+    // Load languages from backend
+    const loadLanguages = async () => {
+      languagesLoading.value = true
+      try {
+        const langs = await fetchLanguages()
+        languages.value = langs
+      } catch (err) {
+        console.error('Failed to load languages:', err)
+        error.value = 'Failed to load languages: ' + err.message
+      } finally {
+        languagesLoading.value = false
+      }
+    }
 
     // Load Leaflet from CDN
     const loadLeaflet = () => {
@@ -661,6 +693,11 @@ export default {
       }
     })
     
+    // Load languages when component is mounted
+    onMounted(() => {
+      loadLanguages()
+    })
+    
     onUnmounted(() => {
       if (map) {
         map.remove()
@@ -670,6 +707,8 @@ export default {
     return { 
       text, 
       language, 
+      languages,
+      languagesLoading,
       region, 
       regionInput,
       source_ref, 
