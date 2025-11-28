@@ -69,7 +69,7 @@
         </p>
         
         <!-- Map Container -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-4">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-4 relative z-0">
           <div id="map" class="w-full rounded-xl" style="height: 600px;"></div>
           
           <!-- Loading overlay -->
@@ -126,7 +126,7 @@
             </span>
           </div>
           
-          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer" @click="$router.push({ name: 'create' })">
+          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer" @click="showCreateDialog = true">
             <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -142,7 +142,7 @@
           <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
             <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('home.exploreMap') }}</h3>
@@ -154,6 +154,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- Create Expression Dialog -->
+    <CreateExpression 
+      v-if="showCreateDialog"
+      :visible="showCreateDialog"
+      @close="showCreateDialog = false"
+      @expression-created="handleExpressionCreated"
+    />
   </div>
 </template>
 
@@ -161,9 +169,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import CreateExpression from '../components/CreateExpression.vue'
 
 export default {
   name: 'Home',
+  components: {
+    CreateExpression
+  },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
@@ -174,6 +186,7 @@ export default {
       totalLanguages: 0,
       totalRegions: 0
     })
+    const showCreateDialog = ref(false)
     
     let map = null
     let markers = []
@@ -199,6 +212,14 @@ export default {
       console.log('Selected region:', region)
       // Could navigate to filtered search or show details
       router.push({ name: 'search', query: { region: region } })
+    }
+    
+    // Handle expression created event
+    const handleExpressionCreated = (expression) => {
+      console.log('Expression created:', expression)
+      showCreateDialog.value = false
+      // Refresh stats since we've added a new expression
+      loadData()
     }
     
     // Create map markers for each region
@@ -405,7 +426,9 @@ export default {
       heatmapData,
       goToSearch,
       selectRegion,
-      t
+      t,
+      showCreateDialog,
+      handleExpressionCreated
     }
   }
 }
