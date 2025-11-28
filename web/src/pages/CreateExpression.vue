@@ -35,12 +35,57 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.region') }}</label>
-          <input 
-            v-model="region" 
-            :placeholder="$t('create.regionPlaceholder')" 
-            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4" 
-          />
+          <div class="flex gap-2">
+            <input 
+              v-model="region" 
+              :placeholder="$t('create.regionPlaceholder')" 
+              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-3 px-4 bg-slate-100 text-slate-500 cursor-not-allowed" 
+              readonly
+            />
+            <button 
+              @click="detectLocation"
+              :disabled="detectingLocation || parsingLocation"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+              :title="$t('create.detectLocation')"
+            >
+              <svg v-if="detectingLocation || parsingLocation" class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <button 
+              @click="toggleMapSelector"
+              :disabled="parsingLocation"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+              :title="$t('create.selectOnMap')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </button>
+          </div>
           <p class="text-sm text-slate-500 mt-1">{{ $t('create.regionHelp') }}</p>
+          
+          <!-- 地图选择器 -->
+          <div v-if="showMapSelector" class="mt-3 border border-slate-200 rounded-lg overflow-hidden">
+            <div id="region-map" class="w-full h-64"></div>
+            <div class="p-3 bg-slate-50 text-sm text-slate-600">
+              {{ $t('create.clickOnMapToSelect') }}
+            </div>
+          </div>
+          
+          <!-- 解析位置信息加载状态 -->
+          <div v-if="parsingLocation" class="mt-2 flex items-center text-sm text-slate-600">
+            <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ $t('create.parsingLocation') }}
+          </div>
         </div>
       </div>
 
@@ -178,7 +223,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
@@ -192,9 +237,20 @@ export default {
     const { t } = useI18n()
     const text = ref(route.query.text || '')
     const language = ref(route.query.language || '')
-    const region = ref(route.query.region || '')
+    
+    // Region is now stored as a JSON string containing name, latitude, and longitude
+    const regionInput = ref(route.query.region || '')
     const source_ref = ref(route.query.source_ref || '')
     const error = ref(null)
+    
+    // Location detection
+    const detectingLocation = ref(false)
+    const parsingLocation = ref(false)
+    
+    // Map selector
+    const showMapSelector = ref(false)
+    let map = null
+    let L
     
     // Association mode
     const associateMode = ref(false)
@@ -205,6 +261,256 @@ export default {
     const selectedExpressionMeanings = ref([])
     const selectedMeaningId = ref(null)
     const newMeaningGloss = ref('')
+
+    // Geo info structure: { name: string, latitude: number, longitude: number }
+    const parseGeoInfo = (geoString) => {
+      if (!geoString) return null
+      try {
+        return JSON.parse(geoString)
+      } catch (e) {
+        // If it's not JSON, treat it as a plain name
+        return { name: geoString, latitude: null, longitude: null }
+      }
+    }
+
+    // Computed region value for display (only the name part)
+    const region = computed({
+      get: () => {
+        const geoInfo = parseGeoInfo(regionInput.value)
+        return geoInfo ? geoInfo.name : ''
+      },
+      set: (value) => {
+        // When setting, preserve existing coordinates if available
+        const geoInfo = parseGeoInfo(regionInput.value) || { latitude: null, longitude: null }
+        regionInput.value = JSON.stringify({ ...geoInfo, name: value })
+      }
+    })
+
+    // Load Leaflet from CDN
+    const loadLeaflet = () => {
+      return new Promise((resolve, reject) => {
+        if (window.L) {
+          resolve()
+          return
+        }
+        
+        // Load CSS
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        link.onload = () => {
+          // Load JS
+          const script = document.createElement('script')
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+          script.onload = () => {
+            resolve()
+          }
+          script.onerror = () => {
+            reject(new Error('Failed to load Leaflet JS'))
+          }
+          document.head.appendChild(script)
+        }
+        link.onerror = () => {
+          reject(new Error('Failed to load Leaflet CSS'))
+        }
+        document.head.appendChild(link)
+      })
+    }
+    
+    // Reverse geocode coordinates to get detailed location info
+    const reverseGeocode = async (lat, lon) => {
+      try {
+        // Get user's preferred language, fallback to 'en'
+        const userLang = navigator.language || 'en';
+        const langCode = userLang.split('-')[0]; // Extract language code (e.g., 'zh' from 'zh-CN')
+        
+        console.log(`Requesting location name in language: ${langCode}`);
+        
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=${langCode}`
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Nominatim response:', data);
+          
+          if (data.address) {
+            const address = data.address
+            // Build a hierarchical location name (city + state + country)
+            const locationParts = [
+              address.city || address.town || address.village || address.municipality,
+              address.state || address.province,
+              address.country
+            ].filter(part => part) // Remove falsy values
+            
+            // If we couldn't get a meaningful name, try with English as fallback
+            let displayName = locationParts.join(', ')
+            console.log('Localized name:', displayName);
+            
+            if (!displayName || displayName.trim() === '') {
+              // Try again with English if the localized name is empty
+              console.log('Localized name empty, trying English fallback');
+              const fallbackResponse = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`
+              )
+              
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json()
+                console.log('Fallback response:', fallbackData);
+                
+                if (fallbackData.address) {
+                  const fallbackAddress = fallbackData.address
+                  const fallbackLocationParts = [
+                    fallbackAddress.city || fallbackAddress.town || fallbackAddress.village || fallbackAddress.municipality,
+                    fallbackAddress.state || fallbackAddress.province,
+                    fallbackAddress.country
+                  ].filter(part => part)
+                  
+                  displayName = fallbackLocationParts.join(', ') || `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
+                  console.log('English fallback name:', displayName);
+                } else {
+                  displayName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
+                }
+              } else {
+                displayName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
+              }
+            }
+            
+            return {
+              name: displayName,
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon)
+            }
+          }
+        }
+        // Fallback to coordinates only
+        console.log('Falling back to coordinates only');
+        return {
+          name: `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon)
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err)
+        // Fallback to coordinates only
+        return {
+          name: `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon)
+        }
+      }
+    }
+    
+    // Initialize map for region selection
+    const initMap = async () => {
+      try {
+        await loadLeaflet()
+        L = window.L
+        
+        // Wait for DOM element to be available
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        const mapElement = document.getElementById('region-map')
+        if (!mapElement) {
+          console.error('Map element not found')
+          return
+        }
+        
+        // Check if map is already initialized
+        if (mapElement._leaflet_id) {
+          // If map already exists, remove it first
+          if (map) {
+            map.remove()
+          }
+          map = null
+        }
+        
+        // Create map centered on world view
+        map = L.map('region-map').setView([20, 0], 2)
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map)
+        
+        // Add click handler
+        map.on('click', async (e) => {
+          const { lat, lng } = e.latlng
+          parsingLocation.value = true
+          
+          try {
+            // Get detailed location info from coordinates
+            const geoInfo = await reverseGeocode(lat, lng)
+            regionInput.value = JSON.stringify(geoInfo)
+          } catch (err) {
+            console.error('Failed to process map click:', err)
+            error.value = t('create.locationParsingFailed')
+          } finally {
+            parsingLocation.value = false
+            showMapSelector.value = false
+          }
+        })
+      } catch (err) {
+        console.error('Failed to initialize map:', err)
+        error.value = 'Failed to load map: ' + err.message
+      }
+    }
+    
+    // Toggle map selector
+    const toggleMapSelector = async () => {
+      showMapSelector.value = !showMapSelector.value
+      if (showMapSelector.value) {
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          initMap()
+        }, 100)
+      } else {
+        if (map) {
+          map.remove()
+          map = null
+        }
+      }
+    }
+    
+    // Detect user location
+    const detectLocation = () => {
+      detectingLocation.value = true
+      error.value = null
+      
+      if (!navigator.geolocation) {
+        error.value = t('create.geolocationNotSupported')
+        detectingLocation.value = false
+        return
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords
+          
+          try {
+            parsingLocation.value = true
+            // Use reverse geocoding to get detailed region info with language localization
+            const geoInfo = await reverseGeocode(latitude, longitude)
+            regionInput.value = JSON.stringify(geoInfo)
+          } catch (err) {
+            console.error('Location processing failed:', err)
+            error.value = t('create.locationParsingFailed')
+          } finally {
+            parsingLocation.value = false
+            detectingLocation.value = false
+          }
+        },
+        (err) => {
+          console.error('Geolocation error:', err)
+          error.value = t('create.locationDetectionFailed')
+          detectingLocation.value = false
+        },
+        {
+          timeout: 10000,
+          enableHighAccuracy: true
+        }
+      )
+    }
 
     function toggleAssociationMode() {
       associateMode.value = !associateMode.value
@@ -274,7 +580,7 @@ export default {
         const payload = {
           text: text.value,
           language: language.value,
-          region: region.value || null,
+          region: regionInput.value || null, // Send the full JSON string
           source_ref: source_ref.value || null,
         }
         
@@ -340,15 +646,43 @@ export default {
         error.value = e.message || String(e)
       }
     }
+    
+    // Watch for map selector visibility changes
+    watch(showMapSelector, (newValue) => {
+      if (newValue) {
+        setTimeout(() => {
+          initMap()
+        }, 100)
+      } else {
+        if (map) {
+          map.remove()
+          map = null
+        }
+      }
+    })
+    
+    onUnmounted(() => {
+      if (map) {
+        map.remove()
+      }
+    })
 
     return { 
       text, 
       language, 
       region, 
+      regionInput,
       source_ref, 
       submit, 
       error, 
       t,
+      // Location detection
+      detectingLocation,
+      parsingLocation,
+      detectLocation,
+      // Map selector
+      showMapSelector,
+      toggleMapSelector,
       // Association properties
       associateMode,
       assocQuery,
