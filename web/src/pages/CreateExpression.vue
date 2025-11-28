@@ -405,11 +405,12 @@ export default {
           } else {
             // Fallback to browser language
             const userLang = navigator.language || 'en';
-            langCode = userLang
+            langCode = userLang.split('-')[0]; // Extract language code (e.g., 'zh' from 'zh-CN')
           }
         }
         
-        const nominatimLangCode = langCode;
+        // For Nominatim, we need just the language part, not the region
+        const nominatimLangCode = langCode.split('-')[0];
         
         console.log(`Requesting location name in language: ${nominatimLangCode}`);
         
@@ -423,15 +424,20 @@ export default {
           
           if (data.address) {
             const address = data.address
-            // Build a hierarchical location name (city + state + country)
+            // Build a hierarchical location name with street/township level details
             const locationParts = [
-              address.city || address.town || address.village || address.municipality,
-              address.state || address.province,
+              address.neighbourhood || address.suburb || address.city_district,
+              address.village || address.town || address.city,
+              address.state_district || address.county || address.state || address.province,
               address.country
             ].filter(part => part) // Remove falsy values
             
+            // Get country information
+            const countryCode = address.country_code?.toUpperCase() || null
+            const countryName = address.country || null
+            
             // If we couldn't get a meaningful name, try with English as fallback
-            let displayName = locationParts.join(', ')
+            let displayName = locationParts.filter(part => part).join(', ')
             console.log('Localized name:', displayName);
             
             if (!displayName || displayName.trim() === '') {
@@ -448,12 +454,13 @@ export default {
                 if (fallbackData.address) {
                   const fallbackAddress = fallbackData.address
                   const fallbackLocationParts = [
-                    fallbackAddress.city || fallbackAddress.town || fallbackAddress.village || fallbackAddress.municipality,
-                    fallbackAddress.state || fallbackAddress.province,
+                    fallbackAddress.neighbourhood || fallbackAddress.suburb || fallbackAddress.city_district,
+                    fallbackAddress.village || fallbackAddress.town || fallbackAddress.city,
+                    fallbackAddress.state_district || fallbackAddress.county || fallbackAddress.state || fallbackAddress.province,
                     fallbackAddress.country
                   ].filter(part => part)
                   
-                  displayName = fallbackLocationParts.join(', ') || `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
+                  displayName = fallbackLocationParts.filter(part => part).join(', ') || `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
                   console.log('English fallback name:', displayName);
                 } else {
                   displayName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
@@ -466,7 +473,9 @@ export default {
             return {
               name: displayName,
               latitude: parseFloat(lat),
-              longitude: parseFloat(lon)
+              longitude: parseFloat(lon),
+              country_code: countryCode,
+              country_name: countryName
             }
           }
         }
@@ -475,7 +484,9 @@ export default {
         return {
           name: `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`,
           latitude: parseFloat(lat),
-          longitude: parseFloat(lon)
+          longitude: parseFloat(lon),
+          country_code: null,
+          country_name: null
         }
       } catch (err) {
         console.error('Reverse geocoding failed:', err)
@@ -483,7 +494,9 @@ export default {
         return {
           name: `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`,
           latitude: parseFloat(lat),
-          longitude: parseFloat(lon)
+          longitude: parseFloat(lon),
+          country_code: null,
+          country_name: null
         }
       }
     }
@@ -663,11 +676,26 @@ export default {
       }
       
       try {
+        // Parse region data if it exists
+        let regionData = null;
+        if (regionInput.value) {
+          try {
+            regionData = JSON.parse(regionInput.value);
+          } catch (e) {
+            // If it's not valid JSON, treat as plain string
+            regionData = { name: regionInput.value };
+          }
+        }
+        
         // First create the expression
         const payload = {
           text: text.value,
           language: language.value,
-          region: regionInput.value || null, // Send the full JSON string
+          region_name: regionData?.name || null,
+          region_latitude: regionData?.latitude !== null ? regionData.latitude.toString() : null,
+          region_longitude: regionData?.longitude !== null ? regionData.longitude.toString() : null,
+          country_code: regionData?.country_code || null,
+          country_name: regionData?.country_name || null,
           source_ref: source_ref.value || null,
         }
         

@@ -434,13 +434,97 @@ export default {
       }
     }
 
+    // Helper method to get language display name
+    function getLanguageDisplayName(languageCode) {
+      // This would ideally come from a global language store or API
+      // For now, we'll use a simple mapping for common languages
+      const languageMap = {
+        'en': 'English',
+        'zh-Hans': '简体中文',
+        'zh-Hant': '傳統中文',
+        'es': 'Español',
+        'fr': 'Français',
+        'ja': '日本語'
+      }
+      
+      return languageMap[languageCode] || languageCode
+    }
+
+    // Helper method to get region display name
+    function getRegionDisplayName(item) {
+      // Use the new region_name field if available, otherwise fall back to region
+      if (item.region_name) {
+        return item.region_name
+      }
+      
+      // If region is a JSON string, try to parse it
+      if (item.region) {
+        try {
+          const regionData = JSON.parse(item.region)
+          return regionData.name || item.region
+        } catch (e) {
+          // If it's not valid JSON, return as is
+          return item.region
+        }
+      }
+      
+      // Default to global if no region data
+      return 'Global'
+    }
+
+    // Helper method to get country display name
+    function getCountryDisplayName(item) {
+      // Use the new country_name field if available
+      if (item.country_name) {
+        return item.country_name
+      }
+      
+      // If region is a JSON string, try to parse it for country info
+      if (item.region) {
+        try {
+          const regionData = JSON.parse(item.region)
+          return regionData.country_name || '';
+        } catch (e) {
+          // If it's not valid JSON, return empty
+          return '';
+        }
+      }
+      
+      // Return empty if no country data
+      return '';
+    }
+
     onMounted(load)
     // when the route param `id` changes the same component instance is reused by the router;
     // watch the prop and reload the details when it changes
     watch(() => props.id, (newId, oldId) => {
       if (newId !== oldId) load()
     })
-    return { item, loading, translations, transLoading, associateMode, assocQuery, assocResults, assocLoading, assocMsg, meanings, linkedIds, assocHasCurrent, isLinked, searchAssociate, associateWith, selectedMeaningId, newMeaningGloss, createMeaning, toggleMeaning, isExpanded }
+    return { 
+      item, 
+      loading, 
+      translations, 
+      transLoading, 
+      associateMode, 
+      assocQuery, 
+      assocResults, 
+      assocLoading, 
+      assocMsg, 
+      meanings, 
+      linkedIds, 
+      assocHasCurrent, 
+      isLinked, 
+      searchAssociate, 
+      associateWith, 
+      selectedMeaningId, 
+      newMeaningGloss, 
+      createMeaning, 
+      toggleMeaning, 
+      isExpanded,
+      getLanguageDisplayName,
+      getRegionDisplayName,
+      getCountryDisplayName
+    }
   }
 }
 </script>

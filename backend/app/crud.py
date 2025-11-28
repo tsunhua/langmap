@@ -36,7 +36,11 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
     # create expression and initial version
     expr = models.Expression(
         language=payload.language,
-        region=payload.region,
+        region_name=payload.region_name,
+        region_latitude=payload.region_latitude,
+        region_longitude=payload.region_longitude,
+        country_code=payload.country_code,
+        country_name=payload.country_name,
         text=payload.text,
         source_type=source_type,
         source_ref=payload.source_ref,
@@ -51,7 +55,11 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
     version = models.ExpressionVersion(
         expression_id=expr.id,
         language=payload.language,
-        region=payload.region,
+        region_name=payload.region_name,
+        region_latitude=payload.region_latitude,
+        region_longitude=payload.region_longitude,
+        country_code=payload.country_code,
+        country_name=payload.country_name,
         text=payload.text,
         source_type=source_type,
         review_status="approved" if auto_approve else "pending",
@@ -136,7 +144,11 @@ def get_translations(db: Session, expression_id: int, limit: int = 50):
             results.append({
                 "id": member.id,
                 "language": member.language,
-                "region": member.region,
+                "region_name": member.region_name,
+                "region_latitude": member.region_latitude,
+                "region_longitude": member.region_longitude,
+                "country_code": member.country_code,
+                "country_name": member.country_name,
                 "text": member.text,
                 "source_ref": member.source_ref,
             })

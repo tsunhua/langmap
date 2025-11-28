@@ -5,7 +5,11 @@ from datetime import datetime
 
 class ExpressionBase(BaseModel):
     language: str
-    region: Optional[str] = None
+    region_name: Optional[str] = None
+    region_latitude: Optional[str] = None
+    region_longitude: Optional[str] = None
+    country_code: Optional[str] = None
+    country_name: Optional[str] = None
     text: str
     source_ref: Optional[str] = None
     audio_url: Optional[str] = None
@@ -32,7 +36,11 @@ class VersionOut(BaseModel):
     id: int
     expression_id: Optional[int] = None
     language: str
-    region: Optional[str] = None
+    region_name: Optional[str] = None
+    region_latitude: Optional[str] = None
+    region_longitude: Optional[str] = None
+    country_code: Optional[str] = None
+    country_name: Optional[str] = None
     text: str
     source_type: str
     review_status: str
