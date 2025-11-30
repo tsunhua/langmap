@@ -82,8 +82,19 @@
                   <span class="ml-2 text-slate-600">{{ $t('detail.searching') }}</span>
                 </div>
                 
-                <div v-else-if="assocResults.length === 0" class="text-center py-4 text-slate-500">
+                <div v-else-if="assocSearched && assocResults.length === 0" class="text-center py-4 text-slate-500">
                   {{ $t('detail.noExpressionsFound') }}
+                  <div class="mt-4">
+                    <button 
+                      @click="openCreateExpressionModal"
+                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      {{ $t('detail.createExpression') }}
+                    </button>
+                  </div>
                 </div>
                 
                 <div v-else class="space-y-2">
@@ -227,6 +238,15 @@
         Back to Search
       </button>
     </div>
+    
+    <!-- Create Expression Modal -->
+    <CreateExpression 
+      :visible="showCreateExpressionModal"
+      :initial-meaning-id="currentMeaningIdForAssociation"
+      :initial-text="assocQuery"
+      @close="showCreateExpressionModal = false"
+      @expression-created="handleExpressionCreated"
+    />
   </div>
 </template>
 
@@ -236,10 +256,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
+import CreateExpression from '../components/CreateExpression.vue'
 
 export default {
   name: 'Detail',
-  components: { ExpressionCard, VersionHistory },
+  components: { ExpressionCard, VersionHistory, CreateExpression },
   props: ['id'],
   setup (props) {
     const route = useRoute()
@@ -261,6 +282,11 @@ export default {
     const assocHasCurrent = ref(false)
     const selectedMeaningId = ref(null)
     const newMeaningGloss = ref('')
+    const assocSearched = ref(false) // 新增状态，标记是否已搜索过
+    
+    // Create expression modal
+    const showCreateExpressionModal = ref(false)
+    const currentMeaningIdForAssociation = ref(null)
     
     const linkedIds = computed(() => {
       const s = new Set()
@@ -360,9 +386,11 @@ export default {
         assocResults.value = await res.json()
         console.debug('Assoc search returned', assocResults.value.length, 'items')
         assocMsg.value = `Found ${assocResults.value.length} candidates.`
+        assocSearched.value = true // 标记已搜索
       } catch (e) {
         assocMsg.value = String(e)
         assocResults.value = []
+        assocSearched.value = true // 即使出错也标记已搜索
       } finally {
         assocLoading.value = false
       }
@@ -432,6 +460,29 @@ export default {
       } catch (e) {
         assocMsg.value = String(e)
       }
+    }
+
+    // Open create expression modal
+    function openCreateExpressionModal() {
+      // If there's a selected meaning, pass it to the modal
+      currentMeaningIdForAssociation.value = selectedMeaningId.value && selectedMeaningId.value !== '__new' 
+        ? selectedMeaningId.value 
+        : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
+      showCreateExpressionModal.value = true;
+    }
+
+    // Handle expression created event from the modal
+    async function handleExpressionCreated(createdExpression) {
+      showCreateExpressionModal.value = false;
+      assocMsg.value = 'Expression created and linked successfully.';
+      
+      // Refresh the page data to show the newly created expression
+      await load();
+      
+      // Reset search results and query
+      assocResults.value = [];
+      assocQuery.value = '';
+      assocSearched.value = false; // 重置搜索状态
     }
 
     // Helper method to get language display name
@@ -523,7 +574,14 @@ export default {
       isExpanded,
       getLanguageDisplayName,
       getRegionDisplayName,
-      getCountryDisplayName
+      getCountryDisplayName,
+      // Create expression modal
+      showCreateExpressionModal,
+      currentMeaningIdForAssociation,
+      openCreateExpressionModal,
+      handleExpressionCreated,
+      // 新增的搜索状态
+      assocSearched
     }
   }
 }

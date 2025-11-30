@@ -349,7 +349,7 @@
 
 <script>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import { fetchLanguages } from '../services/languageService.js'
@@ -375,6 +375,7 @@ export default {
   emits: ['close', 'expression-created'],
   setup (props, { emit }) {
     const route = useRoute()
+    const router = useRouter()
     const { t, locale } = useI18n()
     const text = ref(props.initialText || route.query.text || '')
     const language = ref(route.query.language || '')
@@ -925,10 +926,22 @@ export default {
               return
             }
           }
+        } else if (props.initialMeaningId) {
+          // Automatically associate with the provided initial meaning ID
+          try {
+            const linkRes = await fetch(`/api/v1/meanings/${props.initialMeaningId}/link?expression_id=${created.id}`, { 
+              method: 'POST' 
+            })
+            
+            if (!linkRes.ok) throw new Error('failed to link expression with meaning')
+          } catch (e) {
+            error.value = String(e)
+            return
+          }
         }
         
-        // Navigate to detail view for the created expression
-        router.push({ name: 'detail', params: { id: created.id } })
+        // Emit event to notify parent component about the created expression
+        emit('expression-created', created)
       } catch (e) {
         error.value = e.message || String(e)
       }
@@ -959,6 +972,13 @@ export default {
         
         // Load languages
         loadLanguages()
+        
+        // If there's an initial meaning ID, enable association mode automatically
+        if (props.initialMeaningId) {
+          associateMode.value = true
+          associationType.value = 'existing'
+          selectedMeaningId.value = props.initialMeaningId
+        }
       }
     })
     
