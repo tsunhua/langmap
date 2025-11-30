@@ -366,13 +366,17 @@ export default {
     initialMeaningId: {
       type: Number,
       default: null
+    },
+    initialText: {
+      type: String,
+      default: ''
     }
   },
   emits: ['close', 'expression-created'],
   setup (props, { emit }) {
     const route = useRoute()
     const { t, locale } = useI18n()
-    const text = ref(route.query.text || '')
+    const text = ref(props.initialText || route.query.text || '')
     const language = ref(route.query.language || '')
     
     // Languages data
@@ -941,6 +945,20 @@ export default {
           map.remove()
           map = null
         }
+      }
+    })
+    
+    // Watch for component visibility changes to load languages and reset form
+    watch(() => props.visible, (newVisible) => {
+      if (newVisible) {
+        // Reset form fields when modal opens
+        text.value = props.initialText || route.query.text || ''
+        language.value = route.query.language || ''
+        regionInput.value = route.query.region || ''
+        source_ref.value = route.query.source_ref || ''
+        
+        // Load languages
+        loadLanguages()
       }
     })
     
