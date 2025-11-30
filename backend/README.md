@@ -1,19 +1,49 @@
-# langmap — backend (minimal FastAPI skeleton)
+# LangMap Backend
 
-This folder contains a minimal FastAPI backend skeleton for local development.
+This is the backend API for LangMap, built with FastAPI.
 
-Quick start (macOS / zsh):
+## Features
 
+- RESTful API for language data
+- SQLite database for local development
+- Easily deployable with Docker
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the development server:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+## Database Configuration
+
+The application supports multiple database backends through environment variables:
+
+### SQLite (default for local development)
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-# create sqlite db and tables
-python -c "from app.db.session import engine; from app.db import models; models.Base.metadata.create_all(bind=engine)"
-# run server
-uvicorn app.main:app --reload --port 8000
+export DATABASE_URL="sqlite:///./backend_dev.db"
 ```
 
-Notes:
-- The default DB is SQLite for quick local testing. Set `DATABASE_URL` env var to use Postgres in production.
-- This skeleton intentionally keeps dependencies minimal for easier maintenance.
+### Other databases
+```bash
+# PostgreSQL
+export DATABASE_URL="postgresql://user:password@localhost:5432/mydatabase"
+
+# MySQL
+export DATABASE_URL="mysql://user:password@localhost:3306/mydatabase"
+```
+
+## API Documentation
+
+Once the server is running, visit:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Docker
+
+See [README.DOCKER.md](README.DOCKER.md) for Docker deployment instructions.

@@ -1,3 +1,3 @@
-from sqlalchemy.orm import declarative_base
+from app.db.database import Base
 
-Base = declarative_base()
+# This file is used to import the Base class for model definition
