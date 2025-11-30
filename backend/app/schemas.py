@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from typing import Optional, List
+from pydantic import BaseModel
 from datetime import datetime
 
 
@@ -10,60 +10,41 @@ class ExpressionBase(BaseModel):
     region_longitude: Optional[str] = None
     country_code: Optional[str] = None
     country_name: Optional[str] = None
+
+
+class ExpressionCreate(ExpressionBase):
     text: str
     source_ref: Optional[str] = None
     audio_url: Optional[str] = None
     tags: Optional[List[str]] = None
 
 
-class ExpressionCreate(ExpressionBase):
-    pass
-
-
 class ExpressionOut(ExpressionBase):
     id: int
-    source_type: str
-    review_status: str
-    auto_approved: bool
-    created_at: Optional[datetime] = None
-    created_by: Optional[int] = None
-
-    class Config:
-        from_attributes = True
-
-
-class VersionOut(BaseModel):
-    id: int
-    expression_id: Optional[int] = None
-    language: str
-    region_name: Optional[str] = None
-    region_latitude: Optional[str] = None
-    region_longitude: Optional[str] = None
-    country_code: Optional[str] = None
-    country_name: Optional[str] = None
     text: str
     source_type: str
     review_status: str
     auto_approved: bool
-    change_summary: Optional[str] = None
-    created_at: Optional[datetime] = None
+    source_ref: Optional[str] = None
+    audio_url: Optional[str] = None
+    tags: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
 
 
-class MeaningCreate(BaseModel):
+class MeaningBase(BaseModel):
     gloss: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[List[str]] = None
 
 
-class MeaningOut(BaseModel):
+class MeaningCreate(MeaningBase):
+    pass
+
+
+class MeaningOut(MeaningBase):
     id: int
-    gloss: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -74,6 +55,9 @@ class LanguageBase(BaseModel):
     name: str
     native_name: Optional[str] = None
     direction: str = "ltr"
+    region_name: Optional[str] = None
+    latitude: Optional[str] = None
+    longitude: Optional[str] = None
 
 
 class LanguageCreate(LanguageBase):
@@ -83,8 +67,28 @@ class LanguageCreate(LanguageBase):
 class Language(LanguageBase):
     id: int
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class VersionOut(BaseModel):
+    id: int
+    expression_id: int
+    language: str
+    region: Optional[str] = None
+    region_name: Optional[str] = None
+    region_latitude: Optional[str] = None
+    region_longitude: Optional[str] = None
+    country_code: Optional[str] = None
+    country_name: Optional[str] = None
+    text: str
+    source_type: str
+    review_status: str
+    auto_approved: bool
+    created_at: datetime
 
     class Config:
         from_attributes = True

@@ -44,9 +44,12 @@ class Language(Base):
     native_name = Column(String(100), nullable=True)
     direction = Column(String(3), default="ltr")
     is_active = Column(Boolean, default=True)
+    region_name = Column(String(100), nullable=True)  # Region name (could be capital or other significant region)
+    latitude = Column(String(20), nullable=True)  # Region latitude
+    longitude = Column(String(20), nullable=True)  # Region longitude
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 
 class Expression(Base):

@@ -170,6 +170,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import CreateExpression from '../components/CreateExpression.vue'
+import { fetchLanguages } from '../services/languageService'
 
 export default {
   name: 'Home',
@@ -222,8 +223,8 @@ export default {
       loadData()
     }
     
-    // Create map markers for each region
-    const createMarkers = (regionData) => {
+    // Create map markers for each language
+    const createMarkers = (languageData) => {
       if (!map || !L) return
       
       // Clear existing markers
@@ -231,7 +232,7 @@ export default {
       markers = []
       
       // Add new markers
-      regionData.forEach(point => {
+      languageData.forEach(point => {
         if (point.lat && point.lng) {
           const marker = L.circleMarker([point.lat, point.lng], {
             radius: Math.min(Math.sqrt(point.count) * 3 + 5, 30),
@@ -242,8 +243,8 @@ export default {
             fillOpacity: 0.6
           }).addTo(map)
           
-          marker.bindPopup(`<b>${point.region}</b><br>${point.count} expressions`)
-          marker.on('click', () => selectRegion(point.region))
+          marker.bindPopup(`<b>${point.languageName}</b><br>${point.count} expressions`)
+          marker.on('click', () => selectRegion(point.languageCode))
           
           markers.push(marker)
         }
@@ -281,14 +282,17 @@ export default {
     const loadData = async () => {
       loading.value = true
       try {
-        // Fetch expressions to calculate stats
+        // Fetch expressions and languages to calculate stats
         const res = await fetch('/api/v1/expressions?limit=1000')
+        const languagesRes = await fetchLanguages()
+        
         if (res.ok) {
           const expressions = await res.json()
           
           // Calculate stats
           const languages = new Set(expressions.map(e => e.language))
-          const regions = new Set(expressions.map(e => e.region).filter(r => r))
+          // Fix: Use region_name instead of region which is deprecated
+          const regions = new Set(expressions.map(e => e.region_name).filter(r => r))
           
           stats.value = {
             totalExpressions: expressions.length,
@@ -296,26 +300,28 @@ export default {
             totalRegions: regions.size
           }
           
-          // Group by region and calculate positions
-          const regionCounts = {}
+          // Group by language and calculate positions
+          const languageCounts = {}
           expressions.forEach(expr => {
-            const region = expr.region || 'Global'
-            regionCounts[region] = (regionCounts[region] || 0) + 1
+            const language = expr.language
+            languageCounts[language] = (languageCounts[language] || 0) + 1
           })
           
-          // Generate heatmap points with real geographic coordinates
-          const regionPositions = generateRegionPositions(Object.keys(regionCounts))
-          
-          heatmapData.value = Object.entries(regionCounts).map(([region, count], idx) => {
-            const pos = regionPositions[region] || { lat: 0, lng: 0 }
+          // Generate heatmap points with language regions from backend data
+          const languageData = Object.entries(languageCounts).map(([languageCode, count]) => {
+            // Find language info from the languages API
+            const languageInfo = languagesRes.find(lang => lang.code === languageCode)
+            
             return {
-              id: idx,
-              region,
+              languageCode,
+              languageName: languageInfo ? languageInfo.name : languageCode,
               count,
-              lat: pos.lat,
-              lng: pos.lng
+              lat: languageInfo && languageInfo.latitude ? parseFloat(languageInfo.latitude) : 0,
+              lng: languageInfo && languageInfo.longitude ? parseFloat(languageInfo.longitude) : 0
             }
           })
+          
+          heatmapData.value = languageData
           
           // Create markers on the map
           if (map) {
@@ -329,57 +335,6 @@ export default {
       }
     }
     
-    // Generate geographic positions for regions
-    const generateRegionPositions = (regions) => {
-      const positions = {}
-      
-      regions.forEach(region => {
-        // Simplified geographic positioning - in a real app, you'd use a geocoding service
-        switch (region.toLowerCase()) {
-          case 'global':
-            positions[region] = { lat: 0, lng: 0 }
-            break
-          case 'china':
-            positions[region] = { lat: 35.8617, lng: 104.1954 }
-            break
-          case 'spain':
-            positions[region] = { lat: 40.4637, lng: -3.7492 }
-            break
-          case 'france':
-            positions[region] = { lat: 46.6034, lng: 1.8883 }
-            break
-          case 'germany':
-            positions[region] = { lat: 51.1657, lng: 10.4515 }
-            break
-          case 'japan':
-            positions[region] = { lat: 36.2048, lng: 138.2529 }
-            break
-          case 'korea':
-            positions[region] = { lat: 35.9078, lng: 127.7669 }
-            break
-          case 'russia':
-            positions[region] = { lat: 61.5240, lng: 105.3188 }
-            break
-          case 'arabic':
-            positions[region] = { lat: 27.0000, lng: 30.0000 }
-            break
-          case 'india':
-            positions[region] = { lat: 20.5937, lng: 78.9629 }
-            break
-          case 'portugal':
-            positions[region] = { lat: 39.3999, lng: -8.2245 }
-            break
-          default:
-            // Random position near equator for unknown regions
-            positions[region] = { 
-              lat: -10 + Math.random() * 20, 
-              lng: -180 + Math.random() * 360 
-            }
-        }
-      })
-      
-      return positions
-    }
     
     // Load Leaflet from CDN if not already loaded
     const loadLeaflet = () => {

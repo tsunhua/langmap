@@ -200,7 +200,10 @@ def create_language(db: Session, language):
         code=language.code,
         name=language.name,
         native_name=language.native_name,
-        direction=language.direction
+        direction=language.direction,
+        region_name=language.region_name,
+        latitude=language.latitude,
+        longitude=language.longitude
     )
     db.add(db_language)
     db.commit()
