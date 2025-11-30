@@ -103,7 +103,17 @@
     "ltr": "从左到右 (LTR)",
     "rtl": "从右到左 (RTL)",
     "addingLanguage": "正在添加...",
-    "addLanguageFailed": "添加语言失败，请重试。"
+    "addLanguageFailed": "添加语言失败，请重试。",
+    "latitude": "纬度",
+    "latitudePlaceholder": "例如：51.5074",
+    "longitude": "经度",
+    "longitudePlaceholder": "例如：-0.1278",
+    "regionInformation": "地区信息",
+    "regionName": "地区名称",
+    "regionNamePlaceholder": "例如：伦敦，英国",
+    "nativeRegionName": "本地地区名称",
+    "nativeRegionNamePlaceholder": "例如：伦德雷斯，英国",
+    "hideMap": "隐藏地图"
   },
   "detail": {
     "backToSearch": "返回搜索",

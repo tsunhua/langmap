@@ -22,6 +22,14 @@
       </div>
     </div>
 
+    <!-- Add Expression Modal -->
+    <CreateExpression 
+      :visible="showCreateModal" 
+      :initial-text="q"
+      @close="showCreateModal = false"
+      @created="handleExpressionCreated"
+    />
+
     <div v-if="loading" class="flex items-center justify-center py-12">
       <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -35,7 +43,7 @@
         <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('search.noResults') }}</h3>
         <p class="text-slate-600 mb-6">{{ $t('search.tryDifferent') }}</p>
         <button 
-          @click="$router.push({ name: 'create', query: { text: q } })" 
+          @click="showCreateModal = true" 
           class="inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-2"
         >
           {{ $t('search.addExpression', { expression: q || $t('search.newExpression') }) }}
@@ -67,10 +75,11 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
+import CreateExpression from '../components/CreateExpression.vue'
 
 export default {
   name: 'Search',
-  components: { ExpressionCard },
+  components: { ExpressionCard, CreateExpression },
   setup () {
     const route = useRoute()
     const router = useRouter()
@@ -79,6 +88,7 @@ export default {
     const items = ref([])
     const loading = ref(false)
     const hasSearched = ref(false)
+    const showCreateModal = ref(false)
 
     async function search () {
       // Don't trigger search if query is empty
@@ -107,6 +117,12 @@ export default {
       }
     }
 
+    function handleExpressionCreated(expression) {
+      showCreateModal.value = false
+      // Optionally refresh the search or redirect
+      search()
+    }
+
     // Watch for route query changes
     watch(() => route.query, (newQuery) => {
       if (newQuery.q) {
@@ -115,7 +131,7 @@ export default {
       }
     }, { immediate: true })
 
-    return { q, items, loading, hasSearched, search, t }
+    return { q, items, loading, hasSearched, search, t, showCreateModal, handleExpressionCreated }
   }
 }
 </script>

@@ -103,7 +103,17 @@
     "ltr": "Left to Right (LTR)",
     "rtl": "Right to Left (RTL)",
     "addingLanguage": "Adding...",
-    "addLanguageFailed": "Failed to add language. Please try again."
+    "addLanguageFailed": "Failed to add language. Please try again.",
+    "latitude": "Latitude",
+    "latitudePlaceholder": "e.g. 51.5074",
+    "longitude": "Longitude",
+    "longitudePlaceholder": "e.g. -0.1278",
+    "regionInformation": "Region Information",
+    "regionName": "Region Name",
+    "regionNamePlaceholder": "e.g. London, UK",
+    "nativeRegionName": "Native Region Name",
+    "nativeRegionNamePlaceholder": "e.g. Londres, R.-U.",
+    "hideMap": "Hide Map"
   },
   "detail": {
     "backToSearch": "Back to Search",

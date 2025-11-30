@@ -1,12 +1,23 @@
-# langmap — web (Vue 3 + Vite minimal skeleton)
+# langmap
 
-Quick start (macOS / zsh):
+LangMap is a language learning tool that helps you learn new languages by mapping words and phrases to their meanings in other languages.
 
+## Features
+
+- **Language Learning:** LangMap helps you learn new languages by mapping words and phrases to their meanings in other languages.
+- **Interactive Map:** The interactive map allows you to explore the language map and see how words and phrases are mapped to their meanings in other languages.
+- **User-Friendly Interface:** LangMap has a user-friendly interface that makes it easy to use.
+
+## Installation
+
+To install LangMap, follow these steps:
 ```bash
-cd web
-# use npm or yarn/pnpm as you prefer
-npm install
-npm run dev
+cd langmap
+pip install -r requirements.txt
+python -c "from app.db.session import engine; from app.db import models; models.Base.metadata.create_all(bind=engine)"
+uvicorn app.main:app --reload --port 8000
 ```
 
-This is a minimal front-end skeleton using Vue 3 + Vite. It includes a simple search page that calls the backend at `/api/v1/search` (CORS/back-end proxy may be required during development).
+## Todo
+
+- [] 支持有音無字的語言輸入，聲音錄入
