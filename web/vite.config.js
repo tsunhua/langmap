@@ -7,7 +7,9 @@ export default defineConfig({
   server: {
     // useful default proxy for local backend during development
     proxy: {
-      '/api': 'http://127.0.0.1:8000'
+      '/api': process.env.VITE_API_PROXY || 'http://127.0.0.1:8000'
     }
-  }
+  },
+  // Support for defining the base path for deployment to subdirectories
+  base: process.env.VITE_BASE_PATH || '/',
 })
