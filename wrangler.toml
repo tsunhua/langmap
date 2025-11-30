@@ -1,6 +1,0 @@
-name = "langmap"
-main = "backend/app/main.py"
-compatibility_date = "2024-03-20"
-
-[observability]
-enabled = true

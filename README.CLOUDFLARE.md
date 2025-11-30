@@ -29,19 +29,17 @@
 
 Cloudflare Workers 现在支持 Python，但需要注意一些限制。
 
-1. 安装必要的工具：
+##### 方法 1: 使用 Wrangler CLI (推荐)
+
+1. 安装 Wrangler:
    ```bash
-   # 确保安装了 uv 和 Node.js
-   # 然后安装 workers-py
-   uv tool install workers-py
+   npm install -g wrangler
    ```
 
-2. 初始化项目：
+2. 初始化项目:
    ```bash
    cd backend
-   uv init
-   uv add fastapi
-   uv run pywrangler init
+   wrangler init
    ```
 
 3. 配置 wrangler.toml：
@@ -52,6 +50,30 @@ Cloudflare Workers 现在支持 Python，但需要注意一些限制。
    
    [observability]
    enabled = true
+   ```
+
+##### 方法 2: 手动创建项目结构
+
+如果 `pywrangler` 命令出现问题（如您遇到的 Node.js 兼容性问题），您可以手动创建项目：
+
+1. 创建 `wrangler.toml` 配置文件:
+   ```toml
+   name = "langmap-api"
+   main = "app/main.py"
+   compatibility_date = "2024-03-20"
+   
+   [observability]
+   enabled = true
+   ```
+
+2. 登录 Cloudflare:
+   ```bash
+   wrangler login
+   ```
+
+3. 部署:
+   ```bash
+   wrangler deploy
    ```
 
 4. 注意事项：
