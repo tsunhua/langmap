@@ -6,7 +6,7 @@ authors = [
     { name = "Lim", email = "lshare@outlook.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.122.1",
     "pydantic>=2.12.5",
