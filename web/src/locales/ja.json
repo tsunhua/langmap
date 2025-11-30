@@ -113,7 +113,6 @@
     "textDirection": "文字方向",
     "ltr": "左から右（LTR）",
     "rtl": "右から左（RTL）",
-    "cancel": "キャンセル",
     "addingLanguage": "追加中...",
     "addLanguageFailed": "言語の追加に失敗しました。もう一度お試しください。"
   },

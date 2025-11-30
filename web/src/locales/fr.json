@@ -112,7 +112,6 @@
     "textDirection": "Direction du Texte",
     "ltr": "De gauche à droite (LTR)",
     "rtl": "De droite à gauche (RTL)",
-    "cancel": "Annuler",
     "addingLanguage": "Ajout en cours...",
     "addLanguageFailed": "Échec de l'ajout de la langue. Veuillez réessayer."
   },
