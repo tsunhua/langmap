@@ -6,6 +6,11 @@ compatibility_flags = ["python_workers"]
 [observability]
 enabled = true
 
+[name]
+type = "python"
+python_version = "3.11"
+
+
 # 示例：配置D1数据库绑定
 # [[ d1_databases ]]
 # binding = "DB"
