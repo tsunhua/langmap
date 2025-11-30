@@ -243,8 +243,32 @@ export default {
             fillOpacity: 0.6
           }).addTo(map)
           
-          marker.bindPopup(`<b>${point.languageName}</b><br>${point.count} expressions`)
-          marker.on('click', () => selectRegion(point.languageCode))
+          // Bind tooltip to show information on hover
+          marker.bindTooltip(`
+            <div>
+              <b>${t('home.heatmap.region')}:</b> ${point.regionName || t('home.heatmap.unknown')}<br>
+              <b>${t('home.heatmap.language')}:</b> ${point.languageName}<br>
+              <b>${t('home.heatmap.expressions')}:</b> ${point.count}
+            </div>
+          `, {
+            direction: 'top',
+            offset: [0, -10],
+            permanent: false,
+            sticky: true,
+            opacity: 0.9
+          });
+          
+          // Bind popup with the same information
+          marker.bindPopup(`
+            <div>
+              <b>${t('home.heatmap.region')}:</b> ${point.regionName || t('home.heatmap.unknown')}<br>
+              <b>${t('home.heatmap.language')}:</b> ${point.languageName}<br>
+              <b>${t('home.heatmap.expressions')}:</b> ${point.count}
+            </div>
+          `);
+          
+          // Remove click handler to make heatmap non-clickable
+          // marker.on('click', () => selectRegion(point.languageCode))
           
           markers.push(marker)
         }
@@ -314,7 +338,8 @@ export default {
             
             return {
               languageCode,
-              languageName: languageInfo ? languageInfo.name : languageCode,
+              languageName: languageInfo ? (languageInfo.native_name || languageInfo.name) : languageCode,
+              regionName: languageInfo ? (languageInfo.native_region_name || languageInfo.region_name) : 'Unknown',
               count,
               lat: languageInfo && languageInfo.latitude ? parseFloat(languageInfo.latitude) : 0,
               lng: languageInfo && languageInfo.longitude ? parseFloat(languageInfo.longitude) : 0

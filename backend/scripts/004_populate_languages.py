@@ -20,7 +20,8 @@ def populate_languages():
             "name": "English",
             "native_name": "English",
             "direction": "ltr",
-            "region_name": "London",  # Changed from capital to region_name
+            "region_name": "London",
+            "native_region_name": "London",
             "latitude": "51.5074",
             "longitude": "-0.1278"
         },
@@ -29,7 +30,8 @@ def populate_languages():
             "name": "Simplified Chinese",
             "native_name": "简体中文",
             "direction": "ltr",
-            "region_name": "Beijing",  # Changed from capital to region_name
+            "region_name": "Beijing",
+            "native_region_name": "北京",
             "latitude": "39.9042",
             "longitude": "116.4074"
         },
@@ -38,7 +40,8 @@ def populate_languages():
             "name": "Traditional Chinese",
             "native_name": "繁體中文",
             "direction": "ltr",
-            "region_name": "Taipei",  # Changed from capital to region_name
+            "region_name": "Taipei",
+            "native_region_name": "台北",
             "latitude": "25.0330",
             "longitude": "121.5654"
         },
@@ -47,7 +50,8 @@ def populate_languages():
             "name": "Spanish",
             "native_name": "Español",
             "direction": "ltr",
-            "region_name": "Madrid",  # Changed from capital to region_name
+            "region_name": "Madrid",
+            "native_region_name": "Madrid",
             "latitude": "40.4168",
             "longitude": "-3.7038"
         },
@@ -56,7 +60,8 @@ def populate_languages():
             "name": "French",
             "native_name": "Français",
             "direction": "ltr",
-            "region_name": "Paris",  # Changed from capital to region_name
+            "region_name": "Paris",
+            "native_region_name": "Paris",
             "latitude": "48.8566",
             "longitude": "2.3522"
         },
@@ -65,7 +70,8 @@ def populate_languages():
             "name": "Japanese",
             "native_name": "日本語",
             "direction": "ltr",
-            "region_name": "Tokyo",  # Changed from capital to region_name
+            "region_name": "Tokyo",
+            "native_region_name": "東京",
             "latitude": "35.6762",
             "longitude": "139.6503"
         },
@@ -74,7 +80,8 @@ def populate_languages():
             "name": "Korean",
             "native_name": "한국어",
             "direction": "ltr",
-            "region_name": "Seoul",  # Changed from capital to region_name
+            "region_name": "Seoul",
+            "native_region_name": "서울",
             "latitude": "37.5665",
             "longitude": "126.9780"
         },
@@ -83,7 +90,8 @@ def populate_languages():
             "name": "Arabic",
             "native_name": "العربية",
             "direction": "rtl",
-            "region_name": "Cairo",  # Changed from capital to region_name
+            "region_name": "Cairo",
+            "native_region_name": "القاهرة",
             "latitude": "30.0444",
             "longitude": "31.2357"
         },
@@ -92,7 +100,8 @@ def populate_languages():
             "name": "Portuguese",
             "native_name": "Português",
             "direction": "ltr",
-            "region_name": "Lisbon",  # Changed from capital to region_name
+            "region_name": "Lisbon",
+            "native_region_name": "Lisboa",
             "latitude": "38.7223",
             "longitude": "-9.1393"
         },
@@ -101,7 +110,8 @@ def populate_languages():
             "name": "Russian",
             "native_name": "Русский",
             "direction": "ltr",
-            "region_name": "Moscow",  # Changed from capital to region_name
+            "region_name": "Moscow",
+            "native_region_name": "Москва",
             "latitude": "55.7558",
             "longitude": "37.6176"
         },
@@ -110,7 +120,8 @@ def populate_languages():
             "name": "German",
             "native_name": "Deutsch",
             "direction": "ltr",
-            "region_name": "Berlin",  # Changed from capital to region_name
+            "region_name": "Berlin",
+            "native_region_name": "Berlin",
             "latitude": "52.5200",
             "longitude": "13.4050"
         },
@@ -119,7 +130,8 @@ def populate_languages():
             "name": "Hindi",
             "native_name": "हिन्दी",
             "direction": "ltr",
-            "region_name": "New Delhi",  # Changed from capital to region_name
+            "region_name": "New Delhi",
+            "native_region_name": "नई दिल्ली",
             "latitude": "28.6139",
             "longitude": "77.2090"
         },
@@ -128,7 +140,8 @@ def populate_languages():
             "name": "Italian",
             "native_name": "Italiano",
             "direction": "ltr",
-            "region_name": "Rome",  # Changed from capital to region_name
+            "region_name": "Rome",
+            "native_region_name": "Roma",
             "latitude": "41.9028",
             "longitude": "12.4964"
         }

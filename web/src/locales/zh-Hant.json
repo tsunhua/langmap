@@ -15,10 +15,16 @@
     "high": "高",
     "getStarted": "開始使用",
     "searchExpressions": "搜尋詞句",
-    "searchExpressionsDesc": "查詢不同語言和地區中詞語和句子的表達方式。",
+    "searchExpressionsDesc": "查找不同語言和地區中詞語和句子的表達方式。",
     "startSearching": "開始搜尋 →",
     "addExpression": "新增詞句",
     "addExpressionDesc": "通過新增您語言或地區的詞句為我們的資料庫做貢獻。",
+    "heatmap": {
+      "region": "地區",
+      "language": "語言",
+      "expressions": "詞句數",
+      "unknown": "未知"
+    },
     "addNew": "新增新詞 →",
     "exploreMap": "探索地圖",
     "exploreMapDesc": "在互動式世界地圖上視覺化語言多樣性。",

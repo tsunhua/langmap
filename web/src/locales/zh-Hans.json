@@ -19,6 +19,12 @@
     "startSearching": "开始搜索 →",
     "addExpression": "添加词句",
     "addExpressionDesc": "通过添加您语言或地区的词句为我们的数据库做贡献。",
+    "heatmap": {
+      "region": "地区",
+      "language": "语言",
+      "expressions": "词句数",
+      "unknown": "未知"
+    },
     "addNew": "添加新词 →",
     "exploreMap": "探索地图",
     "exploreMapDesc": "在交互式世界地图上可视化语言多样性。",

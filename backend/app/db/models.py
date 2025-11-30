@@ -45,6 +45,7 @@ class Language(Base):
     direction = Column(String(3), default="ltr")
     is_active = Column(Boolean, default=True)
     region_name = Column(String(100), nullable=True)  # Region name (could be capital or other significant region)
+    native_region_name = Column(String(100), nullable=True)  # Native region name for localization
     latitude = Column(String(20), nullable=True)  # Region latitude
     longitude = Column(String(20), nullable=True)  # Region longitude
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)

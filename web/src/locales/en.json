@@ -19,6 +19,12 @@
     "startSearching": "Start Searching →",
     "addExpression": "Add Expression",
     "addExpressionDesc": "Contribute to our database by adding expressions from your language or region.",
+    "heatmap": {
+      "region": "Region",
+      "language": "Language",
+      "expressions": "Expressions",
+      "unknown": "Unknown"
+    },
     "addNew": "Add New →",
     "exploreMap": "Explore Map",
     "exploreMapDesc": "Visualize linguistic diversity on an interactive world map.",

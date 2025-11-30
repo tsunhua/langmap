@@ -202,6 +202,7 @@ def create_language(db: Session, language):
         native_name=language.native_name,
         direction=language.direction,
         region_name=language.region_name,
+        native_region_name=language.native_region_name,
         latitude=language.latitude,
         longitude=language.longitude
     )

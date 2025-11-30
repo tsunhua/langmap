@@ -56,6 +56,7 @@ class LanguageBase(BaseModel):
     native_name: Optional[str] = None
     direction: str = "ltr"
     region_name: Optional[str] = None
+    native_region_name: Optional[str] = None
     latitude: Optional[str] = None
     longitude: Optional[str] = None
 
