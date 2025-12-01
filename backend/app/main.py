@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import endpoints
-from app.api.v1 import languages
 from app.db import models
 from app.db.database import engine
 import os
@@ -21,7 +20,6 @@ app.add_middleware(
 models.Base.metadata.create_all(bind=engine)
 
 # Include routers - order matters!
-app.include_router(languages.router)
 app.include_router(endpoints.router)
 
 @app.get("/health")
@@ -39,7 +37,7 @@ def db_status():
 def get_database_type(url):
     if url.startswith("sqlite"):
         return "SQLite"
-    elif url.startswith("d1"):
+    elif url.startswith("d1"): 
         return "Cloudflare D1"
     elif url.startswith("postgresql"):
         return "PostgreSQL"
@@ -66,11 +64,3 @@ async def not_found_handler(request: Request, exc):
         status_code=404,
         content={"detail": "Not Found"}
     )
-    
-from workers import WorkerEntrypoint
-
-class Default(WorkerEntrypoint):
-    async def fetch(self, request):
-        import asgi
-
-        return await asgi.fetch(app, request.js_object, self.env)

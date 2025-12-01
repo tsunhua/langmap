@@ -4,18 +4,15 @@ from datetime import datetime
 
 
 class ExpressionBase(BaseModel):
-    language: str
+    language_code: str
+    region_code: Optional[str] = None
     region_name: Optional[str] = None
-    region_latitude: Optional[str] = None
-    region_longitude: Optional[str] = None
-    country_code: Optional[str] = None
-    country_name: Optional[str] = None
+    region_latitude: Optional[float] = None
+    region_longitude: Optional[float] = None
 
 
 class ExpressionCreate(ExpressionBase):
     text: str
-    source_ref: Optional[str] = None
-    audio_url: Optional[str] = None
     tags: Optional[List[str]] = None
 
 
@@ -25,8 +22,6 @@ class ExpressionOut(ExpressionBase):
     source_type: str
     review_status: str
     auto_approved: bool
-    source_ref: Optional[str] = None
-    audio_url: Optional[str] = None
     tags: Optional[List[str]] = None
 
     class Config:
@@ -53,12 +48,10 @@ class MeaningOut(MeaningBase):
 class LanguageBase(BaseModel):
     code: str
     name: str
-    native_name: Optional[str] = None
-    direction: str = "ltr"
+    region_code: Optional[str] = None
     region_name: Optional[str] = None
-    native_region_name: Optional[str] = None
-    latitude: Optional[str] = None
-    longitude: Optional[str] = None
+    region_latitude: Optional[float] = None
+    region_longitude: Optional[float] = None
 
 
 class LanguageCreate(LanguageBase):
@@ -67,7 +60,6 @@ class LanguageCreate(LanguageBase):
 
 class Language(LanguageBase):
     id: int
-    is_active: bool
     created_at: datetime
     updated_at: datetime
 
@@ -78,17 +70,7 @@ class Language(LanguageBase):
 class VersionOut(BaseModel):
     id: int
     expression_id: int
-    language: str
-    region: Optional[str] = None
-    region_name: Optional[str] = None
-    region_latitude: Optional[str] = None
-    region_longitude: Optional[str] = None
-    country_code: Optional[str] = None
-    country_name: Optional[str] = None
-    text: str
-    source_type: str
-    review_status: str
-    auto_approved: bool
+    note: str
     created_at: datetime
 
     class Config:

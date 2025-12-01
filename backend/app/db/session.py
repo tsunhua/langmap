@@ -1,7 +1,5 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.db.database import SessionLocal
+
+from app.db.database import SessionLocal, engine
 
 
 def get_db():
