@@ -18,132 +18,106 @@ def populate_languages():
         {
             "code": "en",
             "name": "English",
-            "native_name": "English",
-            "direction": "ltr",
-            "region_name": "London",
-            "native_region_name": "London",
-            "latitude": "51.5074",
-            "longitude": "-0.1278"
+            "region_code": "GB",
+            "region_name": "London, United Kingdom",
+            "region_latitude": 51.5074,
+            "region_longitude": -0.1278
         },
         {
             "code": "zh-Hans",
-            "name": "Simplified Chinese",
-            "native_name": "简体中文",
-            "direction": "ltr",
-            "region_name": "Beijing",
-            "native_region_name": "北京",
-            "latitude": "39.9042",
-            "longitude": "116.4074"
+            "name": "简体中文",
+            "region_code": "CN",
+            "region_name": "北京，中国",
+            "region_latitude": 39.9042,
+            "region_longitude": 116.4074
         },
         {
             "code": "zh-Hant",
-            "name": "Traditional Chinese",
-            "native_name": "繁體中文",
-            "direction": "ltr",
-            "region_name": "Taipei",
-            "native_region_name": "台北",
-            "latitude": "25.0330",
-            "longitude": "121.5654"
+            "name": "繁體中文",
+            "region_code": "TW",
+            "region_name": "台北，台灣",
+            "region_latitude": 25.0330,
+            "region_longitude": 121.5654
         },
         {
             "code": "es",
-            "name": "Spanish",
-            "native_name": "Español",
-            "direction": "ltr",
-            "region_name": "Madrid",
-            "native_region_name": "Madrid",
-            "latitude": "40.4168",
-            "longitude": "-3.7038"
+            "name": "Español",
+            "region_code": "ES",
+            "region_name": "Madrid, España",
+            "region_latitude": 40.4168,
+            "region_longitude": -3.7038
         },
         {
             "code": "fr",
-            "name": "French",
-            "native_name": "Français",
-            "direction": "ltr",
-            "region_name": "Paris",
-            "native_region_name": "Paris",
-            "latitude": "48.8566",
-            "longitude": "2.3522"
+            "name": "Français",
+            "region_code": "FR",
+            "region_name": "Paris, France",
+            "region_latitude": 48.8566,
+            "region_longitude": 2.3522
         },
         {
             "code": "ja",
-            "name": "Japanese",
-            "native_name": "日本語",
-            "direction": "ltr",
-            "region_name": "Tokyo",
-            "native_region_name": "東京",
-            "latitude": "35.6762",
-            "longitude": "139.6503"
+            "name": "日本語",
+            "region_code": "JP",
+            "region_name": "東京、日本",
+            "region_latitude": 35.6762,
+            "region_longitude": 139.6503
         },
         {
             "code": "ko",
-            "name": "Korean",
-            "native_name": "한국어",
-            "direction": "ltr",
-            "region_name": "Seoul",
-            "native_region_name": "서울",
-            "latitude": "37.5665",
-            "longitude": "126.9780"
+            "name": "한국어",
+            "region_code": "KR",
+            "region_name": "서울, 대한민국",
+            "region_latitude": 37.5665,
+            "region_longitude": 126.9780
         },
         {
             "code": "ar",
-            "name": "Arabic",
-            "native_name": "العربية",
-            "direction": "rtl",
-            "region_name": "Cairo",
-            "native_region_name": "القاهرة",
-            "latitude": "30.0444",
-            "longitude": "31.2357"
+            "name": "العربية",
+            "region_code": "EG",
+            "region_name": "القاهرة، مصر",
+            "region_latitude": 30.0444,
+            "region_longitude": 31.2357
         },
         {
             "code": "pt",
-            "name": "Portuguese",
-            "native_name": "Português",
-            "direction": "ltr",
-            "region_name": "Lisbon",
-            "native_region_name": "Lisboa",
-            "latitude": "38.7223",
-            "longitude": "-9.1393"
+            "name": "Português",
+            "region_code": "PT",
+            "region_name": "Lisboa, Portugal",
+            "region_latitude": 38.7223,
+            "region_longitude": -9.1393
         },
         {
             "code": "ru",
-            "name": "Russian",
-            "native_name": "Русский",
-            "direction": "ltr",
-            "region_name": "Moscow",
-            "native_region_name": "Москва",
-            "latitude": "55.7558",
-            "longitude": "37.6176"
+            "name": "Русский",
+            "region_code": "RU",
+            "region_name": "Москва, Россия",
+            "region_latitude": 55.7558,
+            "region_longitude": 37.6176
         },
         {
             "code": "de",
-            "name": "German",
-            "native_name": "Deutsch",
-            "direction": "ltr",
-            "region_name": "Berlin",
-            "native_region_name": "Berlin",
-            "latitude": "52.5200",
-            "longitude": "13.4050"
+            "name": "Deutsch",
+            "region_code": "DE",
+            "region_name": "Berlin, Deutschland",
+            "region_latitude": 52.5200,
+            "region_longitude": 13.4050
         },
         {
             "code": "hi",
-            "name": "Hindi",
-            "native_name": "हिन्दी",
-            "direction": "ltr",
-            "region_name": "New Delhi",
-            "native_region_name": "नई दिल्ली",
-            "latitude": "28.6139",
-            "longitude": "77.2090"
+            "name": "हिन्दी",
+            "region_code": "IN",
+            "region_name": "नई दिल्ली, भारत",
+            "region_latitude": 28.6139,
+            "region_longitude": 77.2090
         },
         {
             "code": "it",
-            "name": "Italian",
-            "native_name": "Italiano",
-            "direction": "ltr",
-            "region_name": "Rome",
-            "native_region_name": "Roma",
-            "latitude": "41.9028",
-            "longitude": "12.4964"
+            "name": "Italiano",
+            "region_code": "IT",
+            "region_name": "Roma, Italia",
+            "region_latitude": 41.9028,
+            "region_longitude": 12.4964
         }
     ]
 

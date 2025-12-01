@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app'))
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from app.db.models import Expression, Meaning
+from app.db.models import Expression, Meaning, Language
 from app.db.database import DATABASE_URL
 
 
@@ -71,6 +71,22 @@ def add_ui_translations():
             
             print(f"\nProcessing {filename} (language: {language_code})")
             
+            # Get language region info from database
+            language_info = db.query(Language).filter(Language.code == language_code).first()
+            region_code = None
+            region_name = None
+            region_latitude = None
+            region_longitude = None
+            
+            if language_info:
+                region_code = language_info.region_code
+                region_name = language_info.region_name
+                region_latitude = language_info.region_latitude
+                region_longitude = language_info.region_longitude
+                print(f"  Using region info: {region_name} ({region_code})")
+            else:
+                print(f"  Warning: No language info found for {language_code}")
+            
             # Read the language file
             with open(json_file, 'r') as f:
                 lang_data = json.load(f)
@@ -102,10 +118,14 @@ def add_ui_translations():
                     print(f"  Using existing expression: {value[:50]}...")
                     skipped_expr_count += 1
                 else:
-                    # Create new expression
+                    # Create new expression with region info from language
                     expression = Expression(
                         language_code=language_code,
                         text=value,
+                        region_code=region_code,
+                        region_name=region_name,
+                        region_latitude=region_latitude,
+                        region_longitude=region_longitude,
                         source_type='ui_translation',
                         tags=json.dumps(['langmap']),  # Convert to JSON string for SQLite
                         review_status='approved',
