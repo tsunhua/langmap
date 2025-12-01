@@ -314,7 +314,7 @@ export default {
           const expressions = await res.json()
           
           // Calculate stats
-          const languages = new Set(expressions.map(e => e.language))
+          const languages = new Set(expressions.map(e => e.language_code))
           // Fix: Use region_name instead of region which is deprecated
           const regions = new Set(expressions.map(e => e.region_name).filter(r => r))
           
@@ -327,7 +327,7 @@ export default {
           // Group by language and calculate positions
           const languageCounts = {}
           expressions.forEach(expr => {
-            const language = expr.language
+            const language = expr.language_code
             languageCounts[language] = (languageCounts[language] || 0) + 1
           })
           
@@ -338,11 +338,12 @@ export default {
             
             return {
               languageCode,
-              languageName: languageInfo ? (languageInfo.native_name || languageInfo.name) : languageCode,
-              regionName: languageInfo ? (languageInfo.native_region_name || languageInfo.region_name) : 'Unknown',
+              languageName: languageInfo ? languageInfo.name : languageCode,
+              regionCode: languageInfo ? languageInfo.region_code : null,
+              regionName: languageInfo ? languageInfo.region_name : 'Unknown',
               count,
-              lat: languageInfo && languageInfo.latitude ? parseFloat(languageInfo.latitude) : 0,
-              lng: languageInfo && languageInfo.longitude ? parseFloat(languageInfo.longitude) : 0
+              lat: languageInfo && languageInfo.region_latitude ? parseFloat(languageInfo.region_latitude) : 0,
+              lng: languageInfo && languageInfo.region_longitude ? parseFloat(languageInfo.region_longitude) : 0
             }
           })
           

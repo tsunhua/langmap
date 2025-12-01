@@ -16,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app'))
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.db.models import Expression, Meaning
-from app.db.session import DATABASE_URL
+from app.db.database import DATABASE_URL
 
 
 def flatten_dict(d, parent_key='', sep='.'):
@@ -92,7 +92,7 @@ def add_ui_translations():
                     
                 # Check if expression already exists
                 existing_expr = db.query(Expression).filter(
-                    Expression.language == language_code,
+                    Expression.language_code == language_code,
                     Expression.text == value
                 ).first()
                 
@@ -104,11 +104,10 @@ def add_ui_translations():
                 else:
                     # Create new expression
                     expression = Expression(
-                        language=language_code,
+                        language_code=language_code,
                         text=value,
                         source_type='ui_translation',
-                        source_ref='ai',
-                        tags=['langmap'],
+                        tags=json.dumps(['langmap']),  # Convert to JSON string for SQLite
                         review_status='approved',
                         auto_approved=True
                     )
@@ -132,7 +131,7 @@ def add_ui_translations():
                     meaning = Meaning(
                         gloss=meaning_gloss,
                         description=meaning_description,
-                        tags=tags
+                        tags=json.dumps(tags)  # Convert to JSON string for SQLite
                     )
                     db.add(meaning)
                     db.flush()  # Flush to get the meaning ID

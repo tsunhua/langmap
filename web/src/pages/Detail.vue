@@ -505,7 +505,7 @@ export default {
     function getRegionDisplayName(item) {
       // Use the new region_name field if available, otherwise fall back to region
       if (item.region_name) {
-        return item.region_name
+        return item.region_name + (item.region_code ? ` (${item.region_code})` : '')
       }
       
       // If region is a JSON string, try to parse it
@@ -523,27 +523,7 @@ export default {
       return 'Global'
     }
 
-    // Helper method to get country display name
-    function getCountryDisplayName(item) {
-      // Use the new country_name field if available
-      if (item.country_name) {
-        return item.country_name
-      }
-      
-      // If region is a JSON string, try to parse it for country info
-      if (item.region) {
-        try {
-          const regionData = JSON.parse(item.region)
-          return regionData.country_name || '';
-        } catch (e) {
-          // If it's not valid JSON, return empty
-          return '';
-        }
-      }
-      
-      // Return empty if no country data
-      return '';
-    }
+
 
     onMounted(load)
     // when the route param `id` changes the same component instance is reused by the router;
@@ -574,7 +554,6 @@ export default {
       isExpanded,
       getLanguageDisplayName,
       getRegionDisplayName,
-      getCountryDisplayName,
       // Create expression modal
       showCreateExpressionModal,
       currentMeaningIdForAssociation,

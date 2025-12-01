@@ -8,9 +8,9 @@ def get_expressions(db: Session, skip: int = 0, limit: int = 50):
     return db.query(models.Expression).offset(skip).limit(limit).all()
 
 
-def get_expressions_by_tags(db: Session, language: str, tags: List[str], skip: int = 0, limit: int = 50):
+def get_expressions_by_tags(db: Session, language_code: str, tags: List[str], skip: int = 0, limit: int = 50):
     """Get expressions filtered by language and tags for UI translations"""
-    query = db.query(models.Expression).filter(models.Expression.language == language)
+    query = db.query(models.Expression).filter(models.Expression.language_code == language_code)
     
     # If tags are provided, filter by them
     if tags:
@@ -32,20 +32,17 @@ def get_expressions_by_tags(db: Session, language: str, tags: List[str], skip: i
     return query.order_by(models.Expression.created_at.desc()).offset(skip).limit(limit).all()
 
 
-def create_expression(db: Session, payload, source_type: str = "user", auto_approve: bool = False):
+def create_expression(db: Session, payload, source_type: str = "user", auto_approve: bool = False, created_by: Optional[int] = None):
     # create expression and initial version
     expr = models.Expression(
-        language=payload.language,
+        language_code=payload.language_code,
+        region_code=payload.region_code,
         region_name=payload.region_name,
         region_latitude=payload.region_latitude,
         region_longitude=payload.region_longitude,
-        country_code=payload.country_code,
-        country_name=payload.country_name,
         text=payload.text,
-        source_type=source_type,
-        source_ref=payload.source_ref,
-        audio_url=payload.audio_url,
         tags=payload.tags,
+        source_type=source_type,
         review_status="approved" if auto_approve else "pending",
         auto_approved=bool(auto_approve),
     )
@@ -54,16 +51,7 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
 
     version = models.ExpressionVersion(
         expression_id=expr.id,
-        language=payload.language,
-        region_name=payload.region_name,
-        region_latitude=payload.region_latitude,
-        region_longitude=payload.region_longitude,
-        country_code=payload.country_code,
-        country_name=payload.country_name,
-        text=payload.text,
-        source_type=source_type,
-        review_status="approved" if auto_approve else "pending",
-        auto_approved=bool(auto_approve),
+        note=f"Created expression with text: {payload.text}",
     )
     db.add(version)
     db.commit()
@@ -72,7 +60,7 @@ def create_expression(db: Session, payload, source_type: str = "user", auto_appr
 
 
 def create_meaning(db: Session, gloss: Optional[str] = None, description: Optional[str] = None, tags: Optional[List[str]] = None, created_by: Optional[int] = None):
-    m = models.Meaning(gloss=gloss, description=description, tags=tags, created_by=created_by)
+    m = models.Meaning(gloss=gloss, description=description, tags=tags)
     db.add(m)
     db.commit()
     db.refresh(m)
@@ -89,7 +77,7 @@ def link_expression_meaning(db: Session, expression_id: int, meaning_id: int, cr
     )
     if exists:
         return exists
-    link = models.ExpressionMeaning(expression_id=expression_id, meaning_id=meaning_id, created_by=created_by, note=note)
+    link = models.ExpressionMeaning(expression_id=expression_id, meaning_id=meaning_id, note=note)
     db.add(link)
     db.commit()
     db.refresh(link)
@@ -105,7 +93,11 @@ def get_meaning_members(db: Session, meaning_id: int, limit: int = 100):
     if not m:
         return []
     # eager load members via relationship
-    return m.expressions[:limit]
+    # We'll query for all ExpressionMeaning entries with this meaning_id
+    # and join with Expression to get the actual expressions
+    return db.query(models.Expression).join(models.ExpressionMeaning).filter(
+        models.ExpressionMeaning.meaning_id == meaning_id
+    ).limit(limit).all()
 
 
 def get_expression(db: Session, expr_id: int):
@@ -133,27 +125,35 @@ def get_translations(db: Session, expression_id: int, limit: int = 50):
         return []
     results = []
     seen = set()
-    # iterate meanings
-    for meaning in expr.meanings:
-        for member in meaning.expressions:
-            if member.id == expr.id:
-                continue
-            if member.id in seen:
-                continue
-            seen.add(member.id)
-            results.append({
-                "id": member.id,
-                "language": member.language,
-                "region_name": member.region_name,
-                "region_latitude": member.region_latitude,
-                "region_longitude": member.region_longitude,
-                "country_code": member.country_code,
-                "country_name": member.country_name,
-                "text": member.text,
-                "source_ref": member.source_ref,
-            })
-            if len(results) >= limit:
-                return results
+    
+    # Find all meanings associated with this expression
+    expression_meanings = db.query(models.ExpressionMeaning).filter(
+        models.ExpressionMeaning.expression_id == expression_id
+    ).all()
+    
+    meaning_ids = [em.meaning_id for em in expression_meanings]
+    
+    # Find all expressions associated with these meanings
+    related_expressions = db.query(models.Expression).join(models.ExpressionMeaning).filter(
+        models.ExpressionMeaning.meaning_id.in_(meaning_ids),
+        models.Expression.id != expression_id
+    ).limit(limit).all()
+    
+    for member in related_expressions:
+        if member.id in seen:
+            continue
+        seen.add(member.id)
+        results.append({
+            "id": member.id,
+            "language_code": member.language_code,
+            "region_code": member.region_code,
+            "region_name": member.region_name,
+            "region_latitude": member.region_latitude,
+            "region_longitude": member.region_longitude,
+            "text": member.text,
+        })
+        if len(results) >= limit:
+            return results
     return results
 
 
@@ -161,8 +161,20 @@ def get_meanings_by_expression(db: Session, expression_id: int):
     expr = get_expression(db, expression_id)
     if not expr:
         return []
+        
+    # Get all meanings associated with this expression
+    expression_meanings = db.query(models.ExpressionMeaning).filter(
+        models.ExpressionMeaning.expression_id == expression_id
+    ).all()
+    
+    meaning_ids = [em.meaning_id for em in expression_meanings]
+    
+    meanings = db.query(models.Meaning).filter(
+        models.Meaning.id.in_(meaning_ids)
+    ).all()
+    
     out = []
-    for m in expr.meanings:
+    for m in meanings:
         out.append({
             "id": m.id,
             "gloss": m.gloss,
@@ -176,11 +188,11 @@ def search_expressions(db: Session, q: str = None, from_lang: str = None, region
     query = db.query(models.Expression)
     if q:
         likeq = f"%{q}%"
-        query = query.filter(or_(models.Expression.text.ilike(likeq), models.Expression.source_ref.ilike(likeq)))
+        query = query.filter(or_(models.Expression.text.ilike(likeq)))
     if from_lang:
-        query = query.filter(models.Expression.language == from_lang)
+        query = query.filter(models.Expression.language_code == from_lang)
     if region:
-        query = query.filter(models.Expression.region == region)
+        query = query.filter(models.Expression.region_name == region)
     return query.order_by(models.Expression.created_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -194,17 +206,15 @@ def get_language_by_code(db: Session, code: str):
     return db.query(models.Language).filter(models.Language.code == code).first()
 
 
-def create_language(db: Session, language):
+def create_language(db: Session, language, created_by: Optional[int] = None):
     """Create a new language"""
     db_language = models.Language(
         code=language.code,
         name=language.name,
-        native_name=language.native_name,
-        direction=language.direction,
+        region_code=language.region_code,
         region_name=language.region_name,
-        native_region_name=language.native_region_name,
-        latitude=language.latitude,
-        longitude=language.longitude
+        region_latitude=language.region_latitude,
+        region_longitude=language.region_longitude,
     )
     db.add(db_language)
     db.commit()
@@ -212,7 +222,7 @@ def create_language(db: Session, language):
     return db_language
 
 
-def get_ui_translations_by_meaning(db: Session, language: str, skip: int = 0, limit: int = 100):
+def get_ui_translations_by_meaning(db: Session, language_code: str, skip: int = 0, limit: int = 100):
     """Get UI translations for a specific language by joining expressions with meanings that have 'langmap.' glosses"""
     # Query expressions that are linked to meanings with gloss starting with 'langmap.'
     # and match the specified language
@@ -220,7 +230,7 @@ def get_ui_translations_by_meaning(db: Session, language: str, skip: int = 0, li
         db.query(models.Expression, models.Meaning.gloss)
         .join(models.ExpressionMeaning, models.Expression.id == models.ExpressionMeaning.expression_id)
         .join(models.Meaning, models.Meaning.id == models.ExpressionMeaning.meaning_id)
-        .filter(models.Expression.language == language)
+        .filter(models.Expression.language_code == language_code)
         .filter(models.Meaning.gloss.like('langmap.%'))
     )
     
@@ -232,14 +242,14 @@ def get_ui_translations_by_meaning(db: Session, language: str, skip: int = 0, li
         translations.append({
             'id': expression.id,
             'text': expression.text,
-            'language': expression.language,
+            'language_code': expression.language_code,
             'gloss': gloss
         })
     
     return translations
 
 
-def get_ui_translations_by_meaning_tags(db: Session, language: str, skip: int = 0, limit: int = 100):
+def get_ui_translations_by_meaning_tags(db: Session, language_code: str, skip: int = 0, limit: int = 100):
     """Get UI translations for a specific language by querying meanings with 'langmap' tag 
     and finding linked expressions in the specified language"""
     
@@ -258,15 +268,18 @@ def get_ui_translations_by_meaning_tags(db: Session, language: str, skip: int = 
     translations = []
     for meaning in meanings:
         # Look for expressions linked to this meaning in the specified language
-        for expression in meaning.expressions:
-            if expression.language == language:
-                translations.append({
-                    'id': expression.id,
-                    'text': expression.text,
-                    'language': expression.language,
-                    'gloss': meaning.gloss
-                })
-                break  # Take the first expression we find in this language
+        expression = db.query(models.Expression).join(models.ExpressionMeaning).filter(
+            models.ExpressionMeaning.meaning_id == meaning.id,
+            models.Expression.language_code == language_code
+        ).first()
+        
+        if expression:
+            translations.append({
+                'id': expression.id,
+                'text': expression.text,
+                'language_code': expression.language_code,
+                'gloss': meaning.gloss
+            })
     
     # Apply pagination
     return translations[skip:skip+limit]
