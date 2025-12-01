@@ -39,7 +39,6 @@ class Expression(Base):
     region_name = Column(String, nullable=True)
     region_latitude = Column(Float, nullable=True)
     region_longitude = Column(Float, nullable=True)
-    meaning_id = Column(Integer, nullable=True)
     source_type = Column(String(20), default="user")
     review_status = Column(String(20), default="pending")
     auto_approved = Column(Boolean, default=False)

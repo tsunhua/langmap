@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS expressions (
     region_name TEXT,
     region_latitude REAL,
     region_longitude REAL,
-    meaning_id INTEGER,
     tags TEXT,
     source_type TEXT DEFAULT 'user',
     review_status TEXT DEFAULT 'pending',
