@@ -15,9 +15,17 @@ dependencies = [
     "uvicorn>=0.38.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "workers-py>=1.0.0",
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk"
+]
+
+[tool.poetry]
+exclude = [
+    "*.md",
+    "tests/*",
+    "docs/*"
 ]
 
 #[tool.uv.workspace]

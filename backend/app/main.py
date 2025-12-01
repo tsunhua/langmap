@@ -66,3 +66,11 @@ async def not_found_handler(request: Request, exc):
         status_code=404,
         content={"detail": "Not Found"}
     )
+    
+from workers import WorkerEntrypoint
+
+class Default(WorkerEntrypoint):
+    async def fetch(self, request):
+        import asgi
+
+        return await asgi.fetch(app, request.js_object, self.env)
