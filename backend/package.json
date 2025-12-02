@@ -2,17 +2,21 @@
   "name": "langmap-worker",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "$npm_execpath run build && vite preview",
+    "dev": "npx wrangler dev --remote",
+    "build": "npx wrangler build",
+    "preview": "$npm_execpath run build && wrangler dev --remote",
     "deploy": "$npm_execpath run build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.5",
+    "better-sqlite3": "^11.10.0",
     "hono": "^4.10.7"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.2.3",
+    "@cloudflare/workers-types": "^4.20251202.0",
+    "@types/better-sqlite3": "^7.6.13",
     "vite": "^6.3.5",
     "vite-ssr-components": "^0.5.1",
     "wrangler": "^4.17.0"

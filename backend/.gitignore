@@ -1,24 +1,37 @@
-# Backend-specific ignores
-# Virtualenv
-.venv/
-venv/
+# prod
+dist/
+dist-server/
 
-# Local DB
-backend_dev.db
-*.db
+# dev
+.yarn/
+!.yarn/releases
+.vscode/*
+!.vscode/launch.json
+!.vscode/*.code-snippets
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf
 
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Env files
-.env
-.env.*
-
-# IDE
-.vscode/
-.idea/
-
+# deps
 node_modules/
-python_modules/
+.wrangler
 
+# env
+.env
+.env.production
+.dev.vars
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# misc
+.DS_Store
+
+public/client/
+public/langmap_worker/
