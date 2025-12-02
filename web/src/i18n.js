@@ -19,6 +19,9 @@ const staticMessages = {
   ja: jaMessages
 }
 
+console.log('Loaded static messages:', staticMessages);
+
+
 // Cache for dynamically loaded messages
 const dynamicMessagesCache = {}
 
