@@ -10,4 +10,3 @@ window.addEventListener('unhandledrejection', event => {
 })
 
 createApp(App).use(router).use(i18n).mount('#app')
-console.log('Messages for current locale:', i18n.global.getLocaleMessage('en'));
