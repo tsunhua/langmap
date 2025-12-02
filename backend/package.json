@@ -1,11 +1,10 @@
 {
-  "name": "langmap-worker",
+  "name": "langmap-backend",
   "type": "module",
   "scripts": {
     "dev": "npx wrangler dev --remote",
     "build": "npx wrangler build",
-    "preview": "$npm_execpath run build && wrangler dev --remote",
-    "deploy": "$npm_execpath run build && wrangler deploy",
+    "deploy": "npx wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
