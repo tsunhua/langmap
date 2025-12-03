@@ -1,12 +1,40 @@
 // Hono API routes implementing the same interface as FastAPI backend
 import { Hono } from 'hono'
 import { createDatabaseService } from '../db'
+import * as jose from 'jose'
+import bcrypt from 'bcryptjs'
 
 // Create a new Hono app for API v1 routes
 const api = new Hono<{ Bindings: any }>()
 
 // Helper function to get database service
 const getDB = (c: any) => createDatabaseService(c.env)
+
+// JWT helper functions
+const SECRET_KEY = 'your-secret-key-change-in-production' // In production, use env variable
+
+async function signJWT(payload: any): Promise<string> {
+  const secret = new TextEncoder().encode(SECRET_KEY)
+  const alg = 'HS256'
+  
+  const jwt = await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg })
+    .setIssuedAt()
+    .setExpirationTime('24h')
+    .sign(secret)
+    
+  return jwt
+}
+
+async function verifyJWT(token: string): Promise<any> {
+  try {
+    const secret = new TextEncoder().encode(SECRET_KEY)
+    const { payload } = await jose.jwtVerify(token, secret)
+    return payload
+  } catch (error) {
+    return null
+  }
+}
 
 // GET /api/v1/languages
 api.get('/languages', async (c) => {
@@ -282,6 +310,160 @@ api.post('/ai/suggest', async (c) => {
     return c.json(suggestions)
   } catch (error: any) {
     return c.json({ error: 'Failed to get AI suggestions' }, 500)
+  }
+})
+
+// User Authentication Routes
+
+// POST /api/v1/auth/register
+api.post('/auth/register', async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { username, email, password } = body
+
+    // Validate input
+    if (!username || !email || !password) {
+      return c.json({ error: 'Username, email, and password are required' }, 400)
+    }
+
+    // Check if user already exists
+    const existingUser = await db.getUserByUsername(username)
+    if (existingUser) {
+      return c.json({ error: 'Username already exists' }, 409)
+    }
+
+    const existingEmail = await db.getUserByEmail(email)
+    if (existingEmail) {
+      return c.json({ error: 'Email already registered' }, 409)
+    }
+
+    // Hash password
+    const saltRounds = 10
+    const password_hash = await bcrypt.hash(password, saltRounds)
+
+    // Create user
+    const user = await db.createUser({
+      username,
+      email,
+      password_hash,
+      role: 'user' // Default role
+    })
+
+    // Remove password_hash from response
+    const { password_hash: _, ...userResponse } = user
+
+    return c.json({
+      success: true,
+      data: {
+        user: userResponse
+      }
+    }, 201)
+  } catch (error: any) {
+    console.error('Registration error:', error)
+    return c.json({ error: 'Failed to register user' }, 500)
+  }
+})
+
+// POST /api/v1/auth/login
+api.post('/auth/login', async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { email, password } = body
+
+    // Validate input
+    if (!email || !password) {
+      return c.json({ error: 'Email and password are required' }, 400)
+    }
+
+    // Find user by email
+    const user = await db.getUserByEmail(email)
+    if (!user) {
+      return c.json({ error: 'Invalid credentials' }, 401)
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password_hash)
+    if (!isValidPassword) {
+      return c.json({ error: 'Invalid credentials' }, 401)
+    }
+
+    // Generate JWT token
+    const token = await signJWT({ 
+      id: user.id, 
+      username: user.username, 
+      email: user.email,
+      role: user.role
+    })
+
+    // Remove password_hash from response
+    const { password_hash: _, ...userResponse } = user
+
+    return c.json({
+      success: true,
+      data: {
+        token,
+        user: userResponse
+      }
+    })
+  } catch (error: any) {
+    console.error('Login error:', error)
+    return c.json({ error: 'Failed to login' }, 500)
+  }
+})
+
+// POST /api/v1/auth/logout
+api.post('/auth/logout', async (c) => {
+  try {
+    // With JWT, logout is typically handled client-side by deleting the token
+    // Server-side, we could implement a token blacklist, but for simplicity
+    // we'll just return a success response
+    return c.json({
+      success: true,
+      message: 'Logged out successfully'
+    })
+  } catch (error: any) {
+    console.error('Logout error:', error)
+    return c.json({ error: 'Failed to logout' }, 500)
+  }
+})
+
+// GET /api/v1/users/me
+api.get('/users/me', async (c) => {
+  try {
+    // Extract and verify JWT token
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Missing or invalid authorization header' }, 401)
+    }
+    
+    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    const payload = await verifyJWT(token)
+    
+    if (!payload) {
+      return c.json({ error: 'Invalid or expired token' }, 401)
+    }
+    
+    const userId = payload.id
+    
+    const db = getDB(c)
+    const user = await db.getUserById(userId)
+    
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    // Remove password_hash from response
+    const { password_hash: _, ...userResponse } = user
+
+    return c.json({
+      success: true,
+      data: userResponse
+    })
+  } catch (error: any) {
+    console.error('Get user error:', error)
+    return c.json({ error: 'Failed to get user' }, 500)
   }
 })
 

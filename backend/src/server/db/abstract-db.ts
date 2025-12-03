@@ -71,7 +71,11 @@ export interface ExpressionMeaning {
 export interface User {
   id: number
   username: string
-  role?: string
+  email: string
+  password_hash: string
+  role: string
+  created_at?: string
+  updated_at?: string
 }
 
 // Abstract database service class
@@ -112,4 +116,7 @@ export abstract class AbstractDatabaseService {
 
   // Users
   abstract getUserByUsername(username: string): Promise<User | null>
+  abstract getUserByEmail(email: string): Promise<User | null>
+  abstract getUserById(id: number): Promise<User | null>
+  abstract createUser(user: Partial<User>): Promise<User>
 }

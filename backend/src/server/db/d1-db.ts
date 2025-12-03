@@ -353,6 +353,39 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return user || null
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    const user = await this.db.prepare(
+      'SELECT * FROM users WHERE email = ?'
+    ).bind(email).first<User>()
+    return user || null
+  }
+
+  async getUserById(id: number): Promise<User | null> {
+    const user = await this.db.prepare(
+      'SELECT * FROM users WHERE id = ?'
+    ).bind(id).first<User>()
+    return user || null
+  }
+
+  async createUser(user: Partial<User>): Promise<User> {
+    const result: any = await this.db.prepare(
+      `INSERT INTO users (
+        username, email, password_hash, role
+      ) VALUES (?, ?, ?, ?) RETURNING *`
+    ).bind(
+      user.username,
+      user.email,
+      user.password_hash,
+      user.role || 'user'
+    ).run()
+    
+    if (!result.success) {
+      throw new Error('Failed to create user')
+    }
+    
+    return result.results[0] as User
+  }
+
   /**
    * Generate a stable ID based on the content using FNV-1a 32-bit hash.
    * This ensures that the same content always produces the same ID.

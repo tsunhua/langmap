@@ -33,7 +33,11 @@
   },
   "nav": {
     "home": "Home",
-    "search": "Search"
+    "search": "Search",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
   },
   "footer": {
     "copyright": "© {year} langmap - Linguistic Expression Mapping Platform"
@@ -153,5 +157,50 @@
     "audio": "Audio",
     "location": "Location",
     "none": "none"
+  },
+  "login": {
+    "title": "Sign in to your account",
+    "description": "Enter your credentials to access your account",
+    "email": "Email address",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "loginFailed": "Login failed. Please check your credentials and try again.",
+    "or": "Or",
+    "createAccount": "Create a new account"
+  },
+  "register": {
+    "title": "Create a new account",
+    "description": "Fill in the information below to create your account",
+    "username": "Username",
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "agreeToTerms": "I agree to the",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "signUp": "Sign up",
+    "signingUp": "Signing up...",
+    "registrationFailed": "Registration failed. Please check your information and try again.",
+    "passwordMismatch": "Passwords do not match.",
+    "or": "Or",
+    "signIn": "Sign in to existing account"
+  },
+  "userProfile": {
+    "title": "User Profile",
+    "description": "View and manage your account information",
+    "username": "Username",
+    "email": "Email address",
+    "role": "Role",
+    "memberSince": "Member since",
+    "actions": "Actions",
+    "logout": "Logout",
+    "changePassword": "Change Password",
+    "fetchFailed": "Failed to fetch user profile information.",
+    "logoutFailed": "Logout failed. Please try again.",
+    "changePasswordNotImplemented": "Change password functionality is not implemented yet."
   }
 }
