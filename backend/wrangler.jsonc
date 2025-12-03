@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "langmap-backend",
+  "compatibility_date": "2025-08-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./src/index.tsx",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "rules": [
+    { "type": "ESModule", "globs": ["**/*.js", "**/*.mjs", "**/*.ts", "**/*.tsx"] }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "langmap",
+      "database_id": "f21a787e-769f-45b3-bd1a-59d41b35ff12"
+    }
+  ]
+}

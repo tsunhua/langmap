@@ -107,10 +107,19 @@ export default {
     AddLanguageModal
   },
   setup() {
-    const { locale } = useI18n()
+    // const { locale } = useI18n()
     const langDropdownOpen = ref(false)
     const langDropdown = ref(null)
+
+    const { t, locale } = useI18n();
     
+    console.log('=== I18n Debug Info ===');
+    console.log('Current locale:', locale.value);
+    console.log('Test translation:', t('nav.home'));
+    console.log('========================');
+    
+    return { t };
+      
     // Language management
     const showAddLanguageModal = ref(false)
     const addingLanguage = ref(false)

@@ -19,6 +19,7 @@ const staticMessages = {
   ja: jaMessages
 }
 
+
 // Cache for dynamically loaded messages
 const dynamicMessagesCache = {}
 
