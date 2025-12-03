@@ -17,7 +17,7 @@ export interface Language {
 
 export interface Meaning {
   id: number
-  gloss?: string
+  gloss: string
   description?: string
   tags?: string
   created_by?: string

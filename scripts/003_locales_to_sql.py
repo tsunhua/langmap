@@ -7,7 +7,8 @@ Populates expressions, meanings, and expression_versions tables.
 import json
 import os
 import sqlite3
-from typing import Dict, List, Any
+import hashlib
+from typing import Dict, List, Any, Tuple
 
 
 def load_locale_files(locales_dir: str) -> Dict[str, Dict[str, Any]]:
@@ -27,6 +28,102 @@ def load_locale_files(locales_dir: str) -> Dict[str, Dict[str, Any]]:
             with open(os.path.join(locales_dir, filename), 'r', encoding='utf-8') as f:
                 locales[lang_code] = json.load(f)
     return locales
+
+
+def get_language_region_info() -> Dict[str, Dict[str, Any]]:
+    """
+    Get region information for languages from the language data.
+    This information is manually extracted from 002_d1_populate_languages.sql.
+    
+    Returns:
+        Dictionary mapping language codes to their region information
+    """
+    return {
+        'en-US': {
+            'region_code': 'US',
+            'region_name': 'New York, United States',
+            'region_latitude': 40.7128,
+            'region_longitude': -74.0060
+        },
+        'en-GB': {
+            'region_code': 'GB',
+            'region_name': 'London, United Kingdom',
+            'region_latitude': 51.5074,
+            'region_longitude': -0.1278
+        },
+        'zh-CN': {
+            'region_code': 'CN',
+            'region_name': '北京，中国',
+            'region_latitude': 39.9042,
+            'region_longitude': 116.4074
+        },
+        'zh-TW': {
+            'region_code': 'TW',
+            'region_name': '台北，台灣',
+            'region_latitude': 25.0330,
+            'region_longitude': 121.5654
+        },
+        'es': {
+            'region_code': 'ES',
+            'region_name': 'Madrid, España',
+            'region_latitude': 40.4168,
+            'region_longitude': -3.7038
+        },
+        'fr': {
+            'region_code': 'FR',
+            'region_name': 'Paris, France',
+            'region_latitude': 48.8566,
+            'region_longitude': 2.3522
+        },
+        'ja': {
+            'region_code': 'JP',
+            'region_name': '東京、日本',
+            'region_latitude': 35.6762,
+            'region_longitude': 139.6503
+        },
+        'ko': {
+            'region_code': 'KR',
+            'region_name': '서울, 대한민국',
+            'region_latitude': 37.5665,
+            'region_longitude': 126.9780
+        },
+        'ar': {
+            'region_code': 'EG',
+            'region_name': 'القاهرة، مصر',
+            'region_latitude': 30.0444,
+            'region_longitude': 31.2357
+        },
+        'pt': {
+            'region_code': 'PT',
+            'region_name': 'Lisboa, Portugal',
+            'region_latitude': 38.7223,
+            'region_longitude': -9.1393
+        },
+        'ru': {
+            'region_code': 'RU',
+            'region_name': 'Москва, Россия',
+            'region_latitude': 55.7558,
+            'region_longitude': 37.6176
+        },
+        'de': {
+            'region_code': 'DE',
+            'region_name': 'Berlin, Deutschland',
+            'region_latitude': 52.5200,
+            'region_longitude': 13.4050
+        },
+        'hi': {
+            'region_code': 'IN',
+            'region_name': 'नई दिल्ली, भारत',
+            'region_latitude': 28.6139,
+            'region_longitude': 77.2090
+        },
+        'it': {
+            'region_code': 'IT',
+            'region_name': 'Roma, Italia',
+            'region_latitude': 41.9028,
+            'region_longitude': 12.4964
+        }
+    }
 
 
 def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dict[str, Any]:
@@ -51,6 +148,26 @@ def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dic
     return dict(items)
 
 
+def stable_hash_id(content: str) -> int:
+    """
+    Generate a stable ID based on the content using FNV-1a 32-bit hash.
+    This ensures that the same content always produces the same ID.
+    
+    Args:
+        content: String content to hash
+        
+    Returns:
+        Stable integer ID derived from the content hash
+    """
+    # Using FNV-1a 32-bit algorithm
+    h = 0x811c9dc5  # FNV offset basis
+    for char in content:
+        h ^= ord(char)
+        h = (h * 0x01000193) & 0xFFFFFFFF  # FNV prime and limit to 32 bits
+    # Ensure we don't get 0 as ID (minimum ID should be 1)
+    return (h % (2**31 - 1)) + 1
+
+
 def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     """
     Generate SQL INSERT statements for expressions, meanings, and expression_versions tables.
@@ -63,13 +180,16 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     """
     sql_statements = []
     
+    # Get language region information
+    language_region_info = get_language_region_info()
+    
     # Track meanings to avoid duplicates - key is the meaning gloss (key_path)
-    meanings_map = {}  # key_path -> meaning_id
-    next_meaning_id = 1
+    processed_meanings = set()  # Set of meaning_ids to avoid duplicates
     
     # Track expressions to link with versions
-    expressions_map = {}  # (text, language_code) -> expression_id
+    processed_expressions = set()  # Set of (text, language_code) tuples to avoid duplicates
     next_expression_id = 1
+    expression_id_map = {}  # Map (text, language_code) to expression_id
     
     # First pass: collect all unique meanings
     for lang_code, content in locales.items():
@@ -86,11 +206,12 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             if len(text_value.strip()) <= 1:
                 continue
                 
+            # Create stable meaning ID based on key_path
+            meaning_id = stable_hash_id(key_path)
+            
             # Create meaning entry if not exists
-            if key_path not in meanings_map:
-                meanings_map[key_path] = next_meaning_id
-                meaning_id = next_meaning_id
-                next_meaning_id += 1
+            if meaning_id not in processed_meanings:
+                processed_meanings.add(meaning_id)
                 
                 # Insert into meanings table
                 meaning_gloss = f"langmap.{key_path}"
@@ -101,6 +222,23 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     
     # Second pass: create expressions and link to meanings
     for lang_code, content in locales.items():
+        # Get region information for this language
+        region_info = language_region_info.get(lang_code, {})
+        region_code = region_info.get('region_code', 'NULL')
+        region_name = region_info.get('region_name', 'NULL')
+        region_latitude = region_info.get('region_latitude', 'NULL')
+        region_longitude = region_info.get('region_longitude', 'NULL')
+        
+        # Format values for SQL
+        if region_code != 'NULL':
+            region_code = f"'{region_code}'"
+        if region_name != 'NULL':
+            region_name = f"'{region_name}'"
+        if region_latitude != 'NULL':
+            region_latitude = str(region_latitude)
+        if region_longitude != 'NULL':
+            region_longitude = str(region_longitude)
+        
         # Flatten the nested JSON structure
         flat_content = flatten_dict(content)
         
@@ -114,31 +252,38 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             if len(text_value.strip()) <= 1:
                 continue
                 
-            # Get meaning id
-            meaning_id = meanings_map[key_path]
+            # Get stable meaning id
+            meaning_id = stable_hash_id(key_path)
             
-            # Create expression entry
-            expression_id = next_expression_id
-            expressions_map[(text_value, lang_code)] = expression_id
-            next_expression_id += 1
+            # Create expression entry if not exists
+            expression_key = (text_value, lang_code)
+            if expression_key not in expression_id_map:
+                expression_id = next_expression_id
+                expression_id_map[expression_key] = expression_id
+                next_expression_id += 1
+                processed_expressions.add(expression_key)
+                
+                # Insert into expressions table
+                escaped_text = text_value.replace("'", "''")  # Escape single quotes
+                sql_statements.append(
+                    f"INSERT INTO expressions (id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status) "
+                    f"VALUES ({expression_id}, '{escaped_text}', '{lang_code}', {region_code}, {region_name}, {region_latitude}, {region_longitude}, 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]', 'ai', 'approved');"
+                )
+                
+                # Create expression version entry
+                sql_statements.append(
+                    f"INSERT INTO expression_versions (expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at) "
+                    f"VALUES ({expression_id}, '{escaped_text}', {region_name}, {region_latitude}, {region_longitude}, 'langmap', datetime('now'));"
+                )
+            else:
+                expression_id = expression_id_map[expression_key]
             
-            # Insert into expressions table
-            escaped_text = text_value.replace("'", "''")  # Escape single quotes
-            sql_statements.append(
-                f"INSERT INTO expressions (id, text, language_code, created_by, updated_by, created_at, updated_at, tags, source_type, review_status, auto_approved) "
-                f"VALUES ({expression_id}, '{escaped_text}', '{lang_code}', 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]', 'ai', 'approved', 1);"
-            )
-            
-            # Link expression and meaning
+            # Link expression and meaning if not already linked
+            link_key = f"{expression_id}:{meaning_id}"
+            # We'll let the database handle duplicate link detection through constraints
             sql_statements.append(
                 f"INSERT INTO expression_meanings (expression_id, meaning_id, created_by, updated_by, created_at, updated_at) "
                 f"VALUES ({expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'));"
-            )
-            
-            # Create expression version entry
-            sql_statements.append(
-                f"INSERT INTO expression_versions (expression_id, text, created_by, created_at) "
-                f"VALUES ({expression_id}, '{escaped_text}', 'langmap', datetime('now'));"
             )
     
     return sql_statements

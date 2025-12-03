@@ -3,7 +3,7 @@
 
 -- Languages table
 CREATE TABLE IF NOT EXISTS languages (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY NOT NULL,
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     direction TEXT DEFAULT 'ltr',
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS languages (
 
 -- Meanings table
 CREATE TABLE IF NOT EXISTS meanings (
-    id INTEGER PRIMARY KEY,
-    gloss TEXT UNIQUE,
+    id INTEGER PRIMARY KEY NOT NULL,
+    gloss TEXT UNIQUE NOT NULL,
     description TEXT,
     tags TEXT,
     created_by TEXT,
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS meanings (
 
 -- Expressions table
 CREATE TABLE IF NOT EXISTS expressions (
-    id INTEGER PRIMARY KEY,
-    text TEXT NOT NULL,
+    id INTEGER PRIMARY KEY NOT NULL,
+    text TEXT NOT NULL NOT NULL,
     audio_url TEXT,
     language_code TEXT NOT NULL,
     region_code TEXT,
@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS expressions (
 
 -- Expression versions table
 CREATE TABLE IF NOT EXISTS expression_versions (
-    id INTEGER PRIMARY KEY,
-    expression_id INTEGER,
+    id INTEGER PRIMARY KEY NOT NULL,
+    expression_id INTEGER NOT NULL,
     text TEXT NOT NULL,
     audio_url TEXT,
     region_name TEXT,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS expression_versions (
 
 -- Expression-Meaning relationships table
 CREATE TABLE IF NOT EXISTS expression_meanings (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY NOT NULL,
     expression_id INTEGER NOT NULL,
     meaning_id INTEGER NOT NULL,
     note TEXT,

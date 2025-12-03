@@ -236,11 +236,16 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createMeaning(meaning: Partial<Meaning>): Promise<Meaning> {
+    // Generate stable ID based on gloss content using MD5
+    const gloss = meaning.gloss || '';
+    const id = this.stableHashId(gloss);
+
     const result: any = await this.db.prepare(
       `INSERT INTO meanings (
-        gloss, description, tags, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?) RETURNING *`
+        id, gloss, description, tags, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(
+      id,
       meaning.gloss,
       meaning.description,
       meaning.tags,
@@ -346,5 +351,24 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'SELECT * FROM users WHERE username = ?'
     ).bind(username).first<User>()
     return user || null
+  }
+
+  /**
+   * Generate a stable ID based on the content using FNV-1a 32-bit hash.
+   * This ensures that the same content always produces the same ID.
+   * 
+   * @param content String content to hash
+   * @returns Stable integer ID derived from the content hash
+   */
+  private stableHashId(content: string): number {
+    let h = 0x811c9dc5;  // FNV offset basis
+    for (let i = 0; i < content.length; i++) {
+      h ^= content.charCodeAt(i);
+      h = Math.imul(h, 0x01000193); // FNV prime
+    }
+    h = h >>> 0; // convert to unsigned int32
+    
+    // Ensure we don't get 0 as ID (minimum ID should be 1)
+    return (h % (2**31 - 1)) + 1;
   }
 }
