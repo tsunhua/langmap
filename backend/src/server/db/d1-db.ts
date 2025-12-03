@@ -26,8 +26,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createLanguage(language: Partial<Language>): Promise<Language> {
+    // Generate stable ID based on language code
+    const code = language.code || '';
+    const id = this.stableHashId(code);
+
     // Filter out undefined values and replace them with null
     const bindValues = [
+      id,
       language.code || null,
       language.name || null,
       language.direction || 'ltr',
@@ -42,9 +47,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
     
     const result: any = await this.db.prepare(
       `INSERT INTO languages (
-        code, name, direction, is_active, region_code, region_name, 
+        id, code, name, direction, is_active, region_code, region_name, 
         region_latitude, region_longitude, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
     
     if (!result.success) {
@@ -112,8 +117,16 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
     try {
+      // Generate stable ID based on text, language_code and region_code
+      const text = expression.text;
+      const languageCode = expression.language_code;
+      const regionCode = expression.region_code || '';
+      const idContent = `${text}|${languageCode}|${regionCode}`;
+      const id = this.stableHashId(idContent);
+
       // Filter out undefined values and replace them with null
       const bindValues = [
+        id,
         expression.text,
         expression.audio_url || null,
         expression.language_code,
@@ -131,9 +144,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
       const result: any = await this.db.prepare(
         `INSERT INTO expressions (
-          text, audio_url, language_code, region_code, region_name, region_latitude,
+          id, text, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).run()
       
       if (!result.success) {
@@ -210,8 +223,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion> {
+    // Generate stable ID based on expression_id and text
+    const expressionId = version.expression_id || 0;
+    const text = version.text || '';
+    const idContent = `${expressionId}|${text}`;
+    const id = this.stableHashId(idContent);
+
     // Filter out undefined values and replace them with null
     const bindValues = [
+      id,
       version.expression_id || null,
       version.text || null,
       version.audio_url || null,
@@ -223,9 +243,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
     
     const result: any = await this.db.prepare(
       `INSERT INTO expression_versions (
-        expression_id, text, audio_url, region_name, region_latitude, 
+        id, expression_id, text, audio_url, region_name, region_latitude, 
         region_longitude, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
     
     if (!result.success) {
@@ -322,8 +342,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   // Expression-Meaning operations
   async linkExpressionAndMeaning(expressionId: number, meaningId: number, note?: string): Promise<ExpressionMeaning> {
+    // Generate stable ID based on expression_id and meaning_id
+    const idContent = `${expressionId}|${meaningId}`;
+    const id = this.stableHashId(idContent);
+
     // Filter out undefined values and replace them with null
     const bindValues = [
+      id,
       expressionId || null,
       meaningId || null,
       note || null,
@@ -333,8 +358,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
     
     const result: any = await this.db.prepare(
       `INSERT INTO expression_meanings (
-        expression_id, meaning_id, note, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?) RETURNING *`
+        id, expression_id, meaning_id, note, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?) 
+      ON CONFLICT(id) DO UPDATE SET
+        expression_id=excluded.expression_id,
+        meaning_id=excluded.meaning_id,
+        note=excluded.note,
+        updated_by=excluded.updated_by,
+        updated_at=CURRENT_TIMESTAMP
+      RETURNING *`
     ).bind(...bindValues).run()
     
     if (!result.success) {
@@ -389,8 +421,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createUser(user: Partial<User>): Promise<User> {
+    // Generate stable ID based on username
+    const username = user.username || '';
+    const id = this.stableHashId(username);
+
     // Filter out undefined values and replace them with null
     const bindValues = [
+      id,
       user.username || null,
       user.email || null,
       user.password_hash || null,
@@ -399,8 +436,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     
     const result: any = await this.db.prepare(
       `INSERT INTO users (
-        username, email, password_hash, role
-      ) VALUES (?, ?, ?, ?) RETURNING *`
+        id, username, email, password_hash, role
+      ) VALUES (?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
     
     if (!result.success) {

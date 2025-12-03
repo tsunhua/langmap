@@ -38,92 +38,105 @@ def get_language_region_info() -> Dict[str, Dict[str, Any]]:
     Returns:
         Dictionary mapping language codes to their region information
     """
-    return {
-        'en-US': {
-            'region_code': 'US',
-            'region_name': 'New York, United States',
-            'region_latitude': 40.7128,
-            'region_longitude': -74.0060
-        },
-        'en-GB': {
-            'region_code': 'GB',
-            'region_name': 'London, United Kingdom',
-            'region_latitude': 51.5074,
-            'region_longitude': -0.1278
-        },
-        'zh-CN': {
-            'region_code': 'CN',
-            'region_name': '北京，中国',
-            'region_latitude': 39.9042,
-            'region_longitude': 116.4074
-        },
-        'zh-TW': {
-            'region_code': 'TW',
-            'region_name': '台北，台灣',
-            'region_latitude': 25.0330,
-            'region_longitude': 121.5654
-        },
-        'es': {
-            'region_code': 'ES',
-            'region_name': 'Madrid, España',
-            'region_latitude': 40.4168,
-            'region_longitude': -3.7038
-        },
-        'fr': {
-            'region_code': 'FR',
-            'region_name': 'Paris, France',
-            'region_latitude': 48.8566,
-            'region_longitude': 2.3522
-        },
-        'ja': {
-            'region_code': 'JP',
-            'region_name': '東京、日本',
-            'region_latitude': 35.6762,
-            'region_longitude': 139.6503
-        },
-        'ko': {
-            'region_code': 'KR',
-            'region_name': '서울, 대한민국',
-            'region_latitude': 37.5665,
-            'region_longitude': 126.9780
-        },
-        'ar': {
-            'region_code': 'EG',
-            'region_name': 'القاهرة، مصر',
-            'region_latitude': 30.0444,
-            'region_longitude': 31.2357
-        },
-        'pt': {
-            'region_code': 'PT',
-            'region_name': 'Lisboa, Portugal',
-            'region_latitude': 38.7223,
-            'region_longitude': -9.1393
-        },
-        'ru': {
-            'region_code': 'RU',
-            'region_name': 'Москва, Россия',
-            'region_latitude': 55.7558,
-            'region_longitude': 37.6176
-        },
-        'de': {
-            'region_code': 'DE',
-            'region_name': 'Berlin, Deutschland',
-            'region_latitude': 52.5200,
-            'region_longitude': 13.4050
-        },
-        'hi': {
-            'region_code': 'IN',
-            'region_name': 'नई दिल्ली, भारत',
-            'region_latitude': 28.6139,
-            'region_longitude': 77.2090
-        },
-        'it': {
-            'region_code': 'IT',
-            'region_name': 'Roma, Italia',
-            'region_latitude': 41.9028,
-            'region_longitude': 12.4964
-        }
-    }
+    return {}
+    # return {
+    #     'en-US': {
+    #         'region_code': 'US',
+    #         'region_name': 'New York, United States',
+    #         'region_latitude': 40.7128,
+    #         'region_longitude': -74.0060
+    #     },
+    #     'en-GB': {
+    #         'region_code': 'GB',
+    #         'region_name': 'London, United Kingdom',
+    #         'region_latitude': 51.5074,
+    #         'region_longitude': -0.1278
+    #     },
+    #     'zh-CN': {
+    #         'region_code': 'CN',
+    #         'region_name': '北京，中国',
+    #         'region_latitude': 39.9042,
+    #         'region_longitude': 116.4074
+    #     },
+    #     'zh-TW': {
+    #         'region_code': 'TW',
+    #         'region_name': '台北，台灣',
+    #         'region_latitude': 25.0330,
+    #         'region_longitude': 121.5654
+    #     },
+    #     'es': {
+    #         'region_code': 'ES',
+    #         'region_name': 'Madrid, España',
+    #         'region_latitude': 40.4168,
+    #         'region_longitude': -3.7038
+    #     },
+    #     'fr': {
+    #         'region_code': 'FR',
+    #         'region_name': 'Paris, France',
+    #         'region_latitude': 48.8566,
+    #         'region_longitude': 2.3522
+    #     },
+    #     'ja': {
+    #         'region_code': 'JP',
+    #         'region_name': '東京、日本',
+    #         'region_latitude': 35.6762,
+    #         'region_longitude': 139.6503
+    #     },
+    #     'ko': {
+    #         'region_code': 'KR',
+    #         'region_name': '서울, 대한민국',
+    #         'region_latitude': 37.5665,
+    #         'region_longitude': 126.9780
+    #     },
+    #     'ar': {
+    #         'region_code': 'EG',
+    #         'region_name': 'القاهرة، مصر',
+    #         'region_latitude': 30.0444,
+    #         'region_longitude': 31.2357
+    #     },
+    #     'pt': {
+    #         'region_code': 'PT',
+    #         'region_name': 'Lisboa, Portugal',
+    #         'region_latitude': 38.7223,
+    #         'region_longitude': -9.1393
+    #     },
+    #     'ru': {
+    #         'region_code': 'RU',
+    #         'region_name': 'Москва, Россия',
+    #         'region_latitude': 55.7558,
+    #         'region_longitude': 37.6176
+    #     },
+    #     'de': {
+    #         'region_code': 'DE',
+    #         'region_name': 'Berlin, Deutschland',
+    #         'region_latitude': 52.5200,
+    #         'region_longitude': 13.4050
+    #     },
+    #     'hi': {
+    #         'region_code': 'IN',
+    #         'region_name': 'नई दिल्ली, भारत',
+    #         'region_latitude': 28.6139,
+    #         'region_longitude': 77.2090
+    #     },
+    #     'it': {
+    #         'region_code': 'IT',
+    #         'region_name': 'Roma, Italia',
+    #         'region_latitude': 41.9028,
+    #         'region_longitude': 12.4964
+    #     },
+    #     'yue-HK': {
+    #         'region_code': 'HK',
+    #         'region_name': '香港，中国',
+    #         'region_latitude': 22.3964,
+    #         'region_longitude': 114.1095
+    #     },
+    #     'nan-TW': {
+    #         'region_code': 'TW',
+    #         'region_name': '台北，台灣',
+    #         'region_latitude': 25.0330,
+    #         'region_longitude': 121.5654
+    #     }
+    # }
 
 
 def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dict[str, Any]:
@@ -194,19 +207,58 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     # Track meanings to avoid duplicates - key is the meaning gloss (key_path)
     processed_meanings = set()  # Set of meaning_ids to avoid duplicates
     
-    # Track expressions to link with versions
-    processed_expressions = set()  # Set of (text, language_code) tuples to avoid duplicates
-    next_expression_id = 1
-    expression_id_map = {}  # Map (text, language_code) to expression_id
+    # Track expressions to avoid duplicates
+    processed_expressions = set()  # Set of expression_ids to avoid duplicates
     
-    # Helper function to flush buffers
-    def flush_buffer(table_name, buffer, columns):
-        if buffer:
-            values_str = ",\n    ".join(buffer)
+    # Helper function to flush buffers for meanings
+    def flush_meanings_buffer():
+        if meanings_buffer:
+            values_str = ",\n    ".join(meanings_buffer)
             sql_statements.append(
-                f"INSERT OR IGNORE INTO {table_name} ({columns}) VALUES\n    {values_str};"
+                f"INSERT INTO meanings (id, gloss, description, created_by, updated_by, created_at, updated_at, tags) VALUES\n    {values_str}\n"
+                f"ON CONFLICT(id) DO UPDATE SET\n"
+                f"    gloss=excluded.gloss,\n"
+                f"    description=excluded.description,\n"
+                f"    updated_by=excluded.updated_by,\n"
+                f"    updated_at=excluded.updated_at,\n"
+                f"    tags=excluded.tags;"
             )
-            buffer.clear()
+            meanings_buffer.clear()
+    
+    # Helper function to flush buffers for expressions
+    def flush_expressions_buffer():
+        if expressions_buffer:
+            values_str = ",\n    ".join(expressions_buffer)
+            sql_statements.append(
+                f"INSERT INTO expressions (id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status) VALUES\n    {values_str}\n"
+                f"ON CONFLICT(id) DO UPDATE SET\n"
+                f"    text=excluded.text,\n"
+                f"    language_code=excluded.language_code,\n"
+                f"    region_code=excluded.region_code,\n"
+                f"    region_name=excluded.region_name,\n"
+                f"    region_latitude=excluded.region_latitude,\n"
+                f"    region_longitude=excluded.region_longitude,\n"
+                f"    updated_by=excluded.updated_by,\n"
+                f"    updated_at=excluded.updated_at,\n"
+                f"    tags=excluded.tags,\n"
+                f"    source_type=excluded.source_type,\n"
+                f"    review_status=excluded.review_status;"
+            )
+            expressions_buffer.clear()
+    
+    # Helper function to flush buffers for expression_meanings
+    def flush_expression_meanings_buffer():
+        if expression_meanings_buffer:
+            values_str = ",\n    ".join(expression_meanings_buffer)
+            sql_statements.append(
+                f"INSERT INTO expression_meanings (id, expression_id, meaning_id, created_by, updated_by, created_at, updated_at) VALUES\n    {values_str}\n"
+                f"ON CONFLICT(id) DO UPDATE SET\n"
+                f"    expression_id=excluded.expression_id,\n"
+                f"    meaning_id=excluded.meaning_id,\n"
+                f"    updated_by=excluded.updated_by,\n"
+                f"    updated_at=excluded.updated_at;"
+            )
+            expression_meanings_buffer.clear()
     
     # First pass: collect all unique meanings
     for lang_code, content in locales.items():
@@ -238,18 +290,10 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                 
                 # Flush buffer if it reaches batch size
                 if len(meanings_buffer) >= BATCH_SIZE:
-                    flush_buffer(
-                        "meanings",
-                        meanings_buffer,
-                        "id, gloss, description, created_by, updated_by, created_at, updated_at, tags"
-                    )
+                    flush_meanings_buffer()
     
     # Flush remaining meanings
-    flush_buffer(
-        "meanings",
-        meanings_buffer,
-        "id, gloss, description, created_by, updated_by, created_at, updated_at, tags"
-    )
+    flush_meanings_buffer()
     
     # Second pass: create expressions and link to meanings
     for lang_code, content in locales.items():
@@ -286,13 +330,13 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             # Get stable meaning id
             meaning_id = stable_hash_id(key_path)
             
+            # Create stable expression ID based on text, language_code and region_code
+            expression_id_content = f"{text_value}|{lang_code}|{region_info.get('region_code', '')}"
+            expression_id = stable_hash_id(expression_id_content)
+            
             # Create expression entry if not exists
-            expression_key = (text_value, lang_code)
-            if expression_key not in expression_id_map:
-                expression_id = next_expression_id
-                expression_id_map[expression_key] = expression_id
-                next_expression_id += 1
-                processed_expressions.add(expression_key)
+            if expression_id not in processed_expressions:
+                processed_expressions.add(expression_id)
                 
                 # Insert into expressions table
                 escaped_text = text_value.replace("'", "''")  # Escape single quotes
@@ -302,42 +346,23 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                 
                 # Flush buffer if it reaches batch size
                 if len(expressions_buffer) >= BATCH_SIZE:
-                    flush_buffer(
-                        "expressions",
-                        expressions_buffer,
-                        "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
-                    )
+                    flush_expressions_buffer()
             
-            else:
-                expression_id = expression_id_map[expression_key]
             
-            # Link expression and meaning if not already linked
-            link_key = f"{expression_id}:{meaning_id}"
             # We'll let the database handle duplicate link detection through constraints
+            em_id_content = f"{expression_id}|{meaning_id}"
+            em_id = stable_hash_id(em_id_content)
             expression_meanings_buffer.append(
-                f"({expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'))"
+                f"({em_id}, {expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'))"
             )
             
             # Flush buffer if it reaches batch size
             if len(expression_meanings_buffer) >= BATCH_SIZE:
-                flush_buffer(
-                    "expression_meanings",
-                    expression_meanings_buffer,
-                    "expression_id, meaning_id, created_by, updated_by, created_at, updated_at"
-                )
+                flush_expression_meanings_buffer()
     
     # Flush remaining buffers
-    flush_buffer(
-        "expressions",
-        expressions_buffer,
-        "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
-    )
-    
-    flush_buffer(
-        "expression_meanings",
-        expression_meanings_buffer,
-        "expression_id, meaning_id, created_by, updated_by, created_at, updated_at"
-    )
+    flush_expressions_buffer()
+    flush_expression_meanings_buffer()
     
     return sql_statements
 
@@ -367,7 +392,8 @@ def main():
     output_path = os.path.join(output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write("-- Auto-generated SQL script from locale files\n")
-        f.write("-- This script populates expressions, meanings, and expression_meanings tables\n\n")
+        f.write("-- This script populates expressions, meanings, and expression_meanings tables\n")
+        f.write("-- Uses UPSERT (INSERT ... ON CONFLICT ... DO UPDATE) to update existing rows or insert new ones\n\n")
         for statement in sql_statements:
             f.write(statement + '\n')
     
