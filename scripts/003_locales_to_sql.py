@@ -180,6 +180,15 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     """
     sql_statements = []
     
+    # Buffers for batch inserts
+    meanings_buffer = []
+    expressions_buffer = []
+    expression_versions_buffer = []
+    expression_meanings_buffer = []
+    
+    # Batch size
+    BATCH_SIZE = 500
+    
     # Get language region information
     language_region_info = get_language_region_info()
     
@@ -190,6 +199,15 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     processed_expressions = set()  # Set of (text, language_code) tuples to avoid duplicates
     next_expression_id = 1
     expression_id_map = {}  # Map (text, language_code) to expression_id
+    
+    # Helper function to flush buffers
+    def flush_buffer(table_name, buffer, columns):
+        if buffer:
+            values_str = ",\n    ".join(buffer)
+            sql_statements.append(
+                f"INSERT OR IGNORE INTO {table_name} ({columns}) VALUES\n    {values_str};"
+            )
+            buffer.clear()
     
     # First pass: collect all unique meanings
     for lang_code, content in locales.items():
@@ -213,12 +231,26 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             if meaning_id not in processed_meanings:
                 processed_meanings.add(meaning_id)
                 
-                # Insert into meanings table
-                meaning_gloss = f"langmap.{key_path}"
-                sql_statements.append(
-                    f"INSERT INTO meanings (id, gloss, description, created_by, updated_by, created_at, updated_at, tags) "
-                    f"VALUES ({meaning_id}, '{meaning_gloss}', '', 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]');"
+                # Add to meanings buffer
+                meaning_gloss = f"langmap.{key_path}".replace("'", "''")  # Escape single quotes
+                meanings_buffer.append(
+                    f"({meaning_id}, '{meaning_gloss}', '', 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]')"
                 )
+                
+                # Flush buffer if it reaches batch size
+                if len(meanings_buffer) >= BATCH_SIZE:
+                    flush_buffer(
+                        "meanings",
+                        meanings_buffer,
+                        "id, gloss, description, created_by, updated_by, created_at, updated_at, tags"
+                    )
+    
+    # Flush remaining meanings
+    flush_buffer(
+        "meanings",
+        meanings_buffer,
+        "id, gloss, description, created_by, updated_by, created_at, updated_at, tags"
+    )
     
     # Second pass: create expressions and link to meanings
     for lang_code, content in locales.items():
@@ -265,26 +297,67 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                 
                 # Insert into expressions table
                 escaped_text = text_value.replace("'", "''")  # Escape single quotes
-                sql_statements.append(
-                    f"INSERT INTO expressions (id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status) "
-                    f"VALUES ({expression_id}, '{escaped_text}', '{lang_code}', {region_code}, {region_name}, {region_latitude}, {region_longitude}, 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]', 'ai', 'approved');"
+                expressions_buffer.append(
+                    f"({expression_id}, '{escaped_text}', '{lang_code}', {region_code}, {region_name}, {region_latitude}, {region_longitude}, 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]', 'ai', 'approved')"
                 )
                 
+                # Flush buffer if it reaches batch size
+                if len(expressions_buffer) >= BATCH_SIZE:
+                    flush_buffer(
+                        "expressions",
+                        expressions_buffer,
+                        "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
+                    )
+                
                 # Create expression version entry
-                sql_statements.append(
-                    f"INSERT INTO expression_versions (expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at) "
-                    f"VALUES ({expression_id}, '{escaped_text}', {region_name}, {region_latitude}, {region_longitude}, 'langmap', datetime('now'));"
+                expression_versions_buffer.append(
+                    f"({expression_id}, '{escaped_text}', {region_name}, {region_latitude}, {region_longitude}, 'langmap', datetime('now'))"
                 )
+                
+                # Flush buffer if it reaches batch size
+                if len(expression_versions_buffer) >= BATCH_SIZE:
+                    flush_buffer(
+                        "expression_versions",
+                        expression_versions_buffer,
+                        "expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at"
+                    )
+            
             else:
                 expression_id = expression_id_map[expression_key]
             
             # Link expression and meaning if not already linked
             link_key = f"{expression_id}:{meaning_id}"
             # We'll let the database handle duplicate link detection through constraints
-            sql_statements.append(
-                f"INSERT INTO expression_meanings (expression_id, meaning_id, created_by, updated_by, created_at, updated_at) "
-                f"VALUES ({expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'));"
+            expression_meanings_buffer.append(
+                f"({expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'))"
             )
+            
+            # Flush buffer if it reaches batch size
+            if len(expression_meanings_buffer) >= BATCH_SIZE:
+                flush_buffer(
+                    "expression_meanings",
+                    expression_meanings_buffer,
+                    "expression_id, meaning_id, created_by, updated_by, created_at, updated_at"
+                )
+    
+    # Flush remaining buffers
+    flush_buffer(
+        "expressions",
+        expressions_buffer,
+        "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
+    )
+    
+    flush_buffer(
+        "expression_versions",
+        expression_versions_buffer,
+        "expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at"
+    )
+    
+    flush_buffer(
+        "expression_meanings",
+        expression_meanings_buffer,
+        "expression_id, meaning_id, created_by, updated_by, created_at, updated_at"
+    )
     
     return sql_statements
 
