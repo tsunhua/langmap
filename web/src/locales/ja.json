@@ -148,6 +148,11 @@
     "loading": "バージョンを読み込み中...",
     "noVersions": "利用可能なバージョンがありません",
     "auto": "自動",
-    "anonymous": "匿名"
+    "anonymous": "匿名",
+    "changes": "変更点",
+    "text": "テキスト",
+    "audio": "音声",
+    "location": "位置",
+    "none": "なし"
   }
 }
