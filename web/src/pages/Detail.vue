@@ -491,8 +491,8 @@ export default {
       // For now, we'll use a simple mapping for common languages
       const languageMap = {
         'en': 'English',
-        'zh-Hans': '简体中文',
-        'zh-Hant': '傳統中文',
+        'zh-CN': '中文（北京）',
+        'zh-TW': '中文（台北）',
         'es': 'Español',
         'fr': 'Français',
         'ja': '日本語'

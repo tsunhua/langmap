@@ -127,8 +127,8 @@ export default {
     // Available languages - start with static ones
     const availableLanguages = ref({
       en: 'English',
-      'zh-Hans': '简体中文',
-      'zh-Hant': '傳統中文',
+      'zh-CN': '中文（北京）',
+      'zh-TW': '中文（台北）',
       es: 'Español',
       fr: 'Français',
       ja: '日本語'
@@ -197,7 +197,7 @@ export default {
         locale.value = savedLang
         
         // If it's a dynamic language, load its translations
-        if (!['en', 'zh-Hans', 'zh-Hant', 'es', 'fr', 'ja'].includes(savedLang)) {
+        if (!['en', 'zh-CN', 'zh-TW', 'es', 'fr', 'ja'].includes(savedLang)) {
           const { loadLanguage } = await import('./i18n.js')
           await loadLanguage(savedLang)
         }
