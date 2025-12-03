@@ -822,8 +822,8 @@ export default {
           language_code: language_code.value,
           region_code: regionData?.country_code || null,
           region_name: regionData?.name || null,
-          region_latitude: regionData?.latitude !== null ? regionData.latitude : null,
-          region_longitude: regionData?.longitude !== null ? regionData.longitude : null,
+          region_latitude: regionData && regionData.latitude !== undefined && regionData.latitude !== null ? regionData.latitude : null,
+          region_longitude: regionData && regionData.longitude !== undefined && regionData.longitude !== null ? regionData.longitude : null,
         }
         
         const res = await fetch('/api/v1/expressions', {

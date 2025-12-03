@@ -26,23 +26,26 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createLanguage(language: Partial<Language>): Promise<Language> {
+    // Filter out undefined values and replace them with null
+    const bindValues = [
+      language.code || null,
+      language.name || null,
+      language.direction || 'ltr',
+      language.is_active !== undefined ? language.is_active : 0,
+      language.region_code || null,
+      language.region_name || null,
+      language.region_latitude !== undefined ? language.region_latitude : null,
+      language.region_longitude !== undefined ? language.region_longitude : null,
+      language.created_by || null,
+      language.updated_by || null
+    ];
+    
     const result: any = await this.db.prepare(
       `INSERT INTO languages (
         code, name, direction, is_active, region_code, region_name, 
         region_latitude, region_longitude, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(
-      language.code,
-      language.name,
-      language.direction || 'ltr',
-      language.is_active !== undefined ? language.is_active : 0,
-      language.region_code,
-      language.region_name,
-      language.region_latitude,
-      language.region_longitude,
-      language.created_by,
-      language.updated_by
-    ).run()
+    ).bind(...bindValues).run()
     
     if (!result.success) {
       throw new Error('Failed to create language')
@@ -108,32 +111,41 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
-    const result: any = await this.db.prepare(
-      `INSERT INTO expressions (
-        text, audio_url, language_code, region_code, region_name, region_latitude,
-        region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(
-      expression.text,
-      expression.audio_url,
-      expression.language_code,
-      expression.region_code,
-      expression.region_name,
-      expression.region_latitude,
-      expression.region_longitude,
-      expression.tags,
-      expression.source_type || 'user',
-      expression.source_ref,
-      expression.review_status || 'pending',
-      expression.created_by,
-      expression.updated_by
-    ).run()
-    
-    if (!result.success) {
-      throw new Error('Failed to create expression')
+    try {
+      // Filter out undefined values and replace them with null
+      const bindValues = [
+        expression.text,
+        expression.audio_url || null,
+        expression.language_code,
+        expression.region_code || null,
+        expression.region_name || null,
+        expression.region_latitude !== undefined ? expression.region_latitude : null,
+        expression.region_longitude !== undefined ? expression.region_longitude : null,
+        expression.tags || null,
+        expression.source_type || 'user',
+        expression.source_ref || null,
+        expression.review_status || 'pending',
+        expression.created_by || null,
+        expression.updated_by || null
+      ];
+
+      const result: any = await this.db.prepare(
+        `INSERT INTO expressions (
+          text, audio_url, language_code, region_code, region_name, region_latitude,
+          region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      ).bind(...bindValues).run()
+      
+      if (!result.success) {
+        console.error('Failed to create expression in database:', result);
+        throw new Error('Failed to create expression')
+      }
+      
+      return result.results[0] as Expression
+    } catch (error) {
+      console.error('Error creating expression:', error);
+      throw error;
     }
-    
-    return result.results[0] as Expression
   }
 
   async updateExpression(id: number, expression: Partial<Expression>): Promise<Expression> {
@@ -198,20 +210,23 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion> {
+    // Filter out undefined values and replace them with null
+    const bindValues = [
+      version.expression_id || null,
+      version.text || null,
+      version.audio_url || null,
+      version.region_name || null,
+      version.region_latitude !== undefined ? version.region_latitude : null,
+      version.region_longitude !== undefined ? version.region_longitude : null,
+      version.created_by || null
+    ];
+    
     const result: any = await this.db.prepare(
       `INSERT INTO expression_versions (
         expression_id, text, audio_url, region_name, region_latitude, 
         region_longitude, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(
-      version.expression_id,
-      version.text,
-      version.audio_url,
-      version.region_name,
-      version.region_latitude,
-      version.region_longitude,
-      version.created_by
-    ).run()
+    ).bind(...bindValues).run()
     
     if (!result.success) {
       throw new Error('Failed to create expression version')
@@ -240,18 +255,21 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const gloss = meaning.gloss || '';
     const id = this.stableHashId(gloss);
 
+    // Filter out undefined values and replace them with null
+    const bindValues = [
+      id,
+      meaning.gloss || null,
+      meaning.description || null,
+      meaning.tags || null,
+      meaning.created_by || null,
+      meaning.updated_by || null
+    ];
+
     const result: any = await this.db.prepare(
       `INSERT INTO meanings (
         id, gloss, description, tags, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(
-      id,
-      meaning.gloss,
-      meaning.description,
-      meaning.tags,
-      meaning.created_by,
-      meaning.updated_by
-    ).run()
+    ).bind(...bindValues).run()
     
     if (!result.success) {
       throw new Error('Failed to create meaning')
@@ -304,17 +322,20 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   // Expression-Meaning operations
   async linkExpressionAndMeaning(expressionId: number, meaningId: number, note?: string): Promise<ExpressionMeaning> {
+    // Filter out undefined values and replace them with null
+    const bindValues = [
+      expressionId || null,
+      meaningId || null,
+      note || null,
+      null, // created_by
+      null  // updated_by
+    ];
+    
     const result: any = await this.db.prepare(
       `INSERT INTO expression_meanings (
         expression_id, meaning_id, note, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?) RETURNING *`
-    ).bind(
-      expressionId,
-      meaningId,
-      note,
-      null, // created_by
-      null  // updated_by
-    ).run()
+    ).bind(...bindValues).run()
     
     if (!result.success) {
       throw new Error('Failed to link expression and meaning')
@@ -368,16 +389,19 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createUser(user: Partial<User>): Promise<User> {
+    // Filter out undefined values and replace them with null
+    const bindValues = [
+      user.username || null,
+      user.email || null,
+      user.password_hash || null,
+      user.role || 'user'
+    ];
+    
     const result: any = await this.db.prepare(
       `INSERT INTO users (
         username, email, password_hash, role
       ) VALUES (?, ?, ?, ?) RETURNING *`
-    ).bind(
-      user.username,
-      user.email,
-      user.password_hash,
-      user.role || 'user'
-    ).run()
+    ).bind(...bindValues).run()
     
     if (!result.success) {
       throw new Error('Failed to create user')
