@@ -25,9 +25,10 @@
             </router-link>
           </nav>
           
-          <!-- User menu -->
-          <div v-if="isLoggedIn" class="relative" ref="userDropdown">
+          <!-- Combined Auth/Profile Button -->
+          <div class="relative" ref="authDropdown">
             <button 
+              v-if="isLoggedIn"
               @click="toggleUserDropdown" 
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
               aria-haspopup="true"
@@ -36,13 +37,26 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span class="mr-1">{{ currentUser.username }}</span>
+              <span class="mr-1">{{ $t('nav.profile') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="userDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
               </svg>
             </button>
             
+            <button
+              v-else
+              @click="$router.push('/login')"
+              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span class="mr-1">{{ $t('nav.login') }}</span>
+            </button>
+            
+            <!-- User Dropdown Menu -->
             <div 
+              v-if="isLoggedIn"
               v-show="userDropdownOpen" 
               class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
               role="menu"
@@ -63,22 +77,6 @@
                 {{ $t('nav.logout') }}
               </button>
             </div>
-          </div>
-          
-          <!-- Auth links -->
-          <div v-else class="flex items-center gap-4">
-            <router-link 
-              to="/login" 
-              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-            >
-              {{ $t('nav.login') }}
-            </router-link>
-            <router-link 
-              to="/register" 
-              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-            >
-              {{ $t('nav.register') }}
-            </router-link>
           </div>
           
           <!-- Language selector dropdown -->
@@ -237,6 +235,9 @@ export default {
         currentUser.value = {}
         userDropdownOpen.value = false
         
+        // Notify about auth state change
+        window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { isLoggedIn: false } }))
+        
         // Redirect to login
         router.push('/login')
       } catch (error) {
@@ -292,11 +293,28 @@ export default {
             // If unauthorized, remove token
             if (response.status === 401) {
               localStorage.removeItem('authToken')
+              isLoggedIn.value = false
+              currentUser.value = {}
             }
           }
         } catch (error) {
           console.error('Error checking auth status:', error)
         }
+      } else {
+        isLoggedIn.value = false
+        currentUser.value = {}
+      }
+    }
+    
+    // Handle auth state change events
+    const handleAuthStateChange = (event) => {
+      if (event.detail.isLoggedIn) {
+        // User just logged in, refresh auth status
+        checkAuthStatus()
+      } else {
+        // User logged out
+        isLoggedIn.value = false
+        currentUser.value = {}
       }
     }
     
@@ -304,6 +322,9 @@ export default {
     onMounted(async () => {
       // Check auth status
       await checkAuthStatus()
+      
+      // Listen for auth state changes
+      window.addEventListener('auth-state-changed', handleAuthStateChange)
       
       // Fetch dynamic languages from backend
       try {
@@ -332,6 +353,7 @@ export default {
     
     onUnmounted(() => {
       document.removeEventListener('click', handleClickOutside)
+      window.removeEventListener('auth-state-changed', handleAuthStateChange)
     })
     
     return {
