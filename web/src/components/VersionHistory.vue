@@ -29,14 +29,6 @@
           >
             <div class="flex justify-between items-start">
               <div class="text-slate-800 font-medium">{{ v.text }}</div>
-              <span :class="[
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                v.review_status === 'approved' ? 'bg-green-100 text-green-800' : 
-                v.review_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-              ]">
-                {{ v.review_status }}
-                <span v-if="v.auto_approved" class="ml-1">({{ $t('versionHistory.auto') }})</span>
-              </span>
             </div>
             
             <div class="mt-2 text-xs text-slate-500 flex flex-wrap items-center">
