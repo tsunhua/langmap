@@ -1,49 +1,53 @@
-# LangMap Backend
+# LangMap Worker
 
-This is the backend API for LangMap, built with FastAPI.
+This is a Hono-based application that serves both static assets and API endpoints.
 
-## Features
+## Development
 
-- RESTful API for language data
-- SQLite database for local development
-- Easily deployable with Docker
+To run the development server:
 
-## Setup
-
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Run the development server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-
-## Database Configuration
-
-The application supports multiple database backends through environment variables:
-
-### SQLite (default for local development)
-```bash
-export DATABASE_URL="sqlite:///./backend_dev.db"
+```txt
+npm install
+npm run dev
 ```
 
-### Other databases
-```bash
-# PostgreSQL
-export DATABASE_URL="postgresql://user:password@localhost:5432/mydatabase"
+This will start the Vite development server with hot reloading.
 
-# MySQL
-export DATABASE_URL="mysql://user:password@localhost:3306/mydatabase"
+## Building
+
+To build the application for production:
+
+```txt
+npm run build
 ```
 
-## API Documentation
+This will bundle the client-side assets into the `public/client` directory and prepare the server-side code.
 
-Once the server is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+## Deployment
 
-## Docker
+To deploy to Cloudflare Workers:
 
-See [README.DOCKER.md](README.DOCKER.md) for Docker deployment instructions.
+```txt
+npm run deploy
+```
+
+This will build the application and deploy it to Cloudflare Workers using Wrangler.
+
+To perform a dry-run of the deployment:
+
+```txt
+npx wrangler deploy --dry-run
+```
+
+[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+
+```txt
+npm run cf-typegen
+```
+
+Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+
+```ts
+// src/index.ts
+const app = new Hono<{ Bindings: CloudflareBindings }>()
+```
