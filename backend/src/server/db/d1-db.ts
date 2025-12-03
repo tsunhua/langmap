@@ -327,7 +327,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       expressionId || null,
       meaningId || null,
       note || null,
-      null, // created_by
+      null, // created_by - this will be updated separately
       null  // updated_by
     ];
     

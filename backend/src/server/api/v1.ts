@@ -36,6 +36,25 @@ async function verifyJWT(token: string): Promise<any> {
   }
 }
 
+// Authentication middleware
+async function requireAuth(c: any, next: any) {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Authentication required' }, 401)
+  }
+  
+  const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+  const payload = await verifyJWT(token)
+  
+  if (!payload) {
+    return c.json({ error: 'Invalid or expired token' }, 401)
+  }
+  
+  // Add user info to context
+  c.set('user', payload)
+  await next()
+}
+
 // GET /api/v1/languages
 api.get('/languages', async (c) => {
   try {
@@ -44,7 +63,6 @@ api.get('/languages', async (c) => {
     const languages = await db.getLanguages()
     return c.json(languages)
   } catch (error: any) {
-    console.error('Error in GET /languages:', error);
     return c.json({ error: 'Failed to fetch languages' }, 500)
   }
 })
@@ -67,13 +85,23 @@ api.get('/expressions', async (c) => {
 })
 
 // POST /api/v1/expressions
-api.post('/expressions', async (c) => {
+api.post('/expressions', requireAuth, async (c) => {
   try {
     const db = getDB(c)
     const body = await c.req.json()
     console.log('Creating expression with body:', body);
     
-    const expression = await db.createExpression(body)
+    // Get user info from middleware
+    const user = c.get('user');
+    const createdBy = user.username;
+    
+    // Add created_by to the expression data
+    const expressionData = {
+      ...body,
+      created_by: body.created_by || createdBy
+    };
+    
+    const expression = await db.createExpression(expressionData)
     return c.json(expression, 201)
   } catch (error: any) {
     console.error('Error in POST /expressions:', error);
@@ -224,14 +252,24 @@ api.get('/meanings', async (c) => {
 })
 
 // POST /api/v1/meanings
-api.post('/meanings', async (c) => {
+api.post('/meanings', requireAuth, async (c) => {
   try {
     console.log('POST /api/v1/meanings');
     const db = getDB(c)
     const body = await c.req.json()
     console.log('Creating meaning with body:', body);
     
-    const meaning = await db.createMeaning(body)
+    // Get user info from middleware
+    const user = c.get('user');
+    const createdBy = user.username;
+    
+    // Add created_by to the meaning data
+    const meaningData = {
+      ...body,
+      created_by: body.created_by || createdBy
+    };
+    
+    const meaning = await db.createMeaning(meaningData)
     return c.json(meaning, 201)
   } catch (error: any) {
     console.error('Error in POST /meanings:', error);
@@ -286,7 +324,7 @@ api.get('/meanings/:mid/members', async (c) => {
 })
 
 // POST /api/v1/meanings/:mid/link
-api.post('/meanings/:mid/link', async (c) => {
+api.post('/meanings/:mid/link', requireAuth, async (c) => {
   try {
     console.log('POST /api/v1/meanings/:mid/link');
     const db = getDB(c)
@@ -300,6 +338,10 @@ api.post('/meanings/:mid/link', async (c) => {
       console.warn('Invalid meaning or expression ID:', { mid, expressionId });
       return c.json({ error: 'Invalid meaning or expression ID' }, 400)
     }
+    
+    // Get user info from middleware
+    const user = c.get('user');
+    const createdBy = user.username;
     
     const link = await db.linkExpressionAndMeaning(expressionId, mid, note)
     return c.json(link, 201)
@@ -483,36 +525,22 @@ api.post('/auth/logout', async (c) => {
 })
 
 // GET /api/v1/users/me
-api.get('/users/me', async (c) => {
+api.get('/users/me', requireAuth, async (c) => {
   try {
     console.log('GET /api/v1/users/me');
-    // Extract and verify JWT token
-    const authHeader = c.req.header('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn('Missing or invalid authorization header');
-      return c.json({ error: 'Missing or invalid authorization header' }, 401)
-    }
-    
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-    const payload = await verifyJWT(token)
-    
-    if (!payload) {
-      console.warn('Invalid or expired token');
-      return c.json({ error: 'Invalid or expired token' }, 401)
-    }
-    
-    const userId = payload.id
+    // Get user info from middleware
+    const user = c.get('user');
     
     const db = getDB(c)
-    const user = await db.getUserById(userId)
+    const fullUser = await db.getUserById(user.id)
     
-    if (!user) {
-      console.warn('User not found:', userId);
+    if (!fullUser) {
+      console.warn('User not found:', user.id);
       return c.json({ error: 'User not found' }, 404)
     }
 
     // Remove password_hash from response
-    const { password_hash: _, ...userResponse } = user
+    const { password_hash: _, ...userResponse } = fullUser
 
     return c.json({
       success: true,

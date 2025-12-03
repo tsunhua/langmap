@@ -804,6 +804,13 @@ export default {
         return
       }
       
+      // Check if user is authenticated
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        error.value = 'You must be logged in to create expressions'
+        return
+      }
+      
       try {
         // Parse region data if it exists
         let regionData = null;
@@ -816,6 +823,23 @@ export default {
           }
         }
         
+        // Get current user info
+        let createdBy = null;
+        try {
+          const response = await fetch('/api/v1/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            createdBy = userData.data.username;
+          }
+        } catch (e) {
+          console.warn('Could not fetch current user info:', e);
+        }
+        
         // First create the expression
         const payload = {
           text: text.value,
@@ -824,11 +848,15 @@ export default {
           region_name: regionData?.name || null,
           region_latitude: regionData && regionData.latitude !== undefined && regionData.latitude !== null ? regionData.latitude : null,
           region_longitude: regionData && regionData.longitude !== undefined && regionData.longitude !== null ? regionData.longitude : null,
+          created_by: createdBy
         }
         
         const res = await fetch('/api/v1/expressions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(payload)
         })
         
@@ -855,10 +883,14 @@ export default {
               try {
                 const pm = await fetch('/api/v1/meanings', {
                   method: 'POST', 
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
                   body: JSON.stringify({ 
                     gloss: newMeaningGloss.value.trim(), 
-                    description: 'Created via UI during expression creation' 
+                    description: 'Created via UI during expression creation',
+                    created_by: createdBy
                   })
                 })
                 
@@ -874,7 +906,14 @@ export default {
             // Link the newly created expression with the selected meaning
             try {
               const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
-                method: 'POST' 
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ 
+                  created_by: createdBy
+                })
               })
               
               if (!linkRes.ok) throw new Error('failed to link expression with meaning')
@@ -892,11 +931,15 @@ export default {
             try {
               const pm = await fetch('/api/v1/meanings', {
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ 
                   gloss: newMeaningGloss.value.trim(), 
                   description: newMeaningDescription.value || '',
-                  tags: newMeaningTags.value.length > 0 ? newMeaningTags.value : undefined
+                  tags: newMeaningTags.value.length > 0 ? newMeaningTags.value : undefined,
+                  created_by: createdBy
                 })
               })
               
@@ -906,7 +949,14 @@ export default {
               
               // Link the newly created expression with the new meaning
               const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
-                method: 'POST' 
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ 
+                  created_by: createdBy
+                })
               })
               
               if (!linkRes.ok) throw new Error('failed to link expression with meaning')
@@ -919,7 +969,14 @@ export default {
           // Automatically associate with the provided initial meaning ID
           try {
             const linkRes = await fetch(`/api/v1/meanings/${props.initialMeaningId}/link?expression_id=${created.id}`, { 
-              method: 'POST' 
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ 
+                created_by: createdBy
+              })
             })
             
             if (!linkRes.ok) throw new Error('failed to link expression with meaning')
