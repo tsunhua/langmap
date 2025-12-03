@@ -154,5 +154,50 @@
     "audio": "音声",
     "location": "位置",
     "none": "なし"
+  },
+  "login": {
+    "title": "アカウントにサインイン",
+    "description": "アカウントにアクセスするには資格情報を入力してください",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "rememberMe": "ログイン情報を保存する",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "signIn": "サインイン",
+    "signingIn": "サインイン中...",
+    "loginFailed": "ログインに失敗しました。資格情報を確認してもう一度お試しください。",
+    "or": "または",
+    "createAccount": "新しいアカウントを作成"
+  },
+  "register": {
+    "title": "新しいアカウントを作成",
+    "description": "以下の情報を入力してアカウントを作成してください",
+    "username": "ユーザー名",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirmPassword": "パスワードを確認",
+    "agreeToTerms": "私は同意します",
+    "termsOfService": "利用規約",
+    "and": "および",
+    "privacyPolicy": "プライバシーポリシー",
+    "signUp": "サインアップ",
+    "signingUp": "サインアップ中...",
+    "registrationFailed": "登録に失敗しました。情報を確認してもう一度お試しください。",
+    "passwordMismatch": "パスワードが一致しません。",
+    "or": "または",
+    "signIn": "既存のアカウントにサインイン"
+  },
+  "userProfile": {
+    "title": "ユーザープロファイル",
+    "description": "アカウント情報を表示・管理する",
+    "username": "ユーザー名",
+    "email": "メールアドレス",
+    "role": "ロール",
+    "memberSince": "メンバー登録日",
+    "actions": "アクション",
+    "logout": "ログアウト",
+    "changePassword": "パスワードを変更",
+    "fetchFailed": "ユーザープロファイル情報の取得に失敗しました。",
+    "logoutFailed": "ログアウトに失敗しました。もう一度お試しください。",
+    "changePasswordNotImplemented": "パスワード変更機能はまだ実装されていません。"
   }
 }

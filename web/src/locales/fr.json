@@ -153,5 +153,50 @@
     "audio": "Audio",
     "location": "Emplacement",
     "none": "aucun"
+  },
+  "login": {
+    "title": "Connectez-vous à votre compte",
+    "description": "Entrez vos identifiants pour accéder à votre compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "loginFailed": "Échec de la connexion. Veuillez vérifier vos identifiants et réessayer.",
+    "or": "Ou",
+    "createAccount": "Créer un nouveau compte"
+  },
+  "register": {
+    "title": "Créer un nouveau compte",
+    "description": "Remplissez les informations ci-dessous pour créer votre compte",
+    "username": "Nom d'utilisateur",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "agreeToTerms": "J'accepte les",
+    "termsOfService": "Conditions d'utilisation",
+    "and": "et",
+    "privacyPolicy": "Politique de confidentialité",
+    "signUp": "S'inscrire",
+    "signingUp": "Inscription en cours...",
+    "registrationFailed": "Échec de l'inscription. Veuillez vérifier vos informations et réessayer.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "or": "Ou",
+    "signIn": "Se connecter à un compte existant"
+  },
+  "userProfile": {
+    "title": "Profil utilisateur",
+    "description": "Afficher et gérer les informations de votre compte",
+    "username": "Nom d'utilisateur",
+    "email": "Adresse e-mail",
+    "role": "Rôle",
+    "memberSince": "Membre depuis",
+    "actions": "Actions",
+    "logout": "Se déconnecter",
+    "changePassword": "Changer le mot de passe",
+    "fetchFailed": "Échec de la récupération des informations du profil utilisateur.",
+    "logoutFailed": "Échec de la déconnexion. Veuillez réessayer.",
+    "changePasswordNotImplemented": "La fonctionnalité de changement de mot de passe n'est pas encore implémentée."
   }
 }

@@ -10,8 +10,10 @@ app.route('/api', api);
 app.get('*', async (c) => {
   try {
     // 首先尝试从ASSETS获取请求的资源
+    // @ts-ignore - ASSETS is a Cloudflare global binding
     if (c.env?.ASSETS) {
       try {
+        // @ts-ignore - ASSETS is a Cloudflare global binding
         const assetResponse = await c.env.ASSETS.fetch(
           new Request(c.req.url, c.req.raw)
         );
@@ -25,8 +27,10 @@ app.get('*', async (c) => {
     }
 
     // 如果没有找到静态资源，则返回index.html（SPA路由处理）
+    // @ts-ignore - ASSETS is a Cloudflare global binding
     if (c.env?.ASSETS) {
       const indexPath = new URL('/index.html', c.req.url).href;
+      // @ts-ignore - ASSETS is a Cloudflare global binding
       return await c.env.ASSETS.fetch(new Request(indexPath));
     }
 
