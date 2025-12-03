@@ -183,7 +183,6 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     # Buffers for batch inserts
     meanings_buffer = []
     expressions_buffer = []
-    expression_versions_buffer = []
     expression_meanings_buffer = []
     
     # Batch size
@@ -308,19 +307,6 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                         expressions_buffer,
                         "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
                     )
-                
-                # Create expression version entry
-                expression_versions_buffer.append(
-                    f"({expression_id}, '{escaped_text}', {region_name}, {region_latitude}, {region_longitude}, 'langmap', datetime('now'))"
-                )
-                
-                # Flush buffer if it reaches batch size
-                if len(expression_versions_buffer) >= BATCH_SIZE:
-                    flush_buffer(
-                        "expression_versions",
-                        expression_versions_buffer,
-                        "expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at"
-                    )
             
             else:
                 expression_id = expression_id_map[expression_key]
@@ -345,12 +331,6 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
         "expressions",
         expressions_buffer,
         "id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status"
-    )
-    
-    flush_buffer(
-        "expression_versions",
-        expression_versions_buffer,
-        "expression_id, text, region_name, region_latitude, region_longitude, created_by, created_at"
     )
     
     flush_buffer(
@@ -387,7 +367,7 @@ def main():
     output_path = os.path.join(output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write("-- Auto-generated SQL script from locale files\n")
-        f.write("-- This script populates expressions, meanings, and expression_versions tables\n\n")
+        f.write("-- This script populates expressions, meanings, and expression_meanings tables\n\n")
         for statement in sql_statements:
             f.write(statement + '\n')
     
