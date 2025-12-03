@@ -1,14 +1,6 @@
 // Hono API routes implementing the same interface as FastAPI backend
 import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
 import { createDatabaseService } from '../db'
-import { 
-  Language, 
-  Expression, 
-  ExpressionVersion, 
-  Meaning, 
-  ExpressionMeaning 
-} from '../db/abstract-db'
 
 // Create a new Hono app for API v1 routes
 const api = new Hono<{ Bindings: any }>()
@@ -116,7 +108,7 @@ api.get('/expressions/:expr_id/translations', async (c) => {
       .then(allExpressions => 
         allExpressions.filter(e => 
           e.id !== exprId && 
-          e.language !== expression.language
+          e.language_code !== expression.language_code
         )
       )
     

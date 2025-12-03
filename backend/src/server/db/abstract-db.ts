@@ -3,72 +3,69 @@ export interface Language {
   id: number
   code: string
   name: string
-  native_name?: string
   direction?: string
   is_active?: boolean
+  region_code?: string
   region_name?: string
-  native_region_name?: string
-  latitude?: string
-  longitude?: string
-  created_by?: number
+  region_latitude?: string
+  region_longitude?: string
+  created_by?: string
   created_at?: string
+  updated_by?: string
   updated_at?: string
 }
 
 export interface Meaning {
   id: number
-  gloss?: string
+  gloss: string
   description?: string
   tags?: string
-  created_by?: number
+  created_by?: string
   created_at?: string
+  updated_by?: string
+  updated_at?: string
 }
 
 export interface Expression {
   id: number
-  language: string
+  text: string
+  audio_url?: string
+  language_code: string
+  region_code?: string
   region_name?: string
   region_latitude?: string
   region_longitude?: string
-  country_code?: string
-  country_name?: string
-  text: string
+  tags?: string
   source_type?: string
   source_ref?: string
-  audio_url?: string
-  created_by?: number
-  created_at?: string
   review_status?: string
-  auto_approved?: boolean
-  tags?: string
+  created_by?: string
+  created_at?: string
+  updated_by?: string
+  updated_at?: string
 }
 
 export interface ExpressionVersion {
   id: number
   expression_id?: number
-  language: string
+  text: string
+  audio_url?: string
   region_name?: string
   region_latitude?: string
   region_longitude?: string
-  country_code?: string
-  country_name?: string
-  text: string
-  source_type?: string
-  created_by?: number
+  created_by?: string
   created_at?: string
-  review_status?: string
-  auto_approved?: boolean
-  parent_version_id?: number
 }
 
 export interface ExpressionMeaning {
   id: number
   expression_id: number
   meaning_id: number
-  created_by?: number
-  created_at?: string
   note?: string
-  parent_version_id?: number
+  created_by?: string
+  created_at?: string
+  updated_by?: string
+  updated_at?: string
 }
 
 export interface User {

@@ -2,7 +2,7 @@ import { createI18n } from 'vue-i18n'
 import { fetchUITranslations, transformTranslations } from './services/languageService.js'
 
 // Import static messages for default languages
-import enMessages from './locales/en.json'
+import enMessages from './locales/en-US.json'
 import zhHansMessages from './locales/zh-CN.json'
 import zhHantMessages from './locales/zh-TW.json'
 import esMessages from './locales/es.json'
@@ -11,7 +11,7 @@ import jaMessages from './locales/ja.json'
 
 // Define static messages for default languages
 const staticMessages = {
-  en: enMessages,
+  'en-US': enMessages,
   'zh-CN': zhHansMessages,
   'zh-TW': zhHantMessages,
   es: esMessages,
@@ -26,8 +26,8 @@ const dynamicMessagesCache = {}
 // Create i18n instance
 const i18n = createI18n({
   legacy: false, // Use Composition API mode
-  locale: 'en', // Default language
-  fallbackLocale: 'en', // Fallback language
+  locale: 'en-US', // Default language
+  fallbackLocale: 'en-US', // Fallback language
   messages: staticMessages
 })
 
@@ -62,7 +62,7 @@ export async function loadLanguage(languageCode) {
   } catch (error) {
     console.error(`Failed to load translations for language ${languageCode}:`, error)
     // Fall back to English if failed to load
-    i18n.global.setLocaleMessage(languageCode, staticMessages.en)
+    i18n.global.setLocaleMessage(languageCode, staticMessages['en-US'])
   }
 }
 

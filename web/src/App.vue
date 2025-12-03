@@ -113,22 +113,15 @@ export default {
 
     const { t, locale } = useI18n();
     
-    console.log('=== I18n Debug Info ===');
-    console.log('Current locale:', locale.value);
-    console.log('Test translation:', t('nav.home'));
-    console.log('========================');
-    
-    return { t };
-      
     // Language management
     const showAddLanguageModal = ref(false)
     const addingLanguage = ref(false)
     
     // Available languages - start with static ones
     const availableLanguages = ref({
-      en: 'English',
-      'zh-CN': '中文（北京）',
-      'zh-TW': '中文（台北）',
+      'en-US': 'English',
+      'zh-CN': '中文 (北京)',
+      'zh-TW': '中文 (台北)',
       es: 'Español',
       fr: 'Français',
       ja: '日本語'
@@ -197,7 +190,7 @@ export default {
         locale.value = savedLang
         
         // If it's a dynamic language, load its translations
-        if (!['en', 'zh-CN', 'zh-TW', 'es', 'fr', 'ja'].includes(savedLang)) {
+        if (!['en-US', 'zh-CN', 'zh-TW', 'es', 'fr', 'ja'].includes(savedLang)) {
           const { loadLanguage } = await import('./i18n.js')
           await loadLanguage(savedLang)
         }
@@ -219,6 +212,7 @@ export default {
       switchLanguage,
       currentLanguage: locale,
       handleAddLanguage,
+      t,
       
       // Language management
       showAddLanguageModal,

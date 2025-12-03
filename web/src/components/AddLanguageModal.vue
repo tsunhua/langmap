@@ -173,7 +173,16 @@ export default {
       if (!formData.code || !formData.name) return
       
       try {
-        const languageObj = await createLanguage(formData)
+        const languageObj = await createLanguage({
+          code: formData.code,
+          name: formData.name,
+          native_name: formData.native_name,
+          region_code: formData.region_code, // Will be derived from region data
+          region_name: formData.region_name || formData.native_region_name,
+          region_latitude: formData.latitude || null,
+          region_longitude: formData.longitude || null,
+          direction: formData.direction
+        })
         emit('add-language', languageObj)
         
         // Reset form

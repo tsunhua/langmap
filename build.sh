@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# build.sh - 构建脚本，将前端构建后放置到后端static目录
+# build.sh - 构建脚本，将前端构建后放置到后端public目录
 
 set -e  # 遇到错误时退出
 
 echo "开始构建LangMap应用程序..."
 
-# 创建后端static目录（如果不存在）
-STATIC_DIR="backend/app/static"
+# 创建后端public目录（如果不存在）
+STATIC_DIR="backend/public"
 echo "确保静态目录存在: $STATIC_DIR"
 mkdir -p "$STATIC_DIR"
 
