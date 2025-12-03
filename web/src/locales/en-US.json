@@ -147,6 +147,11 @@
     "loading": "Loading versions...",
     "noVersions": "No versions available",
     "auto": "auto",
-    "anonymous": "Anonymous"
+    "anonymous": "Anonymous",
+    "changes": "Changes",
+    "text": "Text",
+    "audio": "Audio",
+    "location": "Location",
+    "none": "none"
   }
 }

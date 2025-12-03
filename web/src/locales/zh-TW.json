@@ -147,6 +147,11 @@
     "loading": "正在載入版本...",
     "noVersions": "無可用版本",
     "auto": "自動",
-    "anonymous": "匿名"
+    "anonymous": "匿名",
+    "changes": "變更內容",
+    "text": "文字",
+    "audio": "音訊",
+    "location": "位置",
+    "none": "無"
   }
 }

@@ -147,6 +147,11 @@
     "loading": "Chargement des versions...",
     "noVersions": "Aucune version disponible",
     "auto": "auto",
-    "anonymous": "Anonyme"
+    "anonymous": "Anonyme",
+    "changes": "Modifications",
+    "text": "Texte",
+    "audio": "Audio",
+    "location": "Emplacement",
+    "none": "aucun"
   }
 }
