@@ -33,7 +33,11 @@
   },
   "nav": {
     "home": "主頁",
-    "search": "搜尋"
+    "search": "搜尋",
+    "profile": "個人資料",
+    "logout": "登出",
+    "login": "登入",
+    "register": "註冊"
   },
   "footer": {
     "copyright": "© {year} langmap - 語言詞句地圖平台"
