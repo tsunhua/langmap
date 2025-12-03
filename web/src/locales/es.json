@@ -153,5 +153,50 @@
     "audio": "Audio",
     "location": "Ubicación",
     "none": "ninguno"
+  },
+  "login": {
+    "title": "Inicia sesión en tu cuenta",
+    "description": "Ingresa tus credenciales para acceder a tu cuenta",
+    "email": "Dirección de correo electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recuérdame",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión...",
+    "loginFailed": "Error de inicio de sesión. Por favor, verifica tus credenciales e inténtalo de nuevo.",
+    "or": "O",
+    "createAccount": "Crear una cuenta nueva"
+  },
+  "register": {
+    "title": "Crear una cuenta nueva",
+    "description": "Completa la siguiente información para crear tu cuenta",
+    "username": "Nombre de usuario",
+    "email": "Dirección de correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "agreeToTerms": "Estoy de acuerdo con los",
+    "termsOfService": "Términos de servicio",
+    "and": "y",
+    "privacyPolicy": "Política de privacidad",
+    "signUp": "Registrarse",
+    "signingUp": "Registrándose...",
+    "registrationFailed": "Registro fallido. Por favor, verifica tu información e inténtalo de nuevo.",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "or": "O",
+    "signIn": "Iniciar sesión en una cuenta existente"
+  },
+  "userProfile": {
+    "title": "Perfil del usuario",
+    "description": "Ver y gestionar la información de tu cuenta",
+    "username": "Nombre de usuario",
+    "email": "Dirección de correo electrónico",
+    "role": "Rol",
+    "memberSince": "Miembro desde",
+    "actions": "Acciones",
+    "logout": "Cerrar sesión",
+    "changePassword": "Cambiar contraseña",
+    "fetchFailed": "Error al obtener la información del perfil de usuario.",
+    "logoutFailed": "Error al cerrar sesión. Por favor, inténtalo de nuevo.",
+    "changePasswordNotImplemented": "La funcionalidad de cambio de contraseña aún no está implementada."
   }
 }

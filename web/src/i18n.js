@@ -8,15 +8,19 @@ import zhHantMessages from './locales/zh-TW.json'
 import esMessages from './locales/es.json'
 import frMessages from './locales/fr.json'
 import jaMessages from './locales/ja.json'
+import nanTWMessages from './locales/nan-TW.json'
+import yueHKMessages from './locales/yue-HK.json'
 
 // Define static messages for default languages
 const staticMessages = {
   'en-US': enMessages,
   'zh-CN': zhHansMessages,
   'zh-TW': zhHantMessages,
+  'nan-TW': nanTWMessages,
+  'yue-HK': yueHKMessages,
   es: esMessages,
   fr: frMessages,
-  ja: jaMessages
+  ja: jaMessages,
 }
 
 
