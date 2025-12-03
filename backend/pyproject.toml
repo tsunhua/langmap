@@ -1,0 +1,36 @@
+[project]
+name = "langmap-backend"
+version = "0.1.0"
+description = "Language mapping application deployed on Cloudflare Workers"
+authors = [
+    { name = "Lim", email = "lshare@outlook.com" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.122.0",
+    "pydantic>=2.1.0",
+    "python-dotenv>=1.2.1",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+]
+
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk"
+]
+
+[tool.poetry]
+exclude = [
+    "*.md",
+    "tests/*",
+    "docs/*"
+]
+
+#[tool.uv.workspace]
+#members = ["backend"]
+
+#[build-system]
+#requires = ["hatchling"]
+#build-backend = "hatchling.build"
