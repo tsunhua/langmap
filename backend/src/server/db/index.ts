@@ -5,43 +5,57 @@ export interface Language {
   id: number
   code: string
   name: string
+  direction?: string
+  is_active?: number
   region_code?: string
   region_name?: string
   region_latitude?: number
   region_longitude?: number
+  created_by?: string
   created_at: string
+  updated_by?: string
   updated_at: string
 }
 
 export interface Meaning {
   id: number
-  gloss: string
+  gloss?: string
   description?: string
   tags?: string
+  created_by?: string
   created_at: string
+  updated_by?: string
   updated_at: string
 }
 
 export interface Expression {
   id: number
   text: string
+  audio_url?: string
   language_code: string
   region_code?: string
   region_name?: string
   region_latitude?: number
   region_longitude?: number
-  source_type: string
-  review_status: string
-  auto_approved: boolean
   tags?: string
+  source_type?: string
+  source_ref?: string
+  review_status?: string
+  created_by?: string
   created_at: string
+  updated_by?: string
   updated_at: string
 }
 
 export interface ExpressionVersion {
   id: number
   expression_id?: number
-  note: string
+  text: string
+  audio_url?: string
+  region_name?: string
+  region_latitude?: string
+  region_longitude?: string
+  created_by?: string
   created_at: string
 }
 
@@ -50,7 +64,9 @@ export interface ExpressionMeaning {
   expression_id: number
   meaning_id: number
   note?: string
+  created_by?: string
   created_at: string
+  updated_by?: string
   updated_at: string
 }
 

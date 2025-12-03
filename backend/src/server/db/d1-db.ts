@@ -13,7 +13,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   // Language operations
   async getLanguages(): Promise<Language[]> {
     const { results } = await this.db.prepare(
-      'SELECT * FROM languages ORDER BY name'
+      'SELECT * FROM languages WHERE is_active = 1 ORDER BY name'
     ).all<Language>()
     return results
   }
@@ -26,25 +26,22 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createLanguage(language: Partial<Language>): Promise<Language> {
-    const now = new Date().toISOString()
     const result: any = await this.db.prepare(
       `INSERT INTO languages (
-        code, name, native_name, direction, is_active, region_name, 
-        native_region_name, latitude, longitude, created_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        code, name, direction, is_active, region_code, region_name, 
+        region_latitude, region_longitude, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(
       language.code,
       language.name,
-      language.native_name,
       language.direction || 'ltr',
-      language.is_active !== undefined ? language.is_active : true,
+      language.is_active !== undefined ? language.is_active : 0,
+      language.region_code,
       language.region_name,
-      language.native_region_name,
-      language.latitude,
-      language.longitude,
+      language.region_latitude,
+      language.region_longitude,
       language.created_by,
-      now,
-      now
+      language.updated_by
     ).run()
     
     if (!result.success) {
@@ -55,7 +52,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async updateLanguage(id: number, language: Partial<Language>): Promise<Language> {
-    const now = new Date().toISOString()
     const fields: string[] = []
     const values: any[] = []
     
@@ -66,10 +62,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     })
     
-    values.push(now, id)
+    values.push(id)
     
     const result: any = await this.db.prepare(
-      `UPDATE languages SET ${fields.join(', ')}, updated_at = ? WHERE id = ? RETURNING *`
+      `UPDATE languages SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
     
     if (!result.success) {
@@ -93,7 +89,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const bindings: any[] = []
     
     if (language) {
-      query += ' WHERE language = ?'
+      query += ' WHERE language_code = ?'
       bindings.push(language)
     }
     
@@ -112,29 +108,25 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
-    const now = new Date().toISOString()
     const result: any = await this.db.prepare(
       `INSERT INTO expressions (
-        language, region_name, region_latitude, region_longitude, country_code,
-        country_name, text, source_type, source_ref, audio_url, created_by,
-        created_at, review_status, auto_approved, tags
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        text, audio_url, language_code, region_code, region_name, region_latitude,
+        region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(
-      expression.language,
+      expression.text,
+      expression.audio_url,
+      expression.language_code,
+      expression.region_code,
       expression.region_name,
       expression.region_latitude,
       expression.region_longitude,
-      expression.country_code,
-      expression.country_name,
-      expression.text,
+      expression.tags,
       expression.source_type || 'user',
       expression.source_ref,
-      expression.audio_url,
-      expression.created_by,
-      now,
       expression.review_status || 'pending',
-      expression.auto_approved !== undefined ? expression.auto_approved : false,
-      expression.tags
+      expression.created_by,
+      expression.updated_by
     ).run()
     
     if (!result.success) {
@@ -145,7 +137,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async updateExpression(id: number, expression: Partial<Expression>): Promise<Expression> {
-    const now = new Date().toISOString()
     const fields: string[] = []
     const values: any[] = []
     
@@ -156,10 +147,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     })
     
-    values.push(now, id)
+    values.push(id)
     
     const result: any = await this.db.prepare(
-      `UPDATE expressions SET ${fields.join(', ')}, updated_at = ? WHERE id = ? RETURNING *`
+      `UPDATE expressions SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
     
     if (!result.success) {
@@ -182,7 +173,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const bindings: any[] = [`%${query}%`]
     
     if (fromLang) {
-      sqlQuery += ' AND language = ?'
+      sqlQuery += ' AND language_code = ?'
       bindings.push(fromLang)
     }
     
@@ -207,28 +198,19 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion> {
-    const now = new Date().toISOString()
     const result: any = await this.db.prepare(
       `INSERT INTO expression_versions (
-        expression_id, language, region_name, region_latitude, region_longitude,
-        country_code, country_name, text, source_type, created_by, created_at,
-        review_status, auto_approved, parent_version_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        expression_id, text, audio_url, region_name, region_latitude, 
+        region_longitude, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(
       version.expression_id,
-      version.language,
+      version.text,
+      version.audio_url,
       version.region_name,
       version.region_latitude,
       version.region_longitude,
-      version.country_code,
-      version.country_name,
-      version.text,
-      version.source_type || 'user',
-      version.created_by,
-      now,
-      version.review_status || 'pending',
-      version.auto_approved !== undefined ? version.auto_approved : false,
-      version.parent_version_id
+      version.created_by
     ).run()
     
     if (!result.success) {
@@ -254,17 +236,16 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async createMeaning(meaning: Partial<Meaning>): Promise<Meaning> {
-    const now = new Date().toISOString()
     const result: any = await this.db.prepare(
       `INSERT INTO meanings (
-        gloss, description, tags, created_by, created_at
+        gloss, description, tags, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?) RETURNING *`
     ).bind(
       meaning.gloss,
       meaning.description,
       meaning.tags,
       meaning.created_by,
-      now
+      meaning.updated_by
     ).run()
     
     if (!result.success) {
@@ -275,7 +256,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async updateMeaning(id: number, meaning: Partial<Meaning>): Promise<Meaning> {
-    const now = new Date().toISOString()
     const fields: string[] = []
     const values: any[] = []
     
@@ -286,10 +266,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     })
     
-    values.push(now, id)
+    values.push(id)
     
     const result: any = await this.db.prepare(
-      `UPDATE meanings SET ${fields.join(', ')}, created_at = ? WHERE id = ? RETURNING *`
+      `UPDATE meanings SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
     
     if (!result.success) {
@@ -319,17 +299,16 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   // Expression-Meaning operations
   async linkExpressionAndMeaning(expressionId: number, meaningId: number, note?: string): Promise<ExpressionMeaning> {
-    const now = new Date().toISOString()
     const result: any = await this.db.prepare(
       `INSERT INTO expression_meanings (
-        expression_id, meaning_id, note, created_by, created_at
+        expression_id, meaning_id, note, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?) RETURNING *`
     ).bind(
       expressionId,
       meaningId,
       note,
       null, // created_by
-      now
+      null  // updated_by
     ).run()
     
     if (!result.success) {
@@ -351,11 +330,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 100): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.language as language_code, m.gloss 
+      `SELECT e.id, e.text, e.language_code as language_code, m.gloss 
        FROM expressions e 
        JOIN expression_meanings em ON e.id = em.expression_id 
        JOIN meanings m ON m.id = em.meaning_id 
-       WHERE e.language = ? AND m.gloss LIKE 'langmap.%' 
+       WHERE e.language_code = ? AND m.gloss LIKE 'langmap.%' 
        LIMIT ? OFFSET ?`
     ).bind(language, limit, skip).all<{id: number, text: string, language_code: string, gloss: string}>()
     return results
