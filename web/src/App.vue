@@ -25,6 +25,62 @@
             </router-link>
           </nav>
           
+          <!-- User menu -->
+          <div v-if="isLoggedIn" class="relative" ref="userDropdown">
+            <button 
+              @click="toggleUserDropdown" 
+              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
+              aria-haspopup="true"
+              :aria-expanded="userDropdownOpen"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span class="mr-1">{{ currentUser.username }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="userDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+              </svg>
+            </button>
+            
+            <div 
+              v-show="userDropdownOpen" 
+              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
+              role="menu"
+            >
+              <router-link
+                to="/profile"
+                class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                role="menuitem"
+                @click="userDropdownOpen = false"
+              >
+                {{ $t('nav.profile') }}
+              </router-link>
+              <button
+                @click="handleLogout"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                role="menuitem"
+              >
+                {{ $t('nav.logout') }}
+              </button>
+            </div>
+          </div>
+          
+          <!-- Auth links -->
+          <div v-else class="flex items-center gap-4">
+            <router-link 
+              to="/login" 
+              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            >
+              {{ $t('nav.login') }}
+            </router-link>
+            <router-link 
+              to="/register" 
+              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            >
+              {{ $t('nav.register') }}
+            </router-link>
+          </div>
+          
           <!-- Language selector dropdown -->
           <div class="relative" ref="langDropdown">
             <button 
@@ -98,6 +154,7 @@
 <script>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { fetchLanguages, createLanguage } from './services/languageService.js'
 import AddLanguageModal from './components/AddLanguageModal.vue'
 
@@ -110,8 +167,15 @@ export default {
     // const { locale } = useI18n()
     const langDropdownOpen = ref(false)
     const langDropdown = ref(null)
+    const userDropdownOpen = ref(false)
+    const userDropdown = ref(null)
+    const router = useRouter()
 
     const { t, locale } = useI18n();
+    
+    // User state
+    const isLoggedIn = ref(false)
+    const currentUser = ref({})
     
     // Language management
     const showAddLanguageModal = ref(false)
@@ -137,6 +201,11 @@ export default {
       langDropdownOpen.value = !langDropdownOpen.value
     }
     
+    // Toggle user dropdown
+    const toggleUserDropdown = () => {
+      userDropdownOpen.value = !userDropdownOpen.value
+    }
+    
     // Switch language
     const switchLanguage = async (langCode) => {
       locale.value = langCode
@@ -148,10 +217,41 @@ export default {
       await loadLanguage(langCode)
     }
     
-    // Close dropdown when clicking outside
+    // Handle logout
+    const handleLogout = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (token) {
+          // Call logout API
+          await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        }
+        
+        // Remove token and update state
+        localStorage.removeItem('authToken')
+        isLoggedIn.value = false
+        currentUser.value = {}
+        userDropdownOpen.value = false
+        
+        // Redirect to login
+        router.push('/login')
+      } catch (error) {
+        console.error('Logout error:', error)
+      }
+    }
+    
+    // Close dropdowns when clicking outside
     const handleClickOutside = (event) => {
       if (langDropdown.value && !langDropdown.value.contains(event.target)) {
         langDropdownOpen.value = false
+      }
+      
+      if (userDropdown.value && !userDropdown.value.contains(event.target)) {
+        userDropdownOpen.value = false
       }
     }
     
@@ -172,8 +272,39 @@ export default {
       }
     }
     
+    // Check if user is logged in
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem('authToken')
+      if (token) {
+        try {
+          const response = await fetch('/api/v1/users/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          const data = await response.json()
+          
+          if (response.ok) {
+            isLoggedIn.value = true
+            currentUser.value = data.data
+          } else {
+            // If unauthorized, remove token
+            if (response.status === 401) {
+              localStorage.removeItem('authToken')
+            }
+          }
+        } catch (error) {
+          console.error('Error checking auth status:', error)
+        }
+      }
+    }
+    
     // Load saved language preference
     onMounted(async () => {
+      // Check auth status
+      await checkAuthStatus()
+      
       // Fetch dynamic languages from backend
       try {
         const languages = await fetchLanguages()
@@ -206,13 +337,21 @@ export default {
     return {
       langDropdownOpen,
       langDropdown,
+      userDropdownOpen,
+      userDropdown,
       availableLanguages,
       currentLanguageName,
       toggleLangDropdown,
+      toggleUserDropdown,
       switchLanguage,
+      handleLogout,
       currentLanguage: locale,
       handleAddLanguage,
       t,
+      
+      // User state
+      isLoggedIn,
+      currentUser,
       
       // Language management
       showAddLanguageModal,

@@ -85,3 +85,17 @@ CREATE INDEX IF NOT EXISTS idx_expressions_language_code ON expressions(language
 CREATE INDEX IF NOT EXISTS idx_expression_versions_expression_id ON expression_versions(expression_id);
 CREATE INDEX IF NOT EXISTS idx_expression_meanings_expression_id ON expression_meanings(expression_id);
 CREATE INDEX IF NOT EXISTS idx_expression_meanings_meaning_id ON expression_meanings(meaning_id);
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user', -- 'super_admin', 'admin', 'user'
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
