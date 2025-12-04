@@ -44,42 +44,42 @@ export class D1DatabaseService extends AbstractDatabaseService {
       language.created_by || null,
       language.updated_by || null
     ];
-    
+
     const result: any = await this.db.prepare(
       `INSERT INTO languages (
         id, code, name, direction, is_active, region_code, region_name, 
         region_latitude, region_longitude, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to create language')
     }
-    
+
     return result.results[0] as Language
   }
 
   async updateLanguage(id: number, language: Partial<Language>): Promise<Language> {
     const fields: string[] = []
     const values: any[] = []
-    
+
     Object.entries(language).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'created_at') {
         fields.push(`${key} = ?`)
         values.push(value)
       }
     })
-    
+
     values.push(id)
-    
+
     const result: any = await this.db.prepare(
       `UPDATE languages SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to update language')
     }
-    
+
     return result.results[0] as Language
   }
 
@@ -87,7 +87,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const result: any = await this.db.prepare(
       'DELETE FROM languages WHERE id = ?'
     ).bind(id).run()
-    
+
     return result.success
   }
 
@@ -95,15 +95,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async getExpressions(skip: number = 0, limit: number = 50, language?: string): Promise<Expression[]> {
     let query = 'SELECT * FROM expressions'
     const bindings: any[] = []
-    
+
     if (language) {
       query += ' WHERE language_code = ?'
       bindings.push(language)
     }
-    
+
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
     bindings.push(limit, skip)
-    
+
     const { results } = await this.db.prepare(query).bind(...bindings).all<Expression>()
     return results
   }
@@ -148,12 +148,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).run()
-      
+
       if (!result.success) {
         console.error('Failed to create expression in database:', result);
         throw new Error('Failed to create expression')
       }
-      
+
       return result.results[0] as Expression
     } catch (error) {
       console.error('Error creating expression:', error);
@@ -164,24 +164,24 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async updateExpression(id: number, expression: Partial<Expression>): Promise<Expression> {
     const fields: string[] = []
     const values: any[] = []
-    
+
     Object.entries(expression).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'created_at') {
         fields.push(`${key} = ?`)
         values.push(value)
       }
     })
-    
+
     values.push(id)
-    
+
     const result: any = await this.db.prepare(
       `UPDATE expressions SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to update expression')
     }
-    
+
     return result.results[0] as Expression
   }
 
@@ -189,30 +189,32 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const result: any = await this.db.prepare(
       'DELETE FROM expressions WHERE id = ?'
     ).bind(id).run()
-    
+
     return result.success
   }
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
     let sqlQuery = 'SELECT * FROM expressions WHERE text LIKE ?'
     const bindings: any[] = [`%${query}%`]
-    
+
     if (fromLang) {
       sqlQuery += ' AND language_code = ?'
       bindings.push(fromLang)
     }
-    
+
     if (region) {
       sqlQuery += ' AND region_name LIKE ?'
       bindings.push(`%${region}%`)
     }
-    
-    sqlQuery += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    bindings.push(limit, skip)
-    
+
+    // 使用字符串匹配函数优化排序
+    sqlQuery += ' ORDER BY CASE WHEN text = ? THEN 0 WHEN text LIKE ? THEN 1 WHEN text LIKE ? THEN 2 ELSE 3 END, LENGTH(text), created_at DESC LIMIT ? OFFSET ?'
+    bindings.push(query, `${query}%`, `%${query}`, limit, skip);
+
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
     return results
   }
+
 
   // Expression version operations
   async getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]> {
@@ -240,18 +242,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
       version.region_longitude !== undefined ? version.region_longitude : null,
       version.created_by || null
     ];
-    
+
     const result: any = await this.db.prepare(
       `INSERT INTO expression_versions (
         id, expression_id, text, audio_url, region_name, region_latitude, 
         region_longitude, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to create expression version')
     }
-    
+
     return result.results[0] as ExpressionVersion
   }
 
@@ -290,35 +292,35 @@ export class D1DatabaseService extends AbstractDatabaseService {
         id, gloss, description, tags, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to create meaning')
     }
-    
+
     return result.results[0] as Meaning
   }
 
   async updateMeaning(id: number, meaning: Partial<Meaning>): Promise<Meaning> {
     const fields: string[] = []
     const values: any[] = []
-    
+
     Object.entries(meaning).forEach(([key, value]) => {
       if (key !== 'id' && key !== 'created_at') {
         fields.push(`${key} = ?`)
         values.push(value)
       }
     })
-    
+
     values.push(id)
-    
+
     const result: any = await this.db.prepare(
       `UPDATE meanings SET ${fields.join(', ')} WHERE id = ? RETURNING *`
     ).bind(...values).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to update meaning')
     }
-    
+
     return result.results[0] as Meaning
   }
 
@@ -326,7 +328,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const result: any = await this.db.prepare(
       'DELETE FROM meanings WHERE id = ?'
     ).bind(id).run()
-    
+
     return result.success
   }
 
@@ -355,7 +357,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       null, // created_by - this will be updated separately
       null  // updated_by
     ];
-    
+
     const result: any = await this.db.prepare(
       `INSERT INTO expression_meanings (
         id, expression_id, meaning_id, note, created_by, updated_by
@@ -368,11 +370,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         updated_at=CURRENT_TIMESTAMP
       RETURNING *`
     ).bind(...bindValues).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to link expression and meaning')
     }
-    
+
     return result.results[0] as ExpressionMeaning
   }
 
@@ -384,7 +386,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     ).bind(expressionId).all<Meaning>()
     return results
   }
-  
+
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 100): Promise<any[]> {
     const { results } = await this.db.prepare(
@@ -394,7 +396,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
        JOIN meanings m ON m.id = em.meaning_id 
        WHERE e.language_code = ? AND m.gloss LIKE 'langmap.%' 
        LIMIT ? OFFSET ?`
-    ).bind(language, limit, skip).all<{id: number, text: string, language_code: string, gloss: string}>()
+    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string, gloss: string }>()
     return results
   }
 
@@ -433,17 +435,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
       user.password_hash || null,
       user.role || 'user'
     ];
-    
+
     const result: any = await this.db.prepare(
       `INSERT INTO users (
         id, username, email, password_hash, role
       ) VALUES (?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
-    
+
     if (!result.success) {
       throw new Error('Failed to create user')
     }
-    
+
     return result.results[0] as User
   }
 
@@ -461,8 +463,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
       h = Math.imul(h, 0x01000193); // FNV prime
     }
     h = h >>> 0; // convert to unsigned int32
-    
+
     // Ensure we don't get 0 as ID (minimum ID should be 1)
-    return (h % (2**31 - 1)) + 1;
+    return (h % (2 ** 31 - 1)) + 1;
   }
 }

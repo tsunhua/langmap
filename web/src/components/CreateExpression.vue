@@ -64,7 +64,6 @@
                 v-model="region" 
                 :placeholder="$t('create.regionPlaceholder')" 
                 class="block flex-1 rounded-md border border-slate-300 shadow-sm py-3 px-4 bg-slate-100 text-slate-500 cursor-not-allowed" 
-                readonly
               />
               <button 
                 @click="detectLocation"
