@@ -47,6 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_expressions_text ON expressions(text);
 CREATE INDEX IF NOT EXISTS idx_expressions_language_code ON expressions(language_code);
 CREATE INDEX IF NOT EXISTS idx_expressions_meaning_id ON expressions(meaning_id);
 CREATE INDEX IF NOT EXISTS idx_expressions_tags ON expressions(tags);
+CREATE INDEX IF NOT EXISTS idx_expressions_created_by ON expressions(created_by);
 
 -- Expression versions table
 CREATE TABLE IF NOT EXISTS expression_versions (
