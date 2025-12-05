@@ -59,9 +59,9 @@ export function transformTranslations(expressions) {
   
   expressions.forEach(expression => {
     // Extract key from gloss (assuming format "langmap.key.path")
-    if (!expression.gloss || !expression.gloss.startsWith('langmap.')) return
+    if (!expression.tags) return
     
-    const key = expression.gloss.replace('langmap.', '')
+    const key = JSON.stringify(expression.tags)[0]
     const keys = key.split('.')
     
     // Navigate/create nested objects

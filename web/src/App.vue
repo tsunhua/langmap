@@ -184,9 +184,9 @@ export default {
       'en-US': 'English',
       'zh-CN': '中文 (北京)',
       'zh-TW': '中文 (台北)',
-      es: 'Español',
-      fr: 'Français',
-      ja: '日本語'
+      'es': 'Español',
+      'fr': 'Français',
+      'ja': '日本語'
     })
     
     // Get current language name

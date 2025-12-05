@@ -148,6 +148,39 @@ api.get('/expressions/:expr_id', async (c) => {
   }
 })
 
+// PATCH /api/v1/expressions/:expr_id
+api.patch('/expressions/:expr_id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const body = await c.req.json()
+    
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+    
+    // Get user info from middleware
+    const user = c.get('user');
+    const updatedBy = user.username;
+    
+    // Add updated_by to the expression data
+    const expressionData = {
+      ...body,
+      updated_by: body.updated_by || updatedBy
+    };
+    
+    const expression = await db.updateExpression(exprId, expressionData)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+    
+    return c.json(expression)
+  } catch (error: any) {
+    console.error('Error in PATCH /expressions/:expr_id:', error);
+    return c.json({ error: 'Failed to update expression', details: error.message }, 500)
+  }
+})
+
 // GET /api/v1/expressions/:expr_id/versions
 api.get('/expressions/:expr_id/versions', async (c) => {
   try {
@@ -191,7 +224,8 @@ api.get('/expressions/:expr_id/translations', async (c) => {
     // Find expressions in other languages with the same meaning
     // This is a simplified implementation - in reality, this would involve
     // finding expressions linked to the same meaning(s)
-    const translations = await db.getExpressions(0, 100, language_code, expression.meaning_id)
+    const meaning_id = expression.meaning_id? expression.meaning_id : exprId
+    const translations = await db.getExpressions(0, 100, language_code, meaning_id)
       .then(allExpressions => 
         allExpressions.filter(e => 
           e.id !== exprId && 
@@ -239,7 +273,7 @@ api.get('/ui-translations/:language', async (c) => {
     const db = getDB(c)
     const language = c.req.param('language')
     const skip = parseInt(c.req.query('skip') || '0')
-    const limit = parseInt(c.req.query('limit') || '100')
+    const limit = parseInt(c.req.query('limit') || '200')
     
     const translations = await db.getUITranslations(language, skip, limit)
     return c.json(translations)

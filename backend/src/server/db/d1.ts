@@ -291,11 +291,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // UI translations
-  async getUITranslations(language: string, skip: number = 0, limit: number = 100): Promise<any[]> {
+  async getUITranslations(language: string, skip: number = 0, limit: number = 200): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.language_code as language_code
+      `SELECT e.id, e.text, e.tags, e.language_code as language_code
        FROM expressions e 
-       WHERE e.language_code = ? AND e.text LIKE 'langmap.%' 
+       WHERE e.language_code = ? AND e.created_by = 'langmap'
        LIMIT ? OFFSET ?`
     ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string }>()
     return results
