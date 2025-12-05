@@ -1,8 +1,9 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, Meaning, ExpressionMeaning, User } from './abstract-db'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User } from './protocol'
 
 export class D1DatabaseService extends AbstractDatabaseService {
+
   private db: D1Database
 
   constructor(db: D1Database) {
@@ -92,13 +93,43 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Expression operations
-  async getExpressions(skip: number = 0, limit: number = 50, language?: string): Promise<Expression[]> {
+  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[]): Promise<Expression[]> {
     let query = 'SELECT * FROM expressions'
     const bindings: any[] = []
 
+    // Handle WHERE conditions
+    const whereConditions: string[] = [];
+    
     if (language) {
-      query += ' WHERE language_code = ?'
-      bindings.push(language)
+      whereConditions.push('language_code = ?');
+      bindings.push(language);
+    }
+    
+    if (meaningId !== undefined) {
+      if (Array.isArray(meaningId)) {
+        // Handle array of meaning IDs
+        if (meaningId.length > 0) {
+          const placeholders = meaningId.map(() => '?').join(',');
+          whereConditions.push(`meaning_id IN (${placeholders})`);
+          bindings.push(...meaningId);
+        } else {
+          // Empty array means no results should be returned
+          whereConditions.push('1 = 0'); // Always false condition
+        }
+      } else {
+        // Handle single meaning ID (backward compatibility)
+        if (meaningId === -1) {
+          // Special case: get expressions with any meaning_id (not null)
+          whereConditions.push('meaning_id IS NOT NULL');
+        } else {
+          whereConditions.push('meaning_id = ?');
+          bindings.push(meaningId);
+        }
+      }
+    }
+    
+    if (whereConditions.length > 0) {
+      query += ' WHERE ' + whereConditions.join(' AND ');
     }
 
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
@@ -128,6 +159,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       const bindValues = [
         id,
         expression.text,
+        expression.meaning_id !== undefined ? expression.meaning_id : null,
         expression.audio_url || null,
         expression.language_code,
         expression.region_code || null,
@@ -144,9 +176,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
       const result: any = await this.db.prepare(
         `INSERT INTO expressions (
-          id, text, audio_url, language_code, region_code, region_name, region_latitude,
+          id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).run()
 
       if (!result.success) {
@@ -236,6 +268,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       id,
       version.expression_id || null,
       version.text || null,
+      version.meaning_id !== undefined ? version.meaning_id : null,
       version.audio_url || null,
       version.region_name || null,
       version.region_latitude !== undefined ? version.region_latitude : null,
@@ -245,9 +278,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     const result: any = await this.db.prepare(
       `INSERT INTO expression_versions (
-        id, expression_id, text, audio_url, region_name, region_latitude, 
+        id, expression_id, text, meaning_id, audio_url, region_name, region_latitude, 
         region_longitude, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
 
     if (!result.success) {
@@ -257,146 +290,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return result.results[0] as ExpressionVersion
   }
 
-  // Meaning operations
-  async getMeanings(skip: number = 0, limit: number = 50): Promise<Meaning[]> {
-    const { results } = await this.db.prepare(
-      'SELECT * FROM meanings ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    ).bind(limit, skip).all<Meaning>()
-    return results
-  }
-
-  async getMeaningById(id: number): Promise<Meaning | null> {
-    const meaning = await this.db.prepare(
-      'SELECT * FROM meanings WHERE id = ?'
-    ).bind(id).first<Meaning>()
-    return meaning || null
-  }
-
-  async createMeaning(meaning: Partial<Meaning>): Promise<Meaning> {
-    // Generate stable ID based on gloss content using MD5
-    const gloss = meaning.gloss || '';
-    const id = this.stableHashId(gloss);
-
-    // Filter out undefined values and replace them with null
-    const bindValues = [
-      id,
-      meaning.gloss || null,
-      meaning.description || null,
-      meaning.tags || null,
-      meaning.created_by || null,
-      meaning.updated_by || null
-    ];
-
-    const result: any = await this.db.prepare(
-      `INSERT INTO meanings (
-        id, gloss, description, tags, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
-
-    if (!result.success) {
-      throw new Error('Failed to create meaning')
-    }
-
-    return result.results[0] as Meaning
-  }
-
-  async updateMeaning(id: number, meaning: Partial<Meaning>): Promise<Meaning> {
-    const fields: string[] = []
-    const values: any[] = []
-
-    Object.entries(meaning).forEach(([key, value]) => {
-      if (key !== 'id' && key !== 'created_at') {
-        fields.push(`${key} = ?`)
-        values.push(value)
-      }
-    })
-
-    values.push(id)
-
-    const result: any = await this.db.prepare(
-      `UPDATE meanings SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
-
-    if (!result.success) {
-      throw new Error('Failed to update meaning')
-    }
-
-    return result.results[0] as Meaning
-  }
-
-  async deleteMeaning(id: number): Promise<boolean> {
-    const result: any = await this.db.prepare(
-      'DELETE FROM meanings WHERE id = ?'
-    ).bind(id).run()
-
-    return result.success
-  }
-
-  async getMeaningMembers(meaningId: number, limit: number = 100): Promise<Expression[]> {
-    const { results } = await this.db.prepare(
-      `SELECT e.* FROM expressions e 
-       JOIN expression_meanings em ON e.id = em.expression_id 
-       WHERE em.meaning_id = ? 
-       LIMIT ?`
-    ).bind(meaningId, limit).all<Expression>()
-    return results
-  }
-
-  // Expression-Meaning operations
-  async linkExpressionAndMeaning(expressionId: number, meaningId: number, note?: string): Promise<ExpressionMeaning> {
-    // Generate stable ID based on expression_id and meaning_id
-    const idContent = `${expressionId}|${meaningId}`;
-    const id = this.stableHashId(idContent);
-
-    // Filter out undefined values and replace them with null
-    const bindValues = [
-      id,
-      expressionId || null,
-      meaningId || null,
-      note || null,
-      null, // created_by - this will be updated separately
-      null  // updated_by
-    ];
-
-    const result: any = await this.db.prepare(
-      `INSERT INTO expression_meanings (
-        id, expression_id, meaning_id, note, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?) 
-      ON CONFLICT(id) DO UPDATE SET
-        expression_id=excluded.expression_id,
-        meaning_id=excluded.meaning_id,
-        note=excluded.note,
-        updated_by=excluded.updated_by,
-        updated_at=CURRENT_TIMESTAMP
-      RETURNING *`
-    ).bind(...bindValues).run()
-
-    if (!result.success) {
-      throw new Error('Failed to link expression and meaning')
-    }
-
-    return result.results[0] as ExpressionMeaning
-  }
-
-  async getExpressionMeanings(expressionId: number): Promise<Meaning[]> {
-    const { results } = await this.db.prepare(
-      `SELECT m.* FROM meanings m 
-       JOIN expression_meanings em ON m.id = em.meaning_id 
-       WHERE em.expression_id = ?`
-    ).bind(expressionId).all<Meaning>()
-    return results
-  }
-
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 100): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.language_code as language_code, m.gloss 
+      `SELECT e.id, e.text, e.language_code as language_code
        FROM expressions e 
-       JOIN expression_meanings em ON e.id = em.expression_id 
-       JOIN meanings m ON m.id = em.meaning_id 
-       WHERE e.language_code = ? AND m.gloss LIKE 'langmap.%' 
+       WHERE e.language_code = ? AND e.text LIKE 'langmap.%' 
        LIMIT ? OFFSET ?`
-    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string, gloss: string }>()
+    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string }>()
     return results
   }
 

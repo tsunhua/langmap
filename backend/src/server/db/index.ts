@@ -1,81 +1,11 @@
 // Database integration for Hono with Cloudflare D1
 
-// Type definitions for our data models
-export interface Language {
-  id: number
-  code: string
-  name: string
-  direction?: string
-  is_active?: number
-  region_code?: string
-  region_name?: string
-  region_latitude?: number
-  region_longitude?: number
-  created_by?: string
-  created_at: string
-  updated_by?: string
-  updated_at: string
-}
+import { D1DatabaseService } from './d1'
+import { AbstractDatabaseService } from './protocol'
 
-export interface Meaning {
-  id: number
-  gloss?: string
-  description?: string
-  tags?: string
-  created_by?: string
-  created_at: string
-  updated_by?: string
-  updated_at: string
-}
+let databaseService: AbstractDatabaseService | null = null
 
-export interface Expression {
-  id: number
-  text: string
-  audio_url?: string
-  language_code: string
-  region_code?: string
-  region_name?: string
-  region_latitude?: number
-  region_longitude?: number
-  tags?: string
-  source_type?: string
-  source_ref?: string
-  review_status?: string
-  created_by?: string
-  created_at: string
-  updated_by?: string
-  updated_at: string
-}
-
-export interface ExpressionVersion {
-  id: number
-  expression_id?: number
-  text: string
-  audio_url?: string
-  region_name?: string
-  region_latitude?: string
-  region_longitude?: string
-  created_by?: string
-  created_at: string
-}
-
-export interface ExpressionMeaning {
-  id: number
-  expression_id: number
-  meaning_id: number
-  note?: string
-  created_by?: string
-  created_at: string
-  updated_by?: string
-  updated_at: string
-}
-
-
-import { D1DatabaseService } from './d1-db'
-
-let databaseService: D1DatabaseService | null = null
-
-export function createDatabaseService(env: any): D1DatabaseService {
+export function createDatabaseService(env: any): AbstractDatabaseService {
   // Return cached instance if already created
   if (databaseService) {
     return databaseService
@@ -90,9 +20,6 @@ export function createDatabaseService(env: any): D1DatabaseService {
   return databaseService
 }
 
-// Fix the export conflict by exporting only the DatabaseService and createDatabaseService
-// and importing the types from abstract-db instead of redefining them
-export { AbstractDatabaseService } from './abstract-db'
-export type { Language as AbstractLanguage, Expression as AbstractExpression, 
-              ExpressionVersion as AbstractExpressionVersion, Meaning as AbstractMeaning, 
-              ExpressionMeaning as AbstractExpressionMeaning, User } from './abstract-db'
+// Import and export all types from abstract-db to avoid duplication
+export type { Language, Expression, ExpressionVersion, User } from './protocol'
+export { AbstractDatabaseService } from './protocol'
