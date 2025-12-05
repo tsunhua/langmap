@@ -1,11 +1,24 @@
 // Hono API routes implementing the same interface as FastAPI backend
-import { Hono } from 'hono'
+import { Hono, Context, Next } from 'hono'
 import { createDatabaseService } from '../db'
 import * as jose from 'jose'
 import bcrypt from 'bcryptjs'
 
+// Define types for our application context
+interface JWTPayload {
+  id: number
+  username: string
+  email: string
+  role: string
+}
+
 // Create a new Hono app for API v1 routes
-const api = new Hono<{ Bindings: any }>()
+const api = new Hono<{
+  Bindings: any,
+  Variables: {
+    user: JWTPayload
+  }
+}>()
 
 // Helper function to get database service
 const getDB = (c: any) => createDatabaseService(c.env)
@@ -13,7 +26,7 @@ const getDB = (c: any) => createDatabaseService(c.env)
 // JWT helper functions
 const SECRET_KEY = 'your-secret-key-change-in-production' // In production, use env variable
 
-async function signJWT(payload: any): Promise<string> {
+async function signJWT(payload: jose.JWTPayload): Promise<string> {
   const secret = new TextEncoder().encode(SECRET_KEY)
   const alg = 'HS256'
   
@@ -37,7 +50,7 @@ async function verifyJWT(token: string): Promise<any> {
 }
 
 // Authentication middleware
-async function requireAuth(c: any, next: any) {
+async function requireAuth(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({ error: 'Authentication required' }, 401)
@@ -75,8 +88,9 @@ api.get('/expressions', async (c) => {
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '50')
     const language = c.req.query('language') || undefined
-    
-    const expressions = await db.getExpressions(skip, limit, language)
+    const meaningIdParam = c.req.query('meaning_id');
+    const meaningId = meaningIdParam ? parseInt(meaningIdParam) : undefined
+    const expressions = await db.getExpressions(skip, limit, language, meaningId)
     return c.json(expressions)
   } catch (error: any) {
     console.error('Error in GET /expressions:', error);
@@ -134,6 +148,39 @@ api.get('/expressions/:expr_id', async (c) => {
   }
 })
 
+// PATCH /api/v1/expressions/:expr_id
+api.patch('/expressions/:expr_id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const body = await c.req.json()
+    
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+    
+    // Get user info from middleware
+    const user = c.get('user');
+    const updatedBy = user.username;
+    
+    // Add updated_by to the expression data
+    const expressionData = {
+      ...body,
+      updated_by: body.updated_by || updatedBy
+    };
+    
+    const expression = await db.updateExpression(exprId, expressionData)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+    
+    return c.json(expression)
+  } catch (error: any) {
+    console.error('Error in PATCH /expressions/:expr_id:', error);
+    return c.json({ error: 'Failed to update expression', details: error.message }, 500)
+  }
+})
+
 // GET /api/v1/expressions/:expr_id/versions
 api.get('/expressions/:expr_id/versions', async (c) => {
   try {
@@ -160,6 +207,7 @@ api.get('/expressions/:expr_id/translations', async (c) => {
     console.log('GET /api/v1/expressions/:expr_id/translations');
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
+    const language_code = c.req.query('language_code')
     
     if (isNaN(exprId)) {
       console.warn('Invalid expression ID:', c.req.param('expr_id'));
@@ -176,7 +224,8 @@ api.get('/expressions/:expr_id/translations', async (c) => {
     // Find expressions in other languages with the same meaning
     // This is a simplified implementation - in reality, this would involve
     // finding expressions linked to the same meaning(s)
-    const translations = await db.getExpressions(0, 100, undefined)
+    const meaning_id = expression.meaning_id? expression.meaning_id : exprId
+    const translations = await db.getExpressions(0, 100, language_code, meaning_id)
       .then(allExpressions => 
         allExpressions.filter(e => 
           e.id !== exprId && 
@@ -191,25 +240,6 @@ api.get('/expressions/:expr_id/translations', async (c) => {
   }
 })
 
-// GET /api/v1/expressions/:expr_id/meanings
-api.get('/expressions/:expr_id/meanings', async (c) => {
-  try {
-    console.log('GET /api/v1/expressions/:expr_id/meanings');
-    const db = getDB(c)
-    const exprId = parseInt(c.req.param('expr_id'))
-    
-    if (isNaN(exprId)) {
-      console.warn('Invalid expression ID:', c.req.param('expr_id'));
-      return c.json({ error: 'Invalid expression ID' }, 400)
-    }
-    
-    const meanings = await db.getExpressionMeanings(exprId)
-    return c.json(meanings)
-  } catch (error: any) {
-    console.error('Error in GET /expressions/:expr_id/meanings:', error);
-    return c.json({ error: 'Failed to fetch expression meanings' }, 500)
-  }
-})
 
 // GET /api/v1/search
 api.get('/search', async (c) => {
@@ -235,121 +265,6 @@ api.get('/search', async (c) => {
   }
 })
 
-// GET /api/v1/meanings
-api.get('/meanings', async (c) => {
-  try {
-    console.log('GET /api/v1/meanings');
-    const db = getDB(c)
-    const skip = parseInt(c.req.query('skip') || '0')
-    const limit = parseInt(c.req.query('limit') || '50')
-    
-    const meanings = await db.getMeanings(skip, limit)
-    return c.json(meanings)
-  } catch (error: any) {
-    console.error('Error in GET /meanings:', error);
-    return c.json({ error: 'Failed to fetch meanings' }, 500)
-  }
-})
-
-// POST /api/v1/meanings
-api.post('/meanings', requireAuth, async (c) => {
-  try {
-    console.log('POST /api/v1/meanings');
-    const db = getDB(c)
-    const body = await c.req.json()
-    console.log('Creating meaning with body:', body);
-    
-    // Get user info from middleware
-    const user = c.get('user');
-    const createdBy = user.username;
-    
-    // Add created_by to the meaning data
-    const meaningData = {
-      ...body,
-      created_by: body.created_by || createdBy
-    };
-    
-    const meaning = await db.createMeaning(meaningData)
-    return c.json(meaning, 201)
-  } catch (error: any) {
-    console.error('Error in POST /meanings:', error);
-    return c.json({ error: 'Failed to create meaning' }, 500)
-  }
-})
-
-// GET /api/v1/meanings/:mid
-api.get('/meanings/:mid', async (c) => {
-  try {
-    console.log('GET /api/v1/meanings/:mid');
-    const db = getDB(c)
-    const mid = parseInt(c.req.param('mid'))
-    
-    if (isNaN(mid)) {
-      console.warn('Invalid meaning ID:', c.req.param('mid'));
-      return c.json({ error: 'Invalid meaning ID' }, 400)
-    }
-    
-    const meaning = await db.getMeaningById(mid)
-    if (!meaning) {
-      console.warn('Meaning not found:', mid);
-      return c.json({ error: 'Meaning not found' }, 404)
-    }
-    
-    return c.json(meaning)
-  } catch (error: any) {
-    console.error('Error in GET /meanings/:mid:', error);
-    return c.json({ error: 'Failed to fetch meaning' }, 500)
-  }
-})
-
-// GET /api/v1/meanings/:mid/members
-api.get('/meanings/:mid/members', async (c) => {
-  try {
-    console.log('GET /api/v1/meanings/:mid/members');
-    const db = getDB(c)
-    const mid = parseInt(c.req.param('mid'))
-    const limit = parseInt(c.req.query('limit') || '100')
-    
-    if (isNaN(mid)) {
-      console.warn('Invalid meaning ID:', c.req.param('mid'));
-      return c.json({ error: 'Invalid meaning ID' }, 400)
-    }
-    
-    const members = await db.getMeaningMembers(mid, limit)
-    return c.json(members)
-  } catch (error: any) {
-    console.error('Error in GET /meanings/:mid/members:', error);
-    return c.json({ error: 'Failed to fetch meaning members' }, 500)
-  }
-})
-
-// POST /api/v1/meanings/:mid/link
-api.post('/meanings/:mid/link', requireAuth, async (c) => {
-  try {
-    console.log('POST /api/v1/meanings/:mid/link');
-    const db = getDB(c)
-    const mid = parseInt(c.req.param('mid'))
-    const body = await c.req.json()
-    const { expressionId, note } = body
-    
-    console.log('Linking expression', expressionId, 'to meaning', mid);
-    
-    if (isNaN(mid) || isNaN(expressionId)) {
-      console.warn('Invalid meaning or expression ID:', { mid, expressionId });
-      return c.json({ error: 'Invalid meaning or expression ID' }, 400)
-    }
-    
-    // Get user info from middleware
-    const user = c.get('user');
-    const createdBy = user.username;
-    
-    const link = await db.linkExpressionAndMeaning(expressionId, mid, note)
-    return c.json(link, 201)
-  } catch (error: any) {
-    console.error('Error in POST /meanings/:mid/link:', error);
-    return c.json({ error: 'Failed to link expression and meaning' }, 500)
-  }
-})
 
 // GET /api/v1/ui-translations/:language
 api.get('/ui-translations/:language', async (c) => {
@@ -358,44 +273,13 @@ api.get('/ui-translations/:language', async (c) => {
     const db = getDB(c)
     const language = c.req.param('language')
     const skip = parseInt(c.req.query('skip') || '0')
-    const limit = parseInt(c.req.query('limit') || '100')
+    const limit = parseInt(c.req.query('limit') || '200')
     
     const translations = await db.getUITranslations(language, skip, limit)
     return c.json(translations)
   } catch (error: any) {
     console.error('Error in GET /ui-translations/:language:', error);
     return c.json({ error: 'Failed to fetch UI translations' }, 500)
-  }
-})
-
-// POST /api/v1/ai/suggest
-api.post('/ai/suggest', async (c) => {
-  try {
-    console.log('POST /api/v1/ai/suggest');
-    // This is a mock implementation - in reality, this would call an AI service
-    const body = await c.req.json()
-    const { text, language } = body
-    
-    console.log('AI suggestion request:', { text, language });
-    
-    // Mock suggestions
-    const suggestions = [
-      { 
-        text: `${text} (suggested variation 1)`,
-        language,
-        confidence: 0.8
-      },
-      {
-        text: `${text} (suggested variation 2)`,
-        language,
-        confidence: 0.6
-      }
-    ]
-    
-    return c.json(suggestions)
-  } catch (error: any) {
-    console.error('Error in POST /ai/suggest:', error);
-    return c.json({ error: 'Failed to get AI suggestions' }, 500)
   }
 })
 

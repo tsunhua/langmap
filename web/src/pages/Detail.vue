@@ -31,7 +31,9 @@
         
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedMeanings') }}</h3>
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedExpressions') }} 
+              <span class="text-slate-500 ml-2">({{ translations.length }} expressions)</span>
+            </h3>
             <button 
               v-if="!associateMode" 
               @click="associateMode = true" 
@@ -126,40 +128,13 @@
                   <div v-if="assocHasCurrent" class="p-3 rounded-lg bg-amber-50 text-amber-700">
                     {{ $t('detail.includesCurrent') }}
                   </div>
-                  
-                  <div class="pt-4 border-t border-slate-200 mt-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-1 font-semibold">{{ $t('detail.linkToMeaning') }}</label>
-                    <div class="flex flex-wrap gap-3 mt-2">
-                      <select v-model="selectedMeaningId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 flex-1">
-                        <option :value="null">{{ $t('detail.selectMeaning') }}</option>
-                        <option v-for="m in meanings" :key="m.id" :value="m.id">
-                          {{ m.gloss }} — {{ m.description }}
-                        </option>
-                        <option :value="'__new'">{{ $t('detail.createNew') }}</option>
-                      </select>
-                      
-                      <div v-if="selectedMeaningId === '__new'" class="flex-1">
-                        <input 
-                          v-model="newMeaningGloss" 
-                          :placeholder="$t('detail.newMeaningGloss')" 
-                          class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
-                        />
-                        <button 
-                          @click="createMeaning" 
-                          class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-2 w-full"
-                        >
-                          {{ $t('detail.createMeaning') }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
             
-            <!-- Meanings list -->
+            <!-- Associated expressions list -->
             <div>
-              <div v-if="meanings.length === 0" class="text-center py-8 text-slate-500">
+              <div v-if="translations.length === 0" class="text-center py-8 text-slate-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
@@ -172,45 +147,14 @@
                 </button>
               </div>
               
-              <div v-else class="space-y-4">
+              <div v-else class="space-y-2">
                 <div 
-                  v-for="m in meanings" 
-                  :key="m.id" 
-                  class="border border-slate-200 rounded-lg overflow-hidden"
+                  v-for="expr in translations" 
+                  :key="expr.id" 
+                  class="flex items-center gap-3 py-1 rounded-lg"
                 >
-                  <div class="bg-slate-50 px-5 py-3 flex justify-between items-center">
-                    <div class="font-semibold text-slate-800">
-                      {{ m.gloss }} 
-                      <span class="font-normal text-slate-600">
-                        {{ m.description ? '— ' + m.description : '' }}
-                      </span>
-                      <span class="text-slate-500 ml-2">
-                        ({{ m.members ? m.members.length - 1 : 0 }} expressions)
-                      </span>
-                    </div>
-                    <button 
-                      @click="toggleMeaning(m.id)" 
-                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 py-1 px-3 text-sm"
-                    >
-                      {{ isExpanded(m.id) ? 'Collapse' : 'Expand' }}
-                    </button>
-                  </div>
-                  
-                  <div v-show="isExpanded(m.id)" class="p-4 bg-white">
-                    <div v-if="!m.members || m.members.length === 0" class="text-slate-500 py-2">
-                      No associated expressions.
-                    </div>
-                    <div v-else class="space-y-2">
-                      <div 
-                        v-for="mem in m.members.filter(m => item && m && m.id !== item.id)" 
-                        :key="mem.id" 
-                        class="flex items-center gap-3 py-1 rounded-lg"
-                      >
-                        <div class="flex-1">
-                          <ExpressionCard :item="mem" />
-                        </div>
-                      </div>
-                    </div>
+                  <div class="flex-1">
+                    <ExpressionCard :item="expr" />
                   </div>
                 </div>
               </div>
@@ -312,14 +256,11 @@ export default {
 
     // collapse/expand state for meanings (object map for reactivity)
     function toggleMeaning (mid) {
-      if (expandedMeanings.value.has(mid)) {
-        expandedMeanings.value.delete(mid)
-      } else {
-        expandedMeanings.value.add(mid)
-      }
+      // 不再需要展开/折叠功能
     }
     function isExpanded (mid) {
-      return expandedMeanings.value.has(mid)
+      // 总是展开
+      return true
     }
 
     async function load () {
@@ -345,24 +286,32 @@ export default {
         }
         // fetch meanings for this expression and their members
         try {
-          const mr = await fetch(`/api/v1/expressions/${props.id}/meanings`)
-          if (mr.ok) {
-            const list = await mr.json()
-            // for each meaning fetch its members
-            for (const m of list) {
-              try {
-                const mm = await fetch(`/api/v1/meanings/${m.id}/members`)
-                if (mm.ok) {
-                  m.members = await mm.json()
-                } else {
-                  m.members = []
-                }
-              } catch (e) {
-                m.members = []
-              }
+          // 如果当前表达式有meaning_id，则获取meaning表达式
+          if (item.value.meaning_id) {
+            const mr = await fetch(`/api/v1/expressions/${item.value.meaning_id}`)
+            if (mr.ok) {
+              const meaningExpr = await mr.json()
+              // 设置meaning，模仿原来的格式
+              meanings.value = [{
+                id: meaningExpr.id,
+                text: meaningExpr.text,
+                language_code: meaningExpr.language_code,
+                description: meaningExpr.description || '',
+                members: translations.value
+              }]
+            } else {
+              meanings.value = []
             }
-            meanings.value = list
-          } else meanings.value = []
+          } else {
+            // 如果没有meaning_id，则当前表达式本身就是meaning
+            meanings.value = [{
+              id: item.value.id,
+              text: item.value.text,
+              language_code: item.value.language_code,
+              description: item.value.description || '',
+              members: translations.value
+            }]
+          }
         } catch (e) {
           meanings.value = []
         }
@@ -403,19 +352,25 @@ export default {
         return null
       }
       try {
-        const pm = await fetch('/api/v1/meanings', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gloss: newMeaningGloss.value.trim(), description: 'Created via UI' })
+        // 创建英文(en-GB)表达式作为meaning
+        const pm = await fetch('/api/v1/expressions', {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text: newMeaningGloss.value.trim(), 
+            language_code: 'en-GB',
+            description: 'Created via UI' 
+          })
         })
         if (!pm.ok) throw new Error('failed to create meaning')
-        const newm = await pm.json()
+        const newMeaningExpr = await pm.json()
         // attach empty members (will refresh on next load)
-        newm.members = []
-        meanings.value.push(newm)
-        selectedMeaningId.value = newm.id
+        newMeaningExpr.members = []
+        meanings.value.push(newMeaningExpr)
+        selectedMeaningId.value = newMeaningExpr.id
         newMeaningGloss.value = ''
         assocMsg.value = 'Created new meaning and selected it.'
-        return newm
+        return newMeaningExpr
       } catch (e) {
         assocMsg.value = String(e)
         return null
@@ -437,22 +392,36 @@ export default {
           if (meanings.value && meanings.value.length > 0) {
             mid = meanings.value[0].id
           } else {
-            const pm = await fetch('/api/v1/meanings', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ gloss: item.value.text, description: 'Created via UI association' })
+            // 创建一个新的meaning表达式 (en-GB)
+            const pm = await fetch('/api/v1/expressions', {
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                text: item.value.text, 
+                language_code: 'en-GB',
+                description: 'Created via UI association' 
+              })
             })
             if (!pm.ok) throw new Error('failed to create meaning')
-            const newm = await pm.json()
-            mid = newm.id
+            const newMeaningExpr = await pm.json()
+            mid = newMeaningExpr.id
           }
         }
 
-        // link current expression
-        const link1 = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${props.id}`, { method: 'POST' })
-        if (!link1.ok) throw new Error('failed to link current expression')
-        // link target expression
-        const link2 = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${target.id}`, { method: 'POST' })
-        if (!link2.ok) throw new Error('failed to link target expression')
+        // 更新当前表达式的meaning_id
+        const update1 = await fetch(`/api/v1/expressions/${props.id}`, { 
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meaning_id: mid })
+        })
+        if (!update1.ok) throw new Error('failed to update current expression')
+        // 更新目标表达式的meaning_id
+        const update2 = await fetch(`/api/v1/expressions/${target.id}`, { 
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meaning_id: mid })
+        })
+        if (!update2.ok) throw new Error('failed to update target expression')
 
         assocMsg.value = 'Linked successfully.'
         // refresh translations and meanings

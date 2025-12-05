@@ -18,22 +18,15 @@ CREATE TABLE IF NOT EXISTS languages (
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
--- Meanings table
-CREATE TABLE IF NOT EXISTS meanings (
-    id INTEGER PRIMARY KEY NOT NULL,
-    gloss TEXT UNIQUE NOT NULL,
-    description TEXT,
-    tags TEXT,
-    created_by TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
+CREATE INDEX IF NOT EXISTS idx_languages_code ON languages(code);
+CREATE INDEX IF NOT EXISTS idx_languages_name ON languages(name);
+CREATE INDEX IF NOT EXISTS idx_languages_is_active ON languages(is_active);
 
 -- Expressions table
 CREATE TABLE IF NOT EXISTS expressions (
     id INTEGER PRIMARY KEY NOT NULL,
-    text TEXT NOT NULL NOT NULL,
+    text TEXT NOT NULL,
+    meaning_id INTEGER, --關聯的 en-US 的 expression_id
     audio_url TEXT,
     language_code TEXT NOT NULL,
     region_code TEXT,
@@ -50,11 +43,18 @@ CREATE TABLE IF NOT EXISTS expressions (
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_expressions_text ON expressions(text);
+CREATE INDEX IF NOT EXISTS idx_expressions_language_code ON expressions(language_code);
+CREATE INDEX IF NOT EXISTS idx_expressions_meaning_id ON expressions(meaning_id);
+CREATE INDEX IF NOT EXISTS idx_expressions_tags ON expressions(tags);
+CREATE INDEX IF NOT EXISTS idx_expressions_created_by ON expressions(created_by);
+
 -- Expression versions table
 CREATE TABLE IF NOT EXISTS expression_versions (
     id INTEGER PRIMARY KEY NOT NULL,
     expression_id INTEGER NOT NULL,
     text TEXT NOT NULL,
+    meaning_id INTEGER,
     audio_url TEXT,
     region_name TEXT,
     region_latitude TEXT,
@@ -63,28 +63,7 @@ CREATE TABLE IF NOT EXISTS expression_versions (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
--- Expression-Meaning relationships table
-CREATE TABLE IF NOT EXISTS expression_meanings (
-    id INTEGER PRIMARY KEY NOT NULL,
-    expression_id INTEGER NOT NULL,
-    meaning_id INTEGER NOT NULL,
-    note TEXT,
-    created_by TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_languages_code ON languages(code);
-CREATE INDEX IF NOT EXISTS idx_languages_name ON languages(name);
-CREATE INDEX IF NOT EXISTS idx_languages_is_active ON languages(is_active);
-CREATE INDEX IF NOT EXISTS idx_meanings_gloss ON meanings(gloss);
-CREATE INDEX IF NOT EXISTS idx_expressions_text ON expressions(text);
-CREATE INDEX IF NOT EXISTS idx_expressions_language_code ON expressions(language_code);
 CREATE INDEX IF NOT EXISTS idx_expression_versions_expression_id ON expression_versions(expression_id);
-CREATE INDEX IF NOT EXISTS idx_expression_meanings_expression_id ON expression_meanings(expression_id);
-CREATE INDEX IF NOT EXISTS idx_expression_meanings_meaning_id ON expression_meanings(meaning_id);
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

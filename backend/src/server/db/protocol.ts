@@ -15,20 +15,10 @@ export interface Language {
   updated_at?: string
 }
 
-export interface Meaning {
-  id: number
-  gloss: string
-  description?: string
-  tags?: string
-  created_by?: string
-  created_at?: string
-  updated_by?: string
-  updated_at?: string
-}
-
 export interface Expression {
   id: number
   text: string
+  meaning_id?: number
   audio_url?: string
   language_code: string
   region_code?: string
@@ -47,25 +37,15 @@ export interface Expression {
 
 export interface ExpressionVersion {
   id: number
-  expression_id?: number
+  expression_id: number
   text: string
+  meaning_id?: number
   audio_url?: string
   region_name?: string
   region_latitude?: string
   region_longitude?: string
   created_by?: string
   created_at?: string
-}
-
-export interface ExpressionMeaning {
-  id: number
-  expression_id: number
-  meaning_id: number
-  note?: string
-  created_by?: string
-  created_at?: string
-  updated_by?: string
-  updated_at?: string
 }
 
 export interface User {
@@ -88,7 +68,7 @@ export abstract class AbstractDatabaseService {
   abstract deleteLanguage(id: number): Promise<boolean>
 
   // Expression operations
-  abstract getExpressions(skip?: number, limit?: number, language?: string): Promise<Expression[]>
+  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[]): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
   abstract updateExpression(id: number, expression: Partial<Expression>): Promise<Expression>
@@ -99,18 +79,6 @@ export abstract class AbstractDatabaseService {
   abstract getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]>
   abstract createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion>
 
-  // Meaning operations
-  abstract getMeanings(skip?: number, limit?: number): Promise<Meaning[]>
-  abstract getMeaningById(id: number): Promise<Meaning | null>
-  abstract createMeaning(meaning: Partial<Meaning>): Promise<Meaning>
-  abstract updateMeaning(id: number, meaning: Partial<Meaning>): Promise<Meaning>
-  abstract deleteMeaning(id: number): Promise<boolean>
-  abstract getMeaningMembers(meaningId: number, limit?: number): Promise<Expression[]>
-
-  // Expression-Meaning operations
-  abstract linkExpressionAndMeaning(expressionId: number, meaningId: number, note?: string): Promise<ExpressionMeaning>
-  abstract getExpressionMeanings(expressionId: number): Promise<Meaning[]>
-  
   // UI translations
   abstract getUITranslations(language: string, skip?: number, limit?: number): Promise<any[]>
 

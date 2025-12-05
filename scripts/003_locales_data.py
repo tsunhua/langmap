@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to generate SQL insert statements from locale JSON files.
-Populates expressions, meanings, and expression_versions tables.
+Populates expressions table.
 """
 
 import json
@@ -183,7 +183,7 @@ def stable_hash_id(content: str) -> int:
 
 def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     """
-    Generate SQL INSERT statements for expressions, meanings, and expression_versions tables.
+    Generate SQL INSERT statements for expressions table.
     
     Args:
         locales: Dictionary mapping language codes to their JSON content
@@ -194,9 +194,7 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     sql_statements = []
     
     # Buffers for batch inserts
-    meanings_buffer = []
     expressions_buffer = []
-    expression_meanings_buffer = []
     
     # Batch size
     BATCH_SIZE = 500
@@ -204,35 +202,18 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
     # Get language region information
     language_region_info = get_language_region_info()
     
-    # Track meanings to avoid duplicates - key is the meaning gloss (key_path)
-    processed_meanings = set()  # Set of meaning_ids to avoid duplicates
-    
     # Track expressions to avoid duplicates
     processed_expressions = set()  # Set of expression_ids to avoid duplicates
-    
-    # Helper function to flush buffers for meanings
-    def flush_meanings_buffer():
-        if meanings_buffer:
-            values_str = ",\n    ".join(meanings_buffer)
-            sql_statements.append(
-                f"INSERT INTO meanings (id, gloss, description, created_by, updated_by, created_at, updated_at, tags) VALUES\n    {values_str}\n"
-                f"ON CONFLICT(id) DO UPDATE SET\n"
-                f"    gloss=excluded.gloss,\n"
-                f"    description=excluded.description,\n"
-                f"    updated_by=excluded.updated_by,\n"
-                f"    updated_at=excluded.updated_at,\n"
-                f"    tags=excluded.tags;"
-            )
-            meanings_buffer.clear()
     
     # Helper function to flush buffers for expressions
     def flush_expressions_buffer():
         if expressions_buffer:
             values_str = ",\n    ".join(expressions_buffer)
             sql_statements.append(
-                f"INSERT INTO expressions (id, text, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status) VALUES\n    {values_str}\n"
+                f"INSERT INTO expressions (id, text, meaning_id, language_code, region_code, region_name, region_latitude, region_longitude, created_by, updated_by, created_at, updated_at, tags, source_type, review_status) VALUES\n    {values_str}\n"
                 f"ON CONFLICT(id) DO UPDATE SET\n"
                 f"    text=excluded.text,\n"
+                f"    meaning_id=excluded.meaning_id,\n"
                 f"    language_code=excluded.language_code,\n"
                 f"    region_code=excluded.region_code,\n"
                 f"    region_name=excluded.region_name,\n"
@@ -246,56 +227,27 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             )
             expressions_buffer.clear()
     
-    # Helper function to flush buffers for expression_meanings
-    def flush_expression_meanings_buffer():
-        if expression_meanings_buffer:
-            values_str = ",\n    ".join(expression_meanings_buffer)
-            sql_statements.append(
-                f"INSERT INTO expression_meanings (id, expression_id, meaning_id, created_by, updated_by, created_at, updated_at) VALUES\n    {values_str}\n"
-                f"ON CONFLICT(id) DO UPDATE SET\n"
-                f"    expression_id=excluded.expression_id,\n"
-                f"    meaning_id=excluded.meaning_id,\n"
-                f"    updated_by=excluded.updated_by,\n"
-                f"    updated_at=excluded.updated_at;"
-            )
-            expression_meanings_buffer.clear()
+    # Process expressions for en-US (base language) first to establish expression_ids as meaning_ids
+    en_us_content = locales.get('en-US', {})
+    en_us_flat_content = flatten_dict(en_us_content)
     
-    # First pass: collect all unique meanings
-    for lang_code, content in locales.items():
-        # Flatten the nested JSON structure
-        flat_content = flatten_dict(content)
+    # Create a map of key_path to en-US expression_id (used as meaning_id for all translations)
+    key_path_to_meaning_id = {}
+    for key_path, text_value in en_us_flat_content.items():
+        # Skip non-string values
+        if not isinstance(text_value, str):
+            continue
         
-        # Process each key-value pair
-        for key_path, text_value in flat_content.items():
-            # Skip non-string values
-            if not isinstance(text_value, str):
-                continue
+        # Skip strings with length <= 1
+        if len(text_value.strip()) <= 1:
+            continue
             
-            # Skip strings with length <= 1
-            if len(text_value.strip()) <= 1:
-                continue
-                
-            # Create stable meaning ID based on key_path
-            meaning_id = stable_hash_id(key_path)
-            
-            # Create meaning entry if not exists
-            if meaning_id not in processed_meanings:
-                processed_meanings.add(meaning_id)
-                
-                # Add to meanings buffer
-                meaning_gloss = f"langmap.{key_path}".replace("'", "''")  # Escape single quotes
-                meanings_buffer.append(
-                    f"({meaning_id}, '{meaning_gloss}', '', 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]')"
-                )
-                
-                # Flush buffer if it reaches batch size
-                if len(meanings_buffer) >= BATCH_SIZE:
-                    flush_meanings_buffer()
+        # Create stable expression ID for en-US entries
+        expression_id_content = f"{text_value}|en-US|{language_region_info.get('en-US', {}).get('region_code', '')}"
+        expression_id = stable_hash_id(expression_id_content)
+        key_path_to_meaning_id[key_path] = expression_id
     
-    # Flush remaining meanings
-    flush_meanings_buffer()
-    
-    # Second pass: create expressions and link to meanings
+    # Now process all languages
     for lang_code, content in locales.items():
         # Get region information for this language
         region_info = language_region_info.get(lang_code, {})
@@ -327,8 +279,13 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
             if len(text_value.strip()) <= 1:
                 continue
                 
-            # Get stable meaning id
-            meaning_id = stable_hash_id(key_path)
+            # For en-US entries, meaning_id should be NULL
+            # For other languages, use the en-US expression_id as meaning_id
+            meaning_id = "NULL"
+            if lang_code != 'en-US':
+                meaning_id = key_path_to_meaning_id.get(key_path)
+                if meaning_id is None:
+                    continue
             
             # Create stable expression ID based on text, language_code and region_code
             expression_id_content = f"{text_value}|{lang_code}|{region_info.get('region_code', '')}"
@@ -340,29 +297,21 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                 
                 # Insert into expressions table
                 escaped_text = text_value.replace("'", "''")  # Escape single quotes
+                escaped_key_path = key_path.replace("'", "''")  # Escape single quotes in key_path
+                
+                # Handle meaning_id for SQL
+                meaning_id_str = "NULL" if meaning_id == "NULL" else str(meaning_id)
+                
                 expressions_buffer.append(
-                    f"({expression_id}, '{escaped_text}', '{lang_code}', {region_code}, {region_name}, {region_latitude}, {region_longitude}, 'langmap', 'langmap', datetime('now'), datetime('now'), '[\"langmap\"]', 'ai', 'approved')"
+                    f"({expression_id}, '{escaped_text}', {meaning_id_str}, '{lang_code}', {region_code}, {region_name}, {region_latitude}, {region_longitude}, 'langmap', NULL, datetime('now'), NULL, '[\"{escaped_key_path}\"]', 'ai', 'approved')"
                 )
                 
                 # Flush buffer if it reaches batch size
                 if len(expressions_buffer) >= BATCH_SIZE:
                     flush_expressions_buffer()
-            
-            
-            # We'll let the database handle duplicate link detection through constraints
-            em_id_content = f"{expression_id}|{meaning_id}"
-            em_id = stable_hash_id(em_id_content)
-            expression_meanings_buffer.append(
-                f"({em_id}, {expression_id}, {meaning_id}, 'langmap', 'langmap', datetime('now'), datetime('now'))"
-            )
-            
-            # Flush buffer if it reaches batch size
-            if len(expression_meanings_buffer) >= BATCH_SIZE:
-                flush_expression_meanings_buffer()
     
     # Flush remaining buffers
     flush_expressions_buffer()
-    flush_expression_meanings_buffer()
     
     return sql_statements
 
@@ -392,7 +341,7 @@ def main():
     output_path = os.path.join(output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write("-- Auto-generated SQL script from locale files\n")
-        f.write("-- This script populates expressions, meanings, and expression_meanings tables\n")
+        f.write("-- This script populates expressions table\n")
         f.write("-- Uses UPSERT (INSERT ... ON CONFLICT ... DO UPDATE) to update existing rows or insert new ones\n\n")
         for statement in sql_statements:
             f.write(statement + '\n')

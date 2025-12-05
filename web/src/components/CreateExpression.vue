@@ -222,27 +222,6 @@
                     </svg>
                   </button>
                 </div>
-                
-                <div class="mt-3">
-                  <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('detail.linkToMeaning') }}</label>
-                  <div class="flex flex-wrap gap-3 mt-2">
-                    <select v-model="selectedMeaningId" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 flex-1">
-                      <option :value="null">{{ $t('detail.selectMeaning') }}</option>
-                      <option v-for="m in selectedExpressionMeanings" :key="m.id" :value="m.id">
-                        {{ m.gloss }} — {{ m.description }}
-                      </option>
-                      <option :value="'__new'">{{ $t('detail.createNew') }}</option>
-                    </select>
-                    
-                    <div v-if="selectedMeaningId === '__new'" class="flex-1">
-                      <input 
-                        v-model="newMeaningGloss" 
-                        :placeholder="$t('detail.newMeaningGloss')" 
-                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" 
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -753,18 +732,8 @@ export default {
     async function selectExpression(expression) {
       selectedExpression.value = expression
       selectedExpressionMeanings.value = []
-      selectedMeaningId.value = null
+      selectedMeaningId.value = expression.id  // 直接设置为选中表达式的ID
       newMeaningGloss.value = ''
-      
-      try {
-        // Fetch meanings for the selected expression
-        const res = await fetch(`/api/v1/expressions/${expression.id}/meanings`)
-        if (res.ok) {
-          selectedExpressionMeanings.value = await res.json()
-        }
-      } catch (e) {
-        error.value = String(e)
-      }
     }
 
     function clearSelection() {
@@ -868,54 +837,26 @@ export default {
         
         // Handle meaning association based on user choice
         if (associateMode.value) {
-          if (associationType.value === 'existing' && selectedExpression.value && selectedMeaningId.value) {
+          if (associationType.value === 'existing' && selectedExpression.value) {
             // Associate with existing meaning
-            let mid = selectedMeaningId.value
+            // 在新模式下，meaning_id就是expression_id
+            const mid = selectedExpression.value.id
             
-            // If user wants to create a new meaning
-            if (mid === '__new') {
-              if (!newMeaningGloss.value || newMeaningGloss.value.trim() === '') {
-                error.value = 'Please enter a gloss for the new meaning.'
-                return
-              }
-              
-              try {
-                const pm = await fetch('/api/v1/meanings', {
-                  method: 'POST', 
-                  headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ 
-                    gloss: newMeaningGloss.value.trim(), 
-                    description: 'Created via UI during expression creation',
-                    created_by: createdBy
-                  })
-                })
-                
-                if (!pm.ok) throw new Error('failed to create meaning')
-                const newm = await pm.json()
-                mid = newm.id
-              } catch (e) {
-                error.value = String(e)
-                return
-              }
-            }
-            
-            // Link the newly created expression with the selected meaning
+            // 更新新建表达式的meaning_id
             try {
-              const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
-                method: 'POST',
+              const updateRes = await fetch(`/api/v1/expressions/${created.id}`, {
+                method: 'PATCH',
                 headers: { 
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
-                  created_by: createdBy
+                  meaning_id: mid,
+                  updated_by: createdBy
                 })
               })
               
-              if (!linkRes.ok) throw new Error('failed to link expression with meaning')
+              if (!updateRes.ok) throw new Error('failed to update expression with meaning')
             } catch (e) {
               error.value = String(e)
               return
@@ -928,37 +869,40 @@ export default {
             }
             
             try {
-              const pm = await fetch('/api/v1/meanings', {
+              // 首先创建英文(en-GB)表达式作为meaning
+              const pm = await fetch('/api/v1/expressions', {
                 method: 'POST', 
                 headers: { 
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
-                  gloss: newMeaningGloss.value.trim(), 
+                  text: newMeaningGloss.value.trim(),
+                  language_code: 'en-GB',
                   description: newMeaningDescription.value || '',
                   tags: newMeaningTags.value.length > 0 ? newMeaningTags.value : undefined,
                   created_by: createdBy
                 })
               })
               
-              if (!pm.ok) throw new Error('failed to create meaning')
-              const newm = await pm.json()
-              const mid = newm.id
+              if (!pm.ok) throw new Error('failed to create meaning expression')
+              const newMeaningExpr = await pm.json()
+              const mid = newMeaningExpr.id
               
-              // Link the newly created expression with the new meaning
-              const linkRes = await fetch(`/api/v1/meanings/${mid}/link?expression_id=${created.id}`, { 
-                method: 'POST',
+              // 更新新建表达式的meaning_id
+              const updateRes = await fetch(`/api/v1/expressions/${created.id}`, {
+                method: 'PATCH',
                 headers: { 
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
-                  created_by: createdBy
+                  meaning_id: mid,
+                  updated_by: createdBy
                 })
               })
               
-              if (!linkRes.ok) throw new Error('failed to link expression with meaning')
+              if (!updateRes.ok) throw new Error('failed to update expression with meaning')
             } catch (e) {
               error.value = String(e)
               return
@@ -967,18 +911,19 @@ export default {
         } else if (props.initialMeaningId) {
           // Automatically associate with the provided initial meaning ID
           try {
-            const linkRes = await fetch(`/api/v1/meanings/${props.initialMeaningId}/link?expression_id=${created.id}`, { 
-              method: 'POST',
+            const updateRes = await fetch(`/api/v1/expressions/${created.id}`, {
+              method: 'PATCH',
               headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
               },
               body: JSON.stringify({ 
-                created_by: createdBy
+                meaning_id: props.initialMeaningId,
+                updated_by: createdBy
               })
             })
             
-            if (!linkRes.ok) throw new Error('failed to link expression with meaning')
+            if (!updateRes.ok) throw new Error('failed to update expression with meaning')
           } catch (e) {
             error.value = String(e)
             return
