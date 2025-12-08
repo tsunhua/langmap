@@ -5,6 +5,9 @@
         <router-link to="/" class="no-underline">
           <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
             LangMap
+            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              Beta
+            </span>
           </h1>
         </router-link>
         <div class="flex items-center gap-6">
@@ -117,7 +120,7 @@
               <!-- Add new language option -->
               <div class="border-t border-slate-200 mt-1 pt-1">
                 <button
-                  @click="showAddLanguageModal = true"
+                  @click="handleAddLanguageClick"
                   class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 font-medium"
                   role="menuitem"
                 >
@@ -258,6 +261,12 @@ export default {
     
     // Handle add language
     const handleAddLanguage = async (language) => {
+      // 检查用户是否已登录
+      if (!isLoggedIn.value) {
+        router.push('/login');
+        return;
+      }
+      
       try {
         // Add to available languages
         availableLanguages.value[language.code] = language.native_name || language.name
@@ -271,6 +280,19 @@ export default {
         console.error('Error handling added language:', error)
         alert('Failed to process the new language. Please try again.')
       }
+    }
+    
+    // 处理添加语言点击事件
+    const handleAddLanguageClick = () => {
+      // 检查用户是否已经登录
+      if (!isLoggedIn.value) {
+        // 如果没有登录则跳转到登录页面
+        router.push('/login');
+        return;
+      }
+      
+      // 如果已经登录则显示添加语言模态框
+      showAddLanguageModal.value = true;
     }
     
     // Check if user is logged in
@@ -357,27 +379,29 @@ export default {
     })
     
     return {
+      // Reactive refs
       langDropdownOpen,
       langDropdown,
       userDropdownOpen,
       userDropdown,
+      isLoggedIn,
+      currentUser,
+      showAddLanguageModal,
+      addingLanguage,
       availableLanguages,
       currentLanguageName,
+      
+      // Methods
       toggleLangDropdown,
       toggleUserDropdown,
       switchLanguage,
       handleLogout,
-      currentLanguage: locale,
       handleAddLanguage,
-      t,
+      handleAddLanguageClick,
       
-      // User state
-      isLoggedIn,
-      currentUser,
-      
-      // Language management
-      showAddLanguageModal,
-      addingLanguage
+      // Other
+      currentLanguage: locale,
+      t
     }
   }
 }
