@@ -1,7 +1,7 @@
 {
   "home": {
-    "title": "探索世界語言",
-    "subtitle": "發現各地區同文化嘅語言差異",
+    "title": "連埋晒唔同嘅語言",
+    "subtitle": "學習新語言，一齊守住語言嘅多元化",
     "searchPlaceholder": "搜尋詞句...",
     "searchButton": "搜尋",
     "totalExpressions": "總詞句數",
@@ -27,7 +27,7 @@
     },
     "addNew": "新增新詞 →",
     "exploreMap": "探索地圖",
-    "exploreMapDesc": "喺互動式世界地圖上面視覺化語言多樣性。",
+    "exploreMapDesc": "喺互動式世界地圖上面視覺化語言多元化。",
     "viewMap": "檢視地圖 →",
     "loadingMap": "正在載入地圖..."
   },
