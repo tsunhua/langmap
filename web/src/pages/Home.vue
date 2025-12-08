@@ -89,15 +89,15 @@
               <span class="text-slate-600 font-medium">{{ $t('home.expressionDensity') }}:</span>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-200"></div>
-                <span class="text-slate-600">{{ $t('home.low') }}</span>
+                <span class="text-slate-600">{{ $t('home.low') }} (&lt;5k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-400"></div>
-                <span class="text-slate-600">{{ $t('home.medium') }}</span>
+                <span class="text-slate-600">{{ $t('home.medium') }} (&lt;50k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-600"></div>
-                <span class="text-slate-600">{{ $t('home.high') }}</span>
+                <span class="text-slate-600">{{ $t('home.high') }} (≥50k)</span>
               </div>
             </div>
           </div>
@@ -195,10 +195,9 @@ export default {
     
     // Generate heat color based on count
     const getHeatColor = (count) => {
-      if (count < 3) return '#bfdbfe' // blue-200
-      if (count < 7) return '#60a5fa' // blue-400
-      if (count < 15) return '#3b82f6' // blue-500
-      return '#2563eb' // blue-600
+      if (count < 5000) return '#bfdbfe' // blue-200 (low)
+      if (count < 50000) return '#60a5fa' // blue-400 (medium)
+      return '#2563eb' // blue-600 (high)
     }
     
     const goToSearch = () => {
@@ -235,7 +234,7 @@ export default {
       languageData.forEach(point => {
         if (point.lat && point.lng) {
           const marker = L.circleMarker([point.lat, point.lng], {
-            radius: Math.min(Math.sqrt(point.count) * 3 + 5, 30),
+            radius: point.count < 5000 ? 8 : point.count < 50000 ? 16 : 24,
             fillColor: getHeatColor(point.count),
             color: "#1e40af",
             weight: 1,
