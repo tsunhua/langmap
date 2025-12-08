@@ -1,17 +1,120 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col">
-    <header class="py-6 px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <router-link to="/" class="no-underline">
-          <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+    <!-- Mobile sidebar overlay -->
+    <div 
+      v-if="isMobile && mobileMenuOpen" 
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+      @click="mobileMenuOpen = false"
+    ></div>
+    
+    <!-- Mobile sidebar -->
+    <div 
+      v-if="isMobile" 
+      class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden"
+      :class="{ 'translate-x-0': mobileMenuOpen, '-translate-x-full': !mobileMenuOpen }"
+    >
+      <div class="flex items-center justify-between p-4 border-b">
+        <router-link to="/" class="no-underline" @click="mobileMenuOpen = false">
+          <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
             LangMap
-            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              Beta
-            </span>
           </h1>
         </router-link>
+        <button @click="mobileMenuOpen = false" class="p-2 rounded-md text-slate-600 hover:text-slate-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <nav class="p-4">
+        <router-link 
+          to="/" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('nav.home') }}
+        </router-link>
+        <router-link 
+          to="/search" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('nav.search') }}
+        </router-link>
+        
+        <!-- Mobile Auth Buttons -->
+        <div class="pt-4 mt-4 border-t border-slate-200">
+          <template v-if="isLoggedIn">
+            <router-link 
+              to="/profile" 
+              class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              @click="mobileMenuOpen = false"
+            >
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {{ $t('nav.profile') }}
+              </div>
+            </router-link>
+            <button
+              @click="handleLogoutMobile"
+              class="block w-full text-left py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+            >
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {{ $t('nav.logout') }}
+              </div>
+            </button>
+          </template>
+          <template v-else>
+            <router-link 
+              to="/login" 
+              class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              @click="mobileMenuOpen = false"
+            >
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                {{ $t('nav.login') }}
+              </div>
+            </router-link>
+          </template>
+        </div>
+      </nav>
+    </div>
+    
+    <header class="py-4 px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <div class="flex items-center">
+          <!-- Mobile menu button -->
+          <button 
+            v-if="isMobile"
+            @click="mobileMenuOpen = true"
+            class="mr-3 p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <router-link to="/" class="no-underline">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+              LangMap
+              <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                Beta
+              </span>
+            </h1>
+          </router-link>
+        </div>
+        
         <div class="flex items-center gap-6">
-          <nav class="flex items-center gap-6">
+          <!-- Desktop navigation -->
+          <nav class="hidden lg:flex items-center gap-6">
             <router-link 
               to="/" 
               class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
@@ -28,8 +131,8 @@
             </router-link>
           </nav>
           
-          <!-- Combined Auth/Profile Button -->
-          <div class="relative" ref="authDropdown">
+          <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->
+          <div class="relative hidden lg:block" ref="authDropdown">
             <button 
               v-if="isLoggedIn"
               @click="toggleUserDropdown" 
@@ -171,6 +274,8 @@ export default {
     const userDropdownOpen = ref(false)
     const userDropdown = ref(null)
     const router = useRouter()
+    const mobileMenuOpen = ref(false)
+    const isMobile = ref(false)
 
     const { t, locale } = useI18n();
     
@@ -196,6 +301,11 @@ export default {
     const currentLanguageName = computed(() => {
       return availableLanguages.value[locale.value] || 'English'
     })
+    
+    // Check if device is mobile
+    const checkIsMobile = () => {
+      isMobile.value = window.innerWidth < 1024 // Tailwind's lg breakpoint
+    }
     
     // Toggle language dropdown
     const toggleLangDropdown = () => {
@@ -246,6 +356,12 @@ export default {
       } catch (error) {
         console.error('Logout error:', error)
       }
+    }
+    
+    // Handle logout for mobile
+    const handleLogoutMobile = async () => {
+      mobileMenuOpen.value = false
+      await handleLogout()
     }
     
     // Close dropdowns when clicking outside
@@ -342,6 +458,10 @@ export default {
     
     // Load saved language preference
     onMounted(async () => {
+      // Check if device is mobile
+      checkIsMobile()
+      window.addEventListener('resize', checkIsMobile)
+      
       // Check auth status
       await checkAuthStatus()
       
@@ -376,6 +496,7 @@ export default {
     onUnmounted(() => {
       document.removeEventListener('click', handleClickOutside)
       window.removeEventListener('auth-state-changed', handleAuthStateChange)
+      window.removeEventListener('resize', checkIsMobile)
     })
     
     return {
@@ -390,12 +511,15 @@ export default {
       addingLanguage,
       availableLanguages,
       currentLanguageName,
+      mobileMenuOpen,
+      isMobile,
       
       // Methods
       toggleLangDropdown,
       toggleUserDropdown,
       switchLanguage,
       handleLogout,
+      handleLogoutMobile,
       handleAddLanguage,
       handleAddLanguageClick,
       

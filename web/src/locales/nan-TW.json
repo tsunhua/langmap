@@ -123,7 +123,8 @@
     "backToSearch": "倒轉去尋揣頁",
     "loading": "語詞資料載入中…",
     "expressionDetails": "語詞資料",
-    "associatedMeanings": "相關語意",
+    "associatedMeanings": "相關意思",
+    "associatedExpressions": "已關聯語詞",
     "associateExpressions": "關聯語詞",
     "cancel": "取消",
     "searchPlaceholder": "尋揣欲關聯个語詞…",
@@ -147,15 +148,16 @@
     "auto": "自動"
   },
   "versionHistory": {
-    "title": "版本記錄",
+    "title": "版本紀錄",
     "loading": "版本載入中…",
-    "noVersions": "無版本資料",
+    "noVersions": "無適用个版本",
+    "currentVersion": "這是這條語詞當前个版本",
     "auto": "自動",
     "anonymous": "匿名",
-    "changes": "變更內容",
+    "changes": "修改紀錄",
     "text": "文字",
-    "audio": "音訊",
-    "location": "地點",
+    "audio": "聲音",
+    "location": "位置",
     "none": "無"
   },
   "login": {

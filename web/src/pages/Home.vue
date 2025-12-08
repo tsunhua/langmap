@@ -69,7 +69,7 @@
         </p>
         
         <!-- Map Container -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-4 relative z-0">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-2 mx-2 relative z-0 mx-4">
           <div id="map" class="w-full rounded-xl" style="height: 600px;"></div>
           
           <!-- Loading overlay -->
@@ -112,7 +112,7 @@
           {{ $t('home.getStarted') }}
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mx-4">
           <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer" @click="scrollToSearch">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
