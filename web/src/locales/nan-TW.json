@@ -1,14 +1,14 @@
 {
   "home": {
-    "title": "探索世界个語言",
-    "subtitle": "發現各地語言个差別佮文化風情",
+    "title": "串連起各種語言",
+    "subtitle": "學新語言，做伙保護語言个多元化",
     "searchPlaceholder": "尋揣語詞…",
     "searchButton": "尋揣",
     "totalExpressions": "語詞總數",
     "languages": "語言",
     "regions": "地區",
     "mapTitle": "世界語言分布圖",
-    "mapDescription": "來探索世界各地語言个多樣性。圓圈愈大，代表彼个地區个語詞愈濟。",
+    "mapDescription": "來探索世界各地語言个多元化。圓圈愈大，代表彼个地區个語詞愈濟。",
     "expressionDensity": "語詞密度",
     "low": "低",
     "medium": "中",

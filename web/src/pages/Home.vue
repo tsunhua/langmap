@@ -113,7 +113,7 @@
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer" @click="$router.push({ name: 'search' })">
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer" @click="scrollToSearch">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -126,7 +126,7 @@
             </span>
           </div>
           
-          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer" @click="showCreateDialog = true">
+          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer" @click="handleAddExpressionClick">
             <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -139,7 +139,7 @@
             </span>
           </div>
           
-          <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
+          <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer" @click="scrollToMap">
             <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -220,6 +220,49 @@ export default {
       showCreateDialog.value = false
       // Refresh stats since we've added a new expression
       loadData()
+    }
+    
+    // 处理添加表达式点击事件
+    const handleAddExpressionClick = () => {
+      // 检查用户是否已经登录
+      const isAuthenticated = !!localStorage.getItem('authToken');
+      
+      if (!isAuthenticated) {
+        // 如果没有登录则跳转到登录页面
+        router.push('/login');
+        return;
+      }
+      
+      // 如果已经登录则显示创建对话框
+      showCreateDialog.value = true;
+    }
+    
+    // 滚动到顶部搜索框
+    const scrollToSearch = () => {
+      // 获取顶部搜索框元素
+      const searchBox = document.querySelector('.relative.max-w-4xl.mx-auto .flex.gap-3.bg-white.rounded-2xl.shadow-xl.p-2');
+      
+      if (searchBox) {
+        // 平滑滚动到搜索框
+        searchBox.scrollIntoView({ behavior: 'smooth' });
+        
+        // 聚焦到搜索输入框
+        const searchInput = searchBox.querySelector('input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    }
+    
+    // 滚动到世界语言分布图
+    const scrollToMap = () => {
+      // 获取世界语言分布图部分的标题元素
+      const mapSection = document.querySelector('.bg-slate-50.py-16.px-4.sm\\:px-6.lg\\:px-8');
+      
+      if (mapSection) {
+        // 平滑滚动到地图部分
+        mapSection.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     
     // Create map markers for each language
@@ -404,12 +447,14 @@ export default {
       searchQuery,
       loading,
       stats,
-      heatmapData,
+      showCreateDialog,
       goToSearch,
       selectRegion,
-      t,
-      showCreateDialog,
-      handleExpressionCreated
+      handleExpressionCreated,
+      handleAddExpressionClick,
+      scrollToSearch,
+      scrollToMap,
+      loadData
     }
   }
 }

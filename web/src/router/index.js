@@ -20,4 +20,20 @@ const router = createRouter({
   routes
 })
 
+// 添加导航守卫来检查用户是否已认证
+router.beforeEach((to, from, next) => {
+  // 检查目标路由是否需要认证
+  const requiresAuth = ['profile'].includes(to.name);
+  
+  // 获取认证状态
+  const isAuthenticated = !!localStorage.getItem('authToken');
+  
+  // 如果路由需要认证但用户未认证，则重定向到登录页
+  if (requiresAuth && !isAuthenticated) {
+    next('/login');
+  } else {
+    next();
+  }
+});
+
 export default router
