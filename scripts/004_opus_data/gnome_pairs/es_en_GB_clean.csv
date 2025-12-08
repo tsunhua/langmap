@@ -1,0 +1,4914 @@
+src,tgt
+Peter Parente,Parente
+Arte,Art
+Cámara,Camera
+Peligro,Danger
+Dinero,Money
+Nota,Note
+¡ Oh no !,Oh no !
+Gente,People
+Planificación,Plan
+Favorito,Favourite
+Genérico,Generic
+Importante,Important
+Correo,Mail
+Nuevo,New
+Paquete,Package
+Urgente,Urgent
+Tablero,Tableau
+Meta,Goal
+Puntuación,Scoring
+Montón,Stock
+Doble baraja,Double Deck
+Bloque Diez,Block Ten
+Alfombra,Carpet
+Reloj,Clock
+Cubrir,Cover
+Vacíe el Montón .,Empty the Stock .
+Baraja,Deck
+Montón,Pile
+Rango,Rank
+Hueco,Slot
+Ver Montón .,See Pile .
+Palo,Suit
+"A , 2 , 4 , 8 , 3 , 6 , Q , J , 9 , 5 , 10 , 7 , repetir ...","A , 2 , 4 , 8 , 3 , 6 , Q , J , 9 , 5 , 10 , 7 , repeat …"
+Ocho fuera,Eight Off
+Catorce,Fourteen
+Gigante,Giant
+Rey Alberto,King Albert
+Laberinto,Labyrinth
+Malla,Maze
+Junto al montón .,Next to Stock .
+Vecino,Neighbour
+Ninguno,None
+Trenza,Plait
+Póker,Poker
+Puntuación,Score
+Doble pareja,Two pair
+Pareja,One pair
+Catorce,Quatorze
+Reyerta,Scuffle
+Un palo,One Suit
+Baraja triple,Triple Deck
+Secuencia completa,Straight Up
+Solitario general,General Patience
+Señora,Signora
+Reina,Queen
+Rey,King
+Trece,Thirteen
+Trece,Treize
+Nombre,Name
+Elemento,Item
+Menú principal,Main Menu
+Ele_mento nuevo,Ne _ w Item
+Subir,Move Up
+Bajar,Move Down
+Nombre :,Name :
+Comentario :,Comment :
+EID Anjuta,Anjuta IDE
+Centroeuropeo,Central European
+Báltico,Baltic
+Cirílico,Cyrillic
+Árabe,Arabic
+Griego,Greek
+Hebreo,Hebrew
+Celta,Celtic
+Rumano,Romanian
+Armenio,Armenian
+Coreano,Korean
+Georgiano,Georgian
+Seleccione un complemento,Select a plugin
+Texto,Text
+CVS :,CVS : Import
+Quitar un,Remove Breakpoint
+Saltar a,Jump to Breakpoint
+Activar un,Enable Breakpoint
+Avanzar,Step _ Out
+Selecciona,Select to _ Brace
+Ampliar,Zoom In
+Activar,Enable line wrap
+Ver,View Line Wrap
+No,No file to print !
+Avanzar,Step in
+Avanzar,Step over
+Abrir con,Open _ With
+Abrir,Open
+Abrir,Open _ Recent
+Ejecutar,Execute Program
+Año,Year
+Día,Day
+Hora,Hour
+Minuto,Minute
+Requiere,Require Package :
+Activar,Enable VFS file monitoring
+Tipografía,Font
+Reino :,Realm :
+Complemento,Project Manager Plugin for Anjuta .
+alerta,alert
+animación,animation
+flecha,arrow
+marco,frame
+icono,icon
+imagen,image
+marco interno,internal frame
+etiqueta,label
+menú,menu
+menú emergente,popup menu
+panel raíz,root pane
+tabla,table
+texto,text
+árbol,tree
+pie,footer
+párrafo,paragraph
+regla,ruler
+aplicación,application
+página,page
+formulario,form
+enlace,link
+comentario,comment
+agrupación,grouping
+notificación,notification
+Acetona,Acetone
+Ciclobutano,Cyclobutane
+Dimetil-éter,Dimethyl Ether
+Etanal,Ethanal
+Etano,Ethane
+Etanol,Ethanol
+Etileno,Ethylene
+Glicerina,Glycerin
+Metanal,Methanal
+Metano,Methane
+Metanol,Methanol
+Propileno,Propylene
+Pirano,Pyran
+Agua,Water
+Tiempo,Time
+Juego nuevo,New Game
+Nivel :,Level :
+Molécula :,Molecule :
+Fórmula :,Formula :
+Puntuación :,Score :
+Tiempo :,Time :
+Saltar nivel,Skip Level
+Saltar el nivel actual,Skip the current level
+Inicia un juego,Start a new game
+Documento :,Document :
+Soporte para Karma,Karma Support
+Núcleo,Core
+Compartición DAAP,DAAP Sharing
+Cliente UPnP,UPnP Client
+Panel contextual,Context Pane
+Perfil,Profile
+Grabar CD,Write CD …
+Importar,Import
+Duración,Duration
+Valoración,Rating
+Género,Genre
+Comentario,Comment
+Valor,Value
+Mezclar por álbu_m,Shuffle by A _ lbum
+por álbum,by album
+manualmente,manually
+Mezclar por _valoración,Shuffle by _ Rating
+por valoración,by rating
+Mezclar por _puntuación,Shuffle by S _ core
+Mezclar por _canción,Shuffle by _ Song
+Suave,Soft
+Tecno,Techno
+Álbum,Album
+Título,Title
+Número,Number
+Agrupación,Grouping
+por,by
+en,on
+ppm,bpm
+titulo,title
+nombre,name
+año,year
+año,yr
+genero,genre
+Licencia,Licence
+licencia,licence
+valoracion,rating
+Tamaño,File Size
+ruta,path
+archivo,file
+ubicacion,location
+tiempo,time
+Tipo MIME,Mime Type
+tipo,type
+tipomime,mimetype
+formato,format
+PPM,BPM
+ninguno,none
+Documento externo,External Document
+I_mportar,I _ mport
+Abrir ubicación,Open Location
+Abrir _ubicación,Open _ Location …
+Repetir,Repeat
+Repetir una ve_z,Repeat Singl _ e
+Aleatorio,Shuffle
+Subtítulo,Subtitle
+Importar a la colección,Import to Library
+Renombrar,Rename
+Separar por tipo,Separate by Type
+Copyrig_ht :,Copyrig _ ht :
+Come_ntario :,Co _ mment :
+Carpeta :,Directory :
+Ruta completa :,Full Path :
+Duración :,Duration :
+Título :,Title :
+Álbum :,Album :
+Parar la operación,Stop Operation
+Continuar,Continue
+Exportar,Export
+Seleccionar formato :,Select Format :
+Fuente :,Source :
+Sin configurar,Not Set
+Error al convertir el archivo,Error converting file
+Sincronizar,Sync
+Abrir libro,Open Book
+Autor :,Author :
+Autor,Author
+D_etectar,D _ etect
+Limpiar,Clear
+¿ Reparar ?,Fix ?
+Abrir página web,Open Webpage
+Ubicación :,Location :
+Fecha :,Date :
+Año :,Year :
+Linaje :,Lineage :
+Colección :,Collection :
+Colección,Collection
+Formato,Format
+Proyecto Gutenberg,Project Gutenberg
+Valoración :,Rating :
+Conectar,Connect
+Cuenta,Account
+Mezclar,Mix
+Grupo,Group
+Etiqueta,Tag
+Similar a :,Similar to :
+Colección,Library
+Aún en ejecución,Still Running
+Simplificar,Simplify
+Importar CD,Import CD
+Copiar CD,Duplicate CD
+Ir al menú,Go to Menu
+Navegar al menú,Navigate to menu
+Álbum actual,Current Album
+Archivar,Archive
+Categoría :,Category :
+Iniciar la monitorización SQL,Start SQL Monitoring
+Parar la monitorización SQL,Stop SQL Monitoring
+Compartición UPnP,UPnP Share
+abrir el menú contextual,open context menu
+cualquiera,any
+anterior a,before
+vacío,empty
+Volumen,Volume
+Color,Colour
+Soporte para MeeGo,MeeGo Support
+Depuración,Debug
+Extrema,Extreme
+Tecla,Key
+Acción,Action
+Ctrl,Control
+Interfaz,Interface
+Rhythmbox,Import your Rhythmbox library
+Grabar CD,Write CD ...
+MiB,MB
+GiB,GB
+Abrir _ubicación,Open _ Location ...
+clic,click
+KiB,KB
+Soporte para Moblin,Moblin Support
+Activar,Enable
+Interacción con la colección,Library Interaction
+Finalizar Banter,Quit Banter
+Salir,Quit
+Seleccione un avatar,Select an Avatar
+Filtro,Filter
+Banter - Eliminar grupo,Banter - Delete Group
+yo,me
+Aceptar,Accept
+Rechazar,Decline
+Gráfico activo,Active Chart
+Tamaño,Size
+Ampliar,Zoom _ in
+Volumen principal,Main volume
+Analizar,Scan
+Tamaño total,Total Size
+FTP público,Public FTP
+Información opcional :,Optional information :
+Ampliar,Zoom in
+Abril 2006,April 2006
+Cancelar,Cancel
+HH : MM,HH : mm
+Archivo :,File :
+Correo-e :,E-Mail :
+Tlf móvil :,Mobile Phone :
+Tlf . trabajo :,Work Phone :
+Vacío,Empty
+Fuera,Away
+Para :,To :
+De :,From :
+Abrir con,Open With
+Sitio :,Site :
+Mañana,Tomorrow
+Seleccione una ruta,Select Path
+Quitar ruta,Remove path
+Quitar elemento,Remove item
+Tipo,Type
+Ruta :,Path :
+Patrón :,Pattern :
+Cambiar,Change
+Tipo :,Type :
+Beneficario :,Repeat :
+Beneficario :,Payee :
+Categoría nueva,New Category
+Beneficiario,Payee
+Color :,Colour :
+Confirmación,Confirmation
+Categoría,Category
+Fecha,Date
+Alarma,Alarm
+Información,Information
+Una vez,Once
+Semanalmente,Weekly
+Hora :,Hour :
+A_larma :,A _ larm :
+Tema actual,Current theme
+URL,URL :
+Exportar a ...,Export to ...
+Crear un grupo nuevo,Create a new group
+¿ Eliminar canal ?,Remove Channel ?
+Comportamiento,Behaviour
+Tema,Theme
+Crear un grupo nuevo,Create new group
+Elimina_r,Remo _ ve
+Seleccione el archivo OPML,Select OPML file
+grabar,burn
+grabar CD DVD,burning CD DVD
+Crear un proyecto nuevo,Creating a New Project
+Tipo VCD,Section VCD type :
+Grabar una imagen,Burn Image
+Imagen,Section Image :
+Simular la grabación,Simulate the burning
+Paquete que contiene el programa,Package containing the program
+PAQUETE,PACKAGE
+ARCHIVO,FILE
+ADVERTENCIA :,WARNING :
+Enlace,Link
+SEGS,SECS
+Pixel,PIXEL
+Lineal,Linear
+Uno,One
+Cuatro,Four
+Cinco,Five
+Bloq Num,Num lock
+Boto n 1,Button 1
+Boto n 2,Button 2
+Boto n 3,Button 3
+Apariencia,Appearance
+Tocar,Touch
+Alfa mínima,Minimum Alpha
+Alfa máxima,Maximum Alpha
+2007-2009,"2007,2008"
+2009-07-15,2007-12-04
+Tomar una foto,Taking a photo
+Borrar una foto,Deleting a photo
+Exportar una foto a F-Spot,Export a photo to F-Spot
+Potencia,Peak Power
+Libre,Free
+Lateral,Waterpolo
+Derecha,height
+Cancelar,Cancel event
+TV,TF
+Altura,Height
+Ahora,Now
+Salto,Jump
+Carrera,Run
+Subtipo,Subtype
+Aplicar a,Apply to
+Actual,Current
+Límite,Limit
+Pintar gráfico,Graph
+Kg,kg
+Serie,Sex
+Activar,Reactive
+Seleccionar,Select
+Comparar con,Competition
+Conexión,Detection
+ChronoJump - Confirmar,Chronojump — Confirm
+Software,Sport
+Patear pelota,Kick ball
+Altura mínima,Max Height
+Lineal,Guinea
+ChronoJump - Error,Chronojump — Error
+ChronoJump,Chronojump
+Correo-e,E-mail
+cambio,change
+Cronómetro,Chronometer
+Configurar gráfico,Configure graph
+Máximo,Maximum
+Mínimo,Minimum
+Eje vertical,Vertical Axe
+valor,value
+repetitivo,repetitive
+Nombre completo,Full name
+Fecha nacimiento,Date of Birth
+hombre,man
+mujer,woman
+Nivel,Level
+Ca mara,Cameroon
+Tiempo total,Totaltime
+Crear informe,Make report
+Lugar,Place
+Diferente,Different
+Chronojump finalizará ahora .,Chronojump will exit now .
+África,Africa
+Europa,Europe
+Norteamérica,North America
+Oceanía,Oceania
+Práctica regular,Regular practice
+Élite,Elite
+Dentro,Iran
+aire,Fair
+Plataforma,Pla _ tform
+Ángulo,Angle
+TV Max,TF Max
+DE,SD
+ID,run ID
+Tiempo total,Time total
+Contracción,action
+nombre,Suriname
+Invertir,Invert
+COM1 - COM4,Force Chronopic port to COM1 or COM2
+Conteo,Count
+Multi chronopic,MultiChronopic
+Mujer,Woman
+Copiar,Copy
+Carrera,run
+Tiempo total,Total Time
+Evolución,Evolution
+Hombre,Male
+Mujer,Female
+Salto libre,Free Jump
+Salto Squat,Squat Jump
+Salto Abalakov,Abalakov Jump
+Salto Rocket,Rocket Jump
+Salto DJ,DJ Jump
+Evolución .,Evolution .
+Excelente,Excellent
+Malo,Poor
+Argelia,Algeria
+República Centro Africana,Central African Republic
+Egipto,Egypt
+Guinea Ecuatorial,Equatorial Guinea
+Etiopía,Ethiopia
+Gabón,Gabon
+Kenia,Kenya
+Libia,Libyan Arab Jamahiriya
+Malaui,Malawi
+Níger,Niger
+Reunión,Reunion
+Santa Helena,Saint Helena
+Sierra Leona,Sierra Leone
+Zimbabue,Zimbabwe
+Azerbaiyán,Azerbaijan
+Bahrein,Bahrain
+Bután,Bhutan
+Irak,Iraq
+Japón,Japan
+Líbano,Lebanon
+Omán,Oman
+Singapur,Singapore
+Taiwán,Taiwan
+Turquía,Turkey
+Bélgica,Belgium
+Croacia,Croatia
+República checa,Czech Republic
+Dinamarca,Denmark
+Francia,France
+Alemania,Germany
+Grecia,Greece
+Hungría,Hungary
+Italia,Italy
+Letonia,Latvia
+Lituania,Lithuania
+Luxemburgo,Luxembourg
+Mónaco,Monaco
+Noruega,Norway
+Rumanía,Romania
+Ucrania,Ukraine
+Anguila,Anguilla
+Bélice,Belize
+República Dominicana,Dominican Republic
+Haití,Haiti
+Martinica,Martinique
+México,Mexico
+Panamá,Panama
+San Bartolomé,Saint Barthelemy
+Santa Lucía,Saint Lucia
+San Martín,Saint Martin
+Samoa Americana,American Samoa
+Papúa Nueva Guinea,Papua New Guinea
+Guayana,Guyana
+Perú,Peru
+Natación,Swimming
+Rítmica,Rhythmic
+Trampolín,Trampoline
+Voleibol,Volleyball
+Greco-romana,Greco-Roman
+Tiro con arco,Archery
+Biatlón,Biathlon
+Boxeo,Boxing
+Canoa-cayak,Canoe-Kayak
+Fútbol,Football
+Remo,Rowing
+Vela,Sailing
+Tiro,Shooting
+Patinaje,Skating
+Triatlón,Triathlon
+Halterofilia,Weightlifting
+ChronoJump - gráfico,Chronojump graph
+Diferencia,Difference
+Hexágono,Hexagon
+Altura mínima,Min Height
+Altura natural,Natural Height
+Recortar,Clip
+Ancla X,Anchor X
+Ancla Y,Anchor Y
+Efecto,Effect
+Alineacio n X,X Alignment
+Alineacio n Y,Y Alignment
+Margen inferior,Margin Bottom
+Fuente,Source
+Valor alfa,Alpha value
+Objeto,Object
+Bucle,Loop
+Alfa,Alpha
+Alineacio n horizontal,Horizontal Alignment
+Alineacio n vertical,Vertical Alignment
+Relleno horizontal,Horizontal Fill
+Relleno vertical,Vertical Fill
+Empaquetar al principio,Pack Start
+Matiz,Tint
+El matiz que aplicar,The tint to apply
+Orientacio n,Orientation
+Ruta,Path
+Niebla,Fog
+No limpiar el contorno,No Clear Hint
+Búfer,Buffer
+El búfer para el texto,The buffer for the text
+Seleccionable,Selectable
+Activable,Activatable
+Repetición horizontal,Horizontal repeat
+Repetición vertical,Vertical repeat
+Seleccionar con alfa,Pick With Alpha
+Direccio n,Direction
+Repetir cuenta,Repeat Count
+Intervalo,Interval
+Animable,Animatable
+El objeto animable,The animatable object
+Quitar al completar,Remove on Complete
+Ángulo inicial,Start Angle
+Ángulo inicial,Initial angle
+Ángulo final,Final angle
+Centro,Centre
+Ángulo inicial,Angle Begin
+Centro X,Centre X
+Centro Y,Centre Y
+Centro Z,Centre Z
+Superficie,Surface
+Recortar rectángulo,Clip Rectangle
+Valor inicial,Initial Value
+Valor final,Final Value
+Interpolar,Interpolate
+Deceleración,Deceleration
+Perfil para crear,Profile to create
+Propietario,Owner
+Ruta al objeto,Object Path
+Tiporgb,Typergb
+Ámbito,Scope
+Tabla gamma,Gamma Table
+Ubicación,Seat
+Proyector,Projector
+Punto,Spot
+Ambiente,Ambient
+Calibración,Calibration
+LCD genérico,LCD Generic
+LED genérico,LED Generic
+LCD LED blanco,LCD White LED
+Nativo,Native
+Crear un perfil,Create a profile
+Azul,Blue
+Comparar,Compare
+Saltar,Skip
+Configuración,Configuration
+640x480,640 × 480
+800x600,800 × 600
+1024x768,1024 × 768
+Oficina,Office
+en,into
+Configurar,Configure
+Nota-,Note-
+Limitar a,Limit to
+Icono,Icon
+Autenticar,Authenticate
+Iniciar F-Spot,Start F-Spot
+Eliminar,Delete
+Película,Movie
+Foto,Photo
+Configurar elemento,Configure Item
+Borrar un grupo,Delete Group
+Borrar elemento,Delete Item
+Correo-e :,E-mail :
+Fuente YouTube,YouTube Source
+Sincronización lenta,Slow Sync
+Importar contacto,Import Contact
+Exportar contacto,Export Contact
+C_ontacto,C _ ontact
+0-9#,0-9 #
+H-Ñ,H-N
+Otro,Other
+Teléfono,Phone
+Calle,Street
+Provincia,County
+Móvil,Mobile
+Trabajo,Work
+Abrir imagen,Open image
+Sin imagen,No image
+Sin grupo,No Group
+Región,Region
+Albano,Albanian
+Amhárico,Amharic
+Azerí,Azerbaijani
+Baluchi,Balochi
+Bengalí,Bengali
+Bretón,Breton
+Búlgaro,Bulgarian
+Catalán,Catalan
+Náhuatl central,Nahuatl
+Croata,Croatian
+Checo,Czech
+Friulano,Friulian
+Gallego,Galician
+Alemán,German
+Guaraní,Guarani
+Guyaratí,Gujarati
+Húngaro,Hungarian
+Italiano,Italian
+Kazajo,Kazakh
+Camboyano,Khmer
+Latín,Latin
+Letón,Latvian
+Lituano,Lithuanian
+Malayo,Malay
+Maorí,Maori
+Maratí,Marathi
+Mongol,Mongolian
+Napolitano,Neapolitan
+Nepalí,Nepali
+Occitano,Occitan
+Panyabí,Punjabi
+Quechúa,Quechua
+Serbio,Serbian
+Somalí,Somali
+Suajili,Swahili
+Tágalo,Tagalog
+Tayico,Tajik
+Tártaro,Tatar
+Telugú,Telugu
+Tibetano,Tibetan
+Turcomano,Turkmen
+Uigur,Uighur
+Ucraniano,Ukrainian
+Uzbeco,Uzbek
+Valón,Walloon
+Zulú,Zulu
+Noruego bokmål,Norwegian Bokmål
+Serbio jekavian,Serbian Jekavian
+Serbio latino,Serbian Latin
+Documentación,Documentation
+Licencia FDL,FDL Licence
+Licencia GPL,GPL Licence
+Licencia LGPL,LGPL Licence
+filtro « Alfa a logotipo »,alpha-to-logo filter
+filtro « Animación »,animation filter
+filtro « Combinación »,combine filter
+filtro « Realzar »,enhance filter
+filtro « Genérico »,generic filter
+filtro « Mapa »,map filter
+filtro « Web »,web filter
+menú « Archivo »,file menu
+menú « Imagen »,image menu
+menú « Capa »,layer menu
+menú « Ver »,view menu
+prefacio,preface
+GNOME Web foto,GNOME Web Photo
+WebKitGTK+,WebKitGTK +
+Un cliente VNC para GNOME,A VNC client for GNOME
+Imagen,Image
+Página web,Web page
+Principal,Home
+El proyecto GNOME,The GNOME Project
+Soporte para GNOME,Support
+Twitter,Committer
+Rama,Branch
+Acción nueva,New Action
+Enviar,Submit
+Archivo,File
+Inactivo,Inactive
+"Hola ,","Hello ,"
+Gnome Specimen,GNOME Specimen
+Gtk+,Gtk +
+Archivo nuevo,New file
+Abrir archivo,Open file
+Cortar,Cut
+Alfabeto :,Alphabet :
+Seleccionar archivo,Select File
+Seleccione una tipografía,Select Font
+Centrar círculo,Centre circle
+De arriba a abajo,Top to Bottom
+De abajo a arriba,Bottom to Top
+Tipografía pequeña,Small font
+Pantalla completa,Full Screen
+Aplicación,Application
+Alfabeto,Alphabet
+Enorme,Very Large
+Caja no uniforme,Box non-uniformity
+Ampliación máxima,Maximum Zoom
+Control normal,Normal Control
+Calibración automática,Automatic calibration
+Puerto :,Port :
+Etiqueta X :,X label :
+X mínimo :,X minimum :
+X máximo :,X maximum :
+Etiqueta Y :,Y label :
+Y mínimo :,Y minimum :
+Y máximo :,Y maximum :
+Automático al parar,Auto On Stop
+Hablar,Speak
+En un equipo palmtop ;,On a palmtop computer ;
+en un equipo portable ;,on a wearable computer ;
+Ejemplo,Example
+Una vez lo tuve Una vez l ... lo o o o,Imagine you want to write once a
+Hablar,Speaking
+"4 , 5 , 6 , ó 7","4 , 5 , 6 , or 7"
+C_ontrol,C _ ontrol
+Aplicació_n,A _ pplication
+Script=,Script =
+Mantener evento,Keep event
+Borrar evento,Delete event
+Nuevo evento,New event
+Inicio,Start
+Dom,Sun
+Lun,Mon
+Mar,Tue
+Jue,Thu
+Vie,Fri
+Sáb,Sat
+En la web,On The Web
+Qué,What
+Booleano,Boolean
+Enumeración,Enumeration
+Siguiente,Next
+DevHelp,Devhelp
+Tipografía para el texto,Font for text
+Libro :,Book :
+Libropage,Bookpage
+Página,Page
+Función,Function
+Enumerar,Enum
+Termina cualquier DevHelp en ejecución,Quit any running Devhelp
+Página vacía,Empty Page
+Biblioteca,Book Shelf
+Agrupar por lenguaje,Group by language
+PALABRACLAVE,KEYWORD
+Configuración por encima,Setting above
+Subcategoría,Sub Category
+Error en la fecha,Error in Date
+Error en el número,Error in Number
+Subcuenta,Sub Account
+Exportar a Gnumeric,Export Gnumeric
+Reemplazar,Replace
+De,From
+Para,To
+Categoría principal,Major Category
+Error al exportar a PDF,Error Exporting to PDF
+Exportar a HTML,Export to HTML
+Error al copiar el archivo,Error Copying File
+Soltar,Drop
+Pivotar,Pivot
+Voltear,Flip
+Puerta giratoria,Revolving Door
+Abrir puerta,Open Door
+Ampliacio n,Zoom
+Arriba,Up
+Abajo,Down
+Derecha,Right
+Abajo,Bottom
+Arriba,Top
+Dentro,In
+Fuera,Out
+Seleccionar color,Select Colour
+Compartir igual,Share Alike
+Manualmente,Manually
+Automáticamente,Automatically
+De arri_ba a abajo,Lower to _ Bottom
+Seleccionar imagen,Select Image
+Softphone Ekiga,Ekiga Softphone
+Activar túnel H.245,Enable H.245 tunnelling
+Activar H.245 antiguo,Enable early H.245
+Búfer máximo para el jitter,Maximum jitter buffer
+Contacto nuevo,New contact
+Silencio,Silent
+Loco,Crazy
+Interacción SASL LDAPChallenge,LDAP SASL InteractionChallenge
+Interactuar,Interact
+Error LDAP :,LDAP Error :
+Subárbol,Subtree
+Un nivel,Single Level
+Directorio Ekiga.net,Ekiga.net Directory
+Familia,Family
+Renombrar grupo,Rename group
+Recargar la cuenta,Recharge the account
+Activar cuenta,Enable Account
+Conflicto,Conflict
+No aceptable,Not acceptable
+No aceptable globalmente,Globally not acceptable
+Nombre completo,Full Name
+Copiar el enlace,Copy link
+RDSI,ISDN
+URI SIP,SIP URI
+Ekiga Call out,Ekiga Call Out
+mnño,mno
+Rechazar,Reject
+URI remota :,Remote URI :
+Aplicación remota :,Remote Application :
+Tono,Tone
+Activar _túnel H.245,Enable H.245 _ tunnelling
+Activar H.245 _temprano,Enable _ early H.245
+Automático,Auto
+Canal :,Channel :
+Tamaño :,Size :
+Formato :,Format :
+Un nive_l,Single _ Level
+inactivo,inactive
+error al conectar,error connecting
+Iniciar charla,Start chat
+Continuar la charla,Continue chat
+Activo,Active
+Quitar,Remove
+Co_ntacto,Co _ ntact
+Activar cuenta,Enable account
+"El gatekeeper , ej . « ekiga.net »","The gatekeeper , e.g. ekiga.net"
+Forzar rol H.239 en vivo,Force H.239 Live Role
+Activar control H.239,Enable H.239 control
+Pequeño,Small
+Activar H.239,Enable H.239
+Cita,Appointment
+Reunio n,Meeting
+Al teléfono,On the phone
+Encoge la imagen,Shrink the image
+Copiar el enlace a la web,Copy link to Web
+Ejemplo en Vala,Vala Example
+Quitar,Click on the Remove button .
+Jabber,Jabber ID
+Yahoo !,Yahoo
+Servicio,Server
+Gente cerca,People nearby
+Gente cerca,People Nearby
+Yahoo Japón,Yahoo ! Japan
+en el futuro,in the future
+Cuenta :,Account :
+Ejemplo :,Example : MyScreenName
+Ejemplo :,Example : 123456789
+Nombre real :,Real name :
+Puerto STUN :,STUN Port :
+Sin imagen,No Image
+Tema :,Topic :
+Contacto nuevo,New Contact
+Infor_mación,Infor _ mation
+Seleccionar un contacto,Select a contact
+Área :,Area :
+Calle :,Street :
+Planta :,Floor :
+Habitación :,Room :
+Texto :,Text :
+Ubicación,Location
+Ubicación,"Location ,"
+Contacto,Contact
+Nombre completo :,Full name :
+SO :,OS :
+Cliente :,Client :
+Puerto,Port
+C_hat,C _ hat
+Limpio,Clean
+Seleccionar un archivo,Select a file
+Configuración regional actual,Current Locale
+Megáfono,Megaphone
+Hablar,Talk !
+Seleccione un contacto,Select contact …
+"No , quiero crear una cuenta nueva","No , I want a new account"
+Cuenta nueva,New account
+Cr_ear,Cr _ eate
+cuenta,account
+Llamar,Call
+Colgar,Hang up
+Sala,Room
+Autoconectar,Auto-Connect
+Error al recibir un archivo,Error receiving a file
+Protocolo,Protocol
+Contexto,Context
+Tamaño n_ormal,N _ ormal Size
+Crítico,Critical
+Información,Info
+Dominio,Domain
+Corrector ortográfico,Spell Checker
+Invitar,Invite
+Error en la invitación,Invitation Error
+ANI : Animación,ANI - Animation
+PNM : Portable Anymap from the PPM Toolkit,PNM - Portable Anymap from the PPM Toolkit
+TGA : Targa,TGA - Targa
+XBM : X Bitmap,XBM - X Bitmap
+XPM : X Pixmap,XPM - X Pixmap
+Ampliación,Zooming
+Voltear una imagen,Flipping an Image
+Borrar una imagen,Deleting an Image
+Imprimir una imágen,Printing an Image
+Archivo Imprimir,Select File Print
+Secuencia,Sequence
+Informacio n legal .,Image Information Pane
+Copiar una imagen para pegarla en otra aplicación,Double-click on an image file in the file manager or other application .
+Mapa,Map
+Apertura :,Aperture :
+Ampliación :,Zoom :
+Activar Java,Enable Java
+Activar JavaScript,Enable JavaScript
+Página inicial,Home page
+Nombre común :,Common Name :
+DINÁMICO,DYNAMIC
+Huella MD5 :,MD5 Fingerprint :
+Huella SHA1 :,SHA1 Fingerprint :
+Activar Java_Script,Enable Java _ Script
+Activar _Java,Enable _ Java
+Definir a página en _blanco,Set to _ Blank Page
+C_olor,C _ olour
+Papel,Paper
+Co_nectar,Co _ nnect
+Imprimir,Print
+Crear un tema nuevo,Create a new topic
+Cor_tar,Cu _ t
+Entretenimiento,Entertainment
+Ir,Go
+Página en blanco,Blank page
+Subir un nivel,Go up one level
+Ir página inicial,Go to the home page
+Abrir un archivo,Open a file
+Imprime la página actual,Print the current page
+Selecciona la página completa,Select the entire page
+Abrir _imagen,Open _ Image
+Roto,Broken
+Bajo,Low
+Alto,High
+Activar Java .,Enable Java .
+Activar JavaScript .,Enable JavaScript .
+Archivo para imprimir en,Filename to print to
+Imprimir en,Print To
+A_4,A _ 4
+E_xecutive,E _ xecutive
+L_egal,L _ egal
+Imprimir en,Print to
+Ephy,Epiphany
+"2006,2009",2006-01
+Epiphany,From the Epiphany toolbar
+Componente,Component
+Para abrir un archivo,To Open a File
+Para imprimir una página,To Print a Page
+Para crear un tema nuevo,To Create a New Topic
+Epiphany,About Epiphany
+Firmar texto,Sign Text
+Tema,Topic
+URL,URL …
+Sólo texto,Text only
+Borrar texto,Delete text
+Etíope,Ethiopic
+Ahora no,Not now
+Archivo,File menu
+Nombre común,Common Name
+Huella SHA1,SHA1 Fingerprint
+Huella MD5,MD5 Fingerprint
+Sube un nivel .,Go up a level .
+Va a la página inicial .,Go to your home page .
+AvPág,Page Up
+RePág,Page Down
+Amplía el texto .,Zoom the text larger .
+Tipografía Serif :,Serif font :
+Denegar,Deny
+Permitir,Allow
+No recuperar,Don 't recover
+Activar WebGL,Enable WebGL
+Tipo MIME,MIME type
+Seguimiento,Tracking
+Corrección ortográfica,Spell checking
+Detener,Stop
+Seleccione una carpeta,Select a Directory
+Lanzar,Launch
+Crear una aplicación web,Create Web Application
+C_rear,C _ reate
+Crear,Create
+Atajo,Shortcut
+06-04-2005,2005-04-06
+Componente IU,UI Component
+Tarea,Job
+Intro,Return
+Ir a una página por número o etiqueta,Go to page by number or label
+Tipo 1,Type 1
+Tipo 1C,Type 1C
+Tipo 3,Type 3
+Sin nombre,No name
+Sin error,No error
+Eliminar el archivo temporal,Delete the temporary file
+Seleccione la página,Select Page
+Documento,Document
+Ir a la página,Go to page
+Saltar a la página :,Jump to page :
+Color actual,Current colour
+Imprimir,Print …
+A_brir una copia,Op _ en a Copy
+Copiar _imagen,Copy _ Image
+Navegación,Navigation
+PÁGINA,PAGE
+CADENA,STRING
+Encoger a un área imprimible,Shrink to Printable Area
+Icono :,Icon :
+Párrafo nuevo,New Paragraph
+Pa rrafo,Paragraph
+Círculo,Circle
+Opaca,Opaque
+NÚMERO,NUMBER
+SyncTex,Click Save .
+Imprimir,Printer
+Imprimir,Print range
+Ir a la página,Go to Page
+DESTINO,DEST
+Abrir,To Open A Document
+Ampliar,Zoom out
+Evince,When You Start Evince Document Viewer
+CalDAV,gpg
+Semana laboral,Work Week
+Delegar reunión,Click Delegate Meeting .
+Repetición,Recurrence
+Eliminar un contacto,Deleting a Contact :
+Inicie Evolution .,Start Evolution .
+IMAP+,IMAP
+Envío local,Local Delivery :
+Ninguno,None :
+Selector,Switcher :
+Aceptar :,Accept :
+Seleccione el texto en el que quiere poner en el enlace .,Select the text you want to link from .
+Botón,Button
+Alineación :,Alignment :
+Eliminar :,Delete :
+Pitar :,Beep :
+Ejecutar programa :,Run Program :
+Encauzar al programa :,Pipe to Program :
+Vence en,Due By
+Eliminar una nota,Delegating an Item
+Cc :,Cc
+Etiqueta :,Label :
+Seguimiento :,Follow Up :
+Aceptar,OK
+Ver :,View
+Zona horaria :,Time zone :
+Copiar hacia Pilot :,Copy To Pilot :
+Eliminar nota,Delete Memo
+Nota,Memo
+SPAM,Junk
+filtro,filter
+Crear _regla,Create R _ ule
+Otro,Other …
+A_utenticar,A _ uthenticate
+Etiqueta,Label
+Se_guimiento,Follow _ Up …
+Luego,Then
+Cif_rar con PGP,PGP Encrypt
+Ortografía,Spell Checking
+Reemplazar :,Replace :
+Información opcional,Optional Information
+Tabla,Table
+purgar,expunge
+Purg_ar,Purg _ e
+Seleccionar,Select …
+Meteorología,Weather
+Papel,Role
+Confirmar,RSVP
+Público,Public
+Conexión,Connection
+Obtener _URL,Fetch _ URL
+U_RL OAB :,OAB U _ RL :
+I_nterno :,I _ nternal :
+E_xterno :,E _ xternal :
+Autenticacio n,Authentication
+evolution,Enter evolution .
+Zona horaria,Time Zone
+Exchange MAPI :,MAPI Exchange :
+Configuración SMTP,SMTP Configuration
+Zona horaria,Continue with Time Zone .
+Ver :,View :
+Copiar :,Copy :
+Mover :,Move :
+Renombrar :,Rename :
+En Evolution :,In Evolution :
+Ctrl+R,Ctrl + R
+Ctrl+L,Clrl + L
+Shift+Ctrl+R,Shift + Ctrl + R
+Ctrl+F,Ctrl + F
+Eliminar una columna :,Removing a Column :
+Sin etiqueta,No Label
+Cuenta actual,Current Account
+Contacto :,Contact :
+Nombre completo :,Full Name :
+Internacional,International
+Meteorología : Niebla,Weather : Fog
+Meteorología : Lluvia,Weather : Rain
+Meteorología : Nieve,Weather : Snow
+control+y,control + y
+control+j,control + j
+Semana,Week
+control+k,control + k
+control+m,control + m
+control+l,control + l
+Ejecutar un programa :,Program :
+Cualquier categoría,Any Category
+Cualquier categoría :,Any Category :
+Crear una nueva nota :,To create a new memo entry :
+Rellene la información .,Fill in the information .
+Recibir correo electrónico :,Receiving E-mail :
+Seleccione la cuenta IMAP .,Select the IMAP account .
+Borrar correo :,Deleting Mail :
+Para crear una etiqueta :,To create a label :
+Firma,Signature
+Zona horaria :,Time Zone :
+Proxy HTTP,HTTP Proxy
+Crear un contacto,Creating a Contact
+Uno :,One :
+Nuevo elemento :,New Item :
+Crear una cita nueva :,Creating a New Appointment :
+Crear un contacto nuevo :,Creating a New Contact :
+ejecutar,execute
+en línea,inline
+protocolo,protocol
+EE . UU .,U.S.A.
+Aceptar,Click OK .
+Okänt fel,Unknown error
+IMAP+,IMAP +
+Configurar RSS,Set up RSS
+Sin información,No Information
+Seleccionar archivo para importar,Select import file
+Seleccionar archivo para exportar,Select file to export
+Motor :,Engine :
+KB,0 KB
+Proxy HTTP :,HTTP proxy :
+Sin proxy para :,No proxy for :
+Ubicación :,Article Notification
+Almacenamiento,Storage
+Seleccione una cuenta Scalix,Select Scalix Account
+Seleccione un lugar,Select a location
+Ejecutar programa en un terminal,Run program in terminal
+C_olor :,C _ olour :
+El menú contextual,The Context Menu
+El menú contextual,The context menu
+Mover,Move
+Junio 2003,June 2003
+Enero 2003,January 2003
+Junio 2002,June 2002
+Abrir,Opening
+Ver,Viewing
+Extraer,Extracting
+Crear,Creating
+Archivo Cabinet,Cabinet file
+Abrir,Click on the Open toolbar button .
+Patrón,Pattern
+Abrir,Click Open .
+Extraer,Click Extract .
+Nombre,Enter the new archive name in the Name text box .
+Seleccione el archivo que quiere renombrar .,Select the file that you want to rename .
+Renombrar,Click Rename .
+Extraer,Extract
+Extraer aquí,Extract Here
+Extraer en,Extract To …
+Automático,Automatic
+Quitar archivo :,Removing file :
+ARCHIVADOR,ARCHIVE
+CARPETA,FOLDER
+Ir al lugar inicial,Go to the home location
+por _nombre,by _ Name
+por _tamaño,by _ Size
+por ti_po,by T _ ype
+por _ruta,by _ Location
+Ubilacio nFile,LocationFile
+NuevoFile,NewFile
+Lugar : File,Location : File
+TamañoFile,SizeFile
+TipoFile,TypeFile
+Nuevo,New …
+Abrir,Open …
+Nombreopen recent file,Nameopen recent file
+Cortar,Cutler
+Puntuacio n,Score given
+2000-2002,2000 – 2002
+Jugar a Cuatro en raya,Playing Four-in-a-Row
+Activar animación,Enable Animation
+2001-2002,2001 – 2002
+Verificar una huella,Verify a fingerprint
+Configurar Frogr,Set Up Frogr
+Cómo crear una cuenta,How to create your Account
+Organizar_,Organize _
+Frogr,frogr
+Seleccionar un archivo,Select a Picture
+Copiar foto,Copy Photo
+Exportar a CD,CD Export
+Exportar a Facebook,FacebookExport
+F_acebook,F _ acebook …
+Exportar a Flickr,Flickr Export
+Exportar a Gallery,Gallery Export
+Web _Gallery,Web _ Gallery …
+Exportar a SmugMug,SmugMug Export
+Exportar a Tabblo,Tabblo Export
+Exportar a zip,Zip export
+Cambiar ruta,ChangePath
+Galería web en línea,LiveWebGallery
+Galería web en línea,Live Web Gallery
+Combinar RAW,Merge Raw
+Carrete retroactivo,RetroactiveRoll
+Importar en F-Spot,Import into F-Spot
+Interpolar imagen al ampliar .,Interpolate image on zoom .
+Exportar a,Export to
+Q_uitar etiqueta,Rem _ ove Tag
+8 x 10,8 × 10
+Recortar,Crop
+Arreglar,Fix !
+Siguiente fotografía,Next picture
+Siguiente foto,Next photo
+Error al eliminar la fotografía,Error Deleting Picture
+Error al rotar la foto .,Error while rotating photo .
+Error al renombrar la etiqueta,Error renaming tag
+Puntuación,Ratio
+Reintentar,Retry
+0000:00:00 00:00:00,0000 : 00 : 00 00 : 00 : 00
+00:00:00,00 : 00 : 00
+Sin _imagen,No _ image
+el,at
+entre,between
+Mínima puntuación,Min Rating
+Máxima puntuación,Max Rating
+Reparar,Repair
+No hay una foto activa,No active photo
+Enfocar,Sharpen
+Crear una etiqueta,Create New Tag …
+Nuevo nombre :,New name :
+Crear etiqueta nueva,Create New Tag
+Te_mperatura :,Te _ mp :
+Crear correo,Create Mail
+Diminuto,Tiny
+Enorme,Extra large
+Por _puntuación,By _ Rating
+Por _fecha,By _ Date
+Crear e_tiqueta nueva,Create New _ Tag …
+Seleccionar una etiqueta,Select a Tag …
+Rellenar,Fill
+Ennegrecer,Blackout
+Aplicar,Apply
+Pixelar,Pixelate
+Crear CD,Create CD
+Exportar a Facebook,Export to Facebook
+Crear un álbum nuevo,Create a new album
+Título,Caption
+Galería,Gallery
+Anterior,Prev
+Página :,Page :
+Error al conectar con Gallery,Error while connecting to Gallery
+Error al crear el álbum nuevo,Error while creating new album
+Error al conectar con la Gallery,Error Connecting to Gallery
+U_RL :,U _ RL :
+Error al crear el álbum,Error while creating Album
+Álbum público,Public Album
+Cuenta en Tabblo,Tabblo account
+Galería F-Spot,F-Spot Gallery
+Compartir :,Share :
+Importar :,Import :
+Autorrotar,Autorotate
+Carpeta GPS,GPS Directory
+Un único número,A unique number
+Configuración planar,Planar Configuration
+Interpretación fotométrica,Photometric Interpretation
+Saturación,Saturation
+etiqueta124,label124
+Url,URL
+Seleccionar etiqueta,Select Tag
+Error al importar,Import error
+Error al conectar con la cámara,Error connecting to camera
+Copiar _lugar,Copy Locat _ ion
+comprobar tipo,check type
+Revelar,Reveal
+Limpiar,Wipe
+Partir,Split
+De un archivo gtkrc :,From gtkrc File :
+Seleccione un archivo gtkrc,Select A gtkrc File
+Galería2,Gallery2
+Co_nfigurar,Co _ nfigure
+Sitio nuevo,New Site
+Sitio inteligente nuevo,New Smart Site
+Mezclar automáticamente,Automatic merge
+Seguro,Secure
+Autocompletar,Autocompletion
+Permitir Java,Allow Java
+Permitir Java .,Allow Java .
+Permitir JavaScript,Allow JavaScript
+Permitir JavaScript .,Allow JavaScript .
+Bloquear,Lock
+Organización :,Organization :
+Al archivo :,To file :
+Cambiar página _inicial,Change _ Home Page
+Ir a _página inicial,Go _ Home
+Subir,Go up
+Logotipo,Spinner
+A_brir la imagen,Ope _ n Image
+Abrir la imagen _con,Open Image Wit _ h
+Tamaño normal,Normal Size
+Ir a Mi Portal,Go to the My Portal
+Permitir _Java,Allow _ Java
+Permitir Java_Script,Allow Java _ Script
+Relación,Relation
+Texto alt,Alt Text
+Sin referente,No referrer
+URL _inteligente :,S _ mart URL :
+Mirar en el _título,Look in _ title
+I_magen :,I _ mage :
+Revertir,Revert
+Exportar a Mozilla,Export to Mozilla
+Exportar a Konqueror,Export to Konqueror
+E_xportar,E _ xport
+Exportar a _Mozilla,Export to _ Mozilla ...
+Exportar a Ko_nqueror,Export to Ko _ nqueror ...
+C_ortar,C _ ut
+Un nive_l,One _ Level
+No _iniciar Galeon,Don 't _ Start Galeon
+Iniciar _Galeon,Start _ Galeon
+Texto AL_T,AL _ T text
+Valor :,Value :
+Referente :,Referrer :
+Tipo MIME :,MIME type :
+Página inicial,Home Page
+En página nueva,On New Page
+Se_rif :,Se _ rif :
+Limpi_ar caché,Clear C _ ache
+Noruego,Norwegian
+Abrir marco,Open Frame
+Abrir la imagen,Open Image
+Abre la imagen con,Open Image With
+Imprimir el archivo actual,Print the Current File
+Orientación :,Orientation :
+Imprimir a _archivo :,Print to _ file :
+a :,to :
+Palanca,Lever
+Múltiplo,Multiple number
+Juego,Game
+Ignorar,Ignore
+Pionero,Pioneer
+Bohemio,Bohemian
+Mártir,Martyr
+Solitario,Loner
+Antropofobia,Anthropophobia
+Antrofobia,Anthophobia
+Acrofobia,Acrophobia
+Agorafobia,Agoraphobia
+Violín,Violin
+Flauta,Flute
+Arma,Weapon
+Flor,Flower
+Pórtico,Portico
+Columna,Column
+Ático,Attic
+Kilómetro,Kilometre
+Hectogramo,Hectogram
+Litro,Litre
+Galón,Gallon
+Naranja,Orange
+Manzana,Apple
+Uva,Grape
+Patata,Potato
+Tortuga,Turtle
+Rana,Frog
+Tigre,Tiger
+Hiena,Hyena
+Zorro,Wolf
+Ciervo,Deer
+Dolor,Pain
+Sinónimo,Synonym
+Irónico,Ironic
+Trigo,Wheat
+Maíz,Corn
+Arroz,Rice
+Cebolla,Onion
+Lichi,Lychee
+Aceituna,Olive
+Carbono,Carbon
+Titanio,Titanium
+Hematología,Hematology
+Paleontología,Paleontology
+Habitual,Regular
+Excepcional,Exceptional
+Raro,Rare
+Citar,Fixation
+Auténtico,Attention
+Concierto,Concert hall
+Epigrama,Enneagram
+Compañía aérea,Airline
+Aeronave,Aircraft
+Búnker,Bunker
+Tangente,Tangent
+Repugnancia,Repugnance
+Vergüenza,Shame
+Río,River
+Playa,Beach
+Sobre,Envelope
+Tinta,Ink
+Grano,Grain
+Democracia,Democracy
+Oligarquía,Oligarchy
+Opulento,Affluent
+Decágono,Decagon
+Polo,Pole
+Acimut,Azimuth
+Teatro,Theatre
+Fotografi a,Photography
+Luz,Light
+Botar,Bounce
+Flotar,Float
+Enrollar,Roll
+Girar,Turn
+Intuición,Intuition
+Aire,Air
+Barco,Ship
+Jaula,Cage
+Elevación,Equation
+pelar,peel
+trabajar,work
+tobillo,ankle
+Exportar a PDF,PDF export
+Lógica,Logic
+Cálculo,Calculation
+Tema :,Theme :
+Sólo cálculo mental,Mental Calculation Only
+Memoria,Memory
+azul,blue
+amarillo,yellow
+naranja,orange
+negro,black
+blanco,white
+Cubo 3D,3D Cube
+Balanza,Balance
+Contar,Counting
+Porcentaje cubierto,Cover percentage
+Cubo,Cube
+Mueve la figura,Move figure
+Siguiente figura,Next figure
+Relación numérica,Numeric relation
+Bolígrafo,Pencil
+5º,5th
+19º,19th
+4º,4th
+12º,12th
+9º,9th
+Porcentaje,Percentage
+Hora actual,Time now
+Triángulo,Triangle
+Penta gono,Pentagon
+Mover arriba,Move up
+axila,armpit
+trucha,trout
+patata,potato
+jengibre,ginger
+pimienta,pepper
+ajo,garlic
+calabaza,pumpkin
+freno,brake
+lluvia,rain
+niebla,fog
+conejo,rabbit
+mono,monkey
+lobo,wolf
+Serpiente,Snake
+Yerno,Son-in-law
+Riqueza,Wealthy
+Metro,Metre
+ganar,win
+Rectángulo,Rectangle
+emblema,emblem
+labio,lip
+MD2 con RSA,MD2 with RSA
+MD5 con RSA,MD5 with RSA
+SHA1 con RSA,SHA1 with RSA
+SHA1 con DSA,SHA1 with DSA
+Otro nombre,Other Name
+Clave GPGcolumn,PGP Keycolumn
+Atributo,Attribute
+Cifrar,Encrypt
+Firmar,Sign
+Certificar,Certify
+Algoritmo,Algorithm
+Sólo local,Local only
+Huella,Fingerprint
+Subclave pública,Public Subkey
+Clave pública DSA,Public DSA Key
+Fortaleza,Strength
+Confirmar :,Confirm :
+Sucio,Dirty
+Nombre largo,Long name
+Siguiente ubicación,Next placement
+Flotante,Floating
+X Flotante,Float X
+Y Flotante,Float Y
+Iconizar,Iconify
+Icono Pixbuf,Pixbuf Icon
+Gnome,GNOME
+ARCHIVO-DE-CONFIGURACIÓN,CONFIGFILE
+OPCIONES,OPTIONS
+DIRECCIÓN,ADDRESS
+TIPO,TYPE
+C_onectar,C _ onnect
+COMANDO,COMMAND
+A_pagar,Shut _ Down
+Plano,Plain
+Co_lor :,Co _ lour :
+Configurar _XDMCP,Configure _ XDMCP ...
+Logotipo,Logo
+Remota,Remote
+Gnome Feliz,Happy GNOME
+PANTALLA,DISPLAY
+ARCHIVO-DE-AUTORIZACIÓN,AUTHFILE
+LRla_bel :,LRla _ bel :
+Configurar XDMC_P,Configure XDMC _ P ...
+Ru_ta :,Pa _ th :
+fallo general,general failure
+Texto inactivo,Inactive Text
+Texto activo,Active Text
+Apagar,Shut Down
+Bloquear la pantalla,Lock Screen
+Salir,Quit …
+página 5,page 5
+AutomaticLogin=,AutomaticLogin =
+Soporte XDMCP,XDCMP Support
+MaxWait=30,MaxWait = 30
+Port=177,Port = 177
+Geary,Geary Mail
+email ; e-mail ; correo electrónico ; correo-e ;,Email ; E-mail ; Mail ;
+hace 1 año,1 year back
+Co_ntinuar,Co _ ntinue
+Yo,Me
+Cco :,Bcc :
+Copiar en_lace,Copy _ Link
+Correo Yahoo !,Yahoo ! Mail
+Eliminar cuenta,Remove account
+S_erif,S _ erif
+S_ervicio :,S _ ervice :
+N_ombre :,N _ ame :
+P_uerto :,P _ ort :
+Pue_rto :,Por _ t :
+Colaboración,Collaboration
+Archivo nuevo,New File
+pa gina 1,page 1
+boto n,button
+pa gina 2,page 2
+pa gina 3,page 3
+Botón conmutable activo,Active toggle button
+boto n1,toolbutton1
+boto n2,toolbutton2
+boto n4,toolbutton4
+boto n5,toolbutton5
+boto n6,toolbutton7
+boto n8,toolbutton8
+Binario,Binary
+Reemplazar con,Replace With
+Saltar a byte,Jump to byte
+Imprimir el archivo actual,Print the current file
+Configurar la aplicación,Configure the application
+Binario :,Binary :
+GEOMETRÍA,GEOMETRY
+Seleccione un archivo para abrir,Select a file to open
+Salir,Exit
+Exportar a HTML ...,Export to HTML ...
+Ir al byte,Goto Byte
+Seleccione una fuente,Pick a Font
+ARCHIVOS,FILES
+Familia tipográfica,Font Family
+Rotación :,Rotation :
+Corte :,Shear :
+Tamaño tipográfico :,Font Size :
+Punto por punto,Dot for Dot
+Aplanar imagen,Flatten Image
+Convertir a RGB,Convert to RGB
+Confirmar,Confirm
+Exportar archivo,Export File
+por nombre,by name
+por autor,by author
+por copyright,by copyright
+por tipo,by type
+porcentaje,percent
+Ca_nal,C _ hannel
+Relleno con patrón,Pattern fill
+Sólo blanco,White only
+Sólo negro,Black only
+Ennegrecer,Burn
+Bilineal,Bi-linear
+Pixbuf en línea,Inline pixbuf
+Color RGB,RGB colour
+RGB-alfa,RGB-alpha
+Cúbica,Cubic
+Perceptible,Perceptual
+Colorimétrica relativa,Relative colourimetric
+Ne_gro,Blac _ k
+Actual :,Current :
+Seleccionar _rango :,Select _ range :
+Página 000,Page 000
+Ancla,Anchor
+C_entrar,C _ entre
+Vertical,Portrait
+Tono,Hue
+Cian,Cyan
+Amarillo,Yellow
+Negro,Black
+Acuarela,Watercolour
+Botón 0,Button 0
+Botón 4,Button 4
+Botón 5,Button 5
+Botón 6,Button 6
+Botón 7,Button 7
+Botón 8,Button 8
+Botón 9,Button 9
+Botón extra,Button Extra
+Subir en Z,Z Move Up
+Bajar en Z,Z Move Down
+Alejar en Y,Y Move Away
+Acercar en Y,Y Move Near
+Intérprete interactivo Gimp-Python,Interactive Gimp-Python interpreter
+Paleta,Palette
+Azul o valor,Blue or Value
+Ruta para exportar HTML,Path for HTML export
+Sólo blancocheck-type,White onlycheck-type
+Sólo negroclone-type,Black onlyclone-type
+Imagenclone-type,Imageclone-type
+Linealinterpolation-type,Linearinterpolation-type
+Pixbuf en líneaicon-type,Inline pixbuficon-type
+RGB-alfaimage-type,RGB-alphaimage-type
+Cúbicainterpolation-type,Cubicinterpolation-type
+Ampliarzoom-type,Zoom inzoom-type
+El principio,The Very Beginning
+Seleccio n poligonal,Polygonal Selection
+Operacio n GEGL,GEGL operation
+Programacio n,Scripting
+GIMP,The GIMP Documentation Team
+PREA MBULO,PREAMBLE
+APLICACIO N y DEFINICIONES,APPLICABILITY AND DEFINITIONS
+COPIA LITERAL,VERBATIM COPYING
+COPIADO EN CANTIDAD,COPYING IN QUANTITY
+MODIFICACIONES,MODIFICATIONS
+COMBINACIO N DE DOCUMENTOS,COMBINING DOCUMENTS
+COLECCIONES DE DOCUMENTOS,COLLECTIONS OF DOCUMENTS
+AGREGACIO N CON TRABAJOS INDEPENDIENTES,AGGREGATION WITH INDEPENDENT WORKS
+TRADUCCIO N,TRANSLATION
+TERMINACIO N,TERMINATION
+REVISIONES FUTURAS DE ESTA LICENCIA,FUTURE REVISIONS OF THIS LICENSE
+GIMP,Bugzilla : Enter Bug : GIMP
+GIMP,Enter Bug : GIMP
+Bibliografía,Bibliography
+El proyecto OpenICC,The OpenICC project
+Revertir la imagen,Reverting the image
+cancelar ;,cancel ;
+Configuracio n,Setup
+Para terminar ...,Finally . . .
+Difuminar,Feathering
+Canal alfa,Alpha Channel
+Capa,Layer
+Enlace,Linkage
+Bloquear el canal alfa,Lock Alpha channel
+LLavero,Key fob
+Multiplicar,Multiply
+Pantalla,Screen
+Solapar,Overlay
+Imagen original,Original image
+Crear imagen,Create image
+Imagen nueva,New image
+Abrir un archivo,Open File
+Abrir reciente,Open Recent
+Canal azul,Blue channel
+Empotrar,Docking
+Menú contextual,Context Menu
+Seguir automáticamente a la imagen activa,Auto Follow Active Image
+Canal,Channel
+Perfil ICC,ICC profile
+Aplicar el perfil ICC,Applying the ICC-profile
+Crear una plantilla nueva,Create a new template
+Dia logo,Dialog
+Pi xel,Pixel
+Puntero,Pointer
+Eliminar patrón,Delete Pattern
+Ruta nueva,New Path
+Bajar la ruta,Lower Path
+bajar la ruta,See Lower Path .
+Duplicar la ruta,Duplicate Path
+Seleccio n a ruta,Selection to Path
+trazar la ruta,See Stroke Path .
+Eliminar la ruta,Delete Path
+Trazar la ruta,Stroke Path
+Copiar la ruta,Copy Path
+Importar la ruta,Import Path
+Exportar la ruta,Export Path
+Paleta nueva,New Palette
+Paleta nueva,New palette
+Duplicar paleta,Duplicate Palette
+Duplicar,Duplicate
+Eliminar paleta,Delete Palette
+Importar paleta,Import Palette
+Seleccionar origen,Select Source
+Eliminar el color,Delete Color
+Bloquear el canal alfa,Lock alpha channel
+Capa nueva,New layer
+Bajar a la capa,Lower layer
+Duplicar la capa,Duplicate layer
+Anclar la capa,Anchor layer
+Eliminar la capa,Delete layer
+Ctrl,Ctrl -click on a color entry
+Notacio n HTML,HTML-Notation
+Exportar,Exporting
+Plantilla,Template
+Acuarela,Watercolor
+Recoge color,Color picker
+Notación HTML,HTML Notation
+Seleccion,Selection
+Canal nuevo,New Channel
+Bajar el canal,Lower Channel
+Duplicar canal,Duplicate Channel
+Eliminar el canal,Delete Channel
+Canal alfa,Alpha channel
+Miniatura,Thumbnail
+Eliminar búfer,Delete Buffer
+Menu contextual,Context menu
+Forma,Shape
+Alfa a logotipo,Alpha to Logo
+Activar el filtro,Activate the filter
+Por hacer,TODO
+Neo n,Neon
+Neón,Example for the Neon filter
+Neo n,The Neon filter
+Neón,The Neon logo
+El efecto neón,The Neon effect
+Metal fri o,Cool Metal
+Metal fri o,Example for the Cool Metal filter
+Metal fri o,The Cool Metal filter
+Metal fri o,The Cool Metal logo
+Hacer el reflejo,Making the reflection
+Cromar,Chrome
+Cromar,Example for the Chrome filter
+Cromar,The Chrome logo
+Tiza,Chalk
+Tiza,Example for the Chalk filter
+Tiza,The Chalk logo
+Tiza,Chalk option
+Tiza,The Chalk filter
+Bovinación,Bovination
+Bovinación,Example for the Bovination filter
+Neo n alieni gena,Alien Neon
+Neón alienígena,Example for the Alien Neon filter
+Contorno 3D,3D Outline
+Contorno 3D,Example for the 3D Outline filter
+Contorno 3D,The 3D Outline filter
+Contorno 3D,The 3D Outline logo
+Animación,Animation
+Activar el filtro,Activating the filter
+Globo giratorio,Spinning Globe
+Globo giratorio,Example for the Spinning Globe filter : original image
+Trabajar en copia,Work on copy
+Optimizar,Optimize
+Preparar para GIF,Prepare for GIF
+Convolución,Convolve
+Valor mínimo,Minimum value
+Valor máximo,Maximum value
+Activar el filtro,Starting filter
+Pixelar,Pixelize
+RGB mínimo,Min RGB
+La imagen original .,The original image .
+Fotocopia,Photocopy
+Fotocopia,Example for the Photocopy filter
+Pintura al óleo,Oilify
+Pintura al óleo,Example for the Oilify filter
+Exponente,Exponent
+Entelar,Clothify
+Elevacio n,Elevation
+Viñeta,Cartoon
+Viñeta,Example for the Cartoon filter
+efecto,effect
+Relieve,Relief
+Ángulo inicial,Start angle
+Mantener el original,Keep original
+Del papel,From paper
+Pixelizar,Example for the Pixelize filter
+Combinar,Combine
+Película,Film
+Numeracio n,Numbering
+A la cima,At top
+En la peli cula,On film
+Fuente 1,Source 1
+Fuente 2,Source 2
+Solapamiento,Overlap
+Imagen fuente 1,Source image 1
+Imagen fuente 2,Source image 2
+Mapa 1,Map 1
+Mapa 2,Map 2
+Aplanar imagen,Flatten image
+Manchar,Smear
+Ennegrecer,Blacken
+Reflexivo,Reflective
+Propagar valor,Value Propagate
+Ejemplo para el filtro propagar valor,Example for the Value Propagate filter
+Propagar,Propagate
+A la cima,To top
+Propagar el canal alfa,Propagating alpha channel
+Con texto,With text
+Principal,Main
+Aclarar,Brighten
+Rotar,Rotate
+Reflejar,Mirror
+Intercambiar,Swap
+Encoger,Shrink
+Bilineal,Bilinear
+Animar,Animate
+Ping-Pong,Ping pong
+Sobel horizontalmente,Sobel horizontally
+Sobel verticalmente,Sobel vertically
+Diferencial,Differential
+Envolver,Wrap
+Normalizar,Normalize
+Realzar,Enhance
+Filtro NL,NL Filter
+Filtro NL,NL filter
+Filtro no lineal,Nonlinear filter
+Dilatar,Dilate
+Dilatar texto,Dilate text
+Matriz,Matrix
+Efecto Xach,Xach-Effect
+Efecto Xach,Example for the Xach-Effect filter
+Color natural,Natural color
+Ángulo,Angle example
+Ángulo 15°,Angle 15 °
+Interpolacio n,Interpolation
+Crear una imagen nueva,Create new image
+Punto,Point
+Direccional,Directional
+Brillo,Bright
+Metálico,Metallic
+Curva,Curve
+Altura ma xima,Maximum height
+Centro,Center
+Rotacio n,Rotation
+Rotar el efecto .,Turn the effect .
+Fulgor,Glow
+Deformar,Warp
+Movimiento,Movement
+Forzar,Force
+Seleccionar aquí,Select here
+Centrar,Centering
+Mapear objeto,Map Object
+Mapear a,Map to
+Caja,Box
+Activación,Activation
+Traza Fractal,Fractal Trace
+Traza fractal,Fractal trace
+Remolino,Whirl
+Manchar,Slur
+Lanzar,Hurl
+Lanzar,Example for the Hurl filter
+Herramienta,Tool
+Textura,Texture
+Turbulencia,Turbulence
+Rotación X,Rotate X
+Rotación Y,Rotate Y
+Rotación Z,Rotate Z
+Turbulento,Turbulent
+Detalle,Detail
+Lava,Example for the Lava filter
+Fractal IFS,IFS Fractal
+Centrar,Recenter
+Memoria máx .,Max. memory
+Recortar,Shear
+Voltear el fractal activo .,Flip the active fractal .
+Completa,Full
+Un tutorial breve,A Brief Tutorial
+Crear li nea,Create line
+Crear recta ngulo,Create rectangle
+Crear ci rculo,Create circle
+Crear arco,Create arc
+Crear poli gono regular,Create regular polygon
+Crear curva bezier,Create bezier curve
+Mover un objeto,Move an object
+Copiar un objeto,Copy an object
+Eliminar un objeto,Delete an object
+Seleccionar un objeto,Select an object
+Autoexplicativa .,Self explanatory .
+Anterior,Back
+Trazar,Stroke
+Seno,Sine
+Niebla,Example for the Fog filter
+Llama,Flame
+Difracción,Diffraction
+Rellenar con para metro k,Fill with parameter k
+Rellenar con el parámetro k,"See above , Fill with k parameter ."
+Para metro k,Parameter k
+Límite inferior,Range low
+Valor inicial,Initial value
+Circuito,Circuit
+Trocear,Slice
+Trocear,Example for the Slice filter
+Trocear,Simple Slice filter example output
+Semiaplanar,Semi-Flatten
+Abrir ; Abrir reciente,Open ; Open recent
+Mapa,Mapping
+Flecha,Arrow
+Rectángulo ; Círculo ; Polígono,Rectangle ; Circle ; Polygon
+Selección Rectangular,Rect Select
+Selección libre,Free Select
+Seleccionar por color,Select By Color
+Recoge-color,Color Picker
+Clonar,Clone
+Archivo,Key reference for the File menu
+Ctrl,Ctrl + N
+Ctrl,Ctrl + O
+Ctrl Alt,Ctrl + Alt + O
+Ctrl,Ctrl + D
+Ctrl,Ctrl + 1
+Abrir imagen reciente nº1,Open recent image # 1
+Ctrl,Ctrl + 2
+Abrir imagen reciente nº2,Open recent image # 2
+Ctrl,Ctrl + 3
+Abrir imagen reciente nº3,Open recent image # 3
+Ctrl,Ctrl + 4
+Abrir imagen reciente nº4,Open recent image # 4
+Ctrl,Ctrl + 5
+Abrir imagen reciente nº5,Open recent image # 5
+Ctrl,Ctrl + 6
+Abrir imagen reciente nº6,Open recent image # 6
+Ctrl,Ctrl + 7
+Abrir imagen reciente nº7,Open recent image # 7
+Ctrl,Ctrl + 8
+Abrir imagen reciente nº8,Open recent image # 8
+Ctrl,Ctrl + 9
+Abrir imagen reciente nº9,Open recent image # 9
+Ctrl,Ctrl + 0
+Abrir imagen reciente nº10,Open recent image # 10
+Ctrl,Ctrl + S
+Ctrl,Ctrl + Q
+Ctrl,Ctrl + L
+Ctrl,Ctrl + G
+Alt Ctrl,"Alt + F4 , Ctrl + W"
+Entrar,Enter
+Definir nuevo valor,Set the new value
+Ctrl Alt Ctrl Alt,Ctrl + Alt + PgUp Ctrl + Alt + PgDn
+Alt,Alt + Up
+Alt,Alt + Down
+Alt,Alt + Home
+Ctrl,Ctrl + W
+Ampliación 1:1,Zoom 1 : 1
+Ctrl,Ctrl + E
+Ctrl,Ctrl + Z
+Ctrl,Ctrl + Y
+Ctrl,Ctrl + C
+Ctrl,Ctrl + X
+Ctrl,Ctrl + V
+Supr,Del
+Ctrl,"Ctrl + ,"
+Ctrl,Ctrl + .
+Ctrl,Ctrl + ;
+Rellenar con patrón,Fill with Pattern
+Ctrl,"PgUp , Ctrl + Tab"
+Seleccionar la capa inferior,Select the layer below
+Ctrl,Ctrl + M
+Ctrl,Ctrl + H
+Seleccionar,Key reference for Select menu
+Ctrl,Ctrl + T
+Ctrl,Ctrl + A
+Ctrl,Ctrl + I
+Ctrl,Ctrl + click
+Ampliar en el a rea,Zoom into the area
+Nota legal,Legal Notice
+Prefacio,Preface
+Pintar con GIMP,Painting with GIMP
+Enriquecer mi GIMP,Pimp my GIMP
+Explicación,Explanation
+Valor,Color
+Notación HTML,HTML notation
+L*a*b*,L * a * b *
+La imagen final,The final image
+Efecto muaré,Moireacute ; Effect
+Muaré,Moireacute ;
+Complemento,Plugin
+Definición,Definition
+Cuantizacio n,Quantization
+Colorime trica relativa,Relative colorimetric
+Círculo cromático,Colorcircle
+Y=R+G+B,Y = R + G + B
+U=B-Y,U = B-Y
+V=R-Y,V = R-Y
+Normalizar,Normalize Example
+Ecualizar,Equalize
+Ecualizar,Equalize example
+Realzar color,Color Enhance
+Realzar color,Color enhance
+Realzar color,Color Enhance example
+Imagen original,Source image
+Componente cian,Cyan component
+Componente Negro,Black component
+Monocromo,Monochrome
+Suavizar paleta,Smooth Palette
+Suavizar paleta,Example for the Smooth Palette filter
+Área,Area
+Color origen,From color
+Color final,To color
+Mapa alienígena,Alien Map
+Invertir el valor,Example for the Value invert filter
+Imagen original,Original
+Retinex,The View Menu
+Uniformar,Uniform
+Dinámico,Dynamic
+RGB ma x,Max RGB
+RGB ma x,Example for the filter Max RGB
+RGB ma x,The Image Menu
+Mapa,The Help Menu
+Ejemplo,Sample :
+Caliente,Hot
+Crear una capa nueva,Create new layer
+Color a alfa,Colour to Alpha
+Colorear,Colourify
+Trazar ruta,Stoke path
+Rellenar con patrón,Fill with pattern
+Activar el Submenú,Activate the Submenu
+Imprimir,Printing
+Diálogo abrir,File Open _ Dialogue
+Abrir reciente,Open recent
+Abrir ubicación,The Select Menu
+Al crear,When creating
+blanco,Fill the image with White .
+Seleccionar una región para grabar,Select a _ region to grab
+Submenu,Sub-menu
+Menú,Menu
+Complemento,Plug-In
+En línea,Outline
+Voltear horizontalmente ; voltear verticalmente,Flip _ Horizontally
+Guillotina,Guillotine
+Taman o en memoria,Size in memory :
+Guía nueva,The File Menu
+Convertir,Convert
+Autorecortar la imagen,Autocrop Imag _ e
+Autorecortar,Autocrop
+Pila,Stac _ k
+Rotación arbitraria,Applying Rotate Arbitrary
+Rotar 180°,Rotate _ 180 °
+Rotar 180°,Applying Rotate 180 °
+Capa a la cima,Layer to _ Top
+"Y = -40 , volver al principio","Y = -40 , wrap"
+Capa nueva,New Layer
+Capa nueva,The Layer Menu
+Combinar hacia abajo,Merge Down
+Bajar capa,Lower Layer
+Voltear verticalmente,Flip _ Vertically
+Voltear verticalmente,Flip vertically
+Voltear la capa verticalmente,Applying Flip Layer Vertically
+Voltear horizontalmente,Flip horizontally
+Volear horizontalmente,Applying Flip Layer Horizontally
+Duplicar la capa,D _ uplicate Layer
+Recortar la capa,Crop Layer
+Seleccionar la capa inferior,Select _ Bottom Layer
+Capa inferior,Bottom left
+Autorecortar capa,Autocrop Lay _ er
+Autorecortar capa,Before applying Autocrop Layer
+Anclar la capa flotante,Anchor the floating layer
+Quitar el canal alfa,Remove Alpha Channel
+El menú archivo,The File menu
+A la ruta,To _ Path
+Encoger,S _ hrink
+Cóncavo,Concave
+ninguno,The Select None button .
+invertir,The Select Invert button .
+Revertir la ampliación,Re _ vert Zoom
+Del tema,From _ Theme
+Activar la herramienta,Activating the Tool
+Práctica real,Actual practice
+Suave,Smooth
+Ampliacio n,The Zoom tool in Toolbox
+Alternar herramienta,Tool Toggle
+Ctrl Alt,Ctrl ; Alt
+Poligonal,Polygonal
+Trazar ruta,Stroke path
+ruta,See the Path concept .
+Pintar,Paint
+Operacio n GEGL,GEGL Operation
+Operación,Operation
+Gotero,Eye Dropper
+Capturar el color,Grab color
+So lo recoger,Pick Only
+Seleccio n rectangular,Rectangle Select
+Seleccio n poligonal,Polygon Select
+Seleccionar por color,Select By Colour
+Mover la capa activa,Move the active layer
+Mover la ruta activa,Move the active path
+Mover una capa,Moving a layer
+Mover una ruta,Pick a path
+Herramienta « Voltear »,Flip Path
+Afectar,Affect :
+Sólo la capa actual,Current layer only
+Selección,Highlight
+Auto encoger,Auto Shrink
+Recortar,Clipping :
+Alineacio n,Align
+Relativo a :,Relative to :
+Capa activa,Active layer :
+Canal activo,Active Channel :
+Ruta activa,Active Path :
+Dibujar,Draw
+Objetivo,Intention
+Crear una imagen vacía,Creating a Blank Drawable
+Dibujar la línea,Drawing the Line
+Dibujar la línea,Drawing the line
+Imagen final,Final Image
+Recortar una imagen,Crop An Image
+recortar,crop
+Seleccionar una región para recortar,Select a Region to Crop
+Diálogo para recortar,Dialog for Cropping
+información,information
+Voltear una imagen,Flip An Image
+Voltear una imagen,Dialog Flip an Image
+Rotar una imagen,Rotate An Image
+Rotar una imagen,Menu for Rotate An Image
+Rotar una imagen,Example for Rotate An Image
+Imagen original,Source Image
+Li nea,Line
+Dibujar un recta ngulo,Drawing a rectangle
+Dibujar una línea recta,Drawing a Straight Line
+Una imagen nueva,A new image
+Practicar Scheme,Practicing In Scheme
+"3+5 , 3 +5 , 3+ 5","3 + 5 , 3 + 5 , 3 + 5"
+let*,The General Syntax Of let *
+car,The car Function
+TRUE o FALSE,TRUE or FALSE
+Crear una imagen nueva,Creating A New Image
+Qué obtiene,What you obtain
+Elemento,Element
+incremento_tecla_página,page _ inc
+"SF-COLOR "" etiqueta "" "" color ""","SF-COLOR "" label "" "" color """
+Rotar la imagen,Rotating an Image
+Recortar,Cropping
+Enfocar,Unblurring
+Suavizar,Softening
+Trazar una ruta,Stroking a Path
+Entrelazar,Interlace
+Bucle infinito,Loop forever
+Autoexplicativa .,Self-explanatory .
+Dia logo exportar archivo como MNG,Export MNG File Dialog
+Herramienta « mover »,Move Tool
+Sin accio n,No action
+Variable,Drawable
+Entorno,Environment
+Calibración,C _ alibrate ...
+por nombreicon-type,by nameicon-type
+NoHalointerpolation-type,LoHalointerpolation-type
+Saturacio n,Green or Saturation
+EAN-8 +2,EAN-8 + 2
+EAN-8 +5,EAN-8 + 5
+EAN-13 2,EAN-13 + 2
+EAN-13 +5,EAN-13 + 5
+UPC-A +2,UPC-A + 2
+UPC-A +5,UPC-A + 5
+UPC-E +2,UPC-E + 2
+UPC-E +5,UPC-E + 5
+ISBN +5,ISBN + 5
+Runa Azteca,Aztec Rune
+Telepen numérico,Telepen Numeric
+Marrón,Brown
+Azul marino,Navy Blue
+Salmón,Salmon
+Violeta,Violet
+Caqui,Khaki
+Amarillo claro,Light Yellow
+Cián claro,Light Cyan
+Blanco,White
+Traer al frente,Bring to front
+Alinear por centro horizontal,Align horizontal centre
+Alinear por centro vertical,Align vertical centre
+Centrar horizontalmente,Centre horizontally
+Centrar verticalmente,Centre vertically
+Crear una imagen,Create image object
+Crear una línea,Create line object
+Tecleo,Typing
+Familia tipográfica,Font family
+Itálica,Italic
+Alinear texto,Align text
+Cualquiera,Any
+Sin relleno,No Fill
+Sin línea,No Line
+Crear un archivo nuevo,Create a new file
+Voltear objeto horizontalmente,Flip object horizontally
+Voltear objeto verticalmente,Flip object vertically
+Alinear al centro,Align centre
+Alinear por parte inferior,Align bottom
+Margen,Markup
+Barra principal,Main toolbar
+Reciente,Recent
+Familia :,Family :
+clave :,key :
+Clave :,Key :
+Formato :,format :
+Alto :,Height :
+Ángulo :,Angle :
+Carta,US Letter
+Documento,Locale
+Fuente :,Font :
+Eli ptica,Elliptical
+2. Alto :,2 . Height :
+6. Margen,6 . Margin
+4. Márgen,4 . Margin
+3. Margen,3 . Margin
+Comenzar en la etiqueta,Start on label
+Intercalar,Collate
+Legal,US Legal
+Ejecutivo,US Executive
+Sobre Monarch,Monarch Envelope
+Cualquier etiqueta,Any label
+Abrir un proyecto,Opening a Project
+Caja horizontal,Horizontal Box
+Caja vertical,Vertical Box
+Botonera horizontal,Horizontal Button Box
+Botonera vertical,Vertical Button Box
+Marco,Frame
+Murray,Murrayc
+Iniciar Glom,Starting Glom
+Al iniciar Glom,When You Start Glom
+Diálogo : Conexión,Dialogue : Connection
+Diálogo : Grupo nuevo,Dialogue : New group
+Número - Título,Number - Title
+Género :,Genre :
+Abrir un archivo,Open a File …
+Suma MD5,MD5 Sum
+Perfil nuevo,New Profile
+Aplicación principal,Main Application
+Apl,App
+Silenciar,Mute
+Grab .,Rec .
+Mayo 2003,March 2003
+Mayo 2003,May 2003
+Símbolo,Symbol
+Proyecto GNOME,GNOME Project
+Comprobar información ACPI,Checking the ACPI information
+Seleccionar la CPU que monitorizar,Selecting the CPU to monitor
+Menú emergente,Popup Menu
+Quitar un complemento,Removing a Plug-in
+Marzo 2005,March 2005
+Septiembre 2004,September 2004
+Febrero 2004,February 2004
+Julio 2002,July 2002
+Marzo 2002,March 2002
+Informe meteorológico,Weather Report
+La temperatura actual .,The current temperature .
+Noche,Stock Night
+Niebla,Stock Fog
+Lluvia,Stock Rain
+Nieve,Stock Snow
+Tormenta,Stock Storm
+Cambiar a una zona particular,Changing to Particular Location
+Cielo,Sky
+Temperatura,Temperature
+Temperatura actual .,Current temperature .
+Para apagar el volumen,To Switch the Volume Off
+Altavoz,Speaker
+Micrófono,Microphone
+Línea-1,Line-1
+Línea-2,Line-2
+Parámetro,Parameter
+Botón « Borrar »,Delete button
+CPU que monitorizar,CPU to Monitor
+Gráfico,Graphic
+Belga,Belgian
+Búlgaro cirílico,Bulgarian Cyrillic
+Georgiano latino,Georgian Latin
+Húngaro latino 1,Hungarian latin1
+Cielo :,Sky :
+Temperatura :,Temperature :
+Gráfica financiera,Financial Chart
+Vol+MA,Vol + MA
+Precio,Price
+Gráfica,Chart
+Ganancia,Gain
+Lanzar el programa,Start program
+A_ltura :,H _ eight :
+1 año,1 Year
+Barra,Bar
+Logari tmica,Logarithmic
+"Airlake , aeropuerto",Airlake Airport
+Aeropuerto,Airport
+Provenza,Aix-en-Provence
+"Akron , aeropuerto internacional Akron Fulton","Akron , Akron Fulton International Airport"
+"Albuquerque , aeropuerto",Albuquerque Airport
+Arkhangel'Sk,Arkhangel 'Sk
+"Arlington Municipal , aeropuerto",Arlington Municipal Airport
+Arica,Arwi
+Altamira,Atbara
+"Aurora State , aeropuerto",Aurora State Airport
+"Bacacheri , aeropuerto",Bacacheri Airport
+Bac u,Bacau
+Bar Harbor,Bar Harbour
+Baracoa,Baraboo
+Pekín,Beijing
+Berna,Belp
+Benton Harbor,Benton Harbour
+Berlín,Berlin
+Berna,Bern
+Lago Bicycle,Bicycle Lake
+Lago Big River,Big River Lake
+Birni-N'Konni,Birni-N 'Konni
+Boca Ratón,Boca Raton
+Braganza,Bragança
+Bra,Brač
+Brnö,Brno
+Búfalo,Buffalo
+El Cairo,Cairo
+"Calgary , aeropuerto",Calgary Airport
+Camagüey,Camaguey
+Cabo Blanco,Cape Blanco
+Cabo Cañaberal,Cape Canaveral
+Cabo Dyer,Cape Dyer
+Cabo Henry,Cape Henry
+Cabo Hooper,Cape Hooper
+Cabo Newenham,Cape Newenham
+Cabo Vicente,Cape Vincent
+"Capital , aeropuerto internacional",Capital International Airport
+Cabo S. Lorenzo,Capo S. Lorenzo
+"Centennial , aeropuerto",Centennial Airport
+"Charlevoix , aeropuerto",Charlevoix Airport
+"Charlottetown , aeropuerto",Charlottetown Airport
+"Chatham Municipal , aeropuerto",Chatham Municipal Airport
+New River,Chetco River
+Lago China,China Lake
+Chi in u,Chişinău
+"City , aeropuerto",City Airport
+Lago Clayton,Clayton Lake
+Playa Cocoa,Cocoa Beach
+Colombia,Columbia
+"Cook County , aeropuerto",Cook County Airport
+Copenhage,Copenhagen
+Copper Harbor,Copper Harbour
+"Craig , aeropuerto",Craig Airport
+Cul'Man,Cul 'Man
+Curaçao,Curacao
+Daiton,Dayton
+"De Kalb-Peachtree , aeropuerto",De Kalb-Peachtree Airport
+"Deering , aeropuerto",Deering Airport
+Del Río,Del Rio
+Diego García,Diego Garcia
+Dolný Hri ov,Dolný Hričov
+"Double Eagle II , aeropuerto",Double Eagle II Airport
+"Downtown , aeropuerto",Downtown Airport
+Dublín,Dublin
+Dutch Harbor,Dutch Harbour
+Ekaterinburgo,Ekaterinburg
+"Fenghuang , aeropuerto internacional",Fenghuang International Airport
+Florencia,Florence
+Fuerte Belvoir,Fort Belvoir
+Fuerte Benning,Fort Benning
+Fuerte Bragg,Fort Bragg
+Fuerte Campbell,Fort Campbell
+Fuerte Drum,Fort Drum
+Fuerte Huachuca,Fort Huachuca
+Fuerte Knox,Fort Knox
+Fuerte Riley,Fort Riley
+Fuerte Sill,Fort Sill
+Fuerte Smith,Fort Smith
+Fuerte Stewart,Fort Stewart
+Fuerte Stockton,Fort Stockton
+Fuerte Wayne,Fort Wayne
+Frankfurt,Frankfort
+Fua'Amotu,Fua 'Amotu
+"Fulton County , aeropuerto",Fulton County Airport
+Lago Galbraith,Galbraith Lake
+"Galeão , aeropuerto",Galeão Airport
+"Gatwick , aeropuerto",Gatwick Airport
+Ginebra,Geneva
+"George , aeropuerto",George Airport
+Guaraní,Guarany
+Galena,Gyanca
+Hanoi,Ha Noi
+Granizo,Hail
+Hamburgo,Hamburg
+Harbor Beach,Harbour Beach
+Hawai,Hawaii
+"Heathrow , aeropuerto",Heathrow Airport
+Hebrón,Hebron
+"Hobby , aeropuerto",Hobby Airport
+"Homer , aeropuerto",Homer Airport
+"Hong Kong , aeropuerto internacional",Hong Kong International Airport
+"Hongquiao , aeropuerto internacional",Hongqiao International Airport
+Honolulú,Honolulu
+"Huanghua , aeropuerto internacional",Huanghua International Airport
+Ia i,Iaşi
+Aeropuerto Internacional,International Airport
+"Jacarepaguá , aeropuerto",Jacarepaguá Airport
+"Jiangbe , aeropuerto",Jiangbe Airport
+"Jomo Kenyatta , aeropuerto",Jomo Kenyatta Airport
+Rey Salomón,King Salmon
+L'Viv,L 'Viv
+"La Aurora , aeropuerto",La Aurora Airport
+Libia,Libya
+Liep ja,Liepāja
+Limón,Limon
+Ubicación 1,Location 1
+Ubicación 2,Location 2
+Ubicación 3,Location 3
+Ubicación 4,Location 4
+"Logan , aeropuerto",Logan Airport
+"Lott International , aeropuerto",Lott International Airport
+Lu enec,Lučenec
+M'Pouya,M 'Pouya
+Ma'An,Ma 'An
+"Melville Hall , aeropuerto",Melville Hall Airport
+"Mmabatho , aeropuerto",Mmabatho Airport
+"Mobile Downtown , aeropuerto",Mobile Downtown Airport
+"Mobile Regional , aeropuerto",Mobile Regional Airport
+"Montauk , aeropuerto",Montauk Airport
+"Mora Municipal , aeropuerto",Mora Municipal Airport
+Múnich,Munich
+"Municipal , aeropuerto",Municipal Airport
+Muncie,Munte
+N'Dele,N 'Dele
+N'Zerekore,N 'Zerekore
+Nuevo México,New Mexico
+"New Tokyo International , aeropuerto",New Tokyo International Airport
+Nueva York,New York
+Niágara,Niagara
+Niza,Nice
+"O'Hare , aeropuerto",O 'Hare Airport
+O'Neill,O 'Neill
+Oak Harbor,Oak Harbour
+Ohio,OhioОхрид
+"Opelika , aeropuertoPorto",Opelika AirportPorto
+Orán,Oran
+Oregón,Oregon
+Orenburgo,Orenburg
+"Pangnirtung , aeropuerto",Pangnirtung Airport
+Paraná,Parana
+"Paulatuk , aeropuerto",Paulatuk Airport
+"Pekoa , aeropuerto Santo",Pekoa Airport Santo
+"Pelly Bay , aeropuerto",Pelly Bay Airport
+Perpiñán,Perpignan
+Pieš any,Piešťany
+Ponce De León,Ponce De Leon Inlet
+Puerto Alegre,Porto Alegre
+"Porto Alegre , aeropuerto",Porto Alegre Airport
+Puerto Santo,Porto Santo
+Pozna,Poznań
+"Princeton , aeropuerto",Princeton Airport
+Príncipe,Principe
+Quatar,Qatar
+Québec,Quebec
+"Queen Alia , aeropuerto",Queen Alia Airport
+"Queen Beatrix , aeropuerto",Queen Beatrix Airport
+Ratón,Raton
+RifleR ga,RifleRīga
+La Rioja,Rioja
+Roma,Rome
+Sach'On Ab,Sach 'On Ab
+"Sacramento Mather , aeropuerto",Sacramento Mather Airport
+"Saginaw County H.W. Browne , aeropuerto",Saginaw County H.W. Browne Airport
+San Antonio,Saint Anthony
+San Ignacio,Saint Ignace
+San Martín,Saint Maarten
+San Quintín,Saint-Quentin
+"Salt Lake City Municipal , aeropuerto",Salt Lake City Municipal Airport
+Salzburgo,Salzburg
+Sana'A,Sana 'A
+Santa Bárbara,Santa Barbara
+Santa María,Santa Maria
+Santa Mónica,Santa Monica
+"Schoolcraft County , aeropuerto",Schoolcraft County Airport
+Seúl,Seoul
+Seúl E Ab,Seoul E Ab
+Se ovlje,Sečovlje
+Sheremet'Ye,Sheremet 'Ye
+"Shuangliu , aeropuerto internacional",Shuangliu International Airport
+Sión,Sion
+"Skagit Regional , aeropuerto",Skagit Regional Airport
+"Sky Harbor , aeropuerto",Sky Harbor Airport
+Slia,Sliač
+"Smith , aeropuerto",Smith Airport
+Sofía,Sofia
+"South , aeropuerto",South Airport
+South St . Paul,South St. Paul
+San Paul,St Paul
+St . Clair,St. Clair
+St . Gallen-Altenrhein,St. Gallen-Altenrhein
+St . George,St. George
+St . Lawrence,St. Lawrence
+"St . Lucie County International , aeropuerto",St. Lucie County International Airport
+St . Stephen,St. Stephen
+"Stanley , aeropuerto",Stanley Airport
+Lago Storm,Storm Lake
+Sur in,Surčin
+Timi oara,Timişoara
+Tokio,Tokyo
+Tokio Heliport,Tokyo Heliport
+"Tokyo International , aeropuerto",Tokyo International Airport
+Torreón,Torreon
+Tot'Ma,Tot 'Ma
+Trípoli,Tripoli
+"Tulip City , aeropuerto",Tulip City Airport
+Târgu-Mure,Târgu-Mureş
+Val D'Or,Val D 'Or
+"Valcartier , aeropuerto",Valcartier Airport
+"Vancouver International , aeropuerto",Vancouver International Airport
+Venecia,Venice
+"Victoria International , aeropuerto",Victoria International Airport
+Viena,Vienna
+Vietnam,Viet Nam
+"Virginia Tech , aeropuerto",Virginia Tech Airport
+"Wainwright , aeropuerto",Wainwright Airport
+"Wayne Municipal , aeropuerto",Wayne Municipal Airport
+"Whiteman , aeropuerto",Whiteman Airport
+Wroc aw,Wrocław
+"Wujiaba , aeropuerto internacional",Wujiaba International Airport
+Xi'An,Xi 'An
+"Yaoqiang , aeropuerto internacional",Yaoqiang International Airport
+"Zhongchuan , aeropuerto",Zhongchuan Airport
+Zúrich,Zurich
+epin,Čepin
+"Hailar , aeropuerto",Hailar Airport
+Bola azul,Blue Marble
+Erupción,Spaceflare
+Tierra azul,Terraform Blue
+Tierra naranja,Terraform Orange
+Agua,Aqua
+Flor amarilla,Yellow Flower
+Flujo,Flow
+Duna,Dune
+Tormenta,Storm
+Ejecutar automáticamente MovableType,Self-Run MovableType
+Ejecutar automáticamente otro,Self-Run Other
+Equipo,Computer
+Tableta,Tablet
+Apagar Bluetooth,Turn Off Bluetooth
+Miniaplicación para Bluetooth,Bluetooth Applet
+Verificar el PIN,Verify PIN
+Confirmar el valor para la autenticación :,Confirm value for authentication :
+Emparejar,Pair
+No emparejar,Do not pair
+Conexión,Power
+NOMBRE,NAME
+Apagar el Bluetooth,Turn off Bluetooth
+Conexio nPower,ConnectionPower
+Control remoto,Remote connection
+C_ontinuar,C _ ontinue
+Puerto TLS,TLS Port
+Preparación,Preparation
+Crear una caja,Create a Box
+Generar,General
+Seleccione el paquete,Select package
+Proyecto :,Project :
+Grupo :,Group :
+Generar,Generate
+Genera el Makefile,Generate Makefile
+Configura el proyecto,Configure the project
+Fallo general al crear el objetivo,General failure in target creation
+Documentación man,Man Documentation
+Programa,Program
+Documentación info,Info Documentation
+Grupo nuevo,New Group
+Nuevo objetivo,New Target
+Proyecto,Project
+Objeto GbfProjec,GbfProject Object
+Nuevo _objetivo ...,New _ Target ...
+Abrir proyecto,Open Project
+Sen,Sin
+Senh,Sinh
+Torre,Rook
+Caballo,Knight
+2006-2008,2006 – 2008
+Diciembre,December
+Alarma nuevaNewNew,New AlarmNewNew
+Cronómetro,Stopwatch
+Vuelta,Lap
+Hecho,Done
+Alarma nuevaTime,New AlarmTime
+Alarma nueva,New Alarm
+Importar perfil ICC,Import ICC profile
+Otro perfil,Other profile …
+Recalibrar ahora,Recalibrate now
+Colorimetría relativa,Relative colourmetric
+Azul :,Blue :
+Fabricante :,Manufacturer :
+Licencia :,Licence :
+LCD interno,Internal LCD
+Sin perfil,No profile
+Relativo,Relative
+Ambiente :,Ambient :
+Crear p_erfil,Create _ Profile
+Punto blanco,White point
+Copyright,Copyright :
+Gama 3D,3D Gamut
+Siguiente imagen,Next Image
+Continuar la calibración,Continue calibration
+Calibrar la cámara,Calibrate your camera
+Seleccionar objetivo,Select Target
+Delta-E máxima,Delta-E maximum
+Error,Error :
+Informacio n,More Information
+CIE 1931,CIE 1931 xy
+Continuar la calibración,Device Calibration
+Calibrar la cámara,Calibration error
+Seleccionar una imagen,Select Picture
+Enero,January
+Febrero,February
+Marzo,March
+Abril,April
+Mayo,May
+Junio,June
+Julio,July
+Septiembre,September
+Octubre,October
+Noviembre,November
+Quitar contacto,Create Contact
+Seleccionar un contacto,Select chat account
+Telefonía,Telephony
+Contacto local,Local Contact
+Coche,Car
+Te lex,Telex
+Teletipo,TTY
+Departamento,Department
+Jefe,Manager
+Volver al contacto,Back to Contact
+Enlazar contacto,Link Contact
+Selecciona contacto con el que enlazar,Select contact to link to
+Portátil,Laptop
+No hay URL que lanzar,No URL to launch
+Directorio,Directory
+Tipo MIME,MIME Type
+Servicio,Service
+Ejecutar en t_erminal,Run in t _ erminal
+Nombre genérico,Generic name
+Menú principal,put the application in the Main Menu .
+Explicación línea a línea,Line-by-line explanation
+Type=Application,Type = Application
+Exec=application,Exec = application
+ejemplo,example
+StartupNotify=true,StartupNotify = true
+Diccionario,Dictionary
+Imprimir,"To print , click Print ."
+Quitar,Click the Remove button
+Aceptar,Click Ok
+Sólo local,Local Only
+OPCIONES,FLAGS
+PALABRA,WORD
+PALABRAS,WORDS
+El volumen para formatear,The volume to format
+Volumen nuevo,New Volume
+Error al formatear el volumen,Error formatting volume
+Conjunto RAID,RAID Array
+HFS+,HFS +
+Journal para linux ext3,Journal for Linux ext3
+lvm2_pv,lvm2 _ pv
+Componente RAID,RAID Component
+Partición vacía,Empty Partition
+Partición Driver,Driver Partition
+EL DISCO SE ESTÁ USANDO FUERA DE LOS PARÁMETROS DE DISEÑO,DISK IS BEING USED OUTSIDE DESIGN PARAMETERS
+EL DISCO TIENE MUCHOS SECTORES ERRÓNEOS,DISK HAS MANY BAD SECTORS
+Rotación buzz,Spin Buzz
+Conjunto,Pool
+Crear un conjunto RAID,Create RAID Array
+Conjunto RAID nuevo,New RAID Array
+No particionar,Don 't partition
+Tamaño mínimo,Minimum Size
+Tamaño máximo,Maximum Size
+Error al quitar el componente,Error removing component
+Compro_bar,Chec _ k
+Partición,Partition
+Borrar la partición,Delete the partition
+Error al crear la partición,Error creating partition
+Crear partición,Create Partition
+Crear partición,Create partition
+Error al crear el componente para el conjunto RAID,Error creating component for RAID array
+Error al crear el conjunto RAID,Error creating RAID array
+Iniciar el conjunto,Start the array
+Parar el conjunto,Stop the array
+ahoraATA SMART graph label,nowATA SMART graph label
+En línea,Online
+Nunca,Never
+CancelarCancel,CancelCancel
+La etiqueta nemotécnica para el botón afirmativo,The mnemonic label for the affirmative button
+Volumen lógico,Logical Volume
+Volumen lógico LVM2,LVM2 Logical Volume
+Almacenamiento local,Local Storage
+Journal para Ext3,Journal for Ext3
+Partición para el arranque BIOS,BIOS Boot Partition
+EL FALLO DEL DISCO ES INMINENTEblank,DISK FAILURE IS IMMINENTblank
+Conexión :,Connection :
+ATA en paralelo,Parallel ATA
+Fábrica :,Fabric :
+Parcialmente en ejecución,Partially Running
+Error al comprobar el conjunto RAID,Error checking RAID Array
+Acción :,Action :
+I_niciar el conjunto RAID,St _ art RAID Array
+Pa_rar el conjunto RAID,St _ op RAID Array
+Co_mprobar el conjunto,Chec _ k Array
+Error al montar el volumen,Error mounting volume
+Error al bloquear el volumen LUKS,Error locking LUKS volume
+Error al cambiar la etiqueta,Error changing label
+Error al crear el volumen lógico,Error creating Logical Volume
+Arrancable,Bootable
+Ir al conjunto,Go to array
+Montar el volumen,Mount the volume
+Fo_rmatear volumen,Fo _ rmat Volume
+Crear una partición nueva,Create a new partition
+Crear un volumen lógico nuevo,Create a new logical volume
+I_niciar volumen,S _ tart Volume
+Activar el volumen lógico,Activate the Logical Volume
+Eliminar el volumen lógico,Delete the Logical Volume
+Crear un conjunto RAID,Create a RAID array
+Error al crear la partición para el componente RAID,Error creating partition for RAID component
+MemoryStick,Memory Stick
+SecureDigital,Secure Digital
+Blu-Ray,Blu-ray
+"HDDVDDrive42 GB "" or "" 5 KB","HD DVDDrive42 GB "" or "" 5 KB"
+Firewire,FireWire
+Examinar,Examine
+C_rear,C _ reate …
+Nivel APM,APM Level
+A_PM,A _ PM
+Nivel AAM,AAM Level
+Eliminar partición,Delete partition
+Iniciar el conjunto RAID,Start RAID Array
+Parar el conjunto RAID,Stop RAID Array
+Limpieza automática,Auto-clear
+Formatear,Format …
+Apagar,Power Off …
+Crear RAID,Create RAID
+No montar _automáticamente,Do Not _ Automount
+Formatear volumen,Format Volume
+Corta,Short
+ES PROBABLE QUE EL DISCO FALLE PRONTO,DISK IS LIKELY TO FAIL SOON
+FALLÓ LA AUTOCOMPROBACIÓN,SELF-TEST FAILED
+Pre-fallo,Pre-Fail
+Lento,Slow
+Error al formatear la partición,Error formatting partition
+Fuerte,Strong
+HDDVD,HD DVD
+EL FALLO DEL DISCO ES INMINENTE,DISK FAILURE IS IMMINENT
+Etiqueta : LVM2 LV State,Label : LVM2 LV State
+Error al cancelar el trabajo,Error cancelling job
+"HDDVDDrive42 GB "" or "" 5 kB","HD DVDDrive42 GB "" or "" 5 kB"
+Crear una partición nueva,Create a new partition …
+Eliminar partición,Delete partition …
+De bil,Weak
+Atributobenchmark-graph,Attributebenchmark-graph
+HechoDocument Title,DoneDocument Title
+TítuloSearch Filter,TitleSearch Filter
+Rotar,Rotate ↶
+Rotar,Rotate ↷
+Compartir,Share
+R:#x2003 ;,A : # x2003 ;
+Afiliación,Affiliation
+Precaución,Caution
+Colofón,Colophon
+P:#x2003 ;,Q : # x2003 ;
+Sugerencia,Tip
+biblioentry.tooltip,biblioentry.tooltip View the bibliography entry .
+citetitle.format,citetitle.format “ ”
+chapter.label,chapter.label . # x2003 ; . # x2002 ; Chapter
+chapter.number,chapter.number .
+example.label,example.label Example # x2003 ; Example # x2002 ; Example
+example.number,example.number -
+figure.label,figure.label Figure # x2003 ; Figure # x2002 ; Figure
+figure.number,figure.number -
+part.label,part.label . # x2003 ; . # x2002 ; Part
+quote.format,quote.format ‘ ’ “ ”
+table.label,table.label Table # x2003 ; Table # x2002 ; Table
+table.number,table.number -
+Incompleto,Incomplete
+TEXTO,TEXT
+TAMAN O,SIZE
+ARCHIVO-DE-TIPOGRAFÍA ARCHIVO-DE-SALIDA,FONT-FILE OUTPUT-FILE
+Blackjack,Blackjack Manual
+Blackjack,To Start Blackjack
+Blackjack,When You Start Blackjack
+Blackjack,Blackjack Playing Area
+Doblar,To Double Down
+Blackjack,About Blackjack
+Nivel inicial,Starting level
+Ctrl+Q,Ctrl-Q
+Inicio,Up Left : Home
+Arriba,Up : Up
+AvPág,Up Right : Page Up
+Derecha,Right : Right
+Abajo,Down : Down
+RePág,Down Right : Page Down
+Intro,Wait : Enter
+Nivel inicial,Level to Start On
+Ver próximo bloque,Preview Next Block
+Información importante .,Important information .
+El objetivo,The Goal
+Tetravex,Tetravex Manual
+Tetravex,GNOME Tetravex
+Jugar a Tetravex,Playing GNOME Tetravex
+Jugar al juego,Playing the game
+Un juego Tetravex,A GNOME Tetravex Game
+Un juego Tetravex .,A GNOME Tetravex Game .
+Ganar el juego,Winning the game
+Objetivo,Objective
+Iniciar un nuevo juego,Starting a new game
+Iniciar un juego,Starting a game
+Tali,Tali Manual
+Tali,GNOME Tali
+Jugar a Tali,Playing GNOME Tali
+Tali en acción,GNOME Tali in action
+Secuencia completa,Large Straight
+Secuencia corta,Small Straight
+Iagno,Iagno Manual
+Jugar a Iagno,Playing Iagno
+Nota :,Note :
+Importante :,Important :
+Mahjongg,Mahjongg Manual
+2009,2000
+Mahjongg,GNOME Mahjongg
+Jugar a Mahjongg,Playing Mahjongg
+Sugerencia,Hint
+Same GNOME,Same GNOME Manual
+Same GNOME,Playing Same GNOME
+Same GNOME,Same GNOME at the beginning of a new game .
+Juego,Game Draw
+2011,11
+2012,12
+"2001 Patanjali Somayaji , Mark Rae","Patanjali Somayaji , Mark Rae"
+Imprimir,Click Highlighter
+Callum,Callum McKenzie
+MENSAJE,MESSAGE
+R_eemplazar,R _ eplace
+Configuración inicial,Initial Setup
+Crear una cuenta local,Create a Local Account
+Error al crear la cuenta,Error creating account
+Error al quitar la cuenta,Error removing account
+Tomar una foto,Take a photo …
+Crear una cuenta local,Create Local Account
+Enviar por correo-e a,Mail to
+Ejecutar una aplicación,Run Application
+Documento nuevo,New Document
+Renombrar,Rename ...
+Satélite,Satellite
+km²,km ²
+Voz,Voice
+Vol,vol
+PCM,pcm
+Line,line
+Mic,mic
+Igain,igain
+Line1,line1
+Phin,phin
+Parar un CD,To Stop a CD
+Programación,Programming
+ARCHIVO_MENÚ,MENU _ FILE
+Duración,Running Length
+Repetir canción,Repeat Song
+Seleccionar ninguno,Select None
+Seleccionar,Select All
+Pitar en ping,Beep on ping
+Información IP,IP Information
+Sólo,Only
+Máximo :,Maximum :
+Mínimo :,Minimum :
+Trazar,Trace
+Otro tipo,Other type
+Interfaz Ethernet,Ethernet Interface
+Bucle local,Loopback
+DOMINIO,DOMAIN
+Nombre canónico,Canonical Name
+Miembro,Member
+Secuencia,Seq
+abierto,open
+Tiempo 1,Time 1
+Tiempo 2,Time 2
+Tiempo para la ejecución,Time to fire
+C_onectar,Connecting …
+Ejecutar programa,Run Program
+Paquete :,Package :
+Comunicación,Communication
+Ciencia,Science
+¿ Ejecutar una nueva aplicación ?,Run new application ?
+Diariamente,Daily
+Error al crear,Create error
+Error interno,Internal error
+Quitar paquete,Remove Package
+Miniaplicación Reloj,Clock Applet
+Reloj,Right-click on the Clock applet .
+Copiar hora,Copy Time
+Copiar fecha,Copy Date
+Hora UNIX,UNIX time
+Copiar la _hora,Copy _ Time
+Copiar la _fecha,Copy _ Date
+Información meteorológica,Weather Information
+Fecha y hora,Time & Date
+Hora actual :,Current Time :
+Norte,North
+Sur,South
+Selector,Switcher
+Cajón,Drawer
+Reemplazar un panel actualmente en ejecución,Replace a currently-running panel
+Salir,Log Out …
+Ejecutar una aplicación,Run Application …
+Apagar,Shut Down …
+Aplicación en terminal,Application in Terminal
+Bloquea el objeto en el panel,Lock the object to the panel
+SuperiorOrientation,TopOrientation
+InferiorOrientation,BottomOrientation
+Ejecutar en una _terminal,Run in _ terminal
+Ejecutar con el _archivo,Run with _ file …
+Panel flotante inferior,Bottom Floating Panel
+DiminutoSize,XX SmallSize
+Muy pequeñoSize,X SmallSize
+PequeñoSize,SmallSize
+Enorme,XX Large
+DerechoSize,RightSize
+Mi cuenta,My Account
+Apagar,Power Off
+Apagar el equipo,Power off the computer
+Formato local,Local format
+Complejo,Complex
+P_DA :,P _ DA :
+Propietario :,Owner :
+I_rDA,I _ rDA
+Sincronización inicial,Initial Sync
+Sincronizar,Synchronize
+Copiar al PDA,Copy to PDA
+Combinar al PDA,Merge to PDA
+Serie,Serial
+ID para el PDA,ID for the PDA
+CARPETA,DIRECTORY
+CONDUCTO,CONDUIT
+USUARIO,USERNAME
+USUARIO,LOGIN
+NOMBREPILOT,PILOTNAME
+NOMBRECUNA,CRADLENAME
+Miniaplicación Pilot,Pilot Applet
+2006-2009,2006-08-30
+Energía baja,Power Low
+Energía críticamente baja,Power Critical
+Inhibir la miniaplicación,Inhibit Applet
+Inhibición manual,Manual inhibit
+Fábrica para inhibir la miniaplicación,Factory for Inhibit Applet
+Acción para batería críticamente baja,Battery critical low action
+Con batería,On Battery Power
+Tecnología :,Technology :
+Carga actual :,Current charge :
+Ion litio,Lithium Ion
+SAI bajo,UPS low
+Hibernar,Hibernate
+Carga,Charge
+Tiempo para la carga,Time to full
+Recargable,Rechargeable
+Energía,Energy
+Voltaje,Voltage
+Tecnología,Technology
+Interrupción,Interrupt
+Aplicación :,Application :
+Sin configurar,Configuring
+Origen,Origin
+Máximo,Maximal
+Imagen PNG,PNG picture
+Imagen JPEG,JPEG picture
+Repetitiva,Recurrent
+Al reiniciar,At reboot
+minuto,minute
+hora,hour
+Nueva plantilla,New template
+En un minuto exacto,At an exact minute
+Minuto :,Minute :
+En una hora exacta,At an exact hour
+Día :,Day :
+Crear una plantilla nueva,Create a new template .
+Ejecutar en :,Execute at :
+En un rango,In a range
+Se ejecuta en un rango .,Execution in a range .
+Ejecutar :,Run :
+Bloquear al activar,Lock on activation
+Pie flotante,Floating Feet
+MÁX_IMÁGENES,MAX _ IMAGES
+ANCHURAxALTURA+X+Y,WIDTHxHEIGHT + X + Y
+RUTA,PATH
+activo,active
+Error al crear el archivo,Error creating file
+Aplicar _efecto :,Apply _ effect :
+Seleccionar áre_a que capturar,Select _ area to grab
+Menú principal,From a Main Menu on a panel
+VALOR,VALUE
+DÍAS,DAYS
+USUARIO,USER
+GRUPO,GROUP
+PATRÓN,PATTERN
+Abrir _con,Open Wit _ h
+El panel,Panel
+Com_entario :,Comm _ ent :
+No requerir confirmación,Do not require confirmation
+Apagar,Power off
+CARPETA_DE_AUTOINICIO,AUTOSTART _ DIR
+NOMBRE_DE_LA_SESIÓN,SESSION _ NAME
+Reiniciar,Reboot
+Silenciar,Volume mute
+Subir volumen,Volume up
+Contorno,Hinting
+No activar,Don 't activate
+Activar,Activate
+De prueba,Dummy
+Examinar ...,Examine …
+Sirena,Siren
+Bip,Beep
+Automontar,Automount
+Tóner vacío,Toner empty
+Tapa abierta,Cover open
+Puerta abiertamarker,Door openmarker
+Activar,Turn On
+Silenciar el micrófono,Microphone Mute
+Silenciar,Quiet Volume Mute
+Bajar volumen,Quiet Volume Down
+Subir volumen,Quiet Volume Up
+Rotar la pantalla,Rotate Screen
+ApagarSleep,Power OffSleep
+Dormir,Sleep
+Batería baja,Battery low
+Batería críticamente baja,Battery critically low
+SAI críticamente bajo,UPS critically low
+Hibernación automática,Automatic hibernation
+Complemento rfkill,Colour plugin
+NingunaAction type,NoneAction type
+Atajo nuevo ...,Shortcut for eject .
+CalibrarAction type,Recalibrate nowAction type
+Cambiar monitor,Switch Monitor
+Con batería,PDA battery low
+Abrir archivo,Open file manager
+Activar la hibernación,Enable hibernating
+Pantalla,Monitor
+Aplicacio n,Quit Application
+APLICACIONES,APPLICATIONS
+CONFIGURACIÓN,SETTINGS
+ELEMENTOS RECIENTES,RECENT ITEMS
+Ver fuente,View Source
+Página web,Web Page
+Conectar a,Connect to …
+LUGARES Y DISPOSITIVOS,PLACES & DEVICES
+Ethernet automa tica,Auto Ethernet
+Bluetooth automático,Auto bluetooth
+SAI,UPS
+Teléfono móvil,Mobile phone
+PREFERENCIAS,PREFERENCES
+ENCENDIDO,ON
+APAGADO,OFF
+LUGARES,PLACES
+RESULTADOS DE LA BÚSQUEDA,SEARCH RESULTS
+Servicio :,Service :
+Autenticación DSL,DSL authentication
+Invitación,Invitation
+Dar voz,Unmute
+Ver cuenta,View account
+Apagar,Turn Off
+Bateri a,Battery
+Teléfono móvil,Mobile Phone
+Reconectar,Reconnect
+CONTACTOS,CONTACTS
+Cancelarbutton,Cancelbutton
+Apagartitle,Power Offtitle
+Activar la Wi-Fi,Turn On Wi-Fi
+MODO,MODE
+ID,IDE
+Cancelar,Finance
+Ver,Viewer
+Nuncamenu category,menu category
+Por :,By :
+Guión original :,Original Script :
+Temporización original :,Original Timing :
+Inicio :,New Start :
+Fotograma inicial :,Start Frame :
+Núm . :,No . :
+Ir al _tiempo :,Seek _ to Selection
+Centroeuropeo,Central
+Subtítulo no .,Subtitle Format :
+Abrir otro archivo,Open another file
+SOBR,OVR
+INSER,INS
+Número,No .
+Abrir bugzilla,Open Bugzilla
+Efecto :,Effect :
+Fracción,Fraction
+Color actual,Current Colour
+Abrir el manual,Open the manual
+Archivo,Filename
+Inicio MV,VM Start
+Tamaño MV,VM Size
+cauce,pipe
+Memoria virtual,Virtual Memory
+Memoria :,Memory :
+Ininterrumpible,Uninterruptible
+Muy alta,Very High
+Muy baja,Very Low
+2004-2006,2004 – 2006
+Junio 2004,June 2004
+Zona horaria,Time zone
+Con_figuración :,Con _ figuration :
+Borrar la ubicación actual,Delete current location
+Interfaz ethernet :,Ethernet interface :
+Con_firmación :,Con _ firmation :
+GID máximo :,Maximum GID :
+UID máximo :,Maximum UID :
+GID mínimo :,Minimum GID :
+UID mínimo :,Minimum UID :
+Ubicación en la o_ficina :,O _ ffice location :
+Conexión por puerto paralelo,Parallel port connection
+Conexión punto a punto,Point-to-point connection
+INTERFAZ,INTERFACE
+Grupo nuevo,New group
+No eliminar la cuenta,Don 't Remove Account
+Título inicial,Initial title
+Solapa nueva,New Tab
+Borrar perfil,Delete Profile
+ROL,ROLE
+NOMBRE-DEL-PERFIL,PROFILE-NAME
+TITULO,TITLE
+NOMBREDIR,DIRNAME
+AMPLIACIÓN,ZOOM
+Abrir _terminal,Open _ Terminal
+Cambiar _perfil,Change _ Profile
+ASCII para Supr .,ASCII DEL
+Bloque,Block
+Doble T,I-Beam
+Terminal,XTerm
+IDPERFIL,PROFILEID
+FACTORZOOM,ZOOMFACTOR
+Reemplazar el título inicial,Replace initial title
+Mantener el título inicial,Keep initial title
+Ir a la _línea,Go to _ Line …
+Michael Hill,Michael
+Terminal,To Change the Terminal Title
+Terminal,GNOME Terminal
+actual,current
+Seleccionar un tema,Select a theme
+GNOME Shell,Shell
+Sección 508,Section 508
+Navegar por un elemento o control .,Navigate within an element or control .
+Imprimir pantalla,Print Screen
+"Navegar el menú ,",Navigate the menu .
+flecha arriba,up arrow
+Se mueve una línea arriba .,Move up one line .
+Ctrl,Ctrl + left arrow
+Ctrl,Ctrl + right arrow
+"Activa un botón , enlace u otro control .","Activate a button , link or other control ."
+AvPág RePág,Page Up or Page Down
+Para cambiar,To change the ...
+Activar Orca,Enabling Orca
+Página General,General Page
+Página Voz,Speech Page
+Proporcional,Proportional
+Bilineal o ninguno .,Bilinear or none .
+Punto 7,Dot 7
+Punto 8,Dot 8
+puntero,pointer
+Aceleración,Acceleration
+Revelar archivo,Reveal File
+Volumen ISO 9660,ISO 9660 Volume
+Volumen AFFS,AFFS Volume
+Volumen EncFS,EncFS Volume
+Volumen Linux Ext2,Ext2 Linux Volume
+Volumen Linux Ext3,Ext3 Linux Volume
+Volumen MSDOS,MSDOS Volume
+Volumen BSD,BSD Volume
+Volumen FUSE,FUSE Volume
+Volumen MacOS,MacOS Volume
+Volumen CDROM,CDROM Volume
+Volumen JFS,JFS Volume
+Volumen Minix,Minix Volume
+Volumen Netware,Netware Volume
+Volumen SuperMount,SuperMount Volume
+Volumen DVD,DVD Volume
+Volumen Sun SAM-QFS,Sun SAM-QFS Volume
+Volumen temporal,Temporary Volume
+Volumen Xenix,Xenix Volume
+Volumen Linux XFS,XFS Linux Volume
+Volumen XIAFS,XIAFS Volume
+Volumen CIFS,CIFS Volume
+DVD+R,DVD + R
+DVD+RW,DVD + RW
+DVD±R,DVD ± R
+DVD±RW,DVD ± RW
+Error genérico,Generic error
+Volumen raíz,Root Volume
+Volumen Linux Ext4,Ext4 Linux Volume
+Volumen Linux NILFS,NILFS Linux Volume
+Bulto,Bulge
+Calor,Heat
+Malva,Mauve
+Remolino,Twirl
+Vértigo,Vertigo
+Realizar apertura automática,Perform autoopen
+Realizar ejecución automática,Perform autorun
+Ejecutar programa para tabla,Run tablet program
+Palm,Palm ™
+Almacenamiento extraíble,Removable Storage
+Cámara web,Web Camera
+Hacer un _DVD,Make _ DVD
+Ubicacio n nueva,New Location
+Mañana por la noche,Tomorrow night
+Mañana por la mañana,Tomorrow morning
+conferencia,conference
+integración,outreach
+gnome-women,gnome
+Planeta GNOME,Planet GNOME
+Soporte para GNOME,Support GNOME
+Obtener GNOME,Getting GNOME
+Amazon Alemania,Amazon Germany
+Amazon Francia,Amazon France
+Amazon Japón,Amazon Japan
+Amazon EE . UU .,Amazon US
+Pago con cheque,Pay by Check
+Gobierno,Governance
+Director ejecutivo,Executive Director
+Teléfono,Telephone
+Equipo + GNOME = Amor,Computer + GNOME = Love
+Software Libre,Free Software
+Al principio,In the beginning
+el proyecto GNU,the GNU Project
+Simplemente bonito,Simply Beautiful
+iniciativa GNOME Love,GNOME Love initiative
+contactar,contact
+Proyecto Debian,Debian Project
+Correo-e,Email
+Comenzar aquí,Start Here Note
+Abrir comenzar aquí,Open Start Here
+Crear una nota nueva,Create a new Note
+Compartir URL,Share URL
+Crear una nota _nueva,Create _ New Note
+Crear una nota nueva,Create a new note
+Seleccionar un icono,Select an icon …
+Imprimir nota,Print Footer
+Error al imprimir la nota,Error printing note
+Reemplazar ti tulo,Replace title
+Página web,Homepage
+Nota nueva,New Note
+Comenzar aquí,Start Here
+Te_xto,Te _ xt
+Convertir a nota normal,Convert to regular note
+Abrir la plantilla Nota nueva,Open New Note Template
+Abrir « Co_menzar aquí »,"Open "" _ Start Here """
+Crear una nota _nueva,Create _ new note
+Ser_vicio :,Ser _ vice :
+No configurable,Not configurable
+Renombrar mi nota local,Rename my local note .
+Error al conectar,Error connecting
+Formato,Formatting
+Renombrar la nota local :,Rename local note :
+¿ Activar FUSE ?,Enable FUSE ?
+Sin fecha,No Date
+ejec-lazo-principal,exec-main-loop
+Un puntero al objeto GOStyle,A pointer to the GOStyle object
+Mapeo logarítmico,Logarithm mapping
+Mí_nimo,M _ inimum
+Má_ximo,M _ aximum
+NombreDelMapa,MapName
+Color,Colo _ ur :
+Inicio :,Start :
+Dibujo,Plot
+Caja-3D,3D-Box
+Negativo,Negative
+Colo_r :,Colou _ r :
+Porcentaje,Percent
+Rotar el marco con el texto,Rotate the frame with the text
+Rotar marco con texto,Rotate frame with text
+Alineación,Alignment
+Tamaño manual,Manual
+Anclaje :,Anchor :
+Columna :,Column :
+Límite inferior :,Low limit :
+Origen Y,Y origin
+Origen X,X origin
+Cómo rellenar el área,How to fill the area
+Tema Guppi,Guppi
+Tema nuevo,New image name
+Seleccionar objeto,Select object
+Localización :,Locale :
+azul marino,navy
+púrpura nº2,purple # 2
+lima,lime
+púrpura,purple
+naranja brillante,bright orange
+océano,cyan
+azul brillante,bright blue
+Seleccione una imagen,Select an Image
+RegularFontFace,FontFace
+Extra ligeraFontFace,triangle rightFontFace
+Oblicua ligeraFontFace,light blueFontFace
+LigeraFontFace,RightFontFace
+Seleccionar el tamaño,Select an image
+Financiero,Accounting
+Científico,Scientific
+Á_ngulo :,A _ ngle :
+Logaritmo normal,Lognormal
+"Albania , lek","Albania , Leke"
+"Angola , kwanza","Angola , Kwanza"
+"Bulgaria , lev","Bulgaria , Leva"
+"Bután , ngultrum","Bhutan , Ngultrum"
+"China , yuan renminbi","China , Yuan Renminbi"
+"Eritrea , nakfa","Eritrea , Nakfa"
+"Etiopía , birr","Ethiopia , Birr"
+"Georgia , lari","Georgia , Lari"
+"Croacia , kuna","Croatia , Kuna"
+"Hungría , forint","Hungary , Forint"
+"Japón , yen","Japan , Yen"
+"Lituania , litai","Lithuania , Litai"
+"Letonia , lati","Latvia , Lati"
+"Noruega , corona noruega","Norway , Norwegian Krone"
+"Panamá , balboa","Panama , Balboa"
+"Papúa Nueva Guinea , kina","Papua New Guinea , Kina"
+"Paraguay , guaraní","Paraguay , Guarani"
+"Rumanía , leu","Romania , New Lei"
+"Ucrania , hryvnia","Ukraine , Hryvnia"
+"Samoa , tala","Samoa , Tala"
+"Zambia , kwacha zambiano","Zambia , Zambian Kwacha"
+color,colour
+arriba,up
+VERDADERO,TRUE
+FALSO,FALSE
+triángulo hacia arriba,triangle up
+círculo,circle
+barra,bar
+Línea horizontal,Horizontal Stripe
+Línea vertical,Vertical Stripe
+Línea horizontal fina,Thin Horizontal Stripe
+Línea vertical fina,Thin Vertical Stripe
+Techo,Thatch
+No hay imagen,No image !
+C_ontorno :,O _ utline :
+Sin memoria .,Out of memory .
+El texto con el que reemplazar,The text to replace with
+En 3D,In 3D
+DibujoBarCol,PlotBarCol
+DibujoLínea,PlotLine
+DibujoÁrea,PlotArea
+DibujoMinMax,PlotMinMax
+Máx,Max
+MinMáx,MinMax
+Acumulativo,Cumulative
+Separación,Separation
+GráficoTarta,PlotPie
+GráficoAnillo,PlotRing
+Mover tarta,Move pie
+Ángulo inicial,Initial-angle
+Tarta,Pie
+Anillo,Ring
+DibujarPolar,PlotPolar
+DibujarColorPolar,PlotColourPolar
+Dibujo polar .,Polar plot .
+Contorno,PlotContour
+Superficie,PlotSurface
+DibujarContornoXYZ,PlotXYZContour
+DibujarXYZMatriz,PlotXYMinMax
+DibujarSuperficieXYZ,PlotXYZSurface
+Cuenta :,Count :
+Contorno,Contour
+ContornoXYZ,XYZContour
+SuperficieXYZ,XYZSurface
+Super_ficie,Sur _ face
+Diá_metro,Dia _ meter
+3_D,3 _ D
+GráficoXY,PlotXY
+GráficoBurbuja,PlotBubble
+Burbuja,Bubble
+ColorXY,XYColour
+Afín,Affine
+Polinómico,Polynomial
+Exponencial,Exponential
+"Malta , lira","Malta , Liri"
+"Seborga , luigini","Seborga , Luigini"
+quinto,fifth
+cuarto,fourth
+Extracción,Extraction
+V_olumen,V _ olume
+RUTA_DEL_DISPOSITIVO,DEVICE _ PATH
+Subir el volumen,Volume Up
+Bajar el volumen,Volume Down
+Aplicación Goobox,Goobox Application
+Alinear con : Align to :,Align to : Align to :
+Atención :,Warning :
+Sin activar,Not active
+Crear una partición nueva,Create new Partition
+Partición primaria,Primary Partition
+Partición lógica,Logical Partition
+IMPORTANTE,IMPORTANT
+Continuar operación,Continue Operation
+Cancelar operación,Cancel Operation
+EJECUTANDO,EXECUTING
+ÉXITO,SUCCESS
+Aumentar,Grow
+Verificar,Check
+UUID,UUID :
+crear una partición vacía,create empty partition
+¿ Quiere continuar ?,Do you want to continue ?
+realizar movimiento real,perform real move
+Detectar,Detect
+Toque,Tapping
+Largo,Long
+Color primario,Primary Color
+Tema GTK+,Gtk + Theme
+Línea-3,Line-3
+NIVEL,LEVEL
+LISTA,LIST
+RUTAS,PATHS
+COMPLEMENTOS,PLUGINS
+álbum,album
+intérprete,performer
+mínimo,minimum
+Conteo total :,track count
+"TIPO1 , TIPO2 ,","TYPE1 , TYPE2 , ..."
+Cambiar _equipo ...,Change _ team ...
+Comenzar,Start game
+Cambiar,Change team
+Arrancar página,Detach page
+Un cliente Tetrinet para GNOME .,A Tetrinet client for GNOME .
+O_riginal,O _ riginal
+Cambiar tecla,Change Key
+Cambiar _tecla ...,Change _ key ...
+Habilitar _MIDI,Enable _ MIDI
+Próxima pieza :,Next piece :
+Nivel activo :,Active level :
+Sin juego,Not playing
+SERVIDOR,SERVER
+ALIAS,NICKNAME
+EQUIPO,TEAM
+CONTRASEÑA,PASSWORD
+Equipo,Team
+Su nombre :,Your name :
+Su equipo :,Your team :
+Cliente Tetrinet,Tetrinet client
+Cliente Tetrinet para GNOME,Tetrinet client for GNOME
+Su equipo,Your team
+Com_entario,Comm _ ent
+Imagen nueva :,New Image :
+Crear una categoría nueva,Create a new category
+Convertir formato,Convert Format
+Opti_mizar,Opti _ mize
+B_orrar el original,R _ emove original
+T_GA,T _ GA
+Matiz - Saturación,Hue - Saturation
+Pie,Footer
+Co_mentario :,Co _ mment
+Al_tura :,Hei _ ght :
+Seleccionar un color,Select a colour
+Seleccione una tipografía,Select a font
+Iniciar _en :,Start _ at :
+A_lto,H _ igh
+Ba_jo,Lo _ w
+Nota :,Note : Drag the image to move it in the page . Click on an image to rotate it .
+C_entrar en la página,Centre _ on Page
+E_jecutivo,Executive
+Carta,Letter
+Ve_rtical,P _ ortrait
+Tamaño actual,Actual Size
+Igual a,Equal to
+Cambiar a :,Change to :
+Ca_tálogo,Ca _ talogue
+Cambiar fecha,Change Date
+Álbum para la web,Web Album
+Biblioteca no vacía,Library not empty
+Mover el catálogo a ...,Move Catalogue to ...
+por ruta,by path
+por comentario,by comment
+Nombre nuevo,New Name
+Catálogo nuevo,New Catalogue
+Biblioteca nueva,New Library
+D_uplicar,D _ uplicate
+Elim_inar,Rem _ ove
+Crear un catálogo nuevo,Create a new catalogue
+Renombrar el catálogo actual,Rename current catalogue
+Eliminar el catálogo actual,Remove current catalogue
+Mueve el catálogo actual a otro lugar,Move current catalogue to another location
+Ver la próxima imagen,View next image
+Crear un álbum para la _web ...,Create _ Web Album ...
+Convertir al f_ormato ...,Convert F _ ormat ...
+Ver la imagen,View the image
+por _ruta,by _ Path
+por tiempo _EXIF,by _ Exif Time
+por _comentario,by _ Comment
+Información general,General Information
+Otro ...,Other ...
+Imprimir ...,Print ...
+Imprimir la imagen actual,Print the current image
+Com_entario ...,Comm _ ent ...
+Elimi_nar comentario,Rem _ ove Comment
+Recortar la imagen,Crop image
+Paleta web,Web Palette
+1:1,1 : 1
+C_ambiar la fecha ...,Change _ Date ...
+Temporal,Temporary
+Origen,Square
+Crear _biblioteca,New _ Library
+Catálogo,Catalogue
+Ejemplo,Simple
+Exif general,Exif General
+GPS Exif,Exif GPS
+Exportar a Flickr,To _ Flickr
+Selección,Font Selection
+5:4,5 :
+7:5,75
+año,Search
+A_tajo :,S _ ort :
+Atajo,Sort
+Voltear página,Flip the image
+gthumb,gThumb
+Rec_ortar,Cr _ op
+Sin agrupar,No grouping
+Crear un archivo zip,Make a zip file
+Imagen GThumb,GThumb Image
+Ver con GThumb,View with GThumb
+Refleja la imagen,Mirror the image
+Aplicación GThumb :,GThumb Application
+Ta_maño :,Si _ ze :
+T_ema :,Th _ eme :
+Crear un álbum para la _web,Create _ Web Album
+Convertir al f_ormato,Convert F _ ormat
+por _fecha,by _ Time
+Rotar imagen,Rotate image
+C_ambiar la fecha,Change _ Date
+720 x 720,320 x 200
+1600 x 1600,800 x 600
+2048 x 2048,48 x 48
+Pegar imagen,Save Image
+Apertura,Aperture value
+Proyecto GTK-Doc,GTK-Doc project
+Obtener GTK-Doc,Getting GTK-Doc
+Integración con autoconf,Integration with autoconf
+Integración con automake,Integration with automake
+Integración con autogen,Integration with autogen
+0. PREÁMBULO,0 . PREAMBLE
+1. APLICABILIDAD Y DEFINICIONES,1 . APPLICABILITY AND DEFINITIONS
+2. COPIA LITERAL,2 . VERBATIM COPYING
+3. COPIAR EN CANTIDAD,3 . COPYING IN QUANTITY
+4. MODIFICACIONES,4 . MODIFICATIONS
+5. COMBINAR DOCUMENTOS,5 . COMBINING DOCUMENTS
+6. COLECCIONES DE DOCUMENTOS,6 . COLLECTIONS OF DOCUMENTS
+7. AGREGACIÓN CON TRABAJOS INDEPENDIENTES,7 . AGGREGATION WITH INDEPENDENT WORKS
+8. TRADUCCIÓN,8 . TRANSLATION
+9. TERMINACIÓN,9 . TERMINATION
+10. FUTURAS REVISIONES DE ESTA LICENCIA,10 . FUTURE REVISIONS OF THIS LICENCE
+Licencia Pu blica General GNU,GNU Free Documentation Licence
+explicación,explanation
+Plano,Flat
+Punto,Dot
+Un nombre único para la acción .,A unique name for the action .
+Etiqueta corta,Short label
+Valor mínimo,Minimum Value
+Valor máximo,Maximum Value
+Alineación horizontal,Horizontal alignment
+Alineación vertical,Vertical alignment
+Página completa,Page complete
+La alineación x,The x-align
+La alineación y,The y-align
+Objeto Pixbuf,Pixbuf Object
+Tachar,Strikethrough
+Alfa actual,Current Alpha
+El color actual,The current colour
+Botón Aceptar,OK Button
+Botón Cancelar,Cancel Button
+Permitir vacío,Allow empty
+Elemento activo,Active item
+X mínimo,Minimum X
+X máximo,Maximum X
+Y mínimo,Minimum Y
+Y máximo,Maximum Y
+X alineación,X align
+Truncar multilínea,Truncate multiline
+Pixbuf primario,Primary pixbuf
+GIcon primario,Primary GIcon
+GIcon para el icono primario,GIcon for primary icon
+Icono primario activable,Primary icon activatable
+Selección múltiple,Select Multiple
+Diálogo,Dialogue
+Margen,Margin
+Tecla nemónica,Mnemonic key
+Acoplamiento inferior,Bottom Attach
+Submenú,Submenu
+La imagen,The image
+Alineación Y,Y align
+Activar emergente,Enable Popup
+Página actual,Current Page
+El valor,The value
+El valor actual,The current value
+Inferior,Lower
+Superior,Upper
+Tamaño máximo,Max Size
+Métrica,Metric
+Dibujar valor,Draw Value
+Numérico,Numeric
+Pintable por la aplicación,Application paintable
+Permitir encoger,Allow Shrink
+Permitir crecer,Allow Grow
+Borrable,Deletable
+Fila nueva,New Row
+Altura mínima,Minimum Height
+Color RGBA actual,Current RGBA Colour
+RGBA actual,Current RGBA
+El color RGBA actual,The current RGBA colour
+Margen arriba,Margin on Top
+Margen abajo,Margin on Bottom
+Mayor,Major
+Menor,Minor
+Sugerencia,Tooltip
+Relativo a,Relative to
+Color RGBA,RGBA Colour
+Bloquear texto,Lock Text
+emergente,popup
+Subtítulo,Subitle
+Pila,Stack
+marrón claro,light brown
+naranja claro,light orange
+amarillo claro,light yellow
+cian claro,light cyan
+azul claro,light blue
+púrpura claro,light purple
+Ánge_l,Ange _ l
+Comprobar la _ortografía,Check _ Spelling …
+Alineación central,Centre Alignment
+Texto plano,Plain Text
+Fila,Row
+Borrar tabla,Table Delete
+Columna anterior,Column Before
+Fila inferior,Row Below
+Imagen,Image …
+Enlazar,Link …
+Página,Page …
+Párrafo,Paragraph …
+Regla,Rule …
+Tabla,Table …
+Texto,Text …
+Borrar enlace,Remove Link
+Ortografía en línea,Inline Spelling
+Tinta azul,Blue Ink
+Ribete,Ribbon
+Confirmación al reemplazar,Replace Confirmation
+Col_umna,Col _ umn
+Alineación y comportamiento,Alignment & Behaviour
+Seleccionar una imagen,Select An Image
+Fuente HTML,HTML Source
+Fuente plana,Plain Source
+Emoti_cono,Emoti _ con
+"¡ Oh , _no !",Oh _ No !
+Preformato,Preformat
+Regla,Rule
+Pla_ntilla,Te _ mplate …
+Emergente,Popup
+Alineación horizontal :,Horizontal alignment :
+Fila inferior,Row below
+Columna anterior,Column before
+Confirmación al reemplazar,Replace confirmation
+Corrector ortográfico,Spell checker
+Abrir archivo,Open file …
+Ejemplo,Sample
+Lenguaje,Language
+categoría,category
+El objeto GtkSourceBuffer que imprimir,The GtkSourceBuffer object to print
+Valor booleano,Boolean value
+Número real,Real number
+"Función+ "" , "" *","Function + "" , "" *"
+Objeto ASP,ASP Object
+Valor nulo,Null Value
+Punto,Bullet
+Carácter,Character
+Número en coma flotante,Floating point number
+Número octal,Octal number
+Cobalto,Cobalt
+C++,C + +
+C#,C #
+Número complejo,Complex number
+Declaración,Statement
+GrupoKey,GroupKey
+Número binario,Binary number
+Valor booleano,Boolean Value
+Coma flotante,Floating Point
+BOZ literal,BOZ Literal
+Externo,External
+Declaración,Declaration
+Macro m4,m4 Macro
+función,function
+Número en coma flotante,Floating Point number
+Variante polimórfica,Polymorphic Variant
+Número entero,Integer Number
+Definición,Define
+Sección,Section
+Otra macro,Other Macro
+Variable RPM,RPM Variable
+Elección,Switch
+Numérico literal,Numeric literal
+Opción,Option
+Sección 1,Section 1
+Sección 2,Section 2
+Sección 3,Section 3
+Sección 4,Section 4
+Sección 5,Section 5
+Bloque verbatim,Verbatim Block
+VB . NET,VB.NET
+Puerta,Gate
+TIPODOC,DOCTYPE
+regla,rule
+Encoger altura,Shrink height
+Categoría principal,Main Category
+F#,F #
+Línea nueva,Newline
+Secuencia incompleta,Incomplete Sequence
+Ópalo,Opal
+Función común,Common Function
+La alineación en x,The x-alignment
+La alineación en y,The y-alignment
+El pixbuf,The pixbuf
+El gicon,The gicon
+El texto,The text
+El GIcon,The GIcon
+Primario,Primary
+Prefijo,Prefix
+Objetivo opcional,Optional Target
+Atributo,Attribute name
+Número imaginario,Imaginary number
+Conjunción,Conjunction
+Argumento explícito,Explicit Argument
+Primitivo,Primitive
+Verbo,Verb
+Regla horizontal,Horizontal Rule
+Enlazar texto,Link Text
+Firma,Signal name
+Variable global,Global Variable
+ANS-Forth94,Forth
+Lex,Hex
+Directiva,Line Directive
+Nulo,Null
+Entero,Integer
+Parar la máquina .,Stop the machine .
+Germán Poo Caamaño,Germán Poo-Caamaño
+26-02-2004,2004-02-26
+Texto a copiar,Text to copy text box
+Copiar,Copy button
+U+0042,Example : U + 0042
+LATIN CAPITAL LETTER B,Example : LATIN CAPITAL LETTER B
+0x42,Example : 0x42
+0x0042,Example : 0x0042
+U+212C SCRIPT CAPITAL B,Example : U + 212C SCRIPT CAPITAL B
+Informe,Report
+crear,create
+Buzón nuevo,New mailbox
+Crear informe ...,Create report ...
+Eliminar buzón,Remove mailbox
+Talk - Echo cliente,Talk - Echo client
+Crear buzón,Create mailbox
+Imprimir informe,Print Report
+Quitar categoría,Remove category
+Almorzar,Lunch
+Categoría nueva,New category
+Informe HTML,HTML Report
+Generar un informe,Generate Report
+Ca_mbiar,S _ witch
+Totaloverview graph,Total
+Integracio n,Integration
+Semana :,Week :
+Rango :,Range :
+2008 2010,2008 – 2010
+Informacio n legal .,Legal information .
+Hitori,Hitori Manual
+Hitori,About Hitori
+Menú Jump n Bump,Jump n Bump Menu
+Sin _gore,No _ gore
+Canción :,Song :
+Crear una cuenta,Create an account
+Etiqueta :,Tag :
+Con :,Featuring :
+Etiquete una canción,Tag A Song
+Volumen total,Full Volume
+EXPRESIÓN,EXPRESSION
+IID que activar,IID to activate
+Error al comprobar el error ; no hay excepción,Error checking error ; no exception
+Moniker HTTP,HTTP Moniker
+Componente eco,Echo component
+fábrica corba,corba factory
+Apariencia,Look
+Configurar UI,Configure UI
+PANTALLA,SCREEN
+CLASE,CLASS
+MODULO,MODULE
+GTK+,GTK +
+T_exto,T _ ext
+Hola Gnome,Gnome Hello
+Aumentar altura,Grow Height
+Soporte para GConf GNOME,GNOME GConf Support
+Soporte para Bonobo,Bonobo Support
+HOST : PUERTO,HOSTNAME : PORT
+Tabla popt,Popt Table
+Contexto popt,Popt Context
+Contexto GOption,GOption Context
+Prefijo GNOME,GNOME Prefix
+"MODULO1 , MODULO2 , ...","MODULE1 , MODULE2 , ..."
+Moniker GConf,GConf moniker
+Color primario,Primary Colour
+Localizar puntero,Locate Pointer
+Activar ESD,Enable ESD
+La familia tipográfica,The font family
+Sobre DL,DL Envelope
+Sobre nº 10,Envelope No10
+Derecho,Straight
+Pto,Pt
+Milímetro,Millimetre
+Centímetro,Centimetre
+pl,in
+Inter_calar,C _ ollate
+Ampliar la página,Zoom the page in
+Página actual,Current page
+Imprimir a un _archivo,Print to _ file
+Configura la aplicaciónHelp,Configure the applicationHelp
+Sólo el texto,Text Only
+PREFIJO,PREFIX
+Elija un color,Pick a colour
+Hora inferior,Lower Hour
+Hora inicial,Initial Time
+Seleccione la fecha,Select Date
+Seleccione la hora,Select Time
+Seleccionar archivo,Select file
+Ruta al archivo,Path to file
+Soporte para GNOME GConf UI,GNOME GConf UI Support
+El texto en el botón,The text on the button
+No hay final Zip,No Zip trailer
+Bruto,Raw
+Entrecomillar,Quote
+Alternativo,Fallback
+SUBCOMANDO ARCHIVADOR ...,SUBCOMMAND ARCHIVE ...
+Terminar,Hangup
+Atrapar traza,Trace trap
+Abortar,Abort
+Error EMT,EMT error
+Matar,Kill
+Tubería rota,Broken pipe
+Terminación,Termination
+LEMDDEFAULT_ZONE,EGLLDEFAULT _ ZONE
+LEMD,DEFAULT _ COORDINATES
+Km,km
+km,mi
+Llovizna,Drizzle
+Lluvia,Rain
+Lluvia ligera,Light rain
+Lluvia fuerte,Heavy rain
+Nieve,Snow
+Granizo pequeño,Small hail
+Niebla parcial,Partial fog
+Humo,Smoke
+Bruma,Haze
+Calma,Calm
+ÁfricaRegion,AfricaRegion
+ArgeliaSamoa,AlgeriaSamoa
+AnguilaCountry,AnguillaCountry
+DinamarcaCountry,DenmarkCountry
+Yibuti,Djibouti
+LetoniaCountry,LatviaCountry
+LituaniaCountry,LithuaniaCountry
+Monaco,MonacoУлаанбаатар
+Reunión,Réunion
+San Bartolomé,Saint Barthélemy
+San MartínSaint-Pierre-et-Miquelon,Saint MartinSaint-Pierre-et-Miquelon
+Sierra LeonaCountry,Sierra LeoneCountry
+Bahía,Bahia
+Hora CentralCentral Time,Central TimeCentral Time
+Pekín,Beijing长春
+Shanghái,Shanghai
+Tianjin,Tianjin乌鲁木齐
+In Salah,I-n-Salah
+Tremecén,Tlemcen
+El Valle,The Valley
+Ereván,Yerevan
+Manama,Manamaচট ্ টগ ্ রাম
+Chittagong,Chittagongঢাকা
+Dacca,Dhaka
+Gomel,Homyel '
+Piracununga,Piraçununga
+Porto Seguro,Pôrto Seguro
+Porto Velho,Pôrto Velho
+Siem Riep,Siemreab
+Cabo Cove,Cape Cove
+Cabo Parry,Cape Parry
+Cabo Race,Cape Race
+Dél ne,Délįne
+Terranova,Terra Nova
+Whati,Wha Ti
+Yamena,N 'Djamena
+Changchun,Changchun长沙
+Dalian,Dalian福州
+Fuzhou,Fuzhou广州
+Guilin,Guilin杭州
+Hangzhou,Hangzhou哈尔滨
+Harbin,Harbin合肥
+Hefei,Hefei呼和浩特
+Kunming,Kunming兰州
+Lanzhou,Lanzhou南京
+Nanjing,Nanjing南宁
+"Sanya City in Shanghai , China","Sanya上海City in Shanghai , China"
+Shantou,Shantou沈阳
+Shenzhen,Shenzhen太原
+"Taiyuan City in Tianjin , China","Taiyuan天津City in Tianjin , China"
+Urumqi,Urumqi武汉
+Wuhan,Wuhan西安
+Xi'an,Xi 'an厦门
+Xiamen,Xiamen郑州
+Praga,Prague
+Ronne,Rønne
+AalborgCity in Djibouti,ÅlborgCity in Djibouti
+Sorvagur,Sørvágur
+Seinajoki,Seinäjoki
+AlenconAmbérieu,AlençonAmbérieu
+Hoericourt,Hoëricourt
+Macon,Mâcon
+Cayena,Cayenne
+Fráncfort,Frankfurt
+Wuzburgo,Würzburg
+Heraclión,IrákleionΚαλαμάτα
+Kalamata,Kalamáta
+Kozani,Kozáni
+Kerkyra,KérkyraΚύθηρα
+Kythira,Kýthira
+Mytilini,MytilíniΜύκονος
+Tanagra,Tanágra
+AgañaCity in Guatemala,HagåtñaCity in Guatemala
+Papa,Pápa
+Calcuta,Calcutta
+Jaipur,Jaipurलखनऊ
+Nagpur,Nagpurنئی دلی ‎ ਨਵੀਂ ਦਿੱਲੀनई दिल ् ली
+Nueva Delhi,New Delhi
+Patna,Patnaതിരുവനന ് തപുരം
+Thiruvananthapuram,Thiruvananthapuramதிருச ் சிராப ் பள ் ளி
+Tiruchirappalli,Tiruchchirappalli
+Yakarta,Jakarta
+Pekanbaru,Pekanbaruآبادان
+Aghajari,Aghajariاهواز
+Ahvaz,Ahvazاردبيل
+Chabahar,Chah Baharديرستان
+Gorgan,Gorganگوشه شاهزاده قاسم
+Lar,Larمشهد
+Urmía,Orumiyehقزوین
+Sabzevar,Sabzevarسخت سر
+Semnán,Semnanشهر بالا
+Shahr-e Bala,Shahr-e Balaشهر كرد
+Tabriz,Tabrizتهران
+Teherán,Tehranيزد
+Bérgamo,Bergamo
+Bolonia,Bologna
+Forli,Forlì
+Génova,Genoa
+Milán,Milan
+San Stefano,San Stèfano
+Sant'Eufemia Lamezia,Sant 'Eufemia Lamezia
+TurínVeniceVenezia,TurinVeniceVenezia
+ArbataxCity in Jamaica,ÀrbataxCity in Jamaica
+Narita,Sanrizuka
+Aqaba,Al ' Aqabah
+Al JizahAmman'Amman,Al JizahAmman 'Amman
+AktauAktobe,AqtauAktobe
+Aktobe,Aqtöbe
+RigaBeirutBeyrouth,RīgaBeirutBeyrouth
+Skopie,Skopje
+Melaca,Melaka
+La Valeta,Valletta
+Chi in uCity in Monaco,ChişinăuCity in Monaco
+Ulán Bator,Ulaanbaatar
+Uarzazate,Ouarzazat
+Tánger,Tangier
+Tetuán,Tetouan
+Rangún,Rangoonकाठमाडौं
+Gilze Rijen,Gilze
+La Haya,The Hague
+Kakamega,Karenga
+Numea,Nouméa
+Saipán,Chalan Kanoa
+Berlevag,Berlevåg
+Rorvik,Rørvik
+Svolvaer,Svolvær
+Súbic,Subic
+Zamboanga,Zamboanga City
+Oporto,Porto
+Puerto SantoSanta Cruz,Porto SantoSanta Cruz
+Mihail Kogalniceanu,Mihail Kogălniceanu
+Târgu-Mure,Târgu-MureşАбакан
+Abakan,AbakanАдлер
+Anapa,AnapaАрхангельск
+Barnaul,BarnaulБрацк
+Chita,ChitaЧульман
+Chul'man,Chul 'manЭнгельс
+Kazan ',Kazan 'Кемерово
+Kemerovo,KemerovoХабаровск
+Nalchik,Nal 'chikНижневартовск
+Orenburgo,OrenburgПенза
+Penza,PenzaПермь
+Perm ' -,Perm 'Петропавловск-Камчатский
+Saratov,SaratovСтаврополь
+Stávropol,Stavropol 'Стригино
+Strigino,StriginoСургут
+Vorónezh,Voronezh
+Ekaterimburgo,Yekaterinburg
+Aquiq,Al ' Aqiq
+TaifDhahranAz Zahran,At Ta 'ifDhahranAz Zahran
+Ha'il,Ha 'il
+Yanbu,Yanbu ' al Bahr
+Cheongju,Ch 'ongju
+Inchon,Inch 'on
+P'yongt'aek,P 'yongt 'aek
+Daegu,Taegu
+La Coruña,A Coruña
+Goteborg,Göteborg
+Malmo,Malmö
+BernaGenevaGenève,BernGenevaGenève
+San Galo,Sankt Gallen
+Latakia,Latakia高雄巿
+Puting,Pu-ting臺北市
+Taipéi,T 'ai-pei Shih
+Fua amotu,Fua 'amotu
+Nuku'alofa,Nuku 'alofa
+Kélibia,Qulaybiyah
+Dalamán,Dalaman
+Krivói Rog,Kryvyy Rih
+Lviv,L 'viv
+Mykolaiv,Mykolayiv
+Al Ain,Al ' Ayn
+FujairaDubaiDubayy,Al FujayrahDubaiDubayy
+Cabo Coral,Cape Coral
+Nueva Iberia,New Iberia
+Wahiawa,Wahiawā
+Waikiki,Waiki ‘ i
+Termez,Termiz
+Urgench,Urganch
+HanóiHo Chi Minh CityThanh Pho Ho Chi Minh,HanoiHo Chi Minh CityThanh Pho Ho Chi Minh
+Mata-utu,Mata 'utu
+Marib,Ma 'rib
+Saná,Sanaa
+Seiyun,Say 'un
+Ta'izz,Ta 'izz
+Pohang,P 'ohang
+Sach'on,Sach 'on
+"Abilene , aeropuerto regional",Abilene Regional Airport
+"Abu Dhabi Bateen , aeropuerto",Abu Dhabi Bateen Airport
+"Abhu Dhabi , aeropuerto internacional",Abu Dhabi International Airport
+"Akron , aeropuerto internacional Akron Fulton",Akron Fulton International Airport
+"Akron-Canton , aeropuerto regional",Akron-Canton Regional Airport
+"Albuquerque , aeropuerto internacional",Albuquerque International Airport
+"Allegheny County , aeropuerto",Allegheny County Airport
+"Ankara-Guvercin Lik , aeropuerto",Ankara-Guvercin Lik Airport
+"Baltimore , puerto interior","Baltimore , Inner Harbor"
+"Belo Horizonte , aeropuerto",Belo Horizonte Airport
+Berlín-Tegel,Berlin-Tegel
+Berlín-Tempelhof,Berlin-Tempelhof
+"Bobby L Chain , aeropuerto municipal",Bobby L Chain Municipal Airport
+"Burke Lakefront , aeropuerto",Burke Lakefront Airport
+Calgary Internacional,Calgary International
+"Calgary-Springbank , aeropuerto",Calgary-Springbank Airport
+"Capital City , aeropuerto",Capital City Airport
+"Changi , aeropuerto",Changi Airport
+"Chicago-O'Hare , aeropuerto internacional",Chicago-O 'Hare International Airport
+"Ciampino , aeropuerto",Ciampino Airport
+"Clinton , aeropuerto regional",Clinton Regional Airport
+"Clinton-Sherman , aeropuerto",Clinton-Sherman Airport
+Colonia,Cologne
+"Columbia , aeropuerto metropolitano",Columbia Metropolitan Airport
+"Cox Dayton , aeropuerto internacional",Cox Dayton International Airport
+"Craig , aeropuerto municipal",Craig Municipal Airport
+"Curitiba , aeropuerto",Curitiba Airport
+"Denver , aeropuerto internacional",Denver International Airport
+"Detroit City , aeropuerto",Detroit City Airport
+"Doha , aeropuerto internacional",Doha International Airport
+Zemunik Donji,Donji Zemunik
+"Duluth , aeropuerto internacional",Duluth International Airport
+"Dél ne , aeropuerto",Délįne Airport
+El Cajón,El Cajon
+"Eureka , Skelton , aeropuerto","Eureka , Skelton Airport"
+"Fayetteville , aeropuerto regional",Fayetteville Regional Airport
+"Fort Wainwright , AAF",Fort Wainwright AAF
+"Forth Worth Alliance , aeropuerto",Fort Worth Alliance Airport
+"Gen Maria , aeropuerto",Gen Maria Airport
+"General Mitchell , aeropuerto internacional",General Mitchell International Airport
+"Gotemburgo-Save , aeropuerto",Göteborg-Save Airport
+"Halifax , aeropuerto internacional",Halifax International Airport
+"Hongqiao , aeropuerto",Hongqiao Airport
+"Honolulu , aeropuerto internacional",Honolulu International Airport
+"Jacarepagua , aeropuerto",Jacarepagua Airport
+"Jacqueline Cochran , aeropuerto regional",Jacqueline Cochran Regional Airport
+"La Carlota , aeropuerto",La Carlota Airport
+"Lawton , aeropuerto municipal",Lawton Municipal Airport
+"Linate , aeropuerto",Linate Airport
+"Lompoc , aeropuerto",Lompoc Airport
+"Lyon-Bron , aeropuerto",Lyon-Bron Airport
+"MBS , aeropuerto internacional",MBS International Airport
+"Malcolm McKinnon , aeropuerto",Malcolm McKinnon Airport
+"Marte , aeropuerto",Marte Airport
+"McCarran , aeropuerto internacional",McCarran International Airport
+"McGregor , aeropuerto ejecutivo",McGregor Executive Airport
+"Meacham , aeropuerto internacional",Meacham International Airport
+"Miami , aeropuerto internacional",Miami International Airport
+"Minot , aeropuerto internacional",Minot International Airport
+"Monterrey , aeropuerto internacional",Monterrey International Airport
+"Montichiara , aeropuerto",Montichiara Airport
+"Montreal-Mirabel , aeropuerto",Montreal-Mirabel Airport
+"Nancy-Ochey , aeropuerto",Nancy-Ochey Airport
+"Nueva York , Central Park","New York City , Central Park"
+"Norfolk , aeropuerto internacional",Norfolk International Airport
+"Nouzha , aeropuerto",Nouzha Airport
+"O.R. Tambo , aeropuerto internacional",O. R. Tambo International Airport
+"Obihiro , aeropuerto",Obihiro Airport
+"Olathe , New Century , aerocentro","Olathe , New Century Aircenter"
+"Opa Locka , aeropuerto",Opa Locka Airport
+"Paya Lebar , aeropuerto",Paya Lebar Airport
+"Peter O Knight , aeropuerto",Peter O Knight Airport
+"Phoenix Sky Harbor , aeropuerto internacional",Phoenix Sky Harbor International Airport
+"Phoenix-Deer Valley , aeropuerto municipal",Phoenix-Deer Valley Municipal Airport
+"Qikiqtarjuaq , aeropuerto",Qikiqtarjuaq Airport
+"S. Angelo , aeropuerto",S. Angelo Airport
+"Sacramento , aeropuerto ejecutivo",Sacramento Executive Airport
+"Sacramento , aeropuerto internacional",Sacramento International Airport
+"San Antonio , aeropuerto internacional",San Antonio International Airport
+"Savannah , aeropuerto internacional",Savannah International Airport
+"Seattle-Tacoma , aeropuerto internacional",Seattle-Tacoma International Airport
+"Sheep Mountain , aeropuerto","Sheep Mountain , Sheep Mountain Airport"
+"Sheremet'ye , aeropuerto",Sheremet 'ye Airport
+"Shreveport Downtown , aeropuerto",Shreveport Downtown Airport
+"Shreveport , aeropuerto regional",Shreveport Regional Airport
+"Sigonella , aeropuerto",Sigonella Airport
+"Simón Bolívar , aeropuerto internacional",Simon Bolivar International Airport
+"Spokane , aeropuerto internacional",Spokane International Airport
+"Tafaraoui , aeropuerto",Tafaraoui Airport
+"Tampa , aeropuerto internacional",Tampa International Airport
+"Urbe , aeropuerto",Urbe Airport
+"Vnukovo , aeropuerto",Vnukovo Airport
+"Waco , aeropuerto regional",Waco Regional Airport
+"Willow Run , aeropuerto",Willow Run Airport
+"Winnipeg , aeropuerto internacional",Winnipeg International Airportman .
+ilipi,Čilipi
+Montería,Monteria
+Puerto Príncipe,Port-au-Prince
+Agartala,Agartalaआगरा
+Bhavnagar,Bhavnagarभोपाल
+Bhopal,Bhopalଭୁବେନଶ ୍ ବର
+Chennai,Chennaiகோயம ் புத ் தூர ்
+Coimbatore,Coimbatoreदेहरादून
+Dibrugarh,Dibrugarhदीमापुर
+Jaipur,Jaipurजम ् मू
+KoartacCalcuta,Kolkataलेह
+Leh,Lehलखनऊ
+Bombay,Mumbai
+Pune,Puneशिमला
+Shimla,Shimlaश ् रीनगरشرینگر
+Srinagar,Srinagarതിരുവനന ് തപുരം
+Tiumén,Tyumen
+San Moritz,St. Moritz
+Latakia,Latakia高雄
+Taipei,Taipei埔頂
+Puting,Pu-ting
+GWeather,GNOME Weather
+Aguanieve,Sleet
+LEMD,EGLL
+mmHg,mb
+Hohhot,Hohhot济南
+Carlow,Charlo
+Cavan,Havana
+Monaghan,Yonaguni
+Mullingar,Mullan
+Nenagh,Nenana
+Tralee,Trincomalee
+Tullamore,Tillamook
+Prešov,Holešov
+Ružomberok,Lumberton
+Tren ín,Trenton
+Ž ilina,Jilin
+Semnán,Semnan
+C_onfigurar,C _ onfigure
+Eliminar cookie,Remove cookie
+Comunicacio n,Community
+Pila Telepathy,Telepathy Stack
+Suite Office,Office Suite
+Dibujo,Drawing
+Fórmula,Formula
+Propio,Self
+Ejecutar ejecutable,Run Executable
+Matar programa,Kill Program
+Crear perfil,Create Profile
+Inicial,Initial
+Generar _perfil,Generate _ Profile
+Para iniciar Monkey Bubble,To Start Monkey Bubble
+Detener el juego,Stop the game
+Atención,Warning
+Iniciar juego,Start Game
+Detener juego,Stop game
+Error fatal,Fatal error
+Movimiento,Moving
+Iniciar en el _nivel :,Start at _ level :
+2007 - 2009,2007 – 2009
+C_trl,C _ trl
+Capturar el puntero,Capture Pointer
+Ct_rl,Ct _ rl
+A_lt,A _ lt
+Área en la que bloquear el puntero,Area to lock the pointer
+Capturar área,Capture area
+Activar,On
+Activar « overburn »,Enable overburn
+Activar BurnProof,Enable Burnproof option
+"DVD-R , o DVD-RAM","DVD-R , or DVD-RAM"
+DVD+R DL,DVD + R DL
+DISPOSITIVO,DEVICE
+NOMBRE-ARCHIVO,FILENAME
+Completa,Complete
+Renombrar archivo,Rename file
+Camuflaje,Camouflage
+Corcho,Cork
+Hielo,Ice
+Papel manila,Manila Paper
+Mármol púrpura,Purple Marble
+Terracota,Terracotta
+Pomelo,Grapefruit
+Rubí,Ruby
+Danubio,Danube
+Hoja,Leaf
+Limón,Lemon
+Chicle,Bubble Gum
+Aparición,Apparition
+Hormigón,Concrete
+Granito,Granite
+Tizón,Charcoal
+Ónice,Onyx
+Abrir con otra aplicación,Open with Other Application …
+Contexto SELinux,SELinux Context
+Error al copiar .,Error while copying .
+Error al mover .,Error while moving .
+archivo nuevo,new file
+"00 oct 0000 , 00:00 pm","00 Oct 0000 , 00 : 00"
+programa,program
+1 MiB,1 MB
+3 MiB,3 MB
+5 MiB,5 MB
+10 MiB,10 MB
+100 MiB,100 MB
+1 GiB,1 GB
+2 GiB,2 GB
+4 GiB,4 GB
+Por nombre,By Name
+Por tamaño,By Size
+Por tipo,By Type
+¿ Cambiar a organización manual ?,Switch to Manual Layout ?
+Ejecutar en un _terminal,Run in _ Terminal
+Seleccione una aplicación,Select an Application
+Otra _aplicación,Other _ Application …
+Abrir con _otra aplicación,Open with Other _ Application …
+En_lazar,Make a _ Link
+por ti_po,by _ Type
+Por _nombre,By _ Name
+Por tama_ño,By _ Size
+Por _tipo,By _ Type
+libre,free
+Volumen :,Volume :
+Ejecución :,Execute :
+Contexto SELinux :,SELinux context :
+Árbol,Tree
+Renombrar el emblema,Rename Emblem
+100 KiB,100 KB
+500 KiB,500 KB
+Ir a :,Go To :
+Renombrar,Rename …
+Crear un emblema nuevo,Create a New Emblem
+Crear un color nuevo :,Create a New Colour :
+Seleccione una categoría :,Select a Category :
+C_ancelar eliminación,C _ ancel Remove
+Imagen,Picture
+Seleccione el tipo,Select type
+Otro tipo,Other Type …
+Tamaño _normal,Normal Si _ ze
+100 KiB 500 KiB 1 MiB 3 MiB 5 MiB 10 MiB 100 MiB 1 GiB,100 KB 500 KB 1 MB 3 MB 5 MB 10 MB 100 MB 1 GB
+Copiar a,Copy to
+Mover a,Move to
+Cambiar a otro panel,Switch to other pane
+Ubicación original,Original Location
+Archivo original,Original file
+Reemplazar con,Replace with
+Mezclar,Merge
+Re_nombrar,Re _ name
+Abrir con _otra aplicación,Open With Other _ Application …
+Cop_iar a,Cop _ y to
+M_over a,M _ ove to
+Ca_mbiar a otro panel,S _ witch to Other Pane
+Otro,Another
+Comp_artir :,Sh _ are :
+Ejecutar programa,Run Software
+Relevancia,Relevance
+Copiar a,Copy To …
+Mover a,Move To …
+Reno_mbrar,Rena _ me …
+Abrir con :,Open with :
+E_jecución,E _ xecute
+Correo-e,E-mail …
+Duración :,Length :
+ERROR : no hay información aún,ERROR : no information yet
+Abrir en una terminal _remota,Open in _ Remote Terminal
+Abrir en una terminal _local,Open in _ Local Terminal
+Abrir en una _terminal,Open in T _ erminal
+Abrir _terminal,Open T _ erminal
+Abrir una terminal,Open a terminal
+C_rear compartición,Create _ Share
+Efectuar,Commit
+Información CVS,CVS Information
+Ignorar cuenta,Ignore count
+Llamar a una función,Call a Function
+Ejecutar un programa,Execute a program
+Agrupar por :,Group By :
+Lanzar excepción,Throw Exception
+Capturar excepción,Catch Exception
+Llamar a una función :,Call a function :
+Seleccione un archivo core,Select a Core File
+Archivo core :,Core File :
+Conectar a un programa en ejecución,Attach to a Running Program
+Conectar con objetivo remoto,Connect to Remote Target
+Función :,Function :
+Línea :,Line :
+Saltar a la ubicación :,Jump to location :
+Falló la conexión,Connection failure
+Activar _inalámbrica,Enable _ Wi-Fi
+Interfaz :,Interface :
+Crear,Create …
+automático,automatic
+Aut_onegociar,Aut _ onegotiate
+Enlace local,Link-Local
+Nú_mero :,Nu _ mber :
+Cambiar,Change …
+P_IN :,P _ IN :
+Eco,Echo
+SS_ID :,SS _ ID :
+C_HAP,C _ HAP
+MSCHAP v_2,MSCHAP v _ 2
+Inalámbrica,Wi-Fi
+nunca,never
+ahora,now
+Error al crear la conexión,Error creating connection
+Sólo enlace local,Link-Local Only
+"Automático , DHCP únicamente","Automatic , DHCP only"
+Seleccione el archivo que importar,Select file to import
+Exportar conexión VPN,Export VPN connection …
+Su plan :,Your Plan :
+Co_nexión :,Co _ nnection :
+HSPA+,HSPA +
+Archivo _PAC :,PAC _ file :
+RÁPIDO,FAST
+DNS terciario :,Ternary DNS :
+Conectar _automáticamente,Connect _ automatically
+Miniaplicación NetworkManager,NetworkManager Applet
+Autenticación :,Authentication :
+DNS primario :,Primary DNS :
+Conectar con :,Connect to :
+Crear conexión VPN,Create VPN Connection
+WPA automática,WPA Automatic
+WPA2 automática,WPA2 Automatic
+Autenticación VPN,Authenticate VPN
+Cliente OpenVPN,OpenVPN Client
+Archivo CA :,CA file :
+Dirección :,Direction :
+IP local :,Local IP :
+Configuración OpenVPN,OpenVPN Configuration
+IP remota :,Remote IP :
+Autenticación -TLS,TLS-Auth
+Autenticación PPTP VPN,Authenticate PPTP VPN
+Cliente PPTP,PPTP Client
+Seleccione el archivo a importarin impl_export,Select file to importin impl _ export
+Opcional,Optional
+Conectar a la VPN,Connect to VPN
+Seleccione un archivo,Select A File
+Script CSD _envolvente :,CSD _ Wrapper Script :
+Se obtuvo Keepalive CSTP,Got CSTP Keepalive
+Intentar nueva conexión DTLS,Attempt new DTLS connection
+PIN incorrecto,Wrong PIN
+Error en clave TSS blob,Error in TSS key blob
+Fallo en conexión SSL,SSL connection failure
+Niepce Digital,Niepce Digital -
+Inclinación,Tilt
+Recuperación,Recovery
+Etiqueta _6,Label _ 6
+Etiqueta _7,Label _ 7
+Etiqueta _8,Label _ 8
+Etiqueta _9,Label _ 9
+Etiqueta _10,Label _ 10
+Importar,Import _ UFRaw
+Rotar,Rotate L _ eft
+Etiqueta,Label 1
+Etiqueta,Label 2
+Etiqueta,Label 3
+Etiqueta,Label 4
+Crear,Create library
+Notificación,Notification
+Abrir proyecto,Open project
+Importar PDF,Import PDF
+Eliminar la página actual,Delete current page
+Exportar a ODT,Export to ODT
+Realizar unpaper,Performing Unpaper
+Ruta a unpaper,Path to unpaper
+Motor _favorito :,Favourite engine :
+Motor,Engine
+Línea arriba,Line Up
+Línea abajo,Line Down
+línea nueva,newline
+exclamación,exclaim
+número,number
+coma,comma
+mayor,greater
+circunflejo,caret
+abre llave,left brace
+barra vertical,vertical bar
+cierra llave,right brace
+no lógico,logical not
+acento AGUDO,acute accent
+un cuarto,one fourth
+A CON TILDE,A ACUTE
+A CIRCUNFLEJA,A CIRCUMFLEX
+A CON TILDE,A TILDE
+A CON DIÉRESIS,A UMLAUT
+A CON CÍRCULO,A RING
+E CON TILDE,E ACUTE
+E CIRCUNFLEJA,E CIRCUMFLEX
+E CON DIÉRESIS,E UMLAUT
+I CON TILDE,I ACUTE
+I CIRCUNFLEJA,I CIRCUMFLEX
+I CON DIÉRESIS,I UMLAUT
+O CON TILDE,O ACUTE
+O CIRCUNFLEJA,O CIRCUMFLEX
+O CON TILDE,O TILDE
+O CON DIÉRESIS,O UMLAUT
+O CON BARRA DIAGONAL,O STROKE
+U CON TILDE,U ACUTE
+U CIRCUNFLEJA,U CIRCUMFLEX
+U CON DIÉRESIS,U UMLAUT
+Y CON TILDE,Y ACUTE
+ZORN,THORN
+a circunfleja,a circumflex
+a con círculo,a ring
+e circunfleja,e circumflex
+i circunfleja,i circumflex
+o circunfleja,o circumflex
+zorn,thorn
+u circunfleja,u circumflex
+Y CON DIÉRESIS,Y UMLAUT
+florín,florin
+viñeta,bullet
+viñeta triangular,triangular bullet
+por milla,per mille
+primo,prime
+no igual a,not equal to
+mayor que o igual a,greater than or equal to
+raíz cúbica,cube root
+infinito,infinity
+círculo en blanco,white circle
+viñeta vacía,white bullet
+marca,check mark
+en blanco,blank
+Leer fila,Speak row
+conmutar,toggle
+Alt_Icontrol,Alt _ Lcontrol
+bloqueo numérico,num lock
+intro,return
+intro,enter
+inicio,home
+comenzar,begin
+acento,acute
+circunflejo,circumflex
+círculo,ring
+Saturar azul,Saturate blue
+2. Portátil,2 . Laptop
+Empezar en :,Start from :
+Alternativa,Alternate
+Hiperenlace,Hyperlink
+Punto _7,Dot _ 7
+Punto _8,Dot _ 8
+Leer la _fila actual,Speak current ro _ w
+Voz,Speech
+Activar _monitor Braille,Enable Braille _ monitor
+Pronunciación,Pronunciation
+Leer _ninguno,Speak _ none
+Mover al _principio,Move to _ top
+Mover uno a_rriba,Move _ up one
+Mover al _final,Move to _ bottom
+Alerta,Alert
+flc,arw
+lnz,cnv
+cv,chk
+ElementoMarcable,CheckItem
+elemento marcable,check item
+ico,icn
+mar,frm
+Panel html,HtmlPane
+rlln,flr
+tpg,fnt
+Formulario,Form
+pnltr,gpn
+mrci,ifrm
+Marco Interno,InternalFrame
+etq,lbl
+enlace,lnk
+brmnu,mnubr
+elmnum,mnuitm
+pnlo,optnpn
+mnuem,popmnu
+Menú emergente,PopupMenu
+brprog,pgbar
+pnlr,rtpn
+Panel Raíz,RootPane
+btc,tglbtn
+Botón Conmutable,ToggleButton
+botón conmutable,toggle button
+arb,tre
+tblArb,trtbl
+Prt,vwprt
+Puerto,Viewport
+puerto,viewport
+pDP,ftr
+parra,para
+ap,app
+cEmp,emb
+vcal,calv
+ecal,cale
+abrirwrap,openwrap
+etv,vte
+No-uniforme,Non-uniform
+variantetextattr,varianttextattr
+alineación verticaltextattr,vertical aligntextattr
+ningunofont-effecttextattr,nonefont-effecttextattr
+grabarfont-effecttextattr,engravefont-effecttextattr
+inferiorvertical-aligntextattr,bottomvertical-aligntextattr
+Ninguno Bilineal,None Bilinear
+Leer _fila,Speak ro _ w
+enlaceblankblankblank,linkblankblankblank
+Alguna,Some
+Superiornotification,Topnotification
+marca,tick mark
+Perfil inicial :,Start-up Profile :
+ElementoMarcable,TickItem
+elemento marcable,tick item
+Abrir TTS,Open TTS
+conmutarright alt,toggleright alt
+Color,Colour Magnification
+OPCIO N,OPTION
+Ejecutar ahora,Run now
+Nombre real,Real name
+FALLÓ .,FAILED .
+CORRECTO .,OK .
+Mejora,Enhancement
+Aceptar CLUF,Accept EULA
+Eliminar paquete,Remove package
+Imprimir,Pan : Print
+Almacenar artículo,Cache Article
+Siguiente _grupo,Next _ Group
+Siguiente _artículo,Next _ Article
+Ignorar _autor,Ignore _ Author
+Cance_lar artículo,Cance _ l Article ...
+Reenviar A,Followup-To
+Copiar _URL,Copy _ URL
+Comprobar _ortografía,Check _ Spelling
+Ocurrió un error al abrir el archivo temporal,Error opening temporary file
+Enviar correo-e _a,Mail _ To
+Firma :,Signature :
+Puntuación nueva,New Score
+Criterio,Criteria
+Error al iniciar uulib,Error initializing uulib
+Seleccionar PDF,Select PDF
+Alerta,Alerting
+Conexión telefónica,Phone Connection
+Otro _puerto,Other _ port
+Planner,Planner project plan
+Número,Integer number
+Seleccionar,Select _ All
+Abrir,Open a project
+URL,EDS URL
+Unir equipo al reino,Join machine to realm
+No preguntar,Do not prompt for input
+EXPREG,REGEX
+Reemplazar el actual,Replace _ current
+Sólo texto,Text view font
+3.,3 .
+2.,2 .
+1.,1 .
+Malayam,Malayalam
+Reloj internacional,International Clock
+Reloj internacional .,The international clock .
+Evolución continua,Continual Evolution
+Sonría a la cámara,Smile for the Camera
+ClutterActor,New implicit animation API for ClutterActor .
+File Roller,The archive manager File Roller
+Mantener rotación,Keep Rotation
+MPE_G TS,MPE _ G TS
+Tít_ulo,Ti _ tle
+columna,column
+Tipo MIME ilegal,Illegal MIME-type
+"2005 , 2006 , 2007 , 2008 , 2009","2005 , 2006 , 2007 , 2008"
+Crear,Click Create to create the new key pair .
+DSA,DSA ElGamal
+Borrar una clave,Deleting a Key
+Revocar,"Click on the Revoke button on the left ,"
+Revocar,Click on Revoke .
+Borrar,Click on the Delete button on the left .
+Firmar,Click on Sign .
+Clave,KeyID
+Para eliminar una clave :,Deleting a Subkey
+Para recuperar una clave remota :,To create a Secure Shell key :
+Cifrar,Encrypt …
+Importar clave,Import Key
+Verificar la firma,Verify Signature
+Cifrar un archivo,Encrypt file
+archivo,file …
+Importación,Importing
+Verificación,Verifying
+"2005 , 2006 , 2007 , 2008","2005 , 2006 , 2007 , 2008 , 2009"
+Cifrar texto,Encrypting Text
+Firmar texto,Signing Text
+Cifrar,Encrypt ...
+archivo,file ...
+archivo HPGL,HPGL file
+archivo PCL,PCL file
+plantilla ODT,ODT template
+plantilla OTH,OTH template
+plantilla ODG,ODG template
+plantilla ODP,ODP template
+plantilla ODS,ODS template
+gráfico ODC,ODC chart
+plantilla ODC,ODC template
+fórmula ODF,ODF formula
+plantilla ODF,ODF template
+imagen ODI,ODI image
+paquete SIS,SIS package
+paquete SISX,SISX package
+página ASP,ASP page
+programa en ECMAScript,ECMAScript program
+ejecutable,executable
+archivo IFF,IFF file
+archivo JNPL,JNLP file
+programa en JavaScript,JavaScript program
+archivo OCL,OCL file
+macro M4,M4 macro
+ejecutable PEF,PEF executable
+paquete RPM,RPM package
+tema,theme
+página XHTML,XHTML page
+imagen WBMP,WBMP image
+imagen GIF,GIF image
+imagen IEF,IEF image
+imagen JPEG,JPEG image
+imagen JPEG-2000,JPEG-2000 image
+imagen EXR,EXR image
+imagen PNG,PNG image
+imagen SVG,SVG image
+imagen TIFF,TIFF image
+imagen vectorial DXF,DXF vector image
+imagen DICOM,DICOM image
+imagen DIB,DIB image
+imagen DjVu,DjVu image
+imagen DPX,DPX image
+imagen EPS,EPS image
+imagen FPX,FPX image
+imagen ILBM,ILBM image
+imagen JNG,JNG image
+imagen NIFF,NIFF image
+imagen PCX,PCX image
+imagen PCD,PCD image
+imagen PNM,PNM image
+imagen PBM,PBM image
+imagen PGM,PGM image
+imagen PPM,PPM image
+imagen RGB,RGB image
+imagen SGI,SGI image
+imagen TGA,TGA image
+imagen EMF,EMF image
+imagen WMF,WMF image
+imagen XBM,XBM image
+imagen XPM,XPM image
+referencia a un archivo remoto,reference to remote file
+archivo RDF,RDF file
+programa en WMLScript,WMLScript program
+archivo DTD,DTD file
+archivo MOC Qt,Qt MOC file
+publicación Mup,Mup publication
+archivo XMI,XMI file
+archivo XSL FO,XSL FO file
+animación ANIM,ANIM animation
+animación FLIC,FLIC animation
+animación MNG,MNG animation
+enlace GMC,GMC link
+Solo familia,Family only
+Tamaño original,Original Size
+Con_tinuar,Con _ tinue
+Salir,Logout
+Crear etiqueta,Create Tag
+Marcar,Flag
+Importación completa,Import Complete
+Renombrar evento,Rename Event
+a.m.,AM
+p.m.,PM
+Por _título,By _ Title
+Siguiente foto,Next Photo
+Llenar la página entera,Fill the entire page
+pulg .,in .
+4 × 6 pulg .,4 x 6 in .
+5 × 7 pulg .,5 x 7 in .
+8 × 10 pulg .,8 x 10 in .
+11 × 14 pulg .,11 x 14 in .
+16 × 20 pulg .,16 x 20 in .
+13 × 18 cm,13 x 18 cm
+18 × 24 cm,18 x 24 cm
+20 × 30 cm,20 x 30 cm
+24 × 40 cm,24 x 40 cm
+30 × 40 cm,30 x 40 cm
+RAW+JPEG,RAW + JPEG
+Cámara :,Camera make :
+Voltear hori_zontalmente,Flip Hori _ zontally
+Voltear horizontalmente,Flip Horizontally
+Voltear _verticalmente,Flip Verti _ cally
+Voltear verticalmente,Flip Vertically
+Volver al original,Revert to Original
+Re_nombrar evento,Re _ name Event ...
+Hacer foto _clave para el evento,Make _ Key Photo for Event
+Hacer foto clave para el evento,Make Key Photo for Event
+Evento nuevo,New Event
+Eliminar etiqueta,Delete Tag
+Re_nombrar,Re _ name ...
+Saturación :,Saturation :
+Matiz :,Tint :
+Ver eve_nto para la foto,View Eve _ nt for Photo
+cualquier foto,any photo
+una foto en « raw »,a raw photo
+Cualquier texto,Any text
+E_tiqueta nueva,New _ Tag ...
+Ejemplo :,Example :
+Solo quita_r,Only _ Remove
+Electrónica,Electronica
+Seleccionar un formato,Selecting a Format
+Categoría nueva,New Category ...
+Sin categoría,No Category
+Ca_tegoría :,Ca _ tegory :
+El proyecto Pimlico,The Pimlico Project
+Futuro,Future
+mañanam,Tomorrowm
+Cómic nuevo,New Comic
+altura :,height :
+Abrir cómic,Open comic
+Página nueva,New Page
+Página nueva,New page
+Eliminar página,Delete Page
+Página anterior,Prev Page
+Página anterior,Prev page
+Siguiente pa gina,Next Page
+Siguiente pa gina,Next page
+Marco nuevo,New Frame
+Abrir un archivo,Open a new file
+Reflejo horizontal,Horizontal flip
+Reflejo vertical,Vertical flip
+Mover al frente,Move to front
+Ir a la página,Go To Page
+TeleGNOME : Teletexto para GNOME,TeleGNOME : Teletext for GNOME
+Teletexto para GNOME,Teletext for GNOME
+Error al crear la conexión HTTP,Error making HTTP connection
+móvil,mobile
+voz,voice
+grupo,parcel
+Yahoo ! Japón,Yahoo ! I _ D :
+Tela,Fabric
+Ca mara web,Webcam
+Micrófono,Mic
+2009-03-23,2008-03-07
+Tipografía y tamaño,Font Styling & Sizing
+Crear nueva nota,Select the Create New Note option in the menu .
+Enorme,Huge
+Abrir « Comenzar aquí »,"Open "" Start Here """
+Crear una nota nueva,Create new note
+Objeto GtkTextBuffer que imprimir,GtkTextBuffer object to print
+Crear una nota nueva,Create New Note
+Eliminar una nota,Deleting a Notebook
+Activar un complemento,To Enable a Plugin
+Configurar el complemento,To Configure the Plugin
+C_onfigurar,C _ onfigure …
+0 × 0,0 x 0
+Abrir un archivo no local,Open a non-local file
+Ir al menú DVD,Go to the DVD menu
+Siguiente capítulo o película,Next chapter or movie
+Sat_uración :,Sat _ uration :
+Ningún archivo,No File
+Encolar,Enqueue
+Saltar,Seek
+Sureuropeo,South European
+Por etiqueta,By tag
+Saltar a,Skip to
+Error al lanzar el URI,Error launching URI
+Error genérico .,Generic Error .
+Ir al capítulo,Go to chapter
+Cancelar trabajo,Cancel job
+No montan automáticamentepartition-info,No Automountpartition-info
+Vaci apart-type,Emptypart-type
+Hibernacio npart-type,Hibernationpart-type
+Vinagre,Vinagre Manual
+"2007 , 2008 , 2009","2007 , 2008"
+Iniciar Vinagre,Starting Vinagre
+Conectar con una máquina remota,To connect with a remote machine
+Abrir un archivo en una conexión remota,Opening a Remote Connection File
+Compartir,Sharing
+Error al iniciar libnotify,Error initializing libnotify
+Notificar al conectar,Notify on connect
+BTC 9019U,BTC 9001AH
+Chicony KU-0108,Chicony KB-9885
+en,Ben
+Armenio,Armenia
+in,Fin
+or,Nor
+ta,Ita
+ur,Tur
+mr,Mmr
+Bu lgaro,Bulgaria
+Checo,Czechia
+ku,Iku
+Ewe,Swe
+ha,Tha
+avn,Kan
+Georgiano,Georgia
+gr,Bgr
+hu,Bih
+he,Che
+lt,Mlt
+mi,Smi
+Mongol,Mongolia
+ro,Prt
+Sirio,Syriac
+Vietnamita,Vietnam
+Cló Gaelach,CloGaelach
+eo,Geo
+am,Tam
+brl,Irl
+apl,Mal
+eu,Deu
+Bengalí,Probhat
+Che,Cze
+Fonético,Phonetic
+SrL,Syr
+EE . UU .,USA
+Ucr,Ukr
+Sección 1x,Section 1x
+Sección 1m,Section 1m
+Sección 3p,Section 3p
+Sección 0p,Section 0p
+Sección 3blt,Section 3blt
+Sección 3tiff,Section 3tiff
+Sección 3f,Section 3f
+Sección 3qt,Section 3qt
+Sección 9,Section 9
+Sección 4x,Section 4x
+Configuración X11,X11 Configuration
+Sección 5x,Section 5x
+Configuración OpenSSL,OpenSSL Configuration
+Sección 6,Section 6
+Sección 6x,Section 6x
+Sección 7x,Section 7x
+Inteligencia artificial,Artificial Intelligence
+Biología,Biology
+Economía,Economy
+Geografía,Geography
+Geología,Geology
+Literatura,Literature
+Computación en paralelo,Parallel Computing
+Ingeniería,Engineering
+auto:re :,re
+Sin comentario,No Comment
+Se agotó la memoria,Out of memory
+Error al ejecutar « gnome-open »,"Error executing "" gnome-open """
+Un YelpUri con la ubicación actual,A YelpUri with the current location
+Título raíz,Root Title
+comment.cite.name.format,comment.cite.name.format from
+P :,Q :
+R :,A :
+Error,Bug
+Nota legal,Legal
+RUTAICONO,ICONPATH
+ANCHURA,WIDTH
+ALTURA,HEIGHT
+TIEMPO DE EXPIRACIÓN,TIMEOUT
+DÍA,DAY
+MES,MONTH
+AÑO,YEAR
+SEPARADOR,SEPARATOR
+COLUMNA,COLUMN
+PORCENTAJE,PERCENTAGE
+Zenity,notification icon example
+NOMBRE-DEL-ICONO,ICON-NAME

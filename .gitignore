@@ -44,3 +44,5 @@ coverage.xml
 
 # macOS
 .DS_Store
+
+/scripts/004_opus_data/opus_download/
