@@ -89,15 +89,15 @@
               <span class="text-slate-600 font-medium">{{ $t('home.expressionDensity') }}:</span>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-200"></div>
-                <span class="text-slate-600">{{ $t('home.low') }}</span>
+                <span class="text-slate-600">{{ $t('home.low') }} (&lt;5k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-400"></div>
-                <span class="text-slate-600">{{ $t('home.medium') }}</span>
+                <span class="text-slate-600">{{ $t('home.medium') }} (&lt;50k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-600"></div>
-                <span class="text-slate-600">{{ $t('home.high') }}</span>
+                <span class="text-slate-600">{{ $t('home.high') }} (≥50k)</span>
               </div>
             </div>
           </div>
@@ -195,10 +195,9 @@ export default {
     
     // Generate heat color based on count
     const getHeatColor = (count) => {
-      if (count < 3) return '#bfdbfe' // blue-200
-      if (count < 7) return '#60a5fa' // blue-400
-      if (count < 15) return '#3b82f6' // blue-500
-      return '#2563eb' // blue-600
+      if (count < 5000) return '#bfdbfe' // blue-200 (low)
+      if (count < 50000) return '#60a5fa' // blue-400 (medium)
+      return '#2563eb' // blue-600 (high)
     }
     
     const goToSearch = () => {
@@ -235,7 +234,7 @@ export default {
       languageData.forEach(point => {
         if (point.lat && point.lng) {
           const marker = L.circleMarker([point.lat, point.lng], {
-            radius: Math.min(Math.sqrt(point.count) * 3 + 5, 30),
+            radius: point.count < 5000 ? 8 : point.count < 50000 ? 16 : 24,
             fillColor: getHeatColor(point.count),
             color: "#1e40af",
             weight: 1,
@@ -306,53 +305,55 @@ export default {
     const loadData = async () => {
       loading.value = true
       try {
-        // Fetch expressions and languages to calculate stats
-        const res = await fetch('/api/v1/expressions?limit=1000')
-        const languagesRes = await fetchLanguages()
+        // Fetch statistics from the new dedicated endpoint
+        console.log('Fetching statistics from /api/v1/statistics');
+        const statsRes = await fetch('/api/v1/statistics')
+        console.log('Statistics response status:', statsRes.status);
+        console.log('Statistics response ok?', statsRes.ok);
         
-        if (res.ok) {
-          const expressions = await res.json()
-          
-          // Calculate stats
-          const languages = new Set(expressions.map(e => e.language_code))
-          // Fix: Use region_name instead of region which is deprecated
-          const regions = new Set(expressions.map(e => e.region_name).filter(r => r))
-          
+        // Fetch heatmap data from the new dedicated endpoint
+        console.log('Fetching heatmap data from /api/v1/heatmap');
+        const heatmapRes = await fetch('/api/v1/heatmap')
+        console.log('Heatmap response status:', heatmapRes.status);
+        console.log('Heatmap response ok?', heatmapRes.ok);
+        
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          console.log('Received statistics data:', statsData);
           stats.value = {
-            totalExpressions: expressions.length,
-            totalLanguages: languages.size,
-            totalRegions: regions.size
+            totalExpressions: statsData.total_expressions,
+            totalLanguages: statsData.total_languages,
+            totalRegions: statsData.total_regions
           }
+          console.log('Updated stats value:', stats.value);
+        } else {
+          console.error('Failed to fetch statistics, status:', statsRes.status);
+          const errorText = await statsRes.text();
+          console.error('Error response:', errorText);
+        }
+        
+        if (heatmapRes.ok) {
+          const heatmapResult = await heatmapRes.json()
+          const heatmapPoints = heatmapResult.data || []
           
-          // Group by language and calculate positions
-          const languageCounts = {}
-          expressions.forEach(expr => {
-            const language = expr.language_code
-            languageCounts[language] = (languageCounts[language] || 0) + 1
-          })
-          
-          // Generate heatmap points with language regions from backend data
-          const languageData = Object.entries(languageCounts).map(([languageCode, count]) => {
-            // Find language info from the languages API
-            const languageInfo = languagesRes.find(lang => lang.code === languageCode)
-            
-            return {
-              languageCode,
-              languageName: languageInfo ? languageInfo.name : languageCode,
-              regionCode: languageInfo ? languageInfo.region_code : null,
-              regionName: languageInfo ? languageInfo.region_name : 'Unknown',
-              count,
-              lat: languageInfo && languageInfo.region_latitude ? parseFloat(languageInfo.region_latitude) : 0,
-              lng: languageInfo && languageInfo.region_longitude ? parseFloat(languageInfo.region_longitude) : 0
-            }
-          })
-          
-          heatmapData.value = languageData
+          heatmapData.value = heatmapPoints.map(point => ({
+            languageCode: point.language_code,
+            languageName: point.language_name,
+            regionCode: point.region_code,
+            regionName: point.region_name,
+            count: point.count,
+            lat: point.latitude ? parseFloat(point.latitude) : 0,
+            lng: point.longitude ? parseFloat(point.longitude) : 0
+          }))
           
           // Create markers on the map
           if (map) {
             createMarkers(heatmapData.value)
           }
+        } else {
+          console.error('Failed to fetch heatmap data, status:', heatmapRes.status);
+          const errorText = await heatmapRes.text();
+          console.error('Error response:', errorText);
         }
       } catch (e) {
         console.error('Failed to load data:', e)
@@ -360,7 +361,6 @@ export default {
         loading.value = false
       }
     }
-    
     
     // Load Leaflet from CDN if not already loaded
     const loadLeaflet = () => {

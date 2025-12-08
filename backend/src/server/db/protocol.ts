@@ -58,6 +58,24 @@ export interface User {
   updated_at?: string
 }
 
+// Statistics interface
+export interface Statistics {
+  total_expressions: number
+  total_languages: number
+  total_regions: number
+}
+
+// Heatmap data interface
+export interface HeatmapData {
+  language_code: string
+  language_name: string
+  region_code: string | null
+  region_name: string | null
+  count: number
+  latitude: string | null
+  longitude: string | null
+}
+
 // Abstract database service class
 export abstract class AbstractDatabaseService {
   // Language operations
@@ -87,4 +105,12 @@ export abstract class AbstractDatabaseService {
   abstract getUserByEmail(email: string): Promise<User | null>
   abstract getUserById(id: number): Promise<User | null>
   abstract createUser(user: Partial<User>): Promise<User>
+  
+  // Statistics
+  abstract getStatistics(): Promise<Statistics>
+  abstract clearStatisticsCache(): void
+  
+  // Heatmap
+  abstract getHeatmapData(): Promise<HeatmapData[]>
+  abstract clearHeatmapCache(): void
 }
