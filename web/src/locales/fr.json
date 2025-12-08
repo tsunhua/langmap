@@ -147,6 +147,7 @@
     "title": "Historique des versions",
     "loading": "Chargement des versions...",
     "noVersions": "Aucune version disponible",
+    "currentVersion": "Version actuelle de cette expression",
     "auto": "auto",
     "anonymous": "Anonyme",
     "changes": "Modifications",

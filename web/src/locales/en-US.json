@@ -151,6 +151,7 @@
     "title": "Version History",
     "loading": "Loading versions...",
     "noVersions": "No versions available",
+    "currentVersion": "Current version of this expression",
     "auto": "auto",
     "anonymous": "Anonymous",
     "changes": "Changes",

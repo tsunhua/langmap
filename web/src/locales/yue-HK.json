@@ -148,14 +148,15 @@
     "auto": "自動"
   },
   "versionHistory": {
-    "title": "版本記錄",
-    "loading": "緊喺載入版本…",
+    "title": "版本紀錄",
+    "loading": "載入版本緊…",
     "noVersions": "冇可用嘅版本",
+    "currentVersion": "呢個係呢條詞句而家嘅版本",
     "auto": "自動",
     "anonymous": "匿名",
-    "changes": "改動內容",
+    "changes": "修改記錄",
     "text": "文字",
-    "audio": "音訊",
+    "audio": "聲音",
     "location": "位置",
     "none": "無"
   },

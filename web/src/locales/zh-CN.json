@@ -151,6 +151,7 @@
     "title": "版本历史",
     "loading": "加载版本中...",
     "noVersions": "无可用版本",
+    "currentVersion": "这是该词句的当前版本",
     "auto": "自动",
     "anonymous": "匿名",
     "changes": "变更",

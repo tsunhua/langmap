@@ -31,7 +31,7 @@
         
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedExpressions') }} 
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedExpressions') }}
               <span class="text-slate-500 ml-2">({{ translations.length }})</span>
             </h3>
             <button 

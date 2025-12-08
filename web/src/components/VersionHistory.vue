@@ -14,11 +14,39 @@
       </div>
       
       <div v-else>
-        <div v-if="versions.length === 0" class="text-center py-6 text-slate-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p class="mt-2">{{ $t('versionHistory.noVersions') }}</p>
+        <div v-if="versions.length === 0" class="relative">
+          <!-- Vertical line -->
+          <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200"></div>
+          
+          <div class="space-y-6">
+            <div class="relative pl-12">
+              <!-- Timeline dot -->
+              <div class="absolute left-2 top-4 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow"></div>
+              
+              <!-- Version card (using current expression data) -->
+              <div class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="text-slate-800 font-medium">{{ expression && expression.text ? expression.text : 'N/A' }}</div>
+                  <div class="text-xs text-slate-500">
+                    {{ expression && expression.created_at ? formatDate(expression.created_at) : 'N/A' }}
+                  </div>
+                </div>
+                
+                <div class="text-xs text-slate-500 flex flex-wrap items-center mb-3">
+                  <span class="inline-flex items-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {{ expression && expression.created_by ? expression.created_by : $t('versionHistory.anonymous') }}
+                  </span>
+                </div>
+                
+                <div class="mt-3 p-2 bg-slate-50 rounded text-sm text-slate-600">
+                  {{ $t('versionHistory.currentVersion') }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Timeline view -->
@@ -127,19 +155,33 @@ export default {
   name: 'VersionHistory',
   props: ['expressionId'],
   setup (props) {
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const versions = ref([])
     const loading = ref(false)
+    const expression = ref(null)
 
-    // Simple date formatter
+    // Date formatter using current locale
     const formatDate = (dateString) => {
-      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-      return new Date(dateString).toLocaleDateString(undefined, options)
+      const options = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }
+      return new Date(dateString).toLocaleDateString(locale.value, options)
     }
 
     async function load () {
       loading.value = true
       try {
+        // 获取表达式基本信息
+        const exprRes = await fetch(`/api/v1/expressions/${props.expressionId}`)
+        if (exprRes.ok) {
+          expression.value = await exprRes.json()
+        }
+
+        // 获取版本历史
         const res = await fetch(`/api/v1/expressions/${props.expressionId}/versions`)
         if (!res.ok) {
           versions.value = []
@@ -156,7 +198,7 @@ export default {
     }
 
     onMounted(load)
-    return { versions, loading, formatDate, t }
+    return { versions, loading, formatDate, t, expression }
   }
 }
 </script>
