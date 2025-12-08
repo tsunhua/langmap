@@ -139,7 +139,7 @@
             </span>
           </div>
           
-          <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer">
+          <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 hover:shadow-lg transition-shadow cursor-pointer" @click="scrollToMap">
             <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -251,6 +251,17 @@ export default {
         if (searchInput) {
           searchInput.focus();
         }
+      }
+    }
+    
+    // 滚动到世界语言分布图
+    const scrollToMap = () => {
+      // 获取世界语言分布图部分的标题元素
+      const mapSection = document.querySelector('.bg-slate-50.py-16.px-4.sm\\:px-6.lg\\:px-8');
+      
+      if (mapSection) {
+        // 平滑滚动到地图部分
+        mapSection.scrollIntoView({ behavior: 'smooth' });
       }
     }
     
@@ -442,6 +453,7 @@ export default {
       handleExpressionCreated,
       handleAddExpressionClick,
       scrollToSearch,
+      scrollToMap,
       loadData
     }
   }
