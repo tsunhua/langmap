@@ -306,23 +306,33 @@ export default {
     const loadData = async () => {
       loading.value = true
       try {
+        // Fetch statistics from the new dedicated endpoint
+        console.log('Fetching statistics from /api/v1/statistics');
+        const statsRes = await fetch('/api/v1/statistics')
+        console.log('Statistics response status:', statsRes.status);
+        console.log('Statistics response ok?', statsRes.ok);
+        
         // Fetch expressions and languages to calculate stats
         const res = await fetch('/api/v1/expressions?limit=1000')
         const languagesRes = await fetchLanguages()
         
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          console.log('Received statistics data:', statsData);
+          stats.value = {
+            totalExpressions: statsData.total_expressions,
+            totalLanguages: statsData.total_languages,
+            totalRegions: statsData.total_regions
+          }
+          console.log('Updated stats value:', stats.value);
+        } else {
+          console.error('Failed to fetch statistics, status:', statsRes.status);
+          const errorText = await statsRes.text();
+          console.error('Error response:', errorText);
+        }
+        
         if (res.ok) {
           const expressions = await res.json()
-          
-          // Calculate stats
-          const languages = new Set(expressions.map(e => e.language_code))
-          // Fix: Use region_name instead of region which is deprecated
-          const regions = new Set(expressions.map(e => e.region_name).filter(r => r))
-          
-          stats.value = {
-            totalExpressions: expressions.length,
-            totalLanguages: languages.size,
-            totalRegions: regions.size
-          }
           
           // Group by language and calculate positions
           const languageCounts = {}
@@ -360,7 +370,6 @@ export default {
         loading.value = false
       }
     }
-    
     
     // Load Leaflet from CDN if not already loaded
     const loadLeaflet = () => {

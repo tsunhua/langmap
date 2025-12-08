@@ -1,6 +1,16 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User } from './protocol'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics } from './protocol'
+
+// Cache for statistics
+let statisticsCache: {
+  data: Statistics | null;
+  timestamp: number | null;
+} = {
+  data: null,
+  timestamp: null
+};
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export class D1DatabaseService extends AbstractDatabaseService {
 
@@ -348,6 +358,59 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     return result.results[0] as User
+  }
+
+  // Statistics
+  async getStatistics(): Promise<Statistics> {
+    // Check if we have valid cache
+    const now = Date.now();
+    if (statisticsCache.data && statisticsCache.timestamp && 
+        (now - statisticsCache.timestamp) < CACHE_DURATION) {
+      console.log('Returning cached statistics');
+      return statisticsCache.data;
+    }
+    
+    console.log('Fetching fresh statistics from database');
+    
+    // Get total expressions count
+    const totalExpressionsResult = await this.db.prepare(
+      'SELECT COUNT(*) as count FROM expressions'
+    ).first<{ count: number }>();
+    console.log('Total expressions result:', totalExpressionsResult);
+    
+    // Get total languages count
+    const totalLanguagesResult = await this.db.prepare(
+      'SELECT COUNT(*) as count FROM languages WHERE is_active = 1'
+    ).first<{ count: number }>();
+    console.log('Total languages result:', totalLanguagesResult);
+    
+    // Get total regions count - from languages table as suggested
+    const totalRegionsResult = await this.db.prepare(
+      `SELECT COUNT(DISTINCT region_name) as count 
+       FROM languages 
+       WHERE region_name IS NOT NULL AND region_name != ''`
+    ).first<{ count: number }>();
+    console.log('Total regions result:', totalRegionsResult);
+
+    const statistics = {
+      total_expressions: totalExpressionsResult?.count || 0,
+      total_languages: totalLanguagesResult?.count || 0,
+      total_regions: totalRegionsResult?.count || 0
+    };
+    console.log('Constructed statistics object:', statistics);
+    
+    // Update cache
+    statisticsCache.data = statistics;
+    statisticsCache.timestamp = now;
+    
+    return statistics;
+  }
+  
+  // Method to clear statistics cache (to be called when data changes)
+  clearStatisticsCache(): void {
+    statisticsCache.data = null;
+    statisticsCache.timestamp = null;
+    console.log('Statistics cache cleared');
   }
 
   /**

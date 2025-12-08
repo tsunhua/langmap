@@ -68,6 +68,21 @@ async function requireAuth(c: Context, next: Next) {
   await next()
 }
 
+// GET /api/v1/statistics
+api.get('/statistics', async (c) => {
+  try {
+    console.log('GET /api/v1/statistics');
+    const db = getDB(c)
+    const statistics = await db.getStatistics()
+    console.log('Statistics fetched:', statistics);
+    
+    return c.json(statistics)
+  } catch (error: any) {
+    console.error('Error in GET /statistics:', error);
+    return c.json({ error: 'Failed to fetch statistics' }, 500)
+  }
+})
+
 // GET /api/v1/languages
 api.get('/languages', async (c) => {
   try {
@@ -77,6 +92,96 @@ api.get('/languages', async (c) => {
     return c.json(languages)
   } catch (error: any) {
     return c.json({ error: 'Failed to fetch languages' }, 500)
+  }
+})
+
+// POST /api/v1/languages
+api.post('/languages', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    console.log('Creating language with body:', body);
+    
+    // Get user info from middleware
+    const user = c.get('user');
+    const createdBy = user.username;
+    
+    // Add created_by to the language data
+    const languageData = {
+      ...body,
+      created_by: body.created_by || createdBy
+    };
+
+    const language = await db.createLanguage(languageData)
+    
+    // Clear statistics cache as we've added a new language
+    db.clearStatisticsCache();
+    
+    return c.json(language, 201)
+  } catch (error: any) {
+    console.error('Error in POST /languages:', error);
+    return c.json({ error: 'Failed to create language', details: error.message }, 500)
+  }
+})
+
+// PUT /api/v1/languages/:id
+api.put('/languages/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const body = await c.req.json()
+    
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid language ID' }, 400)
+    }
+    
+    // Get user info from middleware
+    const user = c.get('user');
+    const updatedBy = user.username;
+    
+    // Add updated_by to the language data
+    const languageData = {
+      ...body,
+      updated_by: body.updated_by || updatedBy
+    };
+    
+    const language = await db.updateLanguage(id, languageData)
+    if (!language) {
+      return c.json({ error: 'Language not found' }, 404)
+    }
+    
+    // Clear statistics cache as we've updated a language
+    db.clearStatisticsCache();
+    
+    return c.json(language)
+  } catch (error: any) {
+    console.error('Error in PUT /languages/:id:', error);
+    return c.json({ error: 'Failed to update language', details: error.message }, 500)
+  }
+})
+
+// DELETE /api/v1/languages/:id
+api.delete('/languages/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid language ID' }, 400)
+    }
+    
+    const success = await db.deleteLanguage(id)
+    if (!success) {
+      return c.json({ error: 'Language not found' }, 404)
+    }
+    
+    // Clear statistics cache as we've deleted a language
+    db.clearStatisticsCache();
+    
+    return c.json({ message: 'Language deleted successfully' })
+  } catch (error: any) {
+    console.error('Error in DELETE /languages/:id:', error);
+    return c.json({ error: 'Failed to delete language', details: error.message }, 500)
   }
 })
 
@@ -116,6 +221,10 @@ api.post('/expressions', requireAuth, async (c) => {
     };
     
     const expression = await db.createExpression(expressionData)
+    
+    // Clear statistics cache as we've added a new expression
+    db.clearStatisticsCache();
+    
     return c.json(expression, 201)
   } catch (error: any) {
     console.error('Error in POST /expressions:', error);
@@ -178,6 +287,31 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in PATCH /expressions/:expr_id:', error);
     return c.json({ error: 'Failed to update expression', details: error.message }, 500)
+  }
+})
+
+// DELETE /api/v1/expressions/:expr_id
+api.delete('/expressions/:expr_id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+    
+    const success = await db.deleteExpression(exprId)
+    if (!success) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+    
+    // Clear statistics cache as we've deleted an expression
+    db.clearStatisticsCache();
+    
+    return c.json({ message: 'Expression deleted successfully' })
+  } catch (error: any) {
+    console.error('Error in DELETE /expressions/:expr_id:', error);
+    return c.json({ error: 'Failed to delete expression', details: error.message }, 500)
   }
 })
 

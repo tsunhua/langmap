@@ -58,6 +58,13 @@ export interface User {
   updated_at?: string
 }
 
+// Statistics interface
+export interface Statistics {
+  total_expressions: number
+  total_languages: number
+  total_regions: number
+}
+
 // Abstract database service class
 export abstract class AbstractDatabaseService {
   // Language operations
@@ -87,4 +94,8 @@ export abstract class AbstractDatabaseService {
   abstract getUserByEmail(email: string): Promise<User | null>
   abstract getUserById(id: number): Promise<User | null>
   abstract createUser(user: Partial<User>): Promise<User>
+  
+  // Statistics
+  abstract getStatistics(): Promise<Statistics>
+  abstract clearStatisticsCache(): void
 }
