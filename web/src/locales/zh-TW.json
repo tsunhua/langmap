@@ -120,6 +120,7 @@
     "loading": "正在載入詞句詳情...",
     "expressionDetails": "詞句詳情",
     "associatedMeanings": "關聯含義",
+    "associatedExpressions": "已關聯詞句",
     "associateExpressions": "關聯詞句",
     "cancel": "取消",
     "searchPlaceholder": "搜尋要關聯的詞句...",

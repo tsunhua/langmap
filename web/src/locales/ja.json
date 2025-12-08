@@ -121,6 +121,7 @@
     "loading": "表現の詳細を読み込み中...",
     "expressionDetails": "表現の詳細",
     "associatedMeanings": "関連する意味",
+    "associatedExpressions": "関連する表現",
     "associateExpressions": "表現を関連付ける",
     "cancel": "キャンセル",
     "searchPlaceholder": "関連付ける表現を検索...",

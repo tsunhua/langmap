@@ -124,6 +124,7 @@
     "loading": "Loading expression details...",
     "expressionDetails": "Expression Details",
     "associatedMeanings": "Associated Meanings",
+    "associatedExpressions": "Associated Expressions",
     "associateExpressions": "Associate Expressions",
     "cancel": "Cancel",
     "searchPlaceholder": "Search expressions to associate...",

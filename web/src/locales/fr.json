@@ -120,6 +120,7 @@
     "loading": "Chargement des détails de l'expression...",
     "expressionDetails": "Détails de l'expression",
     "associatedMeanings": "Significations associées",
+    "associatedExpressions": "Expressions associées",
     "associateExpressions": "Associer des expressions",
     "cancel": "Annuler",
     "searchPlaceholder": "Rechercher des expressions à associer...",
