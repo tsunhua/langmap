@@ -113,7 +113,7 @@
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer" @click="$router.push({ name: 'search' })">
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer" @click="scrollToSearch">
             <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -235,6 +235,23 @@ export default {
       
       // 如果已经登录则显示创建对话框
       showCreateDialog.value = true;
+    }
+    
+    // 滚动到顶部搜索框
+    const scrollToSearch = () => {
+      // 获取顶部搜索框元素
+      const searchBox = document.querySelector('.relative.max-w-4xl.mx-auto .flex.gap-3.bg-white.rounded-2xl.shadow-xl.p-2');
+      
+      if (searchBox) {
+        // 平滑滚动到搜索框
+        searchBox.scrollIntoView({ behavior: 'smooth' });
+        
+        // 聚焦到搜索输入框
+        const searchInput = searchBox.querySelector('input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
     }
     
     // Create map markers for each language
@@ -424,6 +441,7 @@ export default {
       selectRegion,
       handleExpressionCreated,
       handleAddExpressionClick,
+      scrollToSearch,
       loadData
     }
   }
