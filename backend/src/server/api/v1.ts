@@ -68,6 +68,23 @@ async function requireAuth(c: Context, next: Next) {
   await next()
 }
 
+// GET /api/v1/heatmap
+api.get('/heatmap', async (c) => {
+  try {
+    console.log('GET /api/v1/heatmap');
+    const db = getDB(c)
+    const heatmapData = await db.getHeatmapData()
+    console.log('Heatmap data fetched:', heatmapData);
+    
+    return c.json({
+      data: heatmapData
+    })
+  } catch (error: any) {
+    console.error('Error in GET /heatmap:', error);
+    return c.json({ error: 'Failed to fetch heatmap data' }, 500)
+  }
+})
+
 // GET /api/v1/statistics
 api.get('/statistics', async (c) => {
   try {

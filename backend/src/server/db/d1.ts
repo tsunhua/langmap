@@ -1,6 +1,6 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics } from './protocol'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData } from './protocol'
 
 // Cache for statistics
 let statisticsCache: {
@@ -11,6 +11,16 @@ let statisticsCache: {
   timestamp: null
 };
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+// Cache for heatmap data
+let heatmapCache: {
+  data: HeatmapData[] | null;
+  timestamp: number | null;
+} = {
+  data: null,
+  timestamp: null
+};
+const HEATMAP_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export class D1DatabaseService extends AbstractDatabaseService {
 
@@ -67,7 +77,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to create language')
     }
 
-    return result.results[0] as Language
+    // Clear statistics and heatmap caches as we've added a new language
+    this.clearStatisticsCache();
+    this.clearHeatmapCache();
+    
+    return result;
   }
 
   async updateLanguage(id: number, language: Partial<Language>): Promise<Language> {
@@ -91,7 +105,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to update language')
     }
 
-    return result.results[0] as Language
+    // Clear statistics and heatmap caches as we've updated a language
+    this.clearStatisticsCache();
+    this.clearHeatmapCache();
+    
+    return result;
   }
 
   async deleteLanguage(id: number): Promise<boolean> {
@@ -99,7 +117,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM languages WHERE id = ?'
     ).bind(id).run()
 
-    return result.success
+    if (result.changes > 0) {
+      // Clear statistics and heatmap caches as we've deleted a language
+      this.clearStatisticsCache();
+      this.clearHeatmapCache();
+      return true;
+    }
+    
+    return false;
   }
 
   // Expression operations
@@ -196,7 +221,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         throw new Error('Failed to create expression')
       }
 
-      return result.results[0] as Expression
+      // Clear statistics and heatmap caches as we've added a new expression
+      this.clearStatisticsCache();
+      this.clearHeatmapCache();
+      
+      return result;
     } catch (error) {
       console.error('Error creating expression:', error);
       throw error;
@@ -224,7 +253,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to update expression')
     }
 
-    return result.results[0] as Expression
+    // Clear statistics and heatmap caches as we've updated an expression
+    this.clearStatisticsCache();
+    this.clearHeatmapCache();
+    
+    return result;
   }
 
   async deleteExpression(id: number): Promise<boolean> {
@@ -232,7 +265,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM expressions WHERE id = ?'
     ).bind(id).run()
 
-    return result.success
+    if (result.changes > 0) {
+      // Clear statistics and heatmap caches as we've deleted an expression
+      this.clearStatisticsCache();
+      this.clearHeatmapCache();
+      return true;
+    }
+    
+    return false;
   }
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
@@ -411,6 +451,60 @@ export class D1DatabaseService extends AbstractDatabaseService {
     statisticsCache.data = null;
     statisticsCache.timestamp = null;
     console.log('Statistics cache cleared');
+  }
+
+  // Heatmap
+  async getHeatmapData(): Promise<HeatmapData[]> {
+    // Check if we have valid cache
+    const now = Date.now();
+    if (heatmapCache.data && heatmapCache.timestamp && 
+        (now - heatmapCache.timestamp) < HEATMAP_CACHE_DURATION) {
+      console.log('Returning cached heatmap data');
+      return heatmapCache.data;
+    }
+    
+    console.log('Fetching fresh heatmap data from database');
+    
+    const query = `
+      SELECT 
+        l.code as language_code,
+        l.name as language_name,
+        l.region_name,
+        l.region_code,
+        COALESCE(e.expression_count, 0) as count,
+        l.region_latitude as latitude,
+        l.region_longitude as longitude
+      FROM languages l
+      LEFT JOIN (
+        SELECT 
+          language_code, 
+          COUNT(*) as expression_count
+        FROM expressions 
+        GROUP BY language_code
+      ) e ON l.code = e.language_code
+      WHERE l.is_active = 1 
+        AND l.region_name IS NOT NULL 
+        AND l.region_latitude IS NOT NULL 
+        AND l.region_longitude IS NOT NULL
+      ORDER BY count DESC
+      LIMIT 1000
+    `;
+    
+    const result = await this.db.prepare(query).all<HeatmapData>();
+    const heatmapData = result.results || [];
+    
+    // Update cache
+    heatmapCache.data = heatmapData;
+    heatmapCache.timestamp = now;
+    
+    return heatmapData;
+  }
+  
+  // Method to clear heatmap cache (to be called when data changes)
+  clearHeatmapCache(): void {
+    heatmapCache.data = null;
+    heatmapCache.timestamp = null;
+    console.log('Heatmap cache cleared');
   }
 
   /**

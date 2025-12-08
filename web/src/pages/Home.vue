@@ -312,9 +312,11 @@ export default {
         console.log('Statistics response status:', statsRes.status);
         console.log('Statistics response ok?', statsRes.ok);
         
-        // Fetch expressions and languages to calculate stats
-        const res = await fetch('/api/v1/expressions?limit=1000')
-        const languagesRes = await fetchLanguages()
+        // Fetch heatmap data from the new dedicated endpoint
+        console.log('Fetching heatmap data from /api/v1/heatmap');
+        const heatmapRes = await fetch('/api/v1/heatmap')
+        console.log('Heatmap response status:', heatmapRes.status);
+        console.log('Heatmap response ok?', heatmapRes.ok);
         
         if (statsRes.ok) {
           const statsData = await statsRes.json()
@@ -331,38 +333,28 @@ export default {
           console.error('Error response:', errorText);
         }
         
-        if (res.ok) {
-          const expressions = await res.json()
+        if (heatmapRes.ok) {
+          const heatmapResult = await heatmapRes.json()
+          const heatmapPoints = heatmapResult.data || []
           
-          // Group by language and calculate positions
-          const languageCounts = {}
-          expressions.forEach(expr => {
-            const language = expr.language_code
-            languageCounts[language] = (languageCounts[language] || 0) + 1
-          })
-          
-          // Generate heatmap points with language regions from backend data
-          const languageData = Object.entries(languageCounts).map(([languageCode, count]) => {
-            // Find language info from the languages API
-            const languageInfo = languagesRes.find(lang => lang.code === languageCode)
-            
-            return {
-              languageCode,
-              languageName: languageInfo ? languageInfo.name : languageCode,
-              regionCode: languageInfo ? languageInfo.region_code : null,
-              regionName: languageInfo ? languageInfo.region_name : 'Unknown',
-              count,
-              lat: languageInfo && languageInfo.region_latitude ? parseFloat(languageInfo.region_latitude) : 0,
-              lng: languageInfo && languageInfo.region_longitude ? parseFloat(languageInfo.region_longitude) : 0
-            }
-          })
-          
-          heatmapData.value = languageData
+          heatmapData.value = heatmapPoints.map(point => ({
+            languageCode: point.language_code,
+            languageName: point.language_name,
+            regionCode: point.region_code,
+            regionName: point.region_name,
+            count: point.count,
+            lat: point.latitude ? parseFloat(point.latitude) : 0,
+            lng: point.longitude ? parseFloat(point.longitude) : 0
+          }))
           
           // Create markers on the map
           if (map) {
             createMarkers(heatmapData.value)
           }
+        } else {
+          console.error('Failed to fetch heatmap data, status:', heatmapRes.status);
+          const errorText = await heatmapRes.text();
+          console.error('Error response:', errorText);
         }
       } catch (e) {
         console.error('Failed to load data:', e)
