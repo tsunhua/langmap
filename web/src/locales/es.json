@@ -33,7 +33,8 @@
   },
   "nav": {
     "home": "Inicio",
-    "search": "Buscar"
+    "search": "Buscar",
+    "about": "Acerca de"
   },
   "footer": {
     "copyright": "© {year} langmap - Plataforma de mapeo de expresiones lingüísticas"

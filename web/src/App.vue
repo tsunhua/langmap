@@ -42,6 +42,14 @@
         >
           {{ $t('nav.search') }}
         </router-link>
+        <router-link 
+          to="/about" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('nav.about') }}
+        </router-link>
         
         <!-- Mobile Auth Buttons -->
         <div class="pt-4 mt-4 border-t border-slate-200">
@@ -128,6 +136,13 @@
               active-class="text-blue-600"
             >
               {{ $t('nav.search') }}
+            </router-link>
+            <router-link 
+              to="/about" 
+              class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600"
+            >
+              {{ $t('nav.about') }}
             </router-link>
           </nav>
           

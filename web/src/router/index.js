@@ -5,6 +5,7 @@ import Detail from '../pages/Detail.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import UserProfile from '../pages/UserProfile.vue'
+import AboutUs from '../pages/AboutUs.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -12,7 +13,8 @@ const routes = [
   { path: '/expressions/:id', name: 'detail', component: Detail, props: true },
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'register', component: Register },
-  { path: '/profile', name: 'profile', component: UserProfile }
+  { path: '/profile', name: 'profile', component: UserProfile },
+  { path: '/about', name: 'about', component: AboutUs }
 ]
 
 const router = createRouter({
