@@ -34,6 +34,7 @@
   "nav": {
     "home": "Home",
     "search": "Search",
+    "about": "About",
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",

@@ -33,7 +33,8 @@
   },
   "nav": {
     "home": "ホーム",
-    "search": "検索"
+    "search": "検索",
+    "about": "概要"
   },
   "footer": {
     "copyright": "© {year} langmap - 言語表現マッピングプラットフォーム"

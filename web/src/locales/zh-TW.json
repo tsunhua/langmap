@@ -33,7 +33,8 @@
   },
   "nav": {
     "home": "主頁",
-    "search": "搜尋"
+    "search": "搜尋",
+    "about": "關於"
   },
   "footer": {
     "copyright": "© {year} langmap - 多語言詞句映射平台"
