@@ -271,9 +271,9 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { fetchLanguages, createLanguage } from './services/languageService.js'
 import AddLanguageModal from './components/AddLanguageModal.vue'
 
@@ -291,8 +291,33 @@ export default {
     const router = useRouter()
     const mobileMenuOpen = ref(false)
     const isMobile = ref(false)
+    const route = useRoute()
 
     const { t, locale } = useI18n();
+
+    // Update document title based on current route and language
+    const updateDocumentTitle = () => {
+      // For home page, use home.title; for others, use nav.* titles
+      let pageTitle;
+      if (route.name === 'Home') {
+        pageTitle = t('home.title');
+        pageTitle = `LangMap - ${pageTitle}`;
+      } else {
+        const routeTitleMap = {
+          'Search': t('nav.search'),
+          'AboutUs': t('nav.about'),
+          'Login': t('nav.login'),
+          'Profile': t('nav.profile')
+        };
+        pageTitle = routeTitleMap[route.name] || t('nav.home');
+        pageTitle = `${pageTitle} - LangMap`;
+      }
+      
+      document.title = pageTitle;
+    }
+
+    // Watch for route and language changes to update document title
+    watch([route, locale], updateDocumentTitle)
     
     // User state
     const isLoggedIn = ref(false)
@@ -480,6 +505,9 @@ export default {
       // Check auth status
       await checkAuthStatus()
       
+      // Set initial document title
+      updateDocumentTitle()
+      
       // Listen for auth state changes
       window.addEventListener('auth-state-changed', handleAuthStateChange)
       
@@ -508,7 +536,7 @@ export default {
       document.addEventListener('click', handleClickOutside)
     })
     
-    onUnmounted(() => {
+    onBeforeUnmount(() => {
       document.removeEventListener('click', handleClickOutside)
       window.removeEventListener('auth-state-changed', handleAuthStateChange)
       window.removeEventListener('resize', checkIsMobile)
