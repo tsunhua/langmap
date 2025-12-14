@@ -202,16 +202,16 @@ export default {
     
     const goToSearch = () => {
       if (searchQuery.value.trim()) {
-        router.push({ name: 'search', query: { q: searchQuery.value.trim() } })
+        router.push({ name: 'Search', query: { q: searchQuery.value.trim() } })
       } else {
-        router.push({ name: 'search' })
+        router.push({ name: 'Search' })
       }
     }
     
     const selectRegion = (region) => {
       console.log('Selected region:', region)
       // Could navigate to filtered search or show details
-      router.push({ name: 'search', query: { region: region } })
+      router.push({ name: 'Search', query: { region: region } })
     }
     
     // Handle expression created event
