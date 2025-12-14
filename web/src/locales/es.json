@@ -201,5 +201,15 @@
     "fetchFailed": "Error al obtener la información del perfil de usuario.",
     "logoutFailed": "Error al cerrar sesión. Por favor, inténtalo de nuevo.",
     "changePasswordNotImplemented": "La funcionalidad de cambio de contraseña aún no está implementada."
+  },
+    "emailVerification": {
+    "title": "Verificación de correo electrónico",
+    "verifyingTitle": "Verificando tu correo electrónico",
+    "verifyingMessage": "Por favor, espera mientras verificamos tu dirección de correo electrónico.",
+    "successTitle": "¡Correo electrónico verificado con éxito!",
+    "successMessage": "Tu correo electrónico ha sido verificado. Ahora puedes iniciar sesión en tu cuenta.",
+    "errorTitle": "Error en la verificación del correo electrónico",
+    "errorMessage": "El enlace de verificación no es válido o ha expirado.",
+    "goToLogin": "Ir a Iniciar Sesión"
   }
 }

@@ -201,5 +201,15 @@
     "fetchFailed": "取得使用者資料失敗。",
     "logoutFailed": "登出失敗。請重試。",
     "changePasswordNotImplemented": "變更密碼功能尚未實現。"
+  },
+  "emailVerification": {
+    "title": "電郵驗證",
+    "verifyingTitle": "正在驗證您的電郵",
+    "verifyingMessage": "請稍候，我們正在驗證您的電郵地址。",
+    "successTitle": "電郵驗證成功！",
+    "successMessage": "您的電郵已通過驗證。您現在可以登入您的帳號。",
+    "errorTitle": "電郵驗證失敗",
+    "errorMessage": "驗證連結無效或已過期。",
+    "goToLogin": "前往登入"
   }
 }

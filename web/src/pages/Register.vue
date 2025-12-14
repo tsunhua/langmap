@@ -10,7 +10,7 @@
         </p>
       </div>
       
-      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div v-if="!registrationSuccess" class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form class="space-y-6" @submit.prevent="handleRegister">
           <div>
             <label for="username" class="block text-sm font-medium text-slate-700">
@@ -159,6 +159,27 @@
           </div>
         </div>
       </div>
+      
+      <div v-else class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 class="mt-4 text-lg font-medium text-slate-900">{{ $t('register.registrationSuccessTitle') }}</h3>
+        <div class="mt-2 text-sm text-slate-500">
+          <p>{{ $t('register.registrationSuccessMessage') }}</p>
+          <p class="mt-2 font-medium">{{ $t('register.checkEmail') }}</p>
+        </div>
+        <div class="mt-6">
+          <router-link 
+            to="/login" 
+            class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            {{ $t('register.goToLogin') }}
+          </router-link>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -184,6 +205,7 @@ export default {
     
     const loading = ref(false)
     const error = ref('')
+    const registrationSuccess = ref(false)
     
     // Watch for password mismatch
     watch([() => form.value.password, () => form.value.confirmPassword], ([password, confirmPassword]) => {
@@ -205,8 +227,7 @@ export default {
         loading.value = true
         error.value = ''
         
-        // In a real implementation, you would make an API call here
-        // For now, we'll simulate a successful registration
+        // Make API call to register user
         const response = await fetch('/api/v1/auth/register', {
           method: 'POST',
           headers: {
@@ -222,14 +243,8 @@ export default {
         const data = await response.json()
         
         if (response.ok) {
-          // Save token to localStorage
-          localStorage.setItem('authToken', data.data.token)
-          
-          // Update global auth state by dispatching a custom event
-          window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { isLoggedIn: true } }))
-          
-          // Redirect to home page
-          router.push('/')
+          // Registration successful, show email verification message
+          registrationSuccess.value = true
         } else {
           error.value = data.error || t('register.registrationFailed')
         }
@@ -245,6 +260,7 @@ export default {
       form,
       loading,
       error,
+      registrationSuccess,
       handleRegister
     }
   }

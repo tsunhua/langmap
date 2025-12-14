@@ -202,5 +202,15 @@
     "fetchFailed": "ユーザープロファイル情報の取得に失敗しました。",
     "logoutFailed": "ログアウトに失敗しました。もう一度お試しください。",
     "changePasswordNotImplemented": "パスワード変更機能はまだ実装されていません。"
+  },
+  "emailVerification": {
+    "title": "メールアドレスの確認",
+    "verifyingTitle": "メールアドレスを確認中",
+    "verifyingMessage": "メールアドレスを確認しています。しばらくお待ちください。",
+    "successTitle": "メールアドレスの確認に成功しました！",
+    "successMessage": "メールアドレスが確認されました。アカウントにログインできます。",
+    "errorTitle": "メールアドレスの確認に失敗しました",
+    "errorMessage": "確認リンクが無効か、期限切れです。",
+    "goToLogin": "ログインページへ"
   }
 }

@@ -201,5 +201,15 @@
     "fetchFailed": "Échec de la récupération des informations du profil utilisateur.",
     "logoutFailed": "Échec de la déconnexion. Veuillez réessayer.",
     "changePasswordNotImplemented": "La fonctionnalité de changement de mot de passe n'est pas encore implémentée."
+  },
+  "emailVerification": {
+    "title": "Vérification de l'e-mail",
+    "verifyingTitle": "Vérification de votre adresse e-mail",
+    "verifyingMessage": "Veuillez patienter pendant que nous vérifions votre adresse e-mail.",
+    "successTitle": "E-mail vérifié avec succès !",
+    "successMessage": "Votre e-mail a été vérifié. Vous pouvez maintenant vous connecter à votre compte.",
+    "errorTitle": "Échec de la vérification de l'e-mail",
+    "errorMessage": "Le lien de vérification n'est pas valide ou a expiré.",
+    "goToLogin": "Aller à la connexion"
   }
 }

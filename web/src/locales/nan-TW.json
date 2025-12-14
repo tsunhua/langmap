@@ -204,5 +204,15 @@
     "fetchFailed": "無法取得使用者資料。",
     "logoutFailed": "登出失敗，請閣試看覓。",
     "changePasswordNotImplemented": "變更密碼功能猶未提供。"
+  },
+  "emailVerification": {
+    "title": "電子郵件驗證",
+    "verifyingTitle": "咧驗證你的電子郵件",
+    "verifyingMessage": "請稍等，阮咧驗證你的電子郵件地址。",
+    "successTitle": "電子郵件驗證成功！",
+    "successMessage": "你的電子郵件已經驗證完成，這馬會使登入你的帳號。",
+    "errorTitle": "電子郵件驗證失敗",
+    "errorMessage": "驗證連結無效抑是已經過期。",
+    "goToLogin": "前往登入"
   }
 }

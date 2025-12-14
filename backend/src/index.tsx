@@ -1,7 +1,14 @@
 import { Hono } from 'hono'
 import api from './server/api'
 
-const app = new Hono()
+// Define types for our environment bindings
+interface Bindings {
+  DB: D1Database;
+  ASSETS: any;
+  RESEND_API_KEY: string;
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
 
 // 正确的路由配置应该是：
 app.route('/api', api);
@@ -49,10 +56,9 @@ app.get('*', async (c) => {
       </html>
     `);
   } catch (error) {
-    console.error('Error serving page:', error);
-    return c.text('Error serving page', 500);
+    console.error('Error serving static file:', error);
+    return c.html('<h1>Error serving static file</h1>', 500);
   }
-});
-
+})
 
 export default app

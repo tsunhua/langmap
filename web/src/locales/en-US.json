@@ -205,5 +205,15 @@
     "fetchFailed": "Failed to fetch user profile information.",
     "logoutFailed": "Logout failed. Please try again.",
     "changePasswordNotImplemented": "Change password functionality is not implemented yet."
+  },
+  "emailVerification": {
+    "title": "Email Verification",
+    "verifyingTitle": "Verifying your email",
+    "verifyingMessage": "Please wait while we verify your email address.",
+    "successTitle": "Email Verified Successfully!",
+    "successMessage": "Your email has been verified. You can now log in to your account.",
+    "errorTitle": "Email Verification Failed",
+    "errorMessage": "The verification link is invalid or has expired.",
+    "goToLogin": "Go to Login"
   }
 }

@@ -205,5 +205,15 @@
     "fetchFailed": "获取用户资料信息失败。",
     "logoutFailed": "退出登录失败。请重试。",
     "changePasswordNotImplemented": "更改密码功能尚未实现。"
+  },
+  "emailVerification": {
+    "title": "邮箱验证",
+    "verifyingTitle": "正在验证您的邮箱",
+    "verifyingMessage": "请稍候，我们正在验证您的邮箱地址。",
+    "successTitle": "邮箱验证成功！",
+    "successMessage": "您的邮箱已通过验证。您现在可以登录您的账户。",
+    "errorTitle": "邮箱验证失败",
+    "errorMessage": "验证链接无效或已过期。",
+    "goToLogin": "前往登录"
   }
 }
