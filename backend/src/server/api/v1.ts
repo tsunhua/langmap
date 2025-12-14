@@ -493,7 +493,9 @@ api.post('/auth/register', async (c) => {
     
     // Send verification email
     const resend = new Resend(c.env.RESEND_API_KEY);
-    const verificationUrl = `${c.req.url.split('/api')[0]}/#/verify-email?token=${token}`;
+    // Use a more robust way to construct the verification URL
+    const baseUrl = c.req.url.split('/api')[0];
+    const verificationUrl = `${baseUrl}/#/verify-email?token=${token}`;
     
     try {
       console.log('Sending verification email to:', email);
@@ -574,7 +576,7 @@ api.post('/auth/login', async (c) => {
     }
 
     // Check if email is verified (email_verified == 1 means verified)
-    if (!user.email_verified) {
+    if (user.email_verified !== 1) {
       console.warn('Email not verified:', email);
       return c.json({ error: 'Please verify your email before logging in' }, 401)
     }
