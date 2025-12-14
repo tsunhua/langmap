@@ -75,8 +75,8 @@
             For information about our Terms of Service, Privacy Policy, and Content Policy, please visit our dedicated 
             <router-link to="/policies" class="text-blue-600 hover:text-blue-800 underline">Policies page</router-link>.
           </p>
-          <p class="text-gray-600 mb-4">
-            Contact: langmapio.gmail.com
+          <p class="text-gray-600 mb-4 text-sm">
+            Contact: info@langmap.io
           </p>
         </section>
       </div>
