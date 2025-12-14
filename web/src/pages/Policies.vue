@@ -3,7 +3,7 @@
     <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Service Policies</h1>
       <p class="text-xs text-gray-600 text-center mt-4 mb-1">Effective Date: December 14, 2025</p>
-      <p class="text-xs text-gray-600 text-center mb-6">Contact: langmapio.gmail.com</p>
+      <p class="text-xs text-gray-600 text-center mb-6">Contact: info@langmap.io</p>
       
       <div class="prose prose-lg max-w-none">
         <!-- Terms of Service -->
