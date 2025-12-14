@@ -97,7 +97,7 @@ export default {
       }
       
       // 更新URL查询参数
-      router.replace({ name: 'search', query: { q: q.value } })
+      router.replace({ name: 'Search', query: { q: q.value } })
       
       hasSearched.value = true
       loading.value = true

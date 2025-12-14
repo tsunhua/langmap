@@ -1,5 +1,5 @@
 <template>
-  <router-link :to="{ name: 'detail', params: { id: item.id } }" class="block no-underline text-inherit">
+  <router-link :to="{ name: 'Detail', params: { id: item.id } }" class="block no-underline text-inherit">
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 mx-4 sm:mx-0">
       <div class="p-4">
         <div class="flex justify-between items-start">

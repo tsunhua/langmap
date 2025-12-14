@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto">
     <div class="flex items-center mb-6">
-      <button @click="$router.push({ name: 'search' })" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 px-4 py-2 flex items-center">
+      <button @click="$router.push({ name: 'Search' })" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 px-4 py-2 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
@@ -176,7 +176,7 @@
       <h3 class="text-xl font-semibold text-slate-800 mt-4">Expression not found</h3>
       <p class="text-slate-600 mt-2">The requested expression could not be found</p>
       <button 
-        @click="$router.push({ name: 'home' })" 
+        @click="$router.push({ name: 'Home' })" 
         class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-4"
       >
         Back to Search
