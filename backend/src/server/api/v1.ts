@@ -1,6 +1,7 @@
 // Hono API routes implementing the same interface as FastAPI backend
 import { Hono, Context, Next } from 'hono'
 import { createDatabaseService } from '../db'
+import { D1Database } from '@cloudflare/workers-types'
 import * as jose from 'jose'
 import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
@@ -17,6 +18,7 @@ interface JWTPayload {
 interface Bindings {
   DB: D1Database;
   RESEND_API_KEY: string;
+  SECRET_KEY: string;
 }
 
 // Create a new Hono app for API v1 routes
@@ -31,10 +33,10 @@ const api = new Hono<{
 const getDB = (c: any) => createDatabaseService(c.env)
 
 // JWT helper functions
-const SECRET_KEY = 'your-secret-key-change-in-production' // In production, use env variable
+// SECRET_KEY will be accessed from context inside functions
 
-async function signJWT(payload: jose.JWTPayload): Promise<string> {
-  const secret = new TextEncoder().encode(SECRET_KEY)
+async function signJWT(payload: jose.JWTPayload, secretKey: string): Promise<string> {
+  const secret = new TextEncoder().encode(secretKey)
   const alg = 'HS256'
   
   const jwt = await new jose.SignJWT(payload)
@@ -46,9 +48,9 @@ async function signJWT(payload: jose.JWTPayload): Promise<string> {
   return jwt
 }
 
-async function verifyJWT(token: string): Promise<any> {
+async function verifyJWT(token: string, secretKey: string): Promise<any> {
   try {
-    const secret = new TextEncoder().encode(SECRET_KEY)
+    const secret = new TextEncoder().encode(secretKey)
     const { payload } = await jose.jwtVerify(token, secret)
     return payload
   } catch (error) {
@@ -64,7 +66,7 @@ async function requireAuth(c: Context, next: Next) {
   }
   
   const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-  const payload = await verifyJWT(token)
+  const payload = await verifyJWT(token, c.env.SECRET_KEY)
   
   if (!payload) {
     return c.json({ error: 'Invalid or expired token' }, 401)
@@ -590,7 +592,7 @@ api.post('/auth/login', async (c) => {
       username: user.username, 
       email: user.email,
       role: user.role
-    })
+    }, c.env.SECRET_KEY)
 
     // Remove password_hash from response
     const { password_hash: _, ...userResponse } = user

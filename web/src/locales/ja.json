@@ -187,7 +187,11 @@
     "registrationFailed": "登録に失敗しました。情報を確認してもう一度お試しください。",
     "passwordMismatch": "パスワードが一致しません。",
     "or": "または",
-    "signIn": "既存のアカウントにサインイン"
+    "signIn": "既存のアカウントにサインイン",
+    "registrationSuccessTitle": "登録成功！",
+    "registrationSuccessMessage": "ご登録ありがとうございます。アカウントを確認するためにメールをご確認ください。",
+    "goToLogin": "ログインへ",
+    "checkEmail": "メールを確認"
   },
   "userProfile": {
     "title": "ユーザープロファイル",

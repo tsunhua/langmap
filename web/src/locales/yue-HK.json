@@ -189,7 +189,11 @@
     "registrationFailed": "註冊失敗。請檢查你嘅資料再試。",
     "passwordMismatch": "兩次輸入嘅密碼唔一致。",
     "or": "或者",
-    "signIn": "登入現有帳戶"
+    "signIn": "登入現有帳戶",
+    "registrationSuccessTitle": "註冊成功！",
+    "registrationSuccessMessage": "多謝你嘅註冊，請檢查你嘅電郵以完成帳號驗證。",
+    "goToLogin": "前往登入",
+    "checkEmail": "檢查你嘅電郵"
   },
   "userProfile": {
     "title": "用戶資料",

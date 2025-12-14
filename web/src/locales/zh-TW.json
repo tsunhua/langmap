@@ -186,7 +186,11 @@
     "registrationFailed": "註冊失敗。請檢查您的資訊並重試。",
     "passwordMismatch": "密碼不相符。",
     "or": "或",
-    "signIn": "登入現有帳戶"
+    "signIn": "登入現有帳戶",
+    "registrationSuccessTitle": "註冊成功！",
+    "registrationSuccessMessage": "感謝您的註冊。請檢查您的郵箱以驗證帳戶。",
+    "goToLogin": "前往登入",
+    "checkEmail": "檢查您的郵箱"
   },
   "userProfile": {
     "title": "使用者資料",

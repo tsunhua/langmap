@@ -186,7 +186,11 @@
     "registrationFailed": "Échec de l'inscription. Veuillez vérifier vos informations et réessayer.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "or": "Ou",
-    "signIn": "Se connecter à un compte existant"
+    "signIn": "Se connecter à un compte existant",
+    "registrationSuccessTitle": "Inscription réussie !",
+    "registrationSuccessMessage": "Merci pour votre inscription. Veuillez vérifier votre e-mail pour valider votre compte.",
+    "goToLogin": "Aller à la connexion",
+    "checkEmail": "Vérifiez votre e-mail"
   },
   "userProfile": {
     "title": "Profil utilisateur",

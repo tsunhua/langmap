@@ -190,7 +190,11 @@
     "registrationFailed": "注册失败。请检查您的信息并重试。",
     "passwordMismatch": "密码不匹配。",
     "or": "或",
-    "signIn": "登录现有账户"
+    "signIn": "登录现有账户",
+    "registrationSuccessTitle": "注册成功！",
+    "registrationSuccessMessage": "感谢您的注册。请检查您的邮箱以验证账户。",
+    "goToLogin": "前往登录",
+    "checkEmail": "检查您的邮箱"
   },
   "userProfile": {
     "title": "用户资料",

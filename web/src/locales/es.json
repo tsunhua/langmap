@@ -186,7 +186,11 @@
     "registrationFailed": "Registro fallido. Por favor, verifica tu información e inténtalo de nuevo.",
     "passwordMismatch": "Las contraseñas no coinciden.",
     "or": "O",
-    "signIn": "Iniciar sesión en una cuenta existente"
+    "signIn": "Iniciar sesión en una cuenta existente",
+    "registrationSuccessTitle": "¡Registro exitoso!",
+    "registrationSuccessMessage": "Gracias por registrarte. Por favor, revisa tu correo electrónico para verificar tu cuenta.",
+    "goToLogin": "Ir a iniciar sesión",
+    "checkEmail": "Revisa tu correo electrónico"
   },
   "userProfile": {
     "title": "Perfil del usuario",
