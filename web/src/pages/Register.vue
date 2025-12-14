@@ -84,28 +84,32 @@
             </div>
           </div>
 
-          <div class="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              v-model="form.agreeToTerms"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-              :disabled="loading"
-            />
-            <label for="terms" class="ml-2 block text-sm text-slate-900">
-              {{ $t('register.agreeToTerms') }}
-              <a href="#" class="text-blue-600 hover:text-blue-500">{{ $t('register.termsOfService') }}</a>
-              {{ $t('register.and') }}
-              <a href="#" class="text-blue-600 hover:text-blue-500">{{ $t('register.privacyPolicy') }}</a>
-            </label>
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                v-model="form.agreeToTerms"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                :disabled="loading"
+              />
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="terms" class="text-slate-900">
+                {{ $t('register.agreeToTerms') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.termsOfService') }}</router-link>
+                {{ $t('register.and') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.privacyPolicy') }}</router-link>
+              </label>
+            </div>
           </div>
 
           <div>
             <button
               type="submit"
-              :disabled="loading"
+              :disabled="loading || !form.agreeToTerms"
               class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               <span v-if="loading" class="flex items-center">
@@ -218,6 +222,12 @@ export default {
     
     const handleRegister = async () => {
       try {
+        // Check if terms are agreed
+        if (!form.value.agreeToTerms) {
+          error.value = t('register.agreeToTermsRequired')
+          return
+        }
+        
         // Check passwords match
         if (form.value.password !== form.value.confirmPassword) {
           error.value = t('register.passwordMismatch')
