@@ -190,7 +190,11 @@
     "registrationFailed": "注册失败。请检查您的信息并重试。",
     "passwordMismatch": "密码不匹配。",
     "or": "或",
-    "signIn": "登录现有账户"
+    "signIn": "登录现有账户",
+    "registrationSuccessTitle": "注册成功！",
+    "registrationSuccessMessage": "感谢您的注册。请检查您的邮箱以验证账户。",
+    "goToLogin": "前往登录",
+    "checkEmail": "检查您的邮箱"
   },
   "userProfile": {
     "title": "用户资料",
@@ -205,5 +209,15 @@
     "fetchFailed": "获取用户资料信息失败。",
     "logoutFailed": "退出登录失败。请重试。",
     "changePasswordNotImplemented": "更改密码功能尚未实现。"
+  },
+  "emailVerification": {
+    "title": "邮箱验证",
+    "verifyingTitle": "正在验证您的邮箱",
+    "verifyingMessage": "请稍候，我们正在验证您的邮箱地址。",
+    "successTitle": "邮箱验证成功！",
+    "successMessage": "您的邮箱已通过验证。您现在可以登录您的账户。",
+    "errorTitle": "邮箱验证失败",
+    "errorMessage": "验证链接无效或已过期。",
+    "goToLogin": "前往登录"
   }
 }

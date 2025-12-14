@@ -54,6 +54,7 @@ export interface User {
   email: string
   password_hash: string
   role: string
+  email_verified?: number
   created_at?: string
   updated_at?: string
 }
@@ -105,6 +106,12 @@ export abstract class AbstractDatabaseService {
   abstract getUserByEmail(email: string): Promise<User | null>
   abstract getUserById(id: number): Promise<User | null>
   abstract createUser(user: Partial<User>): Promise<User>
+  
+  // Email verification
+  abstract createEmailVerificationToken(token: string, userId: number, expiresAt: string): Promise<void>
+  abstract getEmailVerificationToken(token: string): Promise<{ user_id: number, expires_at: string } | null>
+  abstract deleteEmailVerificationToken(token: string): Promise<void>
+  abstract setEmailVerified(userId: number): Promise<void>
   
   // Statistics
   abstract getStatistics(): Promise<Statistics>

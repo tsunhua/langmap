@@ -186,7 +186,11 @@
     "registrationFailed": "Échec de l'inscription. Veuillez vérifier vos informations et réessayer.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "or": "Ou",
-    "signIn": "Se connecter à un compte existant"
+    "signIn": "Se connecter à un compte existant",
+    "registrationSuccessTitle": "Inscription réussie !",
+    "registrationSuccessMessage": "Merci pour votre inscription. Veuillez vérifier votre e-mail pour valider votre compte.",
+    "goToLogin": "Aller à la connexion",
+    "checkEmail": "Vérifiez votre e-mail"
   },
   "userProfile": {
     "title": "Profil utilisateur",
@@ -201,5 +205,15 @@
     "fetchFailed": "Échec de la récupération des informations du profil utilisateur.",
     "logoutFailed": "Échec de la déconnexion. Veuillez réessayer.",
     "changePasswordNotImplemented": "La fonctionnalité de changement de mot de passe n'est pas encore implémentée."
+  },
+  "emailVerification": {
+    "title": "Vérification de l'e-mail",
+    "verifyingTitle": "Vérification de votre adresse e-mail",
+    "verifyingMessage": "Veuillez patienter pendant que nous vérifions votre adresse e-mail.",
+    "successTitle": "E-mail vérifié avec succès !",
+    "successMessage": "Votre e-mail a été vérifié. Vous pouvez maintenant vous connecter à votre compte.",
+    "errorTitle": "Échec de la vérification de l'e-mail",
+    "errorMessage": "Le lien de vérification n'est pas valide ou a expiré.",
+    "goToLogin": "Aller à la connexion"
   }
 }

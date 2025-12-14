@@ -378,19 +378,25 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const username = user.username || '';
     const id = this.stableHashId(username);
 
+    // Convert boolean email_verified to integer (0/1) for database storage
+    const emailVerifiedInt = user.email_verified !== undefined 
+      ? (user.email_verified ? 1 : 0) 
+      : 0;
+
     // Filter out undefined values and replace them with null
     const bindValues = [
       id,
       user.username || null,
       user.email || null,
       user.password_hash || null,
-      user.role || 'user'
+      user.role || 'user',
+      emailVerifiedInt
     ];
 
     const result: any = await this.db.prepare(
       `INSERT INTO users (
-        id, username, email, password_hash, role
-      ) VALUES (?, ?, ?, ?, ?) RETURNING *`
+        id, username, email, password_hash, role, email_verified
+      ) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).run()
 
     if (!result.success) {
@@ -398,6 +404,41 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     return result.results[0] as User
+  }
+
+  // Email verification methods
+  async createEmailVerificationToken(token: string, userId: number, expiresAt: string): Promise<void> {
+    const result: any = await this.db.prepare(
+      'INSERT INTO email_verification_tokens (token, user_id, expires_at) VALUES (?, ?, ?)'
+    ).bind(token, userId, expiresAt).run()
+
+    if (!result.success) {
+      throw new Error('Failed to create email verification token')
+    }
+  }
+
+  async getEmailVerificationToken(token: string): Promise<{ user_id: number, expires_at: string } | null> {
+    const result = await this.db.prepare(
+      'SELECT user_id, expires_at FROM email_verification_tokens WHERE token = ?'
+    ).bind(token).first<{ user_id: number, expires_at: string }>()
+
+    return result || null
+  }
+
+  async deleteEmailVerificationToken(token: string): Promise<void> {
+    await this.db.prepare(
+      'DELETE FROM email_verification_tokens WHERE token = ?'
+    ).bind(token).run()
+  }
+
+  async setEmailVerified(userId: number): Promise<void> {
+    const result: any = await this.db.prepare(
+      'UPDATE users SET email_verified = 1 WHERE id = ?'
+    ).bind(userId).run()
+
+    if (!result.success) {
+      throw new Error('Failed to set email verified')
+    }
   }
 
   // Statistics

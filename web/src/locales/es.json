@@ -186,7 +186,11 @@
     "registrationFailed": "Registro fallido. Por favor, verifica tu información e inténtalo de nuevo.",
     "passwordMismatch": "Las contraseñas no coinciden.",
     "or": "O",
-    "signIn": "Iniciar sesión en una cuenta existente"
+    "signIn": "Iniciar sesión en una cuenta existente",
+    "registrationSuccessTitle": "¡Registro exitoso!",
+    "registrationSuccessMessage": "Gracias por registrarte. Por favor, revisa tu correo electrónico para verificar tu cuenta.",
+    "goToLogin": "Ir a iniciar sesión",
+    "checkEmail": "Revisa tu correo electrónico"
   },
   "userProfile": {
     "title": "Perfil del usuario",
@@ -201,5 +205,15 @@
     "fetchFailed": "Error al obtener la información del perfil de usuario.",
     "logoutFailed": "Error al cerrar sesión. Por favor, inténtalo de nuevo.",
     "changePasswordNotImplemented": "La funcionalidad de cambio de contraseña aún no está implementada."
+  },
+    "emailVerification": {
+    "title": "Verificación de correo electrónico",
+    "verifyingTitle": "Verificando tu correo electrónico",
+    "verifyingMessage": "Por favor, espera mientras verificamos tu dirección de correo electrónico.",
+    "successTitle": "¡Correo electrónico verificado con éxito!",
+    "successMessage": "Tu correo electrónico ha sido verificado. Ahora puedes iniciar sesión en tu cuenta.",
+    "errorTitle": "Error en la verificación del correo electrónico",
+    "errorMessage": "El enlace de verificación no es válido o ha expirado.",
+    "goToLogin": "Ir a Iniciar Sesión"
   }
 }

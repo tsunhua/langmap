@@ -190,7 +190,11 @@
     "registrationFailed": "Registration failed. Please check your information and try again.",
     "passwordMismatch": "Passwords do not match.",
     "or": "Or",
-    "signIn": "Sign in to existing account"
+    "signIn": "Sign in to existing account",
+    "registrationSuccessTitle": "Registration Successful!",
+    "registrationSuccessMessage": "Thank you for registering. Please check your email to verify your account.",
+    "goToLogin": "Go to Login",
+    "checkEmail": "Check your email"
   },
   "userProfile": {
     "title": "User Profile",
@@ -205,5 +209,15 @@
     "fetchFailed": "Failed to fetch user profile information.",
     "logoutFailed": "Logout failed. Please try again.",
     "changePasswordNotImplemented": "Change password functionality is not implemented yet."
+  },
+  "emailVerification": {
+    "title": "Email Verification",
+    "verifyingTitle": "Verifying your email",
+    "verifyingMessage": "Please wait while we verify your email address.",
+    "successTitle": "Email Verified Successfully!",
+    "successMessage": "Your email has been verified. You can now log in to your account.",
+    "errorTitle": "Email Verification Failed",
+    "errorMessage": "The verification link is invalid or has expired.",
+    "goToLogin": "Go to Login"
   }
 }

@@ -10,7 +10,7 @@
         </p>
       </div>
       
-      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div v-if="!registrationSuccess" class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form class="space-y-6" @submit.prevent="handleRegister">
           <div>
             <label for="username" class="block text-sm font-medium text-slate-700">
@@ -84,28 +84,32 @@
             </div>
           </div>
 
-          <div class="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              v-model="form.agreeToTerms"
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-              :disabled="loading"
-            />
-            <label for="terms" class="ml-2 block text-sm text-slate-900">
-              {{ $t('register.agreeToTerms') }}
-              <a href="#" class="text-blue-600 hover:text-blue-500">{{ $t('register.termsOfService') }}</a>
-              {{ $t('register.and') }}
-              <a href="#" class="text-blue-600 hover:text-blue-500">{{ $t('register.privacyPolicy') }}</a>
-            </label>
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                v-model="form.agreeToTerms"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                :disabled="loading"
+              />
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="terms" class="text-slate-900">
+                {{ $t('register.agreeToTerms') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.termsOfService') }}</router-link>
+                {{ $t('register.and') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.privacyPolicy') }}</router-link>
+              </label>
+            </div>
           </div>
 
           <div>
             <button
               type="submit"
-              :disabled="loading"
+              :disabled="loading || !form.agreeToTerms"
               class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               <span v-if="loading" class="flex items-center">
@@ -159,6 +163,27 @@
           </div>
         </div>
       </div>
+      
+      <div v-else class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 class="mt-4 text-lg font-medium text-slate-900">{{ $t('register.registrationSuccessTitle') }}</h3>
+        <div class="mt-2 text-sm text-slate-500">
+          <p>{{ $t('register.registrationSuccessMessage') }}</p>
+          <p class="mt-2 font-medium">{{ $t('register.checkEmail') }}</p>
+        </div>
+        <div class="mt-6">
+          <router-link 
+            to="/login" 
+            class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            {{ $t('register.goToLogin') }}
+          </router-link>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -184,6 +209,7 @@ export default {
     
     const loading = ref(false)
     const error = ref('')
+    const registrationSuccess = ref(false)
     
     // Watch for password mismatch
     watch([() => form.value.password, () => form.value.confirmPassword], ([password, confirmPassword]) => {
@@ -196,6 +222,12 @@ export default {
     
     const handleRegister = async () => {
       try {
+        // Check if terms are agreed
+        if (!form.value.agreeToTerms) {
+          error.value = t('register.agreeToTermsRequired')
+          return
+        }
+        
         // Check passwords match
         if (form.value.password !== form.value.confirmPassword) {
           error.value = t('register.passwordMismatch')
@@ -205,8 +237,7 @@ export default {
         loading.value = true
         error.value = ''
         
-        // In a real implementation, you would make an API call here
-        // For now, we'll simulate a successful registration
+        // Make API call to register user
         const response = await fetch('/api/v1/auth/register', {
           method: 'POST',
           headers: {
@@ -222,14 +253,8 @@ export default {
         const data = await response.json()
         
         if (response.ok) {
-          // Save token to localStorage
-          localStorage.setItem('authToken', data.data.token)
-          
-          // Update global auth state by dispatching a custom event
-          window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { isLoggedIn: true } }))
-          
-          // Redirect to home page
-          router.push('/')
+          // Registration successful, show email verification message
+          registrationSuccess.value = true
         } else {
           error.value = data.error || t('register.registrationFailed')
         }
@@ -245,6 +270,7 @@ export default {
       form,
       loading,
       error,
+      registrationSuccess,
       handleRegister
     }
   }

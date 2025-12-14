@@ -1,22 +1,62 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
-import Search from '../pages/Search.vue'
-import Detail from '../pages/Detail.vue'
+import AboutUs from '../pages/AboutUs.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import UserProfile from '../pages/UserProfile.vue'
-import AboutUs from '../pages/AboutUs.vue'
+import Search from '../pages/Search.vue'
+import Detail from '../pages/Detail.vue'
 import Policies from '../pages/Policies.vue'
+import EmailVerification from '../pages/EmailVerification.vue'
 
 const routes = [
-  { path: '/', name: 'home', component: Home },
-  { path: '/search', name: 'search', component: Search },
-  { path: '/expressions/:id', name: 'detail', component: Detail, props: true },
-  { path: '/login', name: 'login', component: Login },
-  { path: '/register', name: 'register', component: Register },
-  { path: '/profile', name: 'profile', component: UserProfile },
-  { path: '/about', name: 'about', component: AboutUs },
-  { path: '/policies', name: 'policies', component: Policies }
+  {
+    path: '/',
+    name: 'Home',
+    component: Home
+  },
+  {
+    path: '/about',
+    name: 'AboutUs',
+    component: AboutUs
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
+  },
+  {
+    path: '/profile',
+    name: 'UserProfile',
+    component: UserProfile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/search',
+    name: 'Search',
+    component: Search
+  },
+  {
+    path: '/detail/:id',
+    name: 'Detail',
+    component: Detail,
+    props: true
+  },
+  {
+    path: '/policies',
+    name: 'Policies',
+    component: Policies
+  },
+  {
+    path: '/verify-email',
+    name: 'EmailVerification',
+    component: EmailVerification
+  }
 ]
 
 const router = createRouter({
@@ -24,20 +64,15 @@ const router = createRouter({
   routes
 })
 
-// 添加导航守卫来检查用户是否已认证
+// Navigation guard
 router.beforeEach((to, from, next) => {
-  // 检查目标路由是否需要认证
-  const requiresAuth = ['profile'].includes(to.name);
+  const isAuthenticated = !!localStorage.getItem('authToken')
   
-  // 获取认证状态
-  const isAuthenticated = !!localStorage.getItem('authToken');
-  
-  // 如果路由需要认证但用户未认证，则重定向到登录页
-  if (requiresAuth && !isAuthenticated) {
-    next('/login');
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login')
   } else {
-    next();
+    next()
   }
-});
+})
 
 export default router

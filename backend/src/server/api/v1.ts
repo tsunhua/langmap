@@ -1,8 +1,10 @@
 // Hono API routes implementing the same interface as FastAPI backend
 import { Hono, Context, Next } from 'hono'
 import { createDatabaseService } from '../db'
+import { D1Database } from '@cloudflare/workers-types'
 import * as jose from 'jose'
 import bcrypt from 'bcryptjs'
+import { Resend } from 'resend'
 
 // Define types for our application context
 interface JWTPayload {
@@ -12,9 +14,16 @@ interface JWTPayload {
   role: string
 }
 
+// Define types for our environment bindings
+interface Bindings {
+  DB: D1Database;
+  RESEND_API_KEY: string;
+  SECRET_KEY: string;
+}
+
 // Create a new Hono app for API v1 routes
 const api = new Hono<{
-  Bindings: any,
+  Bindings: Bindings,
   Variables: {
     user: JWTPayload
   }
@@ -24,10 +33,10 @@ const api = new Hono<{
 const getDB = (c: any) => createDatabaseService(c.env)
 
 // JWT helper functions
-const SECRET_KEY = 'your-secret-key-change-in-production' // In production, use env variable
+// SECRET_KEY will be accessed from context inside functions
 
-async function signJWT(payload: jose.JWTPayload): Promise<string> {
-  const secret = new TextEncoder().encode(SECRET_KEY)
+async function signJWT(payload: jose.JWTPayload, secretKey: string): Promise<string> {
+  const secret = new TextEncoder().encode(secretKey)
   const alg = 'HS256'
   
   const jwt = await new jose.SignJWT(payload)
@@ -39,9 +48,9 @@ async function signJWT(payload: jose.JWTPayload): Promise<string> {
   return jwt
 }
 
-async function verifyJWT(token: string): Promise<any> {
+async function verifyJWT(token: string, secretKey: string): Promise<any> {
   try {
-    const secret = new TextEncoder().encode(SECRET_KEY)
+    const secret = new TextEncoder().encode(secretKey)
     const { payload } = await jose.jwtVerify(token, secret)
     return payload
   } catch (error) {
@@ -57,7 +66,7 @@ async function requireAuth(c: Context, next: Next) {
   }
   
   const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-  const payload = await verifyJWT(token)
+  const payload = await verifyJWT(token, c.env.SECRET_KEY)
   
   if (!payload) {
     return c.json({ error: 'Invalid or expired token' }, 401)
@@ -467,13 +476,65 @@ api.post('/auth/register', async (c) => {
     const saltRounds = 10
     const password_hash = await bcrypt.hash(password, saltRounds)
 
-    // Create user
+    // Create user with email_verified set to false initially
     const user = await db.createUser({
       username,
       email,
       password_hash,
-      role: 'user' // Default role
+      role: 'user', // Default role
+      email_verified: 0
     })
+
+    // Generate email verification token
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+    
+    await db.createEmailVerificationToken(token, user.id, expiresAt);
+    
+    // Send verification email
+    const resend = new Resend(c.env.RESEND_API_KEY);
+    const verificationUrl = `${c.req.url.split('/api')[0]}/#/verify-email?token=${token}`;
+    
+    try {
+      console.log('Sending verification email to:', email);
+      const { data, error } = await resend.emails.send({
+        from: 'no-reply@langmap.io',
+        to: email,
+        subject: 'Verify your email address',
+        html: `
+          <p>Hello ${username},</p>
+          <p>Thank you for registering with LangMap! To ensure your account security, please click the button below to verify your email address.</p>
+          <p><a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a></p>
+          <p>If you cannot click the button, please copy the following link and open it in your browser:</p>
+          <p>${verificationUrl}</p>
+          <p><strong>Note:</strong> This verification link will expire in 1 hour. Please verify your email as soon as possible.</p>
+          <p>If you didn't register for a LangMap account, please ignore this email.</p>
+          <p>&copy; 2025 LangMap. All rights reserved.</p>
+        `
+      });
+      
+      if (error) {
+        console.error('Failed to send verification email:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          statusCode: error.statusCode
+        });
+      } else {
+        console.log('Verification email sent successfully:', {
+          id: data?.id,
+          to: data?.to,
+          subject: data?.subject
+        });
+      }
+    } catch (emailError: any) {
+      console.error('Error sending verification email:', emailError);
+      console.error('Error details:', {
+        name: emailError?.name,
+        message: emailError?.message,
+        stack: emailError?.stack
+      });
+    }
 
     // Remove password_hash from response
     const { password_hash: _, ...userResponse } = user
@@ -482,7 +543,8 @@ api.post('/auth/register', async (c) => {
       success: true,
       data: {
         user: userResponse
-      }
+      },
+      message: 'User registered successfully. Please check your email for verification.'
     }, 201)
   } catch (error: any) {
     console.error('Registration error:', error)
@@ -511,6 +573,12 @@ api.post('/auth/login', async (c) => {
       return c.json({ error: 'Invalid credentials' }, 401)
     }
 
+    // Check if email is verified (email_verified == 1 means verified)
+    if (!user.email_verified) {
+      console.warn('Email not verified:', email);
+      return c.json({ error: 'Please verify your email before logging in' }, 401)
+    }
+
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash)
     if (!isValidPassword) {
@@ -524,7 +592,7 @@ api.post('/auth/login', async (c) => {
       username: user.username, 
       email: user.email,
       role: user.role
-    })
+    }, c.env.SECRET_KEY)
 
     // Remove password_hash from response
     const { password_hash: _, ...userResponse } = user
@@ -558,6 +626,53 @@ api.post('/auth/logout', async (c) => {
     return c.json({ error: 'Failed to logout' }, 500)
   }
 })
+
+// GET /api/v1/auth/verify-email
+api.get('/auth/verify-email', async (c) => {
+  try {
+    console.log('GET /api/v1/auth/verify-email');
+    const db = getDB(c);
+    const token = c.req.query('token');
+
+    // Validate input
+    if (!token) {
+      console.warn('Missing verification token');
+      return c.json({ error: 'Verification token is required' }, 400);
+    }
+
+    // Find token in database
+    const verificationToken = await db.getEmailVerificationToken(token);
+    if (!verificationToken) {
+      console.warn('Invalid verification token:', token);
+      return c.json({ error: 'Invalid or expired verification token' }, 400);
+    }
+
+    // Check if token is expired
+    const now = new Date();
+    const expiresAt = new Date(verificationToken.expires_at);
+    if (now > expiresAt) {
+      console.warn('Expired verification token:', token);
+      await db.deleteEmailVerificationToken(token);
+      return c.json({ error: 'Verification token has expired' }, 400);
+    }
+
+    // Set user email as verified
+    await db.setEmailVerified(verificationToken.user_id);
+    
+    // Delete the token so it can't be used again
+    await db.deleteEmailVerificationToken(token);
+    
+    console.log('Email verified successfully for user:', verificationToken.user_id);
+
+    return c.json({
+      success: true,
+      message: 'Email verified successfully. You can now log in.'
+    });
+  } catch (error: any) {
+    console.error('Email verification error:', error);
+    return c.json({ error: 'Failed to verify email' }, 500);
+  }
+});
 
 // GET /api/v1/users/me
 api.get('/users/me', requireAuth, async (c) => {
