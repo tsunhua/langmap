@@ -96,6 +96,10 @@ export default {
         
         if (response.ok) {
           verificationStatus.value = 'success'
+          // Redirect to login page after 3 seconds
+          setTimeout(() => {
+            router.push('/login')
+          }, 3000)
         } else {
           verificationStatus.value = 'error'
         }
