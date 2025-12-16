@@ -351,11 +351,22 @@ export default {
         assocMsg.value = 'Please enter a gloss for the new meaning.'
         return null
       }
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        assocMsg.value = 'You must be logged in to create meanings'
+        return null
+      }
+      
       try {
         // 创建英文(en-GB)表达式作为meaning
         const pm = await fetch('/api/v1/expressions', {
           method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ 
             text: newMeaningGloss.value.trim(), 
             language_code: 'en-GB',
@@ -379,6 +390,14 @@ export default {
 
     async function associateWith (target) {
       assocMsg.value = ''
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        assocMsg.value = 'You must be logged in to associate expressions'
+        return
+      }
+      
       try {
         let mid = selectedMeaningId.value
         // if user chose to create new meaning via selector value '__new', use createMeaning
@@ -395,7 +414,10 @@ export default {
             // 创建一个新的meaning表达式 (en-GB)
             const pm = await fetch('/api/v1/expressions', {
               method: 'POST', 
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
               body: JSON.stringify({ 
                 text: item.value.text, 
                 language_code: 'en-GB',
@@ -411,14 +433,20 @@ export default {
         // 更新当前表达式的meaning_id
         const update1 = await fetch(`/api/v1/expressions/${props.id}`, { 
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ meaning_id: mid })
         })
         if (!update1.ok) throw new Error('failed to update current expression')
         // 更新目标表达式的meaning_id
         const update2 = await fetch(`/api/v1/expressions/${target.id}`, { 
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ meaning_id: mid })
         })
         if (!update2.ok) throw new Error('failed to update target expression')
