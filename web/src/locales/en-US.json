@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "Connecting Every Language",
+    "title": "Connect All Languages",
     "subtitle": "Learn New Languages, Preserve Linguistic Diversity",
     "searchPlaceholder": "Search for an expression...",
     "searchButton": "Search",
@@ -141,7 +141,8 @@
     "newMeaningGloss": "New meaning gloss",
     "createMeaning": "Create Meaning",
     "noMeanings": "No meanings associated with this expression",
-    "associateWithMeanings": "Associate with meanings"
+    "associateWithMeanings": "Associate with meanings",
+    "createExpression": "Create Expression"
   },
   "expressionCard": {
     "global": "Global",

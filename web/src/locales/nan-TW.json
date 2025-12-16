@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "串連起各種語言",
+    "title": "串連起所有个語言",
     "subtitle": "學新語言，做伙保護語言个多元化",
     "searchPlaceholder": "尋揣語詞…",
     "searchButton": "尋揣",
@@ -140,7 +140,8 @@
     "newMeaningGloss": "新語意標題",
     "createMeaning": "建立語意",
     "noMeanings": "這條語詞猶未關聯語意",
-    "associateWithMeanings": "關聯語意"
+    "associateWithMeanings": "關聯語意",
+    "createExpression": "建立語詞"
   },
   "expressionCard": {
     "global": "全球",

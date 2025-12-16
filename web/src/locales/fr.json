@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "Relier Chaque Langue",
+    "title": "Relier Toutes les Langues",
     "subtitle": "Apprenez de Nouvelles Langues, Préservez la Diversité Linguistique",
     "searchPlaceholder": "Rechercher une expression...",
     "searchButton": "Recherche",
@@ -137,7 +137,8 @@
     "newMeaningGloss": "Glose de la nouvelle signification",
     "createMeaning": "Créer une signification",
     "noMeanings": "Aucune signification associée à cette expression",
-    "associateWithMeanings": "Associer avec des significations"
+    "associateWithMeanings": "Associer avec des significations",
+    "createExpression": "Créer une expression"
   },
   "expressionCard": {
     "global": "Global",

@@ -138,7 +138,8 @@
     "newMeaningGloss": "新しい意味の語彙",
     "createMeaning": "意味を作成",
     "noMeanings": "この表現に関連する意味はありません",
-    "associateWithMeanings": "意味と関連付ける"
+    "associateWithMeanings": "意味と関連付ける",
+    "createExpression": "表現を作成"
   },
   "expressionCard": {
     "global": "グローバル",
