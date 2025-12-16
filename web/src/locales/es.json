@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "Conectando Cada Idioma",
+    "title": "Conecta Todas las Lenguas",
     "subtitle": "Aprende Nuevos Idiomas, Preserva la Diversidad Lingüística",
     "searchPlaceholder": "Buscar una expresión...",
     "searchButton": "Buscar",
@@ -137,7 +137,8 @@
     "newMeaningGloss": "Glosa del nuevo significado",
     "createMeaning": "Crear significado",
     "noMeanings": "No hay significados asociados con esta expresión",
-    "associateWithMeanings": "Asociar con significados"
+    "associateWithMeanings": "Asociar con significados",
+    "createExpression": "Crear expresión"
   },
   "expressionCard": {
     "global": "Global",

@@ -1,6 +1,6 @@
 {
   "home": {
-    "title": "连接每一种语言",
+    "title": "连接所有语言",
     "subtitle": "学习新语言，守护语言多样性",
     "searchPlaceholder": "搜索词句...",
     "searchButton": "搜索",
@@ -141,7 +141,8 @@
     "newMeaningGloss": "新含义简述",
     "createMeaning": "创建含义",
     "noMeanings": "此词句未关联任何含义",
-    "associateWithMeanings": "关联含义"
+    "associateWithMeanings": "关联含义",
+    "createExpression": "创建词句"
   },
   "expressionCard": {
     "global": "全球",
