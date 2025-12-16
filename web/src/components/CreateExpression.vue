@@ -1,3 +1,148 @@
+<template>
+  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-slate-800">{{ $t('create.title') }}</h2>
+        <button @click="$emit('close')" class="text-slate-500 hover:text-slate-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.text') }} *</label>
+          <textarea
+            v-model="text"
+            rows="3"
+            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4"
+            :placeholder="$t('create.textPlaceholder')"
+          ></textarea>
+          <p class="text-sm text-slate-500 mt-1">{{ $t('create.textHelp') }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.language') }} *</label>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <select
+                  v-model="language_code"
+                  class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-3 appearance-none"
+                  :disabled="languagesLoading"
+                >
+                  <option v-if="languagesLoading" value="" disabled>{{ $t('create.loadingLanguages') }}</option>
+                  <option v-else value="" disabled>{{ $t('create.selectLanguage') }}</option>
+                  <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                    {{ lang.name }} ({{ lang.code }})
+                  </option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <button
+                @click="showAddLanguageModal = true"
+                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                :title="$t('create.addLanguage')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">{{ $t('create.languageHelp') }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.region') }}</label>
+            <div class="flex gap-2">
+              <input
+                v-model="region"
+                :placeholder="$t('create.regionPlaceholder')"
+                class="block flex-1 rounded-md border border-slate-300 shadow-sm py-3 px-4 bg-slate-100 text-slate-500 cursor-not-allowed"
+              />
+              <button
+                @click="detectLocation"
+                :disabled="detectingLocation || parsingLocation"
+                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                :title="$t('create.detectLocation')"
+              >
+                <svg v-if="detectingLocation || parsingLocation" class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1 1 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              <button
+                @click="toggleMapSelector"
+                :disabled="parsingLocation"
+                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                :title="$t('create.selectOnMap')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              </button>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">{{ $t('create.regionHelp') }}</p>
+
+            <!-- 地图选择器 -->
+            <div v-if="showMapSelector" class="mt-3 border border-slate-200 rounded-lg overflow-hidden">
+              <div id="region-map" class="w-full h-64"></div>
+              <div class="p-3 bg-slate-50 text-sm text-slate-600">
+                {{ $t('create.clickOnMapToSelect') }}
+              </div>
+            </div>
+
+            <!-- 解析位置信息加载状态 -->
+            <div v-if="parsingLocation" class="mt-2 flex items-center text-sm text-slate-600">
+              <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ $t('create.parsingLocation') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button @click="submit" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            {{ $t('create.submit') }}
+          </button>
+          <button @click="$emit('close')" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
+            {{ $t('create.cancel') }}
+          </button>
+        </div>
+
+        <div v-if="error" class="mt-4 p-3 bg-red-50 text-red-700 rounded-lg flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ error }}
+        </div>
+      </div>
+
+      <!-- Add Language Modal -->
+      <AddLanguageModal
+        :visible="showAddLanguageModal"
+        :adding-language="addingLanguage"
+        @close="showAddLanguageModal = false"
+        @add-language="handleAddLanguage"
+      />
+    </div>
+  </div>
+</template>
+
 <script>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

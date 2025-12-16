@@ -224,16 +224,19 @@ export default {
     
     // 处理添加表达式点击事件
     const handleAddExpressionClick = () => {
+      console.log('Add expression button clicked');
       // 检查用户是否已经登录
       const isAuthenticated = !!localStorage.getItem('authToken');
       
       if (!isAuthenticated) {
         // 如果没有登录则跳转到登录页面
+        console.log('User not authenticated, redirecting to login');
         router.push('/login');
         return;
       }
       
       // 如果已经登录则显示创建对话框
+      console.log('User authenticated, showing create dialog');
       showCreateDialog.value = true;
     }
     
