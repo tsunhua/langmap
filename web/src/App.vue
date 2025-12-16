@@ -72,7 +72,7 @@
             >
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
                 {{ $t('nav.logout') }}
               </div>
@@ -374,12 +374,17 @@ export default {
         const token = localStorage.getItem('authToken')
         if (token) {
           // Call logout API
-          await fetch('/api/v1/auth/logout', {
+          const response = await fetch('/api/v1/auth/logout', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
             }
           })
+          
+          // If token is invalid/expired, still proceed with local logout
+          if (response.status === 401) {
+            console.warn('Token expired during logout');
+          }
         }
         
         // Remove token and update state
@@ -395,6 +400,11 @@ export default {
         router.push('/login')
       } catch (error) {
         console.error('Logout error:', error)
+        // Even if API fails, still do local logout
+        localStorage.removeItem('authToken')
+        isLoggedIn.value = false
+        currentUser.value = {}
+        router.push('/login')
       }
     }
     
@@ -473,6 +483,8 @@ export default {
               localStorage.removeItem('authToken')
               isLoggedIn.value = false
               currentUser.value = {}
+              // Redirect to login
+              router.push('/login')
             }
           }
         } catch (error) {

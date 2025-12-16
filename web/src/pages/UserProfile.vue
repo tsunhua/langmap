@@ -173,7 +173,7 @@ export default {
         }
         
         // Call logout API
-        await fetch('/api/v1/auth/logout', {
+        const response = await fetch('/api/v1/auth/logout', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -184,6 +184,9 @@ export default {
         localStorage.removeItem('authToken')
         router.push('/login')
       } catch (err) {
+        // Even if API fails, still do local logout
+        localStorage.removeItem('authToken')
+        router.push('/login')
         error.value = t('userProfile.logoutFailed')
         console.error('Logout error:', err)
       }
