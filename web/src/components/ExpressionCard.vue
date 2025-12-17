@@ -54,6 +54,7 @@
 
 <script>
 import { useI18n } from 'vue-i18n'
+import { getLanguageDisplayName } from '../services/languageService.js'
 
 export default {
   name: 'ExpressionCard',
@@ -72,21 +73,8 @@ export default {
       const audio = new Audio(this.item.audio_url)
       audio.play()
     },
-    getLanguageDisplayName(languageCode) {
-      // This would ideally come from a global language store or API
-      // For now, we'll use a simple mapping for common languages
-      const languageMap = {
-        'en-US': 'English',
-        'zh-CN': '中文 (北京)',
-        'zh-TW': '中文 (台北)',
-        'es': 'Español',
-        'fr': 'Français',
-        'ja': '日本語'
-      }
-      
-      // In a real implementation, we would fetch the language data from the backend
-      // and use the native_name field. For now, we'll use the static mapping.
-      return languageMap[languageCode] || languageCode
+    getLanguageDisplayName(code) {
+      return getLanguageDisplayName(code)
     },
     getRegionDisplayName(item) {
       // Use the new region_name field if available
