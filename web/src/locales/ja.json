@@ -128,7 +128,7 @@
     "searchPlaceholder": "関連付ける表現を検索...",
     "search": "検索",
     "searching": "検索中...",
-    "noExpressionsFound": "表現が見つかりません。別の検索語を試してください。",
+    "noExpressionsFound": "表現が見つかりません。別の検索語を試すか、新しい表現を作成してください。",
     "link": "リンク",
     "alreadyLinked": "すでにリンク済み",
     "includesCurrent": "検索結果に現在の表現が含まれています。",

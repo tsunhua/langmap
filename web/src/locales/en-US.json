@@ -131,7 +131,7 @@
     "searchPlaceholder": "Search expressions to associate...",
     "search": "Search",
     "searching": "Searching...",
-    "noExpressionsFound": "No expressions found. Try different search terms.",
+    "noExpressionsFound": "No expressions found. Try different search terms or create a new expression.",
     "link": "Link",
     "alreadyLinked": "Already linked",
     "includesCurrent": "Search results include the current expression.",
