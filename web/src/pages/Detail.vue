@@ -215,7 +215,6 @@ export default {
     const transLoading = ref(false)
     const translations = ref([])
     const meanings = ref([])
-    const expandedMeanings = ref(new Set())
     
     // Association mode
     const associateMode = ref(false)
@@ -482,46 +481,6 @@ export default {
       assocSearched.value = false; // 重置搜索状态
     }
 
-    // Helper method to get language display name
-    function getLanguageDisplayName(languageCode) {
-      // This would ideally come from a global language store or API
-      // For now, we'll use a simple mapping for common languages
-      const languageMap = {
-        'en-US': 'English',
-        'zh-CN': '中文 (北京)',
-        'zh-TW': '中文 (台北)',
-        'es': 'Español',
-        'fr': 'Français',
-        'ja': '日本語'
-      }
-      
-      return languageMap[languageCode] || languageCode
-    }
-
-    // Helper method to get region display name
-    function getRegionDisplayName(item) {
-      // Use the new region_name field if available, otherwise fall back to region
-      if (item.region_name) {
-        return item.region_name + (item.region_code ? ` (${item.region_code})` : '')
-      }
-      
-      // If region is a JSON string, try to parse it
-      if (item.region) {
-        try {
-          const regionData = JSON.parse(item.region)
-          return regionData.name || item.region
-        } catch (e) {
-          // If it's not valid JSON, return as is
-          return item.region
-        }
-      }
-      
-      // Default to global if no region data
-      return 'Global'
-    }
-
-
-
     onMounted(load)
     // when the route param `id` changes the same component instance is reused by the router;
     // watch the prop and reload the details when it changes
@@ -549,8 +508,6 @@ export default {
       createMeaning, 
       toggleMeaning, 
       isExpanded,
-      getLanguageDisplayName,
-      getRegionDisplayName,
       // Create expression modal
       showCreateExpressionModal,
       currentMeaningIdForAssociation,

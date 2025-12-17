@@ -5,14 +5,26 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1'
 })
 
+// Global cache for language map
+let languageMap = {}
+
 /**
- * Fetch all available languages from the backend
+ * Fetch all available languages from the backend and update cache
  * @returns {Promise<Array>} List of available languages
  */
 export async function fetchLanguages() {
   try {
     const response = await api.get('/languages')
-    return response.data
+    const languages = response.data
+    
+    // Automatically update the language map cache
+    const newLanguageMap = {}
+    languages.forEach(lang => {
+      newLanguageMap[lang.code] = lang.native_name || lang.name
+    })
+    languageMap = newLanguageMap
+    
+    return languages
   } catch (error) {
     console.error('Error fetching languages:', error)
     throw error
@@ -78,4 +90,27 @@ export function transformTranslations(expressions) {
   })
   
   return messages
+}
+
+/**
+ * Get language display name from language code
+ * @param {string} languageCode - The language code
+ * @param {Object} languageMap - Map of language codes to display names
+ * @returns {string} Display name of the language
+ */
+export function getLanguageDisplayName(languageCode) {
+  // Return the display name from the map if available, otherwise return the code itself
+  // 如果languageMap 为空，则fetch
+  if (!languageMap) {
+    fetchLanguages()
+  }
+  return languageMap[languageCode] || languageCode
+}
+
+/**
+ * Get the global language map cache
+ * @returns {Object} The cached language map
+ */
+export function getLanguageMapCache() {
+  return languageMap
 }
