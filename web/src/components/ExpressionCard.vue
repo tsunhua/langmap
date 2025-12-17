@@ -33,7 +33,7 @@
           </span>
         </div>
         
-        <div class="mt-4 flex items-center justify-between">
+        <div v-if="item.audio_url" class="mt-4 flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <button 
               v-if="item.audio_url" 
