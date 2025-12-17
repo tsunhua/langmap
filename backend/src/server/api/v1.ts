@@ -38,13 +38,13 @@ const getDB = (c: any) => createDatabaseService(c.env)
 async function signJWT(payload: jose.JWTPayload, secretKey: string): Promise<string> {
   const secret = new TextEncoder().encode(secretKey)
   const alg = 'HS256'
-  
+
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setExpirationTime('24h')
     .sign(secret)
-    
+
   return jwt
 }
 
@@ -64,14 +64,14 @@ async function requireAuth(c: Context, next: Next) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return c.json({ error: 'Authentication required' }, 401)
   }
-  
+
   const token = authHeader.substring(7) // Remove 'Bearer ' prefix
   const payload = await verifyJWT(token, c.env.SECRET_KEY)
-  
+
   if (!payload) {
     return c.json({ error: 'Invalid or expired token' }, 401)
   }
-  
+
   // Add user info to context
   c.set('user', payload)
   await next()
@@ -84,7 +84,7 @@ api.get('/heatmap', async (c) => {
     const db = getDB(c)
     const heatmapData = await db.getHeatmapData()
     console.log('Heatmap data fetched:', heatmapData);
-    
+
     return c.json({
       data: heatmapData
     })
@@ -101,7 +101,7 @@ api.get('/statistics', async (c) => {
     const db = getDB(c)
     const statistics = await db.getStatistics()
     console.log('Statistics fetched:', statistics);
-    
+
     return c.json(statistics)
   } catch (error: any) {
     console.error('Error in GET /statistics:', error);
@@ -127,11 +127,11 @@ api.post('/languages', requireAuth, async (c) => {
     const db = getDB(c)
     const body = await c.req.json()
     console.log('Creating language with body:', body);
-    
+
     // Get user info from middleware
     const user = c.get('user');
     const createdBy = user.username;
-    
+
     // Add created_by to the language data
     const languageData = {
       ...body,
@@ -139,10 +139,10 @@ api.post('/languages', requireAuth, async (c) => {
     };
 
     const language = await db.createLanguage(languageData)
-    
+
     // Clear statistics cache as we've added a new language
     db.clearStatisticsCache();
-    
+
     return c.json(language, 201)
   } catch (error: any) {
     console.error('Error in POST /languages:', error);
@@ -156,29 +156,29 @@ api.put('/languages/:id', requireAuth, async (c) => {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const body = await c.req.json()
-    
+
     if (isNaN(id)) {
       return c.json({ error: 'Invalid language ID' }, 400)
     }
-    
+
     // Get user info from middleware
     const user = c.get('user');
     const updatedBy = user.username;
-    
+
     // Add updated_by to the language data
     const languageData = {
       ...body,
       updated_by: body.updated_by || updatedBy
     };
-    
+
     const language = await db.updateLanguage(id, languageData)
     if (!language) {
       return c.json({ error: 'Language not found' }, 404)
     }
-    
+
     // Clear statistics cache as we've updated a language
     db.clearStatisticsCache();
-    
+
     return c.json(language)
   } catch (error: any) {
     console.error('Error in PUT /languages/:id:', error);
@@ -191,19 +191,19 @@ api.delete('/languages/:id', requireAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
-    
+
     if (isNaN(id)) {
       return c.json({ error: 'Invalid language ID' }, 400)
     }
-    
+
     const success = await db.deleteLanguage(id)
     if (!success) {
       return c.json({ error: 'Language not found' }, 404)
     }
-    
+
     // Clear statistics cache as we've deleted a language
     db.clearStatisticsCache();
-    
+
     return c.json({ message: 'Language deleted successfully' })
   } catch (error: any) {
     console.error('Error in DELETE /languages/:id:', error);
@@ -235,22 +235,22 @@ api.post('/expressions', requireAuth, async (c) => {
     const db = getDB(c)
     const body = await c.req.json()
     console.log('Creating expression with body:', body);
-    
+
     // Get user info from middleware
     const user = c.get('user');
     const createdBy = user.username;
-    
+
     // Add created_by to the expression data
     const expressionData = {
       ...body,
       created_by: body.created_by || createdBy
     };
-    
+
     const expression = await db.createExpression(expressionData)
-    
+
     // Clear statistics cache as we've added a new expression
     db.clearStatisticsCache();
-    
+
     return c.json(expression, 201)
   } catch (error: any) {
     console.error('Error in POST /expressions:', error);
@@ -264,18 +264,18 @@ api.get('/expressions/:expr_id', async (c) => {
     console.log('GET /api/v1/expressions/:expr_id');
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
-    
+
     if (isNaN(exprId)) {
       console.warn('Invalid expression ID:', c.req.param('expr_id'));
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
-    
+
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
       console.warn('Expression not found:', exprId);
       return c.json({ error: 'Expression not found' }, 404)
     }
-    
+
     return c.json(expression)
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id:', error);
@@ -289,26 +289,26 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
     const body = await c.req.json()
-    
+
     if (isNaN(exprId)) {
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
-    
+
     // Get user info from middleware
     const user = c.get('user');
     const updatedBy = user.username;
-    
+
     // Add updated_by to the expression data
     const expressionData = {
       ...body,
       updated_by: body.updated_by || updatedBy
     };
-    
+
     const expression = await db.updateExpression(exprId, expressionData)
     if (!expression) {
       return c.json({ error: 'Expression not found' }, 404)
     }
-    
+
     return c.json(expression)
   } catch (error: any) {
     console.error('Error in PATCH /expressions/:expr_id:', error);
@@ -321,19 +321,19 @@ api.delete('/expressions/:expr_id', requireAuth, async (c) => {
   try {
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
-    
+
     if (isNaN(exprId)) {
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
-    
+
     const success = await db.deleteExpression(exprId)
     if (!success) {
       return c.json({ error: 'Expression not found' }, 404)
     }
-    
+
     // Clear statistics cache as we've deleted an expression
     db.clearStatisticsCache();
-    
+
     return c.json({ message: 'Expression deleted successfully' })
   } catch (error: any) {
     console.error('Error in DELETE /expressions/:expr_id:', error);
@@ -347,12 +347,12 @@ api.get('/expressions/:expr_id/versions', async (c) => {
     console.log('GET /api/v1/expressions/:expr_id/versions');
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
-    
+
     if (isNaN(exprId)) {
       console.warn('Invalid expression ID:', c.req.param('expr_id'));
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
-    
+
     const versions = await db.getExpressionVersions(exprId)
     return c.json(versions)
   } catch (error: any) {
@@ -368,31 +368,44 @@ api.get('/expressions/:expr_id/translations', async (c) => {
     const db = getDB(c)
     const exprId = parseInt(c.req.param('expr_id'))
     const language_code = c.req.query('language_code')
-    
+
     if (isNaN(exprId)) {
       console.warn('Invalid expression ID:', c.req.param('expr_id'));
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
-    
+
     // Get the expression first
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
       console.warn('Expression not found:', exprId);
       return c.json({ error: 'Expression not found' }, 404)
     }
-    
+
     // Find expressions in other languages with the same meaning
     // This is a simplified implementation - in reality, this would involve
     // finding expressions linked to the same meaning(s)
-    const meaning_id = expression.meaning_id? expression.meaning_id : exprId
-    const translations = await db.getExpressions(0, 100, language_code, meaning_id)
-      .then(allExpressions => 
-        allExpressions.filter(e => 
-          e.id !== exprId && 
-          e.language_code !== expression.language_code
+    const meaning_id = expression.meaning_id ? expression.meaning_id : exprId
+    const translations = await db.getExpressions(0, 1000, language_code, meaning_id)
+      .then(allExpressions =>
+        allExpressions.filter(e =>
+          e.id !== exprId
         )
       )
-    
+    // 從 translations 中獲取一個 meaning_id 數組，要求不重複，並且不等於 meaning_id
+    const meaning_ids = translations.map(e => e.meaning_id).filter((id, index, self) => self.indexOf(id) === index && id !== meaning_id)
+
+    // 如果meaning_ids 非空，那麼需要再次 getExpressions
+    if (meaning_ids.length > 0) {
+      translations2 = await db.getExpressions(0, 1000, language_code, meaning_ids)
+        .then(allExpressions =>
+          allExpressions.filter(e =>
+            e.id !== exprId
+          )
+        )
+      // 合併translations2 到 translations 中
+      translations.push(...translations2)
+    }
+
     return c.json(translations)
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id/translations:', error);
@@ -411,12 +424,12 @@ api.get('/search', async (c) => {
     const region = c.req.query('region') || undefined
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
-    
+
     if (!query) {
       console.warn('Query parameter is required');
       return c.json({ error: 'Query parameter is required' }, 400)
     }
-    
+
     const results = await db.searchExpressions(query, fromLang, region, skip, limit)
     return c.json(results)
   } catch (error: any) {
@@ -434,7 +447,7 @@ api.get('/ui-translations/:language', async (c) => {
     const language = c.req.param('language')
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '200')
-    
+
     const translations = await db.getUITranslations(language, skip, limit)
     return c.json(translations)
   } catch (error: any) {
@@ -488,15 +501,15 @@ api.post('/auth/register', async (c) => {
     // Generate email verification token
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
-    
+
     await db.createEmailVerificationToken(token, user.id, expiresAt);
-    
+
     // Send verification email
     const resend = new Resend(c.env.RESEND_API_KEY);
     // Use a more robust way to construct the verification URL
     const baseUrl = c.req.url.split('/api')[0];
     const verificationUrl = `${baseUrl}/#/verify-email?token=${token}`;
-    
+
     try {
       console.log('Sending verification email to:', email);
       const { data, error } = await resend.emails.send({
@@ -514,7 +527,7 @@ api.post('/auth/register', async (c) => {
           <p>&copy; 2025 LangMap. All rights reserved.</p>
         `
       });
-      
+
       if (error) {
         console.error('Failed to send verification email:', error);
         console.error('Error details:', {
@@ -589,9 +602,9 @@ api.post('/auth/login', async (c) => {
     }
 
     // Generate JWT token
-    const token = await signJWT({ 
-      id: user.id, 
-      username: user.username, 
+    const token = await signJWT({
+      id: user.id,
+      username: user.username,
       email: user.email,
       role: user.role
     }, c.env.SECRET_KEY)
@@ -660,10 +673,10 @@ api.get('/auth/verify-email', async (c) => {
 
     // Set user email as verified
     await db.setEmailVerified(verificationToken.user_id);
-    
+
     // Delete the token so it can't be used again
     await db.deleteEmailVerificationToken(token);
-    
+
     console.log('Email verified successfully for user:', verificationToken.user_id);
 
     return c.json({
@@ -682,10 +695,10 @@ api.get('/users/me', requireAuth, async (c) => {
     console.log('GET /api/v1/users/me');
     // Get user info from middleware
     const user = c.get('user');
-    
+
     const db = getDB(c)
     const fullUser = await db.getUserById(user.id)
-    
+
     if (!fullUser) {
       console.warn('User not found:', user.id);
       return c.json({ error: 'User not found' }, 404)
