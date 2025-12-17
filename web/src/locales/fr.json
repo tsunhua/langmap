@@ -127,7 +127,7 @@
     "searchPlaceholder": "Rechercher des expressions à associer...",
     "search": "Recherche",
     "searching": "Recherche en cours...",
-    "noExpressionsFound": "Aucune expression trouvée. Essayez des termes de recherche différents.",
+    "noExpressionsFound": "Aucune expression trouvée. Essayez des termes de recherche différents ou créez une nouvelle expression.",
     "link": "Lier",
     "alreadyLinked": "Déjà lié",
     "includesCurrent": "Les résultats de recherche incluent l'expression actuelle.",

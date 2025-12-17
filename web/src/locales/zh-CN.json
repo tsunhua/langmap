@@ -131,7 +131,7 @@
     "searchPlaceholder": "搜索要关联的词句...",
     "search": "搜索",
     "searching": "搜索中...",
-    "noExpressionsFound": "未找到词句。尝试不同的搜索词。",
+    "noExpressionsFound": "未找到词句。尝试不同的搜索词或创建新词句。",
     "link": "链接",
     "alreadyLinked": "已链接",
     "includesCurrent": "搜索结果包含当前词句。",
