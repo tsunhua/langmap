@@ -1,10 +1,10 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full my-8 mx-auto max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
       <div class="px-6 py-4 border-b border-slate-200">
         <h3 class="text-lg font-medium text-slate-900">{{ $t('create.addLanguage') }}</h3>
       </div>
-      <form @submit.prevent="handleAddLanguage" class="px-6 py-4">
+      <form @submit.prevent="handleAddLanguage" class="px-6 py-4 overflow-y-auto flex-grow">
         <div class="mb-4">
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.languageCode') }}</label>
           <input 
@@ -26,15 +26,7 @@
             required
           >
         </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.nativeName') }}</label>
-          <input 
-            v-model="formData.native_name" 
-            type="text" 
-            class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :placeholder="$t('create.nativeNamePlaceholder')"
-          >
-        </div>
+
         
         <!-- Region Information Section -->
         <div class="mb-4 border border-slate-200 rounded-lg p-4">
@@ -68,15 +60,7 @@
               >
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create.nativeRegionName') }}</label>
-              <input 
-                v-model="formData.native_region_name" 
-                type="text" 
-                class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                :placeholder="$t('create.nativeRegionNamePlaceholder')"
-              >
-            </div>
+
             
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -156,9 +140,8 @@ export default {
     const formData = reactive({
       code: '',
       name: '',
-      native_name: '',
       region_name: '',
-      native_region_name: '',
+      region_code: '',
       latitude: '',
       longitude: '',
       direction: 'ltr'
@@ -176,24 +159,22 @@ export default {
         const languageObj = await createLanguage({
           code: formData.code,
           name: formData.name,
-          native_name: formData.native_name,
           region_code: formData.region_code, // Will be derived from region data
-          region_name: formData.region_name || formData.native_region_name,
+          region_name: formData.region_name,
           region_latitude: formData.latitude || null,
           region_longitude: formData.longitude || null,
           direction: formData.direction
         })
-        emit('add-language', languageObj)
-        
         // Reset form
         formData.code = ''
         formData.name = ''
-        formData.native_name = ''
         formData.region_name = ''
-        formData.native_region_name = ''
+        formData.region_code = ''
         formData.latitude = ''
         formData.longitude = ''
         formData.direction = 'ltr'
+        
+        emit('add-language', languageObj)
       } catch (error) {
         console.error('Error adding language:', error)
         alert(t('create.addLanguageFailed'))
@@ -215,9 +196,8 @@ export default {
       if (!newVal) {
         formData.code = ''
         formData.name = ''
-        formData.native_name = ''
         formData.region_name = ''
-        formData.native_region_name = ''
+        formData.region_code = ''
         formData.latitude = ''
         formData.longitude = ''
         formData.direction = 'ltr'
@@ -272,11 +252,16 @@ export default {
         
         if (response.ok) {
           const data = await response.json()
+
+          // print log
+          console.log('Reverse geocoding result:', data)
+
           if (data.address) {
             const address = data.address
             // Get city-level information
             const cityName = address.city || address.town || address.village || address.municipality || null
             const countryName = address.country || null
+            const regionCode = address.country_code? address.country_code.toUpperCase() : null
             
             // Combine for region name
             let regionName = cityName
@@ -285,11 +270,12 @@ export default {
             } else if (!regionName) {
               regionName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
             }
-            
+
             return {
               name: regionName,
               latitude: parseFloat(lat),
-              longitude: parseFloat(lon)
+              longitude: parseFloat(lon),
+              region_code: regionCode,
             }
           }
         }
@@ -352,7 +338,7 @@ export default {
             
             // Update form data
             formData.region_name = locationInfo.name
-            formData.native_region_name = locationInfo.name
+            formData.region_code = locationInfo.region_code
             formData.latitude = locationInfo.latitude.toFixed(6)
             formData.longitude = locationInfo.longitude.toFixed(6)
           } catch (err) {

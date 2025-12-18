@@ -5,6 +5,34 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1'
 })
 
+// Add interceptor to include auth token in requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clear auth token if 401 error
+      localStorage.removeItem('authToken')
+      // Optionally redirect to login page
+      window.dispatchEvent(new CustomEvent('auth-error'))
+    }
+    return Promise.reject(error)
+  }
+)
+
 // Global cache for language map
 let languageMap = {}
 
@@ -53,6 +81,12 @@ export async function fetchUITranslations(languageCode) {
  */
 export async function createLanguage(languageData) {
   try {
+    // Ensure we have the latest auth token
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    }
+    
     const response = await api.post('/languages', languageData)
     return response.data
   } catch (error) {
