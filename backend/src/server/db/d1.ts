@@ -32,10 +32,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Language operations
-  async getLanguages(): Promise<Language[]> {
-    const { results } = await this.db.prepare(
-      'SELECT * FROM languages WHERE is_active = 1 ORDER BY name'
-    ).all<Language>()
+  async getLanguages(isActive?: number): Promise<Language[]> {
+    let query = 'SELECT * FROM languages'
+    const params: any[] = []
+    
+    if (isActive !== undefined) {
+      query += ' WHERE is_active = ?'
+      params.push(isActive)
+    }
+    
+    query += ' ORDER BY name'
+    
+    const { results } = await this.db.prepare(query).bind(...params).all<Language>()
     return results
   }
 

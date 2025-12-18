@@ -38,11 +38,17 @@ let languageMap = {}
 
 /**
  * Fetch all available languages from the backend and update cache
+ * @param {number|undefined} isActive - Filter languages by is_active status (1=active, 0=inactive, undefined=all)
  * @returns {Promise<Array>} List of available languages
  */
-export async function fetchLanguages() {
+export async function fetchLanguages(isActive) {
   try {
-    const response = await api.get('/languages')
+    let url = '/languages'
+    if (isActive !== undefined) {
+      url += `?is_active=${isActive}`
+    }
+    
+    const response = await api.get(url)
     const languages = response.data
     
     // Automatically update the language map cache

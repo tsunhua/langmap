@@ -34,7 +34,12 @@
   "nav": {
     "home": "ホーム",
     "search": "検索",
-    "about": "概要"
+    "translate": "翻訳",
+    "about": "概要",
+    "profile": "プロフィール",
+    "logout": "ログアウト",
+    "login": "ログイン",
+    "register": "登録"
   },
   "footer": {
     "copyright": "© {year} langmap - 言語表現マッピングプラットフォーム"

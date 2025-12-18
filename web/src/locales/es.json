@@ -34,7 +34,12 @@
   "nav": {
     "home": "Inicio",
     "search": "Buscar",
-    "about": "Acerca de"
+    "translate": "Traducir",
+    "about": "Acerca de",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
   },
   "footer": {
     "copyright": "© {year} langmap - Plataforma de mapeo de expresiones lingüísticas"

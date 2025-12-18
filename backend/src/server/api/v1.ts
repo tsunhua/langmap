@@ -114,7 +114,9 @@ api.get('/languages', async (c) => {
   try {
     console.log('GET /api/v1/languages');
     const db = getDB(c)
-    const languages = await db.getLanguages()
+    const isActive = c.req.query('is_active')
+    const isActiveValue = isActive !== undefined ? parseInt(isActive, 10) : undefined
+    const languages = await db.getLanguages(isActiveValue)
     return c.json(languages)
   } catch (error: any) {
     return c.json({ error: 'Failed to fetch languages' }, 500)

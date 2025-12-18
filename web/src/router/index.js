@@ -8,6 +8,7 @@ import Search from '../pages/Search.vue'
 import Detail from '../pages/Detail.vue'
 import Policies from '../pages/Policies.vue'
 import EmailVerification from '../pages/EmailVerification.vue'
+import Translate from '../pages/Translate.vue'
 
 const routes = [
   {
@@ -56,6 +57,11 @@ const routes = [
     path: '/verify-email',
     name: 'EmailVerification',
     component: EmailVerification
+  },
+  {
+    path: '/translate',
+    name: 'Translate',
+    component: Translate
   }
 ]
 

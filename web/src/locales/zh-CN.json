@@ -34,6 +34,7 @@
   "nav": {
     "home": "首页",
     "search": "搜索",
+    "translate": "翻译",
     "about": "关于",
     "profile": "个人资料",
     "logout": "退出登录",
