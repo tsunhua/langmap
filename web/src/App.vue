@@ -437,9 +437,6 @@ export default {
         // Add to available languages
         availableLanguages.value[language.code] = language.native_name || language.name
         
-        // Switch to the new language
-        await switchLanguage(language.code)
-        
         // Close modal
         showAddLanguageModal.value = false
       } catch (error) {
