@@ -221,5 +221,24 @@
     "errorTitle": "邮箱验证失败",
     "errorMessage": "验证链接无效或已过期。",
     "goToLogin": "前往登录"
+  },
+  "translate": {
+    "title": "翻译界面",
+    "selectLanguage": "选择语言",
+    "referenceLanguage": "参考语言",
+    "targetLanguage": "目标语言",
+    "sameLanguageError": "参考语言和目标语言不能相同",
+    "translationProgress": "翻译进度",
+    "languageActivated": "语言已激活",
+    "languageNotActivated": "语言未激活（完成度需达到60%）",
+    "searchPlaceholder": "搜索本地化键...",
+    "filterAll": "全部",
+    "filterUntranslated": "未翻译",
+    "filterTranslated": "已翻译",
+    "localizationKey": "本地化键",
+    "reference": "参考",
+    "target": "目标",
+    "inputPlaceholder": "请输入翻译",
+    "saveTranslations": "保存翻译 ({ count })"
   }
 }

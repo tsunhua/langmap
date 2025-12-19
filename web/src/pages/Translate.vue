@@ -1,13 +1,13 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">翻译界面</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ $t('translate.title') }}</h1>
     
     <!-- 语言选择器 -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">选择语言</h2>
+      <h2 class="text-xl font-semibold mb-4">{{ $t('translate.selectLanguage') }}</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">参考语言</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('translate.referenceLanguage') }}</label>
           <select 
             v-model="referenceLanguage" 
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -19,7 +19,7 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">目标语言</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('translate.targetLanguage') }}</label>
           <select 
             v-model="targetLanguage" 
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -30,7 +30,7 @@
             </option>
           </select>
           <div v-if="targetLanguage === referenceLanguage" class="text-red-500 text-sm mt-1">
-            参考语言和目标语言不能相同
+            {{ $t('translate.sameLanguageError') }}
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@
       <!-- 进度显示 -->
       <div v-if="targetLanguage && targetLanguage !== referenceLanguage" class="mt-4">
         <div class="flex justify-between mb-1">
-          <span class="text-sm font-medium">翻译进度</span>
+          <span class="text-sm font-medium">{{ $t('translate.translationProgress') }}</span>
           <span class="text-sm font-medium">{{ completionPercentage }}%</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -48,7 +48,7 @@
           ></div>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          {{ isActive ? '语言已激活' : '语言未激活（完成度需达到60%）' }}
+          {{ isActive ? $t('translate.languageActivated') : $t('translate.languageNotActivated') }}
         </div>
       </div>
     </div>
@@ -62,7 +62,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="搜索本地化键..."
+              :placeholder="$t('translate.searchPlaceholder')"
               class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               @input="filterTranslations"
             />
@@ -77,7 +77,7 @@
               ]"
               @click="setFilter('all')"
             >
-              全部
+              {{ $t('translate.filterAll') }}
             </button>
             <button
               :class="[
@@ -88,7 +88,7 @@
               ]"
               @click="setFilter('untranslated')"
             >
-              未翻译
+              {{ $t('translate.filterUntranslated') }}
             </button>
             <button
               :class="[
@@ -99,7 +99,7 @@
               ]"
               @click="setFilter('translated')"
             >
-              已翻译
+              {{ $t('translate.filterTranslated') }}
             </button>
           </div>
         </div>
@@ -111,13 +111,13 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                本地化键
+                {{ $t('translate.localizationKey') }}
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ getLanguageDisplayName(referenceLanguage) }} (参考)
+                {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('translate.reference') }})
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ getLanguageDisplayName(targetLanguage) }} (目标)
+                {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('translate.target') }})
               </th>
             </tr>
           </thead>
@@ -134,7 +134,7 @@
                   v-model="item.targetText"
                   type="text"
                   class="w-full border border-blue-300 py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="请输入翻译"
+                  :placeholder="$t('translate.inputPlaceholder')"
                   @input="markAsModified(item)"
                 />
               </td>
@@ -156,7 +156,7 @@
             ]"
             @click="saveTranslations"
           >
-            保存翻译 ({{ modifiedItems.length }})
+            {{ $t('translate.saveTranslations', { count: modifiedItems.length }) }}
           </button>
         </div>
       </div>
@@ -167,10 +167,13 @@
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
 import { fetchLanguages, fetchUITranslations, getLanguageDisplayName } from '../services/languageService'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'Translate',
   setup() {
+    const { t } = useI18n()
+
     // 语言选择相关
     const languages = ref([])
     const referenceLanguage = ref('en-US')
@@ -400,6 +403,7 @@ export default {
       isActive,
       
       // 方法
+      t,
       loadTranslations,
       filterTranslations,
       setFilter,
@@ -410,7 +414,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* 可以在这里添加特定的样式 */
-</style>

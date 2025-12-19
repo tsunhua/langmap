@@ -221,5 +221,24 @@
     "errorTitle": "電郵驗證失敗",
     "errorMessage": "驗證連結無效或已過期。",
     "goToLogin": "前往登入"
+  },
+  "translate": {
+    "title": "翻譯介面",
+    "selectLanguage": "選擇語言",
+    "referenceLanguage": "參考語言",
+    "targetLanguage": "目標語言",
+    "sameLanguageError": "參考語言和目標語言不能相同",
+    "translationProgress": "翻譯進度",
+    "languageActivated": "語言已啟用",
+    "languageNotActivated": "語言未啟用（完成度需達到60%）",
+    "searchPlaceholder": "搜尋本地化鍵...",
+    "filterAll": "全部",
+    "filterUntranslated": "未翻譯",
+    "filterTranslated": "已翻譯",
+    "localizationKey": "本地化鍵",
+    "reference": "參考",
+    "target": "目標",
+    "inputPlaceholder": "請輸入翻譯",
+    "saveTranslations": "儲存翻譯 ({ count })"
   }
 }

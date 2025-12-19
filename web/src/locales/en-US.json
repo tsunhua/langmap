@@ -221,5 +221,24 @@
     "errorTitle": "Email Verification Failed",
     "errorMessage": "The verification link is invalid or has expired.",
     "goToLogin": "Go to Login"
+  },
+  "translate": {
+    "title": "Translation Interface",
+    "selectLanguage": "Select Language",
+    "referenceLanguage": "Reference Language",
+    "targetLanguage": "Target Language",
+    "sameLanguageError": "Reference and target languages cannot be the same",
+    "translationProgress": "Translation Progress",
+    "languageActivated": "Language Activated",
+    "languageNotActivated": "Language Not Activated (completion rate needs to reach 60%)",
+    "searchPlaceholder": "Search localization keys...",
+    "filterAll": "All",
+    "filterUntranslated": "Untranslated",
+    "filterTranslated": "Translated",
+    "localizationKey": "Localization Key",
+    "reference": "Reference",
+    "target": "Target",
+    "inputPlaceholder": "Please enter translation",
+    "saveTranslations": "Save Translations ({ count })"
   }
 }

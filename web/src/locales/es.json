@@ -221,5 +221,24 @@
     "errorTitle": "Error en la verificación del correo electrónico",
     "errorMessage": "El enlace de verificación no es válido o ha expirado.",
     "goToLogin": "Ir a Iniciar Sesión"
+  },
+  "translate": {
+    "title": "Interfaz de Traducción",
+    "selectLanguage": "Seleccionar Idioma",
+    "referenceLanguage": "Idioma de Referencia",
+    "targetLanguage": "Idioma de Destino",
+    "sameLanguageError": "Los idiomas de referencia y destino no pueden ser iguales",
+    "translationProgress": "Progreso de Traducción",
+    "languageActivated": "Idioma Activado",
+    "languageNotActivated": "Idioma No Activado (la finalización debe alcanzar el 60%)",
+    "searchPlaceholder": "Buscar claves de localización...",
+    "filterAll": "Todos",
+    "filterUntranslated": "Sin traducir",
+    "filterTranslated": "Traducido",
+    "localizationKey": "Clave de Localización",
+    "reference": "Referencia",
+    "target": "Destino",
+    "inputPlaceholder": "Por favor ingrese la traducción",
+    "saveTranslations": "Guardar Traducciones ({ count })"
   }
 }

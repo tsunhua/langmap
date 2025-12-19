@@ -222,5 +222,24 @@
     "errorTitle": "メールアドレスの確認に失敗しました",
     "errorMessage": "確認リンクが無効か、期限切れです。",
     "goToLogin": "ログインページへ"
+  },
+  "translate": {
+    "title": "翻訳インターフェース",
+    "selectLanguage": "言語を選択",
+    "referenceLanguage": "参照言語",
+    "targetLanguage": "対象言語",
+    "sameLanguageError": "参照言語と対象言語は同じにできません",
+    "translationProgress": "翻訳進行状況",
+    "languageActivated": "言語が有効になりました",
+    "languageNotActivated": "言語が無効（完了率は60％に達する必要があります）",
+    "searchPlaceholder": "ローカライズキーを検索...",
+    "filterAll": "すべて",
+    "filterUntranslated": "未翻訳",
+    "filterTranslated": "翻訳済み",
+    "localizationKey": "ローカライズキー",
+    "reference": "参照",
+    "target": "対象",
+    "inputPlaceholder": "翻訳を入力してください",
+    "saveTranslations": "翻訳を保存 ({ count })"
   }
 }

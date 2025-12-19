@@ -221,5 +221,24 @@
     "errorTitle": "Échec de la vérification de l'e-mail",
     "errorMessage": "Le lien de vérification n'est pas valide ou a expiré.",
     "goToLogin": "Aller à la connexion"
+  },
+  "translate": {
+    "title": "Interface de Traduction",
+    "selectLanguage": "Sélectionner la Langue",
+    "referenceLanguage": "Langue de Référence",
+    "targetLanguage": "Langue Cible",
+    "sameLanguageError": "Les langues de référence et cible ne peuvent pas être identiques",
+    "translationProgress": "Progression de la Traduction",
+    "languageActivated": "Langue Activée",
+    "languageNotActivated": "Langue Non Activée (le taux d'achèvement doit atteindre 60 %)",
+    "searchPlaceholder": "Rechercher des clés de localisation...",
+    "filterAll": "Tous",
+    "filterUntranslated": "Non traduits",
+    "filterTranslated": "Traduits",
+    "localizationKey": "Clé de Localisation",
+    "reference": "Référence",
+    "target": "Cible",
+    "inputPlaceholder": "Veuillez entrer la traduction",
+    "saveTranslations": "Enregistrer les Traductions ({ count })"
   }
 }
