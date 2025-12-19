@@ -39,7 +39,9 @@
     "profile": "Profil",
     "logout": "Déconnexion",
     "login": "Connexion",
-    "register": "S'inscrire"
+    "register": "S'inscrire",
+    "assistTranslation": "Aider à traduire",
+    "addLanguage": "✨ Ajouter une langue"
   },
   "footer": {
     "copyright": "© {year} langmap - Plateforme de cartographie des expressions linguistiques"

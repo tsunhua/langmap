@@ -38,7 +38,9 @@
     "profile": "個人資料",
     "logout": "登出",
     "login": "登入",
-    "register": "註冊"
+    "register": "註冊",
+    "assistTranslation": "🛠️ 鬥相共翻譯",
+    "addLanguage": "✨ 新增語言"
   },
   "footer": {
     "copyright": "© {year} langmap - 多語言語詞對應平台"

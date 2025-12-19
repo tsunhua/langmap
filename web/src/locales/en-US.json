@@ -39,7 +39,9 @@
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "assistTranslation": "🛠️ Assist Translation",
+    "addLanguage": "✨ Add New Language"
   },
   "footer": {
     "copyright": "© {year} langmap - Linguistic Expression Mapping Platform"

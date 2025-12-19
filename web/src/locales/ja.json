@@ -39,7 +39,9 @@
     "profile": "プロフィール",
     "logout": "ログアウト",
     "login": "ログイン",
-    "register": "登録"
+    "register": "登録",
+    "assistTranslation": "🛠️ 翻訳支援",
+    "addLanguage": "✨ 新しい言語を追加"
   },
   "footer": {
     "copyright": "© {year} langmap - 言語表現マッピングプラットフォーム"
@@ -98,7 +100,7 @@
     "meaningTags": "タグ",
     "meaningTagsPlaceholder": "タグを追加...",
     "meaningTagsHelp": "タグは意味の分類と検索に役立ちます（Enterキーまたはカンマで追加）",
-    "addLanguage": "+ 新しい言語を追加",
+    "addLanguage": "✨ 新しい言語を追加",
     "languageCode": "言語コード",
     "languageCodePlaceholder": "例：custom-lang, toki-pona",
     "languageCodeHelp": "あなたの言語のカスタムコード（非標準でも可）",

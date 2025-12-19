@@ -31,11 +31,7 @@
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
           {{ $t('nav.search') }}
         </router-link>
-        <router-link to="/translate"
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          {{ $t('nav.translate') }}
-        </router-link>
+
         <router-link to="/about"
           class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
@@ -126,10 +122,7 @@
               active-class="text-blue-600">
               {{ $t('nav.about') }}
             </router-link>
-            <router-link to="/translate" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
-              {{ $t('nav.translate') }}
-            </router-link>
+
           </nav>
 
           <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->
@@ -204,12 +197,22 @@
                   ✓
                 </span>
               </button>
+              
+              <!-- Assist Translation Link -->
+              <div class="border-t border-slate-200 mt-1 pt-1">
+                <router-link to="/translate-interface" 
+                  class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  role="menuitem" @click="langDropdownOpen = false">
+                  {{ $t('nav.assistTranslation') }}
+                </router-link>
+              </div>
+
               <!-- Add new language option -->
               <div class="border-t border-slate-200 mt-1 pt-1">
                 <button @click="handleAddLanguageClick"
-                  class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 font-medium"
+                  class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                   role="menuitem">
-                  + Add New Language
+                  {{ $t('nav.addLanguage') }}
                 </button>
               </div>
             </div>

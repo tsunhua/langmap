@@ -170,7 +170,7 @@ import { fetchLanguages, fetchUITranslations, getLanguageDisplayName } from '../
 import { useI18n } from 'vue-i18n'
 
 export default {
-  name: 'Translate',
+  name: 'TranslateInterface',
   setup() {
     const { t } = useI18n()
 

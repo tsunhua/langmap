@@ -7,8 +7,8 @@ import UserProfile from '../pages/UserProfile.vue'
 import Search from '../pages/Search.vue'
 import Detail from '../pages/Detail.vue'
 import Policies from '../pages/Policies.vue'
+import TranslateInterface from '../pages/TranslateInterface.vue'
 import EmailVerification from '../pages/EmailVerification.vue'
-import Translate from '../pages/Translate.vue'
 
 const routes = [
   {
@@ -59,9 +59,9 @@ const routes = [
     component: EmailVerification
   },
   {
-    path: '/translate',
-    name: 'Translate',
-    component: Translate
+    path: '/translate-interface',
+    name: 'TranslateInterface',
+    component: TranslateInterface
   }
 ]
 
@@ -73,7 +73,7 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('authToken')
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {

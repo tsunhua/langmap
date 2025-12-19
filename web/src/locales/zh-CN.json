@@ -39,7 +39,9 @@
     "profile": "个人资料",
     "logout": "退出登录",
     "login": "登录",
-    "register": "注册"
+    "register": "注册",
+    "assistTranslation": "🛠️ 协助翻译",
+    "addLanguage": "✨ 添加新语言"
   },
   "footer": {
     "copyright": "© {year} langmap - 多语言词句映射平台"
