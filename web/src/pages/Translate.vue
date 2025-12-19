@@ -107,29 +107,29 @@
       
       <!-- 翻译表格 -->
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-200 table-fixed">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ $t('translate.localizationKey') }}
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('translate.reference') }})
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('translate.target') }})
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="item in filteredTranslations" :key="item.key">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <td class="px-6 py-4 text-sm font-medium text-gray-900 break-words">
                 {{ item.key }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="px-6 py-4 text-sm text-gray-500 break-words">
                 {{ item.referenceText }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="px-6 py-4 text-sm text-gray-500">
                 <input
                   v-model="item.targetText"
                   type="text"
@@ -244,13 +244,15 @@ export default {
       
       // 创建参考语言的映射
       referenceTranslations.value.forEach(item => {
-        // 解析tags字段（JSON字符串）
-        let tags
-        try {
-          tags = JSON.parse(item.tags)
-        } catch (e) {
-          console.error('Failed to parse tags for reference item:', item)
-          return
+        // 解析tags字段（JSON字符串或数组）
+        let tags = item.tags
+        if (typeof tags === 'string') {
+          try {
+            tags = JSON.parse(tags)
+          } catch (e) {
+            console.error('Failed to parse tags for reference item:', item)
+            return
+          }
         }
         
         if (tags && tags.length > 0) {
@@ -260,13 +262,15 @@ export default {
       
       // 创建目标语言的映射
       targetTranslations.value.forEach(item => {
-        // 解析tags字段（JSON字符串）
-        let tags
-        try {
-          tags = JSON.parse(item.tags)
-        } catch (e) {
-          console.error('Failed to parse tags for target item:', item)
-          return
+        // 解析tags字段（JSON字符串或数组）
+        let tags = item.tags
+        if (typeof tags === 'string') {
+          try {
+            tags = JSON.parse(tags)
+          } catch (e) {
+            console.error('Failed to parse tags for target item:', item)
+            return
+          }
         }
         
         if (tags && tags.length > 0) {

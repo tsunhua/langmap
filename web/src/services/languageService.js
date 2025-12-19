@@ -73,10 +73,10 @@ export async function fetchLanguages(isActive) {
 export async function fetchUITranslations(languageCode) {
   try {
     const response = await api.get(`/ui-translations/${languageCode}`)
-    return response.data
+    return response.data || [] // 确保返回空数组而不是 undefined
   } catch (error) {
     console.error(`Error fetching UI translations for ${languageCode}:`, error)
-    throw error
+    return [] // 发生错误时返回空数组而不是抛出异常
   }
 }
 
