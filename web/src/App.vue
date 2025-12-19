@@ -129,7 +129,7 @@
           </nav>
 
           <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->
-          <div class="relative hidden lg:block" ref="authDropdown">
+          <div class="relative hidden lg:block" ref="userDropdown">
             <button v-if="isLoggedIn" @click="toggleUserDropdown"
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
               aria-haspopup="true" :aria-expanded="userDropdownOpen">

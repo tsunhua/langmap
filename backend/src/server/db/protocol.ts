@@ -143,7 +143,7 @@ export abstract class AbstractDatabaseService {
   abstract clearHeatmapCache(): void
 
   // Collections
-  abstract getCollections(userId?: number, isPublic?: boolean): Promise<Collection[]>
+  abstract getCollections(userId?: number, isPublic?: boolean, skip?: number, limit?: number): Promise<Collection[]>
   abstract getCollectionById(id: number): Promise<Collection | null>
   abstract createCollection(collection: Partial<Collection>): Promise<Collection>
   abstract updateCollection(id: number, collection: Partial<Collection>): Promise<Collection>

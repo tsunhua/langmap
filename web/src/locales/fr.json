@@ -244,7 +244,8 @@
     "action": "Action",
     "inputPlaceholder": "Veuillez entrer la traduction",
     "saveTranslations": "Enregistrer les Traductions ({ count })",
-    "copyReference": "Copier la traduction de référence vers la cible"
+    "copyReference": "Copiar la traducción de referencia al objetivo",
+    "selectTargetPlaceholder": "Sélectionner la langue cible"
   },
   "collections": {
     "title": "Mes collections",
@@ -268,7 +269,8 @@
     "empty": "Cette collection est vide",
     "removeItem": "Retirer",
     "removeItemConfirm": "Retirer cet élément de la collection ?",
-    "back": "Retour aux collections"
+    "back": "Retour aux collections",
+    "createdOn": "Créé le"
   },
   "common": {
     "save": "Enregistrer",
@@ -278,6 +280,9 @@
     "edit": "Modifier",
     "loading": "Chargement...",
     "error": "Une erreur s'est produite",
-    "success": "Succès"
+    "success": "Succès",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "page": "Page"
   }
 }

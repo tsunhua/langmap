@@ -72,6 +72,27 @@
       </div>
     </div>
 
+    <!-- Pagination -->
+    <div v-if="currentPage > 1 || collections.length === 20" class="flex justify-center items-center gap-4 mt-8">
+      <button 
+        @click="prevPage" 
+        :disabled="currentPage === 1"
+        class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        &laquo; {{ $t('common.prev') || 'Prev' }}
+      </button>
+      <span class="text-sm font-medium">
+        {{ $t('common.page') || 'Page' }} {{ currentPage }}
+      </span>
+      <button 
+        @click="nextPage" 
+        :disabled="collections.length < 20"
+        class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ $t('common.next') || 'Next' }} &raquo;
+      </button>
+    </div>
+
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
@@ -164,17 +185,36 @@ export default {
       is_public: false
     })
     
+    // Pagination state
+    const currentPage = ref(1)
+    const itemsPerPage = ref(20)
+    
     // Load collections
     const fetchCollections = async () => {
       loading.value = true
       try {
-        // Fetch user's collections
-        collections.value = await getCollections()
+        const skip = (currentPage.value - 1) * itemsPerPage.value
+        // Fetch user's collections with pagination
+        collections.value = await getCollections({ skip, limit: itemsPerPage.value })
       } catch (error) {
         console.error('Failed to load collections:', error)
         alert('Failed to load collections')
       } finally {
         loading.value = false
+      }
+    }
+
+    const nextPage = () => {
+      if (collections.value.length === itemsPerPage.value) {
+        currentPage.value++
+        fetchCollections()
+      }
+    }
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--
+        fetchCollections()
       }
     }
     
@@ -267,7 +307,10 @@ export default {
       saveCollection,
       confirmDelete,
       goToDetail,
-      formatDate
+      formatDate,
+      currentPage,
+      nextPage,
+      prevPage
     }
   }
 }

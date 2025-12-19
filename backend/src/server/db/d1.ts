@@ -620,7 +620,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Collections
-  async getCollections(userId?: number, isPublic?: boolean): Promise<Collection[]> {
+  async getCollections(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Collection[]> {
     let query = `
       SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count 
       FROM collections c
@@ -643,6 +643,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     query += ' ORDER BY c.created_at DESC'
+    query += ' LIMIT ? OFFSET ?'
+    params.push(limit, skip)
 
     const { results } = await this.db.prepare(query).bind(...params).all<Collection>()
     return results

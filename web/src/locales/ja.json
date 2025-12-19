@@ -245,7 +245,8 @@
     "action": "アクション",
     "inputPlaceholder": "翻訳を入力してください",
     "saveTranslations": "翻訳を保存 ({ count })",
-    "copyReference": "参照翻訳を対象にコピー"
+    "copyReference": "参照翻訳を対象にコピー",
+    "selectTargetPlaceholder": "ターゲット言語を選択してください"
   },
   "collections": {
     "title": "マイコレクション",
@@ -269,7 +270,8 @@
     "empty": "このコレクションは空です",
     "removeItem": "削除",
     "removeItemConfirm": "このアイテムをコレクションから削除しますか？",
-    "back": "コレクションに戻る"
+    "back": "コレクションに戻る",
+    "createdOn": "作成日"
   },
   "common": {
     "save": "保存",
@@ -279,6 +281,9 @@
     "edit": "編集",
     "loading": "読み込み中...",
     "error": "エラーが発生しました",
-    "success": "成功"
+    "success": "成功",
+    "prev": "前へ",
+    "next": "次へ",
+    "page": "ページ"
   }
 }

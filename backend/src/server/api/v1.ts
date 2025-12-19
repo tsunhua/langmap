@@ -777,9 +777,10 @@ api.get('/collections', requireAuth, async (c) => {
     const userId = c.req.query('user_id') ? parseInt(c.req.query('user_id')!) : user.id
     const isPublicParam = c.req.query('is_public')
     const isPublic = isPublicParam === '1' ? true : (isPublicParam === '0' ? false : undefined)
+    const skip = parseInt(c.req.query('skip') || '0')
+    const limit = parseInt(c.req.query('limit') || '20')
 
-    // Using any for now as protocol.ts types might not be fully picked up yet
-    const collections = await db.getCollections(userId, isPublic)
+    const collections = await db.getCollections(userId, isPublic, skip, limit)
     return c.json(collections)
   } catch (error: any) {
     console.error('Error in GET /collections:', error)
@@ -912,7 +913,7 @@ api.get('/collections/:id/items', requireAuth, async (c) => {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const skip = parseInt(c.req.query('skip') || '0')
-    const limit = parseInt(c.req.query('limit') || '50')
+    const limit = parseInt(c.req.query('limit') || '20')
     const user = c.get('user')
 
     if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)

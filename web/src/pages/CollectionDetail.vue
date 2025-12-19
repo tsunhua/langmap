@@ -48,8 +48,8 @@
     <div class="mb-6">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
         {{ $t('collections.items') || 'Items' }}
-        <span v-if="items.length > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
-          {{ items.length }}
+        <span v-if="collection.items_count > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
+          {{ collection.items_count }}
         </span>
       </h2>
 
@@ -96,6 +96,27 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-8">
+          <button 
+            @click="prevPage" 
+            :disabled="currentPage === 1"
+            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            &laquo; {{ $t('common.prev') || 'Prev' }}
+          </button>
+          <span class="text-sm font-medium">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button 
+            @click="nextPage" 
+            :disabled="currentPage === totalPages"
+            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ $t('common.next') || 'Next' }} &raquo;
+          </button>
+        </div>
       </div>
     </div>
 
@@ -121,6 +142,14 @@ export default {
     const loadingCollection = ref(true)
     const loadingItems = ref(true)
     
+    // Pagination state
+    const currentPage = ref(1)
+    const itemsPerPage = ref(20)
+    const totalPages = computed(() => {
+      if (!collection.value || !collection.value.items_count) return 0
+      return Math.ceil(collection.value.items_count / itemsPerPage.value)
+    })
+    
     // Determine if current user is owner (mock check, ideally check user ID from store)
     // For now assuming if they can edit/delete successfully API allows it
     const isOwner = ref(true) // TODO: Implement real check against current user ID
@@ -144,11 +173,26 @@ export default {
     const fetchItems = async () => {
       loadingItems.value = true
       try {
-        items.value = await getCollectionItems(collectionId)
+        const skip = (currentPage.value - 1) * itemsPerPage.value
+        items.value = await getCollectionItems(collectionId, skip, itemsPerPage.value)
       } catch (error) {
         console.error('Failed to load items:', error)
       } finally {
         loadingItems.value = false
+      }
+    }
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++
+        fetchItems()
+      }
+    }
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--
+        fetchItems()
       }
     }
 
@@ -201,7 +245,11 @@ export default {
       removeItem,
       confirmDelete,
       openEditModal,
-      formatDate
+      formatDate,
+      currentPage,
+      totalPages,
+      nextPage,
+      prevPage
     }
   }
 }

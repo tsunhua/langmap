@@ -215,7 +215,7 @@
     "logoutFailed": "Error al cerrar sesión. Por favor, inténtalo de nuevo.",
     "changePasswordNotImplemented": "La funcionalidad de cambio de contraseña aún no está implementada."
   },
-    "emailVerification": {
+  "emailVerification": {
     "title": "Verificación de correo electrónico",
     "verifyingTitle": "Verificando tu correo electrónico",
     "verifyingMessage": "Por favor, espera mientras verificamos tu dirección de correo electrónico.",
@@ -244,7 +244,8 @@
     "action": "Acción",
     "inputPlaceholder": "Por favor ingrese la traducción",
     "saveTranslations": "Guardar Traducciones ({ count })",
-    "copyReference": "Copiar la traducción de referencia al objetivo"
+    "copyReference": "Copiar la traducción de referencia al objetivo",
+    "selectTargetPlaceholder": "Seleccionar idioma de destino"
   },
   "collections": {
     "title": "Mis colecciones",
@@ -268,7 +269,8 @@
     "empty": "Esta colección está vacía",
     "removeItem": "Eliminar",
     "removeItemConfirm": "¿Eliminar este elemento de la colección?",
-    "back": "Volver a Colecciones"
+    "back": "Volver a Colecciones",
+    "createdOn": "Creado el"
   },
   "common": {
     "save": "Guardar",
@@ -278,6 +280,9 @@
     "edit": "Editar",
     "loading": "Cargando...",
     "error": "Ocurrió un error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "page": "Página"
   }
 }

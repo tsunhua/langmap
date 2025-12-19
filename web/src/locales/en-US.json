@@ -244,7 +244,8 @@
     "action": "Action",
     "inputPlaceholder": "Please enter translation",
     "saveTranslations": "Save Translations ({ count })",
-    "copyReference": "Copy reference translation to target"
+    "copyReference": "Copy reference translation to target",
+    "selectTargetPlaceholder": "Select target language"
   },
   "collections": {
     "title": "My Collections",
@@ -268,7 +269,8 @@
     "empty": "This collection is empty",
     "removeItem": "Remove",
     "removeItemConfirm": "Remove this item from the collection?",
-    "back": "Back to Collections"
+    "back": "Back to Collections",
+    "createdOn": "Created on"
   },
   "common": {
     "save": "Save",
@@ -278,6 +280,9 @@
     "edit": "Edit",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Success"
+    "success": "Success",
+    "prev": "Prev",
+    "next": "Next",
+    "page": "Page"
   }
 }

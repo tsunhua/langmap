@@ -243,7 +243,8 @@
     "action": "動作",
     "inputPlaceholder": "請輸入翻譯內容",
     "saveTranslations": "儲存翻譯（{ count }）",
-    "copyReference": "拷貝參考翻譯到目標"
+    "copyReference": "拷貝參考翻譯到目標",
+    "selectTargetPlaceholder": "請選擇目標語言"
   },
   "collections": {
     "title": "我的收藏",
@@ -267,7 +268,8 @@
     "empty": "這个收藏是空的",
     "removeItem": "移除",
     "removeItemConfirm": "欲對收藏內底移除這个項目？",
-    "back": "倒轉去收藏"
+    "back": "倒轉去收藏",
+    "createdOn": "建立佇"
   },
   "common": {
     "save": "儲存",
@@ -277,6 +279,9 @@
     "edit": "編輯",
     "loading": "載入中…",
     "error": "發生錯誤",
-    "success": "成功"
+    "success": "成功",
+    "prev": "前一頁",
+    "next": "後一頁",
+    "page": "頁"
   }
 }
