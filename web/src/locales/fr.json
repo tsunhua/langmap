@@ -240,7 +240,9 @@
     "localizationKey": "Clé de Localisation",
     "reference": "Référence",
     "target": "Cible",
+    "action": "Action",
     "inputPlaceholder": "Veuillez entrer la traduction",
-    "saveTranslations": "Enregistrer les Traductions ({ count })"
+    "saveTranslations": "Enregistrer les Traductions ({ count })",
+    "copyReference": "Copier la traduction de référence vers la cible"
   }
 }

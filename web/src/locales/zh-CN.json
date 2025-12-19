@@ -240,7 +240,9 @@
     "localizationKey": "本地化键",
     "reference": "参考",
     "target": "目标",
+    "action": "操作",
     "inputPlaceholder": "请输入翻译",
-    "saveTranslations": "保存翻译 ({ count })"
+    "saveTranslations": "保存翻译 ({ count })",
+    "copyReference": "将参考翻译复制到目标"
   }
 }

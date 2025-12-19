@@ -241,7 +241,9 @@
     "localizationKey": "ローカライズキー",
     "reference": "参照",
     "target": "対象",
+    "action": "アクション",
     "inputPlaceholder": "翻訳を入力してください",
-    "saveTranslations": "翻訳を保存 ({ count })"
+    "saveTranslations": "翻訳を保存 ({ count })",
+    "copyReference": "参照翻訳を対象にコピー"
   }
 }

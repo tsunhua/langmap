@@ -116,6 +116,9 @@
               <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('translate.reference') }})
               </th>
+              <th scope="col" class="w-1/12 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {{ $t('translate.action') }}
+              </th>
               <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('translate.target') }})
               </th>
@@ -128,6 +131,15 @@
               </td>
               <td class="px-6 py-4 text-sm text-gray-500 break-words">
                 {{ item.referenceText }}
+              </td>
+              <td class="px-6 py-4 text-center">
+                <button 
+                  @click="copyToTarget(item)" 
+                  class="text-blue-600 hover:text-blue-800 font-bold"
+                  :aria-label="$t('translate.copyReference')"
+                >
+                  &gt;&gt;
+                </button>
               </td>
               <td class="px-6 py-4 text-sm text-gray-500">
                 <input
@@ -289,6 +301,9 @@ export default {
         })
       }
       
+      // 按照本地化键排序
+      merged.sort((a, b) => a.key.localeCompare(b.key))
+      
       mergedTranslations.value = merged
       filterTranslations()
     }
@@ -321,6 +336,12 @@ export default {
     const setFilter = (option) => {
       filterOption.value = option
       filterTranslations()
+    }
+    
+    // 将参考文本复制到目标文本
+    const copyToTarget = (item) => {
+      item.targetText = item.referenceText
+      markAsModified(item)
     }
     
     // 标记为已修改
@@ -411,6 +432,7 @@ export default {
       loadTranslations,
       filterTranslations,
       setFilter,
+      copyToTarget,
       markAsModified,
       saveTranslations,
       getLanguageDisplayName

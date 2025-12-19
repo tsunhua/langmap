@@ -240,7 +240,9 @@
     "localizationKey": "本地化鍵",
     "reference": "參考",
     "target": "目標",
+    "action": "操作",
     "inputPlaceholder": "請輸入翻譯",
-    "saveTranslations": "儲存翻譯 ({ count })"
+    "saveTranslations": "儲存翻譯 ({ count })",
+    "copyReference": "將參考翻譯複製到目標"
   }
 }
