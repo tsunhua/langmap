@@ -243,5 +243,39 @@
     "inputPlaceholder": "請輸入翻譯",
     "saveTranslations": "儲存翻譯 ({ count })",
     "copyReference": "將參考翻譯複製到目標"
+  },
+  "collections": {
+    "title": "我嘅收藏",
+    "addToCollection": "加入收藏",
+    "noCollections": "你而家仲未有任何收藏。",
+    "createNew": "+ 建立新收藏",
+    "public": "公開",
+    "private": "私人",
+    "note": "備註（選填）",
+    "notePlaceholder": "例如：適合用嚟打招呼",
+    "redirectConfirm": "要前往「我嘅收藏」建立新收藏嗎？而家嘅進度將唔會保存。",
+    "updatedSuccess": "收藏更新成功",
+    "updateError": "部分收藏更新失敗",
+    "name": "收藏名稱",
+    "description": "說明",
+    "isPublic": "公開瀏覽",
+    "save": "儲存收藏",
+    "delete": "刪除收藏",
+    "deleteConfirm": "你確定要刪除呢個收藏？",
+    "items": "項目",
+    "empty": "呢個收藏係空嘅",
+    "removeItem": "移除",
+    "removeItemConfirm": "要由收藏入面移除呢個項目？",
+    "back": "返回收藏"
+  },
+  "common": {
+    "save": "儲存",
+    "cancel": "取消",
+    "saving": "儲存中…",
+    "delete": "刪除",
+    "edit": "編輯",
+    "loading": "載入中…",
+    "error": "發生錯誤",
+    "success": "成功"
   }
 }

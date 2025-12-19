@@ -245,5 +245,39 @@
     "inputPlaceholder": "翻訳を入力してください",
     "saveTranslations": "翻訳を保存 ({ count })",
     "copyReference": "参照翻訳を対象にコピー"
+  },
+  "collections": {
+    "title": "マイコレクション",
+    "addToCollection": "コレクションに追加",
+    "noCollections": "コレクションがありません。",
+    "createNew": "+ 新しいコレクションを作成",
+    "public": "公開",
+    "private": "非公開",
+    "note": "メモ (任意)",
+    "notePlaceholder": "例: 挨拶に便利",
+    "redirectConfirm": "マイコレクションに移動して新しいものを作成しますか？現在の進行状況は保存されません。",
+    "updatedSuccess": "コレクションが正常に更新されました",
+    "updateError": "一部のコレクションの更新に失敗しました",
+    "name": "コレクション名",
+    "description": "説明",
+    "isPublic": "公開アクセス",
+    "save": "コレクションを保存",
+    "delete": "コレクションを削除",
+    "deleteConfirm": "本当にこのコレクションを削除しますか？",
+    "items": "アイテム",
+    "empty": "このコレクションは空です",
+    "removeItem": "削除",
+    "removeItemConfirm": "このアイテムをコレクションから削除しますか？",
+    "back": "コレクションに戻る"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "saving": "保存中...",
+    "delete": "削除",
+    "edit": "編集",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "success": "成功"
   }
 }

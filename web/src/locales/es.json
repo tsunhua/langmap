@@ -244,5 +244,39 @@
     "inputPlaceholder": "Por favor ingrese la traducción",
     "saveTranslations": "Guardar Traducciones ({ count })",
     "copyReference": "Copiar la traducción de referencia al objetivo"
+  },
+  "collections": {
+    "title": "Mis colecciones",
+    "addToCollection": "Añadir a la colección",
+    "noCollections": "No tienes colecciones.",
+    "createNew": "+ Crear nueva colección",
+    "public": "Público",
+    "private": "Privado",
+    "note": "Nota (Opcional)",
+    "notePlaceholder": "Ej: Útil para saludar",
+    "redirectConfirm": "¿Ir a Mis Colecciones para crear una nueva? El progreso actual no se guardará.",
+    "updatedSuccess": "Colecciones actualizadas correctamente",
+    "updateError": "Error al actualizar algunas colecciones",
+    "name": "Nombre de la colección",
+    "description": "Descripción",
+    "isPublic": "Acceso público",
+    "save": "Guardar colección",
+    "delete": "Eliminar colección",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar esta colección?",
+    "items": "elementos",
+    "empty": "Esta colección está vacía",
+    "removeItem": "Eliminar",
+    "removeItemConfirm": "¿Eliminar este elemento de la colección?",
+    "back": "Volver a Colecciones"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "success": "Éxito"
   }
 }
