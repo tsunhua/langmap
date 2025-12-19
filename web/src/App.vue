@@ -522,11 +522,14 @@ export default {
       // Listen for auth state changes
       window.addEventListener('auth-state-changed', handleAuthStateChange)
 
-      // Fetch dynamic languages from backend
+      // Fetch dynamic languages from backend and filter out inactive ones
       try {
         const languages = await fetchLanguages()
         languages.forEach(lang => {
-          availableLanguages.value[lang.code] = lang.native_name || lang.name
+          // Only add active languages to availableLanguages
+          if (lang.is_active === 1) {
+            availableLanguages.value[lang.code] = lang.native_name || lang.name
+          }
         })
       } catch (error) {
         console.error('Error fetching languages:', error)
