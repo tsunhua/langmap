@@ -74,14 +74,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
       language.updated_by || null
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO languages (
         id, code, name, direction, is_active, region_code, region_name, 
         region_latitude, region_longitude, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<Language>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to create language')
     }
 
@@ -105,11 +105,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     values.push(id)
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `UPDATE languages SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
+    ).bind(...values).first<Language>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to update language')
     }
 
@@ -217,14 +217,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
         expression.updated_by || null
       ];
 
-      const result: any = await this.db.prepare(
+      const result = await this.db.prepare(
         `INSERT INTO expressions (
           id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-      ).bind(...bindValues).run()
+      ).bind(...bindValues).first<Expression>()
 
-      if (!result.success) {
+      if (!result) {
         console.error('Failed to create expression in database:', result);
         throw new Error('Failed to create expression')
       }
@@ -253,11 +253,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     values.push(id)
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `UPDATE expressions SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
+    ).bind(...values).first<Expression>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to update expression')
     }
 
@@ -334,77 +334,92 @@ export class D1DatabaseService extends AbstractDatabaseService {
       version.created_by || null
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO expression_versions (
         id, expression_id, text, meaning_id, audio_url, region_name, region_latitude, 
         region_longitude, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<ExpressionVersion>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to create expression version')
     }
 
-    return result.results[0] as ExpressionVersion
+    return result;
   }
 
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 200): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.tags, e.language_code as language_code
+      `SELECT e.id, e.text, e.tags, e.language_code as language_code, COALESCE(e.meaning_id, e.id) as meaning_id
        FROM expressions e 
-       WHERE e.language_code = ? AND e.created_by = 'langmap'
+       JOIN collection_items ci ON e.id = ci.expression_id
+       JOIN collections c ON ci.collection_id = c.id
+       WHERE c.name = 'langmap' AND e.language_code = ?
        LIMIT ? OFFSET ?`
-    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string }>()
+    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string, meaning_id: number | null }>()
     return results
   }
 
-  async saveUITranslation(language: string, key: string, text: string, username: string): Promise<any> {
-    // 1. Check if an expression with this language and tag (key) exists
-    // Note: tags is stored as a JSON string or simple string, we search using LIKE
-    // Ideally tags should be normalized. Here we assume tags contains the key.
+  async saveUITranslation(language: string, key: string, text: string, username: string, meaningId?: number): Promise<any> {
+    if (!meaningId) {
+      throw new Error(`meaning_id is required for saving UI translations`);
+    }
 
-    // First, try to find existing expression
-    // Since tags might be stored as '["key"]' or just "key", we need to be careful.
-    // However, getUITranslations returns tags directly. 
-    // Let's assume tags is stored as a simple string containing the key for UI translations,
-    // or we construct a query to find it.
+    // 1. Try to find existing translation by meaning_id within the collection
+    const existingInCollection = await this.db.prepare(
+      `SELECT e.* FROM expressions e
+       JOIN collection_items ci ON e.id = ci.expression_id
+       JOIN collections c ON ci.collection_id = c.id
+       WHERE c.name = 'langmap' AND e.language_code = ? AND e.meaning_id = ?`
+    ).bind(language, meaningId).first<Expression>();
 
-    const existing = await this.db.prepare(
-      `SELECT * FROM expressions 
-       WHERE language_code = ? 
-       AND (tags = ? OR tags LIKE ?)`
-    ).bind(language, `["${key}"]`, `%"${key}"%`).first<Expression>();
-
-    if (existing) {
-      // Update existing
-      return await this.updateExpression(existing.id, {
+    if (existingInCollection) {
+      // Update existing record in collection
+      return await this.updateExpression(existingInCollection.id, {
         text,
         updated_by: username,
-        updated_at: new Date().toISOString() // Although DB has default, we update explicitly to track
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    // 2. Not in collection. Check if an expression with the same text/lang ID already exists globally
+    const id = this.stableHashId(`${text}|${language}|`);
+    const globalExisting = await this.getExpressionById(id);
+
+    let expr: Expression;
+    if (globalExisting) {
+      // Re-use existing expression: update its meaning_id and tags
+      expr = await this.updateExpression(id, {
+        meaning_id: meaningId,
+        tags: `["${key}"]`,
+        updated_by: username,
+        updated_at: new Date().toISOString()
       });
     } else {
-      // Create new
-      // We need to find the meaning_id from the reference language (en-US)
-      // This is best effort.
-      const reference = await this.db.prepare(
-        `SELECT * FROM expressions 
-         WHERE language_code = 'en-US' 
-         AND (tags = ? OR tags LIKE ?)`
-      ).bind(`["${key}"]`, `%"${key}"%`).first<Expression>();
-
-      const meaningId = reference ? (reference.meaning_id || reference.id) : null;
-
-      return await this.createExpression({
+      // Create truly new expression
+      expr = await this.createExpression({
         text,
         language_code: language,
         tags: `["${key}"]`,
-        meaning_id: meaningId || undefined,
+        meaning_id: meaningId,
         source_type: 'user',
         created_by: username,
         updated_by: username
       });
     }
+
+    // 3. Ensure it is linked to 'langmap' collection
+    const langmapCol = await this.db.prepare("SELECT id FROM collections WHERE name = 'langmap'").first<{ id: number }>();
+    if (langmapCol) {
+      await this.addCollectionItem({
+        collection_id: langmapCol.id,
+        expression_id: expr.id,
+        note: 'UI Translation'
+      });
+    }
+
+    return expr;
   }
 
   // Users
@@ -654,17 +669,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
       collection.is_public !== undefined ? (collection.is_public ? 1 : 0) : 0
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO collections (
         id, user_id, name, description, is_public
       ) VALUES (?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<Collection>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to create collection')
     }
 
-    return result.results[0] as Collection
+    return result;
   }
 
   async updateCollection(id: number, collection: Partial<Collection>): Promise<Collection> {
@@ -680,15 +695,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     values.push(id)
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `UPDATE collections SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
+    ).bind(...values).first<Collection>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to update collection')
     }
 
-    return result.results[0] as Collection
+    return result;
   }
 
   async deleteCollection(id: number): Promise<boolean> {
@@ -734,17 +749,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
       item.note || null
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO collection_items (
         id, collection_id, expression_id, note
       ) VALUES (?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<CollectionItem>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to add item to collection')
     }
 
-    return result.results[0] as CollectionItem
+    return result;
   }
 
   async removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean> {

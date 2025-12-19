@@ -119,7 +119,7 @@ export abstract class AbstractDatabaseService {
 
   // UI translations
   abstract getUITranslations(language: string, skip?: number, limit?: number): Promise<any[]>
-  abstract saveUITranslation(language: string, key: string, text: string, username: string): Promise<void>
+  abstract saveUITranslation(language: string, key: string, text: string, username: string, meaningId?: number): Promise<void>
 
 
   // Users

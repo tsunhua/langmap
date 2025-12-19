@@ -482,7 +482,7 @@ api.post('/ui-translations/:language', requireAuth, async (c) => {
       }
 
       try {
-        const result = await db.saveUITranslation(language, item.key, item.text, username)
+        const result = await db.saveUITranslation(language, item.key, item.text, username, item.meaning_id)
         results.push(result)
       } catch (err: any) {
         console.error(`Failed to save translation for key ${item.key}:`, err)

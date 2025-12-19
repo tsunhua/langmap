@@ -25,6 +25,7 @@
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             @change="loadTranslations"
           >
+            <option value="" disabled>{{ $t('translate.selectTargetPlaceholder') || 'Select target language' }}</option>
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
               {{ lang.name }} ({{ lang.code }})
             </option>
@@ -125,7 +126,7 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="item in filteredTranslations" :key="item.key">
+            <tr v-for="item in filteredTranslations" :key="item.id">
               <td class="px-6 py-4 text-sm font-medium text-gray-900 break-words">
                 {{ item.key }}
               </td>
@@ -178,6 +179,7 @@
 
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { fetchLanguages, fetchUITranslations, getLanguageDisplayName, saveUITranslations } from '../services/languageService'
 import { useI18n } from 'vue-i18n'
 
@@ -185,11 +187,13 @@ export default {
   name: 'TranslateInterface',
   setup() {
     const { t } = useI18n()
+    const route = useRoute()
+    const router = useRouter()
 
     // 语言选择相关
     const languages = ref([])
-    const referenceLanguage = ref('en-US')
-    const targetLanguage = ref('')
+    const referenceLanguage = ref(route.query.ref || 'en-US')
+    const targetLanguage = ref(route.query.target || '')
     
     // 翻译数据相关
     const referenceTranslations = ref([])
@@ -212,12 +216,8 @@ export default {
     const loadLanguages = async () => {
       try {
         languages.value = await fetchLanguages() // 不限制is_active参数
-        // 默认目标语言为列表中的第二个语言（如果不是英语）
-        if (languages.value.length > 1) {
-          targetLanguage.value = languages.value[1].code
-        } else if (languages.value.length > 0) {
-          targetLanguage.value = languages.value[0].code
-        }
+        // Reference language defaults to en-US as initialized, 
+        // but target language is left empty to force user selection.
       } catch (error) {
         console.error('加载语言列表失败:', error)
       }
@@ -253,51 +253,41 @@ export default {
     const mergeTranslations = () => {
       const refMap = {}
       const targetMap = {}
-      
-      // 创建参考语言的映射
+      // 创建参考语言的映射 (使用 meaning_id 作为 key)
       referenceTranslations.value.forEach(item => {
-        // 解析tags字段（JSON字符串或数组）
+        // 对于 en-US，其本身就是 meaning_id 的来源，item.id 就是该含义的唯一标识
+        // 但为了通用，我们总是优先使用 meaning_id，如果没有则使用 id (针对 en-US)
+        const mid = item.meaning_id || item.id
+        
         let tags = item.tags
         if (typeof tags === 'string') {
-          try {
-            tags = JSON.parse(tags)
-          } catch (e) {
+          try { tags = JSON.parse(tags) } catch (e) {
             console.error('Failed to parse tags for reference item:', item)
             return
           }
         }
         
-        if (tags && tags.length > 0) {
-          refMap[tags[0]] = item.text
-        }
+        const key = (tags && tags.length > 0) ? tags[0] : `(no key) ${item.text}`
+        refMap[mid] = { text: item.text, key, id: item.id }
       })
       
-      // 创建目标语言的映射
+      // 创建目标语言的映射 (使用 meaning_id 作为 key)
       targetTranslations.value.forEach(item => {
-        // 解析tags字段（JSON字符串或数组）
-        let tags = item.tags
-        if (typeof tags === 'string') {
-          try {
-            tags = JSON.parse(tags)
-          } catch (e) {
-            console.error('Failed to parse tags for target item:', item)
-            return
-          }
-        }
-        
-        if (tags && tags.length > 0) {
-          targetMap[tags[0]] = item.text
+        if (item.meaning_id) {
+          targetMap[item.meaning_id] = item.text
         }
       })
       
       // 合并数据
       const merged = []
-      for (const key in refMap) {
+      for (const mid in refMap) {
         merged.push({
-          key,
-          referenceText: refMap[key],
-          targetText: targetMap[key] || '',
-          originalTargetText: targetMap[key] || ''
+          id: refMap[mid].id,
+          meaning_id: parseInt(mid),
+          key: refMap[mid].key,
+          referenceText: refMap[mid].text,
+          targetText: targetMap[mid] || '',
+          originalTargetText: targetMap[mid] || ''
         })
       }
       
@@ -347,7 +337,7 @@ export default {
     // 标记为已修改
     const markAsModified = (item) => {
       // 检查是否已经在修改列表中
-      const index = modifiedItems.value.findIndex(i => i.key === item.key)
+      const index = modifiedItems.value.findIndex(i => i.meaning_id === item.meaning_id)
       
       // 如果值发生了变化
       if (item.targetText !== item.originalTargetText) {
@@ -370,7 +360,8 @@ export default {
       try {
         const translationsToSave = modifiedItems.value.map(item => ({
           key: item.key,
-          text: item.targetText
+          text: item.targetText,
+          meaning_id: item.meaning_id
         }))
         
         await saveUITranslations(targetLanguage.value, translationsToSave)
@@ -408,8 +399,17 @@ export default {
     }
     
     // 监听语言选择变化
-    watch([referenceLanguage, targetLanguage], () => {
-      if (referenceLanguage.value && targetLanguage.value && referenceLanguage.value !== targetLanguage.value) {
+    watch([referenceLanguage, targetLanguage], ([newRef, newTarget]) => {
+      // 更新 URL
+      router.replace({
+        query: {
+          ...route.query,
+          ref: newRef,
+          target: newTarget || undefined
+        }
+      })
+
+      if (newRef && newTarget && newRef !== newTarget) {
         loadTranslations()
       }
     })

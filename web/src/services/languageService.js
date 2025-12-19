@@ -83,7 +83,7 @@ export async function fetchUITranslations(languageCode) {
 /**
  * Save UI translations for a specific language
  * @param {string} languageCode - The language code
- * @param {Array} translations - List of translations to save [{key, text}]
+ * @param {Array} translations - List of translations to save [{key, text, meaning_id}]
  * @returns {Promise<Object>} Response from the server
  */
 export async function saveUITranslations(languageCode, translations) {
