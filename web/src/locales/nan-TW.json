@@ -34,10 +34,14 @@
   "nav": {
     "home": "頭頁",
     "search": "尋揣",
+    "translate": "翻譯",
     "profile": "個人資料",
     "logout": "登出",
     "login": "登入",
-    "register": "註冊"
+    "register": "註冊",
+    "assistTranslation": "🛠️ 鬥相共翻譯",
+    "addLanguage": "✨ 新增語言",
+    "collections": "收藏集"
   },
   "footer": {
     "copyright": "© {year} langmap - 多語言語詞對應平台"
@@ -219,5 +223,67 @@
     "errorTitle": "電子郵件驗證失敗",
     "errorMessage": "驗證連結無效抑是已經過期。",
     "goToLogin": "前往登入"
+  },
+  "translate": {
+    "title": "翻譯介面",
+    "selectLanguage": "選擇語言",
+    "referenceLanguage": "參考語言",
+    "targetLanguage": "目標語言",
+    "sameLanguageError": "參考語言佮目標語言袂使仝款",
+    "translationProgress": "翻譯進度",
+    "languageActivated": "語言已經啟用",
+    "languageNotActivated": "語言猶未啟用（完成度愛超過 60%）",
+    "searchPlaceholder": "搜尋在地化鍵…",
+    "filterAll": "全部",
+    "filterUntranslated": "猶未翻譯",
+    "filterTranslated": "已經翻譯",
+    "localizationKey": "在地化鍵",
+    "reference": "參考",
+    "target": "目標",
+    "action": "動作",
+    "inputPlaceholder": "請輸入翻譯內容",
+    "saveTranslations": "儲存翻譯（{ count }）",
+    "copyReference": "拷貝參考翻譯到目標",
+    "selectTargetPlaceholder": "請選擇目標語言"
+  },
+  "collections": {
+    "title": "收藏集",
+    "myCollections": "我的收藏",
+    "sharedCollections": "共享收藏",
+    "addToCollection": "加到收藏",
+    "noCollections": "無揣著集。",
+    "createNew": "建立新收藏",
+    "public": "公開",
+    "private": "私人",
+    "note": "備註（選填）",
+    "notePlaceholder": "譬如講：適合用來拍招呼",
+    "redirectConfirm": "欲去「我的收藏」建立新的？目前的進度袂保存。",
+    "updatedSuccess": "收藏更新成功",
+    "updateError": "部分收藏更新失敗",
+    "name": "收藏名",
+    "description": "說明",
+    "isPublic": "公開瀏覽",
+    "save": "儲存收藏",
+    "delete": "刪除收藏",
+    "deleteConfirm": "你確定欲刪掉這个收藏？",
+    "items": "項目",
+    "empty": "這个收藏是空的",
+    "removeItem": "移除",
+    "removeItemConfirm": "欲對收藏內底移除這个項目？",
+    "back": "倒轉去收藏",
+    "createdOn": "建立佇"
+  },
+  "common": {
+    "save": "儲存",
+    "cancel": "取消",
+    "saving": "儲存中…",
+    "delete": "刪除",
+    "edit": "編輯",
+    "loading": "載入中…",
+    "error": "發生錯誤",
+    "success": "成功",
+    "prev": "前一頁",
+    "next": "後一頁",
+    "page": "頁"
   }
 }

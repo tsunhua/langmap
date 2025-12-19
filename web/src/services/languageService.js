@@ -38,20 +38,26 @@ let languageMap = {}
 
 /**
  * Fetch all available languages from the backend and update cache
+ * @param {number|undefined} isActive - Filter languages by is_active status (1=active, 0=inactive, undefined=all)
  * @returns {Promise<Array>} List of available languages
  */
-export async function fetchLanguages() {
+export async function fetchLanguages(isActive) {
   try {
-    const response = await api.get('/languages')
+    let url = '/languages'
+    if (isActive !== undefined) {
+      url += `?is_active=${isActive}`
+    }
+
+    const response = await api.get(url)
     const languages = response.data
-    
+
     // Automatically update the language map cache
     const newLanguageMap = {}
     languages.forEach(lang => {
       newLanguageMap[lang.code] = lang.native_name || lang.name
     })
     languageMap = newLanguageMap
-    
+
     return languages
   } catch (error) {
     console.error('Error fetching languages:', error)
@@ -67,9 +73,27 @@ export async function fetchLanguages() {
 export async function fetchUITranslations(languageCode) {
   try {
     const response = await api.get(`/ui-translations/${languageCode}`)
-    return response.data
+    return response.data || [] // 确保返回空数组而不是 undefined
   } catch (error) {
     console.error(`Error fetching UI translations for ${languageCode}:`, error)
+    return [] // 发生错误时返回空数组而不是抛出异常
+  }
+}
+
+/**
+ * Save UI translations for a specific language
+ * @param {string} languageCode - The language code
+ * @param {Array} translations - List of translations to save [{key, text, meaning_id}]
+ * @returns {Promise<Object>} Response from the server
+ */
+export async function saveUITranslations(languageCode, translations) {
+  try {
+    const response = await api.post(`/ui-translations/${languageCode}`, {
+      translations
+    })
+    return response.data
+  } catch (error) {
+    console.error(`Error saving UI translations for ${languageCode}:`, error)
     throw error
   }
 }
@@ -86,7 +110,7 @@ export async function createLanguage(languageData) {
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
     }
-    
+
     const response = await api.post('/languages', languageData)
     return response.data
   } catch (error) {
@@ -102,14 +126,14 @@ export async function createLanguage(languageData) {
  */
 export function transformTranslations(expressions) {
   const messages = {}
-  
+
   expressions.forEach(expression => {
     // Extract key from gloss (assuming format "langmap.key.path")
     if (!expression.tags) return
-    
+
     const key = JSON.stringify(expression.tags)[0]
     const keys = key.split('.')
-    
+
     // Navigate/create nested objects
     let current = messages
     for (let i = 0; i < keys.length - 1; i++) {
@@ -118,11 +142,11 @@ export function transformTranslations(expressions) {
       }
       current = current[keys[i]]
     }
-    
+
     // Set the final value
     current[keys[keys.length - 1]] = expression.text
   })
-  
+
   return messages
 }
 

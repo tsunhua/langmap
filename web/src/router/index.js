@@ -7,6 +7,7 @@ import UserProfile from '../pages/UserProfile.vue'
 import Search from '../pages/Search.vue'
 import Detail from '../pages/Detail.vue'
 import Policies from '../pages/Policies.vue'
+import TranslateInterface from '../pages/TranslateInterface.vue'
 import EmailVerification from '../pages/EmailVerification.vue'
 
 const routes = [
@@ -56,6 +57,21 @@ const routes = [
     path: '/verify-email',
     name: 'EmailVerification',
     component: EmailVerification
+  },
+  {
+    path: '/translate-interface',
+    name: 'TranslateInterface',
+    component: TranslateInterface
+  },
+  {
+    path: '/collections',
+    name: 'Collections',
+    component: () => import('../pages/Collections.vue')
+  },
+  {
+    path: '/collections/:id',
+    name: 'CollectionDetail',
+    component: () => import('../pages/CollectionDetail.vue')
   }
 ]
 
@@ -67,7 +83,7 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('authToken')
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {

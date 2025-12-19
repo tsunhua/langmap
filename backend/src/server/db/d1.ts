@@ -1,6 +1,6 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData } from './protocol'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem } from './protocol'
 
 // Cache for statistics
 let statisticsCache: {
@@ -32,10 +32,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Language operations
-  async getLanguages(): Promise<Language[]> {
-    const { results } = await this.db.prepare(
-      'SELECT * FROM languages WHERE is_active = 1 ORDER BY name'
-    ).all<Language>()
+  async getLanguages(isActive?: number): Promise<Language[]> {
+    let query = 'SELECT * FROM languages'
+    const params: any[] = []
+
+    if (isActive !== undefined) {
+      query += ' WHERE is_active = ?'
+      params.push(isActive)
+    }
+
+    query += ' ORDER BY name'
+
+    const { results } = await this.db.prepare(query).bind(...params).all<Language>()
     return results
   }
 
@@ -66,21 +74,21 @@ export class D1DatabaseService extends AbstractDatabaseService {
       language.updated_by || null
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO languages (
         id, code, name, direction, is_active, region_code, region_name, 
         region_latitude, region_longitude, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<Language>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to create language')
     }
 
     // Clear statistics and heatmap caches as we've added a new language
     this.clearStatisticsCache();
     this.clearHeatmapCache();
-    
+
     return result;
   }
 
@@ -97,18 +105,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     values.push(id)
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `UPDATE languages SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
+    ).bind(...values).first<Language>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to update language')
     }
 
     // Clear statistics and heatmap caches as we've updated a language
     this.clearStatisticsCache();
     this.clearHeatmapCache();
-    
+
     return result;
   }
 
@@ -123,7 +131,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       this.clearHeatmapCache();
       return true;
     }
-    
+
     return false;
   }
 
@@ -134,12 +142,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     // Handle WHERE conditions
     const whereConditions: string[] = [];
-    
+
     if (language) {
       whereConditions.push('language_code = ?');
       bindings.push(language);
     }
-    
+
     if (meaningId !== undefined) {
       if (Array.isArray(meaningId)) {
         // Handle array of meaning IDs
@@ -162,7 +170,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         }
       }
     }
-    
+
     if (whereConditions.length > 0) {
       query += ' WHERE ' + whereConditions.join(' AND ');
     }
@@ -209,14 +217,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
         expression.updated_by || null
       ];
 
-      const result: any = await this.db.prepare(
+      const result = await this.db.prepare(
         `INSERT INTO expressions (
           id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-      ).bind(...bindValues).run()
+      ).bind(...bindValues).first<Expression>()
 
-      if (!result.success) {
+      if (!result) {
         console.error('Failed to create expression in database:', result);
         throw new Error('Failed to create expression')
       }
@@ -224,7 +232,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       // Clear statistics and heatmap caches as we've added a new expression
       this.clearStatisticsCache();
       this.clearHeatmapCache();
-      
+
       return result;
     } catch (error) {
       console.error('Error creating expression:', error);
@@ -245,18 +253,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     values.push(id)
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `UPDATE expressions SET ${fields.join(', ')} WHERE id = ? RETURNING *`
-    ).bind(...values).run()
+    ).bind(...values).first<Expression>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to update expression')
     }
 
     // Clear statistics and heatmap caches as we've updated an expression
     this.clearStatisticsCache();
     this.clearHeatmapCache();
-    
+
     return result;
   }
 
@@ -271,7 +279,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       this.clearHeatmapCache();
       return true;
     }
-    
+
     return false;
   }
 
@@ -326,29 +334,92 @@ export class D1DatabaseService extends AbstractDatabaseService {
       version.created_by || null
     ];
 
-    const result: any = await this.db.prepare(
+    const result = await this.db.prepare(
       `INSERT INTO expression_versions (
         id, expression_id, text, meaning_id, audio_url, region_name, region_latitude, 
         region_longitude, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).run()
+    ).bind(...bindValues).first<ExpressionVersion>()
 
-    if (!result.success) {
+    if (!result) {
       throw new Error('Failed to create expression version')
     }
 
-    return result.results[0] as ExpressionVersion
+    return result;
   }
 
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 200): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.tags, e.language_code as language_code
+      `SELECT e.id, e.text, e.tags, e.language_code as language_code, COALESCE(e.meaning_id, e.id) as meaning_id
        FROM expressions e 
-       WHERE e.language_code = ? AND e.created_by = 'langmap'
+       JOIN collection_items ci ON e.id = ci.expression_id
+       JOIN collections c ON ci.collection_id = c.id
+       WHERE c.name = 'langmap' AND e.language_code = ?
        LIMIT ? OFFSET ?`
-    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string }>()
+    ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string, meaning_id: number | null }>()
     return results
+  }
+
+  async saveUITranslation(language: string, key: string, text: string, username: string, meaningId?: number): Promise<any> {
+    if (!meaningId) {
+      throw new Error(`meaning_id is required for saving UI translations`);
+    }
+
+    // 1. Try to find existing translation by meaning_id within the collection
+    const existingInCollection = await this.db.prepare(
+      `SELECT e.* FROM expressions e
+       JOIN collection_items ci ON e.id = ci.expression_id
+       JOIN collections c ON ci.collection_id = c.id
+       WHERE c.name = 'langmap' AND e.language_code = ? AND e.meaning_id = ?`
+    ).bind(language, meaningId).first<Expression>();
+
+    if (existingInCollection) {
+      // Update existing record in collection
+      return await this.updateExpression(existingInCollection.id, {
+        text,
+        updated_by: username,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    // 2. Not in collection. Check if an expression with the same text/lang ID already exists globally
+    const id = this.stableHashId(`${text}|${language}|`);
+    const globalExisting = await this.getExpressionById(id);
+
+    let expr: Expression;
+    if (globalExisting) {
+      // Re-use existing expression: update its meaning_id and tags
+      expr = await this.updateExpression(id, {
+        meaning_id: meaningId,
+        tags: `["${key}"]`,
+        updated_by: username,
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      // Create truly new expression
+      expr = await this.createExpression({
+        text,
+        language_code: language,
+        tags: `["${key}"]`,
+        meaning_id: meaningId,
+        source_type: 'user',
+        created_by: username,
+        updated_by: username
+      });
+    }
+
+    // 3. Ensure it is linked to 'langmap' collection
+    const langmapCol = await this.db.prepare("SELECT id FROM collections WHERE name = 'langmap'").first<{ id: number }>();
+    if (langmapCol) {
+      await this.addCollectionItem({
+        collection_id: langmapCol.id,
+        expression_id: expr.id,
+        note: 'UI Translation'
+      });
+    }
+
+    return expr;
   }
 
   // Users
@@ -379,8 +450,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const id = this.stableHashId(username);
 
     // Convert boolean email_verified to integer (0/1) for database storage
-    const emailVerifiedInt = user.email_verified !== undefined 
-      ? (user.email_verified ? 1 : 0) 
+    const emailVerifiedInt = user.email_verified !== undefined
+      ? (user.email_verified ? 1 : 0)
       : 0;
 
     // Filter out undefined values and replace them with null
@@ -445,26 +516,26 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async getStatistics(): Promise<Statistics> {
     // Check if we have valid cache
     const now = Date.now();
-    if (statisticsCache.data && statisticsCache.timestamp && 
-        (now - statisticsCache.timestamp) < CACHE_DURATION) {
+    if (statisticsCache.data && statisticsCache.timestamp &&
+      (now - statisticsCache.timestamp) < CACHE_DURATION) {
       console.log('Returning cached statistics');
       return statisticsCache.data;
     }
-    
+
     console.log('Fetching fresh statistics from database');
-    
+
     // Get total expressions count
     const totalExpressionsResult = await this.db.prepare(
       'SELECT COUNT(*) as count FROM expressions'
     ).first<{ count: number }>();
     console.log('Total expressions result:', totalExpressionsResult);
-    
+
     // Get total languages count
     const totalLanguagesResult = await this.db.prepare(
       'SELECT COUNT(*) as count FROM languages WHERE is_active = 1'
     ).first<{ count: number }>();
     console.log('Total languages result:', totalLanguagesResult);
-    
+
     // Get total regions count - from languages table as suggested
     const totalRegionsResult = await this.db.prepare(
       `SELECT COUNT(DISTINCT region_name) as count 
@@ -479,14 +550,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
       total_regions: totalRegionsResult?.count || 0
     };
     console.log('Constructed statistics object:', statistics);
-    
+
     // Update cache
     statisticsCache.data = statistics;
     statisticsCache.timestamp = now;
-    
+
     return statistics;
   }
-  
+
   // Method to clear statistics cache (to be called when data changes)
   clearStatisticsCache(): void {
     statisticsCache.data = null;
@@ -498,14 +569,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async getHeatmapData(): Promise<HeatmapData[]> {
     // Check if we have valid cache
     const now = Date.now();
-    if (heatmapCache.data && heatmapCache.timestamp && 
-        (now - heatmapCache.timestamp) < HEATMAP_CACHE_DURATION) {
+    if (heatmapCache.data && heatmapCache.timestamp &&
+      (now - heatmapCache.timestamp) < HEATMAP_CACHE_DURATION) {
       console.log('Returning cached heatmap data');
       return heatmapCache.data;
     }
-    
+
     console.log('Fetching fresh heatmap data from database');
-    
+
     const query = `
       SELECT 
         l.code as language_code,
@@ -530,22 +601,193 @@ export class D1DatabaseService extends AbstractDatabaseService {
       ORDER BY count DESC
       LIMIT 1000
     `;
-    
+
     const result = await this.db.prepare(query).all<HeatmapData>();
     const heatmapData = result.results || [];
-    
+
     // Update cache
     heatmapCache.data = heatmapData;
     heatmapCache.timestamp = now;
-    
+
     return heatmapData;
   }
-  
+
   // Method to clear heatmap cache (to be called when data changes)
   clearHeatmapCache(): void {
     heatmapCache.data = null;
     heatmapCache.timestamp = null;
     console.log('Heatmap cache cleared');
+  }
+
+  // Collections
+  async getCollections(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Collection[]> {
+    let query = `
+      SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count 
+      FROM collections c
+    `
+    const params: any[] = []
+    const conditions: string[] = []
+
+    if (userId !== undefined) {
+      conditions.push('c.user_id = ?')
+      params.push(userId)
+    }
+
+    if (isPublic !== undefined) {
+      conditions.push('c.is_public = ?')
+      params.push(isPublic ? 1 : 0)
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ')
+    }
+
+    query += ' ORDER BY c.created_at DESC'
+    query += ' LIMIT ? OFFSET ?'
+    params.push(limit, skip)
+
+    const { results } = await this.db.prepare(query).bind(...params).all<Collection>()
+    return results
+  }
+
+  async getCollectionById(id: number): Promise<Collection | null> {
+    const collection = await this.db.prepare(
+      'SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count FROM collections c WHERE c.id = ?'
+    ).bind(id).first<Collection>()
+    return collection || null
+  }
+
+  async createCollection(collection: Partial<Collection>): Promise<Collection> {
+    const userId = collection.user_id;
+    const name = collection.name || 'Untitled Collection';
+    const idContent = `${userId}|${name}|${Date.now()}`;
+    const id = this.stableHashId(idContent);
+
+    const bindValues = [
+      id,
+      userId,
+      name,
+      collection.description || null,
+      collection.is_public !== undefined ? (collection.is_public ? 1 : 0) : 0
+    ];
+
+    const result = await this.db.prepare(
+      `INSERT INTO collections (
+        id, user_id, name, description, is_public
+      ) VALUES (?, ?, ?, ?, ?) RETURNING *`
+    ).bind(...bindValues).first<Collection>()
+
+    if (!result) {
+      throw new Error('Failed to create collection')
+    }
+
+    return result;
+  }
+
+  async updateCollection(id: number, collection: Partial<Collection>): Promise<Collection> {
+    const fields: string[] = []
+    const values: any[] = []
+
+    Object.entries(collection).forEach(([key, value]) => {
+      if (key !== 'id' && key !== 'user_id' && key !== 'created_at') {
+        fields.push(`${key} = ?`)
+        values.push(value)
+      }
+    })
+
+    values.push(id)
+
+    const result = await this.db.prepare(
+      `UPDATE collections SET ${fields.join(', ')} WHERE id = ? RETURNING *`
+    ).bind(...values).first<Collection>()
+
+    if (!result) {
+      throw new Error('Failed to update collection')
+    }
+
+    return result;
+  }
+
+  async deleteCollection(id: number): Promise<boolean> {
+    // Delete items first (cascade simulation)
+    await this.db.prepare('DELETE FROM collection_items WHERE collection_id = ?').bind(id).run();
+
+    const result: any = await this.db.prepare(
+      'DELETE FROM collections WHERE id = ?'
+    ).bind(id).run()
+
+    return result.changes > 0;
+  }
+
+  // Collection Items
+  async getCollectionItems(collectionId: number, skip: number = 0, limit: number = 50): Promise<CollectionItem[]> {
+    const { results } = await this.db.prepare(
+      'SELECT * FROM collection_items WHERE collection_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    ).bind(collectionId, limit, skip).all<CollectionItem>()
+    return results
+  }
+
+  async addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem> {
+    const collectionId = item.collection_id;
+    const expressionId = item.expression_id;
+
+    // Check if exists
+    const existing = await this.getCollectionItem(collectionId!, expressionId!);
+    if (existing) {
+      return existing;
+    }
+
+    // Since SQLite doesn't have a simple way to return the inserted ID with stableHash if using autoincrement,
+    // but here we are not generating ID manually for items assuming it's autoincrement in D1 usually or we should.
+    // However, the schema says id INTEGER PRIMARY KEY NOT NULL, which usually implies we should adding ID if strict.
+    // Let's generate a stable ID.
+    const idContent = `${collectionId}|${expressionId}`;
+    const id = this.stableHashId(idContent);
+
+    const bindValues = [
+      id,
+      collectionId,
+      expressionId,
+      item.note || null
+    ];
+
+    const result = await this.db.prepare(
+      `INSERT INTO collection_items (
+        id, collection_id, expression_id, note
+      ) VALUES (?, ?, ?, ?) RETURNING *`
+    ).bind(...bindValues).first<CollectionItem>()
+
+    if (!result) {
+      throw new Error('Failed to add item to collection')
+    }
+
+    return result;
+  }
+
+  async removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean> {
+    const result: any = await this.db.prepare(
+      'DELETE FROM collection_items WHERE collection_id = ? AND expression_id = ?'
+    ).bind(collectionId, expressionId).run()
+
+    return result.changes > 0;
+  }
+
+  async getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null> {
+    const item = await this.db.prepare(
+      'SELECT * FROM collection_items WHERE collection_id = ? AND expression_id = ?'
+    ).bind(collectionId, expressionId).first<CollectionItem>()
+    return item || null
+  }
+
+  async getCollectionsContainingItem(userId: number, expressionId: number): Promise<number[]> {
+    const query = `
+      SELECT ci.collection_id
+      FROM collection_items ci
+      JOIN collections c ON ci.collection_id = c.id
+      WHERE ci.expression_id = ? AND c.user_id = ?
+    `
+    const { results } = await this.db.prepare(query).bind(expressionId, userId).all<{ collection_id: number }>()
+    return results.map(r => r.collection_id)
   }
 
   /**

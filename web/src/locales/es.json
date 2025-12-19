@@ -34,7 +34,15 @@
   "nav": {
     "home": "Inicio",
     "search": "Buscar",
-    "about": "Acerca de"
+    "translate": "Traducir",
+    "about": "Acerca de",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "assistTranslation": "🛠️ Ayudar a traducir",
+    "addLanguage": "✨ Agregar idioma",
+    "collections": "Colecciones"
   },
   "footer": {
     "copyright": "© {year} langmap - Plataforma de mapeo de expresiones lingüísticas"
@@ -207,7 +215,7 @@
     "logoutFailed": "Error al cerrar sesión. Por favor, inténtalo de nuevo.",
     "changePasswordNotImplemented": "La funcionalidad de cambio de contraseña aún no está implementada."
   },
-    "emailVerification": {
+  "emailVerification": {
     "title": "Verificación de correo electrónico",
     "verifyingTitle": "Verificando tu correo electrónico",
     "verifyingMessage": "Por favor, espera mientras verificamos tu dirección de correo electrónico.",
@@ -216,5 +224,67 @@
     "errorTitle": "Error en la verificación del correo electrónico",
     "errorMessage": "El enlace de verificación no es válido o ha expirado.",
     "goToLogin": "Ir a Iniciar Sesión"
+  },
+  "translate": {
+    "title": "Interfaz de Traducción",
+    "selectLanguage": "Seleccionar Idioma",
+    "referenceLanguage": "Idioma de Referencia",
+    "targetLanguage": "Idioma de Destino",
+    "sameLanguageError": "Los idiomas de referencia y destino no pueden ser iguales",
+    "translationProgress": "Progreso de Traducción",
+    "languageActivated": "Idioma Activado",
+    "languageNotActivated": "Idioma No Activado (la finalización debe alcanzar el 60%)",
+    "searchPlaceholder": "Buscar claves de localización...",
+    "filterAll": "Todos",
+    "filterUntranslated": "Sin traducir",
+    "filterTranslated": "Traducido",
+    "localizationKey": "Clave de Localización",
+    "reference": "Referencia",
+    "target": "Destino",
+    "action": "Acción",
+    "inputPlaceholder": "Por favor ingrese la traducción",
+    "saveTranslations": "Guardar Traducciones ({ count })",
+    "copyReference": "Copiar la traducción de referencia al objetivo",
+    "selectTargetPlaceholder": "Seleccionar idioma de destino"
+  },
+  "collections": {
+    "title": "Colecciones",
+    "myCollections": "Mis colecciones",
+    "sharedCollections": "Colecciones compartidas",
+    "addToCollection": "Añadir a la colección",
+    "noCollections": "No se encontraron colecciones.",
+    "createNew": "Crear nueva colección",
+    "public": "Público",
+    "private": "Privado",
+    "note": "Nota (Opcional)",
+    "notePlaceholder": "Ej: Útil para saludar",
+    "redirectConfirm": "¿Ir a Mis Colecciones para crear una nueva? El progreso actual no se guardará.",
+    "updatedSuccess": "Colecciones actualizadas correctamente",
+    "updateError": "Error al actualizar algunas colecciones",
+    "name": "Nombre de la colección",
+    "description": "Descripción",
+    "isPublic": "Acceso público",
+    "save": "Guardar colección",
+    "delete": "Eliminar colección",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar esta colección?",
+    "items": "elementos",
+    "empty": "Esta colección está vacía",
+    "removeItem": "Eliminar",
+    "removeItemConfirm": "¿Eliminar este elemento de la colección?",
+    "back": "Volver a Colecciones",
+    "createdOn": "Creado el"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "success": "Éxito",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "page": "Página"
   }
 }

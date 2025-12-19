@@ -77,17 +77,25 @@ async function requireAuth(c: Context, next: Next) {
   await next()
 }
 
+// Optional authentication middleware - populates user context if token is present but doesn't block if missing
+async function optionalAuth(c: Context, next: Next) {
+  const authHeader = c.req.header('Authorization')
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7)
+    const payload = await verifyJWT(token, c.env.SECRET_KEY)
+    if (payload) {
+      c.set('user', payload)
+    }
+  }
+  await next()
+}
+
 // GET /api/v1/heatmap
 api.get('/heatmap', async (c) => {
   try {
-    console.log('GET /api/v1/heatmap');
     const db = getDB(c)
     const heatmapData = await db.getHeatmapData()
-    console.log('Heatmap data fetched:', heatmapData);
-
-    return c.json({
-      data: heatmapData
-    })
+    return c.json({ data: heatmapData })
   } catch (error: any) {
     console.error('Error in GET /heatmap:', error);
     return c.json({ error: 'Failed to fetch heatmap data' }, 500)
@@ -97,11 +105,8 @@ api.get('/heatmap', async (c) => {
 // GET /api/v1/statistics
 api.get('/statistics', async (c) => {
   try {
-    console.log('GET /api/v1/statistics');
     const db = getDB(c)
     const statistics = await db.getStatistics()
-    console.log('Statistics fetched:', statistics);
-
     return c.json(statistics)
   } catch (error: any) {
     console.error('Error in GET /statistics:', error);
@@ -114,7 +119,9 @@ api.get('/languages', async (c) => {
   try {
     console.log('GET /api/v1/languages');
     const db = getDB(c)
-    const languages = await db.getLanguages()
+    const isActive = c.req.query('is_active')
+    const isActiveValue = isActive !== undefined ? parseInt(isActive, 10) : undefined
+    const languages = await db.getLanguages(isActiveValue)
     return c.json(languages)
   } catch (error: any) {
     return c.json({ error: 'Failed to fetch languages' }, 500)
@@ -391,12 +398,12 @@ api.get('/expressions/:expr_id/translations', async (c) => {
           e.id !== exprId
         )
       )
-    // 從 translations 中獲取一個 meaning_id 數組，要求不重複，並且不等於 meaning_id
-    const meaning_ids = translations.map(e => e.meaning_id).filter((id, index, self) => self.indexOf(id) === index && id !== meaning_id)
+    // 從 translations 中獲取一個 meaning_id 數組，要求不重複，並且不等於 meaning_id，且不为undefined
+    const meaning_ids = translations.map(e => e.meaning_id).filter((id): id is number => id !== undefined && id !== null && typeof id === 'number').filter((id, index, self) => self.indexOf(id) === index && id !== meaning_id)
 
     // 如果meaning_ids 非空，那麼需要再次 getExpressions
     if (meaning_ids.length > 0) {
-      translations2 = await db.getExpressions(0, 1000, language_code, meaning_ids)
+      const translations2 = await db.getExpressions(0, 1000, language_code, meaning_ids)
         .then(allExpressions =>
           allExpressions.filter(e =>
             e.id !== exprId
@@ -453,6 +460,53 @@ api.get('/ui-translations/:language', async (c) => {
   } catch (error: any) {
     console.error('Error in GET /ui-translations/:language:', error);
     return c.json({ error: 'Failed to fetch UI translations' }, 500)
+  }
+})
+
+// POST /api/v1/ui-translations/:language
+api.post('/ui-translations/:language', requireAuth, async (c) => {
+  try {
+    console.log('POST /api/v1/ui-translations/:language');
+    const db = getDB(c)
+    const language = c.req.param('language')
+    const body = await c.req.json()
+    const { translations } = body
+
+    if (!translations || !Array.isArray(translations)) {
+      return c.json({ error: 'Invalid translations format' }, 400)
+    }
+
+    // Get user info from middleware
+    const user = c.get('user');
+    const username = user.username;
+
+    const results = []
+    for (const item of translations) {
+      if (!item.key || !item.text) {
+        continue
+      }
+
+      try {
+        const result = await db.saveUITranslation(language, item.key, item.text, username, item.meaning_id)
+        results.push(result)
+      } catch (err: any) {
+        console.error(`Failed to save translation for key ${item.key}:`, err)
+        // Continue with other translations
+        results.push({ key: item.key, error: err.message })
+      }
+    }
+
+    // Clear statistics cache as we've updated expressions
+    db.clearStatisticsCache();
+
+    return c.json({
+      success: true,
+      message: `Processed ${translations.length} translations`,
+      results
+    })
+  } catch (error: any) {
+    console.error('Error in POST /ui-translations/:language:', error);
+    return c.json({ error: 'Failed to save UI translations' }, 500)
   }
 })
 
@@ -714,6 +768,260 @@ api.get('/users/me', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Get user error:', error)
     return c.json({ error: 'Failed to get user' }, 500)
+  }
+})
+
+
+// Collections API Routes
+
+// GET /api/v1/collections
+api.get('/collections', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user') // Optional, from optional auth or session
+
+    const userIdParam = c.req.query('user_id')
+    let userId: number | undefined = userIdParam ? parseInt(userIdParam) : undefined
+
+    const isPublicParam = c.req.query('is_public')
+    const isPublic = isPublicParam === '1' ? true : (isPublicParam === '0' ? false : undefined)
+
+    // If no specific userId is requested, and user is logged in, and we're not explicitly asking for all public collections
+    if (userId === undefined && user && isPublic !== true) {
+      userId = user.id
+    }
+
+    // Security check: if trying to see private collections, must be the owner
+    if (isPublic === false && (!user || userId !== user.id)) {
+      return c.json({ error: 'Access denied to private collections' }, 403)
+    }
+
+    const skip = parseInt(c.req.query('skip') || '0')
+    const limit = parseInt(c.req.query('limit') || '20')
+
+    const collections = await db.getCollections(userId, isPublic, skip, limit)
+    return c.json(collections)
+  } catch (error: any) {
+    console.error('Error in GET /collections:', error)
+    return c.json({ error: 'Failed to fetch collections' }, 500)
+  }
+})
+
+// POST /api/v1/collections
+api.post('/collections', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (!body.name) {
+      return c.json({ error: 'Name is required' }, 400)
+    }
+
+    const collection = await db.createCollection({
+      user_id: user.id,
+      name: body.name,
+      description: body.description,
+      is_public: body.is_public
+    })
+
+    return c.json(collection, 201)
+  } catch (error: any) {
+    console.error('Error in POST /collections:', error)
+    return c.json({ error: 'Failed to create collection' }, 500)
+  }
+})
+
+// Get collections containing an item
+api.get('/collections/check-item', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const expressionId = parseInt(c.req.query('expression_id') || '0')
+
+    if (!expressionId) {
+      return c.json({ error: 'Expression ID is required' }, 400)
+    }
+
+    const collectionIds = await db.getCollectionsContainingItem(user.id, expressionId)
+    return c.json(collectionIds)
+  } catch (error) {
+    console.error('Error in GET /collections/check-item:', error)
+    return c.json({ error: 'Failed to check collections' }, 500)
+  }
+})
+
+// GET /api/v1/collections/:id
+api.get('/collections/:id', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const collection = await db.getCollectionById(id)
+
+    if (!collection) {
+      return c.json({ error: 'Collection not found' }, 404)
+    }
+
+    // Check visibility
+    if (!collection.is_public) {
+      const user = c.get('user')
+      if (!user || collection.user_id !== user.id) {
+        return c.json({ error: 'Access denied' }, 403)
+      }
+    }
+
+    return c.json(collection)
+  } catch (error: any) {
+    console.error('Error in GET /collections/:id:', error)
+    return c.json({ error: 'Failed to fetch collection' }, 500)
+  }
+})
+
+// PUT /api/v1/collections/:id
+api.put('/collections/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getCollectionById(id)
+    if (!existing) return c.json({ error: 'Collection not found' }, 404)
+
+    if (existing.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const updated = await db.updateCollection(id, body)
+    return c.json(updated)
+  } catch (error: any) {
+    console.error('Error in PUT /collections/:id:', error)
+    return c.json({ error: 'Failed to update collection' }, 500)
+  }
+})
+
+// DELETE /api/v1/collections/:id
+api.delete('/collections/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getCollectionById(id)
+    if (!existing) return c.json({ error: 'Collection not found' }, 404)
+
+    if (existing.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    await db.deleteCollection(id)
+    return c.json({ message: 'Collection deleted' })
+  } catch (error: any) {
+    console.error('Error in DELETE /collections/:id:', error)
+    return c.json({ error: 'Failed to delete collection' }, 500)
+  }
+})
+
+// GET /api/v1/collections/:id/items
+api.get('/collections/:id/items', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const skip = parseInt(c.req.query('skip') || '0')
+    const limit = parseInt(c.req.query('limit') || '20')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const collection = await db.getCollectionById(id)
+    if (!collection) return c.json({ error: 'Collection not found' }, 404)
+
+    // Check visibility
+    if (!collection.is_public) {
+      const user = c.get('user')
+      if (!user || collection.user_id !== user.id) {
+        return c.json({ error: 'Access denied' }, 403)
+      }
+    }
+
+    const items = await db.getCollectionItems(id, skip, limit)
+
+    // We might want to fetch full expression details here or just return items
+    // For now, let's fetch expression details for each item
+    // Note: Use Promise.all for parallel fetching. Optimization: Add getExpressionsByIds(ids)
+    const detailedItems = await Promise.all(items.map(async (item) => {
+      const expression = await db.getExpressionById(item.expression_id)
+      return {
+        ...item,
+        expression
+      }
+    }));
+
+    return c.json(detailedItems)
+  } catch (error: any) {
+    console.error('Error in GET /collections/:id/items:', error)
+    return c.json({ error: 'Failed to fetch collection items' }, 500)
+  }
+})
+
+// POST /api/v1/collections/:id/items
+api.post('/collections/:id/items', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+    if (!body.expression_id) return c.json({ error: 'expression_id is required' }, 400)
+
+    const collection = await db.getCollectionById(id)
+    if (!collection) return c.json({ error: 'Collection not found' }, 404)
+
+    if (collection.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const item = await db.addCollectionItem({
+      collection_id: id,
+      expression_id: body.expression_id,
+      note: body.note
+    })
+
+    return c.json(item, 201)
+  } catch (error: any) {
+    console.error('Error in POST /collections/:id/items:', error)
+    return c.json({ error: 'Failed to add item to collection' }, 500)
+  }
+})
+
+// DELETE /api/v1/collections/:id/items/:expressionId
+api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const expressionId = parseInt(c.req.param('expressionId'))
+    const user = c.get('user')
+
+    if (isNaN(id) || isNaN(expressionId)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const collection = await db.getCollectionById(id)
+    if (!collection) return c.json({ error: 'Collection not found' }, 404)
+
+    if (collection.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    await db.removeCollectionItem(id, expressionId)
+    return c.json({ message: 'Item removed from collection' })
+  } catch (error: any) {
+    console.error('Error in DELETE /collections/:id/items/:expressionId:', error)
+    return c.json({ error: 'Failed to remove item from collection' }, 500)
   }
 })
 
