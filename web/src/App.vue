@@ -31,8 +31,16 @@
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
           {{ $t('nav.search') }}
         </router-link>
-
-        <router-link to="/about"
+        <router-link 
+          to="/collections" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('nav.collections') }}
+        </router-link>
+        <router-link 
+          to="/about" 
           class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
           {{ $t('nav.about') }}
@@ -118,7 +126,7 @@
               active-class="text-blue-600">
               {{ $t('nav.search') }}
             </router-link>
-            <router-link v-if="isLoggedIn" to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+            <router-link to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
               {{ $t('nav.collections') || 'Collections' }}
             </router-link>
