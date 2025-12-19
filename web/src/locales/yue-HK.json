@@ -40,7 +40,8 @@
     "login": "登入",
     "register": "註冊",
     "assistTranslation": "🛠️ 幫手翻譯",
-    "addLanguage": "✨ 新增語言"
+    "addLanguage": "✨ 新增語言",
+    "collections": "收藏集"
   },
   "footer": {
     "copyright": "© {year} langmap - 語言詞句地圖平台"

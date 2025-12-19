@@ -41,7 +41,8 @@
     "login": "登录",
     "register": "注册",
     "assistTranslation": "🛠️ 协助翻译",
-    "addLanguage": "✨ 添加新语言"
+    "addLanguage": "✨ 添加新语言",
+    "collections": "收藏集"
   },
   "footer": {
     "copyright": "© {year} langmap - 多语言词句映射平台"

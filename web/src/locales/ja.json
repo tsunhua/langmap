@@ -41,7 +41,8 @@
     "login": "ログイン",
     "register": "登録",
     "assistTranslation": "🛠️ 翻訳支援",
-    "addLanguage": "✨ 新しい言語を追加"
+    "addLanguage": "✨ 新しい言語を追加",
+    "collections": "コレクション"
   },
   "footer": {
     "copyright": "© {year} langmap - 言語表現マッピングプラットフォーム"

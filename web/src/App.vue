@@ -118,13 +118,13 @@
               active-class="text-blue-600">
               {{ $t('nav.search') }}
             </router-link>
-            <router-link to="/about" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
-              {{ $t('nav.about') }}
-            </router-link>
             <router-link v-if="isLoggedIn" to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
               {{ $t('nav.collections') || 'Collections' }}
+            </router-link>
+            <router-link to="/about" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600">
+              {{ $t('nav.about') }}
             </router-link>
           </nav>
 
