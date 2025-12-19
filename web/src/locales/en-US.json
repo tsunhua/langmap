@@ -244,5 +244,39 @@
     "inputPlaceholder": "Please enter translation",
     "saveTranslations": "Save Translations ({ count })",
     "copyReference": "Copy reference translation to target"
+  },
+  "collections": {
+    "title": "My Collections",
+    "addToCollection": "Add to Collection",
+    "noCollections": "You have no collections.",
+    "createNew": "+ Create New Collection",
+    "public": "Public",
+    "private": "Private",
+    "note": "Note (Optional)",
+    "notePlaceholder": "e.g. Useful for greeting",
+    "redirectConfirm": "Go to My Collections to create a new one? Current progress won't be saved.",
+    "updatedSuccess": "Collections updated successfully",
+    "updateError": "Failed to update some collections",
+    "name": "Collection Name",
+    "description": "Description",
+    "isPublic": "Public access",
+    "save": "Save Collection",
+    "delete": "Delete Collection",
+    "deleteConfirm": "Are you sure you want to delete this collection?",
+    "items": "items",
+    "empty": "This collection is empty",
+    "removeItem": "Remove",
+    "removeItemConfirm": "Remove this item from the collection?",
+    "back": "Back to Collections"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success"
   }
 }

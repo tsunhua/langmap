@@ -1,10 +1,10 @@
 <template>
-  <router-link :to="{ name: 'Detail', params: { id: item.id } }" class="block no-underline text-inherit">
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 mx-4 sm:mx-0">
-      <div class="p-4">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="text-xl font-semibold text-slate-800">{{ item.text }}</h3>
+  <div class="relative">
+    <router-link :to="{ name: 'Detail', params: { id: item.id } }" class="block no-underline text-inherit">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 mx-4 sm:mx-0">
+        <div class="p-4 flex justify-between items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <h3 class="text-xl font-semibold text-slate-800 break-words">{{ item.text }}</h3>
             <div class="mt-1 text-sm text-slate-600">
               <span class="inline-flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,40 +24,57 @@
               </span>
             </div>
           </div>
-          <span :class="[
-            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-            item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' : 
-            item.source_type === 'user' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-          ]">
-            {{ item.source_type }}
-          </span>
-        </div>
-        
-        <div v-if="item.audio_url" class="mt-4 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <button 
-              v-if="item.audio_url" 
-              @click.stop.prevent="playAudio" 
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 py-1 px-3 text-sm flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-              {{ $t('expressionCard.play') }}
-            </button>
+
+          <div class="flex flex-col items-end gap-3 flex-shrink-0">
+            <span :class="[
+              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+              item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' : 
+              item.source_type === 'user' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+            ]">
+              {{ item.source_type }}
+            </span>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                v-if="item.audio_url" 
+                @click.stop.prevent="playAudio" 
+                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+                :title="$t('expressionCard.play')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              </button>
+              <button 
+                @click.stop.prevent="openCollectionModal" 
+                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+                :title="$t('collections.addToCollection')"
+              >
+                <span>⭐</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </router-link>
+    </router-link>
+    <AddToCollectionModal 
+      :visible="showCollectionModal" 
+      :expression-id="item.id" 
+      @close="showCollectionModal = false" 
+    />
+  </div>
 </template>
 
 <script>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getLanguageDisplayName } from '../services/languageService.js'
+import AddToCollectionModal from './AddToCollectionModal.vue'
 
 export default {
   name: 'ExpressionCard',
+  components: { AddToCollectionModal },
   props: { 
     item: { 
       type: Object, 
@@ -66,7 +83,19 @@ export default {
   },
   setup() {
     const { t } = useI18n()
-    return { t }
+    const router = useRouter()
+    const showCollectionModal = ref(false)
+
+    const openCollectionModal = () => {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      showCollectionModal.value = true
+    }
+
+    return { t, showCollectionModal, openCollectionModal }
   },
   methods: {
     playAudio () {

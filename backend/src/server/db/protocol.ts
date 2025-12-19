@@ -59,6 +59,25 @@ export interface User {
   updated_at?: string
 }
 
+export interface Collection {
+  id: number
+  user_id: number
+  name: string
+  description?: string
+  is_public: boolean
+  created_at: number
+  updated_at: number
+  items_count?: number
+}
+
+export interface CollectionItem {
+  id: number
+  collection_id: number
+  expression_id: number
+  note?: string
+  created_at: number
+}
+
 // Statistics interface
 export interface Statistics {
   total_expressions: number
@@ -80,7 +99,7 @@ export interface HeatmapData {
 // Abstract database service class
 export abstract class AbstractDatabaseService {
   // Language operations
-  abstract getLanguages(): Promise<Language[]>
+  abstract getLanguages(isActive?: number): Promise<Language[]>
   abstract getLanguageByCode(code: string): Promise<Language | null>
   abstract createLanguage(language: Partial<Language>): Promise<Language>
   abstract updateLanguage(id: number, language: Partial<Language>): Promise<Language>
@@ -100,24 +119,40 @@ export abstract class AbstractDatabaseService {
 
   // UI translations
   abstract getUITranslations(language: string, skip?: number, limit?: number): Promise<any[]>
+  abstract saveUITranslation(language: string, key: string, text: string, username: string): Promise<void>
+
 
   // Users
   abstract getUserByUsername(username: string): Promise<User | null>
   abstract getUserByEmail(email: string): Promise<User | null>
   abstract getUserById(id: number): Promise<User | null>
   abstract createUser(user: Partial<User>): Promise<User>
-  
+
   // Email verification
   abstract createEmailVerificationToken(token: string, userId: number, expiresAt: string): Promise<void>
   abstract getEmailVerificationToken(token: string): Promise<{ user_id: number, expires_at: string } | null>
   abstract deleteEmailVerificationToken(token: string): Promise<void>
   abstract setEmailVerified(userId: number): Promise<void>
-  
+
   // Statistics
   abstract getStatistics(): Promise<Statistics>
   abstract clearStatisticsCache(): void
-  
+
   // Heatmap
   abstract getHeatmapData(): Promise<HeatmapData[]>
   abstract clearHeatmapCache(): void
+
+  // Collections
+  abstract getCollections(userId?: number, isPublic?: boolean): Promise<Collection[]>
+  abstract getCollectionById(id: number): Promise<Collection | null>
+  abstract createCollection(collection: Partial<Collection>): Promise<Collection>
+  abstract updateCollection(id: number, collection: Partial<Collection>): Promise<Collection>
+  abstract deleteCollection(id: number): Promise<boolean>
+  abstract getCollectionsContainingItem(userId: number, expressionId: number): Promise<number[]>
+
+  // Collection Items
+  abstract getCollectionItems(collectionId: number, skip?: number, limit?: number): Promise<CollectionItem[]>
+  abstract addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
+  abstract removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
+  abstract getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null>
 }

@@ -178,7 +178,7 @@
 
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
-import { fetchLanguages, fetchUITranslations, getLanguageDisplayName } from '../services/languageService'
+import { fetchLanguages, fetchUITranslations, getLanguageDisplayName, saveUITranslations } from '../services/languageService'
 import { useI18n } from 'vue-i18n'
 
 export default {
@@ -365,18 +365,33 @@ export default {
     
     // 保存翻译
     const saveTranslations = async () => {
-      // 这里应该实现保存翻译的逻辑
-      console.log('保存翻译:', modifiedItems.value)
-      alert(`将保存 ${modifiedItems.value.length} 条翻译`)
+      if (modifiedItems.value.length === 0) return
       
-      // 重置修改列表
-      modifiedItems.value.forEach(item => {
-        item.originalTargetText = item.targetText
-      })
-      modifiedItems.value = []
-      
-      // 重新计算完成度
-      calculateCompletion()
+      try {
+        const translationsToSave = modifiedItems.value.map(item => ({
+          key: item.key,
+          text: item.targetText
+        }))
+        
+        await saveUITranslations(targetLanguage.value, translationsToSave)
+        
+        alert(t('translate.saveSuccess', { count: modifiedItems.value.length }) || `Successfully saved ${modifiedItems.value.length} translations`)
+        
+        // 重置修改列表
+        modifiedItems.value.forEach(item => {
+          item.originalTargetText = item.targetText
+        })
+        modifiedItems.value = []
+        
+        // 重新计算完成度
+        calculateCompletion()
+        
+        // 可选：重新加载数据以确保一致性
+        // await loadTranslations()
+      } catch (error) {
+        console.error('Failed to save translations:', error)
+        alert(t('translate.saveError') || 'Failed to save translations')
+      }
     }
     
     // 计算完成度

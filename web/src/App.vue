@@ -122,7 +122,10 @@
               active-class="text-blue-600">
               {{ $t('nav.about') }}
             </router-link>
-
+            <router-link v-if="isLoggedIn" to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600">
+              {{ $t('nav.collections') || 'Collections' }}
+            </router-link>
           </nav>
 
           <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->

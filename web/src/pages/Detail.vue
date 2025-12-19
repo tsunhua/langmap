@@ -34,6 +34,7 @@
             <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedExpressions') }}
               <span class="text-slate-500 ml-2">({{ translations.length }})</span>
             </h3>
+
             <button 
               v-if="!associateMode" 
               @click="associateMode = true" 
@@ -191,6 +192,7 @@
       @close="showCreateExpressionModal = false"
       @expression-created="handleExpressionCreated"
     />
+
   </div>
 </template>
 
@@ -230,6 +232,8 @@ export default {
     // Create expression modal
     const showCreateExpressionModal = ref(false)
     const currentMeaningIdForAssociation = ref(null)
+
+
     
     const linkedIds = computed(() => {
       const s = new Set()
@@ -386,6 +390,8 @@ export default {
         return null
       }
     }
+
+
 
     async function associateWith (target) {
       assocMsg.value = ''

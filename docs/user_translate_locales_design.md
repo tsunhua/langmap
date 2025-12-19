@@ -99,9 +99,21 @@ CREATE TABLE IF NOT EXISTS expressions (
    - 添加搜索参数 `search`
    - 添加分页参数 `skip` 和 `limit`
 
-2. 利用现有的表达式创建端点 `/api/v1/expressions` 用于提交用户翻译
-
-3. 利用现有的 `/api/v1/languages` 端点获取语言列表
+2. **新增** UI翻译更新接口 `/api/v1/ui-translations/:language`：
+   - 方法：POST
+   - 用途：批量提交用户翻译
+   - 请求体：
+     ```json
+     {
+       "translations": [
+         {
+           "key": "home.title",
+           "text": "首页标题"
+         }
+       ]
+     }
+     ```
+   - 后端处理：根据key（tags）和语言代码查找或创建expressions记录
 
 ### 完成度跟踪
 
@@ -133,12 +145,14 @@ WHERE language_code = ? AND source_type = 'user' AND review_status = 'approved'
 
 翻译页面将包括以下组件：
 
-1. **LanguageSelector.vue** - 用于选择参考语言和目标语言的下拉菜单
-2. **FilterControls.vue** - 过滤控件，包括过滤选项和搜索框
-3. **TranslationProgress.vue** - 完成百分比的可视化指示器
-4. **TranslationTable.vue** - 主表格界面，包含参考列和输入列
-5. **Pagination.vue** - 分页控件（如果使用分页）
-6. **SubmissionControls.vue** - 保存按钮和激活状态指示器
+1. **TranslateInterface.vue** - 翻译页面的主容器组件，负责协调数据加载、状态管理和保存操作
+2. **LanguageSelector.vue** - (可选) 用于选择参考语言和目标语言的下拉菜单
+3. **FilterControls.vue** - (可选) 过滤控件，包括过滤选项和搜索框
+4. **TranslationProgress.vue** - (可选) 完成百分比的可视化指示器
+5. **TranslationTable.vue** - (可选) 主表格界面，包含参考列和输入列
+6. **SubmissionControls.vue** - (可选) 保存按钮和激活状态指示器
+
+*注：当前实现可能将上述功能集成在 `TranslateInterface.vue` 单个文件中，后续可根据需要拆分。*
 
 ### 状态管理
 
@@ -167,14 +181,15 @@ WHERE language_code = ? AND source_type = 'user' AND review_status = 'approved'
 
 前端将通过现有API端点与后端通信：
 
-1. UI翻译端点（调用两次）：
-   - GET `/api/v1/ui-translations/:refLang?filter=:filter&search=:search&skip=:skip&limit=:limit` - 获取参考语言翻译数据
-   - GET `/api/v1/ui-translations/:targetLang?filter=:filter&search=:search&skip=:skip&limit=:limit` - 获取目标语言翻译数据
+1. UI翻译端点：
+   - GET `/api/v1/ui-translations/:refLang` - 获取参考语言翻译数据
+   - GET `/api/v1/ui-translations/:targetLang` - 获取目标语言翻译数据
+   - POST `/api/v1/ui-translations/:language` - **保存翻译**
+     - 在 `TranslateInterface.vue` 组件的 `saveTranslations` 方法中调用
+     - 提交修改后的翻译列表
 
-2. 其他现有端点：
+2. 其他端点：
    - GET `/api/v1/languages` - 获取所有可用语言列表
-   - POST `/api/v1/expressions` - 提交新的/更新的翻译
-   - GET `/api/v1/statistics` - 获取语言的完成百分比
 
 ### 数据处理逻辑
 

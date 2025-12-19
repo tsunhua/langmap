@@ -62,6 +62,18 @@ const routes = [
     path: '/translate-interface',
     name: 'TranslateInterface',
     component: TranslateInterface
+  },
+  {
+    path: '/collections',
+    name: 'MyCollections',
+    component: () => import('../pages/MyCollections.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/collections/:id',
+    name: 'CollectionDetail',
+    component: () => import('../pages/CollectionDetail.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
