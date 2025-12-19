@@ -248,10 +248,12 @@
     "selectTargetPlaceholder": "Seleccionar idioma de destino"
   },
   "collections": {
-    "title": "Mis colecciones",
+    "title": "Colecciones",
+    "myCollections": "Mis colecciones",
+    "sharedCollections": "Colecciones compartidas",
     "addToCollection": "Añadir a la colección",
-    "noCollections": "No tienes colecciones.",
-    "createNew": "+ Crear nueva colección",
+    "noCollections": "No se encontraron colecciones.",
+    "createNew": "Crear nueva colección",
     "public": "Público",
     "private": "Privado",
     "note": "Nota (Opcional)",

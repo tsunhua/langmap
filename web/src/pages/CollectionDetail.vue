@@ -12,10 +12,10 @@
             <div class="flex items-center gap-3 mb-2">
               <h1 class="text-3xl font-bold text-gray-900">{{ collection.name }}</h1>
               <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
-                {{ $t('collections.public') || 'Public' }}
+                {{ $t('collections.public') }}
               </span>
               <span v-else class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full">
-                {{ $t('collections.private') || 'Private' }}
+                {{ $t('collections.private') }}
               </span>
             </div>
             <p class="text-gray-600">{{ collection.description }}</p>
@@ -25,29 +25,29 @@
               @click="openEditModal"
               class="text-gray-500 hover:text-blue-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
             >
-              <span>✏️</span> {{ $t('common.edit') || 'Edit' }}
+              <span>✏️</span> {{ $t('common.edit') }}
             </button>
             <button 
               @click="confirmDelete"
               class="text-gray-500 hover:text-red-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
             >
-              <span>🗑️</span> {{ $t('common.delete') || 'Delete' }}
+              <span>🗑️</span> {{ $t('common.delete') }}
             </button>
           </div>
         </div>
         <div class="text-sm text-gray-500">
-          {{ $t('collections.createdOn') || 'Created on' }}: {{ formatDate(collection.created_at) }}
+          {{ $t('collections.createdOn') }}: {{ formatDate(collection.created_at) }}
         </div>
       </div>
       <div v-else class="text-center py-4 text-red-500">
-        {{ $t('collections.notFound') || 'Collection not found' }}
+        {{ $t('collections.notFound') }}
       </div>
     </div>
 
     <!-- Items List -->
     <div class="mb-6">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-        {{ $t('collections.items') || 'Items' }}
+        {{ $t('collections.items') }}
         <span v-if="collection.items_count > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
           {{ collection.items_count }}
         </span>
@@ -58,9 +58,9 @@
       </div>
 
       <div v-else-if="items.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <p class="text-gray-500">{{ $t('collections.emptyItems') || 'This collection is empty.' }}</p>
+        <p class="text-gray-500">{{ $t('collections.empty') }}</p>
         <router-link to="/search" class="text-blue-600 hover:text-blue-800 font-medium mt-2 inline-block">
-          {{ $t('collections.browseExpressions') || 'Browse expressions to add' }}
+          {{ $t('collections.browseExpressions') }}
         </router-link>
       </div>
 
@@ -74,7 +74,7 @@
             <div class="flex-grow">
               <router-link :to="`/detail/${item.expression_id}`" class="block group">
                 <h3 class="text-lg font-medium text-gray-900 group-hover:text-blue-600 mb-1">
-                  {{ item.expression?.text || 'Loading...' }}
+                  {{ item.expression?.text || $t('common.loading') }}
                 </h3>
                 <div class="flex gap-2 text-sm text-gray-500 mb-2">
                   <span class="bg-gray-100 px-2 py-0.5 rounded">{{ item.expression?.language_code }}</span>
@@ -89,7 +89,7 @@
               <button 
                 @click="removeItem(item)"
                 class="text-gray-400 hover:text-red-500 p-1"
-                :title="$t('collections.removeItem') || 'Remove from collection'"
+                :title="$t('collections.removeItem')"
               >
                 ✕
               </button>
@@ -104,7 +104,7 @@
             :disabled="currentPage === 1"
             class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            &laquo; {{ $t('common.prev') || 'Prev' }}
+            &laquo; {{ $t('common.prev') }}
           </button>
           <span class="text-sm font-medium">
             {{ currentPage }} / {{ totalPages }}
@@ -141,6 +141,7 @@ export default {
     const items = ref([])
     const loadingCollection = ref(true)
     const loadingItems = ref(true)
+    const currentUser = ref(null)
     
     // Pagination state
     const currentPage = ref(1)
@@ -150,19 +151,34 @@ export default {
       return Math.ceil(collection.value.items_count / itemsPerPage.value)
     })
     
-    // Determine if current user is owner (mock check, ideally check user ID from store)
-    // For now assuming if they can edit/delete successfully API allows it
-    const isOwner = ref(true) // TODO: Implement real check against current user ID
+    const isOwner = computed(() => {
+      if (!collection.value || !currentUser.value) return false
+      return collection.value.user_id === currentUser.value.id
+    })
+
+    const fetchCurrentUser = async () => {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        currentUser.value = null
+        return
+      }
+      try {
+        const response = await fetch('/api/v1/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          currentUser.value = data.data
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error)
+      }
+    }
 
     const fetchCollection = async () => {
       loadingCollection.value = true
       try {
         collection.value = await getCollectionById(collectionId)
-        // Check ownership if user info is available
-        const token = localStorage.getItem('authToken')
-        if (token) {
-           // Decoded token logic or user store check
-        }
       } catch (error) {
         console.error('Failed to load collection:', error)
       } finally {
@@ -197,7 +213,7 @@ export default {
     }
 
     const removeItem = async (item) => {
-      if (confirm('Remove this expression from collection?')) {
+      if (confirm(t('collections.removeItemConfirm'))) {
         try {
           await removeCollectionItem(collectionId, item.expression_id)
           // Optimistically remove from list
@@ -210,7 +226,7 @@ export default {
     }
 
     const confirmDelete = async () => {
-      if (confirm('Are you sure you want to delete this collection?')) {
+      if (confirm(t('collections.deleteConfirm'))) {
         try {
           await deleteCollection(collectionId)
           router.push('/collections')
@@ -232,6 +248,7 @@ export default {
     }
 
     onMounted(() => {
+      fetchCurrentUser()
       fetchCollection()
       fetchItems()
     })

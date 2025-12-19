@@ -247,10 +247,12 @@
     "selectTargetPlaceholder": "請選擇目標語言"
   },
   "collections": {
-    "title": "我嘅收藏",
+    "title": "收藏集",
+    "myCollections": "我嘅收藏",
+    "sharedCollections": "共享收藏",
     "addToCollection": "加入收藏",
-    "noCollections": "你而家仲未有任何收藏。",
-    "createNew": "+ 建立新收藏",
+    "noCollections": "搵唔到任何收藏。",
+    "createNew": "建立新收藏",
     "public": "公開",
     "private": "私人",
     "note": "備註（選填）",

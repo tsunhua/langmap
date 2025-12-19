@@ -276,7 +276,8 @@ export default {
           'Search': t('nav.search'),
           'AboutUs': t('nav.about'),
           'Login': t('nav.login'),
-          'Profile': t('nav.profile')
+          'Profile': t('nav.profile'),
+          'Collections': t('nav.collections')
         };
         pageTitle = routeTitleMap[route.name] || t('nav.home');
         pageTitle = `${pageTitle} - LangMap`;

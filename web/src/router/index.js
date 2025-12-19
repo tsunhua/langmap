@@ -65,15 +65,13 @@ const routes = [
   },
   {
     path: '/collections',
-    name: 'MyCollections',
-    component: () => import('../pages/MyCollections.vue'),
-    meta: { requiresAuth: true }
+    name: 'Collections',
+    component: () => import('../pages/Collections.vue')
   },
   {
     path: '/collections/:id',
     name: 'CollectionDetail',
-    component: () => import('../pages/CollectionDetail.vue'),
-    meta: { requiresAuth: true }
+    component: () => import('../pages/CollectionDetail.vue')
   }
 ]
 

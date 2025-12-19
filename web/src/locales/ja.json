@@ -249,10 +249,12 @@
     "selectTargetPlaceholder": "ターゲット言語を選択してください"
   },
   "collections": {
-    "title": "マイコレクション",
+    "title": "コレクション",
+    "myCollections": "マイコレクション",
+    "sharedCollections": "共有コレクション",
     "addToCollection": "コレクションに追加",
-    "noCollections": "コレクションがありません。",
-    "createNew": "+ 新しいコレクションを作成",
+    "noCollections": "コレクションが見つかりませんでした。",
+    "createNew": "新しいコレクションを作成",
     "public": "公開",
     "private": "非公開",
     "note": "メモ (任意)",

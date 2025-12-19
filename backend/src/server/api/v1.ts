@@ -77,17 +77,25 @@ async function requireAuth(c: Context, next: Next) {
   await next()
 }
 
+// Optional authentication middleware - populates user context if token is present but doesn't block if missing
+async function optionalAuth(c: Context, next: Next) {
+  const authHeader = c.req.header('Authorization')
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7)
+    const payload = await verifyJWT(token, c.env.SECRET_KEY)
+    if (payload) {
+      c.set('user', payload)
+    }
+  }
+  await next()
+}
+
 // GET /api/v1/heatmap
 api.get('/heatmap', async (c) => {
   try {
-    console.log('GET /api/v1/heatmap');
     const db = getDB(c)
     const heatmapData = await db.getHeatmapData()
-    console.log('Heatmap data fetched:', heatmapData);
-
-    return c.json({
-      data: heatmapData
-    })
+    return c.json({ data: heatmapData })
   } catch (error: any) {
     console.error('Error in GET /heatmap:', error);
     return c.json({ error: 'Failed to fetch heatmap data' }, 500)
@@ -97,11 +105,8 @@ api.get('/heatmap', async (c) => {
 // GET /api/v1/statistics
 api.get('/statistics', async (c) => {
   try {
-    console.log('GET /api/v1/statistics');
     const db = getDB(c)
     const statistics = await db.getStatistics()
-    console.log('Statistics fetched:', statistics);
-
     return c.json(statistics)
   } catch (error: any) {
     console.error('Error in GET /statistics:', error);
@@ -770,13 +775,27 @@ api.get('/users/me', requireAuth, async (c) => {
 // Collections API Routes
 
 // GET /api/v1/collections
-api.get('/collections', requireAuth, async (c) => {
+api.get('/collections', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
-    const user = c.get('user')
-    const userId = c.req.query('user_id') ? parseInt(c.req.query('user_id')!) : user.id
+    const user = c.get('user') // Optional, from optional auth or session
+
+    const userIdParam = c.req.query('user_id')
+    let userId: number | undefined = userIdParam ? parseInt(userIdParam) : undefined
+
     const isPublicParam = c.req.query('is_public')
     const isPublic = isPublicParam === '1' ? true : (isPublicParam === '0' ? false : undefined)
+
+    // If no specific userId is requested, and user is logged in, and we're not explicitly asking for all public collections
+    if (userId === undefined && user && isPublic !== true) {
+      userId = user.id
+    }
+
+    // Security check: if trying to see private collections, must be the owner
+    if (isPublic === false && (!user || userId !== user.id)) {
+      return c.json({ error: 'Access denied to private collections' }, 403)
+    }
+
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
 
@@ -833,7 +852,7 @@ api.get('/collections/check-item', requireAuth, async (c) => {
 })
 
 // GET /api/v1/collections/:id
-api.get('/collections/:id', requireAuth, async (c) => {
+api.get('/collections/:id', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
@@ -846,9 +865,11 @@ api.get('/collections/:id', requireAuth, async (c) => {
     }
 
     // Check visibility
-    const user = c.get('user')
-    if (collection.user_id !== user.id && !collection.is_public) {
-      return c.json({ error: 'Access denied' }, 403)
+    if (!collection.is_public) {
+      const user = c.get('user')
+      if (!user || collection.user_id !== user.id) {
+        return c.json({ error: 'Access denied' }, 403)
+      }
     }
 
     return c.json(collection)
@@ -908,13 +929,12 @@ api.delete('/collections/:id', requireAuth, async (c) => {
 })
 
 // GET /api/v1/collections/:id/items
-api.get('/collections/:id/items', requireAuth, async (c) => {
+api.get('/collections/:id/items', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
-    const user = c.get('user')
 
     if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
 
@@ -922,8 +942,11 @@ api.get('/collections/:id/items', requireAuth, async (c) => {
     if (!collection) return c.json({ error: 'Collection not found' }, 404)
 
     // Check visibility
-    if (collection.user_id !== user.id && !collection.is_public) {
-      return c.json({ error: 'Access denied' }, 403)
+    if (!collection.is_public) {
+      const user = c.get('user')
+      if (!user || collection.user_id !== user.id) {
+        return c.json({ error: 'Access denied' }, 403)
+      }
     }
 
     const items = await db.getCollectionItems(id, skip, limit)
