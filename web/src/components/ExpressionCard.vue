@@ -26,7 +26,9 @@
           </div>
 
           <div class="flex flex-col items-end gap-3 flex-shrink-0">
-            <span :class="[
+            <span
+             v-if="item.source_type"
+             :class="[
               'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
               item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' : 
               item.source_type === 'user' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -50,7 +52,7 @@
                 class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
                 :title="$t('collections.addToCollection')"
               >
-                <span>⭐</span>
+                <span> ⭐ </span>
               </button>
             </div>
           </div>
