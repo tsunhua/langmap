@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { fetchUITranslations, transformTranslations } from './services/languageService.js'
+import { fetchUITranslations, transformTranslations, fetchLanguages } from './services/languageService.js'
 
 // Import static messages for default languages
 import enMessages from './locales/en-US.json'
@@ -23,32 +23,47 @@ const staticMessages = {
   ja: jaMessages,
 }
 
-// Supported languages mapping with browser language codes
-const supportedLanguages = {
-  'en': 'en-US',
-  'en-US': 'en-US',
-  'en-GB': 'en-US',
-  'zh': 'zh-CN',
-  'zh-CN': 'zh-CN',
-  'zh-TW': 'zh-TW',
-  'zh-HK': 'zh-TW',
-  'es': 'es',
-  'fr': 'fr',
-  'ja': 'ja',
-  'nan': 'nan-TW',
-  'nan-TW': 'nan-TW',
-  'yue': 'yue-HK',
-  'yue-HK': 'yue-HK'
-}
+// Cache for supported languages mapping with browser language codes
+let supportedLanguages = {}
 
 // Cache for dynamically loaded messages
 const dynamicMessagesCache = {}
+
+// Initialize supported languages
+async function initializeSupportedLanguages() {
+  try {
+    const languages = await fetchLanguages(1) // Fetch active languages only
+    const languageMap = {}
+    
+    languages.forEach(lang => {
+      // Direct mapping only, without primary language fallback
+      languageMap[lang.code] = lang.code
+    })
+    
+    supportedLanguages = languageMap
+    console.log('[i18n] Supported languages initialized:', supportedLanguages)
+  } catch (error) {
+    console.error('[i18n] Failed to initialize supported languages:', error)
+    // Fallback to basic supported languages
+    supportedLanguages = {
+      'en': 'en-US',
+      'en-US': 'en-US',
+      'zh': 'zh-CN',
+      'zh-CN': 'zh-CN',
+      'zh-TW': 'zh-TW',
+      'nan': 'nan-TW',
+      'nan-TW': 'nan-TW',
+      'yue': 'yue-HK',
+      'yue-HK': 'yue-HK'
+    }
+  }
+}
 
 // Detect browser language
 function detectBrowserLanguage() {
   // Try to get language from localStorage first
   const savedLang = localStorage.getItem('langmap-lang')
-  if (savedLang && staticMessages[savedLang]) {
+  if (savedLang && (staticMessages[savedLang] || supportedLanguages[savedLang])) {
     console.log(`[i18n] Using saved language from localStorage: ${savedLang}`)
     return savedLang
   }
@@ -63,21 +78,21 @@ function detectBrowserLanguage() {
     return supportedLanguages[browserLang]
   }
   
-  // Check for partial match (e.g. zh from zh-CN)
-  const primaryLang = browserLang.split('-')[0]
-  if (supportedLanguages[primaryLang]) {
-    console.log(`[i18n] Found primary language match: ${primaryLang} -> ${supportedLanguages[primaryLang]}`)
-    return supportedLanguages[primaryLang]
-  }
-  
   // Default to English
   console.log('[i18n] No match found, defaulting to en-US')
   return 'en-US'
 }
 
 // Create i18n instance
-const detectedLanguage = detectBrowserLanguage()
-console.log(`[i18n] Initializing with language: ${detectedLanguage}`)
+// Initialize supported languages before creating the i18n instance
+let detectedLanguage = 'en-US'
+initializeSupportedLanguages().then(() => {
+  detectedLanguage = detectBrowserLanguage()
+  i18n.global.locale.value = detectedLanguage
+  console.log(`[i18n] Initializing with language: ${detectedLanguage}`)
+}).catch(error => {
+  console.error('[i18n] Error during initialization:', error)
+})
 
 const i18n = createI18n({
   legacy: false, // Use Composition API mode
@@ -113,12 +128,25 @@ export async function loadLanguage(languageCode) {
     // Transform to nested object format
     const messages = transformTranslations(translations)
     
-    // Cache the messages
-    dynamicMessagesCache[languageCode] = messages
+    // Check if we have any actual translations
+    const hasTranslations = Object.keys(messages).length > 0
     
-    // Set the locale messages
-    i18n.global.setLocaleMessage(languageCode, messages)
-    console.log(`[i18n] Successfully loaded messages for ${languageCode}`)
+    if (hasTranslations) {
+      // Cache the messages
+      dynamicMessagesCache[languageCode] = messages
+      
+      // Set the locale messages
+      i18n.global.setLocaleMessage(languageCode, messages)
+      console.log(`[i18n] Successfully loaded messages for ${languageCode}`)
+    } else {
+      // If no translations, map to closest supported language
+      const mappedLanguage = detectBrowserLanguage()
+      console.log(`[i18n] No translations for ${languageCode}, mapping to ${mappedLanguage}`)
+      
+      // Use messages from the mapped language
+      const fallbackMessages = staticMessages[mappedLanguage] || staticMessages['en-US']
+      i18n.global.setLocaleMessage(languageCode, fallbackMessages)
+    }
   } catch (error) {
     console.error(`[i18n] Failed to load translations for language ${languageCode}:`, error)
     // Fall back to English if failed to load
