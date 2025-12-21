@@ -128,23 +128,33 @@ export function transformTranslations(expressions) {
   const messages = {}
 
   expressions.forEach(expression => {
-    // Extract key from gloss (assuming format "langmap.key.path")
+    // Extract key from tags (which is a JSON array string)
     if (!expression.tags) return
-
-    const key = JSON.stringify(expression.tags)[0]
-    const keys = key.split('.')
-
-    // Navigate/create nested objects
-    let current = messages
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!current[keys[i]]) {
-        current[keys[i]] = {}
+    
+    try {
+      // Parse the tags JSON array
+      const tags = JSON.parse(expression.tags)
+      
+      // Use the first tag as the key
+      if (tags.length > 0) {
+        const key = tags[0]
+        const keys = key.split('.')
+        
+        // Navigate/create nested objects
+        let current = messages
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!current[keys[i]]) {
+            current[keys[i]] = {}
+          }
+          current = current[keys[i]]
+        }
+        
+        // Set the final value
+        current[keys[keys.length - 1]] = expression.text
       }
-      current = current[keys[i]]
+    } catch (e) {
+      console.error('Error parsing tags for expression:', expression, e)
     }
-
-    // Set the final value
-    current[keys[keys.length - 1]] = expression.text
   })
 
   return messages
