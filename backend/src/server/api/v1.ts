@@ -453,7 +453,7 @@ api.get('/ui-translations/:language', async (c) => {
     const db = getDB(c)
     const language = c.req.param('language')
     const skip = parseInt(c.req.query('skip') || '0')
-    const limit = parseInt(c.req.query('limit') || '200')
+    const limit = parseInt(c.req.query('limit') || '1000')
 
     const translations = await db.getUITranslations(language, skip, limit)
     return c.json(translations)
