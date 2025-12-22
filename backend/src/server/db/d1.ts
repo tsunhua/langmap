@@ -191,12 +191,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
     try {
+      if (!expression.text || !expression.language_code) {
+        throw new Error('Text and language_code are required');
+      }
       // Generate stable ID based on text, language_code and region_code
       const text = expression.text;
       const languageCode = expression.language_code;
-      const regionCode = expression.region_code || '';
-      const idContent = `${text}|${languageCode}|${regionCode}`;
-      const id = this.stableHashId(idContent);
+      const id = this.stableExpressionId(text, languageCode);
 
       // Filter out undefined values and replace them with null
       const bindValues = [
@@ -316,10 +317,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion> {
     // Generate stable ID based on expression_id and text
-    const expressionId = version.expression_id || 0;
+    const expressionId = version.expression_id;
     const text = version.text || '';
-    const idContent = `${expressionId}|${text}`;
-    const id = this.stableHashId(idContent);
+    if (!expressionId || !text) {
+      throw new Error('expression_id and text are required');
+    }
+    const now = Date.now();
+    const id = this.stableExpressionVersionId(expressionId, version.created_at || now);
 
     // Filter out undefined values and replace them with null
     const bindValues = [
@@ -384,7 +388,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     // 2. Not in collection. Check if an expression with the same text/lang ID already exists globally
-    const id = this.stableHashId(`${text}|${language}|`);
+    const id = this.stableExpressionId(text, language);
     const globalExisting = await this.getExpressionById(id);
 
     let expr: Expression;
@@ -408,7 +412,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
           console.warn('Failed to parse existing tags, starting fresh:', globalExisting.tags);
         }
       }
-      
+
       expr = await this.updateExpression(id, {
         meaning_id: meaningId,
         tags: JSON.stringify(mergedTags),
@@ -678,9 +682,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async createCollection(collection: Partial<Collection>): Promise<Collection> {
     const userId = collection.user_id;
-    const name = collection.name || 'Untitled Collection';
-    const idContent = `${userId}|${name}|${Date.now()}`;
-    const id = this.stableHashId(idContent);
+    const name = collection.name;
+    if (!userId || !name) {
+      throw new Error('User ID and name are required');
+    }
+    const id = this.stableCollectionId(userId, name);
 
     const bindValues = [
       id,
@@ -750,6 +756,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const collectionId = item.collection_id;
     const expressionId = item.expression_id;
 
+    if (!collectionId || !expressionId) {
+      throw new Error('Collection ID and Expression ID are required');
+    }
+
     // Check if exists
     const existing = await this.getCollectionItem(collectionId!, expressionId!);
     if (existing) {
@@ -760,8 +770,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // but here we are not generating ID manually for items assuming it's autoincrement in D1 usually or we should.
     // However, the schema says id INTEGER PRIMARY KEY NOT NULL, which usually implies we should adding ID if strict.
     // Let's generate a stable ID.
-    const idContent = `${collectionId}|${expressionId}`;
-    const id = this.stableHashId(idContent);
+    const id = this.stableCollectionItemId(collectionId, expressionId);
 
     const bindValues = [
       id,
@@ -807,6 +816,46 @@ export class D1DatabaseService extends AbstractDatabaseService {
     `
     const { results } = await this.db.prepare(query).bind(expressionId, userId).all<{ collection_id: number }>()
     return results.map(r => r.collection_id)
+  }
+
+  /**
+   * Generate a stable Expression ID using FNV-1a 32-bit hash.
+   * @param text 
+   * @param languageCode 
+   * @returns 
+   */
+  private stableExpressionId(text: string, languageCode: string): number {
+    return this.stableHashId(`${text}|${languageCode}`)
+  }
+
+  /**
+   * Generate a stable Collection ID using FNV-1a 32-bit hash.
+   * @param userId 
+   * @param name 
+   * @returns 
+   */
+  private stableCollectionId(userId: number, name: string): number {
+    return this.stableHashId(`${userId}|${name}`)
+  }
+
+  /**
+   * Generate a stable Collection Item ID using FNV-1a 32-bit hash.
+   * @param collectionId 
+   * @param expressionId 
+   * @returns 
+   */
+  private stableCollectionItemId(collectionId: number, expressionId: number): number {
+    return this.stableHashId(`${collectionId}|${expressionId}`)
+  }
+
+  /**
+   * Generate a stable Expression Version ID using FNV-1a 32-bit hash.
+   * @param expressionId 
+   * @param createdAt 
+   * @returns 
+   */
+  private stableExpressionVersionId(expressionId: number, createdAt: string|number): number {
+    return this.stableHashId(`${expressionId}|${createdAt}`)
   }
 
   /**

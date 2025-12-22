@@ -288,7 +288,7 @@ def generate_sql_inserts(locales: Dict[str, Dict[str, Any]]) -> List[str]:
                     continue
             
             # Create stable expression ID based on text, language_code and region_code
-            expression_id_content = f"{text_value}|{lang_code}|{region_info.get('region_code', '')}"
+            expression_id_content = f"{text_value}|{lang_code}"
             expression_id = stable_hash_id(expression_id_content)
             
             # Create expression entry if not exists
