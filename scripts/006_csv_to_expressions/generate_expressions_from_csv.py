@@ -290,7 +290,7 @@ def main():
                             
                             # 为参考语言生成值元组
                             reference_text = ref_text
-                            expression_id = stable_hash_id(reference_text)
+                            expression_id = stable_hash_id((reference_text+"|"+args.reference_column))
                             values_tuple = generate_values_tuple(
                                 expression_id,
                                 reference_text,

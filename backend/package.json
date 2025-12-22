@@ -2,7 +2,7 @@
   "name": "langmap-backend",
   "type": "module",
   "scripts": {
-    "dev": "npx wrangler dev --remote",
+    "dev": "npx wrangler dev --remote --log-level debug",
     "build": "npx wrangler build",
     "deploy": "npx wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
