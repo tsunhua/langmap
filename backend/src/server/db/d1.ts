@@ -390,9 +390,28 @@ export class D1DatabaseService extends AbstractDatabaseService {
     let expr: Expression;
     if (globalExisting) {
       // Re-use existing expression: update its meaning_id and tags
+      // Merge the new key with existing tags
+      let mergedTags = [key];
+      if (globalExisting.tags) {
+        try {
+          const existingTags = JSON.parse(globalExisting.tags);
+          if (Array.isArray(existingTags)) {
+            // Add new key if it's not already in the array
+            if (!existingTags.includes(key)) {
+              mergedTags = [...existingTags, key];
+            } else {
+              mergedTags = existingTags;
+            }
+          }
+        } catch (e) {
+          // If parsing fails, start fresh with just the new key
+          console.warn('Failed to parse existing tags, starting fresh:', globalExisting.tags);
+        }
+      }
+      
       expr = await this.updateExpression(id, {
         meaning_id: meaningId,
-        tags: `["${key}"]`,
+        tags: JSON.stringify(mergedTags),
         updated_by: username,
         updated_at: new Date().toISOString()
       });
