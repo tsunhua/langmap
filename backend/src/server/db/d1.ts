@@ -379,6 +379,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     ).bind(language, meaningId).first<Expression>();
 
     if (existingInCollection) {
+      console.log('Updating existing expression in collection:', existingInCollection.id);
       // Update existing record in collection
       return await this.updateExpression(existingInCollection.id, {
         text,
@@ -393,6 +394,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     let expr: Expression;
     if (globalExisting) {
+      console.log('Re-using existing expression:', globalExisting.id);
       // Re-use existing expression: update its meaning_id and tags
       // Merge the new key with existing tags
       let mergedTags = [key];
@@ -420,6 +422,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         updated_at: new Date().toISOString()
       });
     } else {
+      console.log('Creating new expression:', text);
       // Create truly new expression
       expr = await this.createExpression({
         text,
@@ -435,6 +438,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // 3. Ensure it is linked to 'langmap' collection
     const langmapCol = await this.db.prepare("SELECT id FROM collections WHERE name = 'langmap'").first<{ id: number }>();
     if (langmapCol) {
+      console.log('Adding expression to langmap collection:', expr.id);
       await this.addCollectionItem({
         collection_id: langmapCol.id,
         expression_id: expr.id,
@@ -443,6 +447,35 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     return expr;
+  }
+
+  async saveUITranslations(language: string, translations: Array<{key: string, text: string, meaning_id?: number}>, username: string): Promise<Array<{key: string, error?: string}>> {
+    const results: Array<{key: string, error?: string}> = [];
+    
+    // Process translations in batches to avoid hitting database limits
+    const batchSize = 100;
+    for (let i = 0; i < translations.length; i += batchSize) {
+      const batch = translations.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (item) => {
+          if (!item.key || !item.text) {
+            return { key: item.key, error: 'Missing key or text' };
+          }
+
+          try {
+            const result = await this.saveUITranslation(language, item.key, item.text, username, item.meaning_id);
+            return { key: item.key };
+          } catch (err: any) {
+            console.error(`Failed to save translation for key ${item.key}:`, err);
+            return { key: item.key, error: err.message };
+          }
+        })
+      );
+      
+      results.push(...batchResults);
+    }
+    
+    return results;
   }
 
   // Users
