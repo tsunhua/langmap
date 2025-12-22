@@ -374,11 +374,8 @@ export default {
         })
         modifiedItems.value = []
         
-        // 重新计算完成度
-        calculateCompletion()
-        
-        // 可选：重新加载数据以确保一致性
-        // await loadTranslations()
+        // 重新加载数据以确保一致性
+        await loadTranslations()
       } catch (error) {
         console.error('Failed to save translations:', error)
         alert(t('translate.saveError') || 'Failed to save translations')

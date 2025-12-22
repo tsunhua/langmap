@@ -480,21 +480,8 @@ api.post('/ui-translations/:language', requireAuth, async (c) => {
     const user = c.get('user');
     const username = user.username;
 
-    const results = []
-    for (const item of translations) {
-      if (!item.key || !item.text) {
-        continue
-      }
-
-      try {
-        const result = await db.saveUITranslation(language, item.key, item.text, username, item.meaning_id)
-        results.push(result)
-      } catch (err: any) {
-        console.error(`Failed to save translation for key ${item.key}:`, err)
-        // Continue with other translations
-        results.push({ key: item.key, error: err.message })
-      }
-    }
+    // Use bulk save method for better performance
+    const results = await db.saveUITranslations(language, translations, username);
 
     // Clear statistics cache as we've updated expressions
     db.clearStatisticsCache();

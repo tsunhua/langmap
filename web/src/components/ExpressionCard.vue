@@ -23,6 +23,16 @@
                 </span>
               </span>
             </div>
+            <!-- 显示所有标签 -->
+            <div v-if="getTagsList().length > 0" class="mt-2 flex flex-wrap gap-1">
+              <span 
+                v-for="(tag, index) in getTagsList()" 
+                :key="index"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {{ tag }}
+              </span>
+            </div>
           </div>
 
           <div class="flex flex-col items-end gap-3 flex-shrink-0">
@@ -126,6 +136,19 @@ export default {
       
       // Return empty if no region data
       return ''
+    },
+    // 获取标签列表
+    getTagsList() {
+      if (!this.item.tags) return [];
+      
+      try {
+        // 如果tags是一个JSON字符串数组，则解析它
+        const tags = JSON.parse(this.item.tags);
+        return Array.isArray(tags) ? tags : [];
+      } catch (e) {
+        // 如果不是有效的JSON，返回空数组
+        return [];
+      }
     }
   }
 }
