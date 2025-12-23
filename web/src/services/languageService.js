@@ -130,28 +130,14 @@ export function transformTranslations(expressions) {
   expressions.forEach(expression => {
     // Extract key from tags (which is a JSON array string)
     if (!expression.tags) return
-    
     try {
       // Parse the tags JSON array
       const tags = JSON.parse(expression.tags)
-      
-      // Use the first tag as the key
-      if (tags.length > 0) {
-        const key = tags[0]
-        const keys = key.split('.')
-        
-        // Navigate/create nested objects
-        let current = messages
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (!current[keys[i]]) {
-            current[keys[i]] = {}
-          }
-          current = current[keys[i]]
-        }
-        
-        // Set the final value
-        current[keys[keys.length - 1]] = expression.text
+
+      for (let i in tags) {
+        messages[tags[i]] = expression.text
       }
+      
     } catch (e) {
       console.error('Error parsing tags for expression:', expression, e)
     }
