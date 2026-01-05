@@ -61,4 +61,5 @@ app.get('*', async (c) => {
   }
 })
 
+export { ExportDO } from './do/ExportDO'
 export default app

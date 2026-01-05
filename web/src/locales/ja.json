@@ -248,6 +248,20 @@
     "copyReference": "参照翻訳を対象にコピー",
     "selectTargetPlaceholder": "ターゲット言語を選択してください"
   },
+  "export": {
+    "title": "コレクションのエクスポート",
+    "selectFormat": "エクスポートする形式を選択してください：",
+    "json": "JSON",
+    "jsonDesc": "開発者向け",
+    "csv": "CSV",
+    "csvDesc": "スプレッドシート向け",
+    "processing": "処理中...",
+    "wait": "ファイルを準備しています。お待ちください。",
+    "ready": "エクスポート準備完了！",
+    "success": "ファイルが正常に生成されました。",
+    "download": "ファイルをダウンロード",
+    "close": "閉じる"
+  },
   "collections": {
     "title": "コレクション",
     "myCollections": "マイコレクション",
@@ -284,6 +298,8 @@
     "createdOn": "作成日"
   },
   "common": {
+    "export": "エクスポート",
+    "startExport": "エクスポート開始",
     "save": "保存",
     "cancel": "キャンセル",
     "saving": "保存中...",
