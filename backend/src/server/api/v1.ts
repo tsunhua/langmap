@@ -1,7 +1,7 @@
 // Hono API routes implementing the same interface as FastAPI backend
 import { Hono, Context, Next } from 'hono'
 import { createDatabaseService } from '../db'
-import { D1Database } from '@cloudflare/workers-types'
+import { D1Database, DurableObjectNamespace, R2Bucket } from '@cloudflare/workers-types'
 import * as jose from 'jose'
 import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
@@ -19,6 +19,8 @@ interface Bindings {
   DB: D1Database;
   RESEND_API_KEY: string;
   SECRET_KEY: string;
+  EXPORT_DO: DurableObjectNamespace;
+  EXPORT_BUCKET: R2Bucket;
 }
 
 // Create a new Hono app for API v1 routes
@@ -758,6 +760,129 @@ api.get('/users/me', requireAuth, async (c) => {
   }
 })
 
+
+
+// Export Routes
+
+// POST /api/v1/export
+api.post('/export', requireAuth, async (c) => {
+  try {
+    const body = await c.req.json()
+    const { collectionId, format } = body;
+
+    if (!collectionId) {
+      return c.json({ error: "collectionId is required" }, 400);
+    }
+
+    // Validate format
+    const startFormat = format === 'csv' ? 'csv' : 'json';
+
+    const jobId = `exp_${Date.now()}_${crypto.randomUUID()}`;
+    const id = c.env.EXPORT_DO.idFromName(jobId);
+    const stub = c.env.EXPORT_DO.get(id);
+
+    await stub.fetch("https://do/start", {
+      method: "POST",
+      body: JSON.stringify({
+        jobId,
+        collectionId: collectionId.toString(), // ensure string
+        format: startFormat
+      }),
+    });
+
+    return c.json({ jobId, status: "pending" });
+  } catch (err: any) {
+    console.error("Export start error:", err);
+    return c.json({ error: "Failed to start export" }, 500);
+  }
+})
+
+// GET /api/v1/export/health
+api.get('/export/health', async (c) => {
+  try {
+    const jobId = "health_check";
+    const id = c.env.EXPORT_DO.idFromName(jobId);
+    const stub = c.env.EXPORT_DO.get(id);
+    const res = await stub.fetch("https://do/health");
+    const text = await res.text();
+    return c.json({ status: res.status, message: text });
+  } catch (err: any) {
+    return c.json({ error: "Health check failed: " + err.message }, 500);
+  }
+})
+
+// GET /api/v1/export/:jobId
+api.get('/export/:jobId', requireAuth, async (c) => {
+  try {
+    const jobId = c.req.param('jobId');
+    if (!jobId) return c.json({ error: "Job ID required" }, 400);
+
+    const id = c.env.EXPORT_DO.idFromName(jobId);
+    const stub = c.env.EXPORT_DO.get(id);
+
+    const res = await stub.fetch("https://do/status");
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("DO Error Status:", res.status, errorText);
+      if (res.status === 404) {
+        return c.json({ error: "Job not found" }, 404);
+      }
+      return c.json({ error: `Export job error: ${res.status} ${errorText}` }, 500);
+    }
+
+    // Safety check for empty body
+    const text = await res.text();
+    if (!text) {
+      console.error("DO returned empty response");
+      return c.json({ error: "Empty response from export job" }, 500);
+    }
+
+    try {
+      const data = JSON.parse(text);
+      return c.json(data);
+    } catch (e) {
+      console.error("Failed to parse DO response:", text);
+      return c.json({ error: "Invalid response from export job" }, 500);
+    }
+  } catch (err: any) {
+    console.error("Export status error:", err);
+    return c.json({ error: "Failed to check status" }, 500);
+  }
+})
+
+// GET /api/v1/download
+api.get('/download', async (c) => {
+  try {
+    const key = c.req.query('key');
+    if (!key) {
+      return c.json({ error: "File key required" }, 400);
+    }
+
+    // Security check: ensure key implies it's in exports folder
+    if (!key.startsWith('exports/')) {
+      return c.json({ error: "Invalid file key" }, 403);
+    }
+
+    const object = await c.env.EXPORT_BUCKET.get(key);
+
+    if (object === null) {
+      return c.json({ error: "File not found" }, 404);
+    }
+
+    const headers = new Headers();
+    object.writeHttpMetadata(headers as any);
+    headers.set('etag', object.httpEtag);
+    headers.set("Content-Disposition", `attachment; filename="${key.split('/').pop()}"`);
+
+    return new Response(object.body as any, {
+      headers,
+    });
+  } catch (err: any) {
+    console.error("Download error:", err);
+    return c.json({ error: "Failed to download file" }, 500);
+  }
+})
 
 // Collections API Routes
 

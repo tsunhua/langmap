@@ -2,20 +2,53 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "langmap-backend",
   "compatibility_date": "2025-08-03",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": "./src/index.tsx",
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
   },
   "rules": [
-    { "type": "ESModule", "globs": ["**/*.js", "**/*.mjs", "**/*.ts", "**/*.tsx"] }
+    {
+      "type": "ESModule",
+      "globs": [
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.ts",
+        "**/*.tsx"
+      ]
+    }
   ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "langmap",
       "database_id": "f21a787e-769f-45b3-bd1a-59d41b35ff12"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "EXPORT_DO",
+        "class_name": "ExportDO"
+      }
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "EXPORT_BUCKET",
+      "bucket_name": "langmap-exports",
+      "preview_bucket_name": "langmap-exports-preview"
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ExportDO"
+      ]
     }
   ],
   "observability": {

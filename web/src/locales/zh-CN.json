@@ -247,6 +247,20 @@
     "copyReference": "将参考翻译复制到目标",
     "selectTargetPlaceholder": "请选择目标语言"
   },
+  "export": {
+    "title": "导出收藏集",
+    "selectFormat": "选择导出格式：",
+    "json": "JSON",
+    "jsonDesc": "适合开发者",
+    "csv": "CSV",
+    "csvDesc": "适合电子表格",
+    "processing": "处理中...",
+    "wait": "请稍候，正在为您准备文件。",
+    "ready": "导出就绪！",
+    "success": "您的文件已成功生成。",
+    "download": "下载文件",
+    "close": "关闭"
+  },
   "collections": {
     "title": "收藏集",
     "myCollections": "我的收藏",
@@ -283,6 +297,8 @@
     "createdOn": "创建于"
   },
   "common": {
+    "export": "导出",
+    "startExport": "开始导出",
     "save": "保存",
     "cancel": "取消",
     "saving": "保存中...",

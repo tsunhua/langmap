@@ -247,6 +247,20 @@
     "copyReference": "Copiar la traducción de référence al objetivo",
     "selectTargetPlaceholder": "Sélectionner la langue cible"
   },
+  "export": {
+    "title": "Exporter la collection",
+    "selectFormat": "Choisissez un format pour exporter votre collection :",
+    "json": "JSON",
+    "jsonDesc": "Idéal pour les développeurs",
+    "csv": "CSV",
+    "csvDesc": "Idéal pour les feuilles de calcul",
+    "processing": "Traitement en cours...",
+    "wait": "Veuillez patienter pendant la préparation de votre fichier.",
+    "ready": "Exportation prête !",
+    "success": "Votre fichier a été généré avec succès.",
+    "download": "Télécharger le fichier",
+    "close": "Fermer"
+  },
   "collections": {
     "title": "Collections",
     "myCollections": "Mes collections",
@@ -283,6 +297,8 @@
     "createdOn": "Créé le"
   },
   "common": {
+    "export": "Exporter",
+    "startExport": "Commencer l'exportation",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "saving": "Enregistrement...",

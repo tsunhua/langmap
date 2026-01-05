@@ -171,3 +171,37 @@ export async function getCollectionsContainingItem(expressionId) {
         return []
     }
 }
+
+/**
+ * Initiate an export job for a collection
+ * @param {number} collectionId - Collection ID
+ * @param {string} format - 'json' or 'csv'
+ * @returns {Promise<Object>} Job ID and status
+ */
+export async function exportCollection(collectionId, format = 'json') {
+    try {
+        const response = await api.post('/export', {
+            collectionId,
+            format
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error starting export:', error)
+        throw error
+    }
+}
+
+/**
+ * Check status of an export job
+ * @param {string} jobId - Job ID
+ * @returns {Promise<Object>} Job status and result
+ */
+export async function getExportStatus(jobId) {
+    try {
+        const response = await api.get(`/export/${jobId}`)
+        return response.data
+    } catch (error) {
+        console.error(`Error fetching export status ${jobId}:`, error)
+        throw error
+    }
+}

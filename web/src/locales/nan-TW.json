@@ -247,6 +247,20 @@
     "copyReference": "拷貝參考翻譯到目標",
     "selectTargetPlaceholder": "請選擇目標語言"
   },
+  "export": {
+    "title": "匯出收藏集",
+    "selectFormat": "請揀匯出格式：",
+    "json": "JSON",
+    "jsonDesc": "適合開發者",
+    "csv": "CSV",
+    "csvDesc": "適合試算表",
+    "processing": "處理中...",
+    "wait": "請稍等，阮咧為汝準備檔案。",
+    "ready": "匯出完成！",
+    "success": "汝个檔案已經產生成功。",
+    "download": "下載檔案",
+    "close": "關掉"
+  },
   "collections": {
     "title": "收藏集",
     "myCollections": "我个收藏",
@@ -283,6 +297,8 @@
     "createdOn": "建立佇"
   },
   "common": {
+    "export": "匯出",
+    "startExport": "開始匯出",
     "save": "儲存",
     "cancel": "取消",
     "saving": "儲存中…",
