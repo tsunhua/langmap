@@ -377,8 +377,9 @@ export default {
           }
         }
 
-        // Remove token and update state
+        // Remove token and user info from localStorage
         localStorage.removeItem('authToken')
+        localStorage.removeItem('user')
         isLoggedIn.value = false
         currentUser.value = {}
         userDropdownOpen.value = false
@@ -392,6 +393,7 @@ export default {
         console.error('Logout error:', error)
         // Even if API fails, still do local logout
         localStorage.removeItem('authToken')
+        localStorage.removeItem('user')
         isLoggedIn.value = false
         currentUser.value = {}
         router.push('/login')
@@ -451,7 +453,20 @@ export default {
     // Check if user is logged in
     const checkAuthStatus = async () => {
       const token = localStorage.getItem('authToken')
+      const userStr = localStorage.getItem('user')
+
       if (token) {
+        // First, try to load user from localStorage for immediate display
+        if (userStr) {
+          try {
+            currentUser.value = JSON.parse(userStr)
+            isLoggedIn.value = true
+          } catch (e) {
+            console.error('Failed to parse user from localStorage:', e)
+          }
+        }
+
+        // Then verify with the server
         try {
           const response = await fetch('/api/v1/users/me', {
             headers: {
@@ -464,10 +479,13 @@ export default {
           if (response.ok) {
             isLoggedIn.value = true
             currentUser.value = data.data
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(data.data))
           } else {
             // If unauthorized, remove token
             if (response.status === 401) {
               localStorage.removeItem('authToken')
+              localStorage.removeItem('user')
               isLoggedIn.value = false
               currentUser.value = {}
               // Redirect to login

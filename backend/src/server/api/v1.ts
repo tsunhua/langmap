@@ -79,6 +79,30 @@ async function requireAuth(c: Context, next: Next) {
   await next()
 }
 
+// Admin authentication middleware
+async function requireAdmin(c: Context, next: Next) {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Authentication required' }, 401)
+  }
+
+  const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+  const payload = await verifyJWT(token, c.env.SECRET_KEY)
+
+  if (!payload) {
+    return c.json({ error: 'Invalid or expired token' }, 401)
+  }
+
+  // Check if user is admin
+  if (payload.role !== 'admin') {
+    return c.json({ error: 'Admin access required' }, 403)
+  }
+
+  // Add user info to context
+  c.set('user', payload)
+  await next()
+}
+
 // Optional authentication middleware - populates user context if token is present but doesn't block if missing
 async function optionalAuth(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization')
@@ -496,6 +520,39 @@ api.post('/ui-translations/:language', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in POST /ui-translations/:language:', error);
     return c.json({ error: 'Failed to save UI translations' }, 500)
+  }
+})
+
+// POST /api/v1/sync-locales
+// Sync local JSON locales to database (admin only)
+api.post('/sync-locales', requireAdmin, async (c) => {
+  try {
+    console.log('POST /api/v1/sync-locales');
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { localeData } = body
+
+    if (!localeData || typeof localeData !== 'object') {
+      return c.json({ error: 'Invalid localeData format' }, 400)
+    }
+
+    // Get user info from middleware
+    const user = c.get('user');
+    const username = user.username;
+
+    // Sync locales to database
+    const results = await db.syncLocalesToDatabase(localeData, username);
+
+    // Clear statistics cache
+    db.clearStatisticsCache();
+
+    return c.json({
+      success: true,
+      results
+    })
+  } catch (error: any) {
+    console.error('Error in POST /sync-locales:', error);
+    return c.json({ error: 'Failed to sync locales', details: error.message }, 500)
   }
 })
 
