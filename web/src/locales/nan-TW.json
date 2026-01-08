@@ -146,7 +146,10 @@
     "createMeaning": "建立語意",
     "noMeanings": "這條語詞猶未關聯語意",
     "associateWithMeanings": "關聯語意",
-    "createExpression": "建立語詞"
+    "createExpression": "建立語詞",
+    "unlink": "解除連結",
+    "confirmUnlink": "確定欲解除這條詞句个連結？",
+    "loginRequired": "汝欲登入正能做得執行這个動作"
   },
   "expressionCard": {
     "global": "全球",

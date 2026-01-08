@@ -146,7 +146,10 @@
     "createMeaning": "创建含义",
     "noMeanings": "此词句未关联任何含义",
     "associateWithMeanings": "关联含义",
-    "createExpression": "创建词句"
+    "createExpression": "创建词句",
+    "unlink": "解除关联",
+    "confirmUnlink": "确定要解除此词句的关联吗？",
+    "loginRequired": "您必须登录才能执行此操作"
   },
   "expressionCard": {
     "global": "全球",
@@ -222,7 +225,7 @@
     "successTitle": "邮箱验证成功！",
     "successMessage": "您的邮箱已通过验证。您现在可以登录您的账户。",
     "errorTitle": "邮箱验证失败",
-    "errorMessage": "验证链接无效或已过期。",
+    "errorMessage": "验证关联无效或已过期。",
     "goToLogin": "前往登录"
   },
   "translate": {
