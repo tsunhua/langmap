@@ -25,7 +25,12 @@
             <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.expressionDetails') }}</h3>
           </div>
           <div class="p-3">
-            <ExpressionCard :item="item" :key="item.id" />
+            <ExpressionCard 
+              :item="item" 
+              :key="item.id" 
+              :editable="true"
+              @update-tags="handleTagsUpdate"
+            />
           </div>
         </div>
         
@@ -464,6 +469,40 @@ export default {
       }
     }
 
+    async function handleTagsUpdate(newTags) {
+      if (!item.value) return
+      
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          // Ideally show a toast or alert
+          // alert(t('detail.loginRequired')) 
+          console.warn('Login required to update tags')
+          return
+        }
+
+        const res = await fetch(`/api/v1/expressions/${props.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            tags: JSON.stringify(newTags)
+          })
+        })
+
+        if (!res.ok) throw new Error('Failed to update tags')
+        
+        // Update local item
+        item.value.tags = JSON.stringify(newTags)
+        
+      } catch (e) {
+        console.error('Error updating tags:', e)
+        // alert('Failed to update tags')
+      }
+    }
+
     // Open create expression modal
     function openCreateExpressionModal() {
       // If there's a selected meaning, pass it to the modal
@@ -520,7 +559,8 @@ export default {
       openCreateExpressionModal,
       handleExpressionCreated,
       // 新增的搜索状态
-      assocSearched
+      assocSearched,
+      handleTagsUpdate
     }
   }
 }
