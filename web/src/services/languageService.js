@@ -168,3 +168,34 @@ export function getLanguageDisplayName(languageCode) {
 export function getLanguageMapCache() {
   return languageMap
 }
+
+/**
+ * Sync local locales to database (admin only)
+ * @param {Object} localeData - The locale data to sync
+ * @returns {Promise<Object>} Sync results
+ */
+export async function syncLocalesToDatabase(localeData) {
+  try {
+    const response = await api.post('/sync-locales', { localeData })
+    return response.data
+  } catch (error) {
+    console.error('Failed to sync locales:', error)
+    throw error
+  }
+}
+
+/**
+ * Get current user from localStorage
+ * @returns {Object|null} User object or null
+ */
+export function getCurrentUser() {
+  const userStr = localStorage.getItem('user')
+  if (userStr) {
+    try {
+      return JSON.parse(userStr)
+    } catch (e) {
+      return null
+    }
+  }
+  return null
+}

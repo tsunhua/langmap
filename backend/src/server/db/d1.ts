@@ -427,7 +427,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       expr = await this.createExpression({
         text,
         language_code: language,
-        tags: `["${key}"]`,
+        tags: JSON.stringify([key]),
         meaning_id: meaningId,
         source_type: 'user',
         created_by: username,
@@ -449,9 +449,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return expr;
   }
 
-  async saveUITranslations(language: string, translations: Array<{key: string, text: string, meaning_id?: number}>, username: string): Promise<Array<{key: string, error?: string}>> {
-    const results: Array<{key: string, error?: string}> = [];
-    
+  async saveUITranslations(language: string, translations: Array<{ key: string, text: string, meaning_id?: number }>, username: string): Promise<Array<{ key: string, error?: string }>> {
+    const results: Array<{ key: string, error?: string }> = [];
+
     // Process translations in batches to avoid hitting database limits
     const batchSize = 100;
     for (let i = 0; i < translations.length; i += batchSize) {
@@ -471,11 +471,222 @@ export class D1DatabaseService extends AbstractDatabaseService {
           }
         })
       );
-      
+
       results.push(...batchResults);
     }
-    
+
     return results;
+  }
+
+  // Sync locales from local JSON to database
+  async syncLocalesToDatabase(localeData: Record<string, any>, username: string): Promise<Record<string, { added: number, skipped: number, errors: string[] }>> {
+    const results: Record<string, { added: number, skipped: number, errors: string[] }> = {}
+
+    // Get langmap collection ID
+    const langmapCol = await this.db.prepare(
+      "SELECT id FROM collections WHERE name = 'langmap'"
+    ).first<{ id: number }>()
+
+    if (!langmapCol) {
+      throw new Error('langmap collection not found')
+    }
+
+    const timestamp = new Date().toISOString()
+
+    // Flatten en-US messages to map keys to English text for meaning resolution
+    const enUSData = localeData['en-US'] || {}
+    const flattenedEnUS = this.flattenObject(enUSData)
+
+    // Process each language
+    for (const [langCode, messages] of Object.entries(localeData)) {
+      try {
+        const result = { added: 0, skipped: 0, errors: [] }
+
+        // Flatten the messages object
+        const flattened = this.flattenObject(messages)
+
+        // Get existing expressions in database for this language
+        // We need to map by text to find expressions that might already exist for different keys
+        const existing = await this.db.prepare(`
+          SELECT e.id, e.text, e.tags
+          FROM expressions e
+          JOIN collection_items ci ON e.id = ci.expression_id
+          WHERE ci.collection_id = ? AND e.language_code = ?
+        `).bind(langmapCol.id, langCode).all<{ id: number, text: string, tags: string }>()
+
+        // Map: text -> { id, tags[] }
+        const existingByText = new Map<string, { id: number, tags: string[] }>()
+        for (const item of existing.results || []) {
+          let tags: string[] = []
+          try {
+            if (item.tags) {
+              const parsed = JSON.parse(item.tags)
+              if (Array.isArray(parsed)) {
+                tags = parsed
+              }
+            }
+          } catch (e: any) {
+            // Tags format is invalid, treat as empty tags to allow repair
+            console.warn(`[Sync] Invalid tags format for expression ${item.id}: "${item.tags}", treating as empty. Error: ${e?.message || e}`)
+          }
+          // Add to map even if tags are empty or invalid, so we can update it
+          existingByText.set(item.text, { id: item.id, tags })
+        }
+
+        // Also track all existing keys for quick lookup
+        const existingKeys = new Set()
+        for (const { tags } of existingByText.values()) {
+          tags.forEach(key => existingKeys.add(key))
+        }
+
+        // Sync each key
+        for (const [key, text] of Object.entries(flattened)) {
+          const prefixedKey = `langmap.${key}`
+          if (existingKeys.has(prefixedKey)) {
+            // This key already exists (in its prefixed form), skip it
+            result.skipped++
+            continue
+          }
+
+          // Check if there's already an expression with the same text
+          const existingEntry = existingByText.get(text)
+
+
+          if (existingEntry) {
+            // Same text exists with different keys, add this key to the existing expression
+            const prefixedKey = `langmap.${key}`
+            const updatedTags = [...existingEntry.tags, prefixedKey]
+            console.log(`[Sync] Updating existing expression with same text: "${text}" (${langCode}), adding key: ${prefixedKey}`)
+
+            await this.db.prepare(`
+              UPDATE expressions
+              SET tags = ?, updated_by = ?, updated_at = ?
+              WHERE id = ?
+            `).bind(
+              JSON.stringify(updatedTags),
+              username,
+              timestamp,
+              existingEntry.id
+            ).run()
+
+            result.added++
+          } else {
+            // Create new expression
+            const expressionId = this.stableExpressionId(text, langCode)
+            let meaningId: number | null = null
+
+            // For non-en-US languages, find or create the en-US expression first to use as meaning_id
+            if (langCode !== 'en-US') {
+              // Try to find existing en-US expression
+              // 1. Look up by English text if available in the sync payload
+              const enText = flattenedEnUS[key]
+              let enUsExpression: { id: number, tags: string } | null = null
+
+              if (enText) {
+                enUsExpression = await this.db.prepare(`
+                  SELECT e.id, e.tags
+                  FROM expressions e
+                  JOIN collection_items ci ON e.id = ci.expression_id
+                  WHERE ci.collection_id = ? AND e.language_code = 'en-US' AND e.text = ?
+                `).bind(langmapCol.id, enText).first<{ id: number, tags: string }>()
+              }
+
+              // 2. If not found by text (or text unknown), try to find by key tag
+              if (!enUsExpression) {
+                // Note: We use LIKE for simple JSON array search.
+                // This assumes tags are stored as ["key1", "key2"]
+                enUsExpression = await this.db.prepare(`
+                  SELECT e.id, e.tags
+                  FROM expressions e
+                  JOIN collection_items ci ON e.id = ci.expression_id
+                  WHERE ci.collection_id = ? AND e.language_code = 'en-US' AND e.tags LIKE ?
+                `).bind(langmapCol.id, `%"${key}"%`).first<{ id: number, tags: string }>()
+              }
+
+              if (enUsExpression) {
+                meaningId = enUsExpression.id
+                // console.log(`[Sync] Found existing en-US expression for "${key}": ${meaningId}`)
+              } else if (enText) {
+                // Create en-US expression first
+                const enUsId = this.stableExpressionId(enText, 'en-US')
+                const enUsTags = JSON.stringify([`langmap.${key}`])
+
+                console.log(`[Sync] Creating new en-US expression for "${enText}": ${enUsId}`)
+
+                await this.db.prepare(`
+                  INSERT OR IGNORE INTO expressions
+                  (id, text, meaning_id, language_code, tags, source_type, review_status, created_by, created_at, updated_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).bind(
+                  enUsId, enText, enUsId, 'en-US',
+                  enUsTags, 'system', 'approved',
+                  username, timestamp, timestamp
+                ).run()
+
+                // Link to langmap collection
+                await this.db.prepare(`
+                  INSERT OR IGNORE INTO collection_items (collection_id, expression_id, created_at)
+                  VALUES (?, ?, ?)
+                `).bind(langmapCol.id, enUsId, timestamp).run()
+
+                meaningId = enUsId
+              } else {
+                // Fallback: No English text found and no existing key
+                // Use self ID as meaning_id (orphan status)
+                console.warn(`[Sync] Could not resolve en-US parent for key: ${key}`)
+                meaningId = expressionId
+              }
+
+            } else {
+              // For en-US, meaning_id is its own id
+              meaningId = expressionId
+            }
+
+            const tags = JSON.stringify([`langmap.${key}`])
+
+            console.log(`[Sync] Adding new expression: "${text}" (${langCode}), key: ${key}, meaning_id: ${meaningId}, tags: ${tags}`)
+
+            await this.db.prepare(`
+              INSERT OR IGNORE INTO expressions
+              (id, text, meaning_id, language_code, tags, source_type, review_status, created_by, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              expressionId, text, meaningId, langCode,
+              tags, 'system', 'approved',
+              username, timestamp, timestamp
+            ).run()
+
+            // Link to langmap collection
+            await this.db.prepare(`
+              INSERT OR IGNORE INTO collection_items (collection_id, expression_id, created_at)
+              VALUES (?, ?, ?)
+            `).bind(langmapCol.id, expressionId, timestamp).run()
+
+            result.added++
+          }
+        }
+
+        results[langCode] = result
+      } catch (error: any) {
+        results[langCode] = { added: 0, skipped: 0, errors: [error.message] }
+      }
+    }
+
+    return results
+  }
+
+  // Helper function to flatten nested objects
+  private flattenObject(obj: any, prefix = ''): Record<string, string> {
+    const flattened: Record<string, string> = {}
+    for (const key in obj) {
+      const newKey = prefix ? `${prefix}.${key}` : key
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        Object.assign(flattened, this.flattenObject(obj[key], newKey))
+      } else {
+        flattened[newKey] = obj[key]
+      }
+    }
+    return flattened
   }
 
   // Users
@@ -887,7 +1098,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
    * @param createdAt 
    * @returns 
    */
-  private stableExpressionVersionId(expressionId: number, createdAt: string|number): number {
+  private stableExpressionVersionId(expressionId: number, createdAt: string | number): number {
     return this.stableHashId(`${expressionId}|${createdAt}`)
   }
 

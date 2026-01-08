@@ -171,12 +171,13 @@ export default {
         const data = await response.json()
         
         if (response.ok) {
-          // Save token to localStorage
+          // Save token and user info to localStorage
           localStorage.setItem('authToken', data.data.token)
-          
+          localStorage.setItem('user', JSON.stringify(data.data.user))
+
           // Update global auth state by dispatching a custom event
           window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { isLoggedIn: true } }))
-          
+
           // Redirect to home page
           router.push('/')
         } else {
