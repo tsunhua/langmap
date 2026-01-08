@@ -24,14 +24,50 @@
               </span>
             </div>
             <!-- 显示所有标签 -->
-            <div v-if="getTagsList().length > 0" class="mt-2 flex flex-wrap gap-1">
+            <div class="mt-2 flex flex-wrap gap-1 items-center">
               <span 
                 v-for="(tag, index) in getTagsList()" 
                 :key="index"
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
               >
                 {{ tag }}
+                <button 
+                  v-if="editable" 
+                  @click.prevent="removeTag(tag)" 
+                  class="ml-1 text-blue-600 hover:text-blue-900 focus:outline-none"
+                  title="Remove tag"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
               </span>
+              
+              <!-- Add Tag UI -->
+              <div v-if="editable" class="inline-flex items-center">
+                <div v-if="isAddingTag" class="flex items-center">
+                  <input 
+                    v-model="newTagValue" 
+                    @keydown.enter.prevent="confirmAddTag" 
+                    @keydown.esc.prevent="cancelAddTag"
+                    @blur="cancelAddTag"
+                    ref="newTagInput"
+                    placeholder="tag"
+                    class="w-20 px-2 py-0.5 text-xs rounded border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    autofocus
+                  />
+                </div>
+                <button 
+                  v-else 
+                  @click.prevent="startAddTag" 
+                  class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors focus:outline-none"
+                  title="Add tag"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -91,12 +127,21 @@ export default {
     item: { 
       type: Object, 
       required: true 
-    } 
+    },
+    editable: {
+      type: Boolean,
+      default: false
+    }
   },
-  setup() {
+  emits: ['update-tags'],
+  setup(props, { emit }) {
     const { t } = useI18n()
     const router = useRouter()
     const showCollectionModal = ref(false)
+    
+    // Tag management state
+    const isAddingTag = ref(false)
+    const newTagValue = ref('')
 
     const openCollectionModal = () => {
       const token = localStorage.getItem('authToken')
@@ -107,7 +152,47 @@ export default {
       showCollectionModal.value = true
     }
 
-    return { t, showCollectionModal, openCollectionModal }
+    const removeTag = (tagToRemove) => {
+      const currentTags = getTagsList(props.item)
+      const newTags = currentTags.filter(t => t !== tagToRemove)
+      emit('update-tags', newTags)
+    }
+
+    const startAddTag = () => {
+      isAddingTag.value = true
+      newTagValue.value = ''
+      // Focus will be handled by template via autofocus
+    }
+
+    const confirmAddTag = () => {
+      const tag = newTagValue.value.trim()
+      if (tag) {
+        const currentTags = getTagsList(props.item)
+        if (!currentTags.includes(tag)) {
+          const newTags = [...currentTags, tag]
+          emit('update-tags', newTags)
+        }
+      }
+      isAddingTag.value = false
+      newTagValue.value = ''
+    }
+
+    const cancelAddTag = () => {
+      isAddingTag.value = false
+      newTagValue.value = ''
+    }
+
+    return { 
+      t, 
+      showCollectionModal, 
+      openCollectionModal,
+      isAddingTag,
+      newTagValue,
+      removeTag,
+      startAddTag,
+      confirmAddTag,
+      cancelAddTag
+    }
   },
   methods: {
     playAudio () {
@@ -139,17 +224,28 @@ export default {
     },
     // 获取标签列表
     getTagsList() {
+      // Helper specific to formatting for display, 
+      // but simpler to use the static one we define for setup too if we want
+      // or just call this.item processing here.
       if (!this.item.tags) return [];
-      
       try {
-        // 如果tags是一个JSON字符串数组，则解析它
         const tags = JSON.parse(this.item.tags);
         return Array.isArray(tags) ? tags : [];
       } catch (e) {
-        // 如果不是有效的JSON，返回空数组
         return [];
       }
     }
+  }
+}
+
+// Private helper for setup since methods aren't available there easily without context
+function getTagsList(item) {
+  if (!item.tags) return [];
+  try {
+    const tags = JSON.parse(item.tags);
+    return Array.isArray(tags) ? tags : [];
+  } catch (e) {
+    return [];
   }
 }
 </script>
