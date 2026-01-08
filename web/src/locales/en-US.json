@@ -146,7 +146,10 @@
     "createMeaning": "Create Meaning",
     "noMeanings": "No meanings associated with this expression",
     "associateWithMeanings": "Associate with meanings",
-    "createExpression": "Create Expression"
+    "createExpression": "Create Expression",
+    "unlink": "Unlink",
+    "confirmUnlink": "Are you sure you want to unlink this expression?",
+    "loginRequired": "You must be logged in to perform this action"
   },
   "expressionCard": {
     "global": "Global",

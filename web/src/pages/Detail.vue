@@ -162,6 +162,16 @@
                   <div class="flex-1">
                     <ExpressionCard :item="expr" />
                   </div>
+                  <!-- Unlink Button -->
+                  <div v-if="expr.id !== item.id">
+                    <button 
+                      @click="unlink(expr)" 
+                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-red-700 focus:ring-slate-500 px-3 py-1.5 text-sm"
+                      :title="$t('detail.unlink')"
+                    >
+                      ⛓️‍💥 {{ $t('detail.unlink') }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -503,6 +513,35 @@ export default {
       }
     }
 
+    async function unlink(target) {
+      if (!confirm(t('detail.confirmUnlink'))) return
+      
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        alert(t('detail.loginRequired')) 
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/v1/expressions/${target.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ meaning_id: null })
+        })
+
+        if (!res.ok) throw new Error('Failed to unlink expression')
+        
+        // Refresh to show updated list
+        await load()
+      } catch (e) {
+        console.error('Error unlinking:', e)
+        alert('Failed to unlink expression')
+      }
+    }
+
     // Open create expression modal
     function openCreateExpressionModal() {
       // If there's a selected meaning, pass it to the modal
@@ -560,7 +599,8 @@ export default {
       handleExpressionCreated,
       // 新增的搜索状态
       assocSearched,
-      handleTagsUpdate
+      handleTagsUpdate,
+      unlink
     }
   }
 }

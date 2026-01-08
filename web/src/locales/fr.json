@@ -146,7 +146,10 @@
     "createMeaning": "Créer une signification",
     "noMeanings": "Aucune signification associée à cette expression",
     "associateWithMeanings": "Associer avec des significations",
-    "createExpression": "Créer une expression"
+    "createExpression": "Créer une expression",
+    "unlink": "Dissocier",
+    "confirmUnlink": "Êtes-vous sûr de vouloir dissocier cette expression ?",
+    "loginRequired": "Vous devez être connecté pour effectuer cette action"
   },
   "expressionCard": {
     "global": "Global",

@@ -147,7 +147,10 @@
     "createMeaning": "意味を作成",
     "noMeanings": "この表現に関連する意味はありません",
     "associateWithMeanings": "意味と関連付ける",
-    "createExpression": "表現を作成"
+    "createExpression": "表現を作成",
+    "unlink": "リンク解除",
+    "confirmUnlink": "この表現のリンクを解除してもよろしいですか？",
+    "loginRequired": "この操作を行うにはログインが必要です"
   },
   "expressionCard": {
     "global": "グローバル",
