@@ -475,6 +475,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       results.push(...batchResults);
     }
 
+    // After saving all translations, check if we should activate the language
+    try {
+      await this.checkAndActivateLanguage(language);
+    } catch (err) {
+      console.error(`Failed to check/activate language ${language} after saving translations:`, err);
+    }
+
     return results;
   }
 
@@ -667,12 +674,63 @@ export class D1DatabaseService extends AbstractDatabaseService {
         }
 
         results[langCode] = result
+
+        // After syncing this language, check if we should activate it
+        try {
+          await this.checkAndActivateLanguage(langCode);
+        } catch (err) {
+          console.error(`Failed to check/activate language ${langCode} after sync:`, err);
+        }
       } catch (error: any) {
         results[langCode] = { added: 0, skipped: 0, errors: [error.message] }
       }
     }
 
     return results
+  }
+
+  async calculateUITranslationCompletion(languageCode: string): Promise<number> {
+    if (languageCode === 'en-US') return 100;
+
+    // Get total items in langmap collection (using en-US as baseline)
+    const totalQuery = `
+      SELECT COUNT(DISTINCT COALESCE(e.meaning_id, e.id)) as count
+      FROM expressions e
+      JOIN collection_items ci ON e.id = ci.expression_id
+      JOIN collections c ON ci.collection_id = c.id
+      WHERE c.name = 'langmap' AND e.language_code = 'en-US'
+    `;
+    const totalResult = await this.db.prepare(totalQuery).first<{ count: number }>();
+    const totalCount = totalResult?.count || 0;
+
+    if (totalCount === 0) return 0;
+
+    // Get translated items for target language
+    const translatedQuery = `
+      SELECT COUNT(DISTINCT e.meaning_id) as count
+      FROM expressions e
+      JOIN collection_items ci ON e.id = ci.expression_id
+      JOIN collections c ON ci.collection_id = c.id
+      WHERE c.name = 'langmap' AND e.language_code = ? AND e.meaning_id IS NOT NULL
+    `;
+    const translatedResult = await this.db.prepare(translatedQuery).bind(languageCode).first<{ count: number }>();
+    const translatedCount = translatedResult?.count || 0;
+
+    return Math.round((translatedCount / totalCount) * 100);
+  }
+
+  private async checkAndActivateLanguage(languageCode: string): Promise<void> {
+    if (languageCode === 'en-US') return;
+
+    const completion = await this.calculateUITranslationCompletion(languageCode);
+    if (completion >= 60) {
+      const lang = await this.getLanguageByCode(languageCode);
+      // is_active might be returned as 1/0 or true/false depending on D1 driver version and schema
+      if (lang && !lang.is_active) {
+        await this.updateLanguage(lang.id, { is_active: true });
+        console.log(`[Activation] Language ${languageCode} activated (completion: ${completion}%)`);
+      }
+    }
   }
 
   // Helper function to flatten nested objects
