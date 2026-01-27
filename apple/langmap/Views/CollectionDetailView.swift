@@ -14,8 +14,12 @@ struct CollectionDetailView: View {
             } else if let collection = collection {
                 List {
                     ForEach(collection.items ?? []) { item in
-                        NavigationLink(destination: ExpressionDetailView(expression: item.expression)) {
-                            ExpressionCardView(expression: item.expression)
+                        if let expression = item.expression {
+                            NavigationLink(
+                                destination: ExpressionDetailView(expression: expression)
+                            ) {
+                                ExpressionCardView(expression: expression)
+                            }
                         }
                     }
                 }
@@ -37,8 +41,10 @@ struct CollectionDetailView: View {
 
         Task {
             do {
-                let request = NetworkService.shared.createRequest(endpoint: "/collections/\(collectionId)")
-                let response: CollectionDetail = try await NetworkService.shared.performRequest(request, responseType: CollectionDetail.self)
+                let request = NetworkService.shared.createRequest(
+                    endpoint: "/collections/\(collectionId)")
+                let response: CollectionDetail = try await NetworkService.shared.performRequest(
+                    request, responseType: CollectionDetail.self)
 
                 await MainActor.run {
                     self.collection = response

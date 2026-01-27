@@ -24,17 +24,14 @@ struct CollectionItem: Codable, Identifiable {
     let expressionId: Int
     let note: String?
     let createdAt: String
+    let expression: Expression?
 
     enum CodingKeys: String, CodingKey {
-        case id, note
+        case id, note, expression
         case collectionId = "collection_id"
         case expressionId = "expression_id"
         case createdAt = "created_at"
     }
-}
-
-extension CollectionItem: RandomAccessCollection {
-    typealias Element = CollectionItem
 }
 
 struct CollectionDetail: Codable {

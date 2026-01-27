@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 class SearchViewModel: ObservableObject {
     private let networkService = NetworkService.shared
@@ -16,7 +16,8 @@ class SearchViewModel: ObservableObject {
         Task {
             do {
                 let request = networkService.createRequest(endpoint: "/languages")
-                let response: [Language] = try await networkService.performRequest(request, responseType: [Language].self)
+                let response: [Language] = try await networkService.performRequest(
+                    request, responseType: [Language].self)
 
                 await MainActor.run {
                     self.languages = response.filter { $0.isActive == 1 }
@@ -39,7 +40,8 @@ class SearchViewModel: ObservableObject {
             isLoading = true
 
             do {
-                var endpoint = "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                var endpoint =
+                    "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 
                 if let langCode = selectedLanguage?.code {
                     endpoint += "&from_lang=\(langCode)"
@@ -48,7 +50,8 @@ class SearchViewModel: ObservableObject {
                 print("Search endpoint: \(endpoint)")
 
                 let request = networkService.createRequest(endpoint: endpoint)
-                let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
+                let response: [Expression] = try await networkService.performRequest(
+                    request, responseType: [Expression].self)
 
                 print("Search results count: \(response.count)")
 
@@ -59,6 +62,7 @@ class SearchViewModel: ObservableObject {
                     }
                 }
             } catch {
+                print("Search failed: \(error)")
                 if !Task.isCancelled {
                     await MainActor.run {
                         self.searchResults = []
