@@ -3,7 +3,7 @@ import Combine
 
 class NetworkService: ObservableObject {
     static let shared = NetworkService()
-    private let baseURL = "https://api.langmap.com/api/v1"
+    private let baseURL = "https://langmap.io/api/v1"
 
     @Published var authToken: String? {
         didSet {
