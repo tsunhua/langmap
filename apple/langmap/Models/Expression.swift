@@ -3,7 +3,7 @@ import Foundation
 struct Expression: Codable, Identifiable {
     let id: Int
     let text: String
-    let meaningId: Int?
+    let meaningId: Int
     let audioUrl: String?
     let languageCode: String
     let regionCode: String?
@@ -16,7 +16,7 @@ struct Expression: Codable, Identifiable {
     let reviewStatus: String?
     let createdBy: String?
     let createdAt: String
-    let updatedAt: String?
+    let updatedAt: String
 
     var phrase: String {
         return text
@@ -27,8 +27,7 @@ struct Expression: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, tags
-        case meaningId = "meaning_id"
+        case id, text, tags, meaningId
         case audioUrl = "audio_url"
         case languageCode = "language_code"
         case regionCode = "region_code"
