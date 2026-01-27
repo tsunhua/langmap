@@ -5,22 +5,20 @@ struct ExpressionCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(expression.phrase)
+            Text(expression.text)
                 .font(.headline)
 
-            Text(expression.translation)
+            Text("")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            if let language = expression.language {
-                HStack {
-                    Image(systemName: "globe")
-                        .font(.caption)
-                    Text(language.nativeName ?? language.name)
-                        .font(.caption)
-                }
-                .foregroundColor(.secondary)
+            HStack {
+                Image(systemName: "globe")
+                    .font(.caption)
+                Text(expression.languageCode)
+                    .font(.caption)
             }
+            .foregroundColor(.secondary)
         }
         .padding()
         .background(Color.gray.opacity(0.1))
