@@ -29,7 +29,8 @@ struct Expression: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, tags, origin, usage, meaningId
+        case id, text, tags, origin, usage
+        case meaningId = "meaning_id"
         case audioUrl = "audio_url"
         case languageCode = "language_code"
         case regionCode = "region_code"
