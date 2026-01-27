@@ -1,27 +1,35 @@
 import SwiftUI
 
 struct ExpressionCardView: View {
-    let expression: Expression
+    let expression: LMLexiconExpression
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(expression.text)
-                .font(.headline)
+        HStack(spacing: 15) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(expression.text)
+                    .font(.system(.title3, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
 
-            Text("")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            HStack {
-                Image(systemName: "globe")
-                    .font(.caption)
-                Text(expression.languageCode)
-                    .font(.caption)
+                if let meaning = expression.meaningId != 0 ? "\(expression.meaningId)" : nil {
+                    Text(meaning)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
-            .foregroundColor(.secondary)
+
+            Spacer()
+
+            Text(expression.languageCode.uppercased())
+                .font(.system(.caption2, design: .monospaced))
+                .fontWeight(.heavy)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(AppTheme.primaryGradient)
+                .foregroundColor(.white)
+                .cornerRadius(8)
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(10)
+        .glassCardStyle()
+        .padding(.horizontal)
     }
 }

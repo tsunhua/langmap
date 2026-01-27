@@ -1,98 +1,123 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @EnvironmentObject var authService: AuthService
+    @StateObject private var authService = AuthService()
     @State private var showingLogoutAlert = false
 
     var body: some View {
         NavigationView {
-            List {
-                Section {
-                    if let user = authService.currentUser {
-                        HStack {
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .frame(width: 60, height: 60)
-                                .foregroundColor(.blue)
+            VStack {
+                if let user = authService.currentUser {
+                    ScrollView {
+                        VStack(spacing: 25) {
+                            // Profile Header
+                            VStack(spacing: 15) {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 80))
+                                    .foregroundColor(.accentColor)
 
-                            VStack(alignment: .leading) {
                                 Text(user.username)
-                                    .font(.headline)
+                                    .font(.title)
+                                    .fontWeight(.bold)
 
                                 Text(user.email)
-                                    .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                        }
-                    } else {
-                        HStack {
-                            Image(systemName: "person.circle")
-                                .resizable()
-                                .frame(width: 60, height: 60)
-                                .foregroundColor(.gray)
+                            .padding(.top, 40)
 
-                            Text("Guest")
-                                .font(.headline)
+                            // Stats/Info Section
+                            VStack(spacing: 0) {
+                                ProfileRow(
+                                    icon: "calendar", title: "joined".localized,
+                                    value: formatDate(user.createdAt))
+                                Divider().padding(.leading, 50)
+                                ProfileRow(
+                                    icon: "shield.fill", title: "role".localized,
+                                    value: user.role.capitalized
+                                )
+                            }
+                            .glassCardStyle()
+                            .padding(.horizontal)
+
+                            // Actions
+                            VStack(spacing: 12) {
+                                Button(action: { showingLogoutAlert = true }) {
+                                    HStack {
+                                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                                        Text("logout".localized)
+                                        Spacer()
+                                    }
+                                    .foregroundColor(.red)
+                                    .padding()
+                                    .background(Color.red.opacity(0.1))
+                                    .cornerRadius(12)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
                     }
-                }
-
-                Section("Settings") {
-                    HStack {
-                        Image(systemName: "globe")
-                        Text("Language")
-                        Spacer()
-                        Text("English")
+                } else {
+                    VStack(spacing: 20) {
+                        Image(systemName: "person.crop.circle.badge.questionmark")
+                            .font(.system(size: 80))
                             .foregroundColor(.secondary)
-                    }
 
-                    HStack {
-                        Image(systemName: "bell")
-                        Text("Notifications")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
+                        Text("not_logged_in".localized)
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        Text("login_prompt".localized)
+                            .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
-                    }
-                }
-
-                Section("About") {
-                    HStack {
-                        Image(systemName: "info.circle")
-                        Text("About LangMap")
-                    }
-
-                    HStack {
-                        Image(systemName: "questionmark.circle")
-                        Text("Help & Support")
-                    }
-
-                    HStack {
-                        Image(systemName: "star")
-                        Text("Rate App")
-                    }
-                }
-
-                Section {
-                    Button(action: { showingLogoutAlert = true }) {
-                        HStack {
-                            Image(systemName: "arrow.right.square")
-                                .foregroundColor(.red)
-                            Text("Log Out")
-                                .foregroundColor(.red)
-                        }
+                            .padding(.horizontal)
                     }
                 }
             }
-            .navigationTitle("Profile")
-            .alert("Log Out", isPresented: $showingLogoutAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Log Out", role: .destructive) {
+            .navigationTitle("nav_profile".localized)
+            .alert("logout".localized, isPresented: $showingLogoutAlert) {
+                Button("logout".localized, role: .destructive) {
                     authService.logout()
                 }
+                Button("cancel".localized, role: .cancel) {}
             } message: {
-                Text("Are you sure you want to log out?")
+                Text("logout_confirmation".localized)
             }
         }
+    }
+
+    private func formatDate(_ dateString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        if let date = formatter.date(from: dateString) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .long
+            return displayFormatter.string(from: date)
+        }
+        return dateString
+    }
+}
+
+struct ProfileRow: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 15) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.accentColor)
+                .frame(width: 30)
+
+            Text(title)
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            Text(value)
+                .foregroundColor(.secondary)
+        }
+        .padding()
     }
 }

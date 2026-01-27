@@ -6,8 +6,15 @@ struct langmapApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environmentObject(authService)
+            Group {
+                if authService.isAuthenticated {
+                    MainTabView()
+                } else {
+                    LoginView()
+                }
+            }
+            .environmentObject(authService)
+            .environmentObject(LocalizationManager.shared)
         }
     }
 }

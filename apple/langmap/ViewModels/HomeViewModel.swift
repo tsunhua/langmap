@@ -1,13 +1,13 @@
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 class HomeViewModel: ObservableObject {
     private let networkService = NetworkService.shared
 
-    @Published var featuredExpressions: [Expression] = []
-    @Published var languages: [Language] = []
-    @Published var selectedLanguage: Language?
+    @Published var featuredExpressions: [LMLexiconExpression] = []
+    @Published var languages: [LMLexiconLanguage] = []
+    @Published var selectedLanguage: LMLexiconLanguage?
     @Published var isLoading = false
     @Published var errorMessage = ""
 
@@ -17,7 +17,8 @@ class HomeViewModel: ObservableObject {
         Task {
             do {
                 let request = networkService.createRequest(endpoint: "/languages")
-                let response: [Language] = try await networkService.performRequest(request, responseType: [Language].self)
+                let response: [LMLexiconLanguage] = try await networkService.performRequest(
+                    request, responseType: [LMLexiconLanguage].self)
 
                 await MainActor.run {
                     self.languages = response.filter { $0.isActive == 1 }
@@ -46,8 +47,9 @@ class HomeViewModel: ObservableObject {
                     endpoint += "&language=\(langCode)"
                 }
 
-                 let request = networkService.createRequest(endpoint: endpoint)
-                let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
+                let request = networkService.createRequest(endpoint: endpoint)
+                let response: [LMLexiconExpression] = try await networkService.performRequest(
+                    request, responseType: [LMLexiconExpression].self)
 
                 await MainActor.run {
                     self.featuredExpressions = response

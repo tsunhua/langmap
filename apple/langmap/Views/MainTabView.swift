@@ -5,22 +5,22 @@ struct MainTabView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("nav_home".localized, systemImage: "house.fill")
                 }
 
             SearchView()
                 .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
+                    Label("nav_search".localized, systemImage: "magnifyingglass")
                 }
 
             CollectionsView()
                 .tabItem {
-                    Label("Collections", systemImage: "folder.fill")
+                    Label("nav_collections".localized, systemImage: "folder.fill")
                 }
 
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.fill")
+                    Label("nav_profile".localized, systemImage: "person.fill")
                 }
         }
     }

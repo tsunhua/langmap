@@ -9,24 +9,24 @@ struct CreateCollectionSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Collection Info")) {
-                    TextField("Name", text: $name)
+                Section(header: Text("details".localized)) {
+                    TextField("collection_name".localized, text: $name)
 
-                    TextField("Description (optional)", text: $description)
+                    TextField("collection_description".localized, text: $description)
                         .lineLimit(3...5)
                 }
             }
-            .navigationTitle("New Collection")
+            .navigationTitle("new_collection".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button("cancel".localized) {
                         isPresented = false
                     }
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Create") {
+                    Button("create".localized) {
                         onCreate()
                     }
                     .disabled(name.isEmpty)

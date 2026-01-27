@@ -1,10 +1,10 @@
-import Foundation
 import Combine
+import Foundation
 
 class CollectionsViewModel: ObservableObject {
     private let networkService = NetworkService.shared
 
-    @Published var collections: [Collection] = []
+    @Published var collections: [LMCollection] = []
     @Published var isLoading = false
     @Published var errorMessage = ""
     @Published var showCreateCollection = false
@@ -15,7 +15,8 @@ class CollectionsViewModel: ObservableObject {
         Task {
             do {
                 let request = networkService.createRequest(endpoint: "/collections")
-                let response: [Collection] = try await networkService.performRequest(request, responseType: [Collection].self)
+                let response: [LMCollection] = try await networkService.performRequest(
+                    request, responseType: [LMCollection].self)
 
                 await MainActor.run {
                     self.collections = response
@@ -35,12 +36,13 @@ class CollectionsViewModel: ObservableObject {
 
         let collectionData: [String: Any] = [
             "name": name,
-            "description": description
+            "description": description,
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: collectionData)
 
-        let _: Collection = try await networkService.performRequest(request, responseType: Collection.self)
+        let _: LMCollection = try await networkService.performRequest(
+            request, responseType: LMCollection.self)
         loadCollections()
     }
 }

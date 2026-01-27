@@ -8,9 +8,9 @@ struct SearchView: View {
             VStack(spacing: 0) {
                 HStack {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.accentColor)
 
-                    TextField("Search expressions...", text: $viewModel.searchQuery)
+                    TextField("search_placeholder".localized, text: $viewModel.searchQuery)
                         .textFieldStyle(PlainTextFieldStyle())
                         .onChange(of: viewModel.searchQuery) { _, _ in
                             viewModel.search()
@@ -24,7 +24,8 @@ struct SearchView: View {
                     }
                 }
                 .padding()
-                .background(Color(UIColor.systemBackground))
+                .glassCardStyle()
+                .padding()
 
                 Divider()
 
@@ -52,7 +53,7 @@ struct SearchView: View {
                     .padding(.vertical, 8)
                 }
 
-                 if viewModel.isLoading {
+                if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.searchResults.isEmpty && !viewModel.searchQuery.isEmpty {
@@ -60,7 +61,7 @@ struct SearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 50))
                             .foregroundColor(.secondary)
-                        Text("No results found")
+                        Text("no_results".localized)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,14 +70,16 @@ struct SearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 50))
                             .foregroundColor(.secondary)
-                        Text("Start typing to search")
+                        Text("start_typing".localized)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List {
-                        ForEach(viewModel.searchResults) { expression in
-                            NavigationLink(destination: ExpressionDetailView(expression: expression)) {
+                        ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
+                            NavigationLink(
+                                destination: ExpressionDetailView(expression: expression)
+                            ) {
                                 ExpressionCardView(expression: expression)
                             }
                         }
@@ -84,7 +87,7 @@ struct SearchView: View {
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("Search")
+            .navigationTitle("nav_search".localized)
             .onAppear {
                 if viewModel.languages.isEmpty {
                     viewModel.loadLanguages()
@@ -95,19 +98,27 @@ struct SearchView: View {
 }
 
 struct LanguageFilterView: View {
-    let language: Language
+    let language: LMLexiconLanguage
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(language.nativeName ?? language.name)
-                .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
+                .font(.system(.caption, design: .rounded))
+                .fontWeight(.bold)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    isSelected
+                        ? AnyShapeStyle(AppTheme.primaryGradient)
+                        : AnyShapeStyle(Color.primary.opacity(0.05))
+                )
                 .foregroundColor(isSelected ? .white : .primary)
-                .cornerRadius(15)
+                .cornerRadius(20)
+                .shadow(
+                    color: isSelected ? Color.accentColor.opacity(0.3) : Color.clear, radius: 5,
+                    x: 0, y: 3)
         }
     }
 }

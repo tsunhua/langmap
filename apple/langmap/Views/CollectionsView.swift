@@ -18,23 +18,25 @@ struct CollectionsView: View {
                             .font(.system(size: 60))
                             .foregroundColor(.secondary)
 
-                        Text("No collections yet")
+                        Text("no_collections".localized)
                             .font(.title2)
                             .foregroundColor(.secondary)
 
-                        Text("Create your first collection to save expressions")
+                        Text("create_first_collection".localized)
                             .foregroundColor(.secondary)
                     }
                 } else {
                     List(viewModel.collections) { collection in
-                        NavigationLink(destination: CollectionDetailView(collectionId: collection.id)) {
+                        NavigationLink(
+                            destination: CollectionDetailView(collectionId: collection.id)
+                        ) {
                             CollectionCardView(collection: collection)
                         }
                     }
                     .listStyle(PlainListStyle())
                 }
             }
-            .navigationTitle("Collections")
+            .navigationTitle("nav_collections".localized)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingCreateCollection = true }) {
@@ -76,7 +78,7 @@ struct CollectionsView: View {
 }
 
 struct CollectionCardView: View {
-    let collection: Collection
+    let collection: LMCollection
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
