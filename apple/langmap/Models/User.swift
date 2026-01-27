@@ -2,16 +2,18 @@ import Foundation
 
 struct User: Codable {
     let id: Int
-    let email: String
     let username: String
+    let email: String
+    let role: String
+    let emailVerified: Int
     let createdAt: String
-    let emailVerified: Int?
-    let role: String?
+    let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
-        case id, email, username, role
-        case createdAt = "created_at"
+        case id, username, email, role
         case emailVerified = "email_verified"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
     }
 }
 
