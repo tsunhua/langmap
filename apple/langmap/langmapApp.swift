@@ -1,32 +1,21 @@
-//
-//  langmapApp.swift
-//  langmap
-//
-//  Created by Share Lim on 2026/1/27.
-//
-
 import SwiftUI
-import SwiftData
+import CoreData
 
 @main
 struct langmapApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    let persistenceController = PersistenceController.shared
+    @StateObject private var authService = AuthService()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if authService.isAuthenticated {
+                MainTabView()
+                    .environmentObject(authService)
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            } else {
+                LoginView()
+                    .environmentObject(authService)
+            }
         }
-        .modelContainer(sharedModelContainer)
     }
 }
