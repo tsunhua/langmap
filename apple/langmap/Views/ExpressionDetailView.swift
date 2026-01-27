@@ -10,22 +10,13 @@ struct ExpressionDetailView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                VStack(alignment: .leading) {
+                 VStack(alignment: .leading) {
                     Text("Translation")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
                     Text(expression.translation)
                         .font(.title2)
-                }
-
-                if let language = expression.language {
-                    HStack {
-                        Image(systemName: "globe")
-                        Text(language.nativeName ?? language.name)
-                    }
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
                 }
 
                 Divider()
