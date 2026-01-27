@@ -14,9 +14,13 @@ struct Expression: Codable, Identifiable {
     let regionName: String?
     let regionLatitude: Double?
     let regionLongitude: Double?
+    let text: String
+    let tags: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, phrase, translation, origin, usage, language
+        case id, origin, usage, language, tags, text
+        case phrase = "text"
+        case translation
         case languageCode = "language_code"
         case createdAt = "created_at"
         case meaningId = "meaning_id"
