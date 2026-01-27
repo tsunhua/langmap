@@ -33,6 +33,10 @@ struct CollectionItem: Codable, Identifiable {
     }
 }
 
+extension CollectionItem: RandomAccessCollection {
+    typealias Element = CollectionItem
+}
+
 struct CollectionDetail: Codable {
     let id: Int
     let userId: Int
