@@ -52,21 +52,33 @@ struct SearchView: View {
                     .padding(.vertical, 8)
                 }
 
-                if viewModel.isLoading {
+                 if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.searchResults.isEmpty && !viewModel.searchQuery.isEmpty {
-                    Text("No results found")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 50))
+                            .foregroundColor(.secondary)
+                        Text("No results found")
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.searchResults.isEmpty {
-                    Text("Start typing to search")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 50))
+                            .foregroundColor(.secondary)
+                        Text("Start typing to search")
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List(viewModel.searchResults) { expression in
-                        NavigationLink(destination: ExpressionDetailView(expression: expression)) {
-                            ExpressionCardView(expression: expression)
+                    List {
+                        ForEach(viewModel.searchResults) { expression in
+                            NavigationLink(destination: ExpressionDetailView(expression: expression)) {
+                                ExpressionCardView(expression: expression)
+                            }
                         }
                     }
                     .listStyle(PlainListStyle())

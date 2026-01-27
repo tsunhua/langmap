@@ -45,8 +45,12 @@ class SearchViewModel: ObservableObject {
                     endpoint += "&from_lang=\(langCode)"
                 }
 
+                print("Search endpoint: \(endpoint)")
+
                 let request = networkService.createRequest(endpoint: endpoint)
                 let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
+
+                print("Search results count: \(response.count)")
 
                 if !Task.isCancelled {
                     await MainActor.run {
