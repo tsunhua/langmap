@@ -41,6 +41,6 @@ class CollectionsViewModel: ObservableObject {
         request.httpBody = try JSONSerialization.data(withJSONObject: collectionData)
 
         let _: Collection = try await networkService.performRequest(request, responseType: Collection.self)
-        await loadCollections()
+        loadCollections()
     }
 }

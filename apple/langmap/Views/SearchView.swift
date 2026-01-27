@@ -12,7 +12,7 @@ struct SearchView: View {
 
                     TextField("Search expressions...", text: $viewModel.searchQuery)
                         .textFieldStyle(PlainTextFieldStyle())
-                        .onChange(of: viewModel.searchQuery) { _ in
+                        .onChange(of: viewModel.searchQuery) { _, _ in
                             viewModel.search()
                         }
 

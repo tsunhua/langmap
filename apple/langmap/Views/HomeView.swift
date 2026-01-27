@@ -15,7 +15,7 @@ struct HomeView: View {
                         }
                         .pickerStyle(MenuPickerStyle())
                         .padding(.horizontal)
-                        .onChange(of: viewModel.selectedLanguage) { _ in
+                        .onChange(of: viewModel.selectedLanguage) { _, _ in
                             viewModel.loadFeaturedExpressions()
                         }
                     }
