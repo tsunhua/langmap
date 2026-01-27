@@ -12,9 +12,11 @@ struct CollectionDetailView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let collection = collection {
-                List(collection.items) { item in
-                    NavigationLink(destination: ExpressionDetailView(expression: item)) {
-                        ExpressionCardView(expression: item)
+                List {
+                    ForEach(collection.items ?? []) { item in
+                        NavigationLink(destination: ExpressionDetailView(expression: item.expression)) {
+                            ExpressionCardView(expression: item.expression)
+                        }
                     }
                 }
                 .listStyle(PlainListStyle())
