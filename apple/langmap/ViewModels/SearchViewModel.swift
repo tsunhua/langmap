@@ -39,29 +39,19 @@ class SearchViewModel: ObservableObject {
             isLoading = true
 
             do {
-                let endpoint = "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                var endpoint = "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 
                 if let langCode = selectedLanguage?.code {
-                    let langParam = "&from_lang=\(langCode)"
-                    let finalEndpoint = endpoint + langParam
-                    let request = networkService.createRequest(endpoint: finalEndpoint)
-                    let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
+                    endpoint += "&from_lang=\(langCode)"
+                }
 
-                    if !Task.isCancelled {
-                        await MainActor.run {
-                            self.searchResults = response
-                            self.isLoading = false
-                        }
-                    }
-                } else {
-                    let request = networkService.createRequest(endpoint: endpoint)
-                    let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
+                let request = networkService.createRequest(endpoint: endpoint)
+                let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
 
-                    if !Task.isCancelled {
-                        await MainActor.run {
-                            self.searchResults = response
-                            self.isLoading = false
-                        }
+                if !Task.isCancelled {
+                    await MainActor.run {
+                        self.searchResults = response
+                        self.isLoading = false
                     }
                 }
             } catch {
