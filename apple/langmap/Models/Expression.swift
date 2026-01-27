@@ -29,6 +29,33 @@ struct Expression: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
+        case id, text, tags, origin, usage, meaningId
+        case audioUrl = "audio_url"
+        case languageCode = "language_code"
+        case regionCode = "region_code"
+        case regionName = "region_name"
+        case regionLatitude = "region_latitude"
+        case regionLongitude = "region_longitude"
+        case sourceType = "source_type"
+        case sourceRef = "source_ref"
+        case reviewStatus = "review_status"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+struct ExpressionListResponse: Codable {
+    let data: [Expression]
+    let total: Int
+    let page: Int
+}
+
+    var translation: String {
+        return ""
+    }
+
+    enum CodingKeys: String, CodingKey {
         case id, text, tags, origin, usage
         case meaningId = "meaning_id"
         case audioUrl = "audio_url"
