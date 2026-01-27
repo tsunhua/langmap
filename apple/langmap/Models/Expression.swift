@@ -18,9 +18,7 @@ struct Expression: Codable, Identifiable {
     let tags: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, origin, usage, language, tags, text
-        case phrase = "text"
-        case translation
+        case id, phrase, translation, origin, usage, language, tags
         case languageCode = "language_code"
         case createdAt = "created_at"
         case meaningId = "meaning_id"
