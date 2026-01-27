@@ -19,7 +19,7 @@ class NetworkService: ObservableObject {
         authToken = KeychainHelper.load(key: "authToken")
     }
 
-    private func createRequest(endpoint: String, method: String = "GET") -> URLRequest {
+    func createRequest(endpoint: String, method: String = "GET") -> URLRequest {
         var request = URLRequest(url: URL(string: "\(baseURL)\(endpoint)")!)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
