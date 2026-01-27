@@ -2,30 +2,45 @@ import Foundation
 
 struct Expression: Codable, Identifiable {
     let id: Int
-    let phrase: String
-    let translation: String
-    let languageCode: String
-    let origin: String?
-    let usage: String?
-    let createdAt: String
-    let language: Language?
+    let text: String
     let meaningId: Int?
+    let audioUrl: String?
+    let languageCode: String
     let regionCode: String?
     let regionName: String?
     let regionLatitude: Double?
     let regionLongitude: Double?
-    let text: String
     let tags: String?
+    let sourceType: String?
+    let sourceRef: String?
+    let reviewStatus: String?
+    let createdBy: String?
+    let createdAt: String
+    let updatedAt: String?
+
+    var phrase: String {
+        return text
+    }
+
+    var translation: String {
+        return ""
+    }
 
     enum CodingKeys: String, CodingKey {
-        case id, phrase, translation, origin, usage, language, tags
-        case languageCode = "language_code"
-        case createdAt = "created_at"
+        case id, text, tags
         case meaningId = "meaning_id"
+        case audioUrl = "audio_url"
+        case languageCode = "language_code"
         case regionCode = "region_code"
         case regionName = "region_name"
         case regionLatitude = "region_latitude"
         case regionLongitude = "region_longitude"
+        case sourceType = "source_type"
+        case sourceRef = "source_ref"
+        case reviewStatus = "review_status"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
     }
 }
 
