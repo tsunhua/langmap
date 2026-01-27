@@ -21,8 +21,8 @@ class AuthService: ObservableObject {
         request.httpBody = try JSONEncoder().encode(credentials)
 
         let response: AuthResponse = try await networkService.performRequest(request, responseType: AuthResponse.self)
-        networkService.authToken = response.token
-        currentUser = response.user
+        networkService.authToken = response.data.token
+        currentUser = response.data.user
         isAuthenticated = true
     }
 
@@ -36,8 +36,8 @@ class AuthService: ObservableObject {
         request.httpBody = try JSONEncoder().encode(userData)
 
         let response: AuthResponse = try await networkService.performRequest(request, responseType: AuthResponse.self)
-        networkService.authToken = response.token
-        currentUser = response.user
+        networkService.authToken = response.data.token
+        currentUser = response.data.user
         isAuthenticated = true
     }
 

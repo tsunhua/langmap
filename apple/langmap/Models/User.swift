@@ -8,6 +8,11 @@ struct User: Codable {
 }
 
 struct AuthResponse: Codable {
+    let success: Bool
+    let data: AuthData
+}
+
+struct AuthData: Codable {
     let token: String
     let user: User
 }
