@@ -46,11 +46,11 @@ class HomeViewModel: ObservableObject {
                     endpoint += "&language=\(langCode)"
                 }
 
-                let request = networkService.createRequest(endpoint: endpoint)
-                let response: ExpressionListResponse = try await networkService.performRequest(request, responseType: ExpressionListResponse.self)
+                 let request = networkService.createRequest(endpoint: endpoint)
+                let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
 
                 await MainActor.run {
-                    self.featuredExpressions = response.data
+                    self.featuredExpressions = response
                     self.isLoading = false
                 }
             } catch {
