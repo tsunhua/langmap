@@ -10,8 +10,29 @@ struct CollectionsView: View {
         NavigationView {
             ZStack {
                 if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack {
+                        ProgressView()
+                        Text("Loading collections...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !viewModel.errorMessage.isEmpty {
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 60))
+                            .foregroundColor(.red)
+
+                        Text(viewModel.errorMessage)
+                            .multilineTextAlignment(.center)
+                            .padding()
+
+                        Button("Retry") {
+                            viewModel.loadCollections()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding()
                 } else if viewModel.collections.isEmpty {
                     VStack(spacing: 20) {
                         Image(systemName: "folder")
@@ -26,14 +47,19 @@ struct CollectionsView: View {
                             .foregroundColor(.secondary)
                     }
                 } else {
-                    List(viewModel.collections) { collection in
-                        NavigationLink(
-                            destination: CollectionDetailView(collectionId: collection.id)
-                        ) {
-                            CollectionCardView(collection: collection)
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(viewModel.collections) { collection in
+                                NavigationLink(
+                                    destination: CollectionDetailView(collectionId: collection.id)
+                                ) {
+                                    CollectionCardView(collection: collection)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
+                        .padding()
                     }
-                    .listStyle(PlainListStyle())
                 }
             }
             .navigationTitle("nav_collections".localized)
@@ -53,9 +79,7 @@ struct CollectionsView: View {
                 )
             }
             .onAppear {
-                if viewModel.collections.isEmpty {
-                    viewModel.loadCollections()
-                }
+                viewModel.loadCollections()
             }
         }
     }

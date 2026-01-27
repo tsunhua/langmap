@@ -4,10 +4,10 @@ import SwiftUI
 
 // MARK: - Localization
 
-public class LocalizationManager: ObservableObject {
-    public static let shared = LocalizationManager()
+class LocalizationManager: ObservableObject {
+    static let shared = LocalizationManager()
 
-    @Published public var currentLanguage: String = "en-US" {
+    @Published var currentLanguage: String = "en-US" {
         didSet {
             UserDefaults.standard.set(currentLanguage, forKey: "appLanguage")
             loadLocalizations()
@@ -40,42 +40,42 @@ public class LocalizationManager: ObservableObject {
         }
     }
 
-    public func localize(_ key: String) -> String {
+    func localize(_ key: String) -> String {
         return localizations[currentLanguage]?[key] ?? localizations["en-US"]?[key] ?? key
     }
 
-    public static func L(_ key: String) -> String {
+    static func L(_ key: String) -> String {
         return shared.localize(key)
     }
 }
 
 // MARK: - Core Models
 
-public struct LMLexiconExpression: Codable, Identifiable {
-    public let id: Int
-    public let text: String
-    public let meaningId: Int
-    public let audioUrl: String?
-    public let languageCode: String
-    public let regionCode: String?
-    public let regionName: String?
-    public let regionLatitude: Double?
-    public let regionLongitude: Double?
-    public let tags: String?
-    public let sourceType: String?
-    public let sourceRef: String?
-    public let reviewStatus: String?
-    public let createdBy: String?
-    public let createdAt: String
-    public let updatedAt: String
-    public let origin: String?
-    public let usage: String?
+struct LMLexiconExpression: Codable, Identifiable {
+    let id: Int
+    let text: String
+    let meaningId: Int
+    let audioUrl: String?
+    let languageCode: String
+    let regionCode: String?
+    let regionName: String?
+    let regionLatitude: Double?
+    let regionLongitude: Double?
+    let tags: String?
+    let sourceType: String?
+    let sourceRef: String?
+    let reviewStatus: String?
+    let createdBy: String?
+    let createdAt: String
+    let updatedAt: String
+    let origin: String?
+    let usage: String?
 
-    public var phrase: String {
+    var phrase: String {
         return text
     }
 
-    public var translation: String {
+    var translation: String {
         return ""
     }
 
@@ -97,29 +97,23 @@ public struct LMLexiconExpression: Codable, Identifiable {
     }
 }
 
-public struct ExpressionListResponse: Codable {
-    public let data: [LMLexiconExpression]
-    public let total: Int
-    public let page: Int
-}
+struct LMLexiconLanguage: Codable, Identifiable, Hashable {
+    let id: Int
+    let code: String
+    let name: String
+    let direction: String
+    let family: String?
+    let notes: String?
+    let isActive: Int
+    let regionCode: String?
+    let regionName: String?
+    let regionLatitude: Double?
+    let regionLongitude: Double?
+    let createdBy: String?
+    let createdAt: String
+    let updatedAt: String?
 
-public struct LMLexiconLanguage: Codable, Identifiable, Hashable {
-    public let id: Int
-    public let code: String
-    public let name: String
-    public let direction: String
-    public let family: String?
-    public let notes: String?
-    public let isActive: Int
-    public let regionCode: String?
-    public let regionName: String?
-    public let regionLatitude: Double?
-    public let regionLongitude: Double?
-    public let createdBy: String?
-    public let createdAt: String
-    public let updatedAt: String?
-
-    public var nativeName: String? {
+    var nativeName: String? {
         return name
     }
 
@@ -136,14 +130,14 @@ public struct LMLexiconLanguage: Codable, Identifiable, Hashable {
     }
 }
 
-public struct LMCollection: Codable, Identifiable {
-    public let id: Int
-    public let userId: Int
-    public let name: String
-    public let description: String?
-    public let isPublic: Bool
-    public let createdAt: String
-    public let updatedAt: String
+struct LMCollection: Codable, Identifiable {
+    let id: Int
+    let userId: Int
+    let name: String
+    let description: String?
+    let isPublic: Int?
+    let createdAt: String
+    let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id, name, description
@@ -154,14 +148,14 @@ public struct LMCollection: Codable, Identifiable {
     }
 }
 
-public struct CollectionItem: Codable, Identifiable {
-    public let id: Int
-    public let collectionId: Int
-    public let expressionId: Int
-    public let note: String?
-    public let createdAt: String
-    public let updatedAt: String?
-    public let expression: LMLexiconExpression?
+struct CollectionItem: Codable, Identifiable {
+    let id: Int
+    let collectionId: Int
+    let expressionId: Int
+    let note: String?
+    let createdAt: String
+    let updatedAt: String?
+    let expression: LMLexiconExpression?
 
     enum CodingKeys: String, CodingKey {
         case id, note, expression
@@ -172,15 +166,15 @@ public struct CollectionItem: Codable, Identifiable {
     }
 }
 
-public struct CollectionDetail: Codable {
-    public let id: Int
-    public let userId: Int
-    public let name: String
-    public let description: String?
-    public let isPublic: Int
-    public let createdAt: String
-    public let updatedAt: String
-    public let items: [CollectionItem]?
+struct CollectionDetail: Codable {
+    let id: Int
+    let userId: Int
+    let name: String
+    let description: String?
+    let isPublic: Int?
+    let createdAt: String
+    let updatedAt: String?
+    let items: [CollectionItem]?
 
     enum CodingKeys: String, CodingKey {
         case id, name, description, items
@@ -191,14 +185,14 @@ public struct CollectionDetail: Codable {
     }
 }
 
-public struct User: Codable, Identifiable {
-    public let id: Int
-    public let username: String
-    public let email: String
-    public let role: String
-    public let emailVerified: Int
-    public let createdAt: String
-    public let updatedAt: String
+struct User: Codable, Identifiable {
+    let id: Int
+    let username: String
+    let email: String
+    let role: String
+    let emailVerified: Int
+    let createdAt: String
+    let updatedAt: String
 
     enum CodingKeys: String, CodingKey {
         case id, username, email, role
@@ -208,24 +202,28 @@ public struct User: Codable, Identifiable {
     }
 }
 
-public struct AuthResponse: Codable {
-    public let success: Bool
-    public let data: AuthData
+struct AuthResponse: Codable {
+    let success: Bool
+    let data: AuthData
 }
 
-public struct AuthData: Codable {
-    public let token: String
-    public let user: User
+struct AuthData: Codable {
+    let token: String
+    let user: User
 }
 
-public struct ApiError: Codable {
-    public let error: String
+struct LMApiResponse<T: Codable>: Codable {
+    let data: T
+}
+
+struct ApiError: Codable {
+    let error: String
 }
 
 // MARK: - Services
 
-public class KeychainHelper {
-    public static func save(key: String, value: String) {
+class KeychainHelper {
+    static func save(key: String, value: String) {
         let data = Data(value.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -237,7 +235,7 @@ public class KeychainHelper {
         SecItemAdd(query as CFDictionary, nil)
     }
 
-    public static func load(key: String) -> String? {
+    static func load(key: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
@@ -254,7 +252,7 @@ public class KeychainHelper {
         return nil
     }
 
-    public static func delete(key: String) {
+    static func delete(key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
@@ -264,11 +262,11 @@ public class KeychainHelper {
     }
 }
 
-public class NetworkService: ObservableObject {
-    public static let shared = NetworkService()
+class NetworkService: ObservableObject {
+    static let shared = NetworkService()
     private let baseURL = "https://langmap.io/api/v1"
 
-    @Published public var authToken: String? {
+    @Published var authToken: String? {
         didSet {
             if let token = authToken {
                 KeychainHelper.save(key: "authToken", value: token)
@@ -282,7 +280,7 @@ public class NetworkService: ObservableObject {
         authToken = KeychainHelper.load(key: "authToken")
     }
 
-    public func createRequest(endpoint: String, method: String = "GET") -> URLRequest {
+    func createRequest(endpoint: String, method: String = "GET") -> URLRequest {
         var request = URLRequest(url: URL(string: "\(baseURL)\(endpoint)")!)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -294,7 +292,7 @@ public class NetworkService: ObservableObject {
         return request
     }
 
-    public func performRequest<T: Codable>(
+    func performRequest<T: Codable>(
         _ request: URLRequest,
         responseType: T.Type
     ) async throws -> T {
@@ -319,17 +317,29 @@ public class NetworkService: ObservableObject {
     }
 }
 
-public class AuthService: ObservableObject {
+class AuthService: ObservableObject {
     private let networkService = NetworkService.shared
 
-    @Published public var isAuthenticated: Bool = false
-    @Published public var currentUser: User?
+    @Published var isAuthenticated: Bool = false
+    @Published var currentUser: User?
 
-    public init() {
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
         checkAuthStatus()
+        setupAuthObservation()
     }
 
-    public func login(email: String, password: String) async throws {
+    private func setupAuthObservation() {
+        networkService.$authToken
+            .receive(on: RunLoop.main)
+            .sink { [weak self] token in
+                self?.isAuthenticated = token != nil
+            }
+            .store(in: &cancellables)
+    }
+
+    func login(email: String, password: String) async throws {
         var request = networkService.createRequest(
             endpoint: "/auth/login",
             method: "POST"
@@ -345,7 +355,7 @@ public class AuthService: ObservableObject {
         isAuthenticated = true
     }
 
-    public func register(email: String, username: String, password: String) async throws {
+    func register(email: String, username: String, password: String) async throws {
         var request = networkService.createRequest(
             endpoint: "/auth/register",
             method: "POST"
@@ -361,13 +371,13 @@ public class AuthService: ObservableObject {
         isAuthenticated = true
     }
 
-    public func logout() {
+    func logout() {
         networkService.authToken = nil
         currentUser = nil
         isAuthenticated = false
     }
 
-    public func fetchCurrentUser() async throws {
+    func fetchCurrentUser() async throws {
         let request = networkService.createRequest(endpoint: "/auth/me")
         let response: User = try await networkService.performRequest(
             request, responseType: User.self)
@@ -375,19 +385,19 @@ public class AuthService: ObservableObject {
         isAuthenticated = true
     }
 
-    public func checkAuthStatus() {
+    func checkAuthStatus() {
         isAuthenticated = networkService.authToken != nil
     }
 }
 
-public enum NetworkError: Error, LocalizedError {
+enum NetworkError: Error, LocalizedError {
     case invalidResponse
     case unauthorized
     case apiError(String)
     case decodingError
     case networkError(Error)
 
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .invalidResponse:
             return "Invalid response from server"
@@ -405,19 +415,19 @@ public enum NetworkError: Error, LocalizedError {
 
 // MARK: - Theme
 
-public struct AppTheme {
-    public static let primaryGradient: LinearGradient = LinearGradient(
+struct AppTheme {
+    static let primaryGradient: LinearGradient = LinearGradient(
         gradient: Gradient(colors: [Color("6366f1"), Color("a855f7")]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
-    public static let cardBackground = Color.primary.opacity(0.03)
-    public static let secondaryText = Color.secondary
-    public static let cornerRadius: CGFloat = 20
+    static let cardBackground = Color.primary.opacity(0.03)
+    static let secondaryText = Color.secondary
+    static let cornerRadius: CGFloat = 20
 }
 
-public struct GlassCardModifier: ViewModifier {
-    public func body(content: Content) -> some View {
+struct GlassCardModifier: ViewModifier {
+    func body(content: Content) -> some View {
         content
             .padding()
             .background(
@@ -435,19 +445,19 @@ public struct GlassCardModifier: ViewModifier {
 // MARK: - Extensions
 
 extension String {
-    public var localized: String {
+    var localized: String {
         return LocalizationManager.L(self)
     }
 }
 
 extension View {
-    public func glassCardStyle() -> some View {
+    func glassCardStyle() -> some View {
         modifier(GlassCardModifier())
     }
 }
 
 extension Color {
-    public init(_ hex: String) {
+    init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
