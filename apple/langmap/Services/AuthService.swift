@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class AuthService: ObservableObject {
     private let networkService = NetworkService.shared

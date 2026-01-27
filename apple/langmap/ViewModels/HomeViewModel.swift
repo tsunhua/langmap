@@ -1,6 +1,7 @@
 import Foundation
 import CoreData
 import SwiftUI
+import Combine
 
 class HomeViewModel: ObservableObject {
     private let networkService = NetworkService.shared

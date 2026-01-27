@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class SearchViewModel: ObservableObject {
     private let networkService = NetworkService.shared

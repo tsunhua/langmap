@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class NetworkService: ObservableObject {
     static let shared = NetworkService()
