@@ -1,11 +1,9 @@
 import Foundation
-import CoreData
 import SwiftUI
 import Combine
 
 class HomeViewModel: ObservableObject {
     private let networkService = NetworkService.shared
-    private let persistenceController = PersistenceController.shared
 
     @Published var featuredExpressions: [Expression] = []
     @Published var languages: [Language] = []
