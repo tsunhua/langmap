@@ -39,24 +39,35 @@ class SearchViewModel: ObservableObject {
             isLoading = true
 
             do {
-                var endpoint = "/expressions?query=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                let endpoint = "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 
                 if let langCode = selectedLanguage?.code {
-                    endpoint += "&language_code=\(langCode)"
-                }
+                    let langParam = "&from_lang=\(langCode)"
+                    let finalEndpoint = endpoint + langParam
+                    let request = networkService.createRequest(endpoint: finalEndpoint)
+                    let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
 
-                let request = networkService.createRequest(endpoint: endpoint)
-                let response: ExpressionListResponse = try await networkService.performRequest(request, responseType: ExpressionListResponse.self)
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            self.searchResults = response
+                            self.isLoading = false
+                        }
+                    }
+                } else {
+                    let request = networkService.createRequest(endpoint: endpoint)
+                    let response: [Expression] = try await networkService.performRequest(request, responseType: [Expression].self)
 
-                if !Task.isCancelled {
-                    await MainActor.run {
-                        self.searchResults = response.data
-                        self.isLoading = false
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            self.searchResults = response
+                            self.isLoading = false
+                        }
                     }
                 }
             } catch {
                 if !Task.isCancelled {
                     await MainActor.run {
+                        self.searchResults = []
                         self.isLoading = false
                     }
                 }

@@ -28,6 +28,7 @@ class HomeViewModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
+                    self.languages = []
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
@@ -42,7 +43,7 @@ class HomeViewModel: ObservableObject {
             do {
                 var endpoint = "/expressions?limit=10"
                 if let langCode = selectedLanguage?.code {
-                    endpoint += "&language_code=\(langCode)"
+                    endpoint += "&language=\(langCode)"
                 }
 
                 let request = networkService.createRequest(endpoint: endpoint)
@@ -54,6 +55,7 @@ class HomeViewModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
+                    self.featuredExpressions = []
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
