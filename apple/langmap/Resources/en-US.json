@@ -61,5 +61,18 @@
   "add_success": "Added successfully",
   "add_new_expression": "Add New Expression",
   "all_languages": "All",
-  "no_results_hint": "Can't find what you're looking for? Add a new expression!"
+  "no_results_hint": "Can't find what you're looking for? Add a new expression!",
+  "loading_collections": "Loading collections...",
+  "delete_collection": "Delete Collection",
+  "delete_confirmation": "Are you sure you want to delete this collection?",
+  "retry": "Retry",
+  "language_preferences": "Language Preferences",
+  "notifications": "Notifications",
+  "about": "About",
+  "privacy_policy": "Privacy Policy",
+  "expression": "Expression",
+  "tags_optional": "Tags (Optional)",
+  "associate_with_expression_optional": "Associate with Expression (Optional)",
+  "use_current_location": "Use current location",
+  "add_tag_hint": "Max 5 tags, 20 characters each"
 }
