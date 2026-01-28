@@ -58,6 +58,7 @@ struct ExploreView: View {
             }
         }
         .padding(AppSpacing.md)
+        .frame(height: 44) // Explicit height to avoid Auto Layout constraint conflicts
         .background(
             RoundedRectangle(cornerRadius: AppRadius.extraLarge)
                 .fill(.ultraThinMaterial)
