@@ -83,10 +83,15 @@ class ExploreViewModel: ObservableObject {
             guard let self = self else { return }
 
             Task {
-                var endpoint = "/expressions/search?q=\(self.searchQuery)"
+                var components = URLComponents(string: "/expressions/search")
+                var queryItems = [URLQueryItem(name: "q", value: self.searchQuery)]
+
                 if let languageId = self.selectedLanguage?.id {
-                    endpoint += "&language_id=\(languageId)"
+                    queryItems.append(URLQueryItem(name: "language_id", value: "\(languageId)"))
                 }
+
+                components?.queryItems = queryItems
+                let endpoint = components?.url?.absoluteString ?? "/expressions/search"
 
                 do {
                     let request = NetworkService.shared.createRequest(endpoint: endpoint)
