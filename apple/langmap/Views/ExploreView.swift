@@ -56,21 +56,15 @@ struct ExploreView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            }
+        }
         .padding(AppSpacing.md)
-        .frame(height: 44) // Explicit height to avoid Auto Layout constraint conflicts
-        .padding(AppSpacing.md)
-        .frame(height: 44) // Explicit height to avoid Auto Layout constraint conflicts
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.extraLarge)
-                .fill(.ultraThinMaterial)
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        )
+        .background(Color.primary.opacity(0.03))
+        .cornerRadius(AppRadius.extraLarge)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         .padding(.horizontal, AppSpacing.lg)
         .padding(.vertical, AppSpacing.md)
     }
-
-    private var featuredContent: some View {
+        private var featuredContent: some View {
         ScrollView {
             VStack(spacing: AppSpacing.xl) {
                 // Language Filter
