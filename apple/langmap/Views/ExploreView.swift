@@ -39,12 +39,15 @@ struct ExploreView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.accentColor)
+        ZStack(alignment: .leading) {
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.accentColor)
 
-            TextField("search_placeholder".localized, text: $viewModel.searchQuery)
-                .textFieldStyle(PlainTextFieldStyle())
+                TextField("search_placeholder".localized, text: $viewModel.searchQuery)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .frame(maxWidth: .infinity)
+            }
 
             if !viewModel.searchQuery.isEmpty {
                 Button(action: {
@@ -55,18 +58,21 @@ struct ExploreView: View {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
                 }
+                .buttonStyle(PlainButtonStyle())
+                .transition(.opacity)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .padding(AppSpacing.md)
         .frame(height: 44) // Explicit height to avoid Auto Layout constraint conflicts
         .background(
             RoundedRectangle(cornerRadius: AppRadius.extraLarge)
-                .fill(.ultraThinMaterial)
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .padding(.horizontal, AppSpacing.lg)
         .padding(.vertical, AppSpacing.md)
     }
+
+
 
     private var featuredContent: some View {
         ScrollView {
