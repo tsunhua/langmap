@@ -1,75 +1,88 @@
 import SwiftUI
+import Combine
 
 struct ProfileView: View {
     @StateObject private var authService = AuthService()
+    @StateObject private var viewModel = ProfileViewModel()
     @State private var showingLogoutAlert = false
+    @State private var contributionCount: Int = 0
 
     var body: some View {
         NavigationView {
-            VStack {
-                if let user = authService.currentUser {
-                    ScrollView {
-                        VStack(spacing: 25) {
-                            // Profile Header
-                            VStack(spacing: 15) {
-                                Image(systemName: "person.circle.fill")
-                                    .font(.system(size: 80))
-                                    .foregroundColor(.accentColor)
+            ZStack {
+                Color(.systemBackground).ignoresSafeArea()
 
-                                Text(user.username)
-                                    .font(.title)
-                                    .fontWeight(.bold)
+                ScrollView {
+                    VStack(spacing: AppSpacing.xl) {
+                        // User Header
+                        VStack(spacing: AppSpacing.md) {
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 80))
+                                .foregroundColor(.accentColor)
 
-                                Text(user.email)
-                                    .foregroundColor(.secondary)
+                            Text(authService.currentUser?.username ?? "")
+                                .font(.title)
+                                .fontWeight(.bold)
+
+                            Text(authService.currentUser?.email ?? "")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+
+                            if let role = authService.currentUser?.role {
+                                Text(role.capitalized)
+                                    .font(.caption)
+                                    .padding(.horizontal, AppSpacing.sm)
+                                    .padding(.vertical, AppSpacing.xs)
+                                    .background(Color.primary.opacity(0.1))
+                                    .cornerRadius(AppRadius.small)
                             }
-                            .padding(.top, 40)
+                        }
+                        .padding(.top, AppSpacing.xl)
 
-                            // Stats/Info Section
-                            VStack(spacing: 0) {
-                                ProfileRow(
-                                    icon: "calendar", title: "joined".localized,
-                                    value: formatDate(user.createdAt))
-                                Divider().padding(.leading, 50)
-                                ProfileRow(
-                                    icon: "shield.fill", title: "role".localized,
-                                    value: user.role.capitalized
-                                )
-                            }
-                            .glassCardStyle()
-                            .padding(.horizontal)
+                        // Contribution Stats
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                            Text("total_contributions".localized)
+                                .font(.headline)
 
-                            // Actions
-                            VStack(spacing: 12) {
-                                Button(action: { showingLogoutAlert = true }) {
-                                    HStack {
-                                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                                        Text("logout".localized)
-                                        Spacer()
-                                    }
-                                    .foregroundColor(.red)
-                                    .padding()
-                                    .background(Color.red.opacity(0.1))
-                                    .cornerRadius(12)
+                            GlassCard {
+                                HStack {
+                                    Spacer()
+                                    Text("\(contributionCount)")
+                                        .font(.system(size: 48, weight: .bold))
+                                    Spacer()
                                 }
                             }
-                            .padding(.horizontal)
                         }
-                    }
-                } else {
-                    VStack(spacing: 20) {
-                        Image(systemName: "person.crop.circle.badge.questionmark")
-                            .font(.system(size: 80))
-                            .foregroundColor(.secondary)
+                        .padding(.horizontal, AppSpacing.lg)
 
-                        Text("not_logged_in".localized)
-                            .font(.title2)
-                            .fontWeight(.bold)
+                        // Settings List
+                        VStack(spacing: 0) {
+                            SettingsRow(icon: "globe", title: "Language Preferences") {}
+                            Divider().padding(.leading, 50)
+                            SettingsRow(icon: "bell", title: "Notifications") {}
+                            Divider().padding(.leading, 50)
+                            SettingsRow(icon: "info.circle", title: "About") {}
+                            Divider().padding(.leading, 50)
+                            SettingsRow(icon: "hand.raised", title: "Privacy Policy") {}
+                        }
+                        .glassCardStyle()
+                        .padding(.horizontal, AppSpacing.lg)
 
-                        Text("login_prompt".localized)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
+                        // Logout Button
+                        Button(action: { showingLogoutAlert = true }) {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("logout".localized)
+                                Spacer()
+                            }
+                            .foregroundColor(.red)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(AppRadius.medium)
+                        }
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.bottom, AppSpacing.xl)
                     }
                 }
             }
@@ -83,41 +96,64 @@ struct ProfileView: View {
                 Text("logout_confirmation".localized)
             }
         }
+        .onAppear {
+            loadContributionCount()
+        }
     }
 
-    private func formatDate(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        if let date = formatter.date(from: dateString) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.dateStyle = .long
-            return displayFormatter.string(from: date)
+    private func loadContributionCount() {
+        Task {
+            do {
+                let request = NetworkService.shared.createRequest(endpoint: "/user/contributions/count")
+                let response: [String: Int] = try await NetworkService.shared.performRequest(
+                    request, responseType: [String: Int].self
+                )
+                await MainActor.run {
+                    self.contributionCount = response["count"] ?? 0
+                }
+            } catch {
+                // Handle error silently
+            }
         }
-        return dateString
     }
 }
 
-struct ProfileRow: View {
+struct SettingsRow: View {
     let icon: String
     let title: String
-    let value: String
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(.accentColor)
-                .frame(width: 30)
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
+            HStack(spacing: AppSpacing.md) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(.accentColor)
+                    .frame(width: 30)
 
-            Text(title)
-                .foregroundColor(.primary)
+                Text(title)
+                    .foregroundColor(.primary)
 
-            Spacer()
+                Spacer()
 
-            Text(value)
-                .foregroundColor(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(AppSpacing.md)
         }
-        .padding()
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+class ProfileViewModel: ObservableObject {
+    @Published var isLoading = false
+    @Published var errorMessage = ""
+
+    func loadUserProfile() async {
+        // Implementation if needed
     }
 }
