@@ -1,6 +1,9 @@
 import Combine
 import Security
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - Localization
 
@@ -417,13 +420,44 @@ enum NetworkError: Error, LocalizedError {
 
 struct AppTheme {
     static let primaryGradient: LinearGradient = LinearGradient(
-        gradient: Gradient(colors: [Color("6366f1"), Color("a855f7")]),
+        gradient: Gradient(colors: [Color(hex: "6366f1"), Color(hex: "a855f7")]),
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     static let cardBackground = Color.primary.opacity(0.03)
+    static let inputBackground = Color.primary.opacity(0.03)
     static let secondaryText = Color.secondary
-    static let cornerRadius: CGFloat = 20
+
+    // Animation configurations
+    static let standardSpring = Animation.spring(response: 0.3, dampingFraction: 0.7)
+    static let easeInOut = Animation.easeInOut(duration: 0.2)
+    static let bounce = Animation.spring(response: 0.4, dampingFraction: 0.5)
+
+    // Spacing
+    static let cardSpacing: CGFloat = 12
+    static let cardPadding: CGFloat = 16
+}
+
+struct HapticFeedback {
+    static func light() {
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+    }
+
+    static func medium() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+    }
+
+    static func success() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+
+    static func error() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+    }
 }
 
 struct GlassCardModifier: ViewModifier {
@@ -431,12 +465,12 @@ struct GlassCardModifier: ViewModifier {
         content
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                RoundedRectangle(cornerRadius: AppRadius.extraLarge)
                     .fill(AppTheme.cardBackground)
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                RoundedRectangle(cornerRadius: AppRadius.extraLarge)
                     .stroke(Color.primary.opacity(0.05), lineWidth: 1)
             )
     }
