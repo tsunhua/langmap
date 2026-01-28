@@ -3,14 +3,9 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            HomeView()
+            ExploreView()
                 .tabItem {
-                    Label("nav_home".localized, systemImage: "house.fill")
-                }
-
-            SearchView()
-                .tabItem {
-                    Label("nav_search".localized, systemImage: "magnifyingglass")
+                    Label("nav_explore".localized, systemImage: "magnifyingglass.circle.fill")
                 }
 
             CollectionsView()

@@ -4,6 +4,7 @@
   "nav_search": "Search",
   "nav_collections": "Collections",
   "nav_profile": "Profile",
+  "nav_explore": "Explore",
   "login_title": "Sign In",
   "login_subtitle": "Sign in to continue",
   "email": "Email",
@@ -48,5 +49,15 @@
   "login_prompt": "Log in to sync your collections across devices.",
   "go_to_login": "Go to Login",
   "joined": "Joined",
-  "role": "Role"
+  "role": "Role",
+  "start_exploring": "Start Exploring",
+  "search_or_add_hint": "Search expressions or add new ones",
+  "total_contributions": "Total Contributions",
+  "remembered_last_selection": "Last selection remembered",
+  "locating": "Locating...",
+  "location_failed": "Location failed, enter manually",
+  "manual_location_placeholder": "e.g., Beijing, New York",
+  "search_to_associate": "Search expression to associate",
+  "add_success": "Added successfully",
+  "add_new_expression": "Add New Expression"
 }
