@@ -8,6 +8,7 @@ class CollectionsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage = ""
     @Published var showCreateCollection = false
+    @Published var contributionCount: Int = 0
 
     func loadCollections() {
         isLoading = true
@@ -22,11 +23,30 @@ class CollectionsViewModel: ObservableObject {
                     self.collections = response
                     self.isLoading = false
                 }
+
+                // Load contribution count
+                loadContributionCount()
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
+            }
+        }
+    }
+
+    func loadContributionCount() {
+        Task {
+            do {
+                let request = NetworkService.shared.createRequest(endpoint: "/user/contributions/count")
+                let response: [String: Int] = try await NetworkService.shared.performRequest(
+                    request, responseType: [String: Int].self
+                )
+                await MainActor.run {
+                    self.contributionCount = response["count"] ?? 0
+                }
+            } catch {
+                // Handle error silently
             }
         }
     }
@@ -45,4 +65,19 @@ class CollectionsViewModel: ObservableObject {
             request, responseType: LMCollection.self)
         loadCollections()
     }
+
+    func deleteCollection(_ collectionId: Int) async throws {
+        let request = NetworkService.shared.createRequest(
+            endpoint: "/collections/\(collectionId)",
+            method: "DELETE"
+        )
+        let _: EmptyResponse = try await NetworkService.shared.performRequest(
+            request, responseType: EmptyResponse.self
+        )
+        await MainActor.run {
+            collections.removeAll { $0.id == collectionId }
+        }
+    }
 }
+
+struct EmptyResponse: Codable {}
