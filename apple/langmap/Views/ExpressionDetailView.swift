@@ -8,50 +8,58 @@ struct ExpressionDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 25) {
+            VStack(alignment: .leading, spacing: AppSpacing.xl) {
                 // Main Header Card
-                VStack(alignment: .leading, spacing: 15) {
-                    HStack {
-                        Text(expression.text)
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                GlassCard {
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        HStack {
+                            Text(expression.text)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .lineLimit(2)
 
-                        Spacer()
+                            Spacer()
 
-                        Text(expression.languageCode.uppercased())
-                            .font(.system(.caption, design: .monospaced))
-                            .fontWeight(.heavy)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(AppTheme.primaryGradient)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
+                            Text(expression.languageCode.uppercased())
+                                .font(.system(.caption, design: .monospaced))
+                                .fontWeight(.heavy)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(AppTheme.primaryGradient)
+                                .foregroundColor(.white)
+                                .cornerRadius(AppRadius.small)
+                        }
 
-                    if let region = expression.regionName {
-                        Label(region, systemImage: "mappin.and.ellipse")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        if let region = expression.regionName {
+                            Label(region, systemImage: "mappin.and.ellipse")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                .glassCardStyle()
 
                 // Content Sections
                 Group {
                     if let origin = expression.origin, !origin.isEmpty {
                         DetailSection(
-                            title: "origin".localized, content: origin, icon: "text.book.closed")
+                            title: "origin".localized,
+                            content: origin,
+                            icon: "text.book.closed"
+                        )
                     }
 
                     if let usage = expression.usage, !usage.isEmpty {
                         DetailSection(
-                            title: "usage".localized, content: usage, icon: "quote.bubble")
+                            title: "usage".localized,
+                            content: usage,
+                            icon: "quote.bubble"
+                        )
                     }
                 }
 
                 Divider()
 
-                // Associations Section (Functional parity with web meanings)
-                VStack(alignment: .leading, spacing: 15) {
+                // Associations Section
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("associated_expressions".localized)
                         .font(.title3)
                         .fontWeight(.bold)
@@ -62,18 +70,20 @@ struct ExpressionDetailView: View {
                             .padding()
                     } else if associations.isEmpty {
                         Text("no_associated".localized)
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
                     } else {
-                        VStack(spacing: 12) {
+                        VStack(spacing: AppSpacing.md) {
                             ForEach(associations) { assoc in
                                 if assoc.id != expression.id {
                                     NavigationLink(
                                         destination: ExpressionDetailView(expression: assoc)
                                     ) {
-                                        ExpressionCardView(expression: assoc)
+                                        OptimizedExpressionCard(expression: assoc)
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
                             }
                         }
@@ -81,7 +91,7 @@ struct ExpressionDetailView: View {
                 }
 
                 // Metadata
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     Text("metadata".localized)
                         .font(.headline)
 
@@ -103,11 +113,11 @@ struct ExpressionDetailView: View {
                         .foregroundColor(.secondary)
                     }
                 }
-                .padding()
+                .padding(AppSpacing.md)
                 .background(Color.primary.opacity(0.03))
-                .cornerRadius(12)
+                .cornerRadius(AppRadius.medium)
             }
-            .padding()
+            .padding(AppSpacing.lg)
         }
         .navigationTitle("details".localized)
         .navigationBarTitleDisplayMode(.inline)
@@ -122,7 +132,6 @@ struct ExpressionDetailView: View {
         isLoadingAssociations = true
         Task {
             do {
-                // Using the specific endpoint for translations/associations
                 let endpoint = "/expressions/\(expression.id)/translations"
                 let request = NetworkService.shared.createRequest(endpoint: endpoint)
                 let response: [LMLexiconExpression] = try await NetworkService.shared
@@ -161,7 +170,7 @@ struct DetailSection: View {
     let icon: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Label(title, systemImage: icon)
                 .font(.headline)
                 .foregroundColor(.accentColor)
@@ -171,9 +180,9 @@ struct DetailSection: View {
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
+        .padding(AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.primary.opacity(0.03))
-        .cornerRadius(15)
+        .cornerRadius(AppRadius.large)
     }
 }
