@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 class ExploreViewModel: ObservableObject {
     @Published var searchQuery: String = ""
@@ -10,9 +10,10 @@ class ExploreViewModel: ObservableObject {
     @Published var featuredExpressions: [LMLexiconExpression] = []
 
     private var cancellables = Set<AnyCancellable>()
-    private var searchWorkItem: DispatchWorkItem?
+    private var searchTask: Task<Void, Never>?
 
     init() {
+        print("🚀 ExploreViewModel initialized")
         setupSearchDebounce()
     }
 
@@ -20,7 +21,8 @@ class ExploreViewModel: ObservableObject {
         $searchQuery
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .removeDuplicates()
-            .sink { [weak self] _ in
+            .sink { [weak self] query in
+                print("🔍 Search trigger (query: '\(query)')")
                 self?.performSearch()
             }
             .store(in: &cancellables)
@@ -39,6 +41,7 @@ class ExploreViewModel: ObservableObject {
                     self.isLoading = false
                 }
             } catch {
+                print("Failed to load languages: \(error)")
                 await MainActor.run {
                     self.isLoading = false
                 }
@@ -55,14 +58,16 @@ class ExploreViewModel: ObservableObject {
                     endpoint += "?language_id=\(languageId)"
                 }
                 let request = NetworkService.shared.createRequest(endpoint: endpoint)
-                let response: [LMLexiconExpression] = try await NetworkService.shared.performRequest(
-                    request, responseType: [LMLexiconExpression].self
-                )
+                let response: [LMLexiconExpression] = try await NetworkService.shared
+                    .performRequest(
+                        request, responseType: [LMLexiconExpression].self
+                    )
                 await MainActor.run {
                     self.featuredExpressions = response
                     self.isLoading = false
                 }
             } catch {
+                print("Failed to load featured expressions: \(error)")
                 await MainActor.run {
                     self.isLoading = false
                 }
@@ -71,47 +76,50 @@ class ExploreViewModel: ObservableObject {
     }
 
     private func performSearch() {
+        searchTask?.cancel()
+
         guard !searchQuery.isEmpty else {
             searchResults = []
             return
         }
 
         isLoading = true
-        searchWorkItem?.cancel()
 
-        let workItem = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
+        searchTask = Task {
+            let encodedQuery =
+                searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            var endpoint = "/search?q=\(encodedQuery)"
 
-            Task {
-                var components = URLComponents(string: "/expressions/search")
-                var queryItems = [URLQueryItem(name: "q", value: self.searchQuery)]
+            if let languageCode = self.selectedLanguage?.code {
+                endpoint += "&from_lang=\(languageCode)"
+            }
 
-                if let languageId = self.selectedLanguage?.id {
-                    queryItems.append(URLQueryItem(name: "language_id", value: "\(languageId)"))
-                }
+            print("🔎 Exploring search endpoint: \(endpoint)")
 
-                components?.queryItems = queryItems
-                let endpoint = components?.url?.absoluteString ?? "/expressions/search"
-
-                do {
-                    let request = NetworkService.shared.createRequest(endpoint: endpoint)
-                    let response: [LMLexiconExpression] = try await NetworkService.shared.performRequest(
+            do {
+                let request = NetworkService.shared.createRequest(endpoint: endpoint)
+                let response: [LMLexiconExpression] = try await NetworkService.shared
+                    .performRequest(
                         request, responseType: [LMLexiconExpression].self
                     )
+
+                print("✅ Search results received count: \(response.count)")
+
+                if !Task.isCancelled {
                     await MainActor.run {
                         self.searchResults = response
                         self.isLoading = false
                     }
-                } catch {
+                }
+            } catch {
+                print("❌ Search error: \(error)")
+                if !Task.isCancelled {
                     await MainActor.run {
                         self.isLoading = false
                     }
                 }
             }
         }
-
-        searchWorkItem = workItem
-        workItem.perform()
     }
 
     func toggleLanguage(_ language: LMLexiconLanguage) {

@@ -12,17 +12,26 @@ struct ExploreView: View {
                     // Search Bar
                     searchBar
 
-                    if !viewModel.searchResults.isEmpty {
+                    if viewModel.isLoading && viewModel.searchResults.isEmpty {
+                        VStack {
+                            Spacer()
+                            ProgressView()
+                                .scaleEffect(1.5)
+                            Text("searching".localized)
+                                .foregroundColor(.secondary)
+                                .padding(.top, AppSpacing.md)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if !viewModel.searchResults.isEmpty {
                         searchResultsList
-                    } else if !viewModel.searchQuery.isEmpty {
+                    } else if !viewModel.searchQuery.isEmpty && !viewModel.isLoading {
                         noResultsView
                     } else {
                         featuredContent
                     }
 
                     Spacer()
-
-                    // FAB will be overlayed from TabView
                 }
             }
             .navigationTitle("")
@@ -64,7 +73,7 @@ struct ExploreView: View {
         .padding(.horizontal, AppSpacing.lg)
         .padding(.vertical, AppSpacing.md)
     }
-        private var featuredContent: some View {
+    private var featuredContent: some View {
         ScrollView {
             VStack(spacing: AppSpacing.xl) {
                 // Language Filter
@@ -132,7 +141,7 @@ struct ExploreView: View {
                     }
                 }
             }
-            .padding(.bottom, 80) // Space for FAB
+            .padding(.bottom, 80)  // Space for FAB
         }
     }
 
@@ -240,12 +249,15 @@ struct OptimizedExpressionCard: View {
         )
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(AppTheme.easeInOut, value: isPressed)
-        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            withAnimation {
-                isPressed = pressing
-            }
-        }, perform: {
-            HapticFeedback.light()
-        })
+        .onLongPressGesture(
+            minimumDuration: 0,
+            pressing: { pressing in
+                withAnimation {
+                    isPressed = pressing
+                }
+            },
+            perform: {
+                HapticFeedback.light()
+            })
     }
 }

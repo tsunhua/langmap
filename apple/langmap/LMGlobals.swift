@@ -1,8 +1,9 @@
 import Combine
 import Security
 import SwiftUI
+
 #if canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 // MARK: - Localization
@@ -300,7 +301,13 @@ class NetworkService: ObservableObject {
         _ request: URLRequest,
         responseType: T.Type
     ) async throws -> T {
+        print("🌐 Requesting: \(request.url?.absoluteString ?? "unknown")")
+
         let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📝 Raw Response: \(jsonString.prefix(500))...")
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
@@ -312,12 +319,26 @@ class NetworkService: ObservableObject {
         }
 
         if httpResponse.statusCode >= 400 {
-            let errorResponse = try JSONDecoder().decode(ApiError.self, from: data)
-            throw NetworkError.apiError(errorResponse.error)
+            let errorResponse = try? JSONDecoder().decode(ApiError.self, from: data)
+            throw NetworkError.apiError(
+                errorResponse?.error ?? "Unknown error (\(httpResponse.statusCode))")
         }
 
-        let decoded = try JSONDecoder().decode(T.self, from: data)
-        return decoded
+        do {
+            // Try direct decoding first
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            print("⚠️ Direct decoding failed: \(error). Trying to unwrap LMApiResponse...")
+
+            // Try unwrapping if it's an LMApiResponse
+            do {
+                let wrapped = try JSONDecoder().decode(LMApiResponse<T>.self, from: data)
+                return wrapped.data
+            } catch {
+                print("❌ Unwrapping failed: \(error)")
+                throw NetworkError.decodingError
+            }
+        }
     }
 }
 

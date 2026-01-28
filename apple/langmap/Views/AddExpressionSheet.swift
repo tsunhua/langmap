@@ -8,18 +8,22 @@ struct AddExpressionSheet: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                // Expression Text
-                Section {
+            ScrollView {
+                VStack(spacing: AppSpacing.lg) {
+                    // Expression Text
                     VStack(alignment: .leading, spacing: AppSpacing.xs) {
                         Text("Expression")
                             .font(.headline)
 
                         TextEditor(text: $viewModel.expressionText)
-                            .frame(minHeight: 60, maxHeight: 150)
+                            .frame(minHeight: 80, maxHeight: 150)
+                            .background(Color.primary.opacity(0.03))
+                            .cornerRadius(AppRadius.small)
                             .overlay(
                                 RoundedRectangle(cornerRadius: AppRadius.small)
-                                    .stroke(viewModel.expressionTextError != nil ? Color.red : Color.clear, lineWidth: 1)
+                                    .stroke(
+                                        viewModel.expressionTextError != nil
+                                            ? Color.red : Color.clear, lineWidth: 1)
                             )
 
                         if let error = viewModel.expressionTextError {
@@ -35,127 +39,159 @@ struct AddExpressionSheet: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                }
+                    .glassCardStyle()
 
-                // Language Selection
-                Section {
-                    Picker("Language", selection: $viewModel.selectedLanguage) {
-                        ForEach(viewModel.languages) { language in
-                            Text("\(language.nativeName ?? language.name) (\(language.code))")
-                                .tag(language as LMLexiconLanguage?)
-                        }
-                    }
-                    .pickerStyle(.menu)
-
-                    if viewModel.selectedLanguage != nil {
-                        Text("remembered_last_selection".localized)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                // Region
-                Section(header: Text("Region").font(.headline)) {
-                    if viewModel.isLocating {
+                    // Language Selection
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         HStack {
-                            ProgressView()
-                            Text("locating".localized)
-                        }
-                    } else if !viewModel.region.isEmpty {
-                        HStack {
-                            Text(viewModel.region)
+                            Text("Language")
+                                .font(.headline)
                             Spacer()
+                            Picker("", selection: $viewModel.selectedLanguage) {
+                                ForEach(viewModel.languages) { language in
+                                    Text(
+                                        "\(language.nativeName ?? language.name) (\(language.code))"
+                                    )
+                                    .tag(language as LMLexiconLanguage?)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+
+                        if viewModel.selectedLanguage != nil {
+                            Text("remembered_last_selection".localized)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .glassCardStyle()
+
+                    // Region
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        Text("Region")
+                            .font(.headline)
+
+                        if viewModel.isLocating {
+                            HStack {
+                                ProgressView()
+                                Text("locating".localized)
+                            }
+                        } else if !viewModel.region.isEmpty {
+                            HStack {
+                                Text(viewModel.region)
+                                Spacer()
+                                Button(action: viewModel.requestLocation) {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Button(action: { viewModel.region = "" }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        } else {
                             Button(action: viewModel.requestLocation) {
-                                Image(systemName: "arrow.clockwise")
-                            }
-                            Button(action: { viewModel.region = "" }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    } else {
-                        Button(action: viewModel.requestLocation) {
-                            HStack {
-                                Image(systemName: "location.fill")
-                                Text("Use current location")
+                                HStack {
+                                    Image(systemName: "location.fill")
+                                    Text("Use current location")
+                                }
                             }
                         }
                     }
-                }
+                    .glassCardStyle()
 
-                // Tags
-                Section(header: Text("Tags (Optional)").font(.headline)) {
-                    HStack {
-                        TextField("Add tag", text: $viewModel.currentTagInput)
-                            .onSubmit {
-                                viewModel.addTag()
+                    // Tags
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        Text("Tags (Optional)")
+                            .font(.headline)
+
+                        HStack {
+                            TextField("Add tag", text: $viewModel.currentTagInput)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding(AppSpacing.sm)
+                                .background(Color.primary.opacity(0.05))
+                                .cornerRadius(AppRadius.small)
+                                .onSubmit {
+                                    viewModel.addTag()
+                                }
+
+                            Button(action: viewModel.addTag) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title3)
                             }
-
-                        Button(action: viewModel.addTag) {
-                            Image(systemName: "plus.circle.fill")
+                            .disabled(viewModel.currentTagInput.isEmpty)
                         }
-                        .disabled(viewModel.currentTagInput.isEmpty)
-                    }
 
-                    if !viewModel.tags.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                ForEach(viewModel.tags, id: \.self) { tag in
-                                    TagChip(tag: tag) {
-                                        viewModel.removeTag(tag)
+                        if !viewModel.tags.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    ForEach(viewModel.tags, id: \.self) { tag in
+                                        TagChip(tag: tag) {
+                                            viewModel.removeTag(tag)
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        Text("Max 5 tags, 20 characters each")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
+                    .glassCardStyle()
 
-                    Text("Max 5 tags, 20 characters each")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
+                    // Associated Expression
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        Text("Associate with Expression (Optional)")
+                            .font(.headline)
 
-                // Associated Expression
-                Section(header: Text("Associate with Expression (Optional)").font(.headline)) {
-                    if let associated = viewModel.associatedExpression {
-                        VStack {
-                            OptimizedExpressionCard(expression: associated)
-                            Button(action: viewModel.clearAssociation) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.red)
-                                    Text("Remove association")
-                                        .foregroundColor(.red)
+                        if let associated = viewModel.associatedExpression {
+                            VStack {
+                                OptimizedExpressionCard(expression: associated)
+                                Button(action: viewModel.clearAssociation) {
+                                    HStack {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red)
+                                        Text("Remove association")
+                                            .foregroundColor(.red)
+                                    }
                                 }
+                                .padding(.top, AppSpacing.sm)
                             }
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                            TextField("search_to_associate".localized, text: $searchQuery)
-                                .onChange(of: searchQuery) { _, newValue in
-                                    viewModel.searchForAssociations(query: newValue)
-                                }
+                        } else {
+                            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                                TextField("search_to_associate".localized, text: $searchQuery)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .padding(AppSpacing.sm)
+                                    .background(Color.primary.opacity(0.05))
+                                    .cornerRadius(AppRadius.small)
+                                    .onChange(of: searchQuery) { _, newValue in
+                                        viewModel.searchForAssociations(query: newValue)
+                                    }
 
-                            if !viewModel.searchAssociations.isEmpty {
-                                VStack(spacing: AppSpacing.xs) {
-                                    ForEach(viewModel.searchAssociations) { expression in
-                                        Button(action: {
-                                            viewModel.selectAssociation(expression)
-                                        }) {
-                                            HStack {
-                                                Text(expression.text)
-                                                    .foregroundColor(.primary)
-                                                Spacer()
+                                if !viewModel.searchAssociations.isEmpty {
+                                    VStack(spacing: AppSpacing.xs) {
+                                        ForEach(viewModel.searchAssociations) { expression in
+                                            Button(action: {
+                                                viewModel.selectAssociation(expression)
+                                            }) {
+                                                HStack {
+                                                    Text(expression.text)
+                                                        .foregroundColor(.primary)
+                                                    Spacer()
+                                                }
+                                                .padding(AppSpacing.sm)
+                                                .background(Color.primary.opacity(0.05))
+                                                .cornerRadius(AppRadius.small)
                                             }
-                                            .padding(AppSpacing.sm)
-                                            .background(Color.primary.opacity(0.05))
-                                            .cornerRadius(AppRadius.small)
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                    .glassCardStyle()
                 }
+                .padding()
             }
             .navigationTitle("add_new_expression".localized)
             .navigationBarTitleDisplayMode(.inline)
