@@ -59,5 +59,7 @@
   "manual_location_placeholder": "e.g., Beijing, New York",
   "search_to_associate": "Search expression to associate",
   "add_success": "Added successfully",
-  "add_new_expression": "Add New Expression"
+  "add_new_expression": "Add New Expression",
+  "all_languages": "All",
+  "no_results_hint": "Can't find what you're looking for? Add a new expression!"
 }
