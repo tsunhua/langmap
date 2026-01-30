@@ -207,7 +207,6 @@ struct ExploreView: View {
 
 struct OptimizedExpressionCard: View {
     let expression: LMLexiconExpression
-    @State private var isPressed = false
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -247,17 +246,5 @@ struct OptimizedExpressionCard: View {
             RoundedRectangle(cornerRadius: AppRadius.large)
                 .stroke(Color.primary.opacity(0.05), lineWidth: 1)
         )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .animation(AppTheme.easeInOut, value: isPressed)
-        .onLongPressGesture(
-            minimumDuration: 0,
-            pressing: { pressing in
-                withAnimation {
-                    isPressed = pressing
-                }
-            },
-            perform: {
-                HapticFeedback.light()
-            })
     }
 }
