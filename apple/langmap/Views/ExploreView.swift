@@ -76,39 +76,6 @@ struct ExploreView: View {
     private var featuredContent: some View {
         ScrollView {
             VStack(spacing: AppSpacing.xl) {
-                // Language Filter
-                if !viewModel.languages.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: AppSpacing.sm) {
-                            LanguageFilterChip(
-                                language: LMLexiconLanguage(
-                                    id: 0, code: "all", name: "all_languages".localized,
-                                    direction: "ltr", family: nil,
-                                    notes: nil, isActive: 1, regionCode: nil,
-                                    regionName: nil, regionLatitude: nil,
-                                    regionLongitude: nil, createdBy: nil,
-                                    createdAt: "", updatedAt: nil
-                                ),
-                                isSelected: viewModel.selectedLanguage == nil
-                            ) {
-                                viewModel.selectedLanguage = nil
-                                viewModel.loadFeaturedExpressions()
-                            }
-
-                            ForEach(viewModel.languages) { language in
-                                LanguageFilterChip(
-                                    language: language,
-                                    isSelected: viewModel.selectedLanguage?.id == language.id
-                                ) {
-                                    viewModel.toggleLanguage(language)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, AppSpacing.lg)
-                    }
-                    .padding(.bottom, AppSpacing.sm)
-                }
-
                 // Featured Expressions
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("featured_expressions".localized)
@@ -141,7 +108,6 @@ struct ExploreView: View {
                     }
                 }
             }
-            .padding(.bottom, 80)  // Space for FAB
         }
     }
 

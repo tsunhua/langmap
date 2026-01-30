@@ -10,7 +10,7 @@ struct langmapApp: App {
                 if authService.isAuthenticated {
                     MainTabView()
                 } else {
-                    LoginView()
+                    MainTabView()
                 }
             }
             .environmentObject(authService)
