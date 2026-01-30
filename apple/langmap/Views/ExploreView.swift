@@ -147,7 +147,7 @@ struct ExploreView: View {
 
     private var searchResultsList: some View {
         ScrollView {
-            LazyVStack(spacing: AppTheme.cardSpacing) {
+            LazyVStack(spacing: AppSpacing.md) {
                 ForEach(viewModel.searchResults) { expression in
                     NavigationLink(
                         destination: ExpressionDetailView(expression: expression)
@@ -157,10 +157,13 @@ struct ExploreView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
             }
-            .padding(AppSpacing.lg)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.sm)
+            .padding(.bottom, 100)
         }
     }
-        private var noResultsView: some View {
+
+    private var noResultsView: some View {
         VStack(spacing: AppSpacing.xl) {
             Spacer()
 

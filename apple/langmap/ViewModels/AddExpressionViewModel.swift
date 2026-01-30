@@ -1,6 +1,7 @@
-import Foundation
 import Combine
 import CoreLocation
+import Foundation
+import MapKit
 
 class AddExpressionViewModel: ObservableObject {
     @Published var expressionText: String = ""
@@ -16,59 +17,85 @@ class AddExpressionViewModel: ObservableObject {
     @Published var errorMessage: String = ""
 
     private let locationManager = CLLocationManager()
-    private var cancellables = Set<AnyCancellable>()
-
+    private var locationDelegate: LocationDelegate?
     init() {
+        locationDelegate = LocationDelegate(
+            onUpdate: { [weak self] location in
+                self?.reverseGeocode(location)
+            },
+            onError: { [weak self] _ in
+                self?.isLocating = false
+            }
+        )
         setupLocationManager()
         loadLanguages()
-        loadLastLanguage()
     }
 
     // MARK: - Location
 
     private func setupLocationManager() {
-        locationManager.delegate = LocationDelegate(
-            onUpdate: { [unowned self] location in
-                self.reverseGeocode(location)
-            },
-            onError: { [unowned self] error in
-                self.isLocating = false
-            }
-        )
+        locationManager.delegate = locationDelegate
     }
 
     func requestLocation() {
-        guard locationManager.authorizationStatus == .authorizedWhenInUse ||
-                locationManager.authorizationStatus == .authorizedAlways else {
-            locationManager.requestWhenInUseAuthorization()
-            return
-        }
+        print("📍 Requesting current location...")
+        #if os(iOS)
+            let status = locationManager.authorizationStatus
+            print("🗺️ Authorization status: \(status.rawValue)")
+            guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+                print("⚠️ Requesting location authorization...")
+                locationManager.requestWhenInUseAuthorization()
+                return
+            }
+        #endif
         isLocating = true
         locationManager.requestLocation()
     }
 
     private func reverseGeocode(_ location: CLLocation) {
-        let geocoder = CLGeocoder()
+        print(
+            "🗺️ Reverse geocoding location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
+
+        guard let request = MKReverseGeocodingRequest(location: location) else {
+            print("❌ Failed to create MKReverseGeocodingRequest")
+            self.isLocating = false
+            return
+        }
 
         Task {
             do {
-                let placemarks = try await geocoder.reverseGeocodeLocation(from: location)
+                let mapItems = try await request.mapItems
+                print("✅ Geocoding successful: \(mapItems.count) locations found")
+
                 await MainActor.run {
-                    self?.isLocating = false
-                    if let placemark = placemarks.first {
-                        self?.region = placemark.name ?? placemark.locality ?? placemark.administrativeArea ?? ""
+                    self.isLocating = false
+                    if let mapItem = mapItems.first {
+                        // Use shortAddress if available, otherwise fallback to fullAddress or name
+                        if let shortAddress = mapItem.address?.shortAddress, !shortAddress.isEmpty {
+                            self.region = shortAddress
+                        } else if let fullAddress = mapItem.address?.fullAddress,
+                            !fullAddress.isEmpty
+                        {
+                            self.region = fullAddress
+                        } else if let name = mapItem.name, !name.isEmpty {
+                            self.region = name
+                        }
+
+                        print("📍 Resolved region: \(self.region)")
+                    } else {
+                        print("⚠️ No locations found")
                     }
                 }
             } catch {
+                print("❌ Reverse geocoding failed: \(error)")
                 await MainActor.run {
-                    self?.isLocating = false
-                }
-            }
-        }
-            DispatchQueue.main.async {
-                self?.isLocating = false
-                if let placemark = placemarks?.first {
-                    self?.region = placemark.locality ?? placemark.administrativeArea ?? ""
+                    self.isLocating = false
+                    // Fallback: show coordinates if geocoding fails
+                    let lat = String(format: "%.4f", location.coordinate.latitude)
+                    let lon = String(format: "%.4f", location.coordinate.longitude)
+                    self.region = "\(lat), \(lon)"
+                    print("📍 Using coordinates as fallback: \(self.region)")
                 }
             }
         }
@@ -79,22 +106,26 @@ class AddExpressionViewModel: ObservableObject {
     private func loadLanguages() {
         Task {
             do {
+                print("🌐 Loading languages for AddExpression...")
                 let request = NetworkService.shared.createRequest(endpoint: "/languages")
                 let response: [LMLexiconLanguage] = try await NetworkService.shared.performRequest(
                     request, responseType: [LMLexiconLanguage].self
                 )
+                print("✅ Languages loaded: \(response.count)")
                 await MainActor.run {
                     self.languages = response
+                    self.loadLastLanguage()
                 }
             } catch {
-                // Handle error
+                print("❌ Failed to load languages: \(error)")
             }
         }
     }
 
     private func loadLastLanguage() {
         if let languageId = UserDefaults.standard.object(forKey: "selectedLanguageId") as? Int,
-           let language = languages.first(where: { $0.id == languageId }) {
+            let language = languages.first(where: { $0.id == languageId })
+        {
             selectedLanguage = language
         }
     }
@@ -110,9 +141,10 @@ class AddExpressionViewModel: ObservableObject {
     func addTag() {
         let tag = currentTagInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !tag.isEmpty,
-              tags.count < 5,
-              tag.count <= 20,
-              !tags.contains(tag) else { return }
+            tags.count < 5,
+            tag.count <= 20,
+            !tags.contains(tag)
+        else { return }
 
         tags.append(tag)
         currentTagInput = ""
@@ -132,12 +164,31 @@ class AddExpressionViewModel: ObservableObject {
 
         Task {
             do {
+                var endpoint =
+                    "/search?q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+
+                if !region.isEmpty {
+                    endpoint +=
+                        "&region=\(region.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                }
+
+                if !tags.isEmpty {
+                    endpoint +=
+                        "&tags=\(tags.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                }
+
+                if let associationId = associatedExpression?.id {
+                    endpoint += "&association_id=\(associationId)"
+                }
+
                 let request = NetworkService.shared.createRequest(
-                    endpoint: "/expressions/search?q=\(query)"
+                    endpoint: endpoint,
+                    method: "GET"
                 )
-                let response: [LMLexiconExpression] = try await NetworkService.shared.performRequest(
-                    request, responseType: [LMLexiconExpression].self
-                )
+                let response: [LMLexiconExpression] = try await NetworkService.shared
+                    .performRequest(
+                        request, responseType: [LMLexiconExpression].self
+                    )
                 await MainActor.run {
                     self.searchAssociations = response
                 }
@@ -159,9 +210,7 @@ class AddExpressionViewModel: ObservableObject {
     // MARK: - Validation
 
     var isValid: Bool {
-        !expressionText.isEmpty &&
-        expressionText.count <= 500 &&
-        selectedLanguage != nil
+        !expressionText.isEmpty && expressionText.count <= 500 && selectedLanguage != nil
     }
 
     var expressionTextError: String? {
@@ -182,26 +231,26 @@ class AddExpressionViewModel: ObservableObject {
         isLoading = true
         saveLastLanguage()
 
-        var components = URLComponents(string: "/expressions")!
-        components.queryItems = [
-            URLQueryItem(name: "text", value: expressionText),
-            URLQueryItem(name: "language_id", value: "\(selectedLanguage!.id)")
-        ]
+        var endpoint =
+            "/expressions?text=\(expressionText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        endpoint += "&language_id=\(selectedLanguage!.id)"
 
         if !region.isEmpty {
-            components.queryItems?.append(URLQueryItem(name: "region", value: region))
+            endpoint +=
+                "&region=\(region.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         }
 
         if !tags.isEmpty {
-            components.queryItems?.append(URLQueryItem(name: "tags", value: tags.joined(separator: ",")))
+            endpoint +=
+                "&tags=\(tags.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         }
 
         if let associationId = associatedExpression?.id {
-            components.queryItems?.append(URLQueryItem(name: "association_id", value: "\(associationId)"))
+            endpoint += "&association_id=\(associationId)"
         }
 
         let request = NetworkService.shared.createRequest(
-            endpoint: components.url!.absoluteString,
+            endpoint: endpoint,
             method: "POST"
         )
 
@@ -211,6 +260,7 @@ class AddExpressionViewModel: ObservableObject {
 
         isLoading = false
     }
+}
 
 // MARK: - Location Delegate
 
@@ -225,13 +275,14 @@ class LocationDelegate: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        print("📡 Location manager updated locations: \(locations.count)")
         if let location = locations.last {
             onUpdate(location)
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("❌ Location manager failed: \(error)")
         onError(error)
     }
 }
-        }

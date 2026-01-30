@@ -47,15 +47,25 @@ struct AddExpressionSheet: View {
                             Text("Language")
                                 .font(.headline)
                             Spacer()
-                            Picker("", selection: $viewModel.selectedLanguage) {
-                                ForEach(viewModel.languages) { language in
-                                    Text(
-                                        "\(language.nativeName ?? language.name) (\(language.code))"
-                                    )
-                                    .tag(language as LMLexiconLanguage?)
+
+                            if viewModel.languages.isEmpty {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Picker("", selection: $viewModel.selectedLanguage) {
+                                    if viewModel.selectedLanguage == nil {
+                                        Text("Select Language").tag(nil as LMLexiconLanguage?)
+                                    }
+                                    ForEach(viewModel.languages) { language in
+                                        Text(
+                                            "\(language.nativeName ?? language.name) (\(language.code))"
+                                        )
+                                        .tag(language as LMLexiconLanguage?)
+                                    }
                                 }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
                             }
-                            .pickerStyle(.menu)
                         }
 
                         if viewModel.selectedLanguage != nil {
