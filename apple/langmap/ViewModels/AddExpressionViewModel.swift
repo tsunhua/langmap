@@ -25,6 +25,9 @@ class AddExpressionViewModel: ObservableObject {
             },
             onError: { [weak self] _ in
                 self?.isLocating = false
+            },
+            onAuthorizationChange: { [weak self] in
+                self?.locationManager.requestLocation()
             }
         )
         setupLocationManager()
@@ -42,9 +45,17 @@ class AddExpressionViewModel: ObservableObject {
         #if os(iOS)
             let status = locationManager.authorizationStatus
             print("🗺️ Authorization status: \(status.rawValue)")
-            guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+
+            if status == .notDetermined {
                 print("⚠️ Requesting location authorization...")
+                isLocating = true
                 locationManager.requestWhenInUseAuthorization()
+                // Location will be requested automatically in locationManagerDidChangeAuthorization
+                return
+            }
+
+            guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+                print("❌ Location permission denied")
                 return
             }
         #endif
@@ -157,8 +168,11 @@ class AddExpressionViewModel: ObservableObject {
     // MARK: - Associations
 
     func searchForAssociations(query: String) {
+        print("🔍 Searching for associations with query: '\(query)'")
+
         guard !query.isEmpty else {
             searchAssociations = []
+            print("⚠️ Query is empty, clearing results")
             return
         }
 
@@ -181,6 +195,8 @@ class AddExpressionViewModel: ObservableObject {
                     endpoint += "&association_id=\(associationId)"
                 }
 
+                print("🌐 Association search endpoint: \(endpoint)")
+
                 let request = NetworkService.shared.createRequest(
                     endpoint: endpoint,
                     method: "GET"
@@ -189,11 +205,19 @@ class AddExpressionViewModel: ObservableObject {
                     .performRequest(
                         request, responseType: [LMLexiconExpression].self
                     )
+
+                print("✅ Association search successful: \(response.count) results")
+
                 await MainActor.run {
                     self.searchAssociations = response
+                    print("📝 Updated searchAssociations with \(response.count) items")
                 }
             } catch {
-                // Handle error
+                print("❌ Association search failed: \(error)")
+                print("❌ Error details: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.searchAssociations = []
+                }
             }
         }
     }
@@ -267,10 +291,16 @@ class AddExpressionViewModel: ObservableObject {
 class LocationDelegate: NSObject, CLLocationManagerDelegate {
     let onUpdate: (CLLocation) -> Void
     let onError: (Error) -> Void
+    let onAuthorizationChange: (() -> Void)?
 
-    init(onUpdate: @escaping (CLLocation) -> Void, onError: @escaping (Error) -> Void) {
+    init(
+        onUpdate: @escaping (CLLocation) -> Void,
+        onError: @escaping (Error) -> Void,
+        onAuthorizationChange: (() -> Void)? = nil
+    ) {
         self.onUpdate = onUpdate
         self.onError = onError
+        self.onAuthorizationChange = onAuthorizationChange
         super.init()
     }
 
@@ -284,5 +314,19 @@ class LocationDelegate: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("❌ Location manager failed: \(error)")
         onError(error)
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        #if os(iOS)
+            let status = manager.authorizationStatus
+            print("🔐 Authorization changed to: \(status.rawValue)")
+
+            if status == .authorizedWhenInUse || status == .authorizedAlways {
+                print("✅ Permission granted, requesting location...")
+                onAuthorizationChange?()
+            } else if status == .denied || status == .restricted {
+                print("❌ Permission denied or restricted")
+            }
+        #endif
     }
 }
