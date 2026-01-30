@@ -146,21 +146,21 @@ struct ExploreView: View {
     }
 
     private var searchResultsList: some View {
-        List {
-            ForEach(viewModel.searchResults) { expression in
-                NavigationLink(
-                    destination: ExpressionDetailView(expression: expression)
-                ) {
-                    OptimizedExpressionCard(expression: expression)
+        ScrollView {
+            LazyVStack(spacing: AppTheme.cardSpacing) {
+                ForEach(viewModel.searchResults) { expression in
+                    NavigationLink(
+                        destination: ExpressionDetailView(expression: expression)
+                    ) {
+                        OptimizedExpressionCard(expression: expression)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            .padding(AppSpacing.lg)
         }
-        .listStyle(.plain)
     }
-
-    private var noResultsView: some View {
+        private var noResultsView: some View {
         VStack(spacing: AppSpacing.xl) {
             Spacer()
 
