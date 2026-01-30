@@ -28,18 +28,18 @@ class AddExpressionViewModel: ObservableObject {
 
     private func setupLocationManager() {
         locationManager.delegate = LocationDelegate(
-            onUpdate: { [weak self] location in
-                self?.reverseGeocode(location)
+            onUpdate: { [unowned self] location in
+                self.reverseGeocode(location)
             },
-            onError: { [weak self] error in
-                self?.isLocating = false
+            onError: { [unowned self] error in
+                self.isLocating = false
             }
         )
     }
 
     func requestLocation() {
-        guard CLLocationManager.authorizationStatus() == .authorizedWhenInUse ||
-                CLLocationManager.authorizationStatus() == .authorizedAlways else {
+        guard locationManager.authorizationStatus == .authorizedWhenInUse ||
+                locationManager.authorizationStatus == .authorizedAlways else {
             locationManager.requestWhenInUseAuthorization()
             return
         }
@@ -49,7 +49,22 @@ class AddExpressionViewModel: ObservableObject {
 
     private func reverseGeocode(_ location: CLLocation) {
         let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+
+        Task {
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(from: location)
+                await MainActor.run {
+                    self?.isLocating = false
+                    if let placemark = placemarks.first {
+                        self?.region = placemark.name ?? placemark.locality ?? placemark.administrativeArea ?? ""
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self?.isLocating = false
+                }
+            }
+        }
             DispatchQueue.main.async {
                 self?.isLocating = false
                 if let placemark = placemarks?.first {
@@ -196,7 +211,6 @@ class AddExpressionViewModel: ObservableObject {
 
         isLoading = false
     }
-}
 
 // MARK: - Location Delegate
 
@@ -220,3 +234,4 @@ class LocationDelegate: NSObject, CLLocationManagerDelegate {
         onError(error)
     }
 }
+        }
