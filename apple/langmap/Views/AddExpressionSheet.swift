@@ -21,19 +21,25 @@ struct AddExpressionSheet: View {
                                 ProgressView()
                                     .controlSize(.small)
                             } else {
-                                Picker("", selection: $viewModel.selectedLanguage) {
-                                    if viewModel.selectedLanguage == nil {
-                                        Text("Select Language").tag(nil as LMLexiconLanguage?)
-                                    }
+                                Text("Languages available: \(viewModel.languages.count)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                Picker("", selection: $viewModel.selectedLanguageId) {
+                                    Text("Select Language").tag(nil as Int?)
                                     ForEach(viewModel.languages) { language in
                                         Text(
                                             "\(language.nativeName ?? language.name) (\(language.code))"
                                         )
-                                        .tag(language as LMLexiconLanguage?)
+                                        .tag(language.id as Int?)
                                     }
                                 }
                                 .pickerStyle(.menu)
                                 .labelsHidden()
+                                .onChange(of: viewModel.selectedLanguageId) { _, newValue in
+                                    print("🔍 onChange triggered: selectedLanguageId changed to \(String(describing: newValue))")
+                                    viewModel.persistSelectedLanguage()
+                                }
                             }
                         }
                         
@@ -254,6 +260,9 @@ struct AddExpressionSheet: View {
                     .disabled(!viewModel.isValid || viewModel.isLoading)
                 }
             }
+        }
+        .onAppear {
+            viewModel.restorePreferences()
         }
         .alert("Error", isPresented: $showingAlert) {
             Button("OK", role: .cancel) {}
