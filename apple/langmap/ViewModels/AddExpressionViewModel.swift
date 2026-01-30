@@ -32,6 +32,7 @@ class AddExpressionViewModel: ObservableObject {
         )
         setupLocationManager()
         loadLanguages()
+        loadSavedPreferences()
     }
 
     // MARK: - Location
@@ -138,6 +139,7 @@ class AddExpressionViewModel: ObservableObject {
             let language = languages.first(where: { $0.id == languageId })
         {
             selectedLanguage = language
+            print("✅ Loaded last selected language: \(language.name)")
         }
     }
 
@@ -145,6 +147,48 @@ class AddExpressionViewModel: ObservableObject {
         if let languageId = selectedLanguage?.id {
             UserDefaults.standard.set(languageId, forKey: "selectedLanguageId")
         }
+    }
+
+    private func loadSavedPreferences() {
+        // Load saved region
+        if let savedRegion = UserDefaults.standard.string(forKey: "lastRegion") {
+            region = savedRegion
+            print("✅ Loaded last region: \(savedRegion)")
+        }
+
+        // Load saved tags
+        if let savedTags = UserDefaults.standard.stringArray(forKey: "lastTags") {
+            tags = savedTags
+            print("✅ Loaded last tags: \(savedTags)")
+        }
+    }
+
+    private func savePreferences() {
+        // Save region
+        if !region.isEmpty {
+            UserDefaults.standard.set(region, forKey: "lastRegion")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "lastRegion")
+        }
+
+        // Save tags
+        if !tags.isEmpty {
+            UserDefaults.standard.set(tags, forKey: "lastTags")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "lastTags")
+        }
+
+        print("💾 Saved preferences: region=\(region), tags=\(tags)")
+    }
+
+    func resetForNextEntry() {
+        // Clear only expression text and association
+        expressionText = ""
+        associatedExpression = nil
+        searchAssociations = []
+
+        // Keep language, region, and tags for next entry
+        print("🔄 Reset for next entry, keeping language/region/tags")
     }
 
     // MARK: - Tags
@@ -254,6 +298,7 @@ class AddExpressionViewModel: ObservableObject {
 
         isLoading = true
         saveLastLanguage()
+        savePreferences()
 
         var endpoint =
             "/expressions?text=\(expressionText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
@@ -283,6 +328,11 @@ class AddExpressionViewModel: ObservableObject {
         )
 
         isLoading = false
+
+        // Reset for next entry instead of closing
+        await MainActor.run {
+            resetForNextEntry()
+        }
     }
 }
 
