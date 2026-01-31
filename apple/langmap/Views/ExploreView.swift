@@ -5,33 +5,17 @@ struct ExploreView: View {
 
     var body: some View {
         NavigationView {
-            ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+            VStack(spacing: 0) {
+                searchBar
 
-                VStack(spacing: 0) {
-                    // Search Bar
-                    searchBar
-
-                    if viewModel.isLoading && viewModel.searchResults.isEmpty {
-                        VStack {
-                            Spacer()
-                            ProgressView()
-                                .scaleEffect(1.5)
-                            Text("searching".localized)
-                                .foregroundColor(.secondary)
-                                .padding(.top, AppSpacing.md)
-                            Spacer()
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if !viewModel.searchResults.isEmpty {
-                        searchResultsList
-                    } else if !viewModel.searchQuery.isEmpty && !viewModel.isLoading {
-                        noResultsView
-                    } else {
-                        featuredContent
-                    }
-
-                    Spacer()
+                if viewModel.isLoading && viewModel.searchResults.isEmpty {
+                    loadingView
+                } else if !viewModel.searchResults.isEmpty {
+                    searchResultsList
+                } else if !viewModel.searchQuery.isEmpty {
+                    noResultsView
+                } else {
+                    featuredContent
                 }
             }
             .navigationTitle("")
@@ -48,172 +32,216 @@ struct ExploreView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: AppSpacing.sm) {
+        HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.accentColor)
+                .font(.body)
+                .foregroundColor(.secondary)
 
-            TextField("search_placeholder".localized, text: $viewModel.searchQuery)
-                .textFieldStyle(PlainTextFieldStyle())
+            TextField("Search", text: $viewModel.searchQuery)
+                .textFieldStyle(.plain)
+                .font(.body)
 
             if !viewModel.searchQuery.isEmpty {
                 Button(action: {
-                    withAnimation {
+                    withAnimation(.easeInOut(duration: 0.2)) {
                         viewModel.searchQuery = ""
                     }
                 }) {
                     Image(systemName: "xmark.circle.fill")
+                        .font(.body)
                         .foregroundColor(.secondary)
                 }
+                .frame(minWidth: 44, minHeight: 44)
             }
         }
-        .padding(AppSpacing.md)
-        .background(Color.primary.opacity(0.03))
-        .cornerRadius(AppRadius.extraLarge)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.md)
+        .padding(16)
+        .background(Color.primary.opacity(0.08))
+        .cornerRadius(12)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
+
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            ProgressView()
+            Text("Searching...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private var featuredContent: some View {
         ScrollView {
-            VStack(spacing: AppSpacing.xl) {
-                // Featured Expressions
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    Text("featured_expressions".localized)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .padding(.horizontal, AppSpacing.lg)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Featured Expressions")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
 
-                    if viewModel.isLoading {
-                        VStack(spacing: AppTheme.cardSpacing) {
-                            ForEach(0..<5) { _ in
-                                SkeletonView()
-                                    .frame(height: 80)
-                            }
+                if viewModel.isLoading {
+                    VStack(spacing: 12) {
+                        ForEach(0..<5) { _ in
+                            SkeletonCard()
                         }
-                        .padding(.horizontal, AppSpacing.lg)
-                    } else if viewModel.featuredExpressions.isEmpty {
-                        emptyStateView
-                    } else {
-                        VStack(spacing: AppTheme.cardSpacing) {
-                            ForEach(viewModel.featuredExpressions) { expression in
-                                NavigationLink(
-                                    destination: ExpressionDetailView(expression: expression)
-                                ) {
-                                    OptimizedExpressionCard(expression: expression)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        .padding(.horizontal, AppSpacing.lg)
                     }
+                    .padding(.horizontal, 16)
+                } else if viewModel.featuredExpressions.isEmpty {
+                    emptyStateView
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(viewModel.featuredExpressions) { expression in
+                            NavigationLink(
+                                destination: ExpressionDetailView(expression: expression)
+                            ) {
+                                ExpressionCard(expression: expression)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
                 }
             }
+            .padding(.bottom, 16)
         }
     }
 
     private var searchResultsList: some View {
         ScrollView {
-            LazyVStack(spacing: AppSpacing.md) {
+            LazyVStack(spacing: 12) {
                 ForEach(viewModel.searchResults) { expression in
                     NavigationLink(
                         destination: ExpressionDetailView(expression: expression)
                     ) {
-                        OptimizedExpressionCard(expression: expression)
+                        ExpressionCard(expression: expression)
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.top, AppSpacing.sm)
-            .padding(.bottom, 100)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 16)
         }
     }
 
     private var noResultsView: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: 24) {
             Spacer()
-
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary)
+                .font(.system(size: 60))
+                .foregroundColor(.secondary.opacity(0.5))
 
-            Text("no_results".localized)
+            Text("No Results")
                 .font(.title2)
+                .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("no_results_hint".localized)
+            Text("Try a different search term")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
-
+                .padding(.horizontal, 24)
             Spacer()
         }
+        .padding(.top, 60)
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: 24) {
             Spacer()
+            Image(systemName: "book.closed")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary.opacity(0.5))
 
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary)
-
-            Text("start_exploring".localized)
+            Text("Start Exploring")
                 .font(.title2)
+                .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("search_or_add_hint".localized)
+            Text("Search for expressions or add your own")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
-
+                .padding(.horizontal, 24)
             Spacer()
         }
+        .padding(.top, 60)
     }
 }
 
-struct OptimizedExpressionCard: View {
+struct ExpressionCard: View {
     let expression: LMLexiconExpression
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(expression.text)
-                    .font(.system(.title3, design: .rounded))
-                    .fontWeight(.bold)
+                    .font(.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.primary)
                     .lineLimit(2)
 
                 if let region = expression.regionName {
-                    Text(region)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.fill")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(region)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
 
             Spacer()
 
             Text(expression.languageCode.uppercased())
-                .font(.system(.caption2, design: .monospaced))
+                .font(.caption2)
                 .fontWeight(.heavy)
-                .padding(.horizontal, AppSpacing.sm)
-                .padding(.vertical, AppSpacing.xs)
-                .background(AppTheme.primaryGradient)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.blue)
                 .foregroundColor(.white)
-                .cornerRadius(AppRadius.small)
+                .cornerRadius(8)
         }
-        .padding(AppSpacing.lg)
+        .padding(16)
         .frame(minHeight: 80)
-        .background(
-            RoundedRectangle(cornerRadius: AppRadius.large)
-                .fill(AppTheme.cardBackground)
-                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-        )
+        .background(Color.primary.opacity(0.03))
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.large)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.primary.opacity(0.05), lineWidth: 1)
         )
+    }
+}
+
+struct SkeletonCard: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.primary.opacity(0.1))
+                    .frame(height: 20)
+                    .frame(maxWidth: .infinity)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.primary.opacity(0.05))
+                    .frame(height: 14)
+                    .frame(width: 80)
+            }
+
+            Spacer()
+
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.primary.opacity(0.1))
+                .frame(width: 40)
+        }
+        .padding(16)
+        .frame(height: 80)
+        .background(Color.primary.opacity(0.03))
+        .cornerRadius(12)
     }
 }

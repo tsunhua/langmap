@@ -9,18 +9,18 @@ struct SearchAssociationSheet: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: AppSpacing.lg) {
+            VStack(spacing: 24) {
                 TextField("Search expressions...", text: $searchQuery)
                     .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.lg)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 24)
                     .onSubmit {
                         viewModel.search(query: searchQuery)
                     }
 
                 if searchQuery.isEmpty {
                     Spacer()
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: 16) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 60))
                             .foregroundColor(.secondary.opacity(0.5))
@@ -36,17 +36,21 @@ struct SearchAssociationSheet: View {
                     Spacer()
                 } else if viewModel.isLoading {
                     Spacer()
-                    ProgressView()
-                        .scaleEffect(1.5)
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            Text("Searching...")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                    }
                     Spacer()
                 } else if viewModel.results.isEmpty {
                     Spacer()
-                    VStack(spacing: AppSpacing.md) {
+                    VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.magnifyingglass")
                             .font(.system(size: 60))
                             .foregroundColor(.secondary.opacity(0.5))
 
-                        Text("No results found")
+                        Text("No Results")
                             .font(.headline)
                             .foregroundColor(.secondary)
 
@@ -62,8 +66,8 @@ struct SearchAssociationSheet: View {
                                 selectedExpression(expression)
                                 isPresented = false
                             }) {
-                                HStack(spacing: AppSpacing.md) {
-                                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 8) {
                                         Text(expression.text)
                                             .font(.body)
                                             .fontWeight(.medium)
@@ -71,9 +75,10 @@ struct SearchAssociationSheet: View {
                                             .lineLimit(2)
 
                                         if let region = expression.regionName {
-                                            HStack(spacing: AppSpacing.xs) {
+                                            HStack(spacing: 4) {
                                                 Image(systemName: "location.fill")
                                                     .font(.caption2)
+                                                    .foregroundColor(.secondary)
                                                 Text(region)
                                                     .font(.caption)
                                                     .foregroundColor(.secondary)
@@ -83,11 +88,11 @@ struct SearchAssociationSheet: View {
 
                                     Spacer()
 
-                                    Image(systemName: "checkmark.circle")
+                                    Image(systemName: "checkmark.circle.fill")
                                         .font(.title2)
-//                                        .foregroundColor(.blue)
+                                        .foregroundColor(.blue)
                                 }
-                                .padding(.vertical, AppSpacing.sm)
+                                .padding(.vertical, 12)
                             }
                             .buttonStyle(.plain)
                         }
@@ -95,7 +100,7 @@ struct SearchAssociationSheet: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Search Expressions")
+            .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

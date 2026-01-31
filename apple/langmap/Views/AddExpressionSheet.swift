@@ -89,7 +89,7 @@ struct AddExpressionSheet: View {
                         
                         if let associated = viewModel.associatedExpression {
                             VStack {
-                                OptimizedExpressionCard(expression: associated)
+                                ExpressionCard(expression: associated)
                                 Button(action: viewModel.clearAssociation) {
                                     HStack {
                                         Image(systemName: "trash")

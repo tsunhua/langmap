@@ -9,128 +9,150 @@ struct CollectionsView: View {
     @State private var collectionToDelete: LMCollection?
 
     let columns = [
-        GridItem(.flexible(), spacing: AppTheme.cardSpacing),
-        GridItem(.flexible(), spacing: AppTheme.cardSpacing)
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
     ]
 
     var body: some View {
         NavigationView {
-            ZStack {
-                Color(.systemBackground).ignoresSafeArea()
-
-                if viewModel.isLoading {
-                    loadingView
-                } else if !viewModel.errorMessage.isEmpty {
-                    errorView
-                } else if viewModel.collections.isEmpty {
-                    emptyStateView
-                } else {
-                    collectionsGrid
+            if viewModel.isLoading {
+                loadingView
+            } else if !viewModel.errorMessage.isEmpty {
+                errorView
+            } else if viewModel.collections.isEmpty {
+                emptyStateView
+            } else {
+                collectionsGrid
+            }
+        }
+        .navigationTitle("Collections")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingCreateCollection = true }) {
+                    Image(systemName: "plus")
+                        .fontWeight(.semibold)
+                }
+                .frame(minWidth: 44, minHeight: 44)
+            }
+        }
+        .sheet(isPresented: $showingCreateCollection) {
+            CreateCollectionSheet(
+                isPresented: $showingCreateCollection,
+                name: $newCollectionName,
+                description: $newCollectionDescription,
+                onCreate: handleCreateCollection
+            )
+        }
+        .alert("Delete Collection", isPresented: $showingDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                if let collection = collectionToDelete {
+                    deleteCollection(collection)
                 }
             }
-            .navigationTitle("nav_collections".localized)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingCreateCollection = true }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showingCreateCollection) {
-                CreateCollectionSheet(
-                    isPresented: $showingCreateCollection,
-                    name: $newCollectionName,
-                    description: $newCollectionDescription,
-                    onCreate: handleCreateCollection
-                )
-            }
-            .alert("Delete Collection", isPresented: $showingDeleteAlert) {
-                Button("Delete", role: .destructive) {
-                    if let collection = collectionToDelete {
-                        deleteCollection(collection)
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Are you sure you want to delete this collection?")
-            }
-            .onAppear {
-                if viewModel.collections.isEmpty {
-                    viewModel.loadCollections()
-                }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete this collection?")
+        }
+        .onAppear {
+            if viewModel.collections.isEmpty {
+                viewModel.loadCollections()
             }
         }
     }
 
     private var loadingView: some View {
-        VStack(spacing: AppSpacing.lg) {
+        VStack(spacing: 16) {
+            Spacer()
             ProgressView()
             Text("Loading collections...")
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundColor(.secondary)
+            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var errorView: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: 24) {
+            Spacer()
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 60))
                 .foregroundColor(.red)
 
             Text(viewModel.errorMessage)
+                .font(.body)
+                .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
-                .padding()
+                .padding(.horizontal, 24)
 
             Button("Retry") {
                 viewModel.loadCollections()
             }
-            .buttonStyle(.bordered)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            Spacer()
         }
-        .padding()
+        .padding(.top, 60)
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: AppSpacing.xl) {
+        VStack(spacing: 24) {
             Spacer()
-
             Image(systemName: "folder")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(.secondary.opacity(0.5))
 
-            Text("no_collections".localized)
+            Text("No Collections")
                 .font(.title2)
+                .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("create_first_collection".localized)
+            Text("Create your first collection to organize expressions")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xl)
+                .padding(.horizontal, 24)
 
+            Button("Create Collection") {
+                showingCreateCollection = true
+            }
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(12)
             Spacer()
         }
+        .padding(.top, 60)
     }
 
     private var collectionsGrid: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: AppTheme.cardSpacing) {
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.collections) { collection in
                     NavigationLink(
                         destination: CollectionDetailView(collectionId: collection.id)
                     ) {
-                        CollectionCard(collection: collection) {
-                            // Navigate to collection detail
-                        } onDelete: {
-                            collectionToDelete = collection
-                            showingDeleteAlert = true
-                        }
+                        CollectionCard(
+                            collection: collection,
+                            onTap: {},
+                            onDelete: {
+                                collectionToDelete = collection
+                                showingDeleteAlert = true
+                            }
+                        )
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(AppSpacing.lg)
-            .padding(.bottom, 80) // Space for FAB
+            .padding(16)
+            .padding(.bottom, 80)
         }
     }
 
@@ -169,67 +191,48 @@ struct CollectionCard: View {
     @State private var showingMenu = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            // Header with gradient
-            ZStack {
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(hex: gradientColors.randomElement() ?? "6366f1"),
-                        Color(hex: gradientColors.randomElement() ?? "a855f7")
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .frame(height: 60)
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(collection.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
 
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text(collection.name)
-                        .font(.headline)
-                        .foregroundColor(.white)
-
-                    HStack {
-                        Spacer()
-                        Menu {
-                            Button(action: {}) {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            Button(role: .destructive, action: onDelete) {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis")
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(AppSpacing.md)
-            }
-
-            // Body
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 if let description = collection.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
+            }
+
+            HStack(spacing: 8) {
+                Text("\(collection.items?.count ?? 0) items")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
                 Spacer()
 
-                Text("\(collection.items?.count ?? 0) items")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xs)
-                    .background(Color.primary.opacity(0.05))
-                    .cornerRadius(AppRadius.small)
+                Menu {
+                    Button(action: {}) {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    Button(role: .destructive, action: onDelete) {
+                        Label("Delete", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(.primary)
+                }
             }
-            .padding(AppSpacing.md)
         }
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(AppRadius.large)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(16)
+        .frame(height: 120)
+        .background(Color.primary.opacity(0.03))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 }
-
-private let gradientColors = ["6366f1", "a855f7", "ec4899", "f59e0b", "10b981", "3b82f6"]
