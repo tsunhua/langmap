@@ -367,8 +367,22 @@ class AddExpressionViewModel: ObservableObject {
     }
 
     private func setupBindings() {
+        // Sync selectedLanguageId -> selectedLanguage (id -> object)
+        // This is the source of truth for user selections
+        $selectedLanguageId
+            .removeDuplicates()
+            .sink { [weak self] languageId in
+                guard let self = self else { return }
+                if let id = languageId {
+                    self.selectedLanguage = self.languages.first(where: { $0.id == id })
+                } else {
+                    self.selectedLanguage = nil
+                }
+            }
+            .store(in: &cancellables)
+
         // Sync selectedLanguage -> selectedLanguageId (object -> id)
-        // Only propagate when a non-nil language is selected to avoid accidentally clearing a previously stored id
+        // Only for programmatic changes from restore
         $selectedLanguage
             .sink { [weak self] language in
                 guard let self = self else { return }
@@ -383,10 +397,6 @@ class AddExpressionViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
-
-        // DO NOT have $selectedLanguageId sink that modifies selectedLanguage
-        // This creates feedback loops and causes the value to be lost during save
-        // Instead, selectedLanguageId is the source of truth and is persisted directly via saveLastLanguage()
 
         // Auto-save region (debounced) and detect user edits vs programmatic sets
         $region
