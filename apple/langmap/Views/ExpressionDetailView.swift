@@ -78,13 +78,13 @@ struct ExpressionDetailView: View {
                         VStack(spacing: AppSpacing.md) {
                             ForEach(associations) { assoc in
                                 if assoc.id != expression.id {
-                                NavigationLink(
-                                    destination: ExpressionDetailView(expression: assoc)
-                                ) {
-                                    ExpressionCard(expression: assoc)
+                                    NavigationLink(
+                                        destination: ExpressionDetailView(expression: assoc)
+                                    ) {
+                                        ExpressionCardView(expression: assoc)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
-                                .buttonStyle(PlainButtonStyle())
-                            }
                             }
                         }
                     }

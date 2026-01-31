@@ -134,24 +134,67 @@ struct CollectionsView: View {
 
     private var collectionsGrid: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(viewModel.collections) { collection in
-                    NavigationLink(
-                        destination: CollectionDetailView(collectionId: collection.id)
-                    ) {
-                        CollectionCard(
-                            collection: collection,
-                            onTap: {},
-                            onDelete: {
-                                collectionToDelete = collection
-                                showingDeleteAlert = true
+            VStack(spacing: 24) {
+                if !viewModel.publicCollections.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Public Collections")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(viewModel.publicCollections) { collection in
+                                NavigationLink(
+                                    destination: CollectionDetailView(collectionId: collection.id)
+                                ) {
+                                    CollectionCard(
+                                        collection: collection,
+                                        onTap: {},
+                                        onDelete: {
+                                            collectionToDelete = collection
+                                            showingDeleteAlert = true
+                                        }
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
-                        )
+                        }
+                        .padding(.horizontal, 16)
                     }
-                    .buttonStyle(.plain)
+                }
+
+                if !viewModel.privateCollections.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Private Collections")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(viewModel.privateCollections) { collection in
+                                NavigationLink(
+                                    destination: CollectionDetailView(collectionId: collection.id)
+                                ) {
+                                    CollectionCard(
+                                        collection: collection,
+                                        onTap: {},
+                                        onDelete: {
+                                            collectionToDelete = collection
+                                            showingDeleteAlert = true
+                                        }
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
                 }
             }
-            .padding(16)
             .padding(.bottom, 80)
         }
     }
@@ -211,10 +254,16 @@ struct CollectionCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
+                if collection.isPublic == 1 {
+                    Image(systemName: "globe")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
+
                 Spacer()
 
                 Menu {
-                    Button(action: {}) {
+                    Button(action: onTap) {
                         Label("Edit", systemImage: "pencil")
                     }
                     Button(role: .destructive, action: onDelete) {

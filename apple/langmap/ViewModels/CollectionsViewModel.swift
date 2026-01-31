@@ -10,6 +10,14 @@ class CollectionsViewModel: ObservableObject {
     @Published var showCreateCollection = false
     @Published var contributionCount: Int = 0
 
+    var privateCollections: [LMCollection] {
+        collections.filter { $0.isPublic == 0 }
+    }
+
+    var publicCollections: [LMCollection] {
+        collections.filter { $0.isPublic == 1 }
+    }
+
     func loadCollections() {
         isLoading = true
 
