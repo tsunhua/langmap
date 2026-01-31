@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var contributionCount: Int = 0
     @State private var showingLanguagePreferences = false
     @State private var showingLogoutAlert = false
+    @ObservedObject private var localizationManager = LocalizationManager.shared
 
     var body: some View {
         NavigationView {
@@ -21,17 +22,17 @@ struct ProfileView: View {
                 }
                 .padding(16)
             }
-            .navigationTitle("Profile")
+            .navigationTitle("nav_profile".localized)
             .sheet(isPresented: $showingLanguagePreferences) {
                 LanguagePreferencesSheet()
             }
-            .alert("Logout", isPresented: $showingLogoutAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Logout", role: .destructive) {
+            .alert("logout".localized, isPresented: $showingLogoutAlert) {
+                Button("cancel".localized, role: .cancel) {}
+                Button("logout".localized, role: .destructive) {
                     authService.logout()
                 }
             } message: {
-                Text("确定要退出登录吗？")
+                Text("logout_confirm".localized)
             }
             .onAppear {
                 loadContributionCount()
@@ -43,7 +44,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
                 Spacer()
-                Text("总贡献")
+                Text("total_contributions".localized)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -61,28 +62,28 @@ struct ProfileView: View {
 
     private var settingsList: some View {
         VStack(spacing: 0) {
-            SettingsRow(icon: "globe", title: "语言偏好") {
+            SettingsRow(icon: "globe", title: "language_preferences".localized) {
                 showingLanguagePreferences = true
             }
 
             Divider()
                 .padding(.leading, 50)
 
-            SettingsRow(icon: "bell", title: "通知") {
+            SettingsRow(icon: "bell", title: "notifications".localized) {
                 // Navigate to notifications
             }
 
             Divider()
                 .padding(.leading, 50)
 
-            SettingsRow(icon: "info.circle", title: "关于") {
+            SettingsRow(icon: "info.circle", title: "about".localized) {
                 // Navigate to about
             }
 
             Divider()
                 .padding(.leading, 50)
 
-            SettingsRow(icon: "hand.raised", title: "隐私政策") {
+            SettingsRow(icon: "hand.raised", title: "privacy_policy".localized) {
                 // Navigate to privacy policy
             }
         }
@@ -98,7 +99,7 @@ struct ProfileView: View {
         Button(action: { showingLogoutAlert = true }) {
             HStack {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
-                Text("退出")
+                Text("logout".localized)
                 Spacer()
             }
             .foregroundColor(.red)
@@ -166,7 +167,7 @@ struct LanguagePreferencesSheet: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                Text("语言偏好")
+                Text("language_preferences".localized)
                     .font(.headline)
                     .fontWeight(.bold)
                     .padding(.horizontal, AppSpacing.lg)
@@ -174,19 +175,19 @@ struct LanguagePreferencesSheet: View {
                 Divider()
 
                 List {
-                    ForEach(viewModel.languages) { language in
+                    ForEach(viewModel.supportedLanguages, id: \.code) { language in
                         Button(action: {
                             viewModel.selectLanguage(language)
                             dismiss()
                         }) {
                             HStack {
-                                Text(language.nativeName ?? language.name)
+                                Text(language.name)
                                     .font(.body)
                                     .foregroundColor(.primary)
 
                                 Spacer()
 
-                                if viewModel.selectedLanguage?.id == language.id {
+                                if viewModel.selectedLanguage?.code == language.code {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.blue)
                                 }
@@ -196,18 +197,15 @@ struct LanguagePreferencesSheet: View {
                     }
                 }
                 .listStyle(.plain)
-                .navigationTitle("语言偏好")
+                .navigationTitle("language_preferences".localized)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("取消") {
+                        Button("cancel".localized) {
                             dismiss()
                         }
                     }
                 }
-            }
-            .onAppear {
-                viewModel.loadLanguages()
             }
         }
     }
@@ -216,39 +214,28 @@ struct LanguagePreferencesSheet: View {
 // MARK: - Language Preferences ViewModel
 
 class LanguagePreferencesViewModel: ObservableObject {
-    @Published var languages: [LMLexiconLanguage] = []
-    @Published var selectedLanguage: LMLexiconLanguage?
-    @Published var isLoading = false
+    @Published var supportedLanguages: [AppLanguage] = [
+        AppLanguage(code: "en-US", name: "English"),
+        AppLanguage(code: "zh-CN", name: "简体中文")
+    ]
+    @Published var selectedLanguage: AppLanguage?
 
-    private let networkService = NetworkService.shared
+    private let localizationManager = LocalizationManager.shared
 
-    func loadLanguages() {
-        isLoading = true
-
-        Task {
-            do {
-                let request = networkService.createRequest(endpoint: "/languages")
-                let response: [LMLexiconLanguage] = try await networkService.performRequest(
-                    request, responseType: [LMLexiconLanguage].self
-                )
-
-                await MainActor.run {
-                    self.languages = response
-                    self.selectedLanguage = response.first { $0.id == UserDefaults.standard.integer(forKey: "preferredLanguageId") }
-                    self.isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.isLoading = false
-                }
-            }
-        }
+    init() {
+        selectedLanguage = supportedLanguages.first { $0.code == localizationManager.currentLanguage }
     }
 
-    func selectLanguage(_ language: LMLexiconLanguage) {
+    func selectLanguage(_ language: AppLanguage) {
         selectedLanguage = language
-        UserDefaults.standard.set(language.id, forKey: "preferredLanguageId")
+        localizationManager.currentLanguage = language.code
     }
+}
+
+struct AppLanguage: Identifiable {
+    let id = UUID()
+    let code: String
+    let name: String
 }
 
 // MARK: - Profile ViewModel

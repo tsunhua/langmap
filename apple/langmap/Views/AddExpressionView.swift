@@ -8,6 +8,7 @@ struct AddExpressionView: View {
     @State private var showingAssociationSearch = false
     @State private var showingLoginSheet = false
     @FocusState private var focusedField: Field?
+    @ObservedObject private var localizationManager = LocalizationManager.shared
 
     enum Field: Hashable {
         case expressionText

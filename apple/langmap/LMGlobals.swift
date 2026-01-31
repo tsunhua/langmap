@@ -11,7 +11,7 @@ import SwiftUI
 class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
 
-    @Published var currentLanguage: String = "en-US" {
+    @Published var currentLanguage: String {
         didSet {
             UserDefaults.standard.set(currentLanguage, forKey: "appLanguage")
             loadLocalizations()
@@ -21,7 +21,25 @@ class LocalizationManager: ObservableObject {
     private var localizations: [String: [String: String]] = [:]
 
     private init() {
-        currentLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? "en-US"
+        // Try to load saved language preference, otherwise use system language
+        if let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") {
+            currentLanguage = savedLanguage
+        } else {
+            // Map system language to supported languages
+            let systemLanguage = Locale.current.language.languageCode?.identifier ?? "en"
+            let systemRegion = Locale.current.region?.identifier ?? ""
+
+            // Try to find a matching language file
+            let supportedLanguages = ["en-US", "zh-CN"]
+            let potentialLanguage = "\(systemLanguage)-\(systemRegion)"
+
+            if supportedLanguages.contains(potentialLanguage) {
+                currentLanguage = potentialLanguage
+            } else {
+                // Fallback to English if system language not supported
+                currentLanguage = "en-US"
+            }
+        }
         loadLocalizations()
     }
 
