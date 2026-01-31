@@ -6,11 +6,20 @@ struct AddExpressionView: View {
     @State private var alertMessage = ""
     @State private var showingSuccess = false
     @State private var showingAssociationSearch = false
+    @State private var showingLoginSheet = false
     @FocusState private var focusedField: Field?
 
     enum Field: Hashable {
         case expressionText
         case tags
+    }
+
+    private var isAuthenticated: Bool {
+        NetworkService.shared.authToken != nil
+    }
+
+    private var canSubmit: Bool {
+        viewModel.isValid && !viewModel.isLoading
     }
 
     var body: some View {
@@ -40,8 +49,8 @@ struct AddExpressionView: View {
                         }
                         .frame(minWidth: 44, minHeight: 44)
                     }
-                    .disabled(!viewModel.isValid || viewModel.isLoading)
-                    .opacity(viewModel.isValid && !viewModel.isLoading ?1 : 0.5)
+                    .disabled(!canSubmit || viewModel.isLoading)
+                    .opacity(canSubmit && !viewModel.isLoading ?1 : 0.5)
                 }
             }
             .alert("Success", isPresented: $showingSuccess) {
@@ -53,6 +62,9 @@ struct AddExpressionView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(alertMessage)
+            }
+            .sheet(isPresented: $showingLoginSheet) {
+                LoginView()
             }
             .onAppear {
                 viewModel.restorePreferences()
@@ -349,6 +361,11 @@ struct AddExpressionView: View {
 
 
     private func submitExpression() {
+        if !isAuthenticated {
+            showingLoginSheet = true
+            return
+        }
+
         Task {
             do {
                 try await viewModel.submit()

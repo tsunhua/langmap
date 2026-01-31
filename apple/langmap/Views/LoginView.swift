@@ -7,99 +7,85 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var errorMessage = ""
     @State private var showRegister = false
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack {
-            AppTheme.primaryGradient
-                .ignoresSafeArea()
+        NavigationView {
+            VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: AppSpacing.md) {
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.blue)
 
-            ScrollView {
-                VStack(spacing: 30) {
-                    Spacer(minLength: 50)
+                    Text("Sign In")
+                        .font(.title)
+                        .fontWeight(.bold)
+                }
+                .padding(.top, AppSpacing.xl)
 
-                    VStack(spacing: 12) {
-                        Text("app_name".localized)
-                            .font(.system(size: 40, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                VStack(spacing: AppSpacing.lg) {
+                    InputField(
+                        title: "Email",
+                        placeholder: "Enter email",
+                        text: $email
+                    )
 
-                        Text("login_subtitle".localized)
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.8))
+                    InputField(
+                        title: "Password",
+                        placeholder: "Enter password",
+                        text: $password,
+                        isSecure: true
+                    )
+
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, AppSpacing.md)
                     }
 
-                    VStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("email".localized)
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.secondary)
-
-                            TextField("email".localized, text: $email)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
-                                .autocapitalization(.none)
-                                .keyboardType(.emailAddress)
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("password".localized)
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.secondary)
-
-                            SecureField("password".localized, text: $password)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
-                        }
-
-                        if !errorMessage.isEmpty {
-                            Text(errorMessage)
-                                .foregroundColor(.red)
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                        }
-
-                        Button(action: handleLogin) {
+                    Button(action: handleLogin) {
+                        HStack {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .controlSize(.small)
+                                    .tint(.white)
                             } else {
-                                Text("sign_in".localized)
-                                    .fontWeight(.bold)
+                                Text("Sign In")
+                                    .fontWeight(.semibold)
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppTheme.primaryGradient)
+                        .frame(height: 50)
+                        .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
-                        .disabled(isLoading)
+                        .cornerRadius(AppRadius.medium)
                     }
-                    .glassCardStyle()
-                    .padding(.horizontal)
-
-                    HStack {
-                        Text("dont_have_account".localized)
-                            .foregroundColor(.white.opacity(0.8))
-                        Button(action: { showRegister = true }) {
-                            Text("sign_up".localized)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                        }
-                    }
-
-                    Spacer()
+                    .disabled(email.isEmpty || password.isEmpty || isLoading)
                 }
-                .padding()
+                .padding(.horizontal, AppSpacing.xl)
+
+                Spacer()
+
+                Button(action: { showRegister = true }) {
+                    Text("Create Account")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
+                .padding(.bottom, AppSpacing.xl)
+            }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
             }
         }
-        .fullScreenCover(isPresented: $showRegister) {
+        .sheet(isPresented: $showRegister) {
             RegisterView()
         }
     }
@@ -112,7 +98,7 @@ struct LoginView: View {
             do {
                 try await authService.login(email: email, password: password)
                 isLoading = false
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             } catch {
                 isLoading = false
                 errorMessage = error.localizedDescription

@@ -8,121 +8,121 @@ struct RegisterView: View {
     @State private var confirmPassword = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack {
-            AppTheme.primaryGradient
-                .ignoresSafeArea()
-
+        NavigationView {
             ScrollView {
-                VStack(spacing: 30) {
-                    Spacer(minLength: 50)
-
+                VStack(spacing: 24) {
                     VStack(spacing: 12) {
-                        Text("create_account".localized)
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                        Image(systemName: "person.crop.circle.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(.blue)
+
+                        Text("Create Account")
+                            .font(.title)
+                            .fontWeight(.bold)
                     }
+                    .padding(.top, 24)
 
-                    VStack(spacing: 20) {
+                    VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("email".localized)
+                            Text("Email")
                                 .font(.caption)
-                                .fontWeight(.bold)
                                 .foregroundColor(.secondary)
 
-                            TextField("email".localized, text: $email)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
-                                .autocapitalization(.none)
-                                .keyboardType(.emailAddress)
+                            TextField("Enter email", text: $email)
+                                .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("username".localized)
+                            Text("Username")
                                 .font(.caption)
-                                .fontWeight(.bold)
                                 .foregroundColor(.secondary)
 
-                            TextField("username".localized, text: $username)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
-                                .autocapitalization(.none)
+                            TextField("Enter username", text: $username)
+                                .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("password".localized)
+                            Text("Password")
                                 .font(.caption)
-                                .fontWeight(.bold)
                                 .foregroundColor(.secondary)
 
-                            SecureField("password".localized, text: $password)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
+                            SecureField("Create password", text: $password)
+                                .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("confirm_password".localized)
+                            Text("Confirm Password")
                                 .font(.caption)
-                                .fontWeight(.bold)
                                 .foregroundColor(.secondary)
 
-                            SecureField("confirm_password".localized, text: $confirmPassword)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .padding()
-                                .background(Color.primary.opacity(0.05))
-                                .cornerRadius(12)
+                            SecureField("Confirm password", text: $confirmPassword)
+                                .textFieldStyle(.roundedBorder)
                         }
 
                         if !errorMessage.isEmpty {
                             Text(errorMessage)
-                                .foregroundColor(.red)
                                 .font(.caption)
-                                .multilineTextAlignment(.center)
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 16)
                         }
 
                         Button(action: handleRegister) {
-                            if isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text("sign_up".localized)
-                                    .fontWeight(.bold)
+                            HStack {
+                                if isLoading {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                        .tint(.white)
+                                } else {
+                                    Text("Create Account")
+                                        .fontWeight(.semibold)
+                                }
                             }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(AppTheme.primaryGradient)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 3)
-                        .disabled(isLoading || !isFormValid)
+                        .disabled(!isFormValid || isLoading)
                     }
-                    .glassCardStyle()
-                    .padding(.horizontal)
-
-                    Button("cancel".localized) {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
+                    .padding(.horizontal, 16)
 
                     Spacer()
+
+                    HStack(spacing: 8) {
+                        Text("Already have an account?")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        Button("Sign In") {
+                            dismiss()
+                        }
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                    }
+                    .padding(.bottom, 24)
                 }
-                .padding()
+            }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
             }
         }
     }
 
     private var isFormValid: Bool {
-        !email.isEmpty && !username.isEmpty && !password.isEmpty && password == confirmPassword
+        !email.isEmpty && !username.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
+            && password == confirmPassword
             && password.count >= 6
     }
 
@@ -134,7 +134,7 @@ struct RegisterView: View {
             do {
                 try await authService.register(email: email, username: username, password: password)
                 isLoading = false
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             } catch {
                 isLoading = false
                 errorMessage = error.localizedDescription
