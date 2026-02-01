@@ -21,21 +21,18 @@ class SearchViewModel: ObservableObject {
 
         isLoading = true
 
-        Task {
+        Task { @MainActor in
+            let request = networkService.createRequest(endpoint: "/languages")
+
             do {
-                let request = networkService.createRequest(endpoint: "/languages")
                 let response: [LMLexiconLanguage] = try await networkService.performRequest(
                     request, responseType: [LMLexiconLanguage].self)
 
-                await MainActor.run {
-                    self.languages = response.filter { $0.isActive == 1 }
-                    self.isLoading = false
-                }
+                self.languages = response.filter { $0.isActive == 1 }
+                self.isLoading = false
             } catch {
                 print("Failed to load languages: \(error)")
-                await MainActor.run {
-                    self.isLoading = false
-                }
+                self.isLoading = false
             }
         }
     }
@@ -48,8 +45,11 @@ class SearchViewModel: ObservableObject {
             return
         }
 
-        searchTask = Task {
-            isLoading = true
+        let searchQuery = self.searchQuery
+        let selectedLanguage = self.selectedLanguage
+
+        searchTask = Task { @MainActor in
+            self.isLoading = true
 
             do {
                 var endpoint =
@@ -72,25 +72,21 @@ class SearchViewModel: ObservableObject {
                 print("Search results count: \(response.count)")
 
                 if !Task.isCancelled {
-                    await MainActor.run {
-                        self.searchResults = response
-                        self.isLoading = false
+                    self.searchResults = response
+                    self.isLoading = false
 
-                        // Save to search history
-                        historyManager.addToHistory(
-                            query: searchQuery,
-                            languageCode: langCode,
-                            resultCount: response.count
-                        )
-                    }
+                    // Save to search history
+                    historyManager.addToHistory(
+                        query: searchQuery,
+                        languageCode: langCode,
+                        resultCount: response.count
+                    )
                 }
             } catch {
                 print("Search failed: \(error)")
                 if !Task.isCancelled {
-                    await MainActor.run {
-                        self.searchResults = []
-                        self.isLoading = false
-                    }
+                    self.searchResults = []
+                    self.isLoading = false
                 }
             }
         }
