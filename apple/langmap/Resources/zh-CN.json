@@ -120,5 +120,8 @@
   "searching": "搜索中...",
   "results": "个结果",
   "items": "项",
-  "ok": "确定"
+  "ok": "确定",
+  "region": "地区",
+  "public_collections": "公开收藏夹",
+  "private_collections": "私人收藏夹"
 }

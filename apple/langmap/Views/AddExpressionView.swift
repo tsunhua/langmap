@@ -241,7 +241,7 @@ struct AddExpressionView: View {
 
     private var regionSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Region")
+            Text("region".localized)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)

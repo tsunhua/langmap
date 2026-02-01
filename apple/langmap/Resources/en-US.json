@@ -120,5 +120,8 @@
   "searching": "Searching...",
   "results": "results",
   "items": "items",
-  "ok": "OK"
+  "ok": "OK",
+  "region": "Region",
+  "public_collections": "Public Collections",
+  "private_collections": "Private Collections"
 }

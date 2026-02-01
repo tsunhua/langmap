@@ -140,7 +140,7 @@ struct CollectionsView: View {
             VStack(spacing: 24) {
                 if !viewModel.publicCollections.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Public Collections")
+                        Text("public_collections".localized)
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
@@ -170,7 +170,7 @@ struct CollectionsView: View {
 
                 if !viewModel.privateCollections.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Private Collections")
+                        Text("private_collections".localized)
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
