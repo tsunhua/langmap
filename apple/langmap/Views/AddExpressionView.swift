@@ -35,6 +35,12 @@ struct AddExpressionView: View {
                 }
                 .padding(AppSpacing.lg)
             }
+            .simultaneousGesture(
+                DragGesture()
+                    .onChanged { _ in
+                        hideKeyboard()
+                    }
+            )
             .navigationTitle("add_expression".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

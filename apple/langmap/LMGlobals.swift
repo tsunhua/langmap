@@ -557,6 +557,12 @@ extension View {
     func glassCardStyle() -> some View {
         modifier(GlassCardModifier())
     }
+
+    func hideKeyboard() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
+    }
 }
 
 extension Color {
