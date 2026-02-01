@@ -5,7 +5,7 @@ import SwiftUI
 class HomeViewModel: ObservableObject {
     private let networkService = NetworkService.shared
 
-    @Published var featuredExpressions: [LMLexiconExpression] = []
+    @Published var recentExpressions: [LMLexiconExpression] = []
     @Published var languages: [LMLexiconLanguage] = []
     @Published var selectedLanguage: LMLexiconLanguage?
     @Published var isLoading = false
@@ -37,7 +37,7 @@ class HomeViewModel: ObservableObject {
         }
     }
 
-    func loadFeaturedExpressions() {
+    func loadRecentExpressions() {
         isLoading = true
 
         Task {
@@ -52,12 +52,12 @@ class HomeViewModel: ObservableObject {
                     request, responseType: [LMLexiconExpression].self)
 
                 await MainActor.run {
-                    self.featuredExpressions = response
+                    self.recentExpressions = response
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
-                    self.featuredExpressions = []
+                    self.recentExpressions = []
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }

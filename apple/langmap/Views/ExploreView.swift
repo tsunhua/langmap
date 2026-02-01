@@ -25,8 +25,8 @@ struct ExploreView: View {
                 if viewModel.languages.isEmpty {
                     viewModel.loadLanguages()
                 }
-                if viewModel.featuredExpressions.isEmpty {
-                    viewModel.loadFeaturedExpressions()
+                if viewModel.recentExpressions.isEmpty {
+                    viewModel.loadRecentExpressions()
                 }
             }
         }
@@ -77,7 +77,7 @@ struct ExploreView: View {
     private var featuredContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("featured_expressions".localized)
+                Text("recent_expressions".localized)
                     .font(.headline)
                     .fontWeight(.bold)
                     .padding(.horizontal, 16)
@@ -90,11 +90,11 @@ struct ExploreView: View {
                         }
                     }
                     .padding(.horizontal, 16)
-                } else if viewModel.featuredExpressions.isEmpty {
+                } else if viewModel.recentExpressions.isEmpty {
                     emptyStateView
                 } else {
                     VStack(spacing: 12) {
-                        ForEach(viewModel.featuredExpressions) { expression in
+                        ForEach(viewModel.recentExpressions) { expression in
                             NavigationLink(
                                 destination: ExpressionDetailView(expression: expression)
                             ) {

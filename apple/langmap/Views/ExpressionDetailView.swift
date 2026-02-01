@@ -122,6 +122,9 @@ struct ExpressionDetailView: View {
         .navigationTitle("details".localized)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            Task { @MainActor in
+                ViewHistoryManager.shared.addToHistory(expression)
+            }
             loadAssociations()
         }
     }

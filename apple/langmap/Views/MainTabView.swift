@@ -6,9 +6,9 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            ExploreView()
+            SearchView()
                 .tabItem {
-                    Label("nav_explore".localized, systemImage: "magnifyingglass.circle.fill")
+                    Label("nav_search".localized, systemImage: "magnifyingglass.circle.fill")
                 }
 
             AddExpressionView()

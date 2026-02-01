@@ -3,6 +3,7 @@ import Foundation
 
 class SearchViewModel: ObservableObject {
     private let networkService = NetworkService.shared
+    private let historyManager = SearchHistoryManager.shared
 
     @Published var searchQuery = ""
     @Published var searchResults: [LMLexiconExpression] = []
@@ -11,6 +12,8 @@ class SearchViewModel: ObservableObject {
     @Published var isLoading = false
 
     private var searchTask: Task<Void, Never>?
+
+    // MARK: - Public Methods
 
     func loadLanguages() {
         Task {
@@ -43,8 +46,12 @@ class SearchViewModel: ObservableObject {
                 var endpoint =
                     "/search?q=\(searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 
-                if let langCode = selectedLanguage?.code {
-                    endpoint += "&from_lang=\(langCode)"
+                let langCode: String?
+                if let selectedLang = selectedLanguage {
+                    langCode = selectedLang.code
+                    endpoint += "&from_lang=\(selectedLang.code)"
+                } else {
+                    langCode = nil
                 }
 
                 print("Search endpoint: \(endpoint)")
@@ -59,6 +66,13 @@ class SearchViewModel: ObservableObject {
                     await MainActor.run {
                         self.searchResults = response
                         self.isLoading = false
+
+                        // Save to search history
+                        historyManager.addToHistory(
+                            query: searchQuery,
+                            languageCode: langCode,
+                            resultCount: response.count
+                        )
                     }
                 }
             } catch {
@@ -71,5 +85,32 @@ class SearchViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func searchHistoryItem(_ item: SearchHistoryItem) {
+        searchQuery = item.query
+        if let langCode = item.languageCode,
+           let language = languages.first(where: { $0.code == langCode }) {
+            selectedLanguage = language
+        } else {
+            selectedLanguage = nil
+        }
+        search()
+    }
+
+    func removeFromHistory(_ item: SearchHistoryItem) {
+        historyManager.removeFromHistory(item)
+    }
+
+    func clearHistory() {
+        historyManager.clearAllHistory()
+    }
+
+    var recentSearches: [SearchHistoryItem] {
+        historyManager.getRecentSearches()
+    }
+
+    var hasSearchHistory: Bool {
+        !historyManager.searchHistory.isEmpty
     }
 }

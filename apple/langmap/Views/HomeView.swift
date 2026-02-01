@@ -4,7 +4,7 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 30) {
                     // Welcome Header
@@ -13,7 +13,7 @@ struct HomeView: View {
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                         Text("welcome_subtitle".localized)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
                     .padding(.top, 20)
@@ -36,13 +36,13 @@ struct HomeView: View {
                             .cornerRadius(12)
                             .padding(.horizontal)
                             .onChange(of: viewModel.selectedLanguage) { _, _ in
-                                viewModel.loadFeaturedExpressions()
+                                viewModel.loadRecentExpressions()
                             }
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 15) {
-                        Text("featured_expressions".localized)
+                        Text("recent_expressions".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                             .padding(.horizontal)
@@ -50,14 +50,14 @@ struct HomeView: View {
                         if viewModel.isLoading {
                             ProgressView()
                                 .frame(maxWidth: .infinity)
-                        } else if viewModel.featuredExpressions.isEmpty {
-                            Text("no_results".localized)
-                                .foregroundColor(.secondary)
+                        } else if viewModel.recentExpressions.isEmpty {
+                            Text("no_recent_expressions".localized)
+                                .foregroundStyle(.secondary)
                                 .padding()
                                 .frame(maxWidth: .infinity)
                         } else {
                             VStack(spacing: 15) {
-                                ForEach(viewModel.featuredExpressions) { expression in
+                                ForEach(viewModel.recentExpressions) { expression in
                                     NavigationLink(
                                         destination: ExpressionDetailView(expression: expression)
                                     ) {
@@ -75,8 +75,8 @@ struct HomeView: View {
                 if viewModel.languages.isEmpty {
                     viewModel.loadLanguages()
                 }
-                if viewModel.featuredExpressions.isEmpty {
-                    viewModel.loadFeaturedExpressions()
+                if viewModel.recentExpressions.isEmpty {
+                    viewModel.loadRecentExpressions()
                 }
             }
         }
