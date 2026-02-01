@@ -370,6 +370,7 @@ class AuthService: ObservableObject {
 
     init() {
         checkAuthStatus()
+        loadUserFromStorage()
         setupAuthObservation()
     }
 
@@ -378,6 +379,13 @@ class AuthService: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] token in
                 self?.isAuthenticated = token != nil
+                if token == nil {
+                    self?.clearUserFromStorage()
+                } else if self?.currentUser == nil {
+                    Task {
+                        try? await self?.fetchCurrentUser()
+                    }
+                }
             }
             .store(in: &cancellables)
     }
@@ -396,6 +404,7 @@ class AuthService: ObservableObject {
         networkService.authToken = response.data.token
         currentUser = response.data.user
         isAuthenticated = true
+        saveUserToStorage(response.data.user)
     }
 
     func register(email: String, username: String, password: String) async throws {
@@ -412,12 +421,14 @@ class AuthService: ObservableObject {
         networkService.authToken = response.data.token
         currentUser = response.data.user
         isAuthenticated = true
+        saveUserToStorage(response.data.user)
     }
 
     func logout() {
         networkService.authToken = nil
         currentUser = nil
         isAuthenticated = false
+        clearUserFromStorage()
     }
 
     func fetchCurrentUser() async throws {
@@ -426,10 +437,28 @@ class AuthService: ObservableObject {
             request, responseType: User.self)
         currentUser = response
         isAuthenticated = true
+        saveUserToStorage(response)
     }
 
     func checkAuthStatus() {
         isAuthenticated = networkService.authToken != nil
+    }
+
+    private func saveUserToStorage(_ user: User) {
+        if let encoded = try? JSONEncoder().encode(user) {
+            UserDefaults.standard.set(encoded, forKey: "currentUser")
+        }
+    }
+
+    private func loadUserFromStorage() {
+        if let data = UserDefaults.standard.data(forKey: "currentUser"),
+           let user = try? JSONDecoder().decode(User.self, from: data) {
+            currentUser = user
+        }
+    }
+
+    private func clearUserFromStorage() {
+        UserDefaults.standard.removeObject(forKey: "currentUser")
     }
 }
 
