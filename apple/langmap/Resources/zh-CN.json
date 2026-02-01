@@ -126,5 +126,9 @@
   "private_collections": "私人收藏夹",
   "expression_required": "表达不能为空",
   "max_characters": "最多500个字符",
-  "add_association": "添加关联"
+  "add_association": "添加关联",
+  "all_expressions": "所有表达",
+  "no_expressions_in_collection": "收藏夹中没有表达",
+  "expressions_not_loaded": "表达未加载",
+  "load_expressions": "加载表达"
 }

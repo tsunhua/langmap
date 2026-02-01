@@ -126,5 +126,7 @@
   "private_collections": "Private Collections",
   "expression_required": "Expression is required",
   "max_characters": "Maximum 500 characters",
-  "add_association": "Add Association"
+  "add_association": "Add Association",
+  "all_expressions": "All Expressions",
+  "no_expressions_in_collection": "No expressions in this collection"
 }

@@ -2,38 +2,33 @@ import Combine
 import Foundation
 
 class CollectionsViewModel: ObservableObject {
-    private let networkService = NetworkService.shared
-
+    
     @Published var collections: [LMCollection] = []
     @Published var isLoading = false
     @Published var errorMessage = ""
     @Published var showCreateCollection = false
-    @Published var contributionCount: Int = 0
-
+    
     var privateCollections: [LMCollection] {
         collections.filter { $0.isPublic == 0 }
     }
-
+    
     var publicCollections: [LMCollection] {
         collections.filter { $0.isPublic == 1 }
     }
-
+    
     func loadCollections() {
         isLoading = true
 
         Task {
             do {
-                let request = networkService.createRequest(endpoint: "/collections")
-                let response: [LMCollection] = try await networkService.performRequest(
+                let request = NetworkService.shared.createRequest(endpoint: "/collections")
+                let response: [LMCollection] = try await NetworkService.shared.performRequest(
                     request, responseType: [LMCollection].self)
 
                 await MainActor.run {
                     self.collections = response
                     self.isLoading = false
                 }
-
-                // Load contribution count
-                loadContributionCount()
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
@@ -43,24 +38,8 @@ class CollectionsViewModel: ObservableObject {
         }
     }
 
-    func loadContributionCount() {
-        Task {
-            do {
-                let request = NetworkService.shared.createRequest(endpoint: "/user/contributions/count")
-                let response: [String: Int] = try await NetworkService.shared.performRequest(
-                    request, responseType: [String: Int].self
-                )
-                await MainActor.run {
-                    self.contributionCount = response["count"] ?? 0
-                }
-            } catch {
-                // Handle error silently
-            }
-        }
-    }
-
     func createCollection(name: String, description: String) async throws {
-        var request = networkService.createRequest(endpoint: "/collections", method: "POST")
+        var request = NetworkService.shared.createRequest(endpoint: "/collections", method: "POST")
 
         let collectionData: [String: Any] = [
             "name": name,
@@ -69,8 +48,9 @@ class CollectionsViewModel: ObservableObject {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: collectionData)
 
-        let _: LMCollection = try await networkService.performRequest(
-            request, responseType: LMCollection.self)
+        let _: LMCollection = try await NetworkService.shared.performRequest(
+            request, responseType: LMCollection.self
+        )
         loadCollections()
     }
 

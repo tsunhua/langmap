@@ -35,7 +35,7 @@ struct CollectionDetailView: View {
 
                             HStack {
                                 Label(
-                                    "\((collection.items?.count ?? 0)) " + "items".localized,
+                                    "\((collection.itemsCount ?? 0)) " + "items".localized,
                                     systemImage: "list.bullet")
                                 Spacer()
                                 Text("added_on".localized + " \(formatDate(collection.createdAt))")

@@ -254,7 +254,7 @@ struct CollectionCard: View {
             }
 
             HStack(spacing: 8) {
-                Text("\(collection.items?.count ?? 0) " + "items".localized)
+                Text("\(collection.itemsCount ?? 0) " + "items".localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
 
