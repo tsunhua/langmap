@@ -49,6 +49,8 @@ struct CollectionDetailView: View {
                             .foregroundColor(.secondary)
                             .padding(.top, 5)
                         }
+                        .padding()
+                        .glassCardStyle()
                         .padding(.horizontal)
 
                         VStack(alignment: .leading, spacing: 15) {
@@ -72,26 +74,27 @@ struct CollectionDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 50)
                             } else {
-                                LazyVStack(spacing: 12) {
+                                VStack(spacing: 4) {
                                     ForEach(items) { item in
                                         if let expression = item.expression {
                                             NavigationLink(
                                                 destination: ExpressionDetailView(
                                                     expression: expression)
                                             ) {
-                                                VStack(alignment: .leading, spacing: 8) {
-                                                    ExpressionCardView(expression: expression)
+                                                VStack(alignment: .leading, spacing: 0) {
+                                                    ExpressionCardView(expression: expression, compact: true)
 
                                                     if let note = item.note, !note.isEmpty {
                                                         Text(note)
                                                             .font(.caption)
-                                                            .italic()
                                                             .foregroundColor(.secondary)
-                                                            .padding(.horizontal, 25)
-                                                            .padding(.bottom, 5)
+                                                            .padding(.horizontal, 12)
+                                                            .padding(.vertical, 8)
+                                                            .background(Color.yellow.opacity(0.1))
                                                     }
                                                 }
                                             }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                 }
