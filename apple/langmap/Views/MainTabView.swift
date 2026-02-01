@@ -26,8 +26,5 @@ struct MainTabView: View {
                     Label("nav_profile".localized, systemImage: "person.fill")
                 }
         }
-        .sheet(isPresented: $showingAddExpression) {
-            AddExpressionSheet(isPresented: $showingAddExpression)
-        }
     }
 }
