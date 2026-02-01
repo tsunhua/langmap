@@ -91,10 +91,10 @@ struct ViewHistoryItem: Codable, Identifiable, Equatable {
     let text: String
     let languageCode: String
     let regionName: String?
-    let meaningId: Int
+    let meaningId: Int?
     let viewedAt: Date
 
-    init(expressionId: Int, text: String, languageCode: String, regionName: String?, meaningId: Int, viewedAt: Date = Date()) {
+    init(expressionId: Int, text: String, languageCode: String, regionName: String?, meaningId: Int?, viewedAt: Date = Date()) {
         self.id = UUID()
         self.expressionId = expressionId
         self.text = text

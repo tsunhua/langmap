@@ -76,7 +76,7 @@ class LocalizationManager: ObservableObject {
 struct LMLexiconExpression: Codable, Identifiable {
     let id: Int
     let text: String
-    let meaningId: Int
+    let meaningId: Int?
     let audioUrl: String?
     let languageCode: String
     let regionCode: String?

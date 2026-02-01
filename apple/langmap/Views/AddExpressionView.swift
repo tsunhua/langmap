@@ -303,7 +303,7 @@ struct AddExpressionView: View {
             if let associated = viewModel.associatedExpression {
                 VStack(spacing: AppSpacing.sm) {
                     HStack(spacing: AppSpacing.sm) {
-                        Image(systemName: "link.fill")
+                        Image(systemName: "link")
                             .font(.caption)
                             .foregroundColor(.secondary)
 

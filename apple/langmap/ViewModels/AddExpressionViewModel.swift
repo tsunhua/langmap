@@ -661,28 +661,32 @@ class AddExpressionViewModel: ObservableObject {
         saveLastLanguage()
         savePreferences()
 
-        var endpoint =
-            "/expressions?text=\(expressionText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        endpoint += "&language_id=\(selectedLanguage!.id)"
+        // Prepare request body as JSON
+        var requestBody: [String: Any] = [
+            "text": expressionText,
+            "language_code": selectedLanguage!.code
+        ]
 
         if !region.isEmpty {
-            endpoint +=
-                "&region=\(region.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+            requestBody["region"] = region
         }
 
         if !tags.isEmpty {
-            endpoint +=
-                "&tags=\(tags.joined(separator: ",").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+            requestBody["tags"] = tags
         }
 
-        if let associationId = associatedExpression?.id {
-            endpoint += "&association_id=\(associationId)"
+        // Use meaning_id for associations instead of association_id
+        if let meaningId = associatedExpression?.meaningId {
+            requestBody["meaning_id"] = meaningId
         }
 
-        let request = NetworkService.shared.createRequest(
-            endpoint: endpoint,
+        let jsonData = try JSONSerialization.data(withJSONObject: requestBody, options: [])
+
+        var request = NetworkService.shared.createRequest(
+            endpoint: "/expressions",
             method: "POST"
         )
+        request.httpBody = jsonData
 
         let _: LMLexiconExpression = try await NetworkService.shared.performRequest(
             request, responseType: LMLexiconExpression.self

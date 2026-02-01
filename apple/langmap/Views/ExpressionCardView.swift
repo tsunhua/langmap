@@ -52,8 +52,8 @@ struct ExpressionCardView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
 
-                    if let meaning = expression.meaningId != 0 ? "\(expression.meaningId)" : nil {
-                        Text(meaning)
+                    if let meaningId = expression.meaningId, meaningId != 0 {
+                        Text("\(meaningId)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
