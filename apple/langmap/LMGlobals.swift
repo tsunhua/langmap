@@ -21,22 +21,17 @@ class LocalizationManager: ObservableObject {
     private var localizations: [String: [String: String]] = [:]
 
     private init() {
-        // Try to load saved language preference, otherwise use system language
         if let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") {
             currentLanguage = savedLanguage
         } else {
-            // Map system language to supported languages
             let systemLanguage = Locale.current.language.languageCode?.identifier ?? "en"
             let systemRegion = Locale.current.region?.identifier ?? ""
-
-            // Try to find a matching language file
             let supportedLanguages = ["en-US", "zh-CN"]
             let potentialLanguage = "\(systemLanguage)-\(systemRegion)"
 
             if supportedLanguages.contains(potentialLanguage) {
                 currentLanguage = potentialLanguage
             } else {
-                // Fallback to English if system language not supported
                 currentLanguage = "en-US"
             }
         }
@@ -69,182 +64,6 @@ class LocalizationManager: ObservableObject {
     static func L(_ key: String) -> String {
         return shared.localize(key)
     }
-}
-
-// MARK: - Core Models
-
-struct LMLexiconExpression: Codable, Identifiable {
-    let id: Int
-    let text: String
-    let meaningId: Int?
-    let audioUrl: String?
-    let languageCode: String
-    let regionCode: String?
-    let regionName: String?
-    let regionLatitude: Double?
-    let regionLongitude: Double?
-    let tags: String?
-    let sourceType: String?
-    let sourceRef: String?
-    let reviewStatus: String?
-    let createdBy: String?
-    let createdAt: String
-    let updatedAt: String
-    let origin: String?
-    let usage: String?
-
-    var phrase: String {
-        return text
-    }
-
-    var translation: String {
-        return ""
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case id, text, tags, origin, usage
-        case meaningId = "meaning_id"
-        case audioUrl = "audio_url"
-        case languageCode = "language_code"
-        case regionCode = "region_code"
-        case regionName = "region_name"
-        case regionLatitude = "region_latitude"
-        case regionLongitude = "region_longitude"
-        case sourceType = "source_type"
-        case sourceRef = "source_ref"
-        case reviewStatus = "review_status"
-        case createdBy = "created_by"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct LMLexiconLanguage: Codable, Identifiable, Hashable {
-    let id: Int
-    let code: String
-    let name: String
-    let direction: String
-    let family: String?
-    let notes: String?
-    let isActive: Int
-    let regionCode: String?
-    let regionName: String?
-    let regionLatitude: Double?
-    let regionLongitude: Double?
-    let createdBy: String?
-    let createdAt: String
-    let updatedAt: String?
-
-    var nativeName: String? {
-        return name
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case id, code, name, direction, family, notes
-        case isActive = "is_active"
-        case regionCode = "region_code"
-        case regionName = "region_name"
-        case regionLatitude = "region_latitude"
-        case regionLongitude = "region_longitude"
-        case createdBy = "created_by"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct LMCollection: Codable, Identifiable {
-    let id: Int
-    let userId: Int
-    let name: String
-    let description: String?
-    let isPublic: Int?
-    let items: [CollectionItem]?
-    let itemsCount: Int?
-    let createdAt: String
-    let updatedAt: String?
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, description, items
-        case userId = "user_id"
-        case isPublic = "is_public"
-        case itemsCount = "items_count"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct CollectionItem: Codable, Identifiable {
-    let id: Int
-    let collectionId: Int
-    let expressionId: Int
-    let note: String?
-    let createdAt: String
-    let updatedAt: String?
-    let expression: LMLexiconExpression?
-
-    enum CodingKeys: String, CodingKey {
-        case id, note, expression
-        case collectionId = "collection_id"
-        case expressionId = "expression_id"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct CollectionDetail: Codable {
-    let id: Int
-    let userId: Int
-    let name: String
-    let description: String?
-    let isPublic: Int?
-    let createdAt: String
-    let updatedAt: String?
-    let items: [CollectionItem]?
-    let itemsCount: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, description, items
-        case itemsCount = "items_count"
-        case userId = "user_id"
-        case isPublic = "is_public"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct User: Codable, Identifiable {
-    let id: Int
-    let username: String
-    let email: String
-    let role: String
-    let emailVerified: Int
-    let createdAt: String
-    let updatedAt: String
-
-    enum CodingKeys: String, CodingKey {
-        case id, username, email, role
-        case emailVerified = "email_verified"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
-}
-
-struct AuthResponse: Codable {
-    let success: Bool
-    let data: AuthData
-}
-
-struct AuthData: Codable {
-    let token: String
-    let user: User
-}
-
-struct LMApiResponse<T: Codable>: Codable {
-    let data: T
-}
-
-struct ApiError: Codable {
-    let error: String
 }
 
 // MARK: - Services
@@ -347,12 +166,10 @@ class NetworkService: ObservableObject {
         }
 
         do {
-            // Try direct decoding first
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
             print("⚠️ Direct decoding failed: \(error). Trying to unwrap LMApiResponse...")
 
-            // Try unwrapping if it's an LMApiResponse
             do {
                 let wrapped = try JSONDecoder().decode(LMApiResponse<T>.self, from: data)
                 return wrapped.data
@@ -364,106 +181,12 @@ class NetworkService: ObservableObject {
     }
 }
 
-class AuthService: ObservableObject {
-    private let networkService = NetworkService.shared
+struct ApiError: Codable {
+    let error: String
+}
 
-    @Published var isAuthenticated: Bool = false
-    @Published var currentUser: User?
-
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        checkAuthStatus()
-        loadUserFromStorage()
-        setupAuthObservation()
-    }
-
-    private func setupAuthObservation() {
-        networkService.$authToken
-            .receive(on: RunLoop.main)
-            .sink { [weak self] token in
-                self?.isAuthenticated = token != nil
-                if token == nil {
-                    self?.clearUserFromStorage()
-                } else if self?.currentUser == nil {
-                    Task {
-                        try? await self?.fetchCurrentUser()
-                    }
-                }
-            }
-            .store(in: &cancellables)
-    }
-
-    func login(email: String, password: String) async throws {
-        var request = networkService.createRequest(
-            endpoint: "/auth/login",
-            method: "POST"
-        )
-
-        let credentials = ["email": email, "password": password]
-        request.httpBody = try JSONEncoder().encode(credentials)
-
-        let response: AuthResponse = try await networkService.performRequest(
-            request, responseType: AuthResponse.self)
-        networkService.authToken = response.data.token
-        currentUser = response.data.user
-        isAuthenticated = true
-        saveUserToStorage(response.data.user)
-    }
-
-    func register(email: String, username: String, password: String) async throws {
-        var request = networkService.createRequest(
-            endpoint: "/auth/register",
-            method: "POST"
-        )
-
-        let userData = ["email": email, "username": username, "password": password]
-        request.httpBody = try JSONEncoder().encode(userData)
-
-        let response: AuthResponse = try await networkService.performRequest(
-            request, responseType: AuthResponse.self)
-        networkService.authToken = response.data.token
-        currentUser = response.data.user
-        isAuthenticated = true
-        saveUserToStorage(response.data.user)
-    }
-
-    func logout() {
-        networkService.authToken = nil
-        currentUser = nil
-        isAuthenticated = false
-        clearUserFromStorage()
-    }
-
-    func fetchCurrentUser() async throws {
-        let request = networkService.createRequest(endpoint: "/auth/me")
-        let response: User = try await networkService.performRequest(
-            request, responseType: User.self)
-        currentUser = response
-        isAuthenticated = true
-        saveUserToStorage(response)
-    }
-
-    func checkAuthStatus() {
-        isAuthenticated = networkService.authToken != nil
-    }
-
-    private func saveUserToStorage(_ user: User) {
-        if let encoded = try? JSONEncoder().encode(user) {
-            UserDefaults.standard.set(encoded, forKey: "currentUser")
-        }
-    }
-
-    private func loadUserFromStorage() {
-        if let data = UserDefaults.standard.data(forKey: "currentUser"),
-           let user = try? JSONDecoder().decode(User.self, from: data) {
-            currentUser = user
-        }
-    }
-
-    private func clearUserFromStorage() {
-        UserDefaults.standard.removeObject(forKey: "currentUser")
-    }
+struct LMApiResponse<T: Codable>: Codable {
+    let data: T
 }
 
 enum NetworkError: Error, LocalizedError {
@@ -471,20 +194,17 @@ enum NetworkError: Error, LocalizedError {
     case unauthorized
     case apiError(String)
     case decodingError
-    case networkError(Error)
 
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
             return "Invalid response from server"
         case .unauthorized:
-            return "Please log in again"
+            return "Unauthorized access"
         case .apiError(let message):
             return message
         case .decodingError:
             return "Failed to decode response"
-        case .networkError(let error):
-            return error.localizedDescription
         }
     }
 }
@@ -492,60 +212,54 @@ enum NetworkError: Error, LocalizedError {
 // MARK: - Theme
 
 struct AppTheme {
-    static let primaryGradient: LinearGradient = LinearGradient(
-        gradient: Gradient(colors: [Color(hex: "6366f1"), Color(hex: "a855f7")]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-    static let cardBackground = Color.primary.opacity(0.03)
-    static let inputBackground = Color.primary.opacity(0.03)
-    static let secondaryText = Color.secondary
-
-    // Animation configurations
-    static let standardSpring = Animation.spring(response: 0.3, dampingFraction: 0.7)
-    static let easeInOut = Animation.easeInOut(duration: 0.2)
-    static let bounce = Animation.spring(response: 0.4, dampingFraction: 0.5)
-
-    // Spacing
-    static let cardSpacing: CGFloat = 12
-    static let cardPadding: CGFloat = 16
+    static let primaryColor = Color.blue
+    static let secondaryColor = Color.gray
+    static let backgroundColor = Color(UIColor.systemBackground)
+    static let cardBackgroundColor = Color(UIColor.secondarySystemBackground)
+    static let textColor = Color(UIColor.label)
+    static let secondaryTextColor = Color(UIColor.secondaryLabel)
 }
+
+// MARK: - Haptic Feedback
 
 struct HapticFeedback {
     static func light() {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
     }
 
     static func medium() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
     }
 
     static func success() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
     }
 
     static func error() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.error)
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+        #endif
     }
 }
+
+// MARK: - Glass Card
 
 struct GlassCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.extraLarge)
-                    .fill(AppTheme.cardBackground)
-                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.extraLarge)
-                    .stroke(Color.primary.opacity(0.05), lineWidth: 1)
-            )
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppRadius.large))
+    }
+}
+
+extension View {
+    func glassCardStyle() -> some View {
+        modifier(GlassCardModifier())
     }
 }
 
@@ -557,33 +271,18 @@ extension String {
     }
 }
 
-extension View {
-    func glassCardStyle() -> some View {
-        modifier(GlassCardModifier())
-    }
-
-    func hideKeyboard() {
-        #if canImport(UIKit)
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        #endif
-    }
-}
-
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
-        let a: UInt64
-        let r: UInt64
-        let g: UInt64
-        let b: UInt64
+        let a, r, g, b: UInt64
         switch hex.count {
-        case 3:  // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6:  // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8:  // ARGB (32-bit)
+        case 8:
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (1, 1, 1, 0)
@@ -593,8 +292,34 @@ extension Color {
             .sRGB,
             red: Double(r) / 255,
             green: Double(g) / 255,
-            blue: Double(b) / 255,
+            blue:  Double(b) / 255,
             opacity: Double(a) / 255
         )
     }
+}
+
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+struct AppSpacing {
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 12
+    static let lg: CGFloat = 16
+    static let xl: CGFloat = 24
+    static let xxl: CGFloat = 32
+}
+
+struct AppRadius {
+    static let small: CGFloat = 8
+    static let medium: CGFloat = 12
+    static let large: CGFloat = 16
+    static let extraLarge: CGFloat = 20
+}
+
+struct AppTouchTarget {
+    static let minSize: CGFloat = 44
 }

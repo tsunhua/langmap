@@ -66,7 +66,7 @@ struct ExpressionCardView: View {
                     .fontWeight(.heavy)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(AppTheme.primaryGradient)
+                    .background(AppTheme.primaryColor)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }

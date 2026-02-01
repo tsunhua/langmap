@@ -1,8 +1,8 @@
 import SwiftUI
 
 @main
-struct langmapApp: App {
-    @StateObject private var authService = AuthService()
+struct LangMapApp: App {
+    @StateObject var authService = AuthService()
 
     var body: some Scene {
         WindowGroup {

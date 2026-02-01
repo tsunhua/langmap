@@ -224,7 +224,7 @@ struct LanguageFilterView: View {
                 .padding(.vertical, 8)
                 .background(
                     isSelected
-                        ? AnyShapeStyle(AppTheme.primaryGradient)
+                        ? AnyShapeStyle(AppTheme.primaryColor)
                         : AnyShapeStyle(Color.primary.opacity(0.05))
                 )
                 .foregroundColor(isSelected ? .white : .primary)

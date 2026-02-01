@@ -3,8 +3,14 @@ import SwiftUI
 struct CollectionDetailView: View {
     let collectionId: Int
     @State private var collection: CollectionDetail?
+    @State private var items: [CollectionItem] = []
     @State private var isLoading = true
+    @State private var isLoadingItems = true
     @State private var errorMessage = ""
+    @State private var currentPage = 1
+    @State private var itemsPerPage = 20
+    @State private var totalPages = 0
+    @State private var totalItems = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,7 +20,6 @@ struct CollectionDetailView: View {
             } else if let collection = collection {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 25) {
-                        // Collection Header
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text(collection.name)
@@ -35,7 +40,7 @@ struct CollectionDetailView: View {
 
                             HStack {
                                 Label(
-                                    "\((collection.itemsCount ?? 0)) " + "items".localized,
+                                    "\(totalItems)" + "items".localized,
                                     systemImage: "list.bullet")
                                 Spacer()
                                 Text("added_on".localized + " \(formatDate(collection.createdAt))")
@@ -44,17 +49,10 @@ struct CollectionDetailView: View {
                             .foregroundColor(.secondary)
                             .padding(.top, 5)
                         }
-                        .glassCardStyle()
                         .padding(.horizontal)
 
-                        // Items List
                         VStack(alignment: .leading, spacing: 15) {
-                            Text("featured_expressions".localized)  // Or use a generic "Expressions" key if added
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-
-                            if let items = collection.items, !items.isEmpty {
+                            if !items.isEmpty || !isLoadingItems {
                                 LazyVStack(spacing: 12) {
                                     ForEach(items) { item in
                                         if let expression = item.expression {
@@ -78,22 +76,32 @@ struct CollectionDetailView: View {
                                         }
                                     }
                                 }
+                                .task(id: currentPage) {
+                                    await fetchItems()
+                                }
                             } else {
                                 VStack(spacing: 20) {
                                     Image(systemName: "folder.badge.minus")
                                         .font(.system(size: 50))
                                         .foregroundColor(.secondary.opacity(0.5))
 
-                                    Text("no_results".localized)  // Or "collection_empty"
+                                    Text("no_results".localized)
                                         .foregroundColor(.secondary)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 50)
                             }
+
+                            if totalPages > 1 {
+                                paginationControls
+                            }
                         }
+                        .padding(.horizontal)
                     }
                     .padding(.vertical)
                 }
+                .navigationTitle("nav_collections".localized)
+                .navigationBarTitleDisplayMode(.inline)
             } else {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
@@ -107,11 +115,47 @@ struct CollectionDetailView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle("nav_collections".localized)
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             loadCollection()
         }
+    }
+
+    private var paginationControls: some View {
+        HStack(spacing: 8) {
+            Button(action: {
+                if currentPage > 1 {
+                    currentPage -= 1
+                }
+            }) {
+                Text("prev".localized)
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            .disabled(currentPage == 1)
+
+            Text("\(currentPage) / \(totalPages)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(minWidth: 40)
+
+            Button(action: {
+                if currentPage < totalPages {
+                    currentPage += 1
+                }
+            }) {
+                Text("next".localized)
+                    .font(.caption)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            .disabled(currentPage == totalPages)
+        }
+        .padding()
     }
 
     private func loadCollection() {
@@ -119,13 +163,12 @@ struct CollectionDetailView: View {
 
         Task {
             do {
-                let request = NetworkService.shared.createRequest(
-                    endpoint: "/collections/\(collectionId)")
-                let response: CollectionDetail = try await NetworkService.shared.performRequest(
-                    request, responseType: CollectionDetail.self)
+                let response = try await CollectionService.shared.getCollectionById(id: collectionId)
 
                 await MainActor.run {
                     self.collection = response
+                    self.totalItems = response.itemsCount ?? 0
+                    self.totalPages = max(1, Int(ceil(Double(self.totalItems) / Double(itemsPerPage))))
                     self.isLoading = false
                 }
             } catch {
@@ -133,6 +176,30 @@ struct CollectionDetailView: View {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
+            }
+        }
+    }
+
+    private func fetchItems() async {
+        isLoadingItems = true
+
+        do {
+            let skip = (currentPage - 1) * itemsPerPage
+            let response = try await CollectionService.shared.getCollectionItems(
+                id: collectionId,
+                skip: skip,
+                limit: itemsPerPage
+            )
+
+            await MainActor.run {
+                self.items = response.items ?? []
+                self.totalItems = response.total ?? self.totalItems
+                self.totalPages = max(1, Int(ceil(Double(self.totalItems) / Double(itemsPerPage))))
+                self.isLoadingItems = false
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoadingItems = false
             }
         }
     }

@@ -18,7 +18,7 @@ struct GlassCard<Content: View>: View {
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(AppTheme.cardBackground)
+                    .fill(AppTheme.backgroundColor)
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
             .overlay(

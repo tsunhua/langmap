@@ -30,7 +30,7 @@ struct ExpressionDetailView: View {
                                     .fontWeight(.heavy)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
-                                    .background(AppTheme.primaryGradient)
+                                    .background(AppTheme.primaryColor)
                                     .foregroundColor(.white)
                                     .cornerRadius(AppRadius.small)
                             }
