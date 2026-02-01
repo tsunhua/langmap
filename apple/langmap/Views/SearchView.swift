@@ -3,7 +3,9 @@ import SwiftUI
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     @ObservedObject private var viewHistoryManager = ViewHistoryManager.shared
+    @StateObject private var recentExpressionsManager = RecentlyExpressionsManager.shared
     @State private var showingClearHistoryAlert = false
+    @State private var showingHomeSheet = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var refreshID = UUID()
 
@@ -26,7 +28,7 @@ struct SearchView: View {
                         }
 
                     if !viewModel.searchQuery.isEmpty {
-                        Button(action: { 
+                        Button(action: {
                             viewModel.searchQuery = ""
                             isSearchFieldFocused = true
                         }) {
@@ -41,76 +43,120 @@ struct SearchView: View {
 
                 Divider()
 
-                // Language Filter
-                if !viewModel.languages.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(viewModel.languages) { language in
-                                LanguageFilterView(
-                                    language: language,
-                                    isSelected: viewModel.selectedLanguage?.id == language.id
-                                ) {
-                                    withAnimation {
-                                        if viewModel.selectedLanguage?.id == language.id {
-                                            viewModel.selectedLanguage = nil
-                                        } else {
-                                            viewModel.selectedLanguage = language
-                                        }
-                                        viewModel.search()
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding(.vertical, 8)
-                }
-
                 // Content
-                Group {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if isSearchFieldFocused || viewModel.searchQuery.isEmpty {
-                        // Show history when search field is focused or query is empty
-                        viewHistoryView
-                            .id(refreshID)
-                    } else if !viewModel.searchQuery.isEmpty {
-                        if viewModel.searchResults.isEmpty {
-                            VStack(spacing: 10) {
-                                Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 50))
-                                    .foregroundColor(.secondary)
-                                Text("no_results".localized)
-                                    .foregroundColor(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        } else {
-                            List {
-                                ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
-                                    NavigationLink(
-                                        destination: ExpressionDetailView(expression: expression)
-                                    ) {
-                                        ExpressionCardView(expression: expression)
-                                    }
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !viewModel.searchQuery.isEmpty {
+                    // Search Results
+                    if viewModel.searchResults.isEmpty {
+                        VStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 50))
+                                .foregroundColor(.secondary)
+                            Text("no_results".localized)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        List {
+                            ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
+                                NavigationLink(
+                                    destination: ExpressionDetailView(expression: expression)
+                                ) {
+                                    ExpressionCardView(expression: expression)
                                 }
                             }
-                            .listStyle(PlainListStyle())
                         }
-                    } else {
-                        // Fallback - view history
-                        viewHistoryView
-                            .id(refreshID)
+                        .listStyle(PlainListStyle())
                     }
-                }
-            }
-            .navigationTitle("nav_search".localized)
-            .onAppear {
-                if viewModel.languages.isEmpty {
-                    viewModel.loadLanguages()
-                }
-            }
-            .onReceive(viewHistoryManager.$viewHistory) { newHistory in
+                  } else {
+                      // History
+                      ScrollView {
+                          VStack(spacing: 20) {
+                              // Recently Viewed
+                              if viewHistoryManager.hasHistory {
+                                  // Header
+                                  HStack {
+                                      Text("recently_viewed".localized)
+                                          .font(.headline)
+                                          .foregroundColor(.primary)
+
+                                      Spacer()
+
+                                      Button(action: {
+                                          showingClearHistoryAlert = true
+                                      }) {
+                                          Text("clear_all".localized)
+                                              .font(.subheadline)
+                                              .foregroundColor(.blue)
+                                      }
+                                  }
+                                  .padding(.horizontal)
+
+                                  // History Items
+                                  VStack(spacing: 4) {
+                                      ForEach(viewHistoryManager.getRecentViewed()) { item in
+                                          ViewHistoryCard(
+                                              item: item,
+                                              expression: createExpressionFromHistory(item),
+                                              onDelete: {
+                                                  viewHistoryManager.removeFromHistory(item)
+                                              }
+                                          )
+                                      }
+                                  }
+                              } else {
+                                  // Empty State - No history yet
+                                  VStack(spacing: 10) {
+                                      Image(systemName: "clock.arrow.circlepath")
+                                          .font(.system(size: 50))
+                                          .foregroundColor(.secondary)
+                                      Text("no_view_history".localized)
+                                          .font(.body)
+                                          .foregroundColor(.secondary)
+                                          .multilineTextAlignment(.center)
+                                  }
+                                  .frame(maxWidth: .infinity, maxHeight: .infinity)
+                              }
+
+                              // Recently Added
+                              HStack {
+                                  Text("recently_added".localized)
+                                      .font(.headline)
+                                      .foregroundColor(.primary)
+                                  Spacer()
+                              }
+                              .padding(.horizontal)
+
+                                  if recentExpressionsManager.isLoading {
+                                      ProgressView()
+                                          .frame(maxWidth: .infinity, maxHeight: 150)
+                                  } else if !recentExpressionsManager.recentExpressions.isEmpty {
+                                      VStack(spacing: 4) {
+                                          ForEach(recentExpressionsManager.recentExpressions.prefix(5)) { expression in
+                                              NavigationLink(destination: ExpressionDetailView(expression: expression)) {
+                                                  ExpressionCardView(expression: expression, compact: true)
+                                              }
+                                              .buttonStyle(.plain)
+                                          }
+                                      }
+                                  }
+                          }
+                          .padding()
+                      }
+                  }
+             }
+             .navigationTitle("nav_search".localized)
+             .onAppear {
+                 if viewModel.languages.isEmpty {
+                     viewModel.loadLanguages()
+                 }
+                 if recentExpressionsManager.recentExpressions.isEmpty {
+                     recentExpressionsManager.loadRecentExpressions()
+                 }
+             }
+            .onReceive(viewHistoryManager.$viewHistory) { _ in
                 refreshID = UUID()
             }
             .alert("clear_history".localized, isPresented: $showingClearHistoryAlert) {
@@ -147,66 +193,6 @@ struct SearchView: View {
             origin: nil,
             usage: nil
         )
-    }
-
-    // MARK: - View History
-
-    @ViewBuilder
-    private var viewHistoryView: some View {
-        VStack(spacing: 16) {
-            if viewHistoryManager.hasHistory {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Header
-                    HStack {
-                        Text("recently_viewed".localized)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-
-                        Spacer()
-
-                        Button(action: {
-                            showingClearHistoryAlert = true
-                        }) {
-                            Text("clear_all".localized)
-                                .font(.subheadline)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // History Items
-                    ScrollView {
-                        VStack(spacing: 8) {
-                            ForEach(viewHistoryManager.getRecentViewed()) { item in
-                                ViewHistoryCard(
-                                    item: item,
-                                    expression: createExpressionFromHistory(item),
-                                    onDelete: {
-                                        viewHistoryManager.removeFromHistory(item)
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-                .padding()
-            } else {
-                // Empty State - No history yet
-                VStack(spacing: 10) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 50))
-                        .foregroundColor(.secondary)
-                    Text("no_view_history".localized)
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .id("viewHistoryView")
     }
 }
 
@@ -246,41 +232,33 @@ struct ViewHistoryCard: View {
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             NavigationLink(destination: ExpressionDetailView(expression: expression)) {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(item.text)
                             .font(.body)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
                             .lineLimit(1)
 
-                        HStack(spacing: 8) {
-                            // Language badge
+                        HStack(spacing: 6) {
                             Text(item.languageCode.uppercased())
                                 .font(.caption2)
-                                .fontWeight(.heavy)
                                 .foregroundColor(.blue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.1))
-                                .clipShape(.capsule)
 
-                            // Region
                             if let region = item.regionName {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "location.fill")
-                                        .font(.caption2)
-                                    Text(region)
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.secondary)
+                                Text("•")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+
+                                Text(region)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
 
                             Spacer()
 
-                            // Time
                             Text(item.relativeTime)
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
@@ -288,18 +266,23 @@ struct ViewHistoryCard: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
 
             // Delete button
             Button(action: onDelete) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                Image(systemName: "xmark")
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
         }
-        .padding(12)
-        .background(Color.primary.opacity(0.03))
-        .clipShape(.rect(cornerRadius: 12))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.02))
+        .overlay(
+            Rectangle()
+                .fill(Color.secondary.opacity(0.1))
+                .frame(height: 0.5),
+            alignment: .bottom
+        )
     }
 }
