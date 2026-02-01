@@ -121,7 +121,7 @@
   "results": "results",
   "items": "items",
   "ok": "OK",
-  "region": "Region",
+  "region": "Region (optional)",
   "public_collections": "Public Collections",
   "private_collections": "Private Collections"
 }

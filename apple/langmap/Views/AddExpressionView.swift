@@ -27,8 +27,8 @@ struct AddExpressionView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
-                    languageRow
                     expressionSection
+                    languageRow
                     tagsSection
                     regionSection
                     associationSection
@@ -78,50 +78,10 @@ struct AddExpressionView: View {
         }
     }
 
-    // MARK: - Language Row
-
-    private var languageRow: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("language".localized)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-
-            HStack(spacing: AppSpacing.sm) {
-                Image(systemName: "globe")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                if viewModel.languages.isEmpty {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Picker("", selection: $viewModel.selectedLanguageId) {
-                        Text("select_language".localized).tag(nil as Int?)
-                        ForEach(viewModel.languages) { language in
-                            Text(language.name).tag(language.id as Int?)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
-                }
-
-                Spacer()
-            }
-            .padding(AppSpacing.md)
-            .background(Color.secondary.opacity(0.08))
-            .cornerRadius(AppRadius.medium)
-        }
-    }
-
     // MARK: - Expression Section
 
     private var expressionSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("expression".localized)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
 
             ZStack(alignment: .topLeading) {
                 if viewModel.expressionText.isEmpty {
@@ -133,7 +93,7 @@ struct AddExpressionView: View {
 
                 TextEditor(text: $viewModel.expressionText)
                     .focused($focusedField, equals: .expressionText)
-                    .frame(height: 100)
+                    .frame(height: 80)
                     .font(.body)
                     .lineSpacing(1.5)
                     .scrollContentBackground(.hidden)
@@ -173,6 +133,42 @@ struct AddExpressionView: View {
                     )
                     .fontWeight(.medium)
             }
+        }
+    }
+
+    // MARK: - Language Row
+
+    private var languageRow: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text("language".localized)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "globe")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                if viewModel.languages.isEmpty {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Picker("", selection: $viewModel.selectedLanguageId) {
+                        Text("select_language".localized).tag(nil as Int?)
+                        ForEach(viewModel.languages) { language in
+                            Text(language.name).tag(language.id as Int?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                }
+
+                Spacer()
+            }
+            .padding(AppSpacing.md)
+            .background(Color.secondary.opacity(0.08))
+            .cornerRadius(AppRadius.medium)
         }
     }
 
