@@ -5,6 +5,7 @@ struct ExpressionDetailView: View {
     @State private var associations: [LMLexiconExpression] = []
     @State private var isLoadingAssociations = false
     @State private var errorMessage = ""
+    @State private var showingAssociationSearch = false
 
     var body: some View {
         ScrollView {
@@ -60,9 +61,22 @@ struct ExpressionDetailView: View {
 
                 // Associations Section
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    Text("associated_expressions".localized)
-                        .font(.title3)
-                        .fontWeight(.bold)
+                    HStack(alignment: .top) {
+                        Text("associated_expressions".localized)
+                            .font(.title3)
+                            .fontWeight(.bold)
+
+                        Spacer()
+
+                        Button(action: {
+                            showingAssociationSearch = true
+                        }) {
+                            Text("add_association".localized)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .buttonStyle(.bordered)
+                    }
 
                     if isLoadingAssociations {
                         ProgressView()
@@ -120,11 +134,20 @@ struct ExpressionDetailView: View {
         .simultaneousGesture(
             DragGesture()
                 .onChanged { _ in
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    hideKeyboard()
                 }
         )
         .navigationTitle("details".localized)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingAssociationSearch) {
+            SearchAssociationSheet(
+                isPresented: $showingAssociationSearch,
+                currentMeaningId: expression.meaningId ?? expression.id,
+                selectedExpression: { selectedExpression in
+                    handleAssociatedExpression(selectedExpression)
+                }
+            )
+        }
         .onAppear {
             Task { @MainActor in
                 ViewHistoryManager.shared.addToHistory(expression)
@@ -133,8 +156,62 @@ struct ExpressionDetailView: View {
         }
     }
 
+    private func handleAssociatedExpression(_ selectedExpr: LMLexiconExpression) {
+        Task {
+            do {
+                // 场景1：当前词句有 meaning_id，搜索到的词句有/无 meaning_id → 更新搜索到的词句
+                // 场景2：当前词句没有 meaning_id，搜索到的词句有 meaning_id → 更新当前词句
+                // 场景3：两个都没有 meaning_id → 更新搜索到的词句
+
+                var endpoint: String
+                var requestBody: [String: Any] = [:]
+
+                if expression.meaningId != nil {
+                    // 场景1：当前词句有 meaning_id，更新搜索到的词句
+                    endpoint = "/expressions/\(selectedExpr.id)"
+                    requestBody["meaning_id"] = expression.meaningId!
+                    print("📝 场景1：更新搜索到的词句，meaning_id=\(expression.meaningId!)")
+                } else if selectedExpr.meaningId != nil {
+                    // 场景2：搜索到的词句有 meaning_id，更新当前词句
+                    endpoint = "/expressions/\(expression.id)"
+                    requestBody["meaning_id"] = selectedExpr.meaningId!
+                    print("📝 场景2：更新当前词句，meaning_id=\(selectedExpr.meaningId!)")
+                } else {
+                    // 场景3：两个都没有 meaning_id，更新搜索到的词句
+                    endpoint = "/expressions/\(selectedExpr.id)"
+                    requestBody["meaning_id"] = expression.id
+                    print("📝 场景3：更新搜索到的词句，meaning_id=\(expression.id)")
+                }
+
+                print("📝 Patch request: endpoint=\(endpoint), body=\(requestBody)")
+
+                let jsonData = try JSONSerialization.data(withJSONObject: requestBody, options: [])
+
+                var request = NetworkService.shared.createRequest(
+                    endpoint: endpoint,
+                    method: "PATCH"
+                )
+                request.httpBody = jsonData
+
+                let _: LMLexiconExpression = try await NetworkService.shared.performRequest(
+                    request,
+                    responseType: LMLexiconExpression.self
+                )
+
+                print("✅ Association updated successfully")
+
+                await MainActor.run {
+                    loadAssociations()
+                }
+            } catch {
+                print("❌ Failed to update association: \(error)")
+                print("Error details: \(error.localizedDescription)")
+            }
+        }
+    }
+
     private func loadAssociations() {
-        guard expression.meaningId != 0 else { return }
+        guard expression.meaningId != nil else { return }
 
         isLoadingAssociations = true
         Task {

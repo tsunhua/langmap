@@ -361,7 +361,7 @@ struct AddExpressionView: View {
             }
         }
         .sheet(isPresented: $showingAssociationSearch) {
-            SearchAssociationSheet(isPresented: $showingAssociationSearch) { expression in
+            SearchAssociationSheet(isPresented: $showingAssociationSearch, currentMeaningId: nil) { expression in
                 viewModel.associatedExpression = expression
             }
         }

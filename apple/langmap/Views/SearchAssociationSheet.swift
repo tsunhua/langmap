@@ -3,6 +3,7 @@ import Combine
 
 struct SearchAssociationSheet: View {
     @Binding var isPresented: Bool
+    let currentMeaningId: Int?
     let selectedExpression: (LMLexiconExpression) -> Void
     @State private var searchQuery: String = ""
     @StateObject private var viewModel = SearchAssociationViewModel()

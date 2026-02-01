@@ -125,5 +125,6 @@
   "public_collections": "Public Collections",
   "private_collections": "Private Collections",
   "expression_required": "Expression is required",
-  "max_characters": "Maximum 500 characters"
+  "max_characters": "Maximum 500 characters",
+  "add_association": "Add Association"
 }
