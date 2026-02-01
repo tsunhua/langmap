@@ -123,5 +123,7 @@
   "ok": "OK",
   "region": "Region (optional)",
   "public_collections": "Public Collections",
-  "private_collections": "Private Collections"
+  "private_collections": "Private Collections",
+  "expression_required": "Expression is required",
+  "max_characters": "Maximum 500 characters"
 }

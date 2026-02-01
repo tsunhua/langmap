@@ -123,5 +123,7 @@
   "ok": "确定",
   "region": "地区（可选）",
   "public_collections": "公开收藏夹",
-  "private_collections": "私人收藏夹"
+  "private_collections": "私人收藏夹",
+  "expression_required": "表达不能为空",
+  "max_characters": "最多500个字符"
 }

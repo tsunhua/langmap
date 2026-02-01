@@ -162,6 +162,8 @@ struct AddExpressionView: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
+                    .foregroundColor(.primary)
+                    .accentColor(.blue)
                 }
 
                 Spacer()

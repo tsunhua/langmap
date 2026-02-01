@@ -6,7 +6,7 @@ import MapKit
 class AddExpressionViewModel: ObservableObject {
     @Published var expressionText: String = ""
     @Published var selectedLanguage: LMLexiconLanguage?
-    // Use ID as the canonical selected value to avoid instance identity issues in Picker
+    // Use ID as canonical selected value to avoid instance identity issues in Picker
     @Published var selectedLanguageId: Int?
     @Published var languages: [LMLexiconLanguage] = []
 
@@ -20,6 +20,7 @@ class AddExpressionViewModel: ObservableObject {
     @Published var isLocating: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String = ""
+    @Published var hasStartedEditing: Bool = false
 
     // Combine cancellables for auto-save bindings
     private var cancellables = Set<AnyCancellable>()
@@ -425,6 +426,15 @@ class AddExpressionViewModel: ObservableObject {
                 print("💾 Auto-saved tags")
             }
             .store(in: &cancellables)
+
+        // Track when user starts editing expression text
+        $expressionText
+            .sink { [weak self] text in
+                if !text.isEmpty {
+                    self?.hasStartedEditing = true
+                }
+            }
+            .store(in: &cancellables)
     }
 
     private func savePreferences() {
@@ -643,11 +653,12 @@ class AddExpressionViewModel: ObservableObject {
     }
 
     var expressionTextError: String? {
+        // Only show "required" error after user has started editing
         if expressionText.isEmpty {
-            return "Expression is required"
+            return hasStartedEditing ? "expression_required".localized : nil
         }
         if expressionText.count > 500 {
-            return "Maximum 500 characters"
+            return "max_characters".localized
         }
         return nil
     }
