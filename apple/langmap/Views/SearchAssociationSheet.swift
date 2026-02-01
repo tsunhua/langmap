@@ -8,15 +8,36 @@ struct SearchAssociationSheet: View {
     @StateObject private var viewModel = SearchAssociationViewModel()
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                TextField("Search expressions...", text: $searchQuery)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
-                    .onSubmit {
-                        viewModel.search(query: searchQuery)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Search Bar
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.accentColor)
+
+                    TextField("search_expressions".localized, text: $searchQuery)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .onSubmit {
+                            viewModel.search(query: searchQuery)
+                        }
+
+                    if !searchQuery.isEmpty {
+                        Button(action: {
+                            searchQuery = ""
+                            viewModel.clearResults()
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
                     }
+                }
+                .padding()
+                .background(Color.primary.opacity(0.03))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+
+                Divider()
 
                 if searchQuery.isEmpty {
                     Spacer()
@@ -25,11 +46,11 @@ struct SearchAssociationSheet: View {
                             .font(.system(size: 60))
                             .foregroundColor(.secondary.opacity(0.5))
 
-                        Text("Search for expressions")
+                        Text("search_for_expressions".localized)
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        Text("Start typing to search")
+                        Text("start_typing_to_search".localized)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -38,9 +59,9 @@ struct SearchAssociationSheet: View {
                     Spacer()
                     VStack(spacing: 16) {
                         ProgressView()
-                            Text("Searching...")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                        Text("searching".localized)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
                     Spacer()
                 } else if viewModel.results.isEmpty {
@@ -50,54 +71,31 @@ struct SearchAssociationSheet: View {
                             .font(.system(size: 60))
                             .foregroundColor(.secondary.opacity(0.5))
 
-                        Text("No Results")
+                        Text("no_results".localized)
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        Text("Try a different search term")
+                        Text("start_typing".localized)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
                 } else {
-                    List {
-                        ForEach(viewModel.results) { expression in
-                            Button(action: {
-                                selectedExpression(expression)
-                                isPresented = false
-                            }) {
-                                HStack(spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text(expression.text)
-                                            .font(.body)
-                                            .fontWeight(.medium)
-                                            .foregroundColor(.primary)
-                                            .lineLimit(2)
-
-                                        if let region = expression.regionName {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "location.fill")
-                                                    .font(.caption2)
-                                                    .foregroundColor(.secondary)
-                                                Text(region)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                        }
-                                    }
-
-                                    Spacer()
-
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.blue)
+                    ScrollView {
+                        VStack(spacing: 4) {
+                            ForEach(viewModel.results) { expression in
+                                Button(action: {
+                                    selectedExpression(expression)
+                                    isPresented = false
+                                }) {
+                                    ExpressionCardView(expression: expression, compact: true)
                                 }
-                                .padding(.vertical, 12)
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Search")
