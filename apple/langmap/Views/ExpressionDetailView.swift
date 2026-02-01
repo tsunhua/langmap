@@ -6,6 +6,7 @@ struct ExpressionDetailView: View {
     @State private var isLoadingAssociations = false
     @State private var errorMessage = ""
     @State private var showingAssociationSearch = false
+    @State private var isRefreshing = false
 
     var body: some View {
         ScrollView {
@@ -20,14 +21,19 @@ struct ExpressionDetailView: View {
 
                             Spacer()
 
-                            Text(expression.languageCode.uppercased())
-                                .font(.system(.caption, design: .monospaced))
-                                .fontWeight(.heavy)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(AppTheme.primaryGradient)
-                                .foregroundColor(.white)
-                                .cornerRadius(AppRadius.small)
+                            if isRefreshing {
+                                ProgressView()
+                                    .frame(width: 20, height: 20)
+                            } else {
+                                Text(expression.languageCode.uppercased())
+                                    .font(.system(.caption, design: .monospaced))
+                                    .fontWeight(.heavy)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(AppTheme.primaryGradient)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(AppRadius.small)
+                            }
                         }
 
                         if let region = expression.regionName {
@@ -139,6 +145,9 @@ struct ExpressionDetailView: View {
         )
         .navigationTitle("details".localized)
         .navigationBarTitleDisplayMode(.inline)
+        .refreshable {
+            await refreshData()
+        }
         .sheet(isPresented: $showingAssociationSearch) {
             SearchAssociationSheet(
                 isPresented: $showingAssociationSearch,
@@ -154,6 +163,12 @@ struct ExpressionDetailView: View {
             }
             loadAssociations()
         }
+    }
+
+    private func refreshData() async {
+        isRefreshing = true
+        await loadAssociations()
+        isRefreshing = false
     }
 
     private func handleAssociatedExpression(_ selectedExpr: LMLexiconExpression) {
