@@ -24,7 +24,7 @@ struct AddExpressionView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
                     languageRow
@@ -42,7 +42,6 @@ struct AddExpressionView: View {
                     }
             )
             .navigationTitle("add_expression".localized)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: submitExpression) {

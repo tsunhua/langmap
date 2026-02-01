@@ -15,26 +15,28 @@ struct CollectionsView: View {
     ]
 
     var body: some View {
-        NavigationView {
-            if viewModel.isLoading {
-                loadingView
-            } else if !viewModel.errorMessage.isEmpty {
-                errorView
-            } else if viewModel.collections.isEmpty {
-                emptyStateView
-            } else {
-                collectionsGrid
-            }
-        }
-        .navigationTitle("collections".localized)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingCreateCollection = true }) {
-                    Image(systemName: "plus")
-                        .fontWeight(.semibold)
+        NavigationStack {
+            Group {
+                if viewModel.isLoading {
+                    loadingView
+                } else if !viewModel.errorMessage.isEmpty {
+                    errorView
+                } else if viewModel.collections.isEmpty {
+                    emptyStateView
+                } else {
+                    collectionsGrid
                 }
-                .frame(minWidth: 44, minHeight: 44)
+            }
+            .navigationTitle("collections".localized)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingCreateCollection = true }) {
+                        Image(systemName: "plus")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                }
             }
         }
         .sheet(isPresented: $showingCreateCollection) {
@@ -71,7 +73,7 @@ struct CollectionsView: View {
                 .foregroundColor(.secondary)
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     private var errorView: some View {

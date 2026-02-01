@@ -16,6 +16,11 @@ class SearchViewModel: ObservableObject {
     // MARK: - Public Methods
 
     func loadLanguages() {
+        // 避免重复加载
+        guard !isLoading else { return }
+
+        isLoading = true
+
         Task {
             do {
                 let request = networkService.createRequest(endpoint: "/languages")
@@ -24,9 +29,13 @@ class SearchViewModel: ObservableObject {
 
                 await MainActor.run {
                     self.languages = response.filter { $0.isActive == 1 }
+                    self.isLoading = false
                 }
             } catch {
                 print("Failed to load languages: \(error)")
+                await MainActor.run {
+                    self.isLoading = false
+                }
             }
         }
     }

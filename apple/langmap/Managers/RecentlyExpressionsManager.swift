@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 import Combine
 
-@MainActor
 class RecentlyExpressionsManager: ObservableObject {
     static let shared = RecentlyExpressionsManager()
 
@@ -15,9 +14,12 @@ class RecentlyExpressionsManager: ObservableObject {
     private init() {}
 
     func loadRecentExpressions() {
+        // 避免重复加载
+        guard !isLoading else { return }
+
         isLoading = true
 
-        Task {
+        Task { @MainActor in
             do {
                 let endpoint = "/expressions?limit=\(maxCount)"
                 let request = networkService.createRequest(endpoint: endpoint)
