@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject var authService: AuthService
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
@@ -17,7 +18,7 @@ struct LoginView: View {
                         .font(.system(size: 60))
                         .foregroundColor(.blue)
 
-                    Text("Sign In")
+                    Text("login_title".localized)
                         .font(.title)
                         .fontWeight(.bold)
                 }
@@ -25,14 +26,14 @@ struct LoginView: View {
 
                 VStack(spacing: AppSpacing.lg) {
                     InputField(
-                        title: "Email",
-                        placeholder: "Enter email",
+                        title: "email".localized,
+                        placeholder: "email".localized,
                         text: $email
                     )
 
                     InputField(
-                        title: "Password",
-                        placeholder: "Enter password",
+                        title: "password".localized,
+                        placeholder: "password".localized,
                         text: $password,
                         isSecure: true
                     )
@@ -52,7 +53,7 @@ struct LoginView: View {
                                     .controlSize(.small)
                                     .tint(.white)
                             } else {
-                                Text("Sign In")
+                                Text("sign_in".localized)
                                     .fontWeight(.semibold)
                             }
                         }
@@ -69,7 +70,7 @@ struct LoginView: View {
                 Spacer()
 
                 Button(action: { showRegister = true }) {
-                    Text("Create Account")
+                    Text("create_account".localized)
                         .font(.subheadline)
                         .foregroundColor(.blue)
                 }
@@ -79,7 +80,7 @@ struct LoginView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel".localized) {
                         dismiss()
                     }
                 }

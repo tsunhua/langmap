@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var showingAddExpression = false
+    @ObservedObject private var localizationManager = LocalizationManager.shared
 
     var body: some View {
         TabView {

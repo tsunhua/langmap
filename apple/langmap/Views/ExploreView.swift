@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExploreView: View {
     @StateObject private var viewModel = ExploreViewModel()
+    @ObservedObject private var localizationManager = LocalizationManager.shared
 
     var body: some View {
         NavigationView {
@@ -37,7 +38,7 @@ struct ExploreView: View {
                 .font(.body)
                 .foregroundColor(.secondary)
 
-            TextField("Search", text: $viewModel.searchQuery)
+            TextField("search_placeholder".localized, text: $viewModel.searchQuery)
                 .textFieldStyle(.plain)
                 .font(.body)
 
@@ -65,7 +66,7 @@ struct ExploreView: View {
         VStack(spacing: 16) {
             Spacer()
             ProgressView()
-            Text("Searching...")
+            Text("loading".localized)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             Spacer()
@@ -76,7 +77,7 @@ struct ExploreView: View {
     private var featuredContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Featured Expressions")
+                Text("featured_expressions".localized)
                     .font(.headline)
                     .fontWeight(.bold)
                     .padding(.horizontal, 16)
@@ -134,12 +135,12 @@ struct ExploreView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.secondary.opacity(0.5))
 
-            Text("No Results")
+            Text("no_results".localized)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("Try a different search term")
+            Text("no_results_hint".localized)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -156,12 +157,12 @@ struct ExploreView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.secondary.opacity(0.5))
 
-            Text("Start Exploring")
+            Text("start_exploring".localized)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("Search for expressions or add your own")
+            Text("search_or_add_hint".localized)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

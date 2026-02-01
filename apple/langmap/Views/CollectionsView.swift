@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CollectionsView: View {
     @StateObject private var viewModel = CollectionsViewModel()
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @State private var showingCreateCollection = false
     @State private var newCollectionName = ""
     @State private var newCollectionDescription = ""
@@ -25,7 +26,7 @@ struct CollectionsView: View {
                 collectionsGrid
             }
         }
-        .navigationTitle("Collections")
+        .navigationTitle("collections".localized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -44,15 +45,15 @@ struct CollectionsView: View {
                 onCreate: handleCreateCollection
             )
         }
-        .alert("Delete Collection", isPresented: $showingDeleteAlert) {
-            Button("Delete", role: .destructive) {
+        .alert("delete_collection".localized, isPresented: $showingDeleteAlert) {
+            Button("delete".localized, role: .destructive) {
                 if let collection = collectionToDelete {
                     deleteCollection(collection)
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("cancel".localized, role: .cancel) {}
         } message: {
-            Text("Are you sure you want to delete this collection?")
+            Text("delete_confirmation".localized)
         }
         .onAppear {
             if viewModel.collections.isEmpty {
@@ -65,7 +66,7 @@ struct CollectionsView: View {
         VStack(spacing: 16) {
             Spacer()
             ProgressView()
-            Text("Loading collections...")
+            Text("loading_collections".localized)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             Spacer()
@@ -86,7 +87,7 @@ struct CollectionsView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            Button("Retry") {
+            Button("retry".localized) {
                 viewModel.loadCollections()
             }
             .padding(.horizontal, 24)
@@ -107,18 +108,18 @@ struct CollectionsView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.secondary.opacity(0.5))
 
-            Text("No Collections")
+            Text("no_collections".localized)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.secondary)
 
-            Text("Create your first collection to organize expressions")
+            Text("create_first_collection".localized)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            Button("Create Collection") {
+            Button("new_collection".localized) {
                 showingCreateCollection = true
             }
             .padding(.horizontal, 24)
@@ -231,6 +232,7 @@ struct CollectionCard: View {
     let collection: LMCollection
     let onTap: () -> Void
     let onDelete: () -> Void
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @State private var showingMenu = false
 
     var body: some View {
@@ -250,7 +252,7 @@ struct CollectionCard: View {
             }
 
             HStack(spacing: 8) {
-                Text("\(collection.items?.count ?? 0) items")
+                Text("\(collection.items?.count ?? 0) " + "items".localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -264,10 +266,10 @@ struct CollectionCard: View {
 
                 Menu {
                     Button(action: onTap) {
-                        Label("Edit", systemImage: "pencil")
+                        Label("edit".localized, systemImage: "pencil")
                     }
                     Button(role: .destructive, action: onDelete) {
-                        Label("Delete", systemImage: "trash")
+                        Label("delete".localized, systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis")

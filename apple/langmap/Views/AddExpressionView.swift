@@ -2,13 +2,13 @@ import SwiftUI
 
 struct AddExpressionView: View {
     @StateObject private var viewModel = AddExpressionViewModel()
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showingSuccess = false
     @State private var showingAssociationSearch = false
     @State private var showingLoginSheet = false
     @FocusState private var focusedField: Field?
-    @ObservedObject private var localizationManager = LocalizationManager.shared
 
     enum Field: Hashable {
         case expressionText
@@ -35,7 +35,7 @@ struct AddExpressionView: View {
                 }
                 .padding(AppSpacing.lg)
             }
-            .navigationTitle("Add Expression")
+            .navigationTitle("add_expression".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -45,21 +45,21 @@ struct AddExpressionView: View {
                                 ProgressView()
                                     .controlSize(.small)
                             }
-                            Text("Save")
+                            Text("save".localized)
                                 .fontWeight(.semibold)
                         }
                         .frame(minWidth: 44, minHeight: 44)
                     }
                     .disabled(!canSubmit || viewModel.isLoading)
-                    .opacity(canSubmit && !viewModel.isLoading ?1 : 0.5)
+                    .opacity(canSubmit && !viewModel.isLoading ? 1 : 0.5)
                 }
             }
-            .alert("Success", isPresented: $showingSuccess) {
+            .alert("success".localized, isPresented: $showingSuccess) {
                 Button("OK") {}
             } message: {
-                Text("Expression added successfully!")
+                Text("expression_added".localized)
             }
-            .alert("Error", isPresented: $showingAlert) {
+            .alert("error".localized, isPresented: $showingAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(alertMessage)
@@ -77,7 +77,7 @@ struct AddExpressionView: View {
 
     private var languageRow: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Language")
+            Text("language".localized)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
@@ -92,7 +92,7 @@ struct AddExpressionView: View {
                         .controlSize(.small)
                 } else {
                     Picker("", selection: $viewModel.selectedLanguageId) {
-                        Text("Select Language").tag(nil as Int?)
+                        Text("select_language".localized).tag(nil as Int?)
                         ForEach(viewModel.languages) { language in
                             Text(language.name).tag(language.id as Int?)
                         }
@@ -113,14 +113,14 @@ struct AddExpressionView: View {
 
     private var expressionSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Expression")
+            Text("expression".localized)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
 
             ZStack(alignment: .topLeading) {
                 if viewModel.expressionText.isEmpty {
-                    Text("Type your expression here...")
+                    Text("enter_expression".localized)
                         .foregroundColor(Color(uiColor: .placeholderText))
                         .font(.body)
                         .padding(AppSpacing.md)
@@ -175,7 +175,7 @@ struct AddExpressionView: View {
 
     private var tagsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Tags")
+            Text("tags_optional".localized)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
@@ -198,7 +198,7 @@ struct AddExpressionView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                TextField("Add tags...", text: $viewModel.currentTagInput)
+                TextField("add_tag".localized, text: $viewModel.currentTagInput)
                     .textFieldStyle(.plain)
                     .font(.body)
                     .focused($focusedField, equals: .tags)
@@ -225,6 +225,10 @@ struct AddExpressionView: View {
             .padding(AppSpacing.md)
             .background(Color.secondary.opacity(0.08))
             .cornerRadius(AppRadius.medium)
+
+            Text("max_tags_hint".localized)
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
     }
 
@@ -242,7 +246,7 @@ struct AddExpressionView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                TextField("Region (optional)", text: $viewModel.region)
+                TextField("enter_region_or_location".localized, text: $viewModel.region)
                     .textFieldStyle(.plain)
                     .font(.body)
 
@@ -286,7 +290,7 @@ struct AddExpressionView: View {
 
     private var associationSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text("Associate Expression")
+            Text("associate_with_expression_optional".localized)
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
@@ -314,7 +318,7 @@ struct AddExpressionView: View {
                             HStack(spacing: AppSpacing.xs) {
                                 Image(systemName: "trash.fill")
                                     .font(.caption)
-                                Text("Remove")
+                                Text("delete".localized)
                                     .font(.caption)
                                     .fontWeight(.semibold)
                             }
@@ -340,7 +344,7 @@ struct AddExpressionView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
 
-                        Text("Search for expression...")
+                        Text("search_expressions".localized)
                             .font(.body)
                             .foregroundColor(.secondary)
 
@@ -371,7 +375,7 @@ struct AddExpressionView: View {
             do {
                 try await viewModel.submit()
                 await MainActor.run {
-                    alertMessage = "Expression added successfully!"
+                    alertMessage = "expression_added".localized
                     showingSuccess = true
                 }
             } catch {

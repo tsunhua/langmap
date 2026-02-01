@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RegisterView: View {
     @EnvironmentObject var authService: AuthService
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     @State private var email = ""
     @State private var username = ""
     @State private var password = ""
@@ -19,7 +20,7 @@ struct RegisterView: View {
                             .font(.system(size: 60))
                             .foregroundColor(.blue)
 
-                        Text("Create Account")
+                        Text("create_account".localized)
                             .font(.title)
                             .fontWeight(.bold)
                     }
@@ -27,38 +28,38 @@ struct RegisterView: View {
 
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Email")
+                            Text("email".localized)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
-                            TextField("Enter email", text: $email)
+                            TextField("email".localized, text: $email)
                                 .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Username")
+                            Text("username".localized)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
-                            TextField("Enter username", text: $username)
+                            TextField("username".localized, text: $username)
                                 .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Password")
+                            Text("password".localized)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
-                            SecureField("Create password", text: $password)
+                            SecureField("password".localized, text: $password)
                                 .textFieldStyle(.roundedBorder)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Confirm Password")
+                            Text("confirm_password".localized)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
-                            SecureField("Confirm password", text: $confirmPassword)
+                            SecureField("confirm_password".localized, text: $confirmPassword)
                                 .textFieldStyle(.roundedBorder)
                         }
 
@@ -77,7 +78,7 @@ struct RegisterView: View {
                                         .controlSize(.small)
                                         .tint(.white)
                                 } else {
-                                    Text("Create Account")
+                                    Text("create_account".localized)
                                         .fontWeight(.semibold)
                                 }
                             }
@@ -94,11 +95,11 @@ struct RegisterView: View {
                     Spacer()
 
                     HStack(spacing: 8) {
-                        Text("Already have an account?")
+                        Text("dont_have_account".localized)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
 
-                        Button("Sign In") {
+                        Button("sign_in".localized) {
                             dismiss()
                         }
                         .font(.subheadline)
@@ -112,7 +113,7 @@ struct RegisterView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel".localized) {
                         dismiss()
                     }
                 }
