@@ -661,6 +661,10 @@ class AddExpressionViewModel: ObservableObject {
         saveLastLanguage()
         savePreferences()
 
+        defer {
+            isLoading = false
+        }
+
         // Prepare request body as JSON
         var requestBody: [String: Any] = [
             "text": expressionText,
@@ -691,8 +695,6 @@ class AddExpressionViewModel: ObservableObject {
         let _: LMLexiconExpression = try await NetworkService.shared.performRequest(
             request, responseType: LMLexiconExpression.self
         )
-
-        isLoading = false
 
         // Reset for next entry instead of closing
         await MainActor.run {
