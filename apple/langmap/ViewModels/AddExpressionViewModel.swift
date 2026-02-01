@@ -492,57 +492,93 @@ class AddExpressionViewModel: ObservableObject {
     // MARK: - CLGeocoder fallback
 
     private func tryCLGeocoderFallback(_ location: CLLocation) async -> Bool {
-        print("🔁 Attempting CLGeocoder fallback...")
+        print("🔁 Attempting reverse geocoding fallback...")
 
-        return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-            let geocoder = CLGeocoder()
-            geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, clError in
-                guard let self = self else {
-                    continuation.resume(returning: false)
-                    return
+        if #available(iOS 26, macOS 26, *) {
+            guard let request = MKReverseGeocodingRequest(location: location) else {
+                print("❌ Failed to create MKReverseGeocodingRequest")
+                return false
+            }
+
+            do {
+                let mapItems = try await request.mapItems
+
+                guard let mapItem = mapItems.first else {
+                    print("⚠️ MKReverseGeocodingRequest returned no placemarks")
+                    return false
                 }
 
-                if let clError = clError {
-                    print("❌ CLGeocoder failed: \(clError.localizedDescription)")
-                    continuation.resume(returning: false)
-                    return
+                var parts: [String] = []
+                if let shortAddress = mapItem.address?.shortAddress, !shortAddress.isEmpty {
+                    parts.append(shortAddress)
+                } else if let fullAddress = mapItem.address?.fullAddress, !fullAddress.isEmpty {
+                    parts.append(fullAddress)
                 }
+                if let name = mapItem.name { parts.append(name) }
 
-                if let placemark = placemarks?.first {
-                    var parts: [String] = []
-                    if let name = placemark.name { parts.append(name) }
-                    if let locality = placemark.locality { parts.append(locality) }
-                    if let admin = placemark.administrativeArea { parts.append(admin) }
-                    if let country = placemark.country { parts.append(country) }
+                let resolved = parts.joined(separator: ", ")
 
-                    let resolved = parts.joined(separator: ", ")
-
-                    Task {
-                        await MainActor.run {
-                            if self.region.isEmpty || self.regionWasAutoFilled {
-                                // prevent subscription from treating this as user edit
-                                self.suppressRegionChangeCallback = true
-                                self.region = resolved.isEmpty ? (placemark.name ?? "") : resolved
-                                self.regionWasAutoFilled = true
-
-                                // Save coordinates from the original CLLocation passed to fallback caller
-                                // (Note: CLGeocoder doesn't return coordinate; we keep using the passed `location` via capture)
-                                // Coordinates should have been set before this function was called; persist them now
-                                self.savePreferences()
-
-                                print("📍 CLGeocoder fallback resolved region: \(self.region)")
-                            } else {
-                                print("ℹ️ CLGeocoder resolved \(resolved) but keeping existing region: \(self.region)")
-                            }
-                        }
+                await MainActor.run {
+                    if self.region.isEmpty || self.regionWasAutoFilled {
+                        self.suppressRegionChangeCallback = true
+                        self.region = resolved.isEmpty ? (mapItem.name ?? "") : resolved
+                        self.regionWasAutoFilled = true
+                        self.savePreferences()
+                        print("📍 MKReverseGeocodingRequest resolved region: \(self.region)")
+                    } else {
+                        print("ℹ️ MKReverseGeocodingRequest resolved \(resolved) but keeping existing region: \(self.region)")
+                    }
+                }
+                return true
+            } catch {
+                print("❌ MKReverseGeocodingRequest failed: \(error.localizedDescription)")
+                return false
+            }
+        } else {
+            return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+                let geocoder = CLGeocoder()
+                geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, clError in
+                    guard let self = self else {
+                        continuation.resume(returning: false)
+                        return
                     }
 
-                    continuation.resume(returning: true)
-                    return
-                }
+                    if let clError = clError {
+                        print("❌ CLGeocoder failed: \(clError.localizedDescription)")
+                        continuation.resume(returning: false)
+                        return
+                    }
 
-                print("⚠️ CLGeocoder returned no placemarks")
-                continuation.resume(returning: false)
+                    if let placemark = placemarks?.first {
+                        var parts: [String] = []
+                        if let name = placemark.name { parts.append(name) }
+                        if let locality = placemark.locality { parts.append(locality) }
+                        if let admin = placemark.administrativeArea { parts.append(admin) }
+                        if let country = placemark.country { parts.append(country) }
+
+                        let resolved = parts.joined(separator: ", ")
+
+                        Task {
+                            await MainActor.run {
+                                if self.region.isEmpty || self.regionWasAutoFilled {
+                                    self.suppressRegionChangeCallback = true
+                                    self.region = resolved.isEmpty ? (placemark.name ?? "") : resolved
+                                    self.regionWasAutoFilled = true
+                                    self.savePreferences()
+                                    print("📍 CLGeocoder fallback resolved region: \(self.region)")
+                                } else {
+                                    print("ℹ️ CLGeocoder resolved \(resolved) but keeping existing region: \(self.region)")
+                                }
+                            }
+                        }
+
+                        continuation.resume(returning: true)
+                        return
+                    }
+
+                    print("⚠️ CLGeocoder returned no placemarks")
+                    continuation.resume(returning: false)
+                }
             }
         }
     }

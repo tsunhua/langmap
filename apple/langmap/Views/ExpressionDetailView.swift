@@ -167,7 +167,7 @@ struct ExpressionDetailView: View {
 
     private func refreshData() async {
         isRefreshing = true
-        await loadAssociations()
+        loadAssociations()
         isRefreshing = false
     }
 
