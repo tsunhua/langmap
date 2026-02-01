@@ -75,15 +75,13 @@ struct ExpressionDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
                     } else {
-                        VStack(spacing: AppSpacing.md) {
+                        VStack(spacing: 4) {
                             ForEach(associations) { assoc in
                                 if assoc.id != expression.id {
-                                    NavigationLink(
-                                        destination: ExpressionDetailView(expression: assoc)
-                                    ) {
-                                        ExpressionCardView(expression: assoc)
+                                    NavigationLink(destination: ExpressionDetailView(expression: assoc)) {
+                                        ExpressionCardView(expression: assoc, compact: true)
                                     }
-                                    .buttonStyle(PlainButtonStyle())
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -119,6 +117,12 @@ struct ExpressionDetailView: View {
             }
             .padding(AppSpacing.lg)
         }
+        .simultaneousGesture(
+            DragGesture()
+                .onChanged { _ in
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+        )
         .navigationTitle("details".localized)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

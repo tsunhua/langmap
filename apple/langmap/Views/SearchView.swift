@@ -59,16 +59,22 @@ struct SearchView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        List {
-                            ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
-                                NavigationLink(
-                                    destination: ExpressionDetailView(expression: expression)
-                                ) {
-                                    ExpressionCardView(expression: expression)
+                        ScrollView {
+                            VStack(spacing: 4) {
+                                ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
+                                    NavigationLink(destination: ExpressionDetailView(expression: expression)) {
+                                        ExpressionCardView(expression: expression, compact: true)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
-                        .listStyle(PlainListStyle())
+                        .simultaneousGesture(
+                            DragGesture()
+                                .onChanged { _ in
+                                    hideKeyboard()
+                                }
+                        )
                     }
                   } else {
                       // History
@@ -141,12 +147,18 @@ struct SearchView: View {
                                               .buttonStyle(.plain)
                                           }
                                       }
-                                  }
-                          }
-                          .padding()
-                      }
-                  }
-             }
+                                   }
+                            }
+                            .padding()
+                        }
+                        .simultaneousGesture(
+                            DragGesture()
+                                .onChanged { _ in
+                                    hideKeyboard()
+                                }
+                        )
+                    }
+              }
              .navigationTitle("nav_search".localized)
              .onAppear {
                  if viewModel.languages.isEmpty {
@@ -284,5 +296,11 @@ struct ViewHistoryCard: View {
                 .frame(height: 0.5),
             alignment: .bottom
         )
+    }
+}
+
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
