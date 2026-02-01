@@ -8,10 +8,10 @@ class CollectionService: ObservableObject {
 
     private init() {}
 
-    func getCollectionItems(id: Int, skip: Int = 0, limit: Int = 50) async throws -> CollectionItemResponse {
+    func getCollectionItems(id: Int, skip: Int = 0, limit: Int = 50) async throws -> [CollectionItem] {
         let request = networkService.createRequest(
             endpoint: "/collections/\(id)/items?skip=\(skip)&limit=\(limit)")
-        return try await networkService.performRequest(request, responseType: CollectionItemResponse.self)
+        return try await networkService.performRequest(request, responseType: [CollectionItem].self)
     }
 
     func getCollectionById(id: Int) async throws -> CollectionDetail {

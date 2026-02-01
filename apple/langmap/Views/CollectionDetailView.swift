@@ -52,7 +52,26 @@ struct CollectionDetailView: View {
                         .padding(.horizontal)
 
                         VStack(alignment: .leading, spacing: 15) {
-                            if !items.isEmpty || !isLoadingItems {
+                            if isLoadingItems {
+                                VStack(spacing: 20) {
+                                    ProgressView()
+                                    Text("loading".localized)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 50)
+                            } else if items.isEmpty {
+                                VStack(spacing: 20) {
+                                    Image(systemName: "folder.badge.minus")
+                                        .font(.system(size: 50))
+                                        .foregroundColor(.secondary.opacity(0.5))
+
+                                    Text("no_results".localized)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 50)
+                            } else {
                                 LazyVStack(spacing: 12) {
                                     ForEach(items) { item in
                                         if let expression = item.expression {
@@ -76,25 +95,14 @@ struct CollectionDetailView: View {
                                         }
                                     }
                                 }
-                                .task(id: currentPage) {
-                                    await fetchItems()
-                                }
-                            } else {
-                                VStack(spacing: 20) {
-                                    Image(systemName: "folder.badge.minus")
-                                        .font(.system(size: 50))
-                                        .foregroundColor(.secondary.opacity(0.5))
-
-                                    Text("no_results".localized)
-                                        .foregroundColor(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.top, 50)
                             }
 
                             if totalPages > 1 {
                                 paginationControls
                             }
+                        }
+                        .task(id: currentPage) {
+                            await fetchItems()
                         }
                         .padding(.horizontal)
                     }
@@ -185,16 +193,14 @@ struct CollectionDetailView: View {
 
         do {
             let skip = (currentPage - 1) * itemsPerPage
-            let response = try await CollectionService.shared.getCollectionItems(
+            let items = try await CollectionService.shared.getCollectionItems(
                 id: collectionId,
                 skip: skip,
                 limit: itemsPerPage
             )
 
             await MainActor.run {
-                self.items = response.items ?? []
-                self.totalItems = response.total ?? self.totalItems
-                self.totalPages = max(1, Int(ceil(Double(self.totalItems) / Double(itemsPerPage))))
+                self.items = items
                 self.isLoadingItems = false
             }
         } catch {
