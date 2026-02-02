@@ -4,6 +4,7 @@ struct CollectionDetailView: View {
     let collectionId: Int
     @State private var collection: CollectionDetail?
     @State private var items: [CollectionItem] = []
+    @State private var languages: [LMLexiconLanguage] = []
     @State private var isLoading = true
     @State private var isLoadingItems = true
     @State private var errorMessage = ""
@@ -82,7 +83,7 @@ struct CollectionDetailView: View {
                                                     expression: expression)
                                             ) {
                                                 VStack(alignment: .leading, spacing: 0) {
-                                                    ExpressionCardView(expression: expression, compact: true)
+                                                    ExpressionCardView(expression: expression, languages: languages, compact: true)
 
                                                     if let note = item.note, !note.isEmpty {
                                                         Text(note)
@@ -182,12 +183,22 @@ struct CollectionDetailView: View {
                     self.totalPages = max(1, Int(ceil(Double(self.totalItems) / Double(itemsPerPage))))
                     self.isLoading = false
                 }
+
+                await loadLanguages()
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
             }
+        }
+    }
+
+    private func loadLanguages() async {
+        do {
+            self.languages = try await ExpressionService.shared.getLanguages()
+        } catch {
+            print("Failed to load languages: \(error)")
         }
     }
 
@@ -223,5 +234,5 @@ struct CollectionDetailView: View {
             return displayFormatter.string(from: date)
         }
         return dateString
-    }
+    } 
 }

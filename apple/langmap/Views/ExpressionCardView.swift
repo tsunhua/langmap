@@ -2,7 +2,18 @@ import SwiftUI
 
 struct ExpressionCardView: View {
     let expression: LMLexiconExpression
+    let languages: [LMLexiconLanguage]?
     var compact: Bool = false
+
+    private var languageName: String {
+        guard let languages = languages else {
+            return expression.languageCode.uppercased()
+        }
+        if let language = languages.first(where: { $0.code == expression.languageCode }) {
+            return language.name
+        }
+        return expression.languageCode.uppercased()
+    }
 
     var body: some View {
         if compact {
@@ -16,7 +27,7 @@ struct ExpressionCardView: View {
                         .lineLimit(1)
 
                     HStack(spacing: 6) {
-                        Text(expression.languageCode.uppercased())
+                        Text(languageName)
                             .font(.caption2)
                             .foregroundColor(.blue)
 
@@ -61,7 +72,7 @@ struct ExpressionCardView: View {
 
                 Spacer()
 
-                Text(expression.languageCode.uppercased())
+                Text(languageName)
                     .font(.system(.caption2, design: .monospaced))
                     .fontWeight(.heavy)
                     .padding(.horizontal, 8)

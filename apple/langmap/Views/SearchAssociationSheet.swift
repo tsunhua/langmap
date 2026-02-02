@@ -89,7 +89,7 @@ struct SearchAssociationSheet: View {
                                     selectedExpression(expression)
                                     isPresented = false
                                 }) {
-                                    ExpressionCardView(expression: expression, compact: true)
+                                    ExpressionCardView(expression: expression, languages: viewModel.languages, compact: true)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -110,6 +110,7 @@ struct SearchAssociationSheet: View {
             }
         }
         .onAppear {
+            viewModel.loadLanguages()
             if !searchQuery.isEmpty {
                 viewModel.search(query: searchQuery)
             }
@@ -124,7 +125,18 @@ struct SearchAssociationSheet: View {
 
 class SearchAssociationViewModel: NSObject, ObservableObject {
     @Published var results: [LMLexiconExpression] = []
+    @Published var languages: [LMLexiconLanguage] = []
     @Published var isLoading: Bool = false
+
+    func loadLanguages() {
+        Task {
+            do {
+                self.languages = try await ExpressionService.shared.getLanguages()
+            } catch {
+                print("Failed to load languages: \(error)")
+            }
+        }
+    }
 
     func search(query: String) {
         guard !query.isEmpty else { return }

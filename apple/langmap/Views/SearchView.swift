@@ -63,7 +63,7 @@ struct SearchView: View {
                             VStack(spacing: 4) {
                                 ForEach(viewModel.searchResults) { (expression: LMLexiconExpression) in
                                     NavigationLink(destination: ExpressionDetailView(expression: expression)) {
-                                        ExpressionCardView(expression: expression, compact: true)
+                                        ExpressionCardView(expression: expression, languages: viewModel.languages, compact: true)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -106,6 +106,7 @@ struct SearchView: View {
                                           ViewHistoryCard(
                                               item: item,
                                               expression: createExpressionFromHistory(item),
+                                              languages: viewModel.languages,
                                               onDelete: {
                                                   viewHistoryManager.removeFromHistory(item)
                                               }
@@ -139,15 +140,15 @@ struct SearchView: View {
                                       ProgressView()
                                           .frame(maxWidth: .infinity, maxHeight: 150)
                                   } else if !recentExpressionsManager.recentExpressions.isEmpty {
-                                      VStack(spacing: 4) {
-                                          ForEach(recentExpressionsManager.recentExpressions.prefix(5)) { expression in
-                                              NavigationLink(destination: ExpressionDetailView(expression: expression)) {
-                                                  ExpressionCardView(expression: expression, compact: true)
-                                              }
-                                              .buttonStyle(.plain)
-                                          }
-                                      }
-                                   }
+                                       VStack(spacing: 4) {
+                                           ForEach(recentExpressionsManager.recentExpressions.prefix(5)) { expression in
+                                               NavigationLink(destination: ExpressionDetailView(expression: expression)) {
+                                                   ExpressionCardView(expression: expression, languages: viewModel.languages, compact: true)
+                                               }
+                                               .buttonStyle(.plain)
+                                           }
+                                       }
+                                    }
                             }
                             .padding()
                         }
@@ -241,7 +242,15 @@ struct LanguageFilterView: View {
 struct ViewHistoryCard: View {
     let item: ViewHistoryItem
     let expression: LMLexiconExpression
+    let languages: [LMLexiconLanguage]
     let onDelete: () -> Void
+
+    private var languageName: String {
+        if let language = languages.first(where: { $0.code == item.languageCode }) {
+            return language.name
+        }
+        return item.languageCode.uppercased()
+    }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -255,7 +264,7 @@ struct ViewHistoryCard: View {
                             .lineLimit(1)
 
                         HStack(spacing: 6) {
-                            Text(item.languageCode.uppercased())
+                            Text(languageName)
                                 .font(.caption2)
                                 .foregroundColor(.blue)
 

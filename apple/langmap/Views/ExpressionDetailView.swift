@@ -3,10 +3,18 @@ import SwiftUI
 struct ExpressionDetailView: View {
     let expression: LMLexiconExpression
     @State private var associations: [LMLexiconExpression] = []
+    @State private var languages: [LMLexiconLanguage] = []
     @State private var isLoadingAssociations = false
     @State private var errorMessage = ""
     @State private var showingAssociationSearch = false
     @State private var isRefreshing = false
+
+    private var languageName: String {
+        if let language = languages.first(where: { $0.code == expression.languageCode }) {
+            return language.name
+        }
+        return expression.languageCode.uppercased()
+    }
 
     var body: some View {
         ScrollView {
@@ -25,7 +33,7 @@ struct ExpressionDetailView: View {
                                 ProgressView()
                                     .frame(width: 20, height: 20)
                             } else {
-                                Text(expression.languageCode.uppercased())
+                                Text(languageName)
                                     .font(.system(.caption, design: .monospaced))
                                     .fontWeight(.heavy)
                                     .padding(.horizontal, 10)
@@ -99,7 +107,7 @@ struct ExpressionDetailView: View {
                             ForEach(associations) { assoc in
                                 if assoc.id != expression.id {
                                     NavigationLink(destination: ExpressionDetailView(expression: assoc)) {
-                                        ExpressionCardView(expression: assoc, compact: true)
+                                        ExpressionCardView(expression: assoc, languages: languages, compact: true)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -161,6 +169,7 @@ struct ExpressionDetailView: View {
             Task { @MainActor in
                 ViewHistoryManager.shared.addToHistory(expression)
             }
+            loadLanguages()
             loadAssociations()
         }
     }
@@ -221,6 +230,16 @@ struct ExpressionDetailView: View {
             } catch {
                 print("❌ Failed to update association: \(error)")
                 print("Error details: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func loadLanguages() {
+        Task {
+            do {
+                self.languages = try await ExpressionService.shared.getLanguages()
+            } catch {
+                print("Failed to load languages: \(error)")
             }
         }
     }
