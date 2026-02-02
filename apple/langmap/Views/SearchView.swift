@@ -4,7 +4,7 @@ struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     @ObservedObject private var viewHistoryManager = ViewHistoryManager.shared
     @StateObject private var recentExpressionsManager = RecentlyExpressionsManager.shared
-    @State private var showingClearHistoryAlert = false
+    @State private var showingHistorySheet = false
     @State private var showingHomeSheet = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var refreshID = UUID()
@@ -81,39 +81,45 @@ struct SearchView: View {
                       ScrollView {
                           VStack(spacing: 20) {
                               // Recently Viewed
-                              if viewHistoryManager.hasHistory {
-                                  // Header
-                                  HStack {
-                                      Text("recently_viewed".localized)
-                                          .font(.headline)
-                                          .foregroundColor(.primary)
+                               if viewHistoryManager.hasHistory {
+                                   // Header
+                                   HStack {
+                                       Text("recently_viewed".localized)
+                                           .font(.headline)
+                                           .foregroundColor(.primary)
 
-                                      Spacer()
+                                       Spacer()
+                                   }
+                                   .padding(.horizontal)
 
-                                      Button(action: {
-                                          showingClearHistoryAlert = true
-                                      }) {
-                                          Text("clear_all".localized)
-                                              .font(.subheadline)
-                                              .foregroundColor(.blue)
-                                      }
-                                  }
-                                  .padding(.horizontal)
+                                   // History Items (first 3)
+                                   VStack(spacing: 4) {
+                                       ForEach(viewHistoryManager.getRecentViewed(limit: 3)) { item in
+                                           ViewHistoryCard(
+                                               item: item,
+                                               expression: createExpressionFromHistory(item),
+                                               languages: viewModel.languages
+                                           )
+                                       }
+                                   }
 
-                                  // History Items
-                                  VStack(spacing: 4) {
-                                      ForEach(viewHistoryManager.getRecentViewed()) { item in
-                                          ViewHistoryCard(
-                                              item: item,
-                                              expression: createExpressionFromHistory(item),
-                                              languages: viewModel.languages,
-                                              onDelete: {
-                                                  viewHistoryManager.removeFromHistory(item)
-                                              }
-                                          )
-                                      }
-                                  }
-                              } else {
+                                   // View More Button
+                                   if viewHistoryManager.viewHistory.count > 3 {
+                                       Button(action: {
+                                           showingHistorySheet = true
+                                       }) {
+                                           HStack {
+                                               Spacer()
+                                               Text("view_more".localized)
+                                                   .font(.subheadline)
+                                                   .foregroundColor(.blue)
+                                               Spacer()
+                                           }
+                                           .padding(.vertical, 12)
+                                       }
+                                       .buttonStyle(.plain)
+                                   }
+                               } else {
                                   // Empty State - No history yet
                                   VStack(spacing: 10) {
                                       Image(systemName: "clock.arrow.circlepath")
@@ -170,15 +176,81 @@ struct SearchView: View {
                  }
              }
             .onReceive(viewHistoryManager.$viewHistory) { _ in
-                refreshID = UUID()
-            }
-            .alert("clear_history".localized, isPresented: $showingClearHistoryAlert) {
-                Button("cancel".localized, role: .cancel) {}
-                Button("clear".localized, role: .destructive) {
-                    viewHistoryManager.clearAllHistory()
+                 refreshID = UUID()
+             }
+             .sheet(isPresented: $showingHistorySheet) {
+                NavigationStack {
+                    VStack(spacing: 0) {
+                        List {
+                            ForEach(viewHistoryManager.getRecentViewed()) { item in
+                                NavigationLink(destination: ExpressionDetailView(expression: createExpressionFromHistory(item))) {
+                                    HStack(spacing: 10) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(item.text)
+                                                .font(.body)
+                                                .fontWeight(.medium)
+                                                .foregroundColor(.primary)
+                                                .lineLimit(1)
+
+                                            HStack(spacing: 6) {
+                                                Text(languageName(for: item.languageCode))
+                                                    .font(.caption2)
+                                                    .foregroundColor(.blue)
+
+                                                if let region = item.regionName {
+                                                    Text("•")
+                                                        .font(.caption2)
+                                                        .foregroundColor(.secondary)
+
+                                                    Text(region)
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+
+                                                Spacer()
+
+                                                Text(item.relativeTime)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+
+                                    Button(action: {
+                                        viewHistoryManager.removeFromHistory(item)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .onDelete { indexSet in
+                                for index in indexSet {
+                                    let item = viewHistoryManager.getRecentViewed()[index]
+                                    viewHistoryManager.removeFromHistory(item)
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle("recently_viewed".localized)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("done".localized) {
+                                showingHistorySheet = false
+                            }
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(action: {
+                                viewHistoryManager.clearAllHistory()
+                            }) {
+                                Image(systemName: "trash")
+                            }
+                        }
+                    }
                 }
-            } message: {
-                Text("clear_history_confirm".localized)
             }
         }
     }
@@ -206,6 +278,13 @@ struct SearchView: View {
             origin: nil,
             usage: nil
         )
+    }
+
+    private func languageName(for code: String) -> String {
+        if let language = viewModel.languages.first(where: { $0.code == code }) {
+            return language.name
+        }
+        return code.uppercased()
     }
 }
 
@@ -243,7 +322,6 @@ struct ViewHistoryCard: View {
     let item: ViewHistoryItem
     let expression: LMLexiconExpression
     let languages: [LMLexiconLanguage]
-    let onDelete: () -> Void
 
     private var languageName: String {
         if let language = languages.first(where: { $0.code == item.languageCode }) {
@@ -287,14 +365,6 @@ struct ViewHistoryCard: View {
                     }
                 }
             }
-
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "xmark")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)

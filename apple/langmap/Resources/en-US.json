@@ -128,5 +128,7 @@
   "max_characters": "Maximum 500 characters",
   "add_association": "Add Association",
   "all_expressions": "All Expressions",
-  "no_expressions_in_collection": "No expressions in this collection"
+  "no_expressions_in_collection": "No expressions in this collection",
+  "view_more": "View More",
+  "done": "Done"
 }

@@ -130,5 +130,7 @@
   "all_expressions": "所有表达",
   "no_expressions_in_collection": "收藏夹中没有表达",
   "expressions_not_loaded": "表达未加载",
-  "load_expressions": "加载表达"
+  "load_expressions": "加载表达",
+  "view_more": "查看更多",
+  "done": "完成"
 }
