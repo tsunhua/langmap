@@ -337,13 +337,17 @@ export default {
 
     // Switch language
     const switchLanguage = async (langCode) => {
-      locale.value = langCode
+
+      // Save preference
       localStorage.setItem('langmap-lang', langCode)
       langDropdownOpen.value = false
 
-      // If it's a dynamic language, load its translations
+      // If it's a dynamic language, load its translations FIRST
       const { loadLanguage } = await import('./i18n.js')
       await loadLanguage(langCode)
+
+      // THEN switch the locale
+      locale.value = langCode
 
       // Refresh available languages to only show active ones
       try {
@@ -521,6 +525,7 @@ export default {
 
         // Fetch available languages (only active ones)
         const languages = await fetchLanguages(1) // 只获取活跃的语言
+
         const newAvailableLanguages = {}
         languages.forEach(lang => {
           newAvailableLanguages[lang.code] = lang.native_name || lang.name
@@ -555,6 +560,7 @@ export default {
       // Fetch dynamic languages from backend and filter out inactive ones
       try {
         const languages = await fetchLanguages()
+
         languages.forEach(lang => {
           // Only add active languages to availableLanguages
           if (lang.is_active === 1) {
@@ -567,6 +573,7 @@ export default {
 
       // Load saved language preference
       const savedLang = localStorage.getItem('langmap-lang')
+
       if (savedLang && availableLanguages.value[savedLang]) {
         locale.value = savedLang
 

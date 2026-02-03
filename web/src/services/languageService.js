@@ -129,15 +129,38 @@ export function transformTranslations(expressions) {
 
   expressions.forEach(expression => {
     // Extract key from tags (which is a JSON array string)
-    if (!expression.tags) return
+    if (!expression.tags) {
+      console.warn('[transformTranslations] Expression has no tags:', expression)
+      return
+    }
     try {
       // Parse the tags JSON array
       const tags = JSON.parse(expression.tags)
 
       for (let i in tags) {
-        messages[tags[i]] = expression.text
+        let key = tags[i]
+
+        // Remove 'langmap.' prefix if present
+        if (key.startsWith('langmap.')) {
+          key = key.substring(8) // Remove 'langmap.' (8 characters: l-a-n-g-m-a-p-.)
+        }
+
+        // Split key by dots and create nested structure
+        // e.g., 'nav.home' -> { nav: { home: text } }
+        const parts = key.split('.')
+        let current = messages
+
+        for (let j = 0; j < parts.length - 1; j++) {
+          if (!current[parts[j]]) {
+            current[parts[j]] = {}
+          }
+          current = current[parts[j]]
+        }
+
+        // Set the text at the last level
+        current[parts[parts.length - 1]] = expression.text
       }
-      
+
     } catch (e) {
       console.error('Error parsing tags for expression:', expression, e)
     }
