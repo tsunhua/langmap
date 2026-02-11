@@ -148,7 +148,7 @@ export class ExportDO {
                     return [
                         item.id,
                         escape(item.text),
-                        item.meaning_id || "",
+                        item.meaning_id || ""   ,
                         escape(item.audio_url),
                         escape(item.language_code),
                         escape(item.region_code),
