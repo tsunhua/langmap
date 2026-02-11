@@ -122,4 +122,5 @@ LangMap 的核心差异化：
 ## 相关文档
 
 - [系统设计](../design/)
+- [功能模块设计](../design/features/)
 - [实施指南](../guides/)

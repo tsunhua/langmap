@@ -14,6 +14,8 @@
 docs/
 ├── policies/              # 政策与合规文档
 ├── design/                # 系统设计与架构文档
+│   ├── system/            # 总体系统架构
+│   └── features/          # 功能模块设计（使用 feat- 前缀）
 ├── api/                   # API 接口文档
 ├── guides/                # 实施与操作指南
 ├── plans/                 # 计划与路线图
@@ -32,13 +34,22 @@ docs/
 ### 🏗️ 系统设计 (design/)
 系统架构、数据模型和功能设计的详细技术文档。
 
-- **[system-architecture.md](design/system-architecture.md)** - 系统总体架构设计（技术栈、数据模型、API 设计、MVP 路线）
-- **[user-system.md](design/user-system.md)** - 用户与权限系统设计（角色定义、数据库设计、API 接口、安全考虑）
-- **[collection-feature.md](design/collection-feature.md)** - 集合（收藏夹）功能设计（数据模型、API 设计、前端交互）
-- **[export-system.md](design/export-system.md)** - 异步导出系统设计（基于 Cloudflare Workers 的架构、Durable Objects、R2 Storage）
-- **[ui-translation.md](design/ui-translation.md)** - UI 翻译系统设计（用户翻译界面、同步方案、审核工作流）
-- **[i18n-architecture.md](design/i18n-architecture.md)** - 国际化动态语言支持方案（数据库模型、API 设计、前端实现）
-- **[dynamic-languages.md](design/dynamic-languages.md)** - 前端动态语言支持设计
+**总体架构 (system/)**
+- **[architecture.md](design/system/architecture.md)** - 系统总体架构设计（技术栈、数据模型、API 设计、已实现和未实现状态）
+
+**功能模块设计 (features/)**
+各功能模块的详细设计文档（统一使用 `feat-` 前缀），已标注实际实现状态。
+
+- **[feat-user-system.md](design/features/feat-user-system.md)** - 用户与权限系统（角色定义、数据库设计、API 接口、安全考虑、实现状态标注）
+- **[feat-collection.md](design/features/feat-collection.md)** - 集合（收藏夹）功能（数据模型、API 设计、前端交互、实现状态标注）
+- **[feat-export.md](design/features/feat-export.md)** - 异步导出系统（架构设计、数据模型、API 规范、实现状态标注）
+- **[feat-ui-translation.md](design/features/feat-ui-translation.md)** - UI 翻译系统（用户翻译界面、同步方案、审核工作流、实现状态标注）
+- **[feat-i18n.md](design/features/feat-i18n.md)** - 国际化动态语言支持（数据库模型、API 设计、前端实现方案、实现状态标注）
+- **[feat-dynamic-languages.md](design/features/feat-dynamic-languages.md)** - 前端动态语言支持（动态加载机制、语言切换流程、实现状态标注）
+- **[feat-search.md](design/features/feat-search.md)** - 搜索功能设计（API 设计、前端实现、搜索策略、实现状态标注）
+- **[feat-heatmap.md](design/features/feat-heatmap.md)** - 语言地图/热力图功能设计（数据模型、API 设计、可视化方案、实现状态标注）
+- **[feat-user-profile.md](design/features/feat-user-profile.md)** - 用户资料/个人中心设计（数据模型、API 设计、前端实现、实现状态标注）
+- **[feat-database.md](design/features/feat-database.md)** - 数据库设计（表结构、索引、迁移策略、性能优化、备份策略、实现状态标注）
 
 ### 🔌 API 文档 (api/)
 后端 API 的技术文档、端点说明和部署指南。
@@ -68,10 +79,14 @@ docs/
 
 ### 按主题查找
 
-- **用户系统** → [design/user-system.md](design/user-system.md)
-- **认证与安全** → [design/user-system.md](design/user-system.md), [guides/email-verification.md](guides/email-verification.md)
-- **国际化** → [design/i18n-architecture.md](design/i18n-architecture.md), [design/ui-translation.md](design/ui-translation.md)
-- **数据管理** → [design/system-architecture.md](design/system-architecture.md), [design/collection-feature.md](design/collection-feature.md)
+- **用户系统** → [design/features/feat-user-system.md](design/features/feat-user-system.md)
+- **认证与安全** → [design/features/feat-user-system.md](design/features/feat-user-system.md), [guides/email-verification.md](guides/email-verification.md)
+- **国际化** → [design/features/feat-i18n.md](design/features/feat-i18n.md), [design/features/feat-ui-translation.md](design/features/feat-ui-translation.md)
+- **数据管理** → [design/system/architecture.md](design/system/architecture.md), [design/features/feat-collection.md](design/features/feat-collection.md)
+- **数据库设计** → [design/features/feat-database.md](design/features/feat-database.md)
+- **搜索功能** → [design/features/feat-search.md](design/features/feat-search.md)
+- **语言地图** → [design/features/feat-heatmap.md](design/features/feat-heatmap.md)
+- **用户资料** → [design/features/feat-user-profile.md](design/features/feat-user-profile.md)
 - **API 参考** → [api/README.md](api/README.md)
 - **部署指南** → [api/backend-guide.md](api/backend-guide.md), [guides/corpus-acquisition.md](guides/corpus-acquisition.md)
 - **产品定位** → [specs/market-research.md](specs/market-research.md)
@@ -80,7 +95,8 @@ docs/
 ### 按角色查找
 
 **开发者**
-- [系统架构设计](design/system-architecture.md)
+- [系统架构设计](design/system/)
+- [功能模块设计](design/features/)
 - [API 文档](api/)
 - [实施指南](guides/)
 
@@ -91,61 +107,67 @@ docs/
 
 **运维人员**
 - [后端部署指南](api/backend-guide.md)
-- [系统架构设计](design/system-architecture.md)
+- [系统架构设计](design/system/)
 
 **用户**
 - [服务条款](policies/terms-privacy-content.md)
-- [隐私政策](policies/terms-privacy-content.md)
+- [隐私政策](policies/terms-privacy-content-zh.md)
 - [内容政策](policies/terms-privacy-content.md)
 
 ## 文档更新
 
-本文档结构于 **2026年2月** 重新组织，将 24 个分散的文档整理为 6 个主要目录，删除了过时的 TODO 文档，合并了重复的设计文档。
+本文档结构于 **2026年2月** 重新组织并完善，主要变更包括：
 
 ### 主要变更
 
-1. **删除过时文档**（7个）
-   - todo_user.md
-   - todo_user_translation.md
-   - ui_translation_refactor.md
-   - REGION_MIGRATION_README.md
-   - verify_email.md（已重构为 guides/email-verification.md）
+1. **重新组织 design 目录**
+   - 创建 system/ 子目录存放总体架构设计
+   - 创建 features/ 子目录存放功能模块设计
+   - 所有功能模块使用统一的 `feat-` 前缀
+   - 每个文档添加 system-reminder 标注实现状态
 
-2. **合并相关文档**
-   - UI 翻译：design_ui_translation.md + user_translate_locales_design.md → design/ui-translation.md
-   - 用户系统：design_user.md + todo_user.md 的设计部分 → design/user-system.md
+2. **更新系统架构设计**
+   - 按实际实现更新技术栈（Hono + TypeScript + Cloudflare Workers + D1）
+   - 按实际实现更新数据模型说明
+   - 标注已实现和未实现的 API 端点
+   - 简化文档内容，移除过时的设计建议
 
-3. **重新组织目录结构**
-   - 按功能模块分类：policies/, design/, api/, guides/, plans/, specs/
-   - 每个目录添加 README 文档作为导航
+3. **补充缺失的设计文档**
+   - 新增 `feat-search.md` - 搜索功能设计（基础已实现）
+   - 新增 `feat-heatmap.md` - 语言地图/热力图功能设计（基础已实现）
+   - 新增 `feat-user-profile.md` - 用户资料/个人中心设计（前端已实现）
 
-4. **重命名文档**（14个）
-   - 政策文档移至 policies/ 目录
-   - API 文档移至 api/ 目录
-   - 实施指南移至 guides/ 目录
-   - 规范文档移至 specs/ 目录
+4. **更新功能模块文档**
+   - 所有文档添加 system-reminder 章节
+   - 标注实际实现状态（✅ 已实现、⏳ 部分实现、❌ 未实现）
+   - 明确列出已实现和未实现的功能
+   - 明确列出已实现和未实现的 API 端点
+
+5. **更新导航文档**
+   - 更新所有 README 以反映新的目录结构
+   - 更新所有文档链接路径
+   - 添加新增设计文档的导航链接
 
 ## 文档统计
 
-- **总文档数**：23 个（从 24 个整理为 23 个）
+- **总文档数**：31 个（从 27 个增加到 31 个）
   - policies/: 2 个文件
-  - design/: 7 个文件
+  - design/: 14 个文件（1个 README, 1个 system/, 10个 features/, 2个 system/README）
   - api/: 3 个文件
   - guides/: 2 个文件
   - plans/: 1 个文件
   - specs/: 2 个文件
-  - 根目录: 1 个文件
-  - README 文件: 7 个
+  - 根目录: 2 个文件
+  - README 文件: 8 个（每个子目录 + 根目录）
 
-## 贡献指南
+## 文档规范
 
-### 文档规范
+### 命名规范
 
-- 使用 Markdown 格式
-- 标题层级清晰（最多 3 级）
-- 代码块标注语言
-- 表格用于结构化数据
-- 使用 Mermaid 图表展示流程
+- **总体架构文档**：使用简洁的名称（如 `architecture.md`）
+- **功能模块文档**：使用 `feat-` 前缀（如 `feat-user-system.md`）
+- **README 文档**：用于各子目录的导航和说明
+- 标注要求：所有功能模块文档必须包含 system-reminder 章节
 
 ### 更新文档
 
@@ -157,10 +179,11 @@ docs/
 
 对于新增的功能，应创建对应的设计文档：
 
-1. 在 `design/` 目录创建功能设计文档
-2. 更新 `design/README.md` 添加新文档链接
-3. 如有 API 变更，更新 `api/` 目录相关文档
-4. 如需要实施指南，在 `guides/` 目录创建指南
+1. 在 `design/features/` 目录创建 `feat-{feature-name}.md`
+2. 参考现有功能文档的结构和格式
+3. 必须包含 system-reminder 章节，标注实现状态
+4. 更新 `design/features/README.md` 添加新文档链接
+5. 如有 API 变更，更新 `api/` 目录相关文档
 
 ## 联系方式
 

@@ -95,5 +95,6 @@ LangMap iOS 应用的设计文档，包括：
 ## 相关文档
 
 - [系统设计](../design/)
+- [功能模块设计](../design/features/)
 - [API 文档](../api/)
 - [需求规范](../specs/)
