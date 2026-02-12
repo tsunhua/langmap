@@ -43,6 +43,12 @@
     - **复合索引**：创建 `idx_collection_items_query: (collection_id, created_at DESC)`。这将同时满足 SQL #4 的过滤与排序需求。
     - **关联优化**：为 `collections` 增加 `(is_public, created_at DESC)` 复合索引，优化公共列表分页。
 
+### 2.4 UI 翻译性能优化 (针对 /ui-translations/:language)
+- **现状**：该接口涉及 `expressions`, `collection_items`, `collections` 三表联查，且缺少 `collections(name)` 索引。
+- **优化**：
+    - **补充索引**：为 `collections(name)` 创建索引，确保联表查询能快速锁定 `langmap` 集合。
+    - **L2 缓存集成**：该接口返回的数据相对静态，非常适合使用 **Workers Cache API**。设置 `max-age=3600` (1小时)，大幅减少数据库负载。
+
 ## 3. 实施路线图 (更新版)
 
 | 优先级 | 任务内容 | 解决的 Bottlenecks |
