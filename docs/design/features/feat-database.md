@@ -15,8 +15,6 @@
 - `languages` - 语言表
 - `expressions` - 表达式主表
 - `expression_versions` - 版本历史表
-- `meanings` - 语义表
-- `expression_meanings` - 表达式-语义关联表
 - `users` - 用户表
 - `collections` - 集合表
 - `collection_items` - 集合项目表
@@ -70,9 +68,9 @@ languages (语言表)
   ↓ 1:N
 expressions (表达式主表)
 
-meanings (语义表)
-  ↓ M:N (通过 expression_meanings)
 expressions (表达式主表)
+  ↑ 1:1 (自关联)
+  expressions (语义锚点)
 
 email_verification_tokens (邮箱验证令牌表)
   ↓ N:1
@@ -145,7 +143,7 @@ CREATE TABLE IF NOT EXISTS expressions (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (meaning_id) REFERENCES meanings(id)
+    FOREIGN KEY (meaning_id) REFERENCES expressions(id)
 );
 ```
 
@@ -160,7 +158,8 @@ CREATE INDEX idx_expressions_source_type ON expressions(source_type);
 ```
 
 **字段说明**：
-- `meaning_id` - 关联到语义表，支持跨语言的语义链接
+- `id` - 主键，基于 `text + language_code` 计算的确定性哈希值，确保相同内容的词句具有唯一且稳定的 ID。
+- `meaning_id` - 语义锚点 ID（指向 expressions.id），用于将不同语言的同义词句分到同一组。同一组的词句共享相同的 `meaning_id`，通常该 ID 取自该组中第一个被创建或最主要的表达记录。
 - `tags` - JSON 格式存储标签，例如 `["home", "title"]`
 - `source_type` - 标识内容来源，AI 生成的内容可能自动审核通过
 - `review_status` - 用户提交的内容需要审核
@@ -197,69 +196,11 @@ CREATE INDEX idx_expression_versions_created_at ON expression_versions(created_a
 
 **字段说明**：
 - `expression_id` - 指向当前表达式主表记录
-- 不包含 `parent_version_id` - 当前实现中版本链未显式存储
+- `meaning_id` - 记录快照时的语义关联
 - 不包含 `source_type`, `review_status` - 这些字段只在主表中维护
 
-### 4. meanings 表
 
-存储表达式的语义信息。
-
-**表结构**：
-
-```sql
-CREATE TABLE IF NOT EXISTS meanings (
-    id INTEGER PRIMARY KEY NOT NULL,
-    gloss TEXT NOT NULL,                         -- 简短标签 (如 "langmap.home.title")
-    description TEXT,                            -- 详细描述
-    tags TEXT,                                  -- JSON 数组，用于分类
-    created_by TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-**索引**：
-
-```sql
-CREATE INDEX idx_meanings_gloss ON meanings(gloss);
-CREATE INDEX idx_meanings_tags ON meanings(tags);
-```
-
-**字段说明**：
-- `gloss` - 唯一的短标签，用作语义标识符
-- `tags` - JSON 格式，例如 `["langmap", "ui"]` 用于区分 UI 翻译
-
-### 5. expression_meanings 表
-
-表达式与语义的多对多关联表。
-
-**表结构**：
-
-```sql
-CREATE TABLE IF NOT EXISTS expression_meanings (
-    id INTEGER PRIMARY KEY NOT NULL,
-    expression_id INTEGER NOT NULL,                -- 表达式 ID
-    meaning_id INTEGER NOT NULL,                  -- 语义 ID
-    created_by TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    note TEXT,                                   -- 关联备注
-    parent_version_id INTEGER,                     -- 未使用的字段
-    FOREIGN KEY (expression_id) REFERENCES expressions(id),
-    FOREIGN KEY (meaning_id) REFERENCES meanings(id)
-);
-```
-
-**索引**：
-
-```sql
-CREATE INDEX idx_expression_meanings_expr_id ON expression_meanings(expression_id);
-CREATE INDEX idx_expression_meanings_meaning_id ON expression_meanings(meaning_id);
-```
-
-**字段说明**：
-- `parent_version_id` - 当前版本未使用，保留作为未来扩展
-- `note` - 可选的关联说明
-
-### 6. users 表
+### 5. users 表
 
 存储用户账户信息。
 
