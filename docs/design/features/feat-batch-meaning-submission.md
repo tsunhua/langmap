@@ -67,8 +67,8 @@
    - 执行**单次批量查询**：`SELECT id, meaning_id FROM expressions WHERE id IN (:calc_ids)`，获取所有已存在的记录及其关联状态。
 
 2. **预排序 (Pre-sorting)**：
-   - 将提交的词句列表按以下**语言权重顺序**进行排列：
-     - `en-GB`, `en-US`, `zh-TW`, `zh-CN`, `es-ES`, `fr-FR`, `ru-RU`, `ar-SA`, `hi-IN`, `bn-IN`, `pt-BR`, `ur-PK`, `id-ID`, `de-DE`, `ja-JP`, `ko-KR`, `tr-TR`, `it-IT`。
+   - 首先将提交的词句列表按以下**语言权重顺序**进行排列：
+     - `en-GB`, `en-US`, `zh-TW`, `zh-CN`, `hi-IN`, `es-ES`, `fr-FR`, `ar-SA`, `bn-IN`, `pt-BR`, `ru-RU`, `ur-PK`, `id-ID`, `de-DE`, `ja-JP`, `ko-KR`, `tr-TR`, `it-IT`。
    - 不在列表中的语言排在末尾。
 
 3. **确定语义锚点 (Anchor Selection)**：
