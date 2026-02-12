@@ -5,7 +5,8 @@
 **实现状态**：
 - ✅ 后端搜索 API 已实现 - `GET /api/v1/search` + `searchExpressions()` 方法
 - ✅ 前端搜索页面已实现 - `Search.vue`
-- ✅ 数据库查询支持 - LIKE 模糊匹配
+- ✅ 性能优化 - 已集成 L2 边缘缓存 (TTL 1小时)
+- ✅ 数据库查询支持 - LIKE 模糊匹配 + 复合索引优化
 - ⏳ 高级搜索功能 - 未实现（全文检索、拼写纠正）
 - ⏳ 搜索结果排序和过滤 - 部分实现
 
@@ -194,7 +195,8 @@ const searchResults = await client.collections('expressions').documents().search
 ### 当前优化
 
 - **分页**：避免一次返回过多数据
-- **索引**：在 `text`、`language_code`、`region_code` 字段上创建索引
+- **边缘缓存**：集成 L2 缓存，TTL 1小时，针对相同搜索词实现秒开。
+- **复合索引**：部署了 `idx_expressions_lang_text` 等索引，优化模糊查找后的排序开销。
 
 ### 未来优化
 

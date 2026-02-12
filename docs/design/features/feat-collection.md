@@ -7,6 +7,7 @@
 **实现状态**：
 - ✅ 数据库模型（collections, collection_items 表）- 已实现
 - ✅ 后端 API 基础实现 - 已实现（CRUD 操作）
+- ✅ 反范式化计数优化 - 已实现 (`items_count` 自动维护)
 - ✅ 前端基础功能 - 已实现
 - ✅ 集合管理页面 - 已实现
 - ⏳ 管理界面优化 - 部分实现
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS collections (
     name TEXT NOT NULL,                -- 集合名称
     description TEXT,                  -- 集合描述
     is_public INTEGER DEFAULT 0,       -- 是否公开 (0: 私有, 1: 公开)
+    items_count INTEGER DEFAULT 0,     -- 反范式化字段：集合项目总数
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -62,7 +64,9 @@ CREATE TABLE IF NOT EXISTS collection_items (
 
 为了提高查询性能，建议添加以下索引：
 - `collections(user_id)`
-- `collection_items(collection_id)`
+- `collections(name)` -- 优化 UI 翻译检索
+- `collections(is_public, created_at DESC)` -- 优化公开列表分页
+- `collection_items(collection_id, created_at DESC)` -- 优化集合条目检索
 - `collection_items(expression_id)`
 
 ## 3. 后端接口设计 (API Design)

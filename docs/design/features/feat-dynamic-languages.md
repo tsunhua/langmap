@@ -8,8 +8,8 @@
 - ✅ 静态语言加载（en, zh-CN, zh-TW, es, fr, ja, nan-TW, yue-HK）- 已实现
 - ✅ 语言服务基础实现 - 已实现（fetchLanguages, fetchUITranslations）
 - ✅ 动态 i18n 加载增强 - 已实现（混合模式）
+- ✅ 后端 L1 语言缓存 (30min) - 已实现 (D1DatabaseService)
 - ⏳ 用户自定义语言创建 - 部分实现（UI 未完全实现）
-- ❌ 完整的缓存策略 - 未实现（localStorage/IndexedDB with expiration）
 - ❌ 语言切换完整流程 - 部分实现（偏好保存、缓存更新）
 
 **已实现的功能**：
@@ -99,7 +99,7 @@ App 组件（`src/App.vue`）已更新：
 1. 当动态语言首次加载时，其翻译存储在 `dynamicMessagesCache`
 2. 后续对同一语言的请求使用缓存数据
 3. 缓存在应用会话期间维护
-4. 未来增强可包括 localStorage 持久化和过期机制
+4. **后端优化**：后端 D1DatabaseService 实施了 30 分钟的 L1 内存缓存，并在边缘侧集成了 L2 缓存 (1小时)，确保即使动态加载也能秒开。
 
 ### 7. 错误处理
 
