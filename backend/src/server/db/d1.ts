@@ -581,22 +581,40 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
-    let sqlQuery = 'SELECT * FROM expressions WHERE text LIKE ?'
-    const bindings: any[] = [`%${query}%`]
+    if (!query.trim()) return []
+
+    // FTS5 搜索逻辑：使用 MATCH 实现极速检索
+    // 将查询转义并添加 * 实现前缀匹配
+    const ftsQuery = `"${query.replace(/"/g, '""')}"*`
+
+    let sqlQuery = `
+    SELECT e.* 
+    FROM expressions e
+    JOIN expressions_fts fts ON e.id = fts.rowid
+    WHERE expressions_fts MATCH ?
+  `
+    const bindings: any[] = [ftsQuery]
 
     if (fromLang) {
-      sqlQuery += ' AND language_code = ?'
+      sqlQuery += ' AND e.language_code = ?'
       bindings.push(fromLang)
     }
 
     if (region) {
-      sqlQuery += ' AND region_name LIKE ?'
+      sqlQuery += ' AND e.region_name LIKE ?'
       bindings.push(`%${region}%`)
     }
 
-    // 使用字符串匹配函数优化排序
-    sqlQuery += ' ORDER BY CASE WHEN text = ? THEN 0 WHEN text LIKE ? THEN 1 WHEN text LIKE ? THEN 2 ELSE 3 END, LENGTH(text), created_at DESC LIMIT ? OFFSET ?'
-    bindings.push(query, `${query}%`, `%${query}`, limit, skip);
+    // 排序策略：精确匹配优先 > FTS 相关性 (rank) > 文本长度 > 创建时间
+    sqlQuery += ` 
+    ORDER BY 
+      CASE WHEN e.text = ? THEN 0 ELSE 1 END,
+      fts.rank, 
+      LENGTH(e.text), 
+      e.created_at DESC 
+    LIMIT ? OFFSET ?
+  `
+    bindings.push(query, limit, skip)
 
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
     return results

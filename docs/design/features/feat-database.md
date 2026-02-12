@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS language_stats (
 
 ### 未来优化
 
-- **全文索引**：为 `expressions.text` 创建 FTS5 索引（评估中）
+- **全文索引 (FTS5)**：为 `expressions.text` 创建 FTS5 虚拟表，实现毫秒级前缀匹配与全文搜索。
 - **R2 整合**：针对静态资源（如音频、导出结果）的元数据管理优化
 
 ## 数据迁移
@@ -418,6 +418,13 @@ ALTER TABLE expressions ADD COLUMN tags TEXT;
 ### 4. 批量操作优化
 
 - **db.batch()**: 在进行批处理提交 (Upsert) 和 ID 迁移时，使用 D1 的原子批处理语句，大幅减少数据库往返次数。
+
+### 5. 全文检索 (FTS5) 架构
+
+为了消除 `LIKE '%query%'` 带来的全表扫描（High Rows Read），系统引入了 FTS5 虚拟表：
+- **虚拟表**：`expressions_fts` (External Content 模式)。
+- **同步机制**：通过触发器（Trigger）在数据增删改时自动保持主表与搜索索引的实时同步。
+- **分词器**：使用 `unicode61` 以支持全球多语言字符的搜索。
 
 ### 事务管理
 
