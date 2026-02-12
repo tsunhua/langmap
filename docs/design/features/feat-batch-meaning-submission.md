@@ -60,36 +60,20 @@
 
 ## 4. 智能语义锚点选择逻辑 (Intelligent Meaning Selection)
 
-后端在接收到批量提交后，将按以下优先级自动确定 `meaning_id`：
+后端在接收到批量提交后，将按以下步骤自动确定 `meaning_id`：
 
-1. **现有优先 (Existing Association)**：
-   - 遍历提交的所有词句，若其中有词句在数据库中已存在且已关联了 `meaning_id`，则全组复用该 `meaning_id`。
-   - 若多个词句关联了不同的 `meaning_id`，原则上取第一条命中记录，或根据审核状态（Approved 优先）选取。
+1. **ID 计算与批量查重 (ID Generation & Batch Lookup)**：
+   - 为提交列表中的每一项生成 `expression_id`。
+   - 执行**单次批量查询**：`SELECT id, meaning_id FROM expressions WHERE id IN (:calc_ids)`，获取所有已存在的记录及其关联状态。
 
-2. **语言权重优先 (Priority Language Anchor)**：
-   - 若全部词句均为新词（无现有 `meaning_id`），系统检查是否包含以下几种常用语言（按顺序）：
-     - `en-GB` 英语（英国）
-     - `en-US` 英语（美国）
-     - `zh-TW` 中文（繁体）
-     - `zh-CN` 中文（简体）
-     - `es-ES` 西班牙语（西班牙）
-     - `fr-FR` 法语（法国）
-     - `ru-RU` 俄语（俄罗斯）
-     - `ar-SA` 阿拉伯语（沙特阿拉伯）
-     - `hi-IN` 印地语（印度）
-     - `bn-IN` 孟加拉语（印度）
-     - `pt-BR` 葡萄牙语（巴西）
-     - `ur-PK` 乌尔都语（巴基斯坦）
-     - `id-ID` 印度尼西亚语（印度尼西亚）
-     - `de-DE` 德语（德国）
-     - `ja-JP` 日语（日本）
-     - `ko-KR` 韩语（韩国）
-     - `tr-TR` 土耳其语（土耳其）
-     - `it-IT` 意大利语（意大利）
-   - 若包含，则选取该类别中排第一的词句 ID 作为全组的 `meaning_id`。
+2. **预排序 (Pre-sorting)**：
+   - 将提交的词句列表按以下**语言权重顺序**进行排列：
+     - `en-GB`, `en-US`, `zh-TW`, `zh-CN`, `es-ES`, `fr-FR`, `ru-RU`, `ar-SA`, `hi-IN`, `bn-IN`, `pt-BR`, `ur-PK`, `id-ID`, `de-DE`, `ja-JP`, `ko-KR`, `tr-TR`, `it-IT`。
+   - 不在列表中的语言排在末尾。
 
-3. **顺序保底 (Fallback/Sequence)**：
-   - 若以上条件均不满足，则直接取提交数组中**第一条**词句记录的 `expression_id` 作为全组的 `meaning_id`。
+3. **确定语义锚点 (Anchor Selection)**：
+   - **优先追溯**：遍历**排序后**的列表，根据第 1 步的批量查询结果进行匹配。若发现某个词句在库中已有 `meaning_id`，则全组立即复用该 `meaning_id`。
+   - **保底锚点**：若全组皆为新词（或均无现成关联），则取**排序后列表首位**记录的 `expression_id` 作为全组的 `meaning_id`。
 
 ## 5. 业务细节处理 (Business Logic)
 
