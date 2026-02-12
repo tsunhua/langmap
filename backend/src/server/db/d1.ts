@@ -309,13 +309,26 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
         if (res.results && res.results.length > 0) {
           results.push({ id: exprId, expression: res.results[0] });
+        } else if (res.meta?.changes && res.meta.changes > 0) {
+          // Success but no expression returned (matched types)
+          results.push({ id: exprId });
         } else if (res.error) {
           results.push({ id: exprId, error: res.error });
         } else {
-          // Fallback if no results but no error (shouldn't happen with RETURNING *)
           results.push({ id: exprId, error: 'Statement executed but returned no data' });
         }
       });
+    }
+
+    // Update language_stats for potentially new expressions
+    // This is a bulk update: for each language in the expressions, recount or increment.
+    // Simplest is to just re-sync language_stats for the affected languages.
+    const affectedLanguages = [...new Set(expressions.map(e => e.language_code).filter(Boolean))];
+    for (const lang of affectedLanguages) {
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        SELECT ?, COUNT(*) FROM expressions WHERE language_code = ?
+      `).bind(lang, lang).run();
     }
 
     // Clear caches
@@ -366,6 +379,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
         throw new Error('Failed to create expression')
       }
 
+      // Update language_stats
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        VALUES (?, COALESCE((SELECT expression_count FROM language_stats WHERE language_code = ?), 0) + 1)
+      `).bind(languageCode, languageCode).run();
+
       // Clear statistics and heatmap caches as we've added a new expression
       this.clearStatisticsCache();
       this.clearHeatmapCache();
@@ -406,13 +425,25 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async deleteExpression(id: number): Promise<boolean> {
+    const expression = await this.getExpressionById(id);
+    if (!expression) return false;
+
     const { success } = await this.db.prepare(
       'DELETE FROM expressions WHERE id = ?'
     ).bind(id).run()
 
-    // Clear statistics and heatmap caches as we've deleted an expression
-    this.clearStatisticsCache();
-    this.clearHeatmapCache();
+    if (success) {
+      // Update language_stats
+      await this.db.prepare(`
+        UPDATE language_stats 
+        SET expression_count = MAX(0, expression_count - 1) 
+        WHERE language_code = ?
+      `).bind(expression.language_code).run();
+
+      // Clear statistics and heatmap caches as we've deleted an expression
+      this.clearStatisticsCache();
+      this.clearHeatmapCache();
+    }
 
     return success
   }
@@ -461,6 +492,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
       statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
 
       await db.batch(statements);
+
+      // Update language_stats if collision occurred (old record deleted)
+      await this.db.prepare(`
+        UPDATE language_stats SET expression_count = MAX(0, expression_count - 1)
+        WHERE language_code = ?
+      `).bind(current.language_code).run();
 
       return collision;
     }
@@ -522,6 +559,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     // Run the batch
     await db.batch(statements);
+
+    // Update language_stats if language changed or just to be safe
+    const affectedLangs = [...new Set([current.language_code, merged.language_code])];
+    for (const lang of affectedLangs) {
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        SELECT ?, COUNT(*) FROM expressions WHERE language_code = ?
+      `).bind(lang, lang).run();
+    }
 
     // Fetch and return the new record
     const result = await this.getExpressionById(newId);
@@ -1099,9 +1145,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     console.log('Fetching fresh statistics from database');
 
-    // Get total expressions count
+    // Get total expressions count from language_stats (materialized)
     const totalExpressionsResult = await this.db.prepare(
-      'SELECT COUNT(*) as count FROM expressions'
+      'SELECT SUM(expression_count) as count FROM language_stats'
     ).first<{ count: number }>();
     console.log('Total expressions result:', totalExpressionsResult);
 
@@ -1158,17 +1204,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         l.name as language_name,
         l.region_name,
         l.region_code,
-        COALESCE(e.expression_count, 0) as count,
+        COALESCE(ls.expression_count, 0) as count,
         l.region_latitude as latitude,
         l.region_longitude as longitude
       FROM languages l
-      LEFT JOIN (
-        SELECT 
-          language_code, 
-          COUNT(*) as expression_count
-        FROM expressions 
-        GROUP BY language_code
-      ) e ON l.code = e.language_code
+      LEFT JOIN language_stats ls ON l.code = ls.language_code
       WHERE l.is_active = 1 
         AND l.region_name IS NOT NULL 
         AND l.region_latitude IS NOT NULL 
@@ -1204,7 +1244,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   // Collections
   async getCollections(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Collection[]> {
     let query = `
-      SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count 
+      SELECT c.*, c.items_count 
       FROM collections c
     `
     const params: any[] = []
@@ -1234,7 +1274,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async getCollectionById(id: number): Promise<Collection | null> {
     const collection = await this.db.prepare(
-      'SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count FROM collections c WHERE c.id = ?'
+      'SELECT c.*, c.items_count FROM collections c WHERE c.id = ?'
     ).bind(id).first<Collection>()
     return collection || null
   }
@@ -1348,6 +1388,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to add item to collection')
     }
 
+    // Increment items_count in collections
+    await this.db.prepare('UPDATE collections SET items_count = items_count + 1 WHERE id = ?').bind(collectionId).run()
+
     return result;
   }
 
@@ -1356,7 +1399,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM collection_items WHERE collection_id = ? AND expression_id = ?'
     ).bind(collectionId, expressionId).run()
 
-    return result.changes > 0;
+    const changed = result.changes > 0;
+    if (changed) {
+      // Decrement items_count in collections
+      await this.db.prepare('UPDATE collections SET items_count = MAX(0, items_count - 1) WHERE id = ?').bind(collectionId).run()
+    }
+
+    return changed;
   }
 
   async getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null> {
