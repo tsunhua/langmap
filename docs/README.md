@@ -6,8 +6,6 @@
 
 **LangMap** 是一个开源、社区驱动的在线语言地图项目，致力于收集世界各地的语言短语和表达方式，展示不同语言之间的差异，并为语言爱好者提供有价值的资源。
 
-- [项目介绍](./ABOUT_US.md)
-
 ## 文档结构
 
 ```
@@ -70,15 +68,19 @@ docs/
 - **[2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)** - iOS 应用设计文档（SwiftUI、MVVM 架构、核心屏幕）
 
 ### 📄 需求与规范 (specs/)
-项目需求规范、市场调研和可行性分析。
+项目需求规范、业务分析与技术规格。
 
-- **[project-spec.md](specs/project-spec.md)** - 项目需求规范（目标、语料来源、页面结构、粗略架构）
-- **[market-research.md](specs/market-research.md)** - 市场调研与可行性分析（竞品分析、目标用户、差异化策略）
+- **[BRD.md](specs/BRD.md)** - 业务需求文档（愿景、目标、市场分析）
+- **[PRD.md](specs/PRD.md)** - 产品需求文档（功能描述、用户流程）
+- **[SRS.md](specs/SRS.md)** - 系统需求规格说明（技术栈、系统架构、接口规范）
 
 ## 快速导航
 
 ### 按主题查找
 
+- **项目愿景与背景** → [specs/BRD.md](specs/BRD.md)
+- **产品核心功能** → [specs/PRD.md](specs/PRD.md)
+- **系统架构与技术栈** → [specs/SRS.md](specs/SRS.md), [design/system/architecture.md](design/system/architecture.md)
 - **用户系统** → [design/features/feat-user-system.md](design/features/feat-user-system.md)
 - **认证与安全** → [design/features/feat-user-system.md](design/features/feat-user-system.md), [guides/email-verification.md](guides/email-verification.md)
 - **国际化** → [design/features/feat-i18n.md](design/features/feat-i18n.md), [design/features/feat-ui-translation.md](design/features/feat-ui-translation.md)
@@ -89,76 +91,29 @@ docs/
 - **用户资料** → [design/features/feat-user-profile.md](design/features/feat-user-profile.md)
 - **API 参考** → [api/README.md](api/README.md)
 - **部署指南** → [api/backend-guide.md](api/backend-guide.md), [guides/corpus-acquisition.md](guides/corpus-acquisition.md)
-- **产品定位** → [specs/market-research.md](specs/market-research.md)
-- **开发计划** → [plans/README.md](plans/README.md)
+- **开发计划** → [plans/2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)
 
 ### 按角色查找
 
 **开发者**
-- [系统架构设计](design/system/)
+- [系统需求规格 (SRS)](specs/SRS.md)
+- [总体架构设计](design/system/architecture.md)
 - [功能模块设计](design/features/)
 - [API 文档](api/)
-- [实施指南](guides/)
 
 **产品经理**
-- [需求规范](specs/)
-- [市场调研](specs/market-research.md)
+- [业务需求 (BRD)](specs/BRD.md)
+- [产品需求 (PRD)](specs/PRD.md)
 - [计划与路线图](plans/)
 
 **运维人员**
 - [后端部署指南](api/backend-guide.md)
-- [系统架构设计](design/system/)
+- [系统架构设计](design/system/architecture.md)
 
 **用户**
+- [关于项目](specs/ABOUT_US.md)
 - [服务条款](policies/terms-privacy-content.md)
 - [隐私政策](policies/terms-privacy-content-zh.md)
-- [内容政策](policies/terms-privacy-content.md)
-
-## 文档更新
-
-本文档结构于 **2026年2月** 重新组织并完善，主要变更包括：
-
-### 主要变更
-
-1. **重新组织 design 目录**
-   - 创建 system/ 子目录存放总体架构设计
-   - 创建 features/ 子目录存放功能模块设计
-   - 所有功能模块使用统一的 `feat-` 前缀
-   - 每个文档添加 system-reminder 标注实现状态
-
-2. **更新系统架构设计**
-   - 按实际实现更新技术栈（Hono + TypeScript + Cloudflare Workers + D1）
-   - 按实际实现更新数据模型说明
-   - 标注已实现和未实现的 API 端点
-   - 简化文档内容，移除过时的设计建议
-
-3. **补充缺失的设计文档**
-   - 新增 `feat-search.md` - 搜索功能设计（基础已实现）
-   - 新增 `feat-heatmap.md` - 语言地图/热力图功能设计（基础已实现）
-   - 新增 `feat-user-profile.md` - 用户资料/个人中心设计（前端已实现）
-
-4. **更新功能模块文档**
-   - 所有文档添加 system-reminder 章节
-   - 标注实际实现状态（✅ 已实现、⏳ 部分实现、❌ 未实现）
-   - 明确列出已实现和未实现的功能
-   - 明确列出已实现和未实现的 API 端点
-
-5. **更新导航文档**
-   - 更新所有 README 以反映新的目录结构
-   - 更新所有文档链接路径
-   - 添加新增设计文档的导航链接
-
-## 文档统计
-
-- **总文档数**：31 个（从 27 个增加到 31 个）
-  - policies/: 2 个文件
-  - design/: 14 个文件（1个 README, 1个 system/, 10个 features/, 2个 system/README）
-  - api/: 3 个文件
-  - guides/: 2 个文件
-  - plans/: 1 个文件
-  - specs/: 2 个文件
-  - 根目录: 2 个文件
-  - README 文件: 8 个（每个子目录 + 根目录）
 
 ## 文档规范
 
@@ -166,13 +121,12 @@ docs/
 
 - **总体架构文档**：使用简洁的名称（如 `architecture.md`）
 - **功能模块文档**：使用 `feat-` 前缀（如 `feat-user-system.md`）
-- **README 文档**：用于各子目录的导航和说明
 - 标注要求：所有功能模块文档必须包含 system-reminder 章节
 
 ### 更新文档
 
 1. 在对应的目录下创建或更新文档
-2. 更新目录的 README.md 以反映变更
+2. 更新 README.md 以反映变更
 3. 提交代码时在 commit message 中说明文档更新
 
 ### 新增功能文档
@@ -184,10 +138,6 @@ docs/
 3. 必须包含 system-reminder 章节，标注实现状态
 4. 更新 `design/features/README.md` 添加新文档链接
 5. 如有 API 变更，更新 `api/` 目录相关文档
-
-## 联系方式
-
-如有文档相关疑问或建议，请通过项目提供的联系方式与我们联系。
 
 ---
 
