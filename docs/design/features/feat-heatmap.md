@@ -6,8 +6,8 @@
 - ✅ 后端热力图 API 已实现 - `GET /api/v1/heatmap` + `getHeatmapData()` 方法
 - ✅ 前端热力图页面已实现 - `Home.vue` 中的地图组件
 - ✅ 数据模型已定义 - `HeatmapData` 接口
-- ✅ 数据聚合已实现 - 从 languages 表聚合数据
-- ✅ 缓存机制已实现 - 10分钟缓存
+- ✅ 数据聚合已实施 - 使用 `language_stats` 物化表优化
+- ✅ 多级缓存机制已实现 - L1 Memory + L2 Edge (1小时 TTL)
 - ⏳ 地图交互功能 - 部分实现（点击事件、缩放）
 - ⏳ 地域选择器 - 未实现
 
@@ -60,15 +60,9 @@ SELECT
   l.region_name,
   l.region_latitude as latitude,
   l.region_longitude as longitude,
-  COALESCE(e.expression_count, 0) as count
+  COALESCE(ls.expression_count, 0) as count
 FROM languages l
-LEFT JOIN (
-  SELECT 
-    language_code, 
-    COUNT(*) as expression_count
-  FROM expressions 
-  GROUP BY language_code
-) e ON l.code = e.language_code
+LEFT JOIN language_stats ls ON l.code = ls.language_code
 WHERE l.is_active = 1 
   AND l.region_name IS NOT NULL 
   AND l.region_latitude IS NOT NULL 
@@ -113,9 +107,11 @@ LIMIT 1000
 }
 ```
 
-### 缓存机制
+热力图数据在多层缓存中维护：
 
-热力图数据在内存中缓存，缓存时长为 10 分钟：
+1. **L1 (Isolation Cache)**：后端内存缓存，时长 30 分钟。
+2. **L2 (Edge Cache)**：Cloudflare 边缘缓存，时长 1 小时，由于数据变动频率较低且有物化表支撑。
+3. **L3 (Materialized Table)**：`language_stats` 表实时维护聚合结果，将 O(N) 复杂度的全表扫描转化为 O(1) 的点查询。
 
 ```typescript
 let heatmapCache: {

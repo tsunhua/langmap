@@ -5,20 +5,22 @@
 **实现状态**：
 - ✅ Cloudflare D1 数据库已部署
 - ✅ 核心表结构已实现
-- ✅ 基础索引已创建
-- ⏳ 数据库迁移脚本未完善
-- ⏳ 数据备份策略未实现
-- ❌ 数据库性能监控未实现
-- ❌ 读写分离未实现
+- ✅ 复合优化索引已部署 (013_optimization_indexes.sql)
+- ✅ 多级缓存机制已实施 (L1 Memory + L2 Edge Cache)
+- ✅ 反范式化统计已实施 (items_count & language_stats)
+- ✅ 数据库迁移脚本已规范化
+- ⏳ 数据备份策略待自动化
+- ✅ 数据库性能监控初步实现 (Edge Log)
 
 **已实现的数据库表**：
 - `languages` - 语言表
 - `expressions` - 表达式主表
 - `expression_versions` - 版本历史表
 - `users` - 用户表
-- `collections` - 集合表
+- `collections` - 集合表 (含 `items_count` 冗余字段)
 - `collection_items` - 集合项目表
 - `email_verification_tokens` - 邮箱验证令牌表
+- `language_stats` - 语言词数统计表 (物化统计)
 
 **未实现的功能**：
 - 数据库迁移管理工具
@@ -54,6 +56,16 @@ LangMap 项目使用 Cloudflare D1 作为主数据库，这是一个兼容 SQLit
 ### 表关系图
 
 ```
+languages (语言表)
+  ↓ 1:N
+expressions (表达式主表)
+  ↓ 1:N
+expression_versions (版本历史表)
+
+languages (语言表)
+  ↔ 1:1
+language_stats (物化统计表)
+
 users (用户表)
   ↓ 1:N
 collections (集合表)
@@ -61,20 +73,6 @@ collections (集合表)
 collection_items (集合项目表)
   ↓ N:1
 expressions (表达式主表)
-  ↓ 1:N
-expression_versions (版本历史表)
-
-languages (语言表)
-  ↓ 1:N
-expressions (表达式主表)
-
-expressions (表达式主表)
-  ↑ 1:1 (自关联)
-  expressions (语义锚点)
-
-email_verification_tokens (邮箱验证令牌表)
-  ↓ N:1
-users (用户表)
 ```
 
 ## 表结构详情
@@ -109,7 +107,7 @@ CREATE TABLE IF NOT EXISTS languages (
 ```sql
 CREATE INDEX idx_languages_code ON languages(code);
 CREATE INDEX idx_languages_is_active ON languages(is_active);
-CREATE INDEX idx_languages_region ON languages(region_code);
+CREATE INDEX idx_languages_active_name ON languages(is_active, name); -- 优化常用语言列表
 ```
 
 **字段说明**：
@@ -150,11 +148,13 @@ CREATE TABLE IF NOT EXISTS expressions (
 **索引**：
 
 ```sql
-CREATE INDEX idx_expressions_language ON expressions(language_code);
-CREATE INDEX idx_expressions_meaning ON expressions(meaning_id);
-CREATE INDEX idx_expressions_review_status ON expressions(review_status);
-CREATE INDEX idx_expressions_created_at ON expressions(created_at);
-CREATE INDEX idx_expressions_source_type ON expressions(source_type);
+CREATE INDEX idx_expressions_language_code ON expressions(language_code);
+CREATE INDEX idx_expressions_meaning_id ON expressions(meaning_id);
+CREATE INDEX idx_expressions_text ON expressions(text);
+-- 复合索引：优化针对特定语言的分页列表
+CREATE INDEX idx_expressions_lang_meaning_created ON expressions(language_code, meaning_id, created_at DESC);
+-- 复合索引：优化同步与去重检查
+CREATE INDEX idx_expressions_lang_text ON expressions(language_code, text);
 ```
 
 **字段说明**：
@@ -271,6 +271,7 @@ CREATE TABLE IF NOT EXISTS collections (
     name TEXT NOT NULL,                            -- 集合名称
     description TEXT,                               -- 集合描述
     is_public INTEGER DEFAULT 0,                    -- 是否公开: 0=私有, 1=公开
+    items_count INTEGER DEFAULT 0,                 -- 反范式化字段：集合项目总数
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -281,8 +282,10 @@ CREATE TABLE IF NOT EXISTS collections (
 
 ```sql
 CREATE INDEX idx_collections_user_id ON collections(user_id);
-CREATE INDEX idx_collections_is_public ON collections(is_public);
-CREATE INDEX idx_collections_created_at ON collections(created_at);
+CREATE INDEX idx_collections_name ON collections(name);
+-- 复合索引：优化公共/个人列表的分页排序
+CREATE INDEX idx_collections_is_public_created ON collections(is_public, created_at DESC);
+CREATE INDEX idx_collections_user_created ON collections(user_id, created_at DESC);
 ```
 
 **字段说明**：
@@ -312,11 +315,31 @@ CREATE TABLE IF NOT EXISTS collection_items (
 ```sql
 CREATE INDEX idx_collection_items_collection_id ON collection_items(collection_id);
 CREATE INDEX idx_collection_items_expression_id ON collection_items(expression_id);
+-- 复合索引：优化集合详情页的加载
+CREATE INDEX idx_collection_items_query ON collection_items(collection_id, created_at DESC);
 ```
 
 **字段说明**：
 - `UNIQUE(collection_id, expression_id)` - 保证同一表达式在同一集合中只出现一次
 - `note` - 可选的添加说明
+- `items_count` (在 collections 表) - 每次增删 collection_items 时同步更新，避免昂贵的 COUNT 子查询。
+
+### 10. language_stats 表
+
+物化统计表，用于加速热力图和仪表盘的显示。
+
+**表结构**：
+
+```sql
+CREATE TABLE IF NOT EXISTS language_stats (
+    language_code TEXT PRIMARY KEY,               -- 语言代码
+    expression_count INTEGER DEFAULT 0             -- 该语言下的表达式总数
+);
+```
+
+**字段说明**：
+- 物化视图：取代了所有针对 `expressions` 表的 `GROUP BY language_code` 的聚合查询。
+- 维护机制：在 Expression 进行 CRUD 或批处理迁移时，由后端 Service 实时同步更新。
 
 ## 索引设计
 
@@ -335,9 +358,8 @@ CREATE INDEX idx_collection_items_expression_id ON collection_items(expression_i
 
 ### 未来优化
 
-- **全文索引**：为 `expressions.text` 创建 FTS 索引
-- **JSON 索引**：优化 `tags` 字段的查询
-- **地理索引**：如果支持，为地理位置创建索引
+- **全文索引**：为 `expressions.text` 创建 FTS5 索引（评估中）
+- **R2 整合**：针对静态资源（如音频、导出结果）的元数据管理优化
 
 ## 数据迁移
 
@@ -377,12 +399,25 @@ ALTER TABLE expressions ADD COLUMN tags TEXT;
 
 ## 性能优化
 
-### 查询优化
+### 1. 多级缓存策略 (Multi-layer Caching)
 
-1. **使用索引**：确保查询使用索引
-2. **避免 SELECT *** **：只选择需要的字段
-3. **限制结果集**：使用 `LIMIT` 分页
-4. **批量操作**：减少数据库往返
+为了抵消 Cloudflare D1 的 "Rows Read" 限制并提升响应性能，系统实施了三级缓存：
+- **L1 (Isolation Cache)**: 后端单次请求作用域内的 `languagesCache`，TTL 为 30 分钟。
+- **L2 (Edge Cache)**: 利用 Workers Cache API，在边缘节点缓存高频 GET 请求（热力图、搜索、UI 翻译等）。
+- **L3 (Materialized)**: 通过 `language_stats` 等物化表将聚合结果持久化，变 O(N) 为 O(1)。
+
+### 2. 反范式化设计 (De-normalization)
+
+- **items_count**: 在 `collections` 表中冗余存储项目数量，消除列表展示时的统计开销。
+
+### 3. 索引精细化
+
+- 针对分页查询（`created_at DESC`）普遍补充了复合索引。
+- 针对 UI 翻译（`WHERE collection.name = 'langmap'`）补充了 `idx_collections_name`。
+
+### 4. 批量操作优化
+
+- **db.batch()**: 在进行批处理提交 (Upsert) 和 ID 迁移时，使用 D1 的原子批处理语句，大幅减少数据库往返次数。
 
 ### 事务管理
 

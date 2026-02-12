@@ -177,7 +177,7 @@ api.get('/heatmap', cacheMiddleware(600), async (c) => {
 })
 
 // GET /api/v1/statistics
-api.get('/statistics', async (c) => {
+api.get('/statistics', cacheMiddleware(3600), async (c) => {
   try {
     const db = getDB(c)
     const statistics = await db.getStatistics()

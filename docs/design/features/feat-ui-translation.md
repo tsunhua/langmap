@@ -7,6 +7,7 @@
 **实现状态**：
 - ✅ 翻译界面基础功能 - 已实现
 - ✅ 后端 API 基础实现 - 已实现
+- ✅ 性能优化 (L2 Cache + 专用索引) - 已实现
 - ✅ 完成度计算 - 已实现
 - ⏳ 自动激活逻辑 - 部分实现（阈值检测已完成，但自动激活机制需确认）
 - ⏳ 管理员同步功能 - 部分实现（同步按钮已设计，但未实现）
@@ -113,6 +114,7 @@ CREATE TABLE IF NOT EXISTS expressions (
 
 **GET /api/v1/ui-translations/:language**
 - 获取指定语言的UI翻译
+- **性能优化**：已集成 L2 边缘缓存 (TTL 1小时) 并利用 `idx_collections_name` 索引加速收藏集查找。
 - 支持过滤参数：`filter` (untranslated/translated/all)
 - 支持搜索参数：`search`
 - 支持分页参数：`skip` 和 `limit`
