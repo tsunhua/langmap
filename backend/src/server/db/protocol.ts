@@ -108,9 +108,12 @@ export abstract class AbstractDatabaseService {
   // Expression operations
   abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[]): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
+  abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
+  abstract upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>>
   abstract updateExpression(id: number, expression: Partial<Expression>): Promise<Expression>
   abstract deleteExpression(id: number): Promise<boolean>
+  abstract migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression>
   abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number): Promise<Expression[]>
 
   // Expression version operations
@@ -158,4 +161,5 @@ export abstract class AbstractDatabaseService {
   abstract addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
   abstract removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
   abstract getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null>
+  abstract stableExpressionId(text: string, languageCode: string): number
 }
