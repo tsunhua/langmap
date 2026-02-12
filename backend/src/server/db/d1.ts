@@ -10,7 +10,7 @@ let statisticsCache: {
   data: null,
   timestamp: null
 };
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+const CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
 
 // Cache for heatmap data
 let heatmapCache: {
@@ -20,7 +20,17 @@ let heatmapCache: {
   data: null,
   timestamp: null
 };
-const HEATMAP_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+const HEATMAP_CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
+
+// Cache for languages
+let languagesCache: {
+  data: Language[] | null;
+  timestamp: number | null;
+} = {
+  data: null,
+  timestamp: null
+};
+const LANGUAGES_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export class D1DatabaseService extends AbstractDatabaseService {
 
@@ -33,21 +43,54 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   // Language operations
   async getLanguages(isActive?: number): Promise<Language[]> {
-    let query = 'SELECT * FROM languages'
-    const params: any[] = []
+    const now = Date.now();
 
-    if (isActive !== undefined) {
-      query += ' WHERE is_active = ?'
-      params.push(isActive)
+    // Check if cache is valid
+    const isCacheValid = !!(languagesCache.data && languagesCache.timestamp &&
+      (now - languagesCache.timestamp) < LANGUAGES_CACHE_DURATION);
+
+    if (isCacheValid) {
+      console.log('Returning cached languages');
+      let results = languagesCache.data || [];
+      if (isActive !== undefined && !isNaN(isActive)) {
+        // Use loose equality or cast to number to handle 0/1 vs boolean
+        results = results.filter(l => (l.is_active ? 1 : 0) === isActive);
+      }
+      return results;
     }
 
-    query += ' ORDER BY name'
+    try {
+      console.log('Fetching fresh languages from database');
+      const response = await this.db.prepare('SELECT * FROM languages ORDER BY name').all<Language>();
 
-    const { results } = await this.db.prepare(query).bind(...params).all<Language>()
-    return results
+      const results = response.results || [];
+
+      // Update cache
+      languagesCache.data = results;
+      languagesCache.timestamp = now;
+
+      if (isActive !== undefined && !isNaN(isActive)) {
+        return results.filter(l => (l.is_active ? 1 : 0) === isActive);
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error in getLanguages:', error);
+      throw error;
+    }
   }
 
   async getLanguageByCode(code: string): Promise<Language | null> {
+    const now = Date.now();
+    if (languagesCache.data && languagesCache.timestamp &&
+      (now - languagesCache.timestamp) < LANGUAGES_CACHE_DURATION) {
+      const language = languagesCache.data.find(l => l.code === code);
+      if (language) {
+        console.log('Returning cached language by code:', code);
+        return language;
+      }
+    }
+
     const language = await this.db.prepare(
       'SELECT * FROM languages WHERE code = ?'
     ).bind(code).first<Language>()
@@ -85,9 +128,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to create language')
     }
 
-    // Clear statistics and heatmap caches as we've added a new language
+    // Clear all related caches
     this.clearStatisticsCache();
     this.clearHeatmapCache();
+    this.clearLanguagesCache();
 
     return result;
   }
@@ -113,9 +157,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to update language')
     }
 
-    // Clear statistics and heatmap caches as we've updated a language
+    // Clear all related caches
     this.clearStatisticsCache();
     this.clearHeatmapCache();
+    this.clearLanguagesCache();
 
     return result;
   }
@@ -126,9 +171,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
     ).bind(id).run()
 
     if (result.changes > 0) {
-      // Clear statistics and heatmap caches as we've deleted a language
+      // Clear all related caches
       this.clearStatisticsCache();
       this.clearHeatmapCache();
+      this.clearLanguagesCache();
       return true;
     }
 
@@ -1146,6 +1192,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
     heatmapCache.data = null;
     heatmapCache.timestamp = null;
     console.log('Heatmap cache cleared');
+  }
+
+  // Method to clear languages cache
+  clearLanguagesCache(): void {
+    languagesCache.data = null;
+    languagesCache.timestamp = null;
+    console.log('Languages cache cleared');
   }
 
   // Collections
