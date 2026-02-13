@@ -12,10 +12,10 @@
             <div class="flex items-center gap-3 mb-2">
               <h1 class="text-3xl font-bold text-gray-900">{{ collection.name }}</h1>
               <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
-                {{ $t('collections.public') }}
+                {{ $t('public') }}
               </span>
               <span v-else class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full">
-                {{ $t('collections.private') }}
+                {{ $t('private') }}
               </span>
             </div>
             <p class="text-gray-600">{{ collection.description }}</p>
@@ -26,7 +26,7 @@
               @click="showExportModal = true"
               class="text-gray-500 hover:text-green-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
             >
-              <span>📥</span> {{ $t('common.export') || 'Export' }}
+              <span>📥</span> {{ $t('export') || 'Export' }}
             </button>
 
             <template v-if="isOwner">
@@ -34,30 +34,30 @@
                 @click="openEditModal"
                 class="text-gray-500 hover:text-blue-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
               >
-                <span>✏️</span> {{ $t('common.edit') }}
+                <span>✏️</span> {{ $t('edit') }}
               </button>
               <button 
                 @click="confirmDelete"
                 class="text-gray-500 hover:text-red-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
               >
-                <span>🗑️</span> {{ $t('common.delete') }}
+                <span>🗑️</span> {{ $t('delete') }}
               </button>
             </template>
           </div>
         </div>
         <div class="text-sm text-gray-500">
-          {{ $t('collections.createdOn') }}: {{ formatDate(collection.created_at) }}
+          {{ $t('collections_createdOn') }}: {{ formatDate(collection.created_at) }}
         </div>
       </div>
       <div v-else class="text-center py-4 text-red-500">
-        {{ $t('collections.notFound') }}
+        {{ $t('not_found') }}
       </div>
     </div>
 
     <!-- Items List -->
     <div class="mb-6">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-        {{ $t('collections.items') }}
+        {{ $t('collections_items') }}
         <span v-if="collection && collection.items_count > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
           {{ collection.items_count }}
         </span>
@@ -68,9 +68,9 @@
       </div>
 
       <div v-else-if="items.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <p class="text-gray-500">{{ $t('collections.empty') }}</p>
+        <p class="text-gray-500">{{ $t('empty') }}</p>
         <router-link to="/search" class="text-blue-600 hover:text-blue-800 font-medium mt-2 inline-block">
-          {{ $t('collections.browseExpressions') }}
+          {{ $t('collections_browseExpressions') }}
         </router-link>
       </div>
 
@@ -84,7 +84,7 @@
             <div class="flex-grow">
               <router-link :to="`/detail/${item.expression_id}`" class="block group">
                 <h3 class="text-lg font-medium text-gray-900 group-hover:text-blue-600 mb-1">
-                  {{ item.expression?.text || $t('common.loading') }}
+                  {{ item.expression?.text || $t('loading') }}
                 </h3>
                 <div class="flex gap-2 text-sm text-gray-500 mb-2">
                   <span class="bg-gray-100 px-2 py-0.5 rounded">{{ item.expression?.language_code }}</span>
@@ -99,7 +99,7 @@
               <button 
                 @click="removeItem(item)"
                 class="text-gray-400 hover:text-red-500 p-1"
-                :title="$t('collections.removeItem')"
+                :title="$t('collections_removeItem')"
               >
                 ✕
               </button>
@@ -114,7 +114,7 @@
             :disabled="currentPage === 1"
             class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            &laquo; {{ $t('common.prev') }}
+            &laquo; {{ $t('prev') }}
           </button>
           <span class="text-sm font-medium">
             {{ currentPage }} / {{ totalPages }}
@@ -124,7 +124,7 @@
             :disabled="currentPage === totalPages"
             class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ $t('common.next') || 'Next' }} &raquo;
+            {{ $t('next') || 'Next' }} &raquo;
           </button>
         </div>
       </div>
@@ -135,21 +135,21 @@
     <!-- Export Modal -->
     <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h3 class="text-xl font-bold mb-4">{{ $t('export.title') || 'Export Collection' }}</h3>
+        <h3 class="text-xl font-bold mb-4">{{ $t('export_title') || 'Export Collection' }}</h3>
         
         <div v-if="exportState.status === 'idle' || exportState.status === 'error'">
-           <p class="text-gray-600 mb-4">{{ $t('export.selectFormat') || 'Choose a format to export your collection:' }}</p>
+           <p class="text-gray-600 mb-4">{{ $t('select_format') || 'Choose a format to export your collection:' }}</p>
            
            <div class="flex flex-col gap-3 mb-6">
              <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
                <input type="radio" v-model="exportFormat" value="json" name="format">
                <span class="font-medium">JSON</span>
-               <span class="text-xs text-gray-500 ml-auto">{{ $t('export.jsonDesc') }}</span>
+               <span class="text-xs text-gray-500 ml-auto">{{ $t('json_desc') }}</span>
              </label>
              <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
                <input type="radio" v-model="exportFormat" value="csv" name="format">
                <span class="font-medium">CSV</span>
-               <span class="text-xs text-gray-500 ml-auto">{{ $t('export.csvDesc') }}</span>
+               <span class="text-xs text-gray-500 ml-auto">{{ $t('csv_desc') }}</span>
              </label>
            </div>
            
@@ -159,10 +159,10 @@
 
            <div class="flex justify-end gap-2">
              <button @click="showExportModal = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">
-               {{ $t('common.cancel') || 'Cancel' }}
+               {{ $t('cancel') || 'Cancel' }}
              </button>
              <button @click="startExport" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-               {{ $t('common.startExport') || 'Start Export' }}
+               {{ $t('start_export') || 'Start Export' }}
              </button>
            </div>
         </div>
@@ -170,21 +170,21 @@
         <div v-else class="text-center py-4">
            <div v-if="exportState.status === 'pending' || exportState.status === 'running'" class="space-y-4">
              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-             <p class="text-gray-700 font-medium">{{ $t('export.processing') }} {{ Math.round(exportState.progress * 100) }}%</p>
-             <p class="text-sm text-gray-500">{{ $t('export.wait') }}</p>
+             <p class="text-gray-700 font-medium">{{ $t('processing') }} {{ Math.round(exportState.progress * 100) }}%</p>
+             <p class="text-sm text-gray-500">{{ $t('wait') }}</p>
            </div>
            
            <div v-if="exportState.status === 'done'" class="space-y-4">
              <div class="text-5xl mb-2">✅</div>
-             <p class="text-lg font-bold text-green-600">{{ $t('export.ready') }}</p>
-             <p class="text-sm text-gray-600">{{ $t('export.success') }}</p>
+             <p class="text-lg font-bold text-green-600">{{ $t('ready') }}</p>
+             <p class="text-sm text-gray-600">{{ $t('export_success') }}</p>
              
              <button @click="downloadFile" class="w-full py-3 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 mt-4">
-                {{ $t('export.download') }}
+                {{ $t('download_file') }}
              </button>
              
              <button @click="resetExport" class="text-sm text-gray-500 underline mt-4">
-               {{ $t('export.close') }}
+               {{ $t('close') }}
              </button>
            </div>
         </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-slate-200">
     <div class="border-b border-slate-200 px-4 py-3">
-      <h4 class="font-semibold text-slate-800">{{ $t('versionHistory.title') }}</h4>
+      <h4 class="font-semibold text-slate-800">{{ $t('version_history') }}</h4>
     </div>
     
     <div class="p-3">
@@ -10,7 +10,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <span class="ml-2 text-slate-600">{{ $t('versionHistory.loading') }}</span>
+        <span class="ml-2 text-slate-600">{{ $t('loading_versions') }}</span>
       </div>
       
       <div v-else>
@@ -37,12 +37,12 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    {{ expression && expression.created_by ? expression.created_by : $t('versionHistory.anonymous') }}
+                    {{ expression && expression.created_by ? expression.created_by : $t('anonymous') }}
                   </span>
                 </div>
                 
                 <div class="mt-3 p-2 bg-slate-50 rounded text-sm text-slate-600">
-                  {{ $t('versionHistory.currentVersion') }}
+                  {{ $t('current_version') }}
                 </div>
               </div>
             </div>
@@ -77,7 +77,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    {{ v.created_by || $t('versionHistory.anonymous') }}
+                    {{ v.created_by || $t('anonymous') }}
                   </span>
                   
                   <span class="inline-flex items-center">
@@ -90,13 +90,13 @@
                 
                 <!-- Diff view for changes compared to previous version -->
                 <div v-if="index < versions.length - 1" class="border-t border-slate-100 pt-3">
-                  <h5 class="text-xs font-semibold text-slate-700 mb-2">{{ $t('versionHistory.changes') }}:</h5>
+                  <h5 class="text-xs font-semibold text-slate-700 mb-2">{{ $t('changes') }}:</h5>
                   <div class="space-y-1">
                     <!-- Text change -->
                     <div v-if="v.text !== versions[index + 1].text" class="flex items-start">
                       <span class="text-yellow-600 font-mono mr-2">📝</span>
                       <span class="text-slate-600 text-sm flex-1">
-                        <span class="font-medium">{{ $t('versionHistory.text') }}: </span>
+                        <span class="font-medium">{{ $t('text') }}: </span>
                         "{{ versions[index + 1].text }}" → "{{ v.text }}"
                       </span>
                     </div>
@@ -105,12 +105,12 @@
                     <div v-if="v.audio_url !== versions[index + 1].audio_url" class="flex items-start">
                       <span class="text-blue-600 font-mono mr-2">🔊</span>
                       <span class="text-slate-600 text-sm flex-1">
-                        <span class="font-medium">{{ $t('versionHistory.audio') }}: </span>
+                        <span class="font-medium">{{ $t('audio') }}: </span>
                         <span v-if="versions[index + 1].audio_url" class="line-through">"{{ versions[index + 1].audio_url }}"</span>
-                        <span v-else class="italic">{{ $t('versionHistory.none') }}</span>
+                        <span v-else class="italic">{{ $t('none') }}</span>
                         <span class="mx-1">→</span>
                         <span v-if="v.audio_url">"{{ v.audio_url }}"</span>
-                        <span v-else class="italic">{{ $t('versionHistory.none') }}</span>
+                        <span v-else class="italic">{{ $t('none') }}</span>
                       </span>
                     </div>
                     
@@ -120,16 +120,16 @@
                                v.region_longitude !== versions[index + 1].region_longitude" class="flex items-start">
                       <span class="text-green-600 font-mono mr-2">📍</span>
                       <span class="text-slate-600 text-sm flex-1">
-                        <span class="font-medium">{{ $t('versionHistory.location') }}: </span>
+                        <span class="font-medium">{{ $t('location') }}: </span>
                         <span v-if="versions[index + 1].region_name">
                           {{ versions[index + 1].region_name }}({{ versions[index + 1].region_latitude }}, {{ versions[index + 1].region_longitude }})
                         </span>
-                        <span v-else class="italic">{{ $t('versionHistory.none') }}</span>
+                        <span v-else class="italic">{{ $t('none') }}</span>
                         <span class="mx-1">→</span>
                         <span v-if="v.region_name">
                           {{ v.region_name }}({{ v.region_latitude }}, {{ v.region_longitude }})
                         </span>
-                        <span v-else class="italic">{{ $t('versionHistory.none') }}</span>
+                        <span v-else class="italic">{{ $t('none') }}</span>
                       </span>
                     </div>
                   </div>

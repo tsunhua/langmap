@@ -3,7 +3,7 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-slate-900">
-          {{ $t('emailVerification.title') }}
+          {{ $t('email_verification') }}
         </h2>
       </div>
       
@@ -28,28 +28,28 @@
         </div>
         
         <h3 v-if="verificationStatus === 'success'" class="mt-4 text-lg font-medium text-slate-900">
-          {{ $t('emailVerification.successTitle') }}
+          {{ $t('success') }}
         </h3>
         
         <h3 v-else-if="verificationStatus === 'error'" class="mt-4 text-lg font-medium text-slate-900">
-          {{ $t('emailVerification.errorTitle') }}
+          {{ $t('error') }}
         </h3>
         
         <h3 v-else class="mt-4 text-lg font-medium text-slate-900">
-          {{ $t('emailVerification.verifyingTitle') }}
+          {{ $t('verifying_email_address') }}
         </h3>
         
         <div class="mt-2 text-sm text-slate-500">
           <p v-if="verificationStatus === 'success'">
-            {{ $t('emailVerification.successMessage') }}
+            {{ $t('success_message') }}
           </p>
           
           <p v-else-if="verificationStatus === 'error'">
-            {{ $t('emailVerification.errorMessage') }}
+            {{ $t('error_message') }}
           </p>
           
           <p v-else>
-            {{ $t('emailVerification.verifyingMessage') }}
+            {{ $t('verifying_email_address') }}
           </p>
         </div>
         
@@ -58,7 +58,7 @@
             to="/login" 
             class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            {{ $t('emailVerification.goToLogin') }}
+            {{ $t('go_to_login') }}
           </router-link>
         </div>
       </div>

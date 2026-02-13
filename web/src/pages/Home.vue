@@ -11,11 +11,11 @@
       
       <div class="relative max-w-4xl mx-auto text-center">
         <h1 class="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
-          <!-- {{ $t('home.title') }} -->
-          <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home.title') }}</span>
+          <!-- {{ $t('home_title') }} -->
+          <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home_title') }}</span>
         </h1>
         <p class="text-xl md:text-2xl text-slate-600 mb-10">
-          {{ $t('home.subtitle') }}
+          {{ $t('subtitle') }}
         </p>
         
         <!-- Search Bar -->
@@ -24,14 +24,14 @@
             <input 
               v-model="searchQuery"
               @keyup.enter.prevent="goToSearch"
-              :placeholder="$t('home.searchPlaceholder')"
+              :placeholder="$t('search_placeholder')"
               class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none"
             />
             <button 
               @click="goToSearch"
               class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
             >
-              {{ $t('home.searchButton') }}
+              {{ $t('search') }}
             </button>
           </div>
         </div>
@@ -44,15 +44,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div class="p-6">
             <div class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">{{ stats.totalExpressions }}</div>
-            <div class="text-slate-600 font-medium">{{ $t('home.totalExpressions') }}</div>
+            <div class="text-slate-600 font-medium">{{ $t('total_expressions') }}</div>
           </div>
           <div class="p-6">
             <div class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-700 bg-clip-text text-transparent mb-2">{{ stats.totalLanguages }}</div>
-            <div class="text-slate-600 font-medium">{{ $t('home.languages') }}</div>
+            <div class="text-slate-600 font-medium">{{ $t('languages') }}</div>
           </div>
           <div class="p-6">
             <div class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent mb-2">{{ stats.totalRegions }}</div>
-            <div class="text-slate-600 font-medium">{{ $t('home.regions') }}</div>
+            <div class="text-slate-600 font-medium">{{ $t('regions') }}</div>
           </div>
         </div>
       </div>
@@ -62,10 +62,10 @@
     <div class="bg-slate-50 py-16 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-3xl font-bold text-slate-800 mb-3 text-center">
-          {{ $t('home.mapTitle') }}
+          {{ $t('map_title') }}
         </h2>
         <p class="text-slate-600 mb-12 text-center max-w-2xl mx-auto">
-          {{ $t('home.mapDescription') }}
+          {{ $t('explore_map_description') }}
         </p>
         
         <!-- Map Container -->
@@ -79,25 +79,25 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <p class="text-slate-600">{{ $t('home.loadingMap') }}</p>
+              <p class="text-slate-600">{{ $t('loading_map') }}</p>
             </div>
           </div>
           
           <!-- Legend -->
           <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
             <div class="flex items-center justify-center gap-6 text-sm">
-              <span class="text-slate-600 font-medium">{{ $t('home.expressionDensity') }}:</span>
+              <span class="text-slate-600 font-medium">{{ $t('expression_density') }}:</span>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-200"></div>
-                <span class="text-slate-600">{{ $t('home.low') }} (&lt;5k)</span>
+                <span class="text-slate-600">{{ $t('low') }} (&lt;5k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-400"></div>
-                <span class="text-slate-600">{{ $t('home.medium') }} (&lt;50k)</span>
+                <span class="text-slate-600">{{ $t('medium') }} (&lt;50k)</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-full bg-blue-600"></div>
-                <span class="text-slate-600">{{ $t('home.high') }} (≥50k)</span>
+                <span class="text-slate-600">{{ $t('high') }} (≥50k)</span>
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@
     <div class="bg-white py-16 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-3xl font-bold text-slate-800 mb-12 text-center">
-          {{ $t('home.getStarted') }}
+          {{ $t('get_started') }}
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mx-4">
@@ -119,10 +119,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('home.searchExpressions') }}</h3>
-            <p class="text-slate-600 mb-4">{{ $t('home.searchExpressionsDesc') }}</p>
+            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('search_expressions') }}</h3>
+            <p class="text-slate-600 mb-4">{{ $t('search_expressions_desc') }}</p>
             <span class="text-blue-600 font-medium hover:text-blue-700">
-              {{ $t('home.startSearching') }}
+              {{ $t('start_searching') }}
             </span>
           </div>
           
@@ -132,10 +132,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('home.addExpression') }}</h3>
-            <p class="text-slate-600 mb-4">{{ $t('home.addExpressionDesc') }}</p>
+            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('add_expression') }}</h3>
+            <p class="text-slate-600 mb-4">{{ $t('add_expression_description') }}</p>
             <span class="text-purple-600 font-medium hover:text-purple-700">
-              {{ $t('home.addNew') }}
+              {{ $t('add_new') }}
             </span>
           </div>
           
@@ -145,23 +145,16 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('home.exploreMap') }}</h3>
-            <p class="text-slate-600 mb-4">{{ $t('home.exploreMapDesc') }}</p>
+            <h3 class="text-xl font-semibold text-slate-800 mb-2">{{ $t('explore_map') }}</h3>
+            <p class="text-slate-600 mb-4">{{ $t('explore_map_description') }}</p>
             <span class="text-green-600 font-medium hover:text-green-700">
-              {{ $t('home.viewMap') }}
+              {{ $t('view_map') }}
             </span>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Create Expression Dialog -->
-    <CreateExpression 
-      v-if="showCreateDialog"
-      :visible="showCreateDialog"
-      @close="showCreateDialog = false"
-      @expression-created="handleExpressionCreated"
-    />
   </div>
 </template>
 
@@ -169,14 +162,10 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import CreateExpression from '../components/CreateExpression.vue'
 import { fetchLanguages } from '../services/languageService'
 
 export default {
   name: 'Home',
-  components: {
-    CreateExpression
-  },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
@@ -187,7 +176,6 @@ export default {
       totalLanguages: 0,
       totalRegions: 0
     })
-    const showCreateDialog = ref(false)
     
     let map = null
     let markers = []
@@ -214,30 +202,18 @@ export default {
       router.push({ name: 'Search', query: { region: region } })
     }
     
-    // Handle expression created event
-    const handleExpressionCreated = (expression) => {
-      console.log('Expression created:', expression)
-      showCreateDialog.value = false
-      // Refresh stats since we've added a new expression
-      loadData()
-    }
-    
-    // 处理添加表达式点击事件
     const handleAddExpressionClick = () => {
       console.log('Add expression button clicked');
-      // 检查用户是否已经登录
       const isAuthenticated = !!localStorage.getItem('authToken');
       
       if (!isAuthenticated) {
-        // 如果没有登录则跳转到登录页面
         console.log('User not authenticated, redirecting to login');
         router.push('/login');
         return;
       }
       
-      // 如果已经登录则显示创建对话框
-      console.log('User authenticated, showing create dialog');
-      showCreateDialog.value = true;
+      console.log('User authenticated, navigating to create page');
+      router.push('/create-expression');
     }
     
     // 滚动到顶部搜索框
@@ -450,10 +426,8 @@ export default {
       searchQuery,
       loading,
       stats,
-      showCreateDialog,
       goToSearch,
       selectRegion,
-      handleExpressionCreated,
       handleAddExpressionClick,
       scrollToSearch,
       scrollToMap,

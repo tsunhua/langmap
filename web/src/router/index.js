@@ -72,6 +72,12 @@ const routes = [
     path: '/collections/:id',
     name: 'CollectionDetail',
     component: () => import('../pages/CollectionDetail.vue')
+  },
+  {
+    path: '/create-expression',
+    name: 'CreateExpression',
+    component: () => import('../pages/CreateExpression.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

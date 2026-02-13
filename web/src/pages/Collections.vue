@@ -1,14 +1,14 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">{{ $t('collections.title') }}</h1>
+      <h1 class="text-3xl font-bold text-gray-900">{{ $t('collections') }}</h1>
       <button 
         v-if="isLoggedIn && activeTab === 'my'"
         @click="openCreateModal"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all"
       >
         <span class="text-xl">+</span>
-        {{ $t('collections.createNew') }}
+        {{ $t('create_new') }}
       </button>
     </div>
 
@@ -19,14 +19,14 @@
         @click="activeTab = 'my'"
         :class="['pb-4 text-sm font-medium transition-colors relative', activeTab === 'my' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700']"
       >
-        {{ $t('collections.myCollections') }}
+        {{ $t('collections_myCollections') }}
         <div v-if="activeTab === 'my'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
       </button>
       <button 
         @click="activeTab = 'shared'"
         :class="['pb-4 text-sm font-medium transition-colors relative', activeTab === 'shared' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700']"
       >
-        {{ $t('collections.sharedCollections') }}
+        {{ $t('collections_sharedCollections') }}
         <div v-if="activeTab === 'shared'" class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
       </button>
     </div>
@@ -39,14 +39,14 @@
     <!-- Empty State -->
     <div v-else-if="collections.length === 0" class="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
       <div class="text-4xl mb-4">📂</div>
-      <h3 class="text-xl font-medium text-gray-900 mb-2">{{ $t('collections.noCollections') }}</h3>
-      <p v-if="activeTab === 'my'" class="text-gray-500 mb-6">{{ $t('collections.emptyInfo') }}</p>
+      <h3 class="text-xl font-medium text-gray-900 mb-2">{{ $t('collections_noCollections') }}</h3>
+      <p v-if="activeTab === 'my'" class="text-gray-500 mb-6">{{ $t('empty_info') }}</p>
       <button 
         v-if="isLoggedIn && activeTab === 'my'"
         @click="openCreateModal"
         class="text-blue-600 hover:text-blue-800 font-semibold"
       >
-        {{ $t('collections.createNew') }}
+        {{ $t('create_new') }}
       </button>
     </div>
 
@@ -64,24 +64,24 @@
               {{ collection.name }}
             </h3>
             <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">
-              {{ $t('collections.public') }}
+              {{ $t('public') }}
             </span>
           </div>
           <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed min-h-[3rem]">
-            {{ collection.description || $t('collections.noDescription') }}
+            {{ collection.description || $t('collections_noDescription') }}
           </p>
           <div class="flex items-center gap-2 text-xs text-gray-400 font-medium">
-             <span>{{ collection.items_count || 0 }} {{ $t('collections.items') }}</span>
+             <span>{{ collection.items_count || 0 }} {{ $t('collections_items') }}</span>
           </div>
         </div>
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest font-bold">
           <span>{{ formatDate(collection.created_at) }}</span>
           <div v-if="isLoggedIn && activeTab === 'my'" class="flex gap-3" @click.stop>
             <button @click="openEditModal(collection)" class="hover:text-blue-600 transition-colors">
-              {{ $t('common.edit') }}
+              {{ $t('edit') }}
             </button>
             <button @click="confirmDelete(collection)" class="hover:text-red-600 transition-colors">
-              {{ $t('common.delete') }}
+              {{ $t('delete') }}
             </button>
           </div>
         </div>
@@ -95,17 +95,17 @@
         :disabled="currentPage === 1"
         class="px-5 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium transition-colors"
       >
-        &laquo; {{ $t('common.prev') }}
+        &laquo; {{ $t('prev') }}
       </button>
       <span class="text-sm font-semibold bg-gray-100 px-4 py-2 rounded-lg text-gray-700">
-        {{ $t('common.page') }} {{ currentPage }}
+        {{ $t('page') }} {{ currentPage }}
       </span>
       <button 
         @click="nextPage" 
         :disabled="collections.length < itemsPerPage"
         class="px-5 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-sm font-medium transition-colors"
       >
-        {{ $t('common.next') }} &raquo;
+        {{ $t('next') }} &raquo;
       </button>
     </div>
 
@@ -113,32 +113,32 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 class="text-xl font-bold mb-4">
-          {{ isEditing ? $t('collections.editTitle') : $t('collections.createTitle') }}
+          {{ isEditing ? $t('edit_collection') : $t('collections_createTitle') }}
         </h2>
         
         <form @submit.prevent="saveCollection">
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              {{ $t('collections.name') }} *
+              {{ $t('collections_name') }} *
             </label>
             <input 
               v-model="form.name" 
               type="text" 
               required
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('collections.namePlaceholder')"
+              :placeholder="$t('collections_namePlaceholder')"
             />
           </div>
           
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              {{ $t('collections.description') }}
+              {{ $t('collections_description') }}
             </label>
             <textarea 
               v-model="form.description" 
               rows="3"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('collections.descPlaceholder')"
+              :placeholder="$t('desc_placeholder')"
             ></textarea>
           </div>
           
@@ -149,7 +149,7 @@
                 type="checkbox" 
                 class="form-checkbox h-4 w-4 text-blue-600 rounded"
               />
-              <span class="ml-2 text-sm text-gray-700">{{ $t('collections.isPublic') }}</span>
+              <span class="ml-2 text-sm text-gray-700">{{ $t('collections_isPublic') }}</span>
             </label>
           </div>
           
@@ -159,14 +159,14 @@
               @click="closeModal"
               class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
             >
-              {{ $t('common.cancel') || 'Cancel' }}
+              {{ $t('cancel') || 'Cancel' }}
             </button>
             <button 
               type="submit" 
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               :disabled="submitting"
             >
-              {{ submitting ? ($t('common.saving') || 'Saving...') : ($t('common.save') || 'Save') }}
+              {{ submitting ? ($t('common_saving') || 'Saving...') : ($t('save') || 'Save') }}
             </button>
           </div>
         </form>

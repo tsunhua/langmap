@@ -4,8 +4,8 @@
     
     <div class="mb-4">
       <p class="mb-2">Current language: {{ locale }}</p>
-      <p class="mb-2">Home title: {{ $t('home.title') }}</p>
-      <p class="mb-2">Nav home: {{ $t('nav.home') }}</p>
+      <p class="mb-2">Home title: {{ $t('home_title') }}</p>
+      <p class="mb-2">Nav home: {{ $t('home') }}</p>
     </div>
     
     <div class="mb-4">

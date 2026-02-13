@@ -1,19 +1,19 @@
 <template>
   <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.stop>
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-      <h2 class="text-xl font-bold mb-4">{{ $t('collections.addToCollection') || 'Add to Collection' }}</h2>
+      <h2 class="text-xl font-bold mb-4">{{ $t('add_to_collection') || 'Add to Collection' }}</h2>
       
       <div v-if="loading" class="flex justify-center py-8">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
 
       <div v-else-if="collections.length === 0" class="text-center py-6 text-gray-500">
-        <p class="mb-4">{{ $t('collections.noCollections') || 'You have no collections.' }}</p>
+        <p class="mb-4">{{ $t('collections_noCollections') || 'You have no collections.' }}</p>
         <button 
           @click="createNewCollection"
           class="text-blue-600 font-medium"
         >
-          {{ $t('collections.createNew') || '+ Create New Collection' }}
+          {{ $t('create_new') || '+ Create New Collection' }}
         </button>
       </div>
 
@@ -34,7 +34,7 @@
           <div>
             <div class="font-medium text-gray-900">{{ col.name }}</div>
             <div class="text-xs text-gray-500">
-              {{ col.is_public ? $t('collections.public') || 'Public' : $t('collections.private') || 'Private' }} • {{ col.items_count || 0 }} items
+              {{ col.is_public ? $t('public') || 'Public' : $t('private') || 'Private' }} • {{ col.items_count || 0 }} items
             </div>
           </div>
         </div>
@@ -42,13 +42,13 @@
 
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          {{ $t('collections.note') || 'Note (Optional)' }}
+          {{ $t('note_optional') || 'Note (Optional)' }}
         </label>
         <input 
           v-model="note" 
           type="text" 
           class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-          :placeholder="$t('collections.notePlaceholder') || 'e.g. Useful for greeting'"
+          :placeholder="$t('collections_notePlaceholder') || 'e.g. Useful for greeting'"
         />
       </div>
 
@@ -57,7 +57,7 @@
           @click="createNewCollection"
           class="text-blue-600 text-sm font-medium"
         >
-          {{ $t('collections.createNew') || '+ New Collection' }}
+          {{ $t('create_new') || '+ New Collection' }}
         </button>
         
         <div class="flex gap-2">
@@ -65,14 +65,14 @@
             @click="$emit('close')"
             class="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
           >
-            {{ $t('common.cancel') || 'Cancel' }}
+            {{ $t('cancel') || 'Cancel' }}
           </button>
           <button 
             @click="save"
             class="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             :disabled="loading || submitting"
           >
-            {{ submitting ? $t('common.saving') || 'Saving...' : ($t('common.save') || 'Save') }}
+            {{ submitting ? $t('common_saving') || 'Saving...' : ($t('save') || 'Save') }}
           </button>
         </div>
       </div>
