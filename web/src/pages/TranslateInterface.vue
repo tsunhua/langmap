@@ -319,8 +319,9 @@ export default {
       syncResult.value = null
 
       try {
-        // Sync only the selected language
+        // Sync selected language together with en-US (required for meaning_id calculation)
         const localeData = {
+          'en-US': localMessages['en-US'],
           [syncLanguage.value]: localMessages[syncLanguage.value]
         }
 
