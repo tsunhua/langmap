@@ -32,20 +32,20 @@
           {{ $t('search') }}
         </router-link>
         <router-link 
-          to="/collections" 
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50"
-          @click="mobileMenuOpen = false"
-        >
-          {{ $t('collections') }}
-        </router-link>
-        <router-link 
           to="/create-expression" 
           class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50"
           @click="mobileMenuOpen = false"
         >
           {{ $t('create_title') }}
+        </router-link>
+        <router-link 
+          to="/collections" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('collections') }}
         </router-link>
         <router-link 
           to="/about" 
