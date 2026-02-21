@@ -8,12 +8,12 @@
       </div>
 
       <div v-else-if="collections.length === 0" class="text-center py-6 text-gray-500">
-        <p class="mb-4">{{ $t('collections_noCollections') || 'You have no collections.' }}</p>
+        <p class="mb-4">{{ $t('no_collections') || 'You have no collections.' }}</p>
         <button 
           @click="createNewCollection"
           class="text-blue-600 font-medium"
         >
-          {{ $t('create_new') || '+ Create New Collection' }}
+          {{ $t('new_collection') || '+ Create New Collection' }}
         </button>
       </div>
 
@@ -57,7 +57,7 @@
           @click="createNewCollection"
           class="text-blue-600 text-sm font-medium"
         >
-          {{ $t('create_new') || '+ New Collection' }}
+          {{ $t('new_collection') || '+ New Collection' }}
         </button>
         
         <div class="flex gap-2">
@@ -72,7 +72,7 @@
             class="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             :disabled="loading || submitting"
           >
-            {{ submitting ? $t('common_saving') || 'Saving...' : ($t('save') || 'Save') }}
+            {{ submitting ? $t('saving') || 'Saving...' : ($t('save') || 'Save') }}
           </button>
         </div>
       </div>

@@ -8,7 +8,7 @@
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all"
       >
         <span class="text-xl">+</span>
-        {{ $t('create_new') }}
+        {{ $t('new_collection') }}
       </button>
     </div>
 
@@ -46,7 +46,7 @@
         @click="openCreateModal"
         class="text-blue-600 hover:text-blue-800 font-semibold"
       >
-        {{ $t('create_new') }}
+        {{ $t('new_collection') }}
       </button>
     </div>
 
@@ -113,7 +113,7 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 class="text-xl font-bold mb-4">
-          {{ isEditing ? $t('edit_collection') : $t('create_title') }}
+          {{ isEditing ? $t('edit_collection') : $t('new_collection') }}
         </h2>
         
         <form @submit.prevent="saveCollection">
