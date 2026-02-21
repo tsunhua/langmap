@@ -7,12 +7,49 @@
         <div class="h-4 bg-gray-200 rounded w-2/3"></div>
       </div>
       <div v-else>
-        <div class="flex items-center gap-3">
-          <h1 class="text-3xl font-bold text-gray-900">{{ languageName }}</h1>
-          <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
-            {{ languageCode }}
-          </span>
-        </div>
+         <div class="flex items-center gap-3">
+           <div class="relative" ref="languageDropdownContainer">
+             <button
+               @click.stop="toggleLanguageDropdown"
+               class="flex items-center gap-2 group"
+             >
+               <h1 class="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName }}</h1>
+               <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
+                 {{ languageCode }}
+               </span>
+               <svg
+                 :class="['w-5 h-5 text-gray-500 transition-transform duration-200', showLanguageDropdown ? 'rotate-180' : '']"
+                 xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+               >
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+               </svg>
+             </button>
+
+             <!-- Language Dropdown -->
+             <div v-if="showLanguageDropdown" class="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+               <div v-if="loadingLanguages" class="flex justify-center items-center py-4">
+                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+               </div>
+               <div v-else class="py-2">
+                 <button
+                   v-for="lang in allLanguages"
+                   :key="lang.code"
+                   @click.stop="selectLanguage(lang.code)"
+                   :class="[
+                     'w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center justify-between',
+                     lang.code === languageCode ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                   ]"
+                 >
+                   <span>{{ lang.name }}</span>
+                   <span class="text-sm text-gray-500">{{ lang.code }}</span>
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
       </div>
     </div>
 
@@ -103,7 +140,7 @@ export default {
     const router = useRouter()
     const { t } = useI18n()
 
-    const languageCode = computed(() => props.code || route.params.code)
+    const languageCode = computed(() => route.params.code)
     const languageName = ref('')
     const loadingInfo = ref(true)
     const expressions = ref([])
@@ -115,6 +152,12 @@ export default {
     const itemsPerPage = 20
     const hasMore = ref(false) // Track if there might be more items
 
+    // Language dropdown state
+    const showLanguageDropdown = ref(false)
+    const allLanguages = ref([])
+    const loadingLanguages = ref(false)
+    const languageDropdownContainer = ref(null)
+
     const fetchLanguageInfo = async () => {
       loadingInfo.value = true
       try {
@@ -124,12 +167,40 @@ export default {
         if (language) {
           languageName.value = language.name
         }
+        // Store all languages for dropdown
+        allLanguages.value = languages
       } catch (error) {
         console.error('Failed to fetch language info:', error)
       } finally {
         loadingInfo.value = false
       }
     }
+
+    const toggleLanguageDropdown = () => {
+      showLanguageDropdown.value = !showLanguageDropdown.value
+    }
+
+    const selectLanguage = (langCode) => {
+      if (langCode !== languageCode.value) {
+        router.push(`/languages/${langCode}`)
+      }
+      showLanguageDropdown.value = false
+    }
+
+    // Close dropdown when clicking outside
+    onMounted(() => {
+      const handleClickOutside = (event) => {
+        if (showLanguageDropdown.value && languageDropdownContainer.value) {
+          if (!languageDropdownContainer.value.contains(event.target)) {
+            showLanguageDropdown.value = false
+          }
+        }
+      }
+      document.addEventListener('click', handleClickOutside)
+      return () => {
+        document.removeEventListener('click', handleClickOutside)
+      }
+    })
 
     const fetchExpressions = async () => {
       loading.value = true
@@ -222,7 +293,7 @@ export default {
     const handleSearch = debounce(() => {
       currentPage.value = 1
       fetchExpressions()
-    }, 300)
+    }, 600)
 
     const nextPage = () => {
       if (canGoNext.value) {
@@ -295,6 +366,27 @@ export default {
       fetchExpressions()
     })
 
+    // Watch for language code changes to fetch new language data
+    watch(languageCode, (newCode, oldCode) => {
+      console.log('Language code changed:', { oldCode, newCode })
+      if (newCode && newCode !== oldCode) {
+        // Reset search, pagination and expressions
+        searchQuery.value = ''
+        currentPage.value = 1
+        expressions.value = []
+        // Fetch new language info and expressions
+        fetchLanguageInfo()
+        fetchExpressions()
+      }
+    })
+
+    // Watch for language name changes to update document title
+    watch(languageName, (newName) => {
+      if (newName) {
+        document.title = `${newName} (${languageCode.value}) - LangMap`
+      }
+    })
+
     return {
       languageCode,
       languageName,
@@ -312,6 +404,12 @@ export default {
       nextPage,
       prevPage,
       goToPage,
+      showLanguageDropdown,
+      allLanguages,
+      loadingLanguages,
+      languageDropdownContainer,
+      toggleLanguageDropdown,
+      selectLanguage,
       t
     }
   }
