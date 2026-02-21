@@ -241,7 +241,7 @@ export default {
     const router = useRouter()
 
     // 扁平化嵌套的 JSON 对象
-    // { home: { title: "Hi" } } → { "home.title": "Hi" }
+    // { home: { title: "Hi" } } → { "home_title": "Hi" }
     const flattenObject = (obj, prefix = '') => {
       const flattened = {}
       for (const key in obj) {

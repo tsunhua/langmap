@@ -289,7 +289,7 @@ export default {
       // For home page, use home.title; for others, use nav.* titles
       let pageTitle;
       if (route.name === 'Home') {
-        pageTitle = t('home.title');
+        pageTitle = t('home_title');
         pageTitle = `LangMap - ${pageTitle}`;
       } else {
         const routeTitleMap = {
