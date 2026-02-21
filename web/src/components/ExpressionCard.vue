@@ -1,17 +1,20 @@
 <template>
   <div class="relative">
     <router-link :to="{ name: 'Detail', params: { id: item.id } }" class="block no-underline text-inherit">
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 mx-4 sm:mx-0">
-        <div class="p-4 flex justify-between items-start gap-4">
-          <div class="flex-1 min-w-0">
-            <h3 class="text-xl font-semibold text-slate-800 break-words">{{ item.text }}</h3>
-            <div class="mt-1 text-sm text-slate-600">
-              <span class="inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
-                {{ getLanguageDisplayName(item.language_code) }}
-              </span>
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 mx-4 sm:mx-0 cursor-pointer">
+      <div class="p-4 flex justify-between items-start gap-4">
+        <div class="flex-1 min-w-0">
+          <h3 class="text-xl font-semibold text-slate-800 break-words">{{ item.text }}</h3>
+          <div class="mt-1 text-sm text-slate-600">
+            <div
+              @click.stop.prevent="goToLanguageDetail"
+              class="inline-flex items-center hover:text-blue-600 hover:underline font-medium transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              {{ getLanguageDisplayName(item.language_code) }}
+            </div>
               <span v-if="getRegionDisplayName(item)">
                 <span class="mx-2">•</span>
                 <span class="inline-flex items-center">
@@ -25,15 +28,15 @@
             </div>
             <!-- 显示所有标签 -->
             <div class="mt-2 flex flex-wrap gap-1 items-center">
-              <span 
-                v-for="(tag, index) in getTagsList()" 
+              <span
+                v-for="(tag, index) in getTagsList()"
                 :key="index"
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
               >
                 {{ tag }}
-                <button 
-                  v-if="editable" 
-                  @click.prevent="removeTag(tag)" 
+                <button
+                  v-if="editable"
+                  @click.prevent="removeTag(tag)"
                   class="ml-1 text-blue-600 hover:text-blue-900 focus:outline-none"
                   title="Remove tag"
                 >
@@ -42,13 +45,13 @@
                   </svg>
                 </button>
               </span>
-              
+
               <!-- Add Tag UI -->
               <div v-if="editable" class="inline-flex items-center">
                 <div v-if="isAddingTag" class="flex items-center">
-                  <input 
-                    v-model="newTagValue" 
-                    @keydown.enter.prevent="confirmAddTag" 
+                  <input
+                    v-model="newTagValue"
+                    @keydown.enter.prevent="confirmAddTag"
                     @keydown.esc.prevent="cancelAddTag"
                     @blur="cancelAddTag"
                     ref="newTagInput"
@@ -57,9 +60,9 @@
                     autofocus
                   />
                 </div>
-                <button 
-                  v-else 
-                  @click.prevent="startAddTag" 
+                <button
+                  v-else
+                  @click.prevent="startAddTag"
                   class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors focus:outline-none"
                   title="Add tag"
                 >
@@ -71,50 +74,65 @@
             </div>
           </div>
 
-          <div class="flex flex-col items-end gap-3 flex-shrink-0">
-            <span
+        <div class="flex flex-col items-end gap-3 flex-shrink-0">
+          <span
              v-if="item.source_type"
              :class="[
               'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-              item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' : 
+              item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' :
               item.source_type === 'user' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
             ]">
-              {{ item.source_type }}
-            </span>
-            
-            <div class="flex items-center gap-2">
-              <button 
-                v-if="item.audio_url" 
-                @click.stop.prevent="playAudio" 
-                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
-                :title="$t('play')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            {{ item.source_type }}
+          </span>
+
+          <div class="flex items-center gap-2">
+            <button
+              v-if="item.audio_url"
+              @click.stop.prevent="playAudio"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+              :title="$t('play')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+            <button
+              @click.stop.prevent="copyText"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
+              :title="copied ? 'Copied!' : 'Copy text'"
+            >
+              <template v-if="!copied">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                 </svg>
-              </button>
-              <button 
-                @click.stop.prevent="openCollectionModal" 
-                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
-                :title="$t('add_to_collection')"
-              >
-                <span> ⭐ </span>
-              </button>
-            </div>
+              </template>
+              <template v-else>
+                <span class="text-green-600 font-medium">{{ $t('copied') }}</span>
+              </template>
+            </button>
+            <button
+              @click.stop.prevent="openCollectionModal"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+              :title="$t('add_to_collection')"
+            >
+              <span> ⭐ </span>
+            </button>
           </div>
         </div>
       </div>
+    </div>
     </router-link>
-    <AddToCollectionModal 
-      :visible="showCollectionModal" 
-      :expression-id="item.id" 
-      @close="showCollectionModal = false" 
+    <AddToCollectionModal
+      :visible="showCollectionModal"
+      :expression-id="item.id"
+      @close="showCollectionModal = false"
     />
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getLanguageDisplayName } from '../services/languageService.js'
@@ -138,7 +156,25 @@ export default {
     const { t } = useI18n()
     const router = useRouter()
     const showCollectionModal = ref(false)
-    
+
+    // Copy functionality
+    const copied = ref(false)
+    let copyTimeout = null
+
+    const copyText = async () => {
+      try {
+        await navigator.clipboard.writeText(props.item.text)
+        copied.value = true
+        // Reset after 2 seconds
+        if (copyTimeout) clearTimeout(copyTimeout)
+        copyTimeout = setTimeout(() => {
+          copied.value = false
+        }, 2000)
+      } catch (err) {
+        console.error('Failed to copy text:', err)
+      }
+    }
+
     // Tag management state
     const isAddingTag = ref(false)
     const newTagValue = ref('')
@@ -182,16 +218,30 @@ export default {
       newTagValue.value = ''
     }
 
-    return { 
-      t, 
-      showCollectionModal, 
+    const goToLanguageDetail = () => {
+      router.push({ name: 'LanguageDetail', params: { code: props.item.language_code } })
+    }
+
+    // Clean up timeout on unmount
+    onUnmounted(() => {
+      if (copyTimeout) {
+        clearTimeout(copyTimeout)
+      }
+    })
+
+    return {
+      t,
+      copied,
+      copyText,
+      showCollectionModal,
       openCollectionModal,
       isAddingTag,
       newTagValue,
       removeTag,
       startAddTag,
       confirmAddTag,
-      cancelAddTag
+      cancelAddTag,
+      goToLanguageDetail
     }
   },
   methods: {
