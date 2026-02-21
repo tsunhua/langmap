@@ -267,9 +267,9 @@ export default {
           // Bind tooltip to show information on hover
           marker.bindTooltip(`
             <div>
-              <b>${t('home.heatmap.region')}:</b> ${point.regionName || t('home.heatmap.unknown')}<br>
-              <b>${t('home.heatmap.language')}:</b> ${point.languageName}<br>
-              <b>${t('home.heatmap.expressions')}:</b> ${point.count}
+              <b>${t('region')}:</b> ${point.regionName || t('unknown')}<br>
+              <b>${t('language')}:</b> ${point.languageName}<br>
+              <b>${t('expressions')}:</b> ${point.count}
             </div>
           `, {
             direction: 'top',
@@ -282,9 +282,9 @@ export default {
           // Bind popup with the same information
           marker.bindPopup(`
             <div>
-              <b>${t('home.heatmap.region')}:</b> ${point.regionName || t('home.heatmap.unknown')}<br>
-              <b>${t('home.heatmap.language')}:</b> ${point.languageName}<br>
-              <b>${t('home.heatmap.expressions')}:</b> ${point.count}
+              <b>${t('region')}:</b> ${point.regionName || t('unknown')}<br>
+              <b>${t('language')}:</b> ${point.languageName}<br>
+              <b>${t('expressions')}:</b> ${point.count}
             </div>
           `);
           
