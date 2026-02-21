@@ -24,12 +24,12 @@
       <nav class="p-4">
         <router-link to="/" class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          {{ $t('nav.home') }}
+          {{ $t('home') }}
         </router-link>
         <router-link to="/search"
           class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          {{ $t('nav.search') }}
+          {{ $t('search') }}
         </router-link>
         <router-link 
           to="/collections" 
@@ -37,13 +37,21 @@
           active-class="text-blue-600 bg-blue-50"
           @click="mobileMenuOpen = false"
         >
-          {{ $t('nav.collections') }}
+          {{ $t('collections') }}
+        </router-link>
+        <router-link 
+          to="/create-expression" 
+          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          {{ $t('create_title') }}
         </router-link>
         <router-link 
           to="/about" 
           class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          {{ $t('nav.about') }}
+          {{ $t('about') }}
         </router-link>
 
         <!-- Mobile Auth Buttons -->
@@ -58,7 +66,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                {{ $t('nav.profile') }}
+                {{ $t('profile') }}
               </div>
             </router-link>
             <button @click="handleLogoutMobile"
@@ -69,7 +77,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                {{ $t('nav.logout') }}
+                {{ $t('logout') }}
               </div>
             </button>
           </template>
@@ -83,7 +91,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                {{ $t('nav.login') }}
+                {{ $t('login') }}
               </div>
             </router-link>
           </template>
@@ -115,24 +123,28 @@
           </router-link>
         </div>
 
-        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-6">
           <!-- Desktop navigation -->
           <nav class="hidden lg:flex items-center gap-6">
             <router-link to="/" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
-              {{ $t('nav.home') }}
+              {{ $t('home') }}
             </router-link>
             <router-link to="/search" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
-              {{ $t('nav.search') }}
+              {{ $t('search') }}
             </router-link>
             <router-link to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
-              {{ $t('nav.collections') || 'Collections' }}
+              {{ $t('collections') || 'Collections' }}
+            </router-link>
+            <router-link to="/create-expression" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              active-class="text-blue-600">
+              {{ $t('create_title') }}
             </router-link>
             <router-link to="/about" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               active-class="text-blue-600">
-              {{ $t('nav.about') }}
+              {{ $t('about') }}
             </router-link>
           </nav>
 
@@ -146,7 +158,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span class="mr-1">{{ $t('nav.profile') }}</span>
+              <span class="mr-1">{{ $t('profile') }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -161,7 +173,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              <span class="mr-1">{{ $t('nav.login') }}</span>
+              <span class="mr-1">{{ $t('login') }}</span>
             </button>
 
             <!-- User Dropdown Menu -->
@@ -170,11 +182,11 @@
               role="menu">
               <router-link to="/profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                 role="menuitem" @click="userDropdownOpen = false">
-                {{ $t('nav.profile') }}
+                {{ $t('profile') }}
               </router-link>
               <button @click="handleLogout"
                 class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" role="menuitem">
-                {{ $t('nav.logout') }}
+                {{ $t('logout') }}
               </button>
             </div>
           </div>
@@ -214,7 +226,7 @@
                 <router-link to="/translate-interface" 
                   class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                   role="menuitem" @click="langDropdownOpen = false">
-                  {{ $t('nav.assistTranslation') }}
+                  {{ $t('assist_translation') }}
                 </router-link>
               </div>
 
@@ -223,7 +235,7 @@
                 <button @click="handleAddLanguageClick"
                   class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                   role="menuitem">
-                  {{ $t('nav.addLanguage') }}
+                  {{ $t('add_language') }}
                 </button>
               </div>
             </div>
@@ -241,7 +253,7 @@
     </main>
     <footer class="py-6 border-t border-slate-200 text-center text-slate-500 text-sm mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p>{{ $t('footer.copyright', { year: new Date().getFullYear() }) }}</p>
+        <p>{{ $t('footer_copyright', { year: new Date().getFullYear() }) }}</p>
       </div>
     </footer>
   </div>
@@ -277,17 +289,17 @@ export default {
       // For home page, use home.title; for others, use nav.* titles
       let pageTitle;
       if (route.name === 'Home') {
-        pageTitle = t('home.title');
+        pageTitle = t('home_title');
         pageTitle = `LangMap - ${pageTitle}`;
       } else {
         const routeTitleMap = {
-          'Search': t('nav.search'),
-          'AboutUs': t('nav.about'),
-          'Login': t('nav.login'),
-          'Profile': t('nav.profile'),
-          'Collections': t('nav.collections')
+          'Search': t('search'),
+          'AboutUs': t('about'),
+          'Login': t('login'),
+          'Profile': t('profile'),
+          'Collections': t('collections')
         };
-        pageTitle = routeTitleMap[route.name] || t('nav.home');
+        pageTitle = routeTitleMap[route.name] || t('home');
         pageTitle = `${pageTitle} - LangMap`;
       }
 

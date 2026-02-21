@@ -1,26 +1,38 @@
 import { createI18n } from 'vue-i18n'
-import { fetchUITranslations, transformTranslations, fetchLanguages } from './services/languageService.js'
+import { fetchUITranslations, fetchLanguages } from './services/languageService.js'
 
-// Import static messages for default languages
+// Dynamically import all locale files using Vite's import.meta.glob
+// This will automatically include all .json files from the locales directory
+const localeModules = import.meta.glob('./locales/*.json', { eager: true })
+
+// Import specific well-known languages for backward compatibility
 import enMessages from './locales/en-US.json'
 import zhHansMessages from './locales/zh-CN.json'
 import zhHantMessages from './locales/zh-TW.json'
-import esMessages from './locales/es.json'
-import frMessages from './locales/fr.json'
-import jaMessages from './locales/ja.json'
-import nanTWMessages from './locales/nan-TW.json'
-import yueHKMessages from './locales/yue-HK.json'
 
-// Define static messages for default languages
+// Extract language codes and messages from dynamic imports
+const dynamicMessages = {}
+const dynamicLanguageCodes = []
+
+for (const path in localeModules) {
+  // Extract language code from path (e.g., './locales/en-US.json' -> 'en-US')
+  const match = path.match(/\.\/locales\/([^.]+)\.json$/)
+  if (match) {
+    const langCode = match[1]
+    dynamicLanguageCodes.push(langCode)
+    dynamicMessages[langCode] = localeModules[path].default
+  }
+}
+
+console.log('[i18n] Dynamically loaded locales:', dynamicLanguageCodes)
+
+// Combine dynamic imports with well-known imports
+// Well-known imports ensure backward compatibility and can be removed over time
 const staticMessages = {
   'en-US': enMessages,
   'zh-CN': zhHansMessages,
   'zh-TW': zhHantMessages,
-  'nan-TW': nanTWMessages,
-  'yue-HK': yueHKMessages,
-  es: esMessages,
-  fr: frMessages,
-  ja: jaMessages,
+  ...dynamicMessages,
 }
 
 // Cache for supported languages mapping with browser language codes
@@ -32,11 +44,11 @@ const dynamicMessagesCache = {}
 // Initialize supported languages
 async function initializeSupportedLanguages() {
   try {
-    const languages = await fetchLanguages(1) // Fetch active languages only
+    const languages = await fetchLanguages()
     const languageMap = {}
     
     languages.forEach(lang => {
-      // Direct mapping only, without primary language fallback
+      // Use direct mapping only, without primary language fallback
       languageMap[lang.code] = lang.code
     })
     
@@ -44,18 +56,11 @@ async function initializeSupportedLanguages() {
     console.log('[i18n] Supported languages initialized:', supportedLanguages)
   } catch (error) {
     console.error('[i18n] Failed to initialize supported languages:', error)
-    // Fallback to basic supported languages
-    supportedLanguages = {
-      'en': 'en-US',
-      'en-US': 'en-US',
-      'zh': 'zh-CN',
-      'zh-CN': 'zh-CN',
-      'zh-TW': 'zh-TW',
-      'nan': 'nan-TW',
-      'nan-TW': 'nan-TW',
-      'yue': 'yue-HK',
-      'yue-HK': 'yue-HK'
-    }
+    // Fallback to all dynamically loaded languages
+    supportedLanguages = {}
+    dynamicLanguageCodes.forEach(code => {
+      supportedLanguages[code] = code
+    })
   }
 }
 
@@ -84,7 +89,7 @@ function detectBrowserLanguage() {
 }
 
 // Create i18n instance
-// Initialize supported languages before creating the i18n instance
+// Initialize supported languages before creating i18n instance
 let detectedLanguage = 'en-US'
 initializeSupportedLanguages().then(() => {
   detectedLanguage = detectBrowserLanguage()
@@ -103,7 +108,7 @@ const i18n = createI18n({
 
 /**
  * Load UI translations for a given language dynamically
- * @param {string} languageCode - The language code to load translations for
+ * @param {string} languageCode - The Language code to load translations for
  */
 export async function loadLanguage(languageCode) {
   console.log(`[i18n] Loading language: ${languageCode}`)
@@ -111,16 +116,17 @@ export async function loadLanguage(languageCode) {
   // If it's a static language, no need to fetch anything
   if (staticMessages[languageCode]) {
     console.log(`[i18n] Language ${languageCode} is statically available`)
+    i18n.global.setLocaleMessage(languageCode, staticMessages[languageCode])
     return
   }
-
+  
   // Check if we have cached messages
   if (dynamicMessagesCache[languageCode]) {
     console.log(`[i18n] Using cached messages for ${languageCode}`)
     i18n.global.setLocaleMessage(languageCode, dynamicMessagesCache[languageCode])
     return
   }
-
+  
   try {
     // Fetch UI translations from backend
     const translations = await fetchUITranslations(languageCode)
@@ -135,7 +141,7 @@ export async function loadLanguage(languageCode) {
       // Cache the messages
       dynamicMessagesCache[languageCode] = messages
       
-      // Set the locale messages
+      // Set locale messages
       i18n.global.setLocaleMessage(languageCode, messages)
       console.log(`[i18n] Successfully loaded messages for ${languageCode}`)
     } else {
@@ -143,7 +149,7 @@ export async function loadLanguage(languageCode) {
       const mappedLanguage = detectBrowserLanguage()
       console.log(`[i18n] No translations for ${languageCode}, mapping to ${mappedLanguage}`)
       
-      // Use messages from the mapped language
+      // Use messages from mapped language
       const fallbackMessages = staticMessages[mappedLanguage] || staticMessages['en-US']
       i18n.global.setLocaleMessage(languageCode, fallbackMessages)
     }

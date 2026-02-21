@@ -3,10 +3,10 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-3 text-center text-3xl font-extrabold text-slate-900">
-          {{ $t('register.title') }}
+          {{ $t('new_account') }}
         </h2>
         <p class="mt-2 text-center text-sm text-slate-600">
-          {{ $t('register.description') }}
+          {{ $t('register_description') }}
         </p>
       </div>
       
@@ -14,7 +14,7 @@
         <form class="space-y-6" @submit.prevent="handleRegister">
           <div>
             <label for="username" class="block text-sm font-medium text-slate-700">
-              {{ $t('register.username') }}
+              {{ $t('username') }}
             </label>
             <div class="mt-1">
               <input
@@ -32,7 +32,7 @@
           
           <div>
             <label for="email" class="block text-sm font-medium text-slate-700">
-              {{ $t('register.email') }}
+              {{ $t('email_address') }}
             </label>
             <div class="mt-1">
               <input
@@ -50,7 +50,7 @@
 
           <div>
             <label for="password" class="block text-sm font-medium text-slate-700">
-              {{ $t('register.password') }}
+              {{ $t('password') }}
             </label>
             <div class="mt-1">
               <input
@@ -68,7 +68,7 @@
           
           <div>
             <label for="confirmPassword" class="block text-sm font-medium text-slate-700">
-              {{ $t('register.confirmPassword') }}
+              {{ $t('confirm_password') }}
             </label>
             <div class="mt-1">
               <input
@@ -98,10 +98,10 @@
             </div>
             <div class="ml-3 text-sm">
               <label for="terms" class="text-slate-900">
-                {{ $t('register.agreeToTerms') }}
-                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.termsOfService') }}</router-link>
-                {{ $t('register.and') }}
-                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('register.privacyPolicy') }}</router-link>
+                {{ $t('agree_to_terms') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('terms_of_service') }}</router-link>
+                {{ $t('and') }}
+                <router-link to="/policies" class="text-blue-600 hover:text-blue-500">{{ $t('privacy_policy') }}</router-link>
               </label>
             </div>
           </div>
@@ -117,10 +117,10 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ $t('register.signingUp') }}
+                {{ $t('signing_up') }}
               </span>
               <span v-else>
-                {{ $t('register.signUp') }}
+                {{ $t('sign_up') }}
               </span>
             </button>
           </div>
@@ -148,7 +148,7 @@
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-slate-500">
-                {{ $t('register.or') }}
+                {{ $t('or') }}
               </span>
             </div>
           </div>
@@ -158,7 +158,7 @@
               to="/login" 
               class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {{ $t('register.signIn') }}
+              {{ $t('sign_in') }}
             </router-link>
           </div>
         </div>
@@ -170,17 +170,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 class="mt-4 text-lg font-medium text-slate-900">{{ $t('register.registrationSuccessTitle') }}</h3>
+        <h3 class="mt-4 text-lg font-medium text-slate-900">{{ $t('registration_successful') }}</h3>
         <div class="mt-2 text-sm text-slate-500">
-          <p>{{ $t('register.registrationSuccessMessage') }}</p>
-          <p class="mt-2 font-medium">{{ $t('register.checkEmail') }}</p>
+          <p>{{ $t('registration_successful_message') }}</p>
+          <p class="mt-2 font-medium">{{ $t('registration_verify_email') }}</p>
         </div>
         <div class="mt-6">
           <router-link 
             to="/login" 
             class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            {{ $t('register.goToLogin') }}
+            {{ $t('go_to_login') }}
           </router-link>
         </div>
       </div>

@@ -4,8 +4,8 @@
     
     <div class="mb-4">
       <p class="mb-2">Current language: {{ locale }}</p>
-      <p class="mb-2">Home title: {{ $t('home.title') }}</p>
-      <p class="mb-2">Nav home: {{ $t('nav.home') }}</p>
+      <p class="mb-2">Home title: {{ $t('home_title') }}</p>
+      <p class="mb-2">Nav home: {{ $t('home') }}</p>
     </div>
     
     <div class="mb-4">
@@ -14,7 +14,7 @@
         v-model="testKey" 
         type="text" 
         class="w-full px-3 py-2 border border-gray-300 rounded-md"
-        placeholder="Enter translation key, e.g. home.title"
+        placeholder="Enter translation key, e.g. title"
       >
       <p class="mt-1 text-sm text-gray-500">Translation: {{ $t(testKey) }}</p>
     </div>

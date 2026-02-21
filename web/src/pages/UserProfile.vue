@@ -4,17 +4,17 @@
       <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6">
           <h3 class="text-lg leading-6 font-medium text-slate-900">
-            {{ $t('userProfile.title') }}
+            {{ $t('user_profile') }}
           </h3>
           <p class="mt-1 max-w-2xl text-sm text-slate-500">
-            {{ $t('userProfile.description') }}
+            {{ $t('description') }}
           </p>
         </div>
         <div class="border-t border-slate-200">
           <dl>
             <div class="bg-slate-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-slate-500">
-                {{ $t('userProfile.username') }}
+                {{ $t('username') }}
               </dt>
               <dd class="mt-1 text-sm text-slate-900 sm:mt-0 sm:col-span-2">
                 {{ user.username }}
@@ -22,7 +22,7 @@
             </div>
             <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-slate-500">
-                {{ $t('userProfile.email') }}
+                {{ $t('email_address') }}
               </dt>
               <dd class="mt-1 text-sm text-slate-900 sm:mt-0 sm:col-span-2">
                 {{ user.email }}
@@ -30,7 +30,7 @@
             </div>
             <div class="bg-slate-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-slate-500">
-                {{ $t('userProfile.role') }}
+                {{ $t('role') }}
               </dt>
               <dd class="mt-1 text-sm text-slate-900 sm:mt-0 sm:col-span-2">
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -40,7 +40,7 @@
             </div>
             <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-slate-500">
-                {{ $t('userProfile.memberSince') }}
+                {{ $t('member_since') }}
               </dt>
               <dd class="mt-1 text-sm text-slate-900 sm:mt-0 sm:col-span-2">
                 {{ formatDate(user.created_at) }}
@@ -53,7 +53,7 @@
       <div class="mt-6 bg-white shadow sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6">
           <h3 class="text-lg leading-6 font-medium text-slate-900">
-            {{ $t('userProfile.actions') }}
+            {{ $t('actions') }}
           </h3>
         </div>
         <div class="border-t border-slate-200 px-4 py-5 sm:p-6">
@@ -62,14 +62,14 @@
               @click="handleLogout"
               class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
-              {{ $t('userProfile.logout') }}
+              {{ $t('logout') }}
             </button>
             
             <button
               @click="changePassword"
               class="inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {{ $t('userProfile.changePassword') }}
+              {{ $t('change_password') }}
             </button>
           </div>
         </div>

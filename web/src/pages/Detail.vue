@@ -5,7 +5,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        {{ $t('detail.backToSearch') }}
+        {{ $t('back_to_search') }}
       </button>
     </div>
     
@@ -14,7 +14,7 @@
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
-      <span class="ml-2 text-slate-600">{{ $t('detail.loading') }}</span>
+      <span class="ml-2 text-slate-600">{{ $t('loading') }}</span>
     </div>
     
     <div v-else-if="item" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -22,7 +22,7 @@
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4">
-            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.expressionDetails') }}</h3>
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
           </div>
           <div class="p-3">
             <ExpressionCard 
@@ -36,7 +36,7 @@
         
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
           <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-slate-800">{{ $t('detail.associatedExpressions') }}
+            <h3 class="text-xl font-bold text-slate-800">{{ $t('associated_expressions') }}
               <span class="text-slate-500 ml-2">({{ translations.length }})</span>
             </h3>
 
@@ -48,7 +48,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              {{ $t('detail.associateExpressions') }}
+              {{ $t('associate_expressions') }}
             </button>
             <button 
               v-else 
@@ -58,7 +58,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              {{ $t('detail.cancel') }}
+              {{ $t('cancel') }}
             </button>
           </div>
           
@@ -68,7 +68,7 @@
                 <div class="flex-1">
                   <input 
                     v-model="assocQuery" 
-                    :placeholder="$t('detail.searchPlaceholder')" 
+                    :placeholder="$t('search_placeholder')" 
                     class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2.5 px-4" 
                     @keydown.enter="searchAssociate" 
                   />
@@ -77,7 +77,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  {{ $t('detail.search') }}
+                  {{ $t('search') }}
                 </button>
               </div>
               
@@ -87,11 +87,11 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span class="ml-2 text-slate-600">{{ $t('detail.searching') }}</span>
+                  <span class="ml-2 text-slate-600">{{ $t('searching') }}</span>
                 </div>
                 
                 <div v-else-if="assocSearched && assocResults.length === 0" class="text-center py-4 text-slate-500">
-                  {{ $t('detail.noExpressionsFound') }}
+                  {{ $t('no_expressions_found') }}
                   <div class="mt-4">
                     <button 
                       @click="openCreateExpressionModal"
@@ -100,7 +100,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      {{ $t('detail.createExpression') }}
+                      {{ $t('expression') }}
                     </button>
                   </div>
                 </div>
@@ -120,10 +120,10 @@
                         @click="associateWith(c)" 
                         class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2"
                       >
-                        {{ $t('detail.link') }}
+                        {{ $t('link') }}
                       </button>
                       <span v-else class="text-slate-500 px-4 py-2">
-                        {{ $t('detail.alreadyLinked') }}
+                        {{ $t('already_linked') }}
                       </span>
                     </div>
                   </div>
@@ -132,7 +132,7 @@
                     {{ assocMsg }}
                   </div>
                   <div v-if="assocHasCurrent" class="p-3 rounded-lg bg-amber-50 text-amber-700">
-                    {{ $t('detail.includesCurrent') }}
+                    {{ $t('includes_current') }}
                   </div>
                 </div>
               </div>
@@ -144,12 +144,12 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                <p class="mt-2">{{ $t('detail.noMeanings') }}</p>
+                <p class="mt-2">{{ $t('no_meanings') }}</p>
                 <button 
                   @click="associateMode = true" 
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-3"
                 >
-                  {{ $t('detail.associateWithMeanings') }}
+                  {{ $t('associate_with_meanings') }}
                 </button>
               </div>
               
@@ -167,9 +167,9 @@
                     <button 
                       @click="unlink(expr)" 
                       class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-red-700 focus:ring-slate-500 px-3 py-1.5 text-sm"
-                      :title="$t('detail.unlink')"
+                      :title="$t('unlink')"
                     >
-                      ⛓️‍💥 {{ $t('detail.unlink') }}
+                      ⛓️‍💥 {{ $t('unlink') }}
                     </button>
                   </div>
                 </div>

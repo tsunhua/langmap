@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">{{ $t('translate.title') }}</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ $t('translate_title') }}</h1>
 
     <!-- 管理员同步按钮 -->
     <div v-if="isAdmin" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -32,10 +32,10 @@
 
     <!-- 语言选择器 -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">{{ $t('translate.selectLanguage') }}</h2>
+      <h2 class="text-xl font-semibold mb-4">{{ $t('select_language') }}</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('translate.referenceLanguage') }}</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('reference_language') }}</label>
           <select 
             v-model="referenceLanguage" 
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -47,19 +47,19 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('translate.targetLanguage') }}</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('target_language') }}</label>
           <select 
             v-model="targetLanguage" 
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             @change="loadTranslations"
           >
-            <option value="" disabled>{{ $t('translate.selectTargetPlaceholder') || 'Select target language' }}</option>
+            <option value="" disabled>{{ $t('select_target_language') || 'Select target language' }}</option>
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
               {{ lang.name }} ({{ lang.code }})
             </option>
           </select>
           <div v-if="targetLanguage === referenceLanguage" class="text-red-500 text-sm mt-1">
-            {{ $t('translate.sameLanguageError') }}
+            {{ $t('same_language_error') }}
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@
       <!-- 进度显示 -->
       <div v-if="targetLanguage && targetLanguage !== referenceLanguage" class="mt-4">
         <div class="flex justify-between mb-1">
-          <span class="text-sm font-medium">{{ $t('translate.translationProgress') }}</span>
+          <span class="text-sm font-medium">{{ $t('translation_progress') }}</span>
           <span class="text-sm font-medium">{{ completionPercentage }}%</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -77,7 +77,7 @@
           ></div>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          {{ isActive ? $t('translate.languageActivated') : $t('translate.languageNotActivated') }}
+          {{ isActive ? $t('language_activated') : $t('language_not_activated') }}
         </div>
       </div>
     </div>
@@ -91,7 +91,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              :placeholder="$t('translate.searchPlaceholder')"
+              :placeholder="$t('search_placeholder')"
               class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               @input="filterTranslations"
             />
@@ -106,7 +106,7 @@
               ]"
               @click="setFilter('all')"
             >
-              {{ $t('translate.filterAll') }}
+              {{ $t('all') }}
             </button>
             <button
               :class="[
@@ -117,7 +117,7 @@
               ]"
               @click="setFilter('untranslated')"
             >
-              {{ $t('translate.filterUntranslated') }}
+              {{ $t('untranslated') }}
             </button>
             <button
               :class="[
@@ -128,7 +128,7 @@
               ]"
               @click="setFilter('translated')"
             >
-              {{ $t('translate.filterTranslated') }}
+              {{ $t('translated') }}
             </button>
           </div>
         </div>
@@ -140,16 +140,16 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ $t('translate.localizationKey') }}
+                {{ $t('localization_key') }}
               </th>
               <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('translate.reference') }})
+                {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('reference_language') }})
               </th>
               <th scope="col" class="w-1/12 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ $t('translate.action') }}
+                {{ $t('action') }}
               </th>
               <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('translate.target') }})
+                {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('target_language') }})
               </th>
             </tr>
           </thead>
@@ -165,7 +165,7 @@
                 <button 
                   @click="copyToTarget(item)" 
                   class="text-blue-600 hover:text-blue-800 font-bold"
-                  :aria-label="$t('translate.copyReference')"
+                  :aria-label="$t('copy_reference_to_target')"
                 >
                   &gt;&gt;
                 </button>
@@ -175,7 +175,7 @@
                   v-model="item.targetText"
                   type="text"
                   class="w-full border border-blue-300 py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :placeholder="$t('translate.inputPlaceholder')"
+                  :placeholder="$t('please_enter_translation')"
                   @input="markAsModified(item)"
                 />
               </td>
@@ -197,7 +197,7 @@
             ]"
             @click="saveTranslations"
           >
-            {{ $t('translate.saveTranslations', { count: modifiedItems.length }) }}
+            {{ $t('save_translations', { count: modifiedItems.length }) }}
           </button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default {
     const router = useRouter()
 
     // 扁平化嵌套的 JSON 对象
-    // { home: { title: "Hi" } } → { "home.title": "Hi" }
+    // { home: { title: "Hi" } } → { "home_title": "Hi" }
     const flattenObject = (obj, prefix = '') => {
       const flattened = {}
       for (const key in obj) {

@@ -3,10 +3,10 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-slate-900">
-          {{ $t('login.title') }}
+          {{ $t('login_title') }}
         </h2>
         <p class="mt-2 text-center text-sm text-slate-600">
-          {{ $t('login.description') }}
+          {{ $t('login_description') }}
         </p>
       </div>
       
@@ -14,7 +14,7 @@
         <form class="space-y-6" @submit.prevent="handleLogin">
           <div>
             <label for="email" class="block text-sm font-medium text-slate-700">
-              {{ $t('login.email') }}
+              {{ $t('email_address') }}
             </label>
             <div class="mt-1">
               <input
@@ -32,7 +32,7 @@
 
           <div>
             <label for="password" class="block text-sm font-medium text-slate-700">
-              {{ $t('login.password') }}
+              {{ $t('password') }}
             </label>
             <div class="mt-1">
               <input
@@ -59,13 +59,13 @@
                 :disabled="loading"
               />
               <label for="remember-me" class="ml-2 block text-sm text-slate-900">
-                {{ $t('login.rememberMe') }}
+                {{ $t('remember_me') }}
               </label>
             </div>
 
             <div class="text-sm">
               <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
-                {{ $t('login.forgotPassword') }}
+                {{ $t('forgot_password') }}
               </a>
             </div>
           </div>
@@ -81,10 +81,10 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ $t('login.signingIn') }}
+                {{ $t('signing_in') }}
               </span>
               <span v-else>
-                {{ $t('login.signIn') }}
+                {{ $t('sign_in') }}
               </span>
             </button>
           </div>
@@ -112,7 +112,7 @@
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-slate-500">
-                {{ $t('login.or') }}
+                {{ $t('or') }}
               </span>
             </div>
           </div>
@@ -122,7 +122,7 @@
               to="/register" 
               class="w-full flex justify-center py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {{ $t('login.createAccount') }}
+              {{ $t('new_account') }}
             </router-link>
           </div>
         </div>
