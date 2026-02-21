@@ -293,13 +293,13 @@ export default {
         pageTitle = `LangMap - ${pageTitle}`;
       } else {
         const routeTitleMap = {
-          'Search': t('nav.search'),
-          'AboutUs': t('nav.about'),
-          'Login': t('nav.login'),
-          'Profile': t('nav.profile'),
-          'Collections': t('nav.collections')
+          'Search': t('search'),
+          'AboutUs': t('about'),
+          'Login': t('login'),
+          'Profile': t('profile'),
+          'Collections': t('collections')
         };
-        pageTitle = routeTitleMap[route.name] || t('nav.home');
+        pageTitle = routeTitleMap[route.name] || t('home');
         pageTitle = `${pageTitle} - LangMap`;
       }
 

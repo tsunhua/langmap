@@ -6,23 +6,21 @@
       </div>
       <form @submit.prevent="handleAddLanguage" class="px-6 py-4 overflow-y-auto flex-grow">
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_languageCode') }}</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('language_code') }}</label>
           <input 
             v-model="formData.code" 
             type="text" 
             class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :placeholder="$t('create_languageCodePlaceholder')"
             required
           >
           <p class="mt-1 text-xs text-slate-500">{{ $t('language_code_help') }}</p>
         </div>
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_languageName') }}</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('language_name') }}</label>
           <input 
             v-model="formData.name" 
             type="text" 
             class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :placeholder="$t('create_languageNamePlaceholder')"
             required
           >
         </div>
@@ -30,7 +28,7 @@
         
         <!-- Region Information Section -->
         <div class="mb-4 border border-slate-200 rounded-lg p-4">
-          <h4 class="text-md font-medium text-slate-800 mb-3">{{ $t('create_regionInformation') }}</h4>
+          <h4 class="text-md font-medium text-slate-800 mb-3">{{ $t('region_information') }}</h4>
           
           <!-- Map Selection -->
           <div class="mb-4">
@@ -42,7 +40,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
-              {{ showMapSelector ? $t('create_hideMap') : $t('select_on_map') }}
+              {{ showMapSelector ? $t('hide_map') : $t('select_on_map') }}
             </button>
             
             <div v-show="showMapSelector" id="region-map" class="w-full h-64 rounded-md"></div>
@@ -51,12 +49,11 @@
           <!-- Region Details -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_regionName') }}</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('region_name') }}</label>
               <input 
                 v-model="formData.region_name" 
                 type="text" 
                 class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                :placeholder="$t('create_regionNamePlaceholder')"
               >
             </div>
             
@@ -64,21 +61,19 @@
             
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_latitude') }}</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('latitude') }}</label>
                 <input 
                   v-model="formData.latitude" 
                   type="text" 
                   class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :placeholder="$t('create_latitudePlaceholder')"
                 >
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_longitude') }}</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('longitude') }}</label>
                 <input 
                   v-model="formData.longitude" 
                   type="text" 
                   class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :placeholder="$t('create_longitudePlaceholder')"
                 >
               </div>
             </div>
@@ -86,7 +81,7 @@
         </div>
         
         <div class="mb-6">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_textDirection') }}</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text_direction') }}</label>
           <select 
             v-model="formData.direction" 
             class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -108,7 +103,7 @@
             class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
             :disabled="addingLanguage"
           >
-            {{ addingLanguage ? $t('create_addingLanguage') : $t('add_language') }}
+            {{ addingLanguage ? $t('adding') : $t('add_language') }}
           </button>
         </div>
       </form>

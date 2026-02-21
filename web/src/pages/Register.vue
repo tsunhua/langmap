@@ -173,7 +173,7 @@
         <h3 class="mt-4 text-lg font-medium text-slate-900">{{ $t('registration_successful') }}</h3>
         <div class="mt-2 text-sm text-slate-500">
           <p>{{ $t('registration_successful_message') }}</p>
-          <p class="mt-2 font-medium">{{ $t('registration_check_email') }}</p>
+          <p class="mt-2 font-medium">{{ $t('registration_verify_email') }}</p>
         </div>
         <div class="mt-6">
           <router-link 

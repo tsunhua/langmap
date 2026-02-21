@@ -46,7 +46,7 @@
           </div>
         </div>
         <div class="text-sm text-gray-500">
-          {{ $t('collections_createdOn') }}: {{ formatDate(collection.created_at) }}
+          {{ $t('created_on') }}: {{ formatDate(collection.created_at) }}
         </div>
       </div>
       <div v-else class="text-center py-4 text-red-500">
@@ -57,7 +57,7 @@
     <!-- Items List -->
     <div class="mb-6">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-        {{ $t('collections_items') }}
+        {{ $t('items') }}
         <span v-if="collection && collection.items_count > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
           {{ collection.items_count }}
         </span>
@@ -70,7 +70,7 @@
       <div v-else-if="items.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
         <p class="text-gray-500">{{ $t('empty') }}</p>
         <router-link to="/search" class="text-blue-600 hover:text-blue-800 font-medium mt-2 inline-block">
-          {{ $t('collections_browseExpressions') }}
+          {{ $t('browse_expressions_to_add') }}
         </router-link>
       </div>
 
@@ -99,7 +99,7 @@
               <button 
                 @click="removeItem(item)"
                 class="text-gray-400 hover:text-red-500 p-1"
-                :title="$t('collections_removeItem')"
+                :title="$t('remove')"
               >
                 ✕
               </button>
@@ -281,7 +281,7 @@ export default {
     }
 
     const removeItem = async (item) => {
-      if (confirm(t('collections.removeItemConfirm'))) {
+      if (confirm(t('remove_item_confirm'))) {
         try {
           await removeCollectionItem(collectionId, item.expression_id)
           // Optimistically remove from list
@@ -294,7 +294,7 @@ export default {
     }
 
     const confirmDelete = async () => {
-      if (confirm(t('collections.deleteConfirm'))) {
+      if (confirm(t('delete_confirm'))) {
         try {
           await deleteCollection(collectionId)
           router.push('/collections')

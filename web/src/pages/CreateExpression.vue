@@ -2,7 +2,7 @@
   <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h2 class="text-2xl font-bold text-slate-800 mb-2">{{ $t('create_title') }}</h2>
-      <p class="text-slate-600 mb-6">{{ $t('create_description') }}</p>
+      <p class="text-slate-600 mb-6">{{ $t('add_expression_description') }}</p>
 
       <div class="mb-6">
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>

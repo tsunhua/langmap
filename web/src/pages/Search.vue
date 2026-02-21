@@ -53,7 +53,7 @@
       <div v-else>
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold text-slate-800">
-            {{ $t('search_foundExpressions', { count: items_length, plural: items_length !== 1 ? $t('search_plural') : '' }) }}
+            {{ $t('found_expressions', { count: items_length, plural: items_length !== 1 ? $t('plural') : '' }) }}
           </h3>
         </div>
         
@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExpressionCard from '../components/ExpressionCard.vue'
@@ -89,6 +89,7 @@ export default {
     const loading = ref(false)
     const hasSearched = ref(false)
     const showCreateModal = ref(false)
+    const items_length = computed(() => items.value.length)
 
     async function search () {
       // Don't trigger search if query is empty
@@ -131,7 +132,7 @@ export default {
       }
     }, { immediate: true })
 
-    return { q, items, loading, hasSearched, search, t, showCreateModal, handleExpressionCreated }
+    return { q, items, loading, hasSearched, search, t, showCreateModal, handleExpressionCreated, items_length }
   }
 }
 </script>
