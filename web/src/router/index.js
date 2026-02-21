@@ -78,6 +78,12 @@ const routes = [
     name: 'CreateExpression',
     component: () => import('../pages/CreateExpression.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/languages/:code',
+    name: 'LanguageDetail',
+    component: () => import('../pages/LanguageDetail.vue'),
+    props: true
   }
 ]
 
