@@ -211,26 +211,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { fetchLanguages, fetchUITranslations, getLanguageDisplayName, saveUITranslations, syncLocalesToDatabase, getCurrentUser } from '../services/languageService'
 import { useI18n } from 'vue-i18n'
 
-// 导入所有本地 locales 文件
-import enMessages from '../locales/en-US.json'
-import zhHansMessages from '../locales/zh-CN.json'
-import zhHantMessages from '../locales/zh-TW.json'
-import esMessages from '../locales/es.json'
-import frMessages from '../locales/fr.json'
-import jaMessages from '../locales/ja.json'
-import nanTWMessages from '../locales/nan-TW.json'
-import yueHKMessages from '../locales/yue-HK.json'
+// 动态导入所有本地 locales 文件
+const localeModules = import.meta.glob('../locales/*.json', { eager: true })
 
-// 本地 locales 映射
-const localMessages = {
-  'en-US': enMessages,
-  'zh-CN': zhHansMessages,
-  'zh-TW': zhHantMessages,
-  'es': esMessages,
-  'fr': frMessages,
-  'ja': jaMessages,
-  'nan-TW': nanTWMessages,
-  'yue-HK': yueHKMessages
+// 本地 locales 映射（动态生成）
+const localMessages = {}
+for (const path in localeModules) {
+  const module = localeModules[path]
+  const langCode = path.match(/\/([^/]+)\.json$/)?.[1]
+  if (langCode && module.default) {
+    localMessages[langCode] = module.default
+  }
 }
 
 export default {
