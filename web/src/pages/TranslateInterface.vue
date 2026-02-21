@@ -4,17 +4,26 @@
 
     <!-- 管理员同步按钮 -->
     <div v-if="isAdmin" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-yellow-800 mb-3">同步本地翻译</h3>
+      <p class="text-sm text-yellow-700 mb-3">
+        将本地 JSON 文件中的新增翻译同步到数据库。已存在的翻译不会被覆盖。
+      </p>
+      <div class="flex items-center gap-4 mb-3">
         <div>
-          <h3 class="text-lg font-semibold text-yellow-800">同步本地翻译</h3>
-          <p class="text-sm text-yellow-700 mt-1">
-            将本地 JSON 文件中的新增翻译同步到数据库。已存在的翻译不会被覆盖。
-          </p>
+          <label class="block text-sm font-medium text-yellow-900 mb-1">选择要同步的语言</label>
+          <select 
+            v-model="syncLanguage" 
+            class="border border-yellow-300 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          >
+            <option v-for="lang in Object.keys(localMessages)" :key="lang" :value="lang">
+              {{ lang }}
+            </option>
+          </select>
         </div>
         <button
           @click="syncLocales"
           :disabled="syncing"
-          class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors self-end"
         >
           {{ syncing ? '同步中...' : '同步翻译' }}
         </button>
@@ -288,6 +297,7 @@ export default {
     // Admin sync state
     const syncing = ref(false)
     const syncResult = ref(null)
+    const syncLanguage = ref('en-US')
     const isAdmin = computed(() => {
       const user = getCurrentUser()
       return user?.role === 'admin'
@@ -300,14 +310,18 @@ export default {
         return
       }
 
+      if (!syncLanguage.value) {
+        alert('请选择要同步的语言')
+        return
+      }
+
       syncing.value = true
       syncResult.value = null
 
       try {
-        // Collect all local data
-        const localeData = {}
-        for (const [langCode, messages] of Object.entries(localMessages)) {
-          localeData[langCode] = messages
+        // Sync only the selected language
+        const localeData = {
+          [syncLanguage.value]: localMessages[syncLanguage.value]
         }
 
         // Call sync API
@@ -667,10 +681,12 @@ export default {
       modifiedItems,
       completionPercentage,
       isActive,
+      localMessages,
 
       // Admin sync
       syncing,
       syncResult,
+      syncLanguage,
       isAdmin,
 
       // 方法
