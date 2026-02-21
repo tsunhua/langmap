@@ -10,7 +10,7 @@ let statisticsCache: {
   data: null,
   timestamp: null
 };
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+const CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
 
 // Cache for heatmap data
 let heatmapCache: {
@@ -20,7 +20,17 @@ let heatmapCache: {
   data: null,
   timestamp: null
 };
-const HEATMAP_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+const HEATMAP_CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
+
+// Cache for languages
+let languagesCache: {
+  data: Language[] | null;
+  timestamp: number | null;
+} = {
+  data: null,
+  timestamp: null
+};
+const LANGUAGES_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 export class D1DatabaseService extends AbstractDatabaseService {
 
@@ -33,21 +43,54 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   // Language operations
   async getLanguages(isActive?: number): Promise<Language[]> {
-    let query = 'SELECT * FROM languages'
-    const params: any[] = []
+    const now = Date.now();
 
-    if (isActive !== undefined) {
-      query += ' WHERE is_active = ?'
-      params.push(isActive)
+    // Check if cache is valid
+    const isCacheValid = !!(languagesCache.data && languagesCache.timestamp &&
+      (now - languagesCache.timestamp) < LANGUAGES_CACHE_DURATION);
+
+    if (isCacheValid) {
+      console.log('Returning cached languages');
+      let results = languagesCache.data || [];
+      if (isActive !== undefined && !isNaN(isActive)) {
+        // Use loose equality or cast to number to handle 0/1 vs boolean
+        results = results.filter(l => (l.is_active ? 1 : 0) === isActive);
+      }
+      return results;
     }
 
-    query += ' ORDER BY name'
+    try {
+      console.log('Fetching fresh languages from database');
+      const response = await this.db.prepare('SELECT * FROM languages ORDER BY name').all<Language>();
 
-    const { results } = await this.db.prepare(query).bind(...params).all<Language>()
-    return results
+      const results = response.results || [];
+
+      // Update cache
+      languagesCache.data = results;
+      languagesCache.timestamp = now;
+
+      if (isActive !== undefined && !isNaN(isActive)) {
+        return results.filter(l => (l.is_active ? 1 : 0) === isActive);
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error in getLanguages:', error);
+      throw error;
+    }
   }
 
   async getLanguageByCode(code: string): Promise<Language | null> {
+    const now = Date.now();
+    if (languagesCache.data && languagesCache.timestamp &&
+      (now - languagesCache.timestamp) < LANGUAGES_CACHE_DURATION) {
+      const language = languagesCache.data.find(l => l.code === code);
+      if (language) {
+        console.log('Returning cached language by code:', code);
+        return language;
+      }
+    }
+
     const language = await this.db.prepare(
       'SELECT * FROM languages WHERE code = ?'
     ).bind(code).first<Language>()
@@ -85,9 +128,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to create language')
     }
 
-    // Clear statistics and heatmap caches as we've added a new language
+    // Clear all related caches
     this.clearStatisticsCache();
     this.clearHeatmapCache();
+    this.clearLanguagesCache();
 
     return result;
   }
@@ -113,9 +157,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to update language')
     }
 
-    // Clear statistics and heatmap caches as we've updated a language
+    // Clear all related caches
     this.clearStatisticsCache();
     this.clearHeatmapCache();
+    this.clearLanguagesCache();
 
     return result;
   }
@@ -126,9 +171,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
     ).bind(id).run()
 
     if (result.changes > 0) {
-      // Clear statistics and heatmap caches as we've deleted a language
+      // Clear all related caches
       this.clearStatisticsCache();
       this.clearHeatmapCache();
+      this.clearLanguagesCache();
       return true;
     }
 
@@ -189,6 +235,109 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return expression || null
   }
 
+  async getExpressionsByIds(ids: number[]): Promise<Expression[]> {
+    if (ids.length === 0) return [];
+
+    // Process in chunks to avoid D1 parameter limits
+    const chunkSize = 100;
+    const allResults: Expression[] = [];
+
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const placeholders = chunk.map(() => '?').join(',');
+      const { results } = await this.db.prepare(
+        `SELECT * FROM expressions WHERE id IN (${placeholders})`
+      ).bind(...chunk).all<Expression>();
+      allResults.push(...results);
+    }
+
+    return allResults;
+  }
+
+  async upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
+    const results: Array<{ id: number, expression?: Expression, error?: string }> = [];
+
+    // Prepare statements for batch execution
+    const statements = expressions.map(expr => {
+      if (!expr.text || !expr.language_code) {
+        throw new Error('Text and language_code are required');
+      }
+
+      const id = this.stableExpressionId(expr.text, expr.language_code);
+
+      const bindValues = [
+        id,
+        expr.text,
+        expr.meaning_id !== undefined ? expr.meaning_id : null,
+        expr.audio_url || null,
+        expr.language_code,
+        expr.region_code || null,
+        expr.region_name || null,
+        expr.region_latitude !== undefined ? expr.region_latitude : null,
+        expr.region_longitude !== undefined ? expr.region_longitude : null,
+        expr.tags || null,
+        expr.source_type || 'user',
+        expr.source_ref || null,
+        expr.review_status || 'pending',
+        expr.created_by || null,
+        expr.updated_by || null
+      ];
+
+      return this.db.prepare(
+        `INSERT INTO expressions (
+          id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
+          region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          meaning_id = excluded.meaning_id,
+          tags = CASE WHEN excluded.tags IS NOT NULL THEN excluded.tags ELSE tags END,
+          updated_at = CURRENT_TIMESTAMP,
+          updated_by = excluded.updated_by
+        RETURNING *`
+      ).bind(...bindValues);
+    });
+
+    // Execute in batches to satisfy D1 limits
+    const batchSize = 100;
+    for (let i = 0; i < statements.length; i += batchSize) {
+      const batch = statements.slice(i, i + batchSize);
+      const batchBatch = await this.db.batch<Expression>(batch);
+
+      batchBatch.forEach((res, index) => {
+        const originalIndex = i + index;
+        const exprId = this.stableExpressionId(expressions[originalIndex].text!, expressions[originalIndex].language_code!);
+
+        if (res.results && res.results.length > 0) {
+          results.push({ id: exprId, expression: res.results[0] });
+        } else if (res.meta?.changes && res.meta.changes > 0) {
+          // Success but no expression returned (matched types)
+          results.push({ id: exprId });
+        } else if (res.error) {
+          results.push({ id: exprId, error: res.error });
+        } else {
+          results.push({ id: exprId, error: 'Statement executed but returned no data' });
+        }
+      });
+    }
+
+    // Update language_stats for potentially new expressions
+    // This is a bulk update: for each language in the expressions, recount or increment.
+    // Simplest is to just re-sync language_stats for the affected languages.
+    const affectedLanguages = [...new Set(expressions.map(e => e.language_code).filter(Boolean))];
+    for (const lang of affectedLanguages) {
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        SELECT ?, COUNT(*) FROM expressions WHERE language_code = ?
+      `).bind(lang, lang).run();
+    }
+
+    // Clear caches
+    this.clearStatisticsCache();
+    this.clearHeatmapCache();
+
+    return results;
+  }
+
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
     try {
       if (!expression.text || !expression.language_code) {
@@ -230,6 +379,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
         throw new Error('Failed to create expression')
       }
 
+      // Update language_stats
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        VALUES (?, COALESCE((SELECT expression_count FROM language_stats WHERE language_code = ?), 0) + 1)
+      `).bind(languageCode, languageCode).run();
+
       // Clear statistics and heatmap caches as we've added a new expression
       this.clearStatisticsCache();
       this.clearHeatmapCache();
@@ -270,37 +425,196 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async deleteExpression(id: number): Promise<boolean> {
-    const result: any = await this.db.prepare(
+    const expression = await this.getExpressionById(id);
+    if (!expression) return false;
+
+    const { success } = await this.db.prepare(
       'DELETE FROM expressions WHERE id = ?'
     ).bind(id).run()
 
-    if (result.changes > 0) {
+    if (success) {
+      // Update language_stats
+      await this.db.prepare(`
+        UPDATE language_stats 
+        SET expression_count = MAX(0, expression_count - 1) 
+        WHERE language_code = ?
+      `).bind(expression.language_code).run();
+
       // Clear statistics and heatmap caches as we've deleted an expression
       this.clearStatisticsCache();
       this.clearHeatmapCache();
-      return true;
     }
 
-    return false;
+    return success
+  }
+
+  async migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression> {
+    const db = this.db;
+
+    // 1. Fetch current expression to ensure it exists and get its data
+    const current = await this.getExpressionById(oldId);
+    if (!current) {
+      throw new Error('Expression not found');
+    }
+
+    // 2. Determine new ID
+    const text = newExpression.text || current.text;
+    const languageCode = newExpression.language_code || current.language_code;
+    const newId = this.stableExpressionId(text, languageCode);
+
+    // Get current regional data if not provided
+    const regionName = newExpression.region_name !== undefined ? newExpression.region_name : current.region_name;
+    const regionLat = newExpression.region_latitude !== undefined ? newExpression.region_latitude : current.region_latitude;
+    const regionLong = newExpression.region_longitude !== undefined ? newExpression.region_longitude : current.region_longitude;
+
+    if (oldId === newId) {
+      // If ID hasn't changed, just do a normal update
+      return this.updateExpression(oldId, newExpression);
+    }
+
+    // 3. Check if new ID already exists (collision)
+    // If it exists, we might want to merge, but for now we throw error to be safe
+    // or we could handle it by deleting old and letting the existing one stand.
+    const collision = await this.getExpressionById(newId);
+    if (collision) {
+      // If the target ID already exists, we effectively delete the old one 
+      // and redirect all its references to the existing one.
+
+      const statements: any[] = [];
+
+      // - Update meaning_id references
+      statements.push(db.prepare(`UPDATE expressions SET meaning_id = ? WHERE meaning_id = ?`).bind(newId, oldId));
+
+      // - Update collection items
+      statements.push(db.prepare(`UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
+
+      // - Delete old
+      statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+
+      await db.batch(statements);
+
+      // Update language_stats if collision occurred (old record deleted)
+      await this.db.prepare(`
+        UPDATE language_stats SET expression_count = MAX(0, expression_count - 1)
+        WHERE language_code = ?
+      `).bind(current.language_code).run();
+
+      return collision;
+    }
+
+    // 4. Prepare the new record data
+    const merged = { ...current, ...newExpression, id: newId };
+
+    // 5. Execute migration in a single transaction (batch)
+    const statements: any[] = [];
+
+    // - Create version snapshot of OLD record
+    statements.push(db.prepare(
+      `INSERT INTO expression_versions (expression_id, text, meaning_id, audio_url, region_name, region_latitude, region_longitude, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      oldId, current.text, current.meaning_id || null, current.audio_url || null,
+      current.region_name || null, current.region_latitude || null, current.region_longitude || null,
+      newExpression.updated_by || current.created_by || 'system'
+    ));
+
+    // - Update all expressions that point to oldId as meaning_id to point to newId
+    statements.push(db.prepare(
+      `UPDATE expressions SET meaning_id = ? WHERE meaning_id = ?`
+    ).bind(newId, oldId));
+
+    // - Update collection items
+    statements.push(db.prepare(
+      `UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`
+    ).bind(newId, oldId));
+
+    // - Insert the NEW expression
+    const bindValues = [
+      newId,
+      merged.text,
+      merged.meaning_id !== undefined ? merged.meaning_id : null,
+      merged.audio_url || null,
+      merged.language_code,
+      merged.region_code || null,
+      merged.region_name || null,
+      merged.region_latitude !== undefined ? merged.region_latitude : null,
+      merged.region_longitude !== undefined ? merged.region_longitude : null,
+      merged.tags || null,
+      merged.source_type || 'user',
+      merged.source_ref || null,
+      merged.review_status || 'pending',
+      merged.created_by || null,
+      merged.updated_by || null
+    ];
+
+    statements.push(db.prepare(
+      `INSERT INTO expressions (
+        id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
+        region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(...bindValues));
+
+    // - Delete the OLD record
+    statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+
+    // Run the batch
+    await db.batch(statements);
+
+    // Update language_stats if language changed or just to be safe
+    const affectedLangs = [...new Set([current.language_code, merged.language_code])];
+    for (const lang of affectedLangs) {
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+        SELECT ?, COUNT(*) FROM expressions WHERE language_code = ?
+      `).bind(lang, lang).run();
+    }
+
+    // Fetch and return the new record
+    const result = await this.getExpressionById(newId);
+    if (!result) throw new Error('Migration failed');
+
+    // Clear caches
+    this.clearStatisticsCache();
+    this.clearHeatmapCache();
+
+    return result;
   }
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
-    let sqlQuery = 'SELECT * FROM expressions WHERE text LIKE ?'
-    const bindings: any[] = [`%${query}%`]
+    if (!query.trim()) return []
+
+    // FTS5 搜索逻辑：使用 MATCH 实现极速检索
+    // 将查询转义并添加 * 实现前缀匹配
+    const ftsQuery = `"${query.replace(/"/g, '""')}"*`
+
+    let sqlQuery = `
+    SELECT e.* 
+    FROM expressions e
+    JOIN expressions_fts fts ON e.id = fts.rowid
+    WHERE expressions_fts MATCH ?
+  `
+    const bindings: any[] = [ftsQuery]
 
     if (fromLang) {
-      sqlQuery += ' AND language_code = ?'
+      sqlQuery += ' AND e.language_code = ?'
       bindings.push(fromLang)
     }
 
     if (region) {
-      sqlQuery += ' AND region_name LIKE ?'
+      sqlQuery += ' AND e.region_name LIKE ?'
       bindings.push(`%${region}%`)
     }
 
-    // 使用字符串匹配函数优化排序
-    sqlQuery += ' ORDER BY CASE WHEN text = ? THEN 0 WHEN text LIKE ? THEN 1 WHEN text LIKE ? THEN 2 ELSE 3 END, LENGTH(text), created_at DESC LIMIT ? OFFSET ?'
-    bindings.push(query, `${query}%`, `%${query}`, limit, skip);
+    // 排序策略：精确匹配优先 > FTS 相关性 (rank) > 文本长度 > 创建时间
+    sqlQuery += ` 
+    ORDER BY 
+      CASE WHEN e.text = ? THEN 0 ELSE 1 END,
+      fts.rank, 
+      LENGTH(e.text), 
+      e.created_at DESC 
+    LIMIT ? OFFSET ?
+  `
+    bindings.push(query, limit, skip)
 
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
     return results
@@ -849,9 +1163,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     console.log('Fetching fresh statistics from database');
 
-    // Get total expressions count
+    // Get total expressions count from language_stats (materialized)
     const totalExpressionsResult = await this.db.prepare(
-      'SELECT COUNT(*) as count FROM expressions'
+      'SELECT SUM(expression_count) as count FROM language_stats'
     ).first<{ count: number }>();
     console.log('Total expressions result:', totalExpressionsResult);
 
@@ -908,17 +1222,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         l.name as language_name,
         l.region_name,
         l.region_code,
-        COALESCE(e.expression_count, 0) as count,
+        COALESCE(ls.expression_count, 0) as count,
         l.region_latitude as latitude,
         l.region_longitude as longitude
       FROM languages l
-      LEFT JOIN (
-        SELECT 
-          language_code, 
-          COUNT(*) as expression_count
-        FROM expressions 
-        GROUP BY language_code
-      ) e ON l.code = e.language_code
+      LEFT JOIN language_stats ls ON l.code = ls.language_code
       WHERE l.is_active = 1 
         AND l.region_name IS NOT NULL 
         AND l.region_latitude IS NOT NULL 
@@ -944,10 +1252,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
     console.log('Heatmap cache cleared');
   }
 
+  // Method to clear languages cache
+  clearLanguagesCache(): void {
+    languagesCache.data = null;
+    languagesCache.timestamp = null;
+    console.log('Languages cache cleared');
+  }
+
   // Collections
   async getCollections(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Collection[]> {
     let query = `
-      SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count 
+      SELECT c.*, c.items_count 
       FROM collections c
     `
     const params: any[] = []
@@ -977,7 +1292,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async getCollectionById(id: number): Promise<Collection | null> {
     const collection = await this.db.prepare(
-      'SELECT c.*, (SELECT COUNT(*) FROM collection_items WHERE collection_id = c.id) as items_count FROM collections c WHERE c.id = ?'
+      'SELECT c.*, c.items_count FROM collections c WHERE c.id = ?'
     ).bind(id).first<Collection>()
     return collection || null
   }
@@ -1091,6 +1406,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error('Failed to add item to collection')
     }
 
+    // Increment items_count in collections
+    await this.db.prepare('UPDATE collections SET items_count = items_count + 1 WHERE id = ?').bind(collectionId).run()
+
     return result;
   }
 
@@ -1099,7 +1417,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM collection_items WHERE collection_id = ? AND expression_id = ?'
     ).bind(collectionId, expressionId).run()
 
-    return result.changes > 0;
+    const changed = result.changes > 0;
+    if (changed) {
+      // Decrement items_count in collections
+      await this.db.prepare('UPDATE collections SET items_count = MAX(0, items_count - 1) WHERE id = ?').bind(collectionId).run()
+    }
+
+    return changed;
   }
 
   async getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null> {
@@ -1126,7 +1450,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
    * @param languageCode 
    * @returns 
    */
-  private stableExpressionId(text: string, languageCode: string): number {
+  public stableExpressionId(text: string, languageCode: string): number {
     return this.stableHashId(`${text}|${languageCode}`)
   }
 

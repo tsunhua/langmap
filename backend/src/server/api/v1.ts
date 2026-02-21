@@ -103,6 +103,54 @@ async function requireAdmin(c: Context, next: Next) {
   await next()
 }
 
+/**
+ * Workers Cache API Middleware
+ * Caches GET requests at the Cloudflare Edge level.
+ * @param maxAge TTL in seconds
+ */
+const cacheMiddleware = (maxAge: number = 3600) => {
+  return async (c: Context, next: Next) => {
+    // Only cache GET requests and skip caching if not in production/remote dev or if explicit bypass is requested
+    if (c.req.method !== 'GET' || c.req.header('Cache-Control') === 'no-cache') {
+      return await next()
+    }
+
+    const url = new URL(c.req.url)
+    // Create a cache key from the request. 
+    // We clone the request to ensure we don't consume the body (though GETs don't have bodies)
+    const cacheKey = new Request(url.toString(), c.req.raw)
+    const cache = (caches as any).default
+
+    try {
+      const cachedResponse = await cache.match(cacheKey)
+      if (cachedResponse) {
+        console.log(`[L2 Cache] Hit: ${url.pathname}${url.search}`);
+        return cachedResponse
+      }
+    } catch (e) {
+      console.warn('[L2 Cache] Match error (likely local dev without --remote):', e)
+    }
+
+    await next()
+
+    // Cache the response if successful and has content
+    if (c.res && c.res.status === 200 && cache) {
+      try {
+        // Clone the response to avoid consuming the original body stream
+        const responseToCache = c.res.clone()
+        // Override Cache-Control for the stored version
+        responseToCache.headers.set('Cache-Control', `public, max-age=${maxAge}`)
+
+        // Use waitUntil to ensure the cache operation completes after response is sent
+        c.executionCtx.waitUntil(cache.put(cacheKey, responseToCache))
+        console.log(`[L2 Cache] Miss/Put: ${url.pathname}${url.search}`);
+      } catch (e) {
+        console.error('[L2 Cache] Put error:', e)
+      }
+    }
+  }
+}
+
 // Optional authentication middleware - populates user context if token is present but doesn't block if missing
 async function optionalAuth(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization')
@@ -117,7 +165,7 @@ async function optionalAuth(c: Context, next: Next) {
 }
 
 // GET /api/v1/heatmap
-api.get('/heatmap', async (c) => {
+api.get('/heatmap', cacheMiddleware(600), async (c) => {
   try {
     const db = getDB(c)
     const heatmapData = await db.getHeatmapData()
@@ -129,7 +177,7 @@ api.get('/heatmap', async (c) => {
 })
 
 // GET /api/v1/statistics
-api.get('/statistics', async (c) => {
+api.get('/statistics', cacheMiddleware(3600), async (c) => {
   try {
     const db = getDB(c)
     const statistics = await db.getStatistics()
@@ -141,7 +189,7 @@ api.get('/statistics', async (c) => {
 })
 
 // GET /api/v1/languages
-api.get('/languages', async (c) => {
+api.get('/languages', cacheMiddleware(1800), async (c) => {
   try {
     console.log('GET /api/v1/languages');
     const db = getDB(c)
@@ -245,7 +293,7 @@ api.delete('/languages/:id', requireAuth, async (c) => {
 })
 
 // GET /api/v1/expressions
-api.get('/expressions', async (c) => {
+api.get('/expressions', cacheMiddleware(300), async (c) => {
   try {
     console.log('GET /api/v1/expressions');
     const db = getDB(c)
@@ -288,6 +336,113 @@ api.post('/expressions', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in POST /expressions:', error);
     return c.json({ error: 'Failed to create expression', details: error.message }, 500)
+  }
+})
+
+// en-GB: 英语（英国）
+// en-US: 英语（美国）
+// zh-TW: 繁体中文
+// zh-CN: 简体中文
+// hi-IN: 印地语
+// es-ES: 西班牙语
+// fr-FR: 法语
+// ar-SA: 阿拉伯语
+// bn-IN: 孟加拉语
+// pt-BR: 巴西葡萄牙语
+// ru-RU: 俄语
+// ur-PK: 乌尔都语
+// id-ID: 印度尼西亚语
+// de-DE: 德语
+// ja-JP: 日语
+// ko-KR: 韩语
+// tr-TR: 土耳其语
+// it-IT: 意大利语
+const LANGUAGE_PRIORITY = [
+  'en-GB', 'en-US', 'zh-TW', 'zh-CN',
+  'hi-IN', 'es-ES', 'fr-FR', 'ar-SA',
+  'bn-IN', 'pt-BR', 'ru-RU', 'ur-PK',
+  'id-ID', 'de-DE', 'ja-JP', 'ko-KR',
+  'tr-TR', 'it-IT'
+];
+
+// POST /api/v1/expressions/batch
+api.post('/expressions/batch', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { expressions } = body
+
+    if (!expressions || !Array.isArray(expressions)) {
+      return c.json({ error: 'Invalid expressions format' }, 400)
+    }
+
+    // Get user info from middleware
+    const user = c.get('user');
+    const username = user.username;
+
+    // 1. Calculate IDs for all input expressions
+    const exprsWithIds = expressions.map(expr => {
+      if (!expr.text || !expr.language_code) {
+        throw new Error('Text and language_code are required for all expressions');
+      }
+      return {
+        ...expr,
+        id: db.stableExpressionId(expr.text, expr.language_code),
+        created_by: expr.created_by || username
+      };
+    });
+
+    // 2. Batch lookup existing expressions to find current meaning_id associations
+    const existingIds = exprsWithIds.map(e => e.id);
+    const existingExprs = await db.getExpressionsByIds(existingIds);
+    const existingMap = new Map(existingExprs.map(e => [e.id, e]));
+
+    // 3. Pre-sorting by language priority
+    const sortedExprs = [...exprsWithIds].sort((a, b) => {
+      const indexA = LANGUAGE_PRIORITY.indexOf(a.language_code);
+      const indexB = LANGUAGE_PRIORITY.indexOf(b.language_code);
+
+      const priorityA = indexA === -1 ? 999 : indexA;
+      const priorityB = indexB === -1 ? 999 : indexB;
+
+      return priorityA - priorityB;
+    });
+
+    // 4. Smart Anchor Selection
+    let finalMeaningId: number | undefined;
+
+    // First pass: try to find an existing meaning_id association in sorted order
+    for (const expr of sortedExprs) {
+      const existing = existingMap.get(expr.id);
+      if (existing && existing.meaning_id) {
+        finalMeaningId = existing.meaning_id;
+        break;
+      }
+    }
+
+    // Second pass: fallback to the first sorted expression ID if no existing association
+    if (!finalMeaningId && sortedExprs.length > 0) {
+      finalMeaningId = sortedExprs[0].id;
+    }
+
+    // 5. Apply the determined meaning_id to all expressions
+    const finalExprs = exprsWithIds.map(expr => ({
+      ...expr,
+      meaning_id: finalMeaningId
+    }));
+
+    // 6. Batch UPSERT
+    const results = await db.upsertExpressions(finalExprs);
+
+    return c.json({
+      success: true,
+      meaning_id: finalMeaningId,
+      results
+    }, 201);
+
+  } catch (error: any) {
+    console.error('Error in POST /expressions/batch:', error);
+    return c.json({ error: 'Failed to process batch submission', details: error.message }, 500)
   }
 })
 
@@ -337,7 +492,7 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
       updated_by: body.updated_by || updatedBy
     };
 
-    const expression = await db.updateExpression(exprId, expressionData)
+    const expression = await db.migrateExpressionId(exprId, expressionData)
     if (!expression) {
       return c.json({ error: 'Expression not found' }, 404)
     }
@@ -448,7 +603,7 @@ api.get('/expressions/:expr_id/translations', async (c) => {
 
 
 // GET /api/v1/search
-api.get('/search', async (c) => {
+api.get('/search', cacheMiddleware(3600), async (c) => {
   try {
     console.log('GET /api/v1/search');
     const db = getDB(c)
@@ -473,7 +628,7 @@ api.get('/search', async (c) => {
 
 
 // GET /api/v1/ui-translations/:language
-api.get('/ui-translations/:language', async (c) => {
+api.get('/ui-translations/:language', cacheMiddleware(3600), async (c) => {
   try {
     console.log('GET /api/v1/ui-translations/:language');
     const db = getDB(c)
