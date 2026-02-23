@@ -22,35 +22,61 @@
         </button>
       </div>
       <nav class="p-4">
-        <router-link to="/" class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+        <router-link to="/" class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
           {{ $t('home') }}
         </router-link>
         <router-link to="/search"
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           {{ $t('search') }}
         </router-link>
         <router-link 
-          to="/create-expression" 
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50"
-          @click="mobileMenuOpen = false"
-        >
-          {{ $t('create_title') }}
-        </router-link>
-        <router-link 
           to="/collections" 
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50"
           @click="mobileMenuOpen = false"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
           {{ $t('collections') }}
         </router-link>
         <router-link 
+          to="/create-expression" 
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ $t('create_title') }}
+        </router-link>
+        <router-link
+          to="/languages"
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          {{ $t('languages_title') }}
+        </router-link>
+        <router-link 
           to="/about" 
-          class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {{ $t('about') }}
         </router-link>
 
@@ -126,24 +152,46 @@
           <div class="flex items-center gap-6">
           <!-- Desktop navigation -->
           <nav class="hidden lg:flex items-center gap-6">
-            <router-link to="/" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
+            <router-link to="/" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
               {{ $t('home') }}
             </router-link>
-            <router-link to="/search" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
+            <router-link to="/search" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               {{ $t('search') }}
             </router-link>
-            <router-link to="/collections" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
+            <router-link to="/collections" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
               {{ $t('collections') || 'Collections' }}
             </router-link>
-            <router-link to="/create-expression" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
+            <router-link to="/create-expression" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
               {{ $t('create_title') }}
             </router-link>
-            <router-link to="/about" class="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-              active-class="text-blue-600">
+            <router-link to="/languages" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              {{ $t('languages_title') }}
+            </router-link>
+            <router-link to="/about" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {{ $t('about') }}
             </router-link>
           </nav>

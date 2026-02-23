@@ -80,6 +80,11 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/languages',
+    name: 'LanguageList',
+    component: () => import('../pages/LanguageList.vue')
+  },
+  {
     path: '/languages/:code',
     name: 'LanguageDetail',
     component: () => import('../pages/LanguageDetail.vue'),
