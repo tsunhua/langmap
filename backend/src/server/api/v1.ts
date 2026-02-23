@@ -302,7 +302,9 @@ api.get('/expressions', cacheMiddleware(300), async (c) => {
     const language = c.req.query('language') || undefined
     const meaningIdParam = c.req.query('meaning_id');
     const meaningId = meaningIdParam ? parseInt(meaningIdParam) : undefined
-    const expressions = await db.getExpressions(skip, limit, language, meaningId)
+    const tagPrefix = c.req.query('tag') || undefined
+    const excludeTagPrefix = c.req.query('exclude_tag') || undefined
+    const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix)
     return c.json(expressions)
   } catch (error: any) {
     console.error('Error in GET /expressions:', error);

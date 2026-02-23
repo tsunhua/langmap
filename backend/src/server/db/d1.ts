@@ -182,7 +182,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Expression operations
-  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[]): Promise<Expression[]> {
+  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]> {
     let query = 'SELECT * FROM expressions'
     const bindings: any[] = []
 
@@ -217,6 +217,20 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     }
 
+    if (tagPrefix) {
+      // Filter expressions that have the specified tag
+      // tags is JSON array string like ["langmap.key", "category.name"]
+      // Match the tag name anywhere in the tags field
+      whereConditions.push("tags LIKE ?");
+      bindings.push(`%${tagPrefix}%`);
+    }
+
+    if (excludeTagPrefix) {
+      // Filter expressions that do NOT have the specified tag
+      whereConditions.push("(tags IS NULL OR tags NOT LIKE ?)");
+      bindings.push(`%${excludeTagPrefix}%`);
+    }
+
     if (whereConditions.length > 0) {
       query += ' WHERE ' + whereConditions.join(' AND ');
     }
@@ -224,7 +238,34 @@ export class D1DatabaseService extends AbstractDatabaseService {
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
     bindings.push(limit, skip)
 
+    console.log('[getExpressions] SQL:', query);
+    console.log('[getExpressions] Bindings:', bindings);
+    console.log('[getExpressions] Filter: tagPrefix=', tagPrefix, 'excludeTagPrefix=', excludeTagPrefix);
+
     const { results } = await this.db.prepare(query).bind(...bindings).all<Expression>()
+
+    // Log first few results for debugging
+    console.log('[getExpressions] Result count:', results.length);
+    if (results.length > 0) {
+      console.log('[getExpressions] First result id:', results[0].id, 'tags:', results[0].tags);
+      if (excludeTagPrefix) {
+        const tags = results[0].tags;
+        const includesMatch = tags?.includes(excludeTagPrefix);
+        const likeMatch = tags?.includes(excludeTagPrefix);
+        console.log('[getExpressions] Exclude filter check:', {
+          excludeTagPrefix,
+          tagsValue: tags,
+          tagsType: typeof tags,
+          tagsLength: tags?.length,
+          matchPattern: `%${excludeTagPrefix}%`,
+          includesMatch,
+          likeMatch,
+          firstChar: tags?.[0],
+          lastChar: tags?.[tags.length - 1]
+        });
+      }
+    }
+
     return results
   }
 
