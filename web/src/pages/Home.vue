@@ -24,7 +24,6 @@
             <input 
               v-model="searchQuery"
               @keyup.enter.prevent="goToSearch"
-              :placeholder="$t('search_placeholder')"
               class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none"
             />
             <button 

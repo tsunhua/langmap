@@ -59,9 +59,33 @@
         v-model="searchQuery"
         type="text"
         :placeholder="`Search in ${languageName || languageCode}`"
-        class="w-full border border-gray-300 rounded-lg px-4 py-2"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3"
         @input="handleSearch"
       />
+
+      <!-- Tag Filters -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">包含标签</label>
+          <input
+            v-model="tagPrefix"
+            type="text"
+            placeholder="eg: langmap"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            @input="handleFilterChange"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">排除标签</label>
+          <input
+            v-model="excludeTagPrefix"
+            type="text"
+            placeholder="eg: langmap"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            @input="handleFilterChange"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Expressions List -->
@@ -151,6 +175,8 @@ export default {
     const searchQuery = ref('')
     const itemsPerPage = 20
     const hasMore = ref(false) // Track if there might be more items
+    const tagPrefix = ref('')
+    const excludeTagPrefix = ref('')
 
     // Language dropdown state
     const showLanguageDropdown = ref(false)
@@ -218,9 +244,15 @@ export default {
           // Use expressions API for browsing all expressions
           useSearchAPI = false
           url = `/api/v1/expressions?language=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
+          if (tagPrefix.value) {
+            url += `&tag=${encodeURIComponent(tagPrefix.value)}`
+          }
+          if (excludeTagPrefix.value) {
+            url += `&exclude_tag=${encodeURIComponent(excludeTagPrefix.value)}`
+          }
         }
 
-        console.log('Fetching expressions:', { url, currentPage: currentPage.value, skip, limit: itemsPerPage, searchQuery: searchQuery.value, useSearchAPI })
+        console.log('Fetching expressions:', { url, currentPage: currentPage.value, skip, limit: itemsPerPage, searchQuery: searchQuery.value, tagPrefix: tagPrefix.value, excludeTagPrefix: excludeTagPrefix.value, useSearchAPI })
 
         const response = await fetch(url)
         const data = await response.json()
@@ -294,6 +326,11 @@ export default {
       currentPage.value = 1
       fetchExpressions()
     }, 600)
+
+    const handleFilterChange = debounce(() => {
+      currentPage.value = 1
+      fetchExpressions()
+    }, 400)
 
     const nextPage = () => {
       if (canGoNext.value) {
@@ -370,8 +407,10 @@ export default {
     watch(languageCode, (newCode, oldCode) => {
       console.log('Language code changed:', { oldCode, newCode })
       if (newCode && newCode !== oldCode) {
-        // Reset search, pagination and expressions
+        // Reset search, filters, pagination and expressions
         searchQuery.value = ''
+        tagPrefix.value = ''
+        excludeTagPrefix.value = ''
         currentPage.value = 1
         expressions.value = []
         // Fetch new language info and expressions
@@ -397,10 +436,13 @@ export default {
       currentPage,
       totalPages,
       searchQuery,
+      tagPrefix,
+      excludeTagPrefix,
       displayedPages,
       canGoNext,
       fetchExpressions,
       handleSearch,
+      handleFilterChange,
       nextPage,
       prevPage,
       goToPage,

@@ -106,7 +106,7 @@ export abstract class AbstractDatabaseService {
   abstract deleteLanguage(id: number): Promise<boolean>
 
   // Expression operations
-  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[]): Promise<Expression[]>
+  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
   abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
