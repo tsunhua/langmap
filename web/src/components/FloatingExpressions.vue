@@ -4,7 +4,7 @@
       v-for="(expr, index) in floatingExpressions"
       :key="expr.id"
       class="floating-expression"
-      :class="{ 'paused': isHovered[index] }"
+      :class="['color-' + (index % 6), { 'paused': isHovered[index] }]"
       :style="getExpressionStyle(index)"
       @mouseenter="isHovered[index] = true"
       @mouseleave="isHovered[index] = false"
@@ -60,13 +60,16 @@ export default {
         expressions.value = data || []
 
         const count = Math.min(data.length, 10)
+        const minY = 10
+        const maxY = 70
+        const spacing = (maxY - minY) / Math.max(count - 1, 1)
         positions.value = Array.from({ length: count }, (_, index) => ({
-          x: -15 - (index * 8),
-          y: 15 + (index * 7)
+          x: -10 - (index * 4),
+          y: minY + (index * spacing)
         }))
 
         velocities.value = Array.from({ length: count }, () => ({
-          speed: 0.02 + Math.random() * 0.02
+          speed: 0.015 + Math.random() * 0.025
         }))
 
         isHovered.value = {}
@@ -135,11 +138,10 @@ export default {
 .floating-expression {
   position: absolute;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
-  color: #334155;
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   pointer-events: auto;
   cursor: pointer;
@@ -149,6 +151,30 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   z-index: 1;
+}
+
+.floating-expression.color-0 {
+  color: #64748b;
+}
+
+.floating-expression.color-1 {
+  color: #8b5cf6;
+}
+
+.floating-expression.color-2 {
+  color: #3b82f6;
+}
+
+.floating-expression.color-3 {
+  color: #14b8a6;
+}
+
+.floating-expression.color-4 {
+  color: #f59e0b;
+}
+
+.floating-expression.color-5 {
+  color: #ec4899;
 }
 
 .floating-expression:hover {

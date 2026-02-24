@@ -1,42 +1,35 @@
 <template>
   <div class="min-h-screen -mx-4 sm:-mx-6 lg:-mx-8">
     <!-- Hero Section - Full Width -->
-    <div class="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-24 px-4 sm:px-6 lg:px-8">
-      <!-- Decorative elements -->
-      <div class="absolute inset-0 overflow-hidden z-0">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div class="relative bg-slate-50 px-4 sm:px-6 lg:px-8">
+      <!-- Title -->
+      <div class="relative max-w-4xl mx-auto text-center pt-10 pb-4 z-10">
+        <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
+          <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home_title') }}</span>
+        </h1>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="relative max-w-2xl mx-auto pb-6 z-10">
+        <div class="flex gap-3 bg-white rounded-2xl shadow-xl p-2">
+          <input 
+            v-model="searchQuery"
+            @keyup.enter.prevent="goToSearch"
+            :placeholder="$t('placeholder')"
+            class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none"
+          />
+          <button 
+            @click="goToSearch"
+            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+          >
+            {{ $t('search') }}
+          </button>
+        </div>
       </div>
 
       <!-- Floating Expressions - Background Layer -->
-      <FloatingExpressions />
-
-      <div class="relative max-w-4xl mx-auto text-center z-10">
-        <h1 class="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
-          <!-- {{ $t('home_title') }} -->
-          <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home_title') }}</span>
-        </h1>
-        <p class="text-xl md:text-2xl text-slate-600 mb-10">
-          {{ $t('subtitle') }}
-        </p>
-        
-        <!-- Search Bar -->
-        <div class="max-w-2xl mx-auto">
-          <div class="flex gap-3 bg-white rounded-2xl shadow-xl p-2">
-            <input 
-              v-model="searchQuery"
-              @keyup.enter.prevent="goToSearch"
-              class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none"
-            />
-            <button 
-              @click="goToSearch"
-              class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
-            >
-              {{ $t('search') }}
-            </button>
-          </div>
-        </div>
+      <div class="h-48 relative">
+        <FloatingExpressions />
       </div>
     </div>
 
