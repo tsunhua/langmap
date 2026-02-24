@@ -12,26 +12,18 @@
       <!-- Left column: current item + translations as a unified list -->
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+          <div class="border-b border-slate-200 px-6 py-4">
             <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
-            <button
-              v-if="canDeleteExpression"
-              @click="handleDelete"
-              :disabled="deleting"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              {{ deleting ? $t('deleting') : $t('delete') }}
-            </button>
           </div>
           <div class="p-3">
-            <ExpressionCard 
-              :item="item" 
-              :key="item.id" 
+            <ExpressionCard
+              :item="item"
+              :key="item.id"
               :editable="true"
+              :can-delete="canDeleteExpression"
+              :is-deleting="deleting"
               @update-tags="handleTagsUpdate"
+              @delete="handleDelete"
             />
           </div>
         </div>
