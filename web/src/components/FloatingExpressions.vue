@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+  <div ref="container" class="absolute inset-0 overflow-hidden pointer-events-none">
     <div
       v-for="(expr, index) in floatingExpressions"
       :key="expr.id"
@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -28,8 +28,11 @@ export default {
     const expressions = ref([])
     const loading = ref(true)
     const positions = ref([])
+    const pixelPositions = ref([])
     const velocities = ref([])
     const isHovered = ref({})
+    const containerWidth = ref(0)
+    const container = ref(null)
 
     const floatingExpressions = computed(() => {
       return expressions.value.slice(0, 10)
@@ -60,19 +63,22 @@ export default {
         expressions.value = data || []
 
         const count = Math.min(data.length, 10)
-        const minY = 10
-        const maxY = 70
-        const spacing = (maxY - minY) / Math.max(count - 1, 1)
-        positions.value = Array.from({ length: count }, (_, index) => ({
-          x: -10 - (index * 4),
-          y: minY + (index * spacing)
+        const startY = 10
+        const endY = 70
+        const spacing = (endY - startY) / Math.max(count - 1, 1)
+
+        pixelPositions.value = Array.from({ length: count }, (_, index) => ({
+          x: -(200 + Math.random() * 300),
+          y: startY + (index * spacing)
         }))
 
         velocities.value = Array.from({ length: count }, () => ({
-          speed: 0.015 + Math.random() * 0.025
+          speed: 0.3 + Math.random() * 1.0
         }))
 
         isHovered.value = {}
+
+        updateContainerWidth()
       } catch (e) {
         console.error('Failed to load expressions:', e)
       } finally {
@@ -89,32 +95,59 @@ export default {
     }
 
     const animate = () => {
-      if (loading.value || positions.value.length === 0) {
+      if (loading.value || pixelPositions.value.length === 0) {
         requestAnimationFrame(animate)
         return
       }
 
-      const newPositions = positions.value.map((pos, index) => {
+      const startY = 10
+      const endY = 70
+      const spacing = (endY - startY) / Math.max(pixelPositions.value.length - 1, 1)
+
+      const newPixelPositions = pixelPositions.value.map((pos, index) => {
         if (isHovered.value[index]) return pos
 
-        const vel = velocities.value[index] || { speed: 0.015 }
+        const vel = velocities.value[index] || { speed: 0.5 }
         let newX = pos.x + vel.speed
         let newY = pos.y
 
-        if (newX > 105) {
-          newX = -20
+        const maxWidth = containerWidth.value || 1000
+        if (newX > maxWidth + 200) {
+          newX = -(200 + Math.random() * 300)
+          newY = startY + (index * spacing)
         }
 
         return { x: newX, y: newY }
+      })
+
+      pixelPositions.value = newPixelPositions
+
+      const newPositions = newPixelPositions.map(pos => {
+        const maxWidth = containerWidth.value || 1000
+        const xPercent = (pos.x / maxWidth) * 100
+        return { x: xPercent, y: pos.y }
       })
 
       positions.value = newPositions
       requestAnimationFrame(animate)
     }
 
+    const updateContainerWidth = () => {
+      const containerEl = container.value
+      if (containerEl) {
+        containerWidth.value = containerEl.offsetWidth
+      }
+    }
+
     onMounted(() => {
       loadExpressions()
+      updateContainerWidth()
+      window.addEventListener('resize', updateContainerWidth)
       animate()
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', updateContainerWidth)
     })
 
     watch(locale, () => {
@@ -127,6 +160,7 @@ export default {
       loading,
       positions,
       isHovered,
+      container,
       goToExpression,
       getExpressionStyle
     }
