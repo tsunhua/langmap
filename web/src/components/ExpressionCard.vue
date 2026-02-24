@@ -287,6 +287,7 @@ export default {
       showCollectionModal,
       openCollectionModal,
       handleUnlink,
+      handleDelete,
       isAddingTag,
       newTagValue,
       removeTag,
