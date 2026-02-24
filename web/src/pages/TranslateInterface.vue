@@ -33,7 +33,7 @@
         <div v-for="(result, lang) in syncResult" :key="lang" class="flex items-center gap-2">
           <span class="font-medium text-yellow-900">{{ lang }}:</span>
           <span class="text-yellow-800">新增 {{ result.added }} 条</span>
-          <span v-if="result.skipped > 0" class="text-yellow-600">跳过 {{ result.skipped }} 条</span>
+          <span v-if="result.updated > 0" class="text-green-600">更新 {{ result.updated }} 条</span>
           <span v-if="result.errors && result.errors.length > 0" class="text-red-600">错误: {{ result.errors.join(', ') }}</span>
         </div>
       </div>
