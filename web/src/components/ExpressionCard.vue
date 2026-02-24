@@ -120,6 +120,17 @@
               </svg>
             </button>
             <button
+              v-if="canDelete"
+              @click.stop.prevent="handleDelete"
+              :disabled="isDeleting"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-300 focus:ring-red-500 p-1.5 text-sm min-w-[3rem] disabled:opacity-50 disabled:cursor-not-allowed"
+              :title="$t('delete')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <button
               v-if="showUnlink"
               @click.stop.prevent="handleUnlink"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 hover:text-red-600 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
@@ -152,10 +163,10 @@ import AddToCollectionModal from './AddToCollectionModal.vue'
 export default {
   name: 'ExpressionCard',
   components: { AddToCollectionModal },
-  props: { 
-    item: { 
-      type: Object, 
-      required: true 
+  props: {
+    item: {
+      type: Object,
+      required: true
     },
     editable: {
       type: Boolean,
@@ -168,9 +179,17 @@ export default {
     itemId: {
       type: Number,
       default: null
+    },
+    canDelete: {
+      type: Boolean,
+      default: false
+    },
+    isDeleting: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['update-tags', 'unlink'],
+  emits: ['update-tags', 'unlink', 'delete'],
   data() {
     return {
       playing: false
@@ -201,6 +220,10 @@ export default {
 
     const handleUnlink = () => {
       emit('unlink', props.item)
+    }
+
+    const handleDelete = () => {
+      emit('delete', props.item)
     }
 
     // Tag management state
