@@ -484,11 +484,18 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
 
+    // Check if expression exists first
+    const existing = await db.getExpressionById(exprId)
+    if (!existing) {
+      console.warn('Expression not found for PATCH:', exprId);
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
     // Get user info from middleware
     const user = c.get('user');
     const updatedBy = user.username;
 
-    // Add updated_by to the expression data
+    // Add updated_by to expression data
     const expressionData = {
       ...body,
       updated_by: body.updated_by || updatedBy

@@ -76,20 +76,19 @@
 
         <div class="flex flex-col items-end gap-3 flex-shrink-0">
           <span
-             v-if="item.source_type"
-             :class="[
-              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-              item.source_type === 'ai' ? 'bg-sky-100 text-sky-800' :
-              item.source_type === 'user' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-            ]">
-            {{ item.source_type }}
+             v-if="item.created_by"
+             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {{ item.created_by }}
           </span>
 
           <div class="flex items-center gap-2">
             <button
               v-if="item.audio_url"
               @click.stop.prevent="playAudio"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
               :title="$t('play')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +98,7 @@
             <button
               @click.stop.prevent="copyText"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
-              :title="copied ? 'Copied!' : 'Copy text'"
+              :title="copied ? $t('copied') : $t('copy')"
             >
               <template v-if="!copied">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -113,10 +112,22 @@
             </button>
             <button
               @click.stop.prevent="openCollectionModal"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
               :title="$t('add_to_collection')"
             >
-              <span> ⭐ </span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </button>
+            <button
+              v-if="showUnlink"
+              @click.stop.prevent="handleUnlink"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 hover:text-red-600 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
+              :title="$t('unlink')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
@@ -149,9 +160,22 @@ export default {
     editable: {
       type: Boolean,
       default: false
+    },
+    showUnlink: {
+      type: Boolean,
+      default: false
+    },
+    itemId: {
+      type: Number,
+      default: null
     }
   },
-  emits: ['update-tags'],
+  emits: ['update-tags', 'unlink'],
+  data() {
+    return {
+      playing: false
+    }
+  },
   setup(props, { emit }) {
     const { t } = useI18n()
     const router = useRouter()
@@ -173,6 +197,10 @@ export default {
       } catch (err) {
         console.error('Failed to copy text:', err)
       }
+    }
+
+    const handleUnlink = () => {
+      emit('unlink', props.item)
     }
 
     // Tag management state
@@ -235,6 +263,7 @@ export default {
       copyText,
       showCollectionModal,
       openCollectionModal,
+      handleUnlink,
       isAddingTag,
       newTagValue,
       removeTag,
@@ -247,7 +276,14 @@ export default {
   methods: {
     playAudio () {
       const audio = new Audio(this.item.audio_url)
+      this.playing = true
       audio.play()
+      audio.addEventListener('ended', () => {
+        this.playing = false
+      })
+      audio.addEventListener('error', () => {
+        this.playing = false
+      })
     },
     getLanguageDisplayName(code) {
       return getLanguageDisplayName(code)

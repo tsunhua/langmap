@@ -476,10 +476,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
     if (success) {
       // Update language_stats
       await this.db.prepare(`
-        UPDATE language_stats 
-        SET expression_count = MAX(0, expression_count - 1) 
+        UPDATE language_stats
+        SET expression_count = MAX(0, expression_count - 1)
         WHERE language_code = ?
       `).bind(expression.language_code).run();
+
+      // Delete from FTS index to keep in sync
+      await this.db.prepare('DELETE FROM expressions_fts WHERE rowid = ?').bind(id).run();
 
       // Clear statistics and heatmap caches as we've deleted an expression
       this.clearStatisticsCache();
@@ -531,6 +534,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
       // - Delete old
       statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+
+      // - Delete from FTS index
+      statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
 
       await db.batch(statements);
 
@@ -592,11 +598,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
       `INSERT INTO expressions (
         id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
         region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(...bindValues));
 
     // - Delete the OLD record
     statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+
+    // - Delete from FTS index
+    statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
 
     // Run the batch
     await db.batch(statements);
@@ -623,15 +632,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
     if (!query.trim()) return []
-
     // FTS5 搜索逻辑：使用 MATCH 实现极速检索
     // 将查询转义并添加 * 实现前缀匹配
     const ftsQuery = `"${query.replace(/"/g, '""')}"*`
-
     let sqlQuery = `
-    SELECT e.* 
+    SELECT e.*
     FROM expressions e
-    JOIN expressions_fts fts ON e.id = fts.rowid
+    INNER JOIN expressions_fts fts ON e.id = fts.rowid
     WHERE expressions_fts MATCH ?
   `
     const bindings: any[] = [ftsQuery]
@@ -659,6 +666,22 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
     return results
+  }
+
+  // Clean up FTS index - remove entries for expressions that no longer exist
+  async cleanupFTSIndex(): Promise<void> {
+    try {
+      const result = await this.db.prepare(`
+        DELETE FROM expressions_fts
+        WHERE rowid NOT IN (SELECT id FROM expressions)
+      `).run();
+
+      if (result.meta?.changes > 0) {
+        console.log(`[FTS Cleanup] Removed ${result.meta.changes} orphaned FTS entries`);
+      }
+    } catch (error) {
+      console.error('[FTS Cleanup] Error:', error);
+    }
   }
 
 
