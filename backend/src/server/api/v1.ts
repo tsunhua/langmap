@@ -517,10 +517,22 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
 api.delete('/expressions/:expr_id', requireAuth, async (c) => {
   try {
     const db = getDB(c)
+    const user = c.get('user')
     const exprId = parseInt(c.req.param('expr_id'))
 
     if (isNaN(exprId)) {
       return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+
+    // Get the expression to check ownership
+    const expression = await db.getExpressionById(exprId)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
+    // Check if user is the creator or an admin
+    if (user.role !== 'admin' && expression.created_by !== user.username) {
+      return c.json({ error: 'You do not have permission to delete this expression' }, 403)
     }
 
     const success = await db.deleteExpression(exprId)
