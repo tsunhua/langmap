@@ -38,6 +38,7 @@
   "check_your_email": "Check your email",
   "click_on_map_to_select": "Click on the map to select a region",
   "close": "Close",
+  "collection": "Collection",
   "copy": "Copy",
   "copied": "Copied!",
   "collection_name": "Collection Name",
@@ -125,6 +126,7 @@
   "link_to_meaning": "Link to meaning:",
   "loading": "Loading...",
   "loading_languages": "Loading languages...",
+  "loading_collections": "Loading collections...",
   "loading_map": "Loading map...",
   "loading_versions": "Loading versions...",
   "localization_key": "Localization Key",
@@ -157,6 +159,7 @@
   "new_account": "Create a new account",
   "new_collection": "New Collection",
   "new_expression": "new expression",
+  "no_collections": "No collections",
   "new_meaning_gloss": "New meaning gloss",
   "next": "Next",
   "no_collections_found": "No collections found.",
@@ -261,5 +264,9 @@
   "version_history": "Version History",
   "view_and_manage_account": "View and manage your account information",
   "view_map": "View Map →",
-  "wait": "Please wait while we prepare your file."
+  "wait": "Please wait while we prepare your file.",
+  "optional": "optional",
+  "select_collections": "Select collections",
+  "add_to_collection_error": "Expression created, but failed to add to collections",
+  "partial_add_error": "Some expressions could not be added to collections"
 }

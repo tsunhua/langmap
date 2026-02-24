@@ -38,6 +38,7 @@
   "check_your_email": "檢查您的信箱",
   "click_on_map_to_select": "點擊地圖選擇區域",
   "close": "關閉",
+  "collection": "收藏",
   "copy": "複製",
   "copied": "已複製!",
   "collection_name": "收藏名稱",
@@ -125,6 +126,7 @@
   "link_to_meaning": "連結到含義：",
   "loading": "載入中...",
   "loading_languages": "正在載入語言...",
+  "loading_collections": "正在載入收藏集...",
   "loading_map": "正在載入地圖...",
   "loading_versions": "載入版本中...",
   "localization_key": "本地化鍵",
@@ -157,6 +159,7 @@
   "new_account": "建立新帳戶",
   "new_collection": "新建收藏集",
   "new_expression": "新詞句",
+  "no_collections": "暫無收藏集",
   "new_meaning_gloss": "新含義標題",
   "next": "下一頁",
   "no_collections_found": "未找到收藏集。",
@@ -261,5 +264,9 @@
   "version_history": "版本歷史",
   "view_and_manage_account": "檢視和管理您的帳戶資訊",
   "view_map": "檢視地圖 →",
-  "wait": "請稍候，正在為您準備檔案。"
+  "wait": "請稍候，正在為您準備檔案。",
+  "optional": "可選",
+  "select_collections": "選擇收藏集",
+  "add_to_collection_error": "詞句已建立，但加入收藏集時出錯",
+  "partial_add_error": "部分詞句未能加入收藏集"
 }

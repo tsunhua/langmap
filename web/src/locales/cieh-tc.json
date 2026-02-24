@@ -121,6 +121,7 @@
   "link_to_meaning": "穿到意思：",
   "loading": "徠𡍲讀版本牢...",
   "loading_languages": "徠𡍲讀話牢...",
+  "loading_collections": "徠𡍲讀收藏集牢...",
   "loading_map": "徠𡍲讀地圖牢...",
   "loading_versions": "徠𡍲讀版本牢...",
   "localization_key": "地方化捺鍵",
@@ -153,6 +154,7 @@
   "new_account": "開新个賬號",
   "new_collection": "新个收藏集",
   "new_expression": "新个詞句",
+  "no_collections": "收藏集朆有",
   "new_meaning_gloss": "新意思省講",
   "next": "後臗頁",
   "no_collections_found": "收藏集朆尋着。",
@@ -257,5 +259,6 @@
   "version_history": "早時版本",
   "view_and_manage_account": "望搭管理爾个賬號信息",
   "view_map": "望地圖 →",
-  "wait": "等朞，瑲朞徠𡍲準備文件牢。"
+  "wait": "等朞，瑲朞徠𡍲準備文件牢。",
+  "optional": "好省"
 }

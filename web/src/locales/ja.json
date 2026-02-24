@@ -38,6 +38,7 @@
   "check_your_email": "メールを確認",
   "click_on_map_to_select": "地図をクリックして地域を選択",
   "close": "閉じる",
+  "collection": "コレクション",
   "copy": "コピー",
   "copied": "コピーしました!",
   "collection_name": "コレクション名",
@@ -125,6 +126,7 @@
   "link_to_meaning": "意味にリンク:",
   "loading": "読み込み中...",
   "loading_languages": "言語を読み込み中...",
+  "loading_collections": "コレクションを読み込み中...",
   "loading_map": "地図を読み込み中...",
   "loading_versions": "バージョンを読み込み中...",
   "localization_key": "ローカライズキー",
@@ -157,6 +159,7 @@
   "new_account": "新しいアカウントを作成",
   "new_collection": "新しいコレクション",
   "new_expression": "新しい表現",
+  "no_collections": "コレクションがありません",
   "new_meaning_gloss": "新しい意味の語彙",
   "next": "次へ",
   "no_collections_found": "コレクションが見つかりませんでした。",
@@ -261,5 +264,9 @@
   "version_history": "バージョン履歴",
   "view_and_manage_account": "アカウント情報を表示・管理する",
   "view_map": "地図を表示 →",
-  "wait": "ファイルを準備しています。お待ちください。"
+  "wait": "ファイルを準備しています。お待ちください。",
+  "optional": "任意",
+  "select_collections": "コレクションを選択",
+  "add_to_collection_error": "表現は作成されましたが、コレクションへの追加に失敗しました",
+  "partial_add_error": "一部の表現をコレクションに追加できませんでした"
 }
