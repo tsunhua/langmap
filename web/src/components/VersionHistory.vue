@@ -160,6 +160,17 @@ export default {
     const loading = ref(false)
     const expression = ref(null)
 
+    // Map custom locale codes to valid BCP 47 language tags for date formatting
+    const getValidLocale = (localeCode) => {
+      const localeMapping = {
+        'cieh-tc': 'zh-TW',
+        'nan-TW': 'zh-TW',
+        'yue-HK': 'zh-HK',
+        'nan-x-cha': 'zh-CN'
+      }
+      return localeMapping[localeCode] || localeCode || 'en-US'
+    }
+
     // Date formatter using current locale
     const formatDate = (dateString) => {
       const options = { 
@@ -169,7 +180,13 @@ export default {
         hour: '2-digit', 
         minute: '2-digit' 
       }
-      return new Date(dateString).toLocaleDateString(locale.value, options)
+      const validLocale = getValidLocale(locale.value)
+      try {
+        return new Date(dateString).toLocaleDateString(validLocale, options)
+      } catch (e) {
+        console.warn(`Failed to format date with locale ${validLocale}, falling back to en-US`, e)
+        return new Date(dateString).toLocaleDateString('en-US', options)
+      }
     }
 
     async function load () {
