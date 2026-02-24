@@ -895,6 +895,10 @@ export default {
         } else {
           success.value = true
         }
+
+        expressions.value.forEach(expr => {
+          expr.text = ''
+        })
       } catch (e) {
         error.value = e.message || String(e)
       } finally {
