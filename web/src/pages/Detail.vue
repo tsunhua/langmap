@@ -12,8 +12,19 @@
       <!-- Left column: current item + translations as a unified list -->
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div class="border-b border-slate-200 px-6 py-4">
+          <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
             <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
+            <button
+              v-if="canDeleteExpression"
+              @click="handleDelete"
+              :disabled="deleting"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {{ deleting ? $t('deleting') : $t('delete') }}
+            </button>
           </div>
           <div class="p-3">
             <ExpressionCard 
@@ -218,6 +229,8 @@ export default {
     const transLoading = ref(false)
     const translations = ref([])
     const meanings = ref([])
+    const currentUser = ref(null)
+    const deleting = ref(false)
     
     // Association mode
     const associateMode = ref(false)
@@ -542,8 +555,8 @@ export default {
     // Open create expression modal
     function openCreateExpressionModal() {
       // If there's a selected meaning, pass it to the modal
-      currentMeaningIdForAssociation.value = selectedMeaningId.value && selectedMeaningId.value !== '__new' 
-        ? selectedMeaningId.value 
+      currentMeaningIdForAssociation.value = selectedMeaningId.value && selectedMeaningId.value !== '__new'
+        ? selectedMeaningId.value
         : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
       showCreateExpressionModal.value = true;
     }
@@ -552,42 +565,133 @@ export default {
     async function handleExpressionCreated(createdExpression) {
       showCreateExpressionModal.value = false;
       assocMsg.value = 'Expression created and linked successfully.';
-      
+
       // Refresh the page data to show the newly created expression
       await load();
-      
+
       // Reset search results and query
       assocResults.value = [];
       assocQuery.value = '';
       assocSearched.value = false; // 重置搜索状态
     }
 
-    onMounted(load)
+    // Load current user
+    async function loadCurrentUser() {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        currentUser.value = null
+        return
+      }
+
+      try {
+        const response = await fetch('/api/v1/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          currentUser.value = result.data
+        } else {
+          currentUser.value = null
+        }
+      } catch (e) {
+        console.warn('Failed to load current user:', e)
+        currentUser.value = null
+      }
+    }
+
+    // Check if current user can delete the expression
+    const canDeleteExpression = computed(() => {
+      if (!currentUser.value || !item.value) {
+        return false
+      }
+
+      // Admin can delete any expression
+      if (currentUser.value.role === 'admin') {
+        return true
+      }
+
+      // Creator can delete their own expression
+      return item.value.created_by === currentUser.value.username
+    })
+
+    // Handle delete expression
+    async function handleDelete() {
+      if (!item.value) return
+
+      if (!confirm(t('confirm_delete_expression'))) {
+        return
+      }
+
+      deleting.value = true
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        alert(t('login_required'))
+        deleting.value = false
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/v1/expressions/${item.value.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          if (response.status === 403) {
+            alert(t('delete_permission_denied'))
+          } else if (response.status === 404) {
+            alert(t('expression_not_found'))
+          } else {
+            const error = await response.json()
+            alert(error.error || t('delete_failed'))
+          }
+          deleting.value = false
+          return
+        }
+
+        // Redirect to home after successful deletion
+        router.push('/')
+      } catch (e) {
+        console.error('Error deleting expression:', e)
+        alert(t('delete_failed'))
+        deleting.value = false
+      }
+    }
+
+    onMounted(() => {
+      load()
+      loadCurrentUser()
+    })
     // when the route param `id` changes the same component instance is reused by the router;
     // watch the prop and reload the details when it changes
     watch(() => props.id, (newId, oldId) => {
       if (newId !== oldId) load()
     })
-    return { 
-      item, 
-      loading, 
-      translations, 
-      transLoading, 
-      associateMode, 
-      assocQuery, 
-      assocResults, 
-      assocLoading, 
-      assocMsg, 
-      meanings, 
-      linkedIds, 
-      assocHasCurrent, 
-      isLinked, 
-      searchAssociate, 
-      associateWith, 
-      selectedMeaningId, 
-      newMeaningGloss, 
-      createMeaning, 
-      toggleMeaning, 
+    return {
+      item,
+      loading,
+      translations,
+      transLoading,
+      associateMode,
+      assocQuery,
+      assocResults,
+      assocLoading,
+      assocMsg,
+      meanings,
+      linkedIds,
+      assocHasCurrent,
+      isLinked,
+      searchAssociate,
+      associateWith,
+      selectedMeaningId,
+      newMeaningGloss,
+      createMeaning,
+      toggleMeaning,
       isExpanded,
       // Create expression modal
       showCreateExpressionModal,
@@ -597,7 +701,11 @@ export default {
       // 新增的搜索状态
       assocSearched,
       handleTagsUpdate,
-      unlink
+      unlink,
+      // Delete expression
+      canDeleteExpression,
+      deleting,
+      handleDelete
     }
   }
 }
