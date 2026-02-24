@@ -3,13 +3,16 @@
     <!-- Hero Section - Full Width -->
     <div class="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-24 px-4 sm:px-6 lg:px-8">
       <!-- Decorative elements -->
-      <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute inset-0 overflow-hidden z-0">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
         <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
-      
-      <div class="relative max-w-4xl mx-auto text-center">
+
+      <!-- Floating Expressions - Background Layer -->
+      <FloatingExpressions />
+
+      <div class="relative max-w-4xl mx-auto text-center z-10">
         <h1 class="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
           <!-- {{ $t('home_title') }} -->
           <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home_title') }}</span>
@@ -162,9 +165,13 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { fetchLanguages } from '../services/languageService'
+import FloatingExpressions from '../components/FloatingExpressions.vue'
 
 export default {
   name: 'Home',
+  components: {
+    FloatingExpressions
+  },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
