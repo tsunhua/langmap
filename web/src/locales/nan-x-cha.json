@@ -125,6 +125,7 @@
   "link_to_meaning": "關聯到語意：",
   "loading": "語詞資料囉載入…",
   "loading_languages": "語言囉載入…",
+  "loading_collections": "收藏集囉載入…",
   "loading_map": "地圖囉載入…",
   "loading_versions": "版本囉載入…",
   "localization_key": "在地化鍵",
@@ -157,6 +158,7 @@
   "new_account": "建立新帳號",
   "new_collection": "新建收藏集",
   "new_expression": "新語詞",
+  "no_collections": "無收藏集",
   "new_meaning_gloss": "新語意標題",
   "next": "後一頁",
   "no_collections_found": "無揣著集。",
@@ -261,5 +263,9 @@
   "version_history": "版本紀錄",
   "view_and_manage_account": "檢視和管理您个帳戶資訊",
   "view_map": "睇地圖 →",
-  "wait": "請等下，阮囉為汝準備文件。"
+  "wait": "請等下，阮囉為汝準備文件。",
+  "optional": "選填",
+  "select_collections": "揀收藏集",
+  "add_to_collection_error": "語詞已經建立，但是加到收藏集時出錯",
+  "partial_add_error": "部分語詞無變加到收藏集"
 }

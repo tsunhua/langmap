@@ -76,8 +76,7 @@
           <div class="flex gap-2">
             <input
               v-model="expression.region_display"
-              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 bg-slate-100 text-slate-500 cursor-not-allowed"
-              readonly
+              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 text-slate-500"
             />
             <button
               @click="detectLocation(index)"
@@ -121,9 +120,77 @@
             {{ $t('parsing_location') }}
           </div>
         </div>
-      </div>
 
-      <button
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            {{ $t('collections') }} ({{ $t('optional') }})
+          </label>
+          <div class="flex gap-2">
+            <input
+              :value="getSelectedCollectionNames(expression.collections)"
+              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 bg-slate-100 text-slate-500 cursor-pointer"
+              readonly
+              @click="toggleCollectionSelector(index)"
+            />
+            <button
+              @click="toggleCollectionSelector(index)"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+              :title="$t('select_collections')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </button>
+            <button
+              @click="openCreateCollectionModal(index)"
+              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+              :title="$t('create_collection')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+          </div>
+
+          <div v-if="expression.showCollectionSelector" class="mt-3 border border-slate-200 rounded-lg p-3">
+            <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
+              <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ $t('loading_collections') }}
+            </div>
+
+            <div v-else-if="userCollections.length === 0" class="text-center py-4 text-slate-500">
+              <p>{{ $t('no_collections') }}</p>
+              <button @click="openCreateCollectionModal(index)" class="mt-2 text-blue-600 hover:text-blue-800">
+                {{ $t('create_first_collection') }}
+              </button>
+            </div>
+
+            <div v-else class="space-y-2 max-h-48 overflow-y-auto">
+              <label
+                v-for="collection in userCollections"
+                :key="collection.id"
+                class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="expression.collections.includes(collection.id)"
+                  @change="toggleCollectionSelection(index, collection.id)"
+                  class="form-checkbox h-4 w-4 text-blue-600 rounded"
+                />
+                <div class="flex-1">
+                  <span class="text-slate-800">{{ collection.name }}</span>
+                  <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
+                 </div>
+               </label>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <button
         @click="addExpression"
         class="w-full mb-6 py-3 px-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
       >
@@ -171,6 +238,68 @@
       @close="showAddLanguageModal = false"
       @add-language="handleAddLanguage"
     />
+
+    <!-- Create Collection Modal -->
+    <div v-if="showCreateCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h2 class="text-xl font-bold mb-4">{{ $t('new_collection') }}</h2>
+        
+        <form @submit.prevent="handleCreateCollection">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ $t('collection_name') }} *
+            </label>
+            <input 
+              v-model="collectionForm.name"
+              type="text" 
+              required
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :placeholder="$t('e_g_my_favorites')"
+            />
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ $t('description') }}
+            </label>
+            <textarea 
+              v-model="collectionForm.description"
+              rows="3"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :placeholder="$t('e_g_useful_for_greeting')"
+            ></textarea>
+          </div>
+          
+          <div class="mb-6">
+            <label class="flex items-center cursor-pointer">
+              <input 
+                v-model="collectionForm.is_public" 
+                type="checkbox" 
+                class="form-checkbox h-4 w-4 text-blue-600 rounded"
+              />
+              <span class="ml-2 text-sm text-gray-700">{{ $t('public_access') }}</span>
+            </label>
+          </div>
+          
+          <div class="flex justify-end gap-3">
+            <button 
+              type="button" 
+              @click="closeCreateCollectionModal"
+              class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+            >
+              {{ $t('cancel') || 'Cancel' }}
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              :disabled="creatingCollection"
+            >
+              {{ creatingCollection ? $t('saving') || 'Saving...' : ($t('save') || 'Save') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -200,7 +329,9 @@ export default {
         region_display: '',
         detectingLocation: false,
         parsingLocation: false,
-        showMapSelector: false
+        showMapSelector: false,
+        collections: [],
+        showCollectionSelector: false
       }
     ])
 
@@ -211,6 +342,19 @@ export default {
     const error = ref(null)
     const success = ref(false)
     const submitting = ref(false)
+    
+    // Collection-related state
+    const userCollections = ref([])
+    const collectionsLoading = ref(false)
+    const showCreateCollectionModal = ref(false)
+    const currentExpressionIndex = ref(null)
+    const addingToCollections = ref(false)
+    const creatingCollection = ref(false)
+    const collectionForm = ref({
+      name: '',
+      description: '',
+      is_public: false
+    })
 
     const maps = new Map()
     let L = null
@@ -226,6 +370,19 @@ export default {
       } catch (e) {
         expression.region_display = expression.region_input
       }
+    }
+
+    const getSelectedCollectionNames = (collectionIds) => {
+      if (!collectionIds || collectionIds.length === 0) {
+        return ''
+      }
+      return collectionIds
+        .map(id => {
+          const collection = userCollections.value.find(c => c.id === id)
+          return collection ? collection.name : ''
+        })
+        .filter(name => name !== '')
+        .join(', ')
     }
 
     const loadLanguages = async () => {
@@ -261,7 +418,10 @@ export default {
         region_display: '',
         detectingLocation: false,
         parsingLocation: false,
-        showMapSelector: false
+        showMapSelector: false,
+        collections: [],
+        collectionNote: '',
+        showCollectionSelector: false
       })
     }
 
@@ -297,6 +457,118 @@ export default {
         return JSON.parse(geoString)
       } catch (e) {
         return { name: geoString, latitude: null, longitude: null }
+      }
+    }
+
+    const loadUserCollections = async () => {
+      collectionsLoading.value = true
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          userCollections.value = []
+          return
+        }
+
+        const response = await fetch('/api/v1/collections', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to load collections')
+        }
+
+        userCollections.value = await response.json()
+      } catch (err) {
+        console.error('Failed to load collections:', err)
+        userCollections.value = []
+      } finally {
+        collectionsLoading.value = false
+      }
+    }
+
+    const toggleCollectionSelector = (index) => {
+      expressions.value[index].showCollectionSelector = !expressions.value[index].showCollectionSelector
+      if (expressions.value[index].showCollectionSelector && userCollections.value.length === 0) {
+        loadUserCollections()
+      }
+    }
+
+    const toggleCollectionSelection = (exprIndex, collectionId) => {
+      const expr = expressions.value[exprIndex]
+      const indexInCollections = expr.collections.indexOf(collectionId)
+      if (indexInCollections > -1) {
+        expr.collections.splice(indexInCollections, 1)
+      } else {
+        expr.collections.push(collectionId)
+      }
+    }
+
+    const openCreateCollectionModal = (index) => {
+      currentExpressionIndex.value = index
+      showCreateCollectionModal.value = true
+    }
+
+    const closeCreateCollectionModal = () => {
+      showCreateCollectionModal.value = false
+      currentExpressionIndex.value = null
+    }
+
+    const handleCollectionCreated = async (collection) => {
+      await loadUserCollections()
+      if (currentExpressionIndex.value !== null) {
+        const expr = expressions.value[currentExpressionIndex.value]
+        expr.collections.push(collection.id)
+        expr.showCollectionSelector = true
+      }
+      closeCreateCollectionModal()
+    }
+
+    const handleCreateCollection = async () => {
+      if (!collectionForm.value.name.trim()) {
+        return
+      }
+
+      creatingCollection.value = true
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          alert(t('must_be_logged_in'))
+          return
+        }
+
+        const response = await fetch('/api/v1/collections', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: collectionForm.value.name,
+            description: collectionForm.value.description,
+            is_public: collectionForm.value.is_public
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to create collection')
+        }
+
+        const newCollection = await response.json()
+        await handleCollectionCreated(newCollection)
+        
+        // Reset form
+        collectionForm.value = {
+          name: '',
+          description: '',
+          is_public: false
+        }
+      } catch (err) {
+        console.error('Failed to create collection:', err)
+        alert('Failed to create collection. Please try again.')
+      } finally {
+        creatingCollection.value = false
       }
     }
 
@@ -608,12 +880,65 @@ export default {
 
         const result = await res.json()
         console.log('Batch submission result:', result)
-        success.value = true
+
+        // Add expressions to collections
+        const collectionResults = await addToCollections(validExpressions, result.results)
+
+        if (collectionResults.errors > 0) {
+          if (collectionResults.success > 0) {
+            success.value = true
+            error.value = t('partial_add_error')
+          } else {
+            success.value = true
+            error.value = t('add_to_collection_error')
+          }
+        } else {
+          success.value = true
+        }
       } catch (e) {
         error.value = e.message || String(e)
       } finally {
         submitting.value = false
       }
+    }
+
+    async function addToCollections(originalExpressions, createdExpressions) {
+      const results = { success: 0, errors: 0 }
+
+      for (let i = 0; i < originalExpressions.length; i++) {
+        const original = originalExpressions[i]
+        const created = createdExpressions[i]
+        
+        if (original.collections && original.collections.length > 0 && created && created.id) {
+          for (const collectionId of original.collections) {
+            try {
+              const token = localStorage.getItem('authToken')
+              const response = await fetch(`/api/v1/collections/${collectionId}/items`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  expression_id: created.id
+                })
+              })
+
+              if (response.ok) {
+                results.success++
+              } else {
+                console.error(`Failed to add expression ${created.id} to collection ${collectionId}`)
+                results.errors++
+              }
+            } catch (err) {
+              console.error(`Error adding expression ${created.id} to collection ${collectionId}:`, err)
+              results.errors++
+            }
+          }
+        }
+      }
+
+      return results
     }
 
     const goBack = () => {
@@ -622,6 +947,7 @@ export default {
 
     onMounted(() => {
       loadLanguages()
+      loadUserCollections()
       expressions.value.forEach(expr => updateRegionDisplay(expr))
     })
 
@@ -647,7 +973,20 @@ export default {
       submit,
       goBack,
       t,
-      handleAddLanguage
+      handleAddLanguage,
+      // Collection-related
+      userCollections,
+      collectionsLoading,
+      showCreateCollectionModal,
+      collectionForm,
+      creatingCollection,
+      toggleCollectionSelector,
+      toggleCollectionSelection,
+      openCreateCollectionModal,
+      closeCreateCollectionModal,
+      handleCollectionCreated,
+      handleCreateCollection,
+      getSelectedCollectionNames
     }
   }
 }

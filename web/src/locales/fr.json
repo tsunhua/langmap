@@ -125,6 +125,7 @@
   "link_to_meaning": "Lier à la signification:",
   "loading": "Chargement...",
   "loading_languages": "Chargement des langues...",
+  "loading_collections": "Chargement des collections...",
   "loading_map": "Chargement de la carte...",
   "loading_versions": "Chargement des versions...",
   "localization_key": "Clé de Localisation",
@@ -157,6 +158,7 @@
   "new_account": "Créer un nouveau compte",
   "new_collection": "Nouvelle collection",
   "new_expression": "nouvelle expression",
+  "no_collections": "Aucune collection",
   "new_meaning_gloss": "Glose de la nouvelle signification",
   "next": "Suivant",
   "no_collections_found": "Aucune collection trouvée.",
@@ -261,5 +263,9 @@
   "version_history": "Historique des versions",
   "view_and_manage_account": "Afficher et gérer les informations de votre compte",
   "view_map": "Voir la carte →",
-  "wait": "Veuillez patienter pendant la préparation de votre fichier."
+  "wait": "Veuillez patienter pendant la préparation de votre fichier.",
+  "optional": "facultatif",
+  "select_collections": "Sélectionner des collections",
+  "add_to_collection_error": "Expression créée, mais échec de l'ajout aux collections",
+  "partial_add_error": "Certaines expressions n'ont pas pu être ajoutées aux collections"
 }

@@ -38,6 +38,7 @@
   "check_your_email": "检查您的邮箱",
   "click_on_map_to_select": "点击地图选择区域",
   "close": "关闭",
+  "collection": "收藏",
   "copy": "复制",
   "copied": "已复制!",
   "collection_name": "收藏集名称",
@@ -125,6 +126,7 @@
   "link_to_meaning": "链接到含义：",
   "loading": "加载中...",
   "loading_languages": "加载语言中...",
+  "loading_collections": "加载收藏集中...",
   "loading_map": "加载地图中...",
   "loading_versions": "加载版本中...",
   "localization_key": "本地化键",
@@ -157,6 +159,7 @@
   "new_account": "创建新账户",
   "new_collection": "新建收藏集",
   "new_expression": "新词句",
+  "no_collections": "暂无收藏集",
   "new_meaning_gloss": "新含义简述",
   "next": "下一页",
   "no_collections_found": "未找到收藏集。",
@@ -261,5 +264,9 @@
   "version_history": "版本历史",
   "view_and_manage_account": "查看和管理您的账户信息",
   "view_map": "查看地图 →",
-  "wait": "请稍候，正在为您准备文件。"
+  "wait": "请稍候，正在为您准备文件。",
+  "optional": "可选",
+  "select_collections": "选择收藏集",
+  "add_to_collection_error": "词句已创建，但添加到收藏集时出错",
+  "partial_add_error": "部分词句未能添加到收藏集"
 }
