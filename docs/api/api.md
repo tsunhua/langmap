@@ -307,8 +307,8 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 {
   "success": true,
   "results": {
-    "en-US": { "added": 5, "skipped": 100 },
-    "zh-CN": { "added": 3, "skipped": 95, "errors": [] }
+    "en-US": { "added": 5, "updated": 100 },
+    "zh-CN": { "added": 3, "updated": 95, "errors": [] }
   }
 }
 ```

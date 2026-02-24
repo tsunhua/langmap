@@ -841,8 +841,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Sync locales from local JSON to database
-  async syncLocalesToDatabase(localeData: Record<string, any>, username: string): Promise<Record<string, { added: number, skipped: number, errors: string[] }>> {
-    const results: Record<string, { added: number, skipped: number, errors: string[] }> = {}
+  async syncLocalesToDatabase(localeData: Record<string, any>, username: string): Promise<Record<string, { added: number, updated: number, errors: string[] }>> {
+    const results: Record<string, { added: number, updated: number, errors: string[] }> = {}
 
     // Get langmap collection ID
     const langmapCol = await this.db.prepare(
@@ -862,7 +862,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // Process each language
     for (const [langCode, messages] of Object.entries(localeData)) {
       try {
-        const result = { added: 0, skipped: 0, errors: [] }
+        const result = { added: 0, updated: 0, errors: [] }
         const flattened = this.flattenObject(messages)
 
         // Prepare batch operations
@@ -924,19 +924,40 @@ export class D1DatabaseService extends AbstractDatabaseService {
           console.log(`[Sync] ${langCode}: Total IDs to check: ${idsToCheck.length}, Found existing: ${existingIdSet.size}`)
         }
 
-        // Batch insert new expressions (use INSERT OR REPLACE to handle conflicts)
         const BATCH_SIZE = 50
-        for (let i = 0; i < insertExpressions.length; i += BATCH_SIZE) {
-          const chunk = insertExpressions.slice(i, i + BATCH_SIZE)
+
+        // Separate new and existing expressions
+        const newExpressions = insertExpressions.filter(e => !existingIdSet.has(e.expressionId))
+        const existingExpressions = insertExpressions.filter(e => existingIdSet.has(e.expressionId))
+
+        // Insert new expressions
+        for (let i = 0; i < newExpressions.length; i += BATCH_SIZE) {
+          const chunk = newExpressions.slice(i, i + BATCH_SIZE)
           const statements = chunk.map(expr =>
             this.db.prepare(`
-              INSERT OR REPLACE INTO expressions
+              INSERT INTO expressions
               (id, text, meaning_id, language_code, tags, source_type, review_status, created_by, created_at, updated_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               expr.expressionId, expr.text, expr.meaningId, expr.langCode,
               expr.tags, 'system', 'approved',
               expr.username, expr.timestamp, expr.timestamp
+            )
+          )
+          await this.db.batch(statements)
+        }
+
+        // Update existing expressions (only update text, tags, updated_by, and updated_at)
+        for (let i = 0; i < existingExpressions.length; i += BATCH_SIZE) {
+          const chunk = existingExpressions.slice(i, i + BATCH_SIZE)
+          const statements = chunk.map(expr =>
+            this.db.prepare(`
+              UPDATE expressions
+              SET text = ?, tags = ?, updated_by = ?, updated_at = ?
+              WHERE id = ?
+            `).bind(
+              expr.text, expr.tags, expr.username, expr.timestamp,
+              expr.expressionId
             )
           )
           await this.db.batch(statements)
@@ -954,7 +975,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
           await this.db.batch(statements)
         }
 
-        result.added = insertExpressions.length
+        result.added = newExpressions.length
+        result.updated = existingExpressions.length
 
         results[langCode] = result
 
@@ -965,7 +987,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
           console.error(`Failed to check/activate language ${langCode} after sync:`, err);
         }
       } catch (error: any) {
-        results[langCode] = { added: 0, skipped: 0, errors: [error.message] }
+        results[langCode] = { added: 0, updated: 0, errors: [error.message] }
       }
     }
 
