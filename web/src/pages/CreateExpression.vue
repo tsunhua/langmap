@@ -122,7 +122,7 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">词条发音记录 ({{ $t('optional') }})</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_audio_label') }} ({{ $t('optional') }})</label>
           <AudioRecorder 
             @audio-ready="payload => handleAudioReady(index, payload)"
             @audio-cleared="() => handleAudioCleared(index)"
