@@ -775,6 +775,26 @@ api.delete('/expressions/:expr_id/audio', requireAuth, async (c) => {
       audioRecords = [{ url: expression.audio_url, speaker: expression.created_by || 'Unknown' }]
     }
 
+    // Find the record to get its URL and delete the corresponding file from R2
+    const targetRecord = audioRecords.find(record => record.speaker === targetSpeaker)
+    if (targetRecord && c.env.AUDIO_BUCKET) {
+      try {
+        const urlObj = new URL(targetRecord.url)
+        // Extract object key from pathname.
+        // Dev: /audio-assets/expressions/123/... -> expressions/123/...
+        // Prod: /expressions/123/... -> expressions/123/...
+        let objectKey = urlObj.pathname
+        if (objectKey.startsWith('/audio-assets/')) {
+          objectKey = objectKey.substring('/audio-assets/'.length)
+        } else if (objectKey.startsWith('/')) {
+          objectKey = objectKey.substring(1)
+        }
+        await c.env.AUDIO_BUCKET.delete(objectKey)
+      } catch (err) {
+        console.error('Failed to delete file from R2 bucket:', err)
+      }
+    }
+
     // Filter out the target speaker
     const updatedRecords = audioRecords.filter(record => record.speaker !== targetSpeaker)
 
