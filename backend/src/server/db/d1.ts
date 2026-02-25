@@ -266,14 +266,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     }
 
-    return results
+    return results.map(e => this.formatTimestamps(e))
   }
 
   async getExpressionById(id: number): Promise<Expression | null> {
     const expression = await this.db.prepare(
       'SELECT * FROM expressions WHERE id = ?'
     ).bind(id).first<Expression>()
-    return expression || null
+    if (!expression) return null
+    return this.formatTimestamps(expression)
   }
 
   async getExpressionsByIds(ids: number[]): Promise<Expression[]> {
@@ -462,7 +463,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     this.clearStatisticsCache();
     this.clearHeatmapCache();
 
-    return result;
+    return this.formatTimestamps(result);
   }
 
   async deleteExpression(id: number): Promise<boolean> {
@@ -690,7 +691,27 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const { results } = await this.db.prepare(
       'SELECT * FROM expression_versions WHERE expression_id = ? ORDER BY created_at DESC'
     ).bind(expressionId).all<ExpressionVersion>()
-    return results
+    return results.map(v => this.formatTimestamps(v) as ExpressionVersion)
+  }
+
+  /**
+   * Format timestamp fields to ensure ISO 8601 format with 'Z' suffix for UTC
+   * This handles SQLite CURRENT_TIMESTAMP format (YYYY-MM-DD HH:MM:SS) by converting to ISO format
+   */
+  private formatTimestamps<T extends Record<string, any>>(obj: T): T {
+    const result = { ...obj }
+    const timestampFields = ['created_at', 'updated_at']
+    
+    for (const field of timestampFields) {
+      if (result[field] && typeof result[field] === 'string') {
+        const timestamp = result[field] as string
+        if (timestamp.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+          result[field] = timestamp + 'Z'
+        }
+      }
+    }
+    
+    return result
   }
 
   async createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion> {
