@@ -272,5 +272,12 @@
   "optional": "opcional",
   "select_collections": "Seleccionar colecciones",
   "add_to_collection_error": "Expresión creada, pero error al agregar a colecciones",
-  "partial_add_error": "Algunas expresiones no pudieron ser agregadas a colecciones"
+  "partial_add_error": "Algunas expresiones no pudieron ser agregadas a colecciones",
+  "record_audio": "Grabar pronunciación",
+  "audio_not_supported": "El entorno actual no admite grabación. Por favor, use un navegador moderno y asegúrese de acceder a través de HTTPS.",
+  "microphone_access_denied": "No se puede acceder al micrófono. Asegúrese de haber otorgado el permiso.",
+  "add_audio": "Agregar audio",
+  "remove_audio": "Eliminar audio",
+  "expression_audio_label": "Grabación de pronunciación de expresión",
+  "confirm_delete_audio": "¿Estás seguro de que quieres eliminar este audio?"
 }

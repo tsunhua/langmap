@@ -273,5 +273,12 @@
   "optional": "任意",
   "select_collections": "コレクションを選択",
   "add_to_collection_error": "表現は作成されましたが、コレクションへの追加に失敗しました",
-  "partial_add_error": "一部の表現をコレクションに追加できませんでした"
+  "partial_add_error": "一部の表現をコレクションに追加できませんでした",
+  "record_audio": "発音を録音",
+  "audio_not_supported": "現在の環境は録音をサポートしていません。最新のブラウザを使用し、HTTPS経由でアクセスしていることを確認してください。",
+  "microphone_access_denied": "マイクにアクセスできません。権限が付与されていることを確認してください。",
+  "add_audio": "オーディオを追加",
+  "remove_audio": "オーディオを削除",
+  "expression_audio_label": "表現の発音録音",
+  "confirm_delete_audio": "本当にこのオーディオを削除しますか？"
 }

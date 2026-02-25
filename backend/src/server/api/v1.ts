@@ -21,6 +21,10 @@ interface Bindings {
   SECRET_KEY: string;
   EXPORT_DO: DurableObjectNamespace;
   EXPORT_BUCKET: R2Bucket;
+  AUDIO_BUCKET: R2Bucket;
+  R2_ACCOUNT_ID: string;
+  R2_ACCESS_KEY_ID: string;
+  R2_SECRET_ACCESS_KEY: string;
 }
 
 // Create a new Hono app for API v1 routes
@@ -622,6 +626,177 @@ api.get('/expressions/:expr_id/translations', async (c) => {
   }
 })
 
+// POST /api/v1/expressions/:expr_id/upload-audio
+api.post('/expressions/:expr_id/upload-audio', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+
+    // Verify expression exists and user is owner/admin
+    const expression = await db.getExpressionById(exprId)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
+    // Parse multipart/form-data
+    const body = await c.req.parseBody()
+    const file = body['audio_file']
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: 'Invalid parameters: audio_file missing or invalid' }, 400)
+    }
+
+    // Ensure audio size doesn't exceed 1MB (1048576 bytes)
+    if (file.size > 1048576) {
+      return c.json({ error: 'Audio file too large. Max size is 1MB.' }, 400)
+    }
+
+    const bucketParams = c.env.AUDIO_BUCKET
+    if (!bucketParams) {
+      console.error('Server missing AUDIO_BUCKET binding')
+      return c.json({ error: 'Storage configuration error' }, 500)
+    }
+
+    const uuid = crypto.randomUUID()
+
+    // Extrapolate extension from mime content_type
+    const extension = file.type === 'audio/mp4' ? 'mp4' : 'webm'
+    const objectKey = `expressions/${exprId}/${uuid}.${extension}`
+
+    // Upload via native Binding
+    await c.env.AUDIO_BUCKET.put(objectKey, await file.arrayBuffer(), {
+      httpMetadata: {
+        contentType: file.type
+      }
+    })
+
+    // CDN URL logic: Use domain prefix + bucket logic.
+    const isDev = c.req.url.includes('localhost') || c.req.url.includes('127.0.0.1')
+    const cdnUrl = isDev ? `http://localhost:8787/audio-assets/${objectKey}` : `https://audio.langmap.io/${objectKey}`
+
+    // Parse existing audio records
+    let audioRecords: Array<{ url: string; speaker: string }> = []
+    if (expression.audio_url) {
+      try {
+        const parsed = JSON.parse(expression.audio_url)
+        if (Array.isArray(parsed)) {
+          audioRecords = parsed
+        } else if (typeof expression.audio_url === 'string' && expression.audio_url.startsWith('http')) {
+          // Backward compatibility: Convert legacy single URL string to array
+          audioRecords = [{ url: expression.audio_url, speaker: expression.created_by || 'Unknown' }]
+        }
+      } catch (e) {
+        // Fallback for unparseable legacy strings
+        if (typeof expression.audio_url === 'string' && expression.audio_url.startsWith('http')) {
+          audioRecords = [{ url: expression.audio_url, speaker: expression.created_by || 'Unknown' }]
+        }
+      }
+    }
+
+    // Enforce 1 record per user rule by removing existing record by this user if any
+    const username = c.get('user')?.username || 'Unknown'
+    audioRecords = audioRecords.filter(record => record.speaker !== username)
+
+    // Append new record
+    audioRecords.push({ url: cdnUrl, speaker: username })
+
+    // Update DB directly
+    await db.updateExpression(exprId, {
+      audio_url: JSON.stringify(audioRecords),
+      updated_by: username,
+      updated_at: new Date().toISOString()
+    })
+
+    return c.json({
+      audio_url: JSON.stringify(audioRecords)
+    })
+
+  } catch (error: any) {
+    console.error('Error in POST /expressions/:expr_id/upload-audio:', error);
+    return c.json({ error: 'Failed to upload audio file' }, 500)
+  }
+})
+
+// DELETE /api/v1/expressions/:expr_id/audio
+api.delete('/expressions/:expr_id/audio', requireAuth, async (c) => {
+  try {
+    const exprIdStr = c.req.param('expr_id')
+    const exprId = parseInt(exprIdStr, 10)
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID format' }, 400)
+    }
+
+    const currentUser = c.get('user')
+    if (!currentUser) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    // The frontend passes the speaker name it wants to delete via query string
+    const targetSpeaker = c.req.query('speaker')
+    if (!targetSpeaker) {
+      return c.json({ error: 'Speaker parameter is required' }, 400)
+    }
+
+    // Permission check
+    // Only the owner of the audio, an admin, or a super_admin can delete it
+    if (
+      currentUser.username !== targetSpeaker &&
+      currentUser.role !== 'admin' &&
+      currentUser.role !== 'super_admin'
+    ) {
+      return c.json({ error: 'Insufficient permissions to delete this audio' }, 403)
+    }
+
+    const db = getDB(c)
+    const expression = await db.getExpressionById(exprId)
+
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
+    if (!expression.audio_url) {
+      return c.json({ error: 'No audio exists for this expression' }, 400)
+    }
+
+    let audioRecords: Array<{ url: string, speaker: string }> = []
+    try {
+      if (expression.audio_url.startsWith('[')) {
+        audioRecords = JSON.parse(expression.audio_url)
+      } else {
+        // Legacy fallback
+        audioRecords = [{ url: expression.audio_url, speaker: expression.created_by || 'Unknown' }]
+      }
+    } catch (e) {
+      // Legacy fallback
+      audioRecords = [{ url: expression.audio_url, speaker: expression.created_by || 'Unknown' }]
+    }
+
+    // Filter out the target speaker
+    const updatedRecords = audioRecords.filter(record => record.speaker !== targetSpeaker)
+
+    // D1 driver requires null, not undefined
+    const newValue = updatedRecords.length > 0 ? JSON.stringify(updatedRecords) : null
+
+    await db.updateExpression(exprId, {
+      audio_url: newValue,
+      updated_by: currentUser.username,
+      updated_at: new Date().toISOString()
+    })
+
+    return c.json({
+      message: 'Audio deleted successfully',
+      audio_url: newValue
+    })
+
+  } catch (error: any) {
+    console.error('Error in DELETE /expressions/:expr_id/audio:', error);
+    return c.json({ error: 'Failed to delete audio' }, 500)
+  }
+})
 
 // GET /api/v1/search
 api.get('/search', cacheMiddleware(3600), async (c) => {

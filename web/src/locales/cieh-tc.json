@@ -261,5 +261,10 @@
   "view_and_manage_account": "望搭管理爾个賬號信息",
   "view_map": "望地圖 →",
   "wait": "等朞，瑲朞徠𡍲準備文件牢。",
-  "optional": "好省"
+  "optional": "好省",
+  "record_audio": "錄音",
+  "add_audio": "加錄音",
+  "remove_audio": "移爻錄音",
+  "expression_audio_label": "詞句錄音",
+  "confirm_delete_audio": "爾老實約畀箇錄音删爻啊？"
 }
