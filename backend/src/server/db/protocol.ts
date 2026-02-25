@@ -78,6 +78,19 @@ export interface CollectionItem {
   created_at: number
 }
 
+export interface Handbook {
+  id: number
+  user_id: number
+  title: string
+  description?: string
+  content: string
+  source_lang?: string
+  target_lang?: string
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
 // Statistics interface
 export interface Statistics {
   total_expressions: number
@@ -161,5 +174,13 @@ export abstract class AbstractDatabaseService {
   abstract addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
   abstract removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
   abstract getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null>
+
+  // Handbooks
+  abstract getHandbooks(userId?: number, isPublic?: boolean, skip?: number, limit?: number): Promise<Handbook[]>
+  abstract getHandbookById(id: number): Promise<Handbook | null>
+  abstract createHandbook(handbook: Partial<Handbook>): Promise<Handbook>
+  abstract updateHandbook(id: number, handbook: Partial<Handbook>): Promise<Handbook>
+  abstract deleteHandbook(id: number): Promise<boolean>
+
   abstract stableExpressionId(text: string, languageCode: string): number
 }

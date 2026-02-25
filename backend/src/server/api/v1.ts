@@ -305,7 +305,14 @@ api.get('/expressions', cacheMiddleware(300), async (c) => {
     const limit = parseInt(c.req.query('limit') || '50')
     const language = c.req.query('language') || undefined
     const meaningIdParam = c.req.query('meaning_id');
-    const meaningId = meaningIdParam ? parseInt(meaningIdParam) : undefined
+    let meaningId: number | number[] | undefined;
+    if (meaningIdParam) {
+      if (meaningIdParam.includes(',')) {
+        meaningId = meaningIdParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      } else {
+        meaningId = parseInt(meaningIdParam, 10);
+      }
+    }
     const tagPrefix = c.req.query('tag') || undefined
     const excludeTagPrefix = c.req.query('exclude_tag') || undefined
     const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix)
@@ -1562,6 +1569,121 @@ api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in DELETE /collections/:id/items/:expressionId:', error)
     return c.json({ error: 'Failed to remove item from collection' }, 500)
+  }
+})
+
+// Handbook Routes
+// GET /api/v1/handbooks
+api.get('/handbooks', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const userId = c.req.query('user_id') ? parseInt(c.req.query('user_id')!) : undefined
+    const isPublicParam = c.req.query('is_public')
+    const isPublic = isPublicParam !== undefined ? isPublicParam === '1' : undefined
+    const skip = parseInt(c.req.query('skip') || '0')
+    const limit = parseInt(c.req.query('limit') || '20')
+
+    const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)
+    return c.json(handbooks)
+  } catch (error: any) {
+    console.error('Error in GET /api/v1/handbooks:', error)
+    return c.json({ error: 'Failed to fetch handbooks' }, 500)
+  }
+})
+
+// GET /api/v1/handbooks/:id
+api.get('/handbooks/:id', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+
+    // Check visibility
+    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    return c.json(handbook)
+  } catch (error: any) {
+    console.error('Error in GET /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to fetch handbook' }, 500)
+  }
+})
+
+// POST /api/v1/handbooks
+api.post('/handbooks', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (!body.title || !body.content) {
+      return c.json({ error: 'Title and content are required' }, 400)
+    }
+
+    const handbook = await db.createHandbook({
+      ...body,
+      user_id: user.id
+    })
+
+    return c.json(handbook, 201)
+  } catch (error: any) {
+    console.error('Error in POST /api/v1/handbooks:', error)
+    return c.json({ error: 'Failed to create handbook' }, 500)
+  }
+})
+
+// PUT /api/v1/handbooks/:id
+api.put('/handbooks/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getHandbookById(id)
+    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+
+    if (existing.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const updated = await db.updateHandbook(id, body)
+    return c.json(updated)
+  } catch (error: any) {
+    console.error('Error in PUT /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to update handbook' }, 500)
+  }
+})
+
+// DELETE /api/v1/handbooks/:id
+api.delete('/handbooks/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getHandbookById(id)
+    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+
+    if (existing.user_id !== user.id && user.role !== 'admin') {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const success = await db.deleteHandbook(id)
+    return c.json({ success })
+  } catch (error: any) {
+    console.error('Error in DELETE /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to delete handbook' }, 500)
   }
 })
 

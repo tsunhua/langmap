@@ -1,6 +1,6 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem } from './protocol'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook } from './protocol'
 
 // Cache for statistics
 let statisticsCache: {
@@ -701,7 +701,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   private formatTimestamps<T extends Record<string, any>>(obj: T): T {
     const result = { ...obj }
     const timestampFields = ['created_at', 'updated_at']
-    
+
     for (const field of timestampFields) {
       if (result[field] && typeof result[field] === 'string') {
         const timestamp = result[field] as string
@@ -710,7 +710,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         }
       }
     }
-    
+
     return result
   }
 
@@ -924,20 +924,20 @@ export class D1DatabaseService extends AbstractDatabaseService {
           if (langCode === 'en-US') {
             meaningId = expressionId
           } else {
-             let enText: string | undefined = flattenedEnUS[key]
+            let enText: string | undefined = flattenedEnUS[key]
 
-             // If no en-US in uploaded data, query from database
-             if (!enText) {
-               const enUsExpr = await this.db.prepare(`
+            // If no en-US in uploaded data, query from database
+            if (!enText) {
+              const enUsExpr = await this.db.prepare(`
                  SELECT e.text
                  FROM expressions e
                  JOIN collection_items ci ON e.id = ci.expression_id
                  WHERE ci.collection_id = ? AND e.language_code = 'en-US' AND e.tags LIKE ?
                `).bind(langmapCol.id, `%"langmap.${key}"%`).first<{ text: string }>()
-               enText = enUsExpr?.text
-             }
+              enText = enUsExpr?.text
+            }
 
-             if (enText) {
+            if (enText) {
               meaningId = this.stableExpressionId(enText, 'en-US')
             } else {
               meaningId = expressionId // fallback: self
@@ -1497,6 +1497,104 @@ export class D1DatabaseService extends AbstractDatabaseService {
    */
   private stableCollectionId(userId: number, name: string): number {
     return this.stableHashId(`${userId}|${name}`)
+  }
+
+  // Handbooks
+  async getHandbooks(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Handbook[]> {
+    let query = 'SELECT * FROM handbooks'
+    const bindings: any[] = []
+    const conditions: string[] = []
+
+    if (userId !== undefined) {
+      conditions.push('user_id = ?')
+      bindings.push(userId)
+    }
+
+    if (isPublic !== undefined) {
+      conditions.push('is_public = ?')
+      bindings.push(isPublic ? 1 : 0)
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ')
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    bindings.push(limit, skip)
+
+    const { results } = await this.db.prepare(query).bind(...bindings).all<Handbook>()
+    return (results || []).map(h => this.formatTimestamps(h) as Handbook)
+  }
+
+  async getHandbookById(id: number): Promise<Handbook | null> {
+    const handbook = await this.db.prepare(
+      'SELECT * FROM handbooks WHERE id = ?'
+    ).bind(id).first<Handbook>()
+    if (!handbook) return null
+    return this.formatTimestamps(handbook) as Handbook
+  }
+
+  async createHandbook(handbook: Partial<Handbook>): Promise<Handbook> {
+    const id = this.stableHashId(`${handbook.user_id}|${handbook.title}|${Date.now()}`)
+    const bindValues = [
+      id,
+      handbook.user_id,
+      handbook.title,
+      handbook.description || null,
+      handbook.content || '',
+      handbook.source_lang || null,
+      handbook.target_lang || null,
+      handbook.is_public ? 1 : 0
+    ]
+
+    const result = await this.db.prepare(
+      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    ).bind(...bindValues).first<Handbook>()
+
+    if (!result) {
+      throw new Error('Failed to create handbook')
+    }
+
+    return this.formatTimestamps(result) as Handbook
+  }
+
+  async updateHandbook(id: number, handbook: Partial<Handbook>): Promise<Handbook> {
+    const fields: string[] = []
+    const values: any[] = []
+
+    Object.entries(handbook).forEach(([key, value]) => {
+      if (key !== 'id' && key !== 'created_at' && key !== 'user_id') {
+        fields.push(`${key} = ?`)
+        values.push(key === 'is_public' ? (value ? 1 : 0) : value)
+      }
+    })
+
+    if (fields.length === 0) {
+      const current = await this.getHandbookById(id);
+      if (!current) throw new Error('Handbook not found');
+      return current;
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const result = await this.db.prepare(
+      `UPDATE handbooks SET ${fields.join(', ')} WHERE id = ? RETURNING *`
+    ).bind(...values).first<Handbook>()
+
+    if (!result) {
+      throw new Error('Failed to update handbook')
+    }
+
+    return this.formatTimestamps(result) as Handbook
+  }
+
+  async deleteHandbook(id: number): Promise<boolean> {
+    const result = await this.db.prepare(
+      'DELETE FROM handbooks WHERE id = ?'
+    ).bind(id).run()
+    return (result.meta?.changes ?? 0) > 0
   }
 
   /**
