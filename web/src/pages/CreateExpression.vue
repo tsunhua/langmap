@@ -121,6 +121,14 @@
           </div>
         </div>
 
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-slate-700 mb-1">词条发音记录 ({{ $t('optional') }})</label>
+          <AudioRecorder 
+            @audio-ready="payload => handleAudioReady(index, payload)"
+            @audio-cleared="() => handleAudioCleared(index)"
+          />
+        </div>
+
         <div class="mt-6">
           <label class="block text-sm font-medium text-slate-700 mb-1">
             {{ $t('collections') }} ({{ $t('optional') }})
@@ -309,12 +317,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { fetchLanguages } from '../services/languageService.js'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
+import AudioRecorder from '../components/AudioRecorder.vue'
 
 let expressionIdCounter = 0
 
 export default {
   name: 'CreateExpressionPage',
-  components: { AddLanguageModal },
+  components: { AddLanguageModal, AudioRecorder },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -331,7 +340,9 @@ export default {
         parsingLocation: false,
         showMapSelector: false,
         collections: [],
-        showCollectionSelector: false
+        showCollectionSelector: false,
+        audioBlob: null,
+        audioMimeType: null
       }
     ])
 
@@ -421,7 +432,9 @@ export default {
         showMapSelector: false,
         collections: [],
         collectionNote: '',
-        showCollectionSelector: false
+        showCollectionSelector: false,
+        audioBlob: null,
+        audioMimeType: null
       })
     }
 
@@ -434,6 +447,16 @@ export default {
         }
       }
       expressions.value.splice(index, 1)
+    }
+
+    const handleAudioReady = (index, payload) => {
+      expressions.value[index].audioBlob = payload.blob
+      expressions.value[index].audioMimeType = payload.mimeType
+    }
+
+    const handleAudioCleared = (index) => {
+      expressions.value[index].audioBlob = null
+      expressions.value[index].audioMimeType = null
     }
 
     const handleLanguageChange = (index) => {
@@ -881,6 +904,12 @@ export default {
         const result = await res.json()
         console.log('Batch submission result:', result)
 
+        // Process audio uploads if present
+        const audioResults = await processAudioUploads(validExpressions, result.results, token)
+        if (audioResults.errors > 0) {
+          console.warn('Some audio uploads failed.')
+        }
+
         // Add expressions to collections
         const collectionResults = await addToCollections(validExpressions, result.results)
 
@@ -904,6 +933,46 @@ export default {
       } finally {
         submitting.value = false
       }
+    }
+
+    async function processAudioUploads(originalExpressions, createdExpressions, token) {
+      const results = { success: 0, errors: 0 }
+      
+      for (let i = 0; i < originalExpressions.length; i++) {
+        const original = originalExpressions[i]
+        const created = createdExpressions[i]
+        
+        if (original.audioBlob && created && created.id) {
+          try {
+            // 1. Upload directly to Worker using Native Bindings
+            const formData = new FormData()
+            formData.append('audio_file', original.audioBlob, `audio.${original.audioMimeType === 'audio/mp4' ? 'mp4' : 'webm'}`)
+
+            const uploadRes = await fetch(`/api/v1/expressions/${created.id}/upload-audio`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              body: formData
+            })
+
+            if (!uploadRes.ok) {
+              const errData = await uploadRes.json()
+              throw new Error(errData.error || 'Direct worker upload failed for expression ' + created.id)
+            }
+
+            // The backend upload-audio endpoint now updates the database directly.
+            // We no longer need a separate PATCH request to save the audio_url.
+
+            results.success++
+          } catch (err) {
+            console.error('Audio processing error:', err)
+            results.errors++
+          }
+        }
+      }
+
+      return results
     }
 
     async function addToCollections(originalExpressions, createdExpressions) {
@@ -990,7 +1059,9 @@ export default {
       closeCreateCollectionModal,
       handleCollectionCreated,
       handleCreateCollection,
-      getSelectedCollectionNames
+      getSelectedCollectionNames,
+      handleAudioReady,
+      handleAudioCleared
     }
   }
 }

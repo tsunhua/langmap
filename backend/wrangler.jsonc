@@ -40,7 +40,12 @@
     {
       "binding": "EXPORT_BUCKET",
       "bucket_name": "langmap-exports",
-      "preview_bucket_name": "langmap-exports-preview"
+      "preview_bucket_name": "langmap-exports"
+    },
+    {
+      "binding": "AUDIO_BUCKET",
+      "bucket_name": "langmap-audio",
+      "preview_bucket_name": "langmap-audio"
     }
   ],
   "migrations": [

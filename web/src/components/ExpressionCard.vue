@@ -26,18 +26,60 @@
                 </span>
               </span>
             </div>
-            <!-- 显示所有标签 -->
-            <div class="mt-2 flex flex-wrap gap-1 items-center">
+            <!-- Audio Row -->
+            <div class="mt-3 flex flex-wrap items-center gap-2" v-if="audioList.length > 0 || editable">
+              <template v-for="(audioItem, index) in audioList" :key="index">
+                <div class="inline-flex items-center bg-slate-50 border border-slate-200 rounded-full transition-colors group/pill h-8">
+                  <button @click.stop.prevent="playAudio(audioItem, index)" class="inline-flex items-center justify-center text-slate-600 hover:text-blue-600 hover:bg-slate-200 active:bg-slate-300 focus:outline-none p-1 ml-0.5 rounded-full transition-colors" :title="$t('play')">
+                    <svg v-if="playingIndex !== index" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <span class="text-xs font-medium text-slate-600 px-1.5 cursor-default truncate max-w-[100px]" :title="audioItem.speaker">
+                    {{ audioItem.speaker }}
+                  </span>
+                  
+                  <!-- Spacer when non-editable or no delete rights, or just padding -->
+                  <div class="w-1.5 h-full" v-if="!canDeleteAudio(audioItem.speaker)"></div>
+
+                  <!-- X Button Container (Zero width until hover/focus) -->
+                  <div v-if="canDeleteAudio(audioItem.speaker)" class="w-0 overflow-hidden group-hover/pill:w-7 transition-[width] duration-200 ease-in-out flex items-center justify-end h-full pr-1">
+                    <button @click.stop.prevent="handleRemoveAudio(audioItem.speaker)" class="flex-shrink-0 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors w-5 h-5" :title="$t('remove_audio')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-if="editable && canAddAudio">
+                <div v-if="showAudioRecorder" class="w-full flex" @click.stop.prevent>
+                  <AudioRecorder @audio-ready="handleInlineAudioUpload" @audio-cleared="showAudioRecorder = false" />
+                </div>
+                <button v-else-if="editable && canAddAudio" @click.stop.prevent="showAudioRecorder = true" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors font-medium">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                  {{ $t('add_audio') }}
+                </button>
+              </template>
+            </div>
+
+            <!-- Tags -->
+            <div class="mt-3 flex flex-wrap gap-1 items-center">
               <span
                 v-for="(tag, index) in getTagsList()"
                 :key="index"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"
               >
                 {{ tag }}
                 <button
                   v-if="editable"
                   @click.prevent="removeTag(tag)"
-                  class="ml-1 text-blue-600 hover:text-blue-900 focus:outline-none"
+                  class="ml-1 text-slate-500 hover:text-slate-800 focus:outline-none"
                   title="Remove tag"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -56,14 +98,14 @@
                     @blur="cancelAddTag"
                     ref="newTagInput"
                     placeholder="tag"
-                    class="w-20 px-2 py-0.5 text-xs rounded border border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    class="w-20 px-2 py-0.5 text-xs rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-500"
                     autofocus
                   />
                 </div>
                 <button
                   v-else
                   @click.prevent="startAddTag"
-                  class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors focus:outline-none"
+                  class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 border border-dashed border-slate-300 hover:bg-slate-100 hover:border-slate-400 text-slate-500 transition-all focus:outline-none"
                   title="Add tag"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -85,16 +127,6 @@
           </span>
 
           <div class="flex items-center gap-2">
-            <button
-              v-if="item.audio_url"
-              @click.stop.prevent="playAudio"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
-              :title="$t('play')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-            </button>
             <button
               @click.stop.prevent="copyText"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-50 focus:ring-slate-500 p-1.5 text-sm min-w-[3rem]"
@@ -154,15 +186,16 @@
 </template>
 
 <script>
-import { ref, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getLanguageDisplayName } from '../services/languageService.js'
 import AddToCollectionModal from './AddToCollectionModal.vue'
+import AudioRecorder from './AudioRecorder.vue'
 
 export default {
   name: 'ExpressionCard',
-  components: { AddToCollectionModal },
+  components: { AddToCollectionModal, AudioRecorder },
   props: {
     item: {
       type: Object,
@@ -190,15 +223,74 @@ export default {
     }
   },
   emits: ['update-tags', 'unlink', 'delete'],
-  data() {
-    return {
-      playing: false
-    }
-  },
   setup(props, { emit }) {
     const { t } = useI18n()
     const router = useRouter()
     const showCollectionModal = ref(false)
+    const showAudioRecorder = ref(false)
+
+    // Current user info
+    const currentUser = ref(null)
+    const loadUser = () => {
+      try {
+        // App.vue saves user info as 'user'
+        const userInfo = localStorage.getItem('user')
+        if (userInfo) {
+          currentUser.value = JSON.parse(userInfo)
+        }
+      } catch (e) {
+        console.error('Failed to parse user info', e)
+      }
+    }
+    loadUser()
+
+    // Parse audio list
+    const audioList = ref([])
+    const updateAudioList = () => {
+      if (!props.item.audio_url) {
+        audioList.value = []
+        return
+      }
+      try {
+        const parsed = JSON.parse(props.item.audio_url)
+        if (Array.isArray(parsed)) {
+          audioList.value = parsed
+        } else if (typeof props.item.audio_url === 'string' && props.item.audio_url.startsWith('http')) {
+          audioList.value = [{ url: props.item.audio_url, speaker: props.item.created_by || 'Unknown' }]
+        } else {
+          audioList.value = []
+        }
+      } catch (e) {
+        if (typeof props.item.audio_url === 'string' && props.item.audio_url.startsWith('http')) {
+          audioList.value = [{ url: props.item.audio_url, speaker: props.item.created_by || 'Unknown' }]
+        } else {
+          audioList.value = []
+        }
+      }
+    }
+    
+    // Watch for changes in audio_url (moved below)
+
+    const canAddAudio = ref(false)
+    const updateCanAddAudio = () => {
+      if (!currentUser.value) {
+        canAddAudio.value = false
+        return
+      }
+      // Can add if user doesn't already have an audio record
+      canAddAudio.value = !audioList.value.some(a => a.speaker === currentUser.value.username)
+    }
+    updateCanAddAudio()
+
+    watch(() => props.item.audio_url, () => {
+      updateAudioList()
+      updateCanAddAudio()
+    }, { immediate: true })
+
+    const canDeleteAudio = (speaker) => {
+      if (!props.editable || !currentUser.value) return false
+      return currentUser.value.role === 'admin' || currentUser.value.role === 'super_admin' || currentUser.value.username === speaker
+    }
 
     // Copy functionality
     const copied = ref(false)
@@ -245,6 +337,61 @@ export default {
       emit('update-tags', newTags)
     }
 
+    const handleInlineAudioUpload = async (payload) => {
+      const token = localStorage.getItem('authToken')
+      if (!token) return
+
+      try {
+        // 1. Upload directly to Worker
+        const formData = new FormData()
+        formData.append('audio_file', payload.blob, `audio.${payload.mimeType === 'audio/mp4' ? 'mp4' : 'webm'}`)
+
+        const uploadRes = await fetch(`/api/v1/expressions/${props.item.id}/upload-audio`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+
+        if (!uploadRes.ok) throw new Error('Native binding upload failed')
+        const { audio_url } = await uploadRes.json()
+        props.item.audio_url = audio_url // Update parent data optimistically
+        updateAudioList()
+        updateCanAddAudio()
+        showAudioRecorder.value = false
+
+      } catch (err) {
+        console.error('Audio processing error:', err)
+        alert('Failed to upload audio')
+      }
+    }
+
+    const handleRemoveAudio = async (speaker) => {
+      if (!confirm(t('confirm_delete', { item: 'audio' }))) return
+
+      const token = localStorage.getItem('authToken')
+      if (!token) return
+
+      try {
+        const updateRes = await fetch(`/api/v1/expressions/${props.item.id}/audio?speaker=${encodeURIComponent(speaker)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!updateRes.ok) throw new Error('Failed to delete audio')
+        
+        const { audio_url } = await updateRes.json()
+        props.item.audio_url = audio_url
+        updateAudioList()
+        updateCanAddAudio()
+      } catch (err) {
+        console.error('Error removing audio:', err)
+      }
+    }
+
     const startAddTag = () => {
       isAddingTag.value = true
       newTagValue.value = ''
@@ -273,10 +420,47 @@ export default {
       router.push({ name: 'LanguageDetail', params: { code: props.item.language_code } })
     }
 
-    // Clean up timeout on unmount
+    const playingIndex = ref(-1)
+    let audioInstance = null
+
+    const playAudio = (audioItem, index) => {
+      if (!audioItem || !audioItem.url) return
+      
+      if (audioInstance && playingIndex.value === index) {
+        audioInstance.pause()
+        audioInstance.currentTime = 0
+        playingIndex.value = -1
+        return
+      }
+
+      if (audioInstance) {
+        audioInstance.pause()
+        audioInstance.currentTime = 0
+      }
+
+      audioInstance = new Audio(audioItem.url)
+      audioInstance.addEventListener('ended', () => {
+        playingIndex.value = -1
+      })
+      audioInstance.addEventListener('error', () => {
+        playingIndex.value = -1
+      })
+
+      audioInstance.play().catch(e => {
+        console.error('Playback error:', e);
+        playingIndex.value = -1;
+      })
+      playingIndex.value = index
+    }
+
+    // Clean up timeout and audio on unmount
     onUnmounted(() => {
       if (copyTimeout) {
         clearTimeout(copyTimeout)
+      }
+      if (audioInstance) {
+        audioInstance.pause()
+        audioInstance = null
       }
     })
 
@@ -294,21 +478,18 @@ export default {
       startAddTag,
       confirmAddTag,
       cancelAddTag,
-      goToLanguageDetail
+      goToLanguageDetail,
+      showAudioRecorder,
+      handleInlineAudioUpload,
+      handleRemoveAudio,
+      playAudio,
+      playingIndex,
+      audioList,
+      canAddAudio,
+      canDeleteAudio
     }
   },
   methods: {
-    playAudio () {
-      const audio = new Audio(this.item.audio_url)
-      this.playing = true
-      audio.play()
-      audio.addEventListener('ended', () => {
-        this.playing = false
-      })
-      audio.addEventListener('error', () => {
-        this.playing = false
-      })
-    },
     getLanguageDisplayName(code) {
       return getLanguageDisplayName(code)
     },
