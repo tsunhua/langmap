@@ -171,21 +171,28 @@ export default {
       return localeMapping[localeCode] || localeCode || 'en-US'
     }
 
-    // Date formatter using current locale
     const formatDate = (dateString) => {
       const options = { 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric', 
         hour: '2-digit', 
-        minute: '2-digit' 
+        minute: '2-digit',
+        timeZoneName: 'short'
       }
       const validLocale = getValidLocale(locale.value)
+      
+      let date
       try {
-        return new Date(dateString).toLocaleDateString(validLocale, options)
+        if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+          date = new Date(dateString + 'Z')
+        } else {
+          date = new Date(dateString)
+        }
+        return date.toLocaleString(validLocale, options)
       } catch (e) {
         console.warn(`Failed to format date with locale ${validLocale}, falling back to en-US`, e)
-        return new Date(dateString).toLocaleDateString('en-US', options)
+        return date.toLocaleString('en-US', options)
       }
     }
 
