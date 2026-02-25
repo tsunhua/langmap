@@ -6,36 +6,45 @@
 
     <div v-else-if="handbook" class="space-y-8">
       <!-- Header -->
-      <header class="space-y-4">
-        <div class="flex justify-between items-start">
-          <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">{{ handbook.title }}</h1>
-          <button 
-            v-if="canEdit"
-            @click="goToEdit"
-            class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all shadow-sm"
-          >
-            {{ $t('edit') }}
-          </button>
-        </div>
-        <p class="text-lg text-gray-500 max-w-2xl leading-relaxed">
-          {{ handbook.description }}
-        </p>
-        
-        <div class="flex items-center gap-6 pt-4 border-t border-gray-100">
-          <div class="flex items-center gap-4">
-            <label class="text-sm font-bold text-gray-400 uppercase tracking-widest">{{ $t('handbook_learning_language') || 'Learning Language' }}:</label>
-            <select 
-              v-model="targetLanguage" 
-              class="bg-white border-none text-sm font-bold text-blue-600 focus:ring-2 focus:ring-blue-500 rounded-lg py-1 pl-2 pr-8 shadow-sm cursor-pointer"
-            >
-              <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
-                {{ lang.name }} ({{ lang.code }})
-              </option>
-            </select>
+      <header class="space-y-3">
+        <!-- Title row with top-right icon toolbar -->
+        <div class="flex justify-between items-start gap-4">
+          <div>
+            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">{{ handbook.title }}</h1>
+            <p v-if="handbook.description" class="mt-2 text-base text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description }}</p>
+            <p class="mt-2 text-[11px] text-gray-400">{{ $t('handbook_last_updated') || 'Updated' }}: {{ formatDate(handbook.updated_at) }}</p>
           </div>
-          <div class="h-4 w-px bg-gray-200"></div>
-          <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-            {{ $t('handbook_last_updated') || 'Updated' }}: {{ formatDate(handbook.updated_at) }}
+
+          <!-- Top-right icon toolbar -->
+          <div class="flex items-center gap-0.5 flex-shrink-0 mt-1">
+            <!-- Language switcher: globe icon + compact select -->
+            <div class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-50 transition-colors" :title="$t('handbook_learning_language') || 'Learning Language'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3a14.4 14.4 0 0 1 0 18M12 3a14.4 14.4 0 0 0 0 18" />
+              </svg>
+              <span class="text-xs text-gray-400">{{ $t('handbook_learn_in') || 'Learn in' }}</span>
+              <select
+                v-model="targetLanguage"
+                class="border-none bg-transparent text-xs text-gray-600 focus:ring-0 focus:outline-none cursor-pointer p-0 appearance-none"
+                style="background-image: none;"
+              >
+                <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
+                  {{ lang.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Edit button (icon only) -->
+            <button
+              v-if="canEdit"
+              @click="goToEdit"
+              class="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              :title="$t('edit')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487a2.25 2.25 0 1 1 3.182 3.182L7.5 20.213l-4.5 1 1-4.5L16.862 4.487Z" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>

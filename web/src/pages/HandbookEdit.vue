@@ -1,27 +1,29 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="max-w-7xl mx-auto px-4 py-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">
-        {{ isEditing ? $t('handbook_edit') : $t('handbook_new') }}
-      </h1>
-      <div class="flex gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          {{ isEditing ? $t('handbook_edit') : $t('handbook_new') }}
+        </h1>
+      </div>
+      <div class="flex items-center gap-2">
         <button 
           @click="goBack"
-          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
         >
           {{ $t('cancel') }}
         </button>
         <button 
           @click="save"
           :disabled="saving"
-          class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all font-medium shadow-md"
+          class="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
         >
           {{ saving ? $t('saving') : $t('save') }}
         </button>
       </div>
     </div>
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6">
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <!-- Title -->
         <div class="mb-4">
@@ -81,101 +83,110 @@
 
         <!-- Content Editor -->
         <div class="mb-6">
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-sm font-semibold text-gray-700">{{ $t('handbook_content_label') }}</label>
-            <div class="flex gap-2">
-              <button 
-                @click="previewMode = false"
-                :class="['px-3 py-1 text-xs font-medium rounded-md transition-all', !previewMode ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
-              >
-                {{ $t('handbook_write') }}
-              </button>
-              <button 
-                @click="switchToPreview"
-                :class="['px-3 py-1 text-xs font-medium rounded-md transition-all', previewMode ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
-              >
-                {{ $t('handbook_preview') }}
-                <span v-if="previewLoading" class="ml-1 inline-block w-2 h-2 border border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-              </button>
-            </div>
-          </div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('handbook_content_label') }}</label>
 
-          <!-- Toolbar (Visible only in Write mode) -->
-          <div v-if="!previewMode" class="flex flex-wrap items-center gap-1 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl overflow-x-auto">
-            <button @click="undo" :disabled="historyIndex <= 0" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Undo">↩️</button>
-            <button @click="redo" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Redo">↪️</button>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <button @click="applyStyle('**', '**')" class="px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors" title="Bold">B</button>
-            <button @click="applyStyle('*', '*')" class="px-2 py-1 text-sm italic hover:bg-white rounded transition-colors" title="Italic">I</button>
-            <button @click="applyStyle('<u>', '</u>')" class="px-2 py-1 text-sm underline hover:bg-white rounded transition-colors" title="Underline">U</button>
-            <button @click="applyStyle('~~', '~~')" class="px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors" title="Strikethrough">S</button>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <button @click="applyStyle('# ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H1</button>
-            <button @click="applyStyle('## ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H2</button>
-            <button @click="applyStyle('### ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H3</button>
-            <div class="h-4 w-px bg-gray-300 mx-1"></div>
-            <button @click="applyStyle('- ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Bullet List">•</button>
-            <button @click="applyStyle('1. ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Numbered List">1.</button>
-            <button @click="applyStyle('> ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Quote">"</button>
-            <button @click="applyStyle('`', '`')" class="px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors" title="Code">&lt;/&gt;</button>
-          </div>
-
-          <!-- Expression Search (separate row, below toolbar, no overflow clipping) -->
-          <div v-if="!previewMode" class="relative mb-2">
-            <input 
-              v-model="searchQuery"
-              type="text"
-              class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white"
-              :placeholder="form.source_lang ? `🔍 Search & insert expression in ${form.source_lang}...` : ('🔍 ' + ($t('handbook_insert_expression') || 'Search & insert expression...'))"
-              @input="search"
-            />
-
-            <!-- Search Results Dropdown -->
-            <div v-if="searchQuery && (searchResults.length > 0 || searching)" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
-              <div v-if="searching" class="p-4 text-center">
-                <div class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-              </div>
-              <div v-else>
-                <div 
-                  v-for="expr in searchResults" 
-                  :key="expr.id"
-                  class="p-2 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors"
-                  @click="insertAndClear(expr)"
+          <div :class="['grid gap-4', showPreview ? 'grid-cols-2' : 'grid-cols-1']">
+            <!-- Left Column: Editor -->
+            <div>
+              <!-- Toolbar -->
+              <div class="flex flex-wrap items-center gap-1 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl">
+                <button @click="undo" :disabled="historyIndex <= 0" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Undo">↩️</button>
+                <button @click="redo" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Redo">↪️</button>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <button @click="applyStyle('**', '**')" class="px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors" title="Bold">B</button>
+                <button @click="applyStyle('*', '*')" class="px-2 py-1 text-sm italic hover:bg-white rounded transition-colors" title="Italic">I</button>
+                <button @click="applyStyle('<u>', '</u>')" class="px-2 py-1 text-sm underline hover:bg-white rounded transition-colors" title="Underline">U</button>
+                <button @click="applyStyle('~~', '~~')" class="px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors" title="Strikethrough">S</button>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <button @click="applyStyle('# ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H1</button>
+                <button @click="applyStyle('## ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H2</button>
+                <button @click="applyStyle('### ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H3</button>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <button @click="applyStyle('- ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Bullet List">•</button>
+                <button @click="applyStyle('1. ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Numbered List">1.</button>
+                <button @click="applyStyle('> ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Quote">"</button>
+                <button @click="applyStyle('`', '`')" class="px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors" title="Code">&lt;/&gt;</button>
+                <div class="flex-grow"></div>
+                <!-- Preview Toggle -->
+                <button 
+                  @click="showPreview = !showPreview"
+                  :class="['px-2.5 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1', showPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
+                  :title="showPreview ? ($t('hide_preview') || 'Hide Preview') : ($t('show_preview') || 'Show Preview')"
                 >
-                  <div class="flex justify-between items-center">
-                    <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                    <span class="text-[10px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">{{ expr.language_code }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Expression Search -->
+              <div class="relative mb-2">
+                <input 
+                  v-model="searchQuery"
+                  type="text"
+                  class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white"
+                  :placeholder="form.source_lang ? `🔍 Search & insert expression in ${form.source_lang}...` : ('🔍 ' + ($t('handbook_insert_expression') || 'Search & insert expression...'))"
+                  @input="search"
+                />
+
+                <!-- Search Results Dropdown -->
+                <div v-if="searchQuery && (searchResults.length > 0 || searching)" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
+                  <div v-if="searching" class="p-4 text-center">
+                    <div class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  </div>
+                  <div v-else>
+                    <div 
+                      v-for="expr in searchResults" 
+                      :key="expr.id"
+                      class="p-2 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors"
+                      @click="insertAndClear(expr)"
+                    >
+                      <div class="flex justify-between items-center">
+                        <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                        <span class="text-[10px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">{{ expr.language_code }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div v-if="!previewMode" class="relative group">
-            <textarea 
-              ref="contentArea"
-              v-model="form.content"
-              rows="18"
-              class="w-full font-mono text-sm border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-4 transition-all"
-              :placeholder="$t('handbook_content_placeholder')"
-            ></textarea>
-            <div class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-              Markdown Supported
-            </div>
-          </div>
-          
-          <!-- Preview Mode -->
-          <div v-else>
-            <div v-if="previewLoading" class="w-full min-h-[200px] flex items-center justify-center border border-gray-200 rounded-xl bg-gray-50">
-              <div class="text-center text-gray-500">
-                <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mb-2"></div>
-                <p class="text-sm">{{ $t('handbook_loading_preview') || 'Loading translations...' }}</p>
+              <div class="relative group">
+                <textarea 
+                  ref="contentArea"
+                  v-model="form.content"
+                  rows="18"
+                  class="w-full font-mono text-sm border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-4 transition-all"
+                  :placeholder="$t('handbook_content_placeholder')"
+                ></textarea>
+                <div class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Markdown
+                </div>
               </div>
             </div>
-            <div v-else class="w-full min-h-[450px] border border-gray-200 rounded-xl p-8 bg-gray-50 prose prose-blue prose-sm max-w-none markdown-body" v-html="renderedContent"></div>
-            <p v-if="form.target_lang" class="text-xs text-gray-400 mt-2">
-              {{ $t('handbook_preview_lang_hint') || 'Preview shows translations in' }}: <strong>{{ form.target_lang }}</strong>
-            </p>
+
+            <!-- Right Column: Preview -->
+            <div v-if="showPreview" class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+              <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <h3 class="text-sm font-semibold text-gray-700">{{ $t('handbook_preview') }}</h3>
+                <span v-if="previewLoading" class="ml-auto inline-block w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+              </div>
+              
+              <div v-if="previewLoading" class="min-h-[150px] flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                  <div class="animate-spin inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mb-2"></div>
+                  <p class="text-xs">{{ $t('handbook_loading_preview') || 'Loading...' }}</p>
+                </div>
+              </div>
+              <div v-else class="prose prose-blue prose-sm max-w-none markdown-body" v-html="renderedContent"></div>
+              <p v-if="form.target_lang && renderedContent" class="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-200">
+                {{ $t('handbook_preview_lang_hint') || 'Translations in' }}: <strong>{{ form.target_lang }}</strong>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -194,7 +205,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed } from 'vue'
+ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
@@ -209,11 +220,11 @@ export default {
     const { t } = useI18n()
     const md = new MarkdownIt({ html: true })
     
-    const isEditing = computed(() => !!props.id)
-    const saving = ref(false)
-    const previewMode = ref(false)
-    const previewLoading = ref(false)
-    const contentArea = ref(null)
+     const isEditing = computed(() => !!props.id)
+     const saving = ref(false)
+     const showPreview = ref(true)
+     const previewLoading = ref(false)
+     const contentArea = ref(null)
     
     // Available languages for selectors
     const languages = ref([])
@@ -427,9 +438,9 @@ export default {
       })
     }
 
-    // Switch to preview: fetch translations if target_lang is set
-    const switchToPreview = async () => {
-      previewMode.value = true
+    // Update preview: fetch translations if target_lang is set
+    const updatePreview = async () => {
+      if (!showPreview.value) return
 
       if (!form.target_lang) {
         // No target lang, just render without translations
@@ -472,6 +483,15 @@ export default {
       renderedContent.value = buildRenderedContent(translationCache.value)
     }
 
+    let previewTimeout = null
+    // Watch for content and target_lang changes to update preview
+    watch([() => form.content, () => form.target_lang, showPreview], () => {
+      if (previewTimeout) clearTimeout(previewTimeout)
+      previewTimeout = setTimeout(() => {
+        updatePreview()
+      }, 300)
+    })
+
     const save = async () => {
       if (!form.title.trim()) {
         alert(t('handbook_title_required') || 'Title is required')
@@ -513,12 +533,13 @@ export default {
     onMounted(() => {
       fetchLanguages()
       fetchHandbook()
+      updatePreview()
     })
 
     return {
       isEditing,
       saving,
-      previewMode,
+      showPreview,
       previewLoading,
       form,
       languages,
@@ -535,7 +556,6 @@ export default {
       applyStyle,
       undo,
       redo,
-      switchToPreview,
       save,
       goBack
     }
