@@ -272,5 +272,12 @@
   "optional": "facultatif",
   "select_collections": "Sélectionner des collections",
   "add_to_collection_error": "Expression créée, mais échec de l'ajout aux collections",
-  "partial_add_error": "Certaines expressions n'ont pas pu être ajoutées aux collections"
+  "partial_add_error": "Certaines expressions n'ont pas pu être ajoutées aux collections",
+  "record_audio": "Enregistrer la prononciation",
+  "audio_not_supported": "L'environnement actuel ne prend pas en charge l'enregistrement. Veuillez utiliser un navigateur moderne et vous assurer que vous accédez via HTTPS.",
+  "microphone_access_denied": "Impossible d'accéder au microphone. Assurez-vous que vous avez accordé l'autorisation.",
+  "add_audio": "Ajouter l'audio",
+  "remove_audio": "Supprimer l'audio",
+  "expression_audio_label": "Enregistrement de la prononciation de l'expression",
+  "confirm_delete_audio": "Êtes-vous sûr de vouloir supprimer cet audio ?"
 }

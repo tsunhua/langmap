@@ -368,7 +368,7 @@ export default {
     }
 
     const handleRemoveAudio = async (speaker) => {
-      if (!confirm(t('confirm_delete', { item: 'audio' }))) return
+      if (!confirm(t('confirm_delete_audio'))) return
 
       const token = localStorage.getItem('authToken')
       if (!token) return

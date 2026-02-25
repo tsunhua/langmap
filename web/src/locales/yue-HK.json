@@ -272,5 +272,12 @@
   "optional": "可選",
   "select_collections": "揀收藏集",
   "add_to_collection_error": "詞句已建立，但加入收藏集時出錯",
-  "partial_add_error": "部分詞句未能加入收藏集"
+  "partial_add_error": "部分詞句未能加入收藏",
+  "record_audio": "錄音",
+  "audio_not_supported": "目前環境不支援錄音，請使用較新的瀏覽器並確保在 HTTPS 環境下開啟。",
+  "microphone_access_denied": "無法存取麥克風，請確認已授權。",
+  "add_audio": "加入錄音",
+  "remove_audio": "移除錄音",
+  "expression_audio_label": "詞句錄音",
+  "confirm_delete_audio": "你確定要刪除呢段錄音？"
 }

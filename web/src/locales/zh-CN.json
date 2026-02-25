@@ -273,5 +273,12 @@
   "optional": "可选",
   "select_collections": "选择收藏集",
   "add_to_collection_error": "词句已创建，但添加到收藏集时出错",
-  "partial_add_error": "部分词句未能添加到收藏集"
+  "partial_add_error": "部分词句未能添加到收藏集",
+  "record_audio": "录音",
+  "audio_not_supported": "当前环境不支持录音，请使用现代浏览器并确保在 HTTPS 环境下访问。",
+  "microphone_access_denied": "无法访问麦克风。请确保您已授予权限。",
+  "add_audio": "添加录音",
+  "remove_audio": "移除录音",
+  "expression_audio_label": "词条录音",
+  "confirm_delete_audio": "您确定要删除这条录音吗？"
 }

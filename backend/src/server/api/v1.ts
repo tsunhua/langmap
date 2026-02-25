@@ -778,7 +778,8 @@ api.delete('/expressions/:expr_id/audio', requireAuth, async (c) => {
     // Filter out the target speaker
     const updatedRecords = audioRecords.filter(record => record.speaker !== targetSpeaker)
 
-    const newValue = updatedRecords.length > 0 ? JSON.stringify(updatedRecords) : undefined
+    // D1 driver requires null, not undefined
+    const newValue = updatedRecords.length > 0 ? JSON.stringify(updatedRecords) : null
 
     await db.updateExpression(exprId, {
       audio_url: newValue,

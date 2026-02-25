@@ -19,7 +19,7 @@ export interface Expression {
   id: number
   text: string
   meaning_id?: number
-  audio_url?: string
+  audio_url?: string | null
   language_code: string
   region_code?: string
   region_name?: string
@@ -40,7 +40,7 @@ export interface ExpressionVersion {
   expression_id: number
   text: string
   meaning_id?: number
-  audio_url?: string
+  audio_url?: string | null
   region_name?: string
   region_latitude?: string
   region_longitude?: string
