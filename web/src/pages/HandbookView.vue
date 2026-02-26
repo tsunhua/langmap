@@ -18,7 +18,7 @@
           <!-- Top-right icon toolbar -->
           <div class="flex items-center gap-0.5 flex-shrink-0 mt-1">
             <!-- Language switcher: globe icon + compact select -->
-            <div class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-50 transition-colors" :title="$t('handbook_learning_language') || 'Learning Language'">
+            <div class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-50 transition-colors" :title="$t('handbook_instruction_lang') || 'Instruction Language'">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3a14.4 14.4 0 0 1 0 18M12 3a14.4 14.4 0 0 0 0 18" />
               </svg>

@@ -55,7 +55,7 @@
           <div class="space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('handbook_source_lang') || 'Writing Language' }}
+                <span class="text-red-500">*</span> {{ $t('handbook_content_lang') || 'Target Language' }}
               </label>
               <select 
                 v-model="form.source_lang"
@@ -69,7 +69,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('handbook_target_lang') || 'Learning Language' }}
+                <span class="text-red-500">*</span> {{ $t('handbook_instruction_lang') || 'Instruction Language' }}
               </label>
               <select 
                 v-model="form.target_lang"
@@ -507,11 +507,11 @@ export default {
         return
       }
       if (!form.source_lang) {
-        alert(t('handbook_source_lang_required') || 'Writing Language is required')
+        alert(t('handbook_content_lang_required') || 'Target Language is required')
         return
       }
       if (!form.target_lang) {
-        alert(t('handbook_target_lang_required') || 'Learning Language is required')
+        alert(t('handbook_instruction_lang_required') || 'Instruction Language is required')
         return
       }
 
