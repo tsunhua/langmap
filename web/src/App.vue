@@ -37,6 +37,19 @@
           </svg>
           {{ $t('search') }}
         </router-link>
+
+        <router-link 
+          to="/create-expression" 
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50"
+          @click="mobileMenuOpen = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ $t('create_title') }}
+        </router-link>
+
         <router-link 
           to="/collections" 
           class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
@@ -59,37 +72,18 @@
           </svg>
           {{ $t('handbook_title') }}
         </router-link>
-        <router-link 
-          to="/create-expression" 
-          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50"
-          @click="mobileMenuOpen = false"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          {{ $t('create_title') }}
-        </router-link>
-        <router-link
-          to="/languages"
-          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50"
-          @click="mobileMenuOpen = false"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          {{ $t('languages_title') }}
-        </router-link>
-        <router-link 
-          to="/about" 
-          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {{ $t('about') }}
-        </router-link>
+        
+         <router-link
+           to="/languages"
+           class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+           active-class="text-blue-600 bg-blue-50"
+           @click="mobileMenuOpen = false"
+         >
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+           </svg>
+           {{ $t('languages_title') }}
+         </router-link>
 
         <!-- Mobile Auth Buttons -->
         <div class="pt-4 mt-4 border-t border-slate-200">
@@ -177,20 +171,8 @@
               </svg>
               {{ $t('search') }}
             </router-link>
-            <router-link to="/collections" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
-              active-class="!text-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              {{ $t('collections') || 'Collections' }}
-            </router-link>
-            <router-link to="/handbooks" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
-              active-class="!text-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332 0.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332 0.477-4.5 1.253" />
-              </svg>
-              {{ $t('handbook_title') }}
-            </router-link>
+            
+            <!-- create-expression -->
             <router-link to="/create-expression" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
               active-class="!text-blue-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,63 +180,74 @@
               </svg>
               {{ $t('create_title') }}
             </router-link>
-            <router-link to="/languages" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
-              active-class="!text-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-              {{ $t('languages_title') }}
-            </router-link>
-            <router-link to="/about" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
-              active-class="!text-blue-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ $t('about') }}
-            </router-link>
+
+            <!-- Resources Dropdown -->
+            <div class="relative" ref="resourcesDropdown">
+              <button @click="toggleResourcesDropdown"
+                class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900 px-2 py-1 rounded-md hover:bg-slate-100"
+                aria-haspopup="true" :aria-expanded="resourcesDropdownOpen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span>{{ $t('resources') || 'Resources' }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    :d="resourcesDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
+                </svg>
+              </button>
+
+              <div v-show="resourcesDropdownOpen"
+                class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
+                role="menu">
+                <router-link to="/collections" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  role="menuitem" @click="resourcesDropdownOpen = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  {{ $t('collections') || 'Collections' }}
+                </router-link>
+                <router-link to="/handbooks" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  role="menuitem" @click="resourcesDropdownOpen = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332 0.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332 0.477-4.5 1.253" />
+                  </svg>
+                  {{ $t('handbook_title') }}
+                </router-link>
+                <router-link to="/languages" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  role="menuitem" @click="resourcesDropdownOpen = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  {{ $t('languages_title') }}
+                </router-link>
+              </div>
+            </div>
+
           </nav>
 
           <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->
-          <div class="relative hidden lg:block" ref="userDropdown">
-            <button v-if="isLoggedIn" @click="toggleUserDropdown"
+          <div class="hidden lg:block">
+            <router-link v-if="isLoggedIn" to="/profile"
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
-              aria-haspopup="true" :aria-expanded="userDropdownOpen">
+              active-class="!text-blue-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span class="mr-1">{{ $t('profile') }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  :d="userDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
-              </svg>
-            </button>
+              <span>{{ $t('profile') }}</span>
+            </router-link>
 
-            <button v-else @click="$router.push('/login')"
-              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100">
+            <router-link v-else to="/login"
+              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
+              active-class="!text-blue-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              <span class="mr-1">{{ $t('login') }}</span>
-            </button>
-
-            <!-- User Dropdown Menu -->
-            <div v-if="isLoggedIn" v-show="userDropdownOpen"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
-              role="menu">
-              <router-link to="/profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                role="menuitem" @click="userDropdownOpen = false">
-                {{ $t('profile') }}
-              </router-link>
-              <button @click="handleLogout"
-                class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" role="menuitem">
-                {{ $t('logout') }}
-              </button>
-            </div>
+              <span>{{ $t('login') }}</span>
+            </router-link>
           </div>
 
           <!-- Language selector dropdown -->
@@ -319,7 +312,13 @@
     </main>
     <footer class="py-6 border-t border-slate-200 text-center text-slate-500 text-sm mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p>{{ $t('footer_copyright', { year: new Date().getFullYear() }) }}</p>
+        <div class="flex items-center justify-center gap-4">
+          <p>{{ $t('footer_copyright', { year: new Date().getFullYear() }) }}</p>
+          <span>|</span>
+          <router-link to="/about" class="hover:text-slate-700 transition-colors">
+            {{ $t('about') }}
+          </router-link>
+        </div>
       </div>
     </footer>
   </div>
@@ -341,8 +340,8 @@ export default {
     // const { locale } = useI18n()
     const langDropdownOpen = ref(false)
     const langDropdown = ref(null)
-    const userDropdownOpen = ref(false)
-    const userDropdown = ref(null)
+    const resourcesDropdownOpen = ref(false)
+    const resourcesDropdown = ref(null)
     const router = useRouter()
     const mobileMenuOpen = ref(false)
     const isMobile = ref(false)
@@ -411,9 +410,9 @@ export default {
       langDropdownOpen.value = !langDropdownOpen.value
     }
 
-    // Toggle user dropdown
-    const toggleUserDropdown = () => {
-      userDropdownOpen.value = !userDropdownOpen.value
+    // Toggle resources dropdown
+    const toggleResourcesDropdown = () => {
+      resourcesDropdownOpen.value = !resourcesDropdownOpen.value
     }
 
     // Switch language
@@ -497,8 +496,8 @@ export default {
         langDropdownOpen.value = false
       }
 
-      if (userDropdown.value && !userDropdown.value.contains(event.target)) {
-        userDropdownOpen.value = false
+      if (resourcesDropdown.value && !resourcesDropdown.value.contains(event.target)) {
+        resourcesDropdownOpen.value = false
       }
     }
 
@@ -678,8 +677,8 @@ export default {
       // Reactive refs
       langDropdownOpen,
       langDropdown,
-      userDropdownOpen,
-      userDropdown,
+      resourcesDropdownOpen,
+      resourcesDropdown,
       isLoggedIn,
       currentUser,
       showAddLanguageModal,
@@ -691,7 +690,7 @@ export default {
 
       // Methods
       toggleLangDropdown,
-      toggleUserDropdown,
+      toggleResourcesDropdown,
       switchLanguage,
       handleLogout,
       handleLogoutMobile,
