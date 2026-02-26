@@ -365,7 +365,7 @@ export default {
           'Collections': t('collections'),
           'HandbookList': t('handbook_title'),
           'HandbookView': t('handbook_title'),
-          'HandbookEdit': t('handbook_edit')
+          'HandbookEdit': t('edit_handbook')
         };
         pageTitle = routeTitleMap[route.name] || t('home');
         pageTitle = `${pageTitle} - LangMap`;

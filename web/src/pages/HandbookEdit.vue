@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">
-          {{ isEditing ? $t('handbook_edit') : $t('handbook_new') }}
+          {{ isEditing ? $t('edit_handbook') : $t('handbook_new') }}
         </h1>
       </div>
       <div class="flex items-center gap-2">
@@ -31,7 +31,7 @@
           <div class="space-y-4">
             <div>
               <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('handbook_title_label') }}
+                <span class="text-red-500">*</span> {{ $t('title_label') }}
               </label>
               <input 
                 v-model="form.title"
@@ -46,7 +46,7 @@
                 v-model="form.description"
                 rows="2"
                 class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm"
-                :placeholder="$t('handbook_description_placeholder')"
+                :placeholder="$t('description_placeholder')"
               ></textarea>
             </div>
           </div>
@@ -55,7 +55,7 @@
           <div class="space-y-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('handbook_content_lang') || 'Target Language' }}
+                <span class="text-red-500">*</span> {{ $t('content_lang') }}
               </label>
               <select 
                 v-model="form.source_lang"
@@ -69,7 +69,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('handbook_instruction_lang') || 'Instruction Language' }}
+                <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
               <select 
                 v-model="form.target_lang"
@@ -93,30 +93,30 @@
           <div :class="['grid gap-4', showPreview ? 'grid-cols-2' : 'grid-cols-1']">
             <!-- Left Column: Editor -->
             <div>
-              <!-- Toolbar -->
+               <!-- Toolbar -->
               <div class="flex flex-wrap items-center gap-1 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl">
-                <button @click="undo" :disabled="historyIndex <= 0" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Undo">↩️</button>
-                <button @click="redo" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" title="Redo">↪️</button>
+                <button @click="undo" :disabled="historyIndex <= 0" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" :title="$t('undo')">↩️</button>
+                <button @click="redo" :disabled="historyIndex >= history.length - 1" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30" :title="$t('redo')">↪️</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('**', '**')" class="px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors" title="Bold">B</button>
-                <button @click="applyStyle('*', '*')" class="px-2 py-1 text-sm italic hover:bg-white rounded transition-colors" title="Italic">I</button>
-                <button @click="applyStyle('<u>', '</u>')" class="px-2 py-1 text-sm underline hover:bg-white rounded transition-colors" title="Underline">U</button>
-                <button @click="applyStyle('~~', '~~')" class="px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors" title="Strikethrough">S</button>
+                <button @click="applyStyle('**', '**')" class="px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors" :title="$t('bold')">B</button>
+                <button @click="applyStyle('*', '*')" class="px-2 py-1 text-sm italic hover:bg-white rounded transition-colors" :title="$t('italic')">I</button>
+                <button @click="applyStyle('<u>', '</u>')" class="px-2 py-1 text-sm underline hover:bg-white rounded transition-colors" :title="$t('underline')">U</button>
+                <button @click="applyStyle('~~', '~~')" class="px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors" :title="$t('strikethrough')">S</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('# ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H1</button>
-                <button @click="applyStyle('## ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H2</button>
-                <button @click="applyStyle('### ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H3</button>
+                <button @click="applyStyle('# ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors" :title="$t('heading') + ' 1'">H1</button>
+                <button @click="applyStyle('## ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors" :title="$t('heading') + ' 2'">H2</button>
+                <button @click="applyStyle('### ')" class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors" :title="$t('heading') + ' 3'">H3</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('- ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Bullet List">•</button>
-                <button @click="applyStyle('1. ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Numbered List">1.</button>
-                <button @click="applyStyle('> ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" title="Quote">"</button>
-                <button @click="applyStyle('`', '`')" class="px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors" title="Code">&lt;/&gt;</button>
+                <button @click="applyStyle('- ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" :title="$t('bullet_list')">•</button>
+                <button @click="applyStyle('1. ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" :title="$t('numbered_list')">1.</button>
+                <button @click="applyStyle('> ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors" :title="$t('quote')">"</button>
+                <button @click="applyStyle('`', '`')" class="px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors" :title="$t('code')">&lt;/&gt;</button>
                 <div class="flex-grow"></div>
                 <!-- Preview Toggle -->
                 <button 
                   @click="showPreview = !showPreview"
                   :class="['px-2.5 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1', showPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
-                  :title="showPreview ? ($t('hide_preview') || 'Hide Preview') : ($t('show_preview') || 'Show Preview')"
+                  :title="showPreview ? $t('hide_preview') : $t('show_preview')"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -127,13 +127,13 @@
 
               <!-- Expression Search -->
               <div class="relative mb-2">
-                <input 
-                  v-model="searchQuery"
-                  type="text"
-                  class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white"
-                  :placeholder="form.source_lang ? `🔍 Search & insert expression in ${form.source_lang}...` : ('🔍 ' + ($t('handbook_insert_expression') || 'Search & insert expression...'))"
-                  @input="search"
-                />
+                 <input 
+                   v-model="searchQuery"
+                   type="text"
+                   class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white"
+                   :placeholder="form.source_lang ? `🔍 ${$t('search_in_lang', { lang: form.source_lang })}` : ('🔍 ' + $t('insert_expression'))"
+                   @input="search"
+                 />
 
                 <!-- Search Results Dropdown -->
                 <div v-if="searchQuery && (searchResults.length > 0 || searching)" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
@@ -156,18 +156,18 @@
                 </div>
               </div>
 
-              <div class="relative group">
-                <textarea 
-                  ref="contentArea"
-                  v-model="form.content"
-                  rows="18"
-                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500  p-4 transition-all"
-                  :placeholder="$t('handbook_content_placeholder')"
-                ></textarea>
-                <div class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Markdown
+                <div class="relative group">
+                  <textarea 
+                    ref="contentArea"
+                    v-model="form.content"
+                    rows="18"
+                    class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500  p-4 transition-all"
+                    :placeholder="$t('content_placeholder')"
+                  ></textarea>
+                  <div class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {{ $t('markdown') }}
+                  </div>
                 </div>
-              </div>
             </div>
 
             <!-- Right Column: Preview -->
@@ -177,20 +177,17 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <h3 class="text-sm font-semibold text-gray-700">{{ $t('handbook_preview') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-700">{{ $t('preview') }}</h3>
                 <span v-if="previewLoading" class="ml-auto inline-block w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></span>
               </div>
               
-              <div v-if="previewLoading" class="min-h-[150px] flex items-center justify-center">
+               <div v-if="previewLoading" class="min-h-[150px] flex items-center justify-center">
                 <div class="text-center text-gray-500">
                   <div class="animate-spin inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mb-2"></div>
-                  <p class="text-xs">{{ $t('handbook_loading_preview') || 'Loading...' }}</p>
+                  <p class="text-xs">{{ $t('loading_preview') }}</p>
                 </div>
               </div>
               <div v-else class="prose prose-blue prose-sm max-w-none markdown-body" v-html="renderedContent"></div>
-              <p v-if="form.target_lang && renderedContent" class="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-200">
-                {{ $t('handbook_preview_lang_hint') || 'Translations in' }}: <strong>{{ form.target_lang }}</strong>
-              </p>
             </div>
           </div>
         </div>
@@ -202,7 +199,7 @@
             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             <span class="ml-3 text-sm font-medium text-gray-700">{{ $t('public_access') }}</span>
           </label>
-          <p class="text-[11px] text-gray-400">{{ $t('handbook_public_hint') }}</p>
+           <p class="text-[11px] text-gray-400">{{ $t('public_hint') }}</p>
         </div>
       </div>
     </div>
@@ -298,7 +295,7 @@ export default {
       }
     }
 
-    const fetchHandbook = async () => {
+     const fetchHandbook = async () => {
       if (!props.id) return
       try {
         const data = await getHandbookById(props.id)
@@ -499,19 +496,19 @@ export default {
 
     const save = async () => {
       if (!form.title.trim()) {
-        alert(t('handbook_title_required') || 'Title is required')
+        alert(t('title_required'))
         return
       }
       if (!form.content.trim()) {
-        alert(t('handbook_content_required') || 'Content is required')
+        alert(t('content_required'))
         return
       }
       if (!form.source_lang) {
-        alert(t('handbook_content_lang_required') || 'Target Language is required')
+        alert(t('content_lang_required'))
         return
       }
       if (!form.target_lang) {
-        alert(t('handbook_instruction_lang_required') || 'Instruction Language is required')
+        alert(t('instruction_lang_required'))
         return
       }
 
@@ -533,7 +530,7 @@ export default {
         router.push('/handbooks')
       } catch (error) {
         console.error('Failed to save handbook:', error)
-        alert(t('handbook_save_failed') || 'Failed to save handbook')
+        alert(t('handbook_save_failed'))
       } finally {
         saving.value = false
       }

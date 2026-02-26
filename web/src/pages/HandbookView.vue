@@ -4,68 +4,57 @@
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
 
-    <div v-else-if="handbook" class="space-y-8">
+    <div v-else-if="handbook" class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
       <!-- Header -->
-      <header class="space-y-3">
-        <!-- Title row with top-right icon toolbar -->
-        <div class="flex justify-between items-start gap-4">
-          <div>
-            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">{{ handbook.title }}</h1>
-            <p v-if="handbook.description" class="mt-2 text-base text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description }}</p>
-            <p class="mt-2 text-[11px] text-gray-400">{{ $t('handbook_last_updated') || 'Updated' }}: {{ formatDate(handbook.updated_at) }}</p>
-          </div>
-
-          <!-- Top-right icon toolbar -->
-          <div class="flex items-center gap-0.5 flex-shrink-0 mt-1">
-            <!-- Language switcher: globe icon + compact select -->
-            <div class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-50 transition-colors" :title="$t('handbook_instruction_lang') || 'Instruction Language'">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3a14.4 14.4 0 0 1 0 18M12 3a14.4 14.4 0 0 0 0 18" />
-              </svg>
-              <span class="text-xs text-gray-400">{{ $t('handbook_learn_in') || 'Learn in' }}</span>
-              <select
-                v-model="targetLanguage"
-                class="border-none bg-transparent text-xs text-gray-600 focus:ring-0 focus:outline-none cursor-pointer p-0 appearance-none"
-                style="background-image: none;"
-              >
-                <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
-                  {{ lang.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Edit button (icon only) -->
-            <button
-              v-if="canEdit"
-              @click="goToEdit"
-              class="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-              :title="$t('edit')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487a2.25 2.25 0 1 1 3.182 3.182L7.5 20.213l-4.5 1 1-4.5L16.862 4.487Z" />
-              </svg>
-            </button>
-          </div>
+      <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
+        <div class="space-y-1.5 flex-1">
+            <h1 class="text-3xl font-bold text-gray-900">{{ handbook.title }}</h1>
+            <p v-if="handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description }}</p>
+            <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
         </div>
-      </header>
+
+        <!-- Language Switcher -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+           <span class="text-xs text-gray-400">{{ $t('learn_in') }}</span>
+           <select
+             v-model="instructionLanguage"
+             class="border border-gray-200 rounded-lg text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-1.5 px-2 bg-white cursor-pointer"
+           >
+             <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
+               {{ lang.name }}
+             </option>
+           </select>
+        </div>
+
+        <!-- Edit Button -->
+        <button
+          v-if="canEdit"
+          @click="goToEdit"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+        >
+          {{ $t('edit_handbook') }}
+        </button>
+      </div>
 
       <!-- Content -->
-      <article 
-        class="prose prose-blue max-w-none bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-blue-900/5 border border-gray-100 leading-loose"
+      <div 
+        class="prose prose-blue max-w-none leading-loose py-6"
         v-html="renderedContent"
-      ></article>
+      ></div>
 
       <!-- Audio Player Placeholder (Hidden) -->
       <audio ref="audioPlayer" class="hidden"></audio>
     </div>
 
     <div v-else class="text-center py-24">
-      <div class="text-6xl mb-6">🏜️</div>
-      <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $t('handbook_not_found') || 'Handbook Not Found' }}</h2>
-      <p class="text-gray-500 mb-8">{{ $t('handbook_not_found_info') || 'The handbook may have been deleted or moved.' }}</p>
-      <router-link to="/handbooks" class="text-blue-600 font-medium hover:underline">
-        {{ $t('handbook_back_to_list') || 'Back to Handbook List' }}
-      </router-link>
+      <div class="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-200 max-w-md mx-auto">
+        <div class="text-6xl mb-6">🏜️</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ $t('handbook_not_found') }}</h2>
+        <p class="text-gray-500 mb-8">{{ $t('handbook_not_found_info') }}</p>
+        <router-link to="/handbooks" class="text-blue-600 font-medium hover:underline">
+          {{ $t('handbook_back_to_list') }}
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -85,9 +74,9 @@ export default {
     const md = new MarkdownIt({ html: true })
     
     // State
-    const handbook = ref(null)
+     const handbook = ref(null)
     const languages = ref([])
-    const targetLanguage = ref(localStorage.getItem('targetLanguage') || 'zh-CN')
+    const instructionLanguage = ref(localStorage.getItem('instructionLanguage') || 'zh-CN')
     const expressionsMap = ref({})
     const loading = ref(true)
     const audioPlayer = ref(null)
@@ -109,7 +98,7 @@ export default {
         if (data) {
           // Use the handbook's target_lang if set, otherwise fall back to localStorage
           if (data.target_lang) {
-            targetLanguage.value = data.target_lang
+            instructionLanguage.value = data.target_lang
           }
 
           // Detect all MIDs in the content
@@ -139,7 +128,7 @@ export default {
     const fetchTranslations = async (mids) => {
       if (!mids || mids.length === 0) return
       try {
-        const results = await getHandbookExpressions(targetLanguage.value, mids)
+        const results = await getHandbookExpressions(instructionLanguage.value, mids)
         const map = {}
         results.forEach(ex => {
           map[ex.meaning_id] = ex
@@ -151,8 +140,8 @@ export default {
     }
 
     // Watch language change to re-fetch
-    watch(targetLanguage, async (newLang) => {
-      localStorage.setItem('targetLanguage', newLang)
+    watch(instructionLanguage, async (newLang) => {
+      localStorage.setItem('instructionLanguage', newLang)
       if (!handbook.value) return
       
       const mids = []
@@ -237,7 +226,7 @@ export default {
     return {
       handbook,
       loading,
-      targetLanguage,
+      instructionLanguage,
       sortedLanguages,
       renderedContent,
       audioPlayer,
