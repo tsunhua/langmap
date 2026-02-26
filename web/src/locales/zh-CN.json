@@ -302,6 +302,8 @@
   "handbook_search_hint": "在搜索框搜索词条，点击即可插入手册，并支持多语言动态切换。",
   "handbook_title_required": "必须填写标题",
   "handbook_content_required": "手册内容不能为空",
+  "handbook_source_lang_required": "必须选择编写语言",
+  "handbook_target_lang_required": "必须选择学习语言",
   "handbook_save_failed": "保存手册失败",
   "handbook_learning_language": "学习目标语言",
   "handbook_last_updated": "最后更新",

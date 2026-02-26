@@ -302,6 +302,8 @@
   "handbook_search_hint": "Search for expressions to insert them with dynamic language support.",
   "handbook_title_required": "Title is required",
   "handbook_content_required": "Content is required",
+  "handbook_source_lang_required": "Writing Language is required",
+  "handbook_target_lang_required": "Learning Language is required",
   "handbook_save_failed": "Failed to save handbook",
   "handbook_learning_language": "Learning Language",
   "handbook_last_updated": "Last Updated",

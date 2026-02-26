@@ -23,67 +23,72 @@
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto space-y-6">
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <!-- Title -->
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('handbook_title_label') }}</label>
-          <input 
-            v-model="form.title"
-            type="text"
-            class="w-full text-lg font-medium border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-3"
-            :placeholder="$t('handbook_title_placeholder')"
-          />
-        </div>
-
-        <!-- Description -->
-        <div class="mb-4">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('description') }}</label>
-          <textarea 
-            v-model="form.description"
-            rows="2"
-            class="w-full border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            :placeholder="$t('handbook_description_placeholder')"
-          ></textarea>
-        </div>
-
-        <!-- Language Settings -->
-        <div class="mb-6 grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-              {{ $t('handbook_source_lang') || 'Writing Language' }}
-            </label>
-            <p class="text-xs text-gray-400 mb-2">{{ $t('handbook_source_lang_hint') || 'The language used in this handbook content' }}</p>
-            <select 
-              v-model="form.source_lang"
-              class="w-full border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2"
-            >
-              <option value="">{{ $t('handbook_lang_auto') || 'Any Language' }}</option>
-              <option v-for="lang in languages" :key="lang.code" :value="lang.code">
-                {{ lang.name }} ({{ lang.code }})
-              </option>
-            </select>
+    <div class="max-w-7xl mx-auto space-y-5">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <!-- Title, Description & Language Settings -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-4">
+          <!-- Left: Title & Description -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                <span class="text-red-500">*</span> {{ $t('handbook_title_label') }}
+              </label>
+              <input 
+                v-model="form.title"
+                type="text"
+                class="w-full text-base font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
+                :placeholder="$t('handbook_title_placeholder')"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
+              <textarea 
+                v-model="form.description"
+                rows="2"
+                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm"
+                :placeholder="$t('handbook_description_placeholder')"
+              ></textarea>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-              {{ $t('handbook_target_lang') || 'Learning Language' }}
-            </label>
-            <p class="text-xs text-gray-400 mb-2">{{ $t('handbook_target_lang_hint') || 'Default language for reading & previewing expressions' }}</p>
-            <select 
-              v-model="form.target_lang"
-              class="w-full border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2"
-            >
-              <option value="">{{ $t('handbook_lang_auto') || 'Any Language' }}</option>
-              <option v-for="lang in languages" :key="lang.code" :value="lang.code">
-                {{ lang.name }} ({{ lang.code }})
-              </option>
-            </select>
+
+          <!-- Right: Language Selectors -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                <span class="text-red-500">*</span> {{ $t('handbook_source_lang') || 'Writing Language' }}
+              </label>
+              <select 
+                v-model="form.source_lang"
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 bg-white"
+              >
+                <option value="" disabled>{{ $t('select_language') }}</option>
+                <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                  {{ lang.name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                <span class="text-red-500">*</span> {{ $t('handbook_target_lang') || 'Learning Language' }}
+              </label>
+              <select 
+                v-model="form.target_lang"
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 bg-white"
+              >
+                <option value="" disabled>{{ $t('select_language') }}</option>
+                <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                  {{ lang.name }}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
 
         <!-- Content Editor -->
         <div class="mb-6">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('handbook_content_label') }}</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <span class="text-red-500">*</span> {{ $t('handbook_content_label') }}
+          </label>
 
           <div :class="['grid gap-4', showPreview ? 'grid-cols-2' : 'grid-cols-1']">
             <!-- Left Column: Editor -->
@@ -156,7 +161,7 @@
                   ref="contentArea"
                   v-model="form.content"
                   rows="18"
-                  class="w-full font-mono text-sm border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-4 transition-all"
+                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500  p-4 transition-all"
                   :placeholder="$t('handbook_content_placeholder')"
                 ></textarea>
                 <div class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -499,6 +504,14 @@ export default {
       }
       if (!form.content.trim()) {
         alert(t('handbook_content_required') || 'Content is required')
+        return
+      }
+      if (!form.source_lang) {
+        alert(t('handbook_source_lang_required') || 'Writing Language is required')
+        return
+      }
+      if (!form.target_lang) {
+        alert(t('handbook_target_lang_required') || 'Learning Language is required')
         return
       }
 
