@@ -38,7 +38,7 @@
 
       <!-- Content -->
       <div 
-        class="prose prose-blue max-w-none leading-loose py-6"
+        class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body"
         v-html="renderedContent"
       ></div>
 
@@ -183,20 +183,20 @@ export default {
         if (translation) {
           // Show original text + [translation] in brackets, same as editor preview
           return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100 group"
+            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
                   onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')">
               ${originalText}
               <span class="text-gray-400 font-normal text-xs">[${translation.text}]</span>
-              <span class="text-[10px] opacity-60 group-hover:opacity-100 transition-opacity">🔊</span>
+              <span class="text-[10px]">🔊</span>
             </span>
           `
         } else {
-          // Fallback: show original text only, slightly dimmed
+          // Fallback: show original text only, same as editor preview
           return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 text-gray-600 border border-gray-200 rounded text-sm font-medium cursor-pointer hover:bg-gray-100 group"
+            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
                   onclick="event.stopPropagation(); window.playHandbookAudio('${originalAudio}')">
               ${originalText}
-              <span class="text-[10px] opacity-40 group-hover:opacity-80 transition-opacity">🔊</span>
+              <span class="text-[10px]">🔊</span>
             </span>
           `
         }
@@ -238,20 +238,7 @@ export default {
 }
 </script>
 
-<style>
-/* Global styles for rendered markdown */
-.prose h1, .prose h2, .prose h3 {
-  color: #111827;
-  font-weight: 800;
-  margin-top: 2em;
-  margin-bottom: 0.8em;
-}
-
-.prose p {
-  margin-bottom: 1.5em;
-  color: #374151;
-}
-
+<style scoped>
 .handbook-item {
   padding: 0 4px;
   border-radius: 4px;

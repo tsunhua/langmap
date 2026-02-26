@@ -574,20 +574,6 @@ export default {
 </script>
 
 <style scoped>
-.markdown-body {
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-:deep(.markdown-body h1) { font-size: 1.875rem; font-weight: 800; margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
-:deep(.markdown-body h2) { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; }
-:deep(.markdown-body h3) { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
-:deep(.markdown-body p) { margin-bottom: 1rem; }
-:deep(.markdown-body ul) { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-:deep(.markdown-body ol) { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
-:deep(.markdown-body code) { background-color: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-:deep(.markdown-body blockquote) { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #6b7280; font-style: italic; }
-
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
