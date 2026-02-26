@@ -168,6 +168,10 @@ export default {
         audioPlayer.value.play()
       }
 
+      window.navigateToExpression = (id) => {
+        router.push(`/detail/${id}`)
+      }
+
       return html.replace(TAG_REGEX, (match, exp, mid, originalText, originalAudio) => {
         const translation = expressionsMap.value[mid]
 
@@ -182,21 +186,23 @@ export default {
 
         if (translation) {
           // Show original text + [translation] in brackets, same as editor preview
+          const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
           return `
             <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')">
+                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
               ${originalText}
               <span class="text-gray-400 font-normal text-xs">[${translation.text}]</span>
-              <span class="text-[10px]">🔊</span>
+              ${audioIcon}
             </span>
           `
         } else {
           // Fallback: show original text only, same as editor preview
+          const audioIcon = originalAudio ? `<span class="text-[10px]">🔊</span>` : ''
           return `
             <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.playHandbookAudio('${originalAudio}')">
+                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${originalAudio ? `window.playHandbookAudio('${originalAudio}')` : ''}">
               ${originalText}
-              <span class="text-[10px]">🔊</span>
+              ${audioIcon}
             </span>
           `
         }

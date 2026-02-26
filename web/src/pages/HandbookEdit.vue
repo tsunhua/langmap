@@ -409,31 +409,37 @@ export default {
         audio.play()
       }
 
+      window.navigateToExpression = (id) => {
+        router.push(`/detail/${id}`)
+      }
+
       return html.replace(TAG_REGEX, (match, exp, mid, originalText, originalAudio) => {
         const translated = expressionMap[parseInt(mid)]
-        
+
         if (translated) {
           // Show original text with a bracketed translation annotation
-          const audioUrl = translated.audio_url 
-            ? (JSON.parse(translated.audio_url)?.[0]?.url || '') 
+          const audioUrl = translated.audio_url
+            ? (JSON.parse(translated.audio_url)?.[0]?.url || '')
             : (originalAudio || '')
           const translatedText = translated.text
-          
+          const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+
           return `
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100" 
-                  onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
               ${originalText}
               <span class="text-gray-400 font-normal text-xs">[${translatedText}]</span>
-              <span class="text-[10px]">🔊</span>
+              ${audioIcon}
             </span>
           `
         } else {
           // Fallback: show original text without translation
+          const audioIcon = originalAudio ? `<span class="text-[10px]">🔊</span>` : ''
           return `
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100" 
-                  onclick="event.stopPropagation(); window.playHandbookAudio('${originalAudio}')">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${originalAudio ? `window.playHandbookAudio('${originalAudio}')` : ''}">
               ${originalText}
-              <span class="text-[10px]">🔊</span>
+              ${audioIcon}
             </span>
           `
         }
