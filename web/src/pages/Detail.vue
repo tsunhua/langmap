@@ -178,13 +178,13 @@
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <h3 class="text-xl font-semibold text-slate-800 mt-4">Expression not found</h3>
-      <p class="text-slate-600 mt-2">The requested expression could not be found</p>
+      <h3 class="text-xl font-semibold text-slate-800 mt-4">{{ $t('expression_not_found') }}</h3>
+      <p class="text-slate-600 mt-2">{{ $t('expression_not_found_info') }}</p>
       <button 
         @click="$router.push({ name: 'Home' })" 
         class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-4"
       >
-        Back to Search
+        {{ $t('back_to_search') }}
       </button>
     </div>
     
@@ -231,8 +231,6 @@ export default {
     const assocLoading = ref(false)
     const assocMsg = ref('')
     const assocHasCurrent = ref(false)
-    const selectedMeaningId = ref(null)
-    const newMeaningGloss = ref('')
     const assocSearched = ref(false) // 新增状态，标记是否已搜索过
     
     // Create expression modal
@@ -261,15 +259,6 @@ export default {
       } catch (e) {
         return false
       }
-    }
-
-    // collapse/expand state for meanings (object map for reactivity)
-    function toggleMeaning (mid) {
-      // 不再需要展开/折叠功能
-    }
-    function isExpanded (mid) {
-      // 总是展开
-      return true
     }
 
     async function load () {
@@ -343,7 +332,7 @@ export default {
         if (!res.ok) throw new Error('search failed')
         assocResults.value = await res.json()
         console.debug('Assoc search returned', assocResults.value.length, 'items')
-        assocMsg.value = `Found ${assocResults.value.length} candidates.`
+        assocMsg.value = t('found_candidates', { count: assocResults.value.length })
         assocSearched.value = true // 标记已搜索
       } catch (e) {
         assocMsg.value = String(e)
@@ -354,58 +343,13 @@ export default {
       }
     }
 
-    async function createMeaning () {
-      assocMsg.value = ''
-      if (!newMeaningGloss.value || newMeaningGloss.value.trim() === '') {
-        assocMsg.value = 'Please enter a gloss for the new meaning.'
-        return null
-      }
-      
-      // Check if user is authenticated
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        assocMsg.value = 'You must be logged in to create meanings'
-        return null
-      }
-      
-      try {
-        // 创建英文(en-GB)表达式作为meaning
-        const pm = await fetch('/api/v1/expressions', {
-          method: 'POST', 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ 
-            text: newMeaningGloss.value.trim(), 
-            language_code: 'en-GB',
-            description: 'Created via UI' 
-          })
-        })
-        if (!pm.ok) throw new Error('failed to create meaning')
-        const newMeaningExpr = await pm.json()
-        // attach empty members (will refresh on next load)
-        newMeaningExpr.members = []
-        meanings.value.push(newMeaningExpr)
-        selectedMeaningId.value = newMeaningExpr.id
-        newMeaningGloss.value = ''
-        assocMsg.value = 'Created new meaning and selected it.'
-        return newMeaningExpr
-      } catch (e) {
-        assocMsg.value = String(e)
-        return null
-      }
-    }
-
-
-
     async function associateWith (target) {
       assocMsg.value = ''
 
       // Check if user is authenticated
       const token = localStorage.getItem('authToken')
       if (!token) {
-        assocMsg.value = 'You must be logged in to associate expressions'
+        assocMsg.value = t('must_be_logged_in_to_associate')
         return
       }
 
@@ -413,12 +357,12 @@ export default {
         // Verify target expression exists before attempting to link
         const verifyRes = await fetch(`/api/v1/expressions/${target.id}`)
         if (!verifyRes.ok) {
-          assocMsg.value = 'Target expression not found. Please try searching again.'
+          assocMsg.value = t('target_expression_not_found')
           return
         }
         const verifiedTarget = await verifyRes.json()
         if (!verifiedTarget) {
-          assocMsg.value = 'Target expression no longer exists. Please try searching again.'
+          assocMsg.value = t('target_expression_no_longer_exists')
           return
         }
 
@@ -452,7 +396,7 @@ export default {
         }
 
         const result = await associateRes.json()
-        assocMsg.value = `Linked successfully with semantic anchor ${result.meaning_id}.`
+        assocMsg.value = t('linked_with_anchor', { anchorId: result.meaning_id })
 
         // refresh translations and meanings
         await load()
@@ -464,7 +408,7 @@ export default {
 
     async function handleTagsUpdate(newTags) {
       if (!item.value) return
-      
+
       try {
         const token = localStorage.getItem('authToken')
         if (!token) {
@@ -484,23 +428,23 @@ export default {
           })
         })
 
-        if (!res.ok) throw new Error('Failed to update tags')
-        
+        if (!res.ok) throw new Error(t('failed_to_update_tags'))
+
         // Update local item
         item.value.tags = JSON.stringify(newTags)
-        
+
       } catch (e) {
         console.error('Error updating tags:', e)
-        // alert('Failed to update tags')
+        alert(t('failed_to_update_tags'))
       }
     }
 
     async function unlink(target) {
       if (!confirm(t('confirm_unlink'))) return
-      
+
       const token = localStorage.getItem('authToken')
       if (!token) {
-        alert(t('login_required')) 
+        alert(t('login_required'))
         return
       }
 
@@ -514,29 +458,27 @@ export default {
           body: JSON.stringify({ meaning_id: null })
         })
 
-        if (!res.ok) throw new Error('Failed to unlink expression')
-        
+        if (!res.ok) throw new Error(t('failed_to_unlink'))
+
         // Refresh to show updated list
         await load()
       } catch (e) {
         console.error('Error unlinking:', e)
-        alert('Failed to unlink expression')
+        alert(t('failed_to_unlink'))
       }
     }
 
     // Open create expression modal
     function openCreateExpressionModal() {
-      // If there's a selected meaning, pass it to the modal
-      currentMeaningIdForAssociation.value = selectedMeaningId.value && selectedMeaningId.value !== '__new'
-        ? selectedMeaningId.value
-        : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
+      // Pass the current meaning's id to the modal
+      currentMeaningIdForAssociation.value = (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
       showCreateExpressionModal.value = true;
     }
 
     // Handle expression created event from the modal
     async function handleExpressionCreated(createdExpression) {
       showCreateExpressionModal.value = false;
-      assocMsg.value = 'Expression created and linked successfully.';
+      assocMsg.value = t('expression_created_linked');
 
       // Refresh the page data to show the newly created expression
       await load();
@@ -660,11 +602,6 @@ export default {
       isLinked,
       searchAssociate,
       associateWith,
-      selectedMeaningId,
-      newMeaningGloss,
-      createMeaning,
-      toggleMeaning,
-      isExpanded,
       // Create expression modal
       showCreateExpressionModal,
       currentMeaningIdForAssociation,
@@ -678,7 +615,7 @@ export default {
       canDeleteExpression,
       deleting,
       handleDelete
+      }
     }
-  }
 }
 </script>
