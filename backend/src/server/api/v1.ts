@@ -1577,11 +1577,20 @@ api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
 api.get('/handbooks', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
-    const userId = c.req.query('user_id') ? parseInt(c.req.query('user_id')!) : undefined
+    const user = c.get('user')
     const isPublicParam = c.req.query('is_public')
     const isPublic = isPublicParam !== undefined ? isPublicParam === '1' : undefined
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
+
+    // If user_id is not specified, use the authenticated user's ID
+    // If requesting public handbooks, don't filter by user
+    let userId: number | undefined
+    if (isPublic) {
+      userId = undefined
+    } else if (user) {
+      userId = user.id
+    }
 
     const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)
     return c.json(handbooks)

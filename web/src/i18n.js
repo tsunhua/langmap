@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { fetchUITranslations, fetchLanguages } from './services/languageService.js'
+import { fetchUITranslations, fetchLanguages, transformTranslations } from './services/languageService.js'
 
 // Dynamically import all locale files using Vite's import.meta.glob
 // This will automatically include all .json files from the locales directory
