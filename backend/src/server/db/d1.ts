@@ -631,6 +631,54 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return result;
   }
 
+  /**
+   * 智能语义锚点选择
+   * 根据词句的语言优先级选择最合适的语义锚点
+   */
+  async selectSemanticAnchor(expressionIds: number[]): Promise<number | null> {
+    if (expressionIds.length === 0) return null;
+
+    const LANGUAGE_PRIORITY = [
+      'en-GB', 'en-US', 'zh-TW', 'zh-CN',
+      'hi-IN', 'es-ES', 'fr-FR', 'ar-SA',
+      'bn-IN', 'pt-BR', 'ru-RU', 'ur-PK',
+      'id-ID', 'de-DE', 'ja-JP', 'ko-KR',
+      'tr-TR', 'it-IT'
+    ];
+
+    try {
+      const expressions = await this.getExpressionsByIds(expressionIds);
+
+      // 按语言优先级排序
+      const sortedExprs = [...expressions].sort((a, b) => {
+        const indexA = LANGUAGE_PRIORITY.indexOf(a.language_code);
+        const indexB = LANGUAGE_PRIORITY.indexOf(b.language_code);
+
+        const priorityA = indexA === -1 ? 999 : indexA;
+        const priorityB = indexB === -1 ? 999 : indexB;
+
+        return priorityA - priorityB;
+      });
+
+      // 遍历排序后的表达式，找到第一个有 meaning_id 的
+      for (const expr of sortedExprs) {
+        if (expr.meaning_id) {
+          return expr.meaning_id;
+        }
+      }
+
+      // 如果都没有 meaning_id，返回排序后第一个表达式的 ID
+      if (sortedExprs.length > 0) {
+        return sortedExprs[0].id;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error selecting semantic anchor:', error);
+      return null;
+    }
+  }
+
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
     if (!query.trim()) return []
     // FTS5 搜索逻辑：使用 MATCH 实现极速检索

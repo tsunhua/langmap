@@ -459,6 +459,53 @@ api.post('/expressions/batch', requireAuth, async (c) => {
   }
 })
 
+// POST /api/v1/expressions/associate
+// 智能语义锚点关联 - 自动选择最合适的语义锚点
+api.post('/expressions/associate', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { expression_ids } = body
+
+    if (!expression_ids || !Array.isArray(expression_ids) || expression_ids.length < 2) {
+      return c.json({ error: 'At least 2 expression IDs are required' }, 400)
+    }
+
+    const user = c.get('user');
+    const username = user.username;
+
+    // 使用智能语义锚点选择
+    const meaningId = await db.selectSemanticAnchor(expression_ids);
+
+    if (!meaningId) {
+      return c.json({ error: 'Failed to select semantic anchor' }, 500)
+    }
+
+    // 批量更新所有表达式的 meaning_id
+    const statements = expression_ids.map(id =>
+      db.db.prepare(
+        'UPDATE expressions SET meaning_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+      ).bind(meaningId, username, id)
+    );
+
+    await db.db.batch(statements);
+
+    // 清除缓存
+    db.clearStatisticsCache();
+    db.clearHeatmapCache();
+
+    return c.json({
+      success: true,
+      meaning_id: meaningId,
+      updated_count: expression_ids.length
+    });
+
+  } catch (error: any) {
+    console.error('Error in POST /expressions/associate:', error);
+    return c.json({ error: 'Failed to associate expressions', details: error.message }, 500)
+  }
+})
+
 // GET /api/v1/expressions/:expr_id
 api.get('/expressions/:expr_id', async (c) => {
   try {
@@ -512,12 +559,22 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
       updated_by: body.updated_by || updatedBy
     };
 
-    const expression = await db.migrateExpressionId(exprId, expressionData)
-    if (!expression) {
-      return c.json({ error: 'Expression not found' }, 404)
+    // If text is being changed, use migration logic
+    // Otherwise, use simple update
+    if (body.text || body.language_code) {
+      const expression = await db.migrateExpressionId(exprId, expressionData)
+      if (!expression) {
+        return c.json({ error: 'Expression not found' }, 404)
+      }
+      return c.json(expression)
+    } else {
+      // Simple update (e.g., meaning_id only)
+      const expression = await db.updateExpression(exprId, expressionData)
+      if (!expression) {
+        return c.json({ error: 'Expression not found' }, 404)
+      }
+      return c.json(expression)
     }
-
-    return c.json(expression)
   } catch (error: any) {
     console.error('Error in PATCH /expressions/:expr_id:', error);
     return c.json({ error: 'Failed to update expression', details: error.message }, 500)

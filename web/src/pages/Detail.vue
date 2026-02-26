@@ -422,62 +422,42 @@ export default {
           return
         }
 
-        let mid = selectedMeaningId.value
-        // if user chose to create new meaning via selector value '__new', use createMeaning
-        if (mid === '__new') {
-          const nm = await createMeaning()
-          if (!nm) throw new Error('failed to create new meaning')
-          mid = nm.id
-        }
-        // if still no mid, fallback to first meaning or create one from item text
-        if (!mid) {
-          if (meanings.value && meanings.value.length > 0) {
-            mid = meanings.value[0].id
-          } else {
-            // 创建一个新的meaning表达式 (en-GB)
-            const pm = await fetch('/api/v1/expressions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                text: item.value.text,
-                language_code: 'en-GB',
-                description: 'Created via UI association'
-              })
-            })
-            if (!pm.ok) throw new Error('failed to create meaning')
-            const newMeaningExpr = await pm.json()
-            mid = newMeaningExpr.id
-          }
+        // 使用智能语义锚点选择 API
+        // 收集所有需要关联的表达式 ID（包括当前表达式、目标表达式，以及它们现有的 meaning_id 指向的表达式）
+        const expressionIds = new Set([props.id, target.id])
+
+        // 添加当前表达式的 meaning_id（如果存在）
+        if (item.value.meaning_id) {
+          expressionIds.add(item.value.meaning_id)
         }
 
-        // 更新当前表达式的meaning_id
-        const update1 = await fetch(`/api/v1/expressions/${props.id}`, {
-          method: 'PATCH',
+        // 添加目标表达式的 meaning_id（如果存在）
+        if (verifiedTarget.meaning_id) {
+          expressionIds.add(verifiedTarget.meaning_id)
+        }
+
+        // 调用智能语义锚点选择 API
+        const associateRes = await fetch('/api/v1/expressions/associate', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ meaning_id: mid })
+          body: JSON.stringify({ expression_ids: Array.from(expressionIds) })
         })
-        if (!update1.ok) throw new Error('failed to update current expression')
-        // 更新目标表达式的meaning_id
-        const update2 = await fetch(`/api/v1/expressions/${target.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ meaning_id: mid })
-        })
-        if (!update2.ok) throw new Error('failed to update target expression')
 
-        assocMsg.value = 'Linked successfully.'
+        if (!associateRes.ok) {
+          const errorData = await associateRes.json()
+          throw new Error(errorData.error || 'Failed to associate expressions')
+        }
+
+        const result = await associateRes.json()
+        assocMsg.value = `Linked successfully with semantic anchor ${result.meaning_id}.`
+
         // refresh translations and meanings
         await load()
       } catch (e) {
+        console.error('Association error:', e)
         assocMsg.value = String(e)
       }
     }
