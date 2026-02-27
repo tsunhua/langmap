@@ -133,6 +133,7 @@
   "language_name": "Language Name",
   "language_not_activated": "Language Not Activated (completion rate needs to reach 60%)",
   "languages": "Languages",
+  "languages_title": "Language List",
   "search_languages_placeholder": "Search languages...",
   "no_languages_found": "No languages found",
   "latitude": "Latitude",
