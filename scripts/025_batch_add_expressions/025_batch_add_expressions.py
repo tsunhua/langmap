@@ -7,6 +7,7 @@ CSV 格式要求：
 - 表头：语言代码（如 zh-CN, en-US, fr-FR）
 - 每一行：不同语言的词句，该行调用一次 batch API
 - 关联规则：同一行的词句会被关联到同一个语义锚点
+- 注意：表头中非语言代码格式的列会被自动忽略（如中文列名、数字列名等）
 
 使用方法：
     python scripts/025_batch_add_expressions.py expressions.csv -t YOUR_API_TOKEN
@@ -15,6 +16,7 @@ CSV 格式要求：
 import argparse
 import csv
 import json
+import re
 import requests
 import sys
 from pathlib import Path
@@ -23,6 +25,25 @@ from typing import List, Dict, Optional
 # API 配置
 DEFAULT_API_URL = "http://localhost:8787/api/v1/expressions/batch"
 BATCH_SIZE = 1  # 每行就是一个 batch
+
+
+def is_valid_language_code(lang_code: str) -> bool:
+    """
+    检查是否为有效的语言代码格式
+
+    Args:
+        lang_code: 待检查的语言代码
+
+    Returns:
+        是否为有效的语言代码
+    """
+    if not lang_code:
+        return False
+
+    # 语言代码通常格式为: xx-YY (如 zh-CN, en-US, ja-JP)
+    # 至少包含英文字母和连字符
+    pattern = r"^[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?$"
+    return bool(re.match(pattern, lang_code.strip()))
 
 
 def read_csv_to_expressions(csv_file: Path) -> List[Dict]:
@@ -40,11 +61,11 @@ def read_csv_to_expressions(csv_file: Path) -> List[Dict]:
     try:
         with open(csv_file, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            fieldnames = reader.fieldnames
+            fieldnames = reader.fieldnames or []
 
             print(f"📋 读取 CSV 文件: {csv_file}")
             print(f"   表头字段（语言代码）: {fieldnames}")
-            print(f"   共 {len(fieldnames)} 种语言\n")
+            print(f"   共 {len(fieldnames)} 个列\n")
 
             for row_num, row in enumerate(reader, 1):
                 # 跳过空行
@@ -78,6 +99,7 @@ def convert_to_batch_format(expressions_data: List[Dict]) -> List[List[Dict]]:
         批次列表，每批包含该行的多个词句对象
     """
     batches = []
+    ignored_columns = set()
 
     for item in expressions_data:
         row_num = item["row_num"]
@@ -86,20 +108,32 @@ def convert_to_batch_format(expressions_data: List[Dict]) -> List[List[Dict]]:
         # 将每一行转换为多个词句对象（该行作为一个 batch）
         expressions = []
         for lang_code, text in row_data.items():
+            # 跳过非语言代码格式的列
+            if not is_valid_language_code(lang_code):
+                if lang_code not in ignored_columns:
+                    ignored_columns.add(lang_code)
+                    print(f"⚠️  忽略非语言代码列: '{lang_code}'")
+                continue
+
             # 跳过空文本
             if not text or not text.strip():
                 continue
-            
+
             expressions.append(
                 {
                     "language_code": lang_code,
                     "text": text.strip(),
-                    "source_type": "csv_import",
+                    "source_type": "csv_import_26022718",
                 }
             )
 
         if expressions:
             batches.append(expressions)
+
+    if ignored_columns:
+        print(
+            f"\n⚠️  共忽略 {len(ignored_columns)} 个非语言代码列: {sorted(ignored_columns)}"
+        )
 
     print(f"🔄 转换为 {len(batches)} 个批次（每行一个批次）\n")
 
@@ -211,6 +245,8 @@ def main():
   - CSV 每一行代表一组多语言词句（如"你好"的各种翻译）
   - 每一行调用一次 batch API，自动关联到同一语义锚点
   - 空单元格会被自动跳过
+  - 表头中非语言代码格式的列会被自动忽略（如"中文"列名、数字列名等）
+  - 语言代码格式通常为: xx-YY (如 zh-CN, en-US, ja-JP)
         """,
     )
 
