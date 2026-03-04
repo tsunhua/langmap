@@ -69,10 +69,15 @@ design/
   - 用户贡献流程
   - 性能优化策略
 
-- **[feat-dynamic-languages.md](features/feat-dynamic-languages.md)** - 前端动态语言支持
-  - 动态加载机制
-  - 语言切换流程
-  - 缓存策略
+ - **[feat-dynamic-languages.md](features/feat-dynamic-languages.md)** - 前端动态语言支持
+   - 动态加载机制
+   - 语言切换流程
+   - 缓存策略
+ - **[feat-meaning-mapping.md](features/feat-meaning-mapping.md)** - 词句与语义多对多关系
+   - 数据模型设计（meanings、expression_meaning 表）
+   - 数据迁移方案
+   - API 接口设计
+   - 前端交互实现
 
 ## 实施状态
 
@@ -91,6 +96,7 @@ design/
 - [x] feat-ui-translation - 基础实现
 - [ ] feat-i18n - 部分实现
 - [ ] feat-dynamic-languages - 待实施
+- [ ] feat-meaning-mapping - 设计完成，待实现
 
 ## 文档规范
 
