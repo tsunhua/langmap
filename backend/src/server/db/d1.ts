@@ -802,17 +802,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
   }
 
-  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
+  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20, includeMeanings?: boolean): Promise<Expression[]> {
     if (!query.trim()) return []
     // FTS5 搜索逻辑：使用 MATCH 实现极速检索
     // 将查询转义并添加 * 实现前缀匹配
     const ftsQuery = `"${query.replace(/"/g, '""')}"*`
     let sqlQuery = `
-    SELECT e.*
-    FROM expressions e
-    INNER JOIN expressions_fts fts ON e.id = fts.rowid
-    WHERE expressions_fts MATCH ?
-  `
+      SELECT e.*
+      FROM expressions e
+      INNER JOIN expressions_fts fts ON e.id = fts.rowid
+      WHERE expressions_fts MATCH ?
+    `
     const bindings: any[] = [ftsQuery]
 
     if (fromLang) {
@@ -827,17 +827,29 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     // 排序策略：精确匹配优先 > FTS 相关性 (rank) > 文本长度 > 创建时间
     sqlQuery += ` 
-    ORDER BY 
-      CASE WHEN e.text = ? THEN 0 ELSE 1 END,
-      fts.rank, 
-      LENGTH(e.text), 
-      e.created_at DESC 
+      ORDER BY 
+        CASE WHEN e.text = ? THEN 0 ELSE 1 END,
+        fts.rank, 
+        LENGTH(e.text), 
+        e.created_at DESC 
     LIMIT ? OFFSET ?
-  `
+    `
     bindings.push(query, limit, skip)
 
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
-    return results
+
+    // Format timestamps
+    const formattedResults = results.map(e => this.formatTimestamps(e))
+
+    // Add meanings if requested
+    if (includeMeanings) {
+      for (const expr of formattedResults) {
+        const meanings = await this.getMeaningsByExpressionId(expr.id)
+        expr.meanings = meanings
+      }
+    }
+
+    return formattedResults
   }
 
   // Meaning operations

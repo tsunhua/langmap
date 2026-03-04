@@ -956,17 +956,18 @@ api.get('/search', cacheMiddleware(3600), async (c) => {
     const region = c.req.query('region') || undefined
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
+    const includeMeanings = c.req.query('include_meanings') === 'true'
 
     if (!query) {
       console.warn('Query parameter is required');
       return c.json({ error: 'Query parameter is required' }, 400)
     }
 
-    const results = await db.searchExpressions(query, fromLang, region, skip, limit)
+    const results = await db.searchExpressions(query, fromLang, region, skip, limit, includeMeanings)
     return c.json(results)
   } catch (error: any) {
     console.error('Error in GET /search:', error);
-    return c.json({ error: 'Failed to search expressions' }, 500)
+    return c.json({ error: 'Failed to search expressions', details: error.message }, 500)
   }
 })
 

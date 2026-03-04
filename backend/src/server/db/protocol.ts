@@ -144,7 +144,7 @@ export abstract class AbstractDatabaseService {
   abstract deleteExpression(id: number): Promise<boolean>
   abstract migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression>
   abstract selectSemanticAnchor(expressionIds: number[]): Promise<number | null>
-  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number): Promise<Expression[]>
+  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number, includeMeanings?: boolean): Promise<Expression[]>
 
   // Meaning operations
   abstract getMeaningsByExpressionId(expressionId: number): Promise<Meaning[]>
