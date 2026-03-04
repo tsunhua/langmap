@@ -130,8 +130,8 @@
           <div v-if="currentMeaning && activeTab !== 'search'" role="tabpanel">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200">
               <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-                <span class="text-slate-600">({{ currentMembers.length }} {{
-                  $t('expressions') }})</span>
+                <span class="text-slate-600">{{ currentMembers.length }} {{
+                  $t('expressions') }}</span>
                 <button v-if="!groupSearchModes.has(currentMeaning.id)" @click="toggleGroupSearch(currentMeaning.id)"
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2 text-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
@@ -205,8 +205,6 @@
 
               <div class="p-4">
                 <div v-if="currentMembers.length > 0" class="space-y-2">
-                  <div class="bg-green-50 p-1 text-[10px] text-green-400">DEBUG: rendering {{ currentMembers.length }}
-                    members</div>
                   <div v-for="member in currentMembers" :key="member.id"
                     class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
                     <div class="flex-1">
@@ -469,7 +467,6 @@ export default {
 
     // Get current meaning to display
     const currentMeaning = computed(() => {
-      console.log('[Debug] currentMeaning computed triggered. activeTab:', activeTab.value, 'meanings.length:', meanings.value.length)
       if (!meanings.value || meanings.value.length === 0) return null
       if (activeTab.value === 'search') return null
 
@@ -485,7 +482,6 @@ export default {
     const currentMembers = computed(() => {
       const m = currentMeaning.value
       const members = m?.members || []
-      console.log('[Debug] currentMembers computed being accessed. Count:', members.length)
       return members
     })
 
