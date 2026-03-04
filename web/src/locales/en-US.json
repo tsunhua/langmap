@@ -85,6 +85,7 @@
   "expression_not_found_info": "The requested expression could not be found",
   "failed_to_update_tags": "Failed to update tags. Please try again.",
   "expression_group": "Associated Expression Group #{id}",
+  "expression_group_index": "Associated Expression Group #{index}",
   "expressions": "expressions",
   "remove_from_group": "Remove from group",
   "confirm_remove_from_group": "Are you sure you want to remove this expression from the group?",
