@@ -130,19 +130,19 @@
       </nav>
     </div>
 
-    <header class="py-4 px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <div class="flex items-center">
+     <header class="py-4 px-4 sm:px-6 lg:px-8">
+       <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <div class="flex items-center gap-6">
           <!-- Mobile menu button -->
           <button v-if="isMobile" @click="mobileMenuOpen = true"
-            class="mr-3 p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden">
+            class="p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
-          <router-link to="/" class="no-underline">
+          <router-link to="/" class="no-underline ml-8 lg:ml-12">
             <h1
               class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
               LangMap
@@ -152,11 +152,9 @@
               </span>
             </h1>
           </router-link>
-        </div>
 
-          <div class="flex items-center gap-6">
           <!-- Desktop navigation -->
-          <nav class="hidden lg:flex items-center gap-6">
+          <nav class="hidden lg:flex items-center gap-6 mt-2">
             <router-link to="/" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
               active-class="!text-blue-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -171,7 +169,7 @@
               </svg>
               {{ $t('search') }}
             </router-link>
-            
+
             <!-- create-expression -->
             <router-link to="/create-expression" class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
               active-class="!text-blue-600">
@@ -224,8 +222,10 @@
             </div>
 
           </nav>
+        </div>
 
-          <!-- Combined Auth/Profile Button - Hidden on mobile as it's in the sidebar -->
+        <div class="flex items-center ml-auto ml-12 mt-2">
+          <!-- Combined Auth/Profile Button - Hidden on mobile as it's in a sidebar -->
           <div class="hidden lg:block">
             <router-link v-if="isLoggedIn" to="/profile"
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
@@ -251,7 +251,7 @@
           </div>
 
           <!-- Language selector dropdown -->
-          <div class="relative" ref="langDropdown">
+          <div class="relative ml-6" ref="langDropdown">
             <button @click="toggleLangDropdown"
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
               aria-haspopup="true" :aria-expanded="langDropdownOpen">
@@ -261,8 +261,7 @@
                   d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
               </svg>
               <span class="mr-1">{{ currentLanguageName }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   :d="langDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
               </svg>
@@ -279,10 +278,10 @@
                   ✓
                 </span>
               </button>
-              
+
               <!-- Assist Translation Link -->
               <div class="border-t border-slate-200 mt-1 pt-1">
-                <router-link to="/translate-interface" 
+                <router-link to="/translate-interface"
                   class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                   role="menuitem" @click="langDropdownOpen = false">
                   {{ $t('assist_translation') }}

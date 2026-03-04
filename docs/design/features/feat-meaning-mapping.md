@@ -50,20 +50,19 @@ CREATE TABLE IF NOT EXISTS meanings (
 
 ```sql
 CREATE TABLE IF NOT EXISTS expression_meaning (
-    id INTEGER PRIMARY KEY NOT NULL,
+    id TEXT PRIMARY KEY NOT NULL,                 -- 使用 "expression_id-meaning_id" 格式
     expression_id INTEGER NOT NULL,                 -- 关联 expressions.id
     meaning_id INTEGER NOT NULL,                    -- 关联 meanings.id
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(expression_id, meaning_id),             -- 防止重复关联
     FOREIGN KEY (expression_id) REFERENCES expressions(id),
     FOREIGN KEY (meaning_id) REFERENCES meanings(id)
 );
 ```
 
 **字段说明**：
+- `id`: 主键，使用 `"expression_id-meaning_id"` 格式（例如 `"123-456"`），确保唯一性
 - `expression_id`: 关联到 expressions 表
 - `meaning_id`: 关联到 meanings 表
-- `UNIQUE(expression_id, meaning_id)`: 确保同一个词句不会重复关联同一个语义
 
 **索引**：
 
@@ -160,8 +159,8 @@ AND NOT EXISTS (SELECT 1 FROM meanings WHERE id = e.meaning_id);
 -- 为每个有 meaning_id 的 expression 创建关联
 INSERT INTO expression_meaning (id, expression_id, meaning_id, created_at)
 SELECT
-    -- 生成唯一的关联 ID，避免冲突
-    (e.id * 10000) + e.meaning_id,
+    -- 使用拼接的 ID 格式：expression_id-meaning_id
+    e.id || '-' || e.meaning_id,
     e.id,
     e.meaning_id,
     CURRENT_TIMESTAMP
@@ -185,7 +184,8 @@ CREATE INDEX IF NOT EXISTS idx_expression_meaning_meaning_id ON expression_meani
 - 迁移脚本会为每个现有的 `meaning_id` 创建对应的 `meanings` 记录
 - 使用 `meaning_id` 作为 `meanings.id`，保持与现有数据的关联
 - meanings 表仅保留必要的元数据（id, created_by, created_at）
-- 使用 `UNIQUE` 和 `NOT EXISTS` 确保数据不重复
+- `expression_meaning.id` 使用 `"expression_id-meaning_id"` 格式（例如 `"123-456"`），确保唯一性且避免 ID 冲突
+- 使用 `NOT EXISTS` 确保数据不重复
 
 ## API 设计
 

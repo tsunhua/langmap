@@ -315,7 +315,8 @@ api.get('/expressions', cacheMiddleware(300), async (c) => {
     }
     const tagPrefix = c.req.query('tag') || undefined
     const excludeTagPrefix = c.req.query('exclude_tag') || undefined
-    const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix)
+    const includeMeanings = c.req.query('include_meanings') === 'true'
+    const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix, includeMeanings)
     return c.json(expressions)
   } catch (error: any) {
     console.error('Error in GET /expressions:', error);
@@ -433,8 +434,10 @@ api.post('/expressions/batch', requireAuth, async (c) => {
       }
     }
 
-    // Second pass: fallback to the first sorted expression ID if no existing association
-    if (!finalMeaningId && sortedExprs.length > 0) {
+    // Second pass: fallback to the first sorted expression ID if:
+    // - No existing association found, AND
+    // - There are multiple expressions (only create meaning for multi-expression groups)
+    if (!finalMeaningId && sortedExprs.length > 1) {
       finalMeaningId = sortedExprs[0].id;
     }
 
@@ -687,6 +690,67 @@ api.get('/expressions/:expr_id/translations', async (c) => {
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id/translations:', error);
     return c.json({ error: 'Failed to fetch expression translations' }, 500)
+  }
+})
+
+// POST /api/v1/expressions/:expr_id/meanings
+api.post('/expressions/:expr_id/meanings', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const body = await c.req.json()
+
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+
+    if (!body.meaning_id) {
+      return c.json({ error: 'meaning_id is required' }, 400)
+    }
+
+    const expression = await db.getExpressionById(exprId)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
+    const user = c.get('user')
+    const username = user.username
+
+    await db.addExpressionMeaning(exprId, body.meaning_id, username)
+
+    return c.json({
+      success: true,
+      message: 'Meaning added to expression successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in POST /expressions/:expr_id/meanings:', error)
+    return c.json({ error: 'Failed to add meaning to expression', details: error.message }, 500)
+  }
+})
+
+// DELETE /api/v1/expressions/:expr_id/meanings/:meaning_id
+api.delete('/expressions/:expr_id/meanings/:meaning_id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const meaningId = parseInt(c.req.param('meaning_id'))
+
+    if (isNaN(exprId) || isNaN(meaningId)) {
+      return c.json({ error: 'Invalid expression ID or meaning ID' }, 400)
+    }
+
+    const success = await db.removeExpressionMeaning(exprId, meaningId)
+    if (!success) {
+      return c.json({ error: 'Expression-meaning relationship not found' }, 404)
+    }
+
+    return c.json({
+      success: true,
+      message: 'Meaning removed from expression successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in DELETE /expressions/:expr_id/meanings/:meaning_id:', error)
+    return c.json({ error: 'Failed to remove meaning from expression', details: error.message }, 500)
   }
 })
 
