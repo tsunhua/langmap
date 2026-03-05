@@ -116,6 +116,16 @@
 
               <div v-else-if="searchOtherExpressionsSearched" class="text-center py-3 text-slate-500 text-sm">
                 {{ $t('no_expressions_found') }}
+                <div class="mt-3">
+                  <button @click="openCreateExpressionModal(searchOtherExpressionsQuery)"
+                    class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    {{ $t('add_expression') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -194,6 +204,16 @@
 
                 <div v-else-if="groupSearchSearched[currentMeaning.id]" class="text-center py-3 text-slate-500 text-sm">
                   {{ $t('no_expressions_found') }}
+                  <div class="mt-3">
+                    <button @click="openCreateExpressionModalForGroup(currentMeaning.id, groupSearchQueries[currentMeaning.id])"
+                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      {{ $t('add_expression') }}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -292,6 +312,16 @@
 
             <div v-else-if="globalSearchSearched" class="text-center py-3 text-slate-500 text-sm">
               {{ $t('no_expressions_found') }}
+              <div class="mt-3">
+                <button @click="openCreateExpressionModal(globalSearchQuery)"
+                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  {{ $t('add_expression') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -318,7 +348,7 @@
     </div>
 
     <!-- Create Expression Modal -->
-    <CreateExpression :visible="showCreateExpressionModal" :initial-meaning-id="currentMeaningIdForAssociation"
+    <CreateExpression :visible="showCreateExpressionModal" :initial-meaning-id="currentMeaningIdForAssociation" :initial-text="initialTextForCreation"
       @close="showCreateExpressionModal = false" @expression-created="handleExpressionCreated" />
 
     <!-- Meaning Selection Modal -->
@@ -492,6 +522,7 @@ export default {
     // Create expression modal
     const showCreateExpressionModal = ref(false)
     const currentMeaningIdForAssociation = ref(null)
+    const initialTextForCreation = ref('')
 
 
 
@@ -1111,14 +1142,16 @@ export default {
     }
 
     // Open create expression modal
-    function openCreateExpressionModal() {
+    function openCreateExpressionModal(searchText = '') {
       currentMeaningIdForAssociation.value = activeTab.value !== 'search' ? activeTab.value : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
+      initialTextForCreation.value = searchText;
       showCreateExpressionModal.value = true;
     }
 
     // Open create expression modal for specific group
-    function openCreateExpressionModalForGroup(meaningId) {
+    function openCreateExpressionModalForGroup(meaningId, searchText = '') {
       currentMeaningIdForAssociation.value = meaningId;
+      initialTextForCreation.value = searchText;
       showCreateExpressionModal.value = true;
     }
 
@@ -1318,6 +1351,7 @@ export default {
       // Create expression modal
       showCreateExpressionModal,
       currentMeaningIdForAssociation,
+      initialTextForCreation,
       openCreateExpressionModal,
       openCreateExpressionModalForGroup,
       handleExpressionCreated,
