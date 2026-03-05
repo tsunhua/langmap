@@ -1240,8 +1240,8 @@ export default {
           return
         }
 
-        // Redirect to home after successful deletion
-        router.push('/')
+        // Redirect to previous page after successful deletion
+        router.back()
       } catch (e) {
         console.error('Error deleting expression:', e)
         alert(t('delete_failed'))

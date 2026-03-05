@@ -486,12 +486,12 @@ api.post('/expressions/associate', requireAuth, async (c) => {
 
     // 批量更新所有表达式的 meaning_id
     const statements = expression_ids.map(id =>
-      db.db.prepare(
+      (db as any).db.prepare(
         'UPDATE expressions SET meaning_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
       ).bind(meaningId, username, id)
     );
 
-    await db.db.batch(statements);
+    await (db as any).db.batch(statements);
 
     // 清除缓存
     db.clearStatisticsCache();
@@ -613,6 +613,9 @@ api.delete('/expressions/:expr_id', requireAuth, async (c) => {
 
     // Clear statistics cache as we've deleted an expression
     db.clearStatisticsCache();
+
+    // Tell browser to clear its cache for this site to reflect deletion
+    c.header('Clear-Site-Data', '"cache"')
 
     return c.json({ message: 'Expression deleted successfully' })
   } catch (error: any) {
