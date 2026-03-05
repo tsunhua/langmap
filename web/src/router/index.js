@@ -89,6 +89,24 @@ const routes = [
     name: 'LanguageDetail',
     component: () => import('../pages/LanguageDetail.vue'),
     props: true
+  },
+  {
+    path: '/handbooks',
+    name: 'HandbookList',
+    component: () => import('../pages/HandbookList.vue')
+  },
+  {
+    path: '/handbooks/:id',
+    name: 'HandbookView',
+    component: () => import('../pages/HandbookView.vue'),
+    props: true
+  },
+  {
+    path: '/handbooks/edit/:id?',
+    name: 'HandbookEdit',
+    component: () => import('../pages/HandbookEdit.vue'),
+    meta: { requiresAuth: true },
+    props: true
   }
 ]
 

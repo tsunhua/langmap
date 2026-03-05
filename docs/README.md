@@ -40,6 +40,7 @@ docs/
 
 - **[feat-user-system.md](design/features/feat-user-system.md)** - 用户与权限系统（角色定义、数据库设计、API 接口、安全考虑、实现状态标注）
 - **[feat-collection.md](design/features/feat-collection.md)** - 集合（收藏夹）功能（数据模型、API 设计、前端交互、实现状态标注）
+- **[feat-handbook.md](design/features/feat-handbook.md)** - 学习手册功能（Markdown编辑、动态语言词句拉取、数据库与API设计、实现状态标注）
 - **[feat-export.md](design/features/feat-export.md)** - 异步导出系统（架构设计、数据模型、API 规范、实现状态标注）
 - **[feat-ui-translation.md](design/features/feat-ui-translation.md)** - UI 翻译系统（用户翻译界面、同步方案、审核工作流、实现状态标注）
 - **[feat-i18n.md](design/features/feat-i18n.md)** - 国际化动态语言支持（数据库模型、API 设计、前端实现方案、实现状态标注）

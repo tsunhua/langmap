@@ -100,7 +100,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              :placeholder="$t('search_placeholder')"
+              :placeholder="$t('please_input')"
               class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               @input="filterTranslations"
             />

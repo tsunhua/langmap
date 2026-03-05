@@ -1,6 +1,6 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem } from './protocol'
+import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook } from './protocol'
 
 // Cache for statistics
 let statisticsCache: {
@@ -182,7 +182,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Expression operations
-  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]> {
+  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string, includeMeanings?: boolean): Promise<Expression[]> {
     let query = 'SELECT * FROM expressions'
     const bindings: any[] = []
 
@@ -266,7 +266,16 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     }
 
-    return results.map(e => this.formatTimestamps(e))
+    const formattedResults = results.map(e => this.formatTimestamps(e))
+
+    if (includeMeanings) {
+      for (const expr of formattedResults) {
+        const meanings = await this.getMeaningsByExpressionId(expr.id)
+        expr.meanings = meanings
+      }
+    }
+
+    return formattedResults
   }
 
   async getExpressionById(id: number): Promise<Expression | null> {
@@ -274,7 +283,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'SELECT * FROM expressions WHERE id = ?'
     ).bind(id).first<Expression>()
     if (!expression) return null
-    return this.formatTimestamps(expression)
+
+    const formattedExpr = this.formatTimestamps(expression)
+
+    const meanings = await this.getMeaningsByExpressionId(id)
+    formattedExpr.meanings = meanings
+
+    return formattedExpr
   }
 
   async getExpressionsByIds(ids: number[]): Promise<Expression[]> {
@@ -297,20 +312,102 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
-    const results: Array<{ id: number, expression?: Expression, error?: string }> = [];
+    console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions')
 
-    // Prepare statements for batch execution
+    if (expressions.length === 0) return []
+
+    const LANGUAGE_PRIORITY = [
+      'en-GB', 'en-US', 'zh-TW', 'zh-CN',
+      'hi-IN', 'es-ES', 'fr-FR', 'ar-SA',
+      'bn-IN', 'pt-BR', 'ru-RU', 'ur-PK',
+      'id-ID', 'de-DE', 'ja-JP', 'ko-KR',
+      'tr-TR', 'it-IT'
+    ]
+
+    const results: Array<{ id: number, expression?: Expression, error?: string }> = []
+
+    const ids = expressions
+      .filter(e => e.id !== undefined)
+      .map(e => e.id!)
+
+    let existingExprs: Expression[] = []
+    if (ids.length > 0) {
+      existingExprs = await this.getExpressionsByIds(ids)
+    }
+
+    const existingMap = new Map<number, Expression>(
+      existingExprs.map(e => [e.id, e])
+    )
+
+    const sortedExprs = [...expressions].sort((a, b) => {
+      if (!a.text || !a.language_code || !b.text || !b.language_code) {
+        return 0
+      }
+      const indexA = LANGUAGE_PRIORITY.indexOf(a.language_code)
+      const indexB = LANGUAGE_PRIORITY.indexOf(b.language_code)
+
+      const priorityA = indexA === -1 ? 999 : indexA
+      const priorityB = indexB === -1 ? 999 : indexB
+
+      return priorityA - priorityB
+    })
+
+    let finalMeaningId: number | undefined
+
+    const meaningIds: number[] = []
+    for (const expr of sortedExprs) {
+      const existing = existingMap.get(expr.id)
+      if (existing && existing.meaning_id) {
+        meaningIds.push(existing.meaning_id)
+      }
+    }
+
+    if (meaningIds.length === 0) {
+      if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
+        const firstExpr = sortedExprs[0]
+        const firstId = this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
+        finalMeaningId = firstId
+        console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
+      }
+    } else {
+      const uniqueMeaningIds = [...new Set(meaningIds)]
+      if (uniqueMeaningIds.length === 1) {
+        finalMeaningId = uniqueMeaningIds[0]
+        console.log('[upsertExpressions] All expressions share same meaning_id:', finalMeaningId)
+      } else {
+        console.log('[upsertExpressions] Multiple different meaning_ids found:', uniqueMeaningIds)
+        for (const expr of sortedExprs) {
+          if (!expr.id) continue
+
+          const id = this.stableExpressionId(expr.text!, expr.language_code!)
+          if (!uniqueMeaningIds.includes(id)) {
+            finalMeaningId = id
+            console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
+            break
+          }
+        }
+
+        if (!finalMeaningId && sortedExprs.length > 0) {
+          finalMeaningId = sortedExprs[0].id
+          console.log('[upsertExpressions] Using first expression ID as new meaning_id:', finalMeaningId)
+        }
+      }
+    }
+
+    console.log('[upsertExpressions] Final meaning_id:', finalMeaningId)
+
     const statements = expressions.map(expr => {
       if (!expr.text || !expr.language_code) {
-        throw new Error('Text and language_code are required');
+        throw new Error('Text and language_code are required for all expressions');
       }
 
-      const id = this.stableExpressionId(expr.text, expr.language_code);
+      const id = this.stableExpressionId(expr.text, expr.language_code)
+      const meaningId = finalMeaningId !== undefined ? finalMeaningId : (expr.meaning_id !== undefined ? expr.meaning_id : null)
 
       const bindValues = [
         id,
         expr.text,
-        expr.meaning_id !== undefined ? expr.meaning_id : null,
+        meaningId,
         expr.audio_url || null,
         expr.language_code,
         expr.region_code || null,
@@ -323,7 +420,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         expr.review_status || 'pending',
         expr.created_by || null,
         expr.updated_by || null
-      ];
+      ]
 
       return this.db.prepare(
         `INSERT INTO expressions (
@@ -331,53 +428,79 @@ export class D1DatabaseService extends AbstractDatabaseService {
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
-          meaning_id = excluded.meaning_id,
+          meaning_id = CASE WHEN excluded.meaning_id IS NOT NULL THEN excluded.meaning_id ELSE meaning_id END,
           tags = CASE WHEN excluded.tags IS NOT NULL THEN excluded.tags ELSE tags END,
           updated_at = CURRENT_TIMESTAMP,
-          updated_by = excluded.updated_by
+          updated_by = CASE WHEN excluded.updated_by IS NOT NULL THEN excluded.updated_by ELSE updated_by END
         RETURNING *`
-      ).bind(...bindValues);
-    });
+      ).bind(...bindValues)
+    })
 
-    // Execute in batches to satisfy D1 limits
-    const batchSize = 100;
+    const batchSize = 100
     for (let i = 0; i < statements.length; i += batchSize) {
-      const batch = statements.slice(i, i + batchSize);
-      const batchBatch = await this.db.batch<Expression>(batch);
+      const batch = statements.slice(i, i + batchSize)
+      const batchBatch = await this.db.batch<Expression>(batch)
 
       batchBatch.forEach((res, index) => {
-        const originalIndex = i + index;
-        const exprId = this.stableExpressionId(expressions[originalIndex].text!, expressions[originalIndex].language_code!);
+        const originalIndex = i + index
+        const exprId = this.stableExpressionId(expressions[originalIndex].text!, expressions[originalIndex].language_code!)
 
         if (res.results && res.results.length > 0) {
-          results.push({ id: exprId, expression: res.results[0] });
+          results.push({ id: exprId, expression: res.results[0] })
         } else if (res.meta?.changes && res.meta.changes > 0) {
-          // Success but no expression returned (matched types)
-          results.push({ id: exprId });
+          results.push({ id: exprId })
         } else if (res.error) {
-          results.push({ id: exprId, error: res.error });
+          results.push({ id: exprId, error: res.error })
         } else {
-          results.push({ id: exprId, error: 'Statement executed but returned no data' });
+          results.push({ id: exprId, error: 'Statement executed but returned no data' })
         }
-      });
+      })
     }
 
-    // Update language_stats for potentially new expressions
-    // This is a bulk update: for each language in the expressions, recount or increment.
-    // Simplest is to just re-sync language_stats for the affected languages.
-    const affectedLanguages = [...new Set(expressions.map(e => e.language_code).filter(Boolean))];
+    if (finalMeaningId !== undefined) {
+      const meaningExists = existingExprs.some(e => e.meaning_id === finalMeaningId)
+      if (!meaningExists) {
+        console.log('[upsertExpressions] Creating new meaning record for meaning_id:', finalMeaningId)
+
+        const firstExprWithMeaning = sortedExprs.find(e => e.id === finalMeaningId)
+        const created_by = firstExprWithMeaning?.created_by || expressions[0]?.created_by
+
+        await this.db.prepare(
+          'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
+        ).bind(finalMeaningId, created_by).run()
+      }
+
+      for (const expr of sortedExprs) {
+        if (!expr.id) continue
+
+        const exprId = this.stableExpressionId(expr.text!, expr.language_code!)
+        const meaningExistsForExpr = existingMap.get(exprId)?.meaning_id === finalMeaningId
+
+        if (!meaningExistsForExpr) {
+          console.log('[upsertExpressions] Creating expression_meaning relation:', exprId, '->', finalMeaningId)
+
+          const now = new Date().toISOString()
+          await this.db.prepare(
+            'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+          ).bind(`${exprId}-${finalMeaningId}`, exprId, finalMeaningId, now).run()
+        }
+      }
+    }
+
+    const affectedLanguages = [...new Set(expressions.map(e => e.language_code).filter(Boolean))]
     for (const lang of affectedLanguages) {
       await this.db.prepare(`
         INSERT OR REPLACE INTO language_stats (language_code, expression_count)
         SELECT ?, COUNT(*) FROM expressions WHERE language_code = ?
-      `).bind(lang, lang).run();
+      `).bind(lang, lang).run()
     }
 
-    // Clear caches
-    this.clearStatisticsCache();
-    this.clearHeatmapCache();
+    this.clearStatisticsCache()
+    this.clearHeatmapCache()
 
-    return results;
+    console.log('[upsertExpressions] Completed with', results.length, 'results')
+
+    return results
   }
 
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
@@ -631,17 +754,65 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return result;
   }
 
-  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
+  /**
+   * 智能语义锚点选择
+   * 根据词句的语言优先级选择最合适的语义锚点
+   */
+  async selectSemanticAnchor(expressionIds: number[]): Promise<number | null> {
+    if (expressionIds.length === 0) return null;
+
+    const LANGUAGE_PRIORITY = [
+      'en-GB', 'en-US', 'zh-TW', 'zh-CN',
+      'hi-IN', 'es-ES', 'fr-FR', 'ar-SA',
+      'bn-IN', 'pt-BR', 'ru-RU', 'ur-PK',
+      'id-ID', 'de-DE', 'ja-JP', 'ko-KR',
+      'tr-TR', 'it-IT'
+    ];
+
+    try {
+      const expressions = await this.getExpressionsByIds(expressionIds);
+
+      // 按语言优先级排序
+      const sortedExprs = [...expressions].sort((a, b) => {
+        const indexA = LANGUAGE_PRIORITY.indexOf(a.language_code);
+        const indexB = LANGUAGE_PRIORITY.indexOf(b.language_code);
+
+        const priorityA = indexA === -1 ? 999 : indexA;
+        const priorityB = indexB === -1 ? 999 : indexB;
+
+        return priorityA - priorityB;
+      });
+
+      // 遍历排序后的表达式，找到第一个有 meaning_id 的
+      for (const expr of sortedExprs) {
+        if (expr.meaning_id) {
+          return expr.meaning_id;
+        }
+      }
+
+      // 如果都没有 meaning_id，返回排序后第一个表达式的 ID
+      if (sortedExprs.length > 0) {
+        return sortedExprs[0].id;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error selecting semantic anchor:', error);
+      return null;
+    }
+  }
+
+  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20, includeMeanings?: boolean): Promise<Expression[]> {
     if (!query.trim()) return []
     // FTS5 搜索逻辑：使用 MATCH 实现极速检索
     // 将查询转义并添加 * 实现前缀匹配
     const ftsQuery = `"${query.replace(/"/g, '""')}"*`
     let sqlQuery = `
-    SELECT e.*
-    FROM expressions e
-    INNER JOIN expressions_fts fts ON e.id = fts.rowid
-    WHERE expressions_fts MATCH ?
-  `
+      SELECT e.*
+      FROM expressions e
+      INNER JOIN expressions_fts fts ON e.id = fts.rowid
+      WHERE expressions_fts MATCH ?
+    `
     const bindings: any[] = [ftsQuery]
 
     if (fromLang) {
@@ -656,17 +827,57 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     // 排序策略：精确匹配优先 > FTS 相关性 (rank) > 文本长度 > 创建时间
     sqlQuery += ` 
-    ORDER BY 
-      CASE WHEN e.text = ? THEN 0 ELSE 1 END,
-      fts.rank, 
-      LENGTH(e.text), 
-      e.created_at DESC 
+      ORDER BY 
+        CASE WHEN e.text = ? THEN 0 ELSE 1 END,
+        fts.rank, 
+        LENGTH(e.text), 
+        e.created_at DESC 
     LIMIT ? OFFSET ?
-  `
+    `
     bindings.push(query, limit, skip)
 
     const { results } = await this.db.prepare(sqlQuery).bind(...bindings).all<Expression>()
-    return results
+
+    // Format timestamps
+    const formattedResults = results.map(e => this.formatTimestamps(e))
+
+    // Add meanings if requested
+    if (includeMeanings) {
+      for (const expr of formattedResults) {
+        const meanings = await this.getMeaningsByExpressionId(expr.id)
+        expr.meanings = meanings
+      }
+    }
+
+    return formattedResults
+  }
+
+  // Meaning operations
+  async getMeaningsByExpressionId(expressionId: number): Promise<Meaning[]> {
+    const { results } = await this.db.prepare(
+      'SELECT m.* FROM meanings m JOIN expression_meaning em ON m.id = em.meaning_id WHERE em.expression_id = ? ORDER BY em.created_at DESC'
+    ).bind(expressionId).all<Meaning>()
+    return results || []
+  }
+
+  async addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void> {
+    const now = new Date().toISOString()
+
+    const result: any = await this.db.prepare(
+      'INSERT INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+    ).bind(`${expressionId}-${meaningId}`, expressionId, meaningId, now).run()
+
+    if (!result.success) {
+      throw new Error('Failed to add expression-meaning relationship')
+    }
+  }
+
+  async removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean> {
+    const result: any = await this.db.prepare(
+      'DELETE FROM expression_meaning WHERE expression_id = ? AND meaning_id = ?'
+    ).bind(expressionId, meaningId).run()
+
+    return result.changes > 0
   }
 
   // Clean up FTS index - remove entries for expressions that no longer exist
@@ -701,7 +912,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   private formatTimestamps<T extends Record<string, any>>(obj: T): T {
     const result = { ...obj }
     const timestampFields = ['created_at', 'updated_at']
-    
+
     for (const field of timestampFields) {
       if (result[field] && typeof result[field] === 'string') {
         const timestamp = result[field] as string
@@ -710,7 +921,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         }
       }
     }
-    
+
     return result
   }
 
@@ -924,20 +1135,20 @@ export class D1DatabaseService extends AbstractDatabaseService {
           if (langCode === 'en-US') {
             meaningId = expressionId
           } else {
-             let enText: string | undefined = flattenedEnUS[key]
+            let enText: string | undefined = flattenedEnUS[key]
 
-             // If no en-US in uploaded data, query from database
-             if (!enText) {
-               const enUsExpr = await this.db.prepare(`
+            // If no en-US in uploaded data, query from database
+            if (!enText) {
+              const enUsExpr = await this.db.prepare(`
                  SELECT e.text
                  FROM expressions e
                  JOIN collection_items ci ON e.id = ci.expression_id
                  WHERE ci.collection_id = ? AND e.language_code = 'en-US' AND e.tags LIKE ?
                `).bind(langmapCol.id, `%"langmap.${key}"%`).first<{ text: string }>()
-               enText = enUsExpr?.text
-             }
+              enText = enUsExpr?.text
+            }
 
-             if (enText) {
+            if (enText) {
               meaningId = this.stableExpressionId(enText, 'en-US')
             } else {
               meaningId = expressionId // fallback: self
@@ -1497,6 +1708,104 @@ export class D1DatabaseService extends AbstractDatabaseService {
    */
   private stableCollectionId(userId: number, name: string): number {
     return this.stableHashId(`${userId}|${name}`)
+  }
+
+  // Handbooks
+  async getHandbooks(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Handbook[]> {
+    let query = 'SELECT * FROM handbooks'
+    const bindings: any[] = []
+    const conditions: string[] = []
+
+    if (userId !== undefined) {
+      conditions.push('user_id = ?')
+      bindings.push(userId)
+    }
+
+    if (isPublic !== undefined) {
+      conditions.push('is_public = ?')
+      bindings.push(isPublic ? 1 : 0)
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ')
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    bindings.push(limit, skip)
+
+    const { results } = await this.db.prepare(query).bind(...bindings).all<Handbook>()
+    return (results || []).map(h => this.formatTimestamps(h) as Handbook)
+  }
+
+  async getHandbookById(id: number): Promise<Handbook | null> {
+    const handbook = await this.db.prepare(
+      'SELECT * FROM handbooks WHERE id = ?'
+    ).bind(id).first<Handbook>()
+    if (!handbook) return null
+    return this.formatTimestamps(handbook) as Handbook
+  }
+
+  async createHandbook(handbook: Partial<Handbook>): Promise<Handbook> {
+    const id = this.stableHashId(`${handbook.user_id}|${handbook.title}|${Date.now()}`)
+    const bindValues = [
+      id,
+      handbook.user_id,
+      handbook.title,
+      handbook.description || null,
+      handbook.content || '',
+      handbook.source_lang || null,
+      handbook.target_lang || null,
+      handbook.is_public ? 1 : 0
+    ]
+
+    const result = await this.db.prepare(
+      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    ).bind(...bindValues).first<Handbook>()
+
+    if (!result) {
+      throw new Error('Failed to create handbook')
+    }
+
+    return this.formatTimestamps(result) as Handbook
+  }
+
+  async updateHandbook(id: number, handbook: Partial<Handbook>): Promise<Handbook> {
+    const fields: string[] = []
+    const values: any[] = []
+
+    Object.entries(handbook).forEach(([key, value]) => {
+      if (key !== 'id' && key !== 'created_at' && key !== 'user_id') {
+        fields.push(`${key} = ?`)
+        values.push(key === 'is_public' ? (value ? 1 : 0) : value)
+      }
+    })
+
+    if (fields.length === 0) {
+      const current = await this.getHandbookById(id);
+      if (!current) throw new Error('Handbook not found');
+      return current;
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const result = await this.db.prepare(
+      `UPDATE handbooks SET ${fields.join(', ')} WHERE id = ? RETURNING *`
+    ).bind(...values).first<Handbook>()
+
+    if (!result) {
+      throw new Error('Failed to update handbook')
+    }
+
+    return this.formatTimestamps(result) as Handbook
+  }
+
+  async deleteHandbook(id: number): Promise<boolean> {
+    const result = await this.db.prepare(
+      'DELETE FROM handbooks WHERE id = ?'
+    ).bind(id).run()
+    return (result.meta?.changes ?? 0) > 0
   }
 
   /**

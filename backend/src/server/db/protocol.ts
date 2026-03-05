@@ -33,6 +33,22 @@ export interface Expression {
   created_at?: string
   updated_by?: string
   updated_at?: string
+  meanings?: Meaning[]
+}
+
+export interface Meaning {
+  id: number
+  text: string
+  language_code: string
+  created_by?: string
+  created_at?: string
+}
+
+export interface ExpressionMeaning {
+  id: string
+  expression_id: number
+  meaning_id: number
+  created_at?: string
 }
 
 export interface ExpressionVersion {
@@ -78,6 +94,19 @@ export interface CollectionItem {
   created_at: number
 }
 
+export interface Handbook {
+  id: number
+  user_id: number
+  title: string
+  description?: string
+  content: string
+  source_lang?: string
+  target_lang?: string
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
 // Statistics interface
 export interface Statistics {
   total_expressions: number
@@ -106,7 +135,7 @@ export abstract class AbstractDatabaseService {
   abstract deleteLanguage(id: number): Promise<boolean>
 
   // Expression operations
-  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]>
+  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string, includeMeanings?: boolean): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
   abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
@@ -114,7 +143,13 @@ export abstract class AbstractDatabaseService {
   abstract updateExpression(id: number, expression: Partial<Expression>): Promise<Expression>
   abstract deleteExpression(id: number): Promise<boolean>
   abstract migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression>
-  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number): Promise<Expression[]>
+  abstract selectSemanticAnchor(expressionIds: number[]): Promise<number | null>
+  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number, includeMeanings?: boolean): Promise<Expression[]>
+
+  // Meaning operations
+  abstract getMeaningsByExpressionId(expressionId: number): Promise<Meaning[]>
+  abstract addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void>
+  abstract removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean>
 
   // Expression version operations
   abstract getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]>
@@ -161,5 +196,13 @@ export abstract class AbstractDatabaseService {
   abstract addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
   abstract removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
   abstract getCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem | null>
+
+  // Handbooks
+  abstract getHandbooks(userId?: number, isPublic?: boolean, skip?: number, limit?: number): Promise<Handbook[]>
+  abstract getHandbookById(id: number): Promise<Handbook | null>
+  abstract createHandbook(handbook: Partial<Handbook>): Promise<Handbook>
+  abstract updateHandbook(id: number, handbook: Partial<Handbook>): Promise<Handbook>
+  abstract deleteHandbook(id: number): Promise<boolean>
+
   abstract stableExpressionId(text: string, languageCode: string): number
 }

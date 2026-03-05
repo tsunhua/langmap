@@ -305,10 +305,18 @@ api.get('/expressions', cacheMiddleware(300), async (c) => {
     const limit = parseInt(c.req.query('limit') || '50')
     const language = c.req.query('language') || undefined
     const meaningIdParam = c.req.query('meaning_id');
-    const meaningId = meaningIdParam ? parseInt(meaningIdParam) : undefined
+    let meaningId: number | number[] | undefined;
+    if (meaningIdParam) {
+      if (meaningIdParam.includes(',')) {
+        meaningId = meaningIdParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      } else {
+        meaningId = parseInt(meaningIdParam, 10);
+      }
+    }
     const tagPrefix = c.req.query('tag') || undefined
     const excludeTagPrefix = c.req.query('exclude_tag') || undefined
-    const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix)
+    const includeMeanings = c.req.query('include_meanings') === 'true'
+    const expressions = await db.getExpressions(skip, limit, language, meaningId, tagPrefix, excludeTagPrefix, includeMeanings)
     return c.json(expressions)
   } catch (error: any) {
     console.error('Error in GET /expressions:', error);
@@ -426,8 +434,10 @@ api.post('/expressions/batch', requireAuth, async (c) => {
       }
     }
 
-    // Second pass: fallback to the first sorted expression ID if no existing association
-    if (!finalMeaningId && sortedExprs.length > 0) {
+    // Second pass: fallback to the first sorted expression ID if:
+    // - No existing association found, AND
+    // - There are multiple expressions (only create meaning for multi-expression groups)
+    if (!finalMeaningId && sortedExprs.length > 1) {
       finalMeaningId = sortedExprs[0].id;
     }
 
@@ -449,6 +459,53 @@ api.post('/expressions/batch', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in POST /expressions/batch:', error);
     return c.json({ error: 'Failed to process batch submission', details: error.message }, 500)
+  }
+})
+
+// POST /api/v1/expressions/associate
+// 智能语义锚点关联 - 自动选择最合适的语义锚点
+api.post('/expressions/associate', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { expression_ids } = body
+
+    if (!expression_ids || !Array.isArray(expression_ids) || expression_ids.length < 2) {
+      return c.json({ error: 'At least 2 expression IDs are required' }, 400)
+    }
+
+    const user = c.get('user');
+    const username = user.username;
+
+    // 使用智能语义锚点选择
+    const meaningId = await db.selectSemanticAnchor(expression_ids);
+
+    if (!meaningId) {
+      return c.json({ error: 'Failed to select semantic anchor' }, 500)
+    }
+
+    // 批量更新所有表达式的 meaning_id
+    const statements = expression_ids.map(id =>
+      db.db.prepare(
+        'UPDATE expressions SET meaning_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+      ).bind(meaningId, username, id)
+    );
+
+    await db.db.batch(statements);
+
+    // 清除缓存
+    db.clearStatisticsCache();
+    db.clearHeatmapCache();
+
+    return c.json({
+      success: true,
+      meaning_id: meaningId,
+      updated_count: expression_ids.length
+    });
+
+  } catch (error: any) {
+    console.error('Error in POST /expressions/associate:', error);
+    return c.json({ error: 'Failed to associate expressions', details: error.message }, 500)
   }
 })
 
@@ -505,12 +562,22 @@ api.patch('/expressions/:expr_id', requireAuth, async (c) => {
       updated_by: body.updated_by || updatedBy
     };
 
-    const expression = await db.migrateExpressionId(exprId, expressionData)
-    if (!expression) {
-      return c.json({ error: 'Expression not found' }, 404)
+    // If text is being changed, use migration logic
+    // Otherwise, use simple update
+    if (body.text || body.language_code) {
+      const expression = await db.migrateExpressionId(exprId, expressionData)
+      if (!expression) {
+        return c.json({ error: 'Expression not found' }, 404)
+      }
+      return c.json(expression)
+    } else {
+      // Simple update (e.g., meaning_id only)
+      const expression = await db.updateExpression(exprId, expressionData)
+      if (!expression) {
+        return c.json({ error: 'Expression not found' }, 404)
+      }
+      return c.json(expression)
     }
-
-    return c.json(expression)
   } catch (error: any) {
     console.error('Error in PATCH /expressions/:expr_id:', error);
     return c.json({ error: 'Failed to update expression', details: error.message }, 500)
@@ -623,6 +690,67 @@ api.get('/expressions/:expr_id/translations', async (c) => {
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id/translations:', error);
     return c.json({ error: 'Failed to fetch expression translations' }, 500)
+  }
+})
+
+// POST /api/v1/expressions/:expr_id/meanings
+api.post('/expressions/:expr_id/meanings', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const body = await c.req.json()
+
+    if (isNaN(exprId)) {
+      return c.json({ error: 'Invalid expression ID' }, 400)
+    }
+
+    if (!body.meaning_id) {
+      return c.json({ error: 'meaning_id is required' }, 400)
+    }
+
+    const expression = await db.getExpressionById(exprId)
+    if (!expression) {
+      return c.json({ error: 'Expression not found' }, 404)
+    }
+
+    const user = c.get('user')
+    const username = user.username
+
+    await db.addExpressionMeaning(exprId, body.meaning_id, username)
+
+    return c.json({
+      success: true,
+      message: 'Meaning added to expression successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in POST /expressions/:expr_id/meanings:', error)
+    return c.json({ error: 'Failed to add meaning to expression', details: error.message }, 500)
+  }
+})
+
+// DELETE /api/v1/expressions/:expr_id/meanings/:meaning_id
+api.delete('/expressions/:expr_id/meanings/:meaning_id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const exprId = parseInt(c.req.param('expr_id'))
+    const meaningId = parseInt(c.req.param('meaning_id'))
+
+    if (isNaN(exprId) || isNaN(meaningId)) {
+      return c.json({ error: 'Invalid expression ID or meaning ID' }, 400)
+    }
+
+    const success = await db.removeExpressionMeaning(exprId, meaningId)
+    if (!success) {
+      return c.json({ error: 'Expression-meaning relationship not found' }, 404)
+    }
+
+    return c.json({
+      success: true,
+      message: 'Meaning removed from expression successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in DELETE /expressions/:expr_id/meanings/:meaning_id:', error)
+    return c.json({ error: 'Failed to remove meaning from expression', details: error.message }, 500)
   }
 })
 
@@ -828,17 +956,18 @@ api.get('/search', cacheMiddleware(3600), async (c) => {
     const region = c.req.query('region') || undefined
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
+    const includeMeanings = c.req.query('include_meanings') === 'true'
 
     if (!query) {
       console.warn('Query parameter is required');
       return c.json({ error: 'Query parameter is required' }, 400)
     }
 
-    const results = await db.searchExpressions(query, fromLang, region, skip, limit)
+    const results = await db.searchExpressions(query, fromLang, region, skip, limit, includeMeanings)
     return c.json(results)
   } catch (error: any) {
     console.error('Error in GET /search:', error);
-    return c.json({ error: 'Failed to search expressions' }, 500)
+    return c.json({ error: 'Failed to search expressions', details: error.message }, 500)
   }
 })
 
@@ -1562,6 +1691,130 @@ api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in DELETE /collections/:id/items/:expressionId:', error)
     return c.json({ error: 'Failed to remove item from collection' }, 500)
+  }
+})
+
+// Handbook Routes
+// GET /api/v1/handbooks
+api.get('/handbooks', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const isPublicParam = c.req.query('is_public')
+    const isPublic = isPublicParam !== undefined ? isPublicParam === '1' : undefined
+    const skip = parseInt(c.req.query('skip') || '0')
+    const limit = parseInt(c.req.query('limit') || '20')
+
+    // If user_id is not specified, use the authenticated user's ID
+    // If requesting public handbooks, don't filter by user
+    let userId: number | undefined
+    if (isPublic) {
+      userId = undefined
+    } else if (user) {
+      userId = user.id
+    }
+
+    const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)
+    return c.json(handbooks)
+  } catch (error: any) {
+    console.error('Error in GET /api/v1/handbooks:', error)
+    return c.json({ error: 'Failed to fetch handbooks' }, 500)
+  }
+})
+
+// GET /api/v1/handbooks/:id
+api.get('/handbooks/:id', optionalAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+
+    // Check visibility
+    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    return c.json(handbook)
+  } catch (error: any) {
+    console.error('Error in GET /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to fetch handbook' }, 500)
+  }
+})
+
+// POST /api/v1/handbooks
+api.post('/handbooks', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (!body.title || !body.content) {
+      return c.json({ error: 'Title and content are required' }, 400)
+    }
+
+    const handbook = await db.createHandbook({
+      ...body,
+      user_id: user.id
+    })
+
+    return c.json(handbook, 201)
+  } catch (error: any) {
+    console.error('Error in POST /api/v1/handbooks:', error)
+    return c.json({ error: 'Failed to create handbook' }, 500)
+  }
+})
+
+// PUT /api/v1/handbooks/:id
+api.put('/handbooks/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getHandbookById(id)
+    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+
+    if (existing.user_id !== user.id) {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const updated = await db.updateHandbook(id, body)
+    return c.json(updated)
+  } catch (error: any) {
+    console.error('Error in PUT /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to update handbook' }, 500)
+  }
+})
+
+// DELETE /api/v1/handbooks/:id
+api.delete('/handbooks/:id', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const existing = await db.getHandbookById(id)
+    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+
+    if (existing.user_id !== user.id && user.role !== 'admin') {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const success = await db.deleteHandbook(id)
+    return c.json({ success })
+  } catch (error: any) {
+    console.error('Error in DELETE /api/v1/handbooks/:id:', error)
+    return c.json({ error: 'Failed to delete handbook' }, 500)
   }
 })
 
