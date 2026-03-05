@@ -1,6 +1,6 @@
 // D1 Database Service Implementation
 import { D1Database } from '@cloudflare/workers-types'
-import { AbstractDatabaseService, Language, Expression, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook } from './protocol'
+import { AbstractDatabaseService, Language, Expression, Meaning, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook } from './protocol'
 
 // Cache for statistics
 let statisticsCache: {
@@ -356,6 +356,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     const meaningIds: number[] = []
     for (const expr of sortedExprs) {
+      if (expr.id === undefined) continue
       const existing = existingMap.get(expr.id)
       if (existing && existing.meaning_id) {
         meaningIds.push(existing.meaning_id)
@@ -593,27 +594,40 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const expression = await this.getExpressionById(id);
     if (!expression) return false;
 
-    const { success } = await this.db.prepare(
-      'DELETE FROM expressions WHERE id = ?'
-    ).bind(id).run()
+    try {
+      // Use batch to delete all related records in a single transaction
+      // This avoids foreign key constraint failures
+      await this.db.batch([
+        // 1. Delete from junction tables first
+        this.db.prepare('DELETE FROM expression_meaning WHERE expression_id = ?').bind(id),
+        this.db.prepare('DELETE FROM collection_items WHERE expression_id = ?').bind(id),
 
-    if (success) {
-      // Update language_stats
-      await this.db.prepare(`
-        UPDATE language_stats
-        SET expression_count = MAX(0, expression_count - 1)
-        WHERE language_code = ?
-      `).bind(expression.language_code).run();
+        // 2. Delete versions
+        this.db.prepare('DELETE FROM expression_versions WHERE expression_id = ?').bind(id),
 
-      // Delete from FTS index to keep in sync
-      await this.db.prepare('DELETE FROM expressions_fts WHERE rowid = ?').bind(id).run();
+        // 3. Delete from FTS index
+        this.db.prepare('DELETE FROM expressions_fts WHERE rowid = ?').bind(id),
 
-      // Clear statistics and heatmap caches as we've deleted an expression
+        // 4. Finally delete the expression itself
+        this.db.prepare('DELETE FROM expressions WHERE id = ?').bind(id),
+
+        // 5. Update language_stats
+        this.db.prepare(`
+          UPDATE language_stats
+          SET expression_count = MAX(0, expression_count - 1)
+          WHERE language_code = ?
+        `).bind(expression.language_code)
+      ]);
+
+      // Clear statistics and heatmap caches
       this.clearStatisticsCache();
       this.clearHeatmapCache();
-    }
 
-    return success
+      return true;
+    } catch (error) {
+      console.error(`Error deleting expression ${id}:`, error);
+      throw error;
+    }
   }
 
   async migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression> {
@@ -914,10 +928,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const timestampFields = ['created_at', 'updated_at']
 
     for (const field of timestampFields) {
-      if (result[field] && typeof result[field] === 'string') {
-        const timestamp = result[field] as string
+      if ((result as any)[field] && typeof (result as any)[field] === 'string') {
+        const timestamp = (result as any)[field] as string
         if (timestamp.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-          result[field] = timestamp + 'Z'
+          (result as any)[field] = timestamp + 'Z'
         }
       }
     }
