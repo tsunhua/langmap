@@ -14,15 +14,9 @@
     <div v-else-if="item" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Left column: current item + translations as a unified list -->
       <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div class="border-b border-slate-200 px-6 py-4">
-            <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
-          </div>
-          <div class="p-3">
-            <ExpressionCard :item="item" :key="item.id" :editable="true" :can-delete="canDeleteExpression"
-              :is-deleting="deleting" @update-tags="handleTagsUpdate" @delete="handleDelete" />
-          </div>
-        </div>
+        <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
+        <ExpressionCard :item="item" :key="item.id" :editable="true" :can-delete="canDeleteExpression"
+          :is-deleting="deleting" @update-tags="handleTagsUpdate" @delete="handleDelete" />
 
         <div v-if="meanings.length > 0" class="space-y-4">
           <h3 class="text-lg font-bold text-slate-800">{{ $t('associated_expression_groups') }}</h3>

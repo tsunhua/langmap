@@ -142,7 +142,7 @@
             </svg>
           </button>
 
-          <router-link to="/" class="no-underline ml-8 lg:ml-12">
+          <router-link to="/" class="no-underline">
             <h1
               class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
               LangMap
