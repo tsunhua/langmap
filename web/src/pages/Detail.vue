@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-7xl mx-auto">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div v-if="loading" class="flex items-center justify-center py-12">
       <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
         viewBox="0 0 24 24">
@@ -23,7 +23,7 @@
           <nav class="flex flex-wrap gap-2" role="tablist">
             <!-- Meaning group tabs -->
             <button v-for="(meaning, index) in meanings" :key="meaning.id" @click="setActiveTab(meaning.id)" :class="[
-              'px-4 py-3 font-medium text-sm rounded-lg transition-colors',
+              'px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm rounded-lg transition-colors',
               activeTab === meaning.id
                 ? 'bg-blue-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -33,7 +33,7 @@
 
             <!-- Search and associate tab (last) -->
             <button @click="setActiveTab('search')" :class="[
-              'px-4 py-3 font-medium text-sm rounded-lg transition-colors',
+              'px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm rounded-lg transition-colors',
               activeTab === 'search'
                 ? 'bg-blue-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -45,7 +45,7 @@
           <!-- Search and associate tab content -->
           <div v-show="activeTab === 'search'" role="tabpanel">
             <div v-if="searchOtherExpressionsMode" class="border border-slate-200 rounded-lg bg-slate-50 p-4 mb-4">
-              <div class="flex items-center gap-3 mb-3">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-3">
                 <div class="flex-1">
                   <input v-model="searchOtherExpressionsQuery" :placeholder="$t('please_input')"
                     class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
@@ -131,9 +131,9 @@
           </div>
 
           <!-- Meaning group tab contents -->
-          <div v-if="currentMeaning && activeTab !== 'search'" role="tabpanel">
+           <div v-if="currentMeaning && activeTab !== 'search'" role="tabpanel">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+              <div class="border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
                 <span class="text-slate-600">{{ currentMembers.length }} {{
                   $t('expressions') }}</span>
                 <button v-if="!groupSearchModes.has(currentMeaning.id)" @click="toggleGroupSearch(currentMeaning.id)"
@@ -156,8 +156,8 @@
               </div>
 
               <div v-if="groupSearchModes.has(currentMeaning.id)"
-                class="border-b border-slate-200 bg-slate-50 px-6 py-4">
-                <div class="flex items-center gap-3">
+                class="border-b border-slate-200 bg-slate-50 px-4 sm:px-6 py-4">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   <div class="flex-1">
                     <input v-model="groupSearchQueries[currentMeaning.id]" :placeholder="$t('please_input')"
                       class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
@@ -267,7 +267,7 @@
           </button>
 
           <div v-if="globalSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
-            <div class="flex items-center gap-3 mb-3">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-3">
               <div class="flex-1">
                 <input v-model="globalSearchQuery" :placeholder="$t('please_input')"
                   class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
@@ -333,7 +333,7 @@
       </div>
     </div>
 
-    <div v-else class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+    <div v-else class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-12 text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-slate-300" fill="none" viewBox="0 0 24 24"
         stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -353,16 +353,16 @@
 
     <!-- Meaning Selection Modal -->
     <div v-if="showMeaningSelection && selectedExpressionForAssociation"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
-        <div class="border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+        <div class="border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 class="text-lg font-bold text-slate-800">{{ $t('select_meaning_group') }}</h3>
             <p class="text-slate-500 text-sm mt-1">
               {{ $t('select_meaning_to_associate') }}: <strong>"{{ selectedExpressionForAssociation.text }}"</strong>
             </p>
           </div>
-          <button @click="closeMeaningSelection" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <button @click="closeMeaningSelection" class="text-slate-400 hover:text-slate-600 transition-colors self-start">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -370,7 +370,7 @@
           </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           <div v-if="expressionMeaningsLoading" class="flex items-center justify-center py-8">
             <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
               viewBox="0 0 24 24">
@@ -386,13 +386,13 @@
             <div v-for="meaning in expressionMeanings" :key="meaning.id"
               class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
               @click="associateToSelectedMeaning(meaning.id)">
-              <div class="flex justify-between items-center">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <h4 class="font-semibold text-slate-800">{{ $t('expression_group', { id: meaning.id }) }}</h4>
                   <p class="text-sm text-slate-500 mt-1">{{ $t('created_by') }}: {{ meaning.created_by ||
                     $t('anonymous') }}</p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24"
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
@@ -419,7 +419,7 @@
           </div>
         </div>
 
-        <div class="border-t border-slate-200 px-6 py-4">
+        <div class="border-t border-slate-200 px-4 sm:px-6 py-4">
           <button @click="closeMeaningSelection"
             class="w-full inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
             {{ $t('cancel') }}
