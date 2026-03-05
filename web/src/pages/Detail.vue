@@ -53,7 +53,7 @@
             <div v-if="searchOtherExpressionsMode" class="border border-slate-200 rounded-lg bg-slate-50 p-4 mb-4">
               <div class="flex items-center gap-3 mb-3">
                 <div class="flex-1">
-                  <input v-model="searchOtherExpressionsQuery" :placeholder="$t('search_placeholder')"
+                  <input v-model="searchOtherExpressionsQuery" :placeholder="$t('please_input')"
                     class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
                     @keydown.enter="searchOtherExpressions()" />
                 </div>
@@ -155,7 +155,7 @@
                 class="border-b border-slate-200 bg-slate-50 px-6 py-4">
                 <div class="flex items-center gap-3">
                   <div class="flex-1">
-                    <input v-model="groupSearchQueries[currentMeaning.id]" :placeholder="$t('search_placeholder')"
+                    <input v-model="groupSearchQueries[currentMeaning.id]" :placeholder="$t('please_input')"
                       class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
                       @keydown.enter="searchInGroup(currentMeaning.id)" />
                   </div>
@@ -255,7 +255,7 @@
           <div v-if="globalSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
             <div class="flex items-center gap-3 mb-3">
               <div class="flex-1">
-                <input v-model="globalSearchQuery" :placeholder="$t('search_placeholder')"
+                <input v-model="globalSearchQuery" :placeholder="$t('please_input')"
                   class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
                   @keydown.enter="searchGlobal()" />
               </div>
