@@ -33,7 +33,7 @@
       </div>
 
       <!-- Content -->
-      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" 
+      <div class="prose prose-blue max-w-none leading-loose py-6 markdown-body"
            v-html="handbook.rendered_content || handbook.content"></div>
 
       <!-- Audio Player Placeholder (Hidden) -->

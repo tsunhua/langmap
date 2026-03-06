@@ -220,7 +220,7 @@
                   <p v-if="renderedDescription" class="text-xs text-gray-500 leading-relaxed" v-html="renderedDescription"></p>
                 </div>
 
-                <div class="prose prose-blue prose-sm max-w-none leading-loose markdown-body"
+                <div class="prose prose-blue max-w-none leading-loose markdown-body"
                   v-html="renderedContent"></div>
               </div>
             </div>
