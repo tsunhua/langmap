@@ -1790,17 +1790,17 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const renderItem = (id: number, text: string, transList: any[], audioUrl: string, isTitle: boolean) => {
     const meaningsText = transList.length > 0
       ? (isTitle
-        ? `<div class="text-gray-400 font-normal text-xs mt-1">[${transList.map(m => m.text).join('] [')}]</div>`
-        : ` <span class="text-gray-400 font-normal text-xs">[${transList.map(m => m.text).join(', ')}]</span>`)
+        ? `<div class="handbook-meaning-title">[${transList.map(m => m.text).join('] [')}]</div>`
+        : ` <span class="handbook-meaning-content">[${transList.map(m => m.text).join(', ')}]</span>`)
       : ''
-    const audioIcon = audioUrl ? ` <span class="text-[10px]">🔊</span>` : ''
+    const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
     // For title, use flex column to allow meanings to wrap to new line
     // For others, keep inline
     if (isTitle) {
-      return `<span class="handbook-item inline-flex flex-col items-start gap-0 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded font-bold cursor-pointer hover:bg-blue-100" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="title" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
     } else {
-      return `<span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded font-bold cursor-pointer hover:bg-blue-100" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="content" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
     }
   }
 
@@ -1827,7 +1827,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
         }
         return renderItem(id, term, translations, audioUrl, isTitle)
       }
-      return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+      return `<span class="handbook-item-undefined">${term}</span>`
     })
   }
 

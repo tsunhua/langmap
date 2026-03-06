@@ -115,3 +115,60 @@
   color: #6b7280;
   font-style: italic;
 }
+
+/* Handbook item styles */
+.handbook-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background-color 0.15s;
+}
+
+.handbook-item:hover {
+  background-color: #dbeafe;
+}
+
+/* Title styles */
+.handbook-item[data-type="title"] {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  color: #1f2937;
+}
+
+/* Content styles */
+.handbook-item[data-type="content"] {
+  gap: 0.25rem;
+  color: #4b5563;
+}
+
+/* Meaning text in title */
+.handbook-meaning-title {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Meaning text in content */
+.handbook-meaning-content {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+/* Audio icon */
+.handbook-audio-icon {
+  font-size: 0.625rem;
+}
+
+/* Undefined expression item */
+.handbook-item-undefined {
+  color: #9ca3af;
+  border-bottom: 1px dashed #d1d5db;
+}

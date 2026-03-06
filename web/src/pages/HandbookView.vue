@@ -8,7 +8,7 @@
       <!-- Header -->
       <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
         <div class="space-y-1.5 flex-1">
-          <h1 class="text-3xl font-bold text-gray-900" v-html="handbook.rendered_title || handbook.title"></h1>
+          <h1 class="text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
           <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
              v-html="handbook.rendered_description || handbook.description"></p>
           <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
@@ -33,7 +33,7 @@
       </div>
 
       <!-- Content -->
-      <div class="prose prose-blue max-w-none leading-loose py-6 markdown-body"
+      <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body"
            v-html="handbook.rendered_content || handbook.content"></div>
 
       <!-- Audio Player Placeholder (Hidden) -->
@@ -149,14 +149,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.handbook-item {
-  padding: 0 4px;
-  border-radius: 4px;
-}
-
-.handbook-item:hover {
-  background-color: rgba(59, 130, 246, 0.05);
-}
-</style>
