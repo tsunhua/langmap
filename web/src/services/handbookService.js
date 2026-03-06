@@ -64,11 +64,13 @@ export async function getHandbooks(options = {}) {
 /**
  * Get a specific handbook by ID
  * @param {number} id - Handbook ID
+ * @param {string} targetLang - Optional target language for rendering
  * @returns {Promise<Object>} Handbook object
  */
-export async function getHandbookById(id) {
+export async function getHandbookById(id, targetLang) {
     try {
-        const response = await api.get(`/handbooks/${id}`)
+        const url = targetLang ? `/handbooks/${id}/${targetLang}` : `/handbooks/${id}`
+        const response = await api.get(url)
         return response.data
     } catch (error) {
         console.error(`Error fetching handbook ${id}:`, error)

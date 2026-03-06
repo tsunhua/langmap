@@ -1734,39 +1734,44 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const title = handbook.title || ''
   const description = handbook.description || ''
 
-  const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+  const TEXT_LANG_REGEX = /\{\{text:([^|{}]+)(?:\|lang:([^}]+))?\}\}/g
 
   // 1. Extract all expression tags
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
   const fullText = `${title}\n${description}\n${content}`
 
+  TEXT_LANG_REGEX.lastIndex = 0
   let tlMatch
   while ((tlMatch = TEXT_LANG_REGEX.exec(fullText)) !== null) {
     const text = tlMatch[1]
-    const lang = tlMatch[2]
+    const lang = tlMatch[2] || handbook.source_lang || 'en'
     const id = db.stableExpressionId(text, lang)
     if (!expressionsToFetch.some(e => e.id === id)) {
       expressionsToFetch.push({ text, lang, id })
     }
   }
 
-  // 2. Fetch expressions and translations
   const expressionMap: Record<string, any> = {}
   if (expressionsToFetch.length > 0) {
     const ids = expressionsToFetch.map(e => e.id)
     const expressions = await db.getExpressionsByIds(ids)
 
+    // Explicitly fetch meaning IDs for these expressions
+    const meaningIdsMap = await db.getExpressionMeaningIds(ids)
+
     const allMids: number[] = []
     expressions.forEach(expr => {
       expressionMap[expr.id] = expr
-      expr.meanings?.forEach(m => {
-        if (!allMids.includes(m.id)) allMids.push(m.id)
+      const mids = meaningIdsMap.get(expr.id) || []
+      expr.meanings = mids.map(mid => ({ id: mid })) as any[] // Mock meanings objects
+      mids.forEach(mid => {
+        if (!allMids.includes(mid)) allMids.push(mid)
       })
     })
 
     if (allMids.length > 0 && targetLang) {
       // Use the newly optimized batch fetching
-      const translations: any[] = await db.getExpressions(undefined, undefined, targetLang, allMids)
+      const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
       translations.forEach((trans: any) => {
         if (trans.meaning_id) {
           expressionMap[`trans_${trans.meaning_id}`] = trans
@@ -1786,19 +1791,17 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
     const meaningsText = transList.length > 0
       ? ` <span class="text-gray-400 font-normal text-xs">[${transList.map(m => m.text).join(', ')}]</span>`
       : ''
-    const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+    const audioIcon = audioUrl ? ` <span class="text-[10px]">🔊</span>` : ''
 
-    return `
-      <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-            onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-        ${text}${meaningsText}${audioIcon}
-      </span>
-    `
+    // Return as single line to avoid breaking Markdown headings/blocks
+    return `<span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
   }
 
   const renderTextWithTags = (text: string) => {
     if (!text) return ''
-    return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
+    TEXT_LANG_REGEX.lastIndex = 0
+    return text.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
+      const lang = langMatch || handbook.source_lang || 'en'
       const id = db.stableExpressionId(term, lang)
       const expr = expressionMap[id]
       if (expr) {
@@ -1825,39 +1828,20 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const rendered_title = renderTextWithTags(title)
   const rendered_description = renderTextWithTags(description)
 
-  let html = md.render(content)
-  const rendered_content = html.replace(TEXT_LANG_REGEX, (match, term, lang) => {
-    const id = db.stableExpressionId(term, lang)
-    const expr = expressionMap[id]
-    if (expr) {
-      const translations: any[] = []
-      expr.meanings?.forEach((m: any) => {
-        if (expressionMap[`trans_${m.id}`]) {
-          translations.push(expressionMap[`trans_${m.id}`])
-        }
-      })
-      let audioUrl = ''
-      if (expr.audio_url) {
-        try {
-          const parsed = JSON.parse(expr.audio_url)
-          audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-        } catch { }
-      }
-      return renderItem(id, term, translations, audioUrl)
-    }
-    return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
-  })
+  // Replace tags in content BEFORE markdown rendering to ensure <h2> and other blocks correctly wrap the result
+  const preProcessedContent = renderTextWithTags(content)
+  const rendered_content = md.render(preProcessedContent)
 
   return { rendered_title, rendered_description, rendered_content }
 }
 
-// GET /api/v1/handbooks/:id
-api.get('/handbooks/:id', cacheMiddleware(300), optionalAuth, async (c) => {
+// GET /api/v1/handbooks/:id/:target_lang?
+api.get('/handbooks/:id/:target_lang?', cacheMiddleware(300), optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const user = c.get('user')
-    const targetLang = c.req.query('target_lang')
+    const targetLang = c.req.param('target_lang') || c.req.query('target_lang')
 
     if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
 
