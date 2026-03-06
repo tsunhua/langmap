@@ -1763,7 +1763,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const title = handbook.title || ''
   const description = handbook.description || ''
 
-  const TEXT_LANG_REGEX = /\{\{text:([^|{}]+)(?:\|lang:([^}]+))?\}\}/g
+  const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
 
   // 1. Extract all expression tags
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
