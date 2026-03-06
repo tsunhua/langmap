@@ -56,7 +56,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
-import { getHandbookById, getHandbookExpressions } from '../services/handbookService'
+import { getHandbookById, getHandbookExpressions, stableExpressionId, getExpressionById } from '../services/handbookService'
 import { fetchLanguages } from '../services/languageService'
 
 export default {
@@ -76,7 +76,7 @@ export default {
     const currentUser = ref(null) // Should be fetched from auth store/localstorage
 
     // Detection Regex for {{exp:ID|mid:MID|text:TEXT|audio:URL}}
-    const TAG_REGEX = /\{\{exp:(\d+)\|mid:(\d+)\|text:([^|]+)\|audio:([^}]*)\}\}/g
+    const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
 
     const fetchInitialData = async () => {
       loading.value = true
@@ -94,16 +94,18 @@ export default {
             instructionLanguage.value = data.target_lang
           }
 
-          // Detect all MIDs in the content
-          const mids = []
+          // Detect all Text/Lang entries in the content
+          const expressionsToFetch = []
+
           let match
-          const contentRegex = /\{\{exp:(\d+)\|mid:(\d+)\|/g
-          while ((match = contentRegex.exec(data.content)) !== null) {
-            mids.push(parseInt(match[2]))
+          const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+          while ((match = tlRegex.exec(data.content)) !== null) {
+            const id = stableExpressionId(match[1], match[2])
+            expressionsToFetch.push({ id, text: match[1], lang: match[2] })
           }
 
-          if (mids.length > 0) {
-            await fetchTranslations(mids)
+          if (expressionsToFetch.length > 0) {
+            await fetchMetadata(expressionsToFetch)
           }
         }
 
@@ -118,17 +120,45 @@ export default {
       }
     }
 
-    const fetchTranslations = async (mids) => {
-      if (!mids || mids.length === 0) return
+    const fetchMetadata = async (expressionsToFetch) => {
       try {
-        const results = await getHandbookExpressions(instructionLanguage.value, mids)
-        const map = {}
-        results.forEach(ex => {
-          map[ex.id] = ex
+        // Phase 1: Fetch source expressions
+        const sourcePromises = expressionsToFetch.map(e => {
+          if (!expressionsMap.value[e.id]) {
+            return getExpressionById(e.id).then(ex => {
+              expressionsMap.value[e.id] = ex
+              return ex
+            }).catch(() => null)
+          }
+          return Promise.resolve(expressionsMap.value[e.id])
         })
-        expressionsMap.value = map
+
+        const sourceExprs = await Promise.all(sourcePromises)
+
+        // Phase 2: Fetch translations for target_lang
+        const mids = []
+        sourceExprs.forEach(expr => {
+          expr?.meanings?.forEach(m => {
+            if (!mids.includes(m.id)) mids.push(m.id)
+          })
+        })
+
+        if (mids.length > 0 && instructionLanguage.value) {
+          const translations = await getHandbookExpressions(instructionLanguage.value, mids)
+          translations.forEach(trans => {
+            if (trans.meaning_id) {
+              expressionsMap.value[`trans_${trans.meaning_id}`] = trans
+            } else if (trans.meanings) {
+              trans.meanings.forEach(m => {
+                if (mids.includes(m.id)) {
+                  expressionsMap.value[`trans_${m.id}`] = trans
+                }
+              })
+            }
+          })
+        }
       } catch (error) {
-        console.error('Failed to fetch translations:', error)
+        console.error('Failed to fetch metadata:', error)
       }
     }
 
@@ -137,14 +167,16 @@ export default {
       localStorage.setItem('instructionLanguage', newLang)
       if (!handbook.value) return
 
-      const mids = []
+      const expressionsToFetch = []
       let match
-      while ((match = TAG_REGEX.exec(handbook.value.content)) !== null) {
-        mids.push(parseInt(match[2]))
+      const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+      while ((match = tlRegex.exec(handbook.value.content)) !== null) {
+        const id = stableExpressionId(match[1], match[2])
+        expressionsToFetch.push({ id, text: match[1], lang: match[2] })
       }
 
-      if (mids.length > 0) {
-        await fetchTranslations(mids)
+      if (expressionsToFetch.length > 0) {
+        await fetchMetadata(expressionsToFetch)
       }
     })
 
@@ -165,41 +197,46 @@ export default {
         router.push(`/detail/${id}`)
       }
 
-      return html.replace(TAG_REGEX, (match, exp, mid, originalText, originalAudio) => {
-        const translation = expressionsMap.value[mid]
+      // Helper to render an expression item
+      const renderItem = (id, text, meanings, audioUrl) => {
+        const meaningsText = meanings && meanings.length > 0
+          ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
+          : ''
+        const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
 
-        // Resolve audio: prefer translated expression's first audio record, fallback to original
-        let audioUrl = originalAudio
-        if (translation && translation.audio_url) {
-          try {
-            const parsed = JSON.parse(translation.audio_url)
-            audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || originalAudio) : originalAudio
-          } catch { audioUrl = originalAudio }
-        }
+        return `
+          <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+                onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
+            ${text}${meaningsText}${audioIcon}
+          </span>
+        `
+      }
 
-        if (translation) {
-          // Show original text + [translation] in brackets, same as editor preview
-          const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
-          return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-              ${originalText}
-              <span class="text-gray-400 font-normal text-xs">[${translation.text}]</span>
-              ${audioIcon}
-            </span>
-          `
-        } else {
-          // Fallback: show original text only, same as editor preview
-          const audioIcon = originalAudio ? `<span class="text-[10px]">🔊</span>` : ''
-          return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${originalAudio ? `window.playHandbookAudio('${originalAudio}')` : ''}">
-              ${originalText}
-              ${audioIcon}
-            </span>
-          `
+      // Render text:lang format
+      let result = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
+        const id = stableExpressionId(text, lang)
+        const expr = expressionsMap.value[id]
+        if (expr) {
+          const translations = []
+          expr.meanings?.forEach(m => {
+            if (expressionsMap.value[`trans_${m.id}`]) {
+              translations.push(expressionsMap.value[`trans_${m.id}`])
+            }
+          })
+
+          let audioUrl = ''
+          if (expr.audio_url) {
+            try {
+              const parsed = JSON.parse(expr.audio_url)
+              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+            } catch { audioUrl = '' }
+          }
+          return renderItem(id, text, translations, audioUrl)
         }
+        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${text}</span>`
       })
+
+      return result
     })
 
     const canEdit = computed(() => {

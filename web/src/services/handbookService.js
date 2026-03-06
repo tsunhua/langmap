@@ -5,6 +5,29 @@ const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1'
 })
 
+/**
+ * Generate a stable ID based on the content using FNV-1a 32-bit hash.
+ * Synchronized with backend implementation.
+ */
+function stableHashId(content) {
+    let h = 0x811c9dc5; // FNV offset basis
+    for (let i = 0; i < content.length; i++) {
+        h ^= content.charCodeAt(i);
+        h = Math.imul(h, 0x01000193); // FNV prime
+    }
+    h = h >>> 0; // convert to unsigned int32
+
+    // Ensure we don't get 0 as ID (minimum ID should be 1)
+    return (h % (2 ** 31 - 1)) + 1;
+}
+
+/**
+ * Generate a stable Expression ID using FNV-1a 32-bit hash.
+ */
+export function stableExpressionId(text, languageCode) {
+    return stableHashId(`${text}|${languageCode}`);
+}
+
 // Add interceptor to include auth token in requests
 api.interceptors.request.use(
     (config) => {
@@ -112,17 +135,41 @@ export async function deleteHandbook(id) {
 export async function getHandbookExpressions(languageCode, meaningIds) {
     if (!meaningIds || meaningIds.length === 0) return []
 
+    const CHUNK_SIZE = 50 // Limit IDs per request to avoid URL length issues
+    const allResults = []
+
     try {
-        const response = await api.get('/expressions', {
-            params: {
-                language: languageCode,
-                meaning_id: meaningIds.join(','),
-                limit: 1000 // Sufficient for most handbooks
+        for (let i = 0; i < meaningIds.length; i += CHUNK_SIZE) {
+            const chunk = meaningIds.slice(i, i + CHUNK_SIZE)
+            const response = await api.get('/expressions', {
+                params: {
+                    language: languageCode,
+                    meaning_id: chunk.join(','),
+                    limit: 1000
+                }
+            })
+            if (response.data) {
+                allResults.push(...response.data)
             }
-        })
-        return response.data
+        }
+        return allResults
     } catch (error) {
         console.error('Error fetching expressions for handbook:', error)
+        throw error
+    }
+}
+
+/**
+ * Get a specific expression by ID
+ * @param {number} id - Expression ID
+ * @returns {Promise<Object>} Expression with meanings
+ */
+export async function getExpressionById(id) {
+    try {
+        const response = await api.get(`/expressions/${id}`)
+        return response.data
+    } catch (error) {
+        console.error(`Error fetching expression ${id}:`, error)
         throw error
     }
 }
