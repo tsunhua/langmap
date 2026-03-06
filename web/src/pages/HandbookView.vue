@@ -82,8 +82,7 @@ export default {
         }
 
         // Fetch handbook with pre-rendered content from backend
-        const queryParams = { target_lang: instructionLanguage.value }
-        const data = await getHandbookById(props.id, queryParams)
+        const data = await getHandbookById(props.id, instructionLanguage.value)
         
         if (data) {
           handbook.value = data
