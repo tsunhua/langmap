@@ -16,7 +16,7 @@
           <input v-model="searchQuery" @keyup.enter.prevent="goToSearch" :placeholder="$t('placeholder')"
             class="flex-1 px-6 py-3 text-lg text-slate-800 bg-transparent focus:outline-none" />
           <button @click="goToSearch"
-            class="px-4 sm:px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
+            class="flex items-center px-4 sm:px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
