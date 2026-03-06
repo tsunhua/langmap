@@ -1895,6 +1895,41 @@ api.get('/handbooks/:id/:target_lang?', cacheMiddleware(300), optionalAuth, asyn
   }
 })
 
+// POST /api/v1/handbooks/preview
+api.post('/handbooks/preview', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+
+    if (!body.content) {
+      return c.json({ error: 'Content is required' }, 400)
+    }
+
+    // Build a temporary handbook object for rendering
+    const tempHandbook = {
+      id: 0,
+      title: body.title || '',
+      description: body.description || '',
+      content: body.content,
+      source_lang: body.source_lang || 'en',
+      target_lang: body.target_lang || ''
+    }
+
+    const targetLang = body.target_lang || ''
+    
+    // Use the same rendering logic as GET /handbooks/:id/:target_lang
+    const renders = await renderHandbookInternal(c, tempHandbook, targetLang)
+    
+    return c.json({
+      ...tempHandbook,
+      ...renders
+    })
+  } catch (error: any) {
+    console.error('Error in POST /api/v1/handbooks/preview:', error)
+    return c.json({ error: 'Failed to preview handbook' }, 500)
+  }
+})
+
 // POST /api/v1/handbooks
 api.post('/handbooks', requireAuth, async (c) => {
   try {

@@ -96,16 +96,22 @@ const routes = [
     component: () => import('../pages/HandbookList.vue')
   },
   {
-    path: '/handbooks/:id',
-    name: 'HandbookView',
-    component: () => import('../pages/HandbookView.vue'),
-    props: true
-  },
-  {
-    path: '/handbooks/edit/:id?',
+    path: '/handbooks/:id/edit',
     name: 'HandbookEdit',
     component: () => import('../pages/HandbookEdit.vue'),
     meta: { requiresAuth: true },
+    props: true
+  },
+  {
+    path: '/handbooks/edit',
+    name: 'HandbookEditNew',
+    component: () => import('../pages/HandbookEdit.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/handbooks/:id',
+    name: 'HandbookView',
+    component: () => import('../pages/HandbookView.vue'),
     props: true
   }
 ]
