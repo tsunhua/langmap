@@ -326,8 +326,8 @@ export default {
     const searching = ref(false)
     let searchTimeout = null
 
-    // Expression Tag Regex
-    const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+    // Expression Tag Regex - supports both {{text:xxx|lang:xxx}} and {{xxx}} formats
+    const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
 
     const fetchLanguages = async () => {
       try {
@@ -461,15 +461,14 @@ export default {
     }
 
     // Parse all metadata required for preview from content
-    const extractRequiredMetadata = async (content, title = '', description = '') => {
+    const extractRequiredMetadata = async (content, title = '', description = '', sourceLang = '') => {
       const expressionsToFetch = [] // { id, text, lang }
       const fullText = `${title}\n${description}\n${content}`
 
-      const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
       let tlMatch
-      while ((tlMatch = tlRegex.exec(fullText)) !== null) {
+      while ((tlMatch = TEXT_LANG_REGEX.exec(fullText)) !== null) {
         const text = tlMatch[1]
-        const lang = tlMatch[2]
+        const lang = tlMatch[2] || sourceLang
         const id = stableExpressionId(text, lang)
         if (!expressionsToFetch.some(e => e.id === id)) {
           expressionsToFetch.push({ id, text, lang })
@@ -506,13 +505,14 @@ export default {
     }
 
     // Build preview HTML using cached translations
-    const buildRenderedContent = (content, expressionMap) => {
+    const buildRenderedContent = (content, expressionMap, sourceLang = '') => {
       if (!content) return ''
       let html = md.render(content)
 
       // Replace tags with rendered items
       html = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
-        const id = stableExpressionId(text, lang)
+        const actualLang = lang || sourceLang
+        const id = stableExpressionId(text, actualLang)
         const expr = expressionMap[id]
         if (expr) {
           // Collect all translations for these meanings in the target language
@@ -523,7 +523,6 @@ export default {
             }
           })
 
-          console.log(`Rendering expression ${id}:`, { text, meanings: expr.meanings, translations })
           const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
           return renderItem(id, text, translations, audioUrl)
         }
@@ -533,10 +532,11 @@ export default {
       return html
     }
 
-    const renderPlainTextTags = (text, expressionMap, isTitle = false) => {
+    const renderPlainTextTags = (text, expressionMap, isTitle = false, sourceLang = '') => {
       if (!text) return ''
       return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
-        const id = stableExpressionId(term, lang)
+        const actualLang = lang || sourceLang
+        const id = stableExpressionId(term, actualLang)
         const expr = expressionMap[id]
         if (expr) {
           const translations = []
@@ -556,12 +556,12 @@ export default {
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description)
+      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.source_lang)
 
       if (expressionsToFetch.length === 0) {
-        renderedContent.value = buildRenderedContent(form.content, {})
-        renderedTitle.value = renderPlainTextTags(form.title || '', {}, true)
-        renderedDescription.value = renderPlainTextTags(form.description || '', {})
+        renderedContent.value = buildRenderedContent(form.content, {}, form.source_lang)
+        renderedTitle.value = renderPlainTextTags(form.title || '', {}, true, form.source_lang)
+        renderedDescription.value = renderPlainTextTags(form.description || '', {}, false, form.source_lang)
         return
       }
 
@@ -634,9 +634,9 @@ export default {
         }
       }
 
-      renderedContent.value = buildRenderedContent(form.content, translationCache.value)
-      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true)
-      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value)
+      renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.source_lang)
+      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.source_lang)
+      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.source_lang)
 
       console.log('Preview update:', {
         targetLang: form.target_lang,
