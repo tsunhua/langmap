@@ -1806,8 +1806,18 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
 
   const renderTextWithTags = (text: string, isTitle: boolean) => {
     if (!text) return ''
+
+    // For title, auto-wrap the entire text with source_lang if it doesn't already contain tags
+    let textToRender = text
+    if (isTitle) {
+      const hasTags = TEXT_LANG_REGEX.test(text)
+      if (!hasTags && handbook.source_lang) {
+        textToRender = `{{text:${text.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${handbook.source_lang}}}`
+      }
+    }
+
     TEXT_LANG_REGEX.lastIndex = 0
-    return text.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
+    return textToRender.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
       const lang = langMatch || handbook.source_lang || 'en'
       const id = db.stableExpressionId(term, lang)
       const expr = expressionMap[id]
