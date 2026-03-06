@@ -324,11 +324,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       const chunk = expressionIds.slice(i, i + chunkSize)
       const placeholders = chunk.map(() => '?').join(',')
 
-      const rows = await this.db.prepare(
+      const { results: rows } = await this.db.prepare(
         `SELECT expression_id, meaning_id FROM expression_meaning WHERE expression_id IN (${placeholders})`
       ).bind(...chunk).all<{expression_id: number, meaning_id: number}>()
 
-      rows.forEach(row => {
+      rows?.forEach(row => {
         if (!result.has(row.expression_id)) {
           result.set(row.expression_id, [])
         }
