@@ -508,7 +508,7 @@ api.post('/expressions/associate', requireAuth, async (c) => {
 })
 
 // GET /api/v1/expressions/:expr_id
-api.get('/expressions/:expr_id', async (c) => {
+api.get('/expressions/:expr_id', cacheMiddleware(300), async (c) => {
   try {
     console.log('GET /api/v1/expressions/:expr_id');
     const db = getDB(c)
@@ -1697,7 +1697,7 @@ api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
 
 // Handbook Routes
 // GET /api/v1/handbooks
-api.get('/handbooks', optionalAuth, async (c) => {
+api.get('/handbooks', cacheMiddleware(300), optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const user = c.get('user')
@@ -1723,12 +1723,141 @@ api.get('/handbooks', optionalAuth, async (c) => {
   }
 })
 
+import MarkdownIt from 'markdown-it'
+
+// Helper for handbook rendering
+async function renderHandbookInternal(c: Context, handbook: any, targetLang: string) {
+  const md = new MarkdownIt({ html: true })
+  const db = getDB(c)
+
+  const content = handbook.content || ''
+  const title = handbook.title || ''
+  const description = handbook.description || ''
+
+  const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+
+  // 1. Extract all expression tags
+  const expressionsToFetch: { text: string, lang: string, id: number }[] = []
+  const fullText = `${title}\n${description}\n${content}`
+
+  let tlMatch
+  while ((tlMatch = TEXT_LANG_REGEX.exec(fullText)) !== null) {
+    const text = tlMatch[1]
+    const lang = tlMatch[2]
+    const id = db.stableExpressionId(text, lang)
+    if (!expressionsToFetch.some(e => e.id === id)) {
+      expressionsToFetch.push({ text, lang, id })
+    }
+  }
+
+  // 2. Fetch expressions and translations
+  const expressionMap: Record<string, any> = {}
+  if (expressionsToFetch.length > 0) {
+    const ids = expressionsToFetch.map(e => e.id)
+    const expressions = await db.getExpressionsByIds(ids)
+
+    const allMids: number[] = []
+    expressions.forEach(expr => {
+      expressionMap[expr.id] = expr
+      expr.meanings?.forEach(m => {
+        if (!allMids.includes(m.id)) allMids.push(m.id)
+      })
+    })
+
+    if (allMids.length > 0 && targetLang) {
+      // Use the newly optimized batch fetching
+      const translations: any[] = await db.getExpressions(undefined, undefined, targetLang, allMids)
+      translations.forEach((trans: any) => {
+        if (trans.meaning_id) {
+          expressionMap[`trans_${trans.meaning_id}`] = trans
+        } else if (trans.meanings) {
+          trans.meanings.forEach((m: any) => {
+            if (allMids.includes(m.id)) {
+              expressionMap[`trans_${m.id}`] = trans
+            }
+          })
+        }
+      })
+    }
+  }
+
+  // 3. Render helpers
+  const renderItem = (id: number, text: string, transList: any[], audioUrl: string) => {
+    const meaningsText = transList.length > 0
+      ? ` <span class="text-gray-400 font-normal text-xs">[${transList.map(m => m.text).join(', ')}]</span>`
+      : ''
+    const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+
+    return `
+      <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+            onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
+        ${text}${meaningsText}${audioIcon}
+      </span>
+    `
+  }
+
+  const renderTextWithTags = (text: string) => {
+    if (!text) return ''
+    return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
+      const id = db.stableExpressionId(term, lang)
+      const expr = expressionMap[id]
+      if (expr) {
+        const translations: any[] = []
+        expr.meanings?.forEach((m: any) => {
+          if (expressionMap[`trans_${m.id}`]) {
+            translations.push(expressionMap[`trans_${m.id}`])
+          }
+        })
+        let audioUrl = ''
+        if (expr.audio_url) {
+          try {
+            const parsed = JSON.parse(expr.audio_url)
+            audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+          } catch { }
+        }
+        return renderItem(id, term, translations, audioUrl)
+      }
+      return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+    })
+  }
+
+  // 4. Perform rendering
+  const rendered_title = renderTextWithTags(title)
+  const rendered_description = renderTextWithTags(description)
+
+  let html = md.render(content)
+  const rendered_content = html.replace(TEXT_LANG_REGEX, (match, term, lang) => {
+    const id = db.stableExpressionId(term, lang)
+    const expr = expressionMap[id]
+    if (expr) {
+      const translations: any[] = []
+      expr.meanings?.forEach((m: any) => {
+        if (expressionMap[`trans_${m.id}`]) {
+          translations.push(expressionMap[`trans_${m.id}`])
+        }
+      })
+      let audioUrl = ''
+      if (expr.audio_url) {
+        try {
+          const parsed = JSON.parse(expr.audio_url)
+          audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+        } catch { }
+      }
+      return renderItem(id, term, translations, audioUrl)
+    }
+    return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+  })
+
+  return { rendered_title, rendered_description, rendered_content }
+}
+
 // GET /api/v1/handbooks/:id
-api.get('/handbooks/:id', optionalAuth, async (c) => {
+api.get('/handbooks/:id', cacheMiddleware(300), optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const user = c.get('user')
+    const targetLang = c.req.query('target_lang')
 
     if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
 
@@ -1738,6 +1867,41 @@ api.get('/handbooks/:id', optionalAuth, async (c) => {
     // Check visibility
     if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
       return c.json({ error: 'Access denied' }, 403)
+    }
+
+    const effectiveTargetLang = targetLang || handbook.target_lang || ''
+
+    // Check Render Cache (only if targetLang is provided or fixed)
+    if (effectiveTargetLang) {
+      const cachedRender = await db.getHandbookRender(id, effectiveTargetLang)
+      if (cachedRender) {
+        return c.json({
+          ...handbook,
+          rendered_title: cachedRender.rendered_title,
+          rendered_description: cachedRender.rendered_description,
+          rendered_content: cachedRender.rendered_content,
+          is_cached: true
+        })
+      }
+
+      // Not in cache, render it
+      try {
+        const renders = await renderHandbookInternal(c, handbook, effectiveTargetLang)
+        await db.saveHandbookRender({
+          handbook_id: id,
+          target_lang: effectiveTargetLang,
+          ...renders
+        })
+        return c.json({
+          ...handbook,
+          ...renders,
+          is_cached: false
+        })
+      } catch (renderError) {
+        console.error('Render error:', renderError)
+        // Fallback to raw if rendering fails
+        return c.json(handbook)
+      }
     }
 
     return c.json(handbook)

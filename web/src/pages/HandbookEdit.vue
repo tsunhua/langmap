@@ -213,7 +213,16 @@
                   <p class="text-xs">{{ $t('loading_preview') }}</p>
                 </div>
               </div>
-              <div v-else class="prose prose-blue prose-sm max-w-none markdown-body" v-html="renderedContent"></div>
+              <div v-else>
+                <!-- Rendered Header in Preview -->
+                <div class="mb-6 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <h1 class="text-xl font-bold text-gray-900 mb-2" v-html="renderedTitle"></h1>
+                  <p v-if="renderedDescription" class="text-xs text-gray-500 leading-relaxed" v-html="renderedDescription"></p>
+                </div>
+
+                <div class="prose prose-blue prose-sm max-w-none leading-loose markdown-body"
+                  v-html="renderedContent"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -270,12 +279,13 @@ export default {
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
+    // Rendered HTML after fetching translations
+    const renderedContent = ref('')
+    const renderedTitle = ref('')
+    const renderedDescription = ref('')
 
     // Translated expressions cache for preview { mid: Expression }
     const translationCache = ref({})
-    // Rendered HTML after fetching translations
-    const renderedContent = ref('')
-
     // History for Undo/Redo
     const history = ref([])
     const historyIndex = ref(-1)
@@ -449,12 +459,13 @@ export default {
     }
 
     // Parse all metadata required for preview from content
-    const extractRequiredMetadata = async (content) => {
+    const extractRequiredMetadata = async (content, title = '', description = '') => {
       const expressionsToFetch = [] // { id, text, lang }
+      const fullText = `${title}\n${description}\n${content}`
 
       const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
       let tlMatch
-      while ((tlMatch = tlRegex.exec(content)) !== null) {
+      while ((tlMatch = tlRegex.exec(fullText)) !== null) {
         const text = tlMatch[1]
         const lang = tlMatch[2]
         const id = stableExpressionId(text, lang)
@@ -465,36 +476,37 @@ export default {
 
       return { expressionsToFetch }
     }
+    // Render helpers for preview
+    const renderItem = (id, text, meanings, audioUrl) => {
+      const meaningsText = meanings && meanings.length > 0
+        ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
+        : ''
+      const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+
+      return `
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+              onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
+          ${text}${meaningsText}${audioIcon}
+        </span>
+      `
+    }
+
+    window.playHandbookAudio = (url) => {
+      if (!url) return
+      const audio = new Audio(url)
+      audio.play()
+    }
+
+    window.navigateToExpression = (id) => {
+      router.push(`/detail/${id}`)
+    }
+
     // Build preview HTML using cached translations
-    const buildRenderedContent = (expressionMap) => {
-      let html = md.render(form.content)
+    const buildRenderedContent = (content, expressionMap) => {
+      if (!content) return ''
+      let html = md.render(content)
 
-      window.playHandbookAudio = (url) => {
-        if (!url) return
-        const audio = new Audio(url)
-        audio.play()
-      }
-
-      window.navigateToExpression = (id) => {
-        router.push(`/detail/${id}`)
-      }
-
-      // Helper to render an expression item
-      const renderItem = (id, text, meanings, audioUrl) => {
-        const meaningsText = meanings && meanings.length > 0
-          ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
-          : ''
-        const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
-
-        return `
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-            ${text}${meaningsText}${audioIcon}
-          </span>
-        `
-      }
-
-      // Render text:lang format
+      // Replace tags with rendered items
       html = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
         const id = stableExpressionId(text, lang)
         const expr = expressionMap[id]
@@ -516,14 +528,35 @@ export default {
       return html
     }
 
+    const renderPlainTextTags = (text, expressionMap) => {
+      if (!text) return ''
+      return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
+        const id = stableExpressionId(term, lang)
+        const expr = expressionMap[id]
+        if (expr) {
+          const translations = []
+          expr.meanings?.forEach(m => {
+            if (expressionMap[`trans_${m.id}`]) {
+              translations.push(expressionMap[`trans_${m.id}`])
+            }
+          })
+          const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
+          return renderItem(id, term, translations, audioUrl)
+        }
+        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+      })
+    }
+
     // Update preview: fetch translations if target_lang is set
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch } = await extractRequiredMetadata(form.content)
+      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description)
 
       if (expressionsToFetch.length === 0) {
-        renderedContent.value = buildRenderedContent({})
+        renderedContent.value = buildRenderedContent(form.content, {})
+        renderedTitle.value = renderPlainTextTags(form.title || '', {})
+        renderedDescription.value = renderPlainTextTags(form.description || '', {})
         return
       }
 
@@ -591,7 +624,9 @@ export default {
         }
       }
 
-      renderedContent.value = buildRenderedContent(translationCache.value)
+      renderedContent.value = buildRenderedContent(form.content, translationCache.value)
+      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value)
+      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value)
     }
 
     let previewTimeout = null
@@ -680,6 +715,8 @@ export default {
       historyIndex,
       contentArea,
       renderedContent,
+      renderedTitle,
+      renderedDescription,
       search,
       insertExpression,
       insertAndClear,

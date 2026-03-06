@@ -1867,6 +1867,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const values: any[] = []
 
     Object.entries(handbook).forEach(([key, value]) => {
+      // Don't update renders directly via this method unless explicitly passed
       if (key !== 'id' && key !== 'created_at' && key !== 'user_id') {
         fields.push(`${key} = ?`)
         values.push(key === 'is_public' ? (value ? 1 : 0) : value)
@@ -1878,6 +1879,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       if (!current) throw new Error('Handbook not found');
       return current;
     }
+
+    // Always invalidate all renders on any handbook update
+    fields.push('renders = ?')
+    values.push('{}')
 
     fields.push('updated_at = CURRENT_TIMESTAMP')
     values.push(id)
@@ -1898,6 +1903,74 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM handbooks WHERE id = ?'
     ).bind(id).run()
     return (result.meta?.changes ?? 0) > 0
+  }
+
+  // Handbook Renders (JSON column based)
+  async getHandbookRender(id: number, targetLang: string): Promise<any | null> {
+    const handbook = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(id).first<Handbook>()
+
+    if (!handbook || !handbook.renders) return null
+
+    try {
+      const renders = JSON.parse(handbook.renders)
+      const render = renders[targetLang]
+      if (!render) return null
+
+      // Check TTL (1 hour)
+      const renderedTime = render.at
+      const now = Date.now()
+      if (now - renderedTime > 3600 * 1000) {
+        return null // Expired
+      }
+
+      return render
+    } catch (e) {
+      console.error('Error parsing handbook renders:', e)
+      return null
+    }
+  }
+
+  async saveHandbookRender(renderData: {
+    handbook_id: number;
+    target_lang: string;
+    rendered_title: string;
+    rendered_description?: string;
+    rendered_content: string;
+  }): Promise<void> {
+    // 1. Get current renders
+    const handbook = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(renderData.handbook_id).first<Handbook>()
+
+    if (!handbook) return
+
+    let renders: Record<string, any> = {}
+    try {
+      renders = JSON.parse(handbook.renders || '{}')
+    } catch (e) {
+      renders = {}
+    }
+
+    // 2. Update specific language
+    renders[renderData.target_lang] = {
+      rendered_title: renderData.rendered_title,
+      rendered_description: renderData.rendered_description,
+      rendered_content: renderData.rendered_content,
+      at: Date.now()
+    }
+
+    // 3. Save back
+    await this.db.prepare(
+      'UPDATE handbooks SET renders = ? WHERE id = ?'
+    ).bind(JSON.stringify(renders), renderData.handbook_id).run()
+  }
+
+  async invalidateHandbookRenders(id: number): Promise<void> {
+    await this.db.prepare(
+      'UPDATE handbooks SET renders = ? WHERE id = ?'
+    ).bind('{}', id).run()
   }
 
   /**

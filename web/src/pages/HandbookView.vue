@@ -8,9 +8,9 @@
       <!-- Header -->
       <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
         <div class="space-y-1.5 flex-1">
-          <h1 class="text-3xl font-bold text-gray-900">{{ handbook.title }}</h1>
-          <p v-if="handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description
-            }}</p>
+          <h1 class="text-3xl font-bold text-gray-900" v-html="handbook.rendered_title || handbook.title"></h1>
+          <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
+             v-html="handbook.rendered_description || handbook.description"></p>
           <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
         </div>
 
@@ -33,7 +33,8 @@
       </div>
 
       <!-- Content -->
-      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" v-html="renderedContent"></div>
+      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" 
+           v-html="handbook.rendered_content || handbook.content"></div>
 
       <!-- Audio Player Placeholder (Hidden) -->
       <audio ref="audioPlayer" class="hidden"></audio>
@@ -55,8 +56,7 @@
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import MarkdownIt from 'markdown-it'
-import { getHandbookById, getHandbookExpressions, stableExpressionId, getExpressionById } from '../services/handbookService'
+import { getHandbookById } from '../services/handbookService'
 import { fetchLanguages } from '../services/languageService'
 
 export default {
@@ -64,49 +64,29 @@ export default {
   props: ['id'],
   setup(props) {
     const router = useRouter()
-    const md = new MarkdownIt({ html: true })
 
     // State
     const handbook = ref(null)
     const languages = ref([])
     const instructionLanguage = ref(localStorage.getItem('instructionLanguage') || 'zh-CN')
-    const expressionsMap = ref({})
     const loading = ref(true)
     const audioPlayer = ref(null)
-    const currentUser = ref(null) // Should be fetched from auth store/localstorage
-
-    // Detection Regex for {{exp:ID|mid:MID|text:TEXT|audio:URL}}
-    const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+    const currentUser = ref(null)
 
     const fetchInitialData = async () => {
       loading.value = true
       try {
-        // Fetch languages
-        languages.value = await fetchLanguages()
+        // Fetch languages if not loaded
+        if (languages.value.length === 0) {
+          languages.value = await fetchLanguages()
+        }
 
-        // Fetch handbook
-        const data = await getHandbookById(props.id)
-        handbook.value = data
-
+        // Fetch handbook with pre-rendered content from backend
+        const queryParams = { target_lang: instructionLanguage.value }
+        const data = await getHandbookById(props.id, queryParams)
+        
         if (data) {
-          // Use the handbook's target_lang if set, otherwise fall back to localStorage
-          if (data.target_lang) {
-            instructionLanguage.value = data.target_lang
-          }
-
-          // Detect all Text/Lang entries in the content
-          const expressionsToFetch = []
-
-          let match
-          const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
-          while ((match = tlRegex.exec(data.content)) !== null) {
-            const id = stableExpressionId(match[1], match[2])
-            expressionsToFetch.push({ id, text: match[1], lang: match[2] })
-          }
-
-          if (expressionsToFetch.length > 0) {
-            await fetchMetadata(expressionsToFetch)
-          }
+          handbook.value = data
         }
 
         // Auth check for edit button
@@ -120,123 +100,21 @@ export default {
       }
     }
 
-    const fetchMetadata = async (expressionsToFetch) => {
-      try {
-        // Phase 1: Fetch source expressions
-        const sourcePromises = expressionsToFetch.map(e => {
-          if (!expressionsMap.value[e.id]) {
-            return getExpressionById(e.id).then(ex => {
-              expressionsMap.value[e.id] = ex
-              return ex
-            }).catch(() => null)
-          }
-          return Promise.resolve(expressionsMap.value[e.id])
-        })
-
-        const sourceExprs = await Promise.all(sourcePromises)
-
-        // Phase 2: Fetch translations for target_lang
-        const mids = []
-        sourceExprs.forEach(expr => {
-          expr?.meanings?.forEach(m => {
-            if (!mids.includes(m.id)) mids.push(m.id)
-          })
-        })
-
-        if (mids.length > 0 && instructionLanguage.value) {
-          const translations = await getHandbookExpressions(instructionLanguage.value, mids)
-          translations.forEach(trans => {
-            if (trans.meaning_id) {
-              expressionsMap.value[`trans_${trans.meaning_id}`] = trans
-            } else if (trans.meanings) {
-              trans.meanings.forEach(m => {
-                if (mids.includes(m.id)) {
-                  expressionsMap.value[`trans_${m.id}`] = trans
-                }
-              })
-            }
-          })
-        }
-      } catch (error) {
-        console.error('Failed to fetch metadata:', error)
-      }
+    // Global helpers for rendered HTML interactions
+    window.playHandbookAudio = (url) => {
+      if (!url || !audioPlayer.value) return
+      audioPlayer.value.src = url
+      audioPlayer.value.play()
     }
 
-    // Watch language change to re-fetch
-    watch(instructionLanguage, async (newLang) => {
+    window.navigateToExpression = (id) => {
+      router.push(`/detail/${id}`)
+    }
+
+    // Watch for instruction language changes to re-fetch pre-rendered content from backend
+    watch(instructionLanguage, (newLang) => {
       localStorage.setItem('instructionLanguage', newLang)
-      if (!handbook.value) return
-
-      const expressionsToFetch = []
-      let match
-      const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
-      while ((match = tlRegex.exec(handbook.value.content)) !== null) {
-        const id = stableExpressionId(match[1], match[2])
-        expressionsToFetch.push({ id, text: match[1], lang: match[2] })
-      }
-
-      if (expressionsToFetch.length > 0) {
-        await fetchMetadata(expressionsToFetch)
-      }
-    })
-
-    const renderedContent = computed(() => {
-      if (!handbook.value) return ''
-
-      // Process Markdown
-      let html = md.render(handbook.value.content)
-
-      // We use a custom function in the global scope to handle clicks for rendered HTML
-      window.playHandbookAudio = (url) => {
-        if (!url || !audioPlayer.value) return
-        audioPlayer.value.src = url
-        audioPlayer.value.play()
-      }
-
-      window.navigateToExpression = (id) => {
-        router.push(`/detail/${id}`)
-      }
-
-      // Helper to render an expression item
-      const renderItem = (id, text, meanings, audioUrl) => {
-        const meaningsText = meanings && meanings.length > 0
-          ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
-          : ''
-        const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
-
-        return `
-          <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-            ${text}${meaningsText}${audioIcon}
-          </span>
-        `
-      }
-
-      // Render text:lang format
-      let result = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
-        const id = stableExpressionId(text, lang)
-        const expr = expressionsMap.value[id]
-        if (expr) {
-          const translations = []
-          expr.meanings?.forEach(m => {
-            if (expressionsMap.value[`trans_${m.id}`]) {
-              translations.push(expressionsMap.value[`trans_${m.id}`])
-            }
-          })
-
-          let audioUrl = ''
-          if (expr.audio_url) {
-            try {
-              const parsed = JSON.parse(expr.audio_url)
-              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-            } catch { audioUrl = '' }
-          }
-          return renderItem(id, text, translations, audioUrl)
-        }
-        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${text}</span>`
-      })
-
-      return result
+      fetchInitialData()
     })
 
     const canEdit = computed(() => {
@@ -249,7 +127,7 @@ export default {
     })
 
     const goToEdit = () => {
-      router.push(`/handbooks/edit/${props.id}`)
+      router.push(`/handbooks/${props.id}/edit`)
     }
 
     const formatDate = (dateString) => {
@@ -264,7 +142,6 @@ export default {
       loading,
       instructionLanguage,
       sortedLanguages,
-      renderedContent,
       audioPlayer,
       canEdit,
       goToEdit,
@@ -282,9 +159,5 @@ export default {
 
 .handbook-item:hover {
   background-color: rgba(59, 130, 246, 0.05);
-}
-
-.handbook-item.is-fallback:hover {
-  background-color: rgba(107, 114, 128, 0.05);
 }
 </style>
