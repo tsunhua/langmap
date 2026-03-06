@@ -195,23 +195,26 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     if (meaningId !== undefined) {
+      // Use expression_meaning table instead of expressions.meaning_id field
+      query = 'SELECT e.* FROM expressions e'
+      
       if (Array.isArray(meaningId)) {
         // Handle array of meaning IDs
         if (meaningId.length > 0) {
           const placeholders = meaningId.map(() => '?').join(',');
-          whereConditions.push(`meaning_id IN (${placeholders})`);
+          whereConditions.push(`e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id IN (${placeholders}))`);
           bindings.push(...meaningId);
         } else {
           // Empty array means no results should be returned
           whereConditions.push('1 = 0'); // Always false condition
         }
       } else {
-        // Handle single meaning ID (backward compatibility)
+        // Handle single meaning ID
         if (meaningId === -1) {
-          // Special case: get expressions with any meaning_id (not null)
-          whereConditions.push('meaning_id IS NOT NULL');
+          // Special case: get expressions with any meaning (has entry in expression_meaning)
+          whereConditions.push('EXISTS (SELECT 1 FROM expression_meaning WHERE expression_id = e.id)');
         } else {
-          whereConditions.push('meaning_id = ?');
+          whereConditions.push('e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id = ?)');
           bindings.push(meaningId);
         }
       }
@@ -311,6 +314,31 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return allResults;
   }
 
+  async getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>> {
+    if (expressionIds.length === 0) return new Map()
+
+    const result = new Map<number, number[]>()
+    const chunkSize = 100
+
+    for (let i = 0; i < expressionIds.length; i += chunkSize) {
+      const chunk = expressionIds.slice(i, i + chunkSize)
+      const placeholders = chunk.map(() => '?').join(',')
+
+      const rows = await this.db.prepare(
+        `SELECT expression_id, meaning_id FROM expression_meaning WHERE expression_id IN (${placeholders})`
+      ).bind(...chunk).all<{expression_id: number, meaning_id: number}>()
+
+      rows.forEach(row => {
+        if (!result.has(row.expression_id)) {
+          result.set(row.expression_id, [])
+        }
+        result.get(row.expression_id)!.push(row.meaning_id)
+      })
+    }
+
+    return result
+  }
+
   async upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
     console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions')
 
@@ -339,6 +367,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
       existingExprs.map(e => [e.id, e])
     )
 
+    const existingMeaningIds = await this.getExpressionMeaningIds(ids)
+
     const sortedExprs = [...expressions].sort((a, b) => {
       if (!a.text || !a.language_code || !b.text || !b.language_code) {
         return 0
@@ -357,9 +387,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const meaningIds: number[] = []
     for (const expr of sortedExprs) {
       if (expr.id === undefined) continue
-      const existing = existingMap.get(expr.id)
-      if (existing && existing.meaning_id) {
-        meaningIds.push(existing.meaning_id)
+      const existingMeanings = existingMeaningIds.get(expr.id)
+      if (existingMeanings && existingMeanings.length > 0) {
+        meaningIds.push(...existingMeanings)
       }
     }
 
@@ -403,12 +433,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
 
       const id = this.stableExpressionId(expr.text, expr.language_code)
-      const meaningId = finalMeaningId !== undefined ? finalMeaningId : (expr.meaning_id !== undefined ? expr.meaning_id : null)
-
+ 
       const bindValues = [
         id,
         expr.text,
-        meaningId,
         expr.audio_url || null,
         expr.language_code,
         expr.region_code || null,
@@ -422,14 +450,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
         expr.created_by || null,
         expr.updated_by || null
       ]
-
+ 
       return this.db.prepare(
         `INSERT INTO expressions (
-          id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
+          id, text, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
-          meaning_id = CASE WHEN excluded.meaning_id IS NOT NULL THEN excluded.meaning_id ELSE meaning_id END,
           tags = CASE WHEN excluded.tags IS NOT NULL THEN excluded.tags ELSE tags END,
           updated_at = CURRENT_TIMESTAMP,
           updated_by = CASE WHEN excluded.updated_by IS NOT NULL THEN excluded.updated_by ELSE updated_by END
@@ -459,7 +486,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
 
     if (finalMeaningId !== undefined) {
-      const meaningExists = existingExprs.some(e => e.meaning_id === finalMeaningId)
+      const meaningIdsSet = new Set(meaningIds)
+      const meaningExists = meaningIdsSet.has(finalMeaningId)
+
       if (!meaningExists) {
         console.log('[upsertExpressions] Creating new meaning record for meaning_id:', finalMeaningId)
 
@@ -475,7 +504,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
         if (!expr.id) continue
 
         const exprId = this.stableExpressionId(expr.text!, expr.language_code!)
-        const meaningExistsForExpr = existingMap.get(exprId)?.meaning_id === finalMeaningId
+        const existingMeanings = existingMeaningIds.get(exprId) || []
+        const meaningExistsForExpr = existingMeanings.includes(finalMeaningId)
 
         if (!meaningExistsForExpr) {
           console.log('[upsertExpressions] Creating expression_meaning relation:', exprId, '->', finalMeaningId)
@@ -518,7 +548,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
       const bindValues = [
         id,
         expression.text,
-        expression.meaning_id !== undefined ? expression.meaning_id : null,
         expression.audio_url || null,
         expression.language_code,
         expression.region_code || null,
@@ -535,9 +564,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
       const result = await this.db.prepare(
         `INSERT INTO expressions (
-          id, text, meaning_id, audio_url, language_code, region_code, region_name, region_latitude,
+          id, text, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).first<Expression>()
 
       if (!result) {
@@ -657,35 +686,35 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // 3. Check if new ID already exists (collision)
     // If it exists, we might want to merge, but for now we throw error to be safe
     // or we could handle it by deleting old and letting the existing one stand.
-    const collision = await this.getExpressionById(newId);
-    if (collision) {
-      // If the target ID already exists, we effectively delete the old one 
-      // and redirect all its references to the existing one.
+      const collision = await this.getExpressionById(newId);
+      if (collision) {
+        // If target ID already exists, we effectively delete old one 
+        // and redirect all its references to existing one.
 
-      const statements: any[] = [];
+        const statements: any[] = [];
 
-      // - Update meaning_id references
-      statements.push(db.prepare(`UPDATE expressions SET meaning_id = ? WHERE meaning_id = ?`).bind(newId, oldId));
+        // - Update expression_meaning references (replace old expression_id with new expression_id)
+        statements.push(db.prepare(`UPDATE expression_meaning SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
 
-      // - Update collection items
-      statements.push(db.prepare(`UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
+        // - Update collection items
+        statements.push(db.prepare(`UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
 
-      // - Delete old
-      statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+        // - Delete old
+        statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
 
-      // - Delete from FTS index
-      statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
+        // - Delete from FTS index
+        statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
 
-      await db.batch(statements);
+        await db.batch(statements);
 
-      // Update language_stats if collision occurred (old record deleted)
-      await this.db.prepare(`
-        UPDATE language_stats SET expression_count = MAX(0, expression_count - 1)
-        WHERE language_code = ?
-      `).bind(current.language_code).run();
+        // Update language_stats if collision occurred (old record deleted)
+        await this.db.prepare(`
+          UPDATE language_stats SET expression_count = MAX(0, expression_count - 1)
+          WHERE language_code = ?
+        `).bind(current.language_code).run();
 
-      return collision;
-    }
+        return collision;
+      }
 
     // 4. Prepare the new record data
     const merged = { ...current, ...newExpression, id: newId };
@@ -703,9 +732,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
       newExpression.updated_by || current.created_by || 'system'
     ));
 
-    // - Update all expressions that point to oldId as meaning_id to point to newId
+    // - Update expression_meaning references (replace old expression_id with new expression_id)
     statements.push(db.prepare(
-      `UPDATE expressions SET meaning_id = ? WHERE meaning_id = ?`
+      `UPDATE expression_meaning SET expression_id = ? WHERE expression_id = ?`
     ).bind(newId, oldId));
 
     // - Update collection items
@@ -713,11 +742,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       `UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`
     ).bind(newId, oldId));
 
-    // - Insert the NEW expression
+    // - Insert the NEW expression (meaning_id field is deprecated, always set to null)
     const bindValues = [
       newId,
       merged.text,
-      merged.meaning_id !== undefined ? merged.meaning_id : null,
+      null, // meaning_id is deprecated, use expression_meaning table instead
       merged.audio_url || null,
       merged.language_code,
       merged.region_code || null,
@@ -785,6 +814,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     try {
       const expressions = await this.getExpressionsByIds(expressionIds);
+      const existingMeaningIds = await this.getExpressionMeaningIds(expressionIds);
 
       // 按语言优先级排序
       const sortedExprs = [...expressions].sort((a, b) => {
@@ -797,14 +827,15 @@ export class D1DatabaseService extends AbstractDatabaseService {
         return priorityA - priorityB;
       });
 
-      // 遍历排序后的表达式，找到第一个有 meaning_id 的
+      // 遍历排序后的表达式，找到第一个有 meaning 关联的
       for (const expr of sortedExprs) {
-        if (expr.meaning_id) {
-          return expr.meaning_id;
+        const meanings = existingMeaningIds.get(expr.id);
+        if (meanings && meanings.length > 0) {
+          return meanings[0];
         }
       }
 
-      // 如果都没有 meaning_id，返回排序后第一个表达式的 ID
+      // 如果都没有 meaning 关联，返回排序后第一个表达式的 ID
       if (sortedExprs.length > 0) {
         return sortedExprs[0].id;
       }
@@ -979,10 +1010,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
   // UI translations
   async getUITranslations(language: string, skip: number = 0, limit: number = 200): Promise<any[]> {
     const { results } = await this.db.prepare(
-      `SELECT e.id, e.text, e.tags, e.language_code as language_code, COALESCE(e.meaning_id, e.id) as meaning_id
+      `SELECT e.id, e.text, e.tags, e.language_code as language_code, em.meaning_id
        FROM expressions e 
        JOIN collection_items ci ON e.id = ci.expression_id
        JOIN collections c ON ci.collection_id = c.id
+       JOIN expression_meaning em ON e.id = em.expression_id
        WHERE c.name = 'langmap' AND e.language_code = ?
        LIMIT ? OFFSET ?`
     ).bind(language, limit, skip).all<{ id: number, text: string, language_code: string, meaning_id: number | null }>()
@@ -994,12 +1026,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       throw new Error(`meaning_id is required for saving UI translations`);
     }
 
-    // 1. Try to find existing translation by meaning_id within the collection
+    // 1. Try to find existing translation by meaning_id within collection
     const existingInCollection = await this.db.prepare(
       `SELECT e.* FROM expressions e
        JOIN collection_items ci ON e.id = ci.expression_id
        JOIN collections c ON ci.collection_id = c.id
-       WHERE c.name = 'langmap' AND e.language_code = ? AND e.meaning_id = ?`
+       JOIN expression_meaning em ON e.id = em.expression_id
+       WHERE c.name = 'langmap' AND e.language_code = ? AND em.meaning_id = ?`
     ).bind(language, meaningId).first<Expression>();
 
     if (existingInCollection) {
@@ -1019,8 +1052,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     let expr: Expression;
     if (globalExisting) {
       console.log('Re-using existing expression:', globalExisting.id);
-      // Re-use existing expression: update its meaning_id and tags
-      // Merge the new key with existing tags
+      // Re-use existing expression: merge new key with existing tags and ensure expression_meaning association
       let mergedTags = [key];
       if (globalExisting.tags) {
         try {
@@ -1039,26 +1071,44 @@ export class D1DatabaseService extends AbstractDatabaseService {
         }
       }
 
+      const now = new Date().toISOString()
       expr = await this.updateExpression(id, {
-        meaning_id: meaningId,
         tags: JSON.stringify(mergedTags),
         updated_by: username,
-        updated_at: new Date().toISOString()
+        updated_at: now
       });
+      
+      // Ensure meaning record exists and create association
+      await this.db.prepare(
+        'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
+      ).bind(meaningId, username, now).run();
+      
+      await this.db.prepare(
+        'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+      ).bind(`${id}-${meaningId}`, id, meaningId, now).run();
     } else {
       console.log('Creating new expression:', text);
       // Create truly new expression
+      const now = new Date().toISOString()
       expr = await this.createExpression({
         text,
         language_code: language,
         tags: JSON.stringify([key]),
-        meaning_id: meaningId,
         source_type: 'user',
         created_by: username,
         updated_by: username
       });
+      
+      // Create meaning record and association
+      await this.db.prepare(
+        'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
+      ).bind(meaningId, username, now).run();
+      
+      await this.db.prepare(
+        'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+      ).bind(`${expr.id}-${meaningId}`, expr.id, meaningId, now).run();
     }
-
+ 
     // 3. Ensure it is linked to 'langmap' collection
     const langmapCol = await this.db.prepare("SELECT id FROM collections WHERE name = 'langmap'").first<{ id: number }>();
     if (langmapCol) {
@@ -1069,10 +1119,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         note: 'UI Translation'
       });
     }
-
+ 
     return expr;
-  }
-
+    }
+ 
+  
   async saveUITranslations(language: string, translations: Array<{ key: string, text: string, meaning_id?: number }>, username: string): Promise<Array<{ key: string, error?: string }>> {
     const results: Array<{ key: string, error?: string }> = [];
 
@@ -1199,37 +1250,80 @@ export class D1DatabaseService extends AbstractDatabaseService {
         const newExpressions = insertExpressions.filter(e => !existingIdSet.has(e.expressionId))
         const existingExpressions = insertExpressions.filter(e => existingIdSet.has(e.expressionId))
 
-        // Insert new expressions
+        // Insert new expressions (meaning_id is deprecated, use expression_meaning table instead)
         for (let i = 0; i < newExpressions.length; i += BATCH_SIZE) {
           const chunk = newExpressions.slice(i, i + BATCH_SIZE)
-          const statements = chunk.map(expr =>
-            this.db.prepare(`
-              INSERT INTO expressions
-              (id, text, meaning_id, language_code, tags, source_type, review_status, created_by, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(
-              expr.expressionId, expr.text, expr.meaningId, expr.langCode,
-              expr.tags, 'system', 'approved',
-              expr.username, expr.timestamp, expr.timestamp
+          
+          // Prepare statements: insert expressions, create meanings, create associations
+          const allStatements: any[] = []
+          
+          for (const expr of chunk) {
+            // Insert expression (meaning_id field is deprecated)
+            allStatements.push(
+              this.db.prepare(`
+                INSERT INTO expressions
+                (id, text, meaning_id, language_code, tags, source_type, review_status, created_by, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                expr.expressionId, expr.text, null, expr.langCode,
+                expr.tags, 'system', 'approved',
+                expr.username, expr.timestamp, expr.timestamp
+              )
             )
-          )
-          await this.db.batch(statements)
+            
+            // Insert meaning record if it doesn't exist
+            allStatements.push(
+              this.db.prepare(`
+                INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)
+              `).bind(expr.meaningId, expr.username, expr.timestamp)
+            )
+            
+            // Insert expression_meaning association
+            allStatements.push(
+              this.db.prepare(`
+                INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)
+              `).bind(`${expr.expressionId}-${expr.meaningId}`, expr.expressionId, expr.meaningId, expr.timestamp)
+            )
+          }
+          
+          await this.db.batch(allStatements)
         }
 
         // Update existing expressions (only update text, tags, updated_by, and updated_at)
+        // Also ensure expression_meaning associations exist
         for (let i = 0; i < existingExpressions.length; i += BATCH_SIZE) {
           const chunk = existingExpressions.slice(i, i + BATCH_SIZE)
-          const statements = chunk.map(expr =>
-            this.db.prepare(`
-              UPDATE expressions
-              SET text = ?, tags = ?, updated_by = ?, updated_at = ?
-              WHERE id = ?
-            `).bind(
-              expr.text, expr.tags, expr.username, expr.timestamp,
-              expr.expressionId
+          const allStatements: any[] = []
+          
+          for (const expr of chunk) {
+            // Update expression
+            allStatements.push(
+              this.db.prepare(`
+                UPDATE expressions
+                SET text = ?, tags = ?, updated_by = ?, updated_at = ?
+                WHERE id = ?
+              `).bind(
+                expr.text, expr.tags, expr.username, expr.timestamp,
+                expr.expressionId
+              )
             )
-          )
-          await this.db.batch(statements)
+            
+            // Ensure meaning record exists
+            allStatements.push(
+              this.db.prepare(`
+                INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)
+              `).bind(expr.meaningId, expr.username, expr.timestamp)
+            )
+            
+            // Ensure expression_meaning association exists
+            allStatements.push(
+              this.db.prepare(`
+                INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)
+              `).bind(`${expr.expressionId}-${expr.meaningId}`, expr.expressionId, expr.meaningId, expr.timestamp)
+            )
+          }
+          
+          await this.db.batch(allStatements)
         }
 
         // Batch insert collection_items (use INSERT OR IGNORE to handle conflicts)

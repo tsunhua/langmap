@@ -340,7 +340,7 @@ export default {
     }
 
     const insertExpression = (expr) => {
-      const syntax = `{{exp:${expr.id}|mid:${expr.meaning_id || expr.id}|text:${expr.text}|audio:${expr.audio_url || ''}}}`
+      const syntax = `{{exp:${expr.id}|mid:${expr.expr.id}|text:${expr.text}|audio:${expr.audio_url || ''}}}`
       
       const el = contentArea.value
       if (!el) {
@@ -471,8 +471,8 @@ export default {
           const expressions = await getHandbookExpressions(form.target_lang, uncachedIds)
           // Map by meaning_id for easy lookup
           expressions.forEach(expr => {
-            if (expr.meaning_id) {
-              translationCache.value[expr.meaning_id] = expr
+            if (expr.id) {
+              translationCache.value[expr.id] = expr
             }
           })
           // Mark fetched but missing as null

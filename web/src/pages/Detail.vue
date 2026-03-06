@@ -222,7 +222,19 @@
                   <div v-for="member in currentMembers" :key="member.id"
                     class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
                     <div class="flex-1">
-                      <ExpressionCard :item="member" />
+                      <div v-if="member.id === item.id" class="bg-blue-50 rounded-lg border border-blue-200 p-3">
+                        <div class="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="font-semibold text-slate-800">{{ member.text }}</span>
+                        </div>
+                        <div class="mt-1 text-sm text-slate-600">
+                          <span>{{ getLanguageDisplayName(member.language_code) }}</span>
+                          <span v-if="member.region_name" class="ml-2">• {{ member.region_name }}</span>
+                        </div>
+                      </div>
+                      <ExpressionCard v-else :item="member" />
                     </div>
                     <button @click="removeFromGroup(member.id, currentMeaning.id)"
                       class="text-slate-400 hover:text-red-600 transition-colors" :title="$t('remove_from_group')">
@@ -387,8 +399,8 @@
               class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
               @click="associateToSelectedMeaning(meaning.id)">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div>
-                  <h4 class="font-semibold text-slate-800">{{ $t('expression_group', { id: meaning.id }) }}</h4>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-slate-800 truncate">{{ getMeaningDisplayText(meaning) }}</h4>
                   <p class="text-sm text-slate-500 mt-1">{{ $t('created_by') }}: {{ meaning.created_by ||
                     $t('anonymous') }}</p>
                 </div>
@@ -506,7 +518,12 @@ export default {
     const currentMembers = computed(() => {
       const m = currentMeaning.value
       const members = m?.members || []
-      return members
+      if (!item.value) return members
+
+      const currentItem = members.find(m => m.id === item.value.id)
+      const otherMembers = members.filter(m => m.id !== item.value.id)
+
+      return currentItem ? [currentItem, ...otherMembers] : otherMembers
     })
 
     // Set active tab and reset expansion
@@ -588,14 +605,14 @@ export default {
           for (const meaning of meaningsData) {
             try {
               const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
-              if (membersRes.ok) {
-                const members = await membersRes.json()
-                loadedMeanings.push({
-                  id: meaning.id,
-                  created_by: meaning.created_by,
-                  created_at: meaning.created_at,
-                  members: members.filter(m => m.id !== item.value.id)
-                })
+                if (membersRes.ok) {
+                  const members = await membersRes.json()
+                  loadedMeanings.push({
+                    id: meaning.id,
+                    created_by: meaning.created_by,
+                    created_at: meaning.created_at,
+                    members: members
+                  })
               }
             } catch (e) {
               console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
@@ -824,7 +841,27 @@ export default {
         if (!res.ok) throw new Error('Failed to fetch expression')
 
         const exprData = await res.json()
-        expressionMeanings.value = exprData.meanings || []
+        const meaningsData = exprData.meanings || []
+
+        // Fetch members for each meaning
+        const loadedMeanings = []
+        for (const meaning of meaningsData) {
+          try {
+            const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
+            if (membersRes.ok) {
+              const members = await membersRes.json()
+              loadedMeanings.push({
+                id: meaning.id,
+                created_by: meaning.created_by,
+                created_at: meaning.created_at,
+                members: members
+              })
+            }
+          } catch (e) {
+            console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
+          }
+        }
+        expressionMeanings.value = loadedMeanings
       } catch (e) {
         console.error('Error fetching expression meanings:', e)
         expressionMeanings.value = []
@@ -1347,7 +1384,6 @@ export default {
       setActiveTab,
       currentMeaning,
       currentMembers,
-      getMeaningDisplayText,
       // Create expression modal
       showCreateExpressionModal,
       currentMeaningIdForAssociation,

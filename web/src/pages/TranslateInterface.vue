@@ -430,7 +430,6 @@ export default {
               merged[index] = {
                 ...merged[index],
                 text: dbItem.text,
-                meaning_id: dbItem.meaning_id || dbItem.id,
                 fromLocal: false // 标记为数据库数据
               }
             }
@@ -452,19 +451,18 @@ export default {
       referenceTranslations.value.forEach(item => {
         if (item.key) {
           // Priority to existing key (from local JSON)
-          refMap[item.key] = { 
-            text: item.text, 
-            key: item.key, 
-            id: item.id || item.key, 
-            meaningId: item.meaning_id || null, 
-            fromLocal: item.fromLocal 
+          refMap[item.key] = {
+            text: item.text,
+            key: item.key,
+            id: item.id || item.key,
+            fromLocal: item.fromLocal
           }
         } else if (item.fromLocal) {
           // Local data fallback (should be covered by item.key above)
           refMap[item.key] = { text: item.text, key: item.key, id: item.key, fromLocal: true }
         } else {
           // Database data without matching local key
-          const mid = item.meaning_id || item.id
+          const id = item.id
 
           let tags = item.tags
           if (typeof tags === 'string') {
@@ -477,22 +475,20 @@ export default {
           // Handle tags
           if (tags && tags.length > 0) {
             tags.forEach(tag => {
-              // Only process tags starting with 'langmap.'
-              if (tag.startsWith('langmap.')) {
-                const cleanKey = tag.substring(8)
-                refMap[cleanKey] = { text: item.text, key: cleanKey, id: item.id, meaningId: mid, fromLocal: false }
+              if (!refMap[tag]) {
+                refMap[tag] = { text: tag, key: tag, id: tag, fromLocal: false }
               }
-            })
-          } else {
-            // No valid langmap tags, skip or use fallback if strict mode is off
-            // For now, we only want to show langmap keys
-            // const fallbackKey = `(no key) ${item.text}`
-            // refMap[fallbackKey] = { text: item.text, key: fallbackKey, id: item.id, meaningId: mid, fromLocal: false }
+            });
+          }
+
+          // Map by expression ID
+          if (!refMap[id]) {
+            refMap[id] = { text: item.text, key: id, id: id, fromLocal: false }
           }
         }
       })
 
-      // 创建目标语言的映射 (按 key 和 meaning_id)
+      // 创建目标语言的映射 (按 key 和 id)
       targetTranslations.value.forEach(item => {
         let tags = item.tags
         if (typeof tags === 'string') {
@@ -504,13 +500,14 @@ export default {
         // 处理所有标签，而不仅仅是第一个
         if (tags && tags.length > 0) {
           tags.forEach(tag => {
-            targetMap[tag] = { text: item.text, meaningId: item.meaning_id }
+            targetMap[tag] = { text: item.text }
           })
         }
 
-        // 同时按 meaning_id 存储，以便匹配
-        if (item.meaning_id) {
-          targetMap[`mid:${item.meaning_id}`] = { text: item.text, meaningId: item.meaning_id }
+        // Map by expression ID
+        const id = item.id
+        if (id) {
+          targetMap[id] = { text: item.text }
         }
       })
 
@@ -518,11 +515,10 @@ export default {
       const merged = []
       for (const key in refMap) {
         const refItem = refMap[key]
-        const targetItem = targetMap[key] || targetMap[`mid:${refItem.meaningId}`]
+        const targetItem = targetMap[key] || targetMap[refItem.id]
 
         merged.push({
           id: refItem.id,
-          meaning_id: refItem.meaningId || null, // 本地数据为 null
           key: refItem.key,
           referenceText: refItem.text,
           targetText: targetItem?.text || '',
@@ -576,9 +572,10 @@ export default {
     
     // 标记为已修改
     const markAsModified = (item) => {
-      // 对于本地数据，使用 key 作为唯一标识
+      // 使用 id 或 key 作为唯一标识
+      const identifier = item.fromLocal ? item.key : item.id
       const index = modifiedItems.value.findIndex(i =>
-        i.fromLocal ? i.key === item.key : i.meaning_id === item.meaning_id
+        i.fromLocal ? i.key === item.key : i.id === item.id
       )
 
       // 如果值发生了变化
@@ -600,11 +597,10 @@ export default {
       if (modifiedItems.value.length === 0) return
 
       try {
-        // 后端会自动处理没有 meaning_id 的情况
+        // 保存翻译，不再使用 meaning_id
         const translationsToSave = modifiedItems.value.map(item => ({
           key: `langmap.${item.key}`, // Add prefix when saving
           text: item.targetText,
-          meaning_id: item.meaning_id,
           referenceText: item.fromLocal ? item.referenceText : undefined
         }))
 
