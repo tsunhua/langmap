@@ -9,12 +9,16 @@
       class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden"
       :class="{ 'translate-x-0': mobileMenuOpen, '-translate-x-full': !mobileMenuOpen }">
       <div class="flex items-center justify-between p-4 border-b">
-        <router-link to="/" class="no-underline" @click="mobileMenuOpen = false">
+        <div @click="mobileMenuOpen = false" class="cursor-pointer">
           <h1
             class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
             LangMap
+            <span
+              class="ml-1 inline-flex items-center px-1 py-0.5 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800">
+              β
+            </span>
           </h1>
-        </router-link>
+        </div>
         <button @click="mobileMenuOpen = false" class="p-2 rounded-md text-slate-600 hover:text-slate-900">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -132,10 +136,10 @@
 
      <header class="py-4 px-4 sm:px-6 lg:px-8">
        <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <div class="flex items-center gap-6">
+         <div class="flex items-center gap-6">
           <!-- Mobile menu button -->
           <button v-if="isMobile" @click="mobileMenuOpen = true"
-            class="p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden">
+            class="-ml-1 p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -144,11 +148,11 @@
 
           <router-link to="/" class="no-underline">
             <h1
-              class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
+              class="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-poppins">
               LangMap
               <span
-                class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                Beta
+                class="ml-1 items-center px-0.5 py-0.5 sm:px-1 sm:py-1 rounded-md text-[8px] sm:text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span class="inline-block sm:hidden">β</span><span class="hidden sm:inline">Beta</span>
               </span>
             </h1>
           </router-link>
@@ -253,15 +257,15 @@
           <!-- Language selector dropdown -->
           <div class="relative ml-6" ref="langDropdown">
             <button @click="toggleLangDropdown"
-              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
+              class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-3 lg:px-2 py-1 rounded-md hover:bg-slate-100 text-sm lg:text-base"
               aria-haspopup="true" :aria-expanded="langDropdownOpen">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 lg:h-5 lg:w-5 mr-1 lg:mr-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
               </svg>
-              <span class="mr-1">{{ currentLanguageName }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span class="mr-1 lg:mr-1">{{ currentLanguageName }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 lg:h-4 lg:w-4 ml-1 lg:ml-1 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   :d="langDropdownOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'" />
               </svg>
@@ -271,7 +275,7 @@
               class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
               role="menu">
               <button v-for="(lang, code) in availableLanguages" :key="code" @click="switchLanguage(code)"
-                class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                class="block w-full text-left px-4 py-2 text-sm lg:text-sm text-slate-700 hover:bg-slate-100"
                 :class="{ 'bg-blue-50 text-blue-600': code === currentLanguage }" role="menuitem">
                 {{ lang }}
                 <span v-if="code === currentLanguage" class="float-right">
@@ -306,7 +310,7 @@
     <AddLanguageModal :visible="showAddLanguageModal" :adding-language="addingLanguage"
       @close="showAddLanguageModal = false" @add-language="handleAddLanguage" />
 
-    <main class="py-6 flex-1">
+    <main class="py-2 sm:py-6 flex-1">
       <router-view />
     </main>
     <footer class="py-6 border-t border-slate-200 text-center text-slate-500 text-sm mt-auto">

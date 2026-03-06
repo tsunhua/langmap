@@ -148,6 +148,7 @@ export abstract class AbstractDatabaseService {
 
   // Meaning operations
   abstract getMeaningsByExpressionId(expressionId: number): Promise<Meaning[]>
+  abstract getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>>
   abstract addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void>
   abstract removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean>
 

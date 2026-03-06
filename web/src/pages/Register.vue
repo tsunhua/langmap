@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen flex items-top justify-center bg-slate-50 py-6 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex items-top justify-center bg-slate-50 py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <h2 class="mt-3 text-center text-3xl font-extrabold text-slate-900">
+        <h2 class="mt-1 sm:mt-3 text-center text-3xl font-extrabold text-slate-900">
           {{ $t('new_account') }}
         </h2>
         <p class="mt-2 text-center text-sm text-slate-600">

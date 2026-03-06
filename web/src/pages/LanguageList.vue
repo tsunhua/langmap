@@ -1,29 +1,16 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ $t('languages_title') }}</h1>
 
     <!-- Search box -->
     <div class="mb-6">
       <div class="relative">
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="$t('search_languages_placeholder')"
-          class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 absolute left-3 top-3.5 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
+        <input v-model="searchQuery" type="text" :placeholder="$t('search_languages_placeholder')"
+          class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-3.5 text-gray-400" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
     </div>
@@ -38,12 +25,8 @@
     </div>
 
     <div v-else class="space-y-2">
-      <router-link
-        v-for="lang in filteredLanguages"
-        :key="lang.code"
-        :to="`/languages/${lang.code}`"
-        class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
-      >
+      <router-link v-for="lang in filteredLanguages" :key="lang.code" :to="`/languages/${lang.code}`"
+        class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
         <div class="flex items-center gap-3">
           <span class="text-lg font-medium text-gray-900 group-hover:text-blue-600">
             {{ lang.native_name || lang.name }}
@@ -52,19 +35,9 @@
             {{ lang.code }}
           </span>
         </div>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 text-gray-400 group-hover:text-blue-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 5l7 7-7 7"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-600" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </router-link>
     </div>
