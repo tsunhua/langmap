@@ -248,8 +248,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
-import MarkdownIt from 'markdown-it'
-import { getHandbookById, createHandbook, updateHandbook, getHandbookExpressions, stableExpressionId, getExpressionById } from '../services/handbookService'
+import { getHandbookById, createHandbook, updateHandbook, stableExpressionId } from '../services/handbookService'
 
 export default {
   name: 'HandbookEdit',
