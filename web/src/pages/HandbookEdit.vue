@@ -192,8 +192,8 @@
             </div>
 
             <!-- Right Column: Preview -->
-            <div v-if="showPreview" class="bg-gray-50 rounded-xl p-6 border border-gray-100">
-              <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+            <div v-if="showPreview" class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -215,12 +215,14 @@
               </div>
               <div v-else>
                 <!-- Rendered Header in Preview -->
-                <div class="mb-6 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-                  <h1 class="text-xl font-bold text-gray-900 mb-2" v-html="renderedTitle"></h1>
-                  <p v-if="renderedDescription" class="text-xs text-gray-500 leading-relaxed" v-html="renderedDescription"></p>
+                <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
+                  <div class="space-y-1.5 flex-1">
+                    <h1 class="text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
+                    <p v-if="renderedDescription" class="text-sm text-gray-500 max-w-2xl leading-relaxed" v-html="renderedDescription"></p>
+                  </div>
                 </div>
 
-                <div class="prose prose-blue max-w-none leading-loose markdown-body"
+                <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body"
                   v-html="renderedContent"></div>
               </div>
             </div>
@@ -248,7 +250,8 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
-import { getHandbookById, createHandbook, updateHandbook, stableExpressionId } from '../services/handbookService'
+import MarkdownIt from 'markdown-it'
+import { getHandbookById, createHandbook, updateHandbook, stableExpressionId, getExpressionsByIds, getHandbookExpressions } from '../services/handbookService'
 
 export default {
   name: 'HandbookEdit',
@@ -476,14 +479,16 @@ export default {
       return { expressionsToFetch }
     }
     // Render helpers for preview
-    const renderItem = (id, text, meanings, audioUrl) => {
+    const renderItem = (id, text, meanings, audioUrl, isTitle = false) => {
       const meaningsText = meanings && meanings.length > 0
-        ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
+        ? (isTitle
+          ? `<div class="handbook-meaning-title">[${meanings.map(m => m.text).join('] [')}]</div>`
+          : ` <span class="handbook-meaning-content">[${meanings.map(m => m.text).join(', ')}]</span>`)
         : ''
-      const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+      const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
       return `
-        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+        <span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}"
               onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
           ${text}${meaningsText}${audioIcon}
         </span>
@@ -518,16 +523,17 @@ export default {
             }
           })
 
+          console.log(`Rendering expression ${id}:`, { text, meanings: expr.meanings, translations })
           const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
           return renderItem(id, text, translations, audioUrl)
         }
-        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${text}</span>`
+        return `<span class="handbook-item-undefined">${text}</span>`
       })
 
       return html
     }
 
-    const renderPlainTextTags = (text, expressionMap) => {
+    const renderPlainTextTags = (text, expressionMap, isTitle = false) => {
       if (!text) return ''
       return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
         const id = stableExpressionId(term, lang)
@@ -540,9 +546,9 @@ export default {
             }
           })
           const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
-          return renderItem(id, term, translations, audioUrl)
+          return renderItem(id, term, translations, audioUrl, isTitle)
         }
-        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+        return `<span class="handbook-item-undefined">${term}</span>`
       })
     }
 
@@ -554,24 +560,28 @@ export default {
 
       if (expressionsToFetch.length === 0) {
         renderedContent.value = buildRenderedContent(form.content, {})
-        renderedTitle.value = renderPlainTextTags(form.title || '', {})
+        renderedTitle.value = renderPlainTextTags(form.title || '', {}, true)
         renderedDescription.value = renderPlainTextTags(form.description || '', {})
         return
       }
 
       const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
-      
+
       if (uncachedExprs.length > 0) {
         previewLoading.value = true
         try {
-          // Phase 1: Fetch all source expressions to get their meanings
-          await Promise.all(uncachedExprs.map(e => 
-            getExpressionById(e.id).then(expr => {
-              translationCache.value[e.id] = expr
-            }).catch(() => {
+          // Phase 1: Batch fetch all source expressions to get their meanings
+          const expressions = await getExpressionsByIds(uncachedExprs.map(e => e.id))
+          expressions.forEach(expr => {
+            translationCache.value[expr.id] = expr
+          })
+
+          // Mark expressions that weren't found
+          uncachedExprs.forEach(e => {
+            if (!(e.id in translationCache.value)) {
               translationCache.value[e.id] = null
-            })
-          ))
+            }
+          })
         } catch (error) {
           console.error('Failed to fetch expressions:', error)
         } finally {
@@ -594,6 +604,7 @@ export default {
         previewLoading.value = true
         try {
           const translations = await getHandbookExpressions(form.target_lang, uncachedMids)
+          console.log('Fetched translations:', { targetLang: form.target_lang, uncachedMids, translations })
           // Map mid to the translated expression
           translations.forEach(trans => {
             // Check if this translation belongs to one of our target meanings
@@ -609,7 +620,7 @@ export default {
               })
             }
           })
-          
+
           // Mark tried but not found
           uncachedMids.forEach(mid => {
             if (!(`trans_${mid}` in translationCache.value)) {
@@ -624,8 +635,14 @@ export default {
       }
 
       renderedContent.value = buildRenderedContent(form.content, translationCache.value)
-      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value)
+      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true)
       renderedDescription.value = renderPlainTextTags(form.description, translationCache.value)
+
+      console.log('Preview update:', {
+        targetLang: form.target_lang,
+        translationCacheKeys: Object.keys(translationCache.value),
+        expressionsToFetchCount: expressionsToFetch.length
+      })
     }
 
     let previewTimeout = null

@@ -507,21 +507,50 @@ api.post('/expressions/associate', requireAuth, async (c) => {
   }
 })
 
-// GET /api/v1/expressions/:expr_id
+// GET /api/v1/expressions/:expr_id (support comma-separated ids for batch fetch)
 api.get('/expressions/:expr_id', cacheMiddleware(300), async (c) => {
   try {
     console.log('GET /api/v1/expressions/:expr_id');
     const db = getDB(c)
-    const exprId = parseInt(c.req.param('expr_id'))
+    const exprIdParam = c.req.param('expr_id')
 
+    // Check if it's a comma-separated list of IDs
+    if (exprIdParam.includes(',')) {
+      const ids = exprIdParam.split(',')
+        .map(id => parseInt(id.trim(), 10))
+        .filter(id => !isNaN(id))
+
+      if (ids.length === 0) {
+        return c.json({ error: 'Invalid expression IDs' }, 400)
+      }
+
+      if (ids.length > 100) {
+        return c.json({ error: 'Maximum 100 ids allowed per request' }, 400)
+      }
+
+      const expressions = await db.getExpressionsByIds(ids)
+
+      // Fetch meaning IDs for these expressions
+      const meaningIdsMap = await db.getExpressionMeaningIds(ids)
+
+      // Attach meanings to each expression
+      expressions.forEach(expr => {
+        const mids = meaningIdsMap.get(expr.id) || []
+        expr.meanings = mids.map(mid => ({ id: mid })) as any
+      })
+
+      return c.json(expressions)
+    }
+
+    // Single expression fetch
+    const exprId = parseInt(exprIdParam)
     if (isNaN(exprId)) {
-      console.warn('Invalid expression ID:', c.req.param('expr_id'));
+      console.warn('Invalid expression ID:', exprIdParam);
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
 
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
-      console.warn('Expression not found:', exprId);
       return c.json({ error: 'Expression not found' }, 404)
     }
 

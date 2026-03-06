@@ -163,7 +163,7 @@ export default {
     }
 
     const goToEdit = (id) => {
-      router.push(`/handbooks/edit/${id}`)
+      router.push(`/handbooks/${id}/edit`)
     }
 
     const goToView = (id) => {
