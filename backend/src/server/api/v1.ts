@@ -507,21 +507,50 @@ api.post('/expressions/associate', requireAuth, async (c) => {
   }
 })
 
-// GET /api/v1/expressions/:expr_id
+// GET /api/v1/expressions/:expr_id (support comma-separated ids for batch fetch)
 api.get('/expressions/:expr_id', cacheMiddleware(300), async (c) => {
   try {
     console.log('GET /api/v1/expressions/:expr_id');
     const db = getDB(c)
-    const exprId = parseInt(c.req.param('expr_id'))
+    const exprIdParam = c.req.param('expr_id')
 
+    // Check if it's a comma-separated list of IDs
+    if (exprIdParam.includes(',')) {
+      const ids = exprIdParam.split(',')
+        .map(id => parseInt(id.trim(), 10))
+        .filter(id => !isNaN(id))
+
+      if (ids.length === 0) {
+        return c.json({ error: 'Invalid expression IDs' }, 400)
+      }
+
+      if (ids.length > 100) {
+        return c.json({ error: 'Maximum 100 ids allowed per request' }, 400)
+      }
+
+      const expressions = await db.getExpressionsByIds(ids)
+
+      // Fetch meaning IDs for these expressions
+      const meaningIdsMap = await db.getExpressionMeaningIds(ids)
+
+      // Attach meanings to each expression
+      expressions.forEach(expr => {
+        const mids = meaningIdsMap.get(expr.id) || []
+        expr.meanings = mids.map(mid => ({ id: mid })) as any
+      })
+
+      return c.json(expressions)
+    }
+
+    // Single expression fetch
+    const exprId = parseInt(exprIdParam)
     if (isNaN(exprId)) {
-      console.warn('Invalid expression ID:', c.req.param('expr_id'));
+      console.warn('Invalid expression ID:', exprIdParam);
       return c.json({ error: 'Invalid expression ID' }, 400)
     }
 
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
-      console.warn('Expression not found:', exprId);
       return c.json({ error: 'Expression not found' }, 404)
     }
 
@@ -1790,24 +1819,34 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const renderItem = (id: number, text: string, transList: any[], audioUrl: string, isTitle: boolean) => {
     const meaningsText = transList.length > 0
       ? (isTitle
-        ? `<div class="text-gray-400 font-normal text-xs mt-1">[${transList.map(m => m.text).join('] [')}]</div>`
-        : ` <span class="text-gray-400 font-normal text-xs">[${transList.map(m => m.text).join(', ')}]</span>`)
+        ? `<div class="handbook-meaning-title">[${transList.map(m => m.text).join('] [')}]</div>`
+        : ` <span class="handbook-meaning-content">[${transList.map(m => m.text).join(', ')}]</span>`)
       : ''
-    const audioIcon = audioUrl ? ` <span class="text-[10px]">🔊</span>` : ''
+    const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
     // For title, use flex column to allow meanings to wrap to new line
     // For others, keep inline
     if (isTitle) {
-      return `<span class="handbook-item inline-flex flex-col items-start gap-0 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded font-bold cursor-pointer hover:bg-blue-100" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="title" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
     } else {
-      return `<span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded font-bold cursor-pointer hover:bg-blue-100" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="content" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
     }
   }
 
   const renderTextWithTags = (text: string, isTitle: boolean) => {
     if (!text) return ''
+
+    // For title, auto-wrap the entire text with source_lang if it doesn't already contain tags
+    let textToRender = text
+    if (isTitle) {
+      const hasTags = TEXT_LANG_REGEX.test(text)
+      if (!hasTags && handbook.source_lang) {
+        textToRender = `{{text:${text.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${handbook.source_lang}}}`
+      }
+    }
+
     TEXT_LANG_REGEX.lastIndex = 0
-    return text.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
+    return textToRender.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
       const lang = langMatch || handbook.source_lang || 'en'
       const id = db.stableExpressionId(term, lang)
       const expr = expressionMap[id]
@@ -1827,7 +1866,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
         }
         return renderItem(id, term, translations, audioUrl, isTitle)
       }
-      return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
+      return `<span class="handbook-item-undefined">${term}</span>`
     })
   }
 

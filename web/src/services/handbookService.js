@@ -175,3 +175,31 @@ export async function getExpressionById(id) {
         throw error
     }
 }
+
+/**
+ * Get multiple expressions by IDs (batch fetch)
+ * @param {number[]} ids - Array of expression IDs
+ * @returns {Promise<Array>} Array of expressions
+ */
+export async function getExpressionsByIds(ids) {
+    if (!ids || ids.length === 0) return []
+
+    try {
+        const CHUNK_SIZE = 50 // Limit IDs per request
+        const allResults = []
+
+        for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+            const chunk = ids.slice(i, i + CHUNK_SIZE)
+            const response = await api.get(`/expressions/${chunk.join(',')}`)
+            if (response.data) {
+                allResults.push(...response.data)
+            }
+        }
+
+        return allResults
+    } catch (error) {
+        console.error('Error fetching expressions by IDs:', error)
+        throw error
+    }
+}
+
