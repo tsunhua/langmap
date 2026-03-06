@@ -131,7 +131,7 @@ export default {
         const results = await getHandbookExpressions(instructionLanguage.value, mids)
         const map = {}
         results.forEach(ex => {
-          map[ex.meaning_id] = ex
+          map[ex.id] = ex
         })
         expressionsMap.value = map
       } catch (error) {

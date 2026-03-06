@@ -425,11 +425,14 @@ api.post('/expressions/batch', requireAuth, async (c) => {
     // 4. Smart Anchor Selection
     let finalMeaningId: number | undefined;
 
-    // First pass: try to find an existing meaning_id association in sorted order
+    // Get existing meaning associations
+    const existingMeaningIds = await db.getExpressionMeaningIds(exprsWithIds.map(e => e.id!))
+
+    // First pass: try to find an existing meaning association in sorted order
     for (const expr of sortedExprs) {
-      const existing = existingMap.get(expr.id);
-      if (existing && existing.meaning_id) {
-        finalMeaningId = existing.meaning_id;
+      const existingMeanings = existingMeaningIds.get(expr.id!)
+      if (existingMeanings && existingMeanings.length > 0) {
+        finalMeaningId = existingMeanings[0];
         break;
       }
     }
@@ -441,14 +444,8 @@ api.post('/expressions/batch', requireAuth, async (c) => {
       finalMeaningId = sortedExprs[0].id;
     }
 
-    // 5. Apply the determined meaning_id to all expressions
-    const finalExprs = exprsWithIds.map(expr => ({
-      ...expr,
-      meaning_id: finalMeaningId
-    }));
-
-    // 6. Batch UPSERT
-    const results = await db.upsertExpressions(finalExprs);
+    // 5. Batch UPSERT (without meaning_id field)
+    const results = await db.upsertExpressions(exprsWithIds);
 
     return c.json({
       success: true,
@@ -484,16 +481,17 @@ api.post('/expressions/associate', requireAuth, async (c) => {
       return c.json({ error: 'Failed to select semantic anchor' }, 500)
     }
 
-    // 批量更新所有表达式的 meaning_id
+    // Create expression_meaning associations
+    const now = new Date().toISOString()
     const statements = expression_ids.map(id =>
       (db as any).db.prepare(
-        'UPDATE expressions SET meaning_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-      ).bind(meaningId, username, id)
+        'INSERT OR REPLACE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+      ).bind(`${id}-${meaningId}`, id, meaningId, now)
     );
 
     await (db as any).db.batch(statements);
 
-    // 清除缓存
+    // Clear cache
     db.clearStatisticsCache();
     db.clearHeatmapCache();
 

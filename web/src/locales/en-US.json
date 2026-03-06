@@ -89,6 +89,8 @@
   "expressions": "expressions",
   "remove_from_group": "Remove from group",
   "confirm_remove_from_group": "Are you sure you want to remove this expression from the group?",
+  "leave_this_group": "Leave group",
+  "remove_from_current_group": "Remove this expression from current group",
   "no_other_expressions_in_group": "No other expressions in this group",
   "expressions_processed": "Successfully processed {count} expressions. Meaning ID: {meaningId}",
   "failed_to_remove_from_group": "Failed to remove from group",
