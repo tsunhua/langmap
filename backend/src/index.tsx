@@ -26,7 +26,27 @@ app.get('*', async (c) => {
         );
         // 如果找到了静态资源（状态码不是404），则返回该资源
         if (assetResponse && assetResponse.status !== 404) {
-          return assetResponse;
+          const url = new URL(c.req.url);
+          const path = url.pathname;
+
+          // 创建一个带有新Headers的Response
+          const newResponse = new Response(assetResponse.body, assetResponse);
+
+          if (path.startsWith('/assets/')) {
+            //assets下的资源通常带有哈希值，可以长期缓存
+            newResponse.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+          } else if (path.startsWith('/icons/')) {
+            //图标资源缓存1天
+            newResponse.headers.set('Cache-Control', 'public, max-age=86400');
+          } else if (path === '/' || path.endsWith('/index.html') || path === '/manifest.json') {
+            //入口文件不缓存，确保应用更新
+            newResponse.headers.set('Cache-Control', 'no-cache');
+          } else {
+            //其他静态资源缓存1小时
+            newResponse.headers.set('Cache-Control', 'public, max-age=3600');
+          }
+
+          return newResponse;
         }
       } catch (error) {
         console.log('Asset not found in ASSETS, falling back to index.html');
@@ -38,7 +58,13 @@ app.get('*', async (c) => {
     if (c.env?.ASSETS) {
       const indexPath = new URL('/index.html', c.req.url).href;
       // @ts-ignore - ASSETS is a Cloudflare global binding
-      return await c.env.ASSETS.fetch(new Request(indexPath));
+      const indexResponse = await c.env.ASSETS.fetch(new Request(indexPath));
+      if (indexResponse) {
+        const res = new Response(indexResponse.body, indexResponse);
+        res.headers.set('Cache-Control', 'no-cache');
+        return res;
+      }
+      return indexResponse;
     }
 
     // 开发环境后备方案

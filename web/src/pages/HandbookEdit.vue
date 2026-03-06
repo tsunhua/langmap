@@ -18,6 +18,24 @@
       </div>
     </div>
 
+    <div v-if="hasDraft" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">📝</span>
+        <div>
+          <p class="text-sm font-medium text-yellow-800">{{ $t('draft_found') }}</p>
+          <p class="text-xs text-yellow-600">{{ $t('draft_found_hint') }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button @click="clearDraft" class="px-3 py-1.5 text-xs text-yellow-700 hover:text-yellow-800 font-medium">
+          {{ $t('discard_draft') }}
+        </button>
+        <button @click="restoreDraft" class="px-4 py-1.5 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors">
+          {{ $t('restore_draft') }}
+        </button>
+      </div>
+    </div>
+
     <div class="max-w-7xl mx-auto space-y-5">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <!-- Title, Description & Language Settings -->
@@ -195,7 +213,16 @@
                   <p class="text-xs">{{ $t('loading_preview') }}</p>
                 </div>
               </div>
-              <div v-else class="prose prose-blue prose-sm max-w-none markdown-body" v-html="renderedContent"></div>
+              <div v-else>
+                <!-- Rendered Header in Preview -->
+                <div class="mb-6 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <h1 class="text-xl font-bold text-gray-900 mb-2" v-html="renderedTitle"></h1>
+                  <p v-if="renderedDescription" class="text-xs text-gray-500 leading-relaxed" v-html="renderedDescription"></p>
+                </div>
+
+                <div class="prose prose-blue prose-sm max-w-none leading-loose markdown-body"
+                  v-html="renderedContent"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -222,7 +249,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
-import { getHandbookById, createHandbook, updateHandbook, getHandbookExpressions } from '../services/handbookService'
+import { getHandbookById, createHandbook, updateHandbook, getHandbookExpressions, stableExpressionId, getExpressionById } from '../services/handbookService'
 
 export default {
   name: 'HandbookEdit',
@@ -250,11 +277,15 @@ export default {
       is_public: false
     })
 
-    // Translated expressions cache for preview { mid: Expression }
-    const translationCache = ref({})
+    const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
+    const hasDraft = ref(false)
     // Rendered HTML after fetching translations
     const renderedContent = ref('')
+    const renderedTitle = ref('')
+    const renderedDescription = ref('')
 
+    // Translated expressions cache for preview { mid: Expression }
+    const translationCache = ref({})
     // History for Undo/Redo
     const history = ref([])
     const historyIndex = ref(-1)
@@ -294,7 +325,7 @@ export default {
     let searchTimeout = null
 
     // Expression Tag Regex
-    const TAG_REGEX = /\{\{exp:(\d+)\|mid:(\d+)\|text:([^|]+)\|audio:([^}]*)\}\}/g
+    const TEXT_LANG_REGEX = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
 
     const fetchLanguages = async () => {
       try {
@@ -324,6 +355,36 @@ export default {
       }
     }
 
+    const checkDraft = () => {
+      const draft = localStorage.getItem(storageKey.value)
+      if (draft) {
+        hasDraft.value = true
+        // For new handbooks, restore automatically
+        if (!props.id) {
+          restoreDraft()
+        }
+      }
+    }
+
+    const restoreDraft = () => {
+      const draft = localStorage.getItem(storageKey.value)
+      if (draft) {
+        try {
+          const draftData = JSON.parse(draft)
+          Object.assign(form, draftData)
+          hasDraft.value = false
+          saveToHistory()
+        } catch (e) {
+          console.error('Failed to parse draft:', e)
+        }
+      }
+    }
+
+    const clearDraft = () => {
+      localStorage.removeItem(storageKey.value)
+      hasDraft.value = false
+    }
+
     const search = () => {
       if (searchTimeout) clearTimeout(searchTimeout)
       if (!searchQuery.value.trim()) {
@@ -350,7 +411,7 @@ export default {
     }
 
     const insertExpression = (expr) => {
-      const syntax = `{{exp:${expr.id}|mid:${expr.expr.id}|text:${expr.text}|audio:${expr.audio_url || ''}}}`
+      const syntax = `{{text:${expr.text}|lang:${expr.language_code}}}`
 
       const el = contentArea.value
       if (!el) {
@@ -397,62 +458,92 @@ export default {
       searchResults.value = []
     }
 
-    // Parse all mid values from content
-    const extractMeaningIds = (content) => {
-      const ids = []
-      const regex = /\{\{exp:\d+\|mid:(\d+)\|/g
-      let match
-      while ((match = regex.exec(content)) !== null) {
-        const mid = parseInt(match[1])
-        if (!ids.includes(mid)) ids.push(mid)
+    // Parse all metadata required for preview from content
+    const extractRequiredMetadata = async (content, title = '', description = '') => {
+      const expressionsToFetch = [] // { id, text, lang }
+      const fullText = `${title}\n${description}\n${content}`
+
+      const tlRegex = /\{\{text:([^|]+)\|lang:([^}]+)\}\}/g
+      let tlMatch
+      while ((tlMatch = tlRegex.exec(fullText)) !== null) {
+        const text = tlMatch[1]
+        const lang = tlMatch[2]
+        const id = stableExpressionId(text, lang)
+        if (!expressionsToFetch.some(e => e.id === id)) {
+          expressionsToFetch.push({ id, text, lang })
+        }
       }
-      return ids
+
+      return { expressionsToFetch }
+    }
+    // Render helpers for preview
+    const renderItem = (id, text, meanings, audioUrl) => {
+      const meaningsText = meanings && meanings.length > 0
+        ? ` <span class="text-gray-400 font-normal text-xs">[${meanings.map(m => m.text).join(', ')}]</span>`
+        : ''
+      const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
+
+      return `
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
+              onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
+          ${text}${meaningsText}${audioIcon}
+        </span>
+      `
+    }
+
+    window.playHandbookAudio = (url) => {
+      if (!url) return
+      const audio = new Audio(url)
+      audio.play()
+    }
+
+    window.navigateToExpression = (id) => {
+      router.push(`/detail/${id}`)
     }
 
     // Build preview HTML using cached translations
-    const buildRenderedContent = (expressionMap) => {
-      let html = md.render(form.content)
+    const buildRenderedContent = (content, expressionMap) => {
+      if (!content) return ''
+      let html = md.render(content)
 
-      window.playHandbookAudio = (url) => {
-        if (!url) return
-        const audio = new Audio(url)
-        audio.play()
-      }
+      // Replace tags with rendered items
+      html = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
+        const id = stableExpressionId(text, lang)
+        const expr = expressionMap[id]
+        if (expr) {
+          // Collect all translations for these meanings in the target language
+          const translations = []
+          expr.meanings?.forEach(m => {
+            if (expressionMap[`trans_${m.id}`]) {
+              translations.push(expressionMap[`trans_${m.id}`])
+            }
+          })
 
-      window.navigateToExpression = (id) => {
-        router.push(`/detail/${id}`)
-      }
-
-      return html.replace(TAG_REGEX, (match, exp, mid, originalText, originalAudio) => {
-        const translated = expressionMap[parseInt(mid)]
-
-        if (translated) {
-          // Show original text with a bracketed translation annotation
-          const audioUrl = translated.audio_url
-            ? (JSON.parse(translated.audio_url)?.[0]?.url || '')
-            : (originalAudio || '')
-          const translatedText = translated.text
-          const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
-
-          return `
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-              ${originalText}
-              <span class="text-gray-400 font-normal text-xs">[${translatedText}]</span>
-              ${audioIcon}
-            </span>
-          `
-        } else {
-          // Fallback: show original text without translation
-          const audioIcon = originalAudio ? `<span class="text-[10px]">🔊</span>` : ''
-          return `
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${originalAudio ? `window.playHandbookAudio('${originalAudio}')` : ''}">
-              ${originalText}
-              ${audioIcon}
-            </span>
-          `
+          const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
+          return renderItem(id, text, translations, audioUrl)
         }
+        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${text}</span>`
+      })
+
+      return html
+    }
+
+    const renderPlainTextTags = (text, expressionMap) => {
+      if (!text) return ''
+      return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
+        const id = stableExpressionId(term, lang)
+        const expr = expressionMap[id]
+        if (expr) {
+          const translations = []
+          expr.meanings?.forEach(m => {
+            if (expressionMap[`trans_${m.id}`]) {
+              translations.push(expressionMap[`trans_${m.id}`])
+            }
+          })
+          const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
+          return renderItem(id, term, translations, audioUrl)
+        }
+        return `<span class="text-gray-400 border-b border-dotted border-gray-300">${term}</span>`
       })
     }
 
@@ -460,45 +551,82 @@ export default {
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      if (!form.target_lang) {
-        // No target lang, just render without translations
-        renderedContent.value = buildRenderedContent({})
+      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description)
+
+      if (expressionsToFetch.length === 0) {
+        renderedContent.value = buildRenderedContent(form.content, {})
+        renderedTitle.value = renderPlainTextTags(form.title || '', {})
+        renderedDescription.value = renderPlainTextTags(form.description || '', {})
         return
       }
 
-      const meaningIds = extractMeaningIds(form.content)
-      if (meaningIds.length === 0) {
-        renderedContent.value = buildRenderedContent({})
-        return
-      }
-
-      // Find which IDs we haven't cached yet
-      const uncachedIds = meaningIds.filter(id => !(id in translationCache.value))
-
-      if (uncachedIds.length > 0) {
+      const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
+      
+      if (uncachedExprs.length > 0) {
         previewLoading.value = true
         try {
-          const expressions = await getHandbookExpressions(form.target_lang, uncachedIds)
-          // Map by meaning_id for easy lookup
-          expressions.forEach(expr => {
-            if (expr.id) {
-              translationCache.value[expr.id] = expr
-            }
-          })
-          // Mark fetched but missing as null
-          uncachedIds.forEach(id => {
-            if (!(id in translationCache.value)) {
-              translationCache.value[id] = null
-            }
-          })
+          // Phase 1: Fetch all source expressions to get their meanings
+          await Promise.all(uncachedExprs.map(e => 
+            getExpressionById(e.id).then(expr => {
+              translationCache.value[e.id] = expr
+            }).catch(() => {
+              translationCache.value[e.id] = null
+            })
+          ))
         } catch (error) {
-          console.error('Failed to fetch translations for preview:', error)
+          console.error('Failed to fetch expressions:', error)
         } finally {
           previewLoading.value = false
         }
       }
 
-      renderedContent.value = buildRenderedContent(translationCache.value)
+      // Phase 2: Resolve translations for all collected meanings in target_lang
+      const allMids = []
+      expressionsToFetch.forEach(e => {
+        const expr = translationCache.value[e.id]
+        expr?.meanings?.forEach(m => {
+          if (!allMids.includes(m.id)) allMids.push(m.id)
+        })
+      })
+
+      const uncachedMids = allMids.filter(mid => !(`trans_${mid}` in translationCache.value))
+
+      if (uncachedMids.length > 0 && form.target_lang) {
+        previewLoading.value = true
+        try {
+          const translations = await getHandbookExpressions(form.target_lang, uncachedMids)
+          // Map mid to the translated expression
+          translations.forEach(trans => {
+            // Check if this translation belongs to one of our target meanings
+            // The getHandbookExpressions likely returns expressions that HAVE these meanings
+            // We need to store it so we can find it by mid
+            if (trans.meaning_id) {
+              translationCache.value[`trans_${trans.meaning_id}`] = trans
+            } else if (trans.meanings) {
+              trans.meanings.forEach(m => {
+                if (uncachedMids.includes(m.id)) {
+                  translationCache.value[`trans_${m.id}`] = trans
+                }
+              })
+            }
+          })
+          
+          // Mark tried but not found
+          uncachedMids.forEach(mid => {
+            if (!(`trans_${mid}` in translationCache.value)) {
+              translationCache.value[`trans_${mid}`] = null
+            }
+          })
+        } catch (error) {
+          console.error('Failed to fetch translations:', error)
+        } finally {
+          previewLoading.value = false
+        }
+      }
+
+      renderedContent.value = buildRenderedContent(form.content, translationCache.value)
+      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value)
+      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value)
     }
 
     let previewTimeout = null
@@ -509,6 +637,15 @@ export default {
         updatePreview()
       }, 300)
     })
+
+    // Auto-save watch
+    let autoSaveTimeout = null
+    watch(form, (newVal) => {
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout)
+      autoSaveTimeout = setTimeout(() => {
+        localStorage.setItem(storageKey.value, JSON.stringify(newVal))
+      }, 1000)
+    }, { deep: true })
 
     const save = async () => {
       if (!form.title.trim()) {
@@ -543,6 +680,7 @@ export default {
         } else {
           await createHandbook(payload)
         }
+        clearDraft()
         router.push('/handbooks')
       } catch (error) {
         console.error('Failed to save handbook:', error)
@@ -556,9 +694,10 @@ export default {
       router.back()
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       fetchLanguages()
-      fetchHandbook()
+      await fetchHandbook()
+      checkDraft()
       updatePreview()
     })
 
@@ -576,6 +715,8 @@ export default {
       historyIndex,
       contentArea,
       renderedContent,
+      renderedTitle,
+      renderedDescription,
       search,
       insertExpression,
       insertAndClear,
@@ -583,7 +724,10 @@ export default {
       undo,
       redo,
       save,
-      goBack
+      goBack,
+      hasDraft,
+      restoreDraft,
+      clearDraft
     }
   }
 }

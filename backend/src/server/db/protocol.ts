@@ -105,6 +105,7 @@ export interface Handbook {
   is_public: boolean
   created_at: string
   updated_at: string
+  renders?: string // JSON string for cached renders
 }
 
 // Statistics interface
@@ -204,6 +205,17 @@ export abstract class AbstractDatabaseService {
   abstract createHandbook(handbook: Partial<Handbook>): Promise<Handbook>
   abstract updateHandbook(id: number, handbook: Partial<Handbook>): Promise<Handbook>
   abstract deleteHandbook(id: number): Promise<boolean>
+
+  // Handbook Renders
+  abstract getHandbookRender(id: number, targetLang: string): Promise<any | null>
+  abstract saveHandbookRender(renderData: {
+    handbook_id: number;
+    target_lang: string;
+    rendered_title: string;
+    rendered_description?: string;
+    rendered_content: string;
+  }): Promise<void>
+  abstract invalidateHandbookRenders(id: number): Promise<void>
 
   abstract stableExpressionId(text: string, languageCode: string): number
 }

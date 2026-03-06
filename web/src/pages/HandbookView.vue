@@ -8,9 +8,9 @@
       <!-- Header -->
       <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
         <div class="space-y-1.5 flex-1">
-          <h1 class="text-3xl font-bold text-gray-900">{{ handbook.title }}</h1>
-          <p v-if="handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description
-            }}</p>
+          <h1 class="text-3xl font-bold text-gray-900" v-html="handbook.rendered_title || handbook.title"></h1>
+          <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
+             v-html="handbook.rendered_description || handbook.description"></p>
           <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
         </div>
 
@@ -33,7 +33,8 @@
       </div>
 
       <!-- Content -->
-      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" v-html="renderedContent"></div>
+      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" 
+           v-html="handbook.rendered_content || handbook.content"></div>
 
       <!-- Audio Player Placeholder (Hidden) -->
       <audio ref="audioPlayer" class="hidden"></audio>
@@ -55,8 +56,7 @@
 <script>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import MarkdownIt from 'markdown-it'
-import { getHandbookById, getHandbookExpressions } from '../services/handbookService'
+import { getHandbookById } from '../services/handbookService'
 import { fetchLanguages } from '../services/languageService'
 
 export default {
@@ -64,47 +64,29 @@ export default {
   props: ['id'],
   setup(props) {
     const router = useRouter()
-    const md = new MarkdownIt({ html: true })
 
     // State
     const handbook = ref(null)
     const languages = ref([])
     const instructionLanguage = ref(localStorage.getItem('instructionLanguage') || 'zh-CN')
-    const expressionsMap = ref({})
     const loading = ref(true)
     const audioPlayer = ref(null)
-    const currentUser = ref(null) // Should be fetched from auth store/localstorage
-
-    // Detection Regex for {{exp:ID|mid:MID|text:TEXT|audio:URL}}
-    const TAG_REGEX = /\{\{exp:(\d+)\|mid:(\d+)\|text:([^|]+)\|audio:([^}]*)\}\}/g
+    const currentUser = ref(null)
 
     const fetchInitialData = async () => {
       loading.value = true
       try {
-        // Fetch languages
-        languages.value = await fetchLanguages()
+        // Fetch languages if not loaded
+        if (languages.value.length === 0) {
+          languages.value = await fetchLanguages()
+        }
 
-        // Fetch handbook
-        const data = await getHandbookById(props.id)
-        handbook.value = data
-
+        // Fetch handbook with pre-rendered content from backend
+        const queryParams = { target_lang: instructionLanguage.value }
+        const data = await getHandbookById(props.id, queryParams)
+        
         if (data) {
-          // Use the handbook's target_lang if set, otherwise fall back to localStorage
-          if (data.target_lang) {
-            instructionLanguage.value = data.target_lang
-          }
-
-          // Detect all MIDs in the content
-          const mids = []
-          let match
-          const contentRegex = /\{\{exp:(\d+)\|mid:(\d+)\|/g
-          while ((match = contentRegex.exec(data.content)) !== null) {
-            mids.push(parseInt(match[2]))
-          }
-
-          if (mids.length > 0) {
-            await fetchTranslations(mids)
-          }
+          handbook.value = data
         }
 
         // Auth check for edit button
@@ -118,88 +100,21 @@ export default {
       }
     }
 
-    const fetchTranslations = async (mids) => {
-      if (!mids || mids.length === 0) return
-      try {
-        const results = await getHandbookExpressions(instructionLanguage.value, mids)
-        const map = {}
-        results.forEach(ex => {
-          map[ex.id] = ex
-        })
-        expressionsMap.value = map
-      } catch (error) {
-        console.error('Failed to fetch translations:', error)
-      }
+    // Global helpers for rendered HTML interactions
+    window.playHandbookAudio = (url) => {
+      if (!url || !audioPlayer.value) return
+      audioPlayer.value.src = url
+      audioPlayer.value.play()
     }
 
-    // Watch language change to re-fetch
-    watch(instructionLanguage, async (newLang) => {
+    window.navigateToExpression = (id) => {
+      router.push(`/detail/${id}`)
+    }
+
+    // Watch for instruction language changes to re-fetch pre-rendered content from backend
+    watch(instructionLanguage, (newLang) => {
       localStorage.setItem('instructionLanguage', newLang)
-      if (!handbook.value) return
-
-      const mids = []
-      let match
-      while ((match = TAG_REGEX.exec(handbook.value.content)) !== null) {
-        mids.push(parseInt(match[2]))
-      }
-
-      if (mids.length > 0) {
-        await fetchTranslations(mids)
-      }
-    })
-
-    const renderedContent = computed(() => {
-      if (!handbook.value) return ''
-
-      // Process Markdown
-      let html = md.render(handbook.value.content)
-
-      // We use a custom function in the global scope to handle clicks for rendered HTML
-      window.playHandbookAudio = (url) => {
-        if (!url || !audioPlayer.value) return
-        audioPlayer.value.src = url
-        audioPlayer.value.play()
-      }
-
-      window.navigateToExpression = (id) => {
-        router.push(`/detail/${id}`)
-      }
-
-      return html.replace(TAG_REGEX, (match, exp, mid, originalText, originalAudio) => {
-        const translation = expressionsMap.value[mid]
-
-        // Resolve audio: prefer translated expression's first audio record, fallback to original
-        let audioUrl = originalAudio
-        if (translation && translation.audio_url) {
-          try {
-            const parsed = JSON.parse(translation.audio_url)
-            audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || originalAudio) : originalAudio
-          } catch { audioUrl = originalAudio }
-        }
-
-        if (translation) {
-          // Show original text + [translation] in brackets, same as editor preview
-          const audioIcon = audioUrl ? `<span class="text-[10px]">🔊</span>` : ''
-          return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
-              ${originalText}
-              <span class="text-gray-400 font-normal text-xs">[${translation.text}]</span>
-              ${audioIcon}
-            </span>
-          `
-        } else {
-          // Fallback: show original text only, same as editor preview
-          const audioIcon = originalAudio ? `<span class="text-[10px]">🔊</span>` : ''
-          return `
-            <span class="handbook-item inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-bold cursor-pointer hover:bg-blue-100"
-                  onclick="event.stopPropagation(); window.navigateToExpression(${exp}); ${originalAudio ? `window.playHandbookAudio('${originalAudio}')` : ''}">
-              ${originalText}
-              ${audioIcon}
-            </span>
-          `
-        }
-      })
+      fetchInitialData()
     })
 
     const canEdit = computed(() => {
@@ -212,7 +127,7 @@ export default {
     })
 
     const goToEdit = () => {
-      router.push(`/handbooks/edit/${props.id}`)
+      router.push(`/handbooks/${props.id}/edit`)
     }
 
     const formatDate = (dateString) => {
@@ -227,7 +142,6 @@ export default {
       loading,
       instructionLanguage,
       sortedLanguages,
-      renderedContent,
       audioPlayer,
       canEdit,
       goToEdit,
@@ -245,9 +159,5 @@ export default {
 
 .handbook-item:hover {
   background-color: rgba(59, 130, 246, 0.05);
-}
-
-.handbook-item.is-fallback:hover {
-  background-color: rgba(107, 114, 128, 0.05);
 }
 </style>

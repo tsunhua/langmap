@@ -197,13 +197,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
     if (meaningId !== undefined) {
       // Use expression_meaning table instead of expressions.meaning_id field
       query = 'SELECT e.* FROM expressions e'
-      
+
       if (Array.isArray(meaningId)) {
         // Handle array of meaning IDs
         if (meaningId.length > 0) {
-          const placeholders = meaningId.map(() => '?').join(',');
-          whereConditions.push(`e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id IN (${placeholders}))`);
-          bindings.push(...meaningId);
+          whereConditions.push(`e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id IN (SELECT value FROM json_each(?)))`);
+          bindings.push(JSON.stringify(meaningId));
         } else {
           // Empty array means no results should be returned
           whereConditions.push('1 = 0'); // Always false condition
@@ -298,43 +297,28 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async getExpressionsByIds(ids: number[]): Promise<Expression[]> {
     if (ids.length === 0) return [];
 
-    // Process in chunks to avoid D1 parameter limits
-    const chunkSize = 100;
-    const allResults: Expression[] = [];
+    const { results } = await this.db.prepare(
+      `SELECT * FROM expressions WHERE id IN (SELECT value FROM json_each(?))`
+    ).bind(JSON.stringify(ids)).all<Expression>();
 
-    for (let i = 0; i < ids.length; i += chunkSize) {
-      const chunk = ids.slice(i, i + chunkSize);
-      const placeholders = chunk.map(() => '?').join(',');
-      const { results } = await this.db.prepare(
-        `SELECT * FROM expressions WHERE id IN (${placeholders})`
-      ).bind(...chunk).all<Expression>();
-      allResults.push(...results);
-    }
-
-    return allResults;
+    return results;
   }
 
   async getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>> {
     if (expressionIds.length === 0) return new Map()
 
     const result = new Map<number, number[]>()
-    const chunkSize = 100
 
-    for (let i = 0; i < expressionIds.length; i += chunkSize) {
-      const chunk = expressionIds.slice(i, i + chunkSize)
-      const placeholders = chunk.map(() => '?').join(',')
+    const { results: rows } = await this.db.prepare(
+      `SELECT expression_id, meaning_id FROM expression_meaning WHERE expression_id IN (SELECT value FROM json_each(?))`
+    ).bind(JSON.stringify(expressionIds)).all<{ expression_id: number, meaning_id: number }>()
 
-      const { results: rows } = await this.db.prepare(
-        `SELECT expression_id, meaning_id FROM expression_meaning WHERE expression_id IN (${placeholders})`
-      ).bind(...chunk).all<{expression_id: number, meaning_id: number}>()
-
-      rows?.forEach(row => {
-        if (!result.has(row.expression_id)) {
-          result.set(row.expression_id, [])
-        }
-        result.get(row.expression_id)!.push(row.meaning_id)
-      })
-    }
+    rows?.forEach(row => {
+      if (!result.has(row.expression_id)) {
+        result.set(row.expression_id, [])
+      }
+      result.get(row.expression_id)!.push(row.meaning_id)
+    })
 
     return result
   }
@@ -433,7 +417,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
 
       const id = this.stableExpressionId(expr.text, expr.language_code)
- 
+
       const bindValues = [
         id,
         expr.text,
@@ -450,7 +434,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         expr.created_by || null,
         expr.updated_by || null
       ]
- 
+
       return this.db.prepare(
         `INSERT INTO expressions (
           id, text, audio_url, language_code, region_code, region_name, region_latitude,
@@ -686,35 +670,35 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // 3. Check if new ID already exists (collision)
     // If it exists, we might want to merge, but for now we throw error to be safe
     // or we could handle it by deleting old and letting the existing one stand.
-      const collision = await this.getExpressionById(newId);
-      if (collision) {
-        // If target ID already exists, we effectively delete old one 
-        // and redirect all its references to existing one.
+    const collision = await this.getExpressionById(newId);
+    if (collision) {
+      // If target ID already exists, we effectively delete old one 
+      // and redirect all its references to existing one.
 
-        const statements: any[] = [];
+      const statements: any[] = [];
 
-        // - Update expression_meaning references (replace old expression_id with new expression_id)
-        statements.push(db.prepare(`UPDATE expression_meaning SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
+      // - Update expression_meaning references (replace old expression_id with new expression_id)
+      statements.push(db.prepare(`UPDATE expression_meaning SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
 
-        // - Update collection items
-        statements.push(db.prepare(`UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
+      // - Update collection items
+      statements.push(db.prepare(`UPDATE collection_items SET expression_id = ? WHERE expression_id = ?`).bind(newId, oldId));
 
-        // - Delete old
-        statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
+      // - Delete old
+      statements.push(db.prepare(`DELETE FROM expressions WHERE id = ?`).bind(oldId));
 
-        // - Delete from FTS index
-        statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
+      // - Delete from FTS index
+      statements.push(db.prepare(`DELETE FROM expressions_fts WHERE rowid = ?`).bind(oldId));
 
-        await db.batch(statements);
+      await db.batch(statements);
 
-        // Update language_stats if collision occurred (old record deleted)
-        await this.db.prepare(`
+      // Update language_stats if collision occurred (old record deleted)
+      await this.db.prepare(`
           UPDATE language_stats SET expression_count = MAX(0, expression_count - 1)
           WHERE language_code = ?
         `).bind(current.language_code).run();
 
-        return collision;
-      }
+      return collision;
+    }
 
     // 4. Prepare the new record data
     const merged = { ...current, ...newExpression, id: newId };
@@ -1077,12 +1061,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
         updated_by: username,
         updated_at: now
       });
-      
+
       // Ensure meaning record exists and create association
       await this.db.prepare(
         'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
       ).bind(meaningId, username, now).run();
-      
+
       await this.db.prepare(
         'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
       ).bind(`${id}-${meaningId}`, id, meaningId, now).run();
@@ -1098,17 +1082,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
         created_by: username,
         updated_by: username
       });
-      
+
       // Create meaning record and association
       await this.db.prepare(
         'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
       ).bind(meaningId, username, now).run();
-      
+
       await this.db.prepare(
         'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
       ).bind(`${expr.id}-${meaningId}`, expr.id, meaningId, now).run();
     }
- 
+
     // 3. Ensure it is linked to 'langmap' collection
     const langmapCol = await this.db.prepare("SELECT id FROM collections WHERE name = 'langmap'").first<{ id: number }>();
     if (langmapCol) {
@@ -1119,11 +1103,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
         note: 'UI Translation'
       });
     }
- 
+
     return expr;
-    }
- 
-  
+  }
+
+
   async saveUITranslations(language: string, translations: Array<{ key: string, text: string, meaning_id?: number }>, username: string): Promise<Array<{ key: string, error?: string }>> {
     const results: Array<{ key: string, error?: string }> = [];
 
@@ -1253,10 +1237,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
         // Insert new expressions (meaning_id is deprecated, use expression_meaning table instead)
         for (let i = 0; i < newExpressions.length; i += BATCH_SIZE) {
           const chunk = newExpressions.slice(i, i + BATCH_SIZE)
-          
+
           // Prepare statements: insert expressions, create meanings, create associations
           const allStatements: any[] = []
-          
+
           for (const expr of chunk) {
             // Insert expression (meaning_id field is deprecated)
             allStatements.push(
@@ -1270,14 +1254,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
                 expr.username, expr.timestamp, expr.timestamp
               )
             )
-            
+
             // Insert meaning record if it doesn't exist
             allStatements.push(
               this.db.prepare(`
                 INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)
               `).bind(expr.meaningId, expr.username, expr.timestamp)
             )
-            
+
             // Insert expression_meaning association
             allStatements.push(
               this.db.prepare(`
@@ -1285,7 +1269,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
               `).bind(`${expr.expressionId}-${expr.meaningId}`, expr.expressionId, expr.meaningId, expr.timestamp)
             )
           }
-          
+
           await this.db.batch(allStatements)
         }
 
@@ -1294,7 +1278,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         for (let i = 0; i < existingExpressions.length; i += BATCH_SIZE) {
           const chunk = existingExpressions.slice(i, i + BATCH_SIZE)
           const allStatements: any[] = []
-          
+
           for (const expr of chunk) {
             // Update expression
             allStatements.push(
@@ -1307,14 +1291,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
                 expr.expressionId
               )
             )
-            
+
             // Ensure meaning record exists
             allStatements.push(
               this.db.prepare(`
                 INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)
               `).bind(expr.meaningId, expr.username, expr.timestamp)
             )
-            
+
             // Ensure expression_meaning association exists
             allStatements.push(
               this.db.prepare(`
@@ -1322,7 +1306,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
               `).bind(`${expr.expressionId}-${expr.meaningId}`, expr.expressionId, expr.meaningId, expr.timestamp)
             )
           }
-          
+
           await this.db.batch(allStatements)
         }
 
@@ -1883,6 +1867,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const values: any[] = []
 
     Object.entries(handbook).forEach(([key, value]) => {
+      // Don't update renders directly via this method unless explicitly passed
       if (key !== 'id' && key !== 'created_at' && key !== 'user_id') {
         fields.push(`${key} = ?`)
         values.push(key === 'is_public' ? (value ? 1 : 0) : value)
@@ -1894,6 +1879,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
       if (!current) throw new Error('Handbook not found');
       return current;
     }
+
+    // Always invalidate all renders on any handbook update
+    fields.push('renders = ?')
+    values.push('{}')
 
     fields.push('updated_at = CURRENT_TIMESTAMP')
     values.push(id)
@@ -1914,6 +1903,74 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM handbooks WHERE id = ?'
     ).bind(id).run()
     return (result.meta?.changes ?? 0) > 0
+  }
+
+  // Handbook Renders (JSON column based)
+  async getHandbookRender(id: number, targetLang: string): Promise<any | null> {
+    const handbook = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(id).first<Handbook>()
+
+    if (!handbook || !handbook.renders) return null
+
+    try {
+      const renders = JSON.parse(handbook.renders)
+      const render = renders[targetLang]
+      if (!render) return null
+
+      // Check TTL (1 hour)
+      const renderedTime = render.at
+      const now = Date.now()
+      if (now - renderedTime > 3600 * 1000) {
+        return null // Expired
+      }
+
+      return render
+    } catch (e) {
+      console.error('Error parsing handbook renders:', e)
+      return null
+    }
+  }
+
+  async saveHandbookRender(renderData: {
+    handbook_id: number;
+    target_lang: string;
+    rendered_title: string;
+    rendered_description?: string;
+    rendered_content: string;
+  }): Promise<void> {
+    // 1. Get current renders
+    const handbook = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(renderData.handbook_id).first<Handbook>()
+
+    if (!handbook) return
+
+    let renders: Record<string, any> = {}
+    try {
+      renders = JSON.parse(handbook.renders || '{}')
+    } catch (e) {
+      renders = {}
+    }
+
+    // 2. Update specific language
+    renders[renderData.target_lang] = {
+      rendered_title: renderData.rendered_title,
+      rendered_description: renderData.rendered_description,
+      rendered_content: renderData.rendered_content,
+      at: Date.now()
+    }
+
+    // 3. Save back
+    await this.db.prepare(
+      'UPDATE handbooks SET renders = ? WHERE id = ?'
+    ).bind(JSON.stringify(renders), renderData.handbook_id).run()
+  }
+
+  async invalidateHandbookRenders(id: number): Promise<void> {
+    await this.db.prepare(
+      'UPDATE handbooks SET renders = ? WHERE id = ?'
+    ).bind('{}', id).run()
   }
 
   /**
