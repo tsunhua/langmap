@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-3xl font-bold mb-6">{{ $t('translate_title') }}</h1>
 
     <!-- 管理员同步按钮 -->
@@ -11,20 +11,15 @@
       <div class="flex items-center gap-4 mb-3">
         <div>
           <label class="block text-sm font-medium text-yellow-900 mb-1">选择要同步的语言</label>
-          <select 
-            v-model="syncLanguage" 
-            class="border border-yellow-300 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-          >
+          <select v-model="syncLanguage"
+            class="border border-yellow-300 rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500">
             <option v-for="lang in Object.keys(localMessages)" :key="lang" :value="lang">
               {{ lang }}
             </option>
           </select>
         </div>
-        <button
-          @click="syncLocales"
-          :disabled="syncing"
-          class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors self-end"
-        >
+        <button @click="syncLocales" :disabled="syncing"
+          class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors self-end">
           {{ syncing ? '同步中...' : '同步翻译' }}
         </button>
       </div>
@@ -34,7 +29,8 @@
           <span class="font-medium text-yellow-900">{{ lang }}:</span>
           <span class="text-yellow-800">新增 {{ result.added }} 条</span>
           <span v-if="result.updated > 0" class="text-green-600">更新 {{ result.updated }} 条</span>
-          <span v-if="result.errors && result.errors.length > 0" class="text-red-600">错误: {{ result.errors.join(', ') }}</span>
+          <span v-if="result.errors && result.errors.length > 0" class="text-red-600">错误: {{ result.errors.join(', ')
+            }}</span>
         </div>
       </div>
     </div>
@@ -45,11 +41,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('reference_language') }}</label>
-          <select 
-            v-model="referenceLanguage" 
+          <select v-model="referenceLanguage"
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="loadTranslations"
-          >
+            @change="loadTranslations">
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
               {{ lang.name }} ({{ lang.code }})
             </option>
@@ -57,11 +51,9 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('target_language') }}</label>
-          <select 
-            v-model="targetLanguage" 
+          <select v-model="targetLanguage"
             class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="loadTranslations"
-          >
+            @change="loadTranslations">
             <option value="" disabled>{{ $t('select_target_language') || 'Select target language' }}</option>
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
               {{ lang.name }} ({{ lang.code }})
@@ -72,7 +64,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 进度显示 -->
       <div v-if="targetLanguage && targetLanguage !== referenceLanguage" class="mt-4">
         <div class="flex justify-between mb-1">
@@ -80,84 +72,73 @@
           <span class="text-sm font-medium">{{ completionPercentage }}%</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2.5">
-          <div 
-            class="bg-blue-600 h-2.5 rounded-full" 
-            :style="{ width: completionPercentage + '%' }"
-          ></div>
+          <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: completionPercentage + '%' }"></div>
         </div>
         <div class="text-sm text-gray-500 mt-1">
           {{ isActive ? $t('language_activated') : $t('language_not_activated') }}
         </div>
       </div>
     </div>
-    
+
     <!-- 翻译表格 -->
-    <div v-if="referenceLanguage && targetLanguage && referenceLanguage !== targetLanguage" class="bg-white rounded-lg shadow">
+    <div v-if="referenceLanguage && targetLanguage && referenceLanguage !== targetLanguage"
+      class="bg-white rounded-lg shadow">
       <!-- 过滤控件 -->
       <div class="p-6 border-b border-gray-200">
         <div class="flex flex-col sm:flex-row gap-4">
           <div class="flex-grow">
-            <input
-              v-model="searchQuery"
-              type="text"
-              :placeholder="$t('please_input')"
+            <input v-model="searchQuery" type="text" :placeholder="$t('please_input')"
               class="w-full border border-blue-300 py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              @input="filterTranslations"
-            />
+              @input="filterTranslations" />
           </div>
           <div class="flex gap-2">
-            <button
-              :class="[
-                'px-4 py-2 rounded',
-                filterOption === 'all' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              ]"
-              @click="setFilter('all')"
-            >
+            <button :class="[
+              'px-4 py-2 rounded',
+              filterOption === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ]" @click="setFilter('all')">
               {{ $t('all') }}
             </button>
-            <button
-              :class="[
-                'px-4 py-2 rounded',
-                filterOption === 'untranslated' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              ]"
-              @click="setFilter('untranslated')"
-            >
+            <button :class="[
+              'px-4 py-2 rounded',
+              filterOption === 'untranslated'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ]" @click="setFilter('untranslated')">
               {{ $t('untranslated') }}
             </button>
-            <button
-              :class="[
-                'px-4 py-2 rounded',
-                filterOption === 'translated' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              ]"
-              @click="setFilter('translated')"
-            >
+            <button :class="[
+              'px-4 py-2 rounded',
+              filterOption === 'translated'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ]" @click="setFilter('translated')">
               {{ $t('translated') }}
             </button>
           </div>
         </div>
       </div>
-      
+
       <!-- 翻译表格 -->
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 table-fixed">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col"
+                class="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ $t('localization_key') }}
               </th>
-              <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col"
+                class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(referenceLanguage) }} ({{ $t('reference_language') }})
               </th>
-              <th scope="col" class="w-1/12 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col"
+                class="w-1/12 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ $t('action') }}
               </th>
-              <th scope="col" class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col"
+                class="w-5/12 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ getLanguageDisplayName(targetLanguage) }} ({{ $t('target_language') }})
               </th>
             </tr>
@@ -171,41 +152,30 @@
                 {{ item.referenceText }}
               </td>
               <td class="px-6 py-4 text-center">
-                <button 
-                  @click="copyToTarget(item)" 
-                  class="text-blue-600 hover:text-blue-800 font-bold"
-                  :aria-label="$t('copy_reference_to_target')"
-                >
+                <button @click="copyToTarget(item)" class="text-blue-600 hover:text-blue-800 font-bold"
+                  :aria-label="$t('copy_reference_to_target')">
                   &gt;&gt;
                 </button>
               </td>
               <td class="px-6 py-4 text-sm text-gray-500">
-                <input
-                  v-model="item.targetText"
-                  type="text"
+                <input v-model="item.targetText" type="text"
                   class="w-full border border-blue-300 py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :placeholder="$t('please_enter_translation')"
-                  @input="markAsModified(item)"
-                />
+                  :placeholder="$t('please_enter_translation')" @input="markAsModified(item)" />
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      
+
       <!-- 提交控件 -->
       <div class="p-6 border-t border-gray-200">
         <div class="flex justify-end">
-          <button
-            :disabled="modifiedItems.length === 0"
-            :class="[
-              'px-6 py-3 rounded font-medium',
-              modifiedItems.length === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            ]"
-            @click="saveTranslations"
-          >
+          <button :disabled="modifiedItems.length === 0" :class="[
+            'px-6 py-3 rounded font-medium',
+            modifiedItems.length === 0
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          ]" @click="saveTranslations">
             {{ $t('save_translations', { count: modifiedItems.length }) }}
           </button>
         </div>
@@ -276,20 +246,20 @@ export default {
     const languages = ref([])
     const referenceLanguage = ref(route.query.ref || 'en-US')
     const targetLanguage = ref(route.query.target || '')
-    
+
     // 翻译数据相关
     const referenceTranslations = ref([])
     const targetTranslations = ref([])
     const mergedTranslations = ref([])
     const filteredTranslations = ref([])
-    
+
     // 过滤和搜索相关
     const filterOption = ref('untranslated')
     const searchQuery = ref('')
-    
+
     // 修改状态相关
     const modifiedItems = ref([])
-    
+
     // 进度相关
     const completionPercentage = ref(0)
     const isActive = ref(false)
@@ -351,7 +321,7 @@ export default {
         console.error('加载语言列表失败:', error)
       }
     }
-    
+
     // 加载翻译数据
     const loadTranslations = async () => {
       if (!referenceLanguage.value || !targetLanguage.value || referenceLanguage.value === targetLanguage.value) {
@@ -422,7 +392,7 @@ export default {
         tags.forEach(key => {
           // Check for exact match or langmap. prefix match
           const localKey = key.startsWith('langmap.') ? key.substring(8) : key
-          
+
           if (localMap.has(localKey)) {
             // 找到对应的本地数据，用数据库翻译替换文本
             const index = merged.findIndex(item => item.key === localKey)
@@ -441,7 +411,7 @@ export default {
 
       return merged
     }
-    
+
     // 合并参考语言和目标语言的翻译数据
     const mergeTranslations = () => {
       const refMap = {}
@@ -533,43 +503,43 @@ export default {
       mergedTranslations.value = merged
       filterTranslations()
     }
-    
+
     // 过滤翻译数据
     const filterTranslations = () => {
       let result = [...mergedTranslations.value]
-      
+
       // 根据过滤选项筛选
       if (filterOption.value === 'untranslated') {
         result = result.filter(item => !item.targetText)
       } else if (filterOption.value === 'translated') {
         result = result.filter(item => item.targetText)
       }
-      
+
       // 根据搜索关键词筛选
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
-        result = result.filter(item => 
+        result = result.filter(item =>
           item.key.toLowerCase().includes(query) ||
           item.referenceText.toLowerCase().includes(query) ||
           (item.targetText && item.targetText.toLowerCase().includes(query))
         )
       }
-      
+
       filteredTranslations.value = result
     }
-    
+
     // 设置过滤选项
     const setFilter = (option) => {
       filterOption.value = option
       filterTranslations()
     }
-    
+
     // 将参考文本复制到目标文本
     const copyToTarget = (item) => {
       item.targetText = item.referenceText
       markAsModified(item)
     }
-    
+
     // 标记为已修改
     const markAsModified = (item) => {
       // 使用 id 或 key 作为唯一标识
@@ -621,7 +591,7 @@ export default {
         alert(t('translate.saveError') || 'Failed to save translations')
       }
     }
-    
+
     // 计算完成度
     const calculateCompletion = () => {
       if (mergedTranslations.value.length === 0) {
@@ -629,12 +599,12 @@ export default {
         isActive.value = false
         return
       }
-      
+
       const translatedCount = mergedTranslations.value.filter(item => item.targetText).length
       completionPercentage.value = Math.round((translatedCount / mergedTranslations.value.length) * 100)
       isActive.value = completionPercentage.value >= 60
     }
-    
+
     // 监听语言选择变化
     watch([referenceLanguage, targetLanguage], ([newRef, newTarget]) => {
       // 更新 URL
@@ -650,23 +620,23 @@ export default {
         loadTranslations()
       }
     })
-    
+
     // 监听搜索查询变化
     watch(searchQuery, () => {
       filterTranslations()
     })
-    
+
     // 监听过滤选项变化
     watch(filterOption, () => {
       filterTranslations()
     })
-    
+
     // 初始化
     onMounted(async () => {
       await loadLanguages()
       await loadTranslations()
     })
-    
+
     return {
       // 数据
       languages,

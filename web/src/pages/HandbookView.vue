@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <div v-if="loading" class="flex justify-center py-24">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
@@ -8,39 +8,32 @@
       <!-- Header -->
       <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
         <div class="space-y-1.5 flex-1">
-            <h1 class="text-3xl font-bold text-gray-900">{{ handbook.title }}</h1>
-            <p v-if="handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description }}</p>
-            <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
+          <h1 class="text-3xl font-bold text-gray-900">{{ handbook.title }}</h1>
+          <p v-if="handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed">{{ handbook.description
+            }}</p>
+          <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
         </div>
 
         <!-- Language Switcher -->
         <div class="flex items-center gap-2 flex-shrink-0">
-           <span class="text-xs text-gray-400">{{ $t('learn_in') }}</span>
-           <select
-             v-model="instructionLanguage"
-             class="border border-gray-200 rounded-lg text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-1.5 px-2 bg-white cursor-pointer"
-           >
-             <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
-               {{ lang.name }}
-             </option>
-           </select>
+          <span class="text-xs text-gray-400">{{ $t('learn_in') }}</span>
+          <select v-model="instructionLanguage"
+            class="border border-gray-200 rounded-lg text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-1.5 px-2 bg-white cursor-pointer">
+            <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
+              {{ lang.name }}
+            </option>
+          </select>
         </div>
 
         <!-- Edit Button -->
-        <button
-          v-if="canEdit"
-          @click="goToEdit"
-          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-        >
+        <button v-if="canEdit" @click="goToEdit"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
           {{ $t('edit_handbook') }}
         </button>
       </div>
 
       <!-- Content -->
-      <div 
-        class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body"
-        v-html="renderedContent"
-      ></div>
+      <div class="prose prose-blue prose-sm max-w-none leading-loose py-6 markdown-body" v-html="renderedContent"></div>
 
       <!-- Audio Player Placeholder (Hidden) -->
       <audio ref="audioPlayer" class="hidden"></audio>
@@ -72,9 +65,9 @@ export default {
   setup(props) {
     const router = useRouter()
     const md = new MarkdownIt({ html: true })
-    
+
     // State
-     const handbook = ref(null)
+    const handbook = ref(null)
     const languages = ref([])
     const instructionLanguage = ref(localStorage.getItem('instructionLanguage') || 'zh-CN')
     const expressionsMap = ref({})
@@ -90,11 +83,11 @@ export default {
       try {
         // Fetch languages
         languages.value = await fetchLanguages()
-        
+
         // Fetch handbook
         const data = await getHandbookById(props.id)
         handbook.value = data
-        
+
         if (data) {
           // Use the handbook's target_lang if set, otherwise fall back to localStorage
           if (data.target_lang) {
@@ -108,7 +101,7 @@ export default {
           while ((match = contentRegex.exec(data.content)) !== null) {
             mids.push(parseInt(match[2]))
           }
-          
+
           if (mids.length > 0) {
             await fetchTranslations(mids)
           }
@@ -143,13 +136,13 @@ export default {
     watch(instructionLanguage, async (newLang) => {
       localStorage.setItem('instructionLanguage', newLang)
       if (!handbook.value) return
-      
+
       const mids = []
       let match
       while ((match = TAG_REGEX.exec(handbook.value.content)) !== null) {
         mids.push(parseInt(match[2]))
       }
-      
+
       if (mids.length > 0) {
         await fetchTranslations(mids)
       }

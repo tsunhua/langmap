@@ -1,13 +1,15 @@
 <template>
-  <div class="max-w-5xl mx-auto">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h2 class="text-2xl font-bold text-slate-800 mb-2">{{ $t('create_title') }}</h2>
       <p class="text-slate-600 mb-6">{{ $t('add_expression_description') }}</p>
 
       <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <div class="flex items-start gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div class="text-sm text-blue-800">
             <p>{{ $t('batch_expression_hint') }}</p>
@@ -15,13 +17,11 @@
         </div>
       </div>
 
-      <div v-for="(expression, index) in expressions" :key="expression.id" class="mb-6 p-4 border border-slate-200 rounded-lg relative">
-        <button
-          v-if="expressions.length > 1"
-          @click="removeExpression(index)"
+      <div v-for="(expression, index) in expressions" :key="expression.id"
+        class="mb-6 p-4 border border-slate-200 rounded-lg relative">
+        <button v-if="expressions.length > 1" @click="removeExpression(index)"
           class="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
-          :title="$t('remove_expression')"
-        >
+          :title="$t('remove_expression')">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -31,12 +31,9 @@
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('language') }} *</label>
           <div class="flex gap-2">
             <div class="relative flex-1">
-              <select
-                v-model="expression.language_code"
+              <select v-model="expression.language_code"
                 class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3 appearance-none text-slate-800"
-                :disabled="languagesLoading"
-                @change="handleLanguageChange(index)"
-              >
+                :disabled="languagesLoading" @change="handleLanguageChange(index)">
                 <option v-if="languagesLoading" value="" disabled>{{ $t('loading_languages') }}</option>
                 <option v-else value="" disabled>{{ $t('select_language') }}</option>
                 <option v-for="lang in languages" :key="lang.code" :value="lang.code">
@@ -44,17 +41,17 @@
                 </option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </div>
-            <button
-              @click="showAddLanguageModal = true"
+            <button @click="showAddLanguageModal = true"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('add_language')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              :title="$t('add_language')">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </button>
@@ -63,44 +60,43 @@
 
         <div class="mb-4">
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
-          <textarea
-            v-model="expression.text"
-            rows="3"
+          <textarea v-model="expression.text" rows="3"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-4 text-slate-800"
-            :placeholder="$t('text_placeholder')"
-          ></textarea>
+            :placeholder="$t('text_placeholder')"></textarea>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_region') }}</label>
           <div class="flex gap-2">
-            <input
-              v-model="expression.region_display"
-              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 text-slate-500"
-            />
-            <button
-              @click="detectLocation(index)"
+            <input v-model="expression.region_display"
+              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 text-slate-500" />
+            <button @click="detectLocation(index)"
               :disabled="expression.detectingLocation || expression.parsingLocation"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('detect_location')"
-            >
-              <svg v-if="expression.detectingLocation || expression.parsingLocation" class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              :title="$t('detect_location')">
+              <svg v-if="expression.detectingLocation || expression.parsingLocation"
+                class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
               </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1 1 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1 1 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
-            <button
-              @click="toggleMapSelector(index)"
-              :disabled="expression.parsingLocation"
+            <button @click="toggleMapSelector(index)" :disabled="expression.parsingLocation"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('select_on_map')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              :title="$t('select_on_map')">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </button>
           </div>
@@ -113,20 +109,22 @@
           </div>
 
           <div v-if="expression.parsingLocation" class="mt-2 flex items-center text-sm text-slate-600">
-            <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
             </svg>
             {{ $t('parsing_location') }}
           </div>
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_audio_label') }} ({{ $t('optional') }})</label>
-          <AudioRecorder 
-            @audio-ready="payload => handleAudioReady(index, payload)"
-            @audio-cleared="() => handleAudioCleared(index)"
-          />
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_audio_label') }} ({{
+            $t('optional') }})</label>
+          <AudioRecorder @audio-ready="payload => handleAudioReady(index, payload)"
+            @audio-cleared="() => handleAudioCleared(index)" />
         </div>
 
         <div class="mt-6">
@@ -134,27 +132,23 @@
             {{ $t('collections') }} ({{ $t('optional') }})
           </label>
           <div class="flex gap-2">
-            <input
-              :value="getSelectedCollectionNames(expression.collections)"
+            <input :value="getSelectedCollectionNames(expression.collections)"
               class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 bg-slate-100 text-slate-500 cursor-pointer"
-              readonly
-              @click="toggleCollectionSelector(index)"
-            />
-            <button
-              @click="toggleCollectionSelector(index)"
+              readonly @click="toggleCollectionSelector(index)" />
+            <button @click="toggleCollectionSelector(index)"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('select_collections')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              :title="$t('select_collections')">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </button>
-            <button
-              @click="openCreateCollectionModal(index)"
+            <button @click="openCreateCollectionModal(index)"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('create_collection')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              :title="$t('create_collection')">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </button>
@@ -162,9 +156,12 @@
 
           <div v-if="expression.showCollectionSelector" class="mt-3 border border-slate-200 rounded-lg p-3">
             <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
-              <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
               </svg>
               {{ $t('loading_collections') }}
             </div>
@@ -177,31 +174,23 @@
             </div>
 
             <div v-else class="space-y-2 max-h-48 overflow-y-auto">
-              <label
-                v-for="collection in userCollections"
-                :key="collection.id"
-                class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  :checked="expression.collections.includes(collection.id)"
+              <label v-for="collection in userCollections" :key="collection.id"
+                class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                <input type="checkbox" :checked="expression.collections.includes(collection.id)"
                   @change="toggleCollectionSelection(index, collection.id)"
-                  class="form-checkbox h-4 w-4 text-blue-600 rounded"
-                />
+                  class="form-checkbox h-4 w-4 text-blue-600 rounded" />
                 <div class="flex-1">
                   <span class="text-slate-800">{{ collection.name }}</span>
                   <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
-                 </div>
-               </label>
-             </div>
-           </div>
-         </div>
-       </div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
 
-       <button
-        @click="addExpression"
-        class="w-full mb-6 py-3 px-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-      >
+      <button @click="addExpression"
+        class="w-full mb-6 py-3 px-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
@@ -209,30 +198,39 @@
       </button>
 
       <div class="flex flex-wrap gap-3">
-        <button @click="submit" :disabled="submitting" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg v-if="submitting" class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <button @click="submit" :disabled="submitting"
+          class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg v-if="submitting" class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
           </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
           {{ submitting ? $t('submitting') : $t('submit') }}
         </button>
-        <button @click="goBack" class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
+        <button @click="goBack"
+          class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
           {{ $t('cancel') }}
         </button>
       </div>
 
       <div v-if="error" class="mt-4 p-3 bg-red-50 text-red-700 rounded-lg flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         {{ error }}
       </div>
 
       <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
         {{ $t('success') }}
@@ -240,68 +238,49 @@
     </div>
 
     <!-- Add Language Modal -->
-    <AddLanguageModal
-      :visible="showAddLanguageModal"
-      :adding-language="addingLanguage"
-      @close="showAddLanguageModal = false"
-      @add-language="handleAddLanguage"
-    />
+    <AddLanguageModal :visible="showAddLanguageModal" :adding-language="addingLanguage"
+      @close="showAddLanguageModal = false" @add-language="handleAddLanguage" />
 
     <!-- Create Collection Modal -->
-    <div v-if="showCreateCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div v-if="showCreateCollectionModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 class="text-xl font-bold mb-4">{{ $t('new_collection') }}</h2>
-        
+
         <form @submit.prevent="handleCreateCollection">
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">
               {{ $t('collection_name') }} *
             </label>
-            <input 
-              v-model="collectionForm.name"
-              type="text" 
-              required
+            <input v-model="collectionForm.name" type="text" required
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('e_g_my_favorites')"
-            />
+              :placeholder="$t('e_g_my_favorites')" />
           </div>
-          
+
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">
               {{ $t('description') }}
             </label>
-            <textarea 
-              v-model="collectionForm.description"
-              rows="3"
+            <textarea v-model="collectionForm.description" rows="3"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('e_g_useful_for_greeting')"
-            ></textarea>
+              :placeholder="$t('e_g_useful_for_greeting')"></textarea>
           </div>
-          
+
           <div class="mb-6">
             <label class="flex items-center cursor-pointer">
-              <input 
-                v-model="collectionForm.is_public" 
-                type="checkbox" 
-                class="form-checkbox h-4 w-4 text-blue-600 rounded"
-              />
+              <input v-model="collectionForm.is_public" type="checkbox"
+                class="form-checkbox h-4 w-4 text-blue-600 rounded" />
               <span class="ml-2 text-sm text-gray-700">{{ $t('public_access') }}</span>
             </label>
           </div>
-          
+
           <div class="flex justify-end gap-3">
-            <button 
-              type="button" 
-              @click="closeCreateCollectionModal"
-              class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-            >
+            <button type="button" @click="closeCreateCollectionModal"
+              class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
               {{ $t('cancel') || 'Cancel' }}
             </button>
-            <button 
-              type="submit" 
-              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              :disabled="creatingCollection"
-            >
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              :disabled="creatingCollection">
               {{ creatingCollection ? $t('saving') || 'Saving...' : ($t('save') || 'Save') }}
             </button>
           </div>
@@ -353,7 +332,7 @@ export default {
     const error = ref(null)
     const success = ref(false)
     const submitting = ref(false)
-    
+
     // Collection-related state
     const userCollections = ref([])
     const collectionsLoading = ref(false)
@@ -580,7 +559,7 @@ export default {
 
         const newCollection = await response.json()
         await handleCollectionCreated(newCollection)
-        
+
         // Reset form
         collectionForm.value = {
           name: '',
@@ -937,11 +916,11 @@ export default {
 
     async function processAudioUploads(originalExpressions, createdExpressions, token) {
       const results = { success: 0, errors: 0 }
-      
+
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
         const created = createdExpressions[i]
-        
+
         if (original.audioBlob && created && created.id) {
           try {
             // 1. Upload directly to Worker using Native Bindings
@@ -981,7 +960,7 @@ export default {
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
         const created = createdExpressions[i]
-        
+
         if (original.collections && original.collections.length > 0 && created && created.id) {
           for (const collectionId of original.collections) {
             try {

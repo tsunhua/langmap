@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <div v-if="loadingCollection" class="animate-pulse space-y-4">
@@ -21,25 +21,19 @@
             <p class="text-gray-600">{{ collection.description }}</p>
           </div>
           <div class="flex gap-2">
-             <!-- Export Button -->
-            <button 
-              @click="showExportModal = true"
-              class="text-gray-500 hover:text-green-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
-            >
+            <!-- Export Button -->
+            <button @click="showExportModal = true"
+              class="text-gray-500 hover:text-green-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
               <span>📥</span> {{ $t('export') || 'Export' }}
             </button>
 
             <template v-if="isOwner">
-              <button 
-                @click="openEditModal"
-                class="text-gray-500 hover:text-blue-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
-              >
+              <button @click="openEditModal"
+                class="text-gray-500 hover:text-blue-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
                 <span>✏️</span> {{ $t('edit') }}
               </button>
-              <button 
-                @click="confirmDelete"
-                class="text-gray-500 hover:text-red-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1"
-              >
+              <button @click="confirmDelete"
+                class="text-gray-500 hover:text-red-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
                 <span>🗑️</span> {{ $t('delete') }}
               </button>
             </template>
@@ -58,7 +52,8 @@
     <div class="mb-6">
       <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
         {{ $t('items') }}
-        <span v-if="collection && collection.items_count > 0" class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
+        <span v-if="collection && collection.items_count > 0"
+          class="bg-blue-100 text-blue-800 text-sm font-normal px-2.5 py-0.5 rounded-full">
           {{ collection.items_count }}
         </span>
       </h2>
@@ -75,11 +70,8 @@
       </div>
 
       <div v-else class="space-y-4">
-        <div 
-          v-for="item in items" 
-          :key="item.id"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-        >
+        <div v-for="item in items" :key="item.id"
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
           <div class="flex justify-between">
             <div class="flex-grow">
               <router-link :to="`/detail/${item.expression_id}`" class="block group">
@@ -88,19 +80,17 @@
                 </h3>
                 <div class="flex gap-2 text-sm text-gray-500 mb-2">
                   <span class="bg-gray-100 px-2 py-0.5 rounded">{{ item.expression?.language_code }}</span>
-                  <span v-if="item.expression?.region_name" class="bg-gray-100 px-2 py-0.5 rounded">{{ item.expression?.region_name }}</span>
+                  <span v-if="item.expression?.region_name" class="bg-gray-100 px-2 py-0.5 rounded">{{
+                    item.expression?.region_name }}</span>
                 </div>
               </router-link>
-              <div v-if="item.note" class="bg-yellow-50 p-2 rounded text-sm text-gray-700 mt-2 border-l-4 border-yellow-300">
+              <div v-if="item.note"
+                class="bg-yellow-50 p-2 rounded text-sm text-gray-700 mt-2 border-l-4 border-yellow-300">
                 {{ item.note }}
               </div>
             </div>
             <div v-if="isOwner" class="ml-4 flex flex-col items-end justify-between">
-              <button 
-                @click="removeItem(item)"
-                class="text-gray-400 hover:text-red-500 p-1"
-                :title="$t('remove')"
-              >
+              <button @click="removeItem(item)" class="text-gray-400 hover:text-red-500 p-1" :title="$t('remove')">
                 ✕
               </button>
             </div>
@@ -109,21 +99,15 @@
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 mt-8">
-          <button 
-            @click="prevPage" 
-            :disabled="currentPage === 1"
-            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button @click="prevPage" :disabled="currentPage === 1"
+            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
             &laquo; {{ $t('prev') }}
           </button>
           <span class="text-sm font-medium">
             {{ currentPage }} / {{ totalPages }}
           </span>
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages"
-            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button @click="nextPage" :disabled="currentPage === totalPages"
+            class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
             {{ $t('next') || 'Next' }} &raquo;
           </button>
         </div>
@@ -136,57 +120,59 @@
     <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h3 class="text-xl font-bold mb-4">{{ $t('export_title') || 'Export Collection' }}</h3>
-        
-        <div v-if="exportState.status === 'idle' || exportState.status === 'error'">
-           <p class="text-gray-600 mb-4">{{ $t('select_format') || 'Choose a format to export your collection:' }}</p>
-           
-           <div class="flex flex-col gap-3 mb-6">
-             <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
-               <input type="radio" v-model="exportFormat" value="json" name="format">
-               <span class="font-medium">JSON</span>
-               <span class="text-xs text-gray-500 ml-auto">{{ $t('json_desc') }}</span>
-             </label>
-             <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
-               <input type="radio" v-model="exportFormat" value="csv" name="format">
-               <span class="font-medium">CSV</span>
-               <span class="text-xs text-gray-500 ml-auto">{{ $t('csv_desc') }}</span>
-             </label>
-           </div>
-           
-           <div v-if="exportState.error" class="text-red-600 text-sm mb-4">
-             Error: {{ exportState.error }}
-           </div>
 
-           <div class="flex justify-end gap-2">
-             <button @click="showExportModal = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">
-               {{ $t('cancel') || 'Cancel' }}
-             </button>
-             <button @click="startExport" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-               {{ $t('start_export') || 'Start Export' }}
-             </button>
-           </div>
+        <div v-if="exportState.status === 'idle' || exportState.status === 'error'">
+          <p class="text-gray-600 mb-4">{{ $t('select_format') || 'Choose a format to export your collection:' }}</p>
+
+          <div class="flex flex-col gap-3 mb-6">
+            <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
+              <input type="radio" v-model="exportFormat" value="json" name="format">
+              <span class="font-medium">JSON</span>
+              <span class="text-xs text-gray-500 ml-auto">{{ $t('json_desc') }}</span>
+            </label>
+            <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50">
+              <input type="radio" v-model="exportFormat" value="csv" name="format">
+              <span class="font-medium">CSV</span>
+              <span class="text-xs text-gray-500 ml-auto">{{ $t('csv_desc') }}</span>
+            </label>
+          </div>
+
+          <div v-if="exportState.error" class="text-red-600 text-sm mb-4">
+            Error: {{ exportState.error }}
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <button @click="showExportModal = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">
+              {{ $t('cancel') || 'Cancel' }}
+            </button>
+            <button @click="startExport" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              {{ $t('start_export') || 'Start Export' }}
+            </button>
+          </div>
         </div>
 
         <div v-else class="text-center py-4">
-           <div v-if="exportState.status === 'pending' || exportState.status === 'running'" class="space-y-4">
-             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-             <p class="text-gray-700 font-medium">{{ $t('processing') }} {{ Math.round(exportState.progress * 100) }}%</p>
-             <p class="text-sm text-gray-500">{{ $t('wait') }}</p>
-           </div>
-           
-           <div v-if="exportState.status === 'done'" class="space-y-4">
-             <div class="text-5xl mb-2">✅</div>
-             <p class="text-lg font-bold text-green-600">{{ $t('ready') }}</p>
-             <p class="text-sm text-gray-600">{{ $t('export_success') }}</p>
-             
-             <button @click="downloadFile" class="w-full py-3 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 mt-4">
-                {{ $t('download_file') }}
-             </button>
-             
-             <button @click="resetExport" class="text-sm text-gray-500 underline mt-4">
-               {{ $t('close') }}
-             </button>
-           </div>
+          <div v-if="exportState.status === 'pending' || exportState.status === 'running'" class="space-y-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="text-gray-700 font-medium">{{ $t('processing') }} {{ Math.round(exportState.progress * 100) }}%
+            </p>
+            <p class="text-sm text-gray-500">{{ $t('wait') }}</p>
+          </div>
+
+          <div v-if="exportState.status === 'done'" class="space-y-4">
+            <div class="text-5xl mb-2">✅</div>
+            <p class="text-lg font-bold text-green-600">{{ $t('ready') }}</p>
+            <p class="text-sm text-gray-600">{{ $t('export_success') }}</p>
+
+            <button @click="downloadFile"
+              class="w-full py-3 bg-green-600 text-white rounded font-bold shadow hover:bg-green-700 mt-4">
+              {{ $t('download_file') }}
+            </button>
+
+            <button @click="resetExport" class="text-sm text-gray-500 underline mt-4">
+              {{ $t('close') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -203,14 +189,14 @@ export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
-    
+
     const collectionId = parseInt(route.params.id)
     const collection = ref(null)
     const items = ref([])
     const loadingCollection = ref(true)
     const loadingItems = ref(true)
     const currentUser = ref(null)
-    
+
     // Pagination state
     const currentPage = ref(1)
     const itemsPerPage = ref(20)
@@ -218,7 +204,7 @@ export default {
       if (!collection.value || !collection.value.items_count) return 0
       return Math.ceil(collection.value.items_count / itemsPerPage.value)
     })
-    
+
     const isOwner = computed(() => {
       if (!collection.value || !currentUser.value) return false
       return collection.value.user_id === currentUser.value.id
@@ -304,7 +290,7 @@ export default {
         }
       }
     }
-    
+
     const openEditModal = () => {
       // Logic to open edit modal (can be shared or separate)
       alert('Edit functionality to be implemented similar to list page')
@@ -320,7 +306,7 @@ export default {
       fetchCollection()
       fetchItems()
     })
-    
+
     // Export functionality
     const showExportModal = ref(false)
     const exportFormat = ref('json')
@@ -343,7 +329,7 @@ export default {
         const res = await exportCollection(collectionId, exportFormat.value);
         exportState.value.jobId = res.jobId;
         exportState.value.status = res.status;
-        
+
         // Start polling
         pollInterval = setInterval(checkStatus, 1500);
       } catch (err) {
@@ -354,33 +340,33 @@ export default {
 
     const checkStatus = async () => {
       if (!exportState.value.jobId) return;
-      
+
       try {
         const res = await getExportStatus(exportState.value.jobId);
         exportState.value.status = res.status;
         exportState.value.progress = res.progress;
-        
+
         if (res.status === 'done') {
-           clearInterval(pollInterval);
-           exportState.value.result = res.result;
+          clearInterval(pollInterval);
+          exportState.value.result = res.result;
         } else if (res.status === 'error') {
-           clearInterval(pollInterval);
-           exportState.value.error = res.error || 'Export failed';
+          clearInterval(pollInterval);
+          exportState.value.error = res.error || 'Export failed';
         }
       } catch (err) {
         clearInterval(pollInterval);
-         console.error('Check Status Error:', err);
-         if (err.response && err.response.data) {
-             console.error('Server Error Details:', JSON.stringify(err.response.data, null, 2));
-         }
-         exportState.value.status = 'error';
-         exportState.value.error = 'Lost connection to server';
+        console.error('Check Status Error:', err);
+        if (err.response && err.response.data) {
+          console.error('Server Error Details:', JSON.stringify(err.response.data, null, 2));
+        }
+        exportState.value.status = 'error';
+        exportState.value.error = 'Lost connection to server';
       }
     }
 
     const downloadFile = async () => {
       if (!exportState.value.result?.r2Key) return;
-      
+
       // Since it's R2 relative key, we need a way to download.
       // If result.url exists, use it. But in previous steps we just returned r2Key.
       // We should probably rely on a public URL if configured, or a signed URL.
@@ -405,7 +391,7 @@ export default {
       // `https://<R2_PUBLIC_DOMAIN>/exports/${jobId}.zip`
       // I don't know the R2 domain.
       // Let's try to change the download button to call a download helper.
-      
+
       // Quick fix for this interaction:
       // We'll create a simple download link assuming a pattern, or alert user.
       // Actually, checking `walkthrough.md`: "url": "https://r2.example.com/..."
@@ -416,11 +402,11 @@ export default {
       // and realizes I missed that endpoint.
       // I will implement a quick download proxy in Backend if needed.
       // Or just try to download from a hypothetical public bucket URL.
-      
+
       // Let's implement a download URL construction based on env var or just `/api/v1/download?key=` 
       // and I'll add that endpoint to v1.ts in next step if needed. 
       // For now, let's make the button open a URL.
-      
+
       const key = exportState.value.result.r2Key;
       // Assume a backend endpoint handles serving it.
       const downloadUrl = `/api/v1/download?key=${encodeURIComponent(key)}`;
