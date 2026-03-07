@@ -1,24 +1,24 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">
           {{ isEditing ? $t('edit_handbook') : $t('handbook_new') }}
         </h1>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
         <button @click="goBack"
-          class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600">
+          class="flex-1 sm:flex-none px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 min-h-[44px] cursor-pointer">
           {{ $t('cancel') }}
         </button>
         <button @click="save" :disabled="saving"
-          class="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm">
+          class="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm min-h-[44px] cursor-pointer">
           {{ saving ? $t('saving') : $t('save') }}
         </button>
       </div>
     </div>
 
-    <div v-if="hasDraft" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between">
+    <div v-if="hasDraft" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-3">
         <span class="text-xl">📝</span>
         <div>
@@ -26,11 +26,11 @@
           <p class="text-xs text-yellow-600">{{ $t('draft_found_hint') }}</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button @click="clearDraft" class="px-3 py-1.5 text-xs text-yellow-700 hover:text-yellow-800 font-medium">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button @click="clearDraft" class="flex-1 sm:flex-none px-3 py-2 text-xs text-yellow-700 hover:text-yellow-800 font-medium min-h-[44px] cursor-pointer">
           {{ $t('discard_draft') }}
         </button>
-        <button @click="restoreDraft" class="px-4 py-1.5 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors">
+        <button @click="restoreDraft" class="flex-1 sm:flex-none px-4 py-2 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors min-h-[44px] cursor-pointer">
           {{ $t('restore_draft') }}
         </button>
       </div>
@@ -47,13 +47,13 @@
                 <span class="text-red-500">*</span> {{ $t('title_label') }}
               </label>
               <input v-model="form.title" type="text"
-                class="w-full text-base font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3"
+                class="w-full text-base font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-3 min-h-[44px]"
                 :placeholder="$t('handbook_title_placeholder')" />
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
               <textarea v-model="form.description" rows="2"
-                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm"
+                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"
                 :placeholder="$t('description_placeholder')"></textarea>
             </div>
           </div>
@@ -65,7 +65,7 @@
                 <span class="text-red-500">*</span> {{ $t('content_lang') }}
               </label>
               <select v-model="form.source_lang"
-                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 bg-white">
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
                 <option value="" disabled>{{ $t('select_language') }}</option>
                 <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                   {{ lang.name }}
@@ -77,7 +77,7 @@
                 <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
               <select v-model="form.target_lang"
-                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 bg-white">
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
                 <option value="" disabled>{{ $t('select_language') }}</option>
                 <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                   {{ lang.name }}
@@ -93,54 +93,54 @@
             <span class="text-red-500">*</span> {{ $t('handbook_content_label') }}
           </label>
 
-          <div :class="['grid gap-4', showPreview ? 'grid-cols-2' : 'grid-cols-1']">
+          <div :class="['grid gap-4', showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
             <!-- Left Column: Editor -->
             <div>
               <!-- Toolbar -->
-              <div class="flex flex-wrap items-center gap-1 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl">
+              <div class="flex flex-wrap items-center gap-1.5 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl">
                 <button @click="undo" :disabled="historyIndex <= 0"
-                  class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30 cursor-pointer"
                   :title="$t('undo')">↩️</button>
                 <button @click="redo" :disabled="historyIndex >= history.length - 1"
-                  class="px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30 cursor-pointer"
                   :title="$t('redo')">↪️</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
                 <button @click="applyStyle('**', '**')"
-                  class="px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('bold')">B</button>
                 <button @click="applyStyle('*', '*')"
-                  class="px-2 py-1 text-sm italic hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm italic hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('italic')">I</button>
                 <button @click="applyStyle('<u>', '</u>')"
-                  class="px-2 py-1 text-sm underline hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm underline hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('underline')">U</button>
                 <button @click="applyStyle('~~', '~~')"
-                  class="px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('strikethrough')">S</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
                 <button @click="applyStyle('# ')"
-                  class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 1'">H1</button>
                 <button @click="applyStyle('## ')"
-                  class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 2'">H2</button>
                 <button @click="applyStyle('### ')"
-                  class="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 3'">H3</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('- ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors"
+                <button @click="applyStyle('- ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('bullet_list')">•</button>
-                <button @click="applyStyle('1. ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors"
+                <button @click="applyStyle('1. ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('numbered_list')">1.</button>
-                <button @click="applyStyle('> ')" class="px-2 py-1 text-sm hover:bg-white rounded transition-colors"
+                <button @click="applyStyle('> ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('quote')">"</button>
                 <button @click="applyStyle('`', '`')"
-                  class="px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('code')">&lt;/&gt;</button>
                 <div class="flex-grow"></div>
                 <!-- Preview Toggle -->
                 <button @click="showPreview = !showPreview"
-                  :class="['px-2.5 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1', showPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
+                  :class="['min-h-[36px] px-2.5 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1 cursor-pointer', showPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
                   :title="showPreview ? $t('hide_preview') : $t('show_preview')">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
@@ -154,7 +154,7 @@
               <!-- Expression Search -->
               <div class="relative mb-2">
                 <input v-model="searchQuery" type="text"
-                  class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white"
+                  class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
                   :placeholder="form.source_lang ? `🔍 ${$t('search_in_lang', { lang: form.source_lang })}` : ('🔍 ' + $t('insert_expression'))"
                   @input="search" />
 
@@ -168,11 +168,11 @@
                   </div>
                   <div v-else>
                     <div v-for="expr in searchResults" :key="expr.id"
-                      class="p-2 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors"
+                      class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
                       @click="insertAndClear(expr)">
-                      <div class="flex justify-between items-center">
+                      <div class="flex justify-between items-center w-full">
                         <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                        <span class="text-[10px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">{{
+                        <span class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
                           expr.language_code }}</span>
                       </div>
                     </div>
@@ -181,18 +181,18 @@
               </div>
 
               <div class="relative group">
-                <textarea ref="contentArea" v-model="form.content" rows="18"
-                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500  p-4 transition-all"
+                <textarea ref="contentArea" v-model="form.content" rows="12 sm:rows-15 lg:rows-18"
+                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all"
                   :placeholder="$t('content_placeholder')"></textarea>
                 <div
-                  class="absolute bottom-4 right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  class="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   {{ $t('markdown') }}
                 </div>
               </div>
             </div>
 
             <!-- Right Column: Preview -->
-            <div v-if="showPreview" class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div v-if="showPreview" class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
               <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor" stroke-width="2">
@@ -215,14 +215,14 @@
               </div>
               <div v-else>
                 <!-- Rendered Header in Preview -->
-                <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
+                <div class="flex flex-col gap-4 pb-6 border-b border-gray-100">
                   <div class="space-y-1.5 flex-1">
-                    <h1 class="text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
                     <p v-if="renderedDescription" class="text-sm text-gray-500 max-w-2xl leading-relaxed" v-html="renderedDescription"></p>
                   </div>
                 </div>
 
-                <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body"
+                <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body prose-sm sm:prose-base"
                   v-html="renderedContent"></div>
               </div>
             </div>
@@ -230,7 +230,7 @@
         </div>
 
         <!-- Public Toggle -->
-        <div class="flex items-center gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" v-model="form.is_public" class="sr-only peer">
             <div

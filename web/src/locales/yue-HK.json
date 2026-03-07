@@ -310,5 +310,11 @@
   "instruction_lang_required": "必須選擇教學語言",
   "handbook_save_failed": "手冊保存失敗",
   "handbook_title": "學習手冊",
-  "handbook_empty_info": "建立你嘅第一本手冊，將 LangMap 詞條同你的筆記有機結合。"
+  "handbook_empty_info": "建立你嘅第一本手冊，將 LangMap 詞條同你的筆記有機結合。",
+  "edit_handbook": "編輯手冊",
+  "handbook_not_found": "未搵到手冊",
+  "handbook_not_found_info": "手冊可能已被刪除或者移動咗。",
+  "handbook_back_to_list": "返到手冊列表",
+  "last_updated": "最後更新",
+  "learn_in": "學習語言"
 }

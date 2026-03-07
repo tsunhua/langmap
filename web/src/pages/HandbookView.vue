@@ -6,30 +6,33 @@
 
     <div v-else-if="handbook" class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
       <!-- Header -->
-      <div class="flex justify-between items-start gap-6 pb-6 border-b border-gray-100">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-gray-100">
         <div class="space-y-1.5 flex-1">
-          <h1 class="text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
           <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
              v-html="handbook.rendered_description || handbook.description"></p>
           <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
         </div>
 
-        <!-- Language Switcher -->
-        <div class="flex items-center gap-2 flex-shrink-0">
-          <span class="text-xs text-gray-400">{{ $t('learn_in') }}</span>
-          <select v-model="instructionLanguage"
-            class="border border-gray-200 rounded-lg text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-1.5 px-2 bg-white cursor-pointer">
-            <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
-              {{ lang.name }}
-            </option>
-          </select>
-        </div>
+        <!-- Language Switcher & Edit Button -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <!-- Language Switcher -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}</span>
+            <select v-model="instructionLanguage"
+              class="flex-1 min-w-[140px] border border-gray-200 rounded-lg text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 bg-white cursor-pointer min-h-[44px]">
+              <option v-for="lang in sortedLanguages" :key="lang.code" :value="lang.code">
+                {{ lang.name }}
+              </option>
+            </select>
+          </div>
 
-        <!-- Edit Button -->
-        <button v-if="canEdit" @click="goToEdit"
-          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-          {{ $t('edit_handbook') }}
-        </button>
+          <!-- Edit Button -->
+          <button v-if="canEdit" @click="goToEdit"
+            class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center cursor-pointer">
+            {{ $t('edit_handbook') }}
+          </button>
+        </div>
       </div>
 
       <!-- Content -->

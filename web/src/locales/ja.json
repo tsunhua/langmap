@@ -311,5 +311,11 @@
   "instruction_lang_required": "指示言語を選択してください",
   "handbook_save_failed": "ハンドブックの保存に失敗しました",
   "handbook_title": "学習ハンドブック",
-  "handbook_empty_info": "最初の学習マニュアルを作成して、表現とノートを整理し始めましょう。"
+  "handbook_empty_info": "最初の学習マニュアルを作成して、表現とノートを整理し始めましょう。",
+  "edit_handbook": "ハンドブックを編集",
+  "handbook_not_found": "ハンドブックが見つかりません",
+  "handbook_not_found_info": "ハンドブックは削除または移動された可能性があります。",
+  "handbook_back_to_list": "ハンドブック一覧に戻る",
+  "last_updated": "最終更新",
+  "learn_in": "学習言語"
 }

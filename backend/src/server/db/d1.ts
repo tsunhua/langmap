@@ -1910,18 +1910,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const handbook = await this.db.prepare(
       'SELECT renders FROM handbooks WHERE id = ?'
     ).bind(id).first<Handbook>()
-
-    if (!handbook || !handbook.renders) return null
-
+    
+    if (!handbook || !handbook.renders) return null 
+    
     try {
       const renders = JSON.parse(handbook.renders)
       const render = renders[targetLang]
-      if (!render) return null
+      if (!render) return null 
 
-      // Check TTL (1 hour)
+      // Check TTL (24 hours)
       const renderedTime = render.at
       const now = Date.now()
-      if (now - renderedTime > 3600 * 1000) {
+      if (now - renderedTime > 24 * 3600 * 1000) {
         return null // Expired
       }
 
