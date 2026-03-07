@@ -308,5 +308,7 @@
   "content_required": "內容是必填个",
   "content_lang_required": "愛揀目標語言",
   "instruction_lang_required": "愛揀教學語言",
-  "handbook_save_failed": "手冊保存失敗"
+  "handbook_save_failed": "手冊保存失敗",
+  "handbook_title": "學習手冊",
+  "handbook_empty_info": "建立汝个第一本手冊，將 LangMap 詞條佮汝个筆記有機結合。"
 }

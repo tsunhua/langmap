@@ -308,5 +308,7 @@
   "content_required": "Le contenu est requis",
   "content_lang_required": "La langue du contenu est requise",
   "instruction_lang_required": "La langue d'instruction est requise",
-  "handbook_save_failed": "Échec de la sauvegarde du manuel"
+  "handbook_save_failed": "Échec de la sauvegarde du manuel",
+  "handbook_title": "Manuels d'apprentissage",
+  "handbook_empty_info": "Créez votre premier manuel d'apprentissage pour organiser les expressions et les notes ."
 }

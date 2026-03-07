@@ -308,5 +308,7 @@
   "content_required": "El contenido es obligatorio",
   "content_lang_required": "El idioma del contenido es obligatorio",
   "instruction_lang_required": "El idioma de instrucción es obligatorio",
-  "handbook_save_failed": "Error al guardar el manual"
+  "handbook_save_failed": "Error al guardar el manual",
+  "handbook_title": "Manuales de Aprendizaje",
+  "handbook_empty_info": "Crea tu primer manual de aprendizaje para organizar expresiones y notas."
 }

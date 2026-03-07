@@ -309,5 +309,7 @@
   "content_required": "コンテンツは必須です",
   "content_lang_required": "コンテンツ言語を選択してください",
   "instruction_lang_required": "指示言語を選択してください",
-  "handbook_save_failed": "ハンドブックの保存に失敗しました"
+  "handbook_save_failed": "ハンドブックの保存に失敗しました",
+  "handbook_title": "学習ハンドブック",
+  "handbook_empty_info": "最初の学習マニュアルを作成して、表現とノートを整理し始めましょう。"
 }
