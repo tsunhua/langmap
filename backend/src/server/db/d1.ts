@@ -1973,6 +1973,55 @@ export class D1DatabaseService extends AbstractDatabaseService {
     ).bind('{}', id).run()
   }
 
+  // UI Locale methods (NEW - replaces UI translations)
+  async getUILocale(languageCode: string): Promise<UILocale | null> {
+    const result = await this.db.prepare(
+      'SELECT * FROM ui_locales WHERE language_code = ?'
+    ).bind(languageCode).first<UILocale>()
+
+    return result ? this.formatTimestamps(result) : null
+  }
+
+  async saveUILocale(languageCode: string, localeJson: string, username: string): Promise<UILocale> {
+    const now = new Date().toISOString()
+
+    // Check if locale already exists
+    const existing = await this.getUILocale(languageCode)
+
+    if (existing) {
+      // Update existing locale
+      await this.db.prepare(
+        'UPDATE ui_locales SET locale_json = ?, updated_by = ?, updated_at = ? WHERE language_code = ?'
+      ).bind(localeJson, username, now, languageCode).run()
+
+      return {
+        ...existing,
+        locale_json: localeJson,
+        updated_by: username,
+        updated_at: now
+      }
+    } else {
+      // Create new locale
+      const result = await this.db.prepare(
+        'INSERT INTO ui_locales (language_code, locale_json, created_by, created_at, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING *'
+      ).bind(languageCode, localeJson, username, now, username, now).first<UILocale>()
+
+      if (!result) {
+        throw new Error('Failed to create UI locale')
+      }
+
+      return this.formatTimestamps(result)
+    }
+  }
+
+  async deleteUILocale(languageCode: string): Promise<boolean> {
+    const result = await this.db.prepare(
+      'DELETE FROM ui_locales WHERE language_code = ?'
+    ).bind(languageCode).run()
+
+    return result.meta.changes > 0
+  }
+
   /**
    * Generate a stable Collection Item ID using FNV-1a 32-bit hash.
    * @param collectionId 

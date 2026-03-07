@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { fetchUITranslations, fetchLanguages, transformTranslations } from './services/languageService.js'
+import { fetchUILocale, fetchLanguages } from './services/languageService.js'
 
 // Dynamically import all locale files using Vite's import.meta.glob
 // This will automatically include all .json files from the locales directory
@@ -112,52 +112,53 @@ const i18n = createI18n({
  */
 export async function loadLanguage(languageCode) {
   console.log(`[i18n] Loading language: ${languageCode}`)
-  
+
   // If it's a static language, no need to fetch anything
   if (staticMessages[languageCode]) {
     console.log(`[i18n] Language ${languageCode} is statically available`)
     i18n.global.setLocaleMessage(languageCode, staticMessages[languageCode])
     return
   }
-  
+
   // Check if we have cached messages
   if (dynamicMessagesCache[languageCode]) {
     console.log(`[i18n] Using cached messages for ${languageCode}`)
     i18n.global.setLocaleMessage(languageCode, dynamicMessagesCache[languageCode])
     return
   }
-  
+
   try {
-    // Fetch UI translations from backend
-    const translations = await fetchUITranslations(languageCode)
-    
-    // Transform to nested object format
-    const messages = transformTranslations(translations)
-    
+    // Fetch UI locale from backend (already flattened JSON)
+    const uiLocale = await fetchUILocale(languageCode)
+
     // Check if we have any actual translations
-    const hasTranslations = Object.keys(messages).length > 0
-    
+    const hasTranslations = uiLocale && Object.keys(uiLocale.locale_json).length > 0
+
     if (hasTranslations) {
-      // Cache the messages
-      dynamicMessagesCache[languageCode] = messages
-      
-      // Set locale messages
-      i18n.global.setLocaleMessage(languageCode, messages)
+      // Cache messages
+      dynamicMessagesCache[languageCode] = uiLocale.locale_json
+
+      // Set locale messages (already flattened, no transformation needed)
+      i18n.global.setLocaleMessage(languageCode, uiLocale.locale_json)
       console.log(`[i18n] Successfully loaded messages for ${languageCode}`)
     } else {
       // If no translations, map to closest supported language
       const mappedLanguage = detectBrowserLanguage()
       console.log(`[i18n] No translations for ${languageCode}, mapping to ${mappedLanguage}`)
-      
-      // Use messages from mapped language
-      const fallbackMessages = staticMessages[mappedLanguage] || staticMessages['en-US']
-      i18n.global.setLocaleMessage(languageCode, fallbackMessages)
+      if (mappedLanguage !== languageCode) {
+        await loadLanguage(mappedLanguage)
+      }
     }
   } catch (error) {
-    console.error(`[i18n] Failed to load translations for language ${languageCode}:`, error)
-    // Fall back to English if failed to load
-    i18n.global.setLocaleMessage(languageCode, staticMessages['en-US'])
-  }
+    console.error(`[i18n] Failed to load messages for ${languageCode}:`, error)
+
+    // Fallback to default locale on error
+    const fallbackLanguage = 'en-US'
+    if (languageCode !== fallbackLanguage && staticMessages[fallbackLanguage]) {
+      console.log(`[i18n] Falling back to ${fallbackLanguage}`)
+      i18n.global.setLocaleMessage(languageCode, staticMessages[fallbackLanguage])
+    }
+   }
 }
 
 export default i18n

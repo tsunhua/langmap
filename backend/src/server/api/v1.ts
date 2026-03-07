@@ -1054,7 +1054,7 @@ api.post('/ui-translations/:language', requireAuth, async (c) => {
 })
 
 // POST /api/v1/sync-locales
-// Sync local JSON locales to database (admin only)
+// Sync local JSON locales to database (admin only) - DEPRECATED
 api.post('/sync-locales', requireAdmin, async (c) => {
   try {
     console.log('POST /api/v1/sync-locales');
@@ -1083,6 +1083,119 @@ api.post('/sync-locales', requireAdmin, async (c) => {
   } catch (error: any) {
     console.error('Error in POST /sync-locales:', error);
     return c.json({ error: 'Failed to sync locales', details: error.message }, 500)
+  }
+})
+
+// UI Locale Routes (NEW - replaces UI translations)
+
+// GET /api/v1/ui-locale/:language_code
+api.get('/ui-locale/:language_code', cacheMiddleware(3600), async (c) => {
+  try {
+    console.log('GET /api/v1/ui-locale/:language_code');
+    const db = getDB(c)
+    const language_code = c.req.param('language_code')
+
+    const uiLocale = await db.getUILocale(language_code)
+
+    if (!uiLocale) {
+      return c.json({ error: 'Locale not found' }, 404)
+    }
+
+    // Parse locale_json before returning
+    const localeJson = JSON.parse(uiLocale.locale_json)
+
+    return c.json({
+      ...uiLocale,
+      locale_json: localeJson
+    })
+  } catch (error: any) {
+    console.error('Error in GET /ui-locale/:language_code:', error);
+    return c.json({ error: 'Failed to fetch UI locale' }, 500)
+  }
+})
+
+// POST /api/v1/ui-locale/:language_code
+api.post('/ui-locale/:language_code', requireAuth, async (c) => {
+  try {
+    console.log('POST /api/v1/ui-locale/:language_code');
+    const db = getDB(c)
+    const language_code = c.req.param('language_code')
+    const body = await c.req.json()
+    const { locale_json } = body
+
+    if (!locale_json || typeof locale_json !== 'object') {
+      return c.json({ error: 'Invalid locale_json format' }, 400)
+    }
+
+    // Get user info from middleware
+    const user = c.get('user');
+    const username = user.username;
+
+    // Save locale
+    const savedLocale = await db.saveUILocale(language_code, JSON.stringify(locale_json), username)
+
+    // Clear cache for this language's GET request
+    try {
+      const cache = (caches as any).default
+      if (cache) {
+        const cacheUrl = new URL(`/api/v1/ui-locale/${language_code}`, c.req.url)
+        const cacheKey = new Request(cacheUrl.toString())
+        await cache.delete(cacheKey)
+        console.log(`[L2 Cache] Cleared cache for ${language_code}`)
+      }
+    } catch (e) {
+      console.warn('[L2 Cache] Failed to clear cache:', e)
+    }
+
+    // Parse locale_json before returning
+    const localeJson = JSON.parse(savedLocale.locale_json)
+
+    return c.json({
+      success: true,
+      data: {
+        ...savedLocale,
+        locale_json: localeJson
+      }
+    })
+  } catch (error: any) {
+    console.error('Error in POST /ui-locale/:language_code:', error);
+    return c.json({ error: 'Failed to save UI locale', details: error.message }, 500)
+  }
+})
+
+// DELETE /api/v1/ui-locale/:language_code (admin only)
+api.delete('/ui-locale/:language_code', requireAdmin, async (c) => {
+  try {
+    console.log('DELETE /api/v1/ui-locale/:language_code');
+    const db = getDB(c)
+    const language_code = c.req.param('language_code')
+
+    const success = await db.deleteUILocale(language_code)
+
+    if (!success) {
+      return c.json({ error: 'Locale not found' }, 404)
+    }
+
+    // Clear cache for this language's GET request
+    try {
+      const cache = (caches as any).default
+      if (cache) {
+        const cacheUrl = new URL(`/api/v1/ui-locale/${language_code}`, c.req.url)
+        const cacheKey = new Request(cacheUrl.toString())
+        await cache.delete(cacheKey)
+        console.log(`[L2 Cache] Cleared cache for ${language_code}`)
+      }
+    } catch (e) {
+      console.warn('[L2 Cache] Failed to clear cache:', e)
+    }
+
+    return c.json({
+      success: true,
+      message: 'Locale deleted successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in DELETE /ui-locale/:language_code:', error);
+    return c.json({ error: 'Failed to delete UI locale', details: error.message }, 500)
   }
 })
 

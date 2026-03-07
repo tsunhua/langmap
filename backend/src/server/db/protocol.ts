@@ -126,6 +126,17 @@ export interface HeatmapData {
   longitude: string | null
 }
 
+// UI Locale interface
+export interface UILocale {
+  id: number
+  language_code: string
+  locale_json: string
+  created_by?: string
+  created_at?: string
+  updated_by?: string
+  updated_at?: string
+}
+
 // Abstract database service class
 export abstract class AbstractDatabaseService {
   // Language operations
@@ -157,12 +168,17 @@ export abstract class AbstractDatabaseService {
   abstract getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]>
   abstract createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion>
 
-  // UI translations
+  // UI translations (DEPRECATED - use UI locales instead)
   abstract getUITranslations(language: string, skip?: number, limit?: number): Promise<any[]>
   abstract saveUITranslation(language: string, key: string, text: string, username: string, meaningId?: number): Promise<void>
   abstract saveUITranslations(language: string, translations: Array<{ key: string, text: string, meaning_id?: number }>, username: string): Promise<Array<{ key: string, error?: string }>>
   abstract syncLocalesToDatabase(localeData: Record<string, any>, username: string): Promise<Record<string, { added: number, updated: number, errors: string[] }>>
   abstract calculateUITranslationCompletion(languageCode: string): Promise<number>
+
+  // UI locales (NEW - replaces UI translations)
+  abstract getUILocale(languageCode: string): Promise<UILocale | null>
+  abstract saveUILocale(languageCode: string, localeJson: string, username: string): Promise<UILocale>
+  abstract deleteUILocale(languageCode: string): Promise<boolean>
 
 
   // Users
