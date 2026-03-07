@@ -310,5 +310,11 @@
   "instruction_lang_required": "La langue d'instruction est requise",
   "handbook_save_failed": "Échec de la sauvegarde du manuel",
   "handbook_title": "Manuels d'apprentissage",
-  "handbook_empty_info": "Créez votre premier manuel d'apprentissage pour organiser les expressions et les notes ."
+  "handbook_empty_info": "Créez votre premier manuel d'apprentissage pour organiser les expressions et les notes .",
+  "edit_handbook": "Éditer le Manuel",
+  "handbook_not_found": "Manuel Non Trouvé",
+  "handbook_not_found_info": "Le manuel peut avoir été supprimé ou déplacé.",
+  "handbook_back_to_list": "Retour à la Liste des Manuels",
+  "last_updated": "Dernière Mise à Jour",
+  "learn_in": "Apprendre en"
 }
