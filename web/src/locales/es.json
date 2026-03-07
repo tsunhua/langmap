@@ -228,7 +228,7 @@
   "same_language_error": "Los idiomas de referencia y destino no pueden ser iguales",
   "save": "Guardar",
   "save_collection": "Guardar colección",
-  "save_translations": "Guardar Traducciones ({ count })",
+  "save_translations": "Guardar Traducciones ({count})",
   "saving": "Guardando...",
   "search": "Buscar",
   "search_expressions": "Buscar expresiones",
