@@ -65,125 +65,139 @@
             :placeholder="$t('text_placeholder')"></textarea>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_region') }}</label>
-          <div class="flex gap-2">
-            <input v-model="expression.region_display"
-              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 text-slate-500" />
-            <button @click="detectLocation(index)"
-              :disabled="expression.detectingLocation || expression.parsingLocation"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('detect_location')">
-              <svg v-if="expression.detectingLocation || expression.parsingLocation"
-                class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-              </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1 1 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-            <button @click="toggleMapSelector(index)" :disabled="expression.parsingLocation"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('select_on_map')">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="expression.showMapSelector" class="mt-3 border border-slate-200 rounded-lg overflow-hidden">
-            <div :id="`region-map-${index}`" class="w-full h-64"></div>
-            <div class="p-3 bg-slate-50 text-sm text-slate-600">
-              {{ $t('click_on_map_to_select') }}
-            </div>
-          </div>
-
-          <div v-if="expression.parsingLocation" class="mt-2 flex items-center text-sm text-slate-600">
-            <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-              viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-              </path>
+        <div class="border border-slate-200 rounded-lg">
+          <button @click="toggleAdvanced(index)"
+            class="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors rounded-lg">
+            <span class="text-sm font-medium text-slate-700">{{ $t('more') || 'Advanced Options' }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg"
+              :class="['h-5 w-5 text-slate-500 transition-transform', expression.showAdvanced ? 'rotate-180' : '']"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
-            {{ $t('parsing_location') }}
-          </div>
-        </div>
+          </button>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_audio_label') }} ({{
-            $t('optional') }})</label>
-          <AudioRecorder @audio-ready="payload => handleAudioReady(index, payload)"
-            @audio-cleared="() => handleAudioCleared(index)" />
-        </div>
+          <div v-if="expression.showAdvanced" class="p-4 pt-0 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('create_region') }}</label>
+              <div class="flex gap-2">
+                <input v-model="expression.region_display"
+                  class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 text-slate-500" />
+                <button @click="detectLocation(index)"
+                  :disabled="expression.detectingLocation || expression.parsingLocation"
+                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                  :title="$t('detect_location')">
+                  <svg v-if="expression.detectingLocation || expression.parsingLocation"
+                    class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1 1 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <button @click="toggleMapSelector(index)" :disabled="expression.parsingLocation"
+                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                  :title="$t('select_on_map')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </button>
+              </div>
 
-        <div class="mt-6">
-          <label class="block text-sm font-medium text-slate-700 mb-1">
-            {{ $t('collections') }} ({{ $t('optional') }})
-          </label>
-          <div class="flex gap-2">
-            <input :value="getSelectedCollectionNames(expression.collections)"
-              class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 bg-slate-100 text-slate-500 cursor-pointer"
-              readonly @click="toggleCollectionSelector(index)" />
-            <button @click="toggleCollectionSelector(index)"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('select_collections')">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </button>
-            <button @click="openCreateCollectionModal(index)"
-              class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
-              :title="$t('create_collection')">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="expression.showCollectionSelector" class="mt-3 border border-slate-200 rounded-lg p-3">
-            <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
-              <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-              </svg>
-              {{ $t('loading_collections') }}
-            </div>
-
-            <div v-else-if="userCollections.length === 0" class="text-center py-4 text-slate-500">
-              <p>{{ $t('no_collections') }}</p>
-              <button @click="openCreateCollectionModal(index)" class="mt-2 text-blue-600 hover:text-blue-800">
-                {{ $t('create_first_collection') }}
-              </button>
-            </div>
-
-            <div v-else class="space-y-2 max-h-48 overflow-y-auto">
-              <label v-for="collection in userCollections" :key="collection.id"
-                class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
-                <input type="checkbox" :checked="expression.collections.includes(collection.id)"
-                  @change="toggleCollectionSelection(index, collection.id)"
-                  class="form-checkbox h-4 w-4 text-blue-600 rounded" />
-                <div class="flex-1">
-                  <span class="text-slate-800">{{ collection.name }}</span>
-                  <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
+              <div v-if="expression.showMapSelector" class="mt-3 border border-slate-200 rounded-lg overflow-hidden">
+                <div :id="`region-map-${index}`" class="w-full h-64"></div>
+                <div class="p-3 bg-slate-50 text-sm text-slate-600">
+                  {{ $t('click_on_map_to_select') }}
                 </div>
+              </div>
+
+              <div v-if="expression.parsingLocation" class="mt-2 flex items-center text-sm text-slate-600">
+                <svg class="animate-spin h-4 w-4 mr-2 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                  viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                {{ $t('parsing_location') }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_audio_label') }} ({{
+                $t('optional') }})</label>
+              <AudioRecorder @audio-ready="payload => handleAudioReady(index, payload)"
+                @audio-cleared="() => handleAudioCleared(index)" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">
+                {{ $t('collections') }} ({{ $t('optional') }})
               </label>
+              <div class="flex gap-2">
+                <input :value="getSelectedCollectionNames(expression.collections)"
+                  class="block flex-1 rounded-md border border-slate-300 shadow-sm py-2 px-4 bg-slate-100 text-slate-500 cursor-pointer"
+                  readonly @click="toggleCollectionSelector(index)" />
+                <button @click="toggleCollectionSelector(index)"
+                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                  :title="$t('select_collections')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </button>
+                <button @click="openCreateCollectionModal(index)"
+                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3"
+                  :title="$t('create_collection')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+              </div>
+
+              <div v-if="expression.showCollectionSelector" class="mt-3 border border-slate-200 rounded-lg p-3">
+                <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
+                  <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                  </svg>
+                  {{ $t('loading_collections') }}
+                </div>
+
+                <div v-else-if="userCollections.length === 0" class="text-center py-4 text-slate-500">
+                  <p>{{ $t('no_collections') }}</p>
+                  <button @click="openCreateCollectionModal(index)" class="mt-2 text-blue-600 hover:text-blue-800">
+                    {{ $t('create_first_collection') }}
+                  </button>
+                </div>
+
+                <div v-else class="space-y-2 max-h-48 overflow-y-auto">
+                  <label v-for="collection in userCollections" :key="collection.id"
+                    class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                    <input type="checkbox" :checked="expression.collections.includes(collection.id)"
+                      @change="toggleCollectionSelection(index, collection.id)"
+                      class="form-checkbox h-4 w-4 text-blue-600 rounded" />
+                    <div class="flex-1">
+                      <span class="text-slate-800">{{ collection.name }}</span>
+                      <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -321,7 +335,8 @@ export default {
         collections: [],
         showCollectionSelector: false,
         audioBlob: null,
-        audioMimeType: null
+        audioMimeType: null,
+        showAdvanced: false
       }
     ])
 
@@ -332,6 +347,7 @@ export default {
     const error = ref(null)
     const success = ref(false)
     const submitting = ref(false)
+    const globalShowAdvanced = ref(false)
 
     // Collection-related state
     const userCollections = ref([])
@@ -413,9 +429,31 @@ export default {
         collectionNote: '',
         showCollectionSelector: false,
         audioBlob: null,
-        audioMimeType: null
+        audioMimeType: null,
+        showAdvanced: globalShowAdvanced.value
       })
     }
+
+    const toggleAdvanced = (index) => {
+      const newState = !expressions.value[index].showAdvanced
+      expressions.value[index].showAdvanced = newState
+      globalShowAdvanced.value = newState
+    }
+
+    watch(
+      () => expressions.value.map(e => e.showAdvanced),
+      (newValues, oldValues) => {
+        if (oldValues) {
+          for (let i = 0; i < newValues.length; i++) {
+            if (newValues[i] !== oldValues[i]) {
+              globalShowAdvanced.value = newValues[i]
+              break
+            }
+          }
+        }
+      },
+      { deep: true }
+    )
 
     const removeExpression = (index) => {
       if (expressions.value[index].showMapSelector) {
@@ -1040,7 +1078,8 @@ export default {
       handleCreateCollection,
       getSelectedCollectionNames,
       handleAudioReady,
-      handleAudioCleared
+      handleAudioCleared,
+      toggleAdvanced
     }
   }
 }
