@@ -293,5 +293,20 @@
   "add_audio": "加入錄音",
   "remove_audio": "移除錄音",
   "expression_audio_label": "詞句錄音",
-  "confirm_delete_audio": "你確定要刪除呢段錄音？"
+  "confirm_delete_audio": "你確定要刪除呢段錄音？",
+  "draft_found": "發現草稿",
+  "draft_found_hint": "你有一個未保存嘅草稿，係咪要恢復？",
+  "discard_draft": "放棄",
+  "restore_draft": "恢復草稿",
+  "handbook_title_placeholder": "輸入手冊標題...",
+  "handbook_content_label": "正文內容 (Markdown)",
+  "show_preview": "顯示預覽",
+  "hide_preview": "隱藏預覽",
+  "content_placeholder": "使用 {{text:...|lang:...}} 語法嵌入詞條...",
+  "public_hint": "令所有用戶可見此手冊",
+  "title_required": "標題為必填項",
+  "content_required": "內容為必填項",
+  "content_lang_required": "必須選擇目標語言",
+  "instruction_lang_required": "必須選擇教學語言",
+  "handbook_save_failed": "手冊保存失敗"
 }

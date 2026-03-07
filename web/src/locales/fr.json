@@ -293,5 +293,20 @@
   "add_audio": "Ajouter l'audio",
   "remove_audio": "Supprimer l'audio",
   "expression_audio_label": "Enregistrement de la prononciation de l'expression",
-  "confirm_delete_audio": "Êtes-vous sûr de vouloir supprimer cet audio ?"
+  "confirm_delete_audio": "Êtes-vous sûr de vouloir supprimer cet audio ?",
+  "draft_found": "Brouillon trouvé",
+  "draft_found_hint": "Vous avez un brouillon non sauvegardé. Voulez-vous le restaurer ?",
+  "discard_draft": "Supprimer",
+  "restore_draft": "Restaurer le brouillon",
+  "handbook_title_placeholder": "Entrez le titre du manuel...",
+  "handbook_content_label": "Contenu (Markdown)",
+  "show_preview": "Afficher l'aperçu",
+  "hide_preview": "Masquer l'aperçu",
+  "content_placeholder": "Utilisez la syntaxe {{text:...|lang:...}} pour incorporer des expressions...",
+  "public_hint": "Rendre ce manuel visible pour tous les utilisateurs",
+  "title_required": "Le titre est requis",
+  "content_required": "Le contenu est requis",
+  "content_lang_required": "La langue du contenu est requise",
+  "instruction_lang_required": "La langue d'instruction est requise",
+  "handbook_save_failed": "Échec de la sauvegarde du manuel"
 }
