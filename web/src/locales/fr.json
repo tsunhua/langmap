@@ -302,7 +302,7 @@
   "handbook_content_label": "Contenu (Markdown)",
   "show_preview": "Afficher l'aperçu",
   "hide_preview": "Masquer l'aperçu",
-  "content_placeholder": "Utilisez la syntaxe {{text:...|lang:...}} pour incorporer des expressions...",
+  "content_placeholder": "Utilisez la syntaxe '{{text:...|lang:...}}' pour incorporer des expressions...",
   "public_hint": "Rendre ce manuel visible pour tous les utilisateurs",
   "title_required": "Le titre est requis",
   "content_required": "Le contenu est requis",

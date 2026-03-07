@@ -305,7 +305,7 @@
   "handbook_content_label": "コンテンツ (Markdown)",
   "show_preview": "プレビューを表示",
   "hide_preview": "プレビューを非表示",
-  "content_placeholder": "{{text:...|lang:...}} 構文を使用して表現を埋め込みます...",
+  "content_placeholder": "'{{text:...|lang:...}}' 構文を使用して表現を埋め込みます...",
   "public_hint": "すべてのユーザーにこのハンドブックを表示",
   "title_required": "タイトルは必須です",
   "content_required": "コンテンツは必須です",
