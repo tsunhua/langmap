@@ -293,5 +293,22 @@
   "add_audio": "Agregar audio",
   "remove_audio": "Eliminar audio",
   "expression_audio_label": "Grabación de pronunciación de expresión",
-  "confirm_delete_audio": "¿Estás seguro de que quieres eliminar este audio?"
+  "confirm_delete_audio": "¿Estás seguro de que quieres eliminar este audio?",
+  "draft_found": "Borrador encontrado",
+  "draft_found_hint": "Tienes un borrador sin guardar. ¿Quieres restaurarlo?",
+  "discard_draft": "Descartar",
+  "restore_draft": "Restaurar borrador",
+  "handbook_title_placeholder": "Ingresa el título del manual...",
+  "handbook_content_label": "Contenido (Markdown)",
+  "show_preview": "Mostrar vista previa",
+  "hide_preview": "Ocultar vista previa",
+  "content_placeholder": "Usa la sintaxis {{text:...|lang:...}} para incrustar expresiones...",
+  "public_hint": "Hacer este manual visible para todos los usuarios",
+  "title_required": "El título es obligatorio",
+  "content_required": "El contenido es obligatorio",
+  "content_lang_required": "El idioma del contenido es obligatorio",
+  "instruction_lang_required": "El idioma de instrucción es obligatorio",
+  "handbook_save_failed": "Error al guardar el manual",
+  "handbook_title": "Manuales de Aprendizaje",
+  "handbook_empty_info": "Crea tu primer manual de aprendizaje para organizar expresiones y notas."
 }
