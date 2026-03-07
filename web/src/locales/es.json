@@ -311,10 +311,20 @@
   "handbook_save_failed": "Error al guardar el manual",
   "handbook_title": "Manuales de Aprendizaje",
   "handbook_empty_info": "Crea tu primer manual de aprendizaje para organizar expresiones y notas.",
+  "handbook_delete_confirm": "¿Estás seguro de que quieres eliminar este manual?",
   "edit_handbook": "Editar Manual",
   "handbook_not_found": "Manual No Encontrado",
   "handbook_not_found_info": "El manual puede haber sido eliminado o movido.",
   "handbook_back_to_list": "Volver a la Lista de Manuales",
   "last_updated": "Última Actualización",
-  "learn_in": "Aprender en"
+  "learn_in": "Aprender en",
+  "handbook_new": "Nuevo Manual",
+  "handbook_my": "Mis Manuales",
+  "handbook_shared": "Manuales Compartidos",
+  "handbook_none_found": "No se encontraron manuales",
+  "delete_handbook": "Eliminar Manual",
+  "title_label": "Título",
+  "content_lang": "Idioma del Contenido",
+  "instruction_lang": "Idioma de Instrucción",
+  "save_failed": "Error al guardar"
 }

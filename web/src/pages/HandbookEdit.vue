@@ -54,7 +54,7 @@
               <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
               <textarea v-model="form.description" rows="2"
                 class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"
-                :placeholder="$t('description_placeholder')"></textarea>
+                ></textarea>
             </div>
           </div>
 
