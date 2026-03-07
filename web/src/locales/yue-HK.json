@@ -302,7 +302,7 @@
   "handbook_content_label": "正文內容 (Markdown)",
   "show_preview": "顯示預覽",
   "hide_preview": "隱藏預覽",
-  "content_placeholder": "使用 {{text:...|lang:...}} 語法嵌入詞條...",
+  "content_placeholder": "使用 '{{text:...|lang:...}}' 語法嵌入詞條...",
   "public_hint": "令所有用戶可見此手冊",
   "title_required": "標題為必填項",
   "content_required": "內容為必填項",

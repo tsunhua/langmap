@@ -351,7 +351,7 @@
   "handbook_content_label": "正文内容 (Markdown)",
   "show_preview": "显示预览",
   "hide_preview": "隐藏预览",
-  "content_placeholder": "使用 {{text:...|lang:...}} 语法嵌入词条...",
+  "content_placeholder": "使用 '{{text:...|lang:...}}' 语法嵌入词条...",
   "public_hint": "让所有用户可见此手册",
   "title_required": "标题为必填项",
   "content_required": "内容为必填项",

@@ -360,7 +360,7 @@
   "handbook_content_label": "Content (Markdown)",
   "show_preview": "Show Preview",
   "hide_preview": "Hide Preview",
-  "content_placeholder": "Use {{text:...|lang:...}} syntax to embed expressions...",
+  "content_placeholder": "Use '{{text:...|lang:...}}' syntax to embed expressions...",
   "public_hint": "Make this handbook visible to all users",
   "title_required": "Title is required",
   "content_required": "Content is required",
