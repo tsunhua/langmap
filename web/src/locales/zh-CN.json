@@ -239,7 +239,7 @@
   "same_language_error": "参考语言和目标语言不能相同",
   "save": "保存",
   "save_collection": "保存收藏集",
-  "save_translations": "保存翻译 ({ count })",
+  "save_translations": "保存翻译 ({count})",
   "saving": "保存中...",
   "search": "搜索",
   "search_expressions": "搜索词句",

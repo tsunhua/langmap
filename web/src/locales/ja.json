@@ -230,7 +230,7 @@
   "same_language_error": "参照言語と対象言語は同じにできません",
   "save": "保存",
   "save_collection": "コレクションを保存",
-  "save_translations": "翻訳を保存 ({ count })",
+  "save_translations": "翻訳を保存 ({count})",
   "save_failed": "保存に失敗しました",
   "saving": "保存中...",
   "search": "検索",

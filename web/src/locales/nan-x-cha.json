@@ -228,7 +228,7 @@
   "same_language_error": "參考語言佮目標語言毋孬平樣",
   "save": "儲存收藏",
   "save_collection": "儲存收藏",
-  "save_translations": "保存翻譯（{ count }）",
+  "save_translations": "保存翻譯（{count}）",
   "save_failed": "保存失敗",
   "saving": "囉保存…",
   "search": "尋揣",

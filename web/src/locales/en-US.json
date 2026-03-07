@@ -249,7 +249,7 @@
   "same_language_error": "Reference and target languages cannot be the same",
   "save": "Save",
   "save_collection": "Save Collection",
-  "save_translations": "Save Translations ({ count })",
+  "save_translations": "Save Translations ({count})",
   "saving": "Saving...",
   "search": "Search",
   "search_expressions": "Search Expressions",
