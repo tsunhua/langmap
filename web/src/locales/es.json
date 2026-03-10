@@ -290,6 +290,7 @@
   "add_to_collection_error": "Expresión creada, pero error al agregar a colecciones",
   "partial_add_error": "Algunas expresiones no pudieron ser agregadas a colecciones",
   "record_audio": "Grabar pronunciación",
+  "upload_audio": "Subir audio",
   "audio_not_supported": "El entorno actual no admite grabación. Por favor, use un navegador moderno y asegúrese de acceder a través de HTTPS.",
   "microphone_access_denied": "No se puede acceder al micrófono. Asegúrese de haber otorgado el permiso.",
   "add_audio": "Agregar audio",

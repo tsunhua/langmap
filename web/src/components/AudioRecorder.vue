@@ -34,6 +34,27 @@
         {{ $t('record_audio') }}
       </button>
 
+      <div 
+        v-if="!audioUrl"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-full font-medium transition-colors focus:ring-2 focus:ring-slate-500 focus:outline-none ml-2 cursor-pointer"
+      >
+        <label :for="uploadId" class="cursor-pointer flex items-center gap-2 w-full h-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          {{ $t('upload_audio') }}
+        </label>
+      </div>
+
+      <input 
+        :id="uploadId"
+        ref="fileInput"
+        type="file" 
+        accept="audio/*"
+        style="display: none;"
+        @change="handleFileSelect"
+      />
+
       <div v-if="!isSupported" class="text-xs text-slate-500 ml-2">
         {{ $t('audio_not_supported') }}
       </div>
@@ -72,7 +93,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, watch, nextTick } from 'vue'
+
+const uploadId = `audio-upload-${Math.random().toString(36).substr(2, 9)}`
 
 const props = defineProps({
   existingAudioUrl: {
@@ -88,6 +111,7 @@ const isRecording = ref(false)
 const error = ref('')
 const recordingTime = ref(0)
 const audioUrl = ref(props.existingAudioUrl)
+const fileInput = ref(null)
 
 let mediaRecorder = null
 let audioChunks = []
@@ -184,6 +208,49 @@ const resetRecording = () => {
   recordingTime.value = 0
   error.value = ''
   emit('audio-cleared')
+}
+
+const triggerFileUpload = () => {
+  nextTick(() => {
+    if (fileInput.value) {
+      fileInput.value.click()
+    }
+  })
+}
+
+const handleFileSelect = (event) => {
+  console.log('handleFileSelect called')
+  const file = event.target.files[0]
+  if (!file) {
+    console.log('No file selected')
+    return
+  }
+  
+  console.log('File selected:', file.name, file.type, file.size)
+
+  // Validate file type
+  if (!file.type.startsWith('audio/')) {
+    error.value = '请选择音频文件'
+    return
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    error.value = '音频文件大小不能超过 10MB'
+    return
+  }
+
+  error.value = ''
+  const audioBlob = file
+  audioUrl.value = URL.createObjectURL(audioBlob)
+
+  emit('audio-ready', {
+    blob: audioBlob,
+    mimeType: file.type
+  })
+
+  // Reset file input so same file can be selected again
+  event.target.value = ''
 }
 
 onBeforeUnmount(() => {

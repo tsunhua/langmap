@@ -310,6 +310,7 @@
   "add_to_collection_error": "Expression created, but failed to add to collections",
   "partial_add_error": "Some expressions could not be added to collections",
   "record_audio": "Record Pronunciation",
+  "upload_audio": "Upload Audio",
   "audio_not_supported": "Current environment does not support recording. Please use a modern browser and ensure you're accessing via HTTPS.",
   "microphone_access_denied": "Cannot access microphone. Please ensure you have granted permission.",
   "add_audio": "Add Audio",

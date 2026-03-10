@@ -291,6 +291,7 @@
   "add_to_collection_error": "詞句已經建立，但是加到收藏集時出錯",
   "partial_add_error": "部分詞句無變加入收藏",
   "record_audio": "錄音",
+  "upload_audio": "上傳聲音",
   "audio_not_supported": "目前環境無變錄音，請使用新个瀏覽器，並確保在 HTTPS 環境下使用。",
   "microphone_access_denied": "無變使用話筒，請確定汝已經授權。",
   "add_audio": "加入錄音",

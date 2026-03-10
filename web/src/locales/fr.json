@@ -290,6 +290,7 @@
   "add_to_collection_error": "Expression créée, mais échec de l'ajout aux collections",
   "partial_add_error": "Certaines expressions n'ont pas pu être ajoutées aux collections",
   "record_audio": "Enregistrer la prononciation",
+  "upload_audio": "Télécharger l'audio",
   "audio_not_supported": "L'environnement actuel ne prend pas en charge l'enregistrement. Veuillez utiliser un navigateur moderne et vous assurer que vous accédez via HTTPS.",
   "microphone_access_denied": "Impossible d'accéder au microphone. Assurez-vous que vous avez accordé l'autorisation.",
   "add_audio": "Ajouter l'audio",

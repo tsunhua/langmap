@@ -290,6 +290,7 @@
   "add_to_collection_error": "詞句已建立，但加到收藏集時出錯",
   "partial_add_error": "部分詞句無法度加入收藏",
   "record_audio": "錄音",
+  "upload_audio": "上傳音訊",
   "audio_not_supported": "目前環境無法度錄音，請使用較新个瀏覽器，並確保在 HTTPS 環境下使用。",
   "microphone_access_denied": "無法度使用話筒，請確認汝已經授權。",
   "add_audio": "加入錄音",

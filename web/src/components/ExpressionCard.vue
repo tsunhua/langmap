@@ -74,7 +74,7 @@
                 </div>
               </template>
               <template v-if="editable && canAddAudio">
-                <div v-if="showAudioRecorder" class="w-full flex" @click.stop.prevent>
+                <div v-if="showAudioRecorder" class="w-full flex" @click.stop>
                   <AudioRecorder @audio-ready="handleInlineAudioUpload" @audio-cleared="showAudioRecorder = false" />
                 </div>
                 <button v-else-if="editable && canAddAudio" @click.stop.prevent="showAudioRecorder = true"
