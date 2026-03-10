@@ -13,6 +13,7 @@
              v-html="handbook.rendered_description || handbook.description"></p>
           <div class="text-[11px] text-gray-400">
             <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
+            <p v-if="handbook.created_by">{{ $t('created_by') }}: {{ handbook.created_by }}</p>
             <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
           </div>
         </div>

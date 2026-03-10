@@ -1832,8 +1832,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async getHandbookById(id: number): Promise<Handbook | null> {
     const handbook = await this.db.prepare(
-      'SELECT * FROM handbooks WHERE id = ?'
-    ).bind(id).first<Handbook>()
+      `SELECT h.*, u.username as created_by 
+       FROM handbooks h 
+       LEFT JOIN users u ON h.user_id = u.id 
+       WHERE h.id = ?`
+    ).bind(id).first<Handbook & { created_by?: string }>()
     if (!handbook) return null
     return this.formatTimestamps(handbook) as Handbook
   }

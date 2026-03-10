@@ -107,6 +107,7 @@ export interface Handbook {
   created_at: string
   updated_at: string
   renders?: string // JSON string for cached renders
+  created_by?: string // username from join
 }
 
 // Statistics interface
