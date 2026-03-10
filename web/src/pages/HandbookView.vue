@@ -11,12 +11,9 @@
           <h1 class="text-xl md:text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
           <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
              v-html="handbook.rendered_description || handbook.description"></p>
-          <div class="flex items-center gap-4 text-[11px] text-gray-400">
-            <span>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</span>
-            <span v-if="sourceLanguageName" class="flex items-center gap-1">
-              <span class="text-gray-300">|</span>
-              <span>{{ $t('content_lang') }}: {{ sourceLanguageName }}</span>
-            </span>
+          <div class="text-[11px] text-gray-400">
+            <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
+            <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
           </div>
         </div>
 
