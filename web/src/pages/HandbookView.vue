@@ -126,9 +126,15 @@ export default {
 
     const sortedLanguages = computed(() => {
       // Filter out source language to prevent selecting same language as instruction language
-      return [...languages.value]
+      let result = [...languages.value]
         .filter(lang => lang.code !== handbook.value?.source_lang)
-        .sort((a, b) => a.name.localeCompare(b.name))
+
+      // Apply prefix filter if instruction_lang_prefix is configured
+      if (handbook.value?.instruction_lang_prefix) {
+        result = result.filter(lang => lang.code.startsWith(handbook.value.instruction_lang_prefix))
+      }
+
+      return result.sort((a, b) => a.name.localeCompare(b.name))
     })
 
     const goToEdit = () => {

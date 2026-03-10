@@ -326,5 +326,6 @@
   "handbook_not_found_info": "ハンドブックは削除または移動された可能性があります。",
   "handbook_back_to_list": "ハンドブック一覧に戻る",
   "last_updated": "最終更新",
-  "learn_in": "学習言語"
+  "learn_in": "学習言語",
+  "lang_code_prefix": "言語コードプレフィックス"
 }

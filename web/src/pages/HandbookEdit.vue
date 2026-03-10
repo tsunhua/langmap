@@ -76,13 +76,18 @@
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
                 <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
-              <select v-model="form.instruction_lang"
-                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
-                <option value="" disabled>{{ $t('select_language') }}</option>
-                <option v-for="lang in filteredTargetLanguages" :key="lang.code" :value="lang.code">
-                  {{ lang.name }}
-                </option>
-              </select>
+              <div class="flex gap-2">
+                <select v-model="form.instruction_lang"
+                  class="flex-1 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
+                  <option value="" disabled>{{ $t('select_language') }}</option>
+                  <option v-for="lang in filteredTargetLanguages" :key="lang.code" :value="lang.code">
+                    {{ lang.name }}
+                  </option>
+                </select>
+                <input v-model="form.instruction_lang_prefix" type="text"
+                  class="w-48 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2 min-h-[44px]"
+                  :placeholder="$t('lang_code_prefix')" />
+              </div>
             </div>
           </div>
         </div>
@@ -276,7 +281,8 @@ export default {
       content: '',
       content_lang: '',
       instruction_lang: '',
-      is_public: false
+      is_public: false,
+      instruction_lang_prefix: ''
     })
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
@@ -284,7 +290,14 @@ export default {
 
     // Filter source languages - exclude target language to prevent selecting same language
     const filteredTargetLanguages = computed(() => {
-      return languages.value.filter(lang => lang.code !== form.content_lang)
+      let result = languages.value.filter(lang => lang.code !== form.content_lang)
+
+      // Apply prefix filter if instruction_lang_prefix is configured
+      if (form.instruction_lang_prefix) {
+        result = result.filter(lang => lang.code.startsWith(form.instruction_lang_prefix))
+      }
+
+      return result
     })
     // Rendered HTML after fetching translations
     const renderedContent = ref('')
@@ -354,6 +367,7 @@ export default {
           form.content_lang = data.source_lang || ''
           form.instruction_lang = data.target_lang || ''
           form.is_public = !!data.is_public
+          form.instruction_lang_prefix = data.instruction_lang_prefix || ''
           saveToHistory()
         }
       } catch (error) {
@@ -709,7 +723,8 @@ export default {
           content: form.content,
           source_lang: form.content_lang || null,
           target_lang: form.instruction_lang || null,
-          is_public: form.is_public
+          is_public: form.is_public,
+          instruction_lang_prefix: form.instruction_lang_prefix || null
         }
         if (isEditing.value) {
           await updateHandbook(props.id, payload)

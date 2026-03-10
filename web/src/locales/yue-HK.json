@@ -325,5 +325,6 @@
   "title_label": "標題",
   "content_lang": "目標語言",
   "instruction_lang": "教學語言",
-  "save_failed": "保存失敗"
+  "save_failed": "保存失敗",
+  "lang_code_prefix": "語言代碼前綴"
 }
