@@ -183,7 +183,7 @@
               <div class="relative group">
                 <textarea ref="contentArea" v-model="form.content" rows="12 sm:rows-15 lg:rows-18"
                   class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all"
-                  :placeholder="$t('content_placeholder')"></textarea>
+                  ></textarea>
                 <div
                   class="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   {{ $t('markdown') }}
@@ -246,7 +246,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
@@ -477,6 +477,9 @@ export default {
 
       return { expressionsToFetch }
     }
+    // Store expression data for event handling
+    const expressionClickHandlers = ref(new Map())
+
     // Render helpers for preview
     const renderItem = (id, text, meanings, audioUrl, isTitle = false) => {
       const meaningsText = meanings && meanings.length > 0
@@ -486,22 +489,34 @@ export default {
         : ''
       const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
+      // Store click handler data
+      const key = `expr-${id}`
+      expressionClickHandlers.value.set(key, { id, audioUrl })
+
       return `
-        <span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}"
-              onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">
+        <span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}" data-key="${key}">
           ${text}${meaningsText}${audioIcon}
         </span>
       `
     }
 
-    window.playHandbookAudio = (url) => {
-      if (!url) return
-      const audio = new Audio(url)
-      audio.play()
-    }
+    // Handle click on rendered expressions
+    const handleExpressionClick = (event) => {
+      const target = event.target.closest('.handbook-item')
+      if (!target) return
 
-    window.navigateToExpression = (id) => {
-      router.push(`/detail/${id}`)
+      const key = target.dataset.key
+      const handler = expressionClickHandlers.value.get(key)
+      if (!handler) return
+
+      event.stopPropagation()
+
+      if (handler.audioUrl) {
+        const audio = new Audio(handler.audioUrl)
+        audio.play()
+      }
+
+      router.push(`/detail/${handler.id}`)
     }
 
     // Build preview HTML using cached translations
@@ -715,6 +730,13 @@ export default {
       await fetchHandbook()
       checkDraft()
       updatePreview()
+
+      // Add global click handler for expression items
+      document.addEventListener('click', handleExpressionClick)
+    })
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', handleExpressionClick)
     })
 
     return {
