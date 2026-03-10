@@ -1878,9 +1878,17 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
 
   const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
 
+  // Pre-wrap title if it doesn't contain tags, so expressions in title can be extracted
+  let titleToExtract = title
+  TEXT_LANG_REGEX.lastIndex = 0
+  const hasTags = TEXT_LANG_REGEX.test(title)
+  if (!hasTags && handbook.source_lang) {
+    titleToExtract = `{{text:${title.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${handbook.source_lang}}}`
+  }
+
   // 1. Extract all expression tags
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
-  const fullText = `${title}\n${description}\n${content}`
+  const fullText = `${titleToExtract}\n${description}\n${content}`
 
   TEXT_LANG_REGEX.lastIndex = 0
   let tlMatch
@@ -1949,14 +1957,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const renderTextWithTags = (text: string, isTitle: boolean) => {
     if (!text) return ''
 
-    // For title, auto-wrap the entire text with source_lang if it doesn't already contain tags
-    let textToRender = text
-    if (isTitle) {
-      const hasTags = TEXT_LANG_REGEX.test(text)
-      if (!hasTags && handbook.source_lang) {
-        textToRender = `{{text:${text.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${handbook.source_lang}}}`
-      }
-    }
+    const textToRender = text
 
     TEXT_LANG_REGEX.lastIndex = 0
     return textToRender.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
@@ -1984,7 +1985,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   }
 
   // 4. Perform rendering
-  const rendered_title = renderTextWithTags(title, true)
+  const rendered_title = renderTextWithTags(titleToExtract, true)
   const rendered_description = renderTextWithTags(description, false)
 
   // Replace tags in content BEFORE markdown rendering to ensure <h2> and other blocks correctly wrap the result
