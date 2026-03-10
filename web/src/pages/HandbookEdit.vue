@@ -64,7 +64,7 @@
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
                 <span class="text-red-500">*</span> {{ $t('content_lang') }}
               </label>
-              <select v-model="form.source_lang"
+              <select v-model="form.content_lang"
                 class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
                 <option value="" disabled>{{ $t('select_language') }}</option>
                 <option v-for="lang in languages" :key="lang.code" :value="lang.code">
@@ -76,10 +76,10 @@
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
                 <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
-              <select v-model="form.target_lang"
+              <select v-model="form.instruction_lang"
                 class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
                 <option value="" disabled>{{ $t('select_language') }}</option>
-                <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                <option v-for="lang in filteredTargetLanguages" :key="lang.code" :value="lang.code">
                   {{ lang.name }}
                 </option>
               </select>
@@ -155,7 +155,7 @@
               <div class="relative mb-2">
                 <input v-model="searchQuery" type="text"
                   class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
-                  :placeholder="form.source_lang ? `🔍 ${$t('search_in_lang', { lang: form.source_lang })}` : ('🔍 ' + $t('insert_expression'))"
+                  :placeholder="form.content_lang ? `🔍 ${$t('search_in_lang', { lang: form.content_lang })}` : ('🔍 ' + $t('insert_expression'))"
                   @input="search" />
 
                 <!-- Search Results Dropdown -->
@@ -274,13 +274,18 @@ export default {
       title: '',
       description: '',
       content: '',
-      source_lang: '',
-      target_lang: '',
+      content_lang: '',
+      instruction_lang: '',
       is_public: false
     })
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
+
+    // Filter source languages - exclude target language to prevent selecting same language
+    const filteredTargetLanguages = computed(() => {
+      return languages.value.filter(lang => lang.code !== form.content_lang)
+    })
     // Rendered HTML after fetching translations
     const renderedContent = ref('')
     const renderedTitle = ref('')
@@ -331,7 +336,7 @@ export default {
 
     const fetchLanguages = async () => {
       try {
-        const response = await axios.get('/api/v1/languages', { params: { is_active: 1 } })
+        const response = await axios.get('/api/v1/languages')
         languages.value = response.data || []
       } catch (error) {
         console.error('Failed to fetch languages:', error)
@@ -346,8 +351,8 @@ export default {
           form.title = data.title
           form.description = data.description || ''
           form.content = data.content
-          form.source_lang = data.source_lang || ''
-          form.target_lang = data.target_lang || ''
+          form.content_lang = data.source_lang || ''
+          form.instruction_lang = data.target_lang || ''
           form.is_public = !!data.is_public
           saveToHistory()
         }
@@ -398,9 +403,9 @@ export default {
         searching.value = true
         try {
           const params = { q: searchQuery.value, limit: 10 }
-          // Filter by source_lang if set
-          if (form.source_lang) {
-            params.from_lang = form.source_lang
+          // Filter by content_lang if set
+          if (form.content_lang) {
+            params.from_lang = form.content_lang
           }
           const response = await axios.get('/api/v1/search', { params })
           searchResults.value = response.data
@@ -567,16 +572,16 @@ export default {
       })
     }
 
-    // Update preview: fetch translations if target_lang is set
+    // Update preview: fetch translations if instruction_lang is set
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.source_lang)
+      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
 
       if (expressionsToFetch.length === 0) {
-        renderedContent.value = buildRenderedContent(form.content, {}, form.source_lang)
-        renderedTitle.value = renderPlainTextTags(form.title || '', {}, true, form.source_lang)
-        renderedDescription.value = renderPlainTextTags(form.description || '', {}, false, form.source_lang)
+        renderedContent.value = buildRenderedContent(form.content, {}, form.content_lang)
+        renderedTitle.value = renderPlainTextTags(form.title || '', {}, true, form.content_lang)
+        renderedDescription.value = renderPlainTextTags(form.description || '', {}, false, form.content_lang)
         return
       }
 
@@ -604,7 +609,7 @@ export default {
         }
       }
 
-      // Phase 2: Resolve translations for all collected meanings in target_lang
+      // Phase 2: Resolve translations for all collected meanings in instruction_lang
       const allMids = []
       expressionsToFetch.forEach(e => {
         const expr = translationCache.value[e.id]
@@ -615,11 +620,11 @@ export default {
 
       const uncachedMids = allMids.filter(mid => !(`trans_${mid}` in translationCache.value))
 
-      if (uncachedMids.length > 0 && form.target_lang) {
+      if (uncachedMids.length > 0 && form.instruction_lang) {
         previewLoading.value = true
         try {
-          const translations = await getHandbookExpressions(form.target_lang, uncachedMids)
-          console.log('Fetched translations:', { targetLang: form.target_lang, uncachedMids, translations })
+          const translations = await getHandbookExpressions(form.instruction_lang, uncachedMids)
+          console.log('Fetched translations:', { targetLang: form.instruction_lang, uncachedMids, translations })
           // Map mid to the translated expression
           translations.forEach(trans => {
             // Check if this translation belongs to one of our target meanings
@@ -649,20 +654,20 @@ export default {
         }
       }
 
-      renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.source_lang)
-      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.source_lang)
-      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.source_lang)
+      renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
+      renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)
+      renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.content_lang)
 
       console.log('Preview update:', {
-        targetLang: form.target_lang,
+        targetLang: form.instruction_lang,
         translationCacheKeys: Object.keys(translationCache.value),
         expressionsToFetchCount: expressionsToFetch.length
       })
     }
 
     let previewTimeout = null
-    // Watch for content and target_lang changes to update preview
-    watch([() => form.content, () => form.target_lang, showPreview], () => {
+    // Watch for content and instruction_lang changes to update preview
+    watch([() => form.content, () => form.instruction_lang, showPreview], () => {
       if (previewTimeout) clearTimeout(previewTimeout)
       previewTimeout = setTimeout(() => {
         updatePreview()
@@ -687,11 +692,11 @@ export default {
         alert(t('content_required'))
         return
       }
-      if (!form.source_lang) {
+      if (!form.content_lang) {
         alert(t('content_lang_required'))
         return
       }
-      if (!form.target_lang) {
+      if (!form.instruction_lang) {
         alert(t('instruction_lang_required'))
         return
       }
@@ -702,8 +707,8 @@ export default {
           title: form.title,
           description: form.description,
           content: form.content,
-          source_lang: form.source_lang || null,
-          target_lang: form.target_lang || null,
+          source_lang: form.content_lang || null,
+          target_lang: form.instruction_lang || null,
           is_public: form.is_public
         }
         if (isEditing.value) {
@@ -746,6 +751,7 @@ export default {
       previewLoading,
       form,
       languages,
+      filteredTargetLanguages,
       searchQuery,
       searchResults,
       searching,

@@ -125,7 +125,10 @@ export default {
     })
 
     const sortedLanguages = computed(() => {
-      return [...languages.value].sort((a, b) => a.name.localeCompare(b.name))
+      // Filter out source language to prevent selecting same language as instruction language
+      return [...languages.value]
+        .filter(lang => lang.code !== handbook.value?.source_lang)
+        .sort((a, b) => a.name.localeCompare(b.name))
     })
 
     const goToEdit = () => {
