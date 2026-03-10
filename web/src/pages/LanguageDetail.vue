@@ -11,7 +11,8 @@
           <div class="relative" ref="languageDropdownContainer">
             <button @click.stop="toggleLanguageDropdown" class="flex items-center gap-2 group">
               <h1 class="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName
-                }}</h1>
+                }}<span v-if="languageGroupName" class="text-gray-400 font-normal text-2xl"> | {{ languageGroupName }}</span>
+              </h1>
               <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
                 {{ languageCode }}
               </span>
@@ -126,6 +127,7 @@ export default {
 
     const languageCode = computed(() => route.params.code)
     const languageName = ref('')
+    const languageGroupName = ref('')
     const loadingInfo = ref(true)
     const expressions = ref([])
     const loading = ref(true)
@@ -152,6 +154,7 @@ export default {
         const language = languages.find(l => l.code === languageCode.value)
         if (language) {
           languageName.value = language.name
+          languageGroupName.value = language.group_name || ''
         }
         // Store all languages for dropdown
         allLanguages.value = languages
@@ -389,6 +392,7 @@ export default {
     return {
       languageCode,
       languageName,
+      languageGroupName,
       loadingInfo,
       expressions,
       loading,

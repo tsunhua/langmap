@@ -54,7 +54,7 @@ export async function fetchLanguages(isActive) {
     // Automatically update language map cache
     const newLanguageMap = {}
     languages.forEach(lang => {
-      newLanguageMap[lang.code] = lang.native_name || lang.name
+      newLanguageMap[lang.code] = lang.name
     })
     languageMap = newLanguageMap
 

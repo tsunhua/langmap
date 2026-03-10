@@ -24,6 +24,15 @@
             required
           >
         </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('language_group_name') }}</label>
+          <input 
+            v-model="formData.group_name" 
+            type="text" 
+            class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+          <p class="mt-1 text-xs text-slate-500">{{ $t('language_group_name_help') }}</p>
+        </div>
 
         
         <!-- Region Information Section -->
@@ -135,6 +144,7 @@ export default {
     const formData = reactive({
       code: '',
       name: '',
+      group_name: '',
       region_name: '',
       region_code: '',
       latitude: '',
@@ -154,6 +164,7 @@ export default {
         const languageObj = await createLanguage({
           code: formData.code,
           name: formData.name,
+          group_name: formData.group_name || null,
           region_code: formData.region_code, // Will be derived from region data
           region_name: formData.region_name,
           region_latitude: formData.latitude || null,
@@ -163,6 +174,7 @@ export default {
         // Reset form
         formData.code = ''
         formData.name = ''
+        formData.group_name = ''
         formData.region_name = ''
         formData.region_code = ''
         formData.latitude = ''
@@ -191,6 +203,7 @@ export default {
       if (!newVal) {
         formData.code = ''
         formData.name = ''
+        formData.group_name = ''
         formData.region_name = ''
         formData.region_code = ''
         formData.latitude = ''

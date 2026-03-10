@@ -29,7 +29,8 @@
         class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group">
         <div class="flex items-center gap-3">
           <span class="text-lg font-medium text-gray-900 group-hover:text-blue-600">
-            {{ lang.native_name || lang.name }}
+            {{ lang.name }}
+            <span v-if="lang.group_name" class="text-gray-400 font-normal"> | {{ lang.group_name }}</span>
           </span>
           <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded">
             {{ lang.code }}
@@ -63,7 +64,6 @@ export default {
       return languages.value.filter(
         lang =>
           (lang.name && lang.name.toLowerCase().includes(query)) ||
-          (lang.native_name && lang.native_name.toLowerCase().includes(query)) ||
           (lang.code && lang.code.toLowerCase().includes(query))
       )
     })

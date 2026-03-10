@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS languages (
     region_name TEXT,                          -- 地区名称 (如 "New York", "Beijing")
     region_latitude TEXT,                       -- 地区纬度
     region_longitude TEXT,                      -- 地区经度
+    group_name TEXT,                           -- 语群名称 (如 "闽南语", "吴语")
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,

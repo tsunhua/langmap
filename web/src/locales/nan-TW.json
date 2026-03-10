@@ -130,6 +130,8 @@
   "language_and_text_required": "語言佮詞句攏是必填欄位。",
   "language_code": "語言代碼",
   "language_code_help": "這个語言个自訂代碼（無一定標準嘛無要緊）",
+  "language_group_name": "所屬語群",
+  "language_group_name_help": "該語言所屬个語群",
   "language_help": "這條詞句所屬个語言",
   "language_name": "語言名",
   "language_not_activated": "語言猶未啟用（完成度愛超過 60%）",

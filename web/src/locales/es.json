@@ -130,6 +130,8 @@
   "language_and_text_required": "El idioma y el texto son obligatorios.",
   "language_code": "Código de idioma",
   "language_code_help": "Código personalizado para tu idioma (puede ser no estándar)",
+  "language_group_name": "Grupo de idioma",
+  "language_group_name_help": "El grupo de idioma al que pertenece",
   "language_help": "Selecciona el idioma para esta expresión",
   "language_name": "Nombre del idioma",
   "language_not_activated": "Idioma No Activado (la finalización debe alcanzar el 60%)",

@@ -272,12 +272,12 @@
             </button>
 
             <div v-show="langDropdownOpen"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
+              class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
               role="menu">
               <button v-for="(lang, code) in availableLanguages" :key="code" @click="switchLanguage(code)"
                 class="block w-full text-left px-4 py-2 text-sm lg:text-sm text-slate-700 hover:bg-slate-100"
                 :class="{ 'bg-blue-50 text-blue-600': code === currentLanguage }" role="menuitem">
-                {{ lang }}
+                {{ lang.group_name ? `${lang.name} | ${lang.group_name}` : lang.name }}
                 <span v-if="code === currentLanguage" class="float-right">
                   ✓
                 </span>
@@ -390,17 +390,18 @@ export default {
 
     // Available languages - start with static ones
     const availableLanguages = ref({
-      'en-US': 'English',
-      'zh-CN': '中文 (北京)',
-      'zh-TW': '中文 (台北)',
-      'es': 'Español',
-      'fr': 'Français',
-      'ja': '日本語'
+      'en-US': { name: 'English', group_name: '' },
+      'zh-CN': { name: '中文 (北京)', group_name: '' },
+      'zh-TW': { name: '中文 (台北)', group_name: '' },
+      'es': { name: 'Español', group_name: '' },
+      'fr': { name: 'Français', group_name: '' },
+      'ja': { name: '日本語', group_name: '' }
     })
 
     // Get current language name
     const currentLanguageName = computed(() => {
-      return availableLanguages.value[locale.value] || 'English'
+      const lang = availableLanguages.value[locale.value]
+      return lang?.name || 'English'
     })
 
     // Check if device is mobile
@@ -437,7 +438,11 @@ export default {
         const languages = await fetchLanguages(1) // 只获取活跃的语言
         const newAvailableLanguages = {}
         languages.forEach(lang => {
-          newAvailableLanguages[lang.code] = lang.native_name || lang.name
+          const name = lang.name
+          newAvailableLanguages[lang.code] = { 
+            name, 
+            group_name: lang.group_name || '' 
+          }
         })
         availableLanguages.value = newAvailableLanguages
       } catch (error) {
@@ -514,7 +519,11 @@ export default {
 
       try {
         // Add to available languages
-        availableLanguages.value[language.code] = language.native_name || language.name
+        const name = language.name
+        availableLanguages.value[language.code] = { 
+          name, 
+          group_name: language.group_name || '' 
+        }
 
         // Close modal
         showAddLanguageModal.value = false
@@ -611,7 +620,11 @@ export default {
 
         const newAvailableLanguages = {}
         languages.forEach(lang => {
-          newAvailableLanguages[lang.code] = lang.native_name || lang.name
+          const name = lang.name
+          newAvailableLanguages[lang.code] = { 
+            name, 
+            group_name: lang.group_name || '' 
+          }
         })
         availableLanguages.value = newAvailableLanguages
 
@@ -647,7 +660,11 @@ export default {
         languages.forEach(lang => {
           // Only add active languages to availableLanguages
           if (lang.is_active === 1) {
-            availableLanguages.value[lang.code] = lang.native_name || lang.name
+            const name = lang.name
+            availableLanguages.value[lang.code] = { 
+              name, 
+              group_name: lang.group_name || '' 
+            }
           }
         })
       } catch (error) {

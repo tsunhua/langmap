@@ -61,7 +61,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     try {
       console.log('Fetching fresh languages from database');
-      const response = await this.db.prepare('SELECT * FROM languages ORDER BY name').all<Language>();
+      const response = await this.db.prepare('SELECT * FROM languages ORDER BY code').all<Language>();
 
       const results = response.results || [];
 
@@ -113,6 +113,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       language.region_name || null,
       language.region_latitude !== undefined ? language.region_latitude : null,
       language.region_longitude !== undefined ? language.region_longitude : null,
+      language.group_name || null,
       language.created_by || null,
       language.updated_by || null
     ];
@@ -120,8 +121,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const result = await this.db.prepare(
       `INSERT INTO languages (
         id, code, name, direction, is_active, region_code, region_name, 
-        region_latitude, region_longitude, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        region_latitude, region_longitude, group_name, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).first<Language>()
 
     if (!result) {

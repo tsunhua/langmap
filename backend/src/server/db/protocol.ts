@@ -9,6 +9,7 @@ export interface Language {
   region_name?: string
   region_latitude?: string
   region_longitude?: string
+  group_name?: string
   created_by?: string
   created_at?: string
   updated_by?: string

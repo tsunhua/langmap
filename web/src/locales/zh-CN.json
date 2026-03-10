@@ -141,6 +141,8 @@
   "language_and_text_required": "语言和文本为必填项。",
   "language_code": "语言代码",
   "language_code_help": "您语言的自定义代码（可以是非标准的）",
+  "language_group_name": "所属语群",
+  "language_group_name_help": "该语言所属的语群",
   "language_help": "为此词句选择语言",
   "language_name": "语言名称",
   "language_not_activated": "语言未激活（完成度需达到60%）",

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS languages (
     region_name TEXT,
     region_latitude REAL,
     region_longitude REAL,
+    group_name TEXT,
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,

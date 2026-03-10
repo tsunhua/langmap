@@ -132,6 +132,8 @@
   "language_and_text_required": "言語とテキストは必須です。",
   "language_code": "言語コード",
   "language_code_help": "あなたの言語のカスタムコード（非標準でも可）",
+  "language_group_name": "言語グループ",
+  "language_group_name_help": "所属する言語グループ",
   "language_help": "この表現の言語を選択",
   "language_name": "言語名",
   "language_not_activated": "言語が無効（完了率は60％に達する必要があります）",
