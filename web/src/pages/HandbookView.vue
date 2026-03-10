@@ -11,7 +11,13 @@
           <h1 class="text-xl md:text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
           <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed" 
              v-html="handbook.rendered_description || handbook.description"></p>
-          <p class="text-[11px] text-gray-400">{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
+          <div class="flex items-center gap-4 text-[11px] text-gray-400">
+            <span>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</span>
+            <span v-if="sourceLanguageName" class="flex items-center gap-1">
+              <span class="text-gray-300">|</span>
+              <span>{{ $t('content_lang') }}: {{ sourceLanguageName }}</span>
+            </span>
+          </div>
         </div>
 
         <!-- Language Switcher & Edit Button -->
@@ -137,6 +143,12 @@ export default {
       return result.sort((a, b) => a.name.localeCompare(b.name))
     })
 
+    const sourceLanguageName = computed(() => {
+      if (!handbook.value?.source_lang) return null
+      const lang = languages.value.find(l => l.code === handbook.value.source_lang)
+      return lang?.name || handbook.value.source_lang
+    })
+
     const goToEdit = () => {
       router.push(`/handbooks/${props.id}/edit`)
     }
@@ -153,6 +165,7 @@ export default {
       loading,
       instructionLanguage,
       sortedLanguages,
+      sourceLanguageName,
       audioPlayer,
       canEdit,
       goToEdit,

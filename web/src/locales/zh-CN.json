@@ -340,7 +340,7 @@
   "learn_in": "学习语言",
   "title_label": "标题",
   "content_label": "正文内容 (Markdown)",
-  "content_lang": "目标语言",
+  "content_lang": "内容语言",
   "instruction_lang": "教学语言",
   "search_hint": "在搜索框搜索词条，点击即可插入手册，并支持多语言动态切换。",
   "loading_language": "教学语言",

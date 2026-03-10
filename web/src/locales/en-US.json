@@ -349,7 +349,7 @@
   "learn_in": "Learn in",
   "title_label": "Title",
   "content_label": "Content (Markdown)",
-  "content_lang": "Target Language",
+  "content_lang": "Content Language",
   "instruction_lang": "Instruction Language",
   "search_hint": "Search for expressions to insert them with dynamic language support.",
   "save_failed": "Failed to save",

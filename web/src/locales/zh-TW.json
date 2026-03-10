@@ -310,7 +310,7 @@
   "public_hint": "讓所有用戶可見此手冊",
   "title_required": "標題為必填項",
   "content_required": "內容為必填項",
-  "content_lang": "目標語言",
+  "content_lang": "內容語言",
   "content_lang_required": "必須選擇目標語言",
   "instruction_lang": "教學語言",
   "instruction_lang_required": "必須選擇教學語言",
