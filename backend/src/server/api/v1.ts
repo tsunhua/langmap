@@ -227,6 +227,7 @@ api.post('/languages', requireAuth, async (c) => {
 
     // Clear statistics cache as we've added a new language
     db.clearStatisticsCache();
+    db.clearLanguagesCache();
 
     return c.json(language, 201)
   } catch (error: any) {
@@ -263,6 +264,7 @@ api.put('/languages/:id', requireAuth, async (c) => {
 
     // Clear statistics cache as we've updated a language
     db.clearStatisticsCache();
+    db.clearLanguagesCache();
 
     return c.json(language)
   } catch (error: any) {
@@ -288,6 +290,7 @@ api.delete('/languages/:id', requireAuth, async (c) => {
 
     // Clear statistics cache as we've deleted a language
     db.clearStatisticsCache();
+    db.clearLanguagesCache();
 
     return c.json({ message: 'Language deleted successfully' })
   } catch (error: any) {
