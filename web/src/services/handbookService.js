@@ -64,12 +64,21 @@ export async function getHandbooks(options = {}) {
 /**
  * Get a specific handbook by ID
  * @param {number} id - Handbook ID
- * @param {string} targetLang - Optional target language for rendering
+ * @param {string} targetLang - Optional single target language for rendering (backward compatibility)
+ * @param {string} targetLangs - Optional multiple target languages (comma-separated) for rendering
  * @returns {Promise<Object>} Handbook object
  */
-export async function getHandbookById(id, targetLang) {
+export async function getHandbookById(id, targetLang = null, targetLangs = null) {
     try {
-        const url = targetLang ? `/handbooks/${id}/${targetLang}` : `/handbooks/${id}`
+        let url = `/handbooks/${id}`
+        
+        // Support both single language (backward compatible) and multiple languages
+        if (targetLangs) {
+            url += `?target_langs=${encodeURIComponent(targetLangs)}`
+        } else if (targetLang) {
+            url += `/${targetLang}`
+        }
+        
         const response = await api.get(url)
         return response.data
     } catch (error) {

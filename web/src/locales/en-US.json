@@ -8,6 +8,7 @@
   "add_expression_description": "Add expressions from languages or regions you're familiar with.",
   "add_language": "Add Language",
   "add_language_failed": "Failed to add language. Please try again.",
+  "remove_language": "Remove language",
   "add_new": "Add New →",
   "add_to_collection": "Add to Collection",
   "adding": "Adding...",

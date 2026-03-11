@@ -8,6 +8,7 @@
   "add_expression_description": "添加你熟悉的语言或地区词句。",
   "add_language": "添加语言",
   "add_language_failed": "添加语言失败。请重试。",
+  "remove_language": "移除语言",
   "add_new": "添加词句 →",
   "add_to_collection": "添加到收藏集",
   "adding": "添加中...",
