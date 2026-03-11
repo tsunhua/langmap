@@ -347,6 +347,7 @@
   "handbook_empty_info": "Create your first learning manual to organize expressions and notes!",
   "handbook_delete_confirm": "Are you sure you want to delete this handbook?",
   "edit_handbook": "Edit Handbook",
+  "rerender_handbook": "Rerender",
   "delete_handbook": "Delete Handbook",
   "handbook_not_found": "Handbook Not Found",
   "handbook_not_found_info": "The handbook may have been deleted or moved.",

@@ -315,6 +315,7 @@
   "handbook_empty_info": "Crea tu primer manual de aprendizaje para organizar expresiones y notas.",
   "handbook_delete_confirm": "¿Estás seguro de que quieres eliminar este manual?",
   "edit_handbook": "Editar Manual",
+  "rerender_handbook": "Volver a renderizar",
   "handbook_not_found": "Manual No Encontrado",
   "handbook_not_found_info": "El manual puede haber sido eliminado o movido.",
   "handbook_back_to_list": "Volver a la Lista de Manuales",

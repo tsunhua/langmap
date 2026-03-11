@@ -62,13 +62,25 @@
                 </div>
               </div>
             </div>
-          </div> 
-          
-          <!-- Edit Button -->
-          <button v-if="canEdit" @click="goToEdit"
-            class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center cursor-pointer">
-            {{ $t('edit_handbook') }}
-          </button>
+           </div>
+
+            <!-- Edit & Rerender Buttons -->
+            <div class="flex items-center gap-2">
+              <button v-if="canRerender" @click="handleRerender"
+                class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                :title="$t('rerender_handbook')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+              <button v-if="canEdit" @click="goToEdit"
+                class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                :title="$t('edit_handbook')">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
         </div>
       </div>
  
@@ -106,7 +118,7 @@
 <script>
  import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
  import { useRouter } from 'vue-router'
- import { getHandbookById } from '../services/handbookService'
+ import { getHandbookById, rerenderHandbook } from '../services/handbookService'
  import { fetchLanguages } from '../services/languageService'
  import { generateLanguageColor } from '../utils/languageUtils'
  import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
@@ -198,12 +210,29 @@
         fetchInitialData()
       }
 
-     const canEdit = computed(() => {
-       if (!handbook.value || !currentUser.value) return false
-       return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
-     })
+      const canEdit = computed(() => {
+        if (!handbook.value || !currentUser.value) return false
+        return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
+      })
 
-      const selectedLanguages = computed(() => {
+      const canRerender = computed(() => {
+        if (!handbook.value || !currentUser.value) return false
+        return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
+      })
+
+      const handleRerender = async () => {
+        try {
+          loading.value = true
+          await rerenderHandbook(props.id)
+          await fetchInitialData()
+        } catch (error) {
+          console.error('Failed to rerender handbook:', error)
+        } finally {
+          loading.value = false
+        }
+      }
+
+       const selectedLanguages = computed(() => {
         return languages.value.filter(lang => 
           instructionLanguages.value.includes(lang.code)
         )
@@ -315,6 +344,7 @@
           showLanguageSelector,
           audioPlayer,
           canEdit,
+          canRerender,
           goToEdit,
           formatDate,
           getLanguageColor,
@@ -324,7 +354,8 @@
           showExpressionGroupModal,
           selectedExpressionId,
           selectedMeaningId,
-          handleExpressionGroupUpdated
+          handleExpressionGroupUpdated,
+          handleRerender
         }
    }
   }
