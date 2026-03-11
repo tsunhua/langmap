@@ -202,9 +202,17 @@
        return lang?.name || handbook.value.source_lang
      })
 
-     const getLanguageColor = (lang) => {
-       return generateLanguageColor(lang.code)
-     }
+      const getLanguageColor = (lang) => {
+        if (handbook.value?.lang_colors) {
+          try {
+            const colors = JSON.parse(handbook.value.lang_colors)
+            if (colors[lang.code]) {
+              return colors[lang.code]
+            }
+          } catch (e) {}
+        }
+        return generateLanguageColor(lang.code)
+      }
 
       const addLanguage = (lang) => {
         if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {

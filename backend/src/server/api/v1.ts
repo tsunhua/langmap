@@ -1895,6 +1895,19 @@ function generateLanguageColor(langCode: string): string {
   return `#${f(0)}${f(8)}${f(4)}`
 }
 
+// Helper: Get language color with custom color support
+function getLanguageColor(langCode: string, handbook: any): string {
+  if (handbook.lang_colors) {
+    try {
+      const colors = JSON.parse(handbook.lang_colors)
+      if (colors[langCode]) {
+        return colors[langCode]
+      }
+    } catch (e) {}
+  }
+  return generateLanguageColor(langCode)
+}
+
 // Helper for handbook rendering
 async function renderHandbookInternal(c: Context, handbook: any, targetLangs: string[]) {
   // Configure markdown-it with better HTML handling
@@ -2012,7 +2025,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         // Title: inline display with separator
         meaningsHtml = ` <span class="handbook-meaning-title">
           ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-          const color = generateLanguageColor(langCode)
+          const color = getLanguageColor(langCode, handbook)
           const langClass = langCode.replace('.', '-')
           return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(' / ')}</span>`
         }).join(' | ')}
@@ -2021,7 +2034,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         // Content: inline display with separator
         meaningsHtml = ` <span class="handbook-meaning-content">
           ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-          const color = generateLanguageColor(langCode)
+          const color = getLanguageColor(langCode, handbook)
           const langClass = langCode.replace('.', '-')
           return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(', ')}</span>`
         }).join(' | ')}
