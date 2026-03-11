@@ -561,11 +561,35 @@ export default {
     const expressionClickHandlers = ref(new Map())
 
     const renderItem = (id, text, meanings, audioUrl, isTitle = false) => {
-      const meaningsText = meanings && meanings.length > 0
-        ? (isTitle
-          ? `<div class="handbook-meaning-title">${meanings.map(m => `<span class="handbook-meaning-tag" data-translation="true" style="--lang-color: ${m.color}">${m.text}</span>`).join(' ')}</div>`
-          : ` ${meanings.map(m => `<span class="handbook-meaning-tag" data-translation="true" style="--lang-color: ${m.color}">${m.text}</span>`).join(' ')}`)
-        : ''
+      let meaningsText = ''
+      if (meanings && meanings.length > 0) {
+        const translationsByTargetLang = {}
+        meanings.forEach(m => {
+          if (!m.targetLang) return
+          if (!translationsByTargetLang[m.targetLang]) {
+            translationsByTargetLang[m.targetLang] = []
+          }
+          translationsByTargetLang[m.targetLang].push(m.text)
+        })
+
+        const separator = isTitle ? ' / ' : ', '
+        const langSeparator = ' | '
+
+        meaningsText = isTitle
+          ? `<div class="handbook-meaning-title">
+              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
+                const color = generateLanguageColor(langCode)
+                return `<span style="color: ${color}">${texts.join(separator)}</span>`
+              }).join(langSeparator)}
+            </div>`
+          : ` <span class="handbook-meaning-content">
+              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
+                const color = generateLanguageColor(langCode)
+                return `<span style="color: ${color}">${texts.join(separator)}</span>`
+              }).join(langSeparator)}
+            </span>`
+      }
+
       const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
       const key = `expr-${id}`
@@ -612,7 +636,7 @@ export default {
               const cacheKey = `trans_${targetLang}_${m.id}`
               if (expressionMap[cacheKey]) {
                 const trans = expressionMap[cacheKey]
-                trans.color = generateLanguageColor(targetLang)
+                trans.targetLang = targetLang
                 translations.push(trans)
               }
             })
@@ -640,7 +664,7 @@ export default {
               const cacheKey = `trans_${targetLang}_${m.id}`
               if (expressionMap[cacheKey]) {
                 const trans = expressionMap[cacheKey]
-                trans.color = generateLanguageColor(targetLang)
+                trans.targetLang = targetLang
                 translations.push(trans)
               }
             })
@@ -725,12 +749,6 @@ export default {
       renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
       renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)
       renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.content_lang)
-
-      console.log('Preview update:', {
-        targetLang: form.instruction_lang,
-        translationCacheKeys: Object.keys(translationCache.value),
-        expressionsToFetchCount: expressionsToFetch.length
-      })
     }
 
     let previewTimeout = null
@@ -770,6 +788,50 @@ export default {
 
       saving.value = true
       try {
+        previewLoading.value = true
+        
+        const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
+
+        if (expressionsToFetch.length > 0) {
+          const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
+          
+          if (uncachedExprs.length > 0) {
+            const expressions = await getExpressionsByIds(uncachedExprs.map(e => e.id))
+            expressions.forEach(expr => {
+              translationCache.value[expr.id] = expr
+            })
+            uncachedExprs.forEach(e => {
+              if (!(e.id in translationCache.value)) {
+                translationCache.value[e.id] = null
+              }
+            })
+          }
+
+          const allMids = []
+          expressionsToFetch.forEach(e => {
+            const expr = translationCache.value[e.id]
+            expr?.meanings?.forEach(m => {
+              if (!allMids.includes(m.id)) allMids.push(m.id)
+            })
+          })
+
+          if (allMids.length > 0 && form.instruction_langs.length > 0) {
+            for (const targetLang of form.instruction_langs) {
+              const translations = await getHandbookExpressions(targetLang, allMids)
+              translations.forEach(trans => {
+                const cacheKey = `trans_${targetLang}_${trans.meaning_id}`
+                translationCache.value[cacheKey] = trans
+              })
+              allMids.forEach(mid => {
+                const cacheKey = `trans_${targetLang}_${mid}`
+                if (!(cacheKey in translationCache.value)) {
+                  translationCache.value[cacheKey] = null
+                }
+              })
+            }
+          }
+        }
+
         const payload = {
           title: form.title,
           description: form.description,
@@ -791,6 +853,7 @@ export default {
         alert(t('handbook_save_failed'))
       } finally {
         saving.value = false
+        previewLoading.value = false
       }
     }
 
