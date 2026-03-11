@@ -1870,9 +1870,39 @@ api.get('/handbooks', cacheMiddleware(300), optionalAuth, async (c) => {
 
 import MarkdownIt from 'markdown-it'
 
+// Helper: Generate stable color from language code
+function generateLanguageColor(langCode: string): string {
+  let hash = 5381
+  for (let i = 0; i < langCode.length; i++) {
+    hash = ((hash << 5) + hash) + langCode.charCodeAt(i)
+    hash = hash >>> 0
+  }
+
+  const hue = hash % 360
+  const saturation = 60 + (hash % 20)
+  const lightness = 45 + (hash % 10)
+
+  const s = saturation / 100
+  const l = lightness / 100
+  const a = s * Math.min(l, 1 - l)
+  const f = (n: number) => {
+    const k = (n + hue / 30) % 12
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, '0')
+  }
+  return `#${f(0)}${f(8)}${f(4)}`
+}
+
 // Helper for handbook rendering
-async function renderHandbookInternal(c: Context, handbook: any, targetLang: string) {
-  const md = new MarkdownIt({ html: true })
+async function renderHandbookInternal(c: Context, handbook: any, targetLangs: string[]) {
+  // Configure markdown-it with better HTML handling
+  const md = new MarkdownIt({
+    html: true,
+    breaks: true,
+    linkify: false
+  })
   const db = getDB(c)
 
   const content = handbook.content || ''
@@ -1922,38 +1952,89 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
       })
     })
 
-    if (allMids.length > 0 && targetLang) {
-      // Use the newly optimized batch fetching
-      const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
+    // Fetch translations for all target languages
+    const translationsByLang: Record<string, any[]> = {}
+
+    if (allMids.length > 0) {
+      for (const targetLang of targetLangs) {
+        if (!targetLang) continue
+
+        const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
+        translationsByLang[targetLang] = translations
+      }
+    }
+
+    // Organize translations by meaning ID and language
+    Object.entries(translationsByLang).forEach(([langCode, translations]) => {
       translations.forEach((trans: any) => {
         if (trans.meaning_id) {
-          expressionMap[`trans_${trans.meaning_id}`] = trans
+          expressionMap[`trans_${trans.meaning_id}_${langCode}`] = trans
         } else if (trans.meanings) {
           trans.meanings.forEach((m: any) => {
             if (allMids.includes(m.id)) {
-              expressionMap[`trans_${m.id}`] = trans
+              expressionMap[`trans_${m.id}_${langCode}`] = trans
             }
           })
         }
       })
-    }
+    })
   }
 
   // 3. Render helpers
-  const renderItem = (id: number, text: string, transList: any[], audioUrl: string, isTitle: boolean) => {
-    const meaningsText = transList.length > 0
-      ? (isTitle
-        ? `<div class="handbook-meaning-title">[${transList.map(m => m.text).join('] [')}]</div>`
-        : ` <span class="handbook-meaning-content">[${transList.map(m => m.text).join(', ')}]</span>`)
-      : ''
+  const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean) => {
+    // Group translations by language
+    const translationsByTargetLang: Record<string, string[]> = {}
+
+    targetLangs.forEach(targetLang => {
+      if (!targetLang) return
+
+      const transList: string[] = []
+      const meanings = expressionMap[id]?.meanings || []
+
+      meanings.forEach((m: any) => {
+        const transKey = `trans_${m.id}_${targetLang}`
+        if (expressionMap[transKey]) {
+          transList.push(expressionMap[transKey].text)
+        }
+      })
+
+      if (transList.length > 0) {
+        translationsByTargetLang[targetLang] = transList
+      }
+    })
+
+    // If there are translations, render them with colors
+    const hasTranslations = Object.keys(translationsByTargetLang).length > 0
+
+    let meaningsHtml = ''
+    if (hasTranslations) {
+      if (isTitle) {
+        // Title: inline display with separator
+        meaningsHtml = ` <span class="handbook-meaning-title">
+          ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
+          const color = generateLanguageColor(langCode)
+          const langClass = langCode.replace('.', '-')
+          return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(' / ')}</span>`
+        }).join(' | ')}
+        </span>`
+      } else {
+        // Content: inline display with separator
+        meaningsHtml = ` <span class="handbook-meaning-content">
+          ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
+          const color = generateLanguageColor(langCode)
+          const langClass = langCode.replace('.', '-')
+          return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(', ')}</span>`
+        }).join(' | ')}
+        </span>`
+      }
+    }
+
     const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
-    // For title, use flex column to allow meanings to wrap to new line
-    // For others, keep inline
     if (isTitle) {
-      return `<span class="handbook-item" data-type="title" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="title" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsHtml}${audioIcon}</span>`
     } else {
-      return `<span class="handbook-item" data-type="content" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsText}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="content" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsHtml}${audioIcon}</span>`
     }
   }
 
@@ -1967,13 +2048,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
       const lang = langMatch || handbook.source_lang || 'en'
       const id = db.stableExpressionId(term, lang)
       const expr = expressionMap[id]
+
       if (expr) {
-        const translations: any[] = []
-        expr.meanings?.forEach((m: any) => {
-          if (expressionMap[`trans_${m.id}`]) {
-            translations.push(expressionMap[`trans_${m.id}`])
-          }
-        })
         let audioUrl = ''
         if (expr.audio_url) {
           try {
@@ -1981,8 +2057,10 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
             audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
           } catch { }
         }
-        return renderItem(id, term, translations, audioUrl, isTitle)
+
+        return renderItem(id, term, audioUrl, isTitle)
       }
+
       return `<span class="handbook-item-undefined">${term}</span>`
     })
   }
@@ -1991,20 +2069,78 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLang: str
   const rendered_title = renderTextWithTags(titleToExtract, true)
   const rendered_description = renderTextWithTags(description, false)
 
-  // Replace tags in content BEFORE markdown rendering to ensure <h2> and other blocks correctly wrap the result
-  const preProcessedContent = renderTextWithTags(content, false)
-  const rendered_content = md.render(preProcessedContent)
+  // For content: use a placeholder approach to protect expression HTML from markdown processing.
+  // Strategy: replace {{...}} tags with placeholders FIRST (before generating HTML),
+  // then run markdown on the clean placeholder text, then substitute rendered HTML back in.
+  // This avoids the nested-span regex problem (previous approach tried to regex-match already
+  // generated nested <span> HTML, which broke because the non-greedy match stopped at the
+  // first inner </span>, leaving orphan closing tags that markdown wrapped in <pre><code>).
+  const htmlPlaceholders: Record<string, string> = {}
 
-  return { rendered_title, rendered_description, rendered_content }
+  TEXT_LANG_REGEX.lastIndex = 0
+  const contentWithPlaceholders = content.replace(TEXT_LANG_REGEX, (match: string) => {
+    const index = Object.keys(htmlPlaceholders).length
+    const placeholder = `HANDBOOK_ITEM_${index}`
+    htmlPlaceholders[placeholder] = match
+    return placeholder
+  })
+
+  // Render markdown on placeholder-substituted content (no HTML fragments inside)
+  const renderedMarkdown = md.render(contentWithPlaceholders)
+
+  // Now substitute each placeholder with its fully rendered HTML span
+  const finalContent = renderedMarkdown.replace(/HANDBOOK_ITEM_\d+/g, (match) => {
+    const originalTag = htmlPlaceholders[match]
+    if (originalTag) {
+      TEXT_LANG_REGEX.lastIndex = 0
+      return originalTag.replace(TEXT_LANG_REGEX, (m, term, langMatch) => {
+        const lang = langMatch || handbook.source_lang || 'en'
+        const id = db.stableExpressionId(term, lang)
+        const expr = expressionMap[id]
+        if (expr) {
+          let audioUrl = ''
+          if (expr.audio_url) {
+            try {
+              const parsed = JSON.parse(expr.audio_url)
+              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+            } catch { }
+          }
+          return renderItem(id, term, audioUrl, false)
+        }
+        return `<span class="handbook-item-undefined">${term}</span>`
+      })
+    }
+    return match
+  })
+
+  return { rendered_title, rendered_description, rendered_content: finalContent }
 }
 
 // GET /api/v1/handbooks/:id/:target_lang?
-api.get('/handbooks/:id/:target_lang?', cacheMiddleware(300), optionalAuth, async (c) => {
+api.get('/handbooks/:id/:target_lang?', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const id = parseInt(c.req.param('id'))
     const user = c.get('user')
-    const targetLang = c.req.param('target_lang') || c.req.query('target_lang')
+
+    // Support both new multi-language and old single-language format
+    const targetLangsParam = c.req.query('target_langs') || c.req.query('target_lang') || c.req.param('target_lang')
+    let targetLangs: string[] = []
+
+    if (targetLangsParam) {
+      // Split by comma and filter empty strings
+      targetLangs = targetLangsParam.split(',').map(l => l.trim()).filter(Boolean)
+    }
+
+    // If no languages specified, use handbook's target_lang
+    if (targetLangs.length === 0) {
+      const handbook = await db.getHandbookById(id)
+      if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+
+      if (handbook.target_lang) {
+        targetLangs = [handbook.target_lang]
+      }
+    }
 
     if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
 
@@ -2016,11 +2152,11 @@ api.get('/handbooks/:id/:target_lang?', cacheMiddleware(300), optionalAuth, asyn
       return c.json({ error: 'Access denied' }, 403)
     }
 
-    const effectiveTargetLang = targetLang || handbook.target_lang || ''
-
-    // Check Render Cache (only if targetLang is provided or fixed)
-    if (effectiveTargetLang) {
-      const cachedRender = await db.getHandbookRender(id, effectiveTargetLang)
+    // Check Render Cache (only if targetLangs is provided)
+    if (targetLangs.length > 0) {
+      // Generate cache key from sorted languages
+      const cacheKey = [...targetLangs].sort().join('|')
+      const cachedRender = await db.getHandbookRender(id, cacheKey)
       if (cachedRender) {
         return c.json({
           ...handbook,
@@ -2028,30 +2164,46 @@ api.get('/handbooks/:id/:target_lang?', cacheMiddleware(300), optionalAuth, asyn
           rendered_description: cachedRender.rendered_description,
           rendered_content: cachedRender.rendered_content,
           is_cached: true
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          }
         })
       }
 
       // Not in cache, render it
       try {
-        const renders = await renderHandbookInternal(c, handbook, effectiveTargetLang)
+        const renders = await renderHandbookInternal(c, handbook, targetLangs)
         await db.saveHandbookRender({
           handbook_id: id,
-          target_lang: effectiveTargetLang,
+          target_lang: cacheKey,
           ...renders
         })
         return c.json({
           ...handbook,
           ...renders,
           is_cached: false
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          }
         })
       } catch (renderError) {
         console.error('Render error:', renderError)
         // Fallback to raw if rendering fails
-        return c.json(handbook)
+        return c.json(handbook, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          }
+        })
       }
     }
 
-    return c.json(handbook)
+    return c.json(handbook, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+      }
+    })
   } catch (error: any) {
     console.error('Error in GET /api/v1/handbooks/:id:', error)
     return c.json({ error: 'Failed to fetch handbook' }, 500)
@@ -2079,10 +2231,10 @@ api.post('/handbooks/preview', requireAuth, async (c) => {
     }
 
     const targetLang = body.target_lang || ''
-    
+
     // Use the same rendering logic as GET /handbooks/:id/:target_lang
     const renders = await renderHandbookInternal(c, tempHandbook, targetLang)
-    
+
     return c.json({
       ...tempHandbook,
       ...renders
@@ -2132,6 +2284,10 @@ api.put('/handbooks/:id', requireAuth, async (c) => {
     if (existing.user_id !== user.id) {
       return c.json({ error: 'Access denied' }, 403)
     }
+
+    // Invalidate all cached renders for this handbook
+    // This ensures when content changes, old renders are not reused
+    await db.invalidateHandbookRenders(id)
 
     const updated = await db.updateHandbook(id, body)
     return c.json(updated)

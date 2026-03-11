@@ -149,17 +149,27 @@
 
 /* Meaning text in title */
 .handbook-meaning-title {
-  color: #9ca3af;
   font-weight: 400;
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
 
-/* Meaning text in content */
+/* Meaning text in content - used to have bracket styling, now uses tags */
 .handbook-meaning-content {
   color: #9ca3af;
   font-weight: 400;
   font-size: 0.75rem;
+}
+
+/* Individual meaning tag with language color */
+.handbook-meaning-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--lang-color);
 }
 
 /* Audio icon */
@@ -171,4 +181,96 @@
 .handbook-item-undefined {
   color: #9ca3af;
   border-bottom: 1px dashed #d1d5db;
+}
+
+/* Language tag styles */
+.language-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--lang-color);
+  color: var(--lang-color);
+  background: color-mix(in srgb, var(--lang-color) 10%, transparent);
+  transition: all 0.2s;
+}
+
+.language-tag:hover {
+  background: var(--lang-color);
+  color: white;
+}
+
+.language-tag:hover .language-dot {
+  background: white;
+}
+
+.language-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lang-color);
+}
+
+.language-remove {
+  margin-left: 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.language-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px dashed #9CA3AF;
+  color: #6B7280;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.language-add:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+  background: #EFF6FF;
+}
+
+.language-selector-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  min-width: 160px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.language-option:hover {
+  background: #F3F4F6;
+}
+
+.language-option .language-dot {
+  flex-shrink: 0;
 }
