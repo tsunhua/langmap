@@ -149,17 +149,28 @@
 
 /* Meaning text in title */
 .handbook-meaning-title {
-  color: #9ca3af;
   font-weight: 400;
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
 
-/* Meaning text in content */
+/* Meaning text in content - used to have bracket styling, now uses tags */
 .handbook-meaning-content {
   color: #9ca3af;
   font-weight: 400;
   font-size: 0.75rem;
+}
+
+/* Individual meaning tag with language color */
+.handbook-meaning-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--lang-color);
 }
 
 /* Audio icon */

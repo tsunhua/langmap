@@ -76,18 +76,48 @@
               <label class="block text-xs font-medium text-gray-600 mb-1.5">
                 <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
-              <div class="flex gap-2">
-                <select v-model="form.instruction_lang"
-                  class="flex-1 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
-                  <option value="" disabled>{{ $t('select_language') }}</option>
-                  <option v-for="lang in filteredTargetLanguages" :key="lang.code" :value="lang.code">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}</span>
+                
+                <div class="flex flex-wrap gap-1.5 items-center relative">
+                  <span 
+                    v-for="lang in selectedInstructionLanguages" 
+                    :key="lang.code"
+                    class="language-tag"
+                    :style="{ '--lang-color': getLanguageColor(lang) }"
+                    @click="removeInstructionLanguage(lang.code)"
+                    :title="$t('remove_language')"
+                  >
+                    <span class="language-dot"></span>
                     {{ lang.name }}
-                  </option>
-                </select>
-                <input v-model="form.instruction_lang_prefix" type="text"
-                  class="w-48 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2 min-h-[44px]"
-                  :placeholder="$t('lang_code_prefix')" />
+                    <span class="language-remove">×</span>
+                  </span>
+                  
+                  <button 
+                    class="language-add"
+                    @click="showInstructionLanguageSelector = !showInstructionLanguageSelector"
+                    :title="$t('add_language')"
+                  >
+                    +
+                  </button>
+                  
+                  <div v-if="showInstructionLanguageSelector" class="language-selector-dropdown">
+                    <div 
+                      v-for="lang in availableInstructionLanguages" 
+                      :key="lang.code"
+                      class="language-option"
+                      :style="{ '--lang-color': getLanguageColor(lang) }"
+                      @click="addInstructionLanguage(lang)"
+                    >
+                      <span class="language-dot"></span>
+                      {{ lang.name }}
+                    </div>
+                  </div>
+                </div>
               </div>
+              <input v-model="form.instruction_lang_prefix" type="text"
+                class="mt-2 w-full text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2 min-h-[44px]"
+                :placeholder="$t('lang_code_prefix')" />
             </div>
           </div>
         </div>
@@ -257,6 +287,7 @@ import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { getHandbookById, createHandbook, updateHandbook, stableExpressionId, getExpressionsByIds, getHandbookExpressions } from '../services/handbookService'
+import { generateLanguageColor } from '../utils/languageUtils'
 
 export default {
   name: 'HandbookEdit',
@@ -280,7 +311,7 @@ export default {
       description: '',
       content: '',
       content_lang: '',
-      instruction_lang: '',
+      instruction_langs: [],
       is_public: false,
       instruction_lang_prefix: ''
     })
@@ -288,17 +319,45 @@ export default {
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
 
-    // Filter source languages - exclude target language to prevent selecting same language
-    const filteredTargetLanguages = computed(() => {
-      let result = languages.value.filter(lang => lang.code !== form.content_lang)
+    const showInstructionLanguageSelector = ref(false)
 
-      // Apply prefix filter if instruction_lang_prefix is configured
+    const availableInstructionLanguages = computed(() => {
+      let result = languages.value.filter(lang => 
+        lang.code !== form.content_lang &&
+        !form.instruction_langs.includes(lang.code)
+      )
+
       if (form.instruction_lang_prefix) {
         result = result.filter(lang => lang.code.startsWith(form.instruction_lang_prefix))
       }
 
-      return result
+      return result.sort((a, b) => a.name.localeCompare(b.name))
     })
+
+    const selectedInstructionLanguages = computed(() => {
+      return languages.value.filter(lang => 
+        form.instruction_langs.includes(lang.code)
+      )
+    })
+    const getLanguageColor = (lang) => {
+      return generateLanguageColor(lang.code)
+    }
+
+    const addInstructionLanguage = (lang) => {
+      if (!form.instruction_langs.includes(lang.code) && form.instruction_langs.length < 5) {
+        form.instruction_langs.push(lang.code)
+        updatePreview()
+      }
+      showInstructionLanguageSelector.value = false
+    }
+
+    const removeInstructionLanguage = (langCode) => {
+      if (form.instruction_langs.length > 1) {
+        form.instruction_langs = form.instruction_langs.filter(code => code !== langCode)
+        updatePreview()
+      }
+    }
+
     // Rendered HTML after fetching translations
     const renderedContent = ref('')
     const renderedTitle = ref('')
@@ -365,7 +424,9 @@ export default {
           form.description = data.description || ''
           form.content = data.content
           form.content_lang = data.source_lang || ''
-          form.instruction_lang = data.target_lang || ''
+          form.instruction_langs = data.target_lang 
+            ? data.target_lang.split(',').filter(l => l) 
+            : []
           form.is_public = !!data.is_public
           form.instruction_lang_prefix = data.instruction_lang_prefix || ''
           saveToHistory()
@@ -499,16 +560,14 @@ export default {
     // Store expression data for event handling
     const expressionClickHandlers = ref(new Map())
 
-    // Render helpers for preview
     const renderItem = (id, text, meanings, audioUrl, isTitle = false) => {
       const meaningsText = meanings && meanings.length > 0
         ? (isTitle
-          ? `<div class="handbook-meaning-title">[${meanings.map(m => m.text).join('] [')}]</div>`
-          : ` <span class="handbook-meaning-content">[${meanings.map(m => m.text).join(', ')}]</span>`)
+          ? `<div class="handbook-meaning-title">${meanings.map(m => `<span class="handbook-meaning-tag" data-translation="true" style="--lang-color: ${m.color}">${m.text}</span>`).join(' ')}</div>`
+          : ` ${meanings.map(m => `<span class="handbook-meaning-tag" data-translation="true" style="--lang-color: ${m.color}">${m.text}</span>`).join(' ')}`)
         : ''
       const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
 
-      // Store click handler data
       const key = `expr-${id}`
       expressionClickHandlers.value.set(key, { id, audioUrl })
 
@@ -538,23 +597,25 @@ export default {
       router.push(`/detail/${handler.id}`)
     }
 
-    // Build preview HTML using cached translations
     const buildRenderedContent = (content, expressionMap, sourceLang = '') => {
       if (!content) return ''
       let html = md.render(content)
 
-      // Replace tags with rendered items
       html = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
         const actualLang = lang || sourceLang
         const id = stableExpressionId(text, actualLang)
         const expr = expressionMap[id]
         if (expr) {
-          // Collect all translations for these meanings in the target language
           const translations = []
           expr.meanings?.forEach(m => {
-            if (expressionMap[`trans_${m.id}`]) {
-              translations.push(expressionMap[`trans_${m.id}`])
-            }
+            form.instruction_langs.forEach(targetLang => {
+              const cacheKey = `trans_${targetLang}_${m.id}`
+              if (expressionMap[cacheKey]) {
+                const trans = expressionMap[cacheKey]
+                trans.color = generateLanguageColor(targetLang)
+                translations.push(trans)
+              }
+            })
           })
 
           const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
@@ -575,9 +636,14 @@ export default {
         if (expr) {
           const translations = []
           expr.meanings?.forEach(m => {
-            if (expressionMap[`trans_${m.id}`]) {
-              translations.push(expressionMap[`trans_${m.id}`])
-            }
+            form.instruction_langs.forEach(targetLang => {
+              const cacheKey = `trans_${targetLang}_${m.id}`
+              if (expressionMap[cacheKey]) {
+                const trans = expressionMap[cacheKey]
+                trans.color = generateLanguageColor(targetLang)
+                translations.push(trans)
+              }
+            })
           })
           const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
           return renderItem(id, term, translations, audioUrl, isTitle)
@@ -623,7 +689,6 @@ export default {
         }
       }
 
-      // Phase 2: Resolve translations for all collected meanings in instruction_lang
       const allMids = []
       expressionsToFetch.forEach(e => {
         const expr = translationCache.value[e.id]
@@ -632,35 +697,24 @@ export default {
         })
       })
 
-      const uncachedMids = allMids.filter(mid => !(`trans_${mid}` in translationCache.value))
-
-      if (uncachedMids.length > 0 && form.instruction_lang) {
+      if (allMids.length > 0 && form.instruction_langs.length > 0) {
         previewLoading.value = true
         try {
-          const translations = await getHandbookExpressions(form.instruction_lang, uncachedMids)
-          console.log('Fetched translations:', { targetLang: form.instruction_lang, uncachedMids, translations })
-          // Map mid to the translated expression
-          translations.forEach(trans => {
-            // Check if this translation belongs to one of our target meanings
-            // The getHandbookExpressions likely returns expressions that HAVE these meanings
-            // We need to store it so we can find it by mid
-            if (trans.meaning_id) {
-              translationCache.value[`trans_${trans.meaning_id}`] = trans
-            } else if (trans.meanings) {
-              trans.meanings.forEach(m => {
-                if (uncachedMids.includes(m.id)) {
-                  translationCache.value[`trans_${m.id}`] = trans
-                }
-              })
-            }
-          })
-
-          // Mark tried but not found
-          uncachedMids.forEach(mid => {
-            if (!(`trans_${mid}` in translationCache.value)) {
-              translationCache.value[`trans_${mid}`] = null
-            }
-          })
+          for (const targetLang of form.instruction_langs) {
+            const translations = await getHandbookExpressions(targetLang, allMids)
+            
+            translations.forEach(trans => {
+              const cacheKey = `trans_${targetLang}_${trans.meaning_id}`
+              translationCache.value[cacheKey] = trans
+            })
+            
+            allMids.forEach(mid => {
+              const cacheKey = `trans_${targetLang}_${mid}`
+              if (!(cacheKey in translationCache.value)) {
+                translationCache.value[cacheKey] = null
+              }
+            })
+          }
         } catch (error) {
           console.error('Failed to fetch translations:', error)
         } finally {
@@ -680,8 +734,7 @@ export default {
     }
 
     let previewTimeout = null
-    // Watch for content and instruction_lang changes to update preview
-    watch([() => form.content, () => form.instruction_lang, showPreview], () => {
+    watch([() => form.content, showPreview], () => {
       if (previewTimeout) clearTimeout(previewTimeout)
       previewTimeout = setTimeout(() => {
         updatePreview()
@@ -710,7 +763,7 @@ export default {
         alert(t('content_lang_required'))
         return
       }
-      if (!form.instruction_lang) {
+      if (!form.instruction_langs || form.instruction_langs.length === 0) {
         alert(t('instruction_lang_required'))
         return
       }
@@ -722,7 +775,7 @@ export default {
           description: form.description,
           content: form.content,
           source_lang: form.content_lang || null,
-          target_lang: form.instruction_lang || null,
+          target_lang: form.instruction_langs.length > 0 ? form.instruction_langs.join(',') : null,
           is_public: form.is_public,
           instruction_lang_prefix: form.instruction_lang_prefix || null
         }
@@ -746,12 +799,19 @@ export default {
     }
 
     onMounted(async () => {
-      fetchLanguages()
+      await fetchLanguages()
       await fetchHandbook()
+      
+      if (props.id && form.instruction_langs.length === 0) {
+        const defaultLang = languages.value.find(l => l.code === 'zh-CN')
+        if (defaultLang && defaultLang.code !== form.content_lang) {
+          form.instruction_langs = [defaultLang.code]
+        }
+      }
+      
       checkDraft()
       updatePreview()
 
-      // Add global click handler for expression items
       document.addEventListener('click', handleExpressionClick)
     })
 
@@ -766,7 +826,9 @@ export default {
       previewLoading,
       form,
       languages,
-      filteredTargetLanguages,
+      availableInstructionLanguages,
+      selectedInstructionLanguages,
+      showInstructionLanguageSelector,
       searchQuery,
       searchResults,
       searching,
@@ -786,7 +848,10 @@ export default {
       goBack,
       hasDraft,
       restoreDraft,
-      clearDraft
+      clearDraft,
+      getLanguageColor,
+      addInstructionLanguage,
+      removeInstructionLanguage
     }
   }
 }
