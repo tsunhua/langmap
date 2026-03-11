@@ -70,14 +70,19 @@ design/
   - 性能优化策略
 
  - **[feat-dynamic-languages.md](features/feat-dynamic-languages.md)** - 前端动态语言支持
-   - 动态加载机制
-   - 语言切换流程
-   - 缓存策略
- - **[feat-meaning-mapping.md](features/feat-meaning-mapping.md)** - 词句与语义多对多关系
-   - 数据模型设计（meanings、expression_meaning 表）
-   - 数据迁移方案
-   - API 接口设计
-   - 前端交互实现
+    - 动态加载机制
+    - 语言切换流程
+    - 缓存策略
+- **[feat-meaning-mapping.md](features/feat-meaning-mapping.md)** - 词句与语义多对多关系
+    - 数据模型设计（meanings、expression_meaning 表）
+    - 数据迁移方案
+    - API 接口设计
+    - 前端交互实现
+- **[feat-expression-group-modal.md](features/feat-expression-group-modal.md)** - Handbook 词句组快捷弹窗
+    - 词句组详情弹窗设计
+    - 表格展示所有翻译
+    - 快捷添加新翻译功能
+    - 组件与 API 集成
 
 ## 实施状态
 

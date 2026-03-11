@@ -876,50 +876,6 @@ export default {
 
       saving.value = true
       try {
-        previewLoading.value = true
-        
-        const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
-
-        if (expressionsToFetch.length > 0) {
-          const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
-          
-          if (uncachedExprs.length > 0) {
-            const expressions = await getExpressionsByIds(uncachedExprs.map(e => e.id))
-            expressions.forEach(expr => {
-              translationCache.value[expr.id] = expr
-            })
-            uncachedExprs.forEach(e => {
-              if (!(e.id in translationCache.value)) {
-                translationCache.value[e.id] = null
-              }
-            })
-          }
-
-          const allMids = []
-          expressionsToFetch.forEach(e => {
-            const expr = translationCache.value[e.id]
-            expr?.meanings?.forEach(m => {
-              if (!allMids.includes(m.id)) allMids.push(m.id)
-            })
-          })
-
-          if (allMids.length > 0 && form.instruction_langs.length > 0) {
-            for (const targetLang of form.instruction_langs) {
-              const translations = await getHandbookExpressions(targetLang, allMids)
-              translations.forEach(trans => {
-                const cacheKey = `trans_${targetLang}_${trans.meaning_id}`
-                translationCache.value[cacheKey] = trans
-              })
-              allMids.forEach(mid => {
-                const cacheKey = `trans_${targetLang}_${mid}`
-                if (!(cacheKey in translationCache.value)) {
-                  translationCache.value[cacheKey] = null
-                }
-              })
-            }
-          }
-        }
-
         const payload = {
           title: form.title,
           description: form.description,

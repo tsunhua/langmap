@@ -576,6 +576,37 @@ export class D1DatabaseService extends AbstractDatabaseService {
     }
   }
 
+  async ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>> {
+    const results: Record<string, number> = {}
+    const now = new Date().toISOString()
+
+    for (const expr of expressions) {
+      const id = this.stableExpressionId(expr.text, expr.language_code)
+      const existing = await this.db.prepare('SELECT id FROM expressions WHERE id = ?').bind(id).first<{ id: number }>()
+      
+      if (existing) {
+        results[`${expr.text}|${expr.language_code}`] = existing.id
+      } else {
+        try {
+          const result = await this.db.prepare(
+            `INSERT INTO expressions (
+              id, text, audio_url, language_code, region_code, region_name, region_latitude,
+              region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+            ) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, NULL, NULL, 'handbook', NULL, 'approved', ?, ?)`
+          ).bind(id, expr.text, expr.language_code, username, username).first<Expression>()
+          
+          if (result) {
+            results[`${expr.text}|${expr.language_code}`] = result.id
+          }
+        } catch (error) {
+          console.error('Failed to create expression:', expr, error)
+        }
+      }
+    }
+
+    return results
+  }
+
   async updateExpression(id: number, expression: Partial<Expression>): Promise<Expression> {
     const fields: string[] = []
     const values: any[] = []

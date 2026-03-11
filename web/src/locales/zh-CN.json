@@ -375,5 +375,13 @@
   "no_other_expressions_in_group": "该组中没有其他词句",
   "expressions_processed": "成功处理了 {count} 个词句。含义 ID：{meaningId}",
   "failed_to_remove_from_group": "从组中移除失败",
-  "lang_code_prefix": "语言代码前缀"
+  "lang_code_prefix": "语言代码前缀",
+  "expression_group_details": "词句组详情",
+  "add_row": "添加一行",
+  "language_already_exists": "该语言已存在于此词句组中",
+  "translation_added_successfully": "添加成功",
+  "please_select_language": "请选择语言",
+  "please_enter_expression": "请输入词句",
+  "please_fill_all_fields": "请填写所有字段",
+  "failed_to_add_expression": "添加词句失败"
 }

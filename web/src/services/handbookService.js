@@ -207,6 +207,9 @@ export async function getExpressionsByIds(ids) {
 
         return allResults
     } catch (error) {
+        if (error.response?.status === 404) {
+            return [] // Expression not found - this is fine for new expressions
+        }
         console.error('Error fetching expressions by IDs:', error)
         throw error
     }

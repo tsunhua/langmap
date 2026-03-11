@@ -333,5 +333,12 @@
   "color": "顏色",
   "color_hex_format": "十六進位顏色格式（比如：#FF5733）",
   "customize_color": "自訂顏色",
-  "reset_to_default": "恢復做預設"
+  "reset_to_default": "恢復做預設",
+  "expression_group_details": "詞句組詳細",
+  "add_row": "加一棱",
+  "translation_added_successfully": "加成功",
+  "please_select_language": "請選語言",
+  "please_enter_expression": "請輸入詞句",
+  "please_fill_all_fields": "請掠所有空格全填好",
+  "failed_to_add_expression": "加詞句失敗"
 }
