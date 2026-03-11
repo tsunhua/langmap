@@ -1851,12 +1851,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
       handbook.content || '',
       handbook.source_lang || null,
       handbook.target_lang || null,
-      handbook.is_public ? 1 : 0
+      handbook.is_public ? 1 : 0,
+      handbook.lang_colors || '{}'
     ]
 
     const result = await this.db.prepare(
-      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public, lang_colors)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).first<Handbook>()
 
     if (!result) {

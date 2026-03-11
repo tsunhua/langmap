@@ -298,8 +298,8 @@
   "remove_audio": "刪掉錄音",
   "expression_audio_label": "詞句錄音",
   "confirm_delete_audio": "汝確定愛刪掉這段錄音？",
-  "draft_found": "揣著草稿",
-  "draft_found_hint": "汝有一條還未保存个草稿，要愛恢復？",
+  "draft_found": "揣着草稿",
+  "draft_found_hint": "汝有一條還未保存个草稿，愛恢復？",
   "discard_draft": "放棄",
   "restore_draft": "恢復草稿",
   "handbook_title_placeholder": "輸入手冊標題...",
@@ -329,5 +329,9 @@
   "handbook_back_to_list": "轉去手冊列表",
   "last_updated": "最後更新",
   "learn_in": "學習語言",
-  "lang_code_prefix": "語言代碼前綴"
+  "lang_code_prefix": "語言代碼前綴",
+  "color": "顏色",
+  "color_hex_format": "十六進位顏色格式（比如：#FF5733）",
+  "customize_color": "自訂顏色",
+  "reset_to_default": "恢復做預設"
 }

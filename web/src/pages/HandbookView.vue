@@ -22,7 +22,7 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <!-- Language Switcher -->
           <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}</span>
+            <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}: </span>
             
             <!-- Selected Language Tags -->
             <div class="flex flex-wrap gap-1.5 items-center relative">
@@ -202,9 +202,17 @@
        return lang?.name || handbook.value.source_lang
      })
 
-     const getLanguageColor = (lang) => {
-       return generateLanguageColor(lang.code)
-     }
+      const getLanguageColor = (lang) => {
+        if (handbook.value?.lang_colors) {
+          try {
+            const colors = JSON.parse(handbook.value.lang_colors)
+            if (colors[lang.code]) {
+              return colors[lang.code]
+            }
+          } catch (e) {}
+        }
+        return generateLanguageColor(lang.code)
+      }
 
       const addLanguage = (lang) => {
         if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {

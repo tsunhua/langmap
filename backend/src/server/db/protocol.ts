@@ -107,6 +107,7 @@ export interface Handbook {
   created_at: string
   updated_at: string
   renders?: string // JSON string for cached renders
+  lang_colors?: string // JSON string for custom language colors
   created_by?: string // username from join
 }
 

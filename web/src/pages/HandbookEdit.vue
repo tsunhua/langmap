@@ -77,20 +77,18 @@
                 <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
               </label>
               <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}</span>
-                
                 <div class="flex flex-wrap gap-1.5 items-center relative">
                   <span 
                     v-for="lang in selectedInstructionLanguages" 
                     :key="lang.code"
                     class="language-tag"
                     :style="{ '--lang-color': getLanguageColor(lang) }"
-                    @click="removeInstructionLanguage(lang.code)"
-                    :title="$t('remove_language')"
+                    @click="openColorPicker(lang.code)"
+                    :title="$t('customize_color')"
                   >
                     <span class="language-dot"></span>
                     {{ lang.name }}
-                    <span class="language-remove">×</span>
+                    <span class="language-remove" @click.stop="removeInstructionLanguage(lang.code)" :title="$t('remove_language')">×</span>
                   </span>
                   
                   <button 
@@ -111,6 +109,44 @@
                     >
                       <span class="language-dot"></span>
                       {{ lang.name }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Color Picker Modal -->
+                <div v-if="showColorPicker" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click="closeColorPicker">
+                  <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full mx-4" @click.stop>
+                    <h3 class="text-lg font-semibold mb-4">{{ $t('customize_color') }}</h3>
+                    <p class="text-sm text-gray-600 mb-3">{{ selectedLanguageForColor?.name }}</p>
+                    <div class="flex items-center gap-4 mb-4">
+                      <input 
+                        type="color" 
+                        v-model="tempColor"
+                        class="w-16 h-16 cursor-pointer border-0 rounded-lg"
+                      />
+                      <div class="flex-1">
+                        <input 
+                          type="text" 
+                          v-model="tempColor"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase"
+                          maxlength="7"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">{{ $t('color_hex_format') }}</p>
+                      </div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                      <button 
+                        @click="resetColorToDefault"
+                        class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        {{ $t('reset_to_default') }}
+                      </button>
+                      <button 
+                        @click="saveColor"
+                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        {{ $t('save') }}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -313,13 +349,19 @@ export default {
       content_lang: '',
       instruction_langs: [],
       is_public: false,
-      instruction_lang_prefix: ''
+      instruction_lang_prefix: '',
+      lang_colors: {}
     })
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
 
     const showInstructionLanguageSelector = ref(false)
+    
+    // Color picker state
+    const showColorPicker = ref(false)
+    const selectedLanguageForColor = ref(null)
+    const tempColor = ref('#000000')
 
     const availableInstructionLanguages = computed(() => {
       let result = languages.value.filter(lang => 
@@ -340,6 +382,9 @@ export default {
       )
     })
     const getLanguageColor = (lang) => {
+      if (form.lang_colors && form.lang_colors[lang.code]) {
+        return form.lang_colors[lang.code]
+      }
       return generateLanguageColor(lang.code)
     }
 
@@ -356,6 +401,40 @@ export default {
         form.instruction_langs = form.instruction_langs.filter(code => code !== langCode)
         updatePreview()
       }
+    }
+    
+    const openColorPicker = (langCode) => {
+      selectedLanguageForColor.value = languages.value.find(l => l.code === langCode)
+      tempColor.value = form.lang_colors[langCode] || generateLanguageColor(langCode)
+      showColorPicker.value = true
+    }
+    
+    const closeColorPicker = () => {
+      showColorPicker.value = false
+      selectedLanguageForColor.value = null
+      tempColor.value = '#000000'
+    }
+    
+    const saveColor = () => {
+      if (selectedLanguageForColor.value && tempColor.value) {
+        const hexColor = tempColor.value.startsWith('#') ? tempColor.value : `#${tempColor.value}`
+        if (!form.lang_colors) {
+          form.lang_colors = {}
+        }
+        form.lang_colors[selectedLanguageForColor.value.code] = hexColor
+        updatePreview()
+      }
+      closeColorPicker()
+    }
+    
+    const resetColorToDefault = () => {
+      if (selectedLanguageForColor.value) {
+        if (form.lang_colors) {
+          delete form.lang_colors[selectedLanguageForColor.value.code]
+        }
+        updatePreview()
+      }
+      closeColorPicker()
     }
 
     // Rendered HTML after fetching translations
@@ -429,6 +508,15 @@ export default {
             : []
           form.is_public = !!data.is_public
           form.instruction_lang_prefix = data.instruction_lang_prefix || ''
+          
+          if (data.lang_colors) {
+            try {
+              form.lang_colors = JSON.parse(data.lang_colors)
+            } catch (e) {
+              form.lang_colors = {}
+            }
+          }
+          
           saveToHistory()
         }
       } catch (error) {
@@ -578,13 +666,13 @@ export default {
         meaningsText = isTitle
           ? `<div class="handbook-meaning-title">
               ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-                const color = generateLanguageColor(langCode)
+                const color = getLanguageColor({ code: langCode })
                 return `<span style="color: ${color}">${texts.join(separator)}</span>`
               }).join(langSeparator)}
             </div>`
           : ` <span class="handbook-meaning-content">
               ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-                const color = generateLanguageColor(langCode)
+                const color = getLanguageColor({ code: langCode })
                 return `<span style="color: ${color}">${texts.join(separator)}</span>`
               }).join(langSeparator)}
             </span>`
@@ -839,7 +927,8 @@ export default {
           source_lang: form.content_lang || null,
           target_lang: form.instruction_langs.length > 0 ? form.instruction_langs.join(',') : null,
           is_public: form.is_public,
-          instruction_lang_prefix: form.instruction_lang_prefix || null
+          instruction_lang_prefix: form.instruction_lang_prefix || null,
+          lang_colors: JSON.stringify(form.lang_colors || {})
         }
         if (isEditing.value) {
           await updateHandbook(props.id, payload)
@@ -914,7 +1003,14 @@ export default {
       clearDraft,
       getLanguageColor,
       addInstructionLanguage,
-      removeInstructionLanguage
+      removeInstructionLanguage,
+      showColorPicker,
+      selectedLanguageForColor,
+      tempColor,
+      openColorPicker,
+      closeColorPicker,
+      saveColor,
+      resetColorToDefault
     }
   }
 }
