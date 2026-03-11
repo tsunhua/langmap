@@ -104,88 +104,71 @@
    name: 'HandbookView',
    props: ['id'],
    setup(props) {
-     const router = useRouter()
+      const router = useRouter()
 
-     // State
-      const handbook = ref(null)
-      const languages = ref([])
-      const instructionLanguages = ref([])
-      const showLanguageSelector = ref(false)
-     const loading = ref(true)
-     const audioPlayer = ref(null)
-     const currentUser = ref(null)
+      // State
+       const handbook = ref(null)
+       const languages = ref([])
+       const instructionLanguages = ref([])
+       const showLanguageSelector = ref(false)
+      const loading = ref(true)
+      const audioPlayer = ref(null)
+      const currentUser = ref(null)
+      const isInitialized = ref(false)
 
-      // Initialize language selection from handbook or localStorage
-      const initLanguageSelection = () => {
-        // First try localStorage for user preference
-        const saved = localStorage.getItem('instructionLanguages')
-        if (saved) {
-          try {
-            instructionLanguages.value = JSON.parse(saved)
-          } catch {
-            instructionLanguages.value = []
-          }
-        }
-      }
-
-      const setInitialLanguages = () => {
-        // If no languages selected yet, use handbook's target_lang
-        if (instructionLanguages.value.length === 0 && handbook.value?.target_lang) {
-          instructionLanguages.value = [handbook.value.target_lang]
-        }
-        
-        // If still no languages, use default
-        if (instructionLanguages.value.length === 0) {
-          instructionLanguages.value = ['zh-CN']
-        }
-      }
-
-     const fetchInitialData = async () => {
-       loading.value = true
-       try {
-         // Fetch languages if not loaded
-         if (languages.value.length === 0) {
-           languages.value = await fetchLanguages()
+       const setInitialLanguages = () => {
+         if (handbook.value?.target_lang) {
+           instructionLanguages.value = handbook.value.target_lang.split(',').filter(l => l)
          }
+       }
 
-         // Build target languages parameter
-         const targetLangsParam = instructionLanguages.value.join(',')
+      const fetchInitialData = async () => {
+        loading.value = true
+        try {
+          // Fetch languages if not loaded
+          if (languages.value.length === 0) {
+            languages.value = await fetchLanguages()
+          }
 
-         // Fetch handbook with pre-rendered content from backend
-         const data = await getHandbookById(props.id, null, targetLangsParam)
+          // Fetch handbook data first
+          const data = await getHandbookById(props.id)
 
           if (data) {
             handbook.value = data
-            setInitialLanguages()
+            
+            // Only set initial languages on first load
+            if (!isInitialized.value) {
+              setInitialLanguages()
+              isInitialized.value = true
+            }
+
+            // Fetch with target languages for rendering
+            const targetLangsParam = instructionLanguages.value.join(',')
+            const renderedData = await getHandbookById(props.id, null, targetLangsParam)
+            handbook.value = renderedData
           }
 
-         // Auth check for edit button
-         const userStr = localStorage.getItem('user')
-         if (userStr) currentUser.value = JSON.parse(userStr)
+          // Auth check for edit button
+          const userStr = localStorage.getItem('user')
+          if (userStr) currentUser.value = JSON.parse(userStr)
 
-       } catch (error) {
-         console.error('Failed to load handbook data:', error)
-       } finally {
-         loading.value = false
-       }
-     }
+        } catch (error) {
+          console.error('Failed to load handbook data:', error)
+        } finally {
+          loading.value = false
+        }
+      }
 
-     // Global helpers for rendered HTML interactions
-     window.playHandbookAudio = (url) => {
-       if (!url || !audioPlayer.value) return
-       audioPlayer.value.src = url
-       audioPlayer.value.play()
-     }
+      // Global helpers for rendered HTML interactions
+      window.playHandbookAudio = (url) => {
+        if (!url || !audioPlayer.value) return
+        audioPlayer.value.src = url
+        audioPlayer.value.play()
+      }
 
-     window.navigateToExpression = (id) => {
-       router.push(`/detail/${id}`)
-     }
-
-     // Watch for instruction languages changes to re-fetch pre-rendered content from backend
-     watch(instructionLanguages, (newLangs) => {
-       localStorage.setItem('instructionLanguages', JSON.stringify(newLangs))
-       fetchInitialData()
-     }, { deep: true })
+      window.navigateToExpression = (id) => {
+        router.push(`/detail/${id}`)
+      }
 
      const canEdit = computed(() => {
        if (!handbook.value || !currentUser.value) return false
@@ -223,20 +206,22 @@
        return generateLanguageColor(lang.code)
      }
 
-     const addLanguage = (lang) => {
-       if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {
-         instructionLanguages.value.push(lang.code)
-       }
-       showLanguageSelector.value = false
-     }
+      const addLanguage = (lang) => {
+        if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {
+          instructionLanguages.value.push(lang.code)
+          fetchInitialData()
+        }
+        showLanguageSelector.value = false
+      }
 
-     const removeLanguage = (langCode) => {
-       if (instructionLanguages.value.length > 1) {
-         instructionLanguages.value = instructionLanguages.value.filter(
-           code => code !== langCode
-         )
-       }
-     }
+      const removeLanguage = (langCode) => {
+        if (instructionLanguages.value.length > 1) {
+          instructionLanguages.value = instructionLanguages.value.filter(
+            code => code !== langCode
+          )
+          fetchInitialData()
+        }
+      }
 
      const goToEdit = () => {
        router.push(`/handbooks/${props.id}/edit`)
@@ -247,28 +232,26 @@
        return new Date(dateString).toLocaleDateString()
      }
 
-     onMounted(() => {
-       initLanguageSelection()
-       fetchInitialData()
-     })
+      onMounted(() => {
+        fetchInitialData()
+      })
 
-      return {
-        handbook,
-        loading,
-        instructionLanguages,
-        selectedLanguages,
-        availableLanguages,
-        showLanguageSelector,
-        audioPlayer,
-        canEdit,
-        goToEdit,
-        formatDate,
-        getLanguageColor,
-        addLanguage,
-        removeLanguage,
-        sourceLanguageName,
-        setInitialLanguages
-      }
+       return {
+         handbook,
+         loading,
+         instructionLanguages,
+         selectedLanguages,
+         availableLanguages,
+         showLanguageSelector,
+         audioPlayer,
+         canEdit,
+         goToEdit,
+         formatDate,
+         getLanguageColor,
+         addLanguage,
+         removeLanguage,
+         sourceLanguageName
+       }
    }
   }
 </script>
