@@ -749,12 +749,6 @@ export default {
       renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
       renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)
       renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.content_lang)
-
-      console.log('Preview update:', {
-        targetLang: form.instruction_lang,
-        translationCacheKeys: Object.keys(translationCache.value),
-        expressionsToFetchCount: expressionsToFetch.length
-      })
     }
 
     let previewTimeout = null
@@ -838,12 +832,6 @@ export default {
           }
         }
 
-        renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
-        renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)
-        renderedDescription.value = renderPlainTextTags(form.description, translationCache.value, false, form.content_lang)
-        
-        previewLoading.value = false
-
         const payload = {
           title: form.title,
           description: form.description,
@@ -851,10 +839,7 @@ export default {
           source_lang: form.content_lang || null,
           target_lang: form.instruction_langs.length > 0 ? form.instruction_langs.join(',') : null,
           is_public: form.is_public,
-          instruction_lang_prefix: form.instruction_lang_prefix || null,
-          rendered_title: renderedTitle.value,
-          rendered_description: renderedDescription.value,
-          rendered_content: renderedContent.value
+          instruction_lang_prefix: form.instruction_lang_prefix || null
         }
         if (isEditing.value) {
           await updateHandbook(props.id, payload)
