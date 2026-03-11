@@ -22,7 +22,7 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <!-- Language Switcher -->
           <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}</span>
+            <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}: </span>
             
             <!-- Selected Language Tags -->
             <div class="flex flex-wrap gap-1.5 items-center relative">

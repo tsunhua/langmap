@@ -329,5 +329,9 @@
   "content_lang": "Langue du Contenu",
   "instruction_lang": "Langue d'Instruction",
   "save_failed": "Échec de l'enregistrement",
-  "lang_code_prefix": "Préfixe de Code de Langue"
+  "lang_code_prefix": "Préfixe de Code de Langue",
+  "color": "Couleur",
+  "color_hex_format": "Format de couleur hexadécimal (ex. #FF5733)",
+  "customize_color": "Personnaliser la Couleur",
+  "reset_to_default": "Réinitialiser par défaut"
 }
