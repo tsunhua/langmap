@@ -338,6 +338,7 @@
   "handbook_empty_info": "创建您的第一本手册，将 LangMap 词条与您的笔记有机结合！",
   "handbook_delete_confirm": "确定要删除这本手册吗？",
   "edit_handbook": "编辑手册",
+  "rerender_handbook": "重新生成",
   "delete_handbook": "删除手册",
   "handbook_not_found": "未找到手册",
   "handbook_not_found_info": "手册可能已被删除或移动。",

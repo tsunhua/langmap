@@ -62,13 +62,19 @@
                 </div>
               </div>
             </div>
-          </div> 
-          
-          <!-- Edit Button -->
-          <button v-if="canEdit" @click="goToEdit"
-            class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center cursor-pointer">
-            {{ $t('edit_handbook') }}
-          </button>
+           </div>
+
+           <!-- Edit & Rerender Buttons -->
+           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+             <button v-if="canRerender" @click="handleRerender"
+               class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors min-h-[44px] flex items-center justify-center cursor-pointer">
+               {{ $t('rerender_handbook') }}
+             </button>
+             <button v-if="canEdit" @click="goToEdit"
+               class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors min-h-[44px] flex items-center justify-center cursor-pointer">
+               {{ $t('edit_handbook') }}
+             </button>
+           </div>
         </div>
       </div>
  
@@ -106,7 +112,7 @@
 <script>
  import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
  import { useRouter } from 'vue-router'
- import { getHandbookById } from '../services/handbookService'
+ import { getHandbookById, rerenderHandbook } from '../services/handbookService'
  import { fetchLanguages } from '../services/languageService'
  import { generateLanguageColor } from '../utils/languageUtils'
  import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
@@ -198,12 +204,29 @@
         fetchInitialData()
       }
 
-     const canEdit = computed(() => {
-       if (!handbook.value || !currentUser.value) return false
-       return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
-     })
+      const canEdit = computed(() => {
+        if (!handbook.value || !currentUser.value) return false
+        return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
+      })
 
-      const selectedLanguages = computed(() => {
+      const canRerender = computed(() => {
+        if (!handbook.value || !currentUser.value) return false
+        return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
+      })
+
+      const handleRerender = async () => {
+        try {
+          loading.value = true
+          await rerenderHandbook(props.id)
+          await fetchInitialData()
+        } catch (error) {
+          console.error('Failed to rerender handbook:', error)
+        } finally {
+          loading.value = false
+        }
+      }
+
+       const selectedLanguages = computed(() => {
         return languages.value.filter(lang => 
           instructionLanguages.value.includes(lang.code)
         )
@@ -315,6 +338,7 @@
           showLanguageSelector,
           audioPlayer,
           canEdit,
+          canRerender,
           goToEdit,
           formatDate,
           getLanguageColor,
@@ -324,7 +348,8 @@
           showExpressionGroupModal,
           selectedExpressionId,
           selectedMeaningId,
-          handleExpressionGroupUpdated
+          handleExpressionGroupUpdated,
+          handleRerender
         }
    }
   }

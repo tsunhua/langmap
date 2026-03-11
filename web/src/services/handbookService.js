@@ -138,6 +138,21 @@ export async function deleteHandbook(id) {
 }
 
 /**
+ * Rerender a handbook (clear render cache)
+ * @param {number} id - Handbook ID
+ * @returns {Promise<Object>} Response
+ */
+export async function rerenderHandbook(id) {
+    try {
+        const response = await api.post(`/handbooks/${id}/rerender`)
+        return response.data
+    } catch (error) {
+        console.error(`Error rerendering handbook ${id}:`, error)
+        throw error
+    }
+}
+
+/**
  * Get expressions for handbook rendering
  * @param {string} languageCode - Target language code
  * @param {Array<number>} meaningIds - List of meaning IDs to fetch

@@ -333,6 +333,7 @@
   "handbook_delete_confirm": "本当にこのハンドブックを削除しますか？",
   "delete_handbook": "ハンドブックを削除",
   "edit_handbook": "ハンドブックを編集",
+  "rerender_handbook": "再レンダリング",
   "handbook_not_found": "ハンドブックが見つかりません",
   "handbook_not_found_info": "ハンドブックは削除または移動された可能性があります。",
   "handbook_back_to_list": "ハンドブック一覧に戻る",

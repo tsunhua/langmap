@@ -325,6 +325,7 @@
   "handbook_delete_confirm": "確定要刪除這本手冊嗎？",
   "delete_handbook": "刪除手冊",
   "edit_handbook": "編輯手冊",
+  "rerender_handbook": "重新生成",
   "handbook_not_found": "未找到手冊",
   "handbook_not_found_info": "手冊可能已被刪除或移動。",
   "handbook_back_to_list": "返回手冊列表",

@@ -315,6 +315,7 @@
   "handbook_empty_info": "建立汝个第一本手冊，將 LangMap 詞條佮汝个筆記有機結合。",
   "handbook_delete_confirm": "汝確定愛刪掉這本手冊？",
   "edit_handbook": "編輯手冊",
+  "rerender_handbook": "重新生成",
   "handbook_not_found": "無揣着手冊",
   "handbook_not_found_info": "手冊可能已經乎刪掉或者徙位矣。",
   "handbook_back_to_list": "轉去手冊列表",

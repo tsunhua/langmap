@@ -2370,6 +2370,35 @@ api.put('/handbooks/:id', requireAuth, async (c) => {
   }
 })
 
+// POST /api/v1/handbooks/:id/rerender
+api.post('/handbooks/:id/rerender', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return c.json({ error: 'Access denied' }, 403)
+    }
+
+    // Clear all cached renders for this handbook
+    await db.invalidateHandbookRenders(id)
+
+    return c.json({
+      success: true,
+      message: 'Handbook render cache cleared successfully'
+    })
+  } catch (error: any) {
+    console.error('Error in POST /api/v1/handbooks/:id/rerender:', error)
+    return c.json({ error: 'Failed to rerender handbook' }, 500)
+  }
+})
+
 // DELETE /api/v1/handbooks/:id
 api.delete('/handbooks/:id', requireAuth, async (c) => {
   try {
