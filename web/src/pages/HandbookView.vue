@@ -76,8 +76,18 @@
       <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body"
            v-html="handbook.rendered_content || handbook.content"></div>
  
-      <!-- Audio Player Placeholder (Hidden) -->
-      <audio ref="audioPlayer" class="hidden"></audio>
+       <!-- Audio Player Placeholder (Hidden) -->
+       <audio ref="audioPlayer" class="hidden"></audio>
+
+        <!-- Expression Group Modal -->
+        <ExpressionGroupModal
+          :visible="showExpressionGroupModal"
+          :expression-id="selectedExpressionId"
+          :meaning-id="selectedMeaningId"
+          :languages="modalLanguages"
+          @close="showExpressionGroupModal = false"
+          @updated="handleExpressionGroupUpdated"
+        />
     </div>
  
     <div v-else class="text-center py-24">
@@ -94,27 +104,34 @@
 </template>
 
 <script>
- import { ref, onMounted, computed, watch } from 'vue'
+ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
  import { useRouter } from 'vue-router'
  import { getHandbookById } from '../services/handbookService'
  import { fetchLanguages } from '../services/languageService'
  import { generateLanguageColor } from '../utils/languageUtils'
+ import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
 
  export default {
    name: 'HandbookView',
+   components: { ExpressionGroupModal },
    props: ['id'],
    setup(props) {
       const router = useRouter()
 
-      // State
-       const handbook = ref(null)
-       const languages = ref([])
-       const instructionLanguages = ref([])
-       const showLanguageSelector = ref(false)
-      const loading = ref(true)
-      const audioPlayer = ref(null)
-      const currentUser = ref(null)
-      const isInitialized = ref(false)
+       // State
+        const handbook = ref(null)
+        const languages = ref([])
+        const instructionLanguages = ref([])
+        const showLanguageSelector = ref(false)
+       const loading = ref(true)
+       const audioPlayer = ref(null)
+       const currentUser = ref(null)
+       const isInitialized = ref(false)
+
+       // Expression group modal
+       const showExpressionGroupModal = ref(false)
+       const selectedExpressionId = ref(null)
+       const selectedMeaningId = ref(null)
 
        const setInitialLanguages = () => {
          if (handbook.value?.target_lang) {
@@ -170,18 +187,57 @@
         router.push(`/detail/${id}`)
       }
 
+      const handleExpressionClick = (event) => {
+        const { id, meaningId } = event.detail
+        selectedExpressionId.value = id
+        selectedMeaningId.value = meaningId
+        showExpressionGroupModal.value = true
+      }
+
+      const handleExpressionGroupUpdated = () => {
+        fetchInitialData()
+      }
+
      const canEdit = computed(() => {
        if (!handbook.value || !currentUser.value) return false
        return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
      })
 
-     const selectedLanguages = computed(() => {
-       return languages.value.filter(lang => 
-         instructionLanguages.value.includes(lang.code)
-       )
-     })
+      const selectedLanguages = computed(() => {
+        return languages.value.filter(lang => 
+          instructionLanguages.value.includes(lang.code)
+        )
+      })
 
-     const availableLanguages = computed(() => {
+      const modalLanguages = computed(() => {
+        const sourceLangCode = handbook.value?.source_lang
+        const sourceLang = sourceLangCode ? languages.value.find(l => l.code === sourceLangCode) : null
+        
+        let result = []
+        if (selectedLanguages.value.length > 0) {
+          result = [...selectedLanguages.value]
+        } else {
+          // Fallback to all loaded languages if selectedLanguages is empty
+          result = [...languages.value]
+        }
+        
+        if (sourceLang && !result.some(l => l.code === sourceLang.code)) {
+          result.unshift(sourceLang)
+        }
+        
+        console.log('modalLanguages computed:', {
+          sourceLangCode,
+          sourceLang,
+          selectedLanguages: selectedLanguages.value,
+          languagesLength: languages.value.length,
+          resultLength: result.length,
+          result: result
+        })
+        
+        return result
+      })
+
+      const availableLanguages = computed(() => {
        let result = [...languages.value]
          .filter(lang => 
            lang.code !== handbook.value?.source_lang &&
@@ -242,24 +298,34 @@
 
       onMounted(() => {
         fetchInitialData()
+        window.addEventListener('handbook-expression-click', handleExpressionClick)
       })
 
-       return {
-         handbook,
-         loading,
-         instructionLanguages,
-         selectedLanguages,
-         availableLanguages,
-         showLanguageSelector,
-         audioPlayer,
-         canEdit,
-         goToEdit,
-         formatDate,
-         getLanguageColor,
-         addLanguage,
-         removeLanguage,
-         sourceLanguageName
-       }
+      onUnmounted(() => {
+        window.removeEventListener('handbook-expression-click', handleExpressionClick)
+      })
+
+        return {
+          handbook,
+          loading,
+          instructionLanguages,
+          selectedLanguages,
+          modalLanguages,
+          availableLanguages,
+          showLanguageSelector,
+          audioPlayer,
+          canEdit,
+          goToEdit,
+          formatDate,
+          getLanguageColor,
+          addLanguage,
+          removeLanguage,
+          sourceLanguageName,
+          showExpressionGroupModal,
+          selectedExpressionId,
+          selectedMeaningId,
+          handleExpressionGroupUpdated
+        }
    }
   }
 </script>

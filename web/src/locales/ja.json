@@ -338,5 +338,14 @@
   "handbook_back_to_list": "ハンドブック一覧に戻る",
   "last_updated": "最終更新",
   "learn_in": "学習言語",
-  "lang_code_prefix": "言語コードプレフィックス"
+  "lang_code_prefix": "言語コードプレフィックス",
+  "expression_group_details": "表現グループの詳細",
+  "add_row": "行を追加",
+  "language_already_exists": "この言語はすでにグループに存在します",
+  "translation_added_successfully": "追加成功",
+  "please_select_language": "言語を選択",
+  "please_enter_expression": "表現を入力",
+  "please_fill_all_fields": "すべてのフィールドに入力してください",
+  "login_required": "表現を追加するにはログインしてください",
+  "failed_to_add_expression": "表現の追加に失敗しました"
 }

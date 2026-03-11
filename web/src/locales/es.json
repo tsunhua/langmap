@@ -333,5 +333,14 @@
   "color": "Color",
   "color_hex_format": "Formato de color hexadecimal (ej. #FF5733)",
   "customize_color": "Personalizar Color",
-  "reset_to_default": "Restablecer a predeterminado"
+  "reset_to_default": "Restablecer a predeterminado",
+  "expression_group_details": "Detalles del Grupo de Expresiones",
+  "add_row": "Agregar Fila",
+  "language_already_exists": "Este idioma ya existe en el grupo",
+  "translation_added_successfully": "Traducción añadida exitosamente",
+  "please_select_language": "Seleccionar idioma",
+  "please_enter_expression": "Ingresar expresión",
+  "please_fill_all_fields": "Por favor complete todos los campos",
+  "login_required": "Por favor inicie sesión para añadir expresiones",
+  "failed_to_add_expression": "Error al añadir expresión"
 }

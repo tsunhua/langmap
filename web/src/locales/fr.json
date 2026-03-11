@@ -333,5 +333,14 @@
   "color": "Couleur",
   "color_hex_format": "Format de couleur hexadécimal (ex. #FF5733)",
   "customize_color": "Personnaliser la Couleur",
-  "reset_to_default": "Réinitialiser par défaut"
+  "reset_to_default": "Réinitialiser par défaut",
+  "expression_group_details": "Détails du Groupe d'Expressions",
+  "add_row": "Ajouter une Ligne",
+  "language_already_exists": "Cette langue existe déjà dans le groupe",
+  "translation_added_successfully": "Traduction ajoutée avec succès",
+  "please_select_language": "Sélectionner la langue",
+  "please_enter_expression": "Entrer l'expression",
+  "please_fill_all_fields": "Veuillez remplir tous les champs",
+  "login_required": "Veuillez vous connecter pour ajouter des expressions",
+  "failed_to_add_expression": "Échec de l'ajout de l'expression"
 }

@@ -356,6 +356,25 @@ api.post('/expressions', requireAuth, async (c) => {
   }
 })
 
+// POST /api/v1/expressions/ensure - Ensure expressions exist (create if not found)
+api.post('/expressions/ensure', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const user = c.get('user')
+    const body = await c.req.json()
+
+    if (!body.expressions || !Array.isArray(body.expressions)) {
+      return c.json({ error: 'expressions array is required' }, 400)
+    }
+
+    const results = await db.ensureExpressionsExist(body.expressions, user.username)
+    return c.json(results)
+  } catch (error: any) {
+    console.error('Error in POST /expressions/ensure:', error);
+    return c.json({ error: 'Failed to ensure expressions', details: error.message }, 500)
+  }
+})
+
 // en-GB: 英语（英国）
 // en-US: 英语（美国）
 // zh-TW: 繁体中文
@@ -1994,7 +2013,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   // 3. Render helpers
-  const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean) => {
+  const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, meaningId?: number) => {
     // Group translations by language
     const translationsByTargetLang: Record<string, string[]> = {}
 
@@ -2043,11 +2062,12 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     }
 
     const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
+    const audioHandler = audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''
 
     if (isTitle) {
-      return `<span class="handbook-item" data-type="title" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsHtml}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningId || null} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
     } else {
-      return `<span class="handbook-item" data-type="content" onclick="event.stopPropagation(); window.navigateToExpression(${id}); ${audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''}">${text}${meaningsHtml}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningId || null} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
     }
   }
 
@@ -2071,7 +2091,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           } catch { }
         }
 
-        return renderItem(id, term, audioUrl, isTitle)
+        const meaningId = expr.meanings?.[0]?.id
+        return renderItem(id, term, audioUrl, isTitle, meaningId)
       }
 
       return `<span class="handbook-item-undefined">${term}</span>`
@@ -2118,7 +2139,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
               audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
             } catch { }
           }
-          return renderItem(id, term, audioUrl, false)
+          const meaningId = expr.meanings?.[0]?.id
+          return renderItem(id, term, audioUrl, false, meaningId)
         }
         return `<span class="handbook-item-undefined">${term}</span>`
       })
@@ -2269,6 +2291,25 @@ api.post('/handbooks', requireAuth, async (c) => {
       return c.json({ error: 'Title and content are required' }, 400)
     }
 
+    // Extract and ensure all expressions exist
+    const sourceLang = body.source_lang || ''
+    const fullText = `${body.title}\n${body.description || ''}\n${body.content}`
+    const expressions: Array<{ text: string, language_code: string }> = []
+    const regex = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
+    let match
+    while ((match = regex.exec(fullText)) !== null) {
+      const text = match[1]
+      const lang = match[2] || sourceLang
+      if (text && lang && !expressions.some(e => e.text === text && e.language_code === lang)) {
+        expressions.push({ text, language_code: lang })
+      }
+    }
+
+    // Ensure all expressions exist in database
+    if (expressions.length > 0) {
+      await db.ensureExpressionsExist(expressions, user.username)
+    }
+
     const handbook = await db.createHandbook({
       ...body,
       user_id: user.id
@@ -2296,6 +2337,25 @@ api.put('/handbooks/:id', requireAuth, async (c) => {
 
     if (existing.user_id !== user.id) {
       return c.json({ error: 'Access denied' }, 403)
+    }
+
+    // Extract and ensure all expressions exist
+    const sourceLang = body.source_lang || ''
+    const fullText = `${body.title || ''}\n${body.description || ''}\n${body.content || ''}`
+    const expressions: Array<{ text: string, language_code: string }> = []
+    const regex = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
+    let match
+    while ((match = regex.exec(fullText)) !== null) {
+      const text = match[1]
+      const lang = match[2] || sourceLang
+      if (text && lang && !expressions.some(e => e.text === text && e.language_code === lang)) {
+        expressions.push({ text, language_code: lang })
+      }
+    }
+
+    // Ensure all expressions exist in database
+    if (expressions.length > 0) {
+      await db.ensureExpressionsExist(expressions, user.username)
     }
 
     // Invalidate all cached renders for this handbook
