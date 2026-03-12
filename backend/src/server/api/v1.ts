@@ -1861,7 +1861,7 @@ api.delete('/collections/:id/items/:expressionId', requireAuth, async (c) => {
 
 // Handbook Routes
 // GET /api/v1/handbooks
-api.get('/handbooks', cacheMiddleware(300), optionalAuth, async (c) => {
+api.get('/handbooks', optionalAuth, async (c) => {
   try {
     const db = getDB(c)
     const user = c.get('user')

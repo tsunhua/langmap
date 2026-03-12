@@ -55,8 +55,8 @@
               {{ $t('public') }}
             </span>
           </div>
-          <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed min-h-[3rem]">
-            {{ collection.description || $t('no_description_provided') }}
+          <p v-if="collection.description" class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+            {{ collection.description }}
           </p>
           <div class="flex items-center gap-2 text-xs text-gray-400 font-medium">
             <span>{{ collection.items_count || 0 }} {{ $t('items') }}</span>

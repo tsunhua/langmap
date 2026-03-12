@@ -55,8 +55,8 @@
               {{ $t('public') }}
             </span>
           </div>
-          <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed min-h-[3rem]">
-            {{ handbook.description || $t('no_description_provided') }}
+          <p v-if="handbook.description" class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+            {{ handbook.description }}
           </p>
         </div>
         <div
