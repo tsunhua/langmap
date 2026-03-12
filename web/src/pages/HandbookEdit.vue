@@ -167,118 +167,58 @@
           <div :class="['grid gap-4', showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
             <!-- Left Column: Editor -->
             <div>
-              <!-- Toolbar -->
-              <div class="flex flex-wrap items-center gap-1.5 mb-2 p-1.5 bg-gray-50 border border-gray-200 rounded-xl">
-                <button @click="undo" :disabled="historyIndex <= 0"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30 cursor-pointer"
-                  :title="$t('undo')">↩️</button>
-                <button @click="redo" :disabled="historyIndex >= history.length - 1"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30 cursor-pointer"
-                  :title="$t('redo')">↪️</button>
-                <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyWrap('**', '**', '')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('bold')">B</button>
-                <button @click="applyWrap('*', '*', '')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm italic hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('italic')">I</button>
-                <button @click="applyWrap('<u>', '</u>', '')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm underline hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('underline')">U</button>
-                <button @click="applyWrap('~~', '~~', '')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('strikethrough')">S</button>
-                <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyLinePrefix('# ')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('heading') + ' 1'">H1</button>
-                <button @click="applyLinePrefix('## ')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('heading') + ' 2'">H2</button>
-                <button @click="applyLinePrefix('### ')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('heading') + ' 3'">H3</button>
-                <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyLinePrefix('- ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('bullet_list')">•</button>
-                <button @click="applyLinePrefix('1. ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('numbered_list')">1.</button>
-                <button @click="applyLinePrefix('> ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('quote')">"</button>
-                <button @click="applyWrap('`', '`', '')"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors cursor-pointer"
-                  :title="$t('code')">&lt;/&gt;</button>
-                <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="insertLink"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Link (Ctrl/Cmd+K)">🔗</button>
-                <button @click="insertImage"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Image">🖼️</button>
-                <button @click="insertTable"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Table">▦</button>
-                <button @click="insertTaskList"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Task list">☑︎</button>
-                <button @click="insertCodeBlock"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Code block">```</button>
-                <button @click="insertHr"
-                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
-                  title="Horizontal rule">―</button>
-                <div class="flex-grow"></div>
-                <!-- Preview Toggle -->
-                <button @click="showPreview = !showPreview"
-                  :class="['min-h-[36px] px-2.5 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1 cursor-pointer', showPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100']"
-                  :title="showPreview ? $t('hide_preview') : $t('show_preview')">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-              </div>
+              <!-- Expression Search with Preview Toggle -->
+              <div class="flex gap-2 mb-2">
+                <div class="relative flex-1">
+                  <input v-model="searchQuery" type="text"
+                    class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
+                    :placeholder="form.content_lang ? `🔍 ${$t('search_in_lang', { lang: form.content_lang })}` : ('🔍 ' + $t('insert_expression'))"
+                    @input="search" />
 
-              <!-- Expression Search -->
-              <div class="relative mb-2">
-                <input v-model="searchQuery" type="text"
-                  class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
-                  :placeholder="form.content_lang ? `🔍 ${$t('search_in_lang', { lang: form.content_lang })}` : ('🔍 ' + $t('insert_expression'))"
-                  @input="search" />
-
-                <!-- Search Results Dropdown -->
-                <div v-if="searchQuery && (searchResults.length > 0 || searching)"
-                  class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
-                  <div v-if="searching" class="p-4 text-center">
-                    <div
-                      class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full">
+                  <!-- Search Results Dropdown -->
+                  <div v-if="searchQuery && (searchResults.length > 0 || searching)"
+                    class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
+                    <div v-if="searching" class="p-4 text-center">
+                      <div
+                        class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full">
+                      </div>
                     </div>
-                  </div>
-                  <div v-else>
-                    <div v-for="expr in searchResults" :key="expr.id"
-                      class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
-                      @click="insertAndClear(expr)">
-                      <div class="flex justify-between items-center w-full">
-                        <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                        <span class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
-                          expr.language_code }}</span>
+                    <div v-else>
+                      <div v-for="expr in searchResults" :key="expr.id"
+                        class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
+                        @click="insertAndClear(expr)">
+                        <div class="flex justify-between items-center w-full">
+                          <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                          <span class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
+                            expr.language_code }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+                <button @click="showPreview = !showPreview"
+                  :class="['min-h-[44px] px-3 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer border shrink-0', showPreview ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 border-gray-200']"
+                  :title="showPreview ? $t('hide_preview') : $t('show_preview')">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path v-if="showPreview" stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path v-if="!showPreview" stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span class="hidden sm:inline">{{ showPreview ? $t('hide_preview') : $t('show_preview') }}</span>
+                </button>
               </div>
 
-              <div class="relative group">
-                <textarea ref="contentArea" v-model="form.content"
-                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]"
-                  @keydown="handleEditorKeydown"></textarea>
-                <div
-                  class="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {{ $t('markdown') }}
-                </div>
-              </div>
+              <MdEditor
+                ref="mdEditorRef"
+                v-model="form.content"
+                :preview="false"
+                :htmlPreview="false"
+                :noUploadImg="true"
+                :toolbarsExclude="['preview', 'htmlPreview']"
+                :placeholder="$t('handbook_content_label')"
+                class="border border-gray-200 rounded-xl overflow-hidden"
+                :style="{ height: showPreview ? '700px' : '760px' }"
+              />
             </div>
 
             <!-- Right Column: Preview -->
@@ -341,11 +281,14 @@ import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
 import { getHandbookById, createHandbook, updateHandbook, stableExpressionId, getExpressionsByIds, getHandbookExpressions } from '../services/handbookService'
 import { generateLanguageColor } from '../utils/languageUtils'
 
 export default {
   name: 'HandbookEdit',
+  components: { MdEditor },
   props: ['id'],
   setup(props) {
     const router = useRouter()
@@ -360,7 +303,7 @@ export default {
     const saving = ref(false)
     const showPreview = ref(true)
     const previewLoading = ref(false)
-    const contentArea = ref(null)
+    const mdEditorRef = ref(null)
 
     // Available languages for selectors
     const languages = ref([])
@@ -512,59 +455,6 @@ export default {
 
     // Translated expressions cache for preview { mid: Expression }
     const translationCache = ref({})
-    // History for Undo/Redo
-    const history = ref([])
-    const historyIndex = ref(-1)
-    const historyBusy = ref(false)
-    let historyTimer = null
-
-    const pushHistory = (nextContent) => {
-      const content = typeof nextContent === 'string' ? nextContent : (form.content || '')
-      const current = historyIndex.value >= 0 ? history.value[historyIndex.value] : null
-      if (current === content) return
-
-      if (historyIndex.value < history.value.length - 1) {
-        history.value.splice(historyIndex.value + 1)
-      }
-      history.value.push(content)
-      historyIndex.value = history.value.length - 1
-
-      if (history.value.length > 100) {
-        const overflow = history.value.length - 100
-        history.value.splice(0, overflow)
-        historyIndex.value = Math.max(0, historyIndex.value - overflow)
-      }
-    }
-
-    const scheduleHistoryPush = () => {
-      if (historyBusy.value) return
-      if (historyTimer) clearTimeout(historyTimer)
-      historyTimer = setTimeout(() => pushHistory(form.content || ''), 400)
-    }
-
-    const undo = () => {
-      if (historyIndex.value > 0) {
-        historyBusy.value = true
-        historyIndex.value--
-        form.content = history.value[historyIndex.value] || ''
-        setTimeout(() => {
-          historyBusy.value = false
-          focusEditor()
-        }, 0)
-      }
-    }
-
-    const redo = () => {
-      if (historyIndex.value < history.value.length - 1) {
-        historyBusy.value = true
-        historyIndex.value++
-        form.content = history.value[historyIndex.value] || ''
-        setTimeout(() => {
-          historyBusy.value = false
-          focusEditor()
-        }, 0)
-      }
-    }
 
     // Search state
     const searchQuery = ref('')
@@ -607,7 +497,6 @@ export default {
             }
           }
 
-          pushHistory(form.content || '')
         }
       } catch (error) {
         console.error('Failed to fetch handbook:', error)
@@ -647,7 +536,6 @@ export default {
       try {
         Object.assign(form, draftData)
         hasDraft.value = false
-        pushHistory(form.content || '')
         if (setBaseline) {
           baselineJson.value = snapshotJson()
         }
@@ -686,250 +574,23 @@ export default {
       }, 500)
     }
 
+    const insertTextAtCursor = (text) => {
+      const editor = mdEditorRef.value
+      const view = editor && typeof editor.getEditorView === 'function' ? editor.getEditorView() : null
+      if (view && view.state && typeof view.dispatch === 'function') {
+        const tr = view.state.replaceSelection(text)
+        view.dispatch(tr)
+        view.focus()
+        return
+      }
+
+      // Fallback
+      form.content = (form.content || '') + text
+    }
+
     const insertExpression = (expr) => {
       const syntax = `{{text:${expr.text}|lang:${expr.language_code}}}`
-
-      const el = contentArea.value
-      if (!el) {
-        form.content += syntax
-        pushHistory(form.content)
-        return
-      }
-
-      const start = el.selectionStart
-      const end = el.selectionEnd
-      const text = form.content
-      form.content = text.substring(0, start) + syntax + text.substring(end)
-      pushHistory(form.content)
-
-      setTimeout(() => {
-        el.focus()
-        const newPos = start + syntax.length
-        el.setSelectionRange(newPos, newPos)
-      }, 0)
-    }
-
-    const focusEditor = () => {
-      const el = contentArea.value
-      if (!el) return
-      el.focus()
-    }
-
-    const getSelection = () => {
-      const el = contentArea.value
-      if (!el) return null
-      return {
-        el,
-        start: el.selectionStart ?? 0,
-        end: el.selectionEnd ?? 0
-      }
-    }
-
-    const replaceSelection = (replacement, { selectFrom, selectTo } = {}) => {
-      const sel = getSelection()
-      if (!sel) return
-      const { el, start, end } = sel
-
-      const before = (form.content || '').slice(0, start)
-      const after = (form.content || '').slice(end)
-      form.content = before + replacement + after
-      pushHistory(form.content)
-
-      setTimeout(() => {
-        el.focus()
-        const base = before.length
-        const nextStart = typeof selectFrom === 'number' ? base + selectFrom : base + replacement.length
-        const nextEnd = typeof selectTo === 'number' ? base + selectTo : nextStart
-        el.setSelectionRange(nextStart, nextEnd)
-      }, 0)
-    }
-
-    const applyWrap = (prefix, suffix = '', placeholder = '') => {
-      const el = contentArea.value
-      if (!el) return
-
-      const start = el.selectionStart
-      const end = el.selectionEnd
-      const selectedText = form.content.substring(start, end)
-      const inner = selectedText || placeholder || ''
-      const replacement = prefix + inner + suffix
-
-      form.content = form.content.substring(0, start) + replacement + form.content.substring(end)
-      pushHistory(form.content)
-
-      setTimeout(() => {
-        el.focus()
-        const newStart = start + prefix.length
-        const newEnd = newStart + inner.length
-        el.setSelectionRange(newStart, newEnd)
-      }, 0)
-    }
-
-    const applyLinePrefix = (prefix) => {
-      const sel = getSelection()
-      if (!sel) return
-      const { el, start, end } = sel
-      const text = form.content || ''
-
-      const blockStart = text.lastIndexOf('\n', start - 1) + 1
-      const blockEndIdx = text.indexOf('\n', end)
-      const blockEnd = blockEndIdx === -1 ? text.length : blockEndIdx
-
-      const block = text.slice(blockStart, blockEnd)
-      const lines = block.split('\n')
-      const nextLines = lines.map(l => (l.trim().length === 0 ? l : `${prefix}${l}`))
-      const replacement = nextLines.join('\n')
-
-      form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
-      pushHistory(form.content)
-
-      setTimeout(() => {
-        el.focus()
-        const delta = replacement.length - block.length
-        el.setSelectionRange(start + prefix.length, Math.min(end + delta, blockStart + replacement.length))
-      }, 0)
-    }
-
-    const insertLink = () => {
-      const sel = getSelection()
-      if (!sel) return
-      const { start, end } = sel
-      const selected = (form.content || '').slice(start, end)
-      const textPart = selected || 'text'
-      const replacement = `[${textPart}](url)`
-      replaceSelection(replacement, {
-        selectFrom: 1 + textPart.length + 2,
-        selectTo: 1 + textPart.length + 2 + 3
-      })
-    }
-
-    const insertImage = () => {
-      replaceSelection('![alt](url)', { selectFrom: 2, selectTo: 5 })
-    }
-
-    const insertTable = () => {
-      const snippet =
-`| Column 1 | Column 2 |
-| --- | --- |
-|  |  |
-`
-      replaceSelection(snippet)
-    }
-
-    const insertTaskList = () => {
-      applyLinePrefix('- [ ] ')
-    }
-
-    const insertCodeBlock = () => {
-      const sel = getSelection()
-      if (!sel) return
-      const { start, end } = sel
-      const selected = (form.content || '').slice(start, end)
-      const replacement = `\n\`\`\`\n${selected || ''}\n\`\`\`\n`
-      replaceSelection(replacement, {
-        selectFrom: 5,
-        selectTo: 5 + (selected || '').length
-      })
-    }
-
-    const insertHr = () => {
-      replaceSelection(`\n---\n`)
-    }
-
-    const handleEditorKeydown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-        const key = String(e.key || '').toLowerCase()
-        if (key === 'z') {
-          e.preventDefault()
-          if (e.shiftKey) redo()
-          else undo()
-          return
-        }
-        if (key === 'y') {
-          e.preventDefault()
-          redo()
-          return
-        }
-        if (key === 'b') {
-          e.preventDefault()
-          applyWrap('**', '**', '')
-          return
-        }
-        if (key === 'i') {
-          e.preventDefault()
-          applyWrap('*', '*', '')
-          return
-        }
-        if (key === 'k') {
-          e.preventDefault()
-          insertLink()
-          return
-        }
-      }
-
-      if (e.key === 'Tab') {
-        const sel = getSelection()
-        if (!sel) return
-        e.preventDefault()
-
-        const text = form.content || ''
-        const { start, end } = sel
-        const blockStart = text.lastIndexOf('\n', start - 1) + 1
-        const blockEndIdx = text.indexOf('\n', end)
-        const blockEnd = blockEndIdx === -1 ? text.length : blockEndIdx
-        const block = text.slice(blockStart, blockEnd)
-        const lines = block.split('\n')
-
-        if (e.shiftKey) {
-          const nextLines = lines.map(l => l.startsWith('  ') ? l.slice(2) : (l.startsWith('\t') ? l.slice(1) : l))
-          const replacement = nextLines.join('\n')
-          form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
-          pushHistory(form.content)
-          setTimeout(() => {
-            sel.el.focus()
-            const delta = replacement.length - block.length
-            sel.el.setSelectionRange(start, end + delta)
-          }, 0)
-        } else {
-          const nextLines = lines.map(l => (l.length === 0 ? l : `  ${l}`))
-          const replacement = nextLines.join('\n')
-          form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
-          pushHistory(form.content)
-          setTimeout(() => {
-            sel.el.focus()
-            const delta = replacement.length - block.length
-            sel.el.setSelectionRange(start + 2, end + delta)
-          }, 0)
-        }
-        return
-      }
-
-      if (e.key === 'Enter') {
-        const sel = getSelection()
-        if (!sel) return
-        const { start, end } = sel
-        if (start !== end) return
-        const text = form.content || ''
-        const lineStart = text.lastIndexOf('\n', start - 1) + 1
-        const line = text.slice(lineStart, start)
-
-        const m = line.match(/^(\s*)(- \[ \] |- |\d+\. |> )\s*/)
-        if (!m) return
-
-        const indent = m[1] || ''
-        const marker = m[2] || ''
-        const afterMarker = line.slice(m[0].length)
-        if (afterMarker.trim().length === 0) {
-          e.preventDefault()
-          replaceSelection('\n', { selectFrom: 1, selectTo: 1 })
-          return
-        }
-
-        e.preventDefault()
-        const next = '\n' + indent + marker
-        replaceSelection(next, { selectFrom: next.length, selectTo: next.length })
-        return
-      }
+      insertTextAtCursor(syntax)
     }
 
     const insertAndClear = (expr) => {
@@ -1157,11 +818,6 @@ export default {
       }, 300)
     })
 
-    // Keep our undo/redo history in sync with typing (debounced)
-    watch(() => form.content, () => {
-      scheduleHistoryPush()
-    })
-
     // Auto-save watch
     let autoSaveTimeout = null
     let pendingDraft = null
@@ -1265,9 +921,6 @@ export default {
 
       checkDraft()
       updatePreview()
-      if (history.value.length === 0) {
-        pushHistory(form.content || '')
-      }
       isInitializing.value = false
 
       window.addEventListener('beforeunload', flushDraft)
@@ -1301,19 +954,13 @@ export default {
       searchQuery,
       searchResults,
       searching,
-      history,
-      historyIndex,
-      contentArea,
+      mdEditorRef,
       renderedContent,
       renderedTitle,
       renderedDescription,
       search,
       insertExpression,
       insertAndClear,
-      applyWrap,
-      applyLinePrefix,
-      undo,
-      redo,
       save,
       goBack,
       hasDraft,
@@ -1328,14 +975,7 @@ export default {
       openColorPicker,
       closeColorPicker,
       saveColor,
-      resetColorToDefault,
-      handleEditorKeydown,
-      insertLink,
-      insertImage,
-      insertTable,
-      insertTaskList,
-      insertCodeBlock,
-      insertHr
+      resetColorToDefault
     }
   }
 }
