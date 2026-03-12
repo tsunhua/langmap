@@ -176,38 +176,57 @@
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors disabled:opacity-30 cursor-pointer"
                   :title="$t('redo')">↪️</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('**', '**')"
+                <button @click="applyWrap('**', '**', '')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('bold')">B</button>
-                <button @click="applyStyle('*', '*')"
+                <button @click="applyWrap('*', '*', '')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm italic hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('italic')">I</button>
-                <button @click="applyStyle('<u>', '</u>')"
+                <button @click="applyWrap('<u>', '</u>', '')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm underline hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('underline')">U</button>
-                <button @click="applyStyle('~~', '~~')"
+                <button @click="applyWrap('~~', '~~', '')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm line-through hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('strikethrough')">S</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('# ')"
+                <button @click="applyLinePrefix('# ')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 1'">H1</button>
-                <button @click="applyStyle('## ')"
+                <button @click="applyLinePrefix('## ')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 2'">H2</button>
-                <button @click="applyStyle('### ')"
+                <button @click="applyLinePrefix('### ')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('heading') + ' 3'">H3</button>
                 <div class="h-4 w-px bg-gray-300 mx-1"></div>
-                <button @click="applyStyle('- ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                <button @click="applyLinePrefix('- ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('bullet_list')">•</button>
-                <button @click="applyStyle('1. ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                <button @click="applyLinePrefix('1. ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('numbered_list')">1.</button>
-                <button @click="applyStyle('> ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                <button @click="applyLinePrefix('> ')" class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('quote')">"</button>
-                <button @click="applyStyle('`', '`')"
+                <button @click="applyWrap('`', '`', '')"
                   class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm font-mono hover:bg-white rounded transition-colors cursor-pointer"
                   :title="$t('code')">&lt;/&gt;</button>
+                <div class="h-4 w-px bg-gray-300 mx-1"></div>
+                <button @click="insertLink"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Link (Ctrl/Cmd+K)">🔗</button>
+                <button @click="insertImage"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Image">🖼️</button>
+                <button @click="insertTable"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Table">▦</button>
+                <button @click="insertTaskList"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Task list">☑︎</button>
+                <button @click="insertCodeBlock"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Code block">```</button>
+                <button @click="insertHr"
+                  class="min-w-[36px] min-h-[36px] px-2 py-1 text-sm hover:bg-white rounded transition-colors cursor-pointer"
+                  title="Horizontal rule">―</button>
                 <div class="flex-grow"></div>
                 <!-- Preview Toggle -->
                 <button @click="showPreview = !showPreview"
@@ -254,7 +273,7 @@
               <div class="relative group">
                 <textarea ref="contentArea" v-model="form.content"
                   class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]"
-                  ></textarea>
+                  @keydown="handleEditorKeydown"></textarea>
                 <div
                   class="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   {{ $t('markdown') }}
@@ -331,7 +350,11 @@ export default {
   setup(props) {
     const router = useRouter()
     const { t } = useI18n()
-    const md = new MarkdownIt({ html: true })
+    const md = new MarkdownIt({
+      html: true,
+      linkify: true,
+      typographer: true
+    })
 
     const isEditing = computed(() => !!props.id)
     const saving = ref(false)
@@ -492,32 +515,54 @@ export default {
     // History for Undo/Redo
     const history = ref([])
     const historyIndex = ref(-1)
+    const historyBusy = ref(false)
+    let historyTimer = null
 
-    const saveToHistory = () => {
+    const pushHistory = (nextContent) => {
+      const content = typeof nextContent === 'string' ? nextContent : (form.content || '')
+      const current = historyIndex.value >= 0 ? history.value[historyIndex.value] : null
+      if (current === content) return
+
       if (historyIndex.value < history.value.length - 1) {
         history.value.splice(historyIndex.value + 1)
       }
-      if (history.value.length >= 50) {
-        history.value.shift()
-      } else {
-        historyIndex.value++
+      history.value.push(content)
+      historyIndex.value = history.value.length - 1
+
+      if (history.value.length > 100) {
+        const overflow = history.value.length - 100
+        history.value.splice(0, overflow)
+        historyIndex.value = Math.max(0, historyIndex.value - overflow)
       }
-      history.value.push(JSON.stringify(form))
+    }
+
+    const scheduleHistoryPush = () => {
+      if (historyBusy.value) return
+      if (historyTimer) clearTimeout(historyTimer)
+      historyTimer = setTimeout(() => pushHistory(form.content || ''), 400)
     }
 
     const undo = () => {
       if (historyIndex.value > 0) {
+        historyBusy.value = true
         historyIndex.value--
-        const state = JSON.parse(history.value[historyIndex.value])
-        Object.assign(form, state)
+        form.content = history.value[historyIndex.value] || ''
+        setTimeout(() => {
+          historyBusy.value = false
+          focusEditor()
+        }, 0)
       }
     }
 
     const redo = () => {
       if (historyIndex.value < history.value.length - 1) {
+        historyBusy.value = true
         historyIndex.value++
-        const state = JSON.parse(history.value[historyIndex.value])
-        Object.assign(form, state)
+        form.content = history.value[historyIndex.value] || ''
+        setTimeout(() => {
+          historyBusy.value = false
+          focusEditor()
+        }, 0)
       }
     }
 
@@ -561,8 +606,8 @@ export default {
               form.lang_colors = {}
             }
           }
-          
-          saveToHistory()
+
+          pushHistory(form.content || '')
         }
       } catch (error) {
         console.error('Failed to fetch handbook:', error)
@@ -602,7 +647,7 @@ export default {
       try {
         Object.assign(form, draftData)
         hasDraft.value = false
-        saveToHistory()
+        pushHistory(form.content || '')
         if (setBaseline) {
           baselineJson.value = snapshotJson()
         }
@@ -647,6 +692,7 @@ export default {
       const el = contentArea.value
       if (!el) {
         form.content += syntax
+        pushHistory(form.content)
         return
       }
 
@@ -654,7 +700,7 @@ export default {
       const end = el.selectionEnd
       const text = form.content
       form.content = text.substring(0, start) + syntax + text.substring(end)
-      saveToHistory()
+      pushHistory(form.content)
 
       setTimeout(() => {
         el.focus()
@@ -663,24 +709,227 @@ export default {
       }, 0)
     }
 
-    const applyStyle = (prefix, suffix = '') => {
+    const focusEditor = () => {
+      const el = contentArea.value
+      if (!el) return
+      el.focus()
+    }
+
+    const getSelection = () => {
+      const el = contentArea.value
+      if (!el) return null
+      return {
+        el,
+        start: el.selectionStart ?? 0,
+        end: el.selectionEnd ?? 0
+      }
+    }
+
+    const replaceSelection = (replacement, { selectFrom, selectTo } = {}) => {
+      const sel = getSelection()
+      if (!sel) return
+      const { el, start, end } = sel
+
+      const before = (form.content || '').slice(0, start)
+      const after = (form.content || '').slice(end)
+      form.content = before + replacement + after
+      pushHistory(form.content)
+
+      setTimeout(() => {
+        el.focus()
+        const base = before.length
+        const nextStart = typeof selectFrom === 'number' ? base + selectFrom : base + replacement.length
+        const nextEnd = typeof selectTo === 'number' ? base + selectTo : nextStart
+        el.setSelectionRange(nextStart, nextEnd)
+      }, 0)
+    }
+
+    const applyWrap = (prefix, suffix = '', placeholder = '') => {
       const el = contentArea.value
       if (!el) return
 
       const start = el.selectionStart
       const end = el.selectionEnd
       const selectedText = form.content.substring(start, end)
-      const replacement = prefix + selectedText + suffix
+      const inner = selectedText || placeholder || ''
+      const replacement = prefix + inner + suffix
 
       form.content = form.content.substring(0, start) + replacement + form.content.substring(end)
-      saveToHistory()
+      pushHistory(form.content)
 
       setTimeout(() => {
         el.focus()
         const newStart = start + prefix.length
-        const newEnd = newStart + selectedText.length
+        const newEnd = newStart + inner.length
         el.setSelectionRange(newStart, newEnd)
       }, 0)
+    }
+
+    const applyLinePrefix = (prefix) => {
+      const sel = getSelection()
+      if (!sel) return
+      const { el, start, end } = sel
+      const text = form.content || ''
+
+      const blockStart = text.lastIndexOf('\n', start - 1) + 1
+      const blockEndIdx = text.indexOf('\n', end)
+      const blockEnd = blockEndIdx === -1 ? text.length : blockEndIdx
+
+      const block = text.slice(blockStart, blockEnd)
+      const lines = block.split('\n')
+      const nextLines = lines.map(l => (l.trim().length === 0 ? l : `${prefix}${l}`))
+      const replacement = nextLines.join('\n')
+
+      form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
+      pushHistory(form.content)
+
+      setTimeout(() => {
+        el.focus()
+        const delta = replacement.length - block.length
+        el.setSelectionRange(start + prefix.length, Math.min(end + delta, blockStart + replacement.length))
+      }, 0)
+    }
+
+    const insertLink = () => {
+      const sel = getSelection()
+      if (!sel) return
+      const { start, end } = sel
+      const selected = (form.content || '').slice(start, end)
+      const textPart = selected || 'text'
+      const replacement = `[${textPart}](url)`
+      replaceSelection(replacement, {
+        selectFrom: 1 + textPart.length + 2,
+        selectTo: 1 + textPart.length + 2 + 3
+      })
+    }
+
+    const insertImage = () => {
+      replaceSelection('![alt](url)', { selectFrom: 2, selectTo: 5 })
+    }
+
+    const insertTable = () => {
+      const snippet =
+`| Column 1 | Column 2 |
+| --- | --- |
+|  |  |
+`
+      replaceSelection(snippet)
+    }
+
+    const insertTaskList = () => {
+      applyLinePrefix('- [ ] ')
+    }
+
+    const insertCodeBlock = () => {
+      const sel = getSelection()
+      if (!sel) return
+      const { start, end } = sel
+      const selected = (form.content || '').slice(start, end)
+      const replacement = `\n\`\`\`\n${selected || ''}\n\`\`\`\n`
+      replaceSelection(replacement, {
+        selectFrom: 5,
+        selectTo: 5 + (selected || '').length
+      })
+    }
+
+    const insertHr = () => {
+      replaceSelection(`\n---\n`)
+    }
+
+    const handleEditorKeydown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        const key = String(e.key || '').toLowerCase()
+        if (key === 'z') {
+          e.preventDefault()
+          if (e.shiftKey) redo()
+          else undo()
+          return
+        }
+        if (key === 'y') {
+          e.preventDefault()
+          redo()
+          return
+        }
+        if (key === 'b') {
+          e.preventDefault()
+          applyWrap('**', '**', '')
+          return
+        }
+        if (key === 'i') {
+          e.preventDefault()
+          applyWrap('*', '*', '')
+          return
+        }
+        if (key === 'k') {
+          e.preventDefault()
+          insertLink()
+          return
+        }
+      }
+
+      if (e.key === 'Tab') {
+        const sel = getSelection()
+        if (!sel) return
+        e.preventDefault()
+
+        const text = form.content || ''
+        const { start, end } = sel
+        const blockStart = text.lastIndexOf('\n', start - 1) + 1
+        const blockEndIdx = text.indexOf('\n', end)
+        const blockEnd = blockEndIdx === -1 ? text.length : blockEndIdx
+        const block = text.slice(blockStart, blockEnd)
+        const lines = block.split('\n')
+
+        if (e.shiftKey) {
+          const nextLines = lines.map(l => l.startsWith('  ') ? l.slice(2) : (l.startsWith('\t') ? l.slice(1) : l))
+          const replacement = nextLines.join('\n')
+          form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
+          pushHistory(form.content)
+          setTimeout(() => {
+            sel.el.focus()
+            const delta = replacement.length - block.length
+            sel.el.setSelectionRange(start, end + delta)
+          }, 0)
+        } else {
+          const nextLines = lines.map(l => (l.length === 0 ? l : `  ${l}`))
+          const replacement = nextLines.join('\n')
+          form.content = text.slice(0, blockStart) + replacement + text.slice(blockEnd)
+          pushHistory(form.content)
+          setTimeout(() => {
+            sel.el.focus()
+            const delta = replacement.length - block.length
+            sel.el.setSelectionRange(start + 2, end + delta)
+          }, 0)
+        }
+        return
+      }
+
+      if (e.key === 'Enter') {
+        const sel = getSelection()
+        if (!sel) return
+        const { start, end } = sel
+        if (start !== end) return
+        const text = form.content || ''
+        const lineStart = text.lastIndexOf('\n', start - 1) + 1
+        const line = text.slice(lineStart, start)
+
+        const m = line.match(/^(\s*)(- \[ \] |- |\d+\. |> )\s*/)
+        if (!m) return
+
+        const indent = m[1] || ''
+        const marker = m[2] || ''
+        const afterMarker = line.slice(m[0].length)
+        if (afterMarker.trim().length === 0) {
+          e.preventDefault()
+          replaceSelection('\n', { selectFrom: 1, selectTo: 1 })
+          return
+        }
+
+        e.preventDefault()
+        const next = '\n' + indent + marker
+        replaceSelection(next, { selectFrom: next.length, selectTo: next.length })
+        return
+      }
     }
 
     const insertAndClear = (expr) => {
@@ -908,6 +1157,11 @@ export default {
       }, 300)
     })
 
+    // Keep our undo/redo history in sync with typing (debounced)
+    watch(() => form.content, () => {
+      scheduleHistoryPush()
+    })
+
     // Auto-save watch
     let autoSaveTimeout = null
     let pendingDraft = null
@@ -1011,6 +1265,9 @@ export default {
 
       checkDraft()
       updatePreview()
+      if (history.value.length === 0) {
+        pushHistory(form.content || '')
+      }
       isInitializing.value = false
 
       window.addEventListener('beforeunload', flushDraft)
@@ -1053,7 +1310,8 @@ export default {
       search,
       insertExpression,
       insertAndClear,
-      applyStyle,
+      applyWrap,
+      applyLinePrefix,
       undo,
       redo,
       save,
@@ -1070,7 +1328,14 @@ export default {
       openColorPicker,
       closeColorPicker,
       saveColor,
-      resetColorToDefault
+      resetColorToDefault,
+      handleEditorKeydown,
+      insertLink,
+      insertImage,
+      insertTable,
+      insertTaskList,
+      insertCodeBlock,
+      insertHr
     }
   }
 }
