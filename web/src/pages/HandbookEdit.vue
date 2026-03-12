@@ -252,8 +252,8 @@
               </div>
 
               <div class="relative group">
-                <textarea ref="contentArea" v-model="form.content" rows="12 sm:rows-15 lg:rows-18"
-                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all"
+                <textarea ref="contentArea" v-model="form.content"
+                  class="w-full font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 p-3 sm:p-4 transition-all min-h-[500px] sm:min-h-[600px] lg:min-h-[700px]"
                   ></textarea>
                 <div
                   class="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
