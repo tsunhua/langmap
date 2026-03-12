@@ -382,5 +382,6 @@
   "please_select_language": "Select language",
   "please_enter_expression": "Enter expression",
   "please_fill_all_fields": "Please fill in all fields",
-  "failed_to_add_expression": "Failed to add expression"
+  "failed_to_add_expression": "Failed to add expression",
+  "minimal_mode": "Minimal Mode"
 }

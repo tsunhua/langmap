@@ -344,5 +344,6 @@
   "please_enter_expression": "請輸入詞句",
   "please_fill_all_fields": "請填寫所有欄位",
   "login_required": "請登入以新增詞句",
-  "failed_to_add_expression": "新增詞句失敗"
+  "failed_to_add_expression": "新增詞句失敗",
+  "minimal_mode": "極簡模式"
 }

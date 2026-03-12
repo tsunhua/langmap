@@ -384,5 +384,6 @@
   "please_select_language": "请选择语言",
   "please_enter_expression": "请输入词句",
   "please_fill_all_fields": "请填写所有字段",
-  "failed_to_add_expression": "添加词句失败"
+  "failed_to_add_expression": "添加词句失败",
+  "minimal_mode": "极简模式"
 }

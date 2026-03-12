@@ -4,7 +4,17 @@
       <h2 class="text-2xl font-bold text-slate-800 mb-2">{{ $t('create_title') }}</h2>
       <p class="text-slate-600 mb-6">{{ $t('add_expression_description') }}</p>
 
-      <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="minimalMode" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <span class="ml-3 text-sm font-medium text-slate-700">{{ $t('minimal_mode') }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div v-if="!minimalMode" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <div class="flex items-start gap-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
@@ -17,7 +27,97 @@
         </div>
       </div>
 
-      <div v-for="(expression, index) in expressions" :key="expression.id"
+      <div v-if="minimalMode" class="border border-slate-200 rounded-lg overflow-hidden mb-6">
+        <table class="w-full">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{ $t('language') }} *</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{{ $t('text') }} *</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{ $t('collections') }}</th>
+              <th class="px-4 py-3 w-16"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(expression, index) in expressions" :key="expression.id" class="border-t border-slate-100">
+              <td class="px-4 py-3">
+                <select v-model="expression.language_code"
+                  class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm appearance-none text-slate-800"
+                  :disabled="languagesLoading">
+                  <option v-if="languagesLoading" value="" disabled>{{ $t('loading_languages') }}</option>
+                  <option v-else value="" disabled>{{ $t('select_language') }}</option>
+                  <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+                    {{ lang.name }} ({{ lang.code }})
+                  </option>
+                </select>
+              </td>
+              <td class="px-4 py-3">
+                <textarea v-model="expression.text" rows="1"
+                  class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm text-slate-800 resize-none"
+                  :placeholder="$t('text_placeholder')"></textarea>
+              </td>
+              <td class="px-4 py-3">
+                <div class="relative">
+                  <input :value="getSelectedCollectionNames(expression.collections)"
+                    class="block w-full rounded-md border border-slate-300 shadow-sm py-1.5 px-2 pr-8 text-sm bg-slate-100 text-slate-500 cursor-pointer"
+                    readonly @click="toggleCollectionSelector(index)" />
+                  <div v-if="expression.showCollectionSelector" 
+                    class="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    @click.stop="toggleCollectionSelector(index)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <button v-if="expressions.length > 1" @click="removeExpression(index)"
+                  class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                  :title="$t('remove_expression')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="expressions.some(e => e.showCollectionSelector)" class="border-t border-slate-200 p-4 bg-slate-50">
+          <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
+            <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            {{ $t('loading_collections') }}
+          </div>
+
+          <div v-else-if="userCollections.length === 0" class="text-center py-4 text-slate-500">
+            <p>{{ $t('no_collections') }}</p>
+            <button @click="openCreateCollectionModal(0)" class="mt-2 text-blue-600 hover:text-blue-800">
+              {{ $t('create_first_collection') }}
+            </button>
+          </div>
+
+          <div v-else class="space-y-2 max-h-48 overflow-y-auto">
+            <p class="text-sm font-medium text-slate-700 mb-2">{{ $t('select_collections') }}</p>
+            <label v-for="collection in userCollections" :key="collection.id"
+              class="flex items-center gap-3 p-2 hover:bg-slate-100 rounded cursor-pointer">
+              <input type="checkbox" :checked="expressions[activeCollectionIndex]?.collections.includes(collection.id)"
+                @change="toggleCollectionSelection(activeCollectionIndex, collection.id)"
+                class="form-checkbox h-4 w-4 text-blue-600 rounded" />
+              <div class="flex-1">
+                <span class="text-slate-800">{{ collection.name }}</span>
+                <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div v-else v-for="(expression, index) in expressions" :key="expression.id"
         class="mb-6 p-4 border border-slate-200 rounded-lg relative">
         <button v-if="expressions.length > 1" @click="removeExpression(index)"
           class="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
@@ -348,6 +448,8 @@ export default {
     const success = ref(false)
     const submitting = ref(false)
     const globalShowAdvanced = ref(false)
+    const minimalMode = ref(false)
+    const activeCollectionIndex = ref(null)
 
     // Collection-related state
     const userCollections = ref([])
@@ -529,7 +631,20 @@ export default {
     }
 
     const toggleCollectionSelector = (index) => {
-      expressions.value[index].showCollectionSelector = !expressions.value[index].showCollectionSelector
+      expressions.value.forEach((expr, i) => {
+        if (minimalMode.value) {
+          if (i === index) {
+            expr.showCollectionSelector = !expr.showCollectionSelector
+            activeCollectionIndex.value = i
+          } else {
+            expr.showCollectionSelector = false
+          }
+        } else {
+          if (i === index) {
+            expr.showCollectionSelector = !expr.showCollectionSelector
+          }
+        }
+      })
       if (expressions.value[index].showCollectionSelector && userCollections.value.length === 0) {
         loadUserCollections()
       }
@@ -1055,6 +1170,8 @@ export default {
       error,
       success,
       submitting,
+      minimalMode,
+      activeCollectionIndex,
       addExpression,
       removeExpression,
       handleLanguageChange,
