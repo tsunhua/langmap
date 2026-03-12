@@ -579,27 +579,67 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>> {
     const results: Record<string, number> = {}
     const now = new Date().toISOString()
+    
+    // Calculate IDs for all expressions
+    const expressionsWithIds = expressions.map(expr => ({
+      ...expr,
+      id: this.stableExpressionId(expr.text, expr.language_code)
+    }))
 
-    for (const expr of expressions) {
-      const id = this.stableExpressionId(expr.text, expr.language_code)
-      const existing = await this.db.prepare('SELECT id FROM expressions WHERE id = ?').bind(id).first<{ id: number }>()
-      
-      if (existing) {
-        results[`${expr.text}|${expr.language_code}`] = existing.id
-      } else {
+    // Batch check existing IDs (chunk to avoid "too many SQL variables")
+    const idsToCheck = expressionsWithIds.map(e => e.id)
+    const existingIdSet = new Set<number>()
+
+    if (idsToCheck.length > 0) {
+      const CHUNK_SIZE = 50
+      for (let i = 0; i < idsToCheck.length; i += CHUNK_SIZE) {
+        const chunk = idsToCheck.slice(i, i + CHUNK_SIZE)
+        const placeholders = chunk.map(() => '?').join(',')
+        const existingIds = await this.db.prepare(`
+          SELECT id FROM expressions WHERE id IN (${placeholders})
+        `).bind(...chunk).all<{ id: number }>()
+
+        for (const row of existingIds.results || []) {
+          existingIdSet.add(row.id)
+        }
+      }
+    }
+
+    // Separate new and existing expressions
+    const newExpressions = expressionsWithIds.filter(e => !existingIdSet.has(e.id))
+    const existingExpressions = expressionsWithIds.filter(e => existingIdSet.has(e.id))
+
+    // Add existing expressions to results immediately
+    for (const expr of existingExpressions) {
+      results[`${expr.text}|${expr.language_code}`] = expr.id
+    }
+
+    // Batch insert new expressions in chunks
+    if (newExpressions.length > 0) {
+      const BATCH_SIZE = 50
+      for (let i = 0; i < newExpressions.length; i += BATCH_SIZE) {
+        const chunk = newExpressions.slice(i, i + BATCH_SIZE)
+        const statements: any[] = []
+
+        for (const expr of chunk) {
+          statements.push(
+            this.db.prepare(
+              `INSERT INTO expressions (
+                id, text, audio_url, language_code, region_code, region_name, region_latitude,
+                region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
+              ) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, NULL, NULL, 'handbook', NULL, 'approved', ?, ?)`
+            ).bind(expr.id, expr.text, expr.language_code, username, username)
+          )
+        }
+
         try {
-          const result = await this.db.prepare(
-            `INSERT INTO expressions (
-              id, text, audio_url, language_code, region_code, region_name, region_latitude,
-              region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-            ) VALUES (?, ?, NULL, ?, NULL, NULL, NULL, NULL, NULL, 'handbook', NULL, 'approved', ?, ?)`
-          ).bind(id, expr.text, expr.language_code, username, username).first<Expression>()
-          
-          if (result) {
-            results[`${expr.text}|${expr.language_code}`] = result.id
+          const batchResults = await this.db.batch(statements)
+          for (let j = 0; j < chunk.length; j++) {
+            const expr = chunk[j]
+            results[`${expr.text}|${expr.language_code}`] = expr.id
           }
         } catch (error) {
-          console.error('Failed to create expression:', expr, error)
+          console.error('Failed to batch insert expressions:', error)
         }
       }
     }
