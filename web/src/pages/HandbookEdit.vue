@@ -318,7 +318,7 @@
 
 <script>
 import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
@@ -355,6 +355,51 @@ export default {
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
+    const isInitializing = ref(true)
+    const baselineJson = ref('')
+
+    const DRAFT_VERSION = 1
+
+    const snapshotForm = () => ({
+      title: form.title,
+      description: form.description,
+      content: form.content,
+      content_lang: form.content_lang,
+      instruction_langs: Array.isArray(form.instruction_langs) ? [...form.instruction_langs] : [],
+      is_public: !!form.is_public,
+      instruction_lang_prefix: form.instruction_lang_prefix,
+      lang_colors: form.lang_colors && typeof form.lang_colors === 'object' ? form.lang_colors : {}
+    })
+
+    const snapshotJson = () => JSON.stringify(snapshotForm())
+
+    const readDraftData = () => {
+      const raw = localStorage.getItem(storageKey.value)
+      if (!raw) return null
+      try {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && parsed.data && parsed.__meta) {
+          return parsed.data
+        }
+        // Backward compatibility: old format stored the form object directly
+        return parsed
+      } catch (e) {
+        console.error('Failed to parse draft:', e)
+        return null
+      }
+    }
+
+    const writeDraftData = (data) => {
+      const payload = {
+        __meta: {
+          version: DRAFT_VERSION,
+          savedAt: Date.now(),
+          handbookId: props.id || null
+        },
+        data
+      }
+      localStorage.setItem(storageKey.value, JSON.stringify(payload))
+    }
 
     const showInstructionLanguageSelector = ref(false)
     
@@ -526,27 +571,43 @@ export default {
     }
 
     const checkDraft = () => {
-      const draft = localStorage.getItem(storageKey.value)
-      if (draft) {
+      const draftData = readDraftData()
+      if (!draftData) {
+        hasDraft.value = false
+        return
+      }
+
+      // New handbook: auto-restore during initialization; do not show banner
+      if (!props.id) {
+        restoreDraft({ setBaseline: true })
+        hasDraft.value = false
+        return
+      }
+
+      // Existing handbook: show banner only if draft differs from server baseline
+      try {
+        const draftJson = JSON.stringify(draftData)
+        hasDraft.value = !!baselineJson.value && draftJson !== baselineJson.value
+      } catch (e) {
         hasDraft.value = true
-        // For new handbooks, restore automatically
-        if (!props.id) {
-          restoreDraft()
-        }
       }
     }
 
-    const restoreDraft = () => {
-      const draft = localStorage.getItem(storageKey.value)
-      if (draft) {
-        try {
-          const draftData = JSON.parse(draft)
-          Object.assign(form, draftData)
-          hasDraft.value = false
-          saveToHistory()
-        } catch (e) {
-          console.error('Failed to parse draft:', e)
+    const restoreDraft = ({ setBaseline = false } = {}) => {
+      const draftData = readDraftData()
+      if (!draftData) return
+
+      const prevInit = isInitializing.value
+      isInitializing.value = true
+      try {
+        Object.assign(form, draftData)
+        hasDraft.value = false
+        saveToHistory()
+        if (setBaseline) {
+          baselineJson.value = snapshotJson()
         }
+      } finally {
+        isInitializing.value = prevInit
       }
     }
 
@@ -849,12 +910,38 @@ export default {
 
     // Auto-save watch
     let autoSaveTimeout = null
-    watch(form, (newVal) => {
+    let pendingDraft = null
+    let pendingDraftJson = ''
+
+    const flushDraft = () => {
+      if (isInitializing.value) return
+
+      // Always snapshot "now" to avoid relying on watcher timing
+      pendingDraft = snapshotForm()
+      pendingDraftJson = JSON.stringify(pendingDraft)
+
+      if (baselineJson.value && pendingDraftJson === baselineJson.value) {
+        localStorage.removeItem(storageKey.value)
+        hasDraft.value = false
+        pendingDraft = null
+        pendingDraftJson = ''
+        return
+      }
+
+      writeDraftData(pendingDraft)
+      pendingDraft = null
+      pendingDraftJson = ''
+    }
+
+    watch(form, () => {
+      if (isInitializing.value) return
       if (autoSaveTimeout) clearTimeout(autoSaveTimeout)
+      pendingDraft = snapshotForm()
+      pendingDraftJson = JSON.stringify(pendingDraft)
       autoSaveTimeout = setTimeout(() => {
-        localStorage.setItem(storageKey.value, JSON.stringify(newVal))
-      }, 1000)
-    }, { deep: true })
+        flushDraft()
+      }, 300)
+    }, { deep: true, flush: 'sync' })
 
     const save = async () => {
       if (!form.title.trim()) {
@@ -891,6 +978,7 @@ export default {
         } else {
           await createHandbook(payload)
         }
+        baselineJson.value = snapshotJson()
         clearDraft()
         router.push('/handbooks')
       } catch (error) {
@@ -907,24 +995,40 @@ export default {
     }
 
     onMounted(async () => {
+      isInitializing.value = true
       await fetchLanguages()
       await fetchHandbook()
-      
+
       if (props.id && form.instruction_langs.length === 0) {
         const defaultLang = languages.value.find(l => l.code === 'zh-CN')
         if (defaultLang && defaultLang.code !== form.content_lang) {
           form.instruction_langs = [defaultLang.code]
         }
       }
-      
+
+      // Establish baseline after server/default initialization
+      baselineJson.value = snapshotJson()
+
       checkDraft()
       updatePreview()
+      isInitializing.value = false
+
+      window.addEventListener('beforeunload', flushDraft)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushDraft()
+      })
 
       document.addEventListener('click', handleExpressionClick)
     })
 
     onBeforeUnmount(() => {
+      window.removeEventListener('beforeunload', flushDraft)
       document.removeEventListener('click', handleExpressionClick)
+    })
+
+    onBeforeRouteLeave(() => {
+      flushDraft()
+      return true
     })
 
     return {
