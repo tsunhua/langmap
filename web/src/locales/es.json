@@ -343,5 +343,6 @@
   "please_enter_expression": "Ingresar expresión",
   "please_fill_all_fields": "Por favor complete todos los campos",
   "login_required": "Por favor inicie sesión para añadir expresiones",
-  "failed_to_add_expression": "Error al añadir expresión"
+  "failed_to_add_expression": "Error al añadir expresión",
+  "minimal_mode": "Modo Mínimo"
 }

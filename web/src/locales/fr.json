@@ -343,5 +343,6 @@
   "please_enter_expression": "Entrer l'expression",
   "please_fill_all_fields": "Veuillez remplir tous les champs",
   "login_required": "Veuillez vous connecter pour ajouter des expressions",
-  "failed_to_add_expression": "Échec de l'ajout de l'expression"
+  "failed_to_add_expression": "Échec de l'ajout de l'expression",
+  "minimal_mode": "Mode Minimal"
 }
