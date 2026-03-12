@@ -214,7 +214,7 @@
                 :preview="false"
                 :htmlPreview="false"
                 :noUploadImg="true"
-                :toolbarsExclude="['preview', 'htmlPreview']"
+                :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
                 :placeholder="$t('handbook_content_label')"
                 class="border border-gray-200 rounded-xl overflow-hidden"
                 :style="{ height: showPreview ? '700px' : '760px' }"
