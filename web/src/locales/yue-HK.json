@@ -342,5 +342,6 @@
   "please_select_language": "請選擇語言",
   "please_enter_expression": "請輸入詞句",
   "please_fill_all_fields": "請填寫所有欄位",
-  "failed_to_add_expression": "新增詞句失敗"
+  "failed_to_add_expression": "新增詞句失敗",
+  "minimal_mode": "極簡模式"
 }

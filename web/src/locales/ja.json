@@ -237,10 +237,6 @@
   "color_hex_format": "16進色形式（例：#FF5733）",
   "customize_color": "色をカスタマイズ",
   "reset_to_default": "デフォルトに戻す",
-  "color": "色",
-  "color_hex_format": "16進色形式（例：#FF5733）",
-  "customize_color": "色をカスタマイズ",
-  "reset_to_default": "デフォルトに戻す",
   "save_failed": "保存に失敗しました",
   "saving": "保存中...",
   "search": "検索",
@@ -348,5 +344,6 @@
   "please_enter_expression": "表現を入力",
   "please_fill_all_fields": "すべてのフィールドに入力してください",
   "login_required": "表現を追加するにはログインしてください",
-  "failed_to_add_expression": "表現の追加に失敗しました"
+  "failed_to_add_expression": "表現の追加に失敗しました",
+  "minimal_mode": "シンプルモード"
 }
