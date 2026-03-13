@@ -207,7 +207,8 @@
       }
 
       const handleExpressionGroupUpdated = () => {
-        fetchInitialData()
+        // 更新之後無需刷新頁面
+        // fetchInitialData()
       }
 
       const canEdit = computed(() => {
