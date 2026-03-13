@@ -242,7 +242,7 @@
   "search": "検索",
   "search_expressions": "表現を検索",
   "search_expressions_desc": "さまざまな言語や地域で単語や文がどのように表現されているかを見つけます。",
-  "search_searching": "表現を検索中...",
+  "search_placeholder": "表現を検索...",
   "searching": "検索中...",
   "select_format": "エクスポートする形式を選択してください：",
   "select_language": "言語を選択",

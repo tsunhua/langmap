@@ -235,7 +235,7 @@
   "search": "搜尋",
   "search_expressions": "搜尋詞句",
   "search_expressions_desc": "查找唔同語言同地區入面詞語同句子嘅表達方式。",
-  "search_searching": "正在搜尋詞句...",
+  "search_placeholder": "搜尋詞句...",
   "searching": "正在搜尋...",
   "select_format": "揀選匯出格式：",
   "select_language": "選擇語言",

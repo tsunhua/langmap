@@ -44,91 +44,11 @@
 
           <!-- Search and associate tab content -->
           <div v-show="activeTab === 'search'" role="tabpanel">
-            <div v-if="searchOtherExpressionsMode" class="border border-slate-200 rounded-lg bg-slate-50 p-4 mb-4">
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-3">
-                <div class="flex-1">
-                  <input v-model="searchOtherExpressionsQuery" :placeholder="$t('please_input')"
-                    class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
-                    @keydown.enter="searchOtherExpressions()" />
-                </div>
-                <button @click="searchOtherExpressions()"
-                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span class="hidden sm:inline ml-1">{{ $t('search') }}</span>
-                </button>
-              </div>
-
-              <div v-if="searchOtherExpressionsLoading" class="flex items-center justify-center py-3">
-                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
-                <span class="ml-2 text-slate-600">{{ $t('searching') }}</span>
-              </div>
-
-              <div v-else-if="searchOtherExpressionsResults && searchOtherExpressionsResults.length > 0"
-                class="mt-3 space-y-3">
-                <div v-for="expr in searchOtherExpressionsResults" :key="expr.id"
-                  class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-                  <div @click="toggleExpressionExpansion(expr.id)"
-                    class="p-3 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center justify-between">
-                      <div class="flex-1">
-                        <div class="font-semibold text-slate-800">{{ expr.text }}</div>
-                        <div class="text-sm text-slate-500 mt-1">
-                          <span>{{ getLanguageDisplayName(expr.language_code) }}</span>
-                          <span v-if="expr.region_name" class="ml-2">• {{ expr.region_name }}</span>
-                        </div>
-                      </div>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 transition-transform"
-                        :class="{ 'rotate-180': expandedExpressionId === expr.id }" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <!-- Expanded meaning groups -->
-                  <div v-if="expandedExpressionId === expr.id" class="border-t border-slate-200 bg-slate-50 p-3">
-                    <div v-if="expr.meanings && expr.meanings.length > 0" class="space-y-2">
-                      <div class="text-xs text-slate-500 mb-2">{{ $t('expression_groups') }}:</div>
-                      <div v-for="meaning in expr.meanings" :key="meaning.id"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors"
-                        :class="isAlreadyInGroup(meaning.id) ? 'bg-slate-100 text-slate-500' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'"
-                        @click.stop="!isAlreadyInGroup(meaning.id) && associateToSearchResultGroup(meaning.id)">
-                        <span>{{ getMeaningDisplayText(meaning) }}</span>
-                        <span v-if="isAlreadyInGroup(meaning.id)" class="text-xs">({{ $t('already_in_group') }})</span>
-                      </div>
-                    </div>
-                    <div v-else class="text-sm text-slate-500">
-                      {{ $t('no_meaning_groups_for_expression') }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else-if="searchOtherExpressionsSearched" class="text-center py-3 text-slate-500 text-sm">
-                {{ $t('no_expressions_found') }}
-                <div class="mt-3">
-                  <button @click="openCreateExpressionModal(searchOtherExpressionsQuery)"
-                    class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    {{ $t('add_expression') }}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <SmartSearch
+              :exclude-id="item ? item.id : null"
+              @create-new="handleSmartSearchCreateNew"
+              @associate="handleSmartSearchAssociate"
+            />
           </div>
 
           <!-- Meaning group tab contents -->
@@ -159,66 +79,12 @@
 
               <div v-if="groupSearchModes.has(currentMeaning.id)"
                 class="border-b border-slate-200 bg-slate-50 px-4 sm:px-6 py-4">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <div class="flex-1">
-                    <input v-model="groupSearchQueries[currentMeaning.id]" :placeholder="$t('please_input')"
-                      class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
-                      @keydown.enter="searchInGroup(currentMeaning.id)" />
-                  </div>
-                  <button @click="searchInGroup(currentMeaning.id)"
-                    class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span class="hidden sm:inline ml-1">{{ $t('search') }}</span>
-                  </button>
-                </div>
-
-                <div v-if="groupSearchLoading[currentMeaning.id]" class="flex items-center justify-center py-3">
-                  <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                  </svg>
-                  <span class="ml-2 text-slate-600">{{ $t('searching') }}</span>
-                </div>
-
-                <div
-                  v-else-if="groupSearchResults[currentMeaning.id] && groupSearchResults[currentMeaning.id].length > 0"
-                  class="mt-3 space-y-2">
-                  <div v-for="c in groupSearchResults[currentMeaning.id]" :key="c && c.id"
-                    class="flex gap-3 items-center p-2 bg-white rounded-lg">
-                    <div v-if="c && item && c.id !== item.id" class="flex-1">
-                      <ExpressionCard :item="c" />
-                    </div>
-                    <div v-if="c && item && c.id !== item.id && !isLinked(c.id)">
-                      <button @click="openMeaningSelection(c, currentMeaning.id)"
-                        class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
-                        {{ $t('link') }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-else-if="groupSearchSearched[currentMeaning.id]" class="text-center py-3 text-slate-500 text-sm">
-                  {{ $t('no_expressions_found') }}
-                  <div class="mt-3">
-                    <button
-                      @click="openCreateExpressionModalForGroup(currentMeaning.id, groupSearchQueries[currentMeaning.id])"
-                      class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      {{ $t('add_expression') }}
-                    </button>
-                  </div>
-                </div>
+                <SmartSearch
+                  :exclude-id="item ? item.id : null"
+                  :target-meaning-id="currentMeaning.id"
+                  @create-new="handleGroupSearchCreateNew"
+                  @associate="handleGroupSearchAssociate"
+                />
               </div>
 
               <div class="p-4">
@@ -461,10 +327,11 @@ import { getLanguageDisplayName } from '../services/languageService.js'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
+import SmartSearch from '../components/SmartSearch.vue'
 
 export default {
   name: 'Detail',
-  components: { ExpressionCard, VersionHistory, CreateExpression },
+  components: { ExpressionCard, VersionHistory, CreateExpression, SmartSearch },
   props: ['id'],
   setup(props) {
     const route = useRoute()
@@ -480,11 +347,6 @@ export default {
 
     // Group-specific association mode
     const groupSearchModes = ref(new Set())
-    const groupSearchQueries = ref({})
-    const groupSearchResults = ref({})
-    const groupSearchLoading = ref({})
-    const groupSearchSearched = ref({})
-    const groupSearchMessages = ref({})
 
     // Global search mode for when no groups exist
     const globalSearchMode = ref(false)
@@ -499,14 +361,6 @@ export default {
     const selectedExpressionForAssociation = ref(null)
     const expressionMeanings = ref([])
     const expressionMeaningsLoading = ref(false)
-
-    // Search other expressions mode
-    const searchOtherExpressionsMode = ref(false)
-    const searchOtherExpressionsQuery = ref('')
-    const searchOtherExpressionsResults = ref([])
-    const searchOtherExpressionsLoading = ref(false)
-    const searchOtherExpressionsSearched = ref(false)
-    const expandedExpressionId = ref(null)
 
     // Tab navigation
     const activeTab = ref(null)
@@ -536,14 +390,9 @@ export default {
       return currentItem ? [currentItem, ...otherMembers] : otherMembers
     })
 
-    // Set active tab and reset expansion
+    // Set active tab
     function setActiveTab(tabId) {
       activeTab.value = tabId
-      expandedExpressionId.value = null
-      // Automatically enable search mode when switching to search tab
-      if (tabId === 'search' && !searchOtherExpressionsMode.value) {
-        searchOtherExpressionsMode.value = true
-      }
     }
 
     // Create expression modal
@@ -654,97 +503,6 @@ export default {
         modes.delete(meaningId)
       } else {
         modes.add(meaningId)
-        // Initialize empty state
-        if (!groupSearchQueries.value[meaningId]) {
-          groupSearchQueries.value[meaningId] = ''
-        }
-        if (!groupSearchResults.value[meaningId]) {
-          groupSearchResults.value[meaningId] = []
-        }
-        if (!groupSearchSearched.value[meaningId]) {
-          groupSearchSearched.value[meaningId] = false
-        }
-      }
-    }
-
-    // Search in specific group
-    async function searchInGroup(meaningId) {
-      groupSearchLoading.value[meaningId] = true
-      groupSearchSearched.value[meaningId] = false
-      groupSearchMessages.value[meaningId] = ''
-
-      try {
-        const params = new URLSearchParams()
-        const query = groupSearchQueries.value[meaningId] || ''
-        if (query) params.set('q', query)
-        const url = `/api/v1/search?${params.toString()}`
-
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('search failed')
-
-        groupSearchResults.value[meaningId] = await res.json()
-        groupSearchSearched.value[meaningId] = true
-      } catch (e) {
-        groupSearchMessages.value[meaningId] = String(e)
-        groupSearchResults.value[meaningId] = []
-        groupSearchSearched.value[meaningId] = true
-      } finally {
-        groupSearchLoading.value[meaningId] = false
-      }
-    }
-
-    // Associate to specific group
-    async function associateToGroup(target, meaningId) {
-      groupSearchMessages.value[meaningId] = ''
-
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        groupSearchMessages.value[meaningId] = t('must_be_logged_in_to_associate')
-        return
-      }
-
-      try {
-        const batchRes = await fetch('/api/v1/expressions/batch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            expressions: [
-              {
-                id: item.value.id,
-                text: item.value.text,
-                language_code: item.value.language_code
-              },
-              {
-                id: target.id,
-                text: target.text,
-                language_code: target.language_code,
-                meaning_id: meaningId
-              }
-            ]
-          })
-        })
-
-        if (!batchRes.ok) {
-          const errorData = await batchRes.json()
-          throw new Error(errorData.error || 'Failed to associate expressions')
-        }
-
-        const result = await batchRes.json()
-        groupSearchMessages.value[meaningId] = t('expressions_processed', { count: 2, meaningId: result.meaning_id })
-
-        // Refresh to show updated list
-        await load()
-
-        // Reset search for this group
-        groupSearchQueries.value[meaningId] = ''
-        groupSearchResults.value[meaningId] = []
-        groupSearchSearched.value[meaningId] = false
-      } catch (e) {
-        console.error('Association error:', e)
-        groupSearchMessages.value[meaningId] = String(e)
       }
     }
 
@@ -1002,31 +760,6 @@ export default {
       allMeanings.value = []
     }
 
-    // Check if current expression is already in a group
-    function isAlreadyInGroup(meaningId) {
-      return meanings.value && meanings.value.some(m => m.id === meaningId)
-    }
-
-    // Toggle search other expressions mode
-    function toggleSearchOtherExpressions() {
-      searchOtherExpressionsMode.value = !searchOtherExpressionsMode.value
-      if (searchOtherExpressionsMode.value) {
-        searchOtherExpressionsQuery.value = ''
-        searchOtherExpressionsResults.value = []
-        searchOtherExpressionsSearched.value = false
-        expandedExpressionId.value = null
-      }
-    }
-
-    // Toggle expression expansion
-    function toggleExpressionExpansion(exprId) {
-      if (expandedExpressionId.value === exprId) {
-        expandedExpressionId.value = null
-      } else {
-        expandedExpressionId.value = exprId
-      }
-    }
-
     // Get display text for meaning group (show member texts instead of ID)
     function getMeaningDisplayText(meaning) {
       if (meaning.members && meaning.members.length > 0) {
@@ -1039,91 +772,6 @@ export default {
       }
       // Fallback if no members
       return t('expression_group')
-    }
-
-    // Search other expressions
-    async function searchOtherExpressions() {
-      searchOtherExpressionsLoading.value = true
-      searchOtherExpressionsSearched.value = false
-
-      try {
-        const params = new URLSearchParams()
-        const query = searchOtherExpressionsQuery.value || ''
-        if (query) params.set('q', query)
-        params.set('include_meanings', 'true')
-        const url = `/api/v1/search?${params.toString()}`
-
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('search failed')
-
-        const results = await res.json()
-
-        // Fetch members for each meaning in the results
-        for (const expr of results) {
-          if (expr.meanings && expr.meanings.length > 0) {
-            for (const meaning of expr.meanings) {
-              try {
-                const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
-                if (membersRes.ok) {
-                  const members = await membersRes.json()
-                  meaning.members = members
-                }
-              } catch (e) {
-                console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
-                meaning.members = []
-              }
-            }
-          }
-        }
-
-        searchOtherExpressionsResults.value = results
-        searchOtherExpressionsSearched.value = true
-      } catch (e) {
-        console.error('Search error:', e)
-        searchOtherExpressionsResults.value = []
-        searchOtherExpressionsSearched.value = true
-      } finally {
-        searchOtherExpressionsLoading.value = false
-      }
-    }
-
-    // Associate to a meaning from search results
-    async function associateToSearchResultGroup(meaningId) {
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        alert(t('login_required'))
-        return
-      }
-
-      try {
-        const res = await fetch(`/api/v1/expressions/${item.value.id}/meanings`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            meaning_id: meaningId
-          })
-        })
-
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to associate to meaning group')
-        }
-
-        // Refresh to show updated list
-        await load()
-
-        // Reset search
-        searchOtherExpressionsQuery.value = ''
-        searchOtherExpressionsResults.value = []
-        searchOtherExpressionsSearched.value = false
-        searchOtherExpressionsMode.value = false
-      } catch (e) {
-        console.error('Error associating to meaning:', e)
-        alert(t('failed_to_associate_to_meaning'))
-      }
     }
 
     async function handleTagsUpdate(newTags) {
@@ -1193,6 +841,57 @@ export default {
       currentMeaningIdForAssociation.value = activeTab.value !== 'search' ? activeTab.value : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
       initialTextForCreation.value = searchText;
       showCreateExpressionModal.value = true;
+    }
+
+    // Handle SmartSearch create-new event (from search and associate tab)
+    function handleSmartSearchCreateNew(searchText) {
+      openCreateExpressionModal(searchText)
+    }
+
+    // Handle SmartSearch associate event (from search and associate tab)
+    function handleSmartSearchAssociate(result) {
+      openMeaningSelection(result)
+    }
+
+    // Handle SmartSearch create-new event (from within a group)
+    function handleGroupSearchCreateNew(searchText) {
+      openCreateExpressionModalForGroup(currentMeaning.value.id, searchText)
+    }
+
+    // Handle SmartSearch associate event (from within a group)
+    async function handleGroupSearchAssociate(result) {
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        alert(t('login_required'))
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/v1/expressions/${item.value.id}/meanings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            meaning_id: currentMeaning.value.id
+          })
+        })
+
+        if (!res.ok) {
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Failed to associate to meaning group')
+        }
+
+        // Refresh to show updated list
+        await load()
+
+        // Close search mode for this group
+        toggleGroupSearch(currentMeaning.value.id)
+      } catch (e) {
+        console.error('Error associating to meaning:', e)
+        alert(t('failed_to_associate_to_meaning'))
+      }
     }
 
     // Open create expression modal for specific group
@@ -1349,14 +1048,9 @@ export default {
       getLanguageDisplayName,
       // Group search
       groupSearchModes,
-      groupSearchQueries,
-      groupSearchResults,
-      groupSearchLoading,
-      groupSearchSearched,
-      groupSearchMessages,
       toggleGroupSearch,
-      searchInGroup,
-      associateToGroup,
+      handleGroupSearchCreateNew,
+      handleGroupSearchAssociate,
       // Global search
       globalSearchMode,
       globalSearchQuery,
@@ -1376,19 +1070,10 @@ export default {
       closeMeaningSelection,
       associateToSelectedMeaning,
       associateToNewMeaning,
-      // Search other expressions
-      searchOtherExpressionsMode,
-      searchOtherExpressionsQuery,
-      searchOtherExpressionsResults,
-      searchOtherExpressionsLoading,
-      searchOtherExpressionsSearched,
-      toggleSearchOtherExpressions,
-      searchOtherExpressions,
-      associateToSearchResultGroup,
-      isAlreadyInGroup,
-      expandedExpressionId,
-      toggleExpressionExpansion,
       getMeaningDisplayText,
+      // SmartSearch handlers
+      handleSmartSearchCreateNew,
+      handleSmartSearchAssociate,
       // Tab navigation
       activeTab,
       setActiveTab,

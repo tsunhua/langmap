@@ -235,7 +235,7 @@
   "search": "Recherche",
   "search_expressions": "Rechercher des expressions",
   "search_expressions_desc": "Trouvez comment les mots et les phrases sont exprimés dans différentes langues et régions.",
-  "search_searching": "Recherche d'expressions...",
+  "search_placeholder": "Recherche d'expressions...",
   "searching": "Recherche en cours...",
   "select_format": "Choisissez un format pour exporter votre collection :",
   "select_language": "Sélectionner la langue",
