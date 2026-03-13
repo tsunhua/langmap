@@ -2034,16 +2034,40 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     }
 
     // Organize translations by meaning ID and language
+    // Merge multiple translations for same meaning_id and language using | separator
     Object.entries(translationsByLang).forEach(([langCode, translations]) => {
+      // Group translations by meaning_id and merge their texts
+      const transByMeaning: Record<number, {text: string, audio_url: string}> = {}
+      
       translations.forEach((trans: any) => {
         if (trans.meaning_id) {
-          expressionMap[`trans_${trans.meaning_id}_${langCode}`] = trans
+          const mid = trans.meaning_id
+          if (!transByMeaning[mid]) {
+            transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+          }
+          transByMeaning[mid].text = transByMeaning[mid].text 
+            ? `${transByMeaning[mid].text} | ${trans.text}` 
+            : trans.text
         } else if (trans.meanings) {
           trans.meanings.forEach((m: any) => {
             if (allMids.includes(m.id)) {
-              expressionMap[`trans_${m.id}_${langCode}`] = trans
+              const mid = m.id
+              if (!transByMeaning[mid]) {
+                transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+              }
+              transByMeaning[mid].text = transByMeaning[mid].text 
+                ? `${transByMeaning[mid].text} | ${trans.text}` 
+                : trans.text
             }
           })
+        }
+      })
+      
+      // Store merged results in expressionMap
+      Object.entries(transByMeaning).forEach(([mid, merged]) => {
+        expressionMap[`trans_${mid}_${langCode}`] = {
+          text: merged.text,
+          audio_url: merged.audio_url
         }
       })
     })
@@ -2084,7 +2108,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           const color = getLanguageColor(langCode, handbook)
           const langClass = langCode.replace('.', '-')
           return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(' / ')}</span>`
-        }).join(' | ')}
+        }).join(' ')}
         </span>`
       } else {
         // Content: inline display with separator
@@ -2093,7 +2117,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           const color = getLanguageColor(langCode, handbook)
           const langClass = langCode.replace('.', '-')
           return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(', ')}</span>`
-        }).join(' | ')}
+        }).join(' ')}
         </span>`
       }
     }
