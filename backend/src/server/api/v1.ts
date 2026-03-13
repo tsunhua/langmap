@@ -806,6 +806,43 @@ api.delete('/expressions/:expr_id/meanings/:meaning_id', requireAuth, async (c) 
   }
 })
 
+// POST /api/v1/meanings/merge
+api.post('/meanings/merge', requireAuth, async (c) => {
+  try {
+    const db = getDB(c)
+    const body = await c.req.json()
+    const { source_meaning_id, target_meaning_id } = body
+
+    // 验证参数
+    if (!source_meaning_id || !target_meaning_id) {
+      return c.json({ error: 'source_meaning_id and target_meaning_id are required' }, 400)
+    }
+
+    // 验证是数字
+    const sourceId = parseInt(source_meaning_id, 10)
+    const targetId = parseInt(target_meaning_id, 10)
+
+    if (isNaN(sourceId) || isNaN(targetId)) {
+      return c.json({ error: 'Invalid meaning IDs' }, 400)
+    }
+
+    // 执行合并
+    const result = await db.mergeMeaningGroups(sourceId, targetId)
+
+    // 清除缓存
+    db.clearStatisticsCache();
+
+    return c.json({
+      success: true,
+      message: '詞句組合併成功',
+      ...result
+    })
+  } catch (error: any) {
+    console.error('Error in POST /meanings/merge:', error);
+    return c.json({ error: error.message || 'Failed to merge meaning groups' }, 500)
+  }
+})
+
 // POST /api/v1/expressions/:expr_id/upload-audio
 api.post('/expressions/:expr_id/upload-audio', requireAuth, async (c) => {
   try {

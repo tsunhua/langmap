@@ -383,5 +383,10 @@
   "please_enter_expression": "Enter expression",
   "please_fill_all_fields": "Please fill in all fields",
   "failed_to_add_expression": "Failed to add expression",
-  "minimal_mode": "Minimal Mode"
+  "minimal_mode": "Minimal Mode",
+  "merge_groups": "Merge Groups",
+  "merge_groups_description": "Select a target meaning group to merge the current group into. This action cannot be undone.",
+  "cannot_merge_to_same_group": "Cannot merge to the same group",
+  "merge_success": "Successfully merged {count} expressions",
+  "no_other_groups_to_merge": "No other groups available to merge"
 }

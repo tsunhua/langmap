@@ -344,5 +344,10 @@
   "please_fill_all_fields": "Veuillez remplir tous les champs",
   "login_required": "Veuillez vous connecter pour ajouter des expressions",
   "failed_to_add_expression": "Échec de l'ajout de l'expression",
-  "minimal_mode": "Mode Minimal"
+  "minimal_mode": "Mode Minimal",
+  "merge_groups": "Fusionner les Groupes",
+  "merge_groups_description": "Sélectionnez un groupe d'expressions cible dans lequel fusionner le groupe actuel. Cette action ne peut pas être annulée.",
+  "cannot_merge_to_same_group": "Impossible de fusionner avec le même groupe",
+  "merge_success": "{count} expressions fusionnées avec succès",
+  "no_other_groups_to_merge": "Aucun autre groupe disponible pour la fusion"
 }

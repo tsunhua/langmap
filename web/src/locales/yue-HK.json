@@ -343,5 +343,10 @@
   "please_enter_expression": "請輸入詞句",
   "please_fill_all_fields": "請填寫所有欄位",
   "failed_to_add_expression": "新增詞句失敗",
-  "minimal_mode": "極簡模式"
+  "minimal_mode": "極簡模式",
+  "merge_groups": "合併詞句組",
+  "merge_groups_description": "選擇要將當前詞句組合併到嘅目標詞句組。此操作無法復原。",
+  "cannot_merge_to_same_group": "不能合併到同一個詞句組",
+  "merge_success": "成功合併 {count} 個詞句",
+  "no_other_groups_to_merge": "沒有其他詞句組可以合併"
 }

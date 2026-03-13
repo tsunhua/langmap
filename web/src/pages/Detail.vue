@@ -56,8 +56,19 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200">
               <div
                 class="border-b border-slate-200 px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-                <span class="text-slate-600 text-sm sm:text-base">{{ currentMembers.length }} {{
-                  $t('expressions') }}</span>
+                <div class="flex items-center">
+                  <span class="text-slate-600 text-sm sm:text-base">{{ currentMembers.length }} {{
+                    $t('expressions') }}</span>
+                  <button @click="openMergeGroupsModal()"
+                    class="ml-2 text-slate-400 hover:text-blue-600 transition-colors"
+                    :title="$t('merge_groups')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4 4" />
+                    </svg>
+                  </button>
+                </div>
                 <button v-if="!groupSearchModes.has(currentMeaning.id)" @click="toggleGroupSearch(currentMeaning.id)"
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2 text-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
@@ -236,7 +247,83 @@
     <CreateExpression :visible="showCreateExpressionModal" :initial-meaning-id="currentMeaningIdForAssociation"
       :initial-text="initialTextForCreation" @close="showCreateExpressionModal = false"
       @expression-created="handleExpressionCreated" />
+    
+    <!-- 词句组合并模态框 -->
+    <div v-if="showMergeGroupsModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+        <div
+          class="border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">{{ $t('merge_groups') }}</h3>
+            <p class="text-slate-500 text-sm mt-1">
+              {{ $t('merge_groups_description') }}
+            </p>
+          </div>
+          <button @click="closeMergeGroupsModal"
+            class="text-slate-400 hover:text-slate-600 transition-colors self-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+          <div v-if="mergeLoading" class="flex items-center justify-center py-8">
+            <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <span class="ml-2 text-slate-600">{{ $t('loading') }}</span>
+          </div>
+
+          <div v-else-if="mergeMessage" class="text-center py-8">
+            <p class="text-slate-600">{{ mergeMessage }}</p>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div v-for="meaning in otherMeanings" :key="meaning.id"
+              @click="mergeMeaningGroups(meaning.id)"
+              class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-slate-800">#{{ getMeaningIndex(meaning.id) }}</h4>
+                  <p class="text-sm text-slate-500 mt-1">
+                    {{ meaning.members.length }} {{ $t('expressions') }}
+                  </p>
+                  <p class="text-sm text-slate-600 mt-1 truncate">
+                    {{ getMeaningDisplayText(meaning) }}
+                  </p>
+                  <p class="text-xs text-slate-400 mt-1">
+                    {{ $t('created_by') }}: {{ meaning.created_by || $t('anonymous') }}
+                  </p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            <div v-if="otherMeanings.length === 0" class="text-center py-8">
+              <p class="text-slate-500">{{ $t('no_other_groups_to_merge') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-200 px-4 sm:px-6 py-4">
+          <button @click="closeMergeGroupsModal"
+            class="w-full inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
+            {{ $t('cancel') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Meaning Selection Modal -->
     <div v-if="showMeaningSelection && selectedExpressionForAssociation"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -347,7 +434,14 @@ export default {
 
     // Group-specific association mode
     const groupSearchModes = ref(new Set())
-
+    
+    // 词句组合并模态框
+    const showMergeGroupsModal = ref(false)
+    const sourceMeaningId = ref(null)
+    const targetMeaningId = ref(null)
+    const mergeLoading = ref(false)
+    const mergeMessage = ref('')
+    
     // Global search mode for when no groups exist
     const globalSearchMode = ref(false)
     const globalSearchQuery = ref('')
@@ -383,13 +477,21 @@ export default {
       const m = currentMeaning.value
       const members = m?.members || []
       if (!item.value) return members
-
+      
       const currentItem = members.find(m => m.id === item.value.id)
       const otherMembers = members.filter(m => m.id !== item.value.id)
-
+      
       return currentItem ? [currentItem, ...otherMembers] : otherMembers
     })
 
+    // 获取其他词句组（排除当前词句组）
+    const otherMeanings = computed(() => {
+      if (!sourceMeaningId.value) return []
+      return meanings.value.filter(m => m.id !== sourceMeaningId.value)
+    })
+    
+    // Set active tab
+    
     // Set active tab
     function setActiveTab(tabId) {
       activeTab.value = tabId
@@ -773,6 +875,86 @@ export default {
       // Fallback if no members
       return t('expression_group')
     }
+    
+    // 获取词句组在列表中的索引
+    function getMeaningIndex(meaningId) {
+      return meanings.value.findIndex(m => m.id === meaningId) + 1
+    }
+    
+    // 打开词句组合并模态框
+    function openMergeGroupsModal() {
+      if (!currentMeaning.value) {
+        console.warn('Cannot open merge modal: currentMeaning is null')
+        return
+      }
+      sourceMeaningId.value = currentMeaning.value.id
+      targetMeaningId.value = null
+      mergeMessage.value = ''
+      showMergeGroupsModal.value = true
+    }
+    
+    // 关闭词句组合并模态框
+    function closeMergeGroupsModal() {
+      showMergeGroupsModal.value = false
+      sourceMeaningId.value = null
+      targetMeaningId.value = null
+      mergeMessage.value = ''
+    }
+    
+    // 执行词句组合并
+    async function mergeMeaningGroups(targetMeaningIdParam) {
+      if (!sourceMeaningId.value) return
+      
+      // 前端验证
+      if (sourceMeaningId.value === targetMeaningIdParam) {
+        mergeMessage.value = t('cannot_merge_to_same_group')
+        return
+      }
+      
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        alert(t('login_required'))
+        return
+      }
+      
+      mergeLoading.value = true
+      mergeMessage.value = ''
+      
+      try {
+        const res = await fetch('/api/v1/meanings/merge', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            source_meaning_id: sourceMeaningId.value,
+            target_meaning_id: targetMeaningIdParam
+          })
+        })
+        
+        if (!res.ok) {
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Failed to merge meaning groups')
+        }
+        
+        const result = await res.json()
+        
+        // 关闭模态框
+        closeMergeGroupsModal()
+        
+        // 刷新数据
+        await load()
+        
+        // 切换到目标词句组
+        setActiveTab(targetMeaningIdParam.toString())
+      } catch (e) {
+        console.error('Merge error:', e)
+        mergeMessage.value = String(e)
+      } finally {
+        mergeLoading.value = false
+      }
+    }
 
     async function handleTagsUpdate(newTags) {
       if (!item.value) return
@@ -1051,6 +1233,17 @@ export default {
       toggleGroupSearch,
       handleGroupSearchCreateNew,
       handleGroupSearchAssociate,
+      // 词句组合并
+      showMergeGroupsModal,
+      sourceMeaningId,
+      targetMeaningId,
+      mergeLoading,
+      mergeMessage,
+      openMergeGroupsModal,
+      closeMergeGroupsModal,
+      mergeMeaningGroups,
+      otherMeanings,
+      getMeaningIndex,
       // Global search
       globalSearchMode,
       globalSearchQuery,

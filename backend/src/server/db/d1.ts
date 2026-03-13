@@ -2119,7 +2119,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   /**
-   * Generate a stable ID based on the content using FNV-1a 32-bit hash.
+   * Generate a stable ID based on content using FNV-1a 32-bit hash.
    * This ensures that the same content always produces the same ID.
    * 
    * @param content String content to hash
@@ -2132,8 +2132,77 @@ export class D1DatabaseService extends AbstractDatabaseService {
       h = Math.imul(h, 0x01000193); // FNV prime
     }
     h = h >>> 0; // convert to unsigned int32
-
+    
     // Ensure we don't get 0 as ID (minimum ID should be 1)
     return (h % (2 ** 31 - 1)) + 1;
+  }
+  
+  /**
+   * 合并词句组
+   * 将源词句组中的所有词句添加到目标词句组，然后删除源词句组
+   */
+  async mergeMeaningGroups(sourceMeaningId: number, targetMeaningId: number): Promise<{
+    success: boolean
+    merged_count: number
+    target_meaning_id: number
+  }> {
+    const db = this.db;
+
+    // 1. 验证词句组存在
+    const sourceMeaning = await db.prepare('SELECT * FROM meanings WHERE id = ?').bind(sourceMeaningId).first();
+    const targetMeaning = await db.prepare('SELECT * FROM meanings WHERE id = ?').bind(targetMeaningId).first();
+
+    if (!sourceMeaning) {
+      throw new Error('Source meaning group not found');
+    }
+
+    if (!targetMeaning) {
+      throw new Error('Target meaning group not found');
+    }
+
+    // 2. 获取源词句组的所有词句
+    const expressionsResult = await db.prepare(
+      'SELECT expression_id FROM expression_meaning WHERE meaning_id = ?'
+    ).bind(sourceMeaningId).all<{ expression_id: number }>();
+
+    if (!expressionsResult.results || expressionsResult.results.length === 0) {
+      return {
+        success: true,
+        merged_count: 0,
+        target_meaning_id: targetMeaningId
+      };
+    }
+
+    // 3. 批量插入新的 expression_meaning 关联
+    const now = new Date().toISOString();
+    const insertStatements = expressionsResult.results.map(e =>
+      db.prepare(
+        'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+      ).bind(`${e.expression_id}-${targetMeaningId}`, e.expression_id, targetMeaningId, now)
+    );
+
+    // 4. 批量删除源词句组的关联
+    const deleteExpressionMeaningStmt = db.prepare(
+      'DELETE FROM expression_meaning WHERE meaning_id = ?'
+    ).bind(sourceMeaningId);
+
+    // 5. 删除源词句组
+    const deleteMeaningStmt = db.prepare(
+      'DELETE FROM meanings WHERE id = ?'
+    ).bind(sourceMeaningId);
+
+    // 6. 使用 batch 执行所有操作
+    try {
+      await db.batch([...insertStatements, deleteExpressionMeaningStmt, deleteMeaningStmt]);
+
+      return {
+        success: true,
+        merged_count: expressionsResult.results.length,
+        target_meaning_id: targetMeaningId
+      };
+    } catch (error) {
+      console.error('Failed to merge meaning groups:', error);
+      throw new Error('Failed to merge meaning groups');
+    }
   }
 }

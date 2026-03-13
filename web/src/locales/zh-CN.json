@@ -386,5 +386,10 @@
   "please_enter_expression": "请输入词句",
   "please_fill_all_fields": "请填写所有字段",
   "failed_to_add_expression": "添加词句失败",
-  "minimal_mode": "极简模式"
+   "minimal_mode": "极简模式",
+   "merge_groups": "合并词句组",
+   "merge_groups_description": "选择要将当前词句组合并到的目标词句组。此操作无法撤销。",
+   "cannot_merge_to_same_group": "不能合并到同一个词句组",
+   "merge_success": "成功合并 {count} 个词句",
+   "no_other_groups_to_merge": "没有其他可合并的词句组"
 }

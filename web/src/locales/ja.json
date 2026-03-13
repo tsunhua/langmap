@@ -345,5 +345,10 @@
   "please_fill_all_fields": "すべてのフィールドに入力してください",
   "login_required": "表現を追加するにはログインしてください",
   "failed_to_add_expression": "表現の追加に失敗しました",
-  "minimal_mode": "シンプルモード"
+  "minimal_mode": "シンプルモード",
+  "merge_groups": "表現グループを統合",
+  "merge_groups_description": "現在のグループを統合するターゲットの表現グループを選択します。この操作は元に戻せません。",
+  "cannot_merge_to_same_group": "同じグループに統合できません",
+  "merge_success": "{count} 件の表現を統合しました",
+  "no_other_groups_to_merge": "統合できる他のグループがありません"
 }
