@@ -585,38 +585,38 @@ export default {
         }
         
         const created = await res.json()
-        
-        // 如果传入了 initialMeaningId，则自动关联
+
+        // 如果传入了 initialMeaningId，则自动关联到该含义组
         if (props.initialMeaningId) {
           try {
-            const updateRes = await fetch(`/api/v1/expressions/${created.id}`, {
-              method: 'PATCH',
-              headers: { 
+            const associateRes = await fetch(`/api/v1/expressions/${created.id}/meanings`, {
+              method: 'POST',
+              headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
               },
-              body: JSON.stringify({ 
-                meaning_id: props.initialMeaningId,
-                updated_by: createdBy
+              body: JSON.stringify({
+                meaning_id: props.initialMeaningId
               })
             })
-            
-            if (!updateRes.ok) {
-              if (updateRes.status === 401) {
+
+            if (!associateRes.ok) {
+              if (associateRes.status === 401) {
                 // Token is invalid, redirect to login
                 error.value = 'Session expired. Please log in again.';
                 localStorage.removeItem('authToken');
                 router.push('/login');
                 return;
               }
-              throw new Error('failed to update expression with meaning')
+              const errorData = await associateRes.json()
+              throw new Error(errorData.error || 'Failed to associate expression to meaning group')
             }
           } catch (e) {
             error.value = String(e)
             return
           }
         }
-        
+
         // Emit event to notify parent component about the created expression
         emit('expression-created', created)
       } catch (e) {

@@ -27,7 +27,6 @@ CREATE INDEX IF NOT EXISTS idx_languages_is_active ON languages(is_active);
 CREATE TABLE IF NOT EXISTS expressions (
     id INTEGER PRIMARY KEY NOT NULL,
     text TEXT NOT NULL,
-    meaning_id INTEGER, --關聯的 en-US 的 expression_id
     audio_url TEXT,
     language_code TEXT NOT NULL,
     region_code TEXT,
@@ -46,16 +45,34 @@ CREATE TABLE IF NOT EXISTS expressions (
 
 CREATE INDEX IF NOT EXISTS idx_expressions_text ON expressions(text);
 CREATE INDEX IF NOT EXISTS idx_expressions_language_code ON expressions(language_code);
-CREATE INDEX IF NOT EXISTS idx_expressions_meaning_id ON expressions(meaning_id);
 CREATE INDEX IF NOT EXISTS idx_expressions_tags ON expressions(tags);
 CREATE INDEX IF NOT EXISTS idx_expressions_created_by ON expressions(created_by);
+
+-- Meanings table
+CREATE TABLE IF NOT EXISTS meanings (
+    id INTEGER PRIMARY KEY NOT NULL,
+    created_by TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Expression-Meaning mapping table (many-to-many relationship)
+CREATE TABLE IF NOT EXISTS expression_meaning (
+    id TEXT PRIMARY KEY NOT NULL,
+    expression_id INTEGER NOT NULL,
+    meaning_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (expression_id) REFERENCES expressions(id),
+    FOREIGN KEY (meaning_id) REFERENCES meanings(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_expression_meaning_expression_id ON expression_meaning(expression_id);
+CREATE INDEX IF NOT EXISTS idx_expression_meaning_meaning_id ON expression_meaning(meaning_id);
 
 -- Expression versions table
 CREATE TABLE IF NOT EXISTS expression_versions (
     id INTEGER PRIMARY KEY NOT NULL,
     expression_id INTEGER NOT NULL,
     text TEXT NOT NULL,
-    meaning_id INTEGER,
     audio_url TEXT,
     region_name TEXT,
     region_latitude TEXT,

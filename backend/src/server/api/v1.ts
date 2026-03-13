@@ -300,7 +300,7 @@ api.delete('/languages/:id', requireAuth, async (c) => {
 })
 
 // GET /api/v1/expressions
-api.get('/expressions', cacheMiddleware(300), async (c) => {
+api.get('/expressions', optionalAuth, async (c) => {
   try {
     console.log('GET /api/v1/expressions');
     const db = getDB(c)

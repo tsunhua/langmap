@@ -551,7 +551,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         `INSERT INTO expressions (
           id, text, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).first<Expression>()
 
       if (!result) {
