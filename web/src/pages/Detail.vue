@@ -12,7 +12,7 @@
     </div>
 
     <div v-else-if="item" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Left column: current item + translations as a unified list -->
+      <!-- Left column: current item + meaning groups -->
       <div class="lg:col-span-2 space-y-4 sm:space-y-6">
         <h3 class="text-xl font-bold text-slate-800">{{ $t('expression_details') }}</h3>
         <ExpressionCard :item="item" :key="item.id" :editable="true" :can-delete="canDeleteExpression"
@@ -167,6 +167,7 @@
           <div v-if="noGroupSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
             <SmartSearch
               :exclude-id="item ? item.id : null"
+              :current-meaning-ids="[]"
               @create-new="handleSmartSearchCreateNew"
               @associate="handleSmartSearchAssociate"
             />
@@ -377,8 +378,6 @@ export default {
     const { t } = useI18n()
     const item = ref(null)
     const loading = ref(false)
-    const transLoading = ref(false)
-    const translations = ref([])
     const meanings = ref([])
     const currentUser = ref(null)
     const deleting = ref(false)
@@ -482,21 +481,7 @@ export default {
         const res = await fetch(`/api/v1/expressions/${props.id}`)
         if (!res.ok) throw new Error('not found')
         item.value = await res.json()
-        // fetch translations via server-side meaning grouping
-        transLoading.value = true
-        try {
-          const tr = await fetch(`/api/v1/expressions/${props.id}/translations`)
-          if (tr.ok) {
-            translations.value = await tr.json()
-          } else {
-            translations.value = []
-          }
-        } catch (e) {
-          console.warn('translations fetch failed', e)
-          translations.value = []
-        } finally {
-          transLoading.value = false
-        }
+
         // fetch meanings for this expression
         try {
           const rawMeanings = item.value.meanings || []
@@ -938,7 +923,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`/api/v1/expressions/${item.value.id}/meanings`, {
+        const res = await fetch(`/api/v1/expressions/${result.id}/meanings`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1152,8 +1137,6 @@ export default {
     return {
       item,
       loading,
-      translations,
-      transLoading,
       meanings,
       linkedIds,
       isLinked,
