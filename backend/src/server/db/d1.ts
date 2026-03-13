@@ -1876,14 +1876,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const bindings: any[] = []
     const conditions: string[] = []
 
-    if (userId !== undefined) {
-      conditions.push('user_id = ?')
-      bindings.push(userId)
-    }
-
     if (isPublic !== undefined) {
       conditions.push('is_public = ?')
       bindings.push(isPublic ? 1 : 0)
+    } else if (userId !== undefined) {
+      conditions.push('user_id = ?')
+      bindings.push(userId)
+    } else {
+      return []
     }
 
     if (conditions.length > 0) {
@@ -1892,6 +1892,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
     bindings.push(limit, skip)
+
+    console.log(query, bindings)
 
     const { results } = await this.db.prepare(query).bind(...bindings).all<Handbook>()
     return (results || []).map(h => this.formatTimestamps(h) as Handbook)
