@@ -58,6 +58,25 @@
                   </td>
                   <td class="px-3 py-2"></td>
                 </tr>
+                <tr v-for="(pendingExpr, index) in pendingExpressions" :key="'pending-' + index" class="border-t border-slate-100 bg-yellow-50">
+                  <td class="px-3 py-2">
+                    <span class="text-sm text-slate-600">{{ getLanguageName(pendingExpr.language_code) }}</span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <span class="text-sm text-slate-800">{{ pendingExpr.text }}</span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <button 
+                      @click="removePendingExpression(index)"
+                      class="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
+                      :title="$t('remove')"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
                 <tr v-if="showNewRow" class="border-t border-slate-100 bg-blue-50">
                   <td class="px-3 py-2">
                     <select 
@@ -76,19 +95,19 @@
                       type="text"
                       :placeholder="$t('please_enter_expression')"
                       class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      @keydown.enter="confirmNewRow"
+                      @keydown.enter="addToPending"
                     />
                   </td>
                   <td class="px-3 py-2">
                     <div class="flex items-center gap-1">
                       <button 
-                        @click="confirmNewRow"
+                        @click="addToPending"
                         :disabled="adding"
                         class="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
-                        :title="$t('confirm')"
+                        :title="$t('add')"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                       </button>
                       <button 
@@ -106,6 +125,23 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div v-if="pendingExpressions.length > 0" class="mt-3 flex items-center gap-2">
+            <button 
+              @click="submitAllPending"
+              :disabled="adding"
+              class="flex-1 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {{ $t('submit') }}
+            </button>
+            <button 
+              @click="cancelAll"
+              :disabled="adding"
+              class="px-4 py-2 text-slate-600 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            >
+              {{ $t('cancel') }}
+            </button>
           </div>
 
           <p v-if="message" :class="['mt-3 text-sm', messageType === 'error' ? 'text-red-600' : 'text-green-600']">
@@ -149,6 +185,7 @@ export default {
 
     const loading = ref(false)
     const expressions = ref([])
+    const pendingExpressions = ref([])
     const showNewRow = ref(false)
     const newRowLanguage = ref('')
     const newRowText = ref('')
@@ -223,24 +260,36 @@ export default {
       message.value = ''
     }
 
-    const cancelNewRow = () => {
-      showNewRow.value = false
-      newRowLanguage.value = ''
-      newRowText.value = ''
-      message.value = ''
-    }
-
-    const confirmNewRow = async () => {
+    const addToPending = () => {
       if (!newRowLanguage.value || !newRowText.value) {
         message.value = t('please_fill_all_fields')
         messageType.value = 'error'
         return
       }
 
-      const exists = expressions.value.some(e => e.language_code === newRowLanguage.value)
-      if (exists) {
-        message.value = t('language_already_exists')
-        messageType.value = 'error'
+      pendingExpressions.value.push({
+        language_code: newRowLanguage.value,
+        text: newRowText.value
+      })
+
+      newRowLanguage.value = ''
+      newRowText.value = ''
+      message.value = t('added_to_pending_list')
+      messageType.value = 'success'
+    }
+
+    const removePendingExpression = (index) => {
+      pendingExpressions.value.splice(index, 1)
+    }
+
+    const cancelAll = () => {
+      pendingExpressions.value = []
+      message.value = ''
+      close()
+    }
+
+    const submitAllPending = async () => {
+      if (pendingExpressions.value.length === 0) {
         return
       }
 
@@ -255,28 +304,50 @@ export default {
           return
         }
 
-        // If meaningId exists, add directly to the meaning group
         if (props.meaningId) {
-          const res = await fetch('/api/v1/expressions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              text: newRowText.value,
-              language_code: newRowLanguage.value,
-              meaning_id: props.meaningId
+          const promises = pendingExpressions.value.map(pending => 
+            fetch('/api/v1/expressions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                text: pending.text,
+                language_code: pending.language_code,
+                meaning_id: props.meaningId
+              })
             })
-          })
+          )
 
-          if (!res.ok) {
-            const errorData = await res.json()
-            throw new Error(errorData.error || 'Failed to add expression')
+          const results = await Promise.all(promises)
+          const errors = results.filter(res => !res.ok)
+
+          if (errors.length > 0) {
+            message.value = t('some_expressions_failed')
+            messageType.value = 'error'
+          } else {
+            message.value = t('all_expressions_added_successfully')
+            messageType.value = 'success'
+            pendingExpressions.value = []
+            await fetchGroupMembers()
+            emit('updated')
+            close()
           }
         } else {
-          // If no meaningId, create a new meaning group with both expressions
           const existingExpr = expressions.value[0]
+          const allExpressions = [
+            {
+              id: existingExpr.id,
+              text: existingExpr.text,
+              language_code: existingExpr.language_code
+            },
+            ...pendingExpressions.value.map(p => ({
+              text: p.text,
+              language_code: p.language_code
+            }))
+          ]
+
           const batchRes = await fetch('/api/v1/expressions/batch', {
             method: 'POST',
             headers: {
@@ -284,17 +355,7 @@ export default {
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              expressions: [
-                {
-                  id: existingExpr.id,
-                  text: existingExpr.text,
-                  language_code: existingExpr.language_code
-                },
-                {
-                  text: newRowText.value,
-                  language_code: newRowLanguage.value
-                }
-              ]
+              expressions: allExpressions
             })
           })
 
@@ -302,36 +363,43 @@ export default {
             const errorData = await batchRes.json()
             throw new Error(errorData.error || 'Failed to create meaning group')
           }
+
+          message.value = t('all_expressions_added_successfully')
+          messageType.value = 'success'
+          pendingExpressions.value = []
+          await fetchGroupMembers()
+          emit('updated')
+          close()
         }
-
-        message.value = t('translation_added_successfully')
-        messageType.value = 'success'
-
-        cancelNewRow()
-        await fetchGroupMembers()
-        emit('updated')
       } catch (e) {
-        console.error('Error adding expression:', e)
-        message.value = e.message || t('failed_to_add_expression')
+        console.error('Error submitting pending expressions:', e)
+        message.value = e.message || t('failed_to_add_expressions')
         messageType.value = 'error'
       } finally {
         adding.value = false
       }
     }
 
+    const cancelNewRow = () => {
+      showNewRow.value = false
+      newRowLanguage.value = ''
+      newRowText.value = ''
+      message.value = ''
+    }
+
     const close = () => {
       showNewRow.value = false
       newRowLanguage.value = ''
       newRowText.value = ''
+      pendingExpressions.value = []
       message.value = ''
       emit('close')
     }
 
     const goToDetail = () => {
       if (props.expressionId) {
-        router.push(`/detail/${props.expressionId}`)
+        window.open(`/#/detail/${props.expressionId}`, '_blank')
       }
-      close()
     }
 
     watch(() => props.visible, (newVal) => {
@@ -343,6 +411,7 @@ export default {
     return {
       loading,
       expressions,
+      pendingExpressions,
       showNewRow,
       newRowLanguage,
       newRowText,
@@ -355,7 +424,10 @@ export default {
       getLanguageName,
       addNewRow,
       cancelNewRow,
-      confirmNewRow,
+      addToPending,
+      removePendingExpression,
+      cancelAll,
+      submitAllPending,
       close,
       goToDetail
     }
