@@ -46,6 +46,7 @@
           <div v-show="activeTab === 'search'" role="tabpanel">
             <SmartSearch
               :exclude-id="item ? item.id : null"
+              :current-meaning-ids="currentMeaningIds"
               @create-new="handleSmartSearchCreateNew"
               @associate="handleSmartSearchAssociate"
             />
@@ -93,6 +94,7 @@
                 <SmartSearch
                   :exclude-id="item ? item.id : null"
                   :target-meaning-id="currentMeaning.id"
+                  :current-meaning-ids="[currentMeaning.id]"
                   @create-new="handleGroupSearchCreateNew"
                   @associate="handleGroupSearchAssociate"
                 />
@@ -144,15 +146,16 @@
               d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M6.343 6.343l-.707.707m12.728 0l-.707.707M6.343 17.657l3.636-3.636m-1.414 1.414l3.636-3.636m0 5.657V19a2 2 0 002-2H5a2 2 0 00-2 2v-3.172" />
           </svg>
           <p class="mt-2">{{ $t('no_associated_groups') }}</p>
-          <button v-if="!globalSearchMode" @click="toggleGlobalSearch()"
+          <button v-if="!noGroupSearchMode" @click="toggleNoGroupSearch()"
             class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-3">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             {{ $t('search_and_associate') }}
           </button>
-          <button v-else @click="toggleGlobalSearch()"
+          <button v-else @click="toggleNoGroupSearch()"
             class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2 mt-3">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
@@ -161,64 +164,12 @@
             {{ $t('cancel') }}
           </button>
 
-          <div v-if="globalSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-3">
-              <div class="flex-1">
-                <input v-model="globalSearchQuery" :placeholder="$t('please_input')"
-                  class="block w-full rounded-md border border-slate-400 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3"
-                  @keydown.enter="searchGlobal()" />
-              </div>
-              <button @click="searchGlobal()"
-                class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span class="hidden sm:inline ml-1">{{ $t('search') }}</span>
-              </button>
-            </div>
-
-            <div v-if="globalSearchLoading" class="flex items-center justify-center py-3">
-              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-              </svg>
-              <span class="ml-2 text-slate-600">{{ $t('searching') }}</span>
-            </div>
-
-            <div v-else-if="globalSearchResults && globalSearchResults.length > 0" class="space-y-2">
-              <div v-for="c in globalSearchResults" :key="c && c.id"
-                class="flex gap-3 items-center p-2 bg-white rounded-lg">
-                <div v-if="c && item && c.id !== item.id" class="flex-1">
-                  <ExpressionCard :item="c" />
-                </div>
-                <div v-if="c && item && c.id !== item.id">
-                  <button @click="openMeaningSelection(c)"
-                    class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
-                    {{ $t('associate') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div v-else-if="globalSearchSearched" class="text-center py-3 text-slate-500 text-sm">
-              {{ $t('no_expressions_found') }}
-              <div class="mt-3">
-                <button @click="openCreateExpressionModal(globalSearchQuery)"
-                  class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  {{ $t('add_expression') }}
-                </button>
-              </div>
-            </div>
+          <div v-if="noGroupSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
+            <SmartSearch
+              :exclude-id="item ? item.id : null"
+              @create-new="handleSmartSearchCreateNew"
+              @associate="handleSmartSearchAssociate"
+            />
           </div>
         </div>
       </div>
@@ -441,14 +392,9 @@ export default {
     const targetMeaningId = ref(null)
     const mergeLoading = ref(false)
     const mergeMessage = ref('')
-    
-    // Global search mode for when no groups exist
-    const globalSearchMode = ref(false)
-    const globalSearchQuery = ref('')
-    const globalSearchResults = ref([])
-    const globalSearchLoading = ref(false)
-    const globalSearchSearched = ref(false)
-    const globalSearchMessage = ref('')
+
+    // Search mode for when no groups exist
+    const noGroupSearchMode = ref(false)
 
     // Meaning selection mode
     const showMeaningSelection = ref(false)
@@ -477,11 +423,16 @@ export default {
       const m = currentMeaning.value
       const members = m?.members || []
       if (!item.value) return members
-      
+
       const currentItem = members.find(m => m.id === item.value.id)
       const otherMembers = members.filter(m => m.id !== item.value.id)
-      
+
       return currentItem ? [currentItem, ...otherMembers] : otherMembers
+    })
+
+    const currentMeaningIds = computed(() => {
+      if (!meanings.value || meanings.value.length === 0) return []
+      return meanings.value.map(m => m.id)
     })
 
     // 获取其他词句组（排除当前词句组）
@@ -501,8 +452,7 @@ export default {
     const showCreateExpressionModal = ref(false)
     const currentMeaningIdForAssociation = ref(null)
     const initialTextForCreation = ref('')
-
-
+    const shouldAssociateWithCurrent = ref(false)
 
     const linkedIds = computed(() => {
       const s = new Set()
@@ -608,94 +558,9 @@ export default {
       }
     }
 
-    // Toggle global search mode
-    function toggleGlobalSearch() {
-      globalSearchMode.value = !globalSearchMode.value
-      if (globalSearchMode.value) {
-        globalSearchQuery.value = ''
-        globalSearchResults.value = []
-        globalSearchSearched.value = false
-      }
-    }
-
-    // Global search function
-    async function searchGlobal() {
-      globalSearchLoading.value = true
-      globalSearchSearched.value = false
-      globalSearchMessage.value = ''
-
-      try {
-        const params = new URLSearchParams()
-        if (globalSearchQuery.value) params.set('q', globalSearchQuery.value)
-        const url = `/api/v1/search?${params.toString()}`
-
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('search failed')
-
-        globalSearchResults.value = await res.json()
-        globalSearchSearched.value = true
-      } catch (e) {
-        globalSearchMessage.value = String(e)
-        globalSearchResults.value = []
-        globalSearchSearched.value = true
-      } finally {
-        globalSearchLoading.value = false
-      }
-    }
-
-    // Associate globally (will create new meaning group)
-    async function associateGlobally(target) {
-      globalSearchMessage.value = ''
-
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        globalSearchMessage.value = t('must_be_logged_in_to_associate')
-        return
-      }
-
-      try {
-        const batchRes = await fetch('/api/v1/expressions/batch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            expressions: [
-              {
-                id: item.value.id,
-                text: item.value.text,
-                language_code: item.value.language_code
-              },
-              {
-                id: target.id,
-                text: target.text,
-                language_code: target.language_code
-              }
-            ]
-          })
-        })
-
-        if (!batchRes.ok) {
-          const errorData = await batchRes.json()
-          throw new Error(errorData.error || 'Failed to associate expressions')
-        }
-
-        const result = await batchRes.json()
-        globalSearchMessage.value = t('expressions_processed', { count: 2, meaningId: result.meaning_id })
-
-        // Refresh to show updated list
-        await load()
-
-        // Reset global search
-        globalSearchQuery.value = ''
-        globalSearchResults.value = []
-        globalSearchSearched.value = false
-        globalSearchMode.value = false
-      } catch (e) {
-        console.error('Association error:', e)
-        globalSearchMessage.value = String(e)
-      }
+    // Toggle search mode for when no groups exist
+    function toggleNoGroupSearch() {
+      noGroupSearchMode.value = !noGroupSearchMode.value
     }
 
     // Open meaning selection modal
@@ -825,11 +690,9 @@ export default {
         await load()
         closeMeaningSelection()
 
-        // Reset search
-        if (globalSearchMode.value) {
-          globalSearchQuery.value = ''
-          globalSearchResults.value = []
-          globalSearchSearched.value = false
+        // Close search mode if open
+        if (noGroupSearchMode.value) {
+          noGroupSearchMode.value = false
         }
       } catch (e) {
         console.error('Association error:', e)
@@ -1026,8 +889,34 @@ export default {
     }
 
     // Handle SmartSearch create-new event (from search and associate tab)
-    function handleSmartSearchCreateNew(searchText) {
-      openCreateExpressionModal(searchText)
+    async function handleSmartSearchCreateNew(searchText) {
+      // 如果当前没有任何词句组，使用批量关联API让后端创建新的meaning_id
+      if (!meanings.value || meanings.value.length === 0) {
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          alert(t('login_required'))
+          return
+        }
+
+        try {
+          // 直接打开创建弹窗，但在创建后会使用batch API进行关联
+          currentMeaningIdForAssociation.value = null
+          initialTextForCreation.value = searchText
+          showCreateExpressionModal.value = true
+
+          // 存储一个标记，表示这是从没有词句组的情况创建的
+          shouldAssociateWithCurrent.value = true
+        } catch (e) {
+          console.error('Error preparing to create expression:', e)
+          alert(t('failed_to_add_expression'))
+        }
+      } else {
+        // 如果已有词句组，让用户选择关联到哪个词句组
+        currentMeaningIdForAssociation.value = null
+        initialTextForCreation.value = searchText
+        showCreateExpressionModal.value = true
+        shouldAssociateWithCurrent.value = false
+      }
     }
 
     // Handle SmartSearch associate event (from search and associate tab)
@@ -1118,8 +1007,49 @@ export default {
     async function handleExpressionCreated(createdExpression) {
       showCreateExpressionModal.value = false;
 
+      // 如果标记为需要与当前词句关联，使用batch API
+      if (shouldAssociateWithCurrent.value && item.value) {
+        const token = localStorage.getItem('authToken')
+        if (!token) {
+          await load()
+          return
+        }
+
+        try {
+          const batchRes = await fetch('/api/v1/expressions/batch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              expressions: [
+                {
+                  id: item.value.id,
+                  text: item.value.text,
+                  language_code: item.value.language_code
+                },
+                {
+                  id: createdExpression.id,
+                  text: createdExpression.text,
+                  language_code: createdExpression.language_code
+                }
+              ]
+            })
+          })
+
+          if (!batchRes.ok) {
+            const errorData = await batchRes.json()
+            console.error('Failed to associate expressions:', errorData)
+          }
+        } catch (e) {
+          console.error('Error associating expressions:', e)
+        }
+      }
+
       // Refresh to show newly created expression
       await load();
+      shouldAssociateWithCurrent.value = false
     }
 
     // Load current user
@@ -1244,16 +1174,9 @@ export default {
       mergeMeaningGroups,
       otherMeanings,
       getMeaningIndex,
-      // Global search
-      globalSearchMode,
-      globalSearchQuery,
-      globalSearchResults,
-      globalSearchLoading,
-      globalSearchSearched,
-      globalSearchMessage,
-      toggleGlobalSearch,
-      searchGlobal,
-      associateGlobally,
+      // No group search
+      noGroupSearchMode,
+      toggleNoGroupSearch,
       // Meaning selection
       showMeaningSelection,
       selectedExpressionForAssociation,
@@ -1276,6 +1199,7 @@ export default {
       showCreateExpressionModal,
       currentMeaningIdForAssociation,
       initialTextForCreation,
+      shouldAssociateWithCurrent,
       openCreateExpressionModal,
       openCreateExpressionModalForGroup,
       handleExpressionCreated,

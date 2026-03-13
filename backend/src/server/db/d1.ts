@@ -965,12 +965,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const now = new Date().toISOString()
 
     const result: any = await this.db.prepare(
-      'INSERT INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
+      'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
     ).bind(`${expressionId}-${meaningId}`, expressionId, meaningId, now).run()
-
-    if (!result.success) {
-      throw new Error('Failed to add expression-meaning relationship')
-    }
   }
 
   async removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean> {

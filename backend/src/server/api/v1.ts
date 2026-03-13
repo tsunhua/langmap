@@ -300,7 +300,7 @@ api.delete('/languages/:id', requireAuth, async (c) => {
 })
 
 // GET /api/v1/expressions
-api.get('/expressions', optionalAuth, async (c) => {
+api.get('/expressions', async (c) => {
   try {
     console.log('GET /api/v1/expressions');
     const db = getDB(c)
@@ -530,7 +530,7 @@ api.post('/expressions/associate', requireAuth, async (c) => {
 })
 
 // GET /api/v1/expressions/:expr_id (support comma-separated ids for batch fetch)
-api.get('/expressions/:expr_id', cacheMiddleware(300), async (c) => {
+api.get('/expressions/:expr_id', optionalAuth, async (c) => {
   try {
     console.log('GET /api/v1/expressions/:expr_id');
     const db = getDB(c)

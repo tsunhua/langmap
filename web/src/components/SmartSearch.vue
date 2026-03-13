@@ -38,7 +38,10 @@
               </div>
             </div>
           <div class="result-actions">
-            <button @click="handleAssociate(result)" class="action-btn associate-btn">
+            <button v-if="isAlreadyAssociated(result)" disabled class="action-btn associated-btn">
+              {{ $t('associated') }}
+            </button>
+            <button v-else @click="handleAssociate(result)" class="action-btn associate-btn">
               {{ $t('associate') }}
             </button>
           </div>
@@ -67,6 +70,10 @@ export default {
     targetMeaningId: {
       type: Number,
       default: null
+    },
+    currentMeaningIds: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['create-new', 'associate'],
@@ -110,10 +117,6 @@ export default {
         params.set('q', searchQuery.value)
         params.set('include_meanings', 'true')
 
-        if (props.excludeId) {
-          params.set('exclude_id', props.excludeId.toString())
-        }
-
         const url = `/api/v1/search?${params.toString()}`
         const res = await fetch(url)
 
@@ -121,7 +124,13 @@ export default {
           throw new Error('search failed')
         }
 
-        searchResults.value = await res.json()
+        let results = await res.json()
+
+        if (props.excludeId) {
+          results = results.filter(r => r.id !== props.excludeId)
+        }
+
+        searchResults.value = results
       } catch (e) {
         console.error('Search error:', e)
         searchResults.value = []
@@ -140,6 +149,17 @@ export default {
       emit('associate', result)
     }
 
+    const isAlreadyAssociated = (result) => {
+      if (!props.currentMeaningIds || props.currentMeaningIds.length === 0) {
+        return false
+      }
+      if (!result.meanings || result.meanings.length === 0) {
+        return false
+      }
+      const resultMeaningIds = result.meanings.map(m => m.id)
+      return resultMeaningIds.some(id => props.currentMeaningIds.includes(id))
+    }
+
     watch(() => props.excludeId, () => {
       if (searched.value && searchQuery.value) {
         performSearch()
@@ -156,6 +176,7 @@ export default {
       handleSearchInput,
       handleCreateNew,
       handleAssociate,
+      isAlreadyAssociated,
       getLanguageDisplayName,
       t
     }
@@ -308,6 +329,12 @@ export default {
 
 .associate-btn:hover {
   background: #2563eb;
+}
+
+.associated-btn {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .no-results-hint {
