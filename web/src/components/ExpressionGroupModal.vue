@@ -361,7 +361,7 @@ export default {
 
           if (!batchRes.ok) {
             const errorData = await batchRes.json()
-            throw new Error(errorData.error || 'Failed to create meaning group')
+            throw new Error(errorData.error || t('failed_to_create_meaning_group'))
           }
 
           message.value = t('all_expressions_added_successfully')

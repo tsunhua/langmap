@@ -392,5 +392,10 @@
   "underline": "底線",
   "undo": "復原",
   "write": "編輯",
-  "login_required": "你需要登入先可以執行呢個操作"
+  "login_required": "你需要登入先可以執行呢個操作",
+  "added_to_pending_list": "已新增到待處理列表",
+  "some_expressions_failed": "部分詞句新增失敗",
+  "all_expressions_added_successfully": "所有詞句新增成功",
+  "failed_to_add_expressions": "新增詞句失敗",
+  "failed_to_create_meaning_group": "建立詞句組失敗"
 }

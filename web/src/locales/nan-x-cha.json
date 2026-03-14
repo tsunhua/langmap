@@ -394,5 +394,10 @@
   "undo": "撤銷",
   "write": "寫",
   "language_already_exists": "此個語言已經存在於此組底",
-  "login_required": "汝愛登入正能執行此個動作"
+  "login_required": "汝愛登入正能執行此個動作",
+  "added_to_pending_list": "加進等待列表",
+  "some_expressions_failed": "部分詞句加失敗",
+  "all_expressions_added_successfully": "所有詞句做蜀加成功",
+  "failed_to_add_expressions": "加詞句失敗",
+  "failed_to_create_meaning_group": "建立詞句組失敗"
 }

@@ -394,5 +394,10 @@
   "associated": "Associated",
   "associated_expression_group": "Associated Expression Group #{id}",
   "create_new_expression": "Create New Expression",
-  "loading_language": "Loading language..."
+  "loading_language": "Loading language...",
+  "added_to_pending_list": "Added to pending list",
+  "some_expressions_failed": "Some expressions failed to add",
+  "all_expressions_added_successfully": "All expressions added successfully",
+  "failed_to_add_expressions": "Failed to add expressions",
+  "failed_to_create_meaning_group": "Failed to create meaning group"
 }

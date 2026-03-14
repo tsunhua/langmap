@@ -391,5 +391,10 @@
   "undo": "復原",
   "write": "編輯",
   "language_already_exists": "這個語言已經存在於這組內底",
-  "login_required": "汝愛登入正能做得執行這个動作"
+  "login_required": "汝愛登入正能做得執行這个動作",
+  "added_to_pending_list": "加進等待列表",
+  "some_expressions_failed": "部分詞句加失敗",
+  "all_expressions_added_successfully": "所有詞句攏加成功",
+  "failed_to_add_expressions": "加詞句失敗",
+  "failed_to_create_meaning_group": "建立詞句組失敗"
 }
