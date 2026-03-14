@@ -570,28 +570,41 @@ export class D1DatabaseService extends AbstractDatabaseService {
       ];
 
       const result = await this.db.prepare(
-        `INSERT INTO expressions (
+        `INSERT OR IGNORE INTO expressions (
           id, text, audio_url, language_code, region_code, region_name, region_latitude,
           region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
       ).bind(...bindValues).first<Expression>()
 
+      let resultExpression: Expression;
+      
       if (!result) {
-        console.error('Failed to create expression in database:', result);
-        throw new Error('Failed to create expression')
+        // Expression already exists, fetch it
+        const existing = await this.db.prepare(
+          'SELECT * FROM expressions WHERE id = ?'
+        ).bind(id).first<Expression>()
+        
+        if (!existing) {
+          console.error('Failed to fetch existing expression:', id);
+          throw new Error('Failed to fetch existing expression')
+        }
+        
+        resultExpression = existing;
+      } else {
+        // New expression inserted, update language_stats
+        await this.db.prepare(`
+          INSERT OR REPLACE INTO language_stats (language_code, expression_count)
+          VALUES (?, COALESCE((SELECT expression_count FROM language_stats WHERE language_code = ?), 0) + 1)
+        `).bind(languageCode, languageCode).run();
+
+        // Clear statistics and heatmap caches as we've added a new expression
+        this.clearStatisticsCache();
+        this.clearHeatmapCache();
+        
+        resultExpression = result;
       }
 
-      // Update language_stats
-      await this.db.prepare(`
-        INSERT OR REPLACE INTO language_stats (language_code, expression_count)
-        VALUES (?, COALESCE((SELECT expression_count FROM language_stats WHERE language_code = ?), 0) + 1)
-      `).bind(languageCode, languageCode).run();
-
-      // Clear statistics and heatmap caches as we've added a new expression
-      this.clearStatisticsCache();
-      this.clearHeatmapCache();
-
-      return result;
+      return resultExpression;
     } catch (error) {
       console.error('Error creating expression:', error);
       throw error;
