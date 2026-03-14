@@ -2,20 +2,20 @@
   <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" @click.self="close">
     <div class="bg-white rounded-xl shadow-xl max-w-sm sm:max-w-lg w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2">
       <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-base sm:text-lg font-bold text-slate-800">{{ $t('expression_group_details') }}</h3>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
+          <h3 class="text-base sm:text-lg font-bold text-slate-800">{{ $t('expression_group_details') }}</h3>
           <button
             @click="goToDetail"
             class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
             {{ $t('more') }}
           </button>
-          <button @click="close" class="text-slate-400 hover:text-slate-600 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
+        <button @click="close" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-3 sm:p-4">
