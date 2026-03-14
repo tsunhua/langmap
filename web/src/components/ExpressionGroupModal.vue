@@ -1,12 +1,12 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="close">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
-      <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-lg font-bold text-slate-800">{{ $t('expression_group_details') }}</h3>
+  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" @click.self="close">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm sm:max-w-lg w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2">
+      <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800">{{ $t('expression_group_details') }}</h3>
         <div class="flex items-center gap-2">
-          <button 
+          <button
             @click="goToDetail"
-            class="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
             {{ $t('more') }}
           </button>
@@ -18,7 +18,7 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-4">
         <div v-if="loading" class="flex items-center justify-center py-8">
           <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -27,11 +27,11 @@
         </div>
 
         <div v-else>
-          
-          <button 
+
+          <button
             v-if="!showNewRow"
             @click="addNewRow"
-            class="w-full py-2 mb-3 border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-1"
+            class="w-full py-2 mb-3 border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -43,30 +43,30 @@
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
-                  <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/3">{{ $t('language') }}</th>
-                  <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{{ $t('expression') }}</th>
-                  <th class="px-3 py-2 w-16"></th>
+                  <th class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider w-20 sm:w-1/3">{{ $t('language') }}</th>
+                  <th class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider">{{ $t('expression') }}</th>
+                  <th class="px-2 py-2 w-12 sm:w-16"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="expr in expressions" :key="expr.id" class="border-t border-slate-100">
-                  <td class="px-3 py-2">
-                    <span class="text-sm text-slate-600">{{ getLanguageName(expr.language_code) }}</span>
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <span class="text-xs sm:text-sm text-slate-600">{{ getLanguageName(expr.language_code) }}</span>
                   </td>
-                  <td class="px-3 py-2">
-                    <span class="text-sm text-slate-800">{{ expr.text }}</span>
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <span class="text-xs sm:text-sm text-slate-800 break-words">{{ expr.text }}</span>
                   </td>
-                  <td class="px-3 py-2"></td>
+                  <td class="px-2 py-2 sm:px-3 sm:py-2"></td>
                 </tr>
                 <tr v-for="(pendingExpr, index) in pendingExpressions" :key="'pending-' + index" class="border-t border-slate-100 bg-yellow-50">
-                  <td class="px-3 py-2">
-                    <span class="text-sm text-slate-600">{{ getLanguageName(pendingExpr.language_code) }}</span>
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <span class="text-xs sm:text-sm text-slate-600">{{ getLanguageName(pendingExpr.language_code) }}</span>
                   </td>
-                  <td class="px-3 py-2">
-                    <span class="text-sm text-slate-800">{{ pendingExpr.text }}</span>
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <span class="text-xs sm:text-sm text-slate-800 break-words">{{ pendingExpr.text }}</span>
                   </td>
-                  <td class="px-3 py-2">
-                    <button 
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <button
                       @click="removePendingExpression(index)"
                       class="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
                       :title="$t('remove')"
@@ -78,10 +78,10 @@
                   </td>
                 </tr>
                 <tr v-if="showNewRow" class="border-t border-slate-100 bg-blue-50">
-                  <td class="px-3 py-2">
-                    <select 
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <select
                       v-model="newRowLanguage"
-                      class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">{{ $t('please_select_language') }}</option>
                       <option v-for="lang in displayLanguages" :key="lang.code" :value="lang.code">
@@ -89,18 +89,18 @@
                       </option>
                     </select>
                   </td>
-                  <td class="px-3 py-2">
-                    <input 
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
+                    <input
                       v-model="newRowText"
                       type="text"
                       :placeholder="$t('please_enter_expression')"
-                      class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       @keydown.enter="addToPending"
                     />
                   </td>
-                  <td class="px-3 py-2">
+                  <td class="px-2 py-2 sm:px-3 sm:py-2">
                     <div class="flex items-center gap-1">
-                      <button 
+                      <button
                         @click="addToPending"
                         :disabled="adding"
                         class="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
@@ -110,7 +110,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                       </button>
-                      <button 
+                      <button
                         @click="cancelNewRow"
                         :disabled="adding"
                         class="p-1 text-slate-400 hover:bg-slate-200 rounded transition-colors"
@@ -128,23 +128,23 @@
           </div>
 
           <div v-if="pendingExpressions.length > 0" class="mt-3 flex items-center gap-2">
-            <button 
+            <button
               @click="submitAllPending"
               :disabled="adding"
-              class="flex-1 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex-1 py-2 px-3 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {{ $t('submit') }}
             </button>
-            <button 
+            <button
               @click="cancelAll"
               :disabled="adding"
-              class="px-4 py-2 text-slate-600 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              class="px-3 py-2 text-slate-600 text-xs sm:text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
               {{ $t('cancel') }}
             </button>
           </div>
 
-          <p v-if="message" :class="['mt-3 text-sm', messageType === 'error' ? 'text-red-600' : 'text-green-600']">
+          <p v-if="message" :class="['mt-3 text-xs sm:text-sm', messageType === 'error' ? 'text-red-600' : 'text-green-600']">
             {{ message }}
           </p>
         </div>
