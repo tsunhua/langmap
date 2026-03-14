@@ -5,6 +5,8 @@ import { D1Database, DurableObjectNamespace, R2Bucket } from '@cloudflare/worker
 import * as jose from 'jose'
 import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
+import MarkdownIt from 'markdown-it'
+import anchor from 'markdown-it-anchor'
 
 // Define types for our application context
 interface JWTPayload {
@@ -1834,11 +1836,20 @@ function getLanguageColor(langCode: string, handbook: any): string {
 
 // Helper for handbook rendering
 async function renderHandbookInternal(c: Context, handbook: any, targetLangs: string[]) {
-  // Configure markdown-it with better HTML handling
+  // Configure markdown-it with better HTML handling and anchor generation for TOC
   const md = new MarkdownIt({
     html: true,
     breaks: true,
     linkify: false
+  }).use(anchor, {
+    level: [1, 2, 3],
+    slugify: (s) => s
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim(),
+    permalink: false
   })
   const db = getDB(c)
 
