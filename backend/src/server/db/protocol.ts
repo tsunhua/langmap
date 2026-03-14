@@ -155,7 +155,7 @@ export abstract class AbstractDatabaseService {
   abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
   abstract ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>>
-  abstract upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>>
+  abstract upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning?: boolean): Promise<Array<{ id: number, expression?: Expression, error?: string }>>
   abstract updateExpression(id: number, expression: Partial<Expression>): Promise<Expression>
   abstract deleteExpression(id: number): Promise<boolean>
   abstract migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression>

@@ -660,7 +660,8 @@ export default {
                 text: selectedExpressionForAssociation.value.text,
                 language_code: selectedExpressionForAssociation.value.language_code
               }
-            ]
+            ],
+            ensure_new_meaning: true
           })
         })
 
@@ -1019,7 +1020,8 @@ export default {
                   text: createdExpression.text,
                   language_code: createdExpression.language_code
                 }
-              ]
+              ],
+              ensure_new_meaning: true
             })
           })
 

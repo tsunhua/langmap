@@ -324,8 +324,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return result
   }
 
-  async upsertExpressions(expressions: Partial<Expression>[]): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
-    console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions')
+  async upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning: boolean = false): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
+    console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions', 'forceNewMeaning:', forceNewMeaning)
 
     if (expressions.length === 0) return []
 
@@ -378,34 +378,56 @@ export class D1DatabaseService extends AbstractDatabaseService {
       }
     }
 
-    if (meaningIds.length === 0) {
-      if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
-        const firstExpr = sortedExprs[0]
-        const firstId = this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
-        finalMeaningId = firstId
-        console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
+    const uniqueMeaningIds = [...new Set(meaningIds)]
+
+    if (forceNewMeaning) {
+      console.log('[upsertExpressions] Force new meaning mode enabled')
+      console.log('[upsertExpressions] Existing meaning_ids to exclude:', uniqueMeaningIds)
+
+      for (const expr of sortedExprs) {
+        if (!expr.id) continue
+
+        const exprId = expr.id
+        if (!uniqueMeaningIds.includes(exprId)) {
+          finalMeaningId = exprId
+          console.log('[upsertExpressions] Selected new expression ID as meaning_id (force new):', finalMeaningId)
+          break
+        }
+      }
+
+      if (!finalMeaningId && sortedExprs.length > 0) {
+        finalMeaningId = sortedExprs[0].id
+        console.log('[upsertExpressions] All expression IDs already used as meaning_ids, using first as fallback:', finalMeaningId)
       }
     } else {
-      const uniqueMeaningIds = [...new Set(meaningIds)]
-      if (uniqueMeaningIds.length === 1) {
-        finalMeaningId = uniqueMeaningIds[0]
-        console.log('[upsertExpressions] All expressions share same meaning_id:', finalMeaningId)
-      } else {
-        console.log('[upsertExpressions] Multiple different meaning_ids found:', uniqueMeaningIds)
-        for (const expr of sortedExprs) {
-          if (!expr.id) continue
-
-          const id = this.stableExpressionId(expr.text!, expr.language_code!)
-          if (!uniqueMeaningIds.includes(id)) {
-            finalMeaningId = id
-            console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
-            break
-          }
+      if (meaningIds.length === 0) {
+        if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
+          const firstExpr = sortedExprs[0]
+          const firstId = this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
+          finalMeaningId = firstId
+          console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
         }
+      } else {
+        if (uniqueMeaningIds.length === 1) {
+          finalMeaningId = uniqueMeaningIds[0]
+          console.log('[upsertExpressions] All expressions share same meaning_id:', finalMeaningId)
+        } else {
+          console.log('[upsertExpressions] Multiple different meaning_ids found:', uniqueMeaningIds)
+          for (const expr of sortedExprs) {
+            if (!expr.id) continue
 
-        if (!finalMeaningId && sortedExprs.length > 0) {
-          finalMeaningId = sortedExprs[0].id
-          console.log('[upsertExpressions] Using first expression ID as new meaning_id:', finalMeaningId)
+            const id = this.stableExpressionId(expr.text!, expr.language_code!)
+            if (!uniqueMeaningIds.includes(id)) {
+              finalMeaningId = id
+              console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
+              break
+            }
+          }
+
+          if (!finalMeaningId && sortedExprs.length > 0) {
+            finalMeaningId = sortedExprs[0].id
+            console.log('[upsertExpressions] Using first expression ID as new meaning_id:', finalMeaningId)
+          }
         }
       }
     }

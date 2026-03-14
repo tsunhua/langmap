@@ -406,7 +406,7 @@ api.post('/expressions/batch', requireAuth, async (c) => {
   try {
     const db = getDB(c)
     const body = await c.req.json()
-    const { expressions } = body
+    const { expressions, ensure_new_meaning } = body
 
     if (!expressions || !Array.isArray(expressions)) {
       return c.json({ error: 'Invalid expressions format' }, 400)
@@ -415,6 +415,10 @@ api.post('/expressions/batch', requireAuth, async (c) => {
     // Get user info from middleware
     const user = c.get('user');
     const username = user.username;
+
+    // Validate ensure_new_meaning parameter
+    const forceNewMeaning = ensure_new_meaning === true;
+    console.log('[POST /expressions/batch] ensure_new_meaning:', forceNewMeaning);
 
     // 1. Calculate IDs for all input expressions
     const exprsWithIds = expressions.map(expr => {
@@ -467,7 +471,7 @@ api.post('/expressions/batch', requireAuth, async (c) => {
     }
 
     // 5. Batch UPSERT (without meaning_id field)
-    const results = await db.upsertExpressions(exprsWithIds);
+    const results = await db.upsertExpressions(exprsWithIds, forceNewMeaning);
 
     return c.json({
       success: true,
