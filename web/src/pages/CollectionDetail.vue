@@ -7,34 +7,34 @@
         <div class="h-4 bg-gray-200 rounded w-2/3"></div>
       </div>
       <div v-else-if="collection">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <div class="flex items-center gap-3 mb-2">
-              <h1 class="text-3xl font-bold text-gray-900">{{ collection.name }}</h1>
-              <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+          <div class="flex-grow">
+            <div class="flex items-center gap-2 sm:gap-3 mb-2">
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ collection.name }}</h1>
+              <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
                 {{ $t('public') }}
               </span>
-              <span v-else class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full">
+              <span v-else class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
                 {{ $t('private') }}
               </span>
             </div>
             <p class="text-gray-600">{{ collection.description }}</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <!-- Export Button -->
             <button @click="showExportModal = true"
-              class="text-gray-500 hover:text-green-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
-              <span>📥</span> {{ $t('export') || 'Export' }}
+              class="text-gray-500 hover:text-green-600 px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-sm">
+              <span class="text-sm">📥</span> {{ $t('export') || 'Export' }}
             </button>
 
             <template v-if="isOwner">
               <button @click="openEditModal"
-                class="text-gray-500 hover:text-blue-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
-                <span>✏️</span> {{ $t('edit') }}
+                class="text-gray-500 hover:text-blue-600 px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-sm">
+                <span class="text-sm">✏️</span> {{ $t('edit') }}
               </button>
               <button @click="confirmDelete"
-                class="text-gray-500 hover:text-red-600 px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
-                <span>🗑️</span> {{ $t('delete') }}
+                class="text-gray-500 hover:text-red-600 px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-sm">
+                <span class="text-sm">🗑️</span> {{ $t('delete') }}
               </button>
             </template>
           </div>
