@@ -423,8 +423,8 @@ export default {
       const members = m?.members || []
       if (!item.value) return members
 
-      const currentItem = members.find(m => m.id === item.value.id)
-      const otherMembers = members.filter(m => m.id !== item.value.id)
+      const currentItem = members.find(member => member.id === item.value.id)
+      const otherMembers = members.filter(member => member.id !== item.value.id)
 
       return currentItem ? [currentItem, ...otherMembers] : otherMembers
     })

@@ -973,8 +973,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const result: any = await this.db.prepare(
       'DELETE FROM expression_meaning WHERE expression_id = ? AND meaning_id = ?'
     ).bind(expressionId, meaningId).run()
-
-    return result.changes > 0
+    console.log('[removeExpressionMeaning] Result:', result);
+    return result.success
   }
 
   // Clean up FTS index - remove entries for expressions that no longer exist
