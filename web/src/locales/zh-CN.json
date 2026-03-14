@@ -391,5 +391,7 @@
    "merge_groups_description": "选择要将当前词句组合并到的目标词句组。此操作无法撤销。",
    "cannot_merge_to_same_group": "不能合并到同一个词句组",
    "merge_success": "成功合并 {count} 个词句",
-   "no_other_groups_to_merge": "没有其他可合并的词句组"
-}
+   "no_other_groups_to_merge": "没有其他可合并的词句组",
+   "associate": "关联",
+   "associated": "已关联"
+ }

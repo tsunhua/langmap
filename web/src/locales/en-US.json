@@ -388,5 +388,10 @@
   "merge_groups_description": "Select a target meaning group to merge the current group into. This action cannot be undone.",
   "cannot_merge_to_same_group": "Cannot merge to the same group",
   "merge_success": "Successfully merged {count} expressions",
-  "no_other_groups_to_merge": "No other groups available to merge"
+  "no_other_groups_to_merge": "No other groups available to merge",
+  "associate": "Associate",
+  "associated": "Associated",
+  "associated_expression_group": "Associated Expression Group #{id}",
+  "create_new_expression": "Create New Expression",
+  "loading_language": "Loading language..."
 }
