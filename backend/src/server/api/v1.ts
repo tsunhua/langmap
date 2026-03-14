@@ -2040,7 +2040,13 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   // 4. Perform rendering
-  const rendered_title = renderTextWithTags(titleToExtract, true)
+  let rendered_title = renderTextWithTags(titleToExtract, true)
+  
+  // If title has no translations, use empty string to fallback to original title
+  if (!rendered_title.includes('handbook-meaning-title')) {
+    rendered_title = ''
+  }
+  
   const rendered_description = renderTextWithTags(description, false)
 
   // For content: use a placeholder approach to protect expression HTML from markdown processing.

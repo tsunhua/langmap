@@ -27,7 +27,7 @@
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
           <!-- Header -->
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-gray-100">
-            <div class="space-y-1.5 flex-1">
+            <div class="space-y-3 flex-1">
               <h1 class="text-xl md:text-2xl font-bold text-gray-800" v-html="handbook.rendered_title || handbook.title"></h1>
               <p v-if="handbook.rendered_description || handbook.description" class="text-sm text-gray-500 max-w-2xl leading-relaxed"
                  v-html="handbook.rendered_description || handbook.description"></p>
