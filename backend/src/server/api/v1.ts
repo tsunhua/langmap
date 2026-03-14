@@ -1857,7 +1857,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   const title = handbook.title || ''
   const description = handbook.description || ''
 
-  const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
+  const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|([^}]+))?(?:\|([^}]+))?\}\}/g
 
   // Pre-wrap title if it doesn't contain tags, so expressions in title can be extracted
   let titleToExtract = title
@@ -1867,22 +1867,64 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     titleToExtract = `{{text:${title.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${handbook.source_lang}}}`
   }
 
-  // 1. Extract all expression tags
+  // 1. Extract all expression tags and meaning_ids
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
+  const meaningIdsToFetch: Set<number> = new Set()
+  const midTags: Map<string, {text: string, mid: number, lang: string}> = new Map()
   const fullText = `${titleToExtract}\n${description}\n${content}`
 
   TEXT_LANG_REGEX.lastIndex = 0
   let tlMatch
+  let tagIndex = 0
   while ((tlMatch = TEXT_LANG_REGEX.exec(fullText)) !== null) {
     const text = tlMatch[1]
-    const lang = tlMatch[2] || handbook.source_lang || 'en'
-    const id = db.stableExpressionId(text, lang)
-    if (!expressionsToFetch.some(e => e.id === id)) {
-      expressionsToFetch.push({ text, lang, id })
+    const param1 = tlMatch[2]
+    const param2 = tlMatch[3]
+
+    console.log('[Tag Extract] fullMatch:', tlMatch[0], 'text:', text, 'param1:', param1, 'param2:', param2)
+
+    // Determine if we have lang or mid, and in which order
+    let lang = handbook.source_lang || 'en'
+    let mid: number | undefined
+
+    if (param1) {
+      if (param1.startsWith('mid:')) {
+        mid = parseInt(param1.substring(4))
+      } else if (param1.startsWith('lang:')) {
+        lang = param1.substring(5)
+      }
+    }
+    if (param2) {
+      if (param2.startsWith('mid:')) {
+        mid = parseInt(param2.substring(4))
+      } else if (param2.startsWith('lang:')) {
+        lang = param2.substring(5)
+      }
+    }
+
+    console.log('[Tag Extract] Parsed lang:', lang, 'mid:', mid)
+
+    // If mid is specified, record it for later fetching
+    if (mid) {
+      const key = `tag_${tagIndex++}`
+      midTags.set(key, { text, mid, lang })
+      meaningIdsToFetch.add(mid)
+      console.log('[Tag Extract] Added mid tag:', key, 'text:', text, 'mid:', mid, 'lang:', lang)
+    } else {
+      // Original behavior: fetch expression by text and lang
+      const id = db.stableExpressionId(text, lang)
+      if (!expressionsToFetch.some(e => e.id === id)) {
+        expressionsToFetch.push({ text, lang, id })
+      }
     }
   }
 
+  console.log('[Tag Extract] Total mid tags:', midTags.size, 'meaningIdsToFetch:', Array.from(meaningIdsToFetch))
+
   const expressionMap: Record<string, any> = {}
+  const allMids: number[] = []
+  
+  // Fetch expressions by text/lang
   if (expressionsToFetch.length > 0) {
     const ids = expressionsToFetch.map(e => e.id)
     const expressions = await db.getExpressionsByIds(ids)
@@ -1890,7 +1932,6 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     // Explicitly fetch meaning IDs for these expressions
     const meaningIdsMap = await db.getExpressionMeaningIds(ids)
 
-    const allMids: number[] = []
     expressions.forEach(expr => {
       expressionMap[expr.id] = expr
       const mids = meaningIdsMap.get(expr.id) || []
@@ -1899,72 +1940,119 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         if (!allMids.includes(mid)) allMids.push(mid)
       })
     })
+  }
 
-    // Fetch translations for all target languages
-    const translationsByLang: Record<string, any[]> = {}
+    // Fetch expressions for meaning_id tags
+    if (meaningIdsToFetch.size > 0) {
+      const midArray = Array.from(meaningIdsToFetch)
+      // Add these to allMids for translation fetching
+      midArray.forEach(mid => {
+        if (!allMids.includes(mid)) allMids.push(mid)
+      })
 
-    if (allMids.length > 0) {
-      for (const targetLang of targetLangs) {
-        if (!targetLang) continue
+      // Fetch expressions for each meaning_id
+      for (const mid of midArray) {
+        // Fetch all expressions for this meaning_id, with their meanings
+        const midExpressions = await db.getExpressions(0, 1000, undefined, mid, undefined, undefined, true)
 
-        const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
-        translationsByLang[targetLang] = translations
-      }
-    }
+        console.log('[Mid Fetch] mid:', mid, 'expressions found:', midExpressions.length)
 
-    // Organize translations by meaning ID and language
-    // Merge multiple translations for same meaning_id and language using | separator
-    Object.entries(translationsByLang).forEach(([langCode, translations]) => {
-      // Group translations by meaning_id and merge their texts
-      const transByMeaning: Record<number, {text: string, audio_url: string}> = {}
-      
-      translations.forEach((trans: any) => {
-        if (trans.meaning_id) {
-          const mid = trans.meaning_id
-          if (!transByMeaning[mid]) {
-            transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+        // Store expressions by language for this meaning_id
+        midExpressions.forEach(expr => {
+          if (expr.language_code) {
+            const key = `mid_${mid}_${expr.language_code}`
+            // Store the expression with only the specific meaning we want
+            const filteredExpr = {
+              ...expr,
+              meanings: expr.meanings?.filter((m: any) => m.id === mid) || [{ id: mid }]
+            }
+            expressionMap[key] = filteredExpr
+            // Also store by id for backward compatibility
+            expressionMap[expr.id] = filteredExpr
+            console.log('[Mid Fetch] Stored:', key, 'expr id:', expr.id, 'text:', expr.text)
           }
-          transByMeaning[mid].text = transByMeaning[mid].text 
-            ? `${transByMeaning[mid].text} | ${trans.text}` 
-            : trans.text
-        } else if (trans.meanings) {
-          trans.meanings.forEach((m: any) => {
-            if (allMids.includes(m.id)) {
-              const mid = m.id
-              if (!transByMeaning[mid]) {
-                transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
-              }
-              transByMeaning[mid].text = transByMeaning[mid].text 
+        })
+      }
+  }
+
+  // Fetch translations for all target languages
+  const translationsByLang: Record<string, any[]> = {}
+
+  if (allMids.length > 0) {
+    for (const targetLang of targetLangs) {
+      if (!targetLang) continue
+
+      const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
+      translationsByLang[targetLang] = translations
+    }
+  }
+
+  // Organize translations by meaning ID and language
+  // Merge multiple translations for same meaning_id and language using | separator
+  Object.entries(translationsByLang).forEach(([langCode, translations]) => {
+    // Group translations by meaning_id and merge their texts
+    const transByMeaning: Record<number, {text: string, audio_url: string}> = {}
+    
+    translations.forEach((trans: any) => {
+      // Prefer meanings array over meaning_id field, as it contains all associations
+      if (trans.meanings && trans.meanings.length > 0) {
+        trans.meanings.forEach((m: any) => {
+          if (allMids.includes(m.id)) {
+            const mid = m.id
+            if (!transByMeaning[mid]) {
+              transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+            }
+            transByMeaning[mid].text = transByMeaning[mid].text 
                 ? `${transByMeaning[mid].text} | ${trans.text}` 
                 : trans.text
-            }
-          })
+          }
+        })
+      } else if (trans.meaning_id) {
+        const mid = trans.meaning_id
+        if (!transByMeaning[mid]) {
+          transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
         }
-      })
+        transByMeaning[mid].text = transByMeaning[mid].text 
+          ? `${transByMeaning[mid].text} | ${trans.text}` 
+          : trans.text
+      }
+    })
       
       // Store merged results in expressionMap
       Object.entries(transByMeaning).forEach(([mid, merged]) => {
-        expressionMap[`trans_${mid}_${langCode}`] = {
+        const key = `trans_${mid}_${langCode}`
+        expressionMap[key] = {
           text: merged.text,
           audio_url: merged.audio_url
         }
+        console.log('[Translation] Stored:', key, 'text:', merged.text)
       })
     })
-  }
+
+    console.log('[Translation] All trans keys:', Object.keys(expressionMap).filter(k => k.startsWith('trans_')))
+  
 
   // 3. Render helpers
   const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, meaningId?: number) => {
     // Group translations by language
     const translationsByTargetLang: Record<string, string[]> = {}
 
+    // Debug: Log what meaningId we're using
+    console.log('[renderItem] text:', text, 'id:', id, 'meaningId:', meaningId, 'expression meanings:', expressionMap[id]?.meanings?.map((m: any) => m.id))
+
     targetLangs.forEach(targetLang => {
       if (!targetLang) return
 
       const transList: string[] = []
-      const meanings = expressionMap[id]?.meanings || []
 
-      meanings.forEach((m: any) => {
+      // Use the provided meaningId if available, otherwise use expression's meanings
+      const meaningsToUse = meaningId ? [{ id: meaningId }] : (expressionMap[id]?.meanings || [])
+
+      console.log('[renderItem] targetLang:', targetLang, 'meaningsToUse:', meaningsToUse)
+
+      meaningsToUse.forEach((m: any) => {
         const transKey = `trans_${m.id}_${targetLang}`
+        console.log('[renderItem] Looking for transKey:', transKey, 'found:', !!expressionMap[transKey], 'value:', expressionMap[transKey])
         if (expressionMap[transKey]) {
           transList.push(expressionMap[transKey].text)
         }
@@ -2017,8 +2105,48 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     const textToRender = text
 
     TEXT_LANG_REGEX.lastIndex = 0
-    return textToRender.replace(TEXT_LANG_REGEX, (match, term, langMatch) => {
-      const lang = langMatch || handbook.source_lang || 'en'
+    return textToRender.replace(TEXT_LANG_REGEX, (match, term, param1, param2) => {
+      // Determine if we have lang or mid, and in which order
+      let lang = handbook.source_lang || 'en'
+      let mid: number | undefined
+
+      if (param1) {
+        if (param1.startsWith('mid:')) {
+          mid = parseInt(param1.substring(4))
+        } else if (param1.startsWith('lang:')) {
+          lang = param1.substring(5)
+        }
+      }
+      if (param2) {
+        if (param2.startsWith('mid:')) {
+          mid = parseInt(param2.substring(4))
+        } else if (param2.startsWith('lang:')) {
+          lang = param2.substring(5)
+        }
+      }
+
+      // If mid is specified, fetch expressions for that meaning_id
+      if (mid) {
+        // Get the base expression from the specified meaning_id
+        const key = `mid_${mid}_${lang}`
+        const expr = expressionMap[key]
+
+        if (expr) {
+          let audioUrl = ''
+          if (expr.audio_url) {
+            try {
+              const parsed = JSON.parse(expr.audio_url)
+              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+            } catch { }
+          }
+
+          return renderItem(expr.id, term, audioUrl, isTitle, mid)
+        }
+
+        return `<span class="handbook-item-undefined">${term}</span>`
+      }
+
+      // Original behavior: fetch expression by text and lang
       const id = db.stableExpressionId(term, lang)
       const expr = expressionMap[id]
 
@@ -2073,8 +2201,47 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     const originalTag = htmlPlaceholders[match]
     if (originalTag) {
       TEXT_LANG_REGEX.lastIndex = 0
-      return originalTag.replace(TEXT_LANG_REGEX, (m, term, langMatch) => {
-        const lang = langMatch || handbook.source_lang || 'en'
+      return originalTag.replace(TEXT_LANG_REGEX, (m, term, param1, param2) => {
+        // Determine if we have lang or mid, and in which order
+        let lang = handbook.source_lang || 'en'
+        let mid: number | undefined
+
+        if (param1) {
+          if (param1.startsWith('mid:')) {
+            mid = parseInt(param1.substring(4))
+          } else if (param1.startsWith('lang:')) {
+            lang = param1.substring(5)
+          }
+        }
+        if (param2) {
+          if (param2.startsWith('mid:')) {
+            mid = parseInt(param2.substring(4))
+          } else if (param2.startsWith('lang:')) {
+            lang = param2.substring(5)
+          }
+        }
+
+        // If mid is specified, use the expression from that meaning_id
+        if (mid) {
+          const key = `mid_${mid}_${lang}`
+          const expr = expressionMap[key]
+
+          if (expr) {
+            let audioUrl = ''
+            if (expr.audio_url) {
+              try {
+                const parsed = JSON.parse(expr.audio_url)
+                audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+              } catch { }
+            }
+
+            return renderItem(expr.id, term, audioUrl, false, mid)
+          }
+
+          return `<span class="handbook-item-undefined">${term}</span>`
+        }
+
+        // Original behavior: fetch expression by text and lang
         const id = db.stableExpressionId(term, lang)
         const expr = expressionMap[id]
         if (expr) {
@@ -2096,6 +2263,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
   return { rendered_title, rendered_description, rendered_content: finalContent }
 }
+
 
 // GET /api/v1/handbooks/:id/:target_lang?
 api.get('/handbooks/:id/:target_lang?', optionalAuth, async (c) => {
