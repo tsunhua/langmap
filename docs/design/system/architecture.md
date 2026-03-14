@@ -73,7 +73,6 @@
 - `GET /api/v1/expressions/:id` - 获取表达式详情
 - `POST /api/v1/expressions` - 创建表达式
 - `GET /api/v1/expressions/:id/versions` - ⚠️ 已实现 - 获取表达式版本历史
-- `GET /api/v1/expressions/:id/translations` - 获取表达式翻译
 - `GET /api/v1/expressions/:id/meanings` - 获取表达式含义
 
 **语义管理**

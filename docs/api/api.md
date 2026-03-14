@@ -96,7 +96,6 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 - `GET /api/v1/expressions/:id` - 获取表达式详情
 - `POST /api/v1/expressions` - 创建表达式
 - `GET /api/v1/expressions/:id/versions` - 获取表达式版本历史
-- `GET /api/v1/expressions/:id/translations` - 获取表达式翻译
 - `GET /api/v1/expressions/:id/meanings` - 获取表达式含义
 - `PATCH /api/v1/expressions/:id` - 更新表达式（编辑）
 - `DELETE /api/v1/expressions/:id` - 删除表达式
@@ -516,27 +515,6 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
     "language_code": "en-US",
     "created_by": "john_doe",
     "created_at": "2024-01-02T10:30:00Z"
-  }
-]
-```
-
-#### GET /api/v1/expressions/:id/translations
-
-获取表达式的跨语言翻译。
-
-**路径参数**：
-- `id` (number, required) - 表达式 ID
-- `language_code` (string, optional) - 语言代码
-
-**响应**：
-```json
-[
-  {
-    "id": 1,
-    "text": "Hello",
-    "language_code": "zh-CN",
-    "created_by": "john_doe",
-    "created_at": "2024-01-01T00:00:00Z"
   }
 ]
 ```
