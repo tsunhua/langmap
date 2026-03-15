@@ -71,14 +71,14 @@ export async function getHandbooks(options = {}) {
 export async function getHandbookById(id, targetLang = null, targetLangs = null) {
     try {
         let url = `/handbooks/${id}`
-        
+
         // Support both single language (backward compatible) and multiple languages
         if (targetLangs) {
             url += `?target_langs=${encodeURIComponent(targetLangs)}`
         } else if (targetLang) {
             url += `/${targetLang}`
         }
-        
+
         const response = await api.get(url)
         return response.data
     } catch (error) {
@@ -167,13 +167,13 @@ export async function getHandbookExpressions(languageCode, meaningIds) {
     try {
         for (let i = 0; i < meaningIds.length; i += CHUNK_SIZE) {
             const chunk = meaningIds.slice(i, i + CHUNK_SIZE)
-            const response = await api.get('/expressions', {
-                params: {
-                    language: languageCode,
-                    meaning_id: chunk.join(','),
-                    limit: 1000
-                }
-            })
+            const params = {
+                meaning_id: chunk.join(','),
+                limit: 1000,
+                include_meanings: 'true'
+            }
+            if (languageCode) params.language = languageCode
+            const response = await api.get('/expressions', { params })
             if (response.data) {
                 allResults.push(...response.data)
             }

@@ -295,8 +295,8 @@ export default {
     const { t } = useI18n()
     const md = new MarkdownIt({
       html: true,
-      linkify: true,
-      typographer: true
+      breaks: true,
+      linkify: false
     })
 
     const isEditing = computed(() => !!props.id)
@@ -463,8 +463,23 @@ export default {
     const searching = ref(false)
     let searchTimeout = null
 
-    // Expression Tag Regex - supports both {{text:xxx|lang:xxx}} and {{xxx}} formats
-    const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|lang:([^}]+))?\}\}/g
+    // Expression Tag Regex - supports {{text:xxx|lang:xxx}}, {{text:xxx|mid:123}}, {{text:xxx|lang:xxx|mid:123}}, {{xxx}}
+    const TEXT_LANG_REGEX = /\{\{(?:text:)?([^|}]+)(?:\|([^}]+))?(?:\|([^}]+))?\}\}/g
+
+    // Parse param1/param2 into lang and mid, matching backend logic
+    const parseTagParams = (param1, param2, defaultLang) => {
+      let lang = defaultLang
+      let mid = undefined
+      if (param1) {
+        if (param1.startsWith('mid:')) mid = parseInt(param1.substring(4))
+        else if (param1.startsWith('lang:')) lang = param1.substring(5)
+      }
+      if (param2) {
+        if (param2.startsWith('mid:')) mid = parseInt(param2.substring(4))
+        else if (param2.startsWith('lang:')) lang = param2.substring(5)
+      }
+      return { lang, mid }
+    }
 
     const fetchLanguages = async () => {
       try {
@@ -603,25 +618,42 @@ export default {
     // Parse all metadata required for preview from content
     const extractRequiredMetadata = async (content, title = '', description = '', sourceLang = '') => {
       const expressionsToFetch = [] // { id, text, lang }
-      const fullText = `${title}\n${description}\n${content}`
+      const meaningIdsToFetch = new Set()
 
+      // Pre-wrap title if it doesn't contain tags (match backend behavior)
+      let titleToExtract = title
+      TEXT_LANG_REGEX.lastIndex = 0
+      const hasTags = TEXT_LANG_REGEX.test(title)
+      if (!hasTags && sourceLang) {
+        titleToExtract = `{{text:${title.replace(/\{/g, '\\{').replace(/\}/g, '\\}')}|lang:${sourceLang}}}`
+      }
+
+      const fullText = `${titleToExtract}\n${description}\n${content}`
+
+      TEXT_LANG_REGEX.lastIndex = 0
       let tlMatch
       while ((tlMatch = TEXT_LANG_REGEX.exec(fullText)) !== null) {
         const text = tlMatch[1]
-        const lang = tlMatch[2] || sourceLang
+        const param1 = tlMatch[2]
+        const param2 = tlMatch[3]
+        const { lang, mid } = parseTagParams(param1, param2, sourceLang)
+
         const id = stableExpressionId(text, lang)
         if (!expressionsToFetch.some(e => e.id === id)) {
           expressionsToFetch.push({ id, text, lang })
         }
+        if (mid) {
+          meaningIdsToFetch.add(mid)
+        }
       }
 
-      return { expressionsToFetch }
+      return { expressionsToFetch, meaningIdsToFetch: Array.from(meaningIdsToFetch) }
     }
     // Store expression data for event handling
     const expressionClickHandlers = ref(new Map())
 
-    const renderItem = (id, text, meanings, audioUrl, isTitle = false) => {
-      let meaningsText = ''
+    const renderItem = (id, text, meanings, audioUrl, isTitle = false, meaningId = null) => {
+      let meaningsHtml = ''
       if (meanings && meanings.length > 0) {
         const translationsByTargetLang = {}
         meanings.forEach(m => {
@@ -632,22 +664,27 @@ export default {
           translationsByTargetLang[m.targetLang].push(m.text)
         })
 
-        const separator = isTitle ? ' / ' : ', '
-        const langSeparator = ' | '
-
-        meaningsText = isTitle
-          ? `<div class="handbook-meaning-title">
+        const hasTranslations = Object.keys(translationsByTargetLang).length > 0
+        if (hasTranslations) {
+          const separator = isTitle ? ' / ' : ', '
+          if (isTitle) {
+            meaningsHtml = ` <span class="handbook-meaning-title">
               ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
                 const color = getLanguageColor({ code: langCode })
-                return `<span style="color: ${color}">${texts.join(separator)}</span>`
-              }).join(langSeparator)}
-            </div>`
-          : ` <span class="handbook-meaning-content">
-              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-                const color = getLanguageColor({ code: langCode })
-                return `<span style="color: ${color}">${texts.join(separator)}</span>`
-              }).join(langSeparator)}
+                const langClass = langCode.replace('.', '-')
+                return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(separator)}</span>`
+              }).join(' ')}
             </span>`
+          } else {
+            meaningsHtml = ` <span class="handbook-meaning-content">
+              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
+                const color = getLanguageColor({ code: langCode })
+                const langClass = langCode.replace('.', '-')
+                return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(separator)}</span>`
+              }).join(' ')}
+            </span>`
+          }
+        }
       }
 
       const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
@@ -655,11 +692,7 @@ export default {
       const key = `expr-${id}`
       expressionClickHandlers.value.set(key, { id, audioUrl })
 
-      return `
-        <span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}" data-key="${key}">
-          ${text}${meaningsText}${audioIcon}
-        </span>
-      `
+      return `<span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}" data-key="${key}" data-meaning-id="${meaningId || ''}">${text}${meaningsHtml}${audioIcon}</span>`
     }
 
     // Handle click on rendered expressions
@@ -683,54 +716,80 @@ export default {
 
     const buildRenderedContent = (content, expressionMap, sourceLang = '') => {
       if (!content) return ''
-      let html = md.render(content)
 
-      html = html.replace(TEXT_LANG_REGEX, (match, text, lang) => {
-        const actualLang = lang || sourceLang
-        const id = stableExpressionId(text, actualLang)
-        const expr = expressionMap[id]
-        if (expr) {
-          const translations = []
-          expr.meanings?.forEach(m => {
-            form.instruction_langs.forEach(targetLang => {
-              const cacheKey = `trans_${targetLang}_${m.id}`
-              if (expressionMap[cacheKey]) {
-                const trans = expressionMap[cacheKey]
-                trans.targetLang = targetLang
-                translations.push(trans)
-              }
-            })
-          })
-
-          const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
-          return renderItem(id, text, translations, audioUrl)
-        }
-        return `<span class="handbook-item-undefined">${text}</span>`
+      // Placeholder approach: replace {{...}} tags with placeholders FIRST,
+      // run markdown on clean text, then substitute rendered HTML back.
+      // This matches backend logic and avoids nested-span issues.
+      const htmlPlaceholders = {}
+      TEXT_LANG_REGEX.lastIndex = 0
+      const contentWithPlaceholders = content.replace(TEXT_LANG_REGEX, (match) => {
+        const index = Object.keys(htmlPlaceholders).length
+        const placeholder = `HANDBOOK_ITEM_${index}`
+        htmlPlaceholders[placeholder] = match
+        return placeholder
       })
 
-      return html
+      // Render markdown on placeholder-substituted content
+      const renderedMarkdown = md.render(contentWithPlaceholders)
+
+      // Substitute each placeholder with its fully rendered HTML span
+      const finalContent = renderedMarkdown.replace(/HANDBOOK_ITEM_\d+/g, (match) => {
+        const originalTag = htmlPlaceholders[match]
+        if (originalTag) {
+          TEXT_LANG_REGEX.lastIndex = 0
+          return originalTag.replace(TEXT_LANG_REGEX, (m, term, param1, param2) => {
+            const { lang, mid } = parseTagParams(param1, param2, sourceLang)
+
+            const id = stableExpressionId(term, lang)
+            const expr = expressionMap[id]
+            if (expr) {
+              const midsToUse = mid ? [mid] : (expr.meanings?.map(m => m.id) || [])
+              const translations = collectTranslations(expressionMap, midsToUse)
+              let audioUrl = ''
+              if (expr.audio_url) {
+                try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
+              }
+              return renderItem(id, term, translations, audioUrl, false, mid || (expr.meanings?.[0]?.id))
+            }
+            return `<span class="handbook-item-undefined">${term}</span>`
+          })
+        }
+        return match
+      })
+
+      return finalContent
+    }
+
+    // Helper: collect translations for given meaning IDs across all instruction languages
+    const collectTranslations = (expressionMap, meaningIds) => {
+      const translations = []
+      meaningIds.forEach(mid => {
+        form.instruction_langs.forEach(targetLang => {
+          const cacheKey = `trans_${targetLang}_${mid}`
+          if (expressionMap[cacheKey] && expressionMap[cacheKey].text) {
+            translations.push({ text: expressionMap[cacheKey].text, targetLang })
+          }
+        })
+      })
+      return translations
     }
 
     const renderPlainTextTags = (text, expressionMap, isTitle = false, sourceLang = '') => {
       if (!text) return ''
-      return text.replace(TEXT_LANG_REGEX, (match, term, lang) => {
-        const actualLang = lang || sourceLang
-        const id = stableExpressionId(term, actualLang)
+      TEXT_LANG_REGEX.lastIndex = 0
+      return text.replace(TEXT_LANG_REGEX, (match, term, param1, param2) => {
+        const { lang, mid } = parseTagParams(param1, param2, sourceLang)
+
+        const id = stableExpressionId(term, lang)
         const expr = expressionMap[id]
         if (expr) {
-          const translations = []
-          expr.meanings?.forEach(m => {
-            form.instruction_langs.forEach(targetLang => {
-              const cacheKey = `trans_${targetLang}_${m.id}`
-              if (expressionMap[cacheKey]) {
-                const trans = expressionMap[cacheKey]
-                trans.targetLang = targetLang
-                translations.push(trans)
-              }
-            })
-          })
-          const audioUrl = expr.audio_url ? (JSON.parse(expr.audio_url)?.[0]?.url || '') : ''
-          return renderItem(id, term, translations, audioUrl, isTitle)
+          const midsToUse = mid ? [mid] : (expr.meanings?.map(m => m.id) || [])
+          const translations = collectTranslations(expressionMap, midsToUse)
+          let audioUrl = ''
+          if (expr.audio_url) {
+            try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
+          }
+          return renderItem(id, term, translations, audioUrl, isTitle, mid || (expr.meanings?.[0]?.id))
         }
         return `<span class="handbook-item-undefined">${term}</span>`
       })
@@ -740,7 +799,7 @@ export default {
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
+      const { expressionsToFetch, meaningIdsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
 
       if (expressionsToFetch.length === 0) {
         renderedContent.value = buildRenderedContent(form.content, {}, form.content_lang)
@@ -749,18 +808,16 @@ export default {
         return
       }
 
+      // Phase 1: Fetch source expressions
       const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
 
       if (uncachedExprs.length > 0) {
         previewLoading.value = true
         try {
-          // Phase 1: Batch fetch all source expressions to get their meanings
           const expressions = await getExpressionsByIds(uncachedExprs.map(e => e.id))
           expressions.forEach(expr => {
             translationCache.value[expr.id] = expr
           })
-
-          // Mark expressions that weren't found
           uncachedExprs.forEach(e => {
             if (!(e.id in translationCache.value)) {
               translationCache.value[e.id] = null
@@ -773,7 +830,8 @@ export default {
         }
       }
 
-      const allMids = []
+      // Phase 2: Collect all unique meaning IDs
+      const allMids = [...meaningIdsToFetch]
       expressionsToFetch.forEach(e => {
         const expr = translationCache.value[e.id]
         expr?.meanings?.forEach(m => {
@@ -781,15 +839,33 @@ export default {
         })
       })
 
+      // Phase 3: Fetch translations for all target languages
       if (allMids.length > 0 && form.instruction_langs.length > 0) {
         previewLoading.value = true
         try {
           for (const targetLang of form.instruction_langs) {
             const translations = await getHandbookExpressions(targetLang, allMids)
             
+            // Merge multiple translations for same meaning_id using | separator (match backend)
+            const transByMeaning = {}
             translations.forEach(trans => {
-              const cacheKey = `trans_${targetLang}_${trans.meaning_id}`
-              translationCache.value[cacheKey] = trans
+              const mids = trans.meanings?.map(m => m.id).filter(id => allMids.includes(id)) || []
+              if (mids.length === 0 && trans.meaning_id) mids.push(trans.meaning_id)
+              
+              mids.forEach(mid => {
+                if (!transByMeaning[mid]) {
+                  transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+                }
+                transByMeaning[mid].text = transByMeaning[mid].text
+                  ? `${transByMeaning[mid].text} | ${trans.text}`
+                  : trans.text
+              })
+            })
+
+            // Store merged results
+            Object.entries(transByMeaning).forEach(([mid, merged]) => {
+              const cacheKey = `trans_${targetLang}_${mid}`
+              translationCache.value[cacheKey] = merged
             })
             
             allMids.forEach(mid => {
@@ -813,6 +889,7 @@ export default {
 
     let previewTimeout = null
     watch([() => form.content, showPreview], () => {
+      if (isInitializing.value) return
       if (previewTimeout) clearTimeout(previewTimeout)
       previewTimeout = setTimeout(() => {
         updatePreview()
