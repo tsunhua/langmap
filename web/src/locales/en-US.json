@@ -375,7 +375,7 @@
   "content_lang_required": "Content Language is required",
   "instruction_lang_required": "Instruction Language is required",
   "handbook_save_failed": "Failed to save handbook",
-  "lang_code_prefix": "Language Code Prefix",
+  "lang_code_prefix": "Language Code Prefix (e.g., zh,cn)",
   "expression_group_details": "Expression Group Details",
   "add_row": "Add Row",
   "language_already_exists": "This language already exists in the group",

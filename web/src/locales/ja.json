@@ -336,7 +336,7 @@
   "handbook_back_to_list": "ハンドブック一覧に戻る",
   "last_updated": "最終更新",
   "learn_in": "学習言語",
-  "lang_code_prefix": "言語コードプレフィックス",
+  "lang_code_prefix": "言語コードプレフィックス（例：zh,cn）",
   "expression_group_details": "表現グループの詳細",
   "add_row": "行を追加",
   "language_already_exists": "この言語はすでにグループに存在します",

@@ -331,7 +331,7 @@
   "content_lang": "內容語言",
   "instruction_lang": "教學語言",
   "save_failed": "保存失敗",
-  "lang_code_prefix": "語言代碼前綴",
+  "lang_code_prefix": "語言代碼前綴（比如：zh,cn）",
   "color": "顏色",
   "color_hex_format": "十六進位顏色格式（親像：#FF5733）",
   "customize_color": "自訂顏色",

@@ -381,7 +381,8 @@ export default {
       )
 
       if (form.instruction_lang_prefix) {
-        result = result.filter(lang => lang.code.startsWith(form.instruction_lang_prefix))
+        const prefixes = form.instruction_lang_prefix.split(',').map(p => p.trim()).filter(p => p)
+        result = result.filter(lang => prefixes.some(prefix => lang.code.startsWith(prefix)))
       }
 
       return result.sort((a, b) => a.name.localeCompare(b.name))
