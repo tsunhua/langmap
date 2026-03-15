@@ -215,7 +215,7 @@
                 :htmlPreview="false"
                 :noUploadImg="true"
                 :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
-                :placeholder="$t('handbook_content_label')"
+                placeholder="Write your content here. Use {{word}}, {{text:word|lang:en-US}} or {{text:word|mid:123}} to insert expressions."
                 class="border border-gray-200 rounded-xl overflow-hidden"
                 :style="{ height: showPreview ? '700px' : '760px' }"
               />
