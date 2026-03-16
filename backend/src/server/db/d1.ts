@@ -604,6 +604,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
         resultExpression = result;
       }
 
+      // Handle meaning_id association if provided
+      if (expression.meaning_id !== undefined && expression.meaning_id !== null) {
+        console.log('[createExpression] Adding meaning association:', id, '->', expression.meaning_id);
+        await this.addExpressionMeaning(id, expression.meaning_id, expression.created_by || 'system');
+      }
+
       return resultExpression;
     } catch (error) {
       console.error('Error creating expression:', error);
@@ -813,7 +819,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // 5. Execute migration in a single transaction (batch)
     const statements: any[] = [];
 
-    // - Create version snapshot of OLD record
+    // - Create version snapshot of OLD record (meaning_id field in expression_versions is deprecated, kept for historical reference)
     statements.push(db.prepare(
       `INSERT INTO expression_versions (expression_id, text, meaning_id, audio_url, region_name, region_latitude, region_longitude, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -999,9 +1005,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void> {
     const now = new Date().toISOString()
 
+    // Ensure meaning record exists
+    await this.db.prepare(
+      'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
+    ).bind(meaningId, username, now).run()
+
+    // Create expression-meaning association
     const result: any = await this.db.prepare(
       'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
     ).bind(`${expressionId}-${meaningId}`, expressionId, meaningId, now).run()
+
+    console.log('[addExpressionMeaning] Association created:', expressionId, '->', meaningId, 'result:', result);
   }
 
   async removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean> {
@@ -1068,6 +1082,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const id = this.stableExpressionVersionId(expressionId, version.created_at || now);
 
     // Filter out undefined values and replace them with null
+    // Note: meaning_id field in expression_versions is deprecated, kept for historical reference only
     const bindValues = [
       id,
       version.expression_id || null,
@@ -1082,7 +1097,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     const result = await this.db.prepare(
       `INSERT INTO expression_versions (
-        id, expression_id, text, meaning_id, audio_url, region_name, region_latitude, 
+        id, expression_id, text, meaning_id, audio_url, region_name, region_latitude,
         region_longitude, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).first<ExpressionVersion>()
