@@ -4,6 +4,7 @@ import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth } from '../middleware/auth.js'
 import { cacheMiddleware, clearCache } from '../middleware/cache.js'
 import { createLanguageSchema, updateLanguageSchema } from '../schemas/language.js'
+import { success, created, badRequest, notFound, internalError } from '../utils/response.js'
 
 const languagesRoutes = new Hono<{ Bindings: Bindings, Variables: { user: JWTPayload } }>()
 
@@ -13,10 +14,10 @@ languagesRoutes.get('/', cacheMiddleware(1800), async (c) => {
     const isActive = c.req.query('is_active')
     const isActiveValue = isActive !== undefined ? parseInt(isActive, 10) : undefined
     const languages = await db.getLanguages(isActiveValue)
-    return c.json(languages)
+    return success(c, languages)
   } catch (error: any) {
     console.error('Error in GET /languages:', error)
-    return c.json({ error: 'Failed to fetch languages' }, 500)
+    return internalError(c, 'Failed to fetch languages')
   }
 })
 
@@ -37,13 +38,13 @@ languagesRoutes.post('/', requireAuth, async (c) => {
     db.clearStatisticsCache()
     db.clearLanguagesCache()
 
-    return c.json(language, 201)
+    return created(c, language)
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', error.message, error.errors)
     }
     console.error('Error in POST /languages:', error)
-    return c.json({ error: 'Failed to create language', details: error.message }, 500)
+    return internalError(c, 'Failed to create language', error.message)
   }
 })
 
@@ -55,7 +56,7 @@ languagesRoutes.put('/:id', requireAuth, async (c) => {
     const body = await c.req.json()
 
     if (isNaN(id)) {
-      return c.json({ error: 'Invalid language ID' }, 400)
+      return badRequest(c, 'Invalid language ID')
     }
 
     const languageData = {
@@ -65,21 +66,21 @@ languagesRoutes.put('/:id', requireAuth, async (c) => {
 
     const validated = updateLanguageSchema.parse(languageData)
     const language = await db.updateLanguage(id, validated)
-    
+
     if (!language) {
-      return c.json({ error: 'Language not found' }, 404)
+      return notFound(c, 'Language')
     }
 
     db.clearStatisticsCache()
     db.clearLanguagesCache()
 
-    return c.json(language)
+    return success(c, language)
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', error.message, error.errors)
     }
     console.error('Error in PUT /languages/:id:', error)
-    return c.json({ error: 'Failed to update language', details: error.message }, 500)
+    return internalError(c, 'Failed to update language', error.message)
   }
 })
 
@@ -89,21 +90,21 @@ languagesRoutes.delete('/:id', requireAuth, async (c) => {
     const id = parseInt(c.req.param('id'))
 
     if (isNaN(id)) {
-      return c.json({ error: 'Invalid language ID' }, 400)
+      return badRequest(c, 'Invalid language ID')
     }
 
     const success = await db.deleteLanguage(id)
     if (!success) {
-      return c.json({ error: 'Language not found' }, 404)
+      return notFound(c, 'Language')
     }
 
     db.clearStatisticsCache()
     db.clearLanguagesCache()
 
-    return c.json({ message: 'Language deleted successfully' })
+    return success(c, null, 'Language deleted successfully')
   } catch (error: any) {
     console.error('Error in DELETE /languages/:id:', error)
-    return c.json({ error: 'Failed to delete language', details: error.message }, 500)
+    return internalError(c, 'Failed to delete language', error.message)
   }
 })
 

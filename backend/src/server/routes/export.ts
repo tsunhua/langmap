@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth } from '../middleware/auth.js'
+import { success, badRequest, notFound, internalError } from '../utils/response.js'
 
 const exportRoutes = new Hono<{ Bindings: Bindings, Variables: { user: JWTPayload } }>()
 
@@ -10,7 +11,7 @@ exportRoutes.post('/', requireAuth, async (c) => {
     const { collectionId, format } = body
 
     if (!collectionId) {
-      return c.json({ error: "collectionId is required" }, 400)
+      return badRequest(c, "collectionId is required")
     }
 
     const startFormat = format === 'csv' ? 'csv' : 'json'
@@ -28,10 +29,10 @@ exportRoutes.post('/', requireAuth, async (c) => {
       }),
     })
 
-    return c.json({ jobId, status: "pending" })
+    return success(c, { jobId, status: "pending" })
   } catch (err: any) {
     console.error("Export start error:", err)
-    return c.json({ error: "Failed to start export" }, 500)
+    return internalError(c, "Failed to start export")
   }
 })
 
@@ -42,16 +43,16 @@ exportRoutes.get('/health', async (c) => {
     const stub = c.env.EXPORT_DO.get(id)
     const res = await stub.fetch("https://do/health")
     const text = await res.text()
-    return c.json({ status: res.status, message: text })
+    return success(c, { status: res.status, message: text })
   } catch (err: any) {
-    return c.json({ error: "Health check failed: " + err.message }, 500)
+    return internalError(c, "Health check failed: " + err.message)
   }
 })
 
 exportRoutes.get('/:jobId', requireAuth, async (c) => {
   try {
     const jobId = c.req.param('jobId')
-    if (!jobId) return c.json({ error: "Job ID required" }, 400)
+    if (!jobId) return badRequest(c, "Job ID required")
 
     const id = c.env.EXPORT_DO.idFromName(jobId)
     const stub = c.env.EXPORT_DO.get(id)
@@ -62,27 +63,27 @@ exportRoutes.get('/:jobId', requireAuth, async (c) => {
       const errorText = await res.text()
       console.error("DO Error Status:", res.status, errorText)
       if (res.status === 404) {
-        return c.json({ error: "Job not found" }, 404)
+        return notFound(c, "Export job")
       }
-      return c.json({ error: `Export job error: ${res.status} ${errorText}` }, 500)
+      return internalError(c, `Export job error: ${res.status} ${errorText}`)
     }
 
     const text = await res.text()
     if (!text) {
       console.error("DO returned empty response")
-      return c.json({ error: "Empty response from export job" }, 500)
+      return internalError(c, "Empty response from export job")
     }
 
     try {
       const data = JSON.parse(text)
-      return c.json(data)
+      return success(c, data)
     } catch (e) {
       console.error("Failed to parse DO response:", text)
-      return c.json({ error: "Invalid response from export job" }, 500)
+      return internalError(c, "Invalid response from export job")
     }
   } catch (err: any) {
     console.error("Export status error:", err)
-    return c.json({ error: "Failed to check status" }, 500)
+    return internalError(c, "Failed to check status")
   }
 })
 

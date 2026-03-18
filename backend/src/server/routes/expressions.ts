@@ -5,6 +5,7 @@ import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import { cacheMiddleware } from '../middleware/cache.js'
 import { createExpressionSchema, updateExpressionSchema, batchExpressionSchema, ensureExpressionsSchema, addMeaningSchema, expressionsQuerySchema } from '../schemas/expression.js'
+import { success, created, badRequest, notFound, forbidden, internalError, paginated } from '../utils/response.js'
 
 const expressionsRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
@@ -12,7 +13,7 @@ expressionsRoutes.get('/', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const service = new ExpressionService(db)
-    
+
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '50')
     const language = c.req.query('language') || undefined
@@ -29,7 +30,7 @@ expressionsRoutes.get('/', async (c) => {
     const excludeTagPrefix = c.req.query('exclude_tag') || undefined
     const includeMeanings = c.req.query('include_meanings') === 'true'
 
-    const expressions = await service.getAll(skip, limit, {
+    const result = await service.getAll(skip, limit, {
       language,
       meaningId,
       tagPrefix,
@@ -37,10 +38,11 @@ expressionsRoutes.get('/', async (c) => {
       includeMeanings
     })
 
-    return c.json(expressions)
+    const total = result.length < limit ? skip + result.length : (result.length > 0 ? skip + result.length + 1 : skip)
+    return paginated(c, result, total, skip, limit)
   } catch (error: any) {
     console.error('Error in GET /expressions:', error)
-    return c.json({ error: error.message || 'Failed to fetch expressions' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to fetch expressions')
   }
 })
 
@@ -50,17 +52,17 @@ expressionsRoutes.post('/', requireAuth, async (c) => {
     const service = new ExpressionService(db)
     const user = c.get('user')
     const body = await c.req.json()
-    
+
     const validated = createExpressionSchema.parse(body)
     const expression = await service.create(validated, user.username)
-    
-    return c.json(expression, 201)
+
+    return created(c, expression)
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Error in POST /expressions:', error)
-    return c.json({ error: error.message || 'Failed to create expression' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to create expression')
   }
 })
 
@@ -70,17 +72,17 @@ expressionsRoutes.post('/ensure', requireAuth, async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
     const validated = ensureExpressionsSchema.parse(body)
-    
+
     const results = await db.ensureExpressionsExist(validated.expressions, user.username)
-    return c.json(results)
+    return success(c, results)
   } catch (error: any) {
     if (error.name === 'ZodError') {
       console.error('[POST /expressions/ensure] Validation error:', JSON.stringify(error.errors, null, 2))
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('[POST /expressions/ensure] Error:', error)
     console.error('[POST /expressions/ensure] Error stack:', error instanceof Error ? error.stack : 'No stack')
-    return c.json({ error: error.message || 'Failed to ensure expressions' }, 500)
+    return internalError(c, error.message || 'Failed to ensure expressions')
   }
 })
 
@@ -166,11 +168,7 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
 
     const results = await db.upsertExpressions(exprsWithIds, forceNewMeaning)
 
-    return c.json({
-      success: true,
-      meaning_id: finalMeaningId,
-      results
-    }, 201)
+    return created(c, { meaning_id: finalMeaningId, results })
   } catch (error: any) {
     console.error('[POST /expressions/batch] Caught error')
     console.error('[POST /expressions/batch] Error name:', error.name)
@@ -182,9 +180,9 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
 
     if (error.name === 'ZodError') {
       console.error('[POST /expressions/batch] Validation error:', JSON.stringify(error.errors, null, 2))
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
-    return c.json({ error: error.message || 'Failed to process batch submission' }, 500)
+    return internalError(c, error.message || 'Failed to process batch submission')
   }
 })
 
@@ -197,12 +195,12 @@ expressionsRoutes.post('/associate', requireAuth, async (c) => {
 
     const { expression_ids } = body
     if (!expression_ids || !Array.isArray(expression_ids) || expression_ids.length < 2) {
-      return c.json({ error: 'At least 2 expression IDs are required' }, 400)
+      return badRequest(c, 'At least 2 expression IDs are required')
     }
 
     const meaningId = await db.selectSemanticAnchor(expression_ids)
     if (!meaningId) {
-      return c.json({ error: 'Failed to select semantic anchor' }, 500)
+      return internalError(c, 'Failed to select semantic anchor')
     }
 
     const now = new Date().toISOString()
@@ -216,14 +214,10 @@ expressionsRoutes.post('/associate', requireAuth, async (c) => {
     db.clearStatisticsCache()
     db.clearHeatmapCache()
 
-    return c.json({
-      success: true,
-      meaning_id: meaningId,
-      updated_count: expression_ids.length
-    })
+    return success(c, { meaning_id: meaningId, updated_count: expression_ids.length })
   } catch (error: any) {
     console.error('Error in POST /expressions/associate:', error)
-    return c.json({ error: error.message || 'Failed to associate expressions' }, 500)
+    return internalError(c, error.message || 'Failed to associate expressions')
   }
 })
 
@@ -239,11 +233,11 @@ expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
         .filter(id => !isNaN(id))
 
       if (ids.length === 0) {
-        return c.json({ error: 'Invalid expression IDs' }, 400)
+        return badRequest(c, 'Invalid expression IDs')
       }
 
       if (ids.length > 100) {
-        return c.json({ error: 'Maximum 100 ids allowed per request' }, 400)
+        return badRequest(c, 'Maximum 100 ids allowed per request')
       }
 
       const expressions = await service.getByIds(ids)
@@ -254,19 +248,19 @@ expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
         expr.meanings = mids.map(mid => ({ id: mid })) as any
       })
 
-      return c.json(expressions)
+      return success(c, expressions)
     }
 
     const exprId = parseInt(exprIdParam)
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const expression = await service.getById(exprId)
-    return c.json(expression)
+    return success(c, expression)
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id:', error)
-    return c.json({ error: error.message || 'Failed to fetch expression' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to fetch expression')
   }
 })
 
@@ -279,7 +273,7 @@ expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
     const body = await c.req.json()
 
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const expressionData = {
@@ -290,20 +284,20 @@ expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
     if (body.text || body.language_code) {
       const expression = await db.migrateExpressionId(exprId, expressionData)
       if (!expression) {
-        return c.json({ error: 'Expression not found' }, 404)
+        return notFound(c, 'Expression')
       }
-      return c.json(expression)
+      return success(c, expression)
     } else {
       const validated = updateExpressionSchema.parse(expressionData)
       const expression = await service.update(exprId, validated)
-      return c.json(expression)
+      return success(c, expression)
     }
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Error in PATCH /expressions/:expr_id:', error)
-    return c.json({ error: error.message || 'Failed to update expression' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to update expression')
   }
 })
 
@@ -315,25 +309,25 @@ expressionsRoutes.delete('/:expr_id', requireAuth, async (c) => {
     const exprId = parseInt(c.req.param('expr_id'))
 
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
-      return c.json({ error: 'Expression not found' }, 404)
+      return notFound(c, 'Expression')
     }
 
     if (user.role !== 'admin' && expression.created_by !== user.username) {
-      return c.json({ error: 'You do not have permission to delete this expression' }, 403)
+      return forbidden(c, 'You do not have permission to delete this expression')
     }
 
     await service.delete(exprId)
     c.header('Clear-Site-Data', '"cache"')
 
-    return c.json({ message: 'Expression deleted successfully' })
+    return success(c, null, 'Expression deleted successfully')
   } catch (error: any) {
     console.error('Error in DELETE /expressions/:expr_id:', error)
-    return c.json({ error: error.message || 'Failed to delete expression' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to delete expression')
   }
 })
 
@@ -343,14 +337,14 @@ expressionsRoutes.get('/:expr_id/versions', async (c) => {
     const exprId = parseInt(c.req.param('expr_id'))
 
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const versions = await db.getExpressionVersions(exprId)
-    return c.json(versions)
+    return success(c, versions)
   } catch (error: any) {
     console.error('Error in GET /expressions/:expr_id/versions:', error)
-    return c.json({ error: 'Failed to fetch expression versions' }, 500)
+    return internalError(c, 'Failed to fetch expression versions')
   }
 })
 
@@ -363,22 +357,19 @@ expressionsRoutes.post('/:expr_id/meanings', requireAuth, async (c) => {
     const validated = addMeaningSchema.parse(body)
 
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const user = c.get('user')
     await service.addMeaning(exprId, validated.meaning_id, user.username)
 
-    return c.json({
-      success: true,
-      message: 'Meaning added to expression successfully'
-    })
+    return success(c, null, 'Meaning added to expression successfully')
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Error in POST /expressions/:expr_id/meanings:', error)
-    return c.json({ error: 'Failed to add meaning to expression' }, 500)
+    return internalError(c, 'Failed to add meaning to expression')
   }
 })
 
@@ -390,18 +381,15 @@ expressionsRoutes.delete('/:expr_id/meanings/:meaning_id', requireAuth, async (c
     const meaningId = parseInt(c.req.param('meaning_id'))
 
     if (isNaN(exprId) || isNaN(meaningId)) {
-      return c.json({ error: 'Invalid expression ID or meaning ID' }, 400)
+      return badRequest(c, 'Invalid expression ID or meaning ID')
     }
 
     await service.removeMeaning(exprId, meaningId)
 
-    return c.json({
-      success: true,
-      message: 'Meaning removed from expression successfully'
-    })
+    return success(c, null, 'Meaning removed from expression successfully')
   } catch (error: any) {
     console.error('Error in DELETE /expressions/:expr_id/meanings/:meaning_id:', error)
-    return c.json({ error: 'Failed to remove meaning from expression' }, 500)
+    return internalError(c, 'Failed to remove meaning from expression')
   }
 })
 
@@ -411,27 +399,27 @@ expressionsRoutes.post('/:expr_id/upload-audio', requireAuth, async (c) => {
     const exprId = parseInt(c.req.param('expr_id'))
 
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID' }, 400)
+      return badRequest(c, 'Invalid expression ID')
     }
 
     const expression = await db.getExpressionById(exprId)
     if (!expression) {
-      return c.json({ error: 'Expression not found' }, 404)
+      return notFound(c, 'Expression')
     }
 
     const body = await c.req.parseBody()
     const file = body['audio_file']
 
     if (!file || !(file instanceof File)) {
-      return c.json({ error: 'Invalid parameters: audio_file missing or invalid' }, 400)
+      return badRequest(c, 'Invalid parameters: audio_file missing or invalid')
     }
 
     if (file.size > 1048576) {
-      return c.json({ error: 'Audio file too large. Max size is 1MB.' }, 400)
+      return badRequest(c, 'Audio file too large. Max size is 1MB.')
     }
 
     if (!c.env.AUDIO_BUCKET) {
-      return c.json({ error: 'Storage configuration error' }, 500)
+      return internalError(c, 'Storage configuration error')
     }
 
     const uuid = crypto.randomUUID()
@@ -473,10 +461,10 @@ expressionsRoutes.post('/:expr_id/upload-audio', requireAuth, async (c) => {
       updated_at: new Date().toISOString()
     })
 
-    return c.json({ audio_url: JSON.stringify(audioRecords) })
+    return success(c, { audio_url: JSON.stringify(audioRecords) })
   } catch (error: any) {
     console.error('Error in POST /expressions/:expr_id/upload-audio:', error)
-    return c.json({ error: 'Failed to upload audio file' }, 500)
+    return internalError(c, 'Failed to upload audio file')
   }
 })
 
@@ -485,17 +473,17 @@ expressionsRoutes.delete('/:expr_id/audio', requireAuth, async (c) => {
     const exprIdStr = c.req.param('expr_id')
     const exprId = parseInt(exprIdStr, 10)
     if (isNaN(exprId)) {
-      return c.json({ error: 'Invalid expression ID format' }, 400)
+      return badRequest(c, 'Invalid expression ID format')
     }
 
     const currentUser = c.get('user')
     if (!currentUser) {
-      return c.json({ error: 'Unauthorized' }, 401)
+      return internalError(c, 'Unauthorized')
     }
 
     const targetSpeaker = c.req.query('speaker')
     if (!targetSpeaker) {
-      return c.json({ error: 'Speaker parameter is required' }, 400)
+      return badRequest(c, 'Speaker parameter is required')
     }
 
     if (
@@ -503,18 +491,18 @@ expressionsRoutes.delete('/:expr_id/audio', requireAuth, async (c) => {
       currentUser.role !== 'admin' &&
       currentUser.role !== 'super_admin'
     ) {
-      return c.json({ error: 'Insufficient permissions to delete this audio' }, 403)
+      return forbidden(c, 'Insufficient permissions to delete this audio')
     }
 
     const db = createDatabaseService(c.env)
     const expression = await db.getExpressionById(exprId)
 
     if (!expression) {
-      return c.json({ error: 'Expression not found' }, 404)
+      return notFound(c, 'Expression')
     }
 
     if (!expression.audio_url) {
-      return c.json({ error: 'No audio exists for this expression' }, 400)
+      return badRequest(c, 'No audio exists for this expression')
     }
 
     let audioRecords: Array<{ url: string, speaker: string }> = []
@@ -553,13 +541,10 @@ expressionsRoutes.delete('/:expr_id/audio', requireAuth, async (c) => {
       updated_at: new Date().toISOString()
     })
 
-    return c.json({
-      message: 'Audio deleted successfully',
-      audio_url: newValue
-    })
+    return success(c, { message: 'Audio deleted successfully', audio_url: newValue })
   } catch (error: any) {
     console.error('Error in DELETE /expressions/:expr_id/audio:', error)
-    return c.json({ error: 'Failed to delete audio' }, 500)
+    return internalError(c, 'Failed to delete audio')
   }
 })
 

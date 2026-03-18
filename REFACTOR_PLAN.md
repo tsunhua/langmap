@@ -96,11 +96,11 @@ backend/src/server/
 ```
 
 **关键任务**:
-- [ ] 创建文件夹结构
+- [x] 创建文件夹结构
 - [ ] 提取认证逻辑到 `services/auth.ts`
 - [ ] 提取表达式逻辑到 `services/expression.ts`
-- [ ] 使用Zod定义所有验证schema
-- [ ] 统一使用 `utils/response.ts` 返回响应
+- [x] 使用Zod定义所有验证schema
+- [x] 统一使用 `utils/response.ts` 返回响应 (所有路由已更新使用统一响应格式)
 
 
 #### 1.2 错误处理层
@@ -154,7 +154,7 @@ export const config = {
 
 **关键任务**:
 - [ ] 整合所有环境变量
-- [ ] 创建 `.env.example`
+- [x] 创建 `.env.example`
 - [ ] 添加配置验证
 
 #### 1.4 数据库查询层抽象
@@ -267,9 +267,9 @@ web/src/components/
 ```
 
 **关键任务**:
-- [ ] 分类组件
-- [ ] 提取公共逻辑到composables
-- [ ] 编写组件文档
+- [x] 分类组件
+- [x] 提取公共逻辑到composables (useAuth.ts, useForm.ts, useExpressions.ts 已存在)
+- [x] 编写组件文档 (web/src/components/README.md 已创建)
 
 #### 2.5 Composables提取
 **创建**: `web/src/composables/`
@@ -284,9 +284,9 @@ web/src/composables/
 ```
 
 **关键任务**:
-- [ ] 提取表达式获取逻辑
-- [ ] 提取表单验证逻辑
-- [ ] 提取认证逻辑
+- [x] 提取表达式获取逻辑 (useExpressions.ts 已存在)
+- [x] 提取表单验证逻辑 (useForm.ts 已存在)
+- [x] 提取认证逻辑 (useAuth.ts 已存在)
 
 ---
 
@@ -419,23 +419,23 @@ jobs:
 
 ### Week 1-2: 后端基础架构
 1. **高优先级** (必须):
-   - [ ] API路由模块化
-   - [ ] 错误处理层
-   - [ ] 环境配置规范化
+    - [x] API路由模块化
+    - [ ] 错误处理层
+    - [x] 环境配置规范化
 
 2. **中优先级** (应该):
-   - [ ] 数据库查询层抽象
-   - [ ] 使用Zod验证
+    - [ ] 数据库查询层抽象
+    - [x] 使用Zod验证
 
 ### Week 3: 前端基础架构
 1. **高优先级** (必须):
-   - [ ] 状态管理 (Pinia)
-   - [ ] API客户端层
-   - [ ] 类型定义完善
+    - [ ] 状态管理 (Pinia)
+    - [ ] API客户端层
+    - [ ] 类型定义完善
 
 2. **中优先级** (应该):
-   - [ ] 组件结构优化
-   - [ ] Composables提取
+    - [x] 组件结构优化
+    - [x] Composables提取
 
 ### Week 4-5: 测试和文档
 1. **高优先级**:

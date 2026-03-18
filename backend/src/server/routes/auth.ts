@@ -7,6 +7,7 @@ import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import { registerSchema, loginSchema, verifyEmailQuerySchema } from '../schemas/auth.js'
 import { zValidator } from '@hono/zod-validator'
+import { success, created, badRequest, internalError } from '../utils/response.js'
 
 const authRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
@@ -34,17 +35,13 @@ authRoutes.post('/register', async (c) => {
 
     const { password_hash: _, ...userResponse } = result.user
 
-    return c.json({
-      success: true,
-      data: { user: userResponse },
-      message: 'User registered successfully. Please check your email for verification.'
-    }, 201)
+    return created(c, { user: userResponse }, 'User registered successfully. Please check your email for verification.')
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Registration error:', error)
-    return c.json({ error: error.message || 'Failed to register user' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to register user')
   }
 })
 
@@ -57,24 +54,18 @@ authRoutes.post('/login', async (c) => {
     const authService = new AuthService(db)
     const result = await authService.login(validated.email, validated.password, c.env.SECRET_KEY)
 
-    return c.json({
-      success: true,
-      data: result
-    })
+    return success(c, result)
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Login error:', error)
-    return c.json({ error: error.message || 'Failed to login' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to login')
   }
 })
 
 authRoutes.post('/logout', (c) => {
-  return c.json({
-    success: true,
-    message: 'Logged out successfully'
-  })
+  return success(c, null, 'Logged out successfully')
 })
 
 authRoutes.get('/verify-email', async (c) => {
@@ -85,16 +76,13 @@ authRoutes.get('/verify-email', async (c) => {
     const authService = new AuthService(db)
     await authService.verifyEmail(validated.token)
 
-    return c.json({
-      success: true,
-      message: 'Email verified successfully. You can now log in.'
-    })
+    return success(c, null, 'Email verified successfully. You can now log in.')
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return c.json({ error: 'Validation failed', details: error.errors }, 400)
+      return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     console.error('Email verification error:', error)
-    return c.json({ error: error.message || 'Failed to verify email' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to verify email')
   }
 })
 
@@ -105,13 +93,10 @@ authRoutes.get('/me', requireAuth, async (c) => {
     const userService = new UserService(db)
     const fullUser = await userService.getById(user.id)
 
-    return c.json({
-      success: true,
-      data: fullUser
-    })
+    return success(c, fullUser)
   } catch (error: any) {
     console.error('Get user error:', error)
-    return c.json({ error: error.message || 'Failed to get user' }, error.statusCode || 500)
+    return internalError(c, error.message || 'Failed to get user')
   }
 })
 

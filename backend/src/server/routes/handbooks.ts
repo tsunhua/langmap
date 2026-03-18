@@ -4,6 +4,7 @@ import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import MarkdownIt from 'markdown-it'
 import anchor from 'markdown-it-anchor'
+import { success, created, badRequest, forbidden, notFound, internalError } from '../utils/response.js'
 
 const handbookRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
@@ -530,10 +531,10 @@ handbookRoutes.get('/', optionalAuth, async (c) => {
     }
 
     const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)
-    return c.json(handbooks)
+    return success(c, handbooks)
   } catch (error: any) {
     console.error('Error in GET /handbooks:', error)
-    return c.json({ error: 'Failed to fetch handbooks' }, 500)
+    return internalError(c, 'Failed to fetch handbooks')
   }
 })
 
@@ -556,11 +557,11 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
 
     console.log('[GET] Parsed targetLangs:', targetLangs)
 
-    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
 
     console.log('[GET] Fetching handbook...')
     const handbook = await db.getHandbookById(id)
-    if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+    if (!handbook) return notFound(c, 'Handbook')
 
     console.log('[GET] Handbook fetched:', { id: handbook.id, title: handbook.title, target_lang: handbook.target_lang, source_lang: handbook.source_lang })
 
@@ -573,7 +574,7 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
 
     if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
       console.log('[GET] Access denied')
-      return c.json({ error: 'Access denied' }, 403)
+      return forbidden(c, 'Access denied')
     }
 
     if (targetLangs.length > 0) {
@@ -584,17 +585,15 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
         const cachedRender = await db.getHandbookRender(id, cacheKey)
         if (cachedRender) {
           console.log('[GET] Cache hit!')
-          return c.json({
+          const result = success(c, {
             ...handbook,
             rendered_title: cachedRender.rendered_title,
             rendered_description: cachedRender.rendered_description,
             rendered_content: cachedRender.rendered_content,
             is_cached: true
-          }, {
-            headers: {
-              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-            }
           })
+          result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
+          return result
         }
         console.log('[GET] Cache miss, rendering...')
       } catch (cacheErr) {

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../../bindings.js'
+import { badRequest, notFound, internalError } from '../utils/response.js'
 
 const downloadRoutes = new Hono<{ Bindings: Bindings }>()
 
@@ -7,17 +8,17 @@ downloadRoutes.get('/', async (c) => {
   try {
     const key = c.req.query('key')
     if (!key) {
-      return c.json({ error: "File key required" }, 400)
+      return badRequest(c, "File key required")
     }
 
     if (!key.startsWith('exports/')) {
-      return c.json({ error: "Invalid file key" }, 403)
+      return internalError(c, "Invalid file key", undefined, 403)
     }
 
     const object = await c.env.EXPORT_BUCKET.get(key)
 
     if (object === null) {
-      return c.json({ error: "File not found" }, 404)
+      return notFound(c, "File")
     }
 
     const headers = new Headers()
@@ -30,7 +31,7 @@ downloadRoutes.get('/', async (c) => {
     })
   } catch (err: any) {
     console.error("Download error:", err)
-    return c.json({ error: "Failed to download file" }, 500)
+    return internalError(c, "Failed to download file")
   }
 })
 
