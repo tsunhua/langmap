@@ -1,4 +1,37 @@
-export const config = {
+import { z } from 'zod'
+
+const configSchema = z.object({
+  api: z.object({
+    version: z.string(),
+    baseUrl: z.string().url()
+  }),
+  auth: z.object({
+    jwtSecret: z.string().min(8),
+    tokenExpiry: z.string(),
+    resendApiKey: z.string().optional()
+  }),
+  storage: z.object({
+    r2AccountId: z.string().optional(),
+    r2AccessKeyId: z.string().optional(),
+    r2SecretAccessKey: z.string().optional(),
+    audioBucketName: z.string(),
+    exportBucketName: z.string()
+  }),
+  cache: z.object({
+    defaultTTL: z.number().int().positive(),
+    statisticsTTL: z.number().int().positive(),
+    languagesTTL: z.number().int().positive(),
+    heatmapTTL: z.number().int().positive(),
+    uiLocaleTTL: z.number().int().positive()
+  }),
+  limits: z.object({
+    maxUploadSize: z.number().int().positive(),
+    maxBatchSize: z.number().int().positive(),
+    maxExpressionsPerBatch: z.number().int().positive()
+  })
+})
+
+const rawConfig = {
   api: {
     version: 'v1',
     baseUrl: process.env.API_BASE_URL || 'http://localhost:8787'
@@ -33,4 +66,14 @@ export const config = {
   }
 }
 
+// Validate config
+const parsed = configSchema.safeParse(rawConfig)
+
+if (!parsed.success) {
+  console.error('❌ Invalid configuration:', JSON.stringify(parsed.error.format(), null, 2))
+  throw new Error('Invalid configuration')
+}
+
+export const config = parsed.data
 export default config
+

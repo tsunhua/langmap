@@ -4,13 +4,7 @@ import { ConflictError, ValidationError } from '../types/error.js'
 import { signJWT } from '../utils/jwt.js'
 
 interface DBService {
-  getUserByUsername(username: string): Promise<User | null>
-  getUserByEmail(email: string): Promise<User | null>
-  createUser(data: any): Promise<User>
-  createEmailVerificationToken(token: string, userId: number, expiresAt: string): Promise<void>
-  getEmailVerificationToken(token: string): Promise<any>
-  setEmailVerified(userId: number): Promise<void>
-  deleteEmailVerificationToken(token: string): Promise<void>
+  users: any
 }
 
 export class AuthService {
@@ -21,19 +15,19 @@ export class AuthService {
       throw new ValidationError('Username, email, and password are required')
     }
 
-    const existingUser = await this.db.getUserByUsername(username)
+    const existingUser = await this.db.users.findByUsername(username)
     if (existingUser) {
       throw new ConflictError('Username already exists')
     }
 
-    const existingEmail = await this.db.getUserByEmail(email)
+    const existingEmail = await this.db.users.findByEmail(email)
     if (existingEmail) {
       throw new ConflictError('Email already registered')
     }
 
     const password_hash = await hashPassword(password)
 
-    const user = await this.db.createUser({
+    const user = await this.db.users.create(email, {
       username,
       email,
       password_hash,
@@ -44,7 +38,7 @@ export class AuthService {
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
-    await this.db.createEmailVerificationToken(token, user.id, expiresAt)
+    await this.db.users.createVerificationToken(token, user.id, expiresAt)
 
     const verificationUrl = `${baseUrl}/#/verify-email?token=${token}`
 
@@ -72,7 +66,7 @@ export class AuthService {
       throw new ValidationError('Email and password are required')
     }
 
-    const user = await this.db.getUserByEmail(email)
+    const user = await this.db.users.findByEmail(email)
     if (!user) {
       throw new ValidationError('Invalid credentials')
     }
@@ -102,7 +96,7 @@ export class AuthService {
       throw new ValidationError('Verification token is required')
     }
 
-    const verificationToken = await this.db.getEmailVerificationToken(token)
+    const verificationToken = await this.db.users.findVerificationToken(token)
     if (!verificationToken) {
       throw new ValidationError('Invalid or expired verification token')
     }
@@ -110,11 +104,11 @@ export class AuthService {
     const now = new Date()
     const expiresAt = new Date(verificationToken.expires_at)
     if (now > expiresAt) {
-      await this.db.deleteEmailVerificationToken(token)
+      await this.db.users.deleteVerificationToken(token)
       throw new ValidationError('Verification token has expired')
     }
 
-    await this.db.setEmailVerified(verificationToken.user_id)
-    await this.db.deleteEmailVerificationToken(token)
+    await this.db.users.setEmailVerified(verificationToken.user_id)
+    await this.db.users.deleteVerificationToken(token)
   }
 }

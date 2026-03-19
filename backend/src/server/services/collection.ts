@@ -2,26 +2,20 @@ import type { Collection, CollectionItem } from '../types/entity.js'
 import { NotFoundError } from '../types/error.js'
 
 interface DBService {
-  getCollections(userId?: number, isPublic?: boolean, skip?: number, limit?: number): Promise<Collection[]>
-  getCollectionById(id: number): Promise<Collection | null>
-  createCollection(data: any): Promise<Collection>
-  updateCollection(id: number, data: any): Promise<Collection | null>
-  deleteCollection(id: number): Promise<boolean>
-  getCollectionItems(collectionId: number): Promise<CollectionItem[]>
-  addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
-  removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
-  getCollectionsContainingItem(userId: number, expressionId: number): Promise<number[]>
+  collections: any
+  stableCollectionId(userId: number, name: string): number
+  stableCollectionItemId(collectionId: number, expressionId: number): number
 }
 
 export class CollectionService {
   constructor(private db: DBService) {}
 
   async getAll(userId?: number, isPublic?: boolean, skip: number = 0, limit: number = 20): Promise<Collection[]> {
-    return this.db.getCollections(userId, isPublic, skip, limit)
+    return this.db.collections.findAll(userId, isPublic, skip, limit)
   }
 
   async getById(id: number): Promise<Collection> {
-    const collection = await this.db.getCollectionById(id)
+    const collection = await this.db.collections.findById(id)
     if (!collection) {
       throw new NotFoundError('Collection')
     }
@@ -29,15 +23,12 @@ export class CollectionService {
   }
 
   async create(userId: number, data: any): Promise<Collection> {
-    const collectionData = {
-      user_id: userId,
-      ...data
-    }
-    return this.db.createCollection(collectionData)
+    const id = this.db.stableCollectionId(userId, data.name)
+    return this.db.collections.create(id, userId, data.name, data.description || null, !!data.is_public)
   }
 
   async update(id: number, data: any): Promise<Collection> {
-    const collection = await this.db.updateCollection(id, data)
+    const collection = await this.db.collections.update(id, data)
     if (!collection) {
       throw new NotFoundError('Collection')
     }
@@ -45,28 +36,29 @@ export class CollectionService {
   }
 
   async delete(id: number): Promise<void> {
-    const success = await this.db.deleteCollection(id)
+    const success = await this.db.collections.delete(id)
     if (!success) {
       throw new NotFoundError('Collection')
     }
   }
 
   async getItems(collectionId: number): Promise<CollectionItem[]> {
-    return this.db.getCollectionItems(collectionId)
+    return this.db.collections.findItems(collectionId)
   }
 
   async addItem(collectionId: number, expressionId: number): Promise<CollectionItem> {
-    return this.db.addCollectionItem({ collection_id: collectionId, expression_id: expressionId })
+    const id = this.db.stableCollectionItemId(collectionId, expressionId)
+    return this.db.collections.addItem(id, collectionId, expressionId, null)
   }
 
   async removeItem(collectionId: number, expressionId: number): Promise<void> {
-    const success = await this.db.removeCollectionItem(collectionId, expressionId)
+    const success = await this.db.collections.removeItem(collectionId, expressionId)
     if (!success) {
       throw new NotFoundError('Collection item')
     }
   }
 
   async getContainingCollections(userId: number, expressionId: number): Promise<number[]> {
-    return this.db.getCollectionsContainingItem(userId, expressionId)
+    return this.db.collections.findContainingCollections(userId, expressionId)
   }
 }

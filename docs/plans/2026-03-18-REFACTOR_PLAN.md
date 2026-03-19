@@ -97,8 +97,8 @@ backend/src/server/
 
 **关键任务**:
 - [x] 创建文件夹结构
-- [ ] 提取认证逻辑到 `services/auth.ts`
-- [ ] 提取表达式逻辑到 `services/expression.ts`
+- [x] 提取认证逻辑到 `services/auth.ts`
+- [x] 提取表达式逻辑到 `services/expression.ts`
 - [x] 使用Zod定义所有验证schema
 - [x] 统一使用 `utils/response.ts` 返回响应 (所有路由已更新使用统一响应格式)
 
@@ -153,7 +153,7 @@ export const config = {
 ```
 
 **关键任务**:
-- [ ] 整合所有环境变量
+- [x] 整合所有环境变量
 - [x] 创建 `.env.example`
 - [ ] 添加配置验证
 
@@ -194,9 +194,9 @@ web/src/stores/
 ```
 
 **关键任务**:
-- [ ] 安装Pinia: `npm install pinia`
-- [ ] 创建认证store
-- [ ] 创建用户store
+- [x] 安装Pinia: `npm install pinia`
+- [x] 创建认证store
+- [x] 创建用户store
 - [ ] 迁移Axios调用到actions
 
 #### 2.2 API客户端层
@@ -216,7 +216,7 @@ web/src/api/
 - [x] 集中Axios配置
 - [x] 添加请求/响应拦截器 (已更新以处理统一响应格式)
 - [x] 错误处理标准化 (统一错误处理)
-- [ ] 添加请求loading状态
+- [x] 添加请求loading状态
 
 #### 2.3 类型定义完善
 **创建**: `web/src/types/`
@@ -241,9 +241,9 @@ export interface Expression {
 ```
 
 **关键任务**:
-- [ ] 统一API响应类型
-- [ ] 定义所有数据模型
-- [ ] 定义组件props类型
+- [x] 统一API响应类型
+- [x] 定义所有数据模型
+- [x] 定义组件props类型
 
 #### 2.4 组件结构优化
 **重新组织**: `web/src/components/`
@@ -429,9 +429,9 @@ jobs:
 
 ### Week 3: 前端基础架构
 1. **高优先级** (必须):
-    - [ ] 状态管理 (Pinia)
-    - [ ] API客户端层
-    - [ ] 类型定义完善
+    - [x] 状态管理 (Pinia)
+    - [x] API客户端层
+    - [x] 类型定义完善
 
 2. **中优先级** (应该):
     - [x] 组件结构优化

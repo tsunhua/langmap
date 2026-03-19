@@ -2,23 +2,17 @@ import type { Expression } from '../types/entity.js'
 import { NotFoundError } from '../types/error.js'
 
 interface DBService {
-  getExpressions(skip: number, limit: number, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string, includeMeanings?: boolean): Promise<Expression[]>
-  getExpressionById(id: number): Promise<Expression | null>
-  getExpressionsByIds(ids: number[]): Promise<Expression[]>
-  createExpression(data: any): Promise<Expression>
-  updateExpression(id: number, data: any): Promise<Expression | null>
-  deleteExpression(id: number): Promise<boolean>
-  upsertExpressions(expressions: any[], forceNewMeaning: boolean): Promise<any[]>
-  ensureExpressionsExist(expressions: any[], username: string): Promise<any>
-  getExpressionVersions(id: number): Promise<any[]>
-  getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>>
-  addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void>
-  removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean>
-  migrateExpressionId(oldId: number, newData: any): Promise<Expression | null>
-  stableExpressionId(text: string, languageCode: string): number
-  selectSemanticAnchor(expressionIds: number[]): Promise<number | undefined>
+  expressions: any
+  meanings: any
   clearStatisticsCache(): void
   clearHeatmapCache(): void
+  stableExpressionId(text: string, languageCode: string): number
+  formatTimestamps<T>(obj: T): T
+  
+  // High-level operations still in D1DatabaseService
+  upsertExpressions(expressions: any[], forceNewMeaning: boolean): Promise<any[]>
+  ensureExpressionsExist(expressions: any[], username: string): Promise<any>
+  deleteExpression(id: number): Promise<boolean>
 }
 
 export class ExpressionService {
@@ -31,37 +25,33 @@ export class ExpressionService {
     excludeTagPrefix?: string
     includeMeanings?: boolean
   } = {}): Promise<Expression[]> {
-    return this.db.getExpressions(
-      skip,
-      limit,
-      filters.language,
-      filters.meaningId,
-      filters.tagPrefix,
-      filters.excludeTagPrefix,
-      filters.includeMeanings
-    )
+    const results = await this.db.expressions.findAll(skip, limit, filters)
+    return results.map((e: any) => this.db.formatTimestamps(e))
   }
 
   async getById(id: number): Promise<Expression> {
-    const expression = await this.db.getExpressionById(id)
+    const expression = await this.db.expressions.findById(id)
     if (!expression) {
       throw new NotFoundError('Expression')
     }
-    return expression
+    return this.db.formatTimestamps(expression)
   }
 
   async getByIds(ids: number[]): Promise<Expression[]> {
-    return this.db.getExpressionsByIds(ids)
+    const results = await this.db.expressions.findByIds(ids)
+    return results.map((e: any) => this.db.formatTimestamps(e))
   }
 
   async create(data: any, username: string): Promise<Expression> {
+    const id = this.db.stableExpressionId(data.text, data.language_code)
     const expressionData = {
       ...data,
+      id,
       created_by: data.created_by || username
     }
-    const expression = await this.db.createExpression(expressionData)
+    const expression = await this.db.expressions.create(expressionData)
     this.db.clearStatisticsCache()
-    return expression
+    return this.db.formatTimestamps(expression)
   }
 
   async update(id: number, data: any, username: string): Promise<Expression> {
@@ -69,11 +59,11 @@ export class ExpressionService {
       ...data,
       updated_by: data.updated_by || username
     }
-    const expression = await this.db.updateExpression(id, expressionData)
+    const expression = await this.db.expressions.update(id, expressionData)
     if (!expression) {
       throw new NotFoundError('Expression')
     }
-    return expression
+    return this.db.formatTimestamps(expression)
   }
 
   async delete(id: number): Promise<void> {
@@ -107,19 +97,22 @@ export class ExpressionService {
   }
 
   async getVersions(id: number): Promise<any[]> {
-    return this.db.getExpressionVersions(id)
+    const results = await this.db.expressions.getVersions(id)
+    return results.map((v: any) => this.db.formatTimestamps(v))
   }
 
   async addMeaning(expressionId: number, meaningId: number, username: string): Promise<void> {
-    const expression = await this.db.getExpressionById(expressionId)
+    const expression = await this.db.expressions.findById(expressionId)
     if (!expression) {
       throw new NotFoundError('Expression')
     }
-    await this.db.addExpressionMeaning(expressionId, meaningId, username)
+    const now = new Date().toISOString()
+    await this.db.meanings.ensureMeaningExists(meaningId, username, now)
+    await this.db.meanings.addExpressionMeaning(expressionId, meaningId, now)
   }
 
   async removeMeaning(expressionId: number, meaningId: number): Promise<void> {
-    const success = await this.db.removeExpressionMeaning(expressionId, meaningId)
+    const success = await this.db.meanings.removeExpressionMeaning(expressionId, meaningId)
     if (!success) {
       throw new NotFoundError('Expression-meaning relationship')
     }

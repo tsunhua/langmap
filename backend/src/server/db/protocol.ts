@@ -230,5 +230,13 @@ export abstract class AbstractDatabaseService {
   }): Promise<void>
   abstract invalidateHandbookRenders(id: number): Promise<void>
 
-  abstract stableExpressionId(text: string, languageCode: string): number
+  abstract stableExpressionId(text: string, language_code: string): number
+
+  // Query objects for direct access
+  abstract get expressions(): any
+  abstract get users(): any
+  abstract get collections(): any
+  abstract get meanings(): any
+  abstract get languages(): any
+  abstract get handbooks(): any
 }
