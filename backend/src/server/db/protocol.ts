@@ -52,6 +52,13 @@ export interface ExpressionMeaning {
   created_at?: string
 }
 
+export interface ExpressionGroup {
+  id: number
+  expressions: Expression[]
+  created_by?: string
+  created_at?: string
+}
+
 export interface ExpressionVersion {
   id: number
   expression_id: number
@@ -168,6 +175,19 @@ export abstract class AbstractDatabaseService {
   abstract addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void>
   abstract removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean>
 
+  // ExpressionGroup operations
+  abstract getGroupExpressions(groupId: number, languages?: string[]): Promise<Expression[]>
+  abstract getGroupInfo(groupId: number, languages?: string[]): Promise<ExpressionGroup | null>
+  abstract getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]>
+  abstract addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean>
+  abstract removeFromGroup(expressionId: number, groupId: number): Promise<boolean>
+  abstract createGroup(anchorExpressionId: number, username: string): Promise<number>
+  abstract batchAddToGroup(expressionIds: number[], groupId: number, username: string): Promise<number>
+  abstract mergeGroups(sourceGroupId: number, targetGroupId: number): Promise<{ success: boolean, merged_count: number }>
+  abstract deleteGroup(groupId: number): Promise<boolean>
+  abstract listGroups(skip?: number, limit?: number, languages?: string[]): Promise<ExpressionGroup[]>
+  abstract searchGroups(query: string, skip?: number, limit?: number, languages?: string[]): Promise<ExpressionGroup[]>
+
   // Expression version operations
   abstract getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]>
   abstract createExpressionVersion(version: Partial<ExpressionVersion>): Promise<ExpressionVersion>
@@ -239,4 +259,5 @@ export abstract class AbstractDatabaseService {
   abstract get meanings(): any
   abstract get languages(): any
   abstract get handbooks(): any
+  abstract get groups(): any
 }

@@ -78,11 +78,16 @@ design/
     - 数据迁移方案
     - API 接口设计
     - 前端交互实现
-- **[feat-expression-group-modal.md](features/feat-expression-group-modal.md)** - Handbook 词句组快捷弹窗
-    - 词句组详情弹窗设计
-    - 表格展示所有翻译
-    - 快捷添加新翻译功能
-    - 组件与 API 集成
+ - **[feat-expression-group-modal.md](features/feat-expression-group-modal.md)** - Handbook 词句组快捷弹窗
+     - 词句组详情弹窗设计
+     - 表格展示所有翻译
+     - 快捷添加新翻译功能
+     - 组件与 API 集成
+- **[feat-expression-group-abstraction.md](features/feat-expression-group-abstraction.md)** - Expression Group 抽象层设计
+     - ExpressionGroup 概念定义
+     - 隐藏 meanings 和 expression_meaning 表
+     - ExpressionGroup 查询接口实现
+     - API 参数从 meaning_id 改为 group_id
 
 ## 实施状态
 

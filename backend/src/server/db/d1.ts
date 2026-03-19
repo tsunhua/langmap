@@ -1,4 +1,4 @@
-import { AbstractDatabaseService, Language, Expression, Meaning, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook, UILocale } from './protocol.js'
+import { AbstractDatabaseService, Language, Expression, Meaning, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook, UILocale, ExpressionGroup } from './protocol.js'
 import { ExpressionQueries } from './queries/expression.js'
 import { UserQueries } from './queries/user.js'
 import { CollectionQueries } from './queries/collection.js'
@@ -6,6 +6,7 @@ import { MeaningQueries } from './queries/meaning.js'
 import { LanguageQueries } from './queries/language.js'
 import { HandbookQueries } from './queries/handbook.js'
 import { MetaQueries } from './queries/meta.js'
+import { ExpressionGroupQueries } from './queries/expression_group.js'
 
 // Cache for statistics
 let statisticsCache: {
@@ -47,6 +48,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   private languageQueries: LanguageQueries
   private handbookQueries: HandbookQueries
   private metaQueries: MetaQueries
+  private groupQueries: ExpressionGroupQueries
 
   constructor(db: D1Database) {
     super()
@@ -58,6 +60,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     this.languageQueries = new LanguageQueries(db)
     this.handbookQueries = new HandbookQueries(db)
     this.metaQueries = new MetaQueries(db)
+    this.groupQueries = new ExpressionGroupQueries(db)
   }
 
   // Query getters
@@ -68,6 +71,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   get languages() { return this.languageQueries }
   get handbooks() { return this.handbookQueries }
   get meta() { return this.metaQueries }
+  get groups() { return this.groupQueries }
   async getLanguages(isActive?: number): Promise<Language[]> {
     const now = Date.now()
 
@@ -823,5 +827,50 @@ export class D1DatabaseService extends AbstractDatabaseService {
       ...result,
       target_meaning_id: targetMeaningId
     }
+  }
+
+  // ExpressionGroup operations
+  async getGroupExpressions(groupId: number, languages?: string[]): Promise<Expression[]> {
+    return this.groupQueries.getGroupExpressions(groupId, languages)
+  }
+
+  async getGroupInfo(groupId: number, languages?: string[]): Promise<ExpressionGroup | null> {
+    return this.groupQueries.getGroupInfo(groupId, languages)
+  }
+
+  async getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]> {
+    return this.groupQueries.getExpressionGroups(expressionId)
+  }
+
+  async addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean> {
+    return this.groupQueries.addToGroup(expressionId, groupId, username)
+  }
+
+  async removeFromGroup(expressionId: number, groupId: number): Promise<boolean> {
+    return this.groupQueries.removeFromGroup(expressionId, groupId)
+  }
+
+  async createGroup(anchorExpressionId: number, username: string): Promise<number> {
+    return this.groupQueries.createGroup(anchorExpressionId, username)
+  }
+
+  async batchAddToGroup(expressionIds: number[], groupId: number, username: string): Promise<number> {
+    return this.groupQueries.batchAddToGroup(expressionIds, groupId, username)
+  }
+
+  async mergeGroups(sourceGroupId: number, targetGroupId: number): Promise<{ success: boolean, merged_count: number }> {
+    return this.groupQueries.mergeGroups(sourceGroupId, targetGroupId)
+  }
+
+  async deleteGroup(groupId: number): Promise<boolean> {
+    return this.groupQueries.deleteGroup(groupId)
+  }
+
+  async listGroups(skip: number = 0, limit: number = 20, languages?: string[]): Promise<ExpressionGroup[]> {
+    return this.groupQueries.listGroups(skip, limit, languages)
+  }
+
+  async searchGroups(query: string, skip: number = 0, limit: number = 20, languages?: string[]): Promise<ExpressionGroup[]> {
+    return this.groupQueries.searchGroups(query, skip, limit, languages)
   }
 }
