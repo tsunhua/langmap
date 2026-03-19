@@ -183,6 +183,15 @@
     </router-link>
     <AddToCollectionModal :visible="showCollectionModal" :expression-id="item.id"
       @close="showCollectionModal = false" />
+    <!-- Confirm Delete Audio Modal -->
+    <ConfirmModal
+      v-model="showDeleteAudioModal"
+      :message="$t('confirm_delete_audio') || 'Are you sure you want to delete this audio?'"
+      :loading="deletingAudio"
+      :loadingText="$t('deleting') || 'Deleting...'"
+      :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeRemoveAudio"
+    />
   </div>
 </template>
 
@@ -193,10 +202,11 @@ import { useI18n } from 'vue-i18n'
 import { languagesApi } from '../api/index.ts'
 import AddToCollectionModal from './AddToCollectionModal.vue'
 import AudioRecorder from './AudioRecorder.vue'
+import ConfirmModal from './ConfirmModal.vue'
 
 export default {
   name: 'ExpressionCard',
-  components: { AddToCollectionModal, AudioRecorder },
+  components: { AddToCollectionModal, AudioRecorder, ConfirmModal },
   props: {
     item: {
       type: Object,
@@ -229,6 +239,11 @@ export default {
     const router = useRouter()
     const showCollectionModal = ref(false)
     const showAudioRecorder = ref(false)
+
+    // Audio Delete Confirm
+    const showDeleteAudioModal = ref(false)
+    const audioToDeleteSpeaker = ref('')
+    const deletingAudio = ref(false)
 
     // Current user info
     const currentUser = ref(null)
@@ -368,11 +383,19 @@ export default {
       }
     }
 
-    const handleRemoveAudio = async (speaker) => {
-      if (!confirm(t('confirm_delete_audio'))) return
+    const handleRemoveAudio = (speaker) => {
+      audioToDeleteSpeaker.value = speaker
+      showDeleteAudioModal.value = true
+    }
 
+    const executeRemoveAudio = async () => {
+      deletingAudio.value = true
+      const speaker = audioToDeleteSpeaker.value
       const token = localStorage.getItem('authToken')
-      if (!token) return
+      if (!token) {
+        deletingAudio.value = false
+        return
+      }
 
       try {
         const updateRes = await fetch(`/api/v1/expressions/${props.item.id}/audio?speaker=${encodeURIComponent(speaker)}`, {
@@ -388,8 +411,11 @@ export default {
         props.item.audio_url = audio_url
         updateAudioList()
         updateCanAddAudio()
+        showDeleteAudioModal.value = false
       } catch (err) {
         console.error('Error removing audio:', err)
+      } finally {
+        deletingAudio.value = false
       }
     }
 
@@ -483,6 +509,9 @@ export default {
       showAudioRecorder,
       handleInlineAudioUpload,
       handleRemoveAudio,
+      showDeleteAudioModal,
+      deletingAudio,
+      executeRemoveAudio,
       playAudio,
       playingIndex,
       audioList,

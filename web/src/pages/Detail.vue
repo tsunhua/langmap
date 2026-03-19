@@ -355,6 +355,13 @@
       </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model="showConfirmModal"
+      :message="confirmMessage"
+      :loading="confirmLoading"
+      @confirm="executeConfirm"
+    />
   </div>
 </template>
 
@@ -367,10 +374,11 @@ import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
 import SmartSearch from '../components/SmartSearch.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'Detail',
-  components: { ExpressionCard, VersionHistory, CreateExpression, SmartSearch },
+  components: { ExpressionCard, VersionHistory, CreateExpression, SmartSearch, ConfirmModal },
   props: ['id'],
   setup(props) {
     const route = useRoute()
@@ -381,6 +389,29 @@ export default {
     const meanings = ref([])
     const currentUser = ref(null)
     const deleting = ref(false)
+
+    // Confirm Modal config
+    const showConfirmModal = ref(false)
+    const confirmType = ref('')
+    const confirmMessage = ref('')
+    const confirmPayload = ref(null)
+    const confirmLoading = ref(false)
+
+    async function executeConfirm() {
+      confirmLoading.value = true
+      try {
+        if (confirmType.value === 'unlink') {
+          await executeUnlink()
+        } else if (confirmType.value === 'removeFromGroup') {
+          await executeRemoveFromGroup()
+        } else if (confirmType.value === 'delete') {
+          await executeDelete()
+        }
+        showConfirmModal.value = false
+      } finally {
+        confirmLoading.value = false
+      }
+    }
 
     // Group-specific association mode
     const groupSearchModes = ref(new Set())
@@ -862,8 +893,14 @@ export default {
     }
 
     async function unlink(target) {
-      if (!confirm(t('confirm_unlink'))) return
+      confirmType.value = 'unlink'
+      confirmPayload.value = target
+      confirmMessage.value = t('confirm_unlink')
+      showConfirmModal.value = true
+    }
 
+    async function executeUnlink() {
+      const target = confirmPayload.value
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
@@ -983,8 +1020,14 @@ export default {
 
     // Remove expression from a group
     async function removeFromGroup(expressionId, meaningId) {
-      if (!confirm(t('confirm_remove_from_group'))) return;
+      confirmType.value = 'removeFromGroup'
+      confirmPayload.value = { expressionId, meaningId }
+      confirmMessage.value = t('confirm_remove_from_group')
+      showConfirmModal.value = true
+    }
 
+    async function executeRemoveFromGroup() {
+      const { expressionId, meaningId } = confirmPayload.value
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
@@ -1108,10 +1151,12 @@ export default {
     async function handleDelete() {
       if (!item.value) return
 
-      if (!confirm(t('confirm_delete_expression'))) {
-        return
-      }
+      confirmType.value = 'delete'
+      confirmMessage.value = t('confirm_delete_expression')
+      showConfirmModal.value = true
+    }
 
+    async function executeDelete() {
       deleting.value = true
       const token = localStorage.getItem('authToken')
       if (!token) {
@@ -1217,7 +1262,11 @@ export default {
       // Delete expression
       canDeleteExpression,
       deleting,
-      handleDelete
+      handleDelete,
+      showConfirmModal,
+      confirmMessage,
+      confirmLoading,
+      executeConfirm
     }
   }
 }

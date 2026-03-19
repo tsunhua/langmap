@@ -139,6 +139,16 @@
         </form>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      :message="deleteMessage"
+      :loading="deleting"
+      :loadingText="$t('deleting') || 'Deleting...'"
+      :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeDelete"
+    />
   </div>
 </template>
 
@@ -147,9 +157,11 @@ import { ref, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { collectionsApi } from '../api/index.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'Collections',
+  components: { ConfirmModal },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
@@ -163,6 +175,12 @@ export default {
     const currentId = ref(null)
     const activeTab = ref('my')
     const isLoggedIn = ref(!!localStorage.getItem('authToken'))
+
+    // Delete Confirmation
+    const showDeleteModal = ref(false)
+    const itemToDelete = ref(null)
+    const deleteMessage = ref('')
+    const deleting = ref(false)
 
     const form = reactive({
       name: '',
@@ -283,19 +301,29 @@ export default {
       }
     }
 
-    const confirmDelete = async (collection) => {
-      if (confirm(t('collections.deleteConfirm'))) {
-        try {
-          const deleteResult = await collectionsApi.delete(collection.id)
-          if (!deleteResult.success) {
-            console.error('Delete failed:', deleteResult.error || deleteResult.message)
-            alert(deleteResult.error || deleteResult.message || 'Failed to delete collection')
-            return
-          }
-          await fetchCollections()
-        } catch (error) {
-          console.error('Failed to delete collection:', error)
+    const confirmDelete = (collection) => {
+      itemToDelete.value = collection
+      deleteMessage.value = t('collections.deleteConfirm')
+      showDeleteModal.value = true
+    }
+
+    const executeDelete = async () => {
+      if (!itemToDelete.value) return
+      deleting.value = true
+      try {
+        const deleteResult = await collectionsApi.delete(itemToDelete.value.id)
+        if (!deleteResult.success) {
+          console.error('Delete failed:', deleteResult.error || deleteResult.message)
+          alert(deleteResult.error || deleteResult.message || 'Failed to delete collection')
+          deleting.value = false
+          return
         }
+        await fetchCollections()
+        showDeleteModal.value = false
+      } catch (error) {
+        console.error('Failed to delete collection:', error)
+      } finally {
+        deleting.value = false
       }
     }
 
@@ -325,6 +353,10 @@ export default {
       activeTab,
       isLoggedIn,
       itemsPerPage,
+      showDeleteModal,
+      deleteMessage,
+      deleting,
+      executeDelete,
       openCreateModal,
       openEditModal,
       closeModal,

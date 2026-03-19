@@ -396,5 +396,8 @@
   "some_expressions_failed": "部分詞句加失敗",
   "all_expressions_added_successfully": "所有詞句攏加成功",
   "failed_to_add_expressions": "加詞句失敗",
-  "failed_to_create_meaning_group": "建立詞句組失敗"
+  "failed_to_create_meaning_group": "建立詞句組失敗",
+  "confirm_action": "再確認下",
+  "confirm_delete": "確認刪掉",
+  "remove_item": "移掉項目"
 }

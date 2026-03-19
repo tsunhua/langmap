@@ -114,8 +114,64 @@
       </div>
     </div>
 
-    <!-- Edit Modal (Reusing logic if needed, simplify here) -->
-    <!-- ... Similar to MyCollections edit modal ... -->
+    <!-- Edit Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h2 class="text-xl font-bold mb-4">
+          {{ $t('edit_collection') || 'Edit Collection' }}
+        </h2>
+
+        <form @submit.prevent="saveCollection">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ $t('collection_name') || 'Collection Name' }} *
+            </label>
+            <input v-model="form.name" type="text" required
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :placeholder="$t('desc_placeholder') || 'Enter details...'" />
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ $t('description') || 'Description' }}
+            </label>
+            <textarea v-model="form.description" rows="3"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :placeholder="$t('desc_placeholder') || 'Enter details...'"></textarea>
+          </div>
+
+          <div class="mb-6">
+            <label class="flex items-center cursor-pointer">
+              <input v-model="form.is_public" type="checkbox" class="form-checkbox h-4 w-4 text-blue-600 rounded" />
+              <span class="ml-2 text-sm text-gray-700">{{ $t('public_access') || 'Public Access' }}</span>
+            </label>
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button type="button" @click="closeEditModal"
+              class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+              {{ $t('cancel') || 'Cancel' }}
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              :disabled="submitting">
+              {{ submitting ? ($t('saving') || 'Saving...') : ($t('save') || 'Save') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      :message="deleteModalMessage"
+      :loading="submitting"
+      :loadingText="$t('deleting') || 'Deleting...'"
+      :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeDelete"
+      @cancel="closeDeleteModal"
+    />
+
     <!-- Export Modal -->
     <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
@@ -180,15 +236,19 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { collectionsApi } from '../api/index.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'CollectionDetail',
+  components: { ConfirmModal },
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const { t } = useI18n()
 
     const collectionId = parseInt(route.params.id)
     const collection = ref(null)
@@ -272,13 +332,28 @@ export default {
       }
     }
 
-    const removeItem = async (item) => {
-      if (confirm(t('remove_item_confirm'))) {
+    const showDeleteModal = ref(false)
+    const deleteModalType = ref('') // 'collection' or 'item'
+    const deleteModalMessage = ref('')
+    const targetItemToDelete = ref(null)
+
+    const closeDeleteModal = () => {
+      showDeleteModal.value = false
+      targetItemToDelete.value = null
+    }
+
+    const executeDelete = async () => {
+      if (deleteModalType.value === 'item') {
+        const item = targetItemToDelete.value
+        if (!item) return
+        
+        submitting.value = true
         try {
           const result = await collectionsApi.removeItem(collectionId, item.expression_id)
           if (result.success) {
             // Optimistically remove from list
             items.value = items.value.filter(i => i.id !== item.id)
+            closeDeleteModal()
           } else {
             console.error('Remove failed:', result.error || result.message)
             alert(result.error || result.message || 'Failed to remove item')
@@ -286,12 +361,11 @@ export default {
         } catch (error) {
           console.error('Failed to remove item:', error)
           alert('Failed to remove item')
+        } finally {
+          submitting.value = false
         }
-      }
-    }
-
-    const confirmDelete = async () => {
-      if (confirm(t('delete_confirm'))) {
+      } else if (deleteModalType.value === 'collection') {
+        submitting.value = true
         try {
           const result = await collectionsApi.delete(collectionId)
           if (result.success) {
@@ -299,17 +373,71 @@ export default {
           } else {
             console.error('Delete failed:', result.error || result.message)
             alert(result.error || result.message || 'Failed to delete collection')
+            submitting.value = false
           }
         } catch (error) {
           console.error('Failed to delete collection:', error)
           alert('Failed to delete collection')
+          submitting.value = false
         }
       }
     }
 
+    const removeItem = (item) => {
+      deleteModalType.value = 'item'
+      deleteModalMessage.value = t('remove_item_confirm') || 'Are you sure you want to remove this item?'
+      targetItemToDelete.value = item
+      showDeleteModal.value = true
+    }
+
+    const confirmDelete = () => {
+      deleteModalType.value = 'collection'
+      deleteModalMessage.value = t('delete_confirm') || 'Are you sure you want to delete this collection?'
+      showDeleteModal.value = true
+    }
+
+    const showEditModal = ref(false)
+    const submitting = ref(false)
+    const form = reactive({
+      name: '',
+      description: '',
+      is_public: false
+    })
+
     const openEditModal = () => {
-      // Logic to open edit modal (can be shared or separate)
-      alert('Edit functionality to be implemented similar to list page')
+      if (!collection.value) return
+      form.name = collection.value.name
+      form.description = collection.value.description || ''
+      form.is_public = !!collection.value.is_public
+      showEditModal.value = true
+    }
+
+    const closeEditModal = () => {
+      showEditModal.value = false
+    }
+
+    const saveCollection = async () => {
+      if (!form.name.trim()) return
+      submitting.value = true
+      try {
+        const data = {
+          name: form.name,
+          description: form.description,
+          is_public: form.is_public ? 1 : 0
+        }
+        const result = await collectionsApi.update(collectionId, data)
+        if (result.success && result.data) {
+          collection.value = result.data
+          closeEditModal()
+        } else {
+          alert(result.error || result.message || 'Update failed')
+        }
+      } catch (error) {
+        console.error('Failed to save collection:', error)
+        alert('Failed to update collection')
+      } finally {
+        submitting.value = false
+      }
     }
 
     const formatDate = (dateString) => {
@@ -452,6 +580,11 @@ export default {
       removeItem,
       confirmDelete,
       openEditModal,
+      closeEditModal,
+      saveCollection,
+      showEditModal,
+      submitting,
+      form,
       formatDate,
       currentPage,
       totalPages,
@@ -463,7 +596,12 @@ export default {
       exportState,
       startExport,
       downloadFile,
-      resetExport
+      resetExport,
+      // Delete logic
+      showDeleteModal,
+      deleteModalMessage,
+      closeDeleteModal,
+      executeDelete
     }
   }
 }

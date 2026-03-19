@@ -577,18 +577,18 @@ export class D1DatabaseService extends AbstractDatabaseService {
       ).bind(...bindValues).first<Expression>()
 
       let resultExpression: Expression;
-      
+
       if (!result) {
         // Expression already exists, fetch it
         const existing = await this.db.prepare(
           'SELECT * FROM expressions WHERE id = ?'
         ).bind(id).first<Expression>()
-        
+
         if (!existing) {
           console.error('Failed to fetch existing expression:', id);
           throw new Error('Failed to fetch existing expression')
         }
-        
+
         resultExpression = existing;
       } else {
         // New expression inserted, update language_stats
@@ -600,7 +600,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
         // Clear statistics and heatmap caches as we've added a new expression
         this.clearStatisticsCache();
         this.clearHeatmapCache();
-        
+
         resultExpression = result;
       }
 
@@ -620,7 +620,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>> {
     const results: Record<string, number> = {}
     const now = new Date().toISOString()
-    
+
     // Calculate IDs for all expressions
     const expressionsWithIds = expressions.map(expr => ({
       ...expr,
@@ -1626,13 +1626,13 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const handbook = await this.db.prepare(
       'SELECT renders FROM handbooks WHERE id = ?'
     ).bind(id).first<Handbook>()
-    
-    if (!handbook || !handbook.renders) return null 
-    
+
+    if (!handbook || !handbook.renders) return null
+
     try {
       const renders = JSON.parse(handbook.renders)
       const render = renders[targetLang]
-      if (!render) return null 
+      if (!render) return null
 
       // Check TTL (24 hours)
       const renderedTime = render.at
@@ -1772,11 +1772,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
       h = Math.imul(h, 0x01000193); // FNV prime
     }
     h = h >>> 0; // convert to unsigned int32
-    
+
     // Ensure we don't get 0 as ID (minimum ID should be 1)
     return (h % (2 ** 31 - 1)) + 1;
   }
-  
+
   /**
    * 合并词句组
    * 将源词句组中的所有词句添加到目标词句组，然后删除源词句组

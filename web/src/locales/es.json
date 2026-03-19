@@ -343,7 +343,7 @@
   "please_select_language": "Seleccionar idioma",
   "please_enter_expression": "Ingresar expresión",
   "please_fill_all_fields": "Por favor complete todos los campos",
-  "login_required": "Por favor inicie sesión para añadir expresiones",
+  "login_required": "Debes iniciar sesión para realizar esta acción",
   "failed_to_add_expression": "Error al añadir expresión",
   "added_to_pending_list": "Añadido a la lista pendiente",
   "some_expressions_failed": "Algunas expresiones fallaron al añadir",
@@ -400,6 +400,7 @@
   "underline": "Subrayado",
   "undo": "Deshacer",
   "write": "Escribir",
-  "language_already_exists": "Este idioma ya existe en el grupo",
-  "login_required": "Debes iniciar sesión para realizar esta acción"
+  "confirm_action": "Confirm Action",
+  "confirm_delete": "Confirm Delete",
+  "remove_item": "Remove Item"
 }

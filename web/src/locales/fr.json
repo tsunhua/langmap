@@ -343,7 +343,7 @@
   "please_select_language": "Sélectionner la langue",
   "please_enter_expression": "Entrer l'expression",
   "please_fill_all_fields": "Veuillez remplir tous les champs",
-  "login_required": "Veuillez vous connecter pour ajouter des expressions",
+  "login_required": "Vous devez être connecté pour effectuer cette action",
   "added_to_pending_list": "Ajouté à la liste en attente",
   "some_expressions_failed": "Certaines expressions ont échoué à être ajoutées",
   "all_expressions_added_successfully": "Toutes les expressions ont été ajoutées avec succès",
@@ -400,6 +400,7 @@
   "underline": "Souligné",
   "undo": "Annuler",
   "write": "Écrire",
-  "language_already_exists": "Cette langue existe déjà dans le groupe",
-  "login_required": "Vous devez être connecté pour effectuer cette action"
+  "confirm_action": "Confirm Action",
+  "confirm_delete": "Confirm Delete",
+  "remove_item": "Remove Item"
 }

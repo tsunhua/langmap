@@ -77,6 +77,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model="showConfirmModal"
+      :message="$t('collections.redirectConfirm') || 'Go to My Collections to create a new one? Current progress won\'t be saved.'"
+      :confirmText="$t('confirm') || 'Confirm'"
+      @confirm="executeCreateNewCollection"
+    />
   </div>
 </template>
 
@@ -85,9 +93,11 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { collectionsApi } from '../api/index.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'AddToCollectionModal',
+  components: { ConfirmModal },
   props: {
     visible: {
       type: Boolean,
@@ -109,6 +119,7 @@ export default {
     const loading = ref(false)
     const submitting = ref(false)
     const note = ref('')
+    const showConfirmModal = ref(false)
 
     const loadCollections = async () => {
       loading.value = true
@@ -153,9 +164,12 @@ export default {
     }
 
     const createNewCollection = () => {
-      if (confirm(t('collections.redirectConfirm') || 'Go to My Collections to create a new one? Current progress won\'t be saved.')) {
-        router.push('/collections')
-      }
+      showConfirmModal.value = true
+    }
+
+    const executeCreateNewCollection = () => {
+      showConfirmModal.value = false
+      router.push('/collections')
     }
 
     const save = async () => {
@@ -193,8 +207,10 @@ export default {
       loading,
       submitting,
       note,
+      showConfirmModal,
       toggleSelection,
       createNewCollection,
+      executeCreateNewCollection,
       save
     }
   }
