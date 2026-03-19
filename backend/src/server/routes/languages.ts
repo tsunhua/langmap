@@ -8,6 +8,21 @@ import { success, created, badRequest, notFound, internalError } from '../utils/
 
 const languagesRoutes = new Hono<{ Bindings: Bindings, Variables: { user: JWTPayload } }>()
 
+languagesRoutes.get('/:code/stats', cacheMiddleware(600), async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const code = c.req.param('code')
+    const stats = await db.languages.getLanguageStats(code)
+    if (!stats) {
+      return success(c, { expression_count: 0 })
+    }
+    return success(c, stats)
+  } catch (error: any) {
+    console.error('Error in GET /languages/:code/stats:', error)
+    return internalError(c, 'Failed to fetch language stats')
+  }
+})
+
 languagesRoutes.get('/', cacheMiddleware(1800), async (c) => {
   try {
     const db = createDatabaseService(c.env)

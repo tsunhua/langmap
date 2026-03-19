@@ -44,6 +44,23 @@
       </div>
     </div>
 
+    <!-- Language Statistics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div v-if="loadingStats" class="animate-pulse space-y-4">
+        <div class="h-12 bg-gray-200 rounded w-full"></div>
+      </div>
+      <div v-else class="flex items-center justify-center">
+        <div class="text-center">
+          <div class="text-4xl font-bold text-blue-600 mb-1">
+            {{ languageStats.expression_count.toLocaleString() }}
+          </div>
+          <div class="text-gray-500 text-sm font-medium">
+            {{ $t('expressions') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Search -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
       <input v-model="searchQuery" type="text" :placeholder="`Search in ${languageName || languageCode}`"
@@ -129,6 +146,8 @@ export default {
     const languageName = ref('')
     const languageGroupName = ref('')
     const loadingInfo = ref(true)
+    const languageStats = ref({ expression_count: 0 })
+    const loadingStats = ref(true)
     const expressions = ref([])
     const loading = ref(true)
     const total = ref(0)
@@ -163,6 +182,20 @@ export default {
         console.error('Failed to fetch language info:', error)
       } finally {
         loadingInfo.value = false
+      }
+    }
+
+    const fetchLanguageStats = async () => {
+      loadingStats.value = true
+      try {
+        const response = await fetch(`/api/v1/languages/${languageCode.value}/stats`)
+        const result = await response.json()
+        languageStats.value = result.success ? result.data : result
+      } catch (error) {
+        console.error('Failed to fetch language stats:', error)
+        languageStats.value = { expression_count: 0 }
+      } finally {
+        loadingStats.value = false
       }
     }
 
@@ -377,6 +410,7 @@ export default {
 
     onMounted(() => {
       fetchLanguageInfo()
+      fetchLanguageStats()
       fetchExpressions()
     })
 
@@ -390,8 +424,9 @@ export default {
         excludeTagPrefix.value = ''
         currentPage.value = 1
         expressions.value = []
-        // Fetch new language info and expressions
+        // Fetch new language info, stats and expressions
         fetchLanguageInfo()
+        fetchLanguageStats()
         fetchExpressions()
       }
     })
@@ -408,6 +443,8 @@ export default {
       languageName,
       languageGroupName,
       loadingInfo,
+      languageStats,
+      loadingStats,
       expressions,
       loading,
       total,

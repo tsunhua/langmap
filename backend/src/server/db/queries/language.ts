@@ -75,4 +75,10 @@ export class LanguageQueries {
     ).bind(id).run()
     return (result.meta?.changes ?? 0) > 0
   }
+
+  async getLanguageStats(code: string): Promise<{ expression_count: number } | null> {
+    return await this.db.prepare(
+      'SELECT expression_count FROM language_stats WHERE language_code = ?'
+    ).bind(code).first<{ expression_count: number }>() || null
+  }
 }
