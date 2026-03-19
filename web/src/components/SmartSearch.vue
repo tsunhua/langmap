@@ -67,11 +67,11 @@ export default {
       type: Number,
       default: null
     },
-    targetMeaningId: {
+    targetGroupId: {
       type: Number,
       default: null
     },
-    currentMeaningIds: {
+    currentGroupIds: {
       type: Array,
       default: () => []
     }
@@ -115,7 +115,6 @@ export default {
       try {
         const params = new URLSearchParams()
         params.set('q', searchQuery.value)
-        params.set('include_meanings', 'true')
 
         const url = `/api/v1/search?${params.toString()}`
         const res = await fetch(url)
@@ -153,14 +152,14 @@ export default {
     }
 
     const isAlreadyAssociated = (result) => {
-      if (!props.currentMeaningIds || props.currentMeaningIds.length === 0) {
+      if (!props.currentGroupIds || props.currentGroupIds.length === 0) {
         return false
       }
-      if (!result.meanings || result.meanings.length === 0) {
+      if (!result.groups || result.groups.length === 0) {
         return false
       }
-      const resultMeaningIds = result.meanings.map(m => m.id)
-      return resultMeaningIds.some(id => props.currentMeaningIds.includes(id))
+      const resultGroupIds = result.groups.map(g => g.id)
+      return resultGroupIds.some(id => props.currentGroupIds.includes(id))
     }
 
     watch(() => props.excludeId, () => {

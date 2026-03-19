@@ -80,11 +80,6 @@ export const expressionsApi = {
     return response.data as ApiResponse<any>
   },
 
-  async associate(expressionIds: number[]): Promise<ApiResponse<{ group_id: number; updated_count: number }>> {
-    const response = await apiClient.post('/expressions/associate', { expression_ids: expressionIds })
-    return response.data as ApiResponse<{ group_id: number; updated_count: number }>
-  },
-
   async update(id: number, data: UpdateExpressionData): Promise<ApiResponse<Expression>> {
     const response = await apiClient.patch(`/expressions/${id}`, data)
     return response.data as ApiResponse<Expression>

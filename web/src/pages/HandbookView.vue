@@ -112,10 +112,10 @@
            <audio ref="audioPlayer" class="hidden"></audio>
 
             <!-- Expression Group Modal -->
-            <ExpressionGroupModal
+              <ExpressionGroupModal
               :visible="showExpressionGroupModal"
               :expression-id="selectedExpressionId"
-              :meaning-id="selectedMeaningId"
+              :group-id="selectedGroupId"
               :languages="modalLanguages"
               @close="showExpressionGroupModal = false"
               @updated="handleExpressionGroupUpdated"
@@ -169,7 +169,7 @@
        // Expression group modal
        const showExpressionGroupModal = ref(false)
        const selectedExpressionId = ref(null)
-       const selectedMeaningId = ref(null)
+       const selectedGroupId = ref(null)
 
        const setInitialLanguages = () => {
          if (handbook.value?.target_lang) {
@@ -351,9 +351,9 @@
       }
 
       const handleExpressionClick = (event) => {
-        const { id, meaningId } = event.detail
+        const { id, groupId } = event.detail
         selectedExpressionId.value = id
-        selectedMeaningId.value = meaningId
+        selectedGroupId.value = groupId
         showExpressionGroupModal.value = true
       }
 
@@ -519,7 +519,7 @@
            sourceLanguageName,
            showExpressionGroupModal,
            selectedExpressionId,
-           selectedMeaningId,
+           selectedGroupId,
            handleExpressionGroupUpdated,
            handleRerender,
            contentContainer,

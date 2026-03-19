@@ -625,7 +625,7 @@ export default {
     // Parse all metadata required for preview from content
     const extractRequiredMetadata = async (content, title = '', description = '', sourceLang = '') => {
       const expressionsToFetch = [] // { id, text, lang }
-      const meaningIdsToFetch = new Set()
+      const groupIdsToFetch = new Set()
 
       // Pre-wrap title if it doesn't contain tags (match backend behavior)
       let titleToExtract = title
@@ -650,25 +650,25 @@ export default {
           expressionsToFetch.push({ id, text, lang })
         }
         if (mid) {
-          meaningIdsToFetch.add(mid)
+          groupIdsToFetch.add(mid)
         }
       }
 
-      return { expressionsToFetch, meaningIdsToFetch: Array.from(meaningIdsToFetch) }
+      return { expressionsToFetch, groupIdsToFetch: Array.from(groupIdsToFetch) }
     }
     // Store expression data for event handling
     const expressionClickHandlers = ref(new Map())
 
-    const renderItem = (id, text, meanings, audioUrl, isTitle = false, meaningId = null) => {
+    const renderItem = (id, text, groups, audioUrl, isTitle = false, groupId = null) => {
       let meaningsHtml = ''
-      if (meanings && meanings.length > 0) {
+      if (groups && groups.length > 0) {
         const translationsByTargetLang = {}
-        meanings.forEach(m => {
-          if (!m.targetLang) return
-          if (!translationsByTargetLang[m.targetLang]) {
-            translationsByTargetLang[m.targetLang] = []
+        groups.forEach(g => {
+          if (!g.targetLang) return
+          if (!translationsByTargetLang[g.targetLang]) {
+            translationsByTargetLang[g.targetLang] = []
           }
-          translationsByTargetLang[m.targetLang].push(m.text)
+          translationsByTargetLang[g.targetLang].push(g.text)
         })
 
         const hasTranslations = Object.keys(translationsByTargetLang).length > 0
@@ -699,7 +699,7 @@ export default {
       const key = `expr-${id}`
       expressionClickHandlers.value.set(key, { id, audioUrl })
 
-      return `<span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}" data-key="${key}" data-meaning-id="${meaningId || ''}">${text}${meaningsHtml}${audioIcon}</span>`
+      return `<span class="handbook-item" data-type="${isTitle ? 'title' : 'content'}" data-key="${key}" data-group-id="${groupId || ''}">${text}${meaningsHtml}${audioIcon}</span>`
     }
 
     // Handle click on rendered expressions
@@ -750,13 +750,13 @@ export default {
             const id = stableExpressionId(term, lang)
             const expr = expressionMap[id]
             if (expr) {
-              const midsToUse = mid ? [mid] : (expr.meanings?.map(m => m.id) || [])
-              const translations = collectTranslations(expressionMap, midsToUse)
+              const gidsToUse = mid ? [mid] : (expr.groups?.map(g => g.id) || [])
+              const translations = collectTranslations(expressionMap, gidsToUse)
               let audioUrl = ''
               if (expr.audio_url) {
                 try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
               }
-              return renderItem(id, term, translations, audioUrl, false, mid || (expr.meanings?.[0]?.id))
+              return renderItem(id, term, translations, audioUrl, false, mid || (expr.groups?.[0]?.id))
             }
             return `<span class="handbook-item-undefined">${term}</span>`
           })
@@ -767,12 +767,12 @@ export default {
       return finalContent
     }
 
-    // Helper: collect translations for given meaning IDs across all instruction languages
-    const collectTranslations = (expressionMap, meaningIds) => {
+    // Helper: collect translations for given group IDs across all instruction languages
+    const collectTranslations = (expressionMap, groupIds) => {
       const translations = []
-      meaningIds.forEach(mid => {
+      groupIds.forEach(gid => {
         form.instruction_langs.forEach(targetLang => {
-          const cacheKey = `trans_${targetLang}_${mid}`
+          const cacheKey = `trans_${targetLang}_${gid}`
           if (expressionMap[cacheKey] && expressionMap[cacheKey].text) {
             translations.push({ text: expressionMap[cacheKey].text, targetLang })
           }
@@ -790,13 +790,13 @@ export default {
         const id = stableExpressionId(term, lang)
         const expr = expressionMap[id]
         if (expr) {
-          const midsToUse = mid ? [mid] : (expr.meanings?.map(m => m.id) || [])
-          const translations = collectTranslations(expressionMap, midsToUse)
+          const gidsToUse = mid ? [mid] : (expr.groups?.map(g => g.id) || [])
+          const translations = collectTranslations(expressionMap, gidsToUse)
           let audioUrl = ''
           if (expr.audio_url) {
             try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
           }
-          return renderItem(id, term, translations, audioUrl, isTitle, mid || (expr.meanings?.[0]?.id))
+          return renderItem(id, term, translations, audioUrl, isTitle, mid || (expr.groups?.[0]?.id))
         }
         return `<span class="handbook-item-undefined">${term}</span>`
       })
@@ -806,7 +806,7 @@ export default {
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch, meaningIdsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
+      const { expressionsToFetch, groupIdsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
 
       if (expressionsToFetch.length === 0) {
         renderedContent.value = buildRenderedContent(form.content, {}, form.content_lang)
@@ -842,12 +842,12 @@ export default {
         }
       }
 
-      // Phase 2: Collect all unique meaning IDs
-      const allMids = [...meaningIdsToFetch]
+      // Phase 2: Collect all unique group IDs
+      const allMids = [...groupIdsToFetch]
       expressionsToFetch.forEach(e => {
         const expr = translationCache.value[e.id]
-        expr?.meanings?.forEach(m => {
-          if (!allMids.includes(m.id)) allMids.push(m.id)
+        expr?.groups?.forEach(g => {
+          if (!allMids.includes(g.id)) allMids.push(g.id)
         })
       })
 
@@ -864,25 +864,25 @@ export default {
               continue
             }
 
-            // Merge multiple translations for same meaning_id using | separator (match backend)
-            const transByMeaning = {}
+            // Merge multiple translations for same group_id using | separator (match backend)
+            const transByGroup = {}
             translations.forEach(trans => {
-                const mids = trans.meanings?.map(m => m.id).filter(id => allMids.includes(id)) || []
-                if (mids.length === 0 && trans.meaning_id) mids.push(trans.meaning_id)
-                
-                mids.forEach(mid => {
-                  if (!transByMeaning[mid]) {
-                  transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
+                const gids = trans.groups?.map(g => g.id).filter(id => allMids.includes(id)) || []
+                if (gids.length === 0 && trans.group_id) gids.push(trans.group_id)
+
+                gids.forEach(gid => {
+                  if (!transByGroup[gid]) {
+                  transByGroup[gid] = { text: '', audio_url: trans.audio_url || '' }
                 }
-                transByMeaning[mid].text = transByMeaning[mid].text
-                  ? `${transByMeaning[mid].text} | ${trans.text}`
+                transByGroup[gid].text = transByGroup[gid].text
+                  ? `${transByGroup[gid].text} | ${trans.text}`
                   : trans.text
               })
             })
 
             // Store merged results
-            Object.entries(transByMeaning).forEach(([mid, merged]) => {
-              const cacheKey = `trans_${targetLang}_${mid}`
+            Object.entries(transByGroup).forEach(([gid, merged]) => {
+              const cacheKey = `trans_${targetLang}_${gid}`
               translationCache.value[cacheKey] = merged
             })
             

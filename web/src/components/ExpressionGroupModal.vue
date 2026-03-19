@@ -169,7 +169,7 @@ export default {
       type: Number,
       default: null
     },
-    meaningId: {
+    groupId: {
       type: Number,
       default: null
     },
@@ -193,8 +193,8 @@ export default {
     const message = ref('')
     const messageType = ref('success')
 
-    const hasMeaningGroup = computed(() => {
-      return props.meaningId !== null && props.meaningId !== undefined
+    const hasGroup = computed(() => {
+      return props.groupId !== null && props.groupId !== undefined
     })
 
     const displayLanguages = computed(() => {
@@ -215,20 +215,20 @@ export default {
       console.log('fetchGroupMembers called:', {
         visible: props.visible,
         expressionId: props.expressionId,
-        meaningId: props.meaningId,
+        groupId: props.groupId,
         languages: props.languages,
         displayLanguagesLength: displayLanguages.value.length
       })
       try {
-        if (props.meaningId) {
-          const res = await fetch(`/api/v1/expressions?meaning_id=${props.meaningId}&skip=0&limit=100`)
+        if (props.groupId) {
+          const res = await fetch(`/api/v1/expressions?group_id=${props.groupId}&skip=0&limit=100`)
           if (res.ok) {
             const result = await res.json()
             expressions.value = result.success ? result.data : result
           } else {
             expressions.value = []
           }
-        } 
+        }
         else if (props.expressionId) {
           const res = await fetch(`/api/v1/expressions/${props.expressionId}`)
           if (res.ok) {
@@ -306,8 +306,8 @@ export default {
           return
         }
 
-        if (props.meaningId) {
-          const promises = pendingExpressions.value.map(pending => 
+        if (props.groupId) {
+          const promises = pendingExpressions.value.map(pending =>
             fetch('/api/v1/expressions', {
               method: 'POST',
               headers: {
@@ -317,7 +317,7 @@ export default {
               body: JSON.stringify({
                 text: pending.text,
                 language_code: pending.language_code,
-                meaning_id: props.meaningId
+                group_id: props.groupId
               })
             })
           )
@@ -420,7 +420,7 @@ export default {
       adding,
       message,
       messageType,
-      hasMeaningGroup,
+      hasGroup,
       displayLanguages,
       fetchGroupMembers,
       getLanguageName,

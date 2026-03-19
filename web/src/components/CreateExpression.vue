@@ -157,7 +157,7 @@ export default {
       type: Boolean,
       default: false
     },
-    initialMeaningId: {
+    initialGroupId: {
       type: Number,
       default: null
     },
@@ -591,17 +591,17 @@ export default {
         const result = await res.json()
         const created = result.success ? result.data : result
  
-        // 如果传入了 initialMeaningId，则自动关联到该含义组
-        if (props.initialMeaningId) {
+        // 如果传入了 initialGroupId，则自动关联到该词句组
+        if (props.initialGroupId) {
           try {
-            const associateRes = await fetch(`/api/v1/expressions/${created.id}/meanings`, {
+            const associateRes = await fetch(`/api/v1/expressions/${created.id}/associate`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
               },
               body: JSON.stringify({
-                meaning_id: props.initialMeaningId
+                group_id: props.initialGroupId
               })
             })
 
@@ -614,7 +614,7 @@ export default {
                 return;
               }
               const errorData = await associateRes.json()
-              throw new Error(errorData.error || 'Failed to associate expression to meaning group')
+              throw new Error(errorData.error || 'Failed to associate expression to group')
             }
           } catch (e) {
             error.value = String(e)

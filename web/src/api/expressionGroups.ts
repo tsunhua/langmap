@@ -82,8 +82,4 @@ export const expressionGroupsApi = {
     return response.data as ApiResponse<ExpressionGroup[]>
   },
 
-  async linkExpressions(expressionIds: number[]): Promise<ApiResponse<{ group_id: number; updated_count: number }>> {
-    const response = await apiClient.post('/expressions/associate', { expression_ids: expressionIds })
-    return response.data as ApiResponse<{ group_id: number; updated_count: number }>
-  }
 }
