@@ -503,9 +503,9 @@ export default {
             form.description = data.description || ''
             form.content = data.content
             form.content_lang = data.source_lang || ''
-            form.instruction_langs = data.target_langs || ''
-            ? data.target_lang.split(',').filter(l => l)
-            : []
+            form.instruction_langs = data.target_langs
+              ? data.target_lang.split(',').filter(l => l)
+              : []
           form.is_public = !!data.is_public
           form.instruction_lang_prefix = data.instruction_lang_prefix || ''
 
@@ -822,13 +822,13 @@ export default {
         previewLoading.value = true
         try {
           const result = await handbooksApi.getExpressions('', uncachedExprs.map(e => e.id))
-          if (result.success && result.data) {
+          if (result.success && Array.isArray(result.data)) {
             const expressions = result.data
             expressions.forEach(expr => {
               translationCache.value[expr.id] = expr
             })
           } else {
-            console.error('Failed to fetch expressions:', result.error || result.message)
+            console.error('Failed to fetch expressions:', result)
           }
           uncachedExprs.forEach(e => {
             if (!(e.id in translationCache.value)) {
@@ -857,7 +857,7 @@ export default {
         try {
           for (const targetLang of form.instruction_langs) {
             const result = await handbooksApi.getExpressions(targetLang, allMids)
-            const translations = result.success && result.data ? result.data : []
+            const translations = result.success && Array.isArray(result.data) ? result.data : []
 
             if (!result.success) {
               console.error('Failed to fetch expressions:', result.error || result.message)

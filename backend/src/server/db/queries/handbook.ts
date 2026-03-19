@@ -118,31 +118,52 @@ export class HandbookQueries {
   }
 
   async getRender(id: number, targetLang: string): Promise<any | null> {
-    return await this.db.prepare(
-      'SELECT * FROM handbook_renders WHERE handbook_id = ? AND target_lang = ?'
-    ).bind(id, targetLang).first()
+    const result = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(id).first<{ renders: string }>()
+    
+    if (!result?.renders) return null
+    
+    try {
+      const renders = JSON.parse(result.renders)
+      return renders[targetLang] || null
+    } catch (e) {
+      console.error('Failed to parse renders:', e)
+      return null
+    }
   }
 
   async saveRender(data: { handbook_id: number, target_lang: string, rendered_title: string, rendered_description: string, rendered_content: string }): Promise<void> {
+    const currentResult = await this.db.prepare(
+      'SELECT renders FROM handbooks WHERE id = ?'
+    ).bind(data.handbook_id).first<{ renders: string }>()
+    
+    let renders: any = {}
+    if (currentResult?.renders) {
+      try {
+        renders = JSON.parse(currentResult.renders)
+      } catch (e) {
+        console.error('Failed to parse current renders:', e)
+      }
+    }
+    
+    renders[data.target_lang] = {
+      rendered_title: data.rendered_title,
+      rendered_description: data.rendered_description,
+      rendered_content: data.rendered_content
+    }
+    
     await this.db.prepare(
-      `INSERT OR REPLACE INTO handbook_renders (
-        handbook_id, target_lang, rendered_title, rendered_description, rendered_content
-      ) VALUES (?, ?, ?, ?, ?)`
-    ).bind(
-      data.handbook_id,
-      data.target_lang,
-      data.rendered_title,
-      data.rendered_description,
-      data.rendered_content
-    ).run()
+      'UPDATE handbooks SET renders = ? WHERE id = ?'
+    ).bind(JSON.stringify(renders), data.handbook_id).run()
   }
 
   prepareInvalidateRenders(id: number) {
-    return this.db.prepare('DELETE FROM handbook_renders WHERE handbook_id = ?').bind(id)
+    return this.db.prepare('UPDATE handbooks SET renders = ? WHERE id = ?').bind('{}', id)
   }
 
   prepareDeleteRenders(id: number) {
-    return this.db.prepare('DELETE FROM handbook_renders WHERE handbook_id = ?').bind(id)
+    return this.db.prepare('UPDATE handbooks SET renders = ? WHERE id = ?').bind('{}', id)
   }
 
   prepareDeleteHandbook(id: number) {

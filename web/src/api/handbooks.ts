@@ -106,9 +106,12 @@ export const handbooksApi = {
       if (languageCode) params.language = languageCode
  
       const response = await apiClient.get('/expressions', { params })
-      const responseData = response.data as ApiResponse<any[]>
-      if (responseData.data) {
-        allResults.push(...responseData.data)
+      const responseData = response.data as any
+      if (responseData.success && responseData.data) {
+        const items = Array.isArray(responseData.data) ? responseData.data : responseData.data.items || []
+        if (Array.isArray(items)) {
+          allResults.push(...items)
+        }
       }
     }
  
