@@ -377,10 +377,11 @@ export default {
         if (statsRes.ok) {
           const statsData = await statsRes.json()
           console.log('Received statistics data:', statsData);
+          const data = statsData.data || statsData
           stats.value = {
-            totalExpressions: statsData.total_expressions,
-            totalLanguages: statsData.total_languages,
-            totalRegions: statsData.total_regions
+            totalExpressions: data.total_expressions,
+            totalLanguages: data.total_languages,
+            totalRegions: data.total_regions
           }
           console.log('Updated stats value:', stats.value);
         } else {

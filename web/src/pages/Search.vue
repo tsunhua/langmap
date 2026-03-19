@@ -100,8 +100,9 @@ export default {
         // no language selector in MVP; server will return cross-language matches via meanings
         const res = await fetch(`/api/v1/search?${params.toString()}`)
         if (!res.ok) throw new Error('search failed')
-        const data = await res.json()
-        items.value = data
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        items.value = response.data || response || []
       } catch (e) {
         console.error(e)
         items.value = []

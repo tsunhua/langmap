@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { CollectionService } from '../services/collection.js'
 import { createDatabaseService } from '../db/index.js'
-import type { Bindings, JWTPayload } from '../types/bindings.js'
+import type { Bindings } from '../types/bindings.js'
+import type { JWTPayload } from '../types/auth.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import { createCollectionSchema, collectionsQuerySchema } from '../schemas/collection.js'
 import { success, created, badRequest, forbidden, notFound, internalError } from '../utils/response.js'
@@ -24,7 +25,7 @@ collectionsRoutes.get('/', optionalAuth, async (c) => {
       userId = user.id
     }
 
-    if (isPublic === false && (!user || userId !== user.id)) {
+    if (isPublic === false && (!user || (Number(userId) !== Number(user.id) && user.role !== 'admin'))) {
       return forbidden(c, 'Access denied to private collections')
     }
 
@@ -94,7 +95,8 @@ collectionsRoutes.get('/:id', optionalAuth, async (c) => {
 
     if (!collection.is_public) {
       const user = c.get('user')
-      if (!user || collection.user_id !== user.id) {
+      console.log(user, collection)
+      if (!user || (Number(collection.user_id) !== Number(user.id) && user.role !== 'admin')) {
         return forbidden(c, 'Access denied')
       }
     }
@@ -119,7 +121,7 @@ collectionsRoutes.put('/:id', requireAuth, async (c) => {
     const existing = await db.getCollectionById(id)
     if (!existing) return notFound(c, 'Collection')
 
-    if (existing.user_id !== user.id) {
+    if (Number(existing.user_id) !== Number(user.id) && user.role !== 'admin') {
       return forbidden(c, 'Access denied')
     }
 
@@ -143,7 +145,7 @@ collectionsRoutes.delete('/:id', requireAuth, async (c) => {
     const existing = await db.getCollectionById(id)
     if (!existing) return notFound(c, 'Collection')
 
-    if (existing.user_id !== user.id) {
+    if (Number(existing.user_id) !== Number(user.id) && user.role !== 'admin') {
       return forbidden(c, 'Access denied')
     }
 
@@ -169,7 +171,7 @@ collectionsRoutes.get('/:id/items', optionalAuth, async (c) => {
 
     const user = c.get('user')
     if (!collection.is_public) {
-      if (!user || collection.user_id !== user.id) {
+      if (!user || (Number(collection.user_id) !== Number(user.id) && user.role !== 'admin')) {
         return forbidden(c, 'Access denied')
       }
     }
@@ -204,7 +206,7 @@ collectionsRoutes.post('/:id/items', requireAuth, async (c) => {
     const collection = await db.getCollectionById(id)
     if (!collection) return notFound(c, 'Collection')
 
-    if (collection.user_id !== user.id) {
+    if (Number(collection.user_id) !== Number(user.id) && user.role !== 'admin') {
       return forbidden(c, 'Access denied')
     }
 
@@ -233,7 +235,7 @@ collectionsRoutes.delete('/:id/items/:expressionId', requireAuth, async (c) => {
     const collection = await db.getCollectionById(id)
     if (!collection) return notFound(c, 'Collection')
 
-    if (collection.user_id !== user.id) {
+    if (Number(collection.user_id) !== Number(user.id) && user.role !== 'admin') {
       return forbidden(c, 'Access denied')
     }
 

@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { fetchUILocale, fetchLanguages } from './services/languageService.js'
+import { languagesApi } from './api/index.ts'
 
 // Dynamically import all locale files using Vite's import.meta.glob
 // This will automatically include all .json files from locales directory
@@ -40,7 +40,8 @@ const dynamicMessagesCache = {}
 // Initialize supported languages
 async function initializeSupportedLanguages() {
   try {
-    const languages = await fetchLanguages()
+    const response = await languagesApi.getAll()
+    const languages = response.data || []
     const languageMap = {}
 
     languages.forEach(lang => {

@@ -150,7 +150,8 @@ export default {
       loadingInfo.value = true
       try {
         const response = await fetch('/api/v1/languages')
-        const languages = await response.json()
+        const result = await response.json()
+        const languages = result.success ? result.data : result
         const language = languages.find(l => l.code === languageCode.value)
         if (language) {
           languageName.value = language.name
@@ -218,12 +219,19 @@ export default {
         console.log('Fetching expressions:', { url, currentPage: currentPage.value, skip, limit: itemsPerPage, searchQuery: searchQuery.value, tagPrefix: tagPrefix.value, excludeTagPrefix: excludeTagPrefix.value, useSearchAPI })
 
         const response = await fetch(url)
-        const data = await response.json()
+        const rawData = await response.json()
 
-        console.log('API Response:', data)
+        console.log('API Response:', rawData)
+
+        // 适配新的API响应格式 { success, data: { items, total, skip, limit, hasMore } }
+        let data = rawData
+        if (rawData.success && rawData.data) {
+          data = rawData.data
+        }
 
         // Handle different response formats
         if (Array.isArray(data)) {
+          // 直接数组格式（旧格式）
           expressions.value = data
           const itemCount = data.length
 
@@ -241,7 +249,13 @@ export default {
             // Update total to at least what we've seen
             total.value = Math.max(total.value || 0, skip + itemCount)
           }
+        } else if (data.items && Array.isArray(data.items)) {
+          // 新的分页响应格式 { items, total, skip, limit, hasMore }
+          expressions.value = data.items
+          total.value = data.total || 0
+          hasMore.value = data.hasMore || (data.items.length === itemsPerPage)
         } else if (data.results && Array.isArray(data.results)) {
+          // 中间格式 { results, total }
           expressions.value = data.results
           total.value = data.total || data.results.length || 0
           hasMore.value = (data.results.length === itemsPerPage && (!data.total || data.total > skip + itemsPerPage))

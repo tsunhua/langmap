@@ -24,8 +24,26 @@ export interface BatchExpressionData {
   ensure_new_meaning?: boolean
 }
 
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  skip: number
+  limit: number
+  hasMore: boolean
+}
+
+export interface ApiResponse<T = any> {
+  data: T
+  message?: string
+}
+
+export interface BatchResponse {
+  meaning_id: number
+  results: any[]
+}
+
 export const expressionsApi = {
-  async getAll(filters: ExpressionFilters = {}): Promise<Expression[]> {
+  async getAll(filters: ExpressionFilters = {}): Promise<PaginatedResponse<Expression>> {
     const params = new URLSearchParams()
     
     if (filters.skip !== undefined) params.append('skip', filters.skip.toString())
@@ -41,59 +59,80 @@ export const expressionsApi = {
     if (filters.tagPrefix) params.append('tag', filters.tagPrefix)
     if (filters.excludeTagPrefix) params.append('exclude_tag', filters.excludeTagPrefix)
     if (filters.includeMeanings) params.append('include_meanings', 'true')
-
+    
     const response = await apiClient.get('/expressions', { params })
-    return response.data
+    return response.data as PaginatedResponse<Expression>
   },
 
-  async getById(id: number): Promise<Expression> {
+  async getById(id: number): Promise<ApiResponse<Expression>> {
     const response = await apiClient.get(`/expressions/${id}`)
-    return response.data
+    return response.data as ApiResponse<Expression>
   },
 
-  async getByIds(ids: number[]): Promise<Expression[]> {
+  async getByIds(ids: number[]): Promise<ApiResponse<Expression[]>> {
     const response = await apiClient.get(`/expressions/${ids.join(',')}`)
-    return response.data
+    return response.data as ApiResponse<Expression[]>
   },
 
-  async create(data: CreateExpressionData): Promise<Expression> {
+  async create(data: CreateExpressionData): Promise<ApiResponse<Expression>> {
     const response = await apiClient.post('/expressions', data)
-    return response.data
+    return response.data as ApiResponse<Expression>
   },
 
-  async batch(data: BatchExpressionData): Promise<any> {
+  async batch(data: BatchExpressionData): Promise<ApiResponse<BatchResponse>> {
     const response = await apiClient.post('/expressions/batch', data)
-    return response.data
+    return response.data as ApiResponse<BatchResponse>
   },
 
-  async ensureExist(data: any): Promise<any> {
+  async ensureExist(data: any): Promise<ApiResponse<any>> {
     const response = await apiClient.post('/expressions/ensure', data)
-    return response.data
+    return response.data as ApiResponse<any>
   },
 
-  async update(id: number, data: UpdateExpressionData): Promise<Expression> {
+  async associate(expressionIds: number[]): Promise<ApiResponse<{ meaning_id: number; updated_count: number }>> {
+    const response = await apiClient.post('/expressions/associate', { expression_ids: expressionIds })
+    return response.data as ApiResponse<{ meaning_id: number; updated_count: number }>
+  },
+
+  async update(id: number, data: UpdateExpressionData): Promise<ApiResponse<Expression>> {
     const response = await apiClient.patch(`/expressions/${id}`, data)
-    return response.data
+    return response.data as ApiResponse<Expression>
   },
 
-  async delete(id: number): Promise<{ message: string }> {
+  async delete(id: number): Promise<ApiResponse<null>> {
     const response = await apiClient.delete(`/expressions/${id}`)
-    return response.data
+    return response.data as ApiResponse<null>
   },
 
-  async getVersions(id: number): Promise<any[]> {
+  async getVersions(id: number): Promise<ApiResponse<any[]>> {
     const response = await apiClient.get(`/expressions/${id}/versions`)
-    return response.data
+    return response.data as ApiResponse<any[]>
   },
 
-  async addMeaning(id: number, meaningId: number): Promise<{ success: boolean; message: string }> {
+  async addMeaning(id: number, meaningId: number): Promise<ApiResponse<null>> {
     const response = await apiClient.post(`/expressions/${id}/meanings`, { meaning_id: meaningId })
-    return response.data
+    return response.data as ApiResponse<null>
   },
 
-  async removeMeaning(id: number, meaningId: number): Promise<{ success: boolean; message: string }> {
+  async removeMeaning(id: number, meaningId: number): Promise<ApiResponse<null>> {
     const response = await apiClient.delete(`/expressions/${id}/meanings/${meaningId}`)
-    return response.data
+    return response.data as ApiResponse<null>
+  },
+
+  async uploadAudio(id: number, file: File): Promise<ApiResponse<{ audio_url: string }>> {
+    const formData = new FormData()
+    formData.append('audio_file', file)
+    const response = await apiClient.post(`/expressions/${id}/upload-audio`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data as ApiResponse<{ audio_url: string }>
+  },
+
+  async deleteAudio(id: number, speaker: string): Promise<ApiResponse<{ message: string; audio_url: string | null }>> {
+    const response = await apiClient.delete(`/expressions/${id}/audio`, { params: { speaker } })
+    return response.data as ApiResponse<{ message: string; audio_url: string | null }>
   },
 
   async search(query: string, filters: {
@@ -102,7 +141,7 @@ export const expressionsApi = {
     skip?: number
     limit?: number
     includeMeanings?: boolean
-  } = {}): Promise<any[]> {
+  } = {}): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams()
     params.append('q', query)
     
@@ -111,8 +150,8 @@ export const expressionsApi = {
     if (filters.skip !== undefined) params.append('skip', filters.skip.toString())
     if (filters.limit !== undefined) params.append('limit', filters.limit.toString())
     if (filters.includeMeanings) params.append('include_meanings', 'true')
-
+    
     const response = await apiClient.get('/search', { params })
-    return response.data
+    return response.data as ApiResponse<any[]>
   }
 }

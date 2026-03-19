@@ -84,12 +84,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { 
-  getCollections, 
-  getCollectionsContainingItem, 
-  addCollectionItem, 
-  removeCollectionItem 
-} from '../services/collectionService'
+import { collectionsApi } from '../api/index.ts'
 
 export default {
   name: 'AddToCollectionModal',
@@ -118,13 +113,22 @@ export default {
     const loadCollections = async () => {
       loading.value = true
       try {
-        const [userCollections, containingIds] = await Promise.all([
-          getCollections(),
-          getCollectionsContainingItem(props.expressionId)
+        const [userCollectionsRes, containingIdsRes] = await Promise.all([
+          collectionsApi.getAll(),
+          collectionsApi.checkItem(props.expressionId)
         ])
-        collections.value = userCollections
-        selected.value = [...(containingIds || [])]
-        initialSelected.value = [...(containingIds || [])]
+
+        if (userCollectionsRes.success && userCollectionsRes.data) {
+          collections.value = userCollectionsRes.data
+        }
+
+        if (containingIdsRes.success && containingIdsRes.data) {
+          selected.value = [...(containingIdsRes.data || [])]
+          initialSelected.value = [...(containingIdsRes.data || [])]
+        } else {
+          selected.value = []
+          initialSelected.value = []
+        }
       } catch (err) {
         console.error('Failed to load collections', err)
       } finally {
@@ -159,19 +163,22 @@ export default {
       try {
         const toAdd = selected.value.filter(id => !initialSelected.value.includes(id))
         const toRemove = initialSelected.value.filter(id => !selected.value.includes(id))
-        
+
         const promises = [
-          ...toAdd.map(colId => addCollectionItem(colId, props.expressionId, note.value)),
-          ...toRemove.map(colId => removeCollectionItem(colId, props.expressionId))
+          ...toAdd.map(colId => collectionsApi.addItem(colId, props.expressionId, note.value)),
+          ...toRemove.map(colId => collectionsApi.removeItem(colId, props.expressionId))
         ]
-        
+
         if (promises.length > 0) {
-          await Promise.all(promises)
+          const results = await Promise.all(promises)
+          // Check if any failed
+          const failed = results.filter(r => !r.success)
+          if (failed.length > 0) {
+            console.error('Some operations failed:', failed)
+          }
           alert(t('collections.updatedSuccess') || 'Collections updated successfully')
           emit('updated')
         }
-        
-        emit('close')
       } catch (err) {
         console.error('Failed to update collections', err)
         alert(t('collections.updateError') || 'Failed to update some collections')

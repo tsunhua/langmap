@@ -60,9 +60,10 @@ export default {
         const data = await res.json()
 
         console.log('Loaded expressions:', data)
-        expressions.value = data || []
+        const responseData = data.data || data
+        expressions.value = responseData.items || responseData || []
 
-        const count = Math.min(data.length, 10)
+        const count = Math.min(expressions.value.length, 10)
         const startY = 10
         const endY = 70
         const spacing = (endY - startY) / Math.max(count - 1, 1)

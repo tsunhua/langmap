@@ -362,7 +362,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getLanguageDisplayName } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
@@ -480,7 +480,9 @@ export default {
       try {
         const res = await fetch(`/api/v1/expressions/${props.id}`)
         if (!res.ok) throw new Error('not found')
-        item.value = await res.json()
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        item.value = response.data || response
 
         // fetch meanings for this expression
         try {
@@ -502,16 +504,24 @@ export default {
             try {
               const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
               if (membersRes.ok) {
-                const members = await membersRes.json()
+                const response = await membersRes.json()
+                // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
+                const members = response.data?.items || response || []
                 loadedMeanings.push({
                   id: meaning.id,
                   created_by: meaning.created_by,
                   created_at: meaning.created_at,
-                  members: members
+                  members: Array.isArray(members) ? members : []
                 })
               }
             } catch (e) {
               console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
+              loadedMeanings.push({
+                id: meaning.id,
+                created_by: meaning.created_by,
+                created_at: meaning.created_at,
+                members: []
+              })
             }
           }
           meanings.value = loadedMeanings
@@ -560,7 +570,9 @@ export default {
         const res = await fetch(`/api/v1/expressions/${target.id}`)
         if (!res.ok) throw new Error('Failed to fetch expression')
 
-        const exprData = await res.json()
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        const exprData = response.data || response
         const meaningsData = exprData.meanings || []
 
         // Fetch members for each meaning
@@ -569,16 +581,24 @@ export default {
           try {
             const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
             if (membersRes.ok) {
-              const members = await membersRes.json()
+              const response = await membersRes.json()
+              // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
+              const members = response.data?.items || response || []
               loadedMeanings.push({
                 id: meaning.id,
                 created_by: meaning.created_by,
                 created_at: meaning.created_at,
-                members: members
+                members: Array.isArray(members) ? members : []
               })
             }
           } catch (e) {
             console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
+            loadedMeanings.push({
+              id: meaning.id,
+              created_by: meaning.created_by,
+              created_at: meaning.created_at,
+              members: []
+            })
           }
         }
         expressionMeanings.value = loadedMeanings
@@ -696,7 +716,10 @@ export default {
         const res = await fetch('/api/v1/meanings?skip=0&limit=100')
         if (!res.ok) throw new Error('Failed to fetch meanings')
 
-        allMeanings.value = await res.json()
+        const response = await res.json()
+        // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
+        let allMeaningsList = response.data?.items || response.data || response || []
+        allMeanings.value = Array.isArray(allMeaningsList) ? allMeaningsList : []
       } catch (e) {
         console.error('Error fetching all meanings:', e)
         alert(t('failed_to_fetch_meaning_groups'))
@@ -1142,7 +1165,7 @@ export default {
       meanings,
       linkedIds,
       isLinked,
-      getLanguageDisplayName,
+      getLanguageDisplayName: (code) => languagesApi.getLanguageDisplayName(code),
       // Group search
       groupSearchModes,
       toggleGroupSearch,

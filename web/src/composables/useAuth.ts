@@ -7,8 +7,12 @@ export function useAuth() {
 
   async function register(data: RegisterData) {
     try {
-      const response = await authApi.register(data)
-      return { success: true, data: response.data }
+      const result = await authApi.register(data)
+      if (result.success && result.data) {
+        return { success: true, data: result.data }
+      } else {
+        return { success: false, error: result.error || result.message || 'Registration failed' }
+      }
     } catch (error: any) {
       return { success: false, error: error.message || 'Registration failed' }
     }
@@ -16,10 +20,14 @@ export function useAuth() {
 
   async function login(data: LoginData) {
     try {
-      const response = await authApi.login(data)
-      authStore.setToken(response.data.token)
-      authStore.setUser(response.data.user)
-      return { success: true, data: response.data }
+      const result = await authApi.login(data)
+      if (result.success && result.data) {
+        authStore.setToken(result.data.token)
+        authStore.setUser(result.data.user)
+        return { success: true, data: result.data }
+      } else {
+        return { success: false, error: result.error || result.message || 'Login failed' }
+      }
     } catch (error: any) {
       return { success: false, error: error.message || 'Login failed' }
     }
@@ -37,8 +45,12 @@ export function useAuth() {
 
   async function verifyEmail(token: string) {
     try {
-      const response = await authApi.verifyEmail(token)
-      return { success: true, message: response.message }
+      const result = await authApi.verifyEmail(token)
+      if (result.success) {
+        return { success: true, message: result.message }
+      } else {
+        return { success: false, error: result.error || result.message || 'Verification failed' }
+      }
     } catch (error: any) {
       return { success: false, error: error.message || 'Verification failed' }
     }
@@ -46,9 +58,13 @@ export function useAuth() {
 
   async function fetchUser() {
     try {
-      const response = await authApi.getMe()
-      authStore.setUser(response.data)
-      return { success: true, data: response.data }
+      const result = await authApi.getMe()
+      if (result.success && result.data) {
+        authStore.setUser(result.data)
+        return { success: true, data: result.data }
+      } else {
+        return { success: false, error: result.error || result.message || 'Failed to fetch user' }
+      }
     } catch (error: any) {
       return { success: false, error: error.message || 'Failed to fetch user' }
     }

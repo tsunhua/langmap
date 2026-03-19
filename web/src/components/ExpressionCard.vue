@@ -190,7 +190,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getLanguageDisplayName } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 import AddToCollectionModal from './AddToCollectionModal.vue'
 import AudioRecorder from './AudioRecorder.vue'
 
@@ -492,7 +492,7 @@ export default {
   },
   methods: {
     getLanguageDisplayName(code) {
-      return getLanguageDisplayName(code)
+      return languagesApi.getLanguageDisplayName(code)
     },
     getRegionDisplayName(item) {
       // Use the new region_name field if available

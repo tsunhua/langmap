@@ -283,7 +283,7 @@ import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import { getHandbookById, createHandbook, updateHandbook, stableExpressionId, getExpressionsByIds, getHandbookExpressions } from '../services/handbookService'
+import { handbooksApi, stableExpressionId } from '../api/index.ts'
 import { generateLanguageColor } from '../utils/languageUtils'
 
 export default {
@@ -484,7 +484,9 @@ export default {
     const fetchLanguages = async () => {
       try {
         const response = await axios.get('/api/v1/languages')
-        languages.value = response.data || []
+        // 适配新的API响应格式 { success, data }
+        const languages_list = response.data.data || response.data || []
+        languages.value = Array.isArray(languages_list) ? languages_list : []
       } catch (error) {
         console.error('Failed to fetch languages:', error)
       }
@@ -493,18 +495,20 @@ export default {
     const fetchHandbook = async () => {
       if (!props.id) return
       try {
-        const data = await getHandbookById(props.id)
-        if (data) {
-          form.title = data.title
-          form.description = data.description || ''
-          form.content = data.content
-          form.content_lang = data.source_lang || ''
-          form.instruction_langs = data.target_lang 
-            ? data.target_lang.split(',').filter(l => l) 
+        const result = await handbooksApi.getById(props.id)
+        if (result.success && result.data) {
+          const data = result.data
+          if (data) {
+            form.title = data.title
+            form.description = data.description || ''
+            form.content = data.content
+            form.content_lang = data.source_lang || ''
+            form.instruction_langs = data.target_langs || ''
+            ? data.target_lang.split(',').filter(l => l)
             : []
           form.is_public = !!data.is_public
           form.instruction_lang_prefix = data.instruction_lang_prefix || ''
-          
+
           if (data.lang_colors) {
             try {
               form.lang_colors = JSON.parse(data.lang_colors)
@@ -513,6 +517,7 @@ export default {
             }
           }
 
+          }
         }
       } catch (error) {
         console.error('Failed to fetch handbook:', error)
@@ -581,7 +586,9 @@ export default {
             params.from_lang = form.content_lang
           }
           const response = await axios.get('/api/v1/search', { params })
-          searchResults.value = response.data
+          // 适配新的API响应格式 { success, data }
+          const searchData = response.data.data || response.data || []
+          searchResults.value = Array.isArray(searchData) ? searchData : []
         } catch (error) {
           console.error('Search error:', error)
         } finally {
@@ -814,10 +821,15 @@ export default {
       if (uncachedExprs.length > 0) {
         previewLoading.value = true
         try {
-          const expressions = await getExpressionsByIds(uncachedExprs.map(e => e.id))
-          expressions.forEach(expr => {
-            translationCache.value[expr.id] = expr
-          })
+          const result = await handbooksApi.getExpressions('', uncachedExprs.map(e => e.id))
+          if (result.success && result.data) {
+            const expressions = result.data
+            expressions.forEach(expr => {
+              translationCache.value[expr.id] = expr
+            })
+          } else {
+            console.error('Failed to fetch expressions:', result.error || result.message)
+          }
           uncachedExprs.forEach(e => {
             if (!(e.id in translationCache.value)) {
               translationCache.value[e.id] = null
@@ -844,16 +856,22 @@ export default {
         previewLoading.value = true
         try {
           for (const targetLang of form.instruction_langs) {
-            const translations = await getHandbookExpressions(targetLang, allMids)
-            
+            const result = await handbooksApi.getExpressions(targetLang, allMids)
+            const translations = result.success && result.data ? result.data : []
+
+            if (!result.success) {
+              console.error('Failed to fetch expressions:', result.error || result.message)
+              continue
+            }
+
             // Merge multiple translations for same meaning_id using | separator (match backend)
             const transByMeaning = {}
             translations.forEach(trans => {
-              const mids = trans.meanings?.map(m => m.id).filter(id => allMids.includes(id)) || []
-              if (mids.length === 0 && trans.meaning_id) mids.push(trans.meaning_id)
-              
-              mids.forEach(mid => {
-                if (!transByMeaning[mid]) {
+                const mids = trans.meanings?.map(m => m.id).filter(id => allMids.includes(id)) || []
+                if (mids.length === 0 && trans.meaning_id) mids.push(trans.meaning_id)
+                
+                mids.forEach(mid => {
+                  if (!transByMeaning[mid]) {
                   transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
                 }
                 transByMeaning[mid].text = transByMeaning[mid].text
@@ -962,9 +980,19 @@ export default {
           lang_colors: JSON.stringify(form.lang_colors || {})
         }
         if (isEditing.value) {
-          await updateHandbook(props.id, payload)
+          const updateResult = await handbooksApi.update(props.id, payload)
+          if (!updateResult.success) {
+            console.error('Update failed:', updateResult.error || updateResult.message)
+            alert(t('handbook_save_failed'))
+            return
+          }
         } else {
-          await createHandbook(payload)
+          const createResult = await handbooksApi.create(payload)
+          if (!createResult.success) {
+            console.error('Create failed:', createResult.error || createResult.message)
+            alert(t('handbook_save_failed'))
+            return
+          }
         }
         baselineJson.value = snapshotJson()
         clearDraft()

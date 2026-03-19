@@ -12,7 +12,7 @@ export interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem('token'))
+  const token = ref<string | null>(localStorage.getItem('authToken'))
   const user = ref<User | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
@@ -20,7 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setToken(newToken: string) {
     token.value = newToken
-    localStorage.setItem('token', newToken)
+    localStorage.setItem('authToken', newToken)
   }
 
   function setUser(newUser: User) {
@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
   function clearAuth() {
     token.value = null
     user.value = null
-    localStorage.removeItem('token')
+    localStorage.removeItem('authToken')
   }
 
   function logout() {

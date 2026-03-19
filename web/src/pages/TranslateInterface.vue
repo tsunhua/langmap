@@ -154,7 +154,7 @@
 <script>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchLanguages, getLanguageDisplayName, fetchUILocale, saveUILocale, getCurrentUser } from '../services/languageService'
+import { languagesApi } from '../api/index.ts'
 import { useI18n } from 'vue-i18n'
 
 export default {
@@ -188,7 +188,12 @@ export default {
     // 加载语言列表
     const loadLanguages = async () => {
       try {
-        languages.value = await fetchLanguages()
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          languages.value = result.data
+        } else {
+          languages.value = []
+        }
       } catch (error) {
         console.error('加载语言列表失败:', error)
       }
@@ -202,12 +207,12 @@ export default {
 
       try {
         // 加载参考语言
-        const refUiLocale = await fetchUILocale(referenceLanguage.value)
-        referenceLocale.value = refUiLocale?.locale_json || {}
+        const refResult = await languagesApi.fetchUILocale(referenceLanguage.value)
+        referenceLocale.value = refResult.success && refResult.data ? refResult.data.locale_json : {}
 
         // 加载目标语言（如果不存在则创建空对象）
-        let targetUiLocale = await fetchUILocale(targetLanguage.value)
-        targetLocale.value = targetUiLocale?.locale_json || {}
+        const targetResult = await languagesApi.fetchUILocale(targetLanguage.value)
+        targetLocale.value = targetResult.success && targetResult.data ? targetResult.data.locale_json : {}
 
         // 确保目标语言包含参考语言的所有键（使用参考语言作为模板）
         // 只有当目标语言为空或缺少键时才补充
@@ -287,7 +292,12 @@ export default {
 
       try {
         // 保存整个目标语言 locale JSON
-        await saveUILocale(targetLanguage.value, targetLocale.value)
+        const saveResult = await languagesApi.saveUILocale(targetLanguage.value, targetLocale.value)
+        if (!saveResult.success) {
+          console.error('Save failed:', saveResult.error || saveResult.message)
+          alert(t('translate.saveError') || 'Failed to save translations')
+          return
+        }
 
         alert(t('translate.saveSuccess', { count: modifiedKeys.value.size }) || `Successfully saved ${modifiedKeys.value.size} translations`)
 
@@ -368,7 +378,7 @@ export default {
       copyToTarget,
       markAsModified,
       saveTranslations,
-      getLanguageDisplayName
+      getLanguageDisplayName: (code) => languagesApi.getLanguageDisplayName(code)
     }
   }
 }

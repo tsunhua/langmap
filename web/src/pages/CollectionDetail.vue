@@ -182,7 +182,7 @@
 <script>
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getCollectionById, getCollectionItems, removeCollectionItem, deleteCollection, exportCollection, getExportStatus } from '../services/collectionService'
+import { collectionsApi } from '../api/index.ts'
 
 export default {
   name: 'CollectionDetail',
@@ -232,7 +232,10 @@ export default {
     const fetchCollection = async () => {
       loadingCollection.value = true
       try {
-        collection.value = await getCollectionById(collectionId)
+        const result = await collectionsApi.getById(collectionId)
+        if (result.success && result.data) {
+          collection.value = result.data
+        }
       } catch (error) {
         console.error('Failed to load collection:', error)
       } finally {
@@ -244,7 +247,10 @@ export default {
       loadingItems.value = true
       try {
         const skip = (currentPage.value - 1) * itemsPerPage.value
-        items.value = await getCollectionItems(collectionId, skip, itemsPerPage.value)
+        const result = await collectionsApi.getItems(collectionId, skip, itemsPerPage.value)
+        if (result.success && result.data) {
+          items.value = result.data
+        }
       } catch (error) {
         console.error('Failed to load items:', error)
       } finally {
@@ -269,9 +275,14 @@ export default {
     const removeItem = async (item) => {
       if (confirm(t('remove_item_confirm'))) {
         try {
-          await removeCollectionItem(collectionId, item.expression_id)
-          // Optimistically remove from list
-          items.value = items.value.filter(i => i.id !== item.id)
+          const result = await collectionsApi.removeItem(collectionId, item.expression_id)
+          if (result.success) {
+            // Optimistically remove from list
+            items.value = items.value.filter(i => i.id !== item.id)
+          } else {
+            console.error('Remove failed:', result.error || result.message)
+            alert(result.error || result.message || 'Failed to remove item')
+          }
         } catch (error) {
           console.error('Failed to remove item:', error)
           alert('Failed to remove item')
@@ -282,8 +293,13 @@ export default {
     const confirmDelete = async () => {
       if (confirm(t('delete_confirm'))) {
         try {
-          await deleteCollection(collectionId)
-          router.push('/collections')
+          const result = await collectionsApi.delete(collectionId)
+          if (result.success) {
+            router.push('/collections')
+          } else {
+            console.error('Delete failed:', result.error || result.message)
+            alert(result.error || result.message || 'Failed to delete collection')
+          }
         } catch (error) {
           console.error('Failed to delete collection:', error)
           alert('Failed to delete collection')
@@ -326,12 +342,16 @@ export default {
     const startExport = async () => {
       try {
         exportState.value = { status: 'pending', progress: 0, jobId: null, result: null, error: null };
-        const res = await exportCollection(collectionId, exportFormat.value);
-        exportState.value.jobId = res.jobId;
-        exportState.value.status = res.status;
-
-        // Start polling
-        pollInterval = setInterval(checkStatus, 1500);
+        const result = await collectionsApi.export(collectionId, exportFormat.value);
+        if (result.success && result.data) {
+          const data = result.data;
+          exportState.value.jobId = data.jobId;
+          exportState.value.status = data.status;
+          // Start polling
+          pollInterval = setInterval(checkStatus, 1500);
+        } else {
+          throw new Error(result.error || result.message || 'Failed to start export');
+        }
       } catch (err) {
         exportState.value.status = 'error';
         exportState.value.error = err.message || 'Failed to start export';
@@ -342,16 +362,21 @@ export default {
       if (!exportState.value.jobId) return;
 
       try {
-        const res = await getExportStatus(exportState.value.jobId);
-        exportState.value.status = res.status;
-        exportState.value.progress = res.progress;
+        const result = await collectionsApi.getExportStatus(exportState.value.jobId);
+        if (result.success && result.data) {
+          const data = result.data;
+          exportState.value.status = data.status;
+          exportState.value.progress = data.progress;
 
-        if (res.status === 'done') {
-          clearInterval(pollInterval);
-          exportState.value.result = res.result;
-        } else if (res.status === 'error') {
-          clearInterval(pollInterval);
-          exportState.value.error = res.error || 'Export failed';
+          if (data.status === 'done') {
+            clearInterval(pollInterval);
+            exportState.value.result = data.result;
+          } else if (data.status === 'error') {
+            clearInterval(pollInterval);
+            exportState.value.error = data.error || 'Export failed';
+          }
+        } else {
+          throw new Error(result.error || result.message || 'Failed to check export status');
         }
       } catch (err) {
         clearInterval(pollInterval);

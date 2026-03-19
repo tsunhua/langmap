@@ -58,7 +58,7 @@
 <script>
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getLanguageDisplayName } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 
 export default {
   name: 'SmartSearch',
@@ -124,7 +124,10 @@ export default {
           throw new Error('search failed')
         }
 
-        let results = await res.json()
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        let results = response.data || response || []
+        results = Array.isArray(results) ? results : []
 
         if (props.excludeId) {
           results = results.filter(r => r.id !== props.excludeId)
@@ -177,7 +180,7 @@ export default {
       handleCreateNew,
       handleAssociate,
       isAlreadyAssociated,
-      getLanguageDisplayName,
+      getLanguageDisplayName: (code) => languagesApi.getLanguageDisplayName(code),
       t
     }
   }

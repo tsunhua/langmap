@@ -223,7 +223,8 @@ export default {
         if (props.meaningId) {
           const res = await fetch(`/api/v1/expressions?meaning_id=${props.meaningId}&skip=0&limit=100`)
           if (res.ok) {
-            expressions.value = await res.json()
+            const result = await res.json()
+            expressions.value = result.success ? result.data : result
           } else {
             expressions.value = []
           }
@@ -231,7 +232,8 @@ export default {
         else if (props.expressionId) {
           const res = await fetch(`/api/v1/expressions/${props.expressionId}`)
           if (res.ok) {
-            const expr = await res.json()
+            const result = await res.json()
+            const expr = result.success ? result.data : result
             expressions.value = [expr]
           } else {
             expressions.value = []

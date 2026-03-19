@@ -331,7 +331,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
-import { fetchLanguages, createLanguage } from './services/languageService.js'
+import { languagesApi } from './api/index.ts'
 import AddLanguageModal from './components/AddLanguageModal.vue'
 
 export default {
@@ -435,16 +435,19 @@ export default {
 
       // Refresh available languages to only show active ones
       try {
-        const languages = await fetchLanguages(1) // 只获取活跃的语言
-        const newAvailableLanguages = {}
-        languages.forEach(lang => {
-          const name = lang.name
-          newAvailableLanguages[lang.code] = { 
-            name, 
-            group_name: lang.group_name || '' 
-          }
-        })
-        availableLanguages.value = newAvailableLanguages
+        const languageResponse = await languagesApi.getAll(1) // 只获取活跃的语言
+        if (languageResponse.success && languageResponse.data) {
+          const languages = languageResponse.data
+          const newAvailableLanguages = {}
+          languages.forEach(lang => {
+            const name = lang.name
+            newAvailableLanguages[lang.code] = {
+              name,
+              group_name: lang.group_name || ''
+            }
+          })
+          availableLanguages.value = newAvailableLanguages
+        }
       } catch (error) {
         console.error('Failed to refresh available languages:', error)
       }
@@ -616,17 +619,20 @@ export default {
         await checkAuthStatus()
 
         // Fetch available languages (only active ones)
-        const languages = await fetchLanguages(1) // 只获取活跃的语言
+        const languageResponse = await languagesApi.getAll(1) // 只获取活跃的语言
+        if (languageResponse.success && languageResponse.data) {
+          const languages = languageResponse.data
+          const newAvailableLanguages = {}
+          languages.forEach(lang => {
+            const name = lang.name
+            newAvailableLanguages[lang.code] = {
+              name,
+              group_name: lang.group_name || ''
+            }
+          })
+          availableLanguages.value = newAvailableLanguages
+        }
 
-        const newAvailableLanguages = {}
-        languages.forEach(lang => {
-          const name = lang.name
-          newAvailableLanguages[lang.code] = { 
-            name, 
-            group_name: lang.group_name || '' 
-          }
-        })
-        availableLanguages.value = newAvailableLanguages
 
         // Load dynamic language if needed
         const { loadLanguage } = await import('./i18n.js')
@@ -655,18 +661,21 @@ export default {
 
       // Fetch dynamic languages from backend and filter out inactive ones
       try {
-        const languages = await fetchLanguages()
+        const languageResponse = await languagesApi.getAll()
+        if (languageResponse.success && languageResponse.data) {
+          const languages = languageResponse.data
 
-        languages.forEach(lang => {
-          // Only add active languages to availableLanguages
-          if (lang.is_active === 1) {
-            const name = lang.name
-            availableLanguages.value[lang.code] = { 
-              name, 
-              group_name: lang.group_name || '' 
+          languages.forEach(lang => {
+            // Only add active languages to availableLanguages
+            if (lang.is_active === 1) {
+              const name = lang.name
+              availableLanguages.value[lang.code] = {
+                name,
+                group_name: lang.group_name || ''
+              }
             }
-          }
-        })
+          })
+        }
       } catch (error) {
         console.error('Error fetching languages:', error)
       }

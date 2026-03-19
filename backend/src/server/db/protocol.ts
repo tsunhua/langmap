@@ -81,9 +81,9 @@ export interface Collection {
   user_id: number
   name: string
   description?: string
-  is_public: boolean
-  created_at: number
-  updated_at: number
+  is_public: number
+  created_at: string
+  updated_at?: string
   items_count?: number
 }
 
@@ -92,7 +92,7 @@ export interface CollectionItem {
   collection_id: number
   expression_id: number
   note?: string
-  created_at: number
+  created_at: string
 }
 
 export interface Handbook {
@@ -103,7 +103,7 @@ export interface Handbook {
   content: string
   source_lang?: string
   target_lang?: string
-  is_public: boolean
+  is_public: number
   created_at: string
   updated_at: string
   renders?: string // JSON string for cached renders

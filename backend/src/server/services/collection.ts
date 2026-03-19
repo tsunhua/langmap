@@ -8,7 +8,7 @@ interface DBService {
   updateCollection(id: number, data: any): Promise<Collection | null>
   deleteCollection(id: number): Promise<boolean>
   getCollectionItems(collectionId: number): Promise<CollectionItem[]>
-  addCollectionItem(collectionId: number, expressionId: number): Promise<CollectionItem>
+  addCollectionItem(item: Partial<CollectionItem>): Promise<CollectionItem>
   removeCollectionItem(collectionId: number, expressionId: number): Promise<boolean>
   getCollectionsContainingItem(userId: number, expressionId: number): Promise<number[]>
 }
@@ -56,7 +56,7 @@ export class CollectionService {
   }
 
   async addItem(collectionId: number, expressionId: number): Promise<CollectionItem> {
-    return this.db.addCollectionItem(collectionId, expressionId)
+    return this.db.addCollectionItem({ collection_id: collectionId, expression_id: expressionId })
   }
 
   async removeItem(collectionId: number, expressionId: number): Promise<void> {

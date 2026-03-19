@@ -140,8 +140,8 @@
 <script>
  import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
  import { useRouter } from 'vue-router'
- import { getHandbookById, rerenderHandbook } from '../services/handbookService'
- import { fetchLanguages } from '../services/languageService'
+ import { handbooksApi } from '../api/index.ts'
+ import { languagesApi } from '../api/index.ts'
  import { generateLanguageColor } from '../utils/languageUtils'
  import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
 
@@ -180,13 +180,16 @@
        const fetchInitialData = async () => {
          loading.value = true
          try {
-           // Fetch languages if not loaded
-           if (languages.value.length === 0) {
-             languages.value = await fetchLanguages()
-           }
+            // Fetch languages if not loaded
+            if (languages.value.length === 0) {
+              const langResult = await languagesApi.getAll()
+              languages.value = langResult.success && langResult.data ? langResult.data : []
+            }
 
-           // Fetch handbook data first
-           const data = await getHandbookById(props.id)
+            // Fetch handbook data first
+             const dataRes = await handbooksApi.getById(props.id)
+             if (dataRes.success && dataRes.data) {
+               const data = dataRes.data
 
            if (data) {
              handbook.value = data
@@ -197,18 +200,26 @@
                isInitialized.value = true
              }
 
-             // Fetch with target languages for rendering
-             const targetLangsParam = instructionLanguages.value.join(',')
-             const renderedData = await getHandbookById(props.id, null, targetLangsParam)
-             handbook.value = renderedData
+              // Fetch with target languages for rendering
+              const targetLangsParam = instructionLanguages.value.join(',')
+               const renderedDataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
+               if (renderedDataRes.success && renderedDataRes.data) {
+                 const renderedData = renderedDataRes.data
+                 handbook.value = renderedData
+               } else {
+                 console.error('Failed to fetch rendered data:', renderedDataRes.error || renderedDataRes.message)
+               }
 
              // Parse table of contents after content is rendered
              await parseTableOfContents()
            }
+         }
 
-           // Auth check for edit button
-           const userStr = localStorage.getItem('user')
-           if (userStr) currentUser.value = JSON.parse(userStr)
+          // Auth check for edit button
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            currentUser.value = JSON.parse(userStr)
+          }
 
          } catch (error) {
            console.error('Failed to load handbook data:', error)
@@ -361,17 +372,22 @@
         return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
       })
 
-      const handleRerender = async () => {
-        try {
-          loading.value = true
-          await rerenderHandbook(props.id)
-          await fetchInitialData()
-        } catch (error) {
-          console.error('Failed to rerender handbook:', error)
-        } finally {
-          loading.value = false
-        }
-      }
+       const handleRerender = async () => {
+         try {
+           loading.value = true
+           const rerenderResult = await handbooksApi.rerender(props.id)
+           if (!rerenderResult.success) {
+             console.error('Rerender failed:', rerenderResult.error || rerenderResult.message)
+             alert('Failed to rerender handbook. Please try again.')
+             return
+           }
+           await fetchInitialData()
+         } catch (error) {
+           console.error('Failed to rerender handbook:', error)
+         } finally {
+           loading.value = false
+         }
+       }
 
        const selectedLanguages = computed(() => {
         return languages.value.filter(lang => 

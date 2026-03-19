@@ -408,7 +408,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchLanguages } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 import AudioRecorder from '../components/AudioRecorder.vue'
 
@@ -496,8 +496,12 @@ export default {
     const loadLanguages = async () => {
       languagesLoading.value = true
       try {
-        const langs = await fetchLanguages()
-        languages.value = langs
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          languages.value = result.data
+        } else {
+          languages.value = []
+        }
       } catch (err) {
         console.error('Failed to load languages:', err)
         error.value = 'Failed to load languages: ' + err.message
@@ -621,7 +625,8 @@ export default {
           throw new Error('Failed to load collections')
         }
 
-        userCollections.value = await response.json()
+        const result = await response.json()
+        userCollections.value = result.success ? result.data : result
       } catch (err) {
         console.error('Failed to load collections:', err)
         userCollections.value = []
@@ -710,7 +715,8 @@ export default {
           throw new Error('Failed to create collection')
         }
 
-        const newCollection = await response.json()
+        const result = await response.json()
+        const newCollection = result.success ? result.data : result
         await handleCollectionCreated(newCollection)
 
         // Reset form
@@ -1036,14 +1042,17 @@ export default {
         const result = await res.json()
         console.log('Batch submission result:', result)
 
+        // 适配新的响应格式 { success, data: { meaning_id, results } }
+        const createdResults = result.data?.results || result.results || []
+
         // Process audio uploads if present
-        const audioResults = await processAudioUploads(validExpressions, result.results, token)
+        const audioResults = await processAudioUploads(validExpressions, createdResults, token)
         if (audioResults.errors > 0) {
           console.warn('Some audio uploads failed.')
         }
 
         // Add expressions to collections
-        const collectionResults = await addToCollections(validExpressions, result.results)
+        const collectionResults = await addToCollections(validExpressions, createdResults)
 
         if (collectionResults.errors > 0) {
           if (collectionResults.success > 0) {
@@ -1089,8 +1098,9 @@ export default {
             })
 
             if (!uploadRes.ok) {
-              const errData = await uploadRes.json()
-              throw new Error(errData.error || 'Direct worker upload failed for expression ' + created.id)
+              const errResult = await uploadRes.json()
+              const errData = errResult.success ? errResult.data : errResult
+              throw new Error(errData.error || errData.message || 'Direct worker upload failed for expression ' + created.id)
             }
 
             // The backend upload-audio endpoint now updates the database directly.

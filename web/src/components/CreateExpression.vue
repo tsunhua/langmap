@@ -146,7 +146,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchLanguages } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 
 export default {
@@ -223,8 +223,12 @@ export default {
     const loadLanguages = async () => {
       languagesLoading.value = true
       try {
-        const langs = await fetchLanguages()
-        languages.value = langs
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          languages.value = result.data
+        } else {
+          languages.value = []
+        }
       } catch (err) {
         console.error('Failed to load languages:', err)
         error.value = 'Failed to load languages: ' + err.message
@@ -584,8 +588,9 @@ export default {
           throw new Error(txt || 'create failed')
         }
         
-        const created = await res.json()
-
+        const result = await res.json()
+        const created = result.success ? result.data : result
+ 
         // 如果传入了 initialMeaningId，则自动关联到该含义组
         if (props.initialMeaningId) {
           try {

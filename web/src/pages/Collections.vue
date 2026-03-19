@@ -146,7 +146,7 @@
 import { ref, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getCollections, createCollection, updateCollection, deleteCollection } from '../services/collectionService'
+import { collectionsApi } from '../api/index.ts'
 
 export default {
   name: 'Collections',
@@ -190,8 +190,11 @@ export default {
             return
           }
         }
-
-        collections.value = await getCollections(params)
+ 
+        const result = await collectionsApi.getAll(params)
+        if (result.success && result.data) {
+          collections.value = result.data
+        }
       } catch (error) {
         console.error('Failed to load collections:', error)
       } finally {
@@ -254,9 +257,21 @@ export default {
         }
 
         if (isEditing.value) {
-          await updateCollection(currentId.value, data)
+          const updateResult = await collectionsApi.update(currentId.value, data)
+          if (!updateResult.success) {
+            console.error('Update failed:', updateResult.error || updateResult.message)
+            alert(updateResult.error || updateResult.message || 'Failed to update collection')
+            submitting.value = false
+            return
+          }
         } else {
-          await createCollection(data)
+          const createResult = await collectionsApi.create(data)
+          if (!createResult.success) {
+            console.error('Create failed:', createResult.error || createResult.message)
+            alert(createResult.error || createResult.message || 'Failed to create collection')
+            submitting.value = false
+            return
+          }
         }
 
         await fetchCollections()
@@ -271,7 +286,12 @@ export default {
     const confirmDelete = async (collection) => {
       if (confirm(t('collections.deleteConfirm'))) {
         try {
-          await deleteCollection(collection.id)
+          const deleteResult = await collectionsApi.delete(collection.id)
+          if (!deleteResult.success) {
+            console.error('Delete failed:', deleteResult.error || deleteResult.message)
+            alert(deleteResult.error || deleteResult.message || 'Failed to delete collection')
+            return
+          }
           await fetchCollections()
         } catch (error) {
           console.error('Failed to delete collection:', error)
