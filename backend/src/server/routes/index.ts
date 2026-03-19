@@ -12,6 +12,7 @@ import exportRoutes from './export.js'
 import downloadRoutes from './download.js'
 import miscRoutes from './misc.js'
 import handbooksRoutes from './handbooks.js'
+import expressionGroupRoutes from './expressionGroup.js'
 
 apiRoutes.route('/auth', authRoutes)
 apiRoutes.route('/expressions', expressionsRoutes)
@@ -22,5 +23,6 @@ apiRoutes.route('/export', exportRoutes)
 apiRoutes.route('/download', downloadRoutes)
 apiRoutes.route('', miscRoutes)
 apiRoutes.route('/handbooks', handbooksRoutes)
+apiRoutes.route('/groups', expressionGroupRoutes)
 
 export default apiRoutes
