@@ -239,26 +239,4 @@ expressionGroupRoutes.delete('/:id', requireAuth, async (c) => {
   }
 })
 
-/**
- * GET /api/v1/expressions/:id/groups
- * Get all groups that an expression belongs to
- */
-expressionGroupRoutes.get('/expressions/:id/groups', cacheMiddleware(300), async (c) => {
-  try {
-    const db = createDatabaseService(c.env)
-    const id = parseInt(c.req.param('id'), 10)
-
-    if (isNaN(id)) {
-      return badRequest(c, 'Invalid expression ID')
-    }
-
-    const groups = await db.expressionGroup.getExpressionGroups(id)
-
-    return success(c, groups)
-  } catch (error: any) {
-    console.error('Error in GET /expressions/:id/groups:', error)
-    return internalError(c, 'Failed to fetch expression groups')
-  }
-})
-
 export default expressionGroupRoutes

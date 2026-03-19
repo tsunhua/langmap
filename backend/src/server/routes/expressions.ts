@@ -223,6 +223,28 @@ expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
   }
 })
 
+/**
+ * GET /api/v1/expressions/:id/groups
+ * Get all groups that an expression belongs to
+ */
+expressionsRoutes.get('/:id/groups', cacheMiddleware(300), async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const id = parseInt(c.req.param('id'), 10)
+
+    if (isNaN(id)) {
+      return badRequest(c, 'Invalid expression ID')
+    }
+
+    const groups = await db.groups.getExpressionGroups(id)
+
+    return success(c, groups)
+  } catch (error: any) {
+    console.error('Error in GET /expressions/:id/groups:', error)
+    return internalError(c, 'Failed to fetch expression groups')
+  }
+})
+
 expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
   try {
     const db = createDatabaseService(c.env)

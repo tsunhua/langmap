@@ -369,7 +369,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { languagesApi } from '../api/index.ts'
+import { languagesApi, expressionGroupsApi } from '../api/index.ts'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
@@ -439,12 +439,13 @@ export default {
     const currentGroup = computed(() => {
       if (!groups.value || groups.value.length === 0) return null
 
-      const found = groups.value.find(g => g.id === activeTab.value)
-      
-      // Fallback to first group if activeTab is not found but we have groups
-      if (!activeTab.value || activeTab.value === 'null') return groups.value[0]
+      // Fallback to first group if activeTab is invalid or not found
+      if (!activeTab.value || activeTab.value === 'null' || activeTab.value === 'search') return groups.value[0]
 
-      return null
+      const found = groups.value.find(g => g.id === activeTab.value)
+
+      // Return found group or fallback to first group
+      return found || groups.value[0]
     })
 
     const currentMembers = computed(() => {
@@ -513,47 +514,20 @@ export default {
         // 适配新的API响应格式 { success, data }
         item.value = response.data || response
 
-        // fetch groups for this expression
+        // fetch groups for this expression using expression group API
         try {
-          const rawGroups = item.value.groups || []
-          // Deduplicate by ID
-          const groupsData = []
-          const seenIds = new Set()
-          for (const g of rawGroups) {
-            if (g && g.id && !seenIds.has(g.id)) {
-              groupsData.push(g)
-              seenIds.add(g.id)
-            }
+          const result = await expressionGroupsApi.getExpressionGroups(props.id)
+          if (result.success && Array.isArray(result.data)) {
+            const loadedGroups = result.data.map(group => ({
+              id: group.id,
+              created_by: group.created_by,
+              created_at: group.created_at,
+              members: group.expressions || []
+            }))
+            groups.value = loadedGroups
+          } else {
+            groups.value = []
           }
-
-          const loadedGroups = []
-
-          // 为每个 group 获取其关联的所有词句
-          for (const group of groupsData) {
-            try {
-              const membersRes = await fetch(`/api/v1/expressions?group_id=${group.id}&skip=0&limit=100`)
-              if (membersRes.ok) {
-                const response = await membersRes.json()
-                // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
-                const members = response.data?.items || response || []
-                loadedGroups.push({
-                  id: group.id,
-                  created_by: group.created_by,
-                  created_at: group.created_at,
-                  members: Array.isArray(members) ? members : []
-                })
-              }
-            } catch (e) {
-              console.error(`Failed to fetch members for group ${group.id}:`, e)
-              loadedGroups.push({
-                id: group.id,
-                created_by: group.created_by,
-                created_at: group.created_at,
-                members: []
-              })
-            }
-          }
-          groups.value = loadedGroups
         } catch (e) {
           console.error('Failed to load groups:', e)
           groups.value = []
@@ -604,24 +578,22 @@ export default {
         const exprData = response.data || response
         const groupsData = exprData.groups || []
 
-        // Fetch members for each group
+        // Use expression group API to fetch groups with their expressions
         const loadedGroups = []
         for (const group of groupsData) {
           try {
-            const membersRes = await fetch(`/api/v1/expressions?group_id=${group.id}&skip=0&limit=100`)
-            if (membersRes.ok) {
-              const response = await membersRes.json()
-              // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
-              const members = response.data?.items || response || []
+            const result = await expressionGroupsApi.getGroup(group.id)
+            if (result.success && result.data) {
+              const fullGroup = result.data
               loadedGroups.push({
-                id: group.id,
-                created_by: group.created_by,
-                created_at: group.created_at,
-                members: Array.isArray(members) ? members : []
+                id: fullGroup.id,
+                created_by: fullGroup.created_by,
+                created_at: fullGroup.created_at,
+                members: fullGroup.expressions || []
               })
             }
           } catch (e) {
-            console.error(`Failed to fetch members for group ${group.id}:`, e)
+            console.error(`Failed to fetch group ${group.id}:`, e)
             loadedGroups.push({
               id: group.id,
               created_by: group.created_by,

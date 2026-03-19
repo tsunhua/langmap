@@ -31,8 +31,11 @@ export interface UpdateHandbookData {
 }
 
 export interface ApiResponse<T = any> {
+  success: boolean
   data: T
   message?: string
+  error?: string
+  details?: any
 }
 
 function stableHashId(content: string): number {

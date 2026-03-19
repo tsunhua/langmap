@@ -14,8 +14,10 @@ export interface AddToGroupData {
 }
 
 export interface ApiResponse<T = any> {
+  success: boolean
   data: T
   message?: string
+  error?: string
 }
 
 export const expressionGroupsApi = {

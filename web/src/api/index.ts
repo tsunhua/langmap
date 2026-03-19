@@ -1,5 +1,6 @@
 export { authApi } from './auth.js'
 export { expressionsApi } from './expressions.js'
+export { expressionGroupsApi } from './expressionGroups.js'
 export { languagesApi } from './languages.js'
 export { collectionsApi } from './collections.js'
 export { handbooksApi } from './handbooks.js'
@@ -38,3 +39,10 @@ export type {
   ApiResponse as HandbookApiResponse
 } from './handbooks.js'
 export { stableExpressionId } from './handbooks.js'
+
+export type {
+  ExpressionGroup,
+  CreateGroupData,
+  MergeGroupsData,
+  AddToGroupData
+} from './expressionGroups.js'

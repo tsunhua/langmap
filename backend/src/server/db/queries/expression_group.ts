@@ -35,23 +35,23 @@ export class ExpressionGroupQueries {
   }
 
   async getGroupInfo(groupId: number, languages?: string[]): Promise<ExpressionGroup | null> {
-    const meaningResult = await this.db.prepare(`
+    const groupResult = await this.db.prepare(`
       SELECT id, created_by, created_at
-      FROM meanings
+      FROM meanings 
       WHERE id = ?
     `).bind(groupId).first<{ id: number, created_by?: string, created_at?: string }>()
 
-    if (!meaningResult) {
+    if (!groupResult) {
       return null
     }
 
     const expressions = await this.getGroupExpressions(groupId, languages)
 
     return {
-      id: meaningResult.id,
+      id: groupResult.id,
       expressions,
-      created_by: meaningResult.created_by,
-      created_at: meaningResult.created_at
+      created_by: groupResult.created_by,
+      created_at: groupResult.created_at
     }
   }
 
