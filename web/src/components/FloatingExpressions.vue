@@ -55,7 +55,7 @@ export default {
         }
 
         console.log('Loading expressions for language:', currentLang)
-        const res = await fetch(`/api/v1/expressions?language=${currentLang}&limit=10&exclude_tag=langmap`)
+        const res = await fetch(`/api/v1/expressions?lang=${currentLang}&limit=10&exclude_tag=langmap`)
         if (!res.ok) throw new Error('Failed to fetch expressions')
         const data = await res.json()
 

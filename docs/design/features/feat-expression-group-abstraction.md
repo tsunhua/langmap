@@ -1176,28 +1176,28 @@ await fetch(`/api/v1/expressions/${expressionId}/groups`, {
 ### 待完成 ⏳
 
 1. **后端 expressions.ts 路由调整**
-   - ⏳ GET /expressions - 支持 `group_id` 和 `lang` 参数
-   - ⏳ POST /expressions - 支持 `group_id` 字段
-   - ⏳ POST /expressions/batch - 支持的 `ensure_new_group`
-   - ⏳ POST /expressions/associate - 使用 ExpressionGroup API
-   - ⏳ GET /expressions/:id - 返回 `groups` 而不是 `meanings`
-   - ⏳ POST /expressions/:id/meanings - 迁移到 expressionGroups.ts
-   - ⏳ DELETE /expressions/:id/meanings/:id - 迁移到 expressionGroups.ts
+   - ✅ GET /expressions - 支持 `group_id` 和 `lang` 参数
+   - ✅ POST /expressions - 支持 `group_id` 字段
+   - ✅ POST /expressions/batch - 支持的 `ensure_new_group`
+   - ✅ POST /expressions/associate - 使用 ExpressionGroup API
+   - ✅ GET /expressions/:id - 返回 `groups` 而不是 `meanings`
+   - ✅ 移除 POST /expressions/:id/meanings
+   - ✅ 移除 DELETE /expressions/:id/meanings/:id
+   - ✅ 清理所有 meaning_id 兼容代码
 
 2. **前端类型定义**
-   - ⏳ 更新 `Expression` 接口（`group_id` 替代 `meaning_id`）
-   - ⏳ 更新 `ExpressionFilters` 接口（添加 `groupId` 和 `languages`）
-   - ⏳ 更新 `CreateExpressionData` 接口
-   - ⏳ 更新 `UpdateExpressionData` 接口
-   - ⏳ 更新 `BatchExpressionData` 接口
-   - ⏳ 添加 `ExpressionGroup` 接口定义
+   - ✅ 更新 `Expression` 接口（添加 `group_id` 和 `groups`，移除 `meaning_id` 和 `meanings`）
+   - ✅ 更新 `ExpressionFilters` 接口（添加 `groupId` 和 `languages`，移除 `meaningId`）
+   - ✅ 更新 `CreateExpressionData` 接口（添加 `group_id`，移除 `meaning_id`）
+   - ✅ 更新 `UpdateExpressionData` 接口（添加 `group_id`，移除 `meaning_id`）
+   - ✅ 更新 `BatchExpressionData` 接口（添加 `ensure_new_group`，移除 `meaning_id` 和 `ensure_new_meaning`）
+   - ✅ 添加 `ExpressionGroup` 接口定义
 
 3. **前端 API 客户端**
-   - ⏳ 创建 `expressionGroups.ts`（完整的 ExpressionGroup API）
-   - ⏳ 更新 `expressions.ts`（调整参数和类型）
-   - ⏳ 迁移 `associate()` 到 `expressionGroups.ts`
-   - ⏳ 迁移 `addMeaning()` 到 `expressionGroups.ts`（改名）
-   - ⏳ 迁移 `removeMeaning()` 到 `expressionGroups.ts`（改名）
+   - ✅ 创建 `expressionGroups.ts`（完整的 ExpressionGroup API）
+   - ✅ 更新 `expressions.ts`（调整参数和类型，清理兼容代码）
+   - ✅ 迁移 `associate()` 到 `expressionGroups.ts`（作为 `linkExpressions()`）
+   - ✅ 移除 `addMeaning()` 和 `removeMeaning()` 方法
 
 4. **前端组件更新**
    - ⏳ 词句详情页 - 显示 `groups` 而不是 `meanings`

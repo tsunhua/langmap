@@ -19,8 +19,7 @@ export class ExpressionService {
   constructor(private db: DBService) {}
 
   async getAll(skip: number, limit: number, filters: {
-    language?: string
-    meaningId?: number | number[]
+    languages?: string[]
     tagPrefix?: string
     excludeTagPrefix?: string
     includeMeanings?: boolean

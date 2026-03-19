@@ -20,8 +20,7 @@ export class ExpressionQueries {
   }
 
   async findAll(skip: number = 0, limit: number = 50, filters: {
-    language?: string
-    meaningId?: number | number[]
+    languages?: string[]
     tagPrefix?: string
     excludeTagPrefix?: string
   } = {}): Promise<Expression[]> {
@@ -29,28 +28,9 @@ export class ExpressionQueries {
     const bindings: any[] = []
     const whereConditions: string[] = []
 
-    if (filters.language) {
-      whereConditions.push('language_code = ?')
-      bindings.push(filters.language)
-    }
-
-    if (filters.meaningId !== undefined) {
-      query = 'SELECT e.* FROM expressions e'
-      if (Array.isArray(filters.meaningId)) {
-        if (filters.meaningId.length > 0) {
-          whereConditions.push(`e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id IN (SELECT value FROM json_each(?)))`)
-          bindings.push(JSON.stringify(filters.meaningId))
-        } else {
-          whereConditions.push('1 = 0')
-        }
-      } else {
-        if (filters.meaningId === -1) {
-          whereConditions.push('EXISTS (SELECT 1 FROM expression_meaning WHERE expression_id = e.id)')
-        } else {
-          whereConditions.push('e.id IN (SELECT expression_id FROM expression_meaning WHERE meaning_id = ?)')
-          bindings.push(filters.meaningId)
-        }
-      }
+    if (filters.languages) {
+      whereConditions.push('language_code IN (?)')
+      bindings.push(filters.languages.join(','))
     }
 
     if (filters.tagPrefix) {

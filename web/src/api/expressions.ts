@@ -4,14 +4,12 @@ import type { Expression, ExpressionFilters } from '../stores/expressions.js'
 export interface CreateExpressionData {
   text: string
   language_code: string
-  meaning_id?: number
   audio_url?: string
 }
 
 export interface UpdateExpressionData {
   text?: string
   language_code?: string
-  meaning_id?: number
   audio_url?: string
 }
 
@@ -19,9 +17,9 @@ export interface BatchExpressionData {
   expressions: Array<{
     text: string
     language_code: string
-    meaning_id?: number
+    group_id?: number
   }>
-  ensure_new_meaning?: boolean
+  ensure_new_group?: boolean
 }
 
 export interface PaginatedResponse<T> {
@@ -38,28 +36,21 @@ export interface ApiResponse<T = any> {
 }
 
 export interface BatchResponse {
-  meaning_id: number
+  group_id: number
   results: any[]
 }
 
 export const expressionsApi = {
   async getAll(filters: ExpressionFilters = {}): Promise<PaginatedResponse<Expression>> {
     const params = new URLSearchParams()
-    
+
     if (filters.skip !== undefined) params.append('skip', filters.skip.toString())
     if (filters.limit !== undefined) params.append('limit', filters.limit.toString())
-    if (filters.language) params.append('language', filters.language)
-    if (filters.meaningId !== undefined) {
-      if (Array.isArray(filters.meaningId)) {
-        params.append('meaning_id', filters.meaningId.join(','))
-      } else {
-        params.append('meaning_id', filters.meaningId.toString())
-      }
-    }
+    if (filters.lang) params.append('lang', filters.lang)
+
     if (filters.tagPrefix) params.append('tag', filters.tagPrefix)
     if (filters.excludeTagPrefix) params.append('exclude_tag', filters.excludeTagPrefix)
-    if (filters.includeMeanings) params.append('include_meanings', 'true')
-    
+
     const response = await apiClient.get('/expressions', { params })
     return response.data as PaginatedResponse<Expression>
   },
@@ -89,9 +80,9 @@ export const expressionsApi = {
     return response.data as ApiResponse<any>
   },
 
-  async associate(expressionIds: number[]): Promise<ApiResponse<{ meaning_id: number; updated_count: number }>> {
+  async associate(expressionIds: number[]): Promise<ApiResponse<{ group_id: number; updated_count: number }>> {
     const response = await apiClient.post('/expressions/associate', { expression_ids: expressionIds })
-    return response.data as ApiResponse<{ meaning_id: number; updated_count: number }>
+    return response.data as ApiResponse<{ group_id: number; updated_count: number }>
   },
 
   async update(id: number, data: UpdateExpressionData): Promise<ApiResponse<Expression>> {
@@ -107,16 +98,6 @@ export const expressionsApi = {
   async getVersions(id: number): Promise<ApiResponse<any[]>> {
     const response = await apiClient.get(`/expressions/${id}/versions`)
     return response.data as ApiResponse<any[]>
-  },
-
-  async addMeaning(id: number, meaningId: number): Promise<ApiResponse<null>> {
-    const response = await apiClient.post(`/expressions/${id}/meanings`, { meaning_id: meaningId })
-    return response.data as ApiResponse<null>
-  },
-
-  async removeMeaning(id: number, meaningId: number): Promise<ApiResponse<null>> {
-    const response = await apiClient.delete(`/expressions/${id}/meanings/${meaningId}`)
-    return response.data as ApiResponse<null>
   },
 
   async uploadAudio(id: number, file: File): Promise<ApiResponse<{ audio_url: string }>> {

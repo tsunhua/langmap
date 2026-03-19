@@ -5,21 +5,18 @@ export interface Expression {
   id: number
   text: string
   language_code: string
-  meaning_id?: number
   audio_url?: string
   created_by: string
   created_at: string
   updated_at?: string
   updated_by?: string
-  meanings?: Array<{ id: number }>
+  groups?: any[]
 }
 
 export interface ExpressionFilters {
-  language?: string
-  meaningId?: number | number[]
+  lang?: string
   tagPrefix?: string
   excludeTagPrefix?: string
-  includeMeanings?: boolean
   skip?: number
   limit?: number
 }

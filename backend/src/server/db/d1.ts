@@ -155,21 +155,14 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   // Expression operations
-  async getExpressions(skip: number = 0, limit: number = 50, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string, includeMeanings?: boolean): Promise<Expression[]> {
+  async getExpressions(skip: number = 0, limit: number = 50, languages?: string[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]> {
     const results = await this.expressionQueries.findAll(skip, limit, {
-      language,
-      meaningId,
+      languages,
       tagPrefix,
       excludeTagPrefix
     })
 
     const formattedResults = results.map(e => this.formatTimestamps(e))
-
-    if (includeMeanings) {
-      for (const expr of formattedResults) {
-        expr.meanings = await this.getMeaningsByExpressionId(expr.id)
-      }
-    }
 
     return formattedResults
   }
@@ -179,10 +172,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
     if (!expression) return null
 
     const formattedExpr = this.formatTimestamps(expression)
-
-    const meanings = await this.getMeaningsByExpressionId(id)
-    formattedExpr.meanings = meanings
-
     return formattedExpr
   }
 
@@ -385,10 +374,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
       await this.expressionQueries.updateLanguageStats(expression.language_code!, 1)
       this.clearStatisticsCache()
       this.clearHeatmapCache()
-      
-      if (expression.meaning_id) {
-        await this.addExpressionMeaning(id, expression.meaning_id, expression.created_by || 'system')
-      }
       return this.formatTimestamps(result)
     } else {
       const existing = await this.getExpressionById(id)
@@ -453,18 +438,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return this.expressionQueries.selectSemanticAnchor(expressionIds)
   }
 
-  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20, includeMeanings?: boolean): Promise<Expression[]> {
+  async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
     if (!query.trim()) return []
     
     const results = await this.expressionQueries.search(query, fromLang, region, skip, limit)
     const formattedResults = results.map(e => this.formatTimestamps(e))
-
-    if (includeMeanings) {
-      for (const expr of formattedResults) {
-        expr.meanings = await this.getMeaningsByExpressionId(expr.id)
-      }
-    }
-
     return formattedResults
   }
 

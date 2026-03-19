@@ -1,13 +1,20 @@
+export interface ExpressionGroup {
+  id: number
+  expressions: Expression[]
+  created_by?: string
+  created_at?: string
+}
+
 export interface Expression {
   id: number
   text: string
   language_code: string
-  meaning_id?: number
   audio_url?: string
   created_by: string
   created_at: string
   updated_at?: string
   updated_by?: string
+  groups?: ExpressionGroup[]
 }
 
 export interface Language {

@@ -4,7 +4,7 @@ import { createDatabaseService } from '../db/index.js'
 import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
 import { cacheMiddleware } from '../middleware/cache.js'
-import { createExpressionSchema, updateExpressionSchema, batchExpressionSchema, ensureExpressionsSchema, addMeaningSchema, expressionsQuerySchema } from '../schemas/expression.js'
+import { createExpressionSchema, updateExpressionSchema, batchExpressionSchema, ensureExpressionsSchema, expressionsQuerySchema } from '../schemas/expression.js'
 import { success, created, badRequest, notFound, forbidden, internalError, paginated } from '../utils/response.js'
 
 const expressionsRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
@@ -16,26 +16,20 @@ expressionsRoutes.get('/', async (c) => {
 
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '50')
-    const language = c.req.query('language') || undefined
-    const meaningIdParam = c.req.query('meaning_id')
-    let meaningId: number | number[] | undefined
-    if (meaningIdParam) {
-      if (meaningIdParam.includes(',')) {
-        meaningId = meaningIdParam.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id))
-      } else {
-        meaningId = parseInt(meaningIdParam, 10)
-      }
-    }
+    const langParam = c.req.query('lang')
     const tagPrefix = c.req.query('tag') || undefined
     const excludeTagPrefix = c.req.query('exclude_tag') || undefined
-    const includeMeanings = c.req.query('include_meanings') === 'true'
+
+    let languages: string[] | undefined
+    if (langParam) {
+      languages = langParam.split(',').map(l => l.trim())
+    }
 
     const result = await service.getAll(skip, limit, {
-      language,
-      meaningId,
+      languages,
       tagPrefix,
       excludeTagPrefix,
-      includeMeanings
+      includeMeanings: false,
     })
 
     const total = result.length < limit ? skip + result.length : (result.length > 0 ? skip + result.length + 1 : skip)
@@ -120,8 +114,8 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     }
     console.log('[POST /expressions/batch] Validated:', JSON.stringify(validated, null, 2))
 
-    const { expressions, ensure_new_meaning } = validated
-    const forceNewMeaning = ensure_new_meaning === true
+    const { expressions, ensure_new_group } = validated
+    const forceNewGroup = ensure_new_group === true
 
     console.log('[POST /expressions/batch] Creating exprsWithIds...')
     const exprsWithIds = expressions.map(expr => {
@@ -165,10 +159,10 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     if (!finalMeaningId && sortedExprs.length > 1) {
       finalMeaningId = sortedExprs[0].id
     }
+    
+    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup)
 
-    const results = await db.upsertExpressions(exprsWithIds, forceNewMeaning)
-
-    return created(c, { meaning_id: finalMeaningId, results })
+    return created(c, { group_id: finalMeaningId, results })
   } catch (error: any) {
     console.error('[POST /expressions/batch] Caught error')
     console.error('[POST /expressions/batch] Error name:', error.name)
@@ -183,41 +177,6 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
       return badRequest(c, 'Validation failed', undefined, error.errors)
     }
     return internalError(c, error.message || 'Failed to process batch submission')
-  }
-})
-
-expressionsRoutes.post('/associate', requireAuth, async (c) => {
-  try {
-    const db = createDatabaseService(c.env)
-    const service = new ExpressionService(db)
-    const user = c.get('user')
-    const body = await c.req.json()
-
-    const { expression_ids } = body
-    if (!expression_ids || !Array.isArray(expression_ids) || expression_ids.length < 2) {
-      return badRequest(c, 'At least 2 expression IDs are required')
-    }
-
-    const meaningId = await db.selectSemanticAnchor(expression_ids)
-    if (!meaningId) {
-      return internalError(c, 'Failed to select semantic anchor')
-    }
-
-    const now = new Date().toISOString()
-    const statements = expression_ids.map(id =>
-      db.db.prepare(
-        'INSERT OR REPLACE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
-      ).bind(`${id}-${meaningId}`, id, meaningId, now)
-    )
-
-    await db.db.batch(statements)
-    db.clearStatisticsCache()
-    db.clearHeatmapCache()
-
-    return success(c, { meaning_id: meaningId, updated_count: expression_ids.length })
-  } catch (error: any) {
-    console.error('Error in POST /expressions/associate:', error)
-    return internalError(c, error.message || 'Failed to associate expressions')
   }
 })
 
@@ -245,7 +204,7 @@ expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
 
       expressions.forEach(expr => {
         const mids = meaningIdsMap.get(expr.id) || []
-        expr.meanings = mids.map(mid => ({ id: mid })) as any
+        ;(expr as any).groups = mids.map(mid => ({ id: mid }))
       })
 
       return success(c, expressions)
@@ -348,50 +307,7 @@ expressionsRoutes.get('/:expr_id/versions', async (c) => {
   }
 })
 
-expressionsRoutes.post('/:expr_id/meanings', requireAuth, async (c) => {
-  try {
-    const db = createDatabaseService(c.env)
-    const service = new ExpressionService(db)
-    const exprId = parseInt(c.req.param('expr_id'))
-    const body = await c.req.json()
-    const validated = addMeaningSchema.parse(body)
 
-    if (isNaN(exprId)) {
-      return badRequest(c, 'Invalid expression ID')
-    }
-
-    const user = c.get('user')
-    await service.addMeaning(exprId, validated.meaning_id, user.username)
-
-    return success(c, null, 'Meaning added to expression successfully')
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return badRequest(c, 'Validation failed', undefined, error.errors)
-    }
-    console.error('Error in POST /expressions/:expr_id/meanings:', error)
-    return internalError(c, 'Failed to add meaning to expression')
-  }
-})
-
-expressionsRoutes.delete('/:expr_id/meanings/:meaning_id', requireAuth, async (c) => {
-  try {
-    const db = createDatabaseService(c.env)
-    const service = new ExpressionService(db)
-    const exprId = parseInt(c.req.param('expr_id'))
-    const meaningId = parseInt(c.req.param('meaning_id'))
-
-    if (isNaN(exprId) || isNaN(meaningId)) {
-      return badRequest(c, 'Invalid expression ID or meaning ID')
-    }
-
-    await service.removeMeaning(exprId, meaningId)
-
-    return success(c, null, 'Meaning removed from expression successfully')
-  } catch (error: any) {
-    console.error('Error in DELETE /expressions/:expr_id/meanings/:meaning_id:', error)
-    return internalError(c, 'Failed to remove meaning from expression')
-  }
-})
 
 expressionsRoutes.post('/:expr_id/upload-audio', requireAuth, async (c) => {
   try {
