@@ -146,7 +146,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { languagesApi } from '../api/index.ts'
+import { languagesApi, expressionGroupsApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 
 export default {
@@ -594,27 +594,17 @@ export default {
         // 如果传入了 initialGroupId，则自动关联到该词句组
         if (props.initialGroupId) {
           try {
-            const associateRes = await fetch(`/api/v1/expressions/${created.id}/associate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                group_id: props.initialGroupId
-              })
-            })
+            const result = await expressionGroupsApi.addToGroup(props.initialGroupId, { expression_id: created.id })
 
-            if (!associateRes.ok) {
-              if (associateRes.status === 401) {
+            if (!result.success) {
+              if (result.error) {
                 // Token is invalid, redirect to login
                 error.value = 'Session expired. Please log in again.';
                 localStorage.removeItem('authToken');
                 router.push('/login');
                 return;
               }
-              const errorData = await associateRes.json()
-              throw new Error(errorData.error || 'Failed to associate expression to group')
+              throw new Error(result.error || 'Failed to associate expression to group')
             }
           } catch (e) {
             error.value = String(e)

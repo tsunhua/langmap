@@ -23,7 +23,7 @@ expressionGroupRoutes.get('/:id', cacheMiddleware(300), async (c) => {
     const langParam = c.req.query('lang')
     const languages = langParam ? langParam.split(',').map(l => l.trim()) : undefined
 
-    const group = await db.expressionGroup.getGroupInfo(id, languages)
+    const group = await db.groups.getGroupInfo(id, languages)
 
     if (!group) {
       return notFound(c, 'Expression Group')
@@ -52,7 +52,7 @@ expressionGroupRoutes.get('/', cacheMiddleware(300), async (c) => {
       return badRequest(c, 'Invalid pagination parameters')
     }
 
-    const result = await db.expressionGroup.listGroups(skip, limit, languages)
+    const result = await db.groups.listGroups(skip, limit, languages)
 
     return success(c, result)
   } catch (error: any) {
@@ -82,7 +82,7 @@ expressionGroupRoutes.get('/search', cacheMiddleware(300), async (c) => {
       return badRequest(c, 'Invalid pagination parameters')
     }
 
-    const result = await db.expressionGroup.searchGroups(query, skip, limit, languages)
+    const result = await db.groups.searchGroups(query, skip, limit, languages)
 
     return success(c, result)
   } catch (error: any) {
@@ -112,7 +112,7 @@ expressionGroupRoutes.post('/', requireAuth, async (c) => {
       return badRequest(c, 'Invalid anchor expression ID')
     }
 
-    const group = await db.expressionGroup.createGroup(anchorExpressionId, user.username)
+    const group = await db.groups.createGroup(anchorExpressionId, user.username)
 
     return success(c, group, 'Expression group created successfully')
   } catch (error: any) {
@@ -147,7 +147,7 @@ expressionGroupRoutes.post('/:id/expressions', requireAuth, async (c) => {
       return badRequest(c, 'Invalid expression ID')
     }
 
-    await db.expressionGroup.addToGroup(expressionId, groupId, user.username)
+    await db.groups.addToGroup(expressionId, groupId, user.username)
 
     return success(c, null, 'Expression added to group successfully')
   } catch (error: any) {
@@ -170,7 +170,7 @@ expressionGroupRoutes.delete('/:id/expressions/:expressionId', requireAuth, asyn
       return badRequest(c, 'Invalid IDs')
     }
 
-    await db.expressionGroup.removeFromGroup(expressionId, groupId)
+    await db.groups.removeFromGroup(expressionId, groupId)
 
     return success(c, null, 'Expression removed from group successfully')
   } catch (error: any) {
@@ -208,7 +208,7 @@ expressionGroupRoutes.post('/:id/merge', requireAuth, async (c) => {
       return badRequest(c, 'Cannot merge a group into itself')
     }
 
-    const result = await db.expressionGroup.mergeGroups(sourceGroupId, targetGroupId)
+    const result = await db.groups.mergeGroups(sourceGroupId, targetGroupId)
 
     return success(c, result, 'Expression groups merged successfully')
   } catch (error: any) {
@@ -230,7 +230,7 @@ expressionGroupRoutes.delete('/:id', requireAuth, async (c) => {
       return badRequest(c, 'Invalid group ID')
     }
 
-    await db.expressionGroup.deleteGroup(id)
+    await db.groups.deleteGroup(id)
 
     return success(c, null, 'Expression group deleted successfully')
   } catch (error: any) {

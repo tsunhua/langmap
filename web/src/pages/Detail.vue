@@ -627,20 +627,10 @@ export default {
       }
 
       try {
-        const res = await fetch(`/api/v1/expressions/${item.value.id}/associate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            group_id: groupId
-          })
-        })
+        const result = await expressionGroupsApi.addToGroup(groupId, { expression_id: item.value.id })
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to associate to expression group')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to associate to expression group')
         }
 
         // Refresh to show updated list
@@ -947,27 +937,11 @@ export default {
 
     // Handle SmartSearch associate event (from within a group)
     async function handleGroupSearchAssociate(result) {
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        alert(t('login_required'))
-        return
-      }
-
       try {
-        const res = await fetch(`/api/v1/expressions/${result.id}/associate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            group_id: currentGroup.value.id
-          })
-        })
+        const response = await expressionGroupsApi.addToGroup(currentGroup.value.id, { expression_id: result.id })
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to associate to expression group')
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to associate to expression group')
         }
 
         // Refresh to show updated list

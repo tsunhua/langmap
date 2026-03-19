@@ -476,10 +476,10 @@ expressionsRoutes.post('/associate', requireAuth, async (c) => {
   // 使用 expressionGroup 批量添加
   const anchorId = expression_ids[0]
   const user = c.get('user')
-  const groupId = await db.expressionGroup.createGroup(anchorId, user.username)
+  const groupId = await db.groups.createGroup(anchorId, user.username)
 
   // 批量添加其余词句
-  await db.expressionGroup.batchAddToGroup(expression_ids.slice(1), groupId, user.username)
+  await db.groups.batchAddToGroup(expression_ids.slice(1), groupId, user.username)
 
   return success(c, { group_id: groupId, updated_count: expression_ids.length })
 })
@@ -489,7 +489,7 @@ const expression = await service.getById(exprId)
 
 // 替换 meanings 为 groups
 if (includeMeanings) {
-  expression.groups = await db.expressionGroup.getExpressionGroups(exprId)
+  expression.groups = await db.groups.getExpressionGroups(exprId)
 }
 ```
 
@@ -519,7 +519,7 @@ const langParam = c.req.query('lang')
 const languages = langParam ? langParam.split(',').map(l => l.trim()) : undefined
 
 // 查询时传入 languages 参数
-const group = await db.expressionGroup.getGroupInfo(groupId, languages)
+const group = await db.groups.getGroupInfo(groupId, languages)
 ```
 
 ### 前端 API 改造

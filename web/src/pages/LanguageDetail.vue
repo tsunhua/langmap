@@ -240,7 +240,7 @@ export default {
         } else {
           // Use expressions API for browsing all expressions
           useSearchAPI = false
-          url = `/api/v1/expressions?language=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
+          url = `/api/v1/expressions?lang=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
           if (tagPrefix.value) {
             url += `&tag=${encodeURIComponent(tagPrefix.value)}`
           }

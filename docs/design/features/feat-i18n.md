@@ -96,7 +96,7 @@ GET /api/v1/languages
 
 #### 获取指定语言的UI翻译
 ```
-GET /api/v1/expressions?language={language_code}&tags=langmap
+GET /api/v1/expressions?lang={language_code}&tags=langmap
 响应:
 [
   {

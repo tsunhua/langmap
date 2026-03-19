@@ -9,7 +9,7 @@
 - ⏳ 语言详情路由 - 需要添加
 
 **已实现的 API 端点**：
-- `GET /api/v1/expressions?language=...&skip=...&limit=...` - 获取表达列表（支持按语言过滤）
+- `GET /api/v1/expressions?lang=...&skip=...&limit=...` - 获取表达列表（支持按语言过滤）
 - `GET /api/v1/languages` - 获取语言列表
 
 ---
@@ -58,7 +58,7 @@ interface Expression {
 
 ## API 设计
 
-### GET /api/v1/expressions?language=:code&skip=:skip&limit=:limit
+### GET /api/v1/expressions?lang=:code&skip=:skip&limit=:limit
 
 获取指定语言的词条列表（现有接口）。
 
@@ -303,7 +303,7 @@ export default {
       loading.value = true
       try {
         const skip = (currentPage.value - 1) * itemsPerPage
-        let url = `/api/v1/expressions?language=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
+        let url = `/api/v1/expressions?lang=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
 
         // 搜索过滤
         if (searchQuery.value) {
