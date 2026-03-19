@@ -283,7 +283,7 @@ import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import { handbooksApi, stableExpressionId } from '../api/index.ts'
+import { handbooksApi, stableExpressionId, expressionGroupsApi } from '../api/index.ts'
 import { generateLanguageColor } from '../utils/languageUtils'
 
 export default {
@@ -772,9 +772,15 @@ export default {
       const translations = []
       groupIds.forEach(gid => {
         form.instruction_langs.forEach(targetLang => {
-          const cacheKey = `trans_${targetLang}_${gid}`
-          if (expressionMap[cacheKey] && expressionMap[cacheKey].text) {
-            translations.push({ text: expressionMap[cacheKey].text, targetLang })
+          // Find matching group in all cached expressions
+          for (const exprId in expressionMap) {
+            const expr = expressionMap[exprId]
+            if (!expr || !expr.groups) continue
+            
+            const matchingGroup = expr.groups.find(g => g.id === gid && g.targetLang === targetLang)
+            if (matchingGroup) {
+              translations.push({ text: matchingGroup.text, targetLang })
+            }
           }
         })
       })
@@ -815,28 +821,60 @@ export default {
         return
       }
 
-      // Phase 1: Fetch source expressions
+      // Phase 1: Fetch expressions and their groups using expressionGroupsApi
       const uncachedExprs = expressionsToFetch.filter(e => !(e.id in translationCache.value))
 
       if (uncachedExprs.length > 0) {
         previewLoading.value = true
         try {
-          const result = await handbooksApi.getExpressions('', uncachedExprs.map(e => e.id))
-          if (result.success && Array.isArray(result.data)) {
-            const expressions = result.data
-            expressions.forEach(expr => {
-              translationCache.value[expr.id] = expr
-            })
-          } else {
-            console.error('Failed to fetch expressions:', result)
-          }
-          uncachedExprs.forEach(e => {
-            if (!(e.id in translationCache.value)) {
-              translationCache.value[e.id] = null
+          // For each uncached expression, fetch its groups
+          for (const expr of uncachedExprs) {
+            try {
+              const result = await expressionGroupsApi.getExpressionGroups(expr.id)
+              
+              if (result.success && Array.isArray(result.data)) {
+                const groups = result.data
+                
+                // Build expression object from groups
+                // Each group contains multiple expressions, we create unique items for each (group, lang) combination
+                const flatGroups = []
+                for (const group of groups) {
+                  if (group.expressions && Array.isArray(group.expressions)) {
+                    for (const groupExpr of group.expressions) {
+                      // Filter by instruction languages
+                      const targetLang = groupExpr.language_code
+                      const isValidLang = form.instruction_langs.includes(targetLang) || targetLang === form.content_lang
+                      
+                      if (isValidLang) {
+                        flatGroups.push({
+                          id: group.id,
+                          text: groupExpr.text,
+                          lang: groupExpr.language_code,
+                          targetLang: targetLang
+                        })
+                      }
+                    }
+                  }
+                }
+                
+                const expressionData = {
+                  id: expr.id,
+                  text: expr.text,
+                  lang: expr.lang,
+                  groups: flatGroups
+                }
+                translationCache.value[expr.id] = expressionData
+              } else {
+                console.error('Failed to fetch expression groups for:', expr.id, result)
+                translationCache.value[expr.id] = null
+              }
+            } catch (err) {
+              console.error('Failed to fetch expression groups for:', expr.id, err)
+              translationCache.value[expr.id] = null
             }
-          })
+          }
         } catch (error) {
-          console.error('Failed to fetch expressions:', error)
+          console.error('Failed to fetch expression groups:', error)
         } finally {
           previewLoading.value = false
         }
@@ -850,55 +888,6 @@ export default {
           if (!allMids.includes(g.id)) allMids.push(g.id)
         })
       })
-
-      // Phase 3: Fetch translations for all target languages
-      if (allMids.length > 0 && form.instruction_langs.length > 0) {
-        previewLoading.value = true
-        try {
-          for (const targetLang of form.instruction_langs) {
-            const result = await handbooksApi.getExpressions(targetLang, allMids)
-            const translations = result.success && Array.isArray(result.data) ? result.data : []
-
-            if (!result.success) {
-              console.error('Failed to fetch expressions:', result.error || result.message)
-              continue
-            }
-
-            // Merge multiple translations for same group_id using | separator (match backend)
-            const transByGroup = {}
-            translations.forEach(trans => {
-                const gids = trans.groups?.map(g => g.id).filter(id => allMids.includes(id)) || []
-                if (gids.length === 0 && trans.group_id) gids.push(trans.group_id)
-
-                gids.forEach(gid => {
-                  if (!transByGroup[gid]) {
-                  transByGroup[gid] = { text: '', audio_url: trans.audio_url || '' }
-                }
-                transByGroup[gid].text = transByGroup[gid].text
-                  ? `${transByGroup[gid].text} | ${trans.text}`
-                  : trans.text
-              })
-            })
-
-            // Store merged results
-            Object.entries(transByGroup).forEach(([gid, merged]) => {
-              const cacheKey = `trans_${targetLang}_${gid}`
-              translationCache.value[cacheKey] = merged
-            })
-            
-            allMids.forEach(mid => {
-              const cacheKey = `trans_${targetLang}_${mid}`
-              if (!(cacheKey in translationCache.value)) {
-                translationCache.value[cacheKey] = null
-              }
-            })
-          }
-        } catch (error) {
-          console.error('Failed to fetch translations:', error)
-        } finally {
-          previewLoading.value = false
-        }
-      }
 
       renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
       renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)

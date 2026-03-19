@@ -613,9 +613,12 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
         console.log('[GET] Saved to cache')
 
         return c.json({
-          ...handbook,
-          ...renders,
-          is_cached: false
+          success: true,
+          data: {
+            ...handbook,
+            ...renders,
+            is_cached: false
+          }
         }, {
           headers: {
             'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
@@ -624,7 +627,10 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
       } catch (renderError) {
         console.error('[GET] Render error:', renderError)
         console.error('[GET] Render error stack:', renderError instanceof Error ? renderError.stack : 'No stack')
-        return c.json(handbook, {
+        return c.json({
+          success: true,
+          data: handbook
+        }, {
           headers: {
             'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
           }
@@ -633,7 +639,10 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
     }
 
     console.log('[GET] No target langs, returning handbook as-is')
-    return c.json(handbook, {
+    return c.json({
+      success: true,
+      data: handbook
+    }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
       }
@@ -641,7 +650,7 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
   } catch (error: any) {
     console.error('[GET] Error in GET /handbooks/:id:', error)
     console.error('[GET] Error stack:', error instanceof Error ? error.stack : 'No stack')
-    return c.json({ error: 'Failed to fetch handbook' }, 500)
+    return internalError(c, 'Failed to fetch handbook')
   }
 })
 
@@ -655,7 +664,7 @@ handbookRoutes.post('/preview', requireAuth, async (c) => {
     console.log('[POST /preview] Body:', body)
 
     if (!body.content) {
-      return c.json({ error: 'Content is required' }, 400)
+      return badRequest(c, 'Content is required')
     }
 
     const tempHandbook = {
@@ -673,14 +682,14 @@ handbookRoutes.post('/preview', requireAuth, async (c) => {
     const renders = await renderHandbookInternal(c, tempHandbook, targetLangs)
     console.log('[POST /preview] Renders:', Object.keys(renders))
 
-    return c.json({
+    return success(c, {
       ...tempHandbook,
       ...renders
     })
   } catch (error: any) {
     console.error('[POST /preview] Error:', error)
     console.error('[POST /preview] Error stack:', error instanceof Error ? error.stack : 'No stack')
-    return c.json({ error: 'Failed to preview handbook' }, 500)
+    return internalError(c, 'Failed to preview handbook')
   }
 })
 
@@ -691,7 +700,7 @@ handbookRoutes.post('/', requireAuth, async (c) => {
     const body = await c.req.json()
 
     if (!body.title || !body.content) {
-      return c.json({ error: 'Title and content are required' }, 400)
+      return badRequest(c, 'Title and content are required')
     }
 
     const sourceLang = body.source_lang || ''
@@ -716,10 +725,10 @@ handbookRoutes.post('/', requireAuth, async (c) => {
       user_id: user.id
     })
 
-    return c.json(handbook, 201)
+    return created(c, handbook)
   } catch (error: any) {
     console.error('Error in POST /handbooks:', error)
-    return c.json({ error: 'Failed to create handbook' }, 500)
+    return internalError(c, 'Failed to create handbook')
   }
 })
 
@@ -730,13 +739,13 @@ handbookRoutes.put('/:id', requireAuth, async (c) => {
     const id = parseInt(c.req.param('id'))
     const body = await c.req.json()
 
-    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
 
     const existing = await db.getHandbookById(id)
-    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+    if (!existing) return notFound(c, 'Handbook')
 
     if (existing.user_id !== user.id) {
-      return c.json({ error: 'Access denied' }, 403)
+      return forbidden(c, 'Access denied')
     }
 
     const sourceLang = body.source_lang || ''
@@ -759,10 +768,10 @@ handbookRoutes.put('/:id', requireAuth, async (c) => {
     await db.invalidateHandbookRenders(id)
 
     const updated = await db.updateHandbook(id, body)
-    return c.json(updated)
+    return success(c, updated)
   } catch (error: any) {
     console.error('Error in PUT /handbooks/:id:', error)
-    return c.json({ error: 'Failed to update handbook' }, 500)
+    return internalError(c, 'Failed to update handbook')
   }
 })
 
@@ -772,24 +781,21 @@ handbookRoutes.post('/:id/rerender', requireAuth, async (c) => {
     const user = c.get('user')
     const id = parseInt(c.req.param('id'))
 
-    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
 
     const handbook = await db.getHandbookById(id)
-    if (!handbook) return c.json({ error: 'Handbook not found' }, 404)
+    if (!handbook) return notFound(c, 'Handbook')
 
     if (handbook.user_id !== user.id && user.role !== 'admin') {
-      return c.json({ error: 'Access denied' }, 403)
+      return forbidden(c, 'Access denied')
     }
 
     await db.invalidateHandbookRenders(id)
 
-    return c.json({
-      success: true,
-      message: 'Handbook render cache cleared successfully'
-    })
+    return success(c, null, 'Handbook render cache cleared successfully')
   } catch (error: any) {
     console.error('Error in POST /handbooks/:id/rerender:', error)
-    return c.json({ error: 'Failed to rerender handbook' }, 500)
+    return internalError(c, 'Failed to rerender handbook')
   }
 })
 
@@ -799,20 +805,20 @@ handbookRoutes.delete('/:id', requireAuth, async (c) => {
     const user = c.get('user')
     const id = parseInt(c.req.param('id'))
 
-    if (isNaN(id)) return c.json({ error: 'Invalid ID' }, 400)
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
 
     const existing = await db.getHandbookById(id)
-    if (!existing) return c.json({ error: 'Handbook not found' }, 404)
+    if (!existing) return notFound(c, 'Handbook')
 
     if (existing.user_id !== user.id && user.role !== 'admin') {
-      return c.json({ error: 'Access denied' }, 403)
+      return forbidden(c, 'Access denied')
     }
 
     const success = await db.deleteHandbook(id)
-    return c.json({ success })
+    return success(c, { success }, 'Handbook deleted successfully')
   } catch (error: any) {
     console.error('Error in DELETE /handbooks/:id:', error)
-    return c.json({ error: 'Failed to delete handbook' }, 500)
+    return internalError(c, 'Failed to delete handbook')
   }
 })
 

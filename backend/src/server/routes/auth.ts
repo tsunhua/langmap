@@ -12,7 +12,7 @@ import { success, created, badRequest, internalError } from '../utils/response.j
 const authRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
 authRoutes.get('/health', (c) => {
-  return c.json({ status: 'ok', message: 'Auth API is running' })
+  return success(c, { status: 'ok', message: 'Auth API is running' })
 })
 
 authRoutes.post('/register', async (c) => {
