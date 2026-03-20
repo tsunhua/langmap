@@ -228,41 +228,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async getExpressionsGroups(expressionIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup[]>> {
-    const result = new Map<number, ExpressionGroup[]>()
-
-    if (expressionIds.length === 0) return result
-
-    const { results: groupIds } = await this.db.prepare(`
-      SELECT DISTINCT em.expression_id, em.meaning_id, m.created_by, m.created_at
-      FROM expression_meaning em
-      JOIN meanings m ON em.meaning_id = m.id
-      WHERE em.expression_id IN (SELECT value FROM json_each(?))
-      ORDER BY em.created_at DESC
-    `).bind(JSON.stringify(expressionIds)).all<{
-      expression_id: number,
-      meaning_id: number,
-      created_by?: string,
-      created_at?: string
-    }>()
-
-    if (!groupIds || groupIds.length === 0) {
-      return result
-    }
-
-    const uniqueMeaningIds = [...new Set(groupIds.map(row => row.meaning_id))]
-    const groupInfos = await this.groupQueries.getBatchExpressionGroupInfos(uniqueMeaningIds, languages)
-
-    for (const row of groupIds) {
-      const groupInfo = groupInfos.get(row.meaning_id)
-      if (groupInfo) {
-        if (!result.has(row.expression_id)) {
-          result.set(row.expression_id, [])
-        }
-        result.get(row.expression_id)!.push(groupInfo)
-      }
-    }
-
-    return result
+    return this.groupQueries.getExpressionsGroups(expressionIds, languages)
   }
 
   async getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>> {
@@ -805,10 +771,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const render = await this.handbookQueries.getRender(id, targetLang)
     if (!render) return null
 
-    // Check TTL (24 hours)
+    // Check TTL (7 days)
     const renderedTime = render.at || new Date(render.created_at).getTime()
     const now = Date.now()
-    if (now - renderedTime > 24 * 3600 * 1000) {
+    if (now - renderedTime > 7 * 24 * 3600 * 1000) {
       return null // Expired
     }
 

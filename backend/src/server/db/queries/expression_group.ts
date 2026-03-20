@@ -90,16 +90,26 @@ export class ExpressionGroupQueries {
 
     if (groupIds.length === 0) return result
 
-    const { results: groupResults } = await this.db.prepare(`
-      SELECT id, created_by, created_at
-      FROM meanings
-      WHERE id IN (SELECT value FROM json_each(?))
-    `).bind(JSON.stringify(groupIds)).all<{ id: number, created_by?: string, created_at?: string }>()
+    const BATCH_SIZE = 100
+    const allGroupResults: Array<{ id: number, created_by?: string, created_at?: string }> = []
 
-    if (!groupResults || groupResults.length === 0) return result
+    for (let i = 0; i < groupIds.length; i += BATCH_SIZE) {
+      const batch = groupIds.slice(i, i + BATCH_SIZE)
 
-    const groups: ExpressionGroup[] = []
-    for (const groupResult of groupResults) {
+      const { results: groupResults } = await this.db.prepare(`
+        SELECT id, created_by, created_at
+        FROM meanings
+        WHERE id IN (SELECT value FROM json_each(?))
+      `).bind(JSON.stringify(batch)).all<{ id: number, created_by?: string, created_at?: string }>()
+
+      if (groupResults) {
+        allGroupResults.push(...groupResults)
+      }
+    }
+
+    if (allGroupResults.length === 0) return result
+
+    for (const groupResult of allGroupResults) {
       const expressions = await this.getGroupExpressions(groupResult.id, languages)
       const group: ExpressionGroup = {
         id: groupResult.id,
@@ -107,7 +117,6 @@ export class ExpressionGroupQueries {
         created_by: groupResult.created_by,
         created_at: groupResult.created_at
       }
-      groups.push(group)
       result.set(groupResult.id, group)
     }
 
@@ -280,5 +289,59 @@ export class ExpressionGroupQueries {
     }
 
     return groups
+  }
+
+  async getExpressionsGroups(expressionIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup[]>> {
+    const result = new Map<number, ExpressionGroup[]>()
+
+    if (expressionIds.length === 0) return result
+
+    const BATCH_SIZE = 100
+    const allGroupIds: Array<{
+      expression_id: number,
+      meaning_id: number,
+      created_by?: string,
+      created_at?: string
+    }> = []
+
+    for (let i = 0; i < expressionIds.length; i += BATCH_SIZE) {
+      const batch = expressionIds.slice(i, i + BATCH_SIZE)
+
+      const { results: groupIds } = await this.db.prepare(`
+        SELECT DISTINCT em.expression_id, em.meaning_id, m.created_by, m.created_at
+        FROM expression_meaning em
+        JOIN meanings m ON em.meaning_id = m.id
+        WHERE em.expression_id IN (SELECT value FROM json_each(?))
+        ORDER BY em.created_at DESC
+      `).bind(JSON.stringify(batch)).all<{
+        expression_id: number,
+        meaning_id: number,
+        created_by?: string,
+        created_at?: string
+      }>()
+
+      if (groupIds) {
+        allGroupIds.push(...groupIds)
+      }
+    }
+
+    if (allGroupIds.length === 0) {
+      return result
+    }
+
+    const uniqueMeaningIds = [...new Set(allGroupIds.map(row => row.meaning_id))]
+    const groupInfos = await this.getBatchExpressionGroupInfos(uniqueMeaningIds, languages)
+
+    for (const row of allGroupIds) {
+      const groupInfo = groupInfos.get(row.meaning_id)
+      if (groupInfo) {
+        if (!result.has(row.expression_id)) {
+          result.set(row.expression_id, [])
+        }
+        result.get(row.expression_id)!.push(groupInfo)
+      }
+    }
+
+    return result
   }
 }
