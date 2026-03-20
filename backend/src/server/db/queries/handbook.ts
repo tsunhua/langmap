@@ -137,7 +137,7 @@ export class HandbookQueries {
     const currentResult = await this.db.prepare(
       'SELECT renders FROM handbooks WHERE id = ?'
     ).bind(data.handbook_id).first<{ renders: string }>()
-    
+
     let renders: any = {}
     if (currentResult?.renders) {
       try {
@@ -146,13 +146,14 @@ export class HandbookQueries {
         console.error('Failed to parse current renders:', e)
       }
     }
-    
+
     renders[data.target_lang] = {
       rendered_title: data.rendered_title,
       rendered_description: data.rendered_description,
-      rendered_content: data.rendered_content
+      rendered_content: data.rendered_content,
+      at: Date.now()
     }
-    
+
     await this.db.prepare(
       'UPDATE handbooks SET renders = ? WHERE id = ?'
     ).bind(JSON.stringify(renders), data.handbook_id).run()
