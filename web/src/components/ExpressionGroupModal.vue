@@ -274,7 +274,14 @@ export default {
         groups.value = result.success ? result.data : result
 
         if (groups.value.length === 0) {
-          expressions.value = []
+          const exprRes = await fetch(`/api/v1/expressions/${props.expressionId}`)
+          if (exprRes.ok) {
+            const exprResult = await exprRes.json()
+            const currentExpr = exprResult.success ? exprResult.data : exprResult
+            expressions.value = [currentExpr]
+          } else {
+            expressions.value = []
+          }
           return
         }
 

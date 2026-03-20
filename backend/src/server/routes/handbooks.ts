@@ -171,6 +171,12 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     })
   })
 
+  expressionsToFetch.forEach(expr => {
+    if (!expressionMap[expr.id]) {
+      expressionMap[expr.id] = { id: expr.id, groups: [] }
+    }
+  })
+
   const audioUrlCache: Map<number, string> = new Map()
   Object.values(expressionMap).forEach(expr => {
     if (expr.audio_url) {
