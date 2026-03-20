@@ -21,7 +21,7 @@ export const batchExpressionSchema = z.object({
     id: z.number().optional(),
     created_by: z.string().optional()
   })).min(1).max(50),
-  ensure_new_meaning: z.boolean().optional()
+  ensure_new_group: z.boolean().optional()
 })
 
 export const ensureExpressionsSchema = z.object({
