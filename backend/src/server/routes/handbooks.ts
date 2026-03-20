@@ -46,6 +46,17 @@ function getLanguageColor(langCode: string, handbook: any): string {
   return generateLanguageColor(langCode)
 }
 
+// Helper: Precompute language colors for efficiency
+function precomputeLanguageColors(langs: string[], handbook: any): Record<string, string> {
+  const colors: Record<string, string> = {}
+  for (const lang of langs) {
+    if (lang) {
+      colors[lang] = getLanguageColor(lang, handbook)
+    }
+  }
+  return colors
+}
+
 // Helper for handbook rendering
 async function renderHandbookInternal(c: Context, handbook: any, targetLangs: string[]) {
   console.log('[renderHandbookInternal] START', {
@@ -56,6 +67,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     targetLangs: targetLangs,
     contentLength: handbook.content?.length
   })
+
+  const langColors = precomputeLanguageColors(targetLangs, handbook)
 
   const md = new MarkdownIt({
     html: true,
@@ -77,8 +90,6 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   const title = handbook.title || ''
   const description = handbook.description || ''
 
-  console.log('[renderHandbookInternal] Content preview:', content.substring(0, 100))
-
   const TEXT_LANG_REGEX = /\{\{(?:text:)?([^\}|}]+)(?:\|([^}]+))?(?:\|([^}]+))?\}\}/g
 
   let titleToExtract = title
@@ -90,9 +101,9 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
   const midTags: Map<string, {text: string, mid: number, lang: string, expressionId: number}> = new Map()
+  const expressionIdCache: Map<string, number> = new Map()
   const fullText = `${titleToExtract}\n${description}\n${content}`
 
-  console.log('[renderHandbookInternal] Extracting tags from content...')
   TEXT_LANG_REGEX.lastIndex = 0
   let tlMatch
   let tagIndex = 0
@@ -119,10 +130,13 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       }
     }
 
-    console.log('[renderHandbookInternal] Tag found:', { text, param1, param2, lang, mid })
-
     try {
-      const id = db.stableExpressionId(text, lang)
+      const cacheKey = `${text}|${lang}`
+      let id = expressionIdCache.get(cacheKey)
+      if (id === undefined) {
+        id = db.stableExpressionId(text, lang)
+        expressionIdCache.set(cacheKey, id)
+      }
       if (!expressionsToFetch.some(e => e.id === id)) {
         expressionsToFetch.push({ text, lang, id })
       }
@@ -135,29 +149,12 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     }
   }
 
-  console.log('[renderHandbookInternal] Tags summary:', {
-    totalTags: tagIndex,
-    expressionsToFetchLength: expressionsToFetch.length,
-    expressionsToFetchDetails: expressionsToFetch.map(e => ({ id: e.id, text: e.text.substring(0, 30), lang: e.lang }))
-  })
-
   const expressionMap: Record<string, any> = {}
 
-  console.log('[renderHandbookInternal] Fetching expressions groups by ID...')
   const allExpressionIds = [...new Set([...expressionsToFetch.map(e => e.id)])]
-  console.log('[renderHandbookInternal] All expression IDs:', allExpressionIds)
   let expressionGroupsMap: Map<number, any[]>
   try {
     expressionGroupsMap = await db.getExpressionsGroups(allExpressionIds, targetLangs)
-    console.log('[renderHandbookInternal] Expression groups map fetched successfully')
-    console.log('[renderHandbookInternal] Expression groups map:', {
-      size: expressionGroupsMap.size,
-      entries: Array.from(expressionGroupsMap.entries()).map(([exprId, groups]) => ({
-        exprId,
-        groupsCount: groups.length,
-        groupIds: groups.map(g => g.id)
-      }))
-    })
   } catch (err) {
     console.error('[renderHandbookInternal] Error fetching expression groups:', err)
     throw err
@@ -174,27 +171,21 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     })
   })
 
-  console.log('[renderHandbookInternal] ExpressionMap keys:', {
-    count: Object.keys(expressionMap).length,
-    keys: Object.keys(expressionMap)
+  const audioUrlCache: Map<number, string> = new Map()
+  Object.values(expressionMap).forEach(expr => {
+    if (expr.audio_url) {
+      try {
+        const parsed = JSON.parse(expr.audio_url)
+        const audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+        audioUrlCache.set(expr.id, audioUrl)
+      } catch { }
+    }
   })
 
   const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, meaningId?: number) => {
-    console.log('[renderItem] START', {
-      id,
-      text: text.substring(0, 50),
-      isTitle,
-      meaningId,
-      targetLangs,
-      expressionMapKeys: Object.keys(expressionMap),
-      expressionMapHasId: !!expressionMap[id]
-    })
-
     const groupsToUse = meaningId
       ? expressionMap[id]?.groups?.filter((g: any) => g.id === meaningId) || []
       : expressionMap[id]?.groups || []
-
-    console.log('[renderItem] Groups to use:', groupsToUse.map((g: any) => g.id), 'meaningId filter:', meaningId)
 
     const translationGroups: Array<{ groupId: number, translations: Record<string, string> }> = []
 
@@ -218,8 +209,6 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       }
     })
 
-    console.log('[renderItem] Translation groups:', translationGroups.length)
-
     let meaningsHtml = ''
     if (translationGroups.length > 0) {
       const showGroups = translationGroups.slice(0, 2)
@@ -231,7 +220,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             ${showGroups.map((tg, index) => {
               const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
               return Object.entries(tg.translations).map(([langCode, text]) => {
-                const color = getLanguageColor(langCode, handbook)
+                const color = langColors[langCode] || getLanguageColor(langCode, handbook)
                 const langClass = langCode.replace('.', '-')
                 return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
               }).join(' ')
@@ -242,7 +231,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
               ${hiddenGroups.map((tg, index) => {
                 const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
                 return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = getLanguageColor(langCode, handbook)
+                  const color = langColors[langCode] || getLanguageColor(langCode, handbook)
                   const langClass = langCode.replace('.', '-')
                   return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
                 }).join(' ')
@@ -257,7 +246,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             ${showGroups.map((tg, index) => {
               const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
               return Object.entries(tg.translations).map(([langCode, text]) => {
-                const color = getLanguageColor(langCode, handbook)
+                const color = langColors[langCode] || getLanguageColor(langCode, handbook)
                 const langClass = langCode.replace('.', '-')
                 return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
               }).join(' ')
@@ -268,7 +257,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
               ${hiddenGroups.map((tg, index) => {
                 const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
                 return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = getLanguageColor(langCode, handbook)
+                  const color = langColors[langCode] || getLanguageColor(langCode, handbook)
                   const langClass = langCode.replace('.', '-')
                   return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
                 }).join(' ')
@@ -289,20 +278,15 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       ? `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
       : `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
 
-    console.log('[renderItem] Result length:', result.length)
     return result
   }
 
   const renderTextWithTags = (text: string, isTitle: boolean) => {
-    console.log('[renderTextWithTags] START', { isTitle, textLength: text?.length })
     if (!text) return ''
     const textToRender = text
 
-    let matchCount = 0
     TEXT_LANG_REGEX.lastIndex = 0
     const result = textToRender.replace(TEXT_LANG_REGEX, (match, term, param1, param2) => {
-      matchCount++
-      console.log('[renderTextWithTags] Match', matchCount, ':', match, { term, param1, param2 })
 
       let lang = handbook.source_lang || 'en'
       let mid: number | undefined
@@ -322,80 +306,46 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         }
       }
 
-      console.log('[renderTextWithTags] Parsed:', { lang, mid })
-
         if (mid) {
           const key = `mid_${mid}_${lang}`
           const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
           const expressionId = tagInfo?.expressionId
-          console.log('[renderTextWithTags] mid tag found:', { mid, lang, expressionId, hasTagInfo: !!tagInfo })
 
           if (expressionId) {
             const expr = expressionMap[expressionId]
-            console.log('[renderTextWithTags] Looking for expressionId:', expressionId, 'found:', !!expr)
-
             if (expr) {
-              let audioUrl = ''
-              if (expr.audio_url) {
-                try {
-                  const parsed = JSON.parse(expr.audio_url)
-                  audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-                } catch { }
-              }
-
+              const audioUrl = audioUrlCache.get(expr.id) || ''
               return renderItem(expr.id, term, audioUrl, isTitle, mid)
             }
-
-            console.log('[renderTextWithTags] Expression not found for expressionId:', expressionId)
             return `<span class="handbook-item-undefined">${term}</span>`
           }
-
-          console.log('[renderTextWithTags] No expressionId found for mid:', mid)
           return `<span class="handbook-item-undefined">${term}</span>`
         }
 
       try {
-        const id = db.stableExpressionId(term, lang)
+        const cacheKey = `${term}|${lang}`
+        const id = expressionIdCache.get(cacheKey) ?? db.stableExpressionId(term, lang)
         const expr = expressionMap[id]
-        console.log('[renderTextWithTags] Looking for id:', id, 'found:', !!expr)
-
         if (expr) {
-          let audioUrl = ''
-          if (expr.audio_url) {
-            try {
-              const parsed = JSON.parse(expr.audio_url)
-              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-            } catch { }
-          }
-
+          const audioUrl = audioUrlCache.get(expr.id) || ''
           return renderItem(id, term, audioUrl, isTitle)
         }
-
-        console.log('[renderTextWithTags] Expression not found for id:', id)
         return `<span class="handbook-item-undefined">${term}</span>`
       } catch (err) {
         console.error('[renderTextWithTags] Error in renderTextWithTags:', err)
         return `<span class="handbook-item-undefined">${term}</span>`
       }
     })
-
-    console.log('[renderTextWithTags] Total matches:', matchCount, 'result length:', result.length)
     return result
   }
 
-  console.log('[renderHandbookInternal] Rendering title...')
   let rendered_title = renderTextWithTags(titleToExtract, true)
-  console.log('[renderHandbookInternal] Rendered title length:', rendered_title.length)
   if (!rendered_title.includes('handbook-meaning-title')) {
-    console.log('[renderHandbookInternal] Title has no translations, using empty string')
     rendered_title = ''
   }
 
-  console.log('[renderHandbookInternal] Rendering description...')
   const rendered_description = renderTextWithTags(description, false)
-  console.log('[renderHandbookInternal] Rendered description length:', rendered_description.length)
 
-  console.log('[renderHandbookInternal] Creating placeholders for content...')
   const htmlPlaceholders: Record<string, string> = {}
 
   TEXT_LANG_REGEX.lastIndex = 0
@@ -405,17 +355,12 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     htmlPlaceholders[placeholder] = match
     return placeholder
   })
-  console.log('[renderHandbookInternal] Placeholders created:', Object.keys(htmlPlaceholders).length)
 
-  console.log('[renderHandbookInternal] Rendering markdown...')
   const renderedMarkdown = md.render(contentWithPlaceholders)
-  console.log('[renderHandbookInternal] Markdown rendered, length:', renderedMarkdown.length)
 
-  console.log('[renderHandbookInternal] Substituting placeholders...')
   const finalContent = renderedMarkdown.replace(/HANDBOOK_ITEM_\d+/g, (match) => {
     const originalTag = htmlPlaceholders[match]
     if (originalTag) {
-      console.log('[renderHandbookInternal] Substituting placeholder:', match)
       TEXT_LANG_REGEX.lastIndex = 0
       return originalTag.replace(TEXT_LANG_REGEX, (m, term, param1, param2) => {
         let lang = handbook.source_lang || 'en'
@@ -440,50 +385,26 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           const key = `mid_${mid}_${lang}`
           const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
           const expressionId = tagInfo?.expressionId
-          console.log('[renderHandbookInternal] Placeholder substitution - mid tag found:', { mid, lang, expressionId, hasTagInfo: !!tagInfo })
 
           if (expressionId) {
             const expr = expressionMap[expressionId]
-            console.log('[renderHandbookInternal] Placeholder substitution - expressionId:', expressionId, 'found:', !!expr)
-
             if (expr) {
-              let audioUrl = ''
-              if (expr.audio_url) {
-                try {
-                  const parsed = JSON.parse(expr.audio_url)
-                  audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-                } catch { }
-              }
-
+              const audioUrl = audioUrlCache.get(expr.id) || ''
               return renderItem(expr.id, term, audioUrl, false, mid)
             }
-
-            console.log('[renderHandbookInternal] Expression not found for expressionId:', expressionId)
             return `<span class="handbook-item-undefined">${term}</span>`
           }
-
-          console.log('[renderHandbookInternal] No expressionId found for mid:', mid)
           return `<span class="handbook-item-undefined">${term}</span>`
         }
 
         try {
-          const id = db.stableExpressionId(term, lang)
+          const cacheKey = `${term}|${lang}`
+          const id = expressionIdCache.get(cacheKey) ?? db.stableExpressionId(term, lang)
           const expr = expressionMap[id]
-          console.log('[renderHandbookInternal] Placeholder substitution - id:', id, 'found:', !!expr)
-
           if (expr) {
-            let audioUrl = ''
-            if (expr.audio_url) {
-              try {
-                const parsed = JSON.parse(expr.audio_url)
-                audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-              } catch { }
-            }
-
+            const audioUrl = audioUrlCache.get(expr.id) || ''
             return renderItem(id, term, audioUrl, false)
           }
-
-          console.log('[renderHandbookInternal] Expression not found for id:', id)
           return `<span class="handbook-item-undefined">${term}</span>`
         } catch (err) {
           console.error('[renderHandbookInternal] Error in placeholder substitution:', err)
@@ -491,15 +412,9 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         }
       })
     }
-    console.log('[renderHandbookInternal] No original tag found for placeholder:', match)
     return match
   })
 
-  console.log('[renderHandbookInternal] COMPLETE', {
-    titleLength: rendered_title.length,
-    descriptionLength: rendered_description.length,
-    contentLength: finalContent.length
-  })
   return { rendered_title, rendered_description, rendered_content: finalContent }
 }
 

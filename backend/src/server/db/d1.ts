@@ -38,6 +38,51 @@ let languagesCache: {
 };
 const LANGUAGES_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
+// LRU Cache for expression groups
+class LRUCache<K, V> {
+  private maxSize: number
+  private maxAge: number
+  private cache: Map<K, { value: V; timestamp: number }>
+
+  constructor(maxSize: number, maxAge: number) {
+    this.maxSize = maxSize
+    this.maxAge = maxAge
+    this.cache = new Map()
+  }
+
+  get(key: K): V | undefined {
+    const entry = this.cache.get(key)
+    if (!entry) return undefined
+
+    if (Date.now() - entry.timestamp > this.maxAge) {
+      this.cache.delete(key)
+      return undefined
+    }
+
+    this.cache.delete(key)
+    this.cache.set(key, entry)
+    return entry.value
+  }
+
+  set(key: K, value: V): void {
+    this.cache.delete(key)
+    this.cache.set(key, { value, timestamp: Date.now() })
+
+    if (this.cache.size > this.maxSize) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey)
+      }
+    }
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+let expressionGroupsCache = new LRUCache<string, Map<number, any[]>>(1000, 10 * 60 * 1000)
+
 export class D1DatabaseService extends AbstractDatabaseService {
 
   private db: D1Database
@@ -129,6 +174,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     this.clearStatisticsCache()
     this.clearHeatmapCache()
     this.clearLanguagesCache()
+    this.clearExpressionGroupsCache()
 
     return result
   }
@@ -140,6 +186,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     this.clearStatisticsCache()
     this.clearHeatmapCache()
     this.clearLanguagesCache()
+    this.clearExpressionGroupsCache()
 
     return result
   }
@@ -198,7 +245,9 @@ export class D1DatabaseService extends AbstractDatabaseService {
       created_at?: string
     }>()
 
-    if (!groupIds || groupIds.length === 0) return result
+    if (!groupIds || groupIds.length === 0) {
+      return result
+    }
 
     const uniqueMeaningIds = [...new Set(groupIds.map(row => row.meaning_id))]
     const groupInfos = await this.groupQueries.getBatchExpressionGroupInfos(uniqueMeaningIds, languages)
@@ -397,6 +446,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     this.clearStatisticsCache()
     this.clearHeatmapCache()
+    this.clearExpressionGroupsCache()
 
     console.log('[upsertExpressions] Completed with', results.length, 'results')
 
@@ -411,6 +461,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       await this.expressionQueries.updateLanguageStats(expression.language_code!, 1)
       this.clearStatisticsCache()
       this.clearHeatmapCache()
+      this.clearExpressionGroupsCache()
       return this.formatTimestamps(result)
     } else {
       const existing = await this.getExpressionById(id)
@@ -433,6 +484,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     // Clear statistics and heatmap caches as we've updated an expression
     this.clearStatisticsCache()
     this.clearHeatmapCache()
+    this.clearExpressionGroupsCache()
 
     return this.formatTimestamps(result)
   }
@@ -454,6 +506,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
       this.clearStatisticsCache()
       this.clearHeatmapCache()
+      this.clearExpressionGroupsCache()
 
       return true
     } catch (error) {
@@ -629,6 +682,11 @@ export class D1DatabaseService extends AbstractDatabaseService {
     languagesCache.data = null;
     languagesCache.timestamp = null;
     console.log('Languages cache cleared');
+  }
+
+  clearExpressionGroupsCache(): void {
+    expressionGroupsCache.clear()
+    console.log('Expression groups cache cleared')
   }
 
   // Collections
