@@ -149,8 +149,9 @@
    name: 'HandbookView',
    components: { ExpressionGroupModal },
    props: ['id'],
-    setup(props) {
+     setup(props) {
        const router = useRouter()
+       const route = router.currentRoute
 
         // State
          const handbook = ref(null)
@@ -166,79 +167,87 @@
          const activeItemId = ref(null)
          const tocObserver = ref(null)
 
-       // Expression group modal
-       const showExpressionGroupModal = ref(false)
-       const selectedExpressionId = ref(null)
-       const selectedGroupId = ref(null)
+        // Expression group modal
+        const showExpressionGroupModal = ref(false)
+        const selectedExpressionId = ref(null)
+        const selectedGroupId = ref(null)
 
-       const setInitialLanguages = () => {
-         if (handbook.value?.target_lang) {
-           instructionLanguages.value = handbook.value.target_lang.split(',').filter(l => l)
-         }
-       }
-
-       const fetchInitialData = async () => {
-         loading.value = true
-         try {
-            // Fetch languages if not loaded
-            if (languages.value.length === 0) {
-              const langResult = await languagesApi.getAll()
-              languages.value = langResult.success && langResult.data ? langResult.data : []
-            }
-
-            // Fetch handbook data first
-             const dataRes = await handbooksApi.getById(props.id)
-             if (dataRes.success && dataRes.data) {
-               const data = dataRes.data
-
-           if (data) {
-             handbook.value = data
-
-             // Only set initial languages on first load
-             if (!isInitialized.value) {
-               setInitialLanguages()
-               isInitialized.value = true
-             }
-
-               // Fetch with target languages for rendering
-               const targetLangsParam = instructionLanguages.value.join(',')
-               console.log('[HandbookView] Fetching rendered data:', {
-                 handbookId: props.id,
-                 instructionLanguages: instructionLanguages.value,
-                 targetLangsParam,
-                 handbookTargetLang: handbook.value.target_lang
-               })
-                const renderedDataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
-                if (renderedDataRes.success && renderedDataRes.data) {
-                  const renderedData = renderedDataRes.data
-                  console.log('[HandbookView] Rendered data received:', {
-                     hasRenderedContent: !!renderedData.rendered_content,
-                     renderedContentLength: renderedData.rendered_content?.length,
-                     hasRenderedTitle: !!renderedData.rendered_title,
-                     isCached: renderedData.is_cached
-                  })
-                  handbook.value = renderedData
-                } else {
-                  console.error('Failed to fetch rendered data:', renderedDataRes.error || renderedDataRes.message)
-                }
-
-             // Parse table of contents after content is rendered
-             await parseTableOfContents()
+         // Initialize languages from URL query params or handbook
+         const setInitialLanguages = () => {
+           const urlTargetLangs = route.value.query.target_langs
+           if (urlTargetLangs) {
+             instructionLanguages.value = urlTargetLangs.split(',').filter(l => l.trim())
+           } else if (handbook.value?.target_lang) {
+             instructionLanguages.value = handbook.value.target_lang.split(',').filter(l => l)
            }
          }
 
-          // Auth check for edit button
-          const userStr = localStorage.getItem('user')
-          if (userStr) {
-            currentUser.value = JSON.parse(userStr)
-          }
+        // Update URL with selected languages
+        const updateURLLanguages = () => {
+          const targetLangsParam = instructionLanguages.value.join(',')
+          router.replace({
+            query: {
+              ...route.value.query,
+              target_langs: targetLangsParam || undefined
+            }
+          })
+        }
 
-         } catch (error) {
-           console.error('Failed to load handbook data:', error)
-         } finally {
-           loading.value = false
-         }
-       }
+        const fetchInitialData = async () => {
+          loading.value = true
+          try {
+             // Fetch languages if not loaded
+             if (languages.value.length === 0) {
+               const langResult = await languagesApi.getAll()
+               languages.value = langResult.success && langResult.data ? langResult.data : []
+             }
+
+             // Fetch handbook with target languages in one request
+             const targetLangsParam = instructionLanguages.value.join(',')
+             console.log('[HandbookView] Fetching handbook data:', {
+               handbookId: props.id,
+               instructionLanguages: instructionLanguages.value,
+               targetLangsParam
+             })
+              const dataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
+              if (dataRes.success && dataRes.data) {
+                const data = dataRes.data
+                handbook.value = data
+
+                console.log('[HandbookView] Handbook data received:', {
+                  hasRenderedContent: !!data.rendered_content,
+                  renderedContentLength: data.rendered_content?.length,
+                  hasRenderedTitle: !!data.rendered_title,
+                  isCached: data.is_cached
+                })
+
+              // Only set initial languages on first load
+              if (!isInitialized.value) {
+                setInitialLanguages()
+                // Update URL with initial languages
+                const urlTargetLangs = route.value.query.target_langs
+                if (!urlTargetLangs && instructionLanguages.value.length > 0) {
+                  updateURLLanguages()
+                }
+                isInitialized.value = true
+              }
+
+              // Parse table of contents after content is rendered
+              await parseTableOfContents()
+           }
+
+           // Auth check for edit button
+           const userStr = localStorage.getItem('user')
+           if (userStr) {
+             currentUser.value = JSON.parse(userStr)
+           }
+
+          } catch (error) {
+            console.error('Failed to load handbook data:', error)
+          } finally {
+            loading.value = false
+          }
+        }
 
        const parseTableOfContents = async (retryCount = 0) => {
          // 防止重复执行
@@ -471,6 +480,7 @@
       const addLanguage = (lang) => {
         if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {
           instructionLanguages.value.push(lang.code)
+          updateURLLanguages()
           fetchInitialData()
         }
         showLanguageSelector.value = false
@@ -481,6 +491,7 @@
           instructionLanguages.value = instructionLanguages.value.filter(
             code => code !== langCode
           )
+          updateURLLanguages()
           fetchInitialData()
         }
       }
