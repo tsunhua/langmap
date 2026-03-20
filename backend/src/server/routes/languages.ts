@@ -52,6 +52,8 @@ languagesRoutes.post('/', requireAuth, async (c) => {
 
     db.clearStatisticsCache()
     db.clearLanguagesCache()
+    await clearCache(c, '/api/v1/languages')
+    await clearCache(c, '/api/v1/statistics')
 
     return created(c, language)
   } catch (error: any) {
@@ -88,6 +90,9 @@ languagesRoutes.put('/:id', requireAuth, async (c) => {
 
     db.clearStatisticsCache()
     db.clearLanguagesCache()
+    await clearCache(c, '/api/v1/languages')
+    await clearCache(c, '/api/v1/statistics')
+    await clearCache(c, `/api/v1/languages/${language.code}/stats`)
 
     return success(c, language)
   } catch (error: any) {
@@ -108,6 +113,12 @@ languagesRoutes.delete('/:id', requireAuth, async (c) => {
       return badRequest(c, 'Invalid language ID')
     }
 
+    const languages = await db.getLanguages()
+    const language = languages.find(l => l.id === id)
+    if (!language) {
+      return notFound(c, 'Language')
+    }
+
     const success = await db.deleteLanguage(id)
     if (!success) {
       return notFound(c, 'Language')
@@ -115,6 +126,11 @@ languagesRoutes.delete('/:id', requireAuth, async (c) => {
 
     db.clearStatisticsCache()
     db.clearLanguagesCache()
+    await clearCache(c, '/api/v1/languages')
+    await clearCache(c, '/api/v1/statistics')
+    if (language.code) {
+      await clearCache(c, `/api/v1/languages/${language.code}/stats`)
+    }
 
     return success(c, null, 'Language deleted successfully')
   } catch (error: any) {

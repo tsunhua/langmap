@@ -2,6 +2,7 @@ import { Hono, Context } from 'hono'
 import { createDatabaseService } from '../db/index.js'
 import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
+import { clearCache } from '../middleware/cache.js'
 import MarkdownIt from 'markdown-it'
 import anchor from 'markdown-it-anchor'
 import { success, created, badRequest, forbidden, notFound, internalError } from '../utils/response.js'
@@ -682,6 +683,7 @@ handbookRoutes.post('/', requireAuth, async (c) => {
       ...body,
       user_id: user.id
     })
+    await clearCache(c, '/api/v1/handbooks')
 
     return created(c, handbook)
   } catch (error: any) {
@@ -724,6 +726,7 @@ handbookRoutes.put('/:id', requireAuth, async (c) => {
     }
 
     await db.invalidateHandbookRenders(id)
+    await clearCache(c, `/api/v1/handbooks/${id}`)
 
     const updated = await db.updateHandbook(id, body)
     return success(c, updated)
@@ -749,6 +752,7 @@ handbookRoutes.post('/:id/rerender', requireAuth, async (c) => {
     }
 
     await db.invalidateHandbookRenders(id)
+    await clearCache(c, `/api/v1/handbooks/${id}`)
 
     return success(c, null, 'Handbook render cache cleared successfully')
   } catch (error: any) {
@@ -773,6 +777,7 @@ handbookRoutes.delete('/:id', requireAuth, async (c) => {
     }
 
     const success = await db.deleteHandbook(id)
+    await clearCache(c, '/api/v1/handbooks')
     return success(c, { success }, 'Handbook deleted successfully')
   } catch (error: any) {
     console.error('Error in DELETE /handbooks/:id:', error)
