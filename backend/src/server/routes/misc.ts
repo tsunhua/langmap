@@ -111,18 +111,7 @@ miscRoutes.post('/ui-locale/:language_code', requireAuth, async (c) => {
     }
 
     const savedLocale = await db.saveUILocale(language_code, JSON.stringify(locale_json), user.username)
-
-    try {
-      const cache = (caches as any).default
-      if (cache) {
-        const cacheUrl = new URL(`/api/v1/ui-locale/${language_code}`, c.req.url)
-        const cacheKey = new Request(cacheUrl.toString())
-        await cache.delete(cacheKey)
-        console.log(`[L2 Cache] Cleared cache for ${language_code}`)
-      }
-    } catch (e) {
-      console.warn('[L2 Cache] Failed to clear cache:', e)
-    }
+    await clearCache(c, `/api/v1/ui-locale/${language_code}`)
 
     const localeJsonParsed = JSON.parse(savedLocale.locale_json)
 
@@ -144,17 +133,7 @@ miscRoutes.delete('/ui-locale/:language_code', requireAuth, async (c) => {
       return notFound(c, 'Locale')
     }
 
-    try {
-      const cache = (caches as any).default
-      if (cache) {
-        const cacheUrl = new URL(`/api/v1/ui-locale/${language_code}`, c.req.url)
-        const cacheKey = new Request(cacheUrl.toString())
-        await cache.delete(cacheKey)
-        console.log(`[L2 Cache] Cleared cache for ${language_code}`)
-      }
-    } catch (e) {
-      console.warn('[L2 Cache] Failed to clear cache:', e)
-    }
+    await clearCache(c, `/api/v1/ui-locale/${language_code}`)
 
     return success(c, null, 'Locale deleted successfully')
   } catch (error: any) {

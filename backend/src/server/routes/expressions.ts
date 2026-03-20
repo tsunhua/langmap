@@ -3,7 +3,7 @@ import { ExpressionService } from '../services/expression.js'
 import { createDatabaseService } from '../db/index.js'
 import type { Bindings, JWTPayload } from '../types/bindings.js'
 import { requireAuth, optionalAuth } from '../middleware/auth.js'
-import { cacheMiddleware } from '../middleware/cache.js'
+import { cacheMiddleware, clearCache } from '../middleware/cache.js'
 import { createExpressionSchema, updateExpressionSchema, batchExpressionSchema, ensureExpressionsSchema, expressionsQuerySchema } from '../schemas/expression.js'
 import { success, created, badRequest, notFound, forbidden, internalError, paginated } from '../utils/response.js'
 
@@ -40,7 +40,7 @@ expressionsRoutes.get('/', async (c) => {
   }
 })
 
-expressionsRoutes.post('/', requireAuth, clearCache, async (c) => {
+expressionsRoutes.post('/', requireAuth, async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const service = new ExpressionService(db)
@@ -49,6 +49,7 @@ expressionsRoutes.post('/', requireAuth, clearCache, async (c) => {
 
     const validated = createExpressionSchema.parse(body)
     const expression = await service.create(validated, user.username)
+    await clearCache(c, '/api/v1/expressions')
 
     return created(c, expression)
   } catch (error: any) {
