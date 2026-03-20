@@ -643,7 +643,7 @@ export default {
     }
 
     // Associate to new group (using batch)
-    async function associateToNewGroup() {
+    async function associateToNewGroup(closeModal = true) {
       if (!selectedExpressionForAssociation.value) return
 
       const token = localStorage.getItem('authToken')
@@ -685,7 +685,9 @@ export default {
 
         // Refresh to show updated list
         await load()
-        closeGroupSelection()
+        if (closeModal) {
+          closeGroupSelection()
+        }
 
         // Close search mode if open
         if (noGroupSearchMode.value) {
@@ -927,7 +929,14 @@ export default {
 
     // Handle SmartSearch associate event (from search and associate tab)
     function handleSmartSearchAssociate(result) {
-      openGroupSelection(result)
+      // If no groups exist, directly create a new group instead of showing selection modal
+      if (!groups.value || groups.value.length === 0) {
+        selectedExpressionForAssociation.value = result
+        associateToNewGroup(false)
+        selectedExpressionForAssociation.value = null
+      } else {
+        openGroupSelection(result)
+      }
     }
 
     // Handle SmartSearch create-new event (from within a group)
