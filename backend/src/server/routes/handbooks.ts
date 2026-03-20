@@ -48,7 +48,14 @@ function getLanguageColor(langCode: string, handbook: any): string {
 
 // Helper for handbook rendering
 async function renderHandbookInternal(c: Context, handbook: any, targetLangs: string[]) {
-  console.log('[renderHandbookInternal] START', { handbookId: handbook.id, targetLangs })
+  console.log('[renderHandbookInternal] START', {
+    handbookId: handbook.id,
+    handbookTitle: handbook.title,
+    handbookSourceLang: handbook.source_lang,
+    handbookTargetLang: handbook.target_lang,
+    targetLangs: targetLangs,
+    contentLength: handbook.content?.length
+  })
 
   const md = new MarkdownIt({
     html: true,
@@ -82,8 +89,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
-  const meaningIdsToFetch: Set<number> = new Set()
-  const midTags: Map<string, {text: string, mid: number, lang: string}> = new Map()
+  const midTags: Map<string, {text: string, mid: number, lang: string, expressionId: number}> = new Map()
   const fullText = `${titleToExtract}\n${description}\n${content}`
 
   console.log('[renderHandbookInternal] Extracting tags from content...')
@@ -115,165 +121,93 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
     console.log('[renderHandbookInternal] Tag found:', { text, param1, param2, lang, mid })
 
-    if (mid) {
-      const key = `tag_${tagIndex++}`
-      midTags.set(key, { text, mid, lang })
-      meaningIdsToFetch.add(mid)
-    } else {
-      try {
-        const id = db.stableExpressionId(text, lang)
-        if (!expressionsToFetch.some(e => e.id === id)) {
-          expressionsToFetch.push({ text, lang, id })
-        }
-      } catch (err) {
-        console.error('[renderHandbookInternal] Error getting stableExpressionId:', err)
+    try {
+      const id = db.stableExpressionId(text, lang)
+      if (!expressionsToFetch.some(e => e.id === id)) {
+        expressionsToFetch.push({ text, lang, id })
       }
+      if (mid) {
+        const key = `tag_${tagIndex++}`
+        midTags.set(key, { text, mid, lang, expressionId: id })
+      }
+    } catch (err) {
+      console.error('[renderHandbookInternal] Error getting stableExpressionId:', err)
     }
   }
 
   console.log('[renderHandbookInternal] Tags summary:', {
     totalTags: tagIndex,
-    meaningIdsToFetch: Array.from(meaningIdsToFetch),
-    expressionsToFetch: expressionsToFetch.length
+    expressionsToFetchLength: expressionsToFetch.length,
+    expressionsToFetchDetails: expressionsToFetch.map(e => ({ id: e.id, text: e.text.substring(0, 30), lang: e.lang }))
   })
 
   const expressionMap: Record<string, any> = {}
-  const allMids: number[] = []
 
-  console.log('[renderHandbookInternal] Fetching expressions by ID...')
-  if (expressionsToFetch.length > 0) {
-    try {
-      const ids = expressionsToFetch.map(e => e.id)
-      console.log('[renderHandbookInternal] Expression IDs to fetch:', ids)
-      const expressions = await db.getExpressionsByIds(ids)
-      console.log('[renderHandbookInternal] Fetched expressions:', expressions.length)
-
-      const meaningIdsMap = await db.getExpressionMeaningIds(ids)
-      console.log('[renderHandbookInternal] Meaning IDs map:', meaningIdsMap)
-
-      expressions.forEach(expr => {
-        expressionMap[expr.id] = expr
-        const mids = meaningIdsMap.get(expr.id) || []
-        expr.meanings = mids.map(mid => ({ id: mid })) as any[]
-        mids.forEach(mid => {
-          if (!allMids.includes(mid)) allMids.push(mid)
-        })
-      })
-    } catch (err) {
-      console.error('[renderHandbookInternal] Error fetching expressions:', err)
-      throw err
-    }
-  }
-
-  console.log('[renderHandbookInternal] Fetching expressions by meaning_id...')
-  if (meaningIdsToFetch.size > 0) {
-    try {
-      const midArray = Array.from(meaningIdsToFetch)
-      midArray.forEach(mid => {
-        if (!allMids.includes(mid)) allMids.push(mid)
-      })
-
-      for (const mid of midArray) {
-        console.log('[renderHandbookInternal] Fetching for mid:', mid)
-        const midExpressions = await db.getExpressions(0, 1000, undefined, mid, undefined, undefined, true)
-        console.log('[renderHandbookInternal] Mid expressions found:', midExpressions.length)
-
-        midExpressions.forEach(expr => {
-          if (expr.language_code) {
-            const key = `mid_${mid}_${expr.language_code}`
-            const filteredExpr = {
-              ...expr,
-              meanings: expr.meanings?.filter((m: any) => m.id === mid) || [{ id: mid }]
-            }
-            expressionMap[key] = filteredExpr
-            expressionMap[expr.id] = filteredExpr
-          }
-        })
-      }
-    } catch (err) {
-      console.error('[renderHandbookInternal] Error fetching mid expressions:', err)
-      throw err
-    }
-  }
-
-  console.log('[renderHandbookInternal] ExpressionMap keys:', Object.keys(expressionMap))
-  console.log('[renderHandbookInternal] All MIDs:', allMids)
-
-  const translationsByLang: Record<string, any[]> = {}
-
-  console.log('[renderHandbookInternal] Fetching translations for target languages:', targetLangs)
-  if (allMids.length > 0) {
-    for (const targetLang of targetLangs) {
-      if (!targetLang) continue
-
-      console.log('[renderHandbookInternal] Fetching translations for lang:', targetLang, 'mids:', allMids)
-      try {
-        const translations: any[] = await db.getExpressions(0, 1000, [targetLang], allMids, undefined, undefined, true)
-        translationsByLang[targetLang] = translations
-        console.log('[renderHandbookInternal] Translations found for', targetLang, ':', translations.length)
-      } catch (err) {
-        console.error('[renderHandbookInternal] Error fetching translations for', targetLang, ':', err)
-        throw err
-      }
-    }
-  }
-
-  console.log('[renderHandbookInternal] Processing translations...')
-  Object.entries(translationsByLang).forEach(([langCode, translations]) => {
-    const transByMeaning: Record<number, {text: string, audio_url: string}> = {}
-
-    translations.forEach((trans: any) => {
-      if (trans.meanings && trans.meanings.length > 0) {
-        trans.meanings.forEach((m: any) => {
-          if (allMids.includes(m.id)) {
-            const mid = m.id
-            if (!transByMeaning[mid]) {
-              transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
-            }
-            transByMeaning[mid].text = transByMeaning[mid].text
-                ? `${transByMeaning[mid].text} | ${trans.text}`
-                : trans.text
-          }
-        })
-      } else if (trans.meaning_id) {
-        const mid = trans.meaning_id
-        if (!transByMeaning[mid]) {
-          transByMeaning[mid] = { text: '', audio_url: trans.audio_url || '' }
-        }
-        transByMeaning[mid].text = transByMeaning[mid].text
-            ? `${transByMeaning[mid].text} | ${trans.text}`
-            : trans.text
-      }
+  console.log('[renderHandbookInternal] Fetching expressions groups by ID...')
+  const allExpressionIds = [...new Set([...expressionsToFetch.map(e => e.id)])]
+  console.log('[renderHandbookInternal] All expression IDs:', allExpressionIds)
+  let expressionGroupsMap: Map<number, any[]>
+  try {
+    expressionGroupsMap = await db.getExpressionsGroups(allExpressionIds, targetLangs)
+    console.log('[renderHandbookInternal] Expression groups map fetched successfully')
+    console.log('[renderHandbookInternal] Expression groups map:', {
+      size: expressionGroupsMap.size,
+      entries: Array.from(expressionGroupsMap.entries()).map(([exprId, groups]) => ({
+        exprId,
+        groupsCount: groups.length,
+        groupIds: groups.map(g => g.id)
+      }))
     })
+  } catch (err) {
+    console.error('[renderHandbookInternal] Error fetching expression groups:', err)
+    throw err
+  }
 
-    Object.entries(transByMeaning).forEach(([mid, merged]) => {
-      const key = `trans_${mid}_${langCode}`
-      expressionMap[key] = {
-        text: merged.text,
-        audio_url: merged.audio_url
-      }
-      console.log('[renderHandbookInternal] Translation stored:', key, merged.text)
+  expressionGroupsMap.forEach((groups, exprId) => {
+    expressionMap[exprId] = { id: exprId, groups }
+    groups.forEach(group => {
+      group.expressions.forEach(groupExpr => {
+        if (!expressionMap[groupExpr.id]) {
+          expressionMap[groupExpr.id] = groupExpr
+        }
+      })
     })
   })
 
+  console.log('[renderHandbookInternal] ExpressionMap keys:', {
+    count: Object.keys(expressionMap).length,
+    keys: Object.keys(expressionMap)
+  })
+
   const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, meaningId?: number) => {
-    console.log('[renderItem] START', { id, text, isTitle, meaningId, targetLangs })
+    console.log('[renderItem] START', {
+      id,
+      text: text.substring(0, 50),
+      isTitle,
+      meaningId,
+      targetLangs,
+      expressionMapKeys: Object.keys(expressionMap),
+      expressionMapHasId: !!expressionMap[id]
+    })
 
     const translationsByTargetLang: Record<string, string[]> = {}
 
-    const meaningsToUse = meaningId ? [{ id: meaningId }] : (expressionMap[id]?.meanings || [])
-    console.log('[renderItem] Meanings to use:', meaningsToUse)
+    const groupsToUse = meaningId
+      ? expressionMap[id]?.groups?.filter((g: any) => g.id === meaningId) || []
+      : expressionMap[id]?.groups || []
+
+    console.log('[renderItem] Groups to use:', groupsToUse.map((g: any) => g.id), 'meaningId filter:', meaningId)
 
     targetLangs.forEach(targetLang => {
       if (!targetLang) return
 
       const transList: string[] = []
 
-      meaningsToUse.forEach((m: any) => {
-        const transKey = `trans_${m.id}_${targetLang}`
-        console.log('[renderItem] Looking for transKey:', transKey, 'found:', !!expressionMap[transKey])
-        if (expressionMap[transKey]) {
-          transList.push(expressionMap[transKey].text)
+      groupsToUse.forEach((group: any) => {
+        const groupExpressions = group.expressions || []
+        const targetLangExpr = groupExpressions.find((e: any) => e.language_code === targetLang)
+        if (targetLangExpr && targetLangExpr.text) {
+          transList.push(targetLangExpr.text)
         }
       })
 
@@ -351,26 +285,35 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
       console.log('[renderTextWithTags] Parsed:', { lang, mid })
 
-      if (mid) {
-        const key = `mid_${mid}_${lang}`
-        const expr = expressionMap[key]
-        console.log('[renderTextWithTags] Looking for mid key:', key, 'found:', !!expr)
+        if (mid) {
+          const key = `mid_${mid}_${lang}`
+          const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
+          const expressionId = tagInfo?.expressionId
+          console.log('[renderTextWithTags] mid tag found:', { mid, lang, expressionId, hasTagInfo: !!tagInfo })
 
-        if (expr) {
-          let audioUrl = ''
-          if (expr.audio_url) {
-            try {
-              const parsed = JSON.parse(expr.audio_url)
-              audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-            } catch { }
+          if (expressionId) {
+            const expr = expressionMap[expressionId]
+            console.log('[renderTextWithTags] Looking for expressionId:', expressionId, 'found:', !!expr)
+
+            if (expr) {
+              let audioUrl = ''
+              if (expr.audio_url) {
+                try {
+                  const parsed = JSON.parse(expr.audio_url)
+                  audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+                } catch { }
+              }
+
+              return renderItem(expr.id, term, audioUrl, isTitle, mid)
+            }
+
+            console.log('[renderTextWithTags] Expression not found for expressionId:', expressionId)
+            return `<span class="handbook-item-undefined">${term}</span>`
           }
 
-          return renderItem(expr.id, term, audioUrl, isTitle, mid)
+          console.log('[renderTextWithTags] No expressionId found for mid:', mid)
+          return `<span class="handbook-item-undefined">${term}</span>`
         }
-
-        console.log('[renderTextWithTags] Expression not found for mid:', mid)
-        return `<span class="handbook-item-undefined">${term}</span>`
-      }
 
       try {
         const id = db.stableExpressionId(term, lang)
@@ -386,8 +329,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             } catch { }
           }
 
-          const meaningId = expr.meanings?.[0]?.id
-          return renderItem(id, term, audioUrl, isTitle, meaningId)
+          const groupId = expr.groups?.[0]?.id
+          return renderItem(id, term, audioUrl, isTitle, groupId)
         }
 
         console.log('[renderTextWithTags] Expression not found for id:', id)
@@ -457,22 +400,31 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
         if (mid) {
           const key = `mid_${mid}_${lang}`
-          const expr = expressionMap[key]
-          console.log('[renderHandbookInternal] Placeholder substitution - mid key:', key, 'found:', !!expr)
+          const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
+          const expressionId = tagInfo?.expressionId
+          console.log('[renderHandbookInternal] Placeholder substitution - mid tag found:', { mid, lang, expressionId, hasTagInfo: !!tagInfo })
 
-          if (expr) {
-            let audioUrl = ''
-            if (expr.audio_url) {
-              try {
-                const parsed = JSON.parse(expr.audio_url)
-                audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
-              } catch { }
+          if (expressionId) {
+            const expr = expressionMap[expressionId]
+            console.log('[renderHandbookInternal] Placeholder substitution - expressionId:', expressionId, 'found:', !!expr)
+
+            if (expr) {
+              let audioUrl = ''
+              if (expr.audio_url) {
+                try {
+                  const parsed = JSON.parse(expr.audio_url)
+                  audioUrl = Array.isArray(parsed) ? (parsed[0]?.url || '') : ''
+                } catch { }
+              }
+
+              return renderItem(expr.id, term, audioUrl, false, mid)
             }
 
-            return renderItem(expr.id, term, audioUrl, false, mid)
+            console.log('[renderHandbookInternal] Expression not found for expressionId:', expressionId)
+            return `<span class="handbook-item-undefined">${term}</span>`
           }
 
-          console.log('[renderHandbookInternal] Expression not found for mid:', mid)
+          console.log('[renderHandbookInternal] No expressionId found for mid:', mid)
           return `<span class="handbook-item-undefined">${term}</span>`
         }
 
@@ -490,8 +442,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
               } catch { }
             }
 
-            const meaningId = expr.meanings?.[0]?.id
-            return renderItem(id, term, audioUrl, false, meaningId)
+            const groupId = expr.groups?.[0]?.id
+            return renderItem(id, term, audioUrl, false, groupId)
           }
 
           console.log('[renderHandbookInternal] Expression not found for id:', id)
@@ -546,7 +498,27 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
     const id = parseInt(c.req.param('id'))
     const user = c.get('user')
 
-    console.log('[GET] Params:', { id, user: user?.id, queryTargetLang: c.req.query('target_lang'), queryTargetLangs: c.req.query('target_langs'), paramTargetLang: c.req.param('target_lang') })
+    console.log('[GET] Params:', {
+      id,
+      user: user?.id,
+      queryTargetLang: c.req.query('target_lang'),
+      queryTargetLangs: c.req.query('target_langs'),
+      paramTargetLang: c.req.param('target_lang')
+    })
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+
+    console.log('[GET] Fetching handbook...')
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    console.log('[GET] Handbook fetched:', {
+      id: handbook.id,
+      title: handbook.title ? handbook.title.substring(0, 50) : 'NO TITLE',
+      target_lang: handbook.target_lang,
+      source_lang: handbook.source_lang,
+      contentLength: handbook.content?.length || 0
+    })
 
     const targetLangsParam = c.req.query('target_langs') || c.req.query('target_lang') || c.req.param('target_lang')
     let targetLangs: string[] = []
@@ -556,14 +528,13 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
     }
 
     console.log('[GET] Parsed targetLangs:', targetLangs)
-
-    if (isNaN(id)) return badRequest(c, 'Invalid ID')
-
-    console.log('[GET] Fetching handbook...')
-    const handbook = await db.getHandbookById(id)
-    if (!handbook) return notFound(c, 'Handbook')
-
-    console.log('[GET] Handbook fetched:', { id: handbook.id, title: handbook.title, target_lang: handbook.target_lang, source_lang: handbook.source_lang })
+    console.log('[GET] Final targetLangs decision:', {
+      inputParam: targetLangsParam,
+      parsedTargetLangs: targetLangs,
+      handbookTargetLang: handbook.target_lang,
+      willUse: targetLangs.length > 0 ? 'PARSED' : 'HANDBOOK_DEFAULT',
+      finalTargetLangs: targetLangs.length > 0 ? targetLangs : (handbook.target_lang ? [handbook.target_lang] : [])
+    })
 
     if (targetLangs.length === 0) {
       if (handbook.target_lang) {
@@ -626,6 +597,8 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
         })
       } catch (renderError) {
         console.error('[GET] Render error:', renderError)
+        console.error('[GET] Render error type:', renderError?.constructor?.name)
+        console.error('[GET] Render error message:', renderError instanceof Error ? renderError.message : 'No message')
         console.error('[GET] Render error stack:', renderError instanceof Error ? renderError.stack : 'No stack')
         return c.json({
           success: true,

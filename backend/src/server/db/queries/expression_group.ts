@@ -85,6 +85,35 @@ export class ExpressionGroupQueries {
     return groups
   }
 
+  async getBatchExpressionGroupInfos(groupIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup>> {
+    const result = new Map<number, ExpressionGroup>()
+
+    if (groupIds.length === 0) return result
+
+    const { results: groupResults } = await this.db.prepare(`
+      SELECT id, created_by, created_at
+      FROM meanings
+      WHERE id IN (SELECT value FROM json_each(?))
+    `).bind(JSON.stringify(groupIds)).all<{ id: number, created_by?: string, created_at?: string }>()
+
+    if (!groupResults || groupResults.length === 0) return result
+
+    const groups: ExpressionGroup[] = []
+    for (const groupResult of groupResults) {
+      const expressions = await this.getGroupExpressions(groupResult.id, languages)
+      const group: ExpressionGroup = {
+        id: groupResult.id,
+        expressions,
+        created_by: groupResult.created_by,
+        created_at: groupResult.created_at
+      }
+      groups.push(group)
+      result.set(groupResult.id, group)
+    }
+
+    return result
+  }
+
   async addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean> {
     const now = new Date().toISOString()
 

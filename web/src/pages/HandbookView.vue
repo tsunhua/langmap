@@ -200,15 +200,27 @@
                isInitialized.value = true
              }
 
-              // Fetch with target languages for rendering
-              const targetLangsParam = instructionLanguages.value.join(',')
-               const renderedDataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
-               if (renderedDataRes.success && renderedDataRes.data) {
-                 const renderedData = renderedDataRes.data
-                 handbook.value = renderedData
-               } else {
-                 console.error('Failed to fetch rendered data:', renderedDataRes.error || renderedDataRes.message)
-               }
+               // Fetch with target languages for rendering
+               const targetLangsParam = instructionLanguages.value.join(',')
+               console.log('[HandbookView] Fetching rendered data:', {
+                 handbookId: props.id,
+                 instructionLanguages: instructionLanguages.value,
+                 targetLangsParam,
+                 handbookTargetLang: handbook.value.target_lang
+               })
+                const renderedDataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
+                if (renderedDataRes.success && renderedDataRes.data) {
+                  const renderedData = renderedDataRes.data
+                  console.log('[HandbookView] Rendered data received:', {
+                     hasRenderedContent: !!renderedData.rendered_content,
+                     renderedContentLength: renderedData.rendered_content?.length,
+                     hasRenderedTitle: !!renderedData.rendered_title,
+                     isCached: renderedData.is_cached
+                  })
+                  handbook.value = renderedData
+                } else {
+                  console.error('Failed to fetch rendered data:', renderedDataRes.error || renderedDataRes.message)
+                }
 
              // Parse table of contents after content is rendered
              await parseTableOfContents()

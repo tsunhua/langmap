@@ -19,6 +19,14 @@ export class ExpressionQueries {
     return results || []
   }
 
+  async findByMeaningIds(meaningIds: number[]): Promise<Expression[]> {
+    if (meaningIds.length === 0) return []
+    const { results } = await this.db.prepare(
+      `SELECT e.* FROM expressions e INNER JOIN expression_meaning em ON e.id = em.expression_id WHERE em.meaning_id IN (SELECT value FROM json_each(?))`
+    ).bind(JSON.stringify(meaningIds)).all<Expression>()
+    return results || []
+  }
+
   async findAll(skip: number = 0, limit: number = 50, filters: {
     languages?: string[]
     tagPrefix?: string

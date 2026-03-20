@@ -158,6 +158,8 @@ export abstract class AbstractDatabaseService {
   abstract getExpressions(skip?: number, limit?: number, languages?: string[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
   abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
+  abstract getExpressionsByMeaningIds(meaningIds: number[]): Promise<Expression[]>
+  abstract getExpressionsGroups(expressionIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup[]>>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
   abstract ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>>
   abstract upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning?: boolean): Promise<Array<{ id: number, expression?: Expression, error?: string }>>

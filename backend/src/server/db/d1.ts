@@ -179,6 +179,47 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return this.expressionQueries.findByIds(ids)
   }
 
+  async getExpressionsByMeaningIds(meaningIds: number[]): Promise<Expression[]> {
+    const results = await this.expressionQueries.findByMeaningIds(meaningIds)
+    return results.map(e => this.formatTimestamps(e))
+  }
+
+  async getExpressionsGroups(expressionIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup[]>> {
+    const result = new Map<number, ExpressionGroup[]>()
+
+    if (expressionIds.length === 0) return result
+
+    const { results: groupIds } = await this.db.prepare(`
+      SELECT DISTINCT em.expression_id, em.meaning_id, m.created_by, m.created_at
+      FROM expression_meaning em
+      JOIN meanings m ON em.meaning_id = m.id
+      WHERE em.expression_id IN (SELECT value FROM json_each(?))
+      ORDER BY em.created_at DESC
+    `).bind(JSON.stringify(expressionIds)).all<{
+      expression_id: number,
+      meaning_id: number,
+      created_by?: string,
+      created_at?: string
+    }>()
+
+    if (!groupIds || groupIds.length === 0) return result
+
+    const uniqueMeaningIds = [...new Set(groupIds.map(row => row.meaning_id))]
+    const groupInfos = await this.groupQueries.getBatchExpressionGroupInfos(uniqueMeaningIds, languages)
+
+    for (const row of groupIds) {
+      const groupInfo = groupInfos.get(row.meaning_id)
+      if (groupInfo) {
+        if (!result.has(row.expression_id)) {
+          result.set(row.expression_id, [])
+        }
+        result.get(row.expression_id)!.push(groupInfo)
+      }
+    }
+
+    return result
+  }
+
   async getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>> {
     return this.expressionQueries.findMeaningIds(expressionIds)
   }
