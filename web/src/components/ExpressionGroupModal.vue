@@ -287,6 +287,13 @@ export default {
         }
 
         currentGroupId.value = props.groupId || groups.value[0].id
+
+        const group = groups.value.find(g => g.id === currentGroupId.value)
+        if (group && group.expressions) {
+          expressions.value = sortExpressions(group.expressions)
+        } else {
+          expressions.value = []
+        }
       } catch (e) {
         console.error('Failed to fetch group members:', e)
         expressions.value = []
