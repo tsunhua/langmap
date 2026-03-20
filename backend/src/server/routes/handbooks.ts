@@ -208,7 +208,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
       console.log('[renderHandbookInternal] Fetching translations for lang:', targetLang, 'mids:', allMids)
       try {
-        const translations: any[] = await db.getExpressions(0, 1000, targetLang, allMids, undefined, undefined, true)
+        const translations: any[] = await db.getExpressions(0, 1000, [targetLang], allMids, undefined, undefined, true)
         translationsByLang[targetLang] = translations
         console.log('[renderHandbookInternal] Translations found for', targetLang, ':', translations.length)
       } catch (err) {
