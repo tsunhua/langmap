@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import v1Api from './v1-new.js'
+import v1Api from './v1.js'
 
 const api = new Hono()
 
