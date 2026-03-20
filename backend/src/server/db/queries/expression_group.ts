@@ -109,11 +109,46 @@ export class ExpressionGroupQueries {
 
     if (allGroupResults.length === 0) return result
 
+    const groupIdSet = new Set(allGroupResults.map(g => g.id))
+    const allExpressionsMap = new Map<number, Expression[]>()
+
+    for (let i = 0; i < groupIds.length; i += BATCH_SIZE) {
+      const batch = groupIds.slice(i, i + BATCH_SIZE)
+
+      let sql = `
+        SELECT e.*, em.meaning_id
+        FROM expressions e
+        JOIN expression_meaning em ON e.id = em.expression_id
+        WHERE em.meaning_id IN (SELECT value FROM json_each(?))
+      `
+      const bindParams: (string | number[])[] = [JSON.stringify(batch)]
+
+      if (languages && languages.length > 0) {
+        sql += ` AND e.language_code IN (${languages.map(() => '?').join(',')})`
+        bindParams.push(...languages)
+      }
+
+      sql += ' ORDER BY em.meaning_id, e.created_at DESC'
+
+      const { results: expressions } = await this.db.prepare(sql)
+        .bind(...bindParams)
+        .all<Expression & { meaning_id: number }>()
+
+      if (expressions) {
+        for (const expr of expressions) {
+          const groupId = expr.meaning_id
+          if (!allExpressionsMap.has(groupId)) {
+            allExpressionsMap.set(groupId, [])
+          }
+          allExpressionsMap.get(groupId)!.push(expr)
+        }
+      }
+    }
+
     for (const groupResult of allGroupResults) {
-      const expressions = await this.getGroupExpressions(groupResult.id, languages)
       const group: ExpressionGroup = {
         id: groupResult.id,
-        expressions,
+        expressions: allExpressionsMap.get(groupResult.id) || [],
         created_by: groupResult.created_by,
         created_at: groupResult.created_at
       }
