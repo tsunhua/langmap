@@ -177,7 +177,7 @@ export abstract class AbstractDatabaseService {
   // ExpressionGroup operations
   abstract getGroupExpressions(groupId: number, languages?: string[]): Promise<Expression[]>
   abstract getGroupInfo(groupId: number, languages?: string[]): Promise<ExpressionGroup | null>
-  abstract getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]>
+  abstract getExpressionGroups(expressionId: number, languages?: string[]): Promise<ExpressionGroup[]>
   abstract addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean>
   abstract removeFromGroup(expressionId: number, groupId: number): Promise<boolean>
   abstract createGroup(anchorExpressionId: number, username: string): Promise<number>
