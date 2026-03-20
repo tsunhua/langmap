@@ -227,6 +227,20 @@ export default {
       return props.languages
     })
 
+    const sortExpressions = (exprs) => {
+      const langOrder = displayLanguages.value.map(l => l.code)
+      return [...exprs].sort((a, b) => {
+        const aIndex = langOrder.indexOf(a.language_code)
+        const bIndex = langOrder.indexOf(b.language_code)
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex
+        }
+        if (aIndex !== -1) return -1
+        if (bIndex !== -1) return 1
+        return a.language_code.localeCompare(b.language_code)
+      })
+    }
+
     const fetchGroupMembers = async () => {
       loading.value = true
       console.log('fetchGroupMembers called:', {
@@ -281,7 +295,7 @@ export default {
     watch(currentGroupId, (newGroupId) => {
       const group = groups.value.find(g => g.id === newGroupId)
       if (group && group.expressions) {
-        expressions.value = group.expressions
+        expressions.value = sortExpressions(group.expressions)
       } else {
         expressions.value = []
       }
@@ -484,7 +498,8 @@ export default {
       cancelAll,
       submitAllPending,
       close,
-      goToDetail
+      goToDetail,
+      sortExpressions
     }
   }
 }
