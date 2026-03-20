@@ -168,12 +168,15 @@ export default {
           })
         })
         
-        const data = await response.json()
+        const result = await response.json()
         
         if (response.ok) {
+          // Adapt to new response format { success: true, data: { token, user } }
+          const responseData = result.success ? result.data : result
+          
           // Save token and user info to localStorage
-          localStorage.setItem('authToken', data.data.token)
-          localStorage.setItem('user', JSON.stringify(data.data.user))
+          localStorage.setItem('authToken', responseData.token)
+          localStorage.setItem('user', JSON.stringify(responseData.user))
 
           // Update global auth state by dispatching a custom event
           window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: { isLoggedIn: true } }))
@@ -181,7 +184,7 @@ export default {
           // Redirect to home page
           router.push('/')
         } else {
-          error.value = data.error || t('login.loginFailed')
+          error.value = result.error || result.message || t('login.loginFailed')
         }
       } catch (err) {
         error.value = t('login.loginFailed')

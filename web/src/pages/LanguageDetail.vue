@@ -44,6 +44,23 @@
       </div>
     </div>
 
+    <!-- Language Statistics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div v-if="loadingStats" class="animate-pulse space-y-4">
+        <div class="h-12 bg-gray-200 rounded w-full"></div>
+      </div>
+      <div v-else class="flex items-center justify-center">
+        <div class="text-center">
+          <div class="text-4xl font-bold text-blue-600 mb-1">
+            {{ languageStats.expression_count.toLocaleString() }}
+          </div>
+          <div class="text-gray-500 text-sm font-medium">
+            {{ $t('expressions') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Search -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
       <input v-model="searchQuery" type="text" :placeholder="`Search in ${languageName || languageCode}`"
@@ -129,6 +146,8 @@ export default {
     const languageName = ref('')
     const languageGroupName = ref('')
     const loadingInfo = ref(true)
+    const languageStats = ref({ expression_count: 0 })
+    const loadingStats = ref(true)
     const expressions = ref([])
     const loading = ref(true)
     const total = ref(0)
@@ -150,7 +169,8 @@ export default {
       loadingInfo.value = true
       try {
         const response = await fetch('/api/v1/languages')
-        const languages = await response.json()
+        const result = await response.json()
+        const languages = result.success ? result.data : result
         const language = languages.find(l => l.code === languageCode.value)
         if (language) {
           languageName.value = language.name
@@ -162,6 +182,20 @@ export default {
         console.error('Failed to fetch language info:', error)
       } finally {
         loadingInfo.value = false
+      }
+    }
+
+    const fetchLanguageStats = async () => {
+      loadingStats.value = true
+      try {
+        const response = await fetch(`/api/v1/languages/${languageCode.value}/stats`)
+        const result = await response.json()
+        languageStats.value = result.success ? result.data : result
+      } catch (error) {
+        console.error('Failed to fetch language stats:', error)
+        languageStats.value = { expression_count: 0 }
+      } finally {
+        loadingStats.value = false
       }
     }
 
@@ -206,7 +240,7 @@ export default {
         } else {
           // Use expressions API for browsing all expressions
           useSearchAPI = false
-          url = `/api/v1/expressions?language=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
+          url = `/api/v1/expressions?lang=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
           if (tagPrefix.value) {
             url += `&tag=${encodeURIComponent(tagPrefix.value)}`
           }
@@ -218,12 +252,19 @@ export default {
         console.log('Fetching expressions:', { url, currentPage: currentPage.value, skip, limit: itemsPerPage, searchQuery: searchQuery.value, tagPrefix: tagPrefix.value, excludeTagPrefix: excludeTagPrefix.value, useSearchAPI })
 
         const response = await fetch(url)
-        const data = await response.json()
+        const rawData = await response.json()
 
-        console.log('API Response:', data)
+        console.log('API Response:', rawData)
+
+        // 适配新的API响应格式 { success, data: { items, total, skip, limit, hasMore } }
+        let data = rawData
+        if (rawData.success && rawData.data) {
+          data = rawData.data
+        }
 
         // Handle different response formats
         if (Array.isArray(data)) {
+          // 直接数组格式（旧格式）
           expressions.value = data
           const itemCount = data.length
 
@@ -241,7 +282,13 @@ export default {
             // Update total to at least what we've seen
             total.value = Math.max(total.value || 0, skip + itemCount)
           }
+        } else if (data.items && Array.isArray(data.items)) {
+          // 新的分页响应格式 { items, total, skip, limit, hasMore }
+          expressions.value = data.items
+          total.value = data.total || 0
+          hasMore.value = data.hasMore || (data.items.length === itemsPerPage)
         } else if (data.results && Array.isArray(data.results)) {
+          // 中间格式 { results, total }
           expressions.value = data.results
           total.value = data.total || data.results.length || 0
           hasMore.value = (data.results.length === itemsPerPage && (!data.total || data.total > skip + itemsPerPage))
@@ -363,6 +410,7 @@ export default {
 
     onMounted(() => {
       fetchLanguageInfo()
+      fetchLanguageStats()
       fetchExpressions()
     })
 
@@ -376,8 +424,9 @@ export default {
         excludeTagPrefix.value = ''
         currentPage.value = 1
         expressions.value = []
-        // Fetch new language info and expressions
+        // Fetch new language info, stats and expressions
         fetchLanguageInfo()
+        fetchLanguageStats()
         fetchExpressions()
       }
     })
@@ -394,6 +443,8 @@ export default {
       languageName,
       languageGroupName,
       loadingInfo,
+      languageStats,
+      loadingStats,
       expressions,
       loading,
       total,

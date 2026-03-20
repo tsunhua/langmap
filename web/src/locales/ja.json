@@ -344,7 +344,7 @@
   "please_select_language": "言語を選択",
   "please_enter_expression": "表現を入力",
   "please_fill_all_fields": "すべてのフィールドに入力してください",
-  "login_required": "表現を追加するにはログインしてください",
+  "login_required": "この操作を行うにはログインが必要です",
   "failed_to_add_expression": "表現の追加に失敗しました",
   "minimal_mode": "シンプルモード",
   "merge_groups": "表現グループを統合",
@@ -395,11 +395,12 @@
   "underline": "下線",
   "undo": "元に戻す",
   "write": "書く",
-  "language_already_exists": "この言語はすでにグループに存在します",
-  "login_required": "この操作を行うにはログインが必要です",
   "added_to_pending_list": "保留リストに追加しました",
   "some_expressions_failed": "一部の表現の追加に失敗しました",
   "all_expressions_added_successfully": "すべての表現が正常に追加されました",
   "failed_to_add_expressions": "表現の追加に失敗しました",
-  "failed_to_create_meaning_group": "意味グループの作成に失敗しました"
+  "failed_to_create_meaning_group": "意味グループの作成に失敗しました",
+  "confirm_action": "再次確認",
+  "confirm_delete": "確認刪除",
+  "remove_item": "移除項目"
 }

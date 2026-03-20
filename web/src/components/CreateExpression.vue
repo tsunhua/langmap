@@ -146,7 +146,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchLanguages } from '../services/languageService.js'
+import { languagesApi, expressionGroupsApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 
 export default {
@@ -157,7 +157,7 @@ export default {
       type: Boolean,
       default: false
     },
-    initialMeaningId: {
+    initialGroupId: {
       type: Number,
       default: null
     },
@@ -223,8 +223,12 @@ export default {
     const loadLanguages = async () => {
       languagesLoading.value = true
       try {
-        const langs = await fetchLanguages()
-        languages.value = langs
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          languages.value = result.data
+        } else {
+          languages.value = []
+        }
       } catch (err) {
         console.error('Failed to load languages:', err)
         error.value = 'Failed to load languages: ' + err.message
@@ -584,32 +588,23 @@ export default {
           throw new Error(txt || 'create failed')
         }
         
-        const created = await res.json()
-
-        // 如果传入了 initialMeaningId，则自动关联到该含义组
-        if (props.initialMeaningId) {
+        const result = await res.json()
+        const created = result.success ? result.data : result
+ 
+        // 如果传入了 initialGroupId，则自动关联到该词句组
+        if (props.initialGroupId) {
           try {
-            const associateRes = await fetch(`/api/v1/expressions/${created.id}/meanings`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                meaning_id: props.initialMeaningId
-              })
-            })
+            const result = await expressionGroupsApi.addToGroup(props.initialGroupId, { expression_id: created.id })
 
-            if (!associateRes.ok) {
-              if (associateRes.status === 401) {
+            if (!result.success) {
+              if (result.error) {
                 // Token is invalid, redirect to login
                 error.value = 'Session expired. Please log in again.';
                 localStorage.removeItem('authToken');
                 router.push('/login');
                 return;
               }
-              const errorData = await associateRes.json()
-              throw new Error(errorData.error || 'Failed to associate expression to meaning group')
+              throw new Error(result.error || 'Failed to associate expression to group')
             }
           } catch (e) {
             error.value = String(e)

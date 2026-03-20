@@ -123,7 +123,7 @@
 <script>
 import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { createLanguage } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 
 export default {
   name: 'AddLanguageModal',
@@ -161,27 +161,29 @@ export default {
       if (!formData.code || !formData.name) return
       
       try {
-        const languageObj = await createLanguage({
+        const result = await languagesApi.create({
           code: formData.code,
           name: formData.name,
-          group_name: formData.group_name || null,
-          region_code: formData.region_code, // Will be derived from region data
-          region_name: formData.region_name,
-          region_latitude: formData.latitude || null,
-          region_longitude: formData.longitude || null,
-          direction: formData.direction
+          is_active: 1
         })
-        // Reset form
-        formData.code = ''
-        formData.name = ''
-        formData.group_name = ''
-        formData.region_name = ''
-        formData.region_code = ''
-        formData.latitude = ''
-        formData.longitude = ''
-        formData.direction = 'ltr'
-        
-        emit('add-language', languageObj)
+
+        if (result.success && result.data) {
+          const languageObj = result.data
+          // Reset form
+          formData.code = ''
+          formData.name = ''
+          formData.group_name = ''
+          formData.region_name = ''
+          formData.region_code = ''
+          formData.latitude = ''
+          formData.longitude = ''
+          formData.direction = 'ltr'
+
+          emit('add-language', languageObj)
+        } else {
+          console.error('Add language failed:', result.error || result.message)
+          alert('Failed to add language. Please try again.')
+        }
       } catch (error) {
         console.error('Error adding language:', error)
         alert(t('create.addLanguageFailed'))

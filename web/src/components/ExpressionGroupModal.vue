@@ -27,6 +27,21 @@
         </div>
 
         <div v-else>
+          <div v-if="showTabs" class="flex gap-1 mb-3 overflow-x-auto pb-1">
+            <button
+              v-for="group in groups"
+              :key="group.id"
+              @click="selectGroup(group.id)"
+              :class="[
+                'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors',
+                currentGroupId === group.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ]"
+            >
+              #{{ groups.indexOf(group) + 1 }}
+            </button>
+          </div>
 
           <button
             v-if="!showNewRow"
@@ -169,7 +184,7 @@ export default {
       type: Number,
       default: null
     },
-    meaningId: {
+    groupId: {
       type: Number,
       default: null
     },
@@ -185,6 +200,8 @@ export default {
 
     const loading = ref(false)
     const expressions = ref([])
+    const groups = ref([])
+    const currentGroupId = ref(null)
     const pendingExpressions = ref([])
     const showNewRow = ref(false)
     const newRowLanguage = ref('')
@@ -193,8 +210,8 @@ export default {
     const message = ref('')
     const messageType = ref('success')
 
-    const hasMeaningGroup = computed(() => {
-      return props.meaningId !== null && props.meaningId !== undefined
+    const hasGroup = computed(() => {
+      return props.groupId !== null && props.groupId !== undefined
     })
 
     const displayLanguages = computed(() => {
@@ -203,50 +220,97 @@ export default {
         propsLanguagesLength: props.languages?.length,
         languagesArray: Array.isArray(props.languages) ? props.languages : 'not array'
       })
-      
+
       if (!props.languages || !Array.isArray(props.languages) || props.languages.length === 0) {
         return []
       }
       return props.languages
     })
 
+    const sortExpressions = (exprs) => {
+      const langOrder = displayLanguages.value.map(l => l.code)
+      return [...exprs].sort((a, b) => {
+        const aIndex = langOrder.indexOf(a.language_code)
+        const bIndex = langOrder.indexOf(b.language_code)
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex
+        }
+        if (aIndex !== -1) return -1
+        if (bIndex !== -1) return 1
+        return a.language_code.localeCompare(b.language_code)
+      })
+    }
+
     const fetchGroupMembers = async () => {
       loading.value = true
       console.log('fetchGroupMembers called:', {
         visible: props.visible,
         expressionId: props.expressionId,
-        meaningId: props.meaningId,
+        groupId: props.groupId,
         languages: props.languages,
         displayLanguagesLength: displayLanguages.value.length
       })
       try {
-        if (props.meaningId) {
-          const res = await fetch(`/api/v1/expressions?meaning_id=${props.meaningId}&skip=0&limit=100`)
-          if (res.ok) {
-            expressions.value = await res.json()
-          } else {
-            expressions.value = []
-          }
-        } 
-        else if (props.expressionId) {
-          const res = await fetch(`/api/v1/expressions/${props.expressionId}`)
-          if (res.ok) {
-            const expr = await res.json()
-            expressions.value = [expr]
-          } else {
-            expressions.value = []
-          }
-        }
-        else {
+        if (!props.expressionId) {
           expressions.value = []
+          groups.value = []
+          return
         }
+
+        const languageCodes = displayLanguages.value.map(l => l.code).join(',')
+        const url = languageCodes
+          ? `/api/v1/expressions/${props.expressionId}/groups?lang=${languageCodes}`
+          : `/api/v1/expressions/${props.expressionId}/groups`
+
+        const res = await fetch(url)
+        if (!res.ok) {
+          console.error('Failed to fetch expression groups')
+          expressions.value = []
+          groups.value = []
+          return
+        }
+
+        const result = await res.json()
+        groups.value = result.success ? result.data : result
+
+        if (groups.value.length === 0) {
+          const exprRes = await fetch(`/api/v1/expressions/${props.expressionId}`)
+          if (exprRes.ok) {
+            const exprResult = await exprRes.json()
+            const currentExpr = exprResult.success ? exprResult.data : exprResult
+            expressions.value = [currentExpr]
+          } else {
+            expressions.value = []
+          }
+          return
+        }
+
+        currentGroupId.value = props.groupId || groups.value[0].id
       } catch (e) {
         console.error('Failed to fetch group members:', e)
         expressions.value = []
+        groups.value = []
       } finally {
         loading.value = false
       }
     }
+
+    const selectGroup = (groupId) => {
+      currentGroupId.value = groupId
+    }
+
+    watch(currentGroupId, (newGroupId) => {
+      const group = groups.value.find(g => g.id === newGroupId)
+      if (group && group.expressions) {
+        expressions.value = sortExpressions(group.expressions)
+      } else {
+        expressions.value = []
+      }
+    })
+
+    const showTabs = computed(() => {
+      return groups.value.length > 1
+    })
 
     const getLanguageName = (code) => {
       const lang = props.languages.find(l => l.code === code)
@@ -304,8 +368,8 @@ export default {
           return
         }
 
-        if (props.meaningId) {
-          const promises = pendingExpressions.value.map(pending => 
+        if (props.groupId) {
+          const promises = pendingExpressions.value.map(pending =>
             fetch('/api/v1/expressions', {
               method: 'POST',
               headers: {
@@ -315,7 +379,7 @@ export default {
               body: JSON.stringify({
                 text: pending.text,
                 language_code: pending.language_code,
-                meaning_id: props.meaningId
+                group_id: props.groupId
               })
             })
           )
@@ -335,13 +399,20 @@ export default {
             close()
           }
         } else {
-          const existingExpr = expressions.value[0]
-          const allExpressions = [
-            {
-              id: existingExpr.id,
-              text: existingExpr.text,
-              language_code: existingExpr.language_code
-            },
+          const currentGroup = groups.value.find(g => g.id === currentGroupId.value)
+          if (!currentGroup) {
+            message.value = t('failed_to_add_expressions')
+            messageType.value = 'error'
+            return
+          }
+
+          const existingExprs = currentGroup.expressions || []
+          const allExprs = [
+            ...existingExprs.map(e => ({
+              id: e.id,
+              text: e.text,
+              language_code: e.language_code
+            })),
             ...pendingExpressions.value.map(p => ({
               text: p.text,
               language_code: p.language_code
@@ -355,7 +426,7 @@ export default {
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              expressions: allExpressions
+              expressions: allExprs
             })
           })
 
@@ -404,6 +475,7 @@ export default {
 
     watch(() => props.visible, (newVal) => {
       if (newVal) {
+        pendingExpressions.value = []
         fetchGroupMembers()
       }
     })
@@ -411,6 +483,8 @@ export default {
     return {
       loading,
       expressions,
+      groups,
+      currentGroupId,
       pendingExpressions,
       showNewRow,
       newRowLanguage,
@@ -418,10 +492,12 @@ export default {
       adding,
       message,
       messageType,
-      hasMeaningGroup,
+      hasGroup,
       displayLanguages,
+      showTabs,
       fetchGroupMembers,
       getLanguageName,
+      selectGroup,
       addNewRow,
       cancelNewRow,
       addToPending,
@@ -429,7 +505,8 @@ export default {
       cancelAll,
       submitAllPending,
       close,
-      goToDetail
+      goToDetail,
+      sortExpressions
     }
   }
 }

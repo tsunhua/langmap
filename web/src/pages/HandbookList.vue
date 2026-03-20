@@ -89,6 +89,16 @@
         {{ $t('next') }} &raquo;
       </button>
     </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      :message="$t('handbook_delete_confirm') || 'Are you sure you want to delete this handbook?'"
+      :loading="deleting"
+      :loadingText="$t('deleting') || 'Deleting...'"
+      :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeDelete"
+    />
   </div>
 </template>
 
@@ -96,10 +106,12 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getHandbooks, deleteHandbook } from '../services/handbookService'
+import { handbooksApi } from '../api/index.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'HandbookList',
+  components: { ConfirmModal },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
@@ -109,6 +121,11 @@ export default {
     const loading = ref(true)
     const activeTab = ref('my')
     const isLoggedIn = ref(!!localStorage.getItem('authToken'))
+
+    // Delete Confirmation
+    const showDeleteModal = ref(false)
+    const handbookToDelete = ref(null)
+    const deleting = ref(false)
 
     // Pagination state
     const currentPage = ref(1)
@@ -131,7 +148,13 @@ export default {
           // For 'my' tab, we get all handbooks for the current user (handled by backend)
         }
 
-        handbooks.value = await getHandbooks(params)
+
+        const result = await handbooksApi.getAll(params)
+        if (result.success && result.data) {
+          handbooks.value = result.data
+        } else {
+          handbooks.value = []
+        }
       } catch (error) {
         console.error('Failed to load handbooks:', error)
       } finally {
@@ -170,14 +193,28 @@ export default {
       router.push(`/handbooks/${id}`)
     }
 
-    const confirmDelete = async (handbook) => {
-      if (confirm(t('handbook_delete_confirm') || 'Are you sure you want to delete this handbook?')) {
-        try {
-          await deleteHandbook(handbook.id)
-          await fetchHandbooks()
-        } catch (error) {
-          console.error('Failed to delete handbook:', error)
+    const confirmDelete = (handbook) => {
+      handbookToDelete.value = handbook
+      showDeleteModal.value = true
+    }
+
+    const executeDelete = async () => {
+      if (!handbookToDelete.value) return
+      deleting.value = true
+      try {
+        const deleteResult = await handbooksApi.delete(handbookToDelete.value.id)
+        if (!deleteResult.success) {
+          console.error('Delete failed:', deleteResult.error || deleteResult.message)
+          alert('Failed to delete handbook. Please try again.')
+          deleting.value = false
+          return
         }
+        await fetchHandbooks()
+        showDeleteModal.value = false
+      } catch (error) {
+        console.error('Failed to delete handbook:', error)
+      } finally {
+        deleting.value = false
       }
     }
 
@@ -203,6 +240,9 @@ export default {
       goToEdit,
       goToView,
       confirmDelete,
+      showDeleteModal,
+      deleting,
+      executeDelete,
       formatDate,
       currentPage,
       nextPage,

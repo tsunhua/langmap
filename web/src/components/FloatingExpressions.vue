@@ -55,14 +55,15 @@ export default {
         }
 
         console.log('Loading expressions for language:', currentLang)
-        const res = await fetch(`/api/v1/expressions?language=${currentLang}&limit=10&exclude_tag=langmap`)
+        const res = await fetch(`/api/v1/expressions?lang=${currentLang}&limit=10&exclude_tag=langmap`)
         if (!res.ok) throw new Error('Failed to fetch expressions')
         const data = await res.json()
 
         console.log('Loaded expressions:', data)
-        expressions.value = data || []
+        const responseData = data.data || data
+        expressions.value = responseData.items || responseData || []
 
-        const count = Math.min(data.length, 10)
+        const count = Math.min(expressions.value.length, 10)
         const startY = 10
         const endY = 70
         const spacing = (endY - startY) / Math.max(count - 1, 1)

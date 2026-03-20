@@ -399,5 +399,8 @@
   "target_expression_not_found": "目標詞句未找到。請重新搜索。",
   "underline": "下劃線",
   "undo": "撤銷",
-  "write": "編輯"
+  "write": "編輯",
+  "confirm_action": "再次確認",
+  "confirm_delete": "確認刪除",
+  "remove_item": "移除項目"
 }

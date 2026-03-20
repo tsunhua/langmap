@@ -18,16 +18,16 @@
         <ExpressionCard :item="item" :key="item.id" :editable="true" :can-delete="canDeleteExpression"
           :is-deleting="deleting" @update-tags="handleTagsUpdate" @delete="handleDelete" />
 
-        <div v-if="meanings.length > 0" class="space-y-4">
+        <div v-if="groups.length > 0" class="space-y-4">
           <h3 class="text-lg font-bold text-slate-800">{{ $t('associated_expression_groups') }}</h3>
           <nav class="flex flex-wrap gap-2" role="tablist">
-            <!-- Meaning group tabs -->
-            <button v-for="(meaning, index) in meanings" :key="meaning.id" @click="setActiveTab(meaning.id)" :class="[
+            <!-- Group tabs -->
+            <button v-for="(group, index) in groups" :key="group.id" @click="setActiveTab(group.id)" :class="[
               'px-2.5 sm:px-4 py-2 sm:py-3 font-medium text-sm rounded-lg transition-colors',
-              activeTab === meaning.id
+              activeTab === group.id
                 ? 'bg-blue-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            ]" role="tab" :aria-selected="activeTab === meaning.id">
+            ]" role="tab" :aria-selected="activeTab === group.id">
               #{{ index + 1 }}
             </button>
 
@@ -46,14 +46,14 @@
           <div v-show="activeTab === 'search'" role="tabpanel">
             <SmartSearch
               :exclude-id="item ? item.id : null"
-              :current-meaning-ids="currentMeaningIds"
+              :current-group-ids="currentGroupIds"
               @create-new="handleSmartSearchCreateNew"
               @associate="handleSmartSearchAssociate"
             />
           </div>
 
-          <!-- Meaning group tab contents -->
-          <div v-if="currentMeaning && activeTab !== 'search'" role="tabpanel">
+          <!-- Group tab contents -->
+          <div v-if="currentGroup && activeTab !== 'search'" role="tabpanel">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200">
               <div
                 class="border-b border-slate-200 px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
@@ -70,7 +70,7 @@
                     </svg>
                   </button>
                 </div>
-                <button v-if="!groupSearchModes.has(currentMeaning.id)" @click="toggleGroupSearch(currentMeaning.id)"
+                <button v-if="!groupSearchModes.has(currentGroup.id)" @click="toggleGroupSearch(currentGroup.id)"
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-2 text-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -79,7 +79,7 @@
                   </svg>
                   {{ $t('associate_expressions') }}
                 </button>
-                <button v-else @click="toggleGroupSearch(currentMeaning.id)"
+                <button v-else @click="toggleGroupSearch(currentGroup.id)"
                   class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-3 py-2 text-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -89,12 +89,12 @@
                 </button>
               </div>
 
-              <div v-if="groupSearchModes.has(currentMeaning.id)"
+              <div v-if="groupSearchModes.has(currentGroup.id)"
                 class="border-b border-slate-200 bg-slate-50 px-4 sm:px-6 py-4">
                 <SmartSearch
                   :exclude-id="item ? item.id : null"
-                  :target-meaning-id="currentMeaning.id"
-                  :current-meaning-ids="[currentMeaning.id]"
+                  :target-group-id="currentGroup.id"
+                  :current-group-ids="[currentGroup.id]"
                   @create-new="handleGroupSearchCreateNew"
                   @associate="handleGroupSearchAssociate"
                 />
@@ -121,7 +121,7 @@
                       </div>
                       <ExpressionCard v-else :item="member" />
                     </div>
-                    <button @click="removeFromGroup(member.id, currentMeaning.id)"
+                    <button @click="removeFromGroup(member.id, currentGroup.id)"
                       class="text-slate-400 hover:text-red-600 transition-colors" :title="$t('remove_from_group')">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -167,7 +167,7 @@
           <div v-if="noGroupSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
             <SmartSearch
               :exclude-id="item ? item.id : null"
-              :current-meaning-ids="[]"
+              :current-group-ids="[]"
               @create-new="handleSmartSearchCreateNew"
               @associate="handleSmartSearchAssociate"
             />
@@ -196,10 +196,10 @@
     </div>
 
     <!-- Create Expression Modal -->
-    <CreateExpression :visible="showCreateExpressionModal" :initial-meaning-id="currentMeaningIdForAssociation"
+    <CreateExpression :visible="showCreateExpressionModal" :initial-group-id="currentGroupIdForAssociation"
       :initial-text="initialTextForCreation" @close="showCreateExpressionModal = false"
       @expression-created="handleExpressionCreated" />
-    
+
     <!-- 词句组合并模态框 -->
     <div v-if="showMergeGroupsModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -238,20 +238,20 @@
           </div>
 
           <div v-else class="space-y-3">
-            <div v-for="meaning in otherMeanings" :key="meaning.id"
-              @click="mergeMeaningGroups(meaning.id)"
+            <div v-for="group in otherGroups" :key="group.id"
+              @click="mergeGroups(group.id)"
               class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div class="flex-1 min-w-0">
-                  <h4 class="font-semibold text-slate-800">#{{ getMeaningIndex(meaning.id) }}</h4>
+                  <h4 class="font-semibold text-slate-800">#{{ getGroupIndex(group.id) }}</h4>
                   <p class="text-sm text-slate-500 mt-1">
-                    {{ meaning.members.length }} {{ $t('expressions') }}
+                    {{ group.members.length }} {{ $t('expressions') }}
                   </p>
                   <p class="text-sm text-slate-600 mt-1 truncate">
-                    {{ getMeaningDisplayText(meaning) }}
+                    {{ getGroupDisplayText(group) }}
                   </p>
                   <p class="text-xs text-slate-400 mt-1">
-                    {{ $t('created_by') }}: {{ meaning.created_by || $t('anonymous') }}
+                    {{ $t('created_by') }}: {{ group.created_by || $t('anonymous') }}
                   </p>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0"
@@ -261,7 +261,7 @@
               </div>
             </div>
 
-            <div v-if="otherMeanings.length === 0" class="text-center py-8">
+            <div v-if="otherGroups.length === 0" class="text-center py-8">
               <p class="text-slate-500">{{ $t('no_other_groups_to_merge') }}</p>
             </div>
           </div>
@@ -275,20 +275,20 @@
         </div>
       </div>
     </div>
-    
-    <!-- Meaning Selection Modal -->
-    <div v-if="showMeaningSelection && selectedExpressionForAssociation"
+
+    <!-- Group Selection Modal -->
+    <div v-if="showGroupSelection && selectedExpressionForAssociation"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
         <div
           class="border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h3 class="text-lg font-bold text-slate-800">{{ $t('select_meaning_group') }}</h3>
+            <h3 class="text-lg font-bold text-slate-800">{{ $t('select_expression_group') }}</h3>
             <p class="text-slate-500 text-sm mt-1">
-              {{ $t('select_meaning_to_associate') }}: <strong>"{{ selectedExpressionForAssociation.text }}"</strong>
+              {{ $t('select_group_to_associate') }}: <strong>"{{ selectedExpressionForAssociation.text }}"</strong>
             </p>
           </div>
-          <button @click="closeMeaningSelection"
+          <button @click="closeGroupSelection"
             class="text-slate-400 hover:text-slate-600 transition-colors self-start">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
@@ -298,7 +298,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-          <div v-if="expressionMeaningsLoading" class="flex items-center justify-center py-8">
+          <div v-if="expressionGroupsLoading" class="flex items-center justify-center py-8">
             <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
               viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -309,14 +309,14 @@
             <span class="ml-2 text-slate-600">{{ $t('loading') }}</span>
           </div>
 
-          <div v-else-if="expressionMeanings.length > 0" class="space-y-3">
-            <div v-for="meaning in expressionMeanings" :key="meaning.id"
+          <div v-else-if="expressionGroups.length > 0" class="space-y-3">
+            <div v-for="group in expressionGroups" :key="group.id"
               class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
-              @click="associateToSelectedMeaning(meaning.id)">
+              @click="associateToSelectedGroup(group.id)">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div class="flex-1 min-w-0">
-                  <h4 class="font-semibold text-slate-800 truncate">{{ getMeaningDisplayText(meaning) }}</h4>
-                  <p class="text-sm text-slate-500 mt-1">{{ $t('created_by') }}: {{ meaning.created_by ||
+                  <h4 class="font-semibold text-slate-800 truncate">{{ getGroupDisplayText(group) }}</h4>
+                  <p class="text-sm text-slate-500 mt-1">{{ $t('created_by') }}: {{ group.created_by ||
                     $t('anonymous') }}</p>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0" fill="none"
@@ -333,21 +333,21 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M6.343 6.343l-.707.707m12.728 0l-.707.707M6.343 17.657l3.636-3.636m-1.414 1.414l3.636-3.636m0 5.657V19a2 2 0 002-2H5a2 2 0 00-2 2v-3.172" />
             </svg>
-            <p class="mt-2 text-slate-500">{{ $t('no_meaning_groups_for_expression') }}</p>
+            <p class="mt-2 text-slate-500">{{ $t('no_expression_groups_for_expression') }}</p>
             <p class="mt-1 text-sm text-slate-400">{{ $t('create_new_group_with_this_expression') }}</p>
-            <button @click="associateToNewMeaning"
+            <button @click="associateToNewGroup"
               class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-3">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              {{ $t('create_new_meaning_group') }}
+              {{ $t('create_new_expression_group') }}
             </button>
           </div>
         </div>
 
         <div class="border-t border-slate-200 px-4 sm:px-6 py-4">
-          <button @click="closeMeaningSelection"
+          <button @click="closeGroupSelection"
             class="w-full inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 px-4 py-2">
             {{ $t('cancel') }}
           </button>
@@ -355,6 +355,13 @@
       </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model="showConfirmModal"
+      :message="confirmMessage"
+      :loading="confirmLoading"
+      @confirm="executeConfirm"
+    />
   </div>
 </template>
 
@@ -362,15 +369,16 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getLanguageDisplayName } from '../services/languageService.js'
+import { languagesApi, expressionGroupsApi } from '../api/index.ts'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
 import SmartSearch from '../components/SmartSearch.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'Detail',
-  components: { ExpressionCard, VersionHistory, CreateExpression, SmartSearch },
+  components: { ExpressionCard, VersionHistory, CreateExpression, SmartSearch, ConfirmModal },
   props: ['id'],
   setup(props) {
     const route = useRoute()
@@ -378,49 +386,71 @@ export default {
     const { t } = useI18n()
     const item = ref(null)
     const loading = ref(false)
-    const meanings = ref([])
+    const groups = ref([])
     const currentUser = ref(null)
     const deleting = ref(false)
+
+    // Confirm Modal config
+    const showConfirmModal = ref(false)
+    const confirmType = ref('')
+    const confirmMessage = ref('')
+    const confirmPayload = ref(null)
+    const confirmLoading = ref(false)
+
+    async function executeConfirm() {
+      confirmLoading.value = true
+      try {
+        if (confirmType.value === 'unlink') {
+          await executeUnlink()
+        } else if (confirmType.value === 'removeFromGroup') {
+          await executeRemoveFromGroup()
+        } else if (confirmType.value === 'delete') {
+          await executeDelete()
+        }
+        showConfirmModal.value = false
+      } finally {
+        confirmLoading.value = false
+      }
+    }
 
     // Group-specific association mode
     const groupSearchModes = ref(new Set())
     
     // 词句组合并模态框
     const showMergeGroupsModal = ref(false)
-    const sourceMeaningId = ref(null)
-    const targetMeaningId = ref(null)
+    const sourceGroupId = ref(null)
+    const targetGroupId = ref(null)
     const mergeLoading = ref(false)
     const mergeMessage = ref('')
 
     // Search mode for when no groups exist
     const noGroupSearchMode = ref(false)
 
-    // Meaning selection mode
-    const showMeaningSelection = ref(false)
+    // Group selection mode
+    const showGroupSelection = ref(false)
     const selectedExpressionForAssociation = ref(null)
-    const expressionMeanings = ref([])
-    const expressionMeaningsLoading = ref(false)
+    const expressionGroups = ref([])
+    const expressionGroupsLoading = ref(false)
 
     // Tab navigation
     const activeTab = ref(null)
 
-    // Get current meaning to display
-    const currentMeaning = computed(() => {
-      if (!meanings.value || meanings.value.length === 0) return null
-      if (activeTab.value === 'search') return null
+    // Get current group to display
+    const currentGroup = computed(() => {
+      if (!groups.value || groups.value.length === 0) return null
 
-      const found = meanings.value.find(m => m.id === activeTab.value)
-      if (found) return found
+      // Fallback to first group if activeTab is invalid or not found
+      if (!activeTab.value || activeTab.value === 'null' || activeTab.value === 'search') return groups.value[0]
 
-      // Fallback to first meaning if activeTab is not found but we have meanings
-      if (!activeTab.value || activeTab.value === 'null') return meanings.value[0]
+      const found = groups.value.find(g => g.id === activeTab.value)
 
-      return null
+      // Return found group or fallback to first group
+      return found || groups.value[0]
     })
 
     const currentMembers = computed(() => {
-      const m = currentMeaning.value
-      const members = m?.members || []
+      const g = currentGroup.value
+      const members = g?.members || []
       if (!item.value) return members
 
       const currentItem = members.find(member => member.id === item.value.id)
@@ -429,15 +459,15 @@ export default {
       return currentItem ? [currentItem, ...otherMembers] : otherMembers
     })
 
-    const currentMeaningIds = computed(() => {
-      if (!meanings.value || meanings.value.length === 0) return []
-      return meanings.value.map(m => m.id)
+    const currentGroupIds = computed(() => {
+      if (!groups.value || groups.value.length === 0) return []
+      return groups.value.map(g => g.id)
     })
 
     // 获取其他词句组（排除当前词句组）
-    const otherMeanings = computed(() => {
-      if (!sourceMeaningId.value) return []
-      return meanings.value.filter(m => m.id !== sourceMeaningId.value)
+    const otherGroups = computed(() => {
+      if (!sourceGroupId.value) return []
+      return groups.value.filter(g => g.id !== sourceGroupId.value)
     })
     
     // Set active tab
@@ -449,16 +479,16 @@ export default {
 
     // Create expression modal
     const showCreateExpressionModal = ref(false)
-    const currentMeaningIdForAssociation = ref(null)
+    const currentGroupIdForAssociation = ref(null)
     const initialTextForCreation = ref('')
     const shouldAssociateWithCurrent = ref(false)
 
     const linkedIds = computed(() => {
       const s = new Set()
       if (item.value && item.value.id) s.add(item.value.id)
-      for (const m of meanings.value || []) {
-        if (m && m.members) {
-          for (const mem of m.members) {
+      for (const g of groups.value || []) {
+        if (g && g.members) {
+          for (const mem of g.members) {
             if (mem && mem.id) s.add(mem.id)
           }
         }
@@ -480,49 +510,32 @@ export default {
       try {
         const res = await fetch(`/api/v1/expressions/${props.id}`)
         if (!res.ok) throw new Error('not found')
-        item.value = await res.json()
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        item.value = response.data || response
 
-        // fetch meanings for this expression
+        // fetch groups for this expression using expression group API
         try {
-          const rawMeanings = item.value.meanings || []
-          // Deduplicate by ID
-          const meaningsData = []
-          const seenIds = new Set()
-          for (const m of rawMeanings) {
-            if (m && m.id && !seenIds.has(m.id)) {
-              meaningsData.push(m)
-              seenIds.add(m.id)
-            }
+          const result = await expressionGroupsApi.getExpressionGroups(props.id)
+          if (result.success && Array.isArray(result.data)) {
+            const loadedGroups = result.data.map(group => ({
+              id: group.id,
+              created_by: group.created_by,
+              created_at: group.created_at,
+              members: group.expressions || []
+            }))
+            groups.value = loadedGroups
+          } else {
+            groups.value = []
           }
-
-          const loadedMeanings = []
-
-          // 为每个 meaning 获取其关联的所有词句
-          for (const meaning of meaningsData) {
-            try {
-              const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
-              if (membersRes.ok) {
-                const members = await membersRes.json()
-                loadedMeanings.push({
-                  id: meaning.id,
-                  created_by: meaning.created_by,
-                  created_at: meaning.created_at,
-                  members: members
-                })
-              }
-            } catch (e) {
-              console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
-            }
-          }
-          meanings.value = loadedMeanings
         } catch (e) {
-          console.error('Failed to load meanings:', e)
-          meanings.value = []
+          console.error('Failed to load groups:', e)
+          groups.value = []
         }
 
         // Set initial active tab
-        if (meanings.value.length > 0) {
-          activeTab.value = meanings.value[0].id
+        if (groups.value.length > 0) {
+          activeTab.value = groups.value[0].id
         } else {
           activeTab.value = 'search'
         }
@@ -534,12 +547,12 @@ export default {
     }
 
     // Toggle group search mode
-    function toggleGroupSearch(meaningId) {
+    function toggleGroupSearch(groupId) {
       const modes = groupSearchModes.value
-      if (modes.has(meaningId)) {
-        modes.delete(meaningId)
+      if (modes.has(groupId)) {
+        modes.delete(groupId)
       } else {
-        modes.add(meaningId)
+        modes.add(groupId)
       }
     }
 
@@ -548,57 +561,65 @@ export default {
       noGroupSearchMode.value = !noGroupSearchMode.value
     }
 
-    // Open meaning selection modal
-    async function openMeaningSelection(target, targetMeaningId = null) {
+    // Open group selection modal
+    async function openGroupSelection(target, targetGroupId = null) {
       selectedExpressionForAssociation.value = target
-      expressionMeanings.value = []
-      expressionMeaningsLoading.value = true
-      showMeaningSelection.value = true
+      expressionGroups.value = []
+      expressionGroupsLoading.value = true
+      showGroupSelection.value = true
 
       try {
-        // Fetch the target expression's meanings
+        // Fetch the target expression's groups
         const res = await fetch(`/api/v1/expressions/${target.id}`)
         if (!res.ok) throw new Error('Failed to fetch expression')
 
-        const exprData = await res.json()
-        const meaningsData = exprData.meanings || []
+        const response = await res.json()
+        // 适配新的API响应格式 { success, data }
+        const exprData = response.data || response
+        const groupsData = exprData.groups || []
 
-        // Fetch members for each meaning
-        const loadedMeanings = []
-        for (const meaning of meaningsData) {
+        // Use expression group API to fetch groups with their expressions
+        const loadedGroups = []
+        for (const group of groupsData) {
           try {
-            const membersRes = await fetch(`/api/v1/expressions?meaning_id=${meaning.id}&skip=0&limit=100`)
-            if (membersRes.ok) {
-              const members = await membersRes.json()
-              loadedMeanings.push({
-                id: meaning.id,
-                created_by: meaning.created_by,
-                created_at: meaning.created_at,
-                members: members
+            const result = await expressionGroupsApi.getGroup(group.id)
+            if (result.success && result.data) {
+              const fullGroup = result.data
+              loadedGroups.push({
+                id: fullGroup.id,
+                created_by: fullGroup.created_by,
+                created_at: fullGroup.created_at,
+                members: fullGroup.expressions || []
               })
             }
           } catch (e) {
-            console.error(`Failed to fetch members for meaning ${meaning.id}:`, e)
+            console.error(`Failed to fetch group ${group.id}:`, e)
+            loadedGroups.push({
+              id: group.id,
+              created_by: group.created_by,
+              created_at: group.created_at,
+              members: []
+            })
           }
         }
-        expressionMeanings.value = loadedMeanings
+        expressionGroups.value = loadedGroups
       } catch (e) {
-        console.error('Error fetching expression meanings:', e)
-        expressionMeanings.value = []
+        console.error('Error fetching expression groups:', e)
+        expressionGroups.value = []
       } finally {
-        expressionMeaningsLoading.value = false
+        expressionGroupsLoading.value = false
       }
     }
 
-    // Close meaning selection modal
-    function closeMeaningSelection() {
-      showMeaningSelection.value = false
+    // Close group selection modal
+    function closeGroupSelection() {
+      showGroupSelection.value = false
       selectedExpressionForAssociation.value = null
-      expressionMeanings.value = []
+      expressionGroups.value = []
     }
 
-    // Associate to selected meaning
-    async function associateToSelectedMeaning(meaningId) {
+    // Associate to selected group
+    async function associateToSelectedGroup(groupId) {
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
@@ -606,33 +627,23 @@ export default {
       }
 
       try {
-        const res = await fetch(`/api/v1/expressions/${item.value.id}/meanings`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            meaning_id: meaningId
-          })
-        })
+        const result = await expressionGroupsApi.addToGroup(groupId, { expression_id: item.value.id })
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to associate to meaning group')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to associate to expression group')
         }
 
         // Refresh to show updated list
         await load()
-        closeMeaningSelection()
+        closeGroupSelection()
       } catch (e) {
-        console.error('Error associating to meaning:', e)
-        alert(t('failed_to_associate_to_meaning'))
+        console.error('Error associating to group:', e)
+        alert(t('failed_to_associate_to_group'))
       }
     }
 
-    // Associate to new meaning (using batch)
-    async function associateToNewMeaning() {
+    // Associate to new group (using batch)
+    async function associateToNewGroup() {
       if (!selectedExpressionForAssociation.value) return
 
       const token = localStorage.getItem('authToken')
@@ -661,7 +672,7 @@ export default {
                 language_code: selectedExpressionForAssociation.value.language_code
               }
             ],
-            ensure_new_meaning: true
+            ensure_new_group: true
           })
         })
 
@@ -674,7 +685,7 @@ export default {
 
         // Refresh to show updated list
         await load()
-        closeMeaningSelection()
+        closeGroupSelection()
 
         // Close search mode if open
         if (noGroupSearchMode.value) {
@@ -686,36 +697,39 @@ export default {
       }
     }
 
-    // Open all meanings modal
-    async function openAllMeaningsModal() {
-      allMeanings.value = []
-      allMeaningsLoading.value = true
-      showAllMeaningsModal.value = true
+    // Open all groups modal
+    async function openAllGroupsModal() {
+      allGroups.value = []
+      allGroupsLoading.value = true
+      showAllGroupsModal.value = true
 
       try {
-        const res = await fetch('/api/v1/meanings?skip=0&limit=100')
-        if (!res.ok) throw new Error('Failed to fetch meanings')
+        const res = await fetch('/api/v1/groups?skip=0&limit=100')
+        if (!res.ok) throw new Error('Failed to fetch groups')
 
-        allMeanings.value = await res.json()
+        const response = await res.json()
+        // 适配新的分页响应格式 { success, data: { items, total, skip, limit, hasMore } }
+        let allGroupsList = response.data?.items || response.data || response || []
+        allGroups.value = Array.isArray(allGroupsList) ? allGroupsList : []
       } catch (e) {
-        console.error('Error fetching all meanings:', e)
-        alert(t('failed_to_fetch_meaning_groups'))
+        console.error('Error fetching all groups:', e)
+        alert(t('failed_to_fetch_expression_groups'))
       } finally {
-        allMeaningsLoading.value = false
+        allGroupsLoading.value = false
       }
     }
 
-    // Close all meanings modal
-    function closeAllMeaningsModal() {
-      showAllMeaningsModal.value = false
-      allMeanings.value = []
+    // Close all groups modal
+    function closeAllGroupsModal() {
+      showAllGroupsModal.value = false
+      allGroups.value = []
     }
 
-    // Get display text for meaning group (show member texts instead of ID)
-    function getMeaningDisplayText(meaning) {
-      if (meaning.members && meaning.members.length > 0) {
+    // Get display text for expression group (show member texts instead of ID)
+    function getGroupDisplayText(group) {
+      if (group.members && group.members.length > 0) {
         // Get up to 5 member texts, join with " / "
-        const memberTexts = meaning.members
+        const memberTexts = group.members
           .slice(0, 5)
           .map(m => m.text)
           .join(' / ')
@@ -726,18 +740,18 @@ export default {
     }
     
     // 获取词句组在列表中的索引
-    function getMeaningIndex(meaningId) {
-      return meanings.value.findIndex(m => m.id === meaningId) + 1
+    function getGroupIndex(groupId) {
+      return groups.value.findIndex(g => g.id === groupId) + 1
     }
     
     // 打开词句组合并模态框
     function openMergeGroupsModal() {
-      if (!currentMeaning.value) {
-        console.warn('Cannot open merge modal: currentMeaning is null')
+      if (!currentGroup.value) {
+        console.warn('Cannot open merge modal: currentGroup is null')
         return
       }
-      sourceMeaningId.value = currentMeaning.value.id
-      targetMeaningId.value = null
+      sourceGroupId.value = currentGroup.value.id
+      targetGroupId.value = null
       mergeMessage.value = ''
       showMergeGroupsModal.value = true
     }
@@ -745,17 +759,17 @@ export default {
     // 关闭词句组合并模态框
     function closeMergeGroupsModal() {
       showMergeGroupsModal.value = false
-      sourceMeaningId.value = null
-      targetMeaningId.value = null
+      sourceGroupId.value = null
+      targetGroupId.value = null
       mergeMessage.value = ''
     }
     
     // 执行词句组合并
-    async function mergeMeaningGroups(targetMeaningIdParam) {
-      if (!sourceMeaningId.value) return
+    async function mergeGroups(targetGroupIdParam) {
+      if (!sourceGroupId.value) return
       
       // 前端验证
-      if (sourceMeaningId.value === targetMeaningIdParam) {
+      if (sourceGroupId.value === targetGroupIdParam) {
         mergeMessage.value = t('cannot_merge_to_same_group')
         return
       }
@@ -770,21 +784,21 @@ export default {
       mergeMessage.value = ''
       
       try {
-        const res = await fetch('/api/v1/meanings/merge', {
+        const res = await fetch('/api/v1/groups/merge', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            source_meaning_id: sourceMeaningId.value,
-            target_meaning_id: targetMeaningIdParam
+            source_group_id: sourceGroupId.value,
+            target_group_id: targetGroupIdParam
           })
         })
         
         if (!res.ok) {
           const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to merge meaning groups')
+          throw new Error(errorData.error || 'Failed to merge expression groups')
         }
         
         const result = await res.json()
@@ -796,7 +810,7 @@ export default {
         await load()
         
         // 切换到目标词句组
-        setActiveTab(targetMeaningIdParam.toString())
+        setActiveTab(targetGroupIdParam.toString())
       } catch (e) {
         console.error('Merge error:', e)
         mergeMessage.value = String(e)
@@ -839,8 +853,14 @@ export default {
     }
 
     async function unlink(target) {
-      if (!confirm(t('confirm_unlink'))) return
+      confirmType.value = 'unlink'
+      confirmPayload.value = target
+      confirmMessage.value = t('confirm_unlink')
+      showConfirmModal.value = true
+    }
 
+    async function executeUnlink() {
+      const target = confirmPayload.value
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
@@ -854,7 +874,7 @@ export default {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ meaning_id: null })
+          body: JSON.stringify({ group_id: null })
         })
 
         if (!res.ok) throw new Error(t('failed_to_unlink'))
@@ -869,15 +889,15 @@ export default {
 
     // Open create expression modal
     function openCreateExpressionModal(searchText = '') {
-      currentMeaningIdForAssociation.value = activeTab.value !== 'search' ? activeTab.value : (meanings.value && meanings.value.length > 0 ? meanings.value[0].id : null);
+      currentGroupIdForAssociation.value = activeTab.value !== 'search' ? activeTab.value : (groups.value && groups.value.length > 0 ? groups.value[0].id : null);
       initialTextForCreation.value = searchText;
       showCreateExpressionModal.value = true;
     }
 
     // Handle SmartSearch create-new event (from search and associate tab)
     async function handleSmartSearchCreateNew(searchText) {
-      // 如果当前没有任何词句组，使用批量关联API让后端创建新的meaning_id
-      if (!meanings.value || meanings.value.length === 0) {
+      // 如果当前没有任何词句组，使用批量关联API让后端创建新的group_id
+      if (!groups.value || groups.value.length === 0) {
         const token = localStorage.getItem('authToken')
         if (!token) {
           alert(t('login_required'))
@@ -886,7 +906,7 @@ export default {
 
         try {
           // 直接打开创建弹窗，但在创建后会使用batch API进行关联
-          currentMeaningIdForAssociation.value = null
+          currentGroupIdForAssociation.value = null
           initialTextForCreation.value = searchText
           showCreateExpressionModal.value = true
 
@@ -898,7 +918,7 @@ export default {
         }
       } else {
         // 如果已有词句组，让用户选择关联到哪个词句组
-        currentMeaningIdForAssociation.value = null
+        currentGroupIdForAssociation.value = null
         initialTextForCreation.value = searchText
         showCreateExpressionModal.value = true
         shouldAssociateWithCurrent.value = false
@@ -907,61 +927,51 @@ export default {
 
     // Handle SmartSearch associate event (from search and associate tab)
     function handleSmartSearchAssociate(result) {
-      openMeaningSelection(result)
+      openGroupSelection(result)
     }
 
     // Handle SmartSearch create-new event (from within a group)
     function handleGroupSearchCreateNew(searchText) {
-      openCreateExpressionModalForGroup(currentMeaning.value.id, searchText)
+      openCreateExpressionModalForGroup(currentGroup.value.id, searchText)
     }
 
     // Handle SmartSearch associate event (from within a group)
     async function handleGroupSearchAssociate(result) {
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        alert(t('login_required'))
-        return
-      }
-
       try {
-        const res = await fetch(`/api/v1/expressions/${result.id}/meanings`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            meaning_id: currentMeaning.value.id
-          })
-        })
+        const response = await expressionGroupsApi.addToGroup(currentGroup.value.id, { expression_id: result.id })
 
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Failed to associate to meaning group')
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to associate to expression group')
         }
 
         // Refresh to show updated list
         await load()
 
         // Close search mode for this group
-        toggleGroupSearch(currentMeaning.value.id)
+        toggleGroupSearch(currentGroup.value.id)
       } catch (e) {
-        console.error('Error associating to meaning:', e)
-        alert(t('failed_to_associate_to_meaning'))
+        console.error('Error associating to group:', e)
+        alert(t('failed_to_associate_to_group'))
       }
     }
 
     // Open create expression modal for specific group
-    function openCreateExpressionModalForGroup(meaningId, searchText = '') {
-      currentMeaningIdForAssociation.value = meaningId;
+    function openCreateExpressionModalForGroup(groupId, searchText = '') {
+      currentGroupIdForAssociation.value = groupId;
       initialTextForCreation.value = searchText;
       showCreateExpressionModal.value = true;
     }
 
     // Remove expression from a group
-    async function removeFromGroup(expressionId, meaningId) {
-      if (!confirm(t('confirm_remove_from_group'))) return;
+    async function removeFromGroup(expressionId, groupId) {
+      confirmType.value = 'removeFromGroup'
+      confirmPayload.value = { expressionId, groupId }
+      confirmMessage.value = t('confirm_remove_from_group')
+      showConfirmModal.value = true
+    }
 
+    async function executeRemoveFromGroup() {
+      const { expressionId, groupId } = confirmPayload.value
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
@@ -969,7 +979,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`/api/v1/expressions/${expressionId}/meanings/${meaningId}`, {
+        const res = await fetch(`/api/v1/groups/${groupId}/expressions/${expressionId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -1021,7 +1031,7 @@ export default {
                   language_code: createdExpression.language_code
                 }
               ],
-              ensure_new_meaning: true
+              ensure_new_group: true
             })
           })
 
@@ -1085,10 +1095,12 @@ export default {
     async function handleDelete() {
       if (!item.value) return
 
-      if (!confirm(t('confirm_delete_expression'))) {
-        return
-      }
+      confirmType.value = 'delete'
+      confirmMessage.value = t('confirm_delete_expression')
+      showConfirmModal.value = true
+    }
 
+    async function executeDelete() {
       deleting.value = true
       const token = localStorage.getItem('authToken')
       if (!token) {
@@ -1139,10 +1151,10 @@ export default {
     return {
       item,
       loading,
-      meanings,
+      groups,
       linkedIds,
       isLinked,
-      getLanguageDisplayName,
+      getLanguageDisplayName: (code) => languagesApi.getLanguageDisplayName(code),
       // Group search
       groupSearchModes,
       toggleGroupSearch,
@@ -1150,39 +1162,39 @@ export default {
       handleGroupSearchAssociate,
       // 词句组合并
       showMergeGroupsModal,
-      sourceMeaningId,
-      targetMeaningId,
+      sourceGroupId,
+      targetGroupId,
       mergeLoading,
       mergeMessage,
       openMergeGroupsModal,
       closeMergeGroupsModal,
-      mergeMeaningGroups,
-      otherMeanings,
-      getMeaningIndex,
+      mergeGroups,
+      otherGroups,
+      getGroupIndex,
       // No group search
       noGroupSearchMode,
       toggleNoGroupSearch,
-      // Meaning selection
-      showMeaningSelection,
+      // Group selection
+      showGroupSelection,
       selectedExpressionForAssociation,
-      expressionMeanings,
-      expressionMeaningsLoading,
-      openMeaningSelection,
-      closeMeaningSelection,
-      associateToSelectedMeaning,
-      associateToNewMeaning,
-      getMeaningDisplayText,
+      expressionGroups,
+      expressionGroupsLoading,
+      openGroupSelection,
+      closeGroupSelection,
+      associateToSelectedGroup,
+      associateToNewGroup,
+      getGroupDisplayText,
       // SmartSearch handlers
       handleSmartSearchCreateNew,
       handleSmartSearchAssociate,
       // Tab navigation
       activeTab,
       setActiveTab,
-      currentMeaning,
+      currentGroup,
       currentMembers,
       // Create expression modal
       showCreateExpressionModal,
-      currentMeaningIdForAssociation,
+      currentGroupIdForAssociation,
       initialTextForCreation,
       shouldAssociateWithCurrent,
       openCreateExpressionModal,
@@ -1194,7 +1206,11 @@ export default {
       // Delete expression
       canDeleteExpression,
       deleting,
-      handleDelete
+      handleDelete,
+      showConfirmModal,
+      confirmMessage,
+      confirmLoading,
+      executeConfirm
     }
   }
 }

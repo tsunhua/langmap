@@ -47,7 +47,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import { fetchLanguages } from '../services/languageService.js'
+import { languagesApi } from '../api/index.ts'
 
 export default {
   name: 'LanguageList',
@@ -71,7 +71,12 @@ export default {
     const loadLanguages = async () => {
       try {
         loading.value = true
-        languages.value = await fetchLanguages()
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          languages.value = result.data
+        } else {
+          languages.value = []
+        }
       } catch (error) {
         console.error('Failed to load languages:', error)
       } finally {

@@ -24,6 +24,7 @@
     "@cloudflare/workers-types": "^4.20251202.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/markdown-it": "^14.1.2",
+    "@types/node": "^25.5.0",
     "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "vite-ssr-components": "^0.5.1",

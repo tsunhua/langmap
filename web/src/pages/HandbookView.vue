@@ -112,10 +112,10 @@
            <audio ref="audioPlayer" class="hidden"></audio>
 
             <!-- Expression Group Modal -->
-            <ExpressionGroupModal
+              <ExpressionGroupModal
               :visible="showExpressionGroupModal"
               :expression-id="selectedExpressionId"
-              :meaning-id="selectedMeaningId"
+              :group-id="selectedGroupId"
               :languages="modalLanguages"
               @close="showExpressionGroupModal = false"
               @updated="handleExpressionGroupUpdated"
@@ -140,8 +140,8 @@
 <script>
  import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
  import { useRouter } from 'vue-router'
- import { getHandbookById, rerenderHandbook } from '../services/handbookService'
- import { fetchLanguages } from '../services/languageService'
+ import { handbooksApi } from '../api/index.ts'
+ import { languagesApi } from '../api/index.ts'
  import { generateLanguageColor } from '../utils/languageUtils'
  import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
 
@@ -149,8 +149,9 @@
    name: 'HandbookView',
    components: { ExpressionGroupModal },
    props: ['id'],
-    setup(props) {
+     setup(props) {
        const router = useRouter()
+       const route = router.currentRoute
 
         // State
          const handbook = ref(null)
@@ -166,56 +167,87 @@
          const activeItemId = ref(null)
          const tocObserver = ref(null)
 
-       // Expression group modal
-       const showExpressionGroupModal = ref(false)
-       const selectedExpressionId = ref(null)
-       const selectedMeaningId = ref(null)
+        // Expression group modal
+        const showExpressionGroupModal = ref(false)
+        const selectedExpressionId = ref(null)
+        const selectedGroupId = ref(null)
 
-       const setInitialLanguages = () => {
-         if (handbook.value?.target_lang) {
-           instructionLanguages.value = handbook.value.target_lang.split(',').filter(l => l)
-         }
-       }
-
-       const fetchInitialData = async () => {
-         loading.value = true
-         try {
-           // Fetch languages if not loaded
-           if (languages.value.length === 0) {
-             languages.value = await fetchLanguages()
+         // Initialize languages from URL query params or handbook
+         const setInitialLanguages = () => {
+           const urlTargetLangs = route.value.query.target_langs
+           if (urlTargetLangs) {
+             instructionLanguages.value = urlTargetLangs.split(',').filter(l => l.trim())
+           } else if (handbook.value?.target_lang) {
+             instructionLanguages.value = handbook.value.target_lang.split(',').filter(l => l)
            }
+         }
 
-           // Fetch handbook data first
-           const data = await getHandbookById(props.id)
+        // Update URL with selected languages
+        const updateURLLanguages = () => {
+          const targetLangsParam = instructionLanguages.value.join(',')
+          router.replace({
+            query: {
+              ...route.value.query,
+              target_langs: targetLangsParam || undefined
+            }
+          })
+        }
 
-           if (data) {
-             handbook.value = data
-
-             // Only set initial languages on first load
-             if (!isInitialized.value) {
-               setInitialLanguages()
-               isInitialized.value = true
+        const fetchInitialData = async () => {
+          loading.value = true
+          try {
+             // Fetch languages if not loaded
+             if (languages.value.length === 0) {
+               const langResult = await languagesApi.getAll()
+               languages.value = langResult.success && langResult.data ? langResult.data : []
              }
 
-             // Fetch with target languages for rendering
+             // Fetch handbook with target languages in one request
              const targetLangsParam = instructionLanguages.value.join(',')
-             const renderedData = await getHandbookById(props.id, null, targetLangsParam)
-             handbook.value = renderedData
+             console.log('[HandbookView] Fetching handbook data:', {
+               handbookId: props.id,
+               instructionLanguages: instructionLanguages.value,
+               targetLangsParam
+             })
+              const dataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
+              if (dataRes.success && dataRes.data) {
+                const data = dataRes.data
+                handbook.value = data
 
-             // Parse table of contents after content is rendered
-             await parseTableOfContents()
+                console.log('[HandbookView] Handbook data received:', {
+                  hasRenderedContent: !!data.rendered_content,
+                  renderedContentLength: data.rendered_content?.length,
+                  hasRenderedTitle: !!data.rendered_title,
+                  isCached: data.is_cached
+                })
+
+              // Only set initial languages on first load
+              if (!isInitialized.value) {
+                setInitialLanguages()
+                // Update URL with initial languages
+                const urlTargetLangs = route.value.query.target_langs
+                if (!urlTargetLangs && instructionLanguages.value.length > 0) {
+                  updateURLLanguages()
+                }
+                isInitialized.value = true
+              }
+
+              // Parse table of contents after content is rendered
+              await parseTableOfContents()
            }
 
            // Auth check for edit button
            const userStr = localStorage.getItem('user')
-           if (userStr) currentUser.value = JSON.parse(userStr)
+           if (userStr) {
+             currentUser.value = JSON.parse(userStr)
+           }
 
-         } catch (error) {
-           console.error('Failed to load handbook data:', error)
-         } finally {
-           loading.value = false
-         }
-       }
+          } catch (error) {
+            console.error('Failed to load handbook data:', error)
+          } finally {
+            loading.value = false
+          }
+        }
 
        const parseTableOfContents = async (retryCount = 0) => {
          // 防止重复执行
@@ -342,7 +374,7 @@
       const handleExpressionClick = (event) => {
         const { id, meaningId } = event.detail
         selectedExpressionId.value = id
-        selectedMeaningId.value = meaningId
+        selectedGroupId.value = meaningId
         showExpressionGroupModal.value = true
       }
 
@@ -361,17 +393,22 @@
         return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
       })
 
-      const handleRerender = async () => {
-        try {
-          loading.value = true
-          await rerenderHandbook(props.id)
-          await fetchInitialData()
-        } catch (error) {
-          console.error('Failed to rerender handbook:', error)
-        } finally {
-          loading.value = false
-        }
-      }
+       const handleRerender = async () => {
+         try {
+           loading.value = true
+           const rerenderResult = await handbooksApi.rerender(props.id)
+           if (!rerenderResult.success) {
+             console.error('Rerender failed:', rerenderResult.error || rerenderResult.message)
+             alert('Failed to rerender handbook. Please try again.')
+             return
+           }
+           await fetchInitialData()
+         } catch (error) {
+           console.error('Failed to rerender handbook:', error)
+         } finally {
+           loading.value = false
+         }
+       }
 
        const selectedLanguages = computed(() => {
         return languages.value.filter(lang => 
@@ -443,6 +480,7 @@
       const addLanguage = (lang) => {
         if (!instructionLanguages.value.includes(lang.code) && instructionLanguages.value.length < 5) {
           instructionLanguages.value.push(lang.code)
+          updateURLLanguages()
           fetchInitialData()
         }
         showLanguageSelector.value = false
@@ -453,6 +491,7 @@
           instructionLanguages.value = instructionLanguages.value.filter(
             code => code !== langCode
           )
+          updateURLLanguages()
           fetchInitialData()
         }
       }
@@ -503,7 +542,7 @@
            sourceLanguageName,
            showExpressionGroupModal,
            selectedExpressionId,
-           selectedMeaningId,
+           selectedGroupId,
            handleExpressionGroupUpdated,
            handleRerender,
            contentContainer,

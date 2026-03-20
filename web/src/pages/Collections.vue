@@ -139,6 +139,16 @@
         </form>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal
+      v-model="showDeleteModal"
+      :message="deleteMessage"
+      :loading="deleting"
+      :loadingText="$t('deleting') || 'Deleting...'"
+      :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeDelete"
+    />
   </div>
 </template>
 
@@ -146,10 +156,12 @@
 import { ref, onMounted, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getCollections, createCollection, updateCollection, deleteCollection } from '../services/collectionService'
+import { collectionsApi } from '../api/index.ts'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
   name: 'Collections',
+  components: { ConfirmModal },
   setup() {
     const router = useRouter()
     const { t } = useI18n()
@@ -163,6 +175,12 @@ export default {
     const currentId = ref(null)
     const activeTab = ref('my')
     const isLoggedIn = ref(!!localStorage.getItem('authToken'))
+
+    // Delete Confirmation
+    const showDeleteModal = ref(false)
+    const itemToDelete = ref(null)
+    const deleteMessage = ref('')
+    const deleting = ref(false)
 
     const form = reactive({
       name: '',
@@ -190,8 +208,11 @@ export default {
             return
           }
         }
-
-        collections.value = await getCollections(params)
+ 
+        const result = await collectionsApi.getAll(params)
+        if (result.success && result.data) {
+          collections.value = result.data
+        }
       } catch (error) {
         console.error('Failed to load collections:', error)
       } finally {
@@ -254,9 +275,21 @@ export default {
         }
 
         if (isEditing.value) {
-          await updateCollection(currentId.value, data)
+          const updateResult = await collectionsApi.update(currentId.value, data)
+          if (!updateResult.success) {
+            console.error('Update failed:', updateResult.error || updateResult.message)
+            alert(updateResult.error || updateResult.message || 'Failed to update collection')
+            submitting.value = false
+            return
+          }
         } else {
-          await createCollection(data)
+          const createResult = await collectionsApi.create(data)
+          if (!createResult.success) {
+            console.error('Create failed:', createResult.error || createResult.message)
+            alert(createResult.error || createResult.message || 'Failed to create collection')
+            submitting.value = false
+            return
+          }
         }
 
         await fetchCollections()
@@ -268,14 +301,29 @@ export default {
       }
     }
 
-    const confirmDelete = async (collection) => {
-      if (confirm(t('collections.deleteConfirm'))) {
-        try {
-          await deleteCollection(collection.id)
-          await fetchCollections()
-        } catch (error) {
-          console.error('Failed to delete collection:', error)
+    const confirmDelete = (collection) => {
+      itemToDelete.value = collection
+      deleteMessage.value = t('collections.deleteConfirm')
+      showDeleteModal.value = true
+    }
+
+    const executeDelete = async () => {
+      if (!itemToDelete.value) return
+      deleting.value = true
+      try {
+        const deleteResult = await collectionsApi.delete(itemToDelete.value.id)
+        if (!deleteResult.success) {
+          console.error('Delete failed:', deleteResult.error || deleteResult.message)
+          alert(deleteResult.error || deleteResult.message || 'Failed to delete collection')
+          deleting.value = false
+          return
         }
+        await fetchCollections()
+        showDeleteModal.value = false
+      } catch (error) {
+        console.error('Failed to delete collection:', error)
+      } finally {
+        deleting.value = false
       }
     }
 
@@ -305,6 +353,10 @@ export default {
       activeTab,
       isLoggedIn,
       itemsPerPage,
+      showDeleteModal,
+      deleteMessage,
+      deleting,
+      executeDelete,
       openCreateModal,
       openEditModal,
       closeModal,

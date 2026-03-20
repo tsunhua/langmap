@@ -314,17 +314,34 @@ export default {
             opacity: 0.9
           });
 
-          // Bind popup with the same information
-          marker.bindPopup(`
-            <div>
-              <b>${t('region')}:</b> ${point.regionName || t('unknown')}<br>
-              <b>${t('language')}:</b> ${point.languageName}<br>
-              <b>${t('expressions')}:</b> ${point.count}
+          // Bind popup with language info and link to detail page
+          const popupContent = `
+            <div style="min-width: 200px;">
+              <div style="font-size: 14px; margin-bottom: 8px;">
+                <strong style="color: #1e40af;">${point.languageName}</strong>
+                <span style="color: #6b7280; font-size: 12px; margin-left: 4px;">(${point.languageCode})</span>
+              </div>
+              <div style="font-size: 13px; color: #374151; margin-bottom: 4px;">
+                <span style="color: #6b7280;">${t('region')}:</span> ${point.regionName || t('unknown')}
+              </div>
+              <div style="font-size: 13px; color: #374151; margin-bottom: 12px;">
+                <span style="color: #6b7280;">${t('expressions')}:</span> <strong>${point.count.toLocaleString()}</strong>
+              </div>
+              <a href="#/languages/${point.languageCode}" 
+                 style="display: inline-block; 
+                        padding: 6px 12px; 
+                        background-color: #2563eb; 
+                        color: white; 
+                        text-decoration: none; 
+                        border-radius: 4px; 
+                        font-size: 13px; 
+                        text-align: center;
+                        transition: background-color 0.2s;">
+                ${t('view_details')}
+              </a>
             </div>
-          `);
-
-          // Remove click handler to make heatmap non-clickable
-          // marker.on('click', () => selectRegion(point.languageCode))
+          `;
+          marker.bindPopup(popupContent);
 
           markers.push(marker)
         }
@@ -377,10 +394,11 @@ export default {
         if (statsRes.ok) {
           const statsData = await statsRes.json()
           console.log('Received statistics data:', statsData);
+          const data = statsData.data || statsData
           stats.value = {
-            totalExpressions: statsData.total_expressions,
-            totalLanguages: statsData.total_languages,
-            totalRegions: statsData.total_regions
+            totalExpressions: data.total_expressions,
+            totalLanguages: data.total_languages,
+            totalRegions: data.total_regions
           }
           console.log('Updated stats value:', stats.value);
         } else {

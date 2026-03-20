@@ -202,7 +202,9 @@ export default {
         // 获取表达式基本信息
         const exprRes = await fetch(`/api/v1/expressions/${props.expressionId}`)
         if (exprRes.ok) {
-          expression.value = await exprRes.json()
+          const exprResponse = await exprRes.json()
+          // 适配新的API响应格式 { success, data }
+          expression.value = exprResponse.data || exprResponse
         }
 
         // 获取版本历史
@@ -211,9 +213,15 @@ export default {
           versions.value = []
           return
         }
-        versions.value = await res.json()
+        const versionResponse = await res.json()
+        // 适配新的API响应格式 { success, data }
+        let versionsList = versionResponse.data || versionResponse
+        versionsList = Array.isArray(versionsList) ? versionsList : []
+        versions.value = versionsList
         // Sort versions by created_at in descending order (newest first)
-        versions.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        if (Array.isArray(versions.value)) {
+          versions.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        }
       } catch (e) {
         console.warn(e)
       } finally {

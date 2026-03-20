@@ -250,13 +250,13 @@ export default {
           })
         })
         
-        const data = await response.json()
+        const result = await response.json()
         
         if (response.ok) {
           // Registration successful, show email verification message
           registrationSuccess.value = true
         } else {
-          error.value = data.error || t('register.registrationFailed')
+          error.value = result.error || result.message || t('register.registrationFailed')
         }
       } catch (err) {
         error.value = t('register.registrationFailed')

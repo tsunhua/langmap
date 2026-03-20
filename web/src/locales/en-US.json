@@ -399,5 +399,9 @@
   "some_expressions_failed": "Some expressions failed to add",
   "all_expressions_added_successfully": "All expressions added successfully",
   "failed_to_add_expressions": "Failed to add expressions",
-  "failed_to_create_meaning_group": "Failed to create meaning group"
+  "failed_to_create_meaning_group": "Failed to create meaning group",
+  "confirm_action": "Confirm Action",
+  "confirm_delete": "Confirm Delete",
+  "remove_item": "Remove Item",
+  "view_details": "View Details"
 }

@@ -138,7 +138,7 @@ export class ExportDO {
             let content = "";
 
             if (job.options.format === "csv") {
-                const header = "id,text,meaning_id,audio_url,language_code,region_code,region_name,region_latitude,region_longitude,tags,source_type,source_ref\n";
+                const header = "id,text,audio_url,language_code,region_code,region_name,region_latitude,region_longitude,tags,source_type,source_ref\n";
                 const body = fullData.map((item: any) => {
                     const escape = (val: any) => {
                         if (val === null || val === undefined) return "";
@@ -148,7 +148,6 @@ export class ExportDO {
                     return [
                         item.id,
                         escape(item.text),
-                        item.meaning_id || ""   ,
                         escape(item.audio_url),
                         escape(item.language_code),
                         escape(item.region_code),

@@ -19,7 +19,6 @@ export interface Language {
 export interface Expression {
   id: number
   text: string
-  meaning_id?: number // @deprecated 使用 expression_meaning 表建立关联，此字段已废弃
   audio_url?: string | null
   language_code: string
   region_code?: string
@@ -34,7 +33,6 @@ export interface Expression {
   created_at?: string
   updated_by?: string
   updated_at?: string
-  meanings?: Meaning[]
 }
 
 export interface Meaning {
@@ -49,6 +47,13 @@ export interface ExpressionMeaning {
   id: string
   expression_id: number
   meaning_id: number
+  created_at?: string
+}
+
+export interface ExpressionGroup {
+  id: number
+  expressions: Expression[]
+  created_by?: string
   created_at?: string
 }
 
@@ -81,9 +86,9 @@ export interface Collection {
   user_id: number
   name: string
   description?: string
-  is_public: boolean
-  created_at: number
-  updated_at: number
+  is_public: number
+  created_at: string
+  updated_at?: string
   items_count?: number
 }
 
@@ -92,7 +97,7 @@ export interface CollectionItem {
   collection_id: number
   expression_id: number
   note?: string
-  created_at: number
+  created_at: string
 }
 
 export interface Handbook {
@@ -103,7 +108,7 @@ export interface Handbook {
   content: string
   source_lang?: string
   target_lang?: string
-  is_public: boolean
+  is_public: number
   created_at: string
   updated_at: string
   renders?: string // JSON string for cached renders
@@ -150,9 +155,10 @@ export abstract class AbstractDatabaseService {
   abstract deleteLanguage(id: number): Promise<boolean>
 
   // Expression operations
-  abstract getExpressions(skip?: number, limit?: number, language?: string, meaningId?: number | number[], tagPrefix?: string, excludeTagPrefix?: string, includeMeanings?: boolean): Promise<Expression[]>
+  abstract getExpressions(skip?: number, limit?: number, languages?: string[], tagPrefix?: string, excludeTagPrefix?: string): Promise<Expression[]>
   abstract getExpressionById(id: number): Promise<Expression | null>
   abstract getExpressionsByIds(ids: number[]): Promise<Expression[]>
+  abstract getExpressionsGroups(expressionIds: number[], languages?: string[]): Promise<Map<number, ExpressionGroup[]>>
   abstract createExpression(expression: Partial<Expression>): Promise<Expression>
   abstract ensureExpressionsExist(expressions: Array<{ text: string, language_code: string }>, username: string): Promise<Record<string, number>>
   abstract upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning?: boolean): Promise<Array<{ id: number, expression?: Expression, error?: string }>>
@@ -160,13 +166,26 @@ export abstract class AbstractDatabaseService {
   abstract deleteExpression(id: number): Promise<boolean>
   abstract migrateExpressionId(oldId: number, newExpression: Partial<Expression>): Promise<Expression>
   abstract selectSemanticAnchor(expressionIds: number[]): Promise<number | null>
-  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number, includeMeanings?: boolean): Promise<Expression[]>
+  abstract searchExpressions(query: string, fromLang?: string, region?: string, skip?: number, limit?: number): Promise<Expression[]>
 
   // Meaning operations
   abstract getMeaningsByExpressionId(expressionId: number): Promise<Meaning[]>
   abstract getExpressionMeaningIds(expressionIds: number[]): Promise<Map<number, number[]>>
   abstract addExpressionMeaning(expressionId: number, meaningId: number, username: string): Promise<void>
   abstract removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean>
+
+  // ExpressionGroup operations
+  abstract getGroupExpressions(groupId: number, languages?: string[]): Promise<Expression[]>
+  abstract getGroupInfo(groupId: number, languages?: string[]): Promise<ExpressionGroup | null>
+  abstract getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]>
+  abstract addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean>
+  abstract removeFromGroup(expressionId: number, groupId: number): Promise<boolean>
+  abstract createGroup(anchorExpressionId: number, username: string): Promise<number>
+  abstract batchAddToGroup(expressionIds: number[], groupId: number, username: string): Promise<number>
+  abstract mergeGroups(sourceGroupId: number, targetGroupId: number): Promise<{ success: boolean, merged_count: number }>
+  abstract deleteGroup(groupId: number): Promise<boolean>
+  abstract listGroups(skip?: number, limit?: number, languages?: string[]): Promise<ExpressionGroup[]>
+  abstract searchGroups(query: string, skip?: number, limit?: number, languages?: string[]): Promise<ExpressionGroup[]>
 
   // Expression version operations
   abstract getExpressionVersions(expressionId: number): Promise<ExpressionVersion[]>
@@ -230,5 +249,14 @@ export abstract class AbstractDatabaseService {
   }): Promise<void>
   abstract invalidateHandbookRenders(id: number): Promise<void>
 
-  abstract stableExpressionId(text: string, languageCode: string): number
+  abstract stableExpressionId(text: string, language_code: string): number
+
+  // Query objects for direct access
+  abstract get expressions(): any
+  abstract get users(): any
+  abstract get collections(): any
+  abstract get meanings(): any
+  abstract get languages(): any
+  abstract get handbooks(): any
+  abstract get groups(): any
 }
