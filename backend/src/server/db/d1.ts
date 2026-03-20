@@ -834,8 +834,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return this.groupQueries.getGroupInfo(groupId, languages)
   }
 
-  async getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]> {
-    return this.groupQueries.getExpressionGroups(expressionId)
+  async getExpressionGroups(expressionId: number, languages?: string[]): Promise<ExpressionGroup[]> {
+    return this.groupQueries.getExpressionGroups(expressionId, languages)
   }
 
   async addToGroup(expressionId: number, groupId: number, username: string): Promise<boolean> {

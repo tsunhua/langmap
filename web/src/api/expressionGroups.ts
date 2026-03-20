@@ -79,8 +79,9 @@ export const expressionGroupsApi = {
     return response.data as ApiResponse<null>
   },
 
-  async getExpressionGroups(expressionId: number): Promise<ApiResponse<ExpressionGroup[]>> {
-    const response = await apiClient.get(`/expressions/${expressionId}/groups`)
+  async getExpressionGroups(expressionId: number, languages?: string[]): Promise<ApiResponse<ExpressionGroup[]>> {
+    const params = languages ? { lang: languages.join(',') } : {}
+    const response = await apiClient.get(`/expressions/${expressionId}/groups`, { params })
     return response.data as ApiResponse<ExpressionGroup[]>
   },
 

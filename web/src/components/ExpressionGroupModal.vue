@@ -489,6 +489,10 @@ export default {
     watch(() => props.visible, (newVal) => {
       if (newVal) {
         pendingExpressions.value = []
+        currentGroupId.value = null
+        expressions.value = []
+        groups.value = []
+        message.value = ''
         fetchGroupMembers()
       }
     })
