@@ -225,22 +225,32 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           <span class="handbook-visible-groups">
             ${showGroups.map((tg, index) => {
               const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-              return Object.entries(tg.translations).map(([langCode, text]) => {
-                const color = langColors[langCode] || getLanguageColor(langCode, handbook)
-                const langClass = langCode.replace('.', '-')
-                return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-              }).join(' ')
+              const languageElements = targetLangs.map(targetLang => {
+                const text = tg.translations[targetLang]
+                if (text) {
+                  const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+                  const langClass = targetLang.replace('.', '-')
+                  return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                }
+                return ''
+              }).filter(Boolean).join(' ')
+              return `${groupPrefix}${languageElements}`
             }).join(' ')}
           </span>
           ${hiddenGroups.length > 0 ? `
             <span class="handbook-hidden-groups" style="display: none;">
               ${hiddenGroups.map((tg, index) => {
                 const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = langColors[langCode] || getLanguageColor(langCode, handbook)
-                  const langClass = langCode.replace('.', '-')
-                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                }).join(' ')
+                const languageElements = targetLangs.map(targetLang => {
+                  const text = tg.translations[targetLang]
+                  if (text) {
+                    const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+                    const langClass = targetLang.replace('.', '-')
+                    return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  }
+                  return ''
+                }).filter(Boolean).join(' ')
+                return `${groupPrefix}${languageElements}`
               }).join(' ')}
             </span>
             <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
@@ -251,22 +261,32 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           <span class="handbook-visible-groups">
             ${showGroups.map((tg, index) => {
               const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-              return Object.entries(tg.translations).map(([langCode, text]) => {
-                const color = langColors[langCode] || getLanguageColor(langCode, handbook)
-                const langClass = langCode.replace('.', '-')
-                return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-              }).join(' ')
+              const languageElements = targetLangs.map(targetLang => {
+                const text = tg.translations[targetLang]
+                if (text) {
+                  const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+                  const langClass = targetLang.replace('.', '-')
+                  return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                }
+                return ''
+              }).filter(Boolean).join(' ')
+              return `${groupPrefix}${languageElements}`
             }).join(' ')}
           </span>
           ${hiddenGroups.length > 0 ? `
             <span class="handbook-hidden-groups" style="display: none;">
               ${hiddenGroups.map((tg, index) => {
                 const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = langColors[langCode] || getLanguageColor(langCode, handbook)
-                  const langClass = langCode.replace('.', '-')
-                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                }).join(' ')
+                const languageElements = targetLangs.map(targetLang => {
+                  const text = tg.translations[targetLang]
+                  if (text) {
+                    const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+                    const langClass = targetLang.replace('.', '-')
+                    return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  }
+                  return ''
+                }).filter(Boolean).join(' ')
+                return `${groupPrefix}${languageElements}`
               }).join(' ')}
             </span>
             <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
@@ -494,10 +514,13 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
       finalTargetLangs: targetLangs.length > 0 ? targetLangs : (handbook.target_lang ? [handbook.target_lang] : [])
     })
 
+    // IMPORTANT: Use handbook.target_lang as default BEFORE checking cache
     if (targetLangs.length === 0) {
       if (handbook.target_lang) {
-        targetLangs = [handbook.target_lang]
+        // Split handbook.target_lang by comma to handle multiple languages
+        targetLangs = handbook.target_lang.split(',').map(l => l.trim()).filter(Boolean)
         console.log('[GET] Using handbook target_lang:', handbook.target_lang)
+        console.log('[GET] Parsed targetLangs from handbook.target_lang:', targetLangs)
       }
     }
 
@@ -507,8 +530,11 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
     }
 
     if (targetLangs.length > 0) {
-      const cacheKey = [...targetLangs].sort().join('|')
+      const sortedTargetLangs = [...targetLangs].sort()
+      const cacheKey = sortedTargetLangs.join('|')
       console.log('[GET] Checking cache for key:', cacheKey)
+      console.log('[GET] targetLangs before sort:', targetLangs)
+      console.log('[GET] targetLangs after sort:', sortedTargetLangs)
 
       try {
         const cachedRender = await db.getHandbookRender(id, cacheKey)
@@ -534,6 +560,7 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
         const renders = await renderHandbookInternal(c, handbook, targetLangs)
         console.log('[GET] Renders received:', Object.keys(renders))
 
+        console.log('[GET] Saving to cache with key:', cacheKey)
         await db.saveHandbookRender({
           handbook_id: id,
           target_lang: cacheKey,

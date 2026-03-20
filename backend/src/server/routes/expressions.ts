@@ -40,7 +40,7 @@ expressionsRoutes.get('/', async (c) => {
   }
 })
 
-expressionsRoutes.post('/', requireAuth, async (c) => {
+expressionsRoutes.post('/', requireAuth, clearCache, async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const service = new ExpressionService(db)

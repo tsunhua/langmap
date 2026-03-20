@@ -104,7 +104,7 @@ export class ExpressionQueries {
     return result
   }
 
-  async create(data: Partial<Expression>): Promise<Expression | null> {
+  async create(data: Partial<Expression>): Promise<Expression> {
     const bindValues = [
       data.id,
       data.text,
@@ -122,12 +122,14 @@ export class ExpressionQueries {
       data.updated_by || null
     ]
 
-    return await this.db.prepare(
+    await this.db.prepare(
       `INSERT OR IGNORE INTO expressions (
         id, text, audio_url, language_code, region_code, region_name, region_latitude,
         region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-    ).bind(...bindValues).first<Expression>() || null
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(...bindValues).run()
+
+    return await this.findById(data.id!)
   }
 
   async ensureExist(expressions: Array<{ id: number, text: string, language_code: string }>, username: string): Promise<Record<string, number>> {

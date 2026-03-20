@@ -125,7 +125,7 @@ expressionGroupRoutes.post('/', requireAuth, async (c) => {
  * POST /api/v1/groups/:id/expressions
  * Add an expression to a group
  */
-expressionGroupRoutes.post('/:id/expressions', requireAuth, async (c) => {
+expressionGroupRoutes.post('/:id/expressions', requireAuth, clearCache, async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const user = c.get('user')

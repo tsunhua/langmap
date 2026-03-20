@@ -172,6 +172,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { expressionGroupsApi } from '../api/index.ts'
 
 export default {
   name: 'ExpressionGroupModal',
@@ -286,6 +287,13 @@ export default {
         }
 
         currentGroupId.value = props.groupId || groups.value[0].id
+
+        const group = groups.value.find(g => g.id === currentGroupId.value)
+        if (group && group.expressions) {
+          expressions.value = sortExpressions(group.expressions)
+        } else {
+          expressions.value = []
+        }
       } catch (e) {
         console.error('Failed to fetch group members:', e)
         expressions.value = []
@@ -368,9 +376,9 @@ export default {
           return
         }
 
-        if (props.groupId) {
-          const promises = pendingExpressions.value.map(pending =>
-            fetch('/api/v1/expressions', {
+        if (currentGroupId.value) {
+          const promises = pendingExpressions.value.map(async (pending) => {
+            const res = await fetch('/api/v1/expressions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -378,14 +386,26 @@ export default {
               },
               body: JSON.stringify({
                 text: pending.text,
-                language_code: pending.language_code,
-                group_id: props.groupId
+                language_code: pending.language_code
               })
             })
-          )
+
+            if (!res.ok) {
+              return { error: true, pending }
+            }
+
+            const result = await res.json()
+            const newExprId = result.success ? result.data.id : result.id
+
+            await expressionGroupsApi.addToGroup(currentGroupId.value, {
+              expression_id: newExprId
+            })
+
+            return { success: true, id: newExprId }
+          })
 
           const results = await Promise.all(promises)
-          const errors = results.filter(res => !res.ok)
+          const errors = results.filter(res => res.error)
 
           if (errors.length > 0) {
             message.value = t('some_expressions_failed')
@@ -399,14 +419,7 @@ export default {
             close()
           }
         } else {
-          const currentGroup = groups.value.find(g => g.id === currentGroupId.value)
-          if (!currentGroup) {
-            message.value = t('failed_to_add_expressions')
-            messageType.value = 'error'
-            return
-          }
-
-          const existingExprs = currentGroup.expressions || []
+          const existingExprs = expressions.value || []
           const allExprs = [
             ...existingExprs.map(e => ({
               id: e.id,
