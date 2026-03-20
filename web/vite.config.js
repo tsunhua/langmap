@@ -12,4 +12,16 @@ export default defineConfig({
   },
   // Support for defining the base path for deployment to subdirectories
   base: process.env.VITE_BASE_PATH || '/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+          'md-editor': ['md-editor-v3', 'markdown-it'],
+          'axios': ['axios']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 800
+  }
 })

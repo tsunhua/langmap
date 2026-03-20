@@ -403,5 +403,6 @@
   "confirm_action": "再次确认",
   "confirm_delete": "确认删除",
   "remove_item": "移除项目",
-  "view_details": "查看详情"
+  "view_details": "查看详情",
+  "confirm": "确认"
 }

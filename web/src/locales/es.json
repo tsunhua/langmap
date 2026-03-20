@@ -402,5 +402,6 @@
   "write": "Escribir",
   "confirm_action": "Confirm Action",
   "confirm_delete": "Confirm Delete",
-  "remove_item": "Remove Item"
+  "remove_item": "Remove Item",
+  "confirm": "Confirmar"
 }

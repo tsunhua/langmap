@@ -327,30 +327,30 @@
   </div>
 </template>
 
-<script>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter, useRoute } from 'vue-router'
-import { languagesApi } from './api/index.ts'
-import AddLanguageModal from './components/AddLanguageModal.vue'
+ <script>
+ import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+ import { useI18n } from 'vue-i18n'
+ import { useRouter, useRoute } from 'vue-router'
+ import { languagesApi } from './api/index.ts'
+ import AddLanguageModal from './components/AddLanguageModal.vue'
+ import i18n from './i18n'
 
-export default {
-  name: 'App',
-  components: {
-    AddLanguageModal
-  },
-  setup() {
-    // const { locale } = useI18n()
-    const langDropdownOpen = ref(false)
-    const langDropdown = ref(null)
-    const resourcesDropdownOpen = ref(false)
-    const resourcesDropdown = ref(null)
-    const router = useRouter()
-    const mobileMenuOpen = ref(false)
-    const isMobile = ref(false)
-    const route = useRoute()
+ export default {
+   name: 'App',
+   components: {
+     AddLanguageModal
+   },
+   setup() {
+     const langDropdownOpen = ref(false)
+     const langDropdown = ref(null)
+     const resourcesDropdownOpen = ref(false)
+     const resourcesDropdown = ref(null)
+     const router = useRouter()
+     const mobileMenuOpen = ref(false)
+     const isMobile = ref(false)
+     const route = useRoute()
 
-    const { t, locale } = useI18n();
+     const { t, locale } = useI18n();
 
     // Update document title based on current route and language
     const updateDocumentTitle = () => {
@@ -427,7 +427,7 @@ export default {
       langDropdownOpen.value = false
 
       // If it's a dynamic language, load its translations FIRST
-      const { loadLanguage } = await import('./i18n.js')
+      const { loadLanguage } = i18n
       await loadLanguage(langCode)
 
       // THEN switch the locale
@@ -635,7 +635,7 @@ export default {
 
 
         // Load dynamic language if needed
-        const { loadLanguage } = await import('./i18n.js')
+        const { loadLanguage } = i18n
         await loadLanguage(locale.value)
 
         console.log('[App] App initialized successfully')
@@ -688,7 +688,7 @@ export default {
 
         // If it's a dynamic language, load its translations
         if (!['en-US', 'zh-CN', 'zh-TW', 'es', 'fr', 'ja'].includes(savedLang)) {
-          const { loadLanguage } = await import('./i18n.js')
+          const { loadLanguage } = i18n
           await loadLanguage(savedLang)
         }
       }

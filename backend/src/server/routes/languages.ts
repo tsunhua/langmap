@@ -50,10 +50,8 @@ languagesRoutes.post('/', requireAuth, async (c) => {
     const validated = createLanguageSchema.parse(languageData)
     const language = await db.createLanguage(validated)
 
-    db.clearStatisticsCache()
     db.clearLanguagesCache()
     await clearCache(c, '/api/v1/languages')
-    await clearCache(c, '/api/v1/statistics')
 
     return created(c, language)
   } catch (error: any) {
@@ -88,10 +86,7 @@ languagesRoutes.put('/:id', requireAuth, async (c) => {
       return notFound(c, 'Language')
     }
 
-    db.clearStatisticsCache()
     db.clearLanguagesCache()
-    await clearCache(c, '/api/v1/languages')
-    await clearCache(c, '/api/v1/statistics')
     await clearCache(c, `/api/v1/languages/${language.code}/stats`)
 
     return success(c, language)
@@ -124,10 +119,8 @@ languagesRoutes.delete('/:id', requireAuth, async (c) => {
       return notFound(c, 'Language')
     }
 
-    db.clearStatisticsCache()
     db.clearLanguagesCache()
     await clearCache(c, '/api/v1/languages')
-    await clearCache(c, '/api/v1/statistics')
     if (language.code) {
       await clearCache(c, `/api/v1/languages/${language.code}/stats`)
     }
