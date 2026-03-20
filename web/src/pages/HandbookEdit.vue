@@ -976,24 +976,27 @@ export default {
           instruction_lang_prefix: form.instruction_lang_prefix || null,
           lang_colors: JSON.stringify(form.lang_colors || {})
         }
-        if (isEditing.value) {
-          const updateResult = await handbooksApi.update(props.id, payload)
-          if (!updateResult.success) {
-            console.error('Update failed:', updateResult.error || updateResult.message)
-            alert(t('handbook_save_failed'))
-            return
-          }
-        } else {
-          const createResult = await handbooksApi.create(payload)
-          if (!createResult.success) {
-            console.error('Create failed:', createResult.error || createResult.message)
-            alert(t('handbook_save_failed'))
-            return
-          }
-        }
-        baselineJson.value = snapshotJson()
-        clearDraft()
-        router.push('/handbooks')
+         let handbookId
+         if (isEditing.value) {
+           const updateResult = await handbooksApi.update(props.id, payload)
+           if (!updateResult.success) {
+             console.error('Update failed:', updateResult.error || updateResult.message)
+             alert(t('handbook_save_failed'))
+             return
+           }
+           handbookId = props.id
+         } else {
+           const createResult = await handbooksApi.create(payload)
+           if (!createResult.success) {
+             console.error('Create failed:', createResult.error || createResult.message)
+             alert(t('handbook_save_failed'))
+             return
+           }
+           handbookId = createResult.data.id
+         }
+         baselineJson.value = snapshotJson()
+         clearDraft()
+         router.push(`/handbooks/${handbookId}`)
       } catch (error) {
         console.error('Failed to save handbook:', error)
         alert(t('handbook_save_failed'))
