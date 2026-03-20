@@ -181,7 +181,7 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
   }
 })
 
-expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
+expressionsRoutes.get('/:expr_id', cacheMiddleware(300), async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const service = new ExpressionService(db)
@@ -228,7 +228,7 @@ expressionsRoutes.get('/:expr_id', optionalAuth, async (c) => {
  * GET /api/v1/expressions/:id/groups
  * Get all groups that an expression belongs to
  */
-expressionsRoutes.get('/:id/groups', cacheMiddleware(300), async (c) => {
+expressionsRoutes.get('/:id/groups', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const id = parseInt(c.req.param('id'), 10)
@@ -316,7 +316,7 @@ expressionsRoutes.delete('/:expr_id', requireAuth, async (c) => {
   }
 })
 
-expressionsRoutes.get('/:expr_id/versions', async (c) => {
+expressionsRoutes.get('/:expr_id/versions', cacheMiddleware(300), async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const exprId = parseInt(c.req.param('expr_id'))
@@ -332,7 +332,6 @@ expressionsRoutes.get('/:expr_id/versions', async (c) => {
     return internalError(c, 'Failed to fetch expression versions')
   }
 })
-
 
 
 expressionsRoutes.post('/:expr_id/upload-audio', requireAuth, async (c) => {

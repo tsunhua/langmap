@@ -11,7 +11,7 @@ const expressionGroupRoutes = new Hono<{ Bindings: Bindings, Variables: { user?:
  * GET /api/v1/groups/:id
  * Get a specific expression group by ID
  */
-expressionGroupRoutes.get('/:id', cacheMiddleware(300), async (c) => {
+expressionGroupRoutes.get('/:id', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const id = parseInt(c.req.param('id'), 10)
@@ -40,7 +40,7 @@ expressionGroupRoutes.get('/:id', cacheMiddleware(300), async (c) => {
  * GET /api/v1/groups
  * List all expression groups with pagination and optional language filtering
  */
-expressionGroupRoutes.get('/', cacheMiddleware(300), async (c) => {
+expressionGroupRoutes.get('/', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const skip = parseInt(c.req.query('skip') || '0')
@@ -65,7 +65,7 @@ expressionGroupRoutes.get('/', cacheMiddleware(300), async (c) => {
  * GET /api/v1/groups/search
  * Search for expression groups
  */
-expressionGroupRoutes.get('/search', cacheMiddleware(300), async (c) => {
+expressionGroupRoutes.get('/search', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const query = c.req.query('q') || ''

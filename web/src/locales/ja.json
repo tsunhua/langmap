@@ -402,5 +402,6 @@
   "failed_to_create_meaning_group": "意味グループの作成に失敗しました",
   "confirm_action": "再次確認",
   "confirm_delete": "確認刪除",
-  "remove_item": "移除項目"
+  "remove_item": "移除項目",
+  "confirm": "確認"
 }

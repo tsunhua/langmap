@@ -403,5 +403,6 @@
   "confirm_action": "Confirm Action",
   "confirm_delete": "Confirm Delete",
   "remove_item": "Remove Item",
-  "view_details": "View Details"
+  "view_details": "View Details",
+  "confirm": "Confirm"
 }

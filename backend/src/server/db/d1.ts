@@ -16,7 +16,7 @@ let statisticsCache: {
   data: null,
   timestamp: null
 };
-const CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Cache for heatmap data
 let heatmapCache: {
@@ -26,7 +26,7 @@ let heatmapCache: {
   data: null,
   timestamp: null
 };
-const HEATMAP_CACHE_DURATION = 30 * 60 * 1000; // 10 minutes in milliseconds
+const HEATMAP_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Cache for languages
 let languagesCache: {
@@ -36,7 +36,7 @@ let languagesCache: {
   data: null,
   timestamp: null
 };
-const LANGUAGES_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+const LANGUAGES_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // LRU Cache for expression groups
 class LRUCache<K, V> {
@@ -80,8 +80,6 @@ class LRUCache<K, V> {
     this.cache.clear()
   }
 }
-
-let expressionGroupsCache = new LRUCache<string, Map<number, any[]>>(1000, 10 * 60 * 1000)
 
 export class D1DatabaseService extends AbstractDatabaseService {
 
@@ -169,33 +167,17 @@ export class D1DatabaseService extends AbstractDatabaseService {
     const code = language.code || ''
     const id = this.stableHashId(code)
     const result = await this.languageQueries.create(id, language)
-
-    // Clear all related caches
-    this.clearStatisticsCache()
-    this.clearHeatmapCache()
-    this.clearLanguagesCache()
-    this.clearExpressionGroupsCache()
-
     return result
   }
 
   async updateLanguage(id: number, language: Partial<Language>): Promise<Language> {
     const result = await this.languageQueries.update(id, language)
-
-    // Clear all related caches
-    this.clearStatisticsCache()
-    this.clearHeatmapCache()
-    this.clearLanguagesCache()
-    this.clearExpressionGroupsCache()
-
     return result
   }
 
   async deleteLanguage(id: number): Promise<boolean> {
     const success = await this.languageQueries.delete(id)
     if (success) {
-      this.clearStatisticsCache()
-      this.clearHeatmapCache()
       this.clearLanguagesCache()
     }
     return success
@@ -409,13 +391,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
     for (const lang of affectedLanguages) {
       await this.expressionQueries.updateLanguageStatsFromCount(lang as string)
     }
-
-    this.clearStatisticsCache()
-    this.clearHeatmapCache()
-    this.clearExpressionGroupsCache()
-
     console.log('[upsertExpressions] Completed with', results.length, 'results')
-
     return results
   }
 
@@ -425,9 +401,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
     
     if (result) {
       await this.expressionQueries.updateLanguageStats(expression.language_code!, 1)
-      this.clearStatisticsCache()
-      this.clearHeatmapCache()
-      this.clearExpressionGroupsCache()
       return this.formatTimestamps(result)
     } else {
       const existing = await this.getExpressionById(id)
@@ -446,12 +419,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async updateExpression(id: number, expression: Partial<Expression>): Promise<Expression> {
     const result = await this.expressionQueries.update(id, expression)
-
-    // Clear statistics and heatmap caches as we've updated an expression
-    this.clearStatisticsCache()
-    this.clearHeatmapCache()
-    this.clearExpressionGroupsCache()
-
     return this.formatTimestamps(result)
   }
 
@@ -469,11 +436,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
       ])
 
       await this.expressionQueries.updateLanguageStats(expression.language_code, -1)
-
-      this.clearStatisticsCache()
-      this.clearHeatmapCache()
-      this.clearExpressionGroupsCache()
-
       return true
     } catch (error) {
       console.error(`Error deleting expression ${id}:`, error)
@@ -648,11 +610,6 @@ export class D1DatabaseService extends AbstractDatabaseService {
     languagesCache.data = null;
     languagesCache.timestamp = null;
     console.log('Languages cache cleared');
-  }
-
-  clearExpressionGroupsCache(): void {
-    expressionGroupsCache.clear()
-    console.log('Expression groups cache cleared')
   }
 
   // Collections
