@@ -167,7 +167,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     expressionMap[exprId] = { id: exprId, groups }
     groups.forEach(group => {
       group.expressions.forEach(groupExpr => {
-        if (!expressionMap[groupExpr.id]) {
+        if (groupExpr.id !== exprId && !expressionMap[groupExpr.id]) {
           expressionMap[groupExpr.id] = groupExpr
         }
       })
@@ -190,53 +190,92 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       expressionMapHasId: !!expressionMap[id]
     })
 
-    const translationsByTargetLang: Record<string, string[]> = {}
-
     const groupsToUse = meaningId
       ? expressionMap[id]?.groups?.filter((g: any) => g.id === meaningId) || []
       : expressionMap[id]?.groups || []
 
     console.log('[renderItem] Groups to use:', groupsToUse.map((g: any) => g.id), 'meaningId filter:', meaningId)
 
-    targetLangs.forEach(targetLang => {
-      if (!targetLang) return
+    const translationGroups: Array<{ groupId: number, translations: Record<string, string> }> = []
 
-      const transList: string[] = []
+    groupsToUse.forEach((group: any) => {
+      const translations: Record<string, string> = {}
+      const groupExpressions = group.expressions || []
 
-      groupsToUse.forEach((group: any) => {
-        const groupExpressions = group.expressions || []
+      targetLangs.forEach(targetLang => {
+        if (!targetLang) return
         const targetLangExpr = groupExpressions.find((e: any) => e.language_code === targetLang)
         if (targetLangExpr && targetLangExpr.text) {
-          transList.push(targetLangExpr.text)
+          translations[targetLang] = targetLangExpr.text
         }
       })
 
-      if (transList.length > 0) {
-        translationsByTargetLang[targetLang] = transList
-        console.log('[renderItem] Translations for', targetLang, ':', transList)
+      if (Object.keys(translations).length > 0) {
+        translationGroups.push({
+          groupId: group.id,
+          translations
+        })
       }
     })
 
-    const hasTranslations = Object.keys(translationsByTargetLang).length > 0
-    console.log('[renderItem] Has translations:', hasTranslations, 'data:', translationsByTargetLang)
+    console.log('[renderItem] Translation groups:', translationGroups.length)
 
     let meaningsHtml = ''
-    if (hasTranslations) {
+    if (translationGroups.length > 0) {
+      const showGroups = translationGroups.slice(0, 2)
+      const hiddenGroups = translationGroups.slice(2)
+
       if (isTitle) {
         meaningsHtml = ` <span class="handbook-meaning-title">
-          ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-            const color = getLanguageColor(langCode, handbook)
-            const langClass = langCode.replace('.', '-')
-            return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(' / ')}</span>`
-          }).join(' ')}
+          <span class="handbook-visible-groups">
+            ${showGroups.map((tg, index) => {
+              const groupPrefix = translationGroups.length > 1 ? `${index + 1}: ` : ''
+              return Object.entries(tg.translations).map(([langCode, text]) => {
+                const color = getLanguageColor(langCode, handbook)
+                const langClass = langCode.replace('.', '-')
+                return `<span class="lang-${langClass}" style="color: ${color}">${groupPrefix}${text}</span>`
+              }).join(' ')
+            }).join(' ')}
+          </span>
+          ${hiddenGroups.length > 0 ? `
+            <span class="handbook-hidden-groups" style="display: none;">
+              ${hiddenGroups.map((tg, index) => {
+                const groupPrefix = `${index + 3}: `
+                return Object.entries(tg.translations).map(([langCode, text]) => {
+                  const color = getLanguageColor(langCode, handbook)
+                  const langClass = langCode.replace('.', '-')
+                  return `<span class="lang-${langClass}" style="color: ${color}">${groupPrefix}${text}</span>`
+                }).join(' ')
+              }).join(' ')}
+            </span>
+            <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
+          ` : ''}
         </span>`
       } else {
         meaningsHtml = ` <span class="handbook-meaning-content">
-          ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-            const color = getLanguageColor(langCode, handbook)
-            const langClass = langCode.replace('.', '-')
-            return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(', ')}</span>`
-          }).join(' ')}
+          <span class="handbook-visible-groups">
+            ${showGroups.map((tg, index) => {
+              const groupPrefix = translationGroups.length > 1 ? `${index + 1}: ` : ''
+              return Object.entries(tg.translations).map(([langCode, text]) => {
+                const color = getLanguageColor(langCode, handbook)
+                const langClass = langCode.replace('.', '-')
+                return `<span class="lang-${langClass}" style="color: ${color}">${groupPrefix}${text}</span>`
+              }).join(' ')
+            }).join(' ')}
+          </span>
+          ${hiddenGroups.length > 0 ? `
+            <span class="handbook-hidden-groups" style="display: none;">
+              ${hiddenGroups.map((tg, index) => {
+                const groupPrefix = `${index + 3}: `
+                return Object.entries(tg.translations).map(([langCode, text]) => {
+                  const color = getLanguageColor(langCode, handbook)
+                  const langClass = langCode.replace('.', '-')
+                  return `<span class="lang-${langClass}" style="color: ${color}">${groupPrefix}${text}</span>`
+                }).join(' ')
+              }).join(' ')}
+            </span>
+            <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
+          ` : ''}
         </span>`
       }
     }
@@ -329,8 +368,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             } catch { }
           }
 
-          const groupId = expr.groups?.[0]?.id
-          return renderItem(id, term, audioUrl, isTitle, groupId)
+          return renderItem(id, term, audioUrl, isTitle)
         }
 
         console.log('[renderTextWithTags] Expression not found for id:', id)
@@ -442,8 +480,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
               } catch { }
             }
 
-            const groupId = expr.groups?.[0]?.id
-            return renderItem(id, term, audioUrl, false, groupId)
+            return renderItem(id, term, audioUrl, false)
           }
 
           console.log('[renderHandbookInternal] Expression not found for id:', id)
