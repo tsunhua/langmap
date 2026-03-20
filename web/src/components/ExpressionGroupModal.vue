@@ -27,6 +27,21 @@
         </div>
 
         <div v-else>
+          <div v-if="showTabs" class="flex gap-1 mb-3 overflow-x-auto pb-1">
+            <button
+              v-for="group in groups"
+              :key="group.id"
+              @click="selectGroup(group.id)"
+              :class="[
+                'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors',
+                currentGroupId === group.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              ]"
+            >
+              #{{ groups.indexOf(group) + 1 }}
+            </button>
+          </div>
 
           <button
             v-if="!showNewRow"
@@ -185,6 +200,8 @@ export default {
 
     const loading = ref(false)
     const expressions = ref([])
+    const groups = ref([])
+    const currentGroupId = ref(null)
     const pendingExpressions = ref([])
     const showNewRow = ref(false)
     const newRowLanguage = ref('')
@@ -203,7 +220,7 @@ export default {
         propsLanguagesLength: props.languages?.length,
         languagesArray: Array.isArray(props.languages) ? props.languages : 'not array'
       })
-      
+
       if (!props.languages || !Array.isArray(props.languages) || props.languages.length === 0) {
         return []
       }
@@ -220,35 +237,54 @@ export default {
         displayLanguagesLength: displayLanguages.value.length
       })
       try {
-        if (props.groupId) {
-          const res = await fetch(`/api/v1/expressions?group_id=${props.groupId}&skip=0&limit=100`)
-          if (res.ok) {
-            const result = await res.json()
-            expressions.value = result.success ? result.data : result
-          } else {
-            expressions.value = []
-          }
-        }
-        else if (props.expressionId) {
-          const res = await fetch(`/api/v1/expressions/${props.expressionId}`)
-          if (res.ok) {
-            const result = await res.json()
-            const expr = result.success ? result.data : result
-            expressions.value = [expr]
-          } else {
-            expressions.value = []
-          }
-        }
-        else {
+        if (!props.expressionId) {
           expressions.value = []
+          groups.value = []
+          return
         }
+
+        const res = await fetch(`/api/v1/expressions/${props.expressionId}/groups`)
+        if (!res.ok) {
+          console.error('Failed to fetch expression groups')
+          expressions.value = []
+          groups.value = []
+          return
+        }
+
+        const result = await res.json()
+        groups.value = result.success ? result.data : result
+
+        if (groups.value.length === 0) {
+          expressions.value = []
+          return
+        }
+
+        currentGroupId.value = props.groupId || groups.value[0].id
       } catch (e) {
         console.error('Failed to fetch group members:', e)
         expressions.value = []
+        groups.value = []
       } finally {
         loading.value = false
       }
     }
+
+    const selectGroup = (groupId) => {
+      currentGroupId.value = groupId
+    }
+
+    watch(currentGroupId, (newGroupId) => {
+      const group = groups.value.find(g => g.id === newGroupId)
+      if (group && group.expressions) {
+        expressions.value = group.expressions
+      } else {
+        expressions.value = []
+      }
+    })
+
+    const showTabs = computed(() => {
+      return groups.value.length > 1
+    })
 
     const getLanguageName = (code) => {
       const lang = props.languages.find(l => l.code === code)
@@ -337,13 +373,20 @@ export default {
             close()
           }
         } else {
-          const existingExpr = expressions.value[0]
-          const allExpressions = [
-            {
-              id: existingExpr.id,
-              text: existingExpr.text,
-              language_code: existingExpr.language_code
-            },
+          const currentGroup = groups.value.find(g => g.id === currentGroupId.value)
+          if (!currentGroup) {
+            message.value = t('failed_to_add_expressions')
+            messageType.value = 'error'
+            return
+          }
+
+          const existingExprs = currentGroup.expressions || []
+          const allExprs = [
+            ...existingExprs.map(e => ({
+              id: e.id,
+              text: e.text,
+              language_code: e.language_code
+            })),
             ...pendingExpressions.value.map(p => ({
               text: p.text,
               language_code: p.language_code
@@ -357,7 +400,7 @@ export default {
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              expressions: allExpressions
+              expressions: allExprs
             })
           })
 
@@ -413,6 +456,8 @@ export default {
     return {
       loading,
       expressions,
+      groups,
+      currentGroupId,
       pendingExpressions,
       showNewRow,
       newRowLanguage,
@@ -422,8 +467,10 @@ export default {
       messageType,
       hasGroup,
       displayLanguages,
+      showTabs,
       fetchGroupMembers,
       getLanguageName,
+      selectGroup,
       addNewRow,
       cancelNewRow,
       addToPending,

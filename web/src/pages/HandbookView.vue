@@ -363,9 +363,9 @@
       }
 
       const handleExpressionClick = (event) => {
-        const { id, groupId } = event.detail
+        const { id, meaningId } = event.detail
         selectedExpressionId.value = id
-        selectedGroupId.value = groupId
+        selectedGroupId.value = meaningId
         showExpressionGroupModal.value = true
       }
 
