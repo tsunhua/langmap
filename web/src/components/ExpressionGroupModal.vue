@@ -243,7 +243,12 @@ export default {
           return
         }
 
-        const res = await fetch(`/api/v1/expressions/${props.expressionId}/groups`)
+        const languageCodes = displayLanguages.value.map(l => l.code).join(',')
+        const url = languageCodes
+          ? `/api/v1/expressions/${props.expressionId}/groups?lang=${languageCodes}`
+          : `/api/v1/expressions/${props.expressionId}/groups`
+
+        const res = await fetch(url)
         if (!res.ok) {
           console.error('Failed to fetch expression groups')
           expressions.value = []
@@ -449,6 +454,7 @@ export default {
 
     watch(() => props.visible, (newVal) => {
       if (newVal) {
+        pendingExpressions.value = []
         fetchGroupMembers()
       }
     })

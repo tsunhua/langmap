@@ -55,7 +55,7 @@ export class ExpressionGroupQueries {
     }
   }
 
-  async getExpressionGroups(expressionId: number): Promise<ExpressionGroup[]> {
+  async getExpressionGroups(expressionId: number, languages?: string[]): Promise<ExpressionGroup[]> {
     const { results } = await this.db.prepare(`
       SELECT
         m.id,
@@ -73,7 +73,7 @@ export class ExpressionGroupQueries {
 
     const groups: ExpressionGroup[] = []
     for (const result of results) {
-      const expressions = await this.getGroupExpressions(result.id)
+      const expressions = await this.getGroupExpressions(result.id, languages)
       groups.push({
         id: result.id,
         expressions,

@@ -236,7 +236,10 @@ expressionsRoutes.get('/:id/groups', cacheMiddleware(300), async (c) => {
       return badRequest(c, 'Invalid expression ID')
     }
 
-    const groups = await db.groups.getExpressionGroups(id)
+    const langParam = c.req.query('lang')
+    const languages = langParam ? langParam.split(',') : undefined
+
+    const groups = await db.groups.getExpressionGroups(id, languages)
 
     return success(c, groups)
   } catch (error: any) {
