@@ -625,7 +625,6 @@ export default {
     // Parse all metadata required for preview from content
     const extractRequiredMetadata = async (content, title = '', description = '', sourceLang = '') => {
       const expressionsToFetch = [] // { id, text, lang }
-      const groupIdsToFetch = new Set()
 
       // Pre-wrap title if it doesn't contain tags (match backend behavior)
       let titleToExtract = title
@@ -649,48 +648,71 @@ export default {
         if (!expressionsToFetch.some(e => e.id === id)) {
           expressionsToFetch.push({ id, text, lang })
         }
-        if (mid) {
-          groupIdsToFetch.add(mid)
-        }
       }
 
-      return { expressionsToFetch, groupIdsToFetch: Array.from(groupIdsToFetch) }
+      return { expressionsToFetch }
     }
     // Store expression data for event handling
     const expressionClickHandlers = ref(new Map())
 
-    const renderItem = (id, text, groups, audioUrl, isTitle = false, groupId = null) => {
+    const renderItem = (id, text, translationGroups, audioUrl, isTitle = false, groupId = null) => {
       let meaningsHtml = ''
-      if (groups && groups.length > 0) {
-        const translationsByTargetLang = {}
-        groups.forEach(g => {
-          if (!g.targetLang) return
-          if (!translationsByTargetLang[g.targetLang]) {
-            translationsByTargetLang[g.targetLang] = []
-          }
-          translationsByTargetLang[g.targetLang].push(g.text)
-        })
+      if (translationGroups && translationGroups.length > 0) {
+        const showGroups = translationGroups.slice(0, 2)
+        const hiddenGroups = translationGroups.slice(2)
 
-        const hasTranslations = Object.keys(translationsByTargetLang).length > 0
-        if (hasTranslations) {
-          const separator = isTitle ? ' / ' : ', '
-          if (isTitle) {
-            meaningsHtml = ` <span class="handbook-meaning-title">
-              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-                const color = getLanguageColor({ code: langCode })
-                const langClass = langCode.replace('.', '-')
-                return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(separator)}</span>`
+        if (isTitle) {
+          meaningsHtml = ` <span class="handbook-meaning-title">
+            <span class="handbook-visible-groups">
+              ${showGroups.map((tg, index) => {
+                const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+                return Object.entries(tg.translations).map(([langCode, text]) => {
+                  const color = getLanguageColor({ code: langCode })
+                  const langClass = langCode.replace('.', '-')
+                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                }).join(' ')
               }).join(' ')}
-            </span>`
-          } else {
-            meaningsHtml = ` <span class="handbook-meaning-content">
-              ${Object.entries(translationsByTargetLang).map(([langCode, texts]) => {
-                const color = getLanguageColor({ code: langCode })
-                const langClass = langCode.replace('.', '-')
-                return `<span class="lang-${langClass}" style="color: ${color}">${texts.join(separator)}</span>`
+            </span>
+            ${hiddenGroups.length > 0 ? `
+              <span class="handbook-hidden-groups" style="display: none;">
+                ${hiddenGroups.map((tg, index) => {
+                  const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+                  return Object.entries(tg.translations).map(([langCode, text]) => {
+                    const color = getLanguageColor({ code: langCode })
+                    const langClass = langCode.replace('.', '-')
+                    return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  }).join(' ')
+                }).join(' ')}
+              </span>
+              <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
+            ` : ''}
+          </span>`
+        } else {
+          meaningsHtml = ` <span class="handbook-meaning-content">
+            <span class="handbook-visible-groups">
+              ${showGroups.map((tg, index) => {
+                const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+                return Object.entries(tg.translations).map(([langCode, text]) => {
+                  const color = getLanguageColor({ code: langCode })
+                  const langClass = langCode.replace('.', '-')
+                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                }).join(' ')
               }).join(' ')}
-            </span>`
-          }
+            </span>
+            ${hiddenGroups.length > 0 ? `
+              <span class="handbook-hidden-groups" style="display: none;">
+                ${hiddenGroups.map((tg, index) => {
+                  const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+                  return Object.entries(tg.translations).map(([langCode, text]) => {
+                    const color = getLanguageColor({ code: langCode })
+                    const langClass = langCode.replace('.', '-')
+                    return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  }).join(' ')
+                }).join(' ')}
+              </span>
+              <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
+            ` : ''}
+          </span>`
         }
       }
 
@@ -750,13 +772,19 @@ export default {
             const id = stableExpressionId(term, lang)
             const expr = expressionMap[id]
             if (expr) {
-              const gidsToUse = mid ? [mid] : (expr.groups?.map(g => g.id) || [])
-              const translations = collectTranslations(expressionMap, gidsToUse)
               let audioUrl = ''
               if (expr.audio_url) {
                 try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
               }
-              return renderItem(id, term, translations, audioUrl, false, mid || (expr.groups?.[0]?.id))
+
+              let translationGroups = []
+              if (mid) {
+                translationGroups = expr.groups?.filter(g => g.groupId === mid) || []
+              } else {
+                translationGroups = expr.groups || []
+              }
+
+              return renderItem(id, term, translationGroups, audioUrl, false, mid)
             }
             return `<span class="handbook-item-undefined">${term}</span>`
           })
@@ -765,26 +793,6 @@ export default {
       })
 
       return finalContent
-    }
-
-    // Helper: collect translations for given group IDs across all instruction languages
-    const collectTranslations = (expressionMap, groupIds) => {
-      const translations = []
-      groupIds.forEach(gid => {
-        form.instruction_langs.forEach(targetLang => {
-          // Find matching group in all cached expressions
-          for (const exprId in expressionMap) {
-            const expr = expressionMap[exprId]
-            if (!expr || !expr.groups) continue
-            
-            const matchingGroup = expr.groups.find(g => g.id === gid && g.targetLang === targetLang)
-            if (matchingGroup) {
-              translations.push({ text: matchingGroup.text, targetLang })
-            }
-          }
-        })
-      })
-      return translations
     }
 
     const renderPlainTextTags = (text, expressionMap, isTitle = false, sourceLang = '') => {
@@ -796,13 +804,19 @@ export default {
         const id = stableExpressionId(term, lang)
         const expr = expressionMap[id]
         if (expr) {
-          const gidsToUse = mid ? [mid] : (expr.groups?.map(g => g.id) || [])
-          const translations = collectTranslations(expressionMap, gidsToUse)
           let audioUrl = ''
           if (expr.audio_url) {
             try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
           }
-          return renderItem(id, term, translations, audioUrl, isTitle, mid || (expr.groups?.[0]?.id))
+
+          let translationGroups = []
+          if (mid) {
+            translationGroups = expr.groups?.filter(g => g.groupId === mid) || []
+          } else {
+            translationGroups = expr.groups || []
+          }
+
+          return renderItem(id, term, translationGroups, audioUrl, isTitle, mid)
         }
         return `<span class="handbook-item-undefined">${term}</span>`
       })
@@ -812,7 +826,7 @@ export default {
     const updatePreview = async () => {
       if (!showPreview.value) return
 
-      const { expressionsToFetch, groupIdsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
+      const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
 
       if (expressionsToFetch.length === 0) {
         renderedContent.value = buildRenderedContent(form.content, {}, form.content_lang)
@@ -831,37 +845,40 @@ export default {
           for (const expr of uncachedExprs) {
             try {
               const result = await expressionGroupsApi.getExpressionGroups(expr.id)
-              
+
               if (result.success && Array.isArray(result.data)) {
                 const groups = result.data
-                
+
                 // Build expression object from groups
-                // Each group contains multiple expressions, we create unique items for each (group, lang) combination
-                const flatGroups = []
+                // Structure: { id, text, lang, groups: [{ groupId, translations: { langCode: text }] }] }
+                const translationGroups = []
                 for (const group of groups) {
+                  const translations = {}
                   if (group.expressions && Array.isArray(group.expressions)) {
                     for (const groupExpr of group.expressions) {
-                      // Filter by instruction languages
+                      // Filter by instruction languages only (exclude content_lang)
                       const targetLang = groupExpr.language_code
-                      const isValidLang = form.instruction_langs.includes(targetLang) || targetLang === form.content_lang
-                      
+                      const isValidLang = form.instruction_langs.includes(targetLang)
+
                       if (isValidLang) {
-                        flatGroups.push({
-                          id: group.id,
-                          text: groupExpr.text,
-                          lang: groupExpr.language_code,
-                          targetLang: targetLang
-                        })
+                        translations[targetLang] = groupExpr.text
                       }
                     }
                   }
+                  if (Object.keys(translations).length > 0) {
+                    translationGroups.push({
+                      groupId: group.id,
+                      translations
+                    })
+                  }
                 }
-                
+
                 const expressionData = {
                   id: expr.id,
                   text: expr.text,
                   lang: expr.lang,
-                  groups: flatGroups
+                  groups: translationGroups,
+                  audio_url: null
                 }
                 translationCache.value[expr.id] = expressionData
               } else {
@@ -879,15 +896,6 @@ export default {
           previewLoading.value = false
         }
       }
-
-      // Phase 2: Collect all unique group IDs
-      const allMids = [...groupIdsToFetch]
-      expressionsToFetch.forEach(e => {
-        const expr = translationCache.value[e.id]
-        expr?.groups?.forEach(g => {
-          if (!allMids.includes(g.id)) allMids.push(g.id)
-        })
-      })
 
       renderedContent.value = buildRenderedContent(form.content, translationCache.value, form.content_lang)
       renderedTitle.value = renderPlainTextTags(form.title, translationCache.value, true, form.content_lang)
