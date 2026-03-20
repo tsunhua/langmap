@@ -907,19 +907,38 @@ export default {
         }
 
         try {
-          // 直接打开创建弹窗，但在创建后会使用batch API进行关联
-          currentGroupIdForAssociation.value = null
-          initialTextForCreation.value = searchText
-          showCreateExpressionModal.value = true
+          // 直接使用batch API创建新组，不需要弹窗
+          const batchRes = await fetch('/api/v1/expressions/batch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              expressions: [
+                {
+                  id: item.value.id,
+                  text: item.value.text,
+                  language_code: item.value.language_code
+                }
+              ],
+              ensure_new_group: true
+            })
+          })
 
-          // 存储一个标记，表示这是从没有词句组的情况创建的
-          shouldAssociateWithCurrent.value = true
+          if (!batchRes.ok) {
+            const errorData = await batchRes.json()
+            throw new Error(errorData.error || 'Failed to create expression group')
+          }
+
+          // 刷新数据
+          await load()
         } catch (e) {
-          console.error('Error preparing to create expression:', e)
+          console.error('Error creating expression:', e)
           alert(t('failed_to_add_expression'))
         }
       } else {
-        // 如果已有词句组，让用户选择关联到哪个词句组
+        // 如果已有词句组，打开创建弹窗
         currentGroupIdForAssociation.value = null
         initialTextForCreation.value = searchText
         showCreateExpressionModal.value = true
