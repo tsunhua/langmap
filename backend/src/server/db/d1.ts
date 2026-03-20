@@ -176,11 +176,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   }
 
   async getExpressionsByIds(ids: number[]): Promise<Expression[]> {
-    return this.expressionQueries.findByIds(ids)
-  }
-
-  async getExpressionsByMeaningIds(meaningIds: number[]): Promise<Expression[]> {
-    const results = await this.expressionQueries.findByMeaningIds(meaningIds)
+    const results = await this.expressionQueries.findByIds(ids)
     return results.map(e => this.formatTimestamps(e))
   }
 
