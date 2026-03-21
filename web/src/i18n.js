@@ -102,7 +102,7 @@ export async function loadLanguage(languageCode) {
   }
 
   try {
-    const uiLocale = await fetchUILocale(languageCode)
+    const uiLocale = await languagesApi.fetchUILocale(languageCode)
     const hasTranslations = uiLocale && Object.keys(uiLocale.locale_json).length > 0
 
     if (hasTranslations) {
@@ -121,7 +121,7 @@ export async function loadLanguage(languageCode) {
     if (languageCode !== fallbackLanguage && staticMessages[fallbackLanguage]) {
       i18n.global.setLocaleMessage(languageCode, staticMessages[fallbackLanguage])
     }
-   }
+  }
 }
 
 export default i18n

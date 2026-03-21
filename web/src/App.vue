@@ -345,7 +345,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/index.ts'
 import { languagesApi } from './api/index.ts'
 import AddLanguageModal from './components/AddLanguageModal.vue'
-import i18n from './i18n'
+import i18n, { loadLanguage } from './i18n'
 
 export default {
   name: 'App',
@@ -383,8 +383,9 @@ export default {
           'HandbookView': t('handbook_title'),
           'HandbookEdit': t('edit_handbook')
         };
-        pageTitle = routeTitleMap[route.name] || t('home');
-        pageTitle = `${pageTitle} - LangMap`;
+        // Use dynamic title if available (e.g., from Detail page), otherwise use map
+        const title = route.meta.dynamicTitle || routeTitleMap[route.name] || t('home');
+        pageTitle = `${title} - LangMap`;
       }
 
       document.title = pageTitle;
@@ -440,7 +441,7 @@ export default {
       langDropdownOpen.value = false
 
       // If it's a dynamic language, load its translations FIRST
-      const { loadLanguage } = i18n
+      // loadLanguage is now imported directly
       await loadLanguage(langCode)
 
       // THEN switch the locale
@@ -605,7 +606,7 @@ export default {
 
 
         // Load dynamic language if needed
-        const { loadLanguage } = i18n
+        // loadLanguage is now imported directly
         await loadLanguage(locale.value)
 
         console.log('[App] App initialized successfully')
@@ -655,7 +656,7 @@ export default {
 
         // If it's a dynamic language, load its translations
         if (!['en-US', 'zh-CN', 'zh-TW', 'es', 'fr', 'ja'].includes(savedLang)) {
-          const { loadLanguage } = i18n
+          // loadLanguage is now imported directly
           await loadLanguage(savedLang)
         }
       }
