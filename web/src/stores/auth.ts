@@ -13,7 +13,14 @@ export interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('authToken'))
-  const user = ref<User | null>(null)
+  const user = ref<User | null>((() => {
+    const savedUser = localStorage.getItem('user')
+    try {
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch (e) {
+      return null
+    }
+  })())
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'super_admin')
@@ -25,12 +32,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setUser(newUser: User) {
     user.value = newUser
+    localStorage.setItem('user', JSON.stringify(newUser))
   }
 
   function clearAuth() {
     token.value = null
     user.value = null
     localStorage.removeItem('authToken')
+    localStorage.removeItem('user')
   }
 
   function logout() {
