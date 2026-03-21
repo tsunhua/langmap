@@ -58,14 +58,14 @@
           <p v-if="handbook.description" class="text-gray-600 text-sm mb-2 line-clamp-3 leading-relaxed">
             {{ handbook.description }}
           </p>
-          <div class="flex flex-wrap gap-1.5 mb-3">
+          <div class="flex flex-nowrap gap-1 mb-3 overflow-hidden">
             <span v-if="handbook.source_lang"
-              class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded border border-purple-100">
-              {{ $t('content_lang') }}: {{ getLanguageName(handbook.source_lang) }}
+              class="bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded border border-purple-100 flex-shrink-0">
+              {{ getLanguageName(handbook.source_lang) }}
             </span>
             <span v-for="lang in getTargetLangs(handbook.target_langs || handbook.target_lang)" :key="lang"
-              class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded border border-blue-100">
-              {{ $t('learn_in') }}: {{ getLanguageName(lang) }}
+              class="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
+              {{ getLanguageName(lang) }}
             </span>
           </div>
         </div>
