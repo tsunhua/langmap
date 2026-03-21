@@ -12,8 +12,8 @@
         <div class="flex items-center gap-2 flex-1">
           <div class="relative" ref="languageDropdownContainer">
             <button @click.stop="toggleLanguageDropdown" class="flex items-center gap-2 group">
-              <h1 class="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName
-                }}<span v-if="languageGroupName" class="text-gray-400 font-normal text-base sm:text-lg"> | {{ languageGroupName }}</span>
+              <h1 class="text-lg sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName
+                }}<span v-if="languageGroupName" class="text-gray-400 font-normal text-sm sm:text-lg"> | {{ languageGroupName }}</span>
               </h1>
               <span class="border border-blue-200 text-blue-600 text-xs px-2 py-0.5 rounded font-medium">
                 {{ languageCode }}
