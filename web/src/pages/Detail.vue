@@ -44,12 +44,8 @@
 
           <!-- Search and associate tab content -->
           <div v-show="activeTab === 'search'" role="tabpanel">
-            <SmartSearch
-              :exclude-id="item ? item.id : null"
-              :current-group-ids="currentGroupIds"
-              @create-new="handleSmartSearchCreateNew"
-              @associate="handleSmartSearchAssociate"
-            />
+            <SmartSearch :exclude-id="item ? item.id : null" :current-group-ids="currentGroupIds"
+              @create-new="handleSmartSearchCreateNew" @associate="handleSmartSearchAssociate" />
           </div>
 
           <!-- Group tab contents -->
@@ -61,8 +57,7 @@
                   <span class="text-slate-600 text-sm sm:text-base">{{ currentMembers.length }} {{
                     $t('expressions') }}</span>
                   <button @click="openMergeGroupsModal()"
-                    class="ml-2 text-slate-400 hover:text-blue-600 transition-colors"
-                    :title="$t('merge_groups')">
+                    class="ml-2 text-slate-400 hover:text-blue-600 transition-colors" :title="$t('merge_groups')">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -91,13 +86,9 @@
 
               <div v-if="groupSearchModes.has(currentGroup.id)"
                 class="border-b border-slate-200 bg-slate-50 px-4 sm:px-6 py-4">
-                <SmartSearch
-                  :exclude-id="item ? item.id : null"
-                  :target-group-id="currentGroup.id"
-                  :current-group-ids="[currentGroup.id]"
-                  @create-new="handleGroupSearchCreateNew"
-                  @associate="handleGroupSearchAssociate"
-                />
+                <SmartSearch :exclude-id="item ? item.id : null" :target-group-id="currentGroup.id"
+                  :current-group-ids="[currentGroup.id]" @create-new="handleGroupSearchCreateNew"
+                  @associate="handleGroupSearchAssociate" />
               </div>
 
               <div class="p-4">
@@ -150,8 +141,7 @@
             class="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 mt-3">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             {{ $t('search_and_associate') }}
           </button>
@@ -165,12 +155,8 @@
           </button>
 
           <div v-if="noGroupSearchMode" class="mt-4 bg-slate-50 rounded-lg p-4">
-            <SmartSearch
-              :exclude-id="item ? item.id : null"
-              :current-group-ids="[]"
-              @create-new="handleSmartSearchCreateNew"
-              @associate="handleSmartSearchAssociate"
-            />
+            <SmartSearch :exclude-id="item ? item.id : null" :current-group-ids="[]"
+              @create-new="handleSmartSearchCreateNew" @associate="handleSmartSearchAssociate" />
           </div>
         </div>
       </div>
@@ -238,8 +224,7 @@
           </div>
 
           <div v-else class="space-y-3">
-            <div v-for="group in otherGroups" :key="group.id"
-              @click="mergeGroups(group.id)"
+            <div v-for="group in otherGroups" :key="group.id" @click="mergeGroups(group.id)"
               class="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div class="flex-1 min-w-0">
@@ -254,8 +239,8 @@
                     {{ $t('created_by') }}: {{ group.created_by || $t('anonymous') }}
                   </p>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 sm:flex-shrink-0" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -288,8 +273,7 @@
               {{ $t('select_group_to_associate') }}: <strong>"{{ selectedExpressionForAssociation.text }}"</strong>
             </p>
           </div>
-          <button @click="closeGroupSelection"
-            class="text-slate-400 hover:text-slate-600 transition-colors self-start">
+          <button @click="closeGroupSelection" class="text-slate-400 hover:text-slate-600 transition-colors self-start">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
               stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -356,17 +340,13 @@
     </div>
 
     <!-- Confirm Modal -->
-    <ConfirmModal
-      v-model="showConfirmModal"
-      :message="confirmMessage"
-      :loading="confirmLoading"
-      @confirm="executeConfirm"
-    />
+    <ConfirmModal v-model="showConfirmModal" :message="confirmMessage" :loading="confirmLoading"
+      @confirm="executeConfirm" />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { languagesApi, expressionGroupsApi } from '../api/index.ts'
@@ -383,8 +363,22 @@ export default {
   setup(props) {
     const route = useRoute()
     const router = useRouter()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const item = ref(null)
+
+    // Dynamic title logic
+    const updateDynamicTitle = () => {
+      if (item.value && item.value.text) {
+        const langName = languagesApi.getLanguageDisplayName(item.value.language_code)
+        route.meta.dynamicTitle = `${item.value.text} (${langName})`
+      }
+    }
+
+    watch([item, locale], updateDynamicTitle)
+
+    onBeforeUnmount(() => {
+      route.meta.dynamicTitle = null
+    })
     const loading = ref(false)
     const groups = ref([])
     const currentUser = ref(null)
@@ -415,7 +409,7 @@ export default {
 
     // Group-specific association mode
     const groupSearchModes = ref(new Set())
-    
+
     // 词句组合并模态框
     const showMergeGroupsModal = ref(false)
     const sourceGroupId = ref(null)
@@ -469,9 +463,9 @@ export default {
       if (!sourceGroupId.value) return []
       return groups.value.filter(g => g.id !== sourceGroupId.value)
     })
-    
+
     // Set active tab
-    
+
     // Set active tab
     function setActiveTab(tabId) {
       activeTab.value = tabId
@@ -539,6 +533,8 @@ export default {
         } else {
           activeTab.value = 'search'
         }
+
+        // updateDynamicTitle is called by watch
       } catch (e) {
         console.warn(e)
       } finally {
@@ -740,12 +736,12 @@ export default {
       // Fallback if no members
       return t('expression_group')
     }
-    
+
     // 获取词句组在列表中的索引
     function getGroupIndex(groupId) {
       return groups.value.findIndex(g => g.id === groupId) + 1
     }
-    
+
     // 打开词句组合并模态框
     function openMergeGroupsModal() {
       if (!currentGroup.value) {
@@ -757,7 +753,7 @@ export default {
       mergeMessage.value = ''
       showMergeGroupsModal.value = true
     }
-    
+
     // 关闭词句组合并模态框
     function closeMergeGroupsModal() {
       showMergeGroupsModal.value = false
@@ -765,26 +761,26 @@ export default {
       targetGroupId.value = null
       mergeMessage.value = ''
     }
-    
+
     // 执行词句组合并
     async function mergeGroups(targetGroupIdParam) {
       if (!sourceGroupId.value) return
-      
+
       // 前端验证
       if (sourceGroupId.value === targetGroupIdParam) {
         mergeMessage.value = t('cannot_merge_to_same_group')
         return
       }
-      
+
       const token = localStorage.getItem('authToken')
       if (!token) {
         alert(t('login_required'))
         return
       }
-      
+
       mergeLoading.value = true
       mergeMessage.value = ''
-      
+
       try {
         const res = await fetch('/api/v1/groups/merge', {
           method: 'POST',
@@ -797,20 +793,20 @@ export default {
             target_group_id: targetGroupIdParam
           })
         })
-        
+
         if (!res.ok) {
           const errorData = await res.json()
           throw new Error(errorData.error || 'Failed to merge expression groups')
         }
-        
+
         const result = await res.json()
-        
+
         // 关闭模态框
         closeMergeGroupsModal()
-        
+
         // 刷新数据
         await load()
-        
+
         // 切换到目标词句组
         setActiveTab(targetGroupIdParam.toString())
       } catch (e) {
