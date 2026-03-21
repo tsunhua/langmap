@@ -350,6 +350,7 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { languagesApi, expressionGroupsApi } from '../api/index.ts'
+import { useUIStore } from '../stores/index.ts'
 import ExpressionCard from '../components/ExpressionCard.vue'
 import VersionHistory from '../components/VersionHistory.vue'
 import CreateExpression from '../components/CreateExpression.vue'
@@ -364,20 +365,21 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const { t, locale } = useI18n()
+    const uiStore = useUIStore()
     const item = ref(null)
 
     // Dynamic title logic
     const updateDynamicTitle = () => {
       if (item.value && item.value.text) {
         const langName = languagesApi.getLanguageDisplayName(item.value.language_code)
-        route.meta.dynamicTitle = `${item.value.text} (${langName})`
+        uiStore.pageTitle = `${item.value.text} - ${langName}`
       }
     }
 
     watch([item, locale], updateDynamicTitle)
 
     onBeforeUnmount(() => {
-      route.meta.dynamicTitle = null
+      uiStore.pageTitle = ''
     })
     const loading = ref(false)
     const groups = ref([])

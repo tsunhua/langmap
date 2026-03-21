@@ -342,7 +342,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from './stores/index.ts'
+import { useAuthStore, useUIStore } from './stores/index.ts'
 import { languagesApi } from './api/index.ts'
 import AddLanguageModal from './components/AddLanguageModal.vue'
 import i18n, { loadLanguage } from './i18n'
@@ -364,6 +364,12 @@ export default {
 
     const { t, locale } = useI18n();
     const authStore = useAuthStore()
+    const uiStore = useUIStore()
+
+    // Reset page title on route change
+    watch(() => route.path, () => {
+      uiStore.pageTitle = ''
+    })
 
     // Update document title based on current route and language
     const updateDocumentTitle = () => {
@@ -383,16 +389,16 @@ export default {
           'HandbookView': t('handbook_title'),
           'HandbookEdit': t('edit_handbook')
         };
-        // Use dynamic title if available (e.g., from Detail page), otherwise use map
-        const title = route.meta.dynamicTitle || routeTitleMap[route.name] || t('home');
+        // Use dynamic title from store if available, otherwise use map
+        const title = uiStore.pageTitle || routeTitleMap[route.name] || t('home');
         pageTitle = `${title} - LangMap`;
       }
 
       document.title = pageTitle;
     }
 
-    // Watch for route and language changes to update document title
-    watch([route, locale], updateDocumentTitle)
+    // Watch for route, language, and dynamic title changes
+    watch([() => route.path, locale, () => uiStore.pageTitle], updateDocumentTitle)
 
     // User state
     const isLoggedIn = computed(() => authStore.isAuthenticated)

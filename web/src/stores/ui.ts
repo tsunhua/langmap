@@ -59,6 +59,8 @@ export const useUIStore = defineStore('ui', () => {
     document.documentElement.classList.toggle('dark', value)
   }
 
+  const pageTitle = ref('')
+
   return {
     notifications,
     sidebarOpen,
@@ -69,6 +71,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleSidebar,
     setSidebarOpen,
     toggleDarkMode,
-    setDarkMode
+    setDarkMode,
+    pageTitle
   }
 })
