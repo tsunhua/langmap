@@ -134,34 +134,20 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     })
     console.log('[POST /expressions/batch] exprsWithIds created:', exprsWithIds.length)
 
-    const existingIds = exprsWithIds.map(e => e.id!)
-    const existingExprs = await db.getExpressionsByIds(existingIds)
-    const existingMap = new Map(existingExprs.map(e => [e.id, e]))
+    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup)
 
-    const sortedExprs = [...exprsWithIds].sort((a, b) => {
-      const indexA = LANGUAGE_PRIORITY.indexOf(a.language_code)
-      const indexB = LANGUAGE_PRIORITY.indexOf(b.language_code)
-      const priorityA = indexA === -1 ? 999 : indexA
-      const priorityB = indexB === -1 ? 999 : indexB
-      return priorityA - priorityB
-    })
+    const existingIds = exprsWithIds.map(e => e.id!)
+    const existingMeaningIds = await db.getExpressionMeaningIds(existingIds)
 
     let finalMeaningId: number | undefined
-    const existingMeaningIds = await db.getExpressionMeaningIds(exprsWithIds.map(e => e.id!))
-
-    for (const expr of sortedExprs) {
+    for (const expr of exprsWithIds) {
       const existingMeanings = existingMeaningIds.get(expr.id!)
       if (existingMeanings && existingMeanings.length > 0) {
         finalMeaningId = existingMeanings[0]
+        console.log('[POST /expressions/batch] Found meaning_id from expression:', expr.id!, 'meaning_id:', finalMeaningId)
         break
       }
     }
-
-    if (!finalMeaningId && sortedExprs.length > 1) {
-      finalMeaningId = sortedExprs[0].id
-    }
-    
-    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup)
 
     return created(c, { group_id: finalMeaningId, results })
   } catch (error: any) {
