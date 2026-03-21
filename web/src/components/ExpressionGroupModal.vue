@@ -1,13 +1,13 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" @click.self="close">
-    <div class="bg-white rounded-xl shadow-xl max-w-sm sm:max-w-lg w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2">
+  <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
+    @click.self="close">
+    <div
+      class="bg-white rounded-xl shadow-xl max-w-sm sm:max-w-lg w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col mx-2">
       <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex justify-between items-center">
         <div class="flex items-center gap-3">
           <h3 class="text-base sm:text-lg font-bold text-slate-800">{{ $t('expression_group_details') }}</h3>
-          <button
-            @click="goToDetail"
-            class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
+          <button @click="goToDetail"
+            class="px-2 py-1.5 sm:px-3 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             {{ $t('more') }}
           </button>
         </div>
@@ -20,35 +20,31 @@
 
       <div class="flex-1 overflow-y-auto p-3 sm:p-4">
         <div v-if="loading" class="flex items-center justify-center py-8">
-          <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
           </svg>
         </div>
 
         <div v-else>
           <div v-if="showTabs" class="flex gap-1 mb-3 overflow-x-auto pb-1">
-            <button
-              v-for="group in groups"
-              :key="group.id"
-              @click="selectGroup(group.id)"
-              :class="[
-                'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors',
-                currentGroupId === group.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              ]"
-            >
+            <button v-for="group in groups" :key="group.id" @click="selectGroup(group.id)" :class="[
+              'px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors',
+              currentGroupId === group.id
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ]">
               #{{ groups.indexOf(group) + 1 }}
             </button>
           </div>
 
-          <button
-            v-if="!showNewRow"
-            @click="addNewRow"
-            class="w-full py-2 mb-3 border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button v-if="!showNewRow" @click="addNewRow"
+            class="w-full py-2 mb-3 border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             {{ $t('add_row') }}
@@ -58,8 +54,12 @@
             <table class="w-full">
               <thead class="bg-slate-50">
                 <tr>
-                  <th class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider w-20 sm:w-1/3">{{ $t('language') }}</th>
-                  <th class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider">{{ $t('expression') }}</th>
+                  <th
+                    class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider w-20 sm:w-1/3">
+                    {{ $t('language') }}</th>
+                  <th
+                    class="px-2 py-2 text-left text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    {{ $t('expression') }}</th>
                   <th class="px-2 py-2 w-12 sm:w-16"></th>
                 </tr>
               </thead>
@@ -73,31 +73,30 @@
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2"></td>
                 </tr>
-                <tr v-for="(pendingExpr, index) in pendingExpressions" :key="'pending-' + index" class="border-t border-slate-100 bg-yellow-50">
-                  <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <span class="text-xs sm:text-sm text-slate-600">{{ getLanguageName(pendingExpr.language_code) }}</span>
+                <tr v-for="(pendingExpr, index) in pendingExpressions" :key="'pending-' + index"
+                  class="border-t border-slate-100 bg-yellow-50">
+                  <td class="px-2 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm text-slate-600">
+                    {{ getLanguageName(pendingExpr.language_code) }}
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <span class="text-xs sm:text-sm text-slate-800 break-words">{{ pendingExpr.text }}</span>
+                    <input v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <button
-                      @click="removePendingExpression(index)"
-                      class="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
-                      :title="$t('remove')"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <button @click="removePendingExpression(index)"
+                      class="p-1 text-red-500 hover:bg-red-100 rounded transition-colors" :title="$t('remove')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </td>
                 </tr>
                 <tr v-if="showNewRow" class="border-t border-slate-100 bg-blue-50">
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <select
-                      v-model="newRowLanguage"
-                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <select v-model="newRowLanguage"
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">{{ $t('please_select_language') }}</option>
                       <option v-for="lang in displayLanguages" :key="lang.code" :value="lang.code">
                         {{ lang.name }}
@@ -105,34 +104,26 @@
                     </select>
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <input
-                      v-model="newRowText"
-                      type="text"
-                      :placeholder="$t('please_enter_expression')"
+                    <input v-model="newRowText" type="text" :placeholder="$t('please_enter_expression')"
                       class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      @keydown.enter="addToPending"
-                    />
+                      @keydown.enter="addToPending" />
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
                     <div class="flex items-center gap-1">
-                      <button
-                        @click="addToPending"
-                        :disabled="adding"
-                        class="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
-                        :title="$t('add')"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      <button @click="addToPending" :disabled="adding"
+                        class="p-1 text-green-600 hover:bg-green-100 rounded transition-colors" :title="$t('add')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                       </button>
-                      <button
-                        @click="cancelNewRow"
-                        :disabled="adding"
-                        class="p-1 text-slate-400 hover:bg-slate-200 rounded transition-colors"
-                        :title="$t('cancel')"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      <button @click="cancelNewRow" :disabled="adding"
+                        class="p-1 text-slate-400 hover:bg-slate-200 rounded transition-colors" :title="$t('cancel')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </div>
@@ -143,23 +134,18 @@
           </div>
 
           <div v-if="pendingExpressions.length > 0" class="mt-3 flex items-center gap-2">
-            <button
-              @click="submitAllPending"
-              :disabled="adding"
-              class="flex-1 py-2 px-3 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            <button @click="submitAllPending" :disabled="adding"
+              class="flex-1 py-2 px-3 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {{ $t('submit') }}
             </button>
-            <button
-              @click="cancelAll"
-              :disabled="adding"
-              class="px-3 py-2 text-slate-600 text-xs sm:text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors"
-            >
+            <button @click="cancelAll" :disabled="adding"
+              class="px-3 py-2 text-slate-600 text-xs sm:text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors">
               {{ $t('cancel') }}
             </button>
           </div>
 
-          <p v-if="message" :class="['mt-3 text-xs sm:text-sm', messageType === 'error' ? 'text-red-600' : 'text-green-600']">
+          <p v-if="message"
+            :class="['mt-3 text-xs sm:text-sm', messageType === 'error' ? 'text-red-600' : 'text-green-600']">
             {{ message }}
           </p>
         </div>
@@ -280,6 +266,15 @@ export default {
             const exprResult = await exprRes.json()
             const currentExpr = exprResult.success ? exprResult.data : exprResult
             expressions.value = [currentExpr]
+
+            // Auto-populate pending expressions with teaching languages
+            if (props.languages && props.languages.length > 0) {
+              const teachingLangs = props.languages.filter(l => l.code !== currentExpr.language_code)
+              pendingExpressions.value = teachingLangs.map(l => ({
+                language_code: l.code,
+                text: ''
+              }))
+            }
           } else {
             expressions.value = []
           }
@@ -361,7 +356,10 @@ export default {
     }
 
     const submitAllPending = async () => {
-      if (pendingExpressions.value.length === 0) {
+      // Filter out empty expressions
+      const validPending = pendingExpressions.value.filter(p => p.text && p.text.trim())
+
+      if (validPending.length === 0) {
         return
       }
 
@@ -377,7 +375,7 @@ export default {
         }
 
         if (currentGroupId.value) {
-          const promises = pendingExpressions.value.map(async (pending) => {
+          const promises = validPending.map(async (pending) => {
             const res = await fetch('/api/v1/expressions', {
               method: 'POST',
               headers: {
@@ -426,7 +424,7 @@ export default {
               text: e.text,
               language_code: e.language_code
             })),
-            ...pendingExpressions.value.map(p => ({
+            ...validPending.map(p => ({
               text: p.text,
               language_code: p.language_code
             }))
