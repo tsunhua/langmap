@@ -46,8 +46,8 @@
         class="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col"
         @click="goToView(handbook.id)">
         <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-3">
-            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate flex-shrink min-w-0">
+          <div class="flex justify-between items-start mb-3 gap-2">
+            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 flex-1 min-w-0 leading-tight">
               {{ handbook.title }}
             </h3>
             <span v-if="handbook.is_public"
@@ -58,13 +58,13 @@
           <p v-if="handbook.description" class="text-gray-600 text-sm mb-2 line-clamp-3 leading-relaxed">
             {{ handbook.description }}
           </p>
-          <div class="flex flex-nowrap gap-1 mb-3 overflow-hidden">
+          <div class="flex flex-wrap gap-1 mb-3">
             <span v-if="handbook.source_lang"
-              class="bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded border border-purple-100 flex-shrink-0">
+              class="bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded border border-purple-100">
               {{ getLanguageName(handbook.source_lang) }}
             </span>
             <span v-for="lang in getTargetLangs(handbook.target_langs || handbook.target_lang)" :key="lang"
-              class="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 flex-shrink-0">
+              class="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
               {{ getLanguageName(lang) }}
             </span>
           </div>
