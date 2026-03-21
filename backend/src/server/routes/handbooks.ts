@@ -450,15 +450,23 @@ handbookRoutes.get('/', optionalAuth, async (c) => {
     const db = createDatabaseService(c.env)
     const user = c.get('user')
     const isPublicParam = c.req.query('is_public')
-    const isPublic = isPublicParam !== undefined ? isPublicParam === '1' : undefined
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
 
     let userId: number | undefined
-    if (isPublic) {
-      userId = undefined
+    let isPublic: boolean | undefined
+
+    // Explicit is_public parameter
+    if (isPublicParam !== undefined) {
+      isPublic = isPublicParam === '1'
+      userId = undefined  // Don't filter by user_id when is_public is explicitly set
     } else if (user) {
+      // No is_public parameter, user is logged in -> get user's handbooks
       userId = user.id
+      isPublic = undefined  // Get both public and private handbooks
+    } else {
+      // No is_public parameter, user is not logged in -> return empty (shouldn't happen normally)
+      return success(c, [])
     }
 
     const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)

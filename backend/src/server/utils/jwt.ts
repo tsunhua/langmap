@@ -8,7 +8,7 @@ export async function signJWT(payload: jose.JWTPayload, secretKey: string): Prom
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('30d')
     .sign(secret)
 
   return jwt
