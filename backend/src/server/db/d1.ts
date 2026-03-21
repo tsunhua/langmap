@@ -296,7 +296,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       if (meaningIds.length === 0) {
         if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
           const firstExpr = sortedExprs[0]
-          const firstId = this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
+          const firstId = firstExpr.id !== undefined ? firstExpr.id : this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
           finalMeaningId = firstId
           console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
         }
@@ -309,7 +309,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
           for (const expr of sortedExprs) {
             if (!expr.id) continue
 
-            const id = this.stableExpressionId(expr.text!, expr.language_code!)
+            const id = expr.id
             if (!uniqueMeaningIds.includes(id)) {
               finalMeaningId = id
               console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
@@ -332,19 +332,30 @@ export class D1DatabaseService extends AbstractDatabaseService {
         throw new Error('Text and language_code are required for all expressions');
       }
 
-      const id = this.stableExpressionId(expr.text, expr.language_code)
+      // If id is provided, use it; otherwise calculate stable ID
+      const id = expr.id !== undefined ? expr.id : this.stableExpressionId(expr.text, expr.language_code)
+      console.log('[upsertExpressions] Preparing upsert for:', { id, text: expr.text, lang: expr.language_code, provided: expr.id !== undefined })
 
-      return this.expressionQueries.prepareUpsert(expr)
+      return this.expressionQueries.prepareUpsert({ ...expr, id })
     })
 
     const batchSize = 100
     for (let i = 0; i < statements.length; i += batchSize) {
       const batch = statements.slice(i, i + batchSize)
+      console.log('[upsertExpressions] Executing batch of', batch.length, 'statements')
       const batchBatch = await this.db.batch<Expression>(batch)
 
       batchBatch.forEach((res, index) => {
         const originalIndex = i + index
-        const exprId = this.stableExpressionId(expressions[originalIndex].text!, expressions[originalIndex].language_code!)
+        const expr = expressions[originalIndex]
+        const exprId = expr.id !== undefined ? expr.id : this.stableExpressionId(expr.text!, expr.language_code!)
+
+        console.log('[upsertExpressions] Batch result for', exprId, ':', {
+          hasResults: !!res.results,
+          resultsCount: res.results?.length,
+          meta: res.meta,
+          error: res.error
+        })
 
         if (res.results && res.results.length > 0) {
           results.push({ id: exprId, expression: res.results[0] })
@@ -358,9 +369,12 @@ export class D1DatabaseService extends AbstractDatabaseService {
       })
     }
 
+    console.log('[upsertExpressions] Creating meaning relations, finalMeaningId:', finalMeaningId)
     if (finalMeaningId !== undefined) {
       const meaningIdsSet = new Set(meaningIds)
       const meaningExists = meaningIdsSet.has(finalMeaningId)
+
+      console.log('[upsertExpressions] Meaning exists check:', { meaningExists, meaningIdsSet, finalMeaningId })
 
       if (!meaningExists) {
         console.log('[upsertExpressions] Creating new meaning record for meaning_id:', finalMeaningId)
@@ -374,17 +388,23 @@ export class D1DatabaseService extends AbstractDatabaseService {
       for (const expr of sortedExprs) {
         if (!expr.id) continue
 
-        const exprId = this.stableExpressionId(expr.text!, expr.language_code!)
-        const existingMeanings = existingMeaningIds.get(exprId) || []
+        console.log('[upsertExpressions] Processing relation for:', { exprId: expr.id, text: expr.text, lang: expr.language_code })
+        const existingMeanings = existingMeaningIds.get(expr.id) || []
         const meaningExistsForExpr = existingMeanings.includes(finalMeaningId)
 
+        console.log('[upsertExpressions] Relation check:', { exprId: expr.id, existingMeanings, finalMeaningId, meaningExistsForExpr })
+
         if (!meaningExistsForExpr) {
-          console.log('[upsertExpressions] Creating expression_meaning relation:', exprId, '->', finalMeaningId)
+          console.log('[upsertExpressions] Creating expression_meaning relation:', expr.id, '->', finalMeaningId)
 
           const now = new Date().toISOString()
-          await this.meaningQueries.addExpressionMeaning(exprId, finalMeaningId, now)
+          await this.meaningQueries.addExpressionMeaning(expr.id, finalMeaningId, now)
+        } else {
+          console.log('[upsertExpressions] Skipped creating relation (already exists):', expr.id, '->', finalMeaningId)
         }
       }
+    } else {
+      console.log('[upsertExpressions] WARNING: finalMeaningId is undefined, skipping meaning creation')
     }
 
     const affectedLanguages = [...new Set(expressions.map(e => e.language_code).filter(Boolean))]

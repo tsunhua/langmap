@@ -181,28 +181,28 @@ expressionGroupRoutes.delete('/:id/expressions/:expressionId', requireAuth, asyn
 })
 
 /**
- * POST /api/v1/groups/:id/merge
+ * POST /api/v1/groups/merge
  * Merge one group into another
  */
-expressionGroupRoutes.post('/:id/merge', requireAuth, async (c) => {
+expressionGroupRoutes.post('/merge', requireAuth, async (c) => {
   try {
     const db = createDatabaseService(c.env)
-    const targetGroupId = parseInt(c.req.param('id'), 10)
     const body = await c.req.json()
-    const { source_group_id } = body
-
-    if (isNaN(targetGroupId)) {
-      return badRequest(c, 'Invalid target group ID')
-    }
+    const { source_group_id, target_group_id } = body
 
     if (!source_group_id) {
       return badRequest(c, 'source_group_id is required')
     }
 
-    const sourceGroupId = parseInt(source_group_id, 10)
+    if (!target_group_id) {
+      return badRequest(c, 'target_group_id is required')
+    }
 
-    if (isNaN(sourceGroupId)) {
-      return badRequest(c, 'Invalid source group ID')
+    const sourceGroupId = parseInt(source_group_id, 10)
+    const targetGroupId = parseInt(target_group_id, 10)
+
+    if (isNaN(sourceGroupId) || isNaN(targetGroupId)) {
+      return badRequest(c, 'Invalid group IDs')
     }
 
     if (sourceGroupId === targetGroupId) {
@@ -213,7 +213,7 @@ expressionGroupRoutes.post('/:id/merge', requireAuth, async (c) => {
 
     return success(c, result, 'Expression groups merged successfully')
   } catch (error: any) {
-    console.error('Error in POST /groups/:id/merge:', error)
+    console.error('Error in POST /groups/merge:', error)
     return internalError(c, error.message || 'Failed to merge expression groups')
   }
 })

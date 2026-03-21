@@ -7,6 +7,7 @@ export interface CreateGroupData {
 
 export interface MergeGroupsData {
   source_group_id: number
+  target_group_id: number
 }
 
 export interface AddToGroupData {
@@ -69,8 +70,8 @@ export const expressionGroupsApi = {
     return response.data as ApiResponse<null>
   },
 
-  async mergeGroups(targetGroupId: number, data: MergeGroupsData): Promise<ApiResponse<any>> {
-    const response = await apiClient.post(`/groups/${targetGroupId}/merge`, data)
+  async mergeGroups(data: MergeGroupsData): Promise<ApiResponse<any>> {
+    const response = await apiClient.post(`/groups/merge`, data)
     return response.data as ApiResponse<any>
   },
 

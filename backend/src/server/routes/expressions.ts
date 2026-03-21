@@ -124,11 +124,12 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
       if (!expr.text || !expr.language_code) {
         throw new Error('Text and language_code are required for all expressions')
       }
-      const stableId = db.stableExpressionId(expr.text, expr.language_code)
-      console.log('[POST /expressions/batch] Stable ID:', stableId)
+      // If id is provided in the request, use it directly; otherwise calculate stable ID
+      const id = expr.id !== undefined ? expr.id : db.stableExpressionId(expr.text, expr.language_code)
+      console.log('[POST /expressions/batch] Using ID:', id, 'provided:', expr.id !== undefined)
       return {
         ...expr,
-        id: stableId,
+        id,
         created_by: expr.created_by || user.username
       }
     })

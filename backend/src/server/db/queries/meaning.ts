@@ -12,15 +12,23 @@ export class MeaningQueries {
   }
 
   async ensureMeaningExists(meaningId: number, username: string, now: string): Promise<void> {
-    await this.db.prepare(
+    console.log('[ensureMeaningExists] Checking meaning:', meaningId)
+    const result = await this.db.prepare(
       'INSERT OR IGNORE INTO meanings (id, created_by, created_at) VALUES (?, ?, ?)'
     ).bind(meaningId, username, now).run()
+    console.log('[ensureMeaningExists] Result:', { meta: result.meta, success: result.success, error: result.error })
   }
 
   async addExpressionMeaning(expressionId: number, meaningId: number, now: string): Promise<void> {
-    await this.db.prepare(
+    console.log('[addExpressionMeaning] Inserting relation:', { expressionId, meaningId, now })
+    const stmt = this.db.prepare(
       'INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at) VALUES (?, ?, ?, ?)'
-    ).bind(`${expressionId}-${meaningId}`, expressionId, meaningId, now).run()
+    )
+    const result = await stmt.bind(`${expressionId}-${meaningId}`, expressionId, meaningId, now).run()
+    console.log('[addExpressionMeaning] Result:', { meta: result.meta, success: result.success, error: result.error })
+    if (result.error) {
+      console.error('[addExpressionMeaning] Error:', result.error)
+    }
   }
 
   async removeExpressionMeaning(expressionId: number, meaningId: number): Promise<boolean> {
