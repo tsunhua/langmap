@@ -6,7 +6,7 @@
       <div class="relative max-w-4xl mx-auto text-center pt-6 sm:pt-10 pb-4 z-10">
         <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-2">
           <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ $t('home_title')
-          }}</span>
+            }}</span>
         </h1>
       </div>
 
@@ -243,7 +243,7 @@ export default {
 
       if (!isAuthenticated) {
         console.log('User not authenticated, redirecting to login');
-        router.push('/login');
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
         return;
       }
 

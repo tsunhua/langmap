@@ -8,7 +8,9 @@
         <div class="flex items-center gap-2">
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" v-model="minimalMode" class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div
+              class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+            </div>
             <span class="ml-3 text-sm font-medium text-slate-700">{{ $t('minimal_mode') }}</span>
           </label>
         </div>
@@ -31,9 +33,12 @@
         <table class="w-full">
           <thead class="bg-slate-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{ $t('language') }} *</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{{ $t('text') }} *</th>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{ $t('collections') }}</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{
+                $t('language') }} *</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">{{
+                $t('text') }} *</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/4">{{
+                $t('collections') }}</th>
               <th class="px-4 py-3 w-16"></th>
             </tr>
           </thead>
@@ -60,10 +65,11 @@
                   <input :value="getSelectedCollectionNames(expression.collections)"
                     class="block w-full rounded-md border border-slate-300 shadow-sm py-1.5 px-2 pr-8 text-sm bg-slate-100 text-slate-500 cursor-pointer"
                     readonly @click="toggleCollectionSelector(index)" />
-                  <div v-if="expression.showCollectionSelector" 
+                  <div v-if="expression.showCollectionSelector"
                     class="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                     @click.stop="toggleCollectionSelector(index)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -73,7 +79,8 @@
                 <button v-if="expressions.length > 1" @click="removeExpression(index)"
                   class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
                   :title="$t('remove_expression')">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -261,15 +268,16 @@
                   :title="$t('create_collection')">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </button>
               </div>
 
               <div v-if="expression.showCollectionSelector" class="mt-3 border border-slate-200 rounded-lg p-3">
                 <div v-if="collectionsLoading" class="text-center py-4 text-slate-500">
-                  <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
+                  <svg class="animate-spin h-5 w-5 text-blue-500 inline mr-2" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -293,7 +301,8 @@
                       class="form-checkbox h-4 w-4 text-blue-600 rounded" />
                     <div class="flex-1">
                       <span class="text-slate-800">{{ collection.name }}</span>
-                      <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items') }})</span>
+                      <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items')
+                        }})</span>
                     </div>
                   </label>
                 </div>
@@ -989,7 +998,7 @@ export default {
           } else if (response.status === 401) {
             error.value = 'Session expired. Please log in again.'
             localStorage.removeItem('authToken')
-            router.push('/login')
+            router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return
           }
         } catch (e) {
@@ -1032,7 +1041,7 @@ export default {
           if (res.status === 401) {
             error.value = 'Session expired. Please log in again.'
             localStorage.removeItem('authToken')
-            router.push('/login')
+            router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return
           }
           const txt = await res.text()

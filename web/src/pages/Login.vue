@@ -115,7 +115,7 @@
 
 <script>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/index.ts'
 
@@ -124,6 +124,7 @@ export default {
   setup() {
     const { t } = useI18n()
     const router = useRouter()
+    const route = useRoute()
     const authStore = useAuthStore()
 
     const form = ref({
@@ -162,8 +163,9 @@ export default {
           authStore.setToken(responseData.token)
           authStore.setUser(responseData.user)
 
-          // Redirect to home page
-          router.push('/')
+          // Redirect to original page or home page
+          const redirectPath = route.query.redirect || '/'
+          router.push(redirectPath)
         } else {
           error.value = result.error || result.message || t('login.loginFailed')
         }

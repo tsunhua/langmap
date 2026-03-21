@@ -39,7 +39,8 @@ apiClient.interceptors.response.use(
           if (response.status === 401) {
             const authStore = useAuthStore()
             authStore.clearAuth()
-            window.location.href = '/#/login'
+            const redirectPath = encodeURIComponent(window.location.hash.slice(1) || '/')
+            window.location.href = `/#/login?redirect=${redirectPath}`
           } else if (response.status === 403) {
             const uiStore = useUIStore()
             uiStore.addNotification({
@@ -64,7 +65,8 @@ apiClient.interceptors.response.use(
       if (status === 401) {
         const authStore = useAuthStore()
         authStore.clearAuth()
-        window.location.href = '/#/login'
+        const redirectPath = encodeURIComponent(window.location.hash.slice(1) || '/')
+        window.location.href = `/#/login?redirect=${redirectPath}`
       }
 
       if (status === 403) {

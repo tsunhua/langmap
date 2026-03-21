@@ -110,7 +110,7 @@
             </button>
           </template>
           <template v-else>
-            <router-link to="/login"
+            <router-link :to="{ path: '/login', query: { redirect: $route.fullPath } }"
               class="block py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               @click="mobileMenuOpen = false">
               <div class="flex items-center">
@@ -253,7 +253,7 @@
               <span>{{ $t('profile') }}</span>
             </router-link>
 
-            <router-link v-else to="/login"
+            <router-link v-else :to="{ path: '/login', query: { redirect: $route.fullPath } }"
               class="flex items-center text-slate-600 hover:text-slate-900 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100"
               active-class="!text-blue-600">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
@@ -489,12 +489,12 @@ export default {
         authStore.clearAuth()
 
         // Redirect to login
-        router.push('/login')
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
       } catch (error) {
         console.error('Logout error:', error)
         // Even if API fails, still do local logout
         authStore.clearAuth()
-        router.push('/login')
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
       }
     }
 
@@ -519,7 +519,7 @@ export default {
     const handleAddLanguage = async (language) => {
       // 检查用户是否已登录
       if (!isLoggedIn.value) {
-        router.push('/login');
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
         return;
       }
 
@@ -544,7 +544,7 @@ export default {
       // 检查用户是否已经登录
       if (!isLoggedIn.value) {
         // 如果没有登录则跳转到登录页面
-        router.push('/login');
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } });
         return;
       }
 
@@ -572,7 +572,7 @@ export default {
             if (response.status === 401) {
               authStore.clearAuth()
               // Redirect to login
-              router.push('/login')
+              router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             }
           }
         } catch (error) {

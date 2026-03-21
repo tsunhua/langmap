@@ -184,14 +184,10 @@
     <AddToCollectionModal :visible="showCollectionModal" :expression-id="item.id"
       @close="showCollectionModal = false" />
     <!-- Confirm Delete Audio Modal -->
-    <ConfirmModal
-      v-model="showDeleteAudioModal"
-      :message="$t('confirm_delete_audio') || 'Are you sure you want to delete this audio?'"
-      :loading="deletingAudio"
-      :loadingText="$t('deleting') || 'Deleting...'"
-      :confirmText="$t('delete') || 'Delete'"
-      @confirm="executeRemoveAudio"
-    />
+    <ConfirmModal v-model="showDeleteAudioModal"
+      :message="$t('confirm_delete_audio') || 'Are you sure you want to delete this audio?'" :loading="deletingAudio"
+      :loadingText="$t('deleting') || 'Deleting...'" :confirmText="$t('delete') || 'Delete'"
+      @confirm="executeRemoveAudio" />
   </div>
 </template>
 
@@ -341,7 +337,7 @@ export default {
     const openCollectionModal = () => {
       const token = localStorage.getItem('authToken')
       if (!token) {
-        router.push('/login')
+        router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
         return
       }
       showCollectionModal.value = true
