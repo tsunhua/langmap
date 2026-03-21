@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useAuthStore, useUIStore } from '../stores/index.js'
+import { useAuthStore, useUIStore } from '../stores/index.ts'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -27,30 +27,30 @@ apiClient.interceptors.response.use(
     const responseData = response.data
 
     if (typeof responseData === 'object' && responseData !== null) {
-        if ('success' in responseData) {
-          if (responseData.success === false) {
-            const errorMsg = responseData.error || responseData.message || 'Request failed'
-            const errorObj = {
-              status: response.status,
-              message: errorMsg,
-              data: responseData.details || responseData
-            }
- 
-            if (response.status === 401) {
-              const authStore = useAuthStore()
-              authStore.clearAuth()
-              window.location.href = '/#/login'
-            } else if (response.status === 403) {
-              const uiStore = useUIStore()
-              uiStore.addNotification({
-                type: 'error',
-                message: errorMsg
-              })
-            }
- 
-            return Promise.reject(errorObj)
+      if ('success' in responseData) {
+        if (responseData.success === false) {
+          const errorMsg = responseData.error || responseData.message || 'Request failed'
+          const errorObj = {
+            status: response.status,
+            message: errorMsg,
+            data: responseData.details || responseData
           }
+
+          if (response.status === 401) {
+            const authStore = useAuthStore()
+            authStore.clearAuth()
+            window.location.href = '/#/login'
+          } else if (response.status === 403) {
+            const uiStore = useUIStore()
+            uiStore.addNotification({
+              type: 'error',
+              message: errorMsg
+            })
+          }
+
+          return Promise.reject(errorObj)
         }
+      }
     }
 
     return response

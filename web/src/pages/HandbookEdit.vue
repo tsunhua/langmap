@@ -301,7 +301,7 @@ export default {
 
     const isEditing = computed(() => !!props.id)
     const saving = ref(false)
-    const showPreview = ref(true)
+    const showPreview = ref(false)
     const previewLoading = ref(false)
     const mdEditorRef = ref(null)
 
@@ -824,7 +824,7 @@ export default {
 
     // Update preview: fetch translations if instruction_lang is set
     const updatePreview = async () => {
-      if (!showPreview.value) return
+      if (!showPreview.value || saving.value) return
 
       const { expressionsToFetch } = await extractRequiredMetadata(form.content, form.title, form.description, form.content_lang)
 
@@ -843,6 +843,7 @@ export default {
         try {
           // For each uncached expression, fetch its groups
           for (const expr of uncachedExprs) {
+            if (saving.value) break
             try {
               const result = await expressionGroupsApi.getExpressionGroups(expr.id)
 

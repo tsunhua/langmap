@@ -116,7 +116,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '../stores/index.js'
+import { useAuthStore } from '../stores/index.ts'
 import { handbooksApi, languagesApi } from '../api/index.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
 
