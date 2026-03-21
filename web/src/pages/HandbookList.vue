@@ -113,9 +113,10 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '../stores/index.js'
 import { handbooksApi, languagesApi } from '../api/index.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
 
@@ -125,12 +126,13 @@ export default {
   setup() {
     const router = useRouter()
     const { t } = useI18n()
+    const authStore = useAuthStore()
 
     // State
     const handbooks = ref([])
     const loading = ref(true)
     const activeTab = ref('my')
-    const isLoggedIn = ref(!!localStorage.getItem('authToken'))
+    const isLoggedIn = computed(() => authStore.isAuthenticated)
 
     // Delete Confirmation
     const showDeleteModal = ref(false)
@@ -151,13 +153,11 @@ export default {
         if (activeTab.value === 'shared') {
           params.is_public = 1
         } else {
-          if (!isLoggedIn.value) {
-            handbooks.value = []
-            return
-          }
           // For 'my' tab, we get all handbooks for the current user (handled by backend)
+          // Backend will return empty array if user is not authenticated
         }
 
+        console.log('[HandbookList] Fetching handbooks:', { activeTab: activeTab.value, isAuthenticated: authStore.isAuthenticated, params })
 
         const result = await handbooksApi.getAll(params)
         if (result.success && result.data) {
@@ -167,6 +167,7 @@ export default {
         }
       } catch (error) {
         console.error('Failed to load handbooks:', error)
+        handbooks.value = []
       } finally {
         loading.value = false
       }
@@ -175,6 +176,12 @@ export default {
     watch(activeTab, () => {
       currentPage.value = 1
       fetchHandbooks()
+    })
+
+    watch(() => authStore.isAuthenticated, () => {
+      if (activeTab.value === 'my' && authStore.isAuthenticated) {
+        fetchHandbooks()
+      }
     })
 
     const nextPage = () => {
@@ -243,7 +250,7 @@ export default {
     }
 
     onMounted(() => {
-      if (!isLoggedIn.value) {
+      if (!authStore.isAuthenticated) {
         activeTab.value = 'shared'
       }
       fetchHandbooks()

@@ -453,6 +453,8 @@ handbookRoutes.get('/', optionalAuth, async (c) => {
     const skip = parseInt(c.req.query('skip') || '0')
     const limit = parseInt(c.req.query('limit') || '20')
 
+    console.log('[GET /handbooks] Request params:', { isPublicParam, skip, limit, userId: user?.id })
+
     let userId: number | undefined
     let isPublic: boolean | undefined
 
@@ -466,10 +468,12 @@ handbookRoutes.get('/', optionalAuth, async (c) => {
       isPublic = undefined  // Get both public and private handbooks
     } else {
       // No is_public parameter, user is not logged in -> return empty (shouldn't happen normally)
+      console.log('[GET /handbooks] User not authenticated and no is_public parameter, returning empty array')
       return success(c, [])
     }
 
     const handbooks = await db.getHandbooks(userId, isPublic, skip, limit)
+    console.log('[GET /handbooks] Fetched handbooks:', { count: handbooks.length, userId, isPublic })
     return success(c, handbooks)
   } catch (error: any) {
     console.error('Error in GET /handbooks:', error)
