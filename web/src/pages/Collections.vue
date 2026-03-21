@@ -200,7 +200,7 @@ export default {
         const params = { skip, limit: itemsPerPage.value }
 
         if (activeTab.value === 'shared') {
-          params.is_public = 1
+          params.isPublic = true
         } else {
           // If tab is 'my' but not logged in (shouldn't happen with UI guards but for safety)
           if (!isLoggedIn.value) {
