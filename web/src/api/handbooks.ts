@@ -11,7 +11,7 @@ export interface Handbook {
   updated_at?: string
   updated_by?: string
   rendered_content?: string
-  target_langs?: string
+  target_lang?: string
 }
 
 export interface CreateHandbookData {
@@ -19,7 +19,7 @@ export interface CreateHandbookData {
   description?: string
   content: string
   is_public?: number
-  target_langs?: string
+  target_lang?: string
 }
 
 export interface UpdateHandbookData {
@@ -27,7 +27,7 @@ export interface UpdateHandbookData {
   description?: string
   content?: string
   is_public?: number
-  target_langs?: string
+  target_lang?: string
 }
 
 export interface ApiResponse<T = any> {
@@ -58,15 +58,18 @@ export const handbooksApi = {
     return response.data as ApiResponse<Handbook[]>
   },
 
-  async getById(id: number, targetLang?: string, targetLangs?: string): Promise<ApiResponse<Handbook>> {
+  async getById(id: number, targetLang?: string): Promise<ApiResponse<Handbook>> {
     let url = `/handbooks/${id}`
- 
-    if (targetLangs) {
-      url += `?target_langs=${encodeURIComponent(targetLangs)}`
-    } else if (targetLang) {
-      url += `/${targetLang}`
+
+    if (targetLang) {
+      // Use query param for multiple languages or path param for single language
+      if (targetLang.includes(',')) {
+        url += `?target_lang=${encodeURIComponent(targetLang)}`
+      } else {
+        url += `/${targetLang}`
+      }
     }
- 
+
     const response = await apiClient.get(url)
     return response.data as ApiResponse<Handbook>
   },
@@ -95,10 +98,10 @@ export const handbooksApi = {
     if (!meaningIds || meaningIds.length === 0) {
       return { success: true, data: [] }
     }
- 
+
     const CHUNK_SIZE = 50
     const allResults: any[] = []
- 
+
     for (let i = 0; i < meaningIds.length; i += CHUNK_SIZE) {
       const chunk = meaningIds.slice(i, i + CHUNK_SIZE)
       const params: any = {
@@ -107,7 +110,7 @@ export const handbooksApi = {
         include_meanings: 'true'
       }
       if (languageCode) params.language = languageCode
- 
+
       const response = await apiClient.get('/expressions', { params })
       const responseData = response.data as any
       if (responseData.success && responseData.data) {
@@ -117,7 +120,7 @@ export const handbooksApi = {
         }
       }
     }
- 
+
     return { success: true, data: allResults }
   }
 }

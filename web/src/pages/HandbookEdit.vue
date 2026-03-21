@@ -18,7 +18,8 @@
       </div>
     </div>
 
-    <div v-if="hasDraft" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div v-if="hasDraft"
+      class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-3">
         <span class="text-xl">📝</span>
         <div>
@@ -27,10 +28,12 @@
         </div>
       </div>
       <div class="flex items-center gap-2 w-full sm:w-auto">
-        <button @click="clearDraft" class="flex-1 sm:flex-none px-3 py-2 text-xs text-yellow-700 hover:text-yellow-800 font-medium min-h-[44px] cursor-pointer">
+        <button @click="clearDraft"
+          class="flex-1 sm:flex-none px-3 py-2 text-xs text-yellow-700 hover:text-yellow-800 font-medium min-h-[44px] cursor-pointer">
           {{ $t('discard_draft') }}
         </button>
-        <button @click="restoreDraft" class="flex-1 sm:flex-none px-4 py-2 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors min-h-[44px] cursor-pointer">
+        <button @click="restoreDraft"
+          class="flex-1 sm:flex-none px-4 py-2 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors min-h-[44px] cursor-pointer">
           {{ $t('restore_draft') }}
         </button>
       </div>
@@ -53,8 +56,7 @@
             <div>
               <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
               <textarea v-model="form.description" rows="2"
-                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"
-                ></textarea>
+                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"></textarea>
             </div>
           </div>
 
@@ -78,73 +80,51 @@
               </label>
               <div class="flex items-center gap-2">
                 <div class="flex flex-wrap gap-1.5 items-center relative">
-                  <span 
-                    v-for="lang in selectedInstructionLanguages" 
-                    :key="lang.code"
-                    class="language-tag"
-                    :style="{ '--lang-color': getLanguageColor(lang) }"
-                    @click="openColorPicker(lang.code)"
-                    :title="$t('customize_color')"
-                  >
+                  <span v-for="lang in selectedInstructionLanguages" :key="lang.code" class="language-tag"
+                    :style="{ '--lang-color': getLanguageColor(lang) }" @click="openColorPicker(lang.code)"
+                    :title="$t('customize_color')">
                     <span class="language-dot"></span>
                     {{ lang.name }}
-                    <span class="language-remove" @click.stop="removeInstructionLanguage(lang.code)" :title="$t('remove_language')">×</span>
+                    <span class="language-remove" @click.stop="removeInstructionLanguage(lang.code)"
+                      :title="$t('remove_language')">×</span>
                   </span>
-                  
-                  <button 
-                    class="language-add"
+
+                  <button class="language-add"
                     @click="showInstructionLanguageSelector = !showInstructionLanguageSelector"
-                    :title="$t('add_language')"
-                  >
+                    :title="$t('add_language')">
                     +
                   </button>
-                  
+
                   <div v-if="showInstructionLanguageSelector" class="language-selector-dropdown">
-                    <div 
-                      v-for="lang in availableInstructionLanguages" 
-                      :key="lang.code"
-                      class="language-option"
-                      :style="{ '--lang-color': getLanguageColor(lang) }"
-                      @click="addInstructionLanguage(lang)"
-                    >
+                    <div v-for="lang in availableInstructionLanguages" :key="lang.code" class="language-option"
+                      :style="{ '--lang-color': getLanguageColor(lang) }" @click="addInstructionLanguage(lang)">
                       <span class="language-dot"></span>
                       {{ lang.name }}
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Color Picker Modal -->
-                <div v-if="showColorPicker" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" @click="closeColorPicker">
+                <div v-if="showColorPicker" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                  @click="closeColorPicker">
                   <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full mx-4" @click.stop>
                     <h3 class="text-lg font-semibold mb-4">{{ $t('customize_color') }}</h3>
                     <p class="text-sm text-gray-600 mb-3">{{ selectedLanguageForColor?.name }}</p>
                     <div class="flex items-center gap-4 mb-4">
-                      <input 
-                        type="color" 
-                        v-model="tempColor"
-                        class="w-16 h-16 cursor-pointer border-0 rounded-lg"
-                      />
+                      <input type="color" v-model="tempColor" class="w-16 h-16 cursor-pointer border-0 rounded-lg" />
                       <div class="flex-1">
-                        <input 
-                          type="text" 
-                          v-model="tempColor"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase"
-                          maxlength="7"
-                        />
+                        <input type="text" v-model="tempColor"
+                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase" maxlength="7" />
                         <p class="text-xs text-gray-400 mt-1">{{ $t('color_hex_format') }}</p>
                       </div>
                     </div>
                     <div class="flex justify-end gap-2">
-                      <button 
-                        @click="resetColorToDefault"
-                        class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
+                      <button @click="resetColorToDefault"
+                        class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         {{ $t('reset_to_default') }}
                       </button>
-                      <button 
-                        @click="saveColor"
-                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
+                      <button @click="saveColor"
+                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         {{ $t('save') }}
                       </button>
                     </div>
@@ -189,8 +169,9 @@
                         @click="insertAndClear(expr)">
                         <div class="flex justify-between items-center w-full">
                           <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                          <span class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
-                            expr.language_code }}</span>
+                          <span
+                            class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
+                              expr.language_code }}</span>
                         </div>
                       </div>
                     </div>
@@ -199,26 +180,24 @@
                 <button @click="showPreview = !showPreview"
                   :class="['min-h-[44px] px-3 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer border shrink-0', showPreview ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 border-gray-200']"
                   :title="showPreview ? $t('hide_preview') : $t('show_preview')">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                    <path v-if="showPreview" stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    <path v-else stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path v-if="!showPreview" stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-4 h-4">
+                    <path v-if="showPreview" stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path v-if="!showPreview" stroke-linecap="round" stroke-linejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span class="hidden sm:inline">{{ showPreview ? $t('hide_preview') : $t('show_preview') }}</span>
                 </button>
               </div>
 
-              <MdEditor
-                ref="mdEditorRef"
-                v-model="form.content"
-                :preview="false"
-                :htmlPreview="false"
-                :noUploadImg="true"
-                :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
+              <MdEditor ref="mdEditorRef" v-model="form.content" :preview="false" :htmlPreview="false"
+                :noUploadImg="true" :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
                 placeholder="Write your content here. Use {{word}}, {{text:word|lang:en-US}} or {{text:word|mid:123}} to insert expressions."
                 class="border border-gray-200 rounded-xl overflow-hidden"
-                :style="{ height: showPreview ? '700px' : '760px' }"
-              />
+                :style="{ height: showPreview ? '700px' : '760px' }" />
             </div>
 
             <!-- Right Column: Preview -->
@@ -248,11 +227,13 @@
                 <div class="flex flex-col gap-4 pb-6 border-b border-gray-100">
                   <div class="space-y-1.5 flex-1">
                     <h1 class="text-xl sm:text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
-                    <p v-if="renderedDescription" class="text-sm text-gray-500 max-w-2xl leading-relaxed" v-html="renderedDescription"></p>
+                    <p v-if="renderedDescription" class="text-sm text-gray-500 max-w-2xl leading-relaxed"
+                      v-html="renderedDescription"></p>
                   </div>
                 </div>
 
-                <div class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body prose-sm sm:prose-base"
+                <div
+                  class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body prose-sm sm:prose-base"
                   v-html="renderedContent"></div>
               </div>
             </div>
@@ -260,7 +241,8 @@
         </div>
 
         <!-- Public Toggle -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" v-model="form.is_public" class="sr-only peer">
             <div
@@ -368,14 +350,14 @@ export default {
     }
 
     const showInstructionLanguageSelector = ref(false)
-    
+
     // Color picker state
     const showColorPicker = ref(false)
     const selectedLanguageForColor = ref(null)
     const tempColor = ref('#000000')
 
     const availableInstructionLanguages = computed(() => {
-      let result = languages.value.filter(lang => 
+      let result = languages.value.filter(lang =>
         lang.code !== form.content_lang &&
         !form.instruction_langs.includes(lang.code)
       )
@@ -389,7 +371,7 @@ export default {
     })
 
     const selectedInstructionLanguages = computed(() => {
-      return languages.value.filter(lang => 
+      return languages.value.filter(lang =>
         form.instruction_langs.includes(lang.code)
       )
     })
@@ -414,19 +396,19 @@ export default {
         updatePreview()
       }
     }
-    
+
     const openColorPicker = (langCode) => {
       selectedLanguageForColor.value = languages.value.find(l => l.code === langCode)
       tempColor.value = form.lang_colors[langCode] || generateLanguageColor(langCode)
       showColorPicker.value = true
     }
-    
+
     const closeColorPicker = () => {
       showColorPicker.value = false
       selectedLanguageForColor.value = null
       tempColor.value = '#000000'
     }
-    
+
     const saveColor = () => {
       if (selectedLanguageForColor.value && tempColor.value) {
         const hexColor = tempColor.value.startsWith('#') ? tempColor.value : `#${tempColor.value}`
@@ -438,7 +420,7 @@ export default {
       }
       closeColorPicker()
     }
-    
+
     const resetColorToDefault = () => {
       if (selectedLanguageForColor.value) {
         if (form.lang_colors) {
@@ -503,19 +485,19 @@ export default {
             form.description = data.description || ''
             form.content = data.content
             form.content_lang = data.source_lang || ''
-            form.instruction_langs = data.target_langs
+            form.instruction_langs = data.target_lang
               ? data.target_lang.split(',').filter(l => l)
               : []
-          form.is_public = !!data.is_public
-          form.instruction_lang_prefix = data.instruction_lang_prefix || ''
+            form.is_public = !!data.is_public
+            form.instruction_lang_prefix = data.instruction_lang_prefix || ''
 
-          if (data.lang_colors) {
-            try {
-              form.lang_colors = JSON.parse(data.lang_colors)
-            } catch (e) {
-              form.lang_colors = {}
+            if (data.lang_colors) {
+              try {
+                form.lang_colors = JSON.parse(data.lang_colors)
+              } catch (e) {
+                form.lang_colors = {}
+              }
             }
-          }
 
           }
         }
@@ -665,24 +647,24 @@ export default {
           meaningsHtml = ` <span class="handbook-meaning-title">
             <span class="handbook-visible-groups">
               ${showGroups.map((tg, index) => {
-                const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-                return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = getLanguageColor({ code: langCode })
-                  const langClass = langCode.replace('.', '-')
-                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                }).join(' ')
-              }).join(' ')}
+            const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+            return Object.entries(tg.translations).map(([langCode, text]) => {
+              const color = getLanguageColor({ code: langCode })
+              const langClass = langCode.replace('.', '-')
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+            }).join(' ')
+          }).join(' ')}
             </span>
             ${hiddenGroups.length > 0 ? `
               <span class="handbook-hidden-groups" style="display: none;">
                 ${hiddenGroups.map((tg, index) => {
-                  const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                  return Object.entries(tg.translations).map(([langCode, text]) => {
-                    const color = getLanguageColor({ code: langCode })
-                    const langClass = langCode.replace('.', '-')
-                    return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                  }).join(' ')
-                }).join(' ')}
+            const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+            return Object.entries(tg.translations).map(([langCode, text]) => {
+              const color = getLanguageColor({ code: langCode })
+              const langClass = langCode.replace('.', '-')
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+            }).join(' ')
+          }).join(' ')}
               </span>
               <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
             ` : ''}
@@ -691,24 +673,24 @@ export default {
           meaningsHtml = ` <span class="handbook-meaning-content">
             <span class="handbook-visible-groups">
               ${showGroups.map((tg, index) => {
-                const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-                return Object.entries(tg.translations).map(([langCode, text]) => {
-                  const color = getLanguageColor({ code: langCode })
-                  const langClass = langCode.replace('.', '-')
-                  return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                }).join(' ')
-              }).join(' ')}
+            const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+            return Object.entries(tg.translations).map(([langCode, text]) => {
+              const color = getLanguageColor({ code: langCode })
+              const langClass = langCode.replace('.', '-')
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+            }).join(' ')
+          }).join(' ')}
             </span>
             ${hiddenGroups.length > 0 ? `
               <span class="handbook-hidden-groups" style="display: none;">
                 ${hiddenGroups.map((tg, index) => {
-                  const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                  return Object.entries(tg.translations).map(([langCode, text]) => {
-                    const color = getLanguageColor({ code: langCode })
-                    const langClass = langCode.replace('.', '-')
-                    return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
-                  }).join(' ')
-                }).join(' ')}
+            const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+            return Object.entries(tg.translations).map(([langCode, text]) => {
+              const color = getLanguageColor({ code: langCode })
+              const langClass = langCode.replace('.', '-')
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+            }).join(' ')
+          }).join(' ')}
               </span>
               <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
             ` : ''}
@@ -774,7 +756,7 @@ export default {
             if (expr) {
               let audioUrl = ''
               if (expr.audio_url) {
-                try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
+                try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch { }
               }
 
               let translationGroups = []
@@ -806,7 +788,7 @@ export default {
         if (expr) {
           let audioUrl = ''
           if (expr.audio_url) {
-            try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch {}
+            try { audioUrl = JSON.parse(expr.audio_url)?.[0]?.url || '' } catch { }
           }
 
           let translationGroups = []
@@ -977,27 +959,27 @@ export default {
           instruction_lang_prefix: form.instruction_lang_prefix || null,
           lang_colors: JSON.stringify(form.lang_colors || {})
         }
-         let handbookId
-         if (isEditing.value) {
-           const updateResult = await handbooksApi.update(props.id, payload)
-           if (!updateResult.success) {
-             console.error('Update failed:', updateResult.error || updateResult.message)
-             alert(t('handbook_save_failed'))
-             return
-           }
-           handbookId = props.id
-         } else {
-           const createResult = await handbooksApi.create(payload)
-           if (!createResult.success) {
-             console.error('Create failed:', createResult.error || createResult.message)
-             alert(t('handbook_save_failed'))
-             return
-           }
-           handbookId = createResult.data.id
-         }
-         baselineJson.value = snapshotJson()
-         clearDraft()
-         router.push(`/handbooks/${handbookId}`)
+        let handbookId
+        if (isEditing.value) {
+          const updateResult = await handbooksApi.update(props.id, payload)
+          if (!updateResult.success) {
+            console.error('Update failed:', updateResult.error || updateResult.message)
+            alert(t('handbook_save_failed'))
+            return
+          }
+          handbookId = props.id
+        } else {
+          const createResult = await handbooksApi.create(payload)
+          if (!createResult.success) {
+            console.error('Create failed:', createResult.error || createResult.message)
+            alert(t('handbook_save_failed'))
+            return
+          }
+          handbookId = createResult.data.id
+        }
+        baselineJson.value = snapshotJson()
+        clearDraft()
+        router.push(`/handbooks/${handbookId}`)
       } catch (error) {
         console.error('Failed to save handbook:', error)
         alert(t('handbook_save_failed'))
