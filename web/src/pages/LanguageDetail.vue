@@ -1,23 +1,25 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-    <!-- Header -->
+    <!-- Header with Stats -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <div v-if="loadingInfo" class="animate-pulse space-y-4">
-        <div class="h-8 bg-gray-200 rounded w-1/3"></div>
-        <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+      <div v-if="loadingInfo || loadingStats" class="animate-pulse space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="h-6 bg-gray-200 rounded w-1/3"></div>
+          <div class="h-8 bg-gray-200 rounded w-20"></div>
+        </div>
       </div>
-      <div v-else>
-        <div class="flex items-center gap-3">
+      <div v-else class="flex items-center justify-between gap-6">
+        <div class="flex items-center gap-2 flex-1">
           <div class="relative" ref="languageDropdownContainer">
             <button @click.stop="toggleLanguageDropdown" class="flex items-center gap-2 group">
-              <h1 class="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName
-                }}<span v-if="languageGroupName" class="text-gray-400 font-normal text-2xl"> | {{ languageGroupName }}</span>
+              <h1 class="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ languageName
+                }}<span v-if="languageGroupName" class="text-gray-400 font-normal text-lg"> | {{ languageGroupName }}</span>
               </h1>
-              <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">
+              <span class="border border-blue-200 text-blue-600 text-xs px-2 py-0.5 rounded font-medium">
                 {{ languageCode }}
               </span>
               <svg
-                :class="['w-5 h-5 text-gray-500 transition-transform duration-200', showLanguageDropdown ? 'rotate-180' : '']"
+                :class="['w-4 h-4 text-gray-400 transition-transform duration-200', showLanguageDropdown ? 'rotate-180' : '']"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -41,52 +43,41 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Language Statistics -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <div v-if="loadingStats" class="animate-pulse space-y-4">
-        <div class="h-12 bg-gray-200 rounded w-full"></div>
-      </div>
-      <div v-else class="flex items-center justify-center">
-        <div class="text-center">
-          <div class="text-4xl font-bold text-blue-600 mb-1">
+        <div class="flex items-center gap-3 text-sm">
+          <span class="text-gray-500">{{ $t('expressions') }}</span>
+          <span class="text-3xl font-bold text-blue-600">
             {{ languageStats.expression_count.toLocaleString() }}
-          </div>
-          <div class="text-gray-500 text-sm font-medium">
-            {{ $t('expressions') }}
-          </div>
+          </span>
         </div>
       </div>
     </div>
 
     <!-- Search -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <input v-model="searchQuery" type="text" :placeholder="`Search in ${languageName || languageCode}`"
-        class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3" @input="handleSearch" />
+        class="w-full border border-gray-200 rounded-lg px-4 py-2.5 mb-3 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" @input="handleSearch" />
 
       <!-- Tag Filters -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">包含标签</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">包含标签</label>
           <input v-model="tagPrefix" type="text" placeholder="eg: langmap"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" @input="handleFilterChange" />
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" @input="handleFilterChange" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">排除标签</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">排除标签</label>
           <input v-model="excludeTagPrefix" type="text" placeholder="eg: langmap"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" @input="handleFilterChange" />
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" @input="handleFilterChange" />
         </div>
       </div>
     </div>
 
     <!-- Expressions List -->
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div v-if="loading" class="flex justify-center py-16">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
     </div>
 
-    <div v-else-if="expressions.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+    <div v-else-if="expressions.length === 0" class="text-center py-16 bg-gray-50 rounded-lg">
       <p class="text-gray-500">{{ $t('no_expressions_found') }}</p>
     </div>
 
@@ -97,13 +88,13 @@
     <!-- Pagination -->
     <div v-if="currentPage > 0 && (currentPage > 1 || canGoNext)" class="mt-6 flex justify-center items-center gap-2">
       <button @click="prevPage" :disabled="currentPage === 1"
-        class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+        class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition-colors">
         {{ $t('prev') }}
       </button>
 
       <div class="flex gap-1">
         <button v-for="page in displayedPages" :key="page" @click="goToPage(page)" :class="[
-          'min-w-[2.5rem] px-3 py-2 rounded text-sm',
+          'min-w-[2.25rem] px-3 py-1.5 rounded-md text-sm transition-colors',
           typeof page === 'number'
             ? page === currentPage
               ? 'bg-blue-600 text-white hover:bg-blue-700'
@@ -115,7 +106,7 @@
       </div>
 
       <button @click="nextPage" :disabled="!canGoNext"
-        class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+        class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition-colors">
         {{ $t('next') }}
       </button>
     </div>
