@@ -47,17 +47,27 @@
         @click="goToView(handbook.id)">
         <div class="p-6 flex-grow">
           <div class="flex justify-between items-start mb-3">
-            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate pr-2">
+            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate flex-shrink min-w-0">
               {{ handbook.title }}
             </h3>
             <span v-if="handbook.is_public"
-              class="bg-green-100 text-green-800 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">
+              class="bg-green-100 text-green-800 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2">
               {{ $t('public') }}
             </span>
           </div>
-          <p v-if="handbook.description" class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+          <p v-if="handbook.description" class="text-gray-600 text-sm mb-2 line-clamp-3 leading-relaxed">
             {{ handbook.description }}
           </p>
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span v-if="handbook.source_lang"
+              class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded border border-purple-100">
+              {{ $t('content_lang') }}: {{ getLanguageName(handbook.source_lang) }}
+            </span>
+            <span v-for="lang in getTargetLangs(handbook.target_langs || handbook.target_lang)" :key="lang"
+              class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded border border-blue-100">
+              {{ $t('learn_in') }}: {{ getLanguageName(lang) }}
+            </span>
+          </div>
         </div>
         <div
           class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest font-bold">
@@ -106,7 +116,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { handbooksApi } from '../api/index.ts'
+import { handbooksApi, languagesApi } from '../api/index.ts'
 import ConfirmModal from '../components/ConfirmModal.vue'
 
 export default {
@@ -223,6 +233,15 @@ export default {
       return new Date(dateString).toLocaleDateString()
     }
 
+    const getTargetLangs = (targetLang) => {
+      if (!targetLang) return []
+      return targetLang.split(',').map(lang => lang.trim()).filter(lang => lang)
+    }
+
+    const getLanguageName = (code) => {
+      return languagesApi.getLanguageDisplayName(code)
+    }
+
     onMounted(() => {
       if (!isLoggedIn.value) {
         activeTab.value = 'shared'
@@ -244,6 +263,8 @@ export default {
       deleting,
       executeDelete,
       formatDate,
+      getTargetLangs,
+      getLanguageName,
       currentPage,
       nextPage,
       prevPage
