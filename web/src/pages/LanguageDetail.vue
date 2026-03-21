@@ -8,7 +8,7 @@
           <div class="h-8 bg-gray-200 rounded w-20"></div>
         </div>
       </div>
-      <div v-else class="flex items-center justify-between gap-6">
+      <div v-else class="flex flex-col sm:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-2 flex-1">
           <div class="relative" ref="languageDropdownContainer">
             <button @click.stop="toggleLanguageDropdown" class="flex items-center gap-2 group">
