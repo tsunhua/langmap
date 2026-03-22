@@ -25,17 +25,20 @@ SELECT id, text FROM expressions;
 -- Keep the FTS index in sync with the primary expressions table
 
 -- Sync on INSERT
-CREATE TRIGGER IF NOT EXISTS expressions_ai AFTER INSERT ON expressions BEGIN
+DROP TRIGGER IF EXISTS expressions_ai;
+CREATE TRIGGER expressions_ai AFTER INSERT ON expressions BEGIN
   INSERT INTO expressions_fts(rowid, text) VALUES (new.id, new.text);
 END;
 
 -- Sync on DELETE
-CREATE TRIGGER IF NOT EXISTS expressions_ad AFTER DELETE ON expressions BEGIN
-  INSERT INTO expressions_fts(rowid, text) VALUES (old.id, old.text);
+DROP TRIGGER IF EXISTS expressions_ad;
+CREATE TRIGGER expressions_ad AFTER DELETE ON expressions BEGIN
+  INSERT INTO expressions_fts(expressions_fts, rowid, text) VALUES('delete', old.id, old.text);
 END;
 
 -- Sync on UPDATE
-CREATE TRIGGER IF NOT EXISTS expressions_au AFTER UPDATE ON expressions BEGIN
+DROP TRIGGER IF EXISTS expressions_au;
+CREATE TRIGGER expressions_au AFTER UPDATE ON expressions BEGIN
   INSERT INTO expressions_fts(expressions_fts, rowid, text) VALUES('delete', old.id, old.text);
   INSERT INTO expressions_fts(rowid, text) VALUES (new.id, new.text);
 END;

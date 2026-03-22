@@ -418,7 +418,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
   async createExpression(expression: Partial<Expression>): Promise<Expression> {
     const id = this.stableExpressionId(expression.text!, expression.language_code!)
     const result = await this.expressionQueries.create({ ...expression, id })
-    
+
     if (result) {
       await this.expressionQueries.updateLanguageStats(expression.language_code!, 1)
       return this.formatTimestamps(result)
@@ -452,10 +452,10 @@ export class D1DatabaseService extends AbstractDatabaseService {
         this.expressionQueries.prepareDeleteCollectionItems(id),
         this.expressionQueries.prepareDeleteVersions(id),
         this.expressionQueries.prepareDeleteFTS(id),
-        this.expressionQueries.prepareDeleteExpression(id)
+        this.expressionQueries.prepareDeleteExpression(id),
+        this.expressionQueries.prepareUpdateLanguageStats(expression.language_code, -1)
       ])
 
-      await this.expressionQueries.updateLanguageStats(expression.language_code, -1)
       return true
     } catch (error) {
       console.error(`Error deleting expression ${id}:`, error)
@@ -478,7 +478,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
     if (!query.trim()) return []
-    
+
     const results = await this.expressionQueries.search(query, fromLang, region, skip, limit)
     const formattedResults = results.map(e => this.formatTimestamps(e))
     return formattedResults

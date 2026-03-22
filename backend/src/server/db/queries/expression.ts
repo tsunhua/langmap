@@ -2,7 +2,7 @@ import { D1Database, D1Result } from '@cloudflare/workers-types'
 import { Expression, ExpressionVersion } from '../protocol.js'
 
 export class ExpressionQueries {
-  constructor(private db: D1Database) {}
+  constructor(private db: D1Database) { }
 
   async findById(id: number): Promise<Expression | null> {
     const expression = await this.db.prepare(
@@ -129,12 +129,14 @@ export class ExpressionQueries {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(...bindValues).run()
 
-    return await this.findById(data.id!)
+    const resultExpr = await this.findById(data.id!)
+    if (!resultExpr) throw new Error('Failed to create or fetch expression')
+    return resultExpr
   }
 
   async ensureExist(expressions: Array<{ id: number, text: string, language_code: string }>, username: string): Promise<Record<string, number>> {
     const results: Record<string, number> = {}
-    
+
     // Batch check existing IDs in chunks
     const idsToCheck = expressions.map(e => e.id)
     const existingIdSet = new Set<number>()
@@ -159,7 +161,7 @@ export class ExpressionQueries {
       const BATCH_SIZE = 50
       for (let i = 0; i < newExpressions.length; i += BATCH_SIZE) {
         const chunk = newExpressions.slice(i, i + BATCH_SIZE)
-        const statements = chunk.map(expr => 
+        const statements = chunk.map(expr =>
           this.db.prepare(
             `INSERT INTO expressions (
               id, text, audio_url, language_code, source_type, review_status, created_by, updated_by
@@ -176,7 +178,7 @@ export class ExpressionQueries {
   async upsertBatch(expressions: Partial<Expression>[], forceNewMeaning: boolean = false): Promise<any[]> {
     // This is a simplified version, the actual heavy lifting is in D1DatabaseService.upsertExpressions
     // using prepareUpsert for batching.
-    return [] 
+    return []
   }
 
   prepareUpsert(data: Partial<Expression>) {
@@ -277,10 +279,14 @@ export class ExpressionQueries {
   }
 
   async updateLanguageStats(languageCode: string, delta: number): Promise<void> {
-    await this.db.prepare(`
+    await this.prepareUpdateLanguageStats(languageCode, delta).run()
+  }
+
+  prepareUpdateLanguageStats(languageCode: string, delta: number) {
+    return this.db.prepare(`
       INSERT OR REPLACE INTO language_stats (language_code, expression_count)
       VALUES (?, COALESCE((SELECT expression_count FROM language_stats WHERE language_code = ?), 0) + ?)
-    `).bind(languageCode, languageCode, delta).run()
+    `).bind(languageCode, languageCode, delta)
   }
 
   // Helper for batch operations
@@ -297,7 +303,8 @@ export class ExpressionQueries {
   }
 
   prepareDeleteFTS(id: number) {
-    return this.db.prepare('DELETE FROM expressions_fts WHERE rowid = ?').bind(id)
+    // For FTS5 external content, we use the 'delete' command to remove the entry from the index
+    return this.db.prepare("INSERT INTO expressions_fts(expressions_fts, rowid, text) SELECT 'delete', id, text FROM expressions WHERE id = ?").bind(id)
   }
 
   prepareDeleteExpression(id: number) {
