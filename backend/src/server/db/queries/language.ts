@@ -21,7 +21,7 @@ export class LanguageQueries {
       language.code || null,
       language.name || null,
       language.direction || 'ltr',
-      language.is_active !== undefined ? language.is_active : 0,
+      0,
       language.region_code || null,
       language.region_name || null,
       language.region_latitude !== undefined ? language.region_latitude : null,
