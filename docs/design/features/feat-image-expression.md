@@ -55,7 +55,6 @@
 interface Expression {
   text: string               // 纯文本内容 OR 图片 URL
   language_code: string      // "en", "zh", "image" 等
-  meaning_id?: number
   audio_url?: string
   region_code?: string
   // ... 其他现有字段
@@ -78,9 +77,6 @@ SELECT * FROM expressions WHERE language_code = 'image';
 
 -- 查询特定语言的文本表达式
 SELECT * FROM expressions WHERE language_code = 'en';
-
--- 复合索引优化
-CREATE INDEX idx_expressions_format_lang ON expressions(language_code);
 ```
 
 ## 4. 前端 UI 与交互设计
