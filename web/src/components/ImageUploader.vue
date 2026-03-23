@@ -42,7 +42,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { compressToSize, validateImageFile } from '../utils/imageCompression.js'
-import { uploadPresignedUrl } from '../api/images.js'
+import { uploadPresignedUrl } from '../api/images.ts'
 
 const props = defineProps({
   existingImageUrl: {
