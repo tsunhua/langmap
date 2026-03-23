@@ -107,6 +107,11 @@
 ### 媒体处理
 
 - **[feat-audio-upload.md](./feat-audio-upload.md)** - 音频上传功能
+- **[feat-image-expression.md](./feat-image-expression.md)** - 图片词句功能
+  - 图片上传与压缩
+  - R2 直传架构
+  - language_code='image' 标识
+  - 前端动态输入方式切换
 
 ## 命名规范
 

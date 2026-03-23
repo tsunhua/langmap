@@ -50,6 +50,7 @@ docs/
 - **[feat-user-profile.md](design/features/feat-user-profile.md)** - 用户资料/个人中心设计（数据模型、API 设计、前端实现、实现状态标注）
 - **[feat-database.md](design/features/feat-database.md)** - 数据库设计（表结构、索引、迁移策略、性能优化、备份策略、实现状态标注）
 - **[feat-audio-upload.md](design/features/feat-audio-upload.md)** - 词条录音与上传功能（前端直传 R2、预签名设计、低成本架构、实现状态标注）
+- **[feat-image-expression.md](design/features/feat-image-expression.md)** - 图片词句功能（图片上传与压缩、R2 直传架构、language_code='image' 标识、前端动态输入方式切换、实现状态标注）
 
 ### 🔌 API 文档 (api/)
 后端 API 的技术文档、端点说明和部署指南。
