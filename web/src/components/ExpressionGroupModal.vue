@@ -69,7 +69,8 @@
                     <span class="text-xs sm:text-sm text-slate-600">{{ getLanguageName(expr.language_code) }}</span>
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <span class="text-xs sm:text-sm text-slate-800 break-words">{{ expr.text }}</span>
+                    <span v-if="expr.language_code !== 'image'" class="text-xs sm:text-sm text-slate-800 break-words">{{ expr.text }}</span>
+                    <img v-else :src="expr.text" class="h-10 w-10 object-contain rounded" alt="expression image" />
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2"></td>
                 </tr>
@@ -79,7 +80,12 @@
                     {{ getLanguageName(pendingExpr.language_code) }}
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <input v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
+                    <div v-if="pendingExpr.language_code === 'image'" class="flex items-center gap-2">
+                      <img v-if="pendingExpr.text && pendingExpr.text.startsWith('http')" :src="pendingExpr.text" class="h-10 w-10 object-contain rounded" alt="expression image" />
+                      <input v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
+                        class="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                    </div>
+                    <input v-else v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
                       class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
@@ -104,8 +110,14 @@
                     </select>
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
-                    <input v-model="newRowText" type="text" :placeholder="$t('please_enter_expression')"
-                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    <div v-if="newRowLanguage === 'image'" class="flex items-center gap-2">
+                      <img v-if="newRowText && newRowText.startsWith('http')" :src="newRowText" class="h-10 w-10 object-contain rounded" alt="expression image" />
+                      <input v-model="newRowText" type="text" :placeholder="$t('please_enter_image_url')"
+                        class="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        @keydown.enter="addToPending" />
+                    </div>
+                    <input v-else v-model="newRowText" type="text" :placeholder="$t('please_enter_expression')"
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       @keydown.enter="addToPending" />
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">

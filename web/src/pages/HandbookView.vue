@@ -674,8 +674,8 @@ export default {
 /* Image expressions in handbook content - global styles for v-html content */
 .markdown-body .handbook-item img,
 .markdown-body .handbook-image-expression {
-  max-height: 3rem;
-  max-width: 3rem;
+  max-height: 2rem;
+  max-width: 2rem;
   object-fit: contain;
   vertical-align: middle;
   display: inline-block;
