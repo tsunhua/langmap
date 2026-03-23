@@ -9,6 +9,9 @@ import { success, created, badRequest, notFound, forbidden, internalError, pagin
 
 const expressionsRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
+// 速率限制存储
+const expressionRateLimiter = new Map<string, { count: number, resetTime: number, imageCount: number }>()
+
 expressionsRoutes.get('/', async (c) => {
   try {
     const db = createDatabaseService(c.env)
@@ -47,7 +50,38 @@ expressionsRoutes.post('/', requireAuth, async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
 
+    // 验证
     const validated = createExpressionSchema.parse(body)
+
+    // 速率限制（管理员无限制）
+    if (user.role !== 'super_admin' && user.role !== 'admin') {
+      const now = Date.now()
+      const key = `expression:${user.username}`
+      const record = expressionRateLimiter.get(key)
+
+      if (record && record.resetTime > now) {
+        // 图片表达式额外限制：每分钟最多 10 次
+        if (validated.language_code === 'image') {
+          if (record.imageCount >= 10) {
+            return badRequest(c, '图片表达式创建过于频繁，请稍后再试')
+          }
+          record.imageCount++
+        }
+
+        // 总体限制：每分钟最多 20 次
+        if (record.count >= 20) {
+          return badRequest(c, '表达式创建过于频繁，请稍后再试')
+        }
+        record.count++
+      } else {
+        expressionRateLimiter.set(key, {
+          count: 1,
+          resetTime: now + 60000,
+          imageCount: validated.language_code === 'image' ? 1 : 0
+        })
+      }
+    }
+
     const expression = await service.create(validated, user.username)
     await clearCache(c, '/api/v1/expressions')
 
