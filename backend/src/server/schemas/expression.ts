@@ -4,8 +4,12 @@ export const createExpressionSchema = z.object({
   text: z.string().min(1).max(1000),
   language_code: z.string().min(2).max(36),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional(),
-  region_code: z.string().optional()
+  audio_url: z.string().nullable().optional(),
+  region_code: z.string().nullable().optional(),
+  region_name: z.string().nullable().optional(),
+  region_latitude: z.number().nullable().optional(),
+  region_longitude: z.number().nullable().optional(),
+  created_by: z.string().optional()
 }).superRefine((data, ctx) => {
   if (data.language_code === 'image') {
     if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
@@ -39,8 +43,12 @@ export const updateExpressionSchema = z.object({
   text: z.string().min(1).max(1000).optional(),
   language_code: z.string().min(2).max(36).optional(),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional(),
-  region_code: z.string().optional()
+  audio_url: z.string().nullable().optional(),
+  region_code: z.string().nullable().optional(),
+  region_name: z.string().nullable().optional(),
+  region_latitude: z.number().nullable().optional(),
+  region_longitude: z.number().nullable().optional(),
+  updated_by: z.string().optional()
 }).superRefine((data, ctx) => {
   if (data.language_code === 'image' && data.text) {
     if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
@@ -77,8 +85,11 @@ export const batchExpressionSchema = z.object({
     id: z.number().optional(),
     meaning_id: z.number().optional(),
     created_by: z.string().optional(),
-    audio_url: z.string().optional(),
-    region_code: z.string().optional()
+    audio_url: z.string().nullable().optional(),
+    region_code: z.string().nullable().optional(),
+    region_name: z.string().nullable().optional(),
+    region_latitude: z.number().nullable().optional(),
+    region_longitude: z.number().nullable().optional()
   })).min(1).max(50),
   ensure_new_group: z.boolean().optional()
 }).superRefine((data, ctx) => {
