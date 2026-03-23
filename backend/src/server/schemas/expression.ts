@@ -4,14 +4,70 @@ export const createExpressionSchema = z.object({
   text: z.string().min(1).max(1000),
   language_code: z.string().min(2).max(36),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional()
+  audio_url: z.string().optional(),
+  region_code: z.string().optional()
+}).superRefine((data, ctx) => {
+  if (data.language_code === 'image') {
+    if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '图片 URL 必须以 http:// 或 https:// 开头',
+        path: ['text']
+      })
+    }
+
+    try {
+      const url = new URL(data.text)
+      if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '仅允许使用系统生成的图片 URL',
+          path: ['text']
+        })
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '图片 URL 格式无效',
+        path: ['text']
+      })
+    }
+  }
 })
 
 export const updateExpressionSchema = z.object({
   text: z.string().min(1).max(1000).optional(),
   language_code: z.string().min(2).max(36).optional(),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional()
+  audio_url: z.string().optional(),
+  region_code: z.string().optional()
+}).superRefine((data, ctx) => {
+  if (data.language_code === 'image' && data.text) {
+    if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '图片 URL 必须以 http:// 或 https:// 开头',
+        path: ['text']
+      })
+    }
+
+    try {
+      const url = new URL(data.text)
+      if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '仅允许使用系统生成的图片 URL',
+          path: ['text']
+        })
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '图片 URL 格式无效',
+        path: ['text']
+      })
+    }
+  }
 })
 
 export const batchExpressionSchema = z.object({
