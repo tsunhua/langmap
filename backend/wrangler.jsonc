@@ -46,8 +46,17 @@
       "binding": "AUDIO_BUCKET",
       "bucket_name": "langmap-audio",
       "preview_bucket_name": "langmap-audio"
+    },
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "langmap-images",
+      "preview_bucket_name": "langmap-images"
     }
   ],
+  "vars": {
+    "R2_IMAGES_BUCKET": "langmap-images",
+    "IMAGES_PUBLIC_URL": "https://images.langmap.io"
+  },
   "migrations": [
     {
       "tag": "v1",
