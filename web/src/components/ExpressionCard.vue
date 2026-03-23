@@ -5,7 +5,16 @@
         class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200 sm:mx-0 cursor-pointer">
         <div class="p-4 flex justify-between items-start gap-4">
           <div class="flex-1 min-w-0">
-            <h3 class="text-xl font-semibold text-slate-800 break-words">{{ item.text }}</h3>
+            <div v-if="item.language_code === 'image'">
+              <img
+                :src="item.text"
+                class="expression-image"
+                alt="Expression image"
+              />
+            </div>
+            <div v-else>
+              <h3 class="text-xl font-semibold text-slate-800 break-words expression-text">{{ item.text }}</h3>
+            </div>
             <div class="mt-1 text-sm text-slate-600">
               <div @click.stop.prevent="goToLanguageDetail"
                 class="inline-flex items-center hover:text-blue-600 hover:underline font-medium transition-colors">
@@ -566,3 +575,17 @@ function getTagsList(item) {
   }
 }
 </script>
+
+<style scoped>
+.expression-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.expression-text {
+  @apply text-lg font-medium text-slate-800;
+}
+</style>
