@@ -56,7 +56,11 @@
                 </select>
               </td>
               <td class="px-4 py-3">
-                <textarea v-model="expression.text" rows="1"
+                <ImageUploader v-if="expression.language_code === 'image'"
+                  :existing-image-url="expression.text"
+                  @image-ready="handleImageReady(index, $event)"
+                  @image-cleared="handleImageCleared(index)" />
+                <textarea v-else v-model="expression.text" rows="1"
                   class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm text-slate-800 resize-none"
                   :placeholder="$t('text_placeholder')"></textarea>
               </td>
@@ -166,8 +170,12 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
-          <textarea v-model="expression.text" rows="3"
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ expression.language_code === 'image' ? $t('image') || 'Image' : $t('text') }} *</label>
+          <ImageUploader v-if="expression.language_code === 'image'"
+            :existing-image-url="expression.text"
+            @image-ready="handleImageReady(index, $event)"
+            @image-cleared="handleImageCleared(index)" />
+          <textarea v-else v-model="expression.text" rows="3"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-4 text-slate-800"
             :placeholder="$t('text_placeholder')"></textarea>
         </div>
@@ -420,12 +428,13 @@ import { useI18n } from 'vue-i18n'
 import { languagesApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 import AudioRecorder from '../components/AudioRecorder.vue'
+import ImageUploader from '../components/ImageUploader.vue'
 
 let expressionIdCounter = 0
 
 export default {
   name: 'CreateExpressionPage',
-  components: { AddLanguageModal, AudioRecorder },
+  components: { AddLanguageModal, AudioRecorder, ImageUploader },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -589,6 +598,14 @@ export default {
     const handleAudioCleared = (index) => {
       expressions.value[index].audioBlob = null
       expressions.value[index].audioMimeType = null
+    }
+
+    const handleImageReady = (index, imageUrl) => {
+      expressions.value[index].text = imageUrl
+    }
+
+    const handleImageCleared = (index) => {
+      expressions.value[index].text = ''
     }
 
     const handleLanguageChange = (index) => {
@@ -968,7 +985,22 @@ export default {
       success.value = false
       submitting.value = true
 
-      const validExpressions = expressions.value.filter(expr => expr.text && expr.language_code)
+      const validExpressions = expressions.value.filter(expr => {
+        if (!expr.text || !expr.language_code) {
+          return false
+        }
+        // For image language, validate it's a valid URL
+        if (expr.language_code === 'image') {
+          try {
+            new URL(expr.text)
+            return true
+          } catch (e) {
+            error.value = '图片 URL 格式无效'
+            return false
+          }
+        }
+        return true
+      })
 
       if (validExpressions.length === 0) {
         error.value = t('create.requiredError')
@@ -1200,6 +1232,8 @@ export default {
       goBack,
       t,
       handleAddLanguage,
+      handleImageReady,
+      handleImageCleared,
       // Collection-related
       userCollections,
       collectionsLoading,

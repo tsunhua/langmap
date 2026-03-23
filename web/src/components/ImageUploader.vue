@@ -42,7 +42,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { compressToSize, validateImageFile } from '../utils/imageCompression.js'
-import { uploadPresignedUrl } from '../api/images.ts'
+import { uploadImage } from '../api/images.ts'
 
 const props = defineProps({
   existingImageUrl: {
@@ -104,7 +104,7 @@ const processFile = async (file) => {
     }
 
     // 上传到 R2
-    const url = await uploadPresignedUrl(blob)
+    const url = await uploadImage(blob)
 
     imageUrl.value = url
     emit('image-ready', url)

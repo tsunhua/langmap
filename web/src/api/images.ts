@@ -1,31 +1,30 @@
 import apiClient from './client.js'
 
 /**
- * 获取预签名 URL 并上传图片
+ * 直接上传图片到 Worker
  * @param {Blob} blob - 图片 Blob
  * @returns {Promise<string>} 公开访问的图片 URL
  */
-export async function uploadPresignedUrl(blob) {
-  // 1. 获取预签名 URL
-  const presignResponse = await apiClient.post('/images/upload-presign', {
-    content_type: blob.type,
-    content_length: blob.size
-  })
+export async function uploadImage(blob) {
+  const formData = new FormData()
+  formData.append('image_file', blob)
 
-  const { upload_url, image_url } = presignResponse.data
+  const token = localStorage.getItem('authToken')
 
-  // 2. 直接上传到 R2
-  const uploadResponse = await fetch(upload_url, {
-    method: 'PUT',
-    body: blob,
+  const response = await fetch('/api/v1/images/upload', {
+    method: 'POST',
     headers: {
-      'Content-Type': blob.type
-    }
+      'Authorization': `Bearer ${token}`
+      // 不要设置 Content-Type，让浏览器自动设置 multipart/form-data
+    },
+    body: formData
   })
 
-  if (!uploadResponse.ok) {
-    throw new Error('上传失败')
+  const data = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.error || data.message || '上传失败')
   }
 
-  return image_url
+  return data.data.image_url
 }
