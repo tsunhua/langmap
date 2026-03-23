@@ -12,14 +12,24 @@
 
       <div class="p-6">
         <div class="mb-6">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
-          <textarea v-model="text" rows="3"
-            class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4"
-            :placeholder="$t('text_placeholder')"></textarea>
-          <p class="text-sm text-slate-500 mt-1">{{ $t('text_help') }}</p>
+          <div v-if="language_code !== 'image'">
+            <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
+            <textarea v-model="text" rows="3"
+              class="block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-3 px-4"
+              :placeholder="$t('text_placeholder')"></textarea>
+            <p class="text-sm text-slate-500 mt-1">{{ $t('text_help') }}</p>
+          </div>
+          <div v-else>
+            <label class="block text-sm font-medium text-slate-700 mb-1">图片 *</label>
+            <ImageUploader
+              :existing-image-url="text"
+              @image-ready="handleImageReady"
+              @image-cleared="handleImageCleared"
+            />
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" :class="{ 'opacity-50 pointer-events-none': language_code === 'image' }">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('language') }} *</label>
             <div class="flex gap-2">
@@ -32,6 +42,7 @@
                   <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                     {{ lang.name }} ({{ lang.code }})
                   </option>
+                  <option value="image">📷 图片</option>
                 </select>
                 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -148,10 +159,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { languagesApi, expressionGroupsApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
+import ImageUploader from '../components/ImageUploader.vue'
 
 export default {
   name: 'CreateExpression',
-  components: { AddLanguageModal },
+  components: { AddLanguageModal, ImageUploader },
   props: {
     visible: {
       type: Boolean,
@@ -363,9 +375,17 @@ export default {
               } else {
                 displayName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
               }
-            }
+    }
 
-            return {
+    const handleImageReady = (url) => {
+      text.value = url
+    }
+
+    const handleImageCleared = () => {
+      text.value = ''
+    }
+
+    return {
               name: displayName,
               latitude: parseFloat(lat),
               longitude: parseFloat(lon),
@@ -681,7 +701,10 @@ export default {
       detectLocation,
       // Map selector
       showMapSelector,
-      toggleMapSelector
+      toggleMapSelector,
+      // Image handling
+      handleImageReady,
+      handleImageCleared
     }
   }
 }
