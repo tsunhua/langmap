@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { Bindings } from '../../bindings.js'
+import type { Bindings } from '../types/bindings.js'
 import { badRequest, notFound, internalError } from '../utils/response.js'
 
 const downloadRoutes = new Hono<{ Bindings: Bindings }>()
@@ -12,7 +12,7 @@ downloadRoutes.get('/', async (c) => {
     }
 
     if (!key.startsWith('exports/')) {
-      return internalError(c, "Invalid file key", undefined, 403)
+      return internalError(c, "Invalid file key")
     }
 
     const object = await c.env.EXPORT_BUCKET.get(key)

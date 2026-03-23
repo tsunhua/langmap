@@ -408,5 +408,19 @@
   "confirm_delete": "確認刪除",
   "remove_item": "移除項目",
   "view_details": "詳細を見る",
-  "confirm": "確認"
+  "confirm": "確認",
+  "compressing_uploading": "圧縮・アップロード中...",
+  "click_to_upload_image": "クリックして画像をアップロード",
+  "or_drag_image_here": "または画像をここにドラッグ",
+  "supported_formats": "JPG、PNG、WebP対応、最大 5MB（自動圧縮）",
+  "preview": "プレビュー",
+  "delete_image": "画像を削除",
+  "compressed_image_too_large": "圧縮後の画像が大きすぎます。別の画像を選択してください。",
+  "upload_failed_please_try_again": "アップロードに失敗しました。もう一度お試しください。",
+  "image": "画像",
+  "advanced_options": "詳細オプション",
+  "create_collection_failed": "コレクションの作成に失敗しました。もう一度お試しください。",
+  "invalid_image_url_format": "画像URLの形式が無効です",
+  "must_be_logged_in_to_create_expressions": "表現を作成するにはログインが必要です",
+  "session_expired_please_log_in_again": "セッションが期限切れです。再度ログインしてください。"
 }

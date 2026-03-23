@@ -1,8 +1,10 @@
 <template>
   <div class="image-uploader">
     <div v-if="error" class="text-sm text-red-600 mb-2 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       {{ error }}
     </div>
@@ -10,39 +12,39 @@
     <!-- 状态：未上传 -->
     <div v-if="!imageUrl" class="upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop">
       <div class="upload-content">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400 mx-auto mb-3" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <p class="text-slate-600 font-medium">{{ uploading ? '压缩上传中...' : '点击上传图片' }}</p>
-        <p class="text-slate-400 text-sm mt-1">或拖拽图片到此处</p>
-        <p class="text-slate-400 text-xs mt-2">支持 JPG、PNG、WebP，最大 5MB（自动压缩）</p>
+        <p class="text-slate-600 font-medium">{{ uploading ? t('compressing_uploading') : t('click_to_upload_image') }}</p>
+        <p class="text-slate-400 text-sm mt-1">{{ t('or_drag_image_here') }}</p>
+        <p class="text-slate-400 text-xs mt-2">{{ t('supported_formats') }}</p>
       </div>
     </div>
 
     <!-- 状态：已上传 -->
     <div v-else class="preview-area">
-      <img :src="imageUrl" class="preview-image" alt="Preview" />
-      <button @click="clearImage" class="clear-btn" title="删除图片">
+      <img :src="imageUrl" class="preview-image" :alt="t('preview')" />
+      <button @click="clearImage" class="clear-btn" :title="t('delete_image')">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
 
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/jpeg,image/jpg,image/png,image/webp"
-      style="display: none;"
-      @change="handleFileSelect"
-    />
+    <input ref="fileInput" type="file" accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;"
+      @change="handleFileSelect" />
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { compressToSize, validateImageFile } from '../utils/imageCompression.js'
 import { uploadImage } from '../api/images.ts'
+
+const { t } = useI18n()
 
 const props = defineProps({
   existingImageUrl: {
@@ -98,7 +100,7 @@ const processFile = async (file) => {
     const { blob, iterations } = await compressToSize(file, 100 * 1024)
 
     if (blob.size > 300 * 1024) {
-      error.value = '压缩后图片仍然过大，请选择其他图片'
+      error.value = t('compressed_image_too_large')
       uploading.value = false
       return
     }
@@ -111,7 +113,7 @@ const processFile = async (file) => {
 
   } catch (err) {
     console.error('Image upload error:', err)
-    error.value = err.message || '上传失败，请重试'
+    error.value = err.message || t('upload_failed_please_try_again')
   } finally {
     uploading.value = false
   }

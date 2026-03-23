@@ -63,14 +63,14 @@ expressionsRoutes.post('/', requireAuth, async (c) => {
         // 图片表达式额外限制：每分钟最多 10 次
         if (validated.language_code === 'image') {
           if (record.imageCount >= 10) {
-            return badRequest(c, '图片表达式创建过于频繁，请稍后再试')
+            return badRequest(c, 'Image expression creation too frequent, please try again later')
           }
           record.imageCount++
         }
 
         // 总体限制：每分钟最多 20 次
         if (record.count >= 20) {
-          return badRequest(c, '表达式创建过于频繁，请稍后再试')
+          return badRequest(c, 'Expression creation too frequent, please try again later')
         }
         record.count++
       } else {
@@ -153,7 +153,7 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     const forceNewGroup = ensure_new_group === true
 
     console.log('[POST /expressions/batch] Creating exprsWithIds...')
-    const exprsWithIds = expressions.map(expr => {
+    const exprsWithIds = expressions.map((expr: any) => {
       console.log('[POST /expressions/batch] Processing expression:', expr)
       if (!expr.text || !expr.language_code) {
         throw new Error('Text and language_code are required for all expressions')
@@ -169,9 +169,10 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     })
     console.log('[POST /expressions/batch] exprsWithIds created:', exprsWithIds.length)
 
-    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup)
+    const targetMeaningId = expressions[0]?.meaning_id
+    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup, targetMeaningId)
 
-    const existingIds = exprsWithIds.map(e => e.id!)
+    const existingIds = exprsWithIds.map((e: any) => e.id!)
     const existingMeaningIds = await db.getExpressionMeaningIds(existingIds)
 
     let finalMeaningId: number | undefined
@@ -226,7 +227,7 @@ expressionsRoutes.get('/:expr_id', cacheMiddleware(300), async (c) => {
 
       expressions.forEach(expr => {
         const mids = meaningIdsMap.get(expr.id) || []
-        ;(expr as any).groups = mids.map(mid => ({ id: mid }))
+          ; (expr as any).groups = mids.map(mid => ({ id: mid }))
       })
 
       return success(c, expressions)
@@ -295,7 +296,7 @@ expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
       return success(c, expression)
     } else {
       const validated = updateExpressionSchema.parse(expressionData)
-      const expression = await service.update(exprId, validated)
+      const expression = await service.update(exprId, validated, user.username)
       return success(c, expression)
     }
   } catch (error: any) {

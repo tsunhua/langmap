@@ -56,10 +56,8 @@
                 </select>
               </td>
               <td class="px-4 py-3">
-                <ImageUploader v-if="expression.language_code === 'image'"
-                  :existing-image-url="expression.text"
-                  @image-ready="handleImageReady(index, $event)"
-                  @image-cleared="handleImageCleared(index)" />
+                <ImageUploader v-if="expression.language_code === 'image'" :existing-image-url="expression.text"
+                  @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
                 <textarea v-else v-model="expression.text" rows="1"
                   class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm text-slate-800 resize-none"
                   :placeholder="$t('text_placeholder')"></textarea>
@@ -170,11 +168,10 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ expression.language_code === 'image' ? $t('image') || 'Image' : $t('text') }} *</label>
-          <ImageUploader v-if="expression.language_code === 'image'"
-            :existing-image-url="expression.text"
-            @image-ready="handleImageReady(index, $event)"
-            @image-cleared="handleImageCleared(index)" />
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ expression.language_code === 'image' ?
+            $t('image') : $t('text') }} *</label>
+          <ImageUploader v-if="expression.language_code === 'image'" :existing-image-url="expression.text"
+            @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
           <textarea v-else v-model="expression.text" rows="3"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-4 text-slate-800"
             :placeholder="$t('text_placeholder')"></textarea>
@@ -183,7 +180,7 @@
         <div class="border border-slate-200 rounded-lg">
           <button @click="toggleAdvanced(index)"
             class="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors rounded-lg">
-            <span class="text-sm font-medium text-slate-700">{{ $t('more') || 'Advanced Options' }}</span>
+            <span class="text-sm font-medium text-slate-700">{{ $t('advanced_options') }}</span>
             <svg xmlns="http://www.w3.org/2000/svg"
               :class="['h-5 w-5 text-slate-500 transition-transform', expression.showAdvanced ? 'rotate-180' : '']"
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -310,7 +307,7 @@
                     <div class="flex-1">
                       <span class="text-slate-800">{{ collection.name }}</span>
                       <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items')
-                        }})</span>
+                      }})</span>
                     </div>
                   </label>
                 </div>
@@ -358,7 +355,7 @@
         </svg>
         {{ error }}
       </div>
- 
+
       <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg">
         <div class="flex items-center mb-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -370,15 +367,11 @@
 
         <div v-if="createdExpressions.length > 0" class="flex flex-wrap items-center gap-1">
           <template v-for="(expr, index) in createdExpressions" :key="expr.id">
-            <router-link
-              v-if="expr.language_code === 'image'"
-              :to="{ name: 'Detail', params: { id: expr.id } }"
+            <router-link v-if="expr.language_code === 'image'" :to="{ name: 'Detail', params: { id: expr.id } }"
               class="inline-flex items-center">
               <img :src="expr.text" class="h-8 w-8 rounded object-cover" alt="Expression image" />
             </router-link>
-            <router-link
-              v-else
-              :to="{ name: 'Detail', params: { id: expr.id } }"
+            <router-link v-else :to="{ name: 'Detail', params: { id: expr.id } }"
               class="text-blue-600 hover:text-blue-800 hover:underline">
               {{ expr.text }}
             </router-link>
@@ -428,11 +421,11 @@
           <div class="flex justify-end gap-3">
             <button type="button" @click="closeCreateCollectionModal"
               class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
-              {{ $t('cancel') || 'Cancel' }}
+              {{ $t('cancel') }}
             </button>
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               :disabled="creatingCollection">
-              {{ creatingCollection ? $t('saving') || 'Saving...' : ($t('save') || 'Save') }}
+              {{ creatingCollection ? $t('saving') : $t('save') }}
             </button>
           </div>
         </form>
@@ -774,7 +767,7 @@ export default {
         }
       } catch (err) {
         console.error('Failed to create collection:', err)
-        alert('Failed to create collection. Please try again.')
+        alert(t('create_collection_failed'))
       } finally {
         creatingCollection.value = false
       }
@@ -1016,7 +1009,7 @@ export default {
             new URL(expr.text)
             return true
           } catch (e) {
-            error.value = '图片 URL 格式无效'
+            error.value = t('invalid_image_url_format')
             return false
           }
         }
@@ -1031,7 +1024,7 @@ export default {
 
       const token = localStorage.getItem('authToken')
       if (!token) {
-        error.value = 'You must be logged in to create expressions'
+        error.value = t('must_be_logged_in_to_create_expressions')
         submitting.value = false
         return
       }
@@ -1049,7 +1042,7 @@ export default {
             const userData = await response.json()
             createdBy = userData.data.username
           } else if (response.status === 401) {
-            error.value = 'Session expired. Please log in again.'
+            error.value = t('session_expired_please_log_in_again')
             localStorage.removeItem('authToken')
             router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return
@@ -1092,7 +1085,7 @@ export default {
 
         if (!res.ok) {
           if (res.status === 401) {
-            error.value = 'Session expired. Please log in again.'
+            error.value = t('session_expired_please_log_in_again')
             localStorage.removeItem('authToken')
             router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return

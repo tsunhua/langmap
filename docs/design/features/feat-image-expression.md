@@ -23,14 +23,16 @@
 
 ## 2. 存储与架构设计
 
-### 2.1 架构数据流 (S3-compatible Presigned URL 直传)
-
-采用 **客户端直传 R2 (Direct to R2 via Presigned URL)** 的架构，避免图片流经过 Cloudflare Worker 带来的带宽高负荷和执行时间消耗。
-
+### 2.1 架构數據流 (Worker 代理上傳)
+ 
+採用 **Worker 代理上傳至 R2** 的架構。客戶端將壓縮後的圖片發送至 Worker，由 Worker 驗證後寫入 R2。
+ 
 流程如下：
-1. **申请**：客户端请求 Worker 获取 R2 上传预签名 URL (Presigned URL)。
-2. **压缩与直传**：客户端压缩图片（目标 100KB 以内），使用预签名 URL 直接上传至 R2。
-3. **绑定**：上传成功后，回传结果给 Worker，创建表达式记录。
+1. **壓縮**：客戶端壓縮圖片（目標 100KB 以內）。
+2. **上傳**：客戶端將圖片發送至 `/api/v1/images/upload` 接口。
+3. **驗證與存儲**：Worker 接收圖片，驗證用戶權限，並將圖片流直接寫入 R2。
+4. **返回**：Worker 返回圖片的公開訪問 URL。
+5. **綁定**：客戶端使用返回的 URL 創建表達式記錄。
 
 ### 2.2 数据格式与存储结构
 
@@ -136,14 +138,13 @@ SELECT * FROM expressions WHERE language_code = 'en';
 ```
 
 ### 4.3 图片上传交互流程
-
-1. **选择图片**：用户点击上传区域或拖拽图片
-2. **前端压缩**：使用 Canvas 自动压缩图片到 100KB 以内
-3. **预览确认**：显示压缩后的图片预览
-4. **获取签名**：调用 API 获取 R2 预签名 URL
-5. **直传 R2**：使用预签名 URL 上传压缩后的图片
-6. **保存数据**：上传成功后，保存到数据库（`language_code='image'`, `text=图片URL`）
-7. **错误处理**：任何步骤失败，允许用户重新上传
+ 
+1. **選擇圖片**：用戶點擊上傳區域或拖拽圖片
+2. **前端壓縮**：使用 Canvas 自動壓縮圖片到 100KB 以內
+3. **預覽確認**：顯示壓縮後的圖片預覽
+4. **上傳圖片**：調用 `/api/v1/images/upload` 將壓縮後的圖片發送至 Worker
+5. **保存數據**：上傳成功後，保存到數據庫（`language_code='image'`, `text=圖片URL`）
+6. **錯誤處理**：任何步驟失敗，允許用戶重新上傳
 
 ### 4.4 前端判断逻辑
 
@@ -172,22 +173,19 @@ SELECT * FROM expressions WHERE language_code = 'en';
 
 ## 5. API 接口设计
 
-### 5.1 获取预签名 URL
-
-**Endpoint**: `POST /api/v1/images/upload-presign`
-
-**Auth**: 限定已登录用户 (`JWT`)
-
-**Request Parameters**:
-- `content_type`: 图片 MIME 类型（如 `image/webp`）
-- `content_length`: 预估文件大小
-
+### 5.1 图片上传
+ 
+**Endpoint**: `POST /api/v1/images/upload`
+ 
+**Auth**: 限定已登錄用戶 (`JWT`)
+ 
+**Request**: `multipart/form-data`
+- `image_file`: 圖片二進制文件 (Blob)
+ 
 **Response**:
 ```json
 {
-  "upload_url": "https://<r2-bucket>.r2.cloudflarestorage.com/images/expressions/123/xxx.webp?X-Amz-Signature...",
-  "image_url": "https://images.langmap.io/expressions/123/xxx.webp",
-  "expires_in": 300
+  "image_url": "https://images.langmap.io/xxx.webp"
 }
 ```
 
@@ -250,28 +248,22 @@ async function compressImage(file: File, maxWidth: number = 600, quality: number
 ```
 
 ### 6.2 完整上传流程
-
+ 
 ```typescript
 async function uploadImage(file: File): Promise<string> {
-  // 1. 压缩图片
+  // 1. 壓縮圖片
   const compressed = await compressImage(file)
-
-  // 2. 获取预签名 URL
-  const { upload_url, image_url } = await fetch('/api/v1/images/upload-presign', {
+ 
+  // 2. 上傳至 Worker
+  const formData = new FormData()
+  formData.append('image_file', compressed)
+  
+  const { image_url } = await fetch('/api/v1/images/upload', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      content_type: compressed.type,
-      content_length: compressed.size
-    })
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData
   }).then(r => r.json())
-
-  // 3. 直传 R2
-  await fetch(upload_url, {
-    method: 'PUT',
-    body: compressed
-  })
-
+ 
   return image_url
 }
 ```

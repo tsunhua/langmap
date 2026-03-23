@@ -408,5 +408,19 @@
   "confirm_delete": "Confirm Delete",
   "remove_item": "Remove Item",
   "view_details": "Voir les détails",
-  "confirm": "Confirmer"
+  "confirm": "Confirmer",
+  "compressing_uploading": "Compression et téléchargement...",
+  "click_to_upload_image": "Cliquez pour télécharger l'image",
+  "or_drag_image_here": "Ou faites glisser l'image ici",
+  "supported_formats": "Prend en charge JPG, PNG, WebP, max 5 Mo (compression automatique)",
+  "preview": "Aperçu",
+  "delete_image": "Supprimer l'image",
+  "compressed_image_too_large": "L'image compressée est encore trop grande, veuillez choisir une autre image",
+  "upload_failed_please_try_again": "Échec du téléchargement, veuillez réessayer",
+  "image": "Image",
+  "advanced_options": "Options avancées",
+  "create_collection_failed": "Échec de la création de la collection. Veuillez réessayer.",
+  "invalid_image_url_format": "Format d'URL d'image invalide",
+  "must_be_logged_in_to_create_expressions": "Vous devez être connecté pour créer des expressions",
+  "session_expired_please_log_in_again": "Session expirée. Veuillez vous reconnecter."
 }

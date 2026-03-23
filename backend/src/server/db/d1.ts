@@ -217,8 +217,8 @@ export class D1DatabaseService extends AbstractDatabaseService {
     return this.expressionQueries.findMeaningIds(expressionIds)
   }
 
-  async upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning: boolean = false): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
-    console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions', 'forceNewMeaning:', forceNewMeaning)
+  async upsertExpressions(expressions: Partial<Expression>[], forceNewMeaning: boolean = false, targetMeaningId?: number): Promise<Array<{ id: number, expression?: Expression, error?: string }>> {
+    console.log('[upsertExpressions] Starting batch upsert with', expressions.length, 'expressions', 'forceNewMeaning:', forceNewMeaning, 'targetMeaningId:', targetMeaningId)
 
     if (expressions.length === 0) return []
 
@@ -260,7 +260,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
       return priorityA - priorityB
     })
 
-    let finalMeaningId: number | undefined
+    let finalMeaningId: number | undefined = targetMeaningId
 
     const meaningIds: number[] = []
     for (const expr of sortedExprs) {
@@ -273,53 +273,55 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
     const uniqueMeaningIds = [...new Set(meaningIds)]
 
-    if (forceNewMeaning) {
-      console.log('[upsertExpressions] Force new meaning mode enabled')
-      console.log('[upsertExpressions] Existing meaning_ids to exclude:', uniqueMeaningIds)
+    if (finalMeaningId === undefined) {
+      if (forceNewMeaning) {
+        console.log('[upsertExpressions] Force new meaning mode enabled')
+        console.log('[upsertExpressions] Existing meaning_ids to exclude:', uniqueMeaningIds)
 
-      for (const expr of sortedExprs) {
-        if (!expr.id) continue
+        for (const expr of sortedExprs) {
+          if (!expr.id) continue
 
-        const exprId = expr.id
-        if (!uniqueMeaningIds.includes(exprId)) {
-          finalMeaningId = exprId
-          console.log('[upsertExpressions] Selected new expression ID as meaning_id (force new):', finalMeaningId)
-          break
+          const exprId = expr.id
+          if (!uniqueMeaningIds.includes(exprId)) {
+            finalMeaningId = exprId
+            console.log('[upsertExpressions] Selected new expression ID as meaning_id (force new):', finalMeaningId)
+            break
+          }
         }
-      }
 
-      if (!finalMeaningId && sortedExprs.length > 0) {
-        finalMeaningId = sortedExprs[0].id
-        console.log('[upsertExpressions] All expression IDs already used as meaning_ids, using first as fallback:', finalMeaningId)
-      }
-    } else {
-      if (meaningIds.length === 0) {
-        if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
-          const firstExpr = sortedExprs[0]
-          const firstId = firstExpr.id !== undefined ? firstExpr.id : this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
-          finalMeaningId = firstId
-          console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
+        if (!finalMeaningId && sortedExprs.length > 0) {
+          finalMeaningId = sortedExprs[0].id
+          console.log('[upsertExpressions] All expression IDs already used as meaning_ids, using first as fallback:', finalMeaningId)
         }
       } else {
-        if (uniqueMeaningIds.length === 1) {
-          finalMeaningId = uniqueMeaningIds[0]
-          console.log('[upsertExpressions] All expressions share same meaning_id:', finalMeaningId)
-        } else {
-          console.log('[upsertExpressions] Multiple different meaning_ids found:', uniqueMeaningIds)
-          for (const expr of sortedExprs) {
-            if (!expr.id) continue
-
-            const id = expr.id
-            if (!uniqueMeaningIds.includes(id)) {
-              finalMeaningId = id
-              console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
-              break
-            }
+        if (meaningIds.length === 0) {
+          if (sortedExprs.length > 0 && sortedExprs[0].text && sortedExprs[0].language_code) {
+            const firstExpr = sortedExprs[0]
+            const firstId = firstExpr.id !== undefined ? firstExpr.id : this.stableExpressionId(firstExpr.text!, firstExpr.language_code!)
+            finalMeaningId = firstId
+            console.log('[upsertExpressions] No meaning_ids found, using first expression ID as meaning_id:', finalMeaningId)
           }
+        } else {
+          if (uniqueMeaningIds.length === 1) {
+            finalMeaningId = uniqueMeaningIds[0]
+            console.log('[upsertExpressions] All expressions share same meaning_id:', finalMeaningId)
+          } else {
+            console.log('[upsertExpressions] Multiple different meaning_ids found:', uniqueMeaningIds)
+            for (const expr of sortedExprs) {
+              if (!expr.id) continue
 
-          if (!finalMeaningId && sortedExprs.length > 0) {
-            finalMeaningId = sortedExprs[0].id
-            console.log('[upsertExpressions] Using first expression ID as new meaning_id:', finalMeaningId)
+              const id = expr.id
+              if (!uniqueMeaningIds.includes(id)) {
+                finalMeaningId = id
+                console.log('[upsertExpressions] Found expression with ID not in meaning_ids:', finalMeaningId)
+                break
+              }
+            }
+
+            if (!finalMeaningId && sortedExprs.length > 0) {
+              finalMeaningId = sortedExprs[0].id
+              console.log('[upsertExpressions] Using first expression ID as new meaning_id:', finalMeaningId)
+            }
           }
         }
       }
@@ -519,7 +521,7 @@ export class D1DatabaseService extends AbstractDatabaseService {
    * Format timestamp fields to ensure ISO 8601 format with 'Z' suffix for UTC
    * This handles SQLite CURRENT_TIMESTAMP format (YYYY-MM-DD HH:MM:SS) by converting to ISO format
    */
-  private formatTimestamps<T extends Record<string, any>>(obj: T): T {
+  public formatTimestamps<T extends Record<string, any>>(obj: T): T {
     const result = { ...obj }
     const timestampFields = ['created_at', 'updated_at']
 

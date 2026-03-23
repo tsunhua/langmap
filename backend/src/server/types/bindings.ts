@@ -13,4 +13,10 @@ export interface Bindings {
   R2_SECRET_ACCESS_KEY: string;
 }
 
+export interface JWTPayload {
+  id: number;
+  username: string;
+  role: string;
+}
+
 export default Bindings
