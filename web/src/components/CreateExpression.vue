@@ -182,9 +182,8 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const { t, locale } = useI18n()
-    const text = ref(props.initialText || '')
-    // Only use route.query.language_code if opening directly from URL, not when called from Detail page
-    const language_code = ref('')
+    const text = ref(props.initialText || route.query.text || '')
+    const language_code = ref(route.query.language_code || '')
 
     // Languages data
     const languages = ref([])
@@ -235,8 +234,7 @@ export default {
     const loadLanguages = async () => {
       languagesLoading.value = true
       try {
-        // Pass undefined to get all languages (including is_active=0)
-        const result = await languagesApi.getAll(undefined)
+        const result = await languagesApi.getAll()
         if (result.success && result.data) {
           languages.value = result.data
         } else {
@@ -658,11 +656,9 @@ export default {
     watch(() => props.visible, (newVisible) => {
       if (newVisible) {
         // Reset form fields when modal opens
-        text.value = props.initialText || ''
-        // Only use route.query.language_code if initialText is not provided
-        const hasInitialText = props.initialText && props.initialText.trim() !== ''
-        language_code.value = hasInitialText ? '' : (route.query.language_code || '')
-        regionInput.value = ''
+        text.value = props.initialText || route.query.text || ''
+        language_code.value = route.query.language_code || ''
+        regionInput.value = route.query.region || ''
 
         // Load languages
         loadLanguages()
