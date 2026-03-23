@@ -1,17 +1,45 @@
 import { Hono } from 'hono'
 import api from './server/api'
+import type { R2Bucket } from '@cloudflare/workers-types'
 
 // Define types for our environment bindings
 interface Bindings {
   DB: D1Database;
   ASSETS: any;
   RESEND_API_KEY: string;
+  IMAGES_BUCKET: R2Bucket;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
 // 正确的路由配置应该是：
 app.route('/api', api);
+
+// 图片资产代理
+app.get('/image-assets/*', async (c) => {
+  if (!c.env?.IMAGES_BUCKET) {
+    return new Response('Storage configuration error', { status: 500 })
+  }
+
+  const key = c.req.path.replace('/image-assets/', '')
+
+  try {
+    const object = await c.env.IMAGES_BUCKET.get(key)
+
+    if (!object) {
+      return new Response('Not found', { status: 404 })
+    }
+
+    const headers = new Headers()
+    object.writeHttpMetadata(headers)
+    headers.set('etag', object.httpEtag)
+
+    return new Response(object.body, headers)
+  } catch (error) {
+    console.error('Error serving image:', error)
+    return new Response('Error serving image', { status: 500 })
+  }
+})
 
 // 处理所有非API路由，返回前端应用
 app.get('*', async (c) => {

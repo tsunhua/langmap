@@ -56,7 +56,9 @@
                 </select>
               </td>
               <td class="px-4 py-3">
-                <textarea v-model="expression.text" rows="1"
+                <ImageUploader v-if="expression.language_code === 'image'" :existing-image-url="expression.text"
+                  @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
+                <textarea v-else v-model="expression.text" rows="1"
                   class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm text-slate-800 resize-none"
                   :placeholder="$t('text_placeholder')"></textarea>
               </td>
@@ -166,8 +168,11 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
-          <textarea v-model="expression.text" rows="3"
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ expression.language_code === 'image' ?
+            $t('image') : $t('text') }} *</label>
+          <ImageUploader v-if="expression.language_code === 'image'" :existing-image-url="expression.text"
+            @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
+          <textarea v-else v-model="expression.text" rows="3"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-4 text-slate-800"
             :placeholder="$t('text_placeholder')"></textarea>
         </div>
@@ -175,7 +180,7 @@
         <div class="border border-slate-200 rounded-lg">
           <button @click="toggleAdvanced(index)"
             class="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors rounded-lg">
-            <span class="text-sm font-medium text-slate-700">{{ $t('more') || 'Advanced Options' }}</span>
+            <span class="text-sm font-medium text-slate-700">{{ $t('advanced_options') }}</span>
             <svg xmlns="http://www.w3.org/2000/svg"
               :class="['h-5 w-5 text-slate-500 transition-transform', expression.showAdvanced ? 'rotate-180' : '']"
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,7 +307,7 @@
                     <div class="flex-1">
                       <span class="text-slate-800">{{ collection.name }}</span>
                       <span class="text-xs text-slate-400 ml-2">({{ collection.items_count || 0 }} {{ $t('items')
-                        }})</span>
+                      }})</span>
                     </div>
                   </label>
                 </div>
@@ -351,12 +356,28 @@
         {{ error }}
       </div>
 
-      <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        {{ $t('success') }}
+      <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg">
+        <div class="flex items-center mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          {{ $t('success') }}:
+        </div>
+
+        <div v-if="createdExpressions.length > 0" class="flex flex-wrap items-center gap-1">
+          <template v-for="(expr, index) in createdExpressions" :key="expr.id">
+            <router-link v-if="expr.language_code === 'image'" :to="{ name: 'Detail', params: { id: expr.id } }"
+              class="inline-flex items-center">
+              <img :src="expr.text" class="h-8 w-8 rounded object-cover" alt="Expression image" />
+            </router-link>
+            <router-link v-else :to="{ name: 'Detail', params: { id: expr.id } }"
+              class="text-blue-600 hover:text-blue-800 hover:underline">
+              {{ expr.text }}
+            </router-link>
+            <span v-if="index < createdExpressions.length - 1" class="text-slate-400">|</span>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -400,11 +421,11 @@
           <div class="flex justify-end gap-3">
             <button type="button" @click="closeCreateCollectionModal"
               class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
-              {{ $t('cancel') || 'Cancel' }}
+              {{ $t('cancel') }}
             </button>
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               :disabled="creatingCollection">
-              {{ creatingCollection ? $t('saving') || 'Saving...' : ($t('save') || 'Save') }}
+              {{ creatingCollection ? $t('saving') : $t('save') }}
             </button>
           </div>
         </form>
@@ -420,12 +441,13 @@ import { useI18n } from 'vue-i18n'
 import { languagesApi } from '../api/index.ts'
 import AddLanguageModal from '../components/AddLanguageModal.vue'
 import AudioRecorder from '../components/AudioRecorder.vue'
+import ImageUploader from '../components/ImageUploader.vue'
 
 let expressionIdCounter = 0
 
 export default {
   name: 'CreateExpressionPage',
-  components: { AddLanguageModal, AudioRecorder },
+  components: { AddLanguageModal, AudioRecorder, ImageUploader },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -455,6 +477,7 @@ export default {
     const addingLanguage = ref(false)
     const error = ref(null)
     const success = ref(false)
+    const createdExpressions = ref([])
     const submitting = ref(false)
     const globalShowAdvanced = ref(false)
     const minimalMode = ref(false)
@@ -589,6 +612,14 @@ export default {
     const handleAudioCleared = (index) => {
       expressions.value[index].audioBlob = null
       expressions.value[index].audioMimeType = null
+    }
+
+    const handleImageReady = (index, imageUrl) => {
+      expressions.value[index].text = imageUrl
+    }
+
+    const handleImageCleared = (index) => {
+      expressions.value[index].text = ''
     }
 
     const handleLanguageChange = (index) => {
@@ -736,7 +767,7 @@ export default {
         }
       } catch (err) {
         console.error('Failed to create collection:', err)
-        alert('Failed to create collection. Please try again.')
+        alert(t('create_collection_failed'))
       } finally {
         creatingCollection.value = false
       }
@@ -968,7 +999,22 @@ export default {
       success.value = false
       submitting.value = true
 
-      const validExpressions = expressions.value.filter(expr => expr.text && expr.language_code)
+      const validExpressions = expressions.value.filter(expr => {
+        if (!expr.text || !expr.language_code) {
+          return false
+        }
+        // For image language, validate it's a valid URL
+        if (expr.language_code === 'image') {
+          try {
+            new URL(expr.text)
+            return true
+          } catch (e) {
+            error.value = t('invalid_image_url_format')
+            return false
+          }
+        }
+        return true
+      })
 
       if (validExpressions.length === 0) {
         error.value = t('create.requiredError')
@@ -978,7 +1024,7 @@ export default {
 
       const token = localStorage.getItem('authToken')
       if (!token) {
-        error.value = 'You must be logged in to create expressions'
+        error.value = t('must_be_logged_in_to_create_expressions')
         submitting.value = false
         return
       }
@@ -996,7 +1042,7 @@ export default {
             const userData = await response.json()
             createdBy = userData.data.username
           } else if (response.status === 401) {
-            error.value = 'Session expired. Please log in again.'
+            error.value = t('session_expired_please_log_in_again')
             localStorage.removeItem('authToken')
             router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return
@@ -1039,7 +1085,7 @@ export default {
 
         if (!res.ok) {
           if (res.status === 401) {
-            error.value = 'Session expired. Please log in again.'
+            error.value = t('session_expired_please_log_in_again')
             localStorage.removeItem('authToken')
             router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
             return
@@ -1053,6 +1099,13 @@ export default {
 
         // 适配新的响应格式 { success, data: { meaning_id, results } }
         const createdResults = result.data?.results || result.results || []
+
+        // Save created expressions for display
+        createdExpressions.value = createdResults
+          .filter(result => result && result.expression && result.expression.id)
+          .map(result => result.expression)
+
+        console.log('Created expressions for display:', createdExpressions.value)
 
         // Process audio uploads if present
         const audioResults = await processAudioUploads(validExpressions, createdResults, token)
@@ -1085,12 +1138,13 @@ export default {
       }
     }
 
-    async function processAudioUploads(originalExpressions, createdExpressions, token) {
+    async function processAudioUploads(originalExpressions, createdResults, token) {
       const results = { success: 0, errors: 0 }
 
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
-        const created = createdExpressions[i]
+        const createdResult = createdResults[i]
+        const created = createdResult?.expression
 
         if (original.audioBlob && created && created.id) {
           try {
@@ -1126,12 +1180,13 @@ export default {
       return results
     }
 
-    async function addToCollections(originalExpressions, createdExpressions) {
+    async function addToCollections(originalExpressions, createdResults) {
       const results = { success: 0, errors: 0 }
 
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
-        const created = createdExpressions[i]
+        const createdResult = createdResults[i]
+        const created = createdResult?.expression
 
         if (original.collections && original.collections.length > 0 && created && created.id) {
           for (const collectionId of original.collections) {
@@ -1188,6 +1243,7 @@ export default {
       addingLanguage,
       error,
       success,
+      createdExpressions,
       submitting,
       minimalMode,
       activeCollectionIndex,
@@ -1200,6 +1256,8 @@ export default {
       goBack,
       t,
       handleAddLanguage,
+      handleImageReady,
+      handleImageCleared,
       // Collection-related
       userCollections,
       collectionsLoading,

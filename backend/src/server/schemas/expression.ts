@@ -4,14 +4,70 @@ export const createExpressionSchema = z.object({
   text: z.string().min(1).max(1000),
   language_code: z.string().min(2).max(36),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional()
+  audio_url: z.string().optional(),
+  region_code: z.string().optional()
+}).superRefine((data, ctx) => {
+  if (data.language_code === 'image') {
+    if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Image URL must start with http:// or https://',
+        path: ['text']
+      })
+    }
+
+    try {
+      const url = new URL(data.text)
+      if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Only system-generated image URLs are allowed',
+          path: ['text']
+        })
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid image URL format',
+        path: ['text']
+      })
+    }
+  }
 })
 
 export const updateExpressionSchema = z.object({
   text: z.string().min(1).max(1000).optional(),
   language_code: z.string().min(2).max(36).optional(),
   meaning_id: z.number().optional(),
-  audio_url: z.string().optional()
+  audio_url: z.string().optional(),
+  region_code: z.string().optional()
+}).superRefine((data, ctx) => {
+  if (data.language_code === 'image' && data.text) {
+    if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Image URL must start with http:// or https://',
+        path: ['text']
+      })
+    }
+
+    try {
+      const url = new URL(data.text)
+      if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Only system-generated image URLs are allowed',
+          path: ['text']
+        })
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid image URL format',
+        path: ['text']
+      })
+    }
+  }
 })
 
 export const batchExpressionSchema = z.object({
@@ -19,9 +75,41 @@ export const batchExpressionSchema = z.object({
     text: z.string().min(1).max(1000),
     language_code: z.string().min(2).max(36),
     id: z.number().optional(),
-    created_by: z.string().optional()
+    meaning_id: z.number().optional(),
+    created_by: z.string().optional(),
+    audio_url: z.string().optional(),
+    region_code: z.string().optional()
   })).min(1).max(50),
   ensure_new_group: z.boolean().optional()
+}).superRefine((data, ctx) => {
+  data.expressions.forEach((expr, index) => {
+    if (expr.language_code === 'image') {
+      if (!expr.text.startsWith('http://') && !expr.text.startsWith('https://')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Image URL must start with http:// or https://',
+          path: ['expressions', index, 'text']
+        })
+      }
+
+      try {
+        const url = new URL(expr.text)
+        if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Only system-generated image URLs are allowed',
+            path: ['expressions', index, 'text']
+          })
+        }
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Invalid image URL format',
+          path: ['expressions', index, 'text']
+        })
+      }
+    }
+  })
 })
 
 export const ensureExpressionsSchema = z.object({

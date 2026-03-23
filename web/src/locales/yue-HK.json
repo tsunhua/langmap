@@ -406,5 +406,18 @@
   "confirm_delete": "確認刪除",
   "remove_item": "移除項目",
   "view_details": "睇詳情",
-  "confirm": "確認"
+  "confirm": "確認",
+  "compressing_uploading": "壓縮緊並上傳中...",
+  "click_to_upload_image": "點擊上傳圖片",
+  "or_drag_image_here": "或者將圖片拖到呢度",
+  "supported_formats": "支援 JPG、PNG、WebP，最大 5MB（會自動壓縮）",
+  "delete_image": "刪除圖片",
+  "compressed_image_too_large": "壓縮後圖片仍然過大，請選擇其他圖片",
+  "upload_failed_please_try_again": "上傳失敗，請再試一次",
+  "image": "圖片",
+  "advanced_options": "進階選項",
+  "create_collection_failed": "建立收藏集失敗，請再試一次。",
+  "invalid_image_url_format": "圖片 URL 格式無效",
+  "must_be_logged_in_to_create_expressions": "你必須登入先可以建立詞句",
+  "session_expired_please_log_in_again": "登入已過期，請重新登入。"
 }

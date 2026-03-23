@@ -9,6 +9,9 @@ import { success, created, badRequest, notFound, forbidden, internalError, pagin
 
 const expressionsRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
+// 速率限制存储
+const expressionRateLimiter = new Map<string, { count: number, resetTime: number, imageCount: number }>()
+
 expressionsRoutes.get('/', async (c) => {
   try {
     const db = createDatabaseService(c.env)
@@ -47,7 +50,38 @@ expressionsRoutes.post('/', requireAuth, async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
 
+    // 验证
     const validated = createExpressionSchema.parse(body)
+
+    // 速率限制（管理员无限制）
+    if (user.role !== 'super_admin' && user.role !== 'admin') {
+      const now = Date.now()
+      const key = `expression:${user.username}`
+      const record = expressionRateLimiter.get(key)
+
+      if (record && record.resetTime > now) {
+        // 图片表达式额外限制：每分钟最多 10 次
+        if (validated.language_code === 'image') {
+          if (record.imageCount >= 10) {
+            return badRequest(c, 'Image expression creation too frequent, please try again later')
+          }
+          record.imageCount++
+        }
+
+        // 总体限制：每分钟最多 20 次
+        if (record.count >= 20) {
+          return badRequest(c, 'Expression creation too frequent, please try again later')
+        }
+        record.count++
+      } else {
+        expressionRateLimiter.set(key, {
+          count: 1,
+          resetTime: now + 60000,
+          imageCount: validated.language_code === 'image' ? 1 : 0
+        })
+      }
+    }
+
     const expression = await service.create(validated, user.username)
     await clearCache(c, '/api/v1/expressions')
 
@@ -119,7 +153,7 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     const forceNewGroup = ensure_new_group === true
 
     console.log('[POST /expressions/batch] Creating exprsWithIds...')
-    const exprsWithIds = expressions.map(expr => {
+    const exprsWithIds = expressions.map((expr: any) => {
       console.log('[POST /expressions/batch] Processing expression:', expr)
       if (!expr.text || !expr.language_code) {
         throw new Error('Text and language_code are required for all expressions')
@@ -135,9 +169,10 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
     })
     console.log('[POST /expressions/batch] exprsWithIds created:', exprsWithIds.length)
 
-    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup)
+    const targetMeaningId = expressions[0]?.meaning_id
+    const results = await db.upsertExpressions(exprsWithIds, forceNewGroup, targetMeaningId)
 
-    const existingIds = exprsWithIds.map(e => e.id!)
+    const existingIds = exprsWithIds.map((e: any) => e.id!)
     const existingMeaningIds = await db.getExpressionMeaningIds(existingIds)
 
     let finalMeaningId: number | undefined
@@ -192,7 +227,7 @@ expressionsRoutes.get('/:expr_id', cacheMiddleware(300), async (c) => {
 
       expressions.forEach(expr => {
         const mids = meaningIdsMap.get(expr.id) || []
-        ;(expr as any).groups = mids.map(mid => ({ id: mid }))
+          ; (expr as any).groups = mids.map(mid => ({ id: mid }))
       })
 
       return success(c, expressions)
@@ -261,7 +296,7 @@ expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
       return success(c, expression)
     } else {
       const validated = updateExpressionSchema.parse(expressionData)
-      const expression = await service.update(exprId, validated)
+      const expression = await service.update(exprId, validated, user.username)
       return success(c, expression)
     }
   } catch (error: any) {

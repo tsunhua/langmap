@@ -8,15 +8,15 @@ interface DBService {
   clearHeatmapCache(): void
   stableExpressionId(text: string, languageCode: string): number
   formatTimestamps<T>(obj: T): T
-  
+
   // High-level operations still in D1DatabaseService
-  upsertExpressions(expressions: any[], forceNewMeaning: boolean): Promise<any[]>
+  upsertExpressions(expressions: any[], forceNewMeaning: boolean, targetMeaningId?: number): Promise<any[]>
   ensureExpressionsExist(expressions: any[], username: string): Promise<any>
   deleteExpression(id: number): Promise<boolean>
 }
 
 export class ExpressionService {
-  constructor(private db: DBService) {}
+  constructor(private db: DBService) { }
 
   async getAll(skip: number, limit: number, filters: {
     languages?: string[]
@@ -73,7 +73,7 @@ export class ExpressionService {
     this.db.clearStatisticsCache()
   }
 
-  async batchUpsert(expressions: any[], ensureNewMeaning: boolean, username: string): Promise<any> {
+  async batchUpsert(expressions: any[], ensureNewMeaning: boolean, username: string, targetMeaningId?: number): Promise<any> {
     const forceNewMeaning = ensureNewMeaning === true
 
     const exprsWithIds = expressions.map(expr => {
@@ -87,7 +87,7 @@ export class ExpressionService {
       }
     })
 
-    const results = await this.db.upsertExpressions(exprsWithIds, forceNewMeaning)
+    const results = await this.db.upsertExpressions(exprsWithIds, forceNewMeaning, targetMeaningId)
     return { results }
   }
 
