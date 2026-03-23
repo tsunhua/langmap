@@ -4,6 +4,7 @@ export { expressionGroupsApi } from './expressionGroups.js'
 export { languagesApi } from './languages.js'
 export { collectionsApi } from './collections.js'
 export { handbooksApi } from './handbooks.js'
+export * from './images.js'
 
 export type {
   RegisterData,
