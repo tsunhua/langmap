@@ -358,13 +358,33 @@
         </svg>
         {{ error }}
       </div>
+ 
+      <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg">
+        <div class="flex items-center mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          {{ $t('success') }}:
+        </div>
 
-      <div v-if="success" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        {{ $t('success') }}
+        <div v-if="createdExpressions.length > 0" class="flex flex-wrap items-center gap-1">
+          <template v-for="(expr, index) in createdExpressions" :key="expr.id">
+            <router-link
+              v-if="expr.language_code === 'image'"
+              :to="{ name: 'Detail', params: { id: expr.id } }"
+              class="inline-flex items-center">
+              <img :src="expr.text" class="h-8 w-8 rounded object-cover" alt="Expression image" />
+            </router-link>
+            <router-link
+              v-else
+              :to="{ name: 'Detail', params: { id: expr.id } }"
+              class="text-blue-600 hover:text-blue-800 hover:underline">
+              {{ expr.text }}
+            </router-link>
+            <span v-if="index < createdExpressions.length - 1" class="text-slate-400">|</span>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -464,6 +484,7 @@ export default {
     const addingLanguage = ref(false)
     const error = ref(null)
     const success = ref(false)
+    const createdExpressions = ref([])
     const submitting = ref(false)
     const globalShowAdvanced = ref(false)
     const minimalMode = ref(false)
@@ -1086,6 +1107,13 @@ export default {
         // 适配新的响应格式 { success, data: { meaning_id, results } }
         const createdResults = result.data?.results || result.results || []
 
+        // Save created expressions for display
+        createdExpressions.value = createdResults
+          .filter(result => result && result.expression && result.expression.id)
+          .map(result => result.expression)
+
+        console.log('Created expressions for display:', createdExpressions.value)
+
         // Process audio uploads if present
         const audioResults = await processAudioUploads(validExpressions, createdResults, token)
         if (audioResults.errors > 0) {
@@ -1117,12 +1145,13 @@ export default {
       }
     }
 
-    async function processAudioUploads(originalExpressions, createdExpressions, token) {
+    async function processAudioUploads(originalExpressions, createdResults, token) {
       const results = { success: 0, errors: 0 }
 
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
-        const created = createdExpressions[i]
+        const createdResult = createdResults[i]
+        const created = createdResult?.expression
 
         if (original.audioBlob && created && created.id) {
           try {
@@ -1158,12 +1187,13 @@ export default {
       return results
     }
 
-    async function addToCollections(originalExpressions, createdExpressions) {
+    async function addToCollections(originalExpressions, createdResults) {
       const results = { success: 0, errors: 0 }
 
       for (let i = 0; i < originalExpressions.length; i++) {
         const original = originalExpressions[i]
-        const created = createdExpressions[i]
+        const createdResult = createdResults[i]
+        const created = createdResult?.expression
 
         if (original.collections && original.collections.length > 0 && created && created.id) {
           for (const collectionId of original.collections) {
@@ -1220,6 +1250,7 @@ export default {
       addingLanguage,
       error,
       success,
+      createdExpressions,
       submitting,
       minimalMode,
       activeCollectionIndex,

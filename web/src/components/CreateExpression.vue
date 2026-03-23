@@ -42,7 +42,6 @@
                   <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                     {{ lang.name }} ({{ lang.code }})
                   </option>
-                  <option value="image">📷 图片</option>
                 </select>
                 <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -183,8 +182,9 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const { t, locale } = useI18n()
-    const text = ref(props.initialText || route.query.text || '')
-    const language_code = ref(route.query.language_code || '')
+    const text = ref(props.initialText || '')
+    // Only use route.query.language_code if opening directly from URL, not when called from Detail page
+    const language_code = ref('')
 
     // Languages data
     const languages = ref([])
@@ -235,7 +235,8 @@ export default {
     const loadLanguages = async () => {
       languagesLoading.value = true
       try {
-        const result = await languagesApi.getAll()
+        // Pass undefined to get all languages (including is_active=0)
+        const result = await languagesApi.getAll(undefined)
         if (result.success && result.data) {
           languages.value = result.data
         } else {
@@ -375,17 +376,9 @@ export default {
               } else {
                 displayName = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lon).toFixed(4)}`
               }
-    }
+            }
 
-    const handleImageReady = (url) => {
-      text.value = url
-    }
-
-    const handleImageCleared = () => {
-      text.value = ''
-    }
-
-    return {
+            return {
               name: displayName,
               latitude: parseFloat(lat),
               longitude: parseFloat(lon),
@@ -414,6 +407,14 @@ export default {
           country_name: null
         }
       }
+    }
+
+    const handleImageReady = (url) => {
+      text.value = url
+    }
+
+    const handleImageCleared = () => {
+      text.value = ''
     }
 
     // Initialize map for region selection
@@ -657,9 +658,11 @@ export default {
     watch(() => props.visible, (newVisible) => {
       if (newVisible) {
         // Reset form fields when modal opens
-        text.value = props.initialText || route.query.text || ''
-        language_code.value = route.query.language_code || ''
-        regionInput.value = route.query.region || ''
+        text.value = props.initialText || ''
+        // Only use route.query.language_code if initialText is not provided
+        const hasInitialText = props.initialText && props.initialText.trim() !== ''
+        language_code.value = hasInitialText ? '' : (route.query.language_code || '')
+        regionInput.value = ''
 
         // Load languages
         loadLanguages()
