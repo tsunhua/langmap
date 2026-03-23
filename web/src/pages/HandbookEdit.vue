@@ -168,10 +168,11 @@
                         class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
                         @click="insertAndClear(expr)">
                         <div class="flex justify-between items-center w-full">
-                          <span class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                          <span v-if="expr.language_code !== 'image'" class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                          <img v-else :src="expr.text" class="h-12 w-12 object-contain rounded" alt="expression image" />
                           <span
                             class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
-                              expr.language_code }}</span>
+                            expr.language_code }}</span>
                         </div>
                       </div>
                     </div>
@@ -651,7 +652,11 @@ export default {
             return Object.entries(tg.translations).map(([langCode, text]) => {
               const color = getLanguageColor({ code: langCode })
               const langClass = langCode.replace('.', '-')
-              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+              // Render image expressions as <img> tags
+              const textDisplay = langCode === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
             }).join(' ')
           }).join(' ')}
             </span>
@@ -662,7 +667,11 @@ export default {
             return Object.entries(tg.translations).map(([langCode, text]) => {
               const color = getLanguageColor({ code: langCode })
               const langClass = langCode.replace('.', '-')
-              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+              // Render image expressions as <img> tags
+              const textDisplay = langCode === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
             }).join(' ')
           }).join(' ')}
               </span>
@@ -677,7 +686,11 @@ export default {
             return Object.entries(tg.translations).map(([langCode, text]) => {
               const color = getLanguageColor({ code: langCode })
               const langClass = langCode.replace('.', '-')
-              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+              // Render image expressions as <img> tags
+              const textDisplay = langCode === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
             }).join(' ')
           }).join(' ')}
             </span>
@@ -688,7 +701,11 @@ export default {
             return Object.entries(tg.translations).map(([langCode, text]) => {
               const color = getLanguageColor({ code: langCode })
               const langClass = langCode.replace('.', '-')
-              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+              // Render image expressions as <img> tags
+              const textDisplay = langCode === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `${groupPrefix}<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
             }).join(' ')
           }).join(' ')}
               </span>
@@ -1086,5 +1103,41 @@ export default {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #D1D5DB;
+}
+
+/* Image expressions in preview */
+.markdown-body .handbook-item img {
+  max-height: 3rem;
+  max-width: 3rem;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+  border-radius: 0.25rem;
+}
+
+/* Ensure inline images don't break layout */
+.markdown-body .handbook-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+</style>
+
+<style>
+/* Global styles for v-html content in preview */
+.markdown-body .handbook-item img,
+.markdown-body .handbook-image-expression {
+  max-height: 3rem;
+  max-width: 3rem;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+  border-radius: 0.25rem;
+}
+
+.markdown-body .handbook-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 </style>

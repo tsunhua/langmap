@@ -652,4 +652,40 @@ export default {
 .toc-item.toc-level-3.active {
   padding-left: 1.875rem;
 }
+
+/* Image expressions in handbook content */
+.markdown-body .handbook-item img {
+  max-height: 3rem;
+  max-width: 3rem;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* Ensure inline images don't break layout */
+.markdown-body .handbook-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+</style>
+
+<style>
+/* Image expressions in handbook content - global styles for v-html content */
+.markdown-body .handbook-item img,
+.markdown-body .handbook-image-expression {
+  max-height: 3rem;
+  max-width: 3rem;
+  object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
+  border-radius: 0.25rem;
+}
+
+/* Ensure inline images don't break layout */
+.markdown-body .handbook-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 </style>

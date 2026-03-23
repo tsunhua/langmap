@@ -162,11 +162,22 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   expressionGroupsMap.forEach((groups, exprId) => {
-    expressionMap[exprId] = { id: exprId, groups }
+    const mainExpr = groups.find(g => g.expressions?.find(e => e.id === exprId))?.expressions?.find(e => e.id === exprId)
+    expressionMap[exprId] = {
+      id: exprId,
+      groups,
+      language_code: mainExpr?.language_code || 'en',
+      text: mainExpr?.text || ''
+    }
     groups.forEach(group => {
       group.expressions.forEach(groupExpr => {
         if (groupExpr.id !== exprId && !expressionMap[groupExpr.id]) {
-          expressionMap[groupExpr.id] = groupExpr
+          expressionMap[groupExpr.id] = {
+            ...groupExpr,
+            groups: [],
+            language_code: groupExpr.language_code || 'en',
+            text: groupExpr.text || ''
+          }
         }
       })
     })
@@ -189,7 +200,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     }
   })
 
-  const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, meaningId?: number) => {
+  const renderItem = (id: number, text: string, audioUrl: string, isTitle: boolean, lang: string, meaningId?: number) => {
     const groupsToUse = meaningId
       ? expressionMap[id]?.groups?.filter((g: any) => g.id === meaningId) || []
       : expressionMap[id]?.groups || []
@@ -231,7 +242,11 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
                 if (text) {
                   const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
                   const langClass = targetLang.replace('.', '-')
-                  return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  // Render image expressions as <img> tags
+                  const textDisplay = targetLang === 'image'
+                    ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                    : text
+                  return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
                 }
                 return ''
               }).filter(Boolean).join(' ')
@@ -247,7 +262,11 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
                   if (text) {
                     const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
                     const langClass = targetLang.replace('.', '-')
-                    return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                    // Render image expressions as <img> tags
+                    const textDisplay = targetLang === 'image'
+                      ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                      : text
+                    return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
                   }
                   return ''
                 }).filter(Boolean).join(' ')
@@ -267,7 +286,11 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
                 if (text) {
                   const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
                   const langClass = targetLang.replace('.', '-')
-                  return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                  // Render image expressions as <img> tags
+                  const textDisplay = targetLang === 'image'
+                    ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                    : text
+                  return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
                 }
                 return ''
               }).filter(Boolean).join(' ')
@@ -283,7 +306,11 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
                   if (text) {
                     const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
                     const langClass = targetLang.replace('.', '-')
-                    return `<span class="lang-${langClass}" style="color: ${color}">${text}</span>`
+                    // Render image expressions as <img> tags
+                    const textDisplay = targetLang === 'image'
+                      ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                      : text
+                    return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
                   }
                   return ''
                 }).filter(Boolean).join(' ')
@@ -299,11 +326,16 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
     const audioHandler = audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''
 
+    // Render image expression if lang is 'image'
+    const textDisplay = lang === 'image'
+      ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+      : text
+
     const meaningIdValue = meaningId !== undefined ? meaningId : 'null'
 
     const result = isTitle
-      ? `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
-      : `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${text}${meaningsHtml}${audioIcon}</span>`
+      ? `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${textDisplay}${meaningsHtml}${audioIcon}</span>`
+      : `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${textDisplay}${meaningsHtml}${audioIcon}</span>`
 
     return result
   }
@@ -342,7 +374,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             const expr = expressionMap[expressionId]
             if (expr) {
               const audioUrl = audioUrlCache.get(expr.id) || ''
-              return renderItem(expr.id, term, audioUrl, isTitle, mid)
+              return renderItem(expr.id, term, audioUrl, isTitle, lang, mid)
             }
             return `<span class="handbook-item-undefined">${term}</span>`
           }
@@ -355,7 +387,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         const expr = expressionMap[id]
         if (expr) {
           const audioUrl = audioUrlCache.get(expr.id) || ''
-          return renderItem(id, term, audioUrl, isTitle)
+          return renderItem(id, term, audioUrl, isTitle, lang)
         }
         return `<span class="handbook-item-undefined">${term}</span>`
       } catch (err) {
@@ -417,7 +449,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
             const expr = expressionMap[expressionId]
             if (expr) {
               const audioUrl = audioUrlCache.get(expr.id) || ''
-              return renderItem(expr.id, term, audioUrl, false, mid)
+              return renderItem(expr.id, term, audioUrl, false, lang, mid)
             }
             return `<span class="handbook-item-undefined">${term}</span>`
           }
@@ -430,7 +462,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
           const expr = expressionMap[id]
           if (expr) {
             const audioUrl = audioUrlCache.get(expr.id) || ''
-            return renderItem(id, term, audioUrl, false)
+            return renderItem(id, term, audioUrl, false, lang)
           }
           return `<span class="handbook-item-undefined">${term}</span>`
         } catch (err) {
