@@ -103,7 +103,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span class="font-semibold text-slate-800">{{ member.text }}</span>
+                          <span v-if="member.language_code !== 'image'" class="font-semibold text-slate-800">{{ member.text }}</span>
+                          <img v-else :src="member.text" class="group-image-thumb cursor-pointer" alt="Expression image" @click.stop="openImageModal(member.text)" />
                         </div>
                         <div class="mt-1 text-sm text-slate-600">
                           <span>{{ getLanguageDisplayName(member.language_code) }}</span>
@@ -342,6 +343,19 @@
     <!-- Confirm Modal -->
     <ConfirmModal v-model="showConfirmModal" :message="confirmMessage" :loading="confirmLoading"
       @confirm="executeConfirm" />
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4" @click.self="closeImageModal">
+      <div class="relative max-w-5xl max-h-[90vh]">
+        <button @click="closeImageModal"
+          class="absolute -top-4 -right-4 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img :src="modalImageUrl" class="max-w-full max-h-[85vh] object-contain" alt="Full size expression image" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -393,6 +407,10 @@ export default {
     const confirmPayload = ref(null)
     const confirmLoading = ref(false)
 
+    // Image Modal
+    const showImageModal = ref(false)
+    const modalImageUrl = ref('')
+
     async function executeConfirm() {
       confirmLoading.value = true
       try {
@@ -407,6 +425,17 @@ export default {
       } finally {
         confirmLoading.value = false
       }
+    }
+
+    // Image Modal functions
+    function openImageModal(imageUrl) {
+      modalImageUrl.value = imageUrl
+      showImageModal.value = true
+    }
+
+    function closeImageModal() {
+      showImageModal.value = false
+      modalImageUrl.value = ''
     }
 
     // Group-specific association mode
@@ -1236,8 +1265,35 @@ export default {
       showConfirmModal,
       confirmMessage,
       confirmLoading,
-      executeConfirm
+      executeConfirm,
+      // Image Modal
+      showImageModal,
+      modalImageUrl,
+      openImageModal,
+      closeImageModal
     }
   }
 }
 </script>
+
+<style scoped>
+.group-image-thumb {
+  max-width: 80px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.version-image-thumb {
+  max-width: 80px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  object-fit: contain;
+  cursor: pointer;
+}
+</style>

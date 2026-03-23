@@ -8,8 +8,9 @@
             <div v-if="item.language_code === 'image'">
               <img
                 :src="item.text"
-                class="expression-image"
+                class="expression-image cursor-pointer"
                 alt="Expression image"
+                @click.stop.prevent="openImageModal(item.text)"
               />
             </div>
             <div v-else>
@@ -82,7 +83,7 @@
                   </div>
                 </div>
               </template>
-              <template v-if="editable && canAddAudio">
+              <template v-if="editable && canAddAudio && item.language_code !== 'image' && item.language_code !== 'emoji'">
                 <div v-if="showAudioRecorder" class="w-full flex" @click.stop>
                   <AudioRecorder @audio-ready="handleInlineAudioUpload" @audio-cleared="showAudioRecorder = false" />
                 </div>
@@ -197,6 +198,19 @@
       :message="$t('confirm_delete_audio') || 'Are you sure you want to delete this audio?'" :loading="deletingAudio"
       :loadingText="$t('deleting') || 'Deleting...'" :confirmText="$t('delete') || 'Delete'"
       @confirm="executeRemoveAudio" />
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4" @click.self="closeImageModal">
+      <div class="relative max-w-5xl max-h-[90vh]">
+        <button @click="closeImageModal"
+          class="absolute -top-4 -right-4 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img :src="modalImageUrl" class="max-w-full max-h-[85vh] object-contain" alt="Full size expression image" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -244,6 +258,8 @@ export default {
     const router = useRouter()
     const showCollectionModal = ref(false)
     const showAudioRecorder = ref(false)
+    const showImageModal = ref(false)
+    const modalImageUrl = ref('')
 
     // Audio Delete Confirm
     const showDeleteAudioModal = ref(false)
@@ -452,6 +468,16 @@ export default {
       router.push({ name: 'LanguageDetail', params: { code: props.item.language_code } })
     }
 
+    const openImageModal = (imageUrl) => {
+      modalImageUrl.value = imageUrl
+      showImageModal.value = true
+    }
+
+    const closeImageModal = () => {
+      showImageModal.value = false
+      modalImageUrl.value = ''
+    }
+
     const playingIndex = ref(-1)
     let audioInstance = null
 
@@ -521,7 +547,11 @@ export default {
       playingIndex,
       audioList,
       canAddAudio,
-      canDeleteAudio
+      canDeleteAudio,
+      showImageModal,
+      modalImageUrl,
+      openImageModal,
+      closeImageModal
     }
   },
   methods: {
@@ -579,7 +609,8 @@ function getTagsList(item) {
 <style scoped>
 .expression-image {
   width: 100%;
-  max-width: 600px;
+  max-width: 240px;
+  max-height: 240px;
   height: auto;
   border-radius: 8px;
   object-fit: contain;

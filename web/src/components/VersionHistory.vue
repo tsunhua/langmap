@@ -26,7 +26,11 @@
               <!-- Version card (using current expression data) -->
               <div class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                 <div class="flex justify-between items-start mb-2">
-                  <div class="text-slate-800 font-medium">{{ expression && expression.text ? expression.text : 'N/A' }}</div>
+                  <div class="text-slate-800 font-medium">
+                    <span v-if="expression && expression.language_code !== 'image'">{{ expression.text }}</span>
+                    <img v-else-if="expression && expression.text" :src="expression.text" class="version-image-thumb cursor-pointer" alt="Expression image" @click.stop="openImageModal(expression.text)" />
+                    <span v-else>N/A</span>
+                  </div>
                   <div class="text-xs text-slate-500">
                     {{ expression && expression.created_at ? formatDate(expression.created_at) : 'N/A' }}
                   </div>
@@ -66,7 +70,10 @@
               <!-- Version card -->
               <div class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                 <div class="flex justify-between items-start mb-2">
-                  <div class="text-slate-800 font-medium">{{ v.text }}</div>
+                  <div class="text-slate-800 font-medium">
+                    <span v-if="v.language_code !== 'image'">{{ v.text }}</span>
+                    <img v-else :src="v.text" class="version-image-thumb cursor-pointer" alt="Expression image" @click.stop="openImageModal(v.text)" />
+                  </div>
                   <div class="text-xs text-slate-500">
                     {{ formatDate(v.created_at) }}
                   </div>
@@ -144,6 +151,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4" @click.self="closeImageModal">
+      <div class="relative max-w-5xl max-h-[90vh]">
+        <button @click="closeImageModal"
+          class="absolute -top-4 -right-4 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <img :src="modalImageUrl" class="max-w-full max-h-[85vh] object-contain" alt="Full size expression image" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -159,6 +179,10 @@ export default {
     const versions = ref([])
     const loading = ref(false)
     const expression = ref(null)
+
+    // Image Modal
+    const showImageModal = ref(false)
+    const modalImageUrl = ref('')
 
     // Map custom locale codes to valid BCP 47 language tags for date formatting
     const getValidLocale = (localeCode) => {
@@ -229,8 +253,31 @@ export default {
       }
     }
 
+    // Image Modal functions
+    const openImageModal = (imageUrl) => {
+      modalImageUrl.value = imageUrl
+      showImageModal.value = true
+    }
+
+    const closeImageModal = () => {
+      showImageModal.value = false
+      modalImageUrl.value = ''
+    }
+
     onMounted(load)
-    return { versions, loading, formatDate, t, expression }
+    return { versions, loading, formatDate, t, expression, showImageModal, modalImageUrl, openImageModal, closeImageModal }
   }
 }
 </script>
+
+<style scoped>
+.version-image-thumb {
+  max-width: 80px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  object-fit: contain;
+  cursor: pointer;
+}
+</style>
