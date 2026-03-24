@@ -111,7 +111,7 @@
                           <span v-if="member.region_name" class="ml-2">• {{ member.region_name }}</span>
                         </div>
                       </div>
-                      <ExpressionCard v-else :item="member" />
+                      <ExpressionCard v-else :item="member" :image-size="'small'" />
                     </div>
                     <button @click="removeFromGroup(member.id, currentGroup.id)"
                       class="text-slate-400 hover:text-red-600 transition-colors" :title="$t('remove_from_group')">

@@ -8,7 +8,10 @@
             <div v-if="item.language_code === 'image'">
               <img
                 :src="item.text"
-                class="expression-image cursor-pointer"
+                :class="[
+                  'cursor-pointer',
+                  imageSize === 'small' ? 'expression-image-small' : 'expression-image'
+                ]"
                 alt="Expression image"
                 @click.stop.prevent="openImageModal(item.text)"
               />
@@ -250,6 +253,10 @@ export default {
     isDeleting: {
       type: Boolean,
       default: false
+    },
+    imageSize: {
+      type: String,
+      default: 'large'
     }
   },
   emits: ['update-tags', 'unlink', 'delete'],
@@ -611,6 +618,15 @@ function getTagsList(item) {
   width: 100%;
   max-width: 240px;
   max-height: 240px;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.expression-image-small {
+  width: 100%;
+  max-width: 80px;
+  max-height: 80px;
   height: auto;
   border-radius: 8px;
   object-fit: contain;
