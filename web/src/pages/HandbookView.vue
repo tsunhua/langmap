@@ -549,6 +549,12 @@ export default {
       window.addEventListener('handbook-expression-click', handleExpressionClick)
     })
 
+    watch(() => handbook.value, (newHandbook) => {
+      if (newHandbook) {
+        document.title = `${newHandbook.rendered_title || newHandbook.title} - langmap`
+      }
+    })
+
     watch(() => handbook.value?.rendered_content, (newContent) => {
       if (newContent) {
         parseTableOfContents()
