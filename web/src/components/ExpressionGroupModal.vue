@@ -81,9 +81,12 @@
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
                     <div v-if="pendingExpr.language_code === 'image'" class="flex items-center gap-2">
-                      <img v-if="pendingExpr.text && pendingExpr.text.startsWith('http')" :src="pendingExpr.text" class="h-10 w-10 object-contain rounded" alt="expression image" />
-                      <input v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
-                        class="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                      <ImageUploader
+                        :existing-image-url="pendingExpr.text"
+                        :compact="true"
+                        @image-ready="(url) => handlePendingImageReady(index, url)"
+                        @image-cleared="() => handlePendingImageCleared(index)"
+                      />
                     </div>
                     <input v-else v-model="pendingExpr.text" type="text" :placeholder="$t('please_enter_expression')"
                       class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
@@ -111,10 +114,12 @@
                   </td>
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
                     <div v-if="newRowLanguage === 'image'" class="flex items-center gap-2">
-                      <img v-if="newRowText && newRowText.startsWith('http')" :src="newRowText" class="h-10 w-10 object-contain rounded" alt="expression image" />
-                      <input v-model="newRowText" type="text" :placeholder="$t('please_enter_image_url')"
-                        class="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                        @keydown.enter="addToPending" />
+                      <ImageUploader
+                        :existing-image-url="newRowText"
+                        :compact="true"
+                        @image-ready="handleNewRowImageReady"
+                        @image-cleared="handleNewRowImageCleared"
+                      />
                     </div>
                     <input v-else v-model="newRowText" type="text" :placeholder="$t('please_enter_expression')"
                       class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -171,9 +176,11 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { expressionGroupsApi } from '../api/index.ts'
+import ImageUploader from './ImageUploader.vue'
 
 export default {
   name: 'ExpressionGroupModal',
+  components: { ImageUploader },
   props: {
     visible: {
       type: Boolean,
@@ -481,6 +488,22 @@ export default {
       message.value = ''
     }
 
+    const handleNewRowImageReady = (url) => {
+      newRowText.value = url
+    }
+
+    const handleNewRowImageCleared = () => {
+      newRowText.value = ''
+    }
+
+    const handlePendingImageReady = (index, url) => {
+      pendingExpressions.value[index].text = url
+    }
+
+    const handlePendingImageCleared = (index) => {
+      pendingExpressions.value[index].text = ''
+    }
+
     const close = () => {
       showNewRow.value = false
       newRowLanguage.value = ''
@@ -533,7 +556,11 @@ export default {
       submitAllPending,
       close,
       goToDetail,
-      sortExpressions
+      sortExpressions,
+      handleNewRowImageReady,
+      handleNewRowImageCleared,
+      handlePendingImageReady,
+      handlePendingImageCleared
     }
   }
 }

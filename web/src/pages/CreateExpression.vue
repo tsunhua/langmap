@@ -57,7 +57,7 @@
               </td>
               <td class="px-4 py-3">
                 <ImageUploader v-if="expression.language_code === 'image'" :existing-image-url="expression.text"
-                  @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
+                  :compact="true" @image-ready="handleImageReady(index, $event)" @image-cleared="handleImageCleared(index)" />
                 <textarea v-else v-model="expression.text" rows="1"
                   class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-1.5 px-2 text-sm text-slate-800 resize-none"
                   :placeholder="$t('text_placeholder')"></textarea>
