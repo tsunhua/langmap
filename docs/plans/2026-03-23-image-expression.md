@@ -1,32 +1,32 @@
-# 图片词句功能实施计划
+# 圖片詞句功能實施計劃
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**目标：** 实现 LangMap 图片表达功能，支持用户上传、压缩、存储和展示图片作为表达式，采用客户端直传 R2 + 预签名 URL 架构。
+**目標：** 實現 LangMap 圖片表達功能，支持用戶上傳、壓縮、存儲和展示圖片作爲表達式，採用客戶端直傳 R2 + 預籤名 URL 架構。
 
-**架构：**
-- **存储**：Cloudflare R2 (langmap-images bucket)，WebP 格式，最大 300KB
-- **上传**：客户端直传 R2 (Presigned URL)，避免 Worker 代理
-- **识别**：`language_code = 'image'` 标识图片表达式，`text` 存储图片 URL
-- **压缩**：前端 Canvas 压缩到 600px 宽度，质量 0.7，目标 < 100KB
-- **分发**：Cloudflare CDN 边缘缓存，永久静态缓存 (max-age=31536000)
+**架構：**
+- **存儲**：Cloudflare R2 (langmap-images bucket)，WebP 格式，最大 300KB
+- **上傳**：客戶端直傳 R2 (Presigned URL)，避免 Worker 代理
+- **識別**：`language_code = 'image'` 標識圖片表達式，`text` 存儲圖片 URL
+- **壓縮**：前端 Canvas 壓縮到 600px 寬度，質量 0.7，目標 < 100KB
+- **分發**：Cloudflare CDN 邊緣緩存，永久靜態緩存 (max-age=31536000)
 
-**技术栈：**
-- **后端**：Cloudflare Workers + D1 + R2 + Hono + Zod
+**技術棧：**
+- **後端**：Cloudflare Workers + D1 + R2 + Hono + Zod
 - **前端**：Vue 3 + Vite + Tailwind CSS
-- **压缩**：HTML5 Canvas API
-- **验证**：Zod schema，URL 前缀验证，速率限制
+- **壓縮**：HTML5 Canvas API
+- **驗證**：Zod schema，URL 前綴驗證，速率限制
 
 ---
 
-## Task 1: 配置 R2 存储桶和后端环境
+## Task 1: 配置 R2 存儲桶和後端環境
 
 **Files:**
 - Modify: `backend/wrangler.jsonc`
 
 **Step 1: 添加 R2 bucket binding**
 
-修改 `wrangler.jsonc`，在 `r2_buckets` 数组中添加：
+修改 `wrangler.jsonc`，在 `r2_buckets` 數組中添加：
 
 ```jsonc
 {
@@ -36,7 +36,7 @@
 }
 ```
 
-完整配置应如下：
+完整配置應如下：
 
 ```jsonc
 "r2_buckets": [
@@ -58,7 +58,7 @@
 ]
 ```
 
-**Step 2: 更新类型定义**
+**Step 2: 更新類型定義**
 
 修改 `backend/src/server/types/bindings.ts`，在 `Bindings` interface 中添加：
 
@@ -66,7 +66,7 @@
 IMAGES_BUCKET: R2Bucket
 ```
 
-**Step 3: 添加环境变量**
+**Step 3: 添加環境變量**
 
 修改 `backend/wrangler.jsonc`，在 `[vars]` 部分添加：
 
@@ -76,14 +76,14 @@ R2_IMAGES_BUCKET = "langmap-images"
 IMAGES_PUBLIC_URL = "https://images.langmap.io"
 ```
 
-**Step 4: 验证配置**
+**Step 4: 驗證配置**
 
 ```bash
 cd backend
 npx wrangler dev
 ```
 
-预期：Worker 启动成功，无错误
+預期：Worker 啓動成功，無錯誤
 
 **Step 5: Commit**
 
@@ -94,14 +94,14 @@ git commit -m "feat: add R2 images bucket configuration"
 
 ---
 
-## Task 2: 更新 Expression Schema 支持 Image 语言
+## Task 2: 更新 Expression Schema 支持 Image 語言
 
 **Files:**
 - Modify: `backend/src/server/schemas/expression.ts`
 
 **Step 1: 修改 createExpressionSchema**
 
-更新验证逻辑，支持 `language_code = 'image'` 和 URL 验证：
+更新驗證邏輯，支持 `language_code = 'image'` 和 URL 驗證：
 
 ```typescript
 export const createExpressionSchema = z.object({
@@ -111,30 +111,30 @@ export const createExpressionSchema = z.object({
   audio_url: z.string().optional(),
   region_code: z.string().optional()
 }).superRefine((data, ctx) => {
-  // 当 language_code = "image" 时，text 必须是有效 URL
+  // 當 language_code = "image" 時，text 必須是有效 URL
   if (data.language_code === 'image') {
     if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '图片 URL 必须以 http:// 或 https:// 开头',
+        message: '圖片 URL 必須以 http:// 或 https:// 開頭',
         path: ['text']
       })
     }
 
-    // 验证 URL 域名
+    // 驗證 URL 域名
     try {
       const url = new URL(data.text)
       if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: '仅允许使用系统生成的图片 URL',
+          message: '僅允許使用系統生成的圖片 URL',
           path: ['text']
         })
       }
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '图片 URL 格式无效',
+        message: '圖片 URL 格式無效',
         path: ['text']
       })
     }
@@ -144,7 +144,7 @@ export const createExpressionSchema = z.object({
 
 **Step 2: 修改 updateExpressionSchema**
 
-添加相同的 URL 验证：
+添加相同的 URL 驗證：
 
 ```typescript
 export const updateExpressionSchema = z.object({
@@ -158,7 +158,7 @@ export const updateExpressionSchema = z.object({
     if (!data.text.startsWith('http://') && !data.text.startsWith('https://')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '图片 URL 必须以 http:// 或 https:// 开头',
+        message: '圖片 URL 必須以 http:// 或 https:// 開頭',
         path: ['text']
       })
     }
@@ -168,14 +168,14 @@ export const updateExpressionSchema = z.object({
       if (!url.hostname.endsWith('.langmap.io') && !url.hostname.includes('r2.cloudflarestorage.com')) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: '仅允许使用系统生成的图片 URL',
+          message: '僅允許使用系統生成的圖片 URL',
           path: ['text']
         })
       }
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '图片 URL 格式无效',
+        message: '圖片 URL 格式無效',
         path: ['text']
       })
     }
@@ -192,15 +192,15 @@ git commit -m "feat: add image URL validation to expression schemas"
 
 ---
 
-## Task 3: 实现图片上传预签名 URL API
+## Task 3: 實現圖片上傳預籤名 URL API
 
 **Files:**
 - Create: `backend/src/server/routes/images.ts`
 - Modify: `backend/src/server/routes/index.ts`
 
-**Step 1: 创建 images routes**
+**Step 1: 創建 images routes**
 
-创建 `backend/src/server/routes/images.ts`：
+創建 `backend/src/server/routes/images.ts`：
 
 ```typescript
 import { Hono } from 'hono'
@@ -211,10 +211,10 @@ import type { Bindings, JWTPayload } from '../types/bindings.js'
 
 const imagesRoutes = new Hono<{ Bindings: Bindings, Variables: { user?: JWTPayload } }>()
 
-// 速率限制存储（生产环境应使用 KV 或 Durable Object）
+// 速率限制存儲（生產環境應使用 KV 或 Durable Object）
 const rateLimiter = new Map<string, { count: number, resetTime: number }>()
 
-// 验证 schema
+// 驗證 schema
 const uploadPresignSchema = z.object({
   content_type: z.string().regex(/^image\/(webp|jpeg|jpg|png)$/i),
   content_length: z.number().max(1048576) // 最大 1MB
@@ -225,10 +225,10 @@ imagesRoutes.post('/upload-presign', requireAuth, async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
 
-    // 验证请求
+    // 驗證請求
     const validated = uploadPresignSchema.parse(body)
 
-    // 速率限制（管理员无限制）
+    // 速率限制（管理員無限制）
     if (user.role !== 'super_admin' && user.role !== 'admin') {
       const now = Date.now()
       const key = `presign:${user.username}`
@@ -236,7 +236,7 @@ imagesRoutes.post('/upload-presign', requireAuth, async (c) => {
 
       if (record && record.resetTime > now) {
         if (record.count >= 5) {
-          return badRequest(c, '请求过于频繁，请稍后再试')
+          return badRequest(c, '請求過於頻繁，請稍後再試')
         }
         record.count++
       } else {
@@ -248,7 +248,7 @@ imagesRoutes.post('/upload-presign', requireAuth, async (c) => {
     const fileId = crypto.randomUUID()
     const fileName = `${fileId}.webp`
 
-    // 构建预签名 URL（5分钟有效期）
+    // 構建預籤名 URL（5分鐘有效期）
     const bucket = c.env.IMAGES_BUCKET
     const uploadUrl = await new Request(`https://${bucket.name}.r2.cloudflarestorage.com/${fileName}`, {
       method: 'PUT',
@@ -256,10 +256,10 @@ imagesRoutes.post('/upload-presign', requireAuth, async (c) => {
         'Content-Type': validated.content_type
       }
     }).cf({
-      // Cloudflare 会自动生成预签名 URL
+      // Cloudflare 會自動生成預籤名 URL
     })
 
-    // 公开访问的 URL
+    // 公開訪問的 URL
     const publicUrl = `${c.env.IMAGES_PUBLIC_URL}/${fileName}`
 
     return success(c, {
@@ -270,29 +270,29 @@ imagesRoutes.post('/upload-presign', requireAuth, async (c) => {
     })
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return badRequest(c, '验证失败', undefined, error.errors)
+      return badRequest(c, '驗證失敗', undefined, error.errors)
     }
     console.error('Error in POST /images/upload-presign:', error)
-    return internalError(c, error.message || '获取预签名 URL 失败')
+    return internalError(c, error.message || '獲取預籤名 URL 失敗')
   }
 })
 
 export { imagesRoutes }
 ```
 
-**Step 2: 注册路由**
+**Step 2: 註冊路由**
 
-修改 `backend/src/server/routes/index.ts`，添加图片路由：
+修改 `backend/src/server/routes/index.ts`，添加圖片路由：
 
 ```typescript
 import { Hono } from 'hono'
 import { imagesRoutes } from './images.js'
 
-// ... 其他导入
+// ... 其他導入
 
 const routes = new Hono()
 
-// 注册路由
+// 註冊路由
 routes.route('/api/v1/images', imagesRoutes)
 // ... 其他路由
 ```
@@ -313,10 +313,10 @@ git commit -m "feat: add image upload presigned URL API"
 
 **Step 1: 添加速率限制**
 
-在 `POST /expressions` 路由中添加图片表达式的速率限制：
+在 `POST /expressions` 路由中添加圖片表達式的速率限制：
 
 ```typescript
-// 速率限制存储
+// 速率限制存儲
 const expressionRateLimiter = new Map<string, { count: number, resetTime: number, imageCount: number }>()
 
 expressionsRoutes.post('/', requireAuth, async (c) => {
@@ -326,27 +326,27 @@ expressionsRoutes.post('/', requireAuth, async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
 
-    // 验证
+    // 驗證
     const validated = createExpressionSchema.parse(body)
 
-    // 速率限制（管理员无限制）
+    // 速率限制（管理員無限制）
     if (user.role !== 'super_admin' && user.role !== 'admin') {
       const now = Date.now()
       const key = `expression:${user.username}`
       const record = expressionRateLimiter.get(key)
 
       if (record && record.resetTime > now) {
-        // 图片表达式额外限制：每分钟最多 10 次
+        // 圖片表達式額外限制：每分鐘最多 10 次
         if (validated.language_code === 'image') {
           if (record.imageCount >= 10) {
-            return badRequest(c, '图片表达式创建过于频繁，请稍后再试')
+            return badRequest(c, '圖片表達式創建過於頻繁，請稍後再試')
           }
           record.imageCount++
         }
 
-        // 总体限制：每分钟最多 20 次
+        // 總體限制：每分鐘最多 20 次
         if (record.count >= 20) {
-          return badRequest(c, '表达式创建过于频繁，请稍后再试')
+          return badRequest(c, '表達式創建過於頻繁，請稍後再試')
         }
         record.count++
       } else {
@@ -381,22 +381,22 @@ git commit -m "feat: add rate limiting for image expressions"
 
 ---
 
-## Task 5: 实现前端图片压缩工具函数
+## Task 5: 實現前端圖片壓縮工具函數
 
 **Files:**
 - Create: `web/src/utils/imageCompression.js`
 
-**Step 1: 创建图片压缩工具**
+**Step 1: 創建圖片壓縮工具**
 
-创建 `web/src/utils/imageCompression.js`：
+創建 `web/src/utils/imageCompression.js`：
 
 ```javascript
 /**
- * 压缩图片到指定宽度和质量
- * @param {File} file - 原始图片文件
- * @param {number} maxWidth - 最大宽度（默认 600px）
- * @param {number} quality - 质量 0-1（默认 0.7）
- * @returns {Promise<Blob>} 压缩后的 Blob
+ * 壓縮圖片到指定寬度和質量
+ * @param {File} file - 原始圖片文件
+ * @param {number} maxWidth - 最大寬度（默認 600px）
+ * @param {number} quality - 質量 0-1（默認 0.7）
+ * @returns {Promise<Blob>} 壓縮後的 Blob
  */
 export async function compressImage(file, maxWidth = 600, quality = 0.7) {
   return new Promise((resolve, reject) => {
@@ -406,7 +406,7 @@ export async function compressImage(file, maxWidth = 600, quality = 0.7) {
         const canvas = document.createElement('canvas')
         let { width, height } = img
 
-        // 按比例缩放到 maxWidth
+        // 按比例縮放到 maxWidth
         if (width > maxWidth) {
           height = (height * maxWidth) / width
           width = maxWidth
@@ -420,13 +420,13 @@ export async function compressImage(file, maxWidth = 600, quality = 0.7) {
         ctx.fillRect(0, 0, width, height)
         ctx.drawImage(img, 0, 0, width, height)
 
-        // 转换为 WebP 格式
+        // 轉換爲 WebP 格式
         canvas.toBlob(
           (blob) => {
             if (blob) {
               resolve(blob)
             } else {
-              reject(new Error('压缩失败'))
+              reject(new Error('壓縮失敗'))
             }
           },
           'image/webp',
@@ -436,16 +436,16 @@ export async function compressImage(file, maxWidth = 600, quality = 0.7) {
         reject(error)
       }
     }
-    img.onerror = () => reject(new Error('图片加载失败'))
+    img.onerror = () => reject(new Error('圖片加載失敗'))
     img.src = URL.createObjectURL(file)
   })
 }
 
 /**
- * 压缩图片直到小于指定大小
- * @param {File} file - 原始图片文件
- * @param {number} maxSize - 目标大小（字节）
- * @returns {Promise<{ blob: Blob, iterations: number }>} 压缩结果
+ * 壓縮圖片直到小於指定大小
+ * @param {File} file - 原始圖片文件
+ * @param {number} maxSize - 目標大小（字節）
+ * @returns {Promise<{ blob: Blob, iterations: number }>} 壓縮結果
  */
 export async function compressToSize(file, maxSize = 100 * 1024) {
   let quality = 0.9
@@ -467,15 +467,15 @@ export async function compressToSize(file, maxSize = 100 * 1024) {
     iterations++
   }
 
-  // 如果仍然太大，返回最后一次的结果
+  // 如果仍然太大，返回最後一次的結果
   const blob = await compressImage(file, 600, 0.6)
   return { blob, iterations }
 }
 
 /**
- * 验证图片文件
- * @param {File} file - 待验证的文件
- * @returns {Object} 验证结果 { valid: boolean, error?: string }
+ * 驗證圖片文件
+ * @param {File} file - 待驗證的文件
+ * @returns {Object} 驗證結果 { valid: boolean, error?: string }
  */
 export function validateImageFile(file) {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -483,7 +483,7 @@ export function validateImageFile(file) {
   if (!validTypes.includes(file.type)) {
     return {
       valid: false,
-      error: '仅支持 JPG、PNG、WebP 格式'
+      error: '僅支持 JPG、PNG、WebP 格式'
     }
   }
 
@@ -491,7 +491,7 @@ export function validateImageFile(file) {
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: '图片大小不能超过 5MB'
+      error: '圖片大小不能超過 5MB'
     }
   }
 
@@ -508,14 +508,14 @@ git commit -m "feat: add image compression utilities"
 
 ---
 
-## Task 6: 创建前端图片上传组件
+## Task 6: 創建前端圖片上傳組件
 
 **Files:**
 - Create: `web/src/components/ImageUploader.vue`
 
-**Step 1: 创建 ImageUploader 组件**
+**Step 1: 創建 ImageUploader 組件**
 
-创建 `web/src/components/ImageUploader.vue`：
+創建 `web/src/components/ImageUploader.vue`：
 
 ```vue
 <template>
@@ -527,22 +527,22 @@ git commit -m "feat: add image compression utilities"
       {{ error }}
     </div>
 
-    <!-- 状态：未上传 -->
+    <!-- 狀態：未上傳 -->
     <div v-if="!imageUrl" class="upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop">
       <div class="upload-content">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        <p class="text-slate-600 font-medium">{{ uploading ? '压缩上传中...' : '点击上传图片' }}</p>
-        <p class="text-slate-400 text-sm mt-1">或拖拽图片到此处</p>
-        <p class="text-slate-400 text-xs mt-2">支持 JPG、PNG、WebP，最大 5MB（自动压缩）</p>
+        <p class="text-slate-600 font-medium">{{ uploading ? '壓縮上傳中...' : '點擊上傳圖片' }}</p>
+        <p class="text-slate-400 text-sm mt-1">或拖拽圖片到此處</p>
+        <p class="text-slate-400 text-xs mt-2">支持 JPG、PNG、WebP，最大 5MB（自動壓縮）</p>
       </div>
     </div>
 
-    <!-- 状态：已上传 -->
+    <!-- 狀態：已上傳 -->
     <div v-else class="preview-area">
       <img :src="imageUrl" class="preview-image" alt="Preview" />
-      <button @click="clearImage" class="clear-btn" title="删除图片">
+      <button @click="clearImage" class="clear-btn" title="刪除圖片">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -604,7 +604,7 @@ const handleDrop = async (event) => {
 const processFile = async (file) => {
   error.value = ''
 
-  // 验证文件
+  // 驗證文件
   const validation = validateImageFile(file)
   if (!validation.valid) {
     error.value = validation.error
@@ -614,16 +614,16 @@ const processFile = async (file) => {
   try {
     uploading.value = true
 
-    // 压缩图片
+    // 壓縮圖片
     const { blob, iterations } = await compressToSize(file, 100 * 1024)
 
     if (blob.size > 300 * 1024) {
-      error.value = '压缩后图片仍然过大，请选择其他图片'
+      error.value = '壓縮後圖片仍然過大，請選擇其他圖片'
       uploading.value = false
       return
     }
 
-    // 上传到 R2
+    // 上傳到 R2
     const url = await uploadPresignedUrl(blob)
 
     imageUrl.value = url
@@ -631,7 +631,7 @@ const processFile = async (file) => {
 
   } catch (err) {
     console.error('Image upload error:', err)
-    error.value = err.message || '上传失败，请重试'
+    error.value = err.message || '上傳失敗，請重試'
   } finally {
     uploading.value = false
   }
@@ -720,25 +720,25 @@ git commit -m "feat: add ImageUploader component"
 
 ---
 
-## Task 7: 实现前端图片上传 API
+## Task 7: 實現前端圖片上傳 API
 
 **Files:**
 - Create: `web/src/api/images.js`
 
-**Step 1: 创建 images API 模块**
+**Step 1: 創建 images API 模塊**
 
-创建 `web/src/api/images.js`：
+創建 `web/src/api/images.js`：
 
 ```javascript
 import { client } from './client.js'
 
 /**
- * 获取预签名 URL 并上传图片
- * @param {Blob} blob - 图片 Blob
- * @returns {Promise<string>} 公开访问的图片 URL
+ * 獲取預籤名 URL 並上傳圖片
+ * @param {Blob} blob - 圖片 Blob
+ * @returns {Promise<string>} 公開訪問的圖片 URL
  */
 export async function uploadPresignedUrl(blob) {
-  // 1. 获取预签名 URL
+  // 1. 獲取預籤名 URL
   const presignResponse = await client.post('/api/v1/images/upload-presign', {
     content_type: blob.type,
     content_length: blob.size
@@ -746,7 +746,7 @@ export async function uploadPresignedUrl(blob) {
 
   const { upload_url, image_url } = presignResponse.data
 
-  // 2. 直接上传到 R2
+  // 2. 直接上傳到 R2
   const uploadResponse = await fetch(upload_url, {
     method: 'PUT',
     body: blob,
@@ -756,14 +756,14 @@ export async function uploadPresignedUrl(blob) {
   })
 
   if (!uploadResponse.ok) {
-    throw new Error('上传失败')
+    throw new Error('上傳失敗')
   }
 
   return image_url
 }
 ```
 
-**Step 2: 导出 API**
+**Step 2: 導出 API**
 
 修改 `web/src/api/index.js`，添加：
 
@@ -780,14 +780,14 @@ git commit -m "feat: add image upload API client"
 
 ---
 
-## Task 8: 修改 CreateExpression 组件支持图片上传
+## Task 8: 修改 CreateExpression 組件支持圖片上傳
 
 **Files:**
 - Modify: `web/src/components/CreateExpression.vue`
 
-**Step 1: 添加 ImageUploader 组件和语言选项**
+**Step 1: 添加 ImageUploader 組件和語言選項**
 
-在模板中修改语言选择器，添加 "image" 选项：
+在模板中修改語言選擇器，添加 "image" 選項：
 
 ```vue
 <select v-model="language_code"
@@ -798,16 +798,16 @@ git commit -m "feat: add image upload API client"
   <option v-for="lang in languages" :key="lang.code" :value="lang.code">
     {{ lang.name }} ({{ lang.code }})
   </option>
-  <option value="image">📷 图片</option>
+  <option value="image">📷 圖片</option>
 </select>
 ```
 
-**Step 2: 添加条件渲染**
+**Step 2: 添加條件渲染**
 
-根据 `language_code` 动态切换输入方式：
+根據 `language_code` 動態切換輸入方式：
 
 ```vue
-<!-- 文本输入 -->
+<!-- 文本輸入 -->
 <div v-if="language_code !== 'image'" class="mb-6">
   <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('text') }} *</label>
   <textarea v-model="text" rows="3"
@@ -816,9 +816,9 @@ git commit -m "feat: add image upload API client"
   <p class="text-sm text-slate-500 mt-1">{{ $t('text_help') }}</p>
 </div>
 
-<!-- 图片上传 -->
+<!-- 圖片上傳 -->
 <div v-else class="mb-6">
-  <label class="block text-sm font-medium text-slate-700 mb-1">图片 *</label>
+  <label class="block text-sm font-medium text-slate-700 mb-1">圖片 *</label>
   <ImageUploader
     :existing-image-url="text"
     @image-ready="handleImageReady"
@@ -827,7 +827,7 @@ git commit -m "feat: add image upload API client"
 </div>
 ```
 
-**Step 3: 添加脚本逻辑**
+**Step 3: 添加腳本邏輯**
 
 在 `<script setup>` 中添加：
 
@@ -843,9 +843,9 @@ const handleImageCleared = () => {
 }
 ```
 
-**Step 4: 清空文本输入**
+**Step 4: 清空文本輸入**
 
-图片模式时禁用地域选择：
+圖片模式時禁用地域選擇：
 
 ```vue
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" :class="{ 'opacity-50 pointer-events-none': language_code === 'image' }">
@@ -860,14 +860,14 @@ git commit -m "feat: add image upload support to CreateExpression component"
 
 ---
 
-## Task 9: 修改 ExpressionCard 组件支持图片显示
+## Task 9: 修改 ExpressionCard 組件支持圖片顯示
 
 **Files:**
 - Modify: `web/src/components/ExpressionCard.vue`
 
-**Step 1: 添加图片显示逻辑**
+**Step 1: 添加圖片顯示邏輯**
 
-在模板中根据 `language_code` 显示图片或文本：
+在模板中根據 `language_code` 顯示圖片或文本：
 
 ```vue
 <template>
@@ -882,12 +882,12 @@ git commit -m "feat: add image upload support to CreateExpression component"
     <div v-else>
       <h3 class="expression-text">{{ expression.text }}</h3>
     </div>
-    <!-- 其他内容 -->
+    <!-- 其他內容 -->
   </div>
 </template>
 ```
 
-**Step 2: 添加样式**
+**Step 2: 添加樣式**
 
 ```vue
 <style scoped>
@@ -914,37 +914,37 @@ git commit -m "feat: add image display support to ExpressionCard component"
 
 ---
 
-## Task 10: 添加 "image" 语言到数据库
+## Task 10: 添加 "image" 語言到數據庫
 
 **Files:**
 - Create: `scripts/031_add_image_language.sql`
 
-**Step 1: 创建迁移脚本**
+**Step 1: 創建遷移腳本**
 
-创建 `scripts/031_add_image_language.sql`：
+創建 `scripts/031_add_image_language.sql`：
 
 ```sql
--- 添加 "image" 语言到 languages 表
+-- 添加 "image" 語言到 languages 表
 INSERT INTO languages (code, name, direction, is_active, created_by, updated_by)
 VALUES ('image', 'Image', 'ltr', 1, 'system', 'system');
 
--- 验证插入
+-- 驗證插入
 SELECT * FROM languages WHERE code = 'image';
 ```
 
-**Step 2: 执行迁移**
+**Step 2: 執行遷移**
 
 ```bash
 npx wrangler d1 execute langmap --local --file=scripts/031_add_image_language.sql
 ```
 
-**Step 3: 验证数据**
+**Step 3: 驗證數據**
 
 ```bash
 npx wrangler d1 execute langmap --local --command="SELECT * FROM languages WHERE code = 'image'"
 ```
 
-预期输出：
+預期輸出：
 
 ```
 ┌──────┬───────┬───────┬───────────┬───────────┬─────────────┬─────────────┬───────────────────┬──────────┬──────────────────────┬────────────┬──────────┐
@@ -963,72 +963,72 @@ git commit -m "feat: add image language to database"
 
 ---
 
-## Task 11: 创建 R2 Bucket
+## Task 11: 創建 R2 Bucket
 
-**Step 1: 创建本地 bucket（开发环境）**
+**Step 1: 創建本地 bucket（開發環境）**
 
 ```bash
 npx wrangler r2 bucket create langmap-images --preview
 ```
 
-**Step 2: 创建生产 bucket**
+**Step 2: 創建生產 bucket**
 
 ```bash
 npx wrangler r2 bucket create langmap-images
 ```
 
-**Step 3: 验证 bucket**
+**Step 3: 驗證 bucket**
 
 ```bash
 npx wrangler r2 bucket list
 ```
 
-预期输出包含 `langmap-images`
+預期輸出包含 `langmap-images`
 
 ---
 
-## Task 12: 本地测试
+## Task 12: 本地測試
 
-**Step 1: 启动开发服务器**
+**Step 1: 啓動開發服務器**
 
 ```bash
 cd backend
 npm run dev
 ```
 
-**Step 2: 启动前端服务器**
+**Step 2: 啓動前端服務器**
 
-新终端：
+新終端：
 
 ```bash
 cd web
 npm run dev
 ```
 
-**Step 3: 测试完整流程**
+**Step 3: 測試完整流程**
 
-1. 打开浏览器访问 http://localhost:5173
-2. 点击创建表达式
-3. 选择语言为 "📷 图片"
-4. 点击上传区域，选择一张 JPG/PNG 图片
-5. 等待压缩和上传
-6. 保存表达式
-7. 验证图片在列表页正确显示
-8. 验证图片在详情页正确显示
+1. 打開瀏覽器訪問 http://localhost:5173
+2. 點擊創建表達式
+3. 選擇語言爲 "📷 圖片"
+4. 點擊上傳區域，選擇一張 JPG/PNG 圖片
+5. 等待壓縮和上傳
+6. 保存表達式
+7. 驗證圖片在列表頁正確顯示
+8. 驗證圖片在詳情頁正確顯示
 
-**Step 4: 测试边界情况**
+**Step 4: 測試邊界情況**
 
-- 上传 5MB 以上的大图 → 应显示错误
-- 上传非图片文件 → 应显示错误
-- 切换语言到 "English" → 应显示文本输入框
-- 图片压缩后仍 > 300KB → 应显示错误
-- 快速连续上传 → 应触发速率限制
+- 上傳 5MB 以上的大圖 → 應顯示錯誤
+- 上傳非圖片文件 → 應顯示錯誤
+- 切換語言到 "English" → 應顯示文本輸入框
+- 圖片壓縮後仍 > 300KB → 應顯示錯誤
+- 快速連續上傳 → 應觸發速率限制
 
 ---
 
-## Task 13: 生产部署
+## Task 13: 生產部署
 
-**Step 1: 部署后端**
+**Step 1: 部署後端**
 
 ```bash
 cd backend
@@ -1043,25 +1043,25 @@ npm run build
 npx wrangler pages deploy dist
 ```
 
-**Step 3: 执行生产数据库迁移**
+**Step 3: 執行生產數據庫遷移**
 
 ```bash
 npx wrangler d1 execute langmap --file=scripts/031_add_image_language.sql
 ```
 
-**Step 4: 配置自定义域名（可选）**
+**Step 4: 配置自定義域名（可選）**
 
 在 Cloudflare Dashboard 中：
-1. 进入 R2 → langmap-images bucket
-2. 设置 → 自定义域名
+1. 進入 R2 → langmap-images bucket
+2. 設置 → 自定義域名
 3. 添加域名：images.langmap.io
-4. 配置 DNS 记录
+4. 配置 DNS 記錄
 
 ---
 
-## Task 14: 功能验证
+## Task 14: 功能驗證
 
-**Step 1: 验证 API 端点**
+**Step 1: 驗證 API 端點**
 
 ```bash
 curl -X POST https://your-api.com/api/v1/images/upload-presign \
@@ -1070,7 +1070,7 @@ curl -X POST https://your-api.com/api/v1/images/upload-presign \
   -d '{"content_type":"image/webp","content_length":50000}'
 ```
 
-预期返回：
+預期返回：
 
 ```json
 {
@@ -1081,15 +1081,15 @@ curl -X POST https://your-api.com/api/v1/images/upload-presign \
 }
 ```
 
-**Step 2: 验证图片存储**
+**Step 2: 驗證圖片存儲**
 
 ```bash
 npx wrangler r2 object list langmap-images
 ```
 
-预期显示上传的图片文件
+預期顯示上傳的圖片文件
 
-**Step 3: 验证表达式创建**
+**Step 3: 驗證表達式創建**
 
 ```bash
 curl -X POST https://your-api.com/api/v1/expressions \
@@ -1101,81 +1101,81 @@ curl -X POST https://your-api.com/api/v1/expressions \
   }'
 ```
 
-预期返回创建的表达式对象
+預期返回創建的表達式對象
 
 ---
 
-## Task 15: 性能优化监控
+## Task 15: 性能優化監控
 
-**Step 1: 监控压缩性能**
+**Step 1: 監控壓縮性能**
 
-在浏览器 DevTools 中：
-- 记录压缩耗时（应在 1-3 秒内）
-- 记录压缩后大小（应 < 100KB）
-- 记录上传耗时（应在 1-2 秒内）
+在瀏覽器 DevTools 中：
+- 記錄壓縮耗時（應在 1-3 秒內）
+- 記錄壓縮後大小（應 < 100KB）
+- 記錄上傳耗時（應在 1-2 秒內）
 
-**Step 2: 监控 API 性能**
+**Step 2: 監控 API 性能**
 
 在 Cloudflare Dashboard 中：
 - 查看 Workers Analytics
-- 监控 `/api/v1/images/upload-presign` 端点的响应时间
-- 监控 CPU 时间和内存使用
+- 監控 `/api/v1/images/upload-presign` 端點的響應時間
+- 監控 CPU 時間和內存使用
 
-**Step 3: 调整压缩参数（如需要）**
+**Step 3: 調整壓縮參數（如需要）**
 
-如果压缩耗时过长：
+如果壓縮耗時過長：
 - 降低 `maxWidth` 到 500px
 - 降低初始 `quality` 到 0.8
 
-如果压缩后大小过大：
-- 降低目标质量到 0.6
-- 添加多级压缩逻辑
+如果壓縮後大小過大：
+- 降低目標質量到 0.6
+- 添加多級壓縮邏輯
 
 ---
 
-## Task 16: 文档更新
+## Task 16: 文檔更新
 
 **Files:**
 - Modify: `docs/design/features/feat-image-expression.md`
 
-**Step 1: 更新实现状态**
+**Step 1: 更新實現狀態**
 
-在文档开头修改：
+在文檔開頭修改：
 
 ```markdown
 ## System Reminder
 
-**实现状态**：
-- ✅ R2 存储桶/目录配置（图片用）已设置
-- ✅ 预签名 URL API 已实现
-- ✅ 前端图片上传组件已实现
-- ✅ 前端图片压缩逻辑已实现
-- ✅ 数据库 `language_code='image'` 插入已完成
-- ✅ 前端根据 language_code 动态切换输入方式已实现
+**實現狀態**：
+- ✅ R2 存儲桶/目錄配置（圖片用）已設置
+- ✅ 預籤名 URL API 已實現
+- ✅ 前端圖片上傳組件已實現
+- ✅ 前端圖片壓縮邏輯已實現
+- ✅ 數據庫 `language_code='image'` 插入已完成
+- ✅ 前端根據 language_code 動態切換輸入方式已實現
 ```
 
-**Step 2: 添加部署章节**
+**Step 2: 添加部署章節**
 
-在文档末尾添加：
+在文檔末尾添加：
 
 ```markdown
-## 部署记录
+## 部署記錄
 
 **日期**：2026-03-23
 **版本**：v1.0.0
 
-**完成事项**：
-- R2 bucket 创建完成
-- API 端点部署完成
-- 前端组件集成完成
-- 数据库迁移完成
-- 生产环境测试通过
+**完成事項**：
+- R2 bucket 創建完成
+- API 端點部署完成
+- 前端組件集成完成
+- 數據庫遷移完成
+- 生產環境測試通過
 
 **已知限制**：
-- 图片最大尺寸限制为 600px 宽度
-- 压缩质量固定为 0.7
-- 预签名 URL 有效期为 5 分钟
-- 普通用户速率限制：5 次/分钟（预签名），10 次/分钟（创建）
+- 圖片最大尺寸限制爲 600px 寬度
+- 壓縮質量固定爲 0.7
+- 預籤名 URL 有效期爲 5 分鐘
+- 普通用戶速率限制：5 次/分鐘（預籤名），10 次/分鐘（創建）
 ```
 
 **Step 3: Commit**
@@ -1187,15 +1187,15 @@ git commit -m "docs: update implementation status and deployment records"
 
 ---
 
-## Task 17: 标签更新
+## Task 17: 標籤更新
 
-**Step 1: 创建版本标签**
+**Step 1: 創建版本標籤**
 
 ```bash
 git tag -a v1.0.0-image-feature -m "Add image expression feature"
 ```
 
-**Step 2: 推送标签**
+**Step 2: 推送標籤**
 
 ```bash
 git push origin v1.0.0-image-feature
@@ -1203,14 +1203,14 @@ git push origin v1.0.0-image-feature
 
 ---
 
-## 总结
+## 總結
 
-本实施计划涵盖了图片词句功能的完整实现，包括：
+本實施計劃涵蓋了圖片詞句功能的完整實現，包括：
 
-✅ **后端**：R2 配置、预签名 URL API、schema 验证、速率限制
-✅ **前端**：图片压缩工具、上传组件、API 集成、UI 动态切换
-✅ **数据库**：添加 "image" 语言
-✅ **测试**：本地测试、生产验证、性能监控
-✅ **文档**：实现状态更新、部署记录
+✅ **後端**：R2 配置、預籤名 URL API、schema 驗證、速率限制
+✅ **前端**：圖片壓縮工具、上傳組件、API 集成、UI 動態切換
+✅ **數據庫**：添加 "image" 語言
+✅ **測試**：本地測試、生產驗證、性能監控
+✅ **文檔**：實現狀態更新、部署記錄
 
-按照此计划逐步实施，可以实现一个高效、安全、用户友好的图片表达功能。
+按照此計劃逐步實施，可以實現一個高效、安全、用戶友好的圖片表達功能。

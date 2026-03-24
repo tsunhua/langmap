@@ -1,34 +1,34 @@
-# 词句组合并功能设计文档
+# 詞句組合併功能設計文檔
 
-## 1. 概述与用户流程
+## 1. 概述與用戶流程
 
-### 功能目标
-允许用户在详情页将一个词句组合并到另一个词句组，简化词句组管理，避免重复或相似的含义组。
+### 功能目標
+允許用戶在詳情頁將一個詞句組合併到另一個詞句組，簡化詞句組管理，避免重複或相似的含義組。
 
-### 用户场景
-- 用户发现两个词句组表达的含义相似，想要合并它们
-- 用户希望减少词句组数量，使管理更加简洁
-- 用户误创建了多个词句组，需要合并修正
+### 用戶場景
+- 用戶發現兩個詞句組表達的含義相似，想要合併它們
+- 用戶希望減少詞句組數量，使管理更加簡潔
+- 用戶誤創建了多個詞句組，需要合併修正
 
 ### 操作流程
-1. 用户在详情页看到当前词句所属的多个词句组标签
-2. 在词句组标签页的成员数量显示区域旁边点击「合并」按钮
-3. 弹出模态框，显示该词句所属的其他词句组列表
-4. 用户选择要合并到的目标词句组
-5. 系统执行合并，将源词句组中的所有词句添加到目标词句组，然后删除源词句组
-6. 页面自动刷新，显示合并后的词句组列表
+1. 用戶在詳情頁看到當前詞句所屬的多個詞句組標籤
+2. 在詞句組標籤頁的成員數量顯示區域旁邊點擊「合併」按鈕
+3. 彈出模態框，顯示該詞句所屬的其他詞句組列表
+4. 用戶選擇要合併到的目標詞句組
+5. 系統執行合併，將源詞句組中的所有詞句添加到目標詞句組，然後刪除源詞句組
+6. 頁面自動刷新，顯示合併後的詞句組列表
 
-## 2. 界面设计
+## 2. 界面設計
 
-### 2.1 词句组内部布局
+### 2.1 詞句組內部布局
 
-在词句组内部的成员数量显示区域旁边添加合并按钮（Detail.vue 第 57-60 行）：
+在詞句組內部的成員數量顯示區域旁邊添加合併按鈕（Detail.vue 第 57-60 行）：
 
 ```vue
 <div class="border-b border-slate-200 px-3 sm:px-6 py-3 sm:py-4 flex ...">
   <span class="text-slate-600 text-sm sm:text-base">{{ currentMembers.length }} {{ $t('expressions') }}</span>
 
-  <!-- 新增：合并按钮 -->
+  <!-- 新增：合併按鈕 -->
   <button @click="openMergeGroupsModal()" class="ml-2 text-slate-400 hover:text-blue-600 transition-colors" :title="$t('merge_groups')">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -39,122 +39,122 @@
 </div>
 ```
 
-合并按钮使用浅色图标，hover 时变为蓝色，保持低调但可见。
+合併按鈕使用淺色圖標，hover 時變爲藍色，保持低調但可見。
 
-### 2.2 词句组合并模态框
+### 2.2 詞句組合併模態框
 
-模态框布局：
-- **标题**：「合併詞句組」
+模態框布局：
+- **標題**：「合併詞句組」
 - **描述**：「選擇要將當前詞句組合併到的目標詞句組。此操作無法撤銷。」
-- **词句组列表**：显示当前词句所属的所有其他词句组（排除当前标签页的词句组）
-  - 每个词句组卡片显示：
-    - 词句组标签号（如 #1）
-    - 词句数量（如「5 個詞句」）
-    - 前 3 个词句的文本（用 " / " 分隔）
-    - 创建者信息
-  - 点击卡片直接执行合并操作
-- **底部操作栏**：
-  - 「取消」按钮
+- **詞句組列表**：顯示當前詞句所屬的所有其他詞句組（排除當前標籤頁的詞句組）
+  - 每個詞句組卡片顯示：
+    - 詞句組標籤號（如 #1）
+    - 詞句數量（如「5 個詞句」）
+    - 前 3 個詞句的文本（用 " / " 分隔）
+    - 創建者信息
+  - 點擊卡片直接執行合併操作
+- **底部操作欄**：
+  - 「取消」按鈕
 
-## 3. 数据流程
+## 3. 數據流程
 
-### 3.1 合并操作流程
+### 3.1 合併操作流程
 
-1. **用户点击合并按钮**（在词句组内部）
-   - 调用 `openMergeGroupsModal()` 函数
-   - 设置 `showMergeGroupsModal = true`
-   - 设置 `sourceMeaningId = currentMeaning.id`
-   - 加载其他词句组列表（通过 `meanings.value` 过滤，排除当前词句组）
+1. **用戶點擊合併按鈕**（在詞句組內部）
+   - 調用 `openMergeGroupsModal()` 函數
+   - 設置 `showMergeGroupsModal = true`
+   - 設置 `sourceMeaningId = currentMeaning.id`
+   - 加載其他詞句組列表（通過 `meanings.value` 過濾，排除當前詞句組）
 
-2. **用户选择目标词句组**
-   - 调用 `mergeMeaningGroups(targetMeaningId)` 函数
-   - 传递源词句组 ID 和目标词句组 ID
+2. **用戶選擇目標詞句組**
+   - 調用 `mergeMeaningGroups(targetMeaningId)` 函數
+   - 傳遞源詞句組 ID 和目標詞句組 ID
 
-3. **执行合并操作**（前端）
-   - 发送 POST 请求到 `/api/v1/meanings/merge`
-   - 请求体：
+3. **執行合併操作**（前端）
+   - 發送 POST 請求到 `/api/v1/meanings/merge`
+   - 請求體：
      ```json
      {
-       "source_meaning_id": "源词句组ID",
-       "target_meaning_id": "目标词句组ID"
+       "source_meaning_id": "源詞句組ID",
+       "target_meaning_id": "目標詞句組ID"
      }
      ```
 
-4. **后端处理合并逻辑**（使用批量操作）
-   - 验证用户权限
-   - 使用事务或批量操作：
-     1. **批量插入**新的 expression_meaning 关联：
+4. **後端處理合併邏輯**（使用批量操作）
+   - 驗證用戶權限
+   - 使用事務或批量操作：
+     1. **批量插入**新的 expression_meaning 關聯：
         ```sql
         INSERT OR IGNORE INTO expression_meaning (id, expression_id, meaning_id, created_at)
         VALUES (?, ?, ?, ?)
         ```
-        对源词句组的每个词句执行
-     2. **批量删除**源词句组的 expression_meaning 记录：
+        對源詞句組的每個詞句執行
+     2. **批量刪除**源詞句組的 expression_meaning 記錄：
         ```sql
         DELETE FROM expression_meaning WHERE meaning_id = ?
         ```
-     3. **删除**源词句组记录：
+     3. **刪除**源詞句組記錄：
         ```sql
         DELETE FROM meanings WHERE id = ?
         ```
-   - 所有操作在一个事务中执行，确保原子性
-   - 返回合并结果
+   - 所有操作在一個事務中執行，確保原子性
+   - 返回合併結果
 
-5. **前端刷新显示**
-   - 重新加载词句组列表
-   - 自动切换到目标词句组标签页
+5. **前端刷新顯示**
+   - 重新加載詞句組列表
+   - 自動切換到目標詞句組標籤頁
 
-**性能优化点**：
-- 使用 D1 的 `batch()` 方法一次性执行所有 SQL 语句
-- 使用 `INSERT OR IGNORE` 避免重复插入
-- 单次数据库往返完成所有操作
+**性能優化點**：
+- 使用 D1 的 `batch()` 方法一次性執行所有 SQL 語句
+- 使用 `INSERT OR IGNORE` 避免重複插入
+- 單次數據庫往返完成所有操作
 
-## 4. 错误处理
+## 4. 錯誤處理
 
-### 4.1 前端错误处理
+### 4.1 前端錯誤處理
 
-**场景 1：权限不足**
-- 后端返回 401 或 403 状态码
-- 前端显示提示：「您沒有權限執行此操作」
-- 不关闭模态框，允许用户重新登录后重试
+**場景 1：權限不足**
+- 後端返回 401 或 403 狀態碼
+- 前端顯示提示：「您沒有權限執行此操作」
+- 不關閉模態框，允許用戶重新登錄後重試
 
-**场景 2：词句组不存在**
-- 后端返回 404 状态码
-- 前端显示提示：「詞句組不存在，請重新整理頁面」
-- 关闭模态框，刷新数据
+**場景 2：詞句組不存在**
+- 後端返回 404 狀態碼
+- 前端顯示提示：「詞句組不存在，請重新整理頁面」
+- 關閉模態框，刷新數據
 
-**场景 3：合并到同一个词句组**
-- 前端验证：源词句组 ID 不等于目标词句组 ID
-- 如果相等，不发送请求，显示提示：「不能合併到同一個詞句組」
+**場景 3：合併到同一個詞句組**
+- 前端驗證：源詞句組 ID 不等於目標詞句組 ID
+- 如果相等，不發送請求，顯示提示：「不能合併到同一個詞句組」
 
-**场景 4：网络错误**
-- 捕获 fetch 错误
-- 显示提示：「網絡錯誤，請稍後再試」
-- 不关闭模态框，允许用户重试
+**場景 4：網絡錯誤**
+- 捕獲 fetch 錯誤
+- 顯示提示：「網絡錯誤，請稍後再試」
+- 不關閉模態框，允許用戶重試
 
-### 4.2 后端错误处理
+### 4.2 後端錯誤處理
 
-**验证失败**：
-- 源词句组 ID 或目标词句组 ID 不存在：返回 404
-- 用户无权限修改词句组：返回 403
+**驗證失敗**：
+- 源詞句組 ID 或目標詞句組 ID 不存在：返回 404
+- 用戶無權限修改詞句組：返回 403
 
-**数据库错误**：
-- 事务执行失败：返回 500，包含错误详情
-- 记录错误日志便于排查
+**數據庫錯誤**：
+- 事務執行失敗：返回 500，包含錯誤詳情
+- 記錄錯誤日誌便於排查
 
-**并发冲突**：
-- 使用数据库锁或事务隔离级别处理并发合并请求
-- 如果检测到冲突，返回 409 Conflict
+**並發衝突**：
+- 使用數據庫鎖或事務隔離級別處理並發合併請求
+- 如果檢測到衝突，返回 409 Conflict
 
-## 5. 后端 API 设计
+## 5. 後端 API 設計
 
-### 5.1 API 端点
+### 5.1 API 端點
 
 ```
 POST /api/v1/meanings/merge
 ```
 
-### 5.2 请求格式
+### 5.2 請求格式
 
 ```json
 {
@@ -163,9 +163,9 @@ POST /api/v1/meanings/merge
 }
 ```
 
-### 5.3 响应格式
+### 5.3 響應格式
 
-**成功响应（200）**：
+**成功響應（200）**：
 ```json
 {
   "success": true,
@@ -175,7 +175,7 @@ POST /api/v1/meanings/merge
 }
 ```
 
-**错误响应**：
+**錯誤響應**：
 
 ```json
 // 403 Forbidden
@@ -191,17 +191,17 @@ POST /api/v1/meanings/merge
 // 500 Internal Server Error
 {
   "error": "合併失敗",
-  "details": "具体错误信息"
+  "details": "具體錯誤信息"
 }
 ```
 
-### 5.4 数据库操作（伪代码）
+### 5.4 數據庫操作（僞代碼）
 
 ```typescript
 async mergeMeaningGroups(sourceMeaningId: number, targetMeaningId: number, username: string) {
   const db = this.db;
 
-  // 1. 验证词句组存在
+  // 1. 驗證詞句組存在
   const sourceMeaning = await db.prepare('SELECT * FROM meanings WHERE id = ?').bind(sourceMeaningId).first();
   const targetMeaning = await db.prepare('SELECT * FROM meanings WHERE id = ?').bind(targetMeaningId).first();
 
@@ -209,12 +209,12 @@ async mergeMeaningGroups(sourceMeaningId: number, targetMeaningId: number, usern
     throw new Error('詞句組不存在');
   }
 
-  // 2. 获取源词句组的所有词句
+  // 2. 獲取源詞句組的所有詞句
   const expressions = await db.prepare(
     'SELECT expression_id FROM expression_meaning WHERE meaning_id = ?'
   ).bind(sourceMeaningId).all();
 
-  // 3. 批量插入新的 expression_meaning 关联
+  // 3. 批量插入新的 expression_meaning 關聯
   const now = new Date().toISOString();
   const insertStatements = expressions.map(e =>
     db.prepare(
@@ -222,17 +222,17 @@ async mergeMeaningGroups(sourceMeaningId: number, targetMeaningId: number, usern
     ).bind(`${e.expression_id}-${targetMeaningId}`, e.expression_id, targetMeaningId, now)
   );
 
-  // 4. 批量删除源词句组的关联
+  // 4. 批量刪除源詞句組的關聯
   const deleteExpressionMeaningStmt = db.prepare(
     'DELETE FROM expression_meaning WHERE meaning_id = ?'
   ).bind(sourceMeaningId);
 
-  // 5. 删除源词句组
+  // 5. 刪除源詞句組
   const deleteMeaningStmt = db.prepare(
     'DELETE FROM meanings WHERE id = ?'
   ).bind(sourceMeaningId);
 
-  // 6. 使用 batch 执行所有操作
+  // 6. 使用 batch 執行所有操作
   await db.batch([...insertStatements, deleteExpressionMeaningStmt, deleteMeaningStmt]);
 
   return {
@@ -243,12 +243,12 @@ async mergeMeaningGroups(sourceMeaningId: number, targetMeaningId: number, usern
 }
 ```
 
-## 6. 前端组件设计
+## 6. 前端組件設計
 
-### 6.1 新增状态变量（Detail.vue）
+### 6.1 新增狀態變量（Detail.vue）
 
 ```typescript
-// 词句组合并模态框
+// 詞句組合併模態框
 const showMergeGroupsModal = ref(false)
 const sourceMeaningId = ref<number | null>(null)
 const targetMeaningId = ref<number | null>(null)
@@ -256,10 +256,10 @@ const mergeLoading = ref(false)
 const mergeMessage = ref('')
 ```
 
-### 6.2 新增函数（Detail.vue）
+### 6.2 新增函數（Detail.vue）
 
 ```typescript
-// 打开词句组合并模态框
+// 打開詞句組合併模態框
 function openMergeGroupsModal() {
   sourceMeaningId.value = currentMeaning.value.id
   targetMeaningId.value = null
@@ -267,7 +267,7 @@ function openMergeGroupsModal() {
   showMergeGroupsModal.value = true
 }
 
-// 关闭词句组合并模态框
+// 關閉詞句組合併模態框
 function closeMergeGroupsModal() {
   showMergeGroupsModal.value = false
   sourceMeaningId.value = null
@@ -275,11 +275,11 @@ function closeMergeGroupsModal() {
   mergeMessage.value = ''
 }
 
-// 执行词句组合并
+// 執行詞句組合併
 async function mergeMeaningGroups(targetMeaningId: number) {
   if (!sourceMeaningId.value) return
 
-  // 前端验证
+  // 前端驗證
   if (sourceMeaningId.value === targetMeaningId) {
     mergeMessage.value = t('cannot_merge_to_same_group')
     return
@@ -314,16 +314,16 @@ async function mergeMeaningGroups(targetMeaningId: number) {
 
     const result = await res.json()
 
-    // 关闭模态框
+    // 關閉模態框
     closeMergeGroupsModal()
 
-    // 刷新数据
+    // 刷新數據
     await load()
 
-    // 切换到目标词句组
+    // 切換到目標詞句組
     setActiveTab(targetMeaningId.toString())
 
-    // 显示成功提示（可选）
+    // 顯示成功提示（可選）
     mergeMessage.value = t('merge_success', { count: result.merged_count })
   } catch (e) {
     console.error('Merge error:', e)
@@ -334,10 +334,10 @@ async function mergeMeaningGroups(targetMeaningId: number) {
 }
 ```
 
-### 6.3 模态框模板（Detail.vue）
+### 6.3 模態框模板（Detail.vue）
 
 ```vue
-<!-- 词句组合并模态框 -->
+<!-- 詞句組合併模態框 -->
 <div v-if="showMergeGroupsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
     <div class="border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -412,22 +412,22 @@ async function mergeMeaningGroups(targetMeaningId: number) {
 </div>
 ```
 
-### 6.4 计算属性（Detail.vue）
+### 6.4 計算屬性（Detail.vue）
 
 ```typescript
-// 获取其他词句组（排除当前词句组）
+// 獲取其他詞句組（排除當前詞句組）
 const otherMeanings = computed(() => {
   if (!sourceMeaningId.value) return []
   return meanings.value.filter(m => m.id !== sourceMeaningId.value)
 })
 
-// 获取词句组在列表中的索引
+// 獲取詞句組在列表中的索引
 function getMeaningIndex(meaningId: number) {
   return meanings.value.findIndex(m => m.id === meaningId) + 1
 }
 ```
 
-## 7. 国际化字符串
+## 7. 國際化字符串
 
 ### 7.1 英文（en-US.json）
 
@@ -441,7 +441,7 @@ function getMeaningIndex(meaningId: number) {
 }
 ```
 
-### 7.2 简体中文（zh-CN.json）
+### 7.2 簡體中文（zh-CN.json）
 
 ```json
 {
@@ -453,7 +453,7 @@ function getMeaningIndex(meaningId: number) {
 }
 ```
 
-### 7.3 繁体中文（zh-TW.json）
+### 7.3 繁體中文（zh-TW.json）
 
 ```json
 {
@@ -465,79 +465,79 @@ function getMeaningIndex(meaningId: number) {
 }
 ```
 
-## 8. 实现清单
+## 8. 實現清單
 
-### 8.1 前端实现
+### 8.1 前端實現
 
-- [ ] 在 Detail.vue 中添加合并按钮（词句组内部）
-- [ ] 添加词句组合并模态框模板
-- [ ] 添加相关状态变量
-- [ ] 实现打开/关闭模态框函数
-- [ ] 实现执行合并函数
-- [ ] 添加错误处理
-- [ ] 添加国际化字符串
-- [ ] 测试合并功能
+- [ ] 在 Detail.vue 中添加合併按鈕（詞句組內部）
+- [ ] 添加詞句組合併模態框模板
+- [ ] 添加相關狀態變量
+- [ ] 實現打開/關閉模態框函數
+- [ ] 實現執行合併函數
+- [ ] 添加錯誤處理
+- [ ] 添加國際化字符串
+- [ ] 測試合併功能
 
-### 8.2 后端实现
+### 8.2 後端實現
 
 - [ ] 在 D1DatabaseService 中添加 `mergeMeaningGroups` 方法
-- [ ] 在 API v1 中添加 POST /api/v1/meanings/merge 端点
-- [ ] 实现批量插入、批量删除逻辑
-- [ ] 添加权限验证
-- [ ] 添加错误处理
-- [ ] 测试合并 API
+- [ ] 在 API v1 中添加 POST /api/v1/meanings/merge 端點
+- [ ] 實現批量插入、批量刪除邏輯
+- [ ] 添加權限驗證
+- [ ] 添加錯誤處理
+- [ ] 測試合併 API
 
-## 9. 测试用例
+## 9. 測試用例
 
-### 9.1 功能测试
+### 9.1 功能測試
 
-1. **正常合并**
-   - 在详情页点击合并按钮
-   - 选择目标词句组
-   - 验证源词句组的词句已添加到目标词句组
-   - 验证源词句组已删除
-   - 验证页面自动切换到目标词句组
+1. **正常合併**
+   - 在詳情頁點擊合併按鈕
+   - 選擇目標詞句組
+   - 驗證源詞句組的詞句已添加到目標詞句組
+   - 驗證源詞句組已刪除
+   - 驗證頁面自動切換到目標詞句組
 
-2. **合并到同一词句组**
-   - 尝试将词句组合并到自己
-   - 验证显示错误提示
-   - 验证不发送请求
+2. **合併到同一詞句組**
+   - 嘗試將詞句組合併到自己
+   - 驗證顯示錯誤提示
+   - 驗證不發送請求
 
-3. **权限测试**
-   - 未登录用户尝试合并
-   - 验证显示权限错误
-   - 普通用户尝试合并其他用户的词句组
-   - 验证显示权限错误
-   - 管理员用户可以合并任何词句组
+3. **權限測試**
+   - 未登錄用戶嘗試合併
+   - 驗證顯示權限錯誤
+   - 普通用戶嘗試合併其他用戶的詞句組
+   - 驗證顯示權限錯誤
+   - 管理員用戶可以合併任何詞句組
 
-4. **网络错误**
-   - 模拟网络中断
-   - 验证显示网络错误提示
-   - 验证模态框不关闭
+4. **網絡錯誤**
+   - 模擬網絡中斷
+   - 驗證顯示網絡錯誤提示
+   - 驗證模態框不關閉
 
-### 9.2 性能测试
+### 9.2 性能測試
 
-1. **大量词句合并**
-   - 创建包含 100 个词句的词句组
-   - 执行合并操作
-   - 验证响应时间 < 2 秒
+1. **大量詞句合併**
+   - 創建包含 100 個詞句的詞句組
+   - 執行合併操作
+   - 驗證響應時間 < 2 秒
 
-2. **并发合并**
-   - 同时对同一词句组发起多个合并请求
-   - 验证只执行一次合并
-   - 验证其他请求返回冲突错误
+2. **並發合併**
+   - 同時對同一詞句組發起多個合併請求
+   - 驗證只執行一次合併
+   - 驗證其他請求返回衝突錯誤
 
-## 10. 注意事项
+## 10. 注意事項
 
-1. **数据一致性**：所有数据库操作必须在事务中执行，确保原子性
-2. **权限控制**：只有词句组的创建者或管理员可以执行合并操作
-3. **用户体验**：合并操作不可逆，必须在界面中明确提示
-4. **性能优化**：使用批量操作减少数据库往返次数
-5. **缓存清理**：合并后清理相关缓存（statistics cache, heatmap cache）
+1. **數據一致性**：所有數據庫操作必須在事務中執行，確保原子性
+2. **權限控制**：只有詞句組的創建者或管理員可以執行合併操作
+3. **用戶體驗**：合併操作不可逆，必須在界面中明確提示
+4. **性能優化**：使用批量操作減少數據庫往返次數
+5. **緩存清理**：合併後清理相關緩存（statistics cache, heatmap cache）
 
-## 11. 后续优化
+## 11. 後續優化
 
-1. **批量选择**：支持同时选择多个词句组进行批量合并
-2. **合并历史**：记录词句组合并历史，支持撤销操作
-3. **智能推荐**：根据词句相似度推荐合并目标词句组
-4. **合并预览**：在合并前显示预览，展示合并后的词句组内容
+1. **批量選擇**：支持同時選擇多個詞句組進行批量合併
+2. **合併歷史**：記錄詞句組合併歷史，支持撤銷操作
+3. **智能推薦**：根據詞句相似度推薦合併目標詞句組
+4. **合併預覽**：在合併前顯示預覽，展示合併後的詞句組內容

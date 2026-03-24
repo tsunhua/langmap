@@ -1,143 +1,143 @@
-# API 文档
+# API 文檔
 
-本文档描述 LangMap 后端 API 的所有端点、认证机制、请求/响应格式和使用说明。
+本文檔描述 LangMap 後端 API 的所有端點、認證機制、請求/響應格式和使用說明。
 
 ## 概述
 
-LangMap API 使用 Hono + TypeScript 框架，部署在 Cloudflare Workers 上，使用 Cloudflare D1 作为数据库。API 遵循 RESTful 设计原则，所有端点使用 `/api/v1/` 前缀。
+LangMap API 使用 Hono + TypeScript 框架，部署在 Cloudflare Workers 上，使用 Cloudflare D1 作爲數據庫。API 遵循 RESTful 設計原則，所有端點使用 `/api/v1/` 前綴。
 
-## 认证机制
+## 認證機制
 
-### JWT 认证
+### JWT 認證
 
-系统使用 JWT (JSON Web Token) 进行用户认证：
+系統使用 JWT (JSON Web Token) 進行用戶認證：
 
-**端点**：
-- `POST /api/v1/auth/register` - 用户注册（含邮箱验证）
-- `POST /api/v1/auth/login` - 用户登录
-- `POST /api/v1/auth/logout` - 用户登出
-- `GET /api/v1/auth/verify-email` - 验证邮箱
+**端點**：
+- `POST /api/v1/auth/register` - 用戶註冊（含郵箱驗證）
+- `POST /api/v1/auth/login` - 用戶登錄
+- `POST /api/v1/auth/logout` - 用戶登出
+- `GET /api/v1/auth/verify-email` - 驗證郵箱
 
-**认证流程**：
-1. 用户注册/登录 → 服务器返回 JWT token
-2. 客户端在请求头中携带 token：`Authorization: Bearer {token}`
-3. 服务器验证 token 有效性，设置用户上下文
-4. token 有效期 24 小时
+**認證流程**：
+1. 用戶註冊/登錄 → 服務器返回 JWT token
+2. 客戶端在請求頭中攜帶 token：`Authorization: Bearer {token}`
+3. 服務器驗證 token 有效性，設置用戶上下文
+4. token 有效期 24 小時
 
-### 权限控制
+### 權限控制
 
-**公开端点**：无需认证
+**公開端點**：無需認證
 - `GET /api/v1/languages`
 - `GET /api/v1/statistics`
 - `GET /api/v1/heatmap`
 - `GET /api/v1/ui-translations/:language`
 
-**需要认证的端点**：
-- 用户信息管理
-- 表达式管理
-- 语义管理
+**需要認證的端點**：
+- 用戶信息管理
+- 表達式管理
+- 語義管理
 - 集合管理
-- UI 翻译保存
+- UI 翻譯保存
 
-**管理员端点**：
-- `PUT /api/v1/users/:id/role` - 更新用户角色（超级管理员）
+**管理員端點**：
+- `PUT /api/v1/users/:id/role` - 更新用戶角色（超級管理員）
 
-## 数据库架构
+## 數據庫架構
 
-LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构请参见：[数据库设计文档](../design/features/feat-database.md)
+LangMap 使用 Cloudflare D1 (SQLite 兼容邊緣數據庫)，詳細的表結構請參見：[數據庫設計文檔](../design/features/feat-database.md)
 
-**核心表概览**：
-- `languages` - 语言表
-- `expressions` - 表达式主表
-- `expression_versions` - 版本历史表
-- `meanings` - 语义表
-- `expression_meanings` - 表达式-语义关联表
-- `users` - 用户表
+**核心表概覽**：
+- `languages` - 語言表
+- `expressions` - 表達式主表
+- `expression_versions` - 版本歷史表
+- `meanings` - 語義表
+- `expression_meanings` - 表達式-語義關聯表
+- `users` - 用戶表
 - `collections` - 集合表
-- `collection_items` - 集合项目表
-- `email_verification_tokens` - 邮箱验证令牌表
+- `collection_items` - 集合項目表
+- `email_verification_tokens` - 郵箱驗證令牌表
 
-## API 端点总览
+## API 端點總覽
 
-### 按功能分类
+### 按功能分類
 
-#### 公开端点
+#### 公開端點
 
-**语言管理**
-- `GET /api/v1/languages` - 获取支持的语言列表
-- `GET /api/v1/languages?is_active=1` - 获取激活的语言
+**語言管理**
+- `GET /api/v1/languages` - 獲取支持的語言列表
+- `GET /api/v1/languages?is_active=1` - 獲取激活的語言
 
-**统计和热力图**
-- `GET /api/v1/statistics` - 获取系统统计信息
-- `GET /api/v1/heatmap` - 获取热力图数据
+**統計和熱力圖**
+- `GET /api/v1/statistics` - 獲取系統統計信息
+- `GET /api/v1/heatmap` - 獲取熱力圖數據
 
 **搜索功能**
-- `GET /api/v1/search` - 搜索表达式
+- `GET /api/v1/search` - 搜索表達式
 
-**UI 翻译**
-- `GET /api/v1/ui-translations/:language` - 获取 UI 翻译
-- `POST /api/v1/ui-translations/:language` - 保存 UI 翻译
-- `POST /api/v1/sync-locales` - 同步本地翻译到数据库
+**UI 翻譯**
+- `GET /api/v1/ui-translations/:language` - 獲取 UI 翻譯
+- `POST /api/v1/ui-translations/:language` - 保存 UI 翻譯
+- `POST /api/v1/sync-locales` - 同步本地翻譯到數據庫
 
-#### 认证端点
+#### 認證端點
 
-- `POST /api/v1/auth/register` - 用户注册
-- `POST /api/v1/auth/login` - 用户登录
-- `POST /api/v1/auth/logout` - 用户登出
-- `GET /api/v1/auth/verify-email` - 验证邮箱
+- `POST /api/v1/auth/register` - 用戶註冊
+- `POST /api/v1/auth/login` - 用戶登錄
+- `POST /api/v1/auth/logout` - 用戶登出
+- `GET /api/v1/auth/verify-email` - 驗證郵箱
 
-#### 需要认证的端点
+#### 需要認證的端點
 
-**用户信息**
-- `GET /api/v1/users/me` - 获取当前用户信息
+**用戶信息**
+- `GET /api/v1/users/me` - 獲取當前用戶信息
 
-**表达式管理**
-- `GET /api/v1/expressions` - 获取表达式列表
-- `GET /api/v1/expressions/:id` - 获取表达式详情
-- `POST /api/v1/expressions` - 创建表达式
-- `GET /api/v1/expressions/:id/versions` - 获取表达式版本历史
-- `GET /api/v1/expressions/:id/meanings` - 获取表达式含义
-- `PATCH /api/v1/expressions/:id` - 更新表达式（编辑）
-- `DELETE /api/v1/expressions/:id` - 删除表达式
+**表達式管理**
+- `GET /api/v1/expressions` - 獲取表達式列表
+- `GET /api/v1/expressions/:id` - 獲取表達式詳情
+- `POST /api/v1/expressions` - 創建表達式
+- `GET /api/v1/expressions/:id/versions` - 獲取表達式版本歷史
+- `GET /api/v1/expressions/:id/meanings` - 獲取表達式含義
+- `PATCH /api/v1/expressions/:id` - 更新表達式（編輯）
+- `DELETE /api/v1/expressions/:id` - 刪除表達式
 
-**语义管理**
-- `POST /api/v1/meanings` - 创建含义
-- `POST /api/v1/meanings/:id/link` - 关联表达式与含义
-- `GET /api/v1/meanings/:id` - 获取语义详情
+**語義管理**
+- `POST /api/v1/meanings` - 創建含義
+- `POST /api/v1/meanings/:id/link` - 關聯表達式與含義
+- `GET /api/v1/meanings/:id` - 獲取語義詳情
 
 **集合管理**
-- `GET /api/v1/collections` - 获取集合列表
-- `POST /api/v1/collections` - 创建集合
-- `GET /api/v1/collections/:id` - 获取集合详情
+- `GET /api/v1/collections` - 獲取集合列表
+- `POST /api/v1/collections` - 創建集合
+- `GET /api/v1/collections/:id` - 獲取集合詳情
 - `PUT /api/v1/collections/:id` - 更新集合
-- `DELETE /api/v1/collections/:id` - 删除集合
-- `GET /api/v1/collections/:id/items` - 获取集合内容
-- `POST /api/v1/collections/:id/items` - 添加内容到集合
-- `DELETE /api/v1/collections/:id/items/:expressionId` - 从集合移除内容
-- `GET /api/v1/collections/check-item` - 检查是否已包含项目
+- `DELETE /api/v1/collections/:id` - 刪除集合
+- `GET /api/v1/collections/:id/items` - 獲取集合內容
+- `POST /api/v1/collections/:id/items` - 添加內容到集合
+- `DELETE /api/v1/collections/:id/items/:expressionId` - 從集合移除內容
+- `GET /api/v1/collections/check-item` - 檢查是否已包含項目
 
-#### 管理员端点
+#### 管理員端點
 
-- `PUT /api/v1/users/:id/role` - 更新用户角色（仅超级管理员）
+- `PUT /api/v1/users/:id/role` - 更新用戶角色（僅超級管理員）
 
-#### 导出功能（部分实现）
+#### 導出功能（部分實現）
 
-- `POST /api/v1/export` - 发起导出任务
-- `GET /api/v1/export/:jobId` - 查询导出任务状态
-- `GET /api/v1/export/health` - 导出服务健康检查
+- `POST /api/v1/export` - 發起導出任務
+- `GET /api/v1/export/:jobId` - 查詢導出任務狀態
+- `GET /api/v1/export/health` - 導出服務健康檢查
 
-## 详细端点说明
+## 詳細端點說明
 
-### 公开端点
+### 公開端點
 
 #### GET /api/v1/languages
 
-获取支持的语言列表。
+獲取支持的語言列表。
 
-**查询参数**：
-- `is_active` (number, optional) - 是否只返回激活的语言（0或 1）
+**查詢參數**：
+- `is_active` (number, optional) - 是否只返回激活的語言（0或 1）
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -158,9 +158,9 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/statistics
 
-获取系统统计信息。
+獲取系統統計信息。
 
-**响应**：
+**響應**：
 ```json
 {
   "total_expressions": 1250,
@@ -171,9 +171,9 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/heatmap
 
-获取热力图数据，用于首页语言可视化。
+獲取熱力圖數據，用於首頁語言可視化。
 
-**响应**：
+**響應**：
 ```json
 {
   "data": [
@@ -199,20 +199,20 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**缓存**：10分钟内存缓存
+**緩存**：10分鐘內存緩存
 
 #### GET /api/v1/search
 
-搜索表达式。
+搜索表達式。
 
-**查询参数**：
-- `q` (string, required) - 搜索关键词
-- `from_lang` (string, optional) - 源语言代码
-- `region` (string, optional) - 地域代码
-- `skip` (number, optional) - 跳过数量（默认 0）
-- `limit` (number, optional) - 返回数量限制（默认 20）
+**查詢參數**：
+- `q` (string, required) - 搜索關鍵詞
+- `from_lang` (string, optional) - 源語言代碼
+- `region` (string, optional) - 地域代碼
+- `skip` (number, optional) - 跳過數量（默認 0）
+- `limit` (number, optional) - 返回數量限制（默認 20）
 
-**响应**：
+**響應**：
 ```json
 {
   "results": [
@@ -230,16 +230,16 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/ui-translations/:language
 
-获取指定语言的 UI 翻译。
+獲取指定語言的 UI 翻譯。
 
-**路径参数**：
-- `language` (string, required) - 语言代码（如 "en-US", "zh-CN"）
+**路徑參數**：
+- `language` (string, required) - 語言代碼（如 "en-US", "zh-CN"）
 
-**查询参数**：
-- `skip` (number, optional) - 跳过数量（默认 0）
-- `limit` (number, optional) - 返回数量限制（默认 1000）
+**查詢參數**：
+- `skip` (number, optional) - 跳過數量（默認 0）
+- `limit` (number, optional) - 返回數量限制（默認 1000）
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -255,24 +255,24 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/ui-translations/:language
 
-批量保存 UI 翻译。
+批量保存 UI 翻譯。
 
-**路径参数**：
-- `language` (string, required) - 语言代码
+**路徑參數**：
+- `language` (string, required) - 語言代碼
 
-**请求体**：
+**請求體**：
 ```json
 {
   "translations": [
     {
       "key": "home.title",
-      "text": "首页"
+      "text": "首頁"
     }
   ]
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -288,20 +288,20 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/sync-locales
 
-同步本地 JSON 文件到数据库。
+同步本地 JSON 文件到數據庫。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "languages": ["en-US", "zh-CN", "es"],
   "localeData": {
     "en-US": { "home.title": "Home" },
-    "zh-CN": { "home.title": "首页" }
+    "zh-CN": { "home.title": "首頁" }
   }
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -312,13 +312,13 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-### 认证端点
+### 認證端點
 
 #### POST /api/v1/auth/register
 
-用户注册并发送邮箱验证邮件。
+用戶註冊並發送郵箱驗證郵件。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "username": "john_doe",
@@ -327,7 +327,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -343,17 +343,17 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**邮箱验证流程**：
-1. 创建用户（email_verified = 0）
-2. 生成验证 token（1小时有效）
-3. 发送验证邮件（使用 Resend）
-4. 用户点击验证链接激活账户
+**郵箱驗證流程**：
+1. 創建用戶（email_verified = 0）
+2. 生成驗證 token（1小時有效）
+3. 發送驗證郵件（使用 Resend）
+4. 用戶點擊驗證鏈接激活賬戶
 
 #### POST /api/v1/auth/login
 
-用户登录并获取 JWT token。
+用戶登錄並獲取 JWT token。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "email": "john@example.com",
@@ -361,11 +361,11 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJp...（24小时有效）",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJp...（24小時有效）",
   "data": {
     "user": {
       "id": 1,
@@ -380,9 +380,9 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/auth/logout
 
-用户登出（客户端通常删除 token）。
+用戶登出（客戶端通常刪除 token）。
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -392,12 +392,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/auth/verify-email
 
-验证邮箱并激活账户。
+驗證郵箱並激活賬戶。
 
-**查询参数**：
-- `token` (string, required) - 验证 token
+**查詢參數**：
+- `token` (string, required) - 驗證 token
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -405,13 +405,13 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-### 需要认证的端点
+### 需要認證的端點
 
 #### GET /api/v1/users/me
 
-获取当前登录用户的信息。
+獲取當前登錄用戶的信息。
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -423,19 +423,19 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-### 表达式管理
+### 表達式管理
 
 #### GET /api/v1/expressions
 
-获取表达式列表，支持过滤和分页。
+獲取表達式列表，支持過濾和分頁。
 
-**查询参数**：
-- `skip` (number, optional) - 跳过数量（默认 0）
-- `limit` (number, optional) - 返回数量限制（默认 20）
-- `language` (string, optional) - 语言代码
-- `meaning_id` (number, optional) - 含义 ID
+**查詢參數**：
+- `skip` (number, optional) - 跳過數量（默認 0）
+- `limit` (number, optional) - 返回數量限制（默認 20）
+- `language` (string, optional) - 語言代碼
+- `meaning_id` (number, optional) - 含義 ID
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -451,12 +451,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/expressions/:id
 
-获取表达式详情。
+獲取表達式詳情。
 
-**路径参数**：
-- `id` (number, required) - 表达式 ID
+**路徑參數**：
+- `id` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -474,9 +474,9 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/expressions
 
-创建新的表达式。
+創建新的表達式。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "text": "Hello",
@@ -488,7 +488,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -500,12 +500,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/expressions/:id/versions
 
-获取表达式的版本历史。
+獲取表達式的版本歷史。
 
-**路径参数**：
-- `id` (number, required) - 表达式 ID
+**路徑參數**：
+- `id` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -521,18 +521,18 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/expressions/:id/meanings
 
-获取表达式关联的语义信息。
+獲取表達式關聯的語義信息。
 
-**路径参数**：
-- `id` (number, required) - 表达式 ID
+**路徑參數**：
+- `id` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 [
   {
     "id": 1,
     "gloss": "langmap.home.title",
-    "description": "首页标题",
+    "description": "首頁標題",
     "tags": "[\"langmap\"]"
   }
 ]
@@ -541,12 +541,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### PATCH /api/v1/expressions/:id
 
-更新表达式（编辑）。
+更新表達式（編輯）。
 
-**路径参数**：
-- `id` (number, required) - 表达式 ID
+**路徑參數**：
+- `id` (number, required) - 表達式 ID
 
-**请求体**：
+**請求體**：
 ```json
 {
   "text": "Hello World",
@@ -555,7 +555,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -567,12 +567,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### DELETE /api/v1/expressions/:id
 
-删除表达式。
+刪除表達式。
 
-**路径参数**：
-- `id` (number, required) - 表达式 ID
+**路徑參數**：
+- `id` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -580,22 +580,22 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-### 语义管理
+### 語義管理
 
 #### POST /api/v1/meanings
 
-创建新的语义。
+創建新的語義。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "gloss": "langmap.home.title",
-  "description": "首页标题",
+  "description": "首頁標題",
   "tags": "[\"langmap\"]"
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -606,19 +606,19 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/meanings/:id/link
 
-将表达式关联到语义。
+將表達式關聯到語義。
 
-**路径参数**：
-- `id` (number, required) - 语义 ID
+**路徑參數**：
+- `id` (number, required) - 語義 ID
 
-**请求体**：
+**請求體**：
 ```json
 {
   "expression_id": 1
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -628,17 +628,17 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/meanings/:id
 
-获取语义详情。
+獲取語義詳情。
 
-**路径参数**：
-- `id` (number, required) - 语义 ID
+**路徑參數**：
+- `id` (number, required) - 語義 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
   "gloss": "langmap.home.title",
-  "description": "首页标题",
+  "description": "首頁標題",
   "tags": "[\"langmap\"]",
   "expressions": [
     {
@@ -647,7 +647,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
     },
     {
       "id": 2,
-      "text": "首页"
+      "text": "首頁"
     }
   ]
 }
@@ -657,14 +657,14 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/collections
 
-获取集合列表。
+獲取集合列表。
 
-**查询参数**：
-- `skip` (number, optional) - 跳过数量（默认 0）
-- `limit` (number, optional) - 返回数量限制（默认 20）
-- `is_public` (boolean, optional) - 是否只返回公开集合
+**查詢參數**：
+- `skip` (number, optional) - 跳過數量（默認 0）
+- `limit` (number, optional) - 返回數量限制（默認 20）
+- `is_public` (boolean, optional) - 是否只返回公開集合
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -681,9 +681,9 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/collections
 
-创建新集合。
+創建新集合。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "name": "My Collection",
@@ -692,7 +692,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -705,12 +705,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/collections/:id
 
-获取集合详情。
+獲取集合詳情。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -735,10 +735,10 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 更新集合。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
 
-**请求体**：
+**請求體**：
 ```json
 {
   "name": "Updated Collection",
@@ -747,7 +747,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -760,12 +760,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### DELETE /api/v1/collections/:id
 
-删除集合。
+刪除集合。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -775,14 +775,14 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/collections/:id/items
 
-获取集合内容。
+獲取集合內容。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
-- `skip` (number, optional) - 跳过数量（默认 0）
-- `limit` (number, optional) - 返回数量限制（默认 20）
+- `skip` (number, optional) - 跳過數量（默認 0）
+- `limit` (number, optional) - 返回數量限制（默認 20）
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -797,12 +797,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### POST /api/v1/collections/:id/items
 
-添加内容到集合。
+添加內容到集合。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
 
-**请求体**：
+**請求體**：
 ```json
 {
   "expression_id": 1,
@@ -810,7 +810,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -823,13 +823,13 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### DELETE /api/v1/collections/:id/items/:expressionId
 
-从集合中移除内容。
+從集合中移除內容。
 
-**路径参数**：
+**路徑參數**：
 - `id` (number, required) - 集合 ID
-- `expressionId` (number, required) - 表达式 ID
+- `expressionId` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -839,13 +839,13 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/collections/check-item
 
-检查集合是否包含某个表达式。
+檢查集合是否包含某個表達式。
 
-**查询参数**：
+**查詢參數**：
 - `id` (number, required) - 集合 ID
-- `expressionId` (number, required) - 表达式 ID
+- `expressionId` (number, required) - 表達式 ID
 
-**响应**：
+**響應**：
 ```json
 [
   {
@@ -856,17 +856,17 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 ]
 ```
 
-### 管理员端点
+### 管理員端點
 
 #### PUT /api/v1/users/:id/role
 
-更新用户角色（仅超级管理员）。
+更新用戶角色（僅超級管理員）。
 
-**路径参数**：
-- `id` (number, required) - 用户 ID
-- `role` (string, required) - 用户角色（'user', 'admin', 'super_admin'）
+**路徑參數**：
+- `id` (number, required) - 用戶 ID
+- `role` (string, required) - 用戶角色（'user', 'admin', 'super_admin'）
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -877,13 +877,13 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-### 导出功能（部分实现）
+### 導出功能（部分實現）
 
 #### POST /api/v1/export
 
-发起导出任务。
+發起導出任務。
 
-**请求体**：
+**請求體**：
 ```json
 {
   "collectionId": 1,
@@ -891,7 +891,7 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "jobId": "exp_17045678901234"
@@ -900,12 +900,12 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 
 #### GET /api/v1/export/:jobId
 
-查询导出任务状态。
+查詢導出任務狀態。
 
-**路径参数**：
-- `jobId` (string, required) - 任务 ID
+**路徑參數**：
+- `jobId` (string, required) - 任務 ID
 
-**响应**：
+**響應**：
 ```json
 {
   "jobId": "exp_17045678901234",
@@ -915,17 +915,17 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-**状态值**：
-- `pending` - 等待处理
-- `processing` - 处理中
+**狀態值**：
+- `pending` - 等待處理
+- `processing` - 處理中
 - `completed` - 已完成
-- `failed` - 失败
+- `failed` - 失敗
 
 #### GET /api/v1/export/health
 
-检查导出服务健康状态。
+檢查導出服務健康狀態。
 
-**响应**：
+**響應**：
 ```json
 {
   "status": "healthy",
@@ -933,40 +933,40 @@ LangMap 使用 Cloudflare D1 (SQLite 兼容边缘数据库)，详细的表结构
 }
 ```
 
-## 错误响应格式
+## 錯誤響應格式
 
-### 通用错误格式
+### 通用錯誤格式
 
 ```json
 {
-  "error": "错误描述"
+  "error": "錯誤描述"
 }
 ```
 
-### HTTP 状态码
+### HTTP 狀態碼
 
-- `200 OK` - 请求成功
-- `400 Bad Request` - 请求参数错误
-- `401 Unauthorized` - 未认证
-- `403 Forbidden` - 权限不足
-- `404 Not Found` - 资源未找到
-- `500 Internal Server Error` - 服务器内部错误
+- `200 OK` - 請求成功
+- `400 Bad Request` - 請求參數錯誤
+- `401 Unauthorized` - 未認證
+- `403 Forbidden` - 權限不足
+- `404 Not Found` - 資源未找到
+- `500 Internal Server Error` - 服務器內部錯誤
 
-### 常见错误
+### 常見錯誤
 
-| HTTP 状态码 | 错误场景 |
+| HTTP 狀態碼 | 錯誤場景 |
 |-----------|---------|
-| 400 | 缺少必需参数、参数格式错误 |
-| 401 | Token 无效或过期、认证失败 |
-| 403 | 用户权限不足（如删除他人的内容） |
-| 404 | 资源不存在（ID 不存在） |
-| 500 | 数据库错误、服务器内部错误 |
+| 400 | 缺少必需參數、參數格式錯誤 |
+| 401 | Token 無效或過期、認證失敗 |
+| 403 | 用戶權限不足（如刪除他人的內容） |
+| 404 | 資源不存在（ID 不存在） |
+| 500 | 數據庫錯誤、服務器內部錯誤 |
 
-## 相关文档
+## 相關文檔
 
-- [数据库设计](../design/features/feat-database.md)
-- [系统架构设计](../system/architecture.md)
-- [用户与权限系统设计](../features/feat-user-system.md)
-- [搜索功能设计](../features/feat-search.md)
-- [热力图功能设计](../features/feat-heatmap.md)
-- [用户资料设计](../features/feat-user-profile.md)
+- [數據庫設計](../design/features/feat-database.md)
+- [系統架構設計](../system/architecture.md)
+- [用戶與權限系統設計](../features/feat-user-system.md)
+- [搜索功能設計](../features/feat-search.md)
+- [熱力圖功能設計](../features/feat-heatmap.md)
+- [用戶資料設計](../features/feat-user-profile.md)

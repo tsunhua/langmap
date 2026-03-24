@@ -1,42 +1,42 @@
-# 搜索功能设计
+# 搜索功能設計
 
 ## System Reminder
 
-**实现状态**：
-- ✅ 后端搜索 API 已实现 - `GET /api/v1/search` + `searchExpressions()` 方法
-- ✅ 前端搜索页面已实现 - `Search.vue`
-- ✅ 性能优化 - 已集成 L2 边缘缓存 (TTL 1小时)
-- ✅ 数据库查询支持 - LIKE 模糊匹配 + 复合索引优化
-- ⏳ 高级搜索功能 - 未实现（全文检索、拼写纠正）
-- ⏳ 搜索结果排序和过滤 - 部分实现
+**實現狀態**：
+- ✅ 後端搜索 API 已實現 - `GET /api/v1/search` + `searchExpressions()` 方法
+- ✅ 前端搜索頁面已實現 - `Search.vue`
+- ✅ 性能優化 - 已集成 L2 邊緣緩存 (TTL 1小時)
+- ✅ 數據庫查詢支持 - LIKE 模糊匹配 + 複合索引優化
+- ⏳ 高級搜索功能 - 未實現（全文檢索、拼寫糾正）
+- ⏳ 搜索結果排序和過濾 - 部分實現
 
-**已实现的 API 端点**：
-- `GET /api/v1/search?q=...&from_lang=...&region=...&skip=...&limit=...` - 搜索表达式
+**已實現的 API 端點**：
+- `GET /api/v1/search?q=...&from_lang=...&region=...&skip=...&limit=...` - 搜索表達式
 
-**已实现的功能**：
-- 基础搜索（关键词匹配）
-- 按语言过滤
-- 按地域过滤
-- 分页支持
+**已實現的功能**：
+- 基礎搜索（關鍵詞匹配）
+- 按語言過濾
+- 按地域過濾
+- 分頁支持
 
-**未实现的功能**：
-- 全文检索（Typesense/Elasticsearch）
-- 拼写纠正
-- 高级过滤（按来源类型、审核状态）
-- 搜索历史
-- 搜索建议/自动完成
+**未實現的功能**：
+- 全文檢索（Typesense/Elasticsearch）
+- 拼寫糾正
+- 高級過濾（按來源類型、審核狀態）
+- 搜索歷史
+- 搜索建議/自動完成
 
 ---
 
 ## 概述
 
-搜索功能是 LangMap 项目的核心功能之一，允许用户通过关键词检索表达式，并按语言和地域进行过滤。搜索功能支持模糊匹配，帮助用户找到相关的语言表达。
+搜索功能是 LangMap 項目的核心功能之一，允許用戶通過關鍵詞檢索表達式，並按語言和地域進行過濾。搜索功能支持模糊匹配，幫助用戶找到相關的語言表達。
 
-## 数据模型
+## 數據模型
 
-### 搜索相关字段
+### 搜索相關字段
 
-搜索主要使用 `Expression` 表的现有字段：
+搜索主要使用 `Expression` 表的現有字段：
 
 ```typescript
 interface Expression {
@@ -44,31 +44,31 @@ interface Expression {
   text: string              // 主要搜索字段
   meaning_id?: number
   audio_url?: string
-  language_code: string      // 按语言过滤
-  region_code?: string       // 按地域过滤
+  language_code: string      // 按語言過濾
+  region_code?: string       // 按地域過濾
   region_name?: string
-  tags?: string            // JSON 数组，用于高级搜索
-  source_type?: string      // 按来源类型过滤
-  review_status?: string    // 按审核状态过滤
+  tags?: string            // JSON 數組，用於高級搜索
+  source_type?: string      // 按來源類型過濾
+  review_status?: string    // 按審核狀態過濾
   created_by?: string
   created_at?: string
 }
 ```
 
-## API 设计
+## API 設計
 
 ### GET /api/v1/search
 
-搜索表达式，支持关键词匹配和多维度过滤。
+搜索表達式，支持關鍵詞匹配和多維度過濾。
 
-**查询参数**：
-- `q` (string) - 搜索关键词（必需）
-- `from_lang` (string) - 源语言代码（可选）
-- `region` (string) - 地域代码（可选）
-- `skip` (number) - 跳过数量（默认 0）
-- `limit` (number) - 返回数量限制（默认 20）
+**查詢參數**：
+- `q` (string) - 搜索關鍵詞（必需）
+- `from_lang` (string) - 源語言代碼（可選）
+- `region` (string) - 地域代碼（可選）
+- `skip` (number) - 跳過數量（默認 0）
+- `limit` (number) - 返回數量限制（默認 20）
 
-**响应**：
+**響應**：
 ```json
 {
   "results": [
@@ -88,9 +88,9 @@ interface Expression {
 }
 ```
 
-### 实现详情
+### 實現詳情
 
-后端使用简单的 LIKE 模糊匹配：
+後端使用簡單的 LIKE 模糊匹配：
 
 ```typescript
 async searchExpressions(query: string, fromLang?: string, region?: string, skip: number = 0, limit: number = 20): Promise<Expression[]> {
@@ -115,48 +115,48 @@ async searchExpressions(query: string, fromLang?: string, region?: string, skip:
 }
 ```
 
-## 前端实现
+## 前端實現
 
-### Search.vue 页面
+### Search.vue 頁面
 
 主要功能：
-1. 搜索输入框
-2. 语言选择器
-3. 地域选择器
-4. 搜索结果列表
-5. 分页控件
+1. 搜索輸入框
+2. 語言選擇器
+3. 地域選擇器
+4. 搜索結果列表
+5. 分頁控件
 
 **交互流程**：
-1. 用户输入搜索关键词
-2. 选择语言和地域（可选）
-3. 点击搜索或按回车
-4. 调用搜索 API
-5. 显示搜索结果
-6. 点击结果跳转到详情页
+1. 用戶輸入搜索關鍵詞
+2. 選擇語言和地域（可選）
+3. 點擊搜索或按回車
+4. 調用搜索 API
+5. 顯示搜索結果
+6. 點擊結果跳轉到詳情頁
 
 ## 搜索策略
 
-### 当前实现（简单匹配）
+### 當前實現（簡單匹配）
 
-- **LIKE 模糊匹配**：使用 SQL LIKE `%query%` 进行匹配
-- **多维度过滤**：支持按语言、地域过滤
-- **分页支持**：使用 skip 和 limit 分页
+- **LIKE 模糊匹配**：使用 SQL LIKE `%query%` 進行匹配
+- **多維度過濾**：支持按語言、地域過濾
+- **分頁支持**：使用 skip 和 limit 分頁
 
-### 未来改进计划
+### 未來改進計劃
 
-#### 1. 全文检索
+#### 1. 全文檢索
 
 引入 Typesense 或 Elasticsearch：
 
-**优点**：
+**優點**：
 - 更快的搜索性能
-- 支持拼写纠正
-- 相关性排序
-- 支持复杂查询（AND、OR、NOT）
+- 支持拼寫糾正
+- 相關性排序
+- 支持複雜查詢（AND、OR、NOT）
 
-**实施**：
+**實施**：
 ```typescript
-// Typesense 客户端示例
+// Typesense 客戶端示例
 const searchResults = await client.collections('expressions').documents().search({
   q: query,
   query_by: 'text',
@@ -166,47 +166,47 @@ const searchResults = await client.collections('expressions').documents().search
 })
 ```
 
-#### 2. 拼写纠正
+#### 2. 拼寫糾正
 
-使用搜索引擎的拼写纠正功能，自动纠正用户输入的拼写错误。
+使用搜索引擎的拼寫糾正功能，自動糾正用戶輸入的拼寫錯誤。
 
-#### 3. 高级过滤
+#### 3. 高級過濾
 
-添加更多过滤选项：
-- 按来源类型过滤（authoritative/ai/user）
-- 按审核状态过滤（approved/pending）
-- 按时间范围过滤
-- 按热度过滤（投票数）
+添加更多過濾選項：
+- 按來源類型過濾（authoritative/ai/user）
+- 按審核狀態過濾（approved/pending）
+- 按時間範圍過濾
+- 按熱度過濾（投票數）
 
-#### 4. 搜索历史
+#### 4. 搜索歷史
 
-- 记录用户的搜索历史
+- 記錄用戶的搜索歷史
 - 提供快速重新搜索
-- 支持删除搜索历史
+- 支持刪除搜索歷史
 
-#### 5. 搜索建议/自动完成
+#### 5. 搜索建議/自動完成
 
-- 根据用户输入提供实时搜索建议
-- 使用前缀匹配
-- 显示匹配的文本和数量
+- 根據用戶輸入提供實時搜索建議
+- 使用前綴匹配
+- 顯示匹配的文本和數量
 
-## 性能优化
+## 性能優化
 
-### 当前优化
+### 當前優化
 
-- **分页**：避免一次返回过多数据
-- **边缘缓存**：集成 L2 缓存，TTL 1小时，针对相同搜索词实现秒开。
-- **复合索引**：部署了 `idx_expressions_lang_text` 等索引，优化模糊查找后的排序开销。
+- **分頁**：避免一次返回過多數據
+- **邊緣緩存**：集成 L2 緩存，TTL 1小時，針對相同搜索詞實現秒開。
+- **複合索引**：部署了 `idx_expressions_lang_text` 等索引，優化模糊查找後的排序開銷。
 
-### 未来优化
+### 未來優化
 
-- **缓存**：缓存热门搜索词的结果
-- **搜索服务**：使用 Typesense/Elasticsearch 提升性能
-- **防抖**：前端搜索输入防抖，减少 API 调用
+- **緩存**：緩存熱門搜索詞的結果
+- **搜索服務**：使用 Typesense/Elasticsearch 提升性能
+- **防抖**：前端搜索輸入防抖，減少 API 調用
 
-## 用户界面设计
+## 用戶界面設計
 
-### 搜索页面布局
+### 搜索頁面布局
 
 ```
 ┌─────────────────────────────────────────┐
@@ -229,24 +229,24 @@ const searchResults = await client.collections('expressions').documents().search
 └─────────────────────────────────────────┘
 ```
 
-## 测试策略
+## 測試策略
 
-### 单元测试
-- 测试搜索表达式方法
-- 测试过滤逻辑
-- 测试分页逻辑
+### 單元測試
+- 測試搜索表達式方法
+- 測試過濾邏輯
+- 測試分頁邏輯
 
-### 集成测试
-- 测试搜索 API 端点
-- 测试搜索参数验证
-- 测试搜索结果格式
+### 集成測試
+- 測試搜索 API 端點
+- 測試搜索參數驗證
+- 測試搜索結果格式
 
-### 前端测试
-- 测试搜索页面组件
-- 测试搜索输入和过滤
-- 测试分页交互
+### 前端測試
+- 測試搜索頁面組件
+- 測試搜索輸入和過濾
+- 測試分頁交互
 
-## 相关文档
+## 相關文檔
 
-- [系统架构设计](../system/architecture.md)
-- [后端 API 指南](../../api/backend-guide.md)
+- [系統架構設計](../system/architecture.md)
+- [後端 API 指南](../../api/backend-guide.md)

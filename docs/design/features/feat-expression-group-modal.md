@@ -1,49 +1,49 @@
-# Handbook 词句组快捷弹窗功能设计
+# Handbook 詞句組快捷彈窗功能設計
 
 ## System Reminder
 
-**设计来源**：用户需求 - 在 HandbookView 页面点击词句时，弹出一个简略的词句详情框，显示当前词句组（meaning group）的所有词句，并支持快捷添加新词句到该组，使用表格形式展示（表头：语言、词句）。
+**設計來源**：用戶需求 - 在 HandbookView 頁面點擊詞句時，彈出一個簡略的詞句詳情框，顯示當前詞句組（meaning group）的所有詞句，並支持快捷添加新詞句到該組，使用表格形式展示（表頭：語言、詞句）。
 
-**实现状态**：设计阶段，待实现
+**實現狀態**：設計階段，待實現
 
 ---
 
 ## 概述
 
-在阅读 Handbook（学习手册）时，用户经常需要快速查看某个词句在不同语言下的翻译版本，或添加新的翻译版本。当前系统点击词句会跳转到完整的 Detail 页面，这在快速浏览时不够高效。
+在閱讀 Handbook（學習手冊）時，用戶經常需要快速查看某個詞句在不同語言下的翻譯版本，或添加新的翻譯版本。當前系統點擊詞句會跳轉到完整的 Detail 頁面，這在快速瀏覽時不夠高效。
 
-本功能设计一个快捷弹窗，提供：
-1. **词句组概览**：展示该词句组（meaning group）中所有词句的翻译
-2. **表格编辑**：以"语言 - 词句"表格形式展示，支持直接在表格中添加新行
-3. **语言范围限定**：语言选择器的选项与 Handbook 的学习语言（target_lang）范围保持一致
-4. **无缝交互**：支持关闭弹窗或跳转到完整详情页
+本功能設計一個快捷彈窗，提供：
+1. **詞句組概覽**：展示該詞句組（meaning group）中所有詞句的翻譯
+2. **表格編輯**：以"語言 - 詞句"表格形式展示，支持直接在表格中添加新行
+3. **語言範圍限定**：語言選擇器的選項與 Handbook 的學習語言（target_lang）範圍保持一致
+4. **無縫交互**：支持關閉彈窗或跳轉到完整詳情頁
 
 ## 交互流程
 
-### 1. 点击词句触发弹窗
+### 1. 點擊詞句觸發彈窗
 
-在 `HandbookView.vue` 中，渲染的词句元素（`<span class="expression-term">`）点击时不再直接跳转，而是：
-- 调用新的全局函数 `window.showExpressionGroupModal(expressionId, meaningId)`
-- 弹出词句组详情弹窗
+在 `HandbookView.vue` 中，渲染的詞句元素（`<span class="expression-term">`）點擊時不再直接跳轉，而是：
+- 調用新的全局函數 `window.showExpressionGroupModal(expressionId, meaningId)`
+- 彈出詞句組詳情彈窗
 
-### 2. 弹窗内容结构
+### 2. 彈窗內容結構
 
-弹窗采用表格编辑形式，每行显示一个语言的词句：
+彈窗採用表格編輯形式，每行顯示一個語言的詞句：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  [×]  词句组详情                            [查看详情] │
+│  [×]  詞句組詳情                            [查看詳情] │
 ├─────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────┤
 │  │ [+ 添加一行]                                         │
 │  ├─────────────┬────────────────────────────────────────┤
-│  │ 语言        │ 词句                    │ 操作        │
+│  │ 語言        │ 詞句                    │ 操作        │
 │  ├─────────────┼────────────────────────────────────────┤
 │  │ English    │ Hello                      │ [×]       │
-│  │ 中文（简体）│ 你好                        │ [×]       │
+│  │ 中文（簡體）│ 你好                        │ [×]       │
 │  │ 中文（繁體）│ 你好                        │ [×]       │
 │  │ 日本語      │ こんにちは                   │ [×]       │
-│  │ [+ 新行]   │ [输入框]        │ [✓] [×]  │            │
+│  │ [+ 新行]   │ [輸入框]        │ [✓] [×]  │            │
 │  └─────────────┴────────────────────────────────────────┤
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -51,77 +51,77 @@
 
 ### 3. 表格操作
 
-- **关闭弹窗**：点击右上角 × 或背景区域
-- **跳转详情**：点击"查看详情"按钮，跳转到 `/detail/:id` 完整页面
+- **關閉彈窗**：點擊右上角 × 或背景區域
+- **跳轉詳情**：點擊"查看詳情"按鈕，跳轉到 `/detail/:id` 完整頁面
 - **添加新行**：
-  - 点击"+ 添加一行"按钮，在表格末尾添加一个新的空行
-  - 新行包含：语言下拉选择器、词句输入框、确认✓和取消×按钮
-  - 语言选择器选项限定为 handbook 的学习语言范围（与页面顶部语言选择器一致）
-  - 点击✓保存，调用后端 API 添加新词句
-  - 点击×取消，移除新行
+  - 點擊"+ 添加一行"按鈕，在表格末尾添加一個新的空行
+  - 新行包含：語言下拉選擇器、詞句輸入框、確認✓和取消×按鈕
+  - 語言選擇器選項限定爲 handbook 的學習語言範圍（與頁面頂部語言選擇器一致）
+  - 點擊✓保存，調用後端 API 添加新詞句
+  - 點擊×取消，移除新行
 
-### 4. 添加逻辑
+### 4. 添加邏輯
 
-当用户点击✓保存新行时：
-1. 前端验证：
-   - 语言不能为空
-   - 词句文本不能为空
-   - 该语言在当前词句组中尚未存在
-2. 调用后端 API：
-   - 创建新的 expression 记录
-   - 关联到现有的 meaning_id
-3. 成功后刷新表格内容
-4. 可选：同时刷新 Handbook 页面的渲染内容
+當用戶點擊✓保存新行時：
+1. 前端驗證：
+   - 語言不能爲空
+   - 詞句文本不能爲空
+   - 該語言在當前詞句組中尚未存在
+2. 調用後端 API：
+   - 創建新的 expression 記錄
+   - 關聯到現有的 meaning_id
+3. 成功後刷新表格內容
+4. 可選：同時刷新 Handbook 頁面的渲染內容
 
-### 5. 语言范围限定
+### 5. 語言範圍限定
 
-**关键设计**：语言选择器的选项必须与当前 Handbook 的学习语言范围保持一致。
+**關鍵設計**：語言選擇器的選項必須與當前 Handbook 的學習語言範圍保持一致。
 
-从 `HandbookView.vue` 的 `instructionLanguages` 状态获取当前选定的学习语言列表，仅显示这些语言作为添加选项。
+從 `HandbookView.vue` 的 `instructionLanguages` 狀態獲取當前選定的學習語言列表，僅顯示這些語言作爲添加選項。
 
-如果用户还未选择任何学习语言，则显示 Handbook 默认的 `target_lang` 对应的语言。
+如果用戶還未選擇任何學習語言，則顯示 Handbook 默認的 `target_lang` 對應的語言。
 
-## 组件设计
+## 組件設計
 
-### ExpressionGroupModal.vue（新组件）
+### ExpressionGroupModal.vue（新組件）
 
-位于 `web/src/components/ExpressionGroupModal.vue`
+位於 `web/src/components/ExpressionGroupModal.vue`
 
 #### Props
-- `visible`: Boolean - 控制弹窗显示/隐藏
-- `expressionId`: Number - 当前词句 ID（可选，用于获取完整词句信息）
-- `meaningId`: Number - 词句组 ID（核心标识）
-- `availableLanguages`: Array - 可用语言列表（从父组件传入，与 handbook 学习语言一致）
-- `instructionLanguages`: Array - 当前选定的学习语言代码数组
+- `visible`: Boolean - 控制彈窗顯示/隱藏
+- `expressionId`: Number - 當前詞句 ID（可選，用於獲取完整詞句信息）
+- `meaningId`: Number - 詞句組 ID（核心標識）
+- `availableLanguages`: Array - 可用語言列表（從父組件傳入，與 handbook 學習語言一致）
+- `instructionLanguages`: Array - 當前選定的學習語言代碼數組
 
 #### Data
-- `loading`: Boolean - 加载状态
-- `expressions`: Array - 词句组中的所有词句
-- `showNewRow`: Boolean - 是否显示新行
-- `newRowLanguage`: String - 新行选择的语言
-- `newRowText`: String - 新行词句文本
-- `adding`: Boolean - 添加操作进行中
-- `message`: String - 操作消息（成功/错误）
+- `loading`: Boolean - 加載狀態
+- `expressions`: Array - 詞句組中的所有詞句
+- `showNewRow`: Boolean - 是否顯示新行
+- `newRowLanguage`: String - 新行選擇的語言
+- `newRowText`: String - 新行詞句文本
+- `adding`: Boolean - 添加操作進行中
+- `message`: String - 操作消息（成功/錯誤）
 
 #### Computed
-- `displayLanguages` - 计算属性：从 `availableLanguages` 中过滤，仅返回 `instructionLanguages` 中存在的语言
+- `displayLanguages` - 計算屬性：從 `availableLanguages` 中過濾，僅返回 `instructionLanguages` 中存在的語言
 
 #### Methods
-- `fetchGroupMembers()` - 获取词句组所有成员
-- `addNewRow()` - 显示新行（编辑模式）
-- `cancelNewRow()` - 取消添加，隐藏新行
-- `confirmNewRow()` - 确认添加新词句
-- `close()` - 关闭弹窗
-- `goToDetail()` - 跳转到详情页
+- `fetchGroupMembers()` - 獲取詞句組所有成員
+- `addNewRow()` - 顯示新行（編輯模式）
+- `cancelNewRow()` - 取消添加，隱藏新行
+- `confirmNewRow()` - 確認添加新詞句
+- `close()` - 關閉彈窗
+- `goToDetail()` - 跳轉到詳情頁
 
 #### Events
-- `close` - 关闭弹窗时触发
-- `updated` - 成功添加翻译后触发（可触发父组件刷新渲染）
+- `close` - 關閉彈窗時觸發
+- `updated` - 成功添加翻譯後觸發（可觸發父組件刷新渲染）
 
 ### HandbookView.vue 修改
 
 #### Template
-添加组件引用：
+添加組件引用：
 
 ```vue
 <ExpressionGroupModal
@@ -136,7 +136,7 @@
 ```
 
 #### Script
-添加状态和方法：
+添加狀態和方法：
 
 ```javascript
 // State
@@ -144,23 +144,23 @@ const showExpressionGroupModal = ref(false)
 const selectedExpressionId = ref(null)
 const selectedMeaningId = ref(null)
 
-// 全局函数
+// 全局函數
 window.showExpressionGroupModal = (expressionId, meaningId) => {
   selectedExpressionId.value = expressionId
   selectedMeaningId.value = meaningId
   showExpressionGroupModal.value = true
 }
 
-// 处理更新事件
+// 處理更新事件
 const handleExpressionGroupUpdated = () => {
-  // 刷新 handbook 内容以显示新翻译
+  // 刷新 handbook 內容以顯示新翻譯
   fetchInitialData()
 }
 ```
 
-#### 传递 languages 和 instructionLanguages
+#### 傳遞 languages 和 instructionLanguages
 
-在 `return` 中暴露给组件：
+在 `return` 中暴露給組件：
 
 ```javascript
 return {
@@ -170,21 +170,21 @@ return {
 }
 ```
 
-## 后端 API 需求
+## 後端 API 需求
 
-现有 API 已经支持所需功能，无需修改：
+現有 API 已經支持所需功能，無需修改：
 
-1. **获取词句组成员**：
+1. **獲取詞句組成員**：
    - `GET /api/v1/expressions?meaning_id={meaningId}`
-   - 返回词句组中所有词句
+   - 返回詞句組中所有詞句
 
-2. **添加新词句**：
+2. **添加新詞句**：
    - `POST /api/v1/expressions`
    - Body: `{ text, language_code, meaning_id }`
 
-## 数据结构
+## 數據結構
 
-### 词句组响应示例
+### 詞句組響應示例
 
 ```json
 [
@@ -207,7 +207,7 @@ return {
 ]
 ```
 
-### 添加词句请求示例
+### 添加詞句請求示例
 
 ```json
 {
@@ -217,126 +217,126 @@ return {
 }
 ```
 
-## 国际化支持
+## 國際化支持
 
-需要添加以下翻译键到所有 locale 文件：
+需要添加以下翻譯鍵到所有 locale 文件：
 
-| 键名 | 描述 | 示例（中文） |
+| 鍵名 | 描述 | 示例（中文） |
 |-----|------|------------|
-| `expression_group_details` | 弹窗标题 | 词句组详情 |
-| `more` | 更多按钮 | 更多 |
-| `add_row` | 添加一行按钮 | 添加一行 |
-| `cancel` | 取消按钮 | 取消 |
-| `confirm` | 确认按钮 | 确认 |
-| `language` | 表头：语言 | 语言 |
-| `expression` | 表头：词句 | 词句 |
-| `language_already_exists` | 语言已存在错误 | 该语言已存在 |
+| `expression_group_details` | 彈窗標題 | 詞句組詳情 |
+| `more` | 更多按鈕 | 更多 |
+| `add_row` | 添加一行按鈕 | 添加一行 |
+| `cancel` | 取消按鈕 | 取消 |
+| `confirm` | 確認按鈕 | 確認 |
+| `language` | 表頭：語言 | 語言 |
+| `expression` | 表頭：詞句 | 詞句 |
+| `language_already_exists` | 語言已存在錯誤 | 該語言已存在 |
 | `translation_added_successfully` | 添加成功消息 | 添加成功 |
-| `please_select_language` | 选择语言提示 | 请选择语言 |
-| `please_enter_expression` | 输入词句提示 | 请输入词句 |
+| `please_select_language` | 選擇語言提示 | 請選擇語言 |
+| `please_enter_expression` | 輸入詞句提示 | 請輸入詞句 |
 
-## 样式设计
+## 樣式設計
 
-### 弹窗容器
-- 最大宽度：600px
+### 彈窗容器
+- 最大寬度：600px
 - 最大高度：80vh
-- 圆角：12px
-- 阴影：中等
+- 圓角：12px
+- 陰影：中等
 - 背景：白色
 
-### 表格样式
-- 表头：浅灰色背景，加粗文字
-- 行：底部边框分隔
-- 操作列：固定宽度 80px
-- 语言列：宽度 30%
-- 词句列：宽度 50%（剩余空间）
+### 表格樣式
+- 表頭：淺灰色背景，加粗文字
+- 行：底部邊框分隔
+- 操作列：固定寬度 80px
+- 語言列：寬度 30%
+- 詞句列：寬度 50%（剩餘空間）
 
-### 新行样式
-- 背景：浅蓝色高亮
-- 语言选择器：下拉框样式
-- 输入框：边框样式
-- 按钮：✓ 绿色确认，× 灰色取消
+### 新行樣式
+- 背景：淺藍色高亮
+- 語言選擇器：下拉框樣式
+- 輸入框：邊框樣式
+- 按鈕：✓ 綠色確認，× 灰色取消
 
-### 按钮样式
-- 添加一行：虚线边框，+ 图标，hover 时高亮
-- 删除：× 图标，hover 时红色
-- 查看详情：蓝色按钮
+### 按鈕樣式
+- 添加一行：虛線邊框，+ 圖標，hover 時高亮
+- 刪除：× 圖標，hover 時紅色
+- 查看詳情：藍色按鈕
 
-## 实施计划
+## 實施計劃
 
-### Phase 1: 基础弹窗
-- [ ] 创建 `ExpressionGroupModal.vue` 组件
-- [ ] 实现弹窗基础样式和布局
+### Phase 1: 基礎彈窗
+- [ ] 創建 `ExpressionGroupModal.vue` 組件
+- [ ] 實現彈窗基礎樣式和布局
 - [ ] 集成到 `HandbookView.vue`
-- [ ] 修改 `window.navigateToExpression` 为 `window.showExpressionGroupModal`
-- [ ] 传递 `languages` 和 `instructionLanguages` 到组件
+- [ ] 修改 `window.navigateToExpression` 爲 `window.showExpressionGroupModal`
+- [ ] 傳遞 `languages` 和 `instructionLanguages` 到組件
 
 ### Phase 2: 表格展示
-- [ ] 实现 `fetchGroupMembers()` 方法
-- [ ] 实现表格展示逻辑
-- [ ] 添加加载状态处理
-- [ ] 实现关闭和跳转详情功能
-- [ ] 实现删除按钮 UI（暂不实现功能）
+- [ ] 實現 `fetchGroupMembers()` 方法
+- [ ] 實現表格展示邏輯
+- [ ] 添加加載狀態處理
+- [ ] 實現關閉和跳轉詳情功能
+- [ ] 實現刪除按鈕 UI（暫不實現功能）
 
-### Phase 3: 表格编辑添加功能
-- [ ] 实现"+ 添加一行"按钮
-- [ ] 实现新行 UI（语言选择器 + 输入框 + 确认/取消按钮）
-- [ ] 实现 `displayLanguages` 计算属性（过滤到 instructionLanguages）
-- [ ] 实现添加翻译表单验证
-- [ ] 实现后端 API 调用
-- [ ] 实现成功后刷新逻辑
+### Phase 3: 表格編輯添加功能
+- [ ] 實現"+ 添加一行"按鈕
+- [ ] 實現新行 UI（語言選擇器 + 輸入框 + 確認/取消按鈕）
+- [ ] 實現 `displayLanguages` 計算屬性（過濾到 instructionLanguages）
+- [ ] 實現添加翻譯表單驗證
+- [ ] 實現後端 API 調用
+- [ ] 實現成功後刷新邏輯
 
-### Phase 4: 国际化与优化
-- [ ] 添加所有翻译键到 10 个 locale 文件
-- [ ] 优化响应式布局（移动端适配）
-- [ ] 添加错误处理和用户反馈
-- [ ] 测试边界情况
+### Phase 4: 國際化與優化
+- [ ] 添加所有翻譯鍵到 10 個 locale 文件
+- [ ] 優化響應式布局（移動端適配）
+- [ ] 添加錯誤處理和用戶反饋
+- [ ] 測試邊界情況
 
-### Phase 5: 测试与文档
-- [ ] 单元测试
-- [ ] 集成测试
-- [ ] 用户验收测试
+### Phase 5: 測試與文檔
+- [ ] 單元測試
+- [ ] 集成測試
+- [ ] 用戶驗收測試
 
-## 相关文档
+## 相關文檔
 
-- [feat-handbook.md](feat-handbook.md) - Handbook 功能基础设计
-- [feat-meaning-mapping.md](feat-meaning-mapping.md) - 词句与语义多对多关系
-- [feat-ui-translation.md](feat-ui-translation.md) - UI 翻译系统
+- [feat-handbook.md](feat-handbook.md) - Handbook 功能基礎設計
+- [feat-meaning-mapping.md](feat-meaning-mapping.md) - 詞句與語義多對多關係
+- [feat-ui-translation.md](feat-ui-translation.md) - UI 翻譯系統
 
-## 实现检查清单
+## 實現檢查清單
 
-- [ ] 组件 `ExpressionGroupModal.vue` 创建完成
-- [ ] 弹窗样式符合设计稿
-- [ ] 表格展示词句组所有成员
-- [ ] "+ 添加一行"按钮功能正常
-- [ ] 新行语言选择器选项正确限定（与 instructionLanguages 一致）
-- [ ] 添加翻译功能正常工作
-- [ ] 国际化翻译完整（所有 10 个语言）
-- [ ] 移动端响应式正常
-- [ ] 错误处理完善
-- [ ] 后端 API 调用正确
-- [ ] 成功后刷新逻辑正确
+- [ ] 組件 `ExpressionGroupModal.vue` 創建完成
+- [ ] 彈窗樣式符合設計稿
+- [ ] 表格展示詞句組所有成員
+- [ ] "+ 添加一行"按鈕功能正常
+- [ ] 新行語言選擇器選項正確限定（與 instructionLanguages 一致）
+- [ ] 添加翻譯功能正常工作
+- [ ] 國際化翻譯完整（所有 10 個語言）
+- [ ] 移動端響應式正常
+- [ ] 錯誤處理完善
+- [ ] 後端 API 調用正確
+- [ ] 成功後刷新邏輯正確
 
-## 注意事项
+## 注意事項
 
-1. **权限控制**：添加翻译需要用户登录，未登录用户应提示登录
-2. **语言限定**：**关键** - 语言选择器必须只能选择 handbook 当前的学习语言范围
-3. **缓存处理**：Handbook 的渲染内容有 24 小时缓存，添加新翻译后需要决定是否刷新缓存
-4. **边界情况**：
-   - 学习语言列表为空（应显示默认语言或提示）
-   - 所有学习语言都已有翻译（应禁用添加按钮或提示）
-   - 网络请求失败
-   - 后端验证失败
-   - 用户未登录
+1. **權限控制**：添加翻譯需要用戶登錄，未登錄用戶應提示登錄
+2. **語言限定**：**關鍵** - 語言選擇器必須只能選擇 handbook 當前的學習語言範圍
+3. **緩存處理**：Handbook 的渲染內容有 24 小時緩存，添加新翻譯後需要決定是否刷新緩存
+4. **邊界情況**：
+   - 學習語言列表爲空（應顯示默認語言或提示）
+   - 所有學習語言都已有翻譯（應禁用添加按鈕或提示）
+   - 網絡請求失敗
+   - 後端驗證失敗
+   - 用戶未登錄
 
-5. **可访问性**：
-   - 弹窗支持 ESC 关闭
-   - 支持焦点管理
-   - 支持键盘导航
+5. **可訪問性**：
+   - 彈窗支持 ESC 關閉
+   - 支持焦點管理
+   - 支持鍵盤導航
 
-## 未来扩展
+## 未來擴展
 
-- 支持直接在表格中编辑现有翻译
-- 支持直接在表格中删除翻译（需要权限检查）
-- 支持播放录音（如果有）
-- 支持批量导入翻译
+- 支持直接在表格中編輯現有翻譯
+- 支持直接在表格中刪除翻譯（需要權限檢查）
+- 支持播放錄音（如果有）
+- 支持批量導入翻譯

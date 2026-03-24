@@ -1,38 +1,38 @@
-# 用户资料/个人中心设计
+# 用戶資料/個人中心設計
 
 ## System Reminder
 
-**实现状态**：
-- ✅ 前端用户资料页面已实现 - `UserProfile.vue`
-- ⏳ 后端用户资料 API - 部分实现（`GET /api/v1/users/me` 已实现）
-- ⏳ 用户资料更新 API - 未实现（头像、简介等）
-- ⏳ 用户设置功能 - 未实现
-- ⏳ 用户活动记录 - 未实现
+**實現狀態**：
+- ✅ 前端用戶資料頁面已實現 - `UserProfile.vue`
+- ⏳ 後端用戶資料 API - 部分實現（`GET /api/v1/users/me` 已實現）
+- ⏳ 用戶資料更新 API - 未實現（頭像、簡介等）
+- ⏳ 用戶設置功能 - 未實現
+- ⏳ 用戶活動記錄 - 未實現
 
-**已实现的 API 端点**：
-- `GET /api/v1/users/me` - 获取当前用户信息
+**已實現的 API 端點**：
+- `GET /api/v1/users/me` - 獲取當前用戶信息
 
-**已实现的功能**：
-- 基础用户信息展示
-- 用户基本信息（用户名、邮箱）
+**已實現的功能**：
+- 基礎用戶信息展示
+- 用戶基本信息（用戶名、郵箱）
 
-**未实现的功能**：
-- 用户头像上传和管理
-- 用户简介编辑
-- 用户偏好设置
-- 用户密码修改
-- 用户活动记录
-- 用户贡献统计
+**未實現的功能**：
+- 用戶頭像上傳和管理
+- 用戶簡介編輯
+- 用戶偏好設置
+- 用戶密碼修改
+- 用戶活動記錄
+- 用戶貢獻統計
 
 ---
 
 ## 概述
 
-用户资料/个人中心功能是用户管理个人信息和查看个人活动的核心功能。用户可以在个人中心编辑个人信息、查看贡献记录、管理账户设置等。
+用戶資料/個人中心功能是用戶管理個人信息和查看個人活動的核心功能。用戶可以在個人中心編輯個人信息、查看貢獻記錄、管理賬戶設置等。
 
-## 数据模型
+## 數據模型
 
-### User 表（现有）
+### User 表（現有）
 
 ```typescript
 interface User {
@@ -41,15 +41,15 @@ interface User {
   email: string
   password_hash: string
   role: string              // 'user', 'admin', 'super_admin'
-  email_verified?: number   // 0: 未验证, 1: 已验证
+  email_verified?: number   // 0: 未驗證, 1: 已驗證
   created_at?: string
   updated_at?: string
 }
 ```
 
-### 扩展字段（建议新增）
+### 擴展字段（建議新增）
 
-为了支持更丰富的用户资料功能，建议扩展 User 表：
+爲了支持更豐富的用戶資料功能，建議擴展 User 表：
 
 ```sql
 ALTER TABLE users ADD COLUMN avatar_url TEXT;
@@ -61,26 +61,26 @@ ALTER TABLE users ADD COLUMN language_preference TEXT DEFAULT 'en-US';
 ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'light';
 ```
 
-**新增字段说明**：
-- `avatar_url` - 用户头像 URL
-- `bio` - 用户简介
-- `display_name` - 显示名称（可选，与 username 区分）
-- `website_url` - 个人网站
+**新增字段說明**：
+- `avatar_url` - 用戶頭像 URL
+- `bio` - 用戶簡介
+- `display_name` - 顯示名稱（可選，與 username 區分）
+- `website_url` - 個人網站
 - `location` - 所在地
-- `language_preference` - 语言偏好
-- `theme_preference` - 主题偏好（light/dark）
+- `language_preference` - 語言偏好
+- `theme_preference` - 主題偏好（light/dark）
 
-## API 设计
+## API 設計
 
-### 已实现的端点
+### 已實現的端點
 
 #### GET /api/v1/users/me
 
-获取当前用户的信息。
+獲取當前用戶的信息。
 
-**认证**：需要
+**認證**：需要
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -93,15 +93,15 @@ ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'light';
 }
 ```
 
-### 未实现的端点（建议新增）
+### 未實現的端點（建議新增）
 
 #### PUT /api/v1/users/me
 
-更新当前用户的信息。
+更新當前用戶的信息。
 
-**认证**：需要
+**認證**：需要
 
-**请求体**：
+**請求體**：
 ```json
 {
   "avatar_url": "https://example.com/avatar.jpg",
@@ -114,7 +114,7 @@ ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'light';
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "id": 1,
@@ -133,18 +133,18 @@ ALTER TABLE users ADD COLUMN theme_preference TEXT DEFAULT 'light';
 
 #### POST /api/v1/users/avatar
 
-上传用户头像。
+上傳用戶頭像。
 
-**认证**：需要
+**認證**：需要
 
-**请求**：multipart/form-data
+**請求**：multipart/form-data
 
-**请求体**：
+**請求體**：
 ```
 avatar: [binary image file]
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "avatar_url": "https://example.com/avatars/user_1_avatar.jpg"
@@ -153,11 +153,11 @@ avatar: [binary image file]
 
 #### GET /api/v1/users/me/stats
 
-获取当前用户的统计信息。
+獲取當前用戶的統計信息。
 
-**认证**：需要
+**認證**：需要
 
-**响应**：
+**響應**：
 ```json
 {
   "total_expressions": 42,
@@ -170,15 +170,15 @@ avatar: [binary image file]
 
 #### GET /api/v1/users/me/activity
 
-获取当前用户的活动记录。
+獲取當前用戶的活動記錄。
 
-**认证**：需要
+**認證**：需要
 
-**查询参数**：
-- `skip` (number) - 跳过数量（默认 0）
-- `limit` (number) - 返回数量限制（默认 20）
+**查詢參數**：
+- `skip` (number) - 跳過數量（默認 0）
+- `limit` (number) - 返回數量限制（默認 20）
 
-**响应**：
+**響應**：
 ```json
 {
   "activities": [
@@ -207,11 +207,11 @@ avatar: [binary image file]
 
 #### POST /api/v1/users/me/change-password
 
-修改用户密码。
+修改用戶密碼。
 
-**认证**：需要
+**認證**：需要
 
-**请求体**：
+**請求體**：
 ```json
 {
   "current_password": "old_password",
@@ -219,7 +219,7 @@ avatar: [binary image file]
 }
 ```
 
-**响应**：
+**響應**：
 ```json
 {
   "success": true,
@@ -227,19 +227,19 @@ avatar: [binary image file]
 }
 ```
 
-## 前端实现
+## 前端實現
 
-### UserProfile.vue 页面
+### UserProfile.vue 頁面
 
 主要功能：
-1. 展示用户基本信息
-2. 编辑用户资料
-3. 上传头像
-4. 修改密码
-5. 查看活动记录
-6. 查看贡献统计
+1. 展示用戶基本信息
+2. 編輯用戶資料
+3. 上傳頭像
+4. 修改密碼
+5. 查看活動記錄
+6. 查看貢獻統計
 
-**页面布局**：
+**頁面布局**：
 
 ```
 ┌─────────────────────────────────────────┐
@@ -280,7 +280,7 @@ avatar: [binary image file]
 └─────────────────────────────────────────┘
 ```
 
-**实现示例**：
+**實現示例**：
 
 ```vue
 <template>
@@ -454,61 +454,61 @@ export default {
 </script>
 ```
 
-## 安全考虑
+## 安全考慮
 
-### 头像上传
+### 頭像上傳
 
-1. **文件验证**：验证文件类型（只允许图片）
+1. **文件驗證**：驗證文件類型（只允許圖片）
 2. **文件大小限制**：限制文件大小（如 5MB）
-3. **文件名随机化**：避免文件名冲突和目录遍历攻击
-4. **存储隔离**：用户头像存储在独立目录
-5. **URL 验证**：验证外部 URL（如果允许外部头像）
+3. **文件名隨機化**：避免文件名衝突和目錄遍歷攻擊
+4. **存儲隔離**：用戶頭像存儲在獨立目錄
+5. **URL 驗證**：驗證外部 URL（如果允許外部頭像）
 
-### 密码修改
+### 密碼修改
 
-1. **当前密码验证**：修改前必须提供当前密码
-2. **新密码强度要求**：密码长度、复杂度要求
-3. **密码加密**：使用 bcrypt 加密存储
-4. **会话更新**：密码修改后重新登录
+1. **當前密碼驗證**：修改前必須提供當前密碼
+2. **新密碼強度要求**：密碼長度、複雜度要求
+3. **密碼加密**：使用 bcrypt 加密存儲
+4. **會話更新**：密碼修改後重新登錄
 
-## 用户体验优化
+## 用戶體驗優化
 
-### 实时预览
+### 實時預覽
 
-- **头像预览**：上传前预览头像
-- **资料预览**：编辑时实时预览资料卡片
+- **頭像預覽**：上傳前預覽頭像
+- **資料預覽**：編輯時實時預覽資料卡片
 
-### 表单验证
+### 表單驗證
 
-- **客户端验证**：即时显示错误提示
-- **服务器端验证**：最终验证并返回详细错误
+- **客戶端驗證**：即時顯示錯誤提示
+- **服務器端驗證**：最終驗證並返回詳細錯誤
 
-### 加载状态
+### 加載狀態
 
-- **加载指示器**：保存时显示加载状态
-- **成功/失败提示**：操作完成后显示结果
+- **加載指示器**：保存時顯示加載狀態
+- **成功/失敗提示**：操作完成後顯示結果
 
-## 测试策略
+## 測試策略
 
-### 单元测试
-- 测试用户资料更新逻辑
-- 测试头像上传逻辑
-- 测试密码修改逻辑
+### 單元測試
+- 測試用戶資料更新邏輯
+- 測試頭像上傳邏輯
+- 測試密碼修改邏輯
 
-### 集成测试
-- 测试用户资料 API 端点
-- 测试头像上传 API 端点
-- 测试统计 API 端点
-- 测试活动记录 API 端点
+### 集成測試
+- 測試用戶資料 API 端點
+- 測試頭像上傳 API 端點
+- 測試統計 API 端點
+- 測試活動記錄 API 端點
 
-### 前端测试
-- 测试用户资料页面组件
-- 测试表单提交
-- 测试头像上传
-- 测试分页加载活动记录
+### 前端測試
+- 測試用戶資料頁面組件
+- 測試表單提交
+- 測試頭像上傳
+- 測試分頁加載活動記錄
 
-## 相关文档
+## 相關文檔
 
-- [用户与权限系统设计](./feat-user-system.md)
-- [邮箱验证实施指南](../../guides/email-verification.md)
-- [系统架构设计](../system/architecture.md)
+- [用戶與權限系統設計](./feat-user-system.md)
+- [郵箱驗證實施指南](../../guides/email-verification.md)
+- [系統架構設計](../system/architecture.md)

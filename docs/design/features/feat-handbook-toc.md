@@ -1,44 +1,44 @@
-# Handbook 目录 (Table of Contents) 功能设计
+# Handbook 目錄 (Table of Contents) 功能設計
 
 ## System Reminder
 
-**设计来源**：根据用户需求（在 HandbookView.vue 页面左侧显示手册目录）设计。
+**設計來源**：根據用戶需求（在 HandbookView.vue 頁面左側顯示手冊目錄）設計。
 
-**实现状态**：⏸️ 待实现
+**實現狀態**：⏸️ 待實現
 
 ---
 
 ## 概述
 
-在 HandbookView.vue 页面左侧添加目录（Table of Contents）功能，方便用户快速导航到手册的不同章节。
+在 HandbookView.vue 頁面左側添加目錄（Table of Contents）功能，方便用戶快速導航到手冊的不同章節。
 
-目录会自动从 Markdown 内容中解析出各级标题（H1-H3），生成树形结构，支持点击跳转和滚动高亮。
+目錄會自動從 Markdown 內容中解析出各級標題（H1-H3），生成樹形結構，支持點擊跳轉和滾動高亮。
 
 ## 功能需求
 
-### 1. 目录生成
-- 自动解析 Markdown 内容中的标题（H1, H2, H3）
-- 根据标题层级生成树形目录结构
-- 目录项包含标题文本和对应的锚点 ID
+### 1. 目錄生成
+- 自動解析 Markdown 內容中的標題（H1, H2, H3）
+- 根據標題層級生成樹形目錄結構
+- 目錄項包含標題文本和對應的錨點 ID
 
-### 2. 目录显示
-- 在页面左侧固定显示目录
-- 响应式设计：移动端可折叠或隐藏
-- 根据标题层级进行缩进显示层级关系
+### 2. 目錄顯示
+- 在頁面左側固定顯示目錄
+- 響應式設計：移動端可摺疊或隱藏
+- 根據標題層級進行縮進顯示層級關係
 
 ### 3. 交互功能
-- 点击目录项平滑滚动到对应章节
-- 滚动页面时，自动高亮当前所在的章节
-- 支持目录的展开/折叠（可选）
+- 點擊目錄項平滑滾動到對應章節
+- 滾動頁面時，自動高亮當前所在的章節
+- 支持目錄的展開/摺疊（可選）
 
-## 技术方案
+## 技術方案
 
-### 1. HTML 标题解析
+### 1. HTML 標題解析
 
-从 `handbook.rendered_content`（后端已渲染的 HTML）中解析标题：
+從 `handbook.rendered_content`（後端已渲染的 HTML）中解析標題：
 
 ```javascript
-// 解析 HTML 提取 h1, h2, h3 标题
+// 解析 HTML 提取 h1, h2, h3 標題
 const parseHeadingsFromHTML = (html) => {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
@@ -46,7 +46,7 @@ const parseHeadingsFromHTML = (html) => {
 
   return Array.from(headings).map(heading => {
     let id = heading.id
-    // 如果没有 id，自动生成一个
+    // 如果沒有 id，自動生成一個
     if (!id) {
       id = generateId(heading.textContent)
       heading.id = id  // 更新 DOM 中的 id
@@ -59,7 +59,7 @@ const parseHeadingsFromHTML = (html) => {
   })
 }
 
-// 生成目录结构
+// 生成目錄結構
 [
   { level: 1, text: 'Chapter 1', id: 'chapter-1' },
   { level: 2, text: 'Section 1.1', id: 'section-1-1' },
@@ -68,15 +68,15 @@ const parseHeadingsFromHTML = (html) => {
 ]
 ```
 
-### 2. 锚点 ID 生成规则
+### 2. 錨點 ID 生成規則
 
-**后端渲染**：如果后端 Markdown 渲染器已自动为标题生成 id（如 `h1 { id: "chapter-1" }`），前端直接使用。
+**後端渲染**：如果後端 Markdown 渲染器已自動爲標題生成 id（如 `h1 { id: "chapter-1" }`），前端直接使用。
 
-**前端补充**：如果标题没有 id，前端使用以下规则生成：
-- 转为小写
+**前端補充**：如果標題沒有 id，前端使用以下規則生成：
+- 轉爲小寫
 - 移除特殊字符
-- 空格替换为连字符
-- 确保唯一性（添加序号后缀）
+- 空格替換爲連字符
+- 確保唯一性（添加序號後綴）
 
 ```javascript
 const generateId = (text, existingIds = new Set()) => {
@@ -87,7 +87,7 @@ const generateId = (text, existingIds = new Set()) => {
     .replace(/-+/g, '-')
     .trim()
 
-  // 确保 id 唯一
+  // 確保 id 唯一
   let counter = 1
   let uniqueId = id
   while (existingIds.has(uniqueId)) {
@@ -100,7 +100,7 @@ const generateId = (text, existingIds = new Set()) => {
 }
 ```
 
-### 3. UI 布局设计
+### 3. UI 布局設計
 
 ```
 ┌─────────────────────────────────────────┐
@@ -120,20 +120,20 @@ const generateId = (text, existingIds = new Set()) => {
 └──────────────┴──────────────────────────┘
 ```
 
-### 4. 滚动监听与高亮
+### 4. 滾動監聽與高亮
 
-使用 Intersection Observer 或 scroll 事件监听：
-- 监听每个标题元素的可视状态
-- 根据当前可视的标题更新目录项的 active 状态
+使用 Intersection Observer 或 scroll 事件監聽：
+- 監聽每個標題元素的可視狀態
+- 根據當前可視的標題更新目錄項的 active 狀態
 
-## 前端实现设计
+## 前端實現設計
 
-### 1. 组件结构
+### 1. 組件結構
 
 ```vue
 <template>
   <div class="handbook-view-container">
-    <!-- 左侧目录 -->
+    <!-- 左側目錄 -->
     <aside class="handbook-toc" v-if="tableOfContents.length > 0">
       <div class="toc-header">{{ $t('table_of_contents') }}</div>
       <div class="toc-list">
@@ -148,26 +148,26 @@ const generateId = (text, existingIds = new Set()) => {
       </div>
     </aside>
 
-    <!-- 右侧内容 -->
+    <!-- 右側內容 -->
     <main class="handbook-content">
-      <!-- 现有的 handbook 内容 -->
+      <!-- 現有的 handbook 內容 -->
     </main>
   </div>
 </template>
 ```
 
-### 2. 状态管理
+### 2. 狀態管理
 
 ```javascript
-const tableOfContents = ref([])      // 目录数据
-const activeItemId = ref(null)       // 当前激活的目录项 ID
-const tocObserver = ref(null)        // Intersection Observer 实例
+const tableOfContents = ref([])      // 目錄數據
+const activeItemId = ref(null)       // 當前激活的目錄項 ID
+const tocObserver = ref(null)        // Intersection Observer 實例
 ```
 
-### 3. 核心函数
+### 3. 核心函數
 
 ```javascript
-// 解析 HTML 生成目录
+// 解析 HTML 生成目錄
 const parseTableOfContents = (htmlContent) => {
   const parser = new DOMParser()
   const doc = parser.parseFromString(htmlContent, 'text/html')
@@ -177,7 +177,7 @@ const parseTableOfContents = (htmlContent) => {
   const headings = Array.from(headingElements).map(heading => {
     let id = heading.id
 
-    // 如果标题没有 id，自动生成
+    // 如果標題沒有 id，自動生成
     if (!id) {
       id = generateId(heading.textContent, existingIds)
       heading.id = id
@@ -215,7 +215,7 @@ const generateId = (text, existingIds = new Set()) => {
   return uniqueId
 }
 
-// 滚动到指定章节
+// 滾動到指定章節
 const scrollToSection = (id) => {
   const element = document.getElementById(id)
   if (element) {
@@ -224,9 +224,9 @@ const scrollToSection = (id) => {
   }
 }
 
-// 设置滚动监听
+// 設置滾動監聽
 const setupScrollObserver = () => {
-  // 在组件挂载后，监听渲染的 HTML 中的标题
+  // 在組件掛載後，監聽渲染的 HTML 中的標題
   const contentElement = document.querySelector('.markdown-body')
   if (!contentElement) return
 
@@ -248,7 +248,7 @@ const setupScrollObserver = () => {
 }
 ```
 
-### 4. 样式设计
+### 4. 樣式設計
 
 ```scss
 .handbook-view-container {
@@ -299,7 +299,7 @@ const setupScrollObserver = () => {
   }
 }
 
-// 响应式：移动端隐藏目录
+// 響應式：移動端隱藏目錄
 @media (max-width: 768px) {
   .handbook-view-container {
     grid-template-columns: 1fr;
@@ -311,11 +311,11 @@ const setupScrollObserver = () => {
 }
 ```
 
-## 后端调整
+## 後端調整
 
-### 当前渲染实现分析
+### 當前渲染實現分析
 
-根据 `backend/src/server/api/v1.ts:1836-2080`，当前使用 `markdown-it` 渲染 Markdown：
+根據 `backend/src/server/api/v1.ts:1836-2080`，當前使用 `markdown-it` 渲染 Markdown：
 
 ```javascript
 const md = new MarkdownIt({
@@ -325,11 +325,11 @@ const md = new MarkdownIt({
 })
 ```
 
-**问题**：默认配置不会自动为标题生成 id 属性，需要前端手动补充。
+**問題**：默認配置不會自動爲標題生成 id 屬性，需要前端手動補充。
 
-### 推荐方案：后端添加标题 id 生成
+### 推薦方案：後端添加標題 id 生成
 
-使用 `markdown-it-anchor` 插件自动为标题生成 id：
+使用 `markdown-it-anchor` 插件自動爲標題生成 id：
 
 ```javascript
 import MarkdownIt from 'markdown-it'
@@ -340,18 +340,18 @@ const md = new MarkdownIt({
   breaks: true,
   linkify: false
 }).use(anchor, {
-  level: [1, 2, 3],  // 只为 h1, h2, h3 生成 id
+  level: [1, 2, 3],  // 只爲 h1, h2, h3 生成 id
   slugify: (s) => s
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim(),
-  permalink: false  // 不显示可点击的 permalink 符号
+  permalink: false  // 不顯示可點擊的 permalink 符號
 })
 ```
 
-这样渲染后的 HTML 将包含带 id 的标题：
+這樣渲染後的 HTML 將包含帶 id 的標題：
 
 ```html
 <h1 id="chapter-1">Chapter 1</h1>
@@ -359,13 +359,13 @@ const md = new MarkdownIt({
 <h3 id="section-1-1-1">Subsection 1.1.1</h3>
 ```
 
-### 备选方案：前端补充 id
+### 備選方案：前端補充 id
 
-如果后端暂时未添加插件，前端会自动补充（如上文 `parseHeadingsFromHTML` 所示），但这样会增加前端负担且无法利用缓存。
+如果後端暫時未添加插件，前端會自動補充（如上文 `parseHeadingsFromHTML` 所示），但這樣會增加前端負擔且無法利用緩存。
 
-## 国际化
+## 國際化
 
-在语言文件中添加：
+在語言文件中添加：
 
 ```json
 {
@@ -375,43 +375,43 @@ const md = new MarkdownIt({
 }
 ```
 
-## 开发计划 (Implementation Steps)
+## 開發計劃 (Implementation Steps)
 
-1. **解析逻辑**
-   - [ ] 实现 `parseTableOfContents` 函数
-   - [ ] 实现 `generateId` 函数
+1. **解析邏輯**
+   - [ ] 實現 `parseTableOfContents` 函數
+   - [ ] 實現 `generateId` 函數
 
-2. **UI 组件**
-   - [ ] 添加左侧目录 aside 组件
-   - [ ] 调整布局为两栏结构
-   - [ ] 实现目录项的样式（不同层级）
+2. **UI 組件**
+   - [ ] 添加左側目錄 aside 組件
+   - [ ] 調整布局爲兩欄結構
+   - [ ] 實現目錄項的樣式（不同層級）
 
 3. **交互功能**
-   - [ ] 实现点击目录项跳转
-   - [ ] 实现滚动监听与高亮
-   - [ ] 平滑滚动效果
+   - [ ] 實現點擊目錄項跳轉
+   - [ ] 實現滾動監聽與高亮
+   - [ ] 平滑滾動效果
 
-4. **响应式适配**
-   - [ ] 移动端隐藏或折叠目录
-   - [ ] 目录粘性定位优化
+4. **響應式適配**
+   - [ ] 移動端隱藏或摺疊目錄
+   - [ ] 目錄粘性定位優化
 
-5. **测试与优化**
-   - [ ] 测试各种 Markdown 标题格式
-   - [ ] 性能优化（防抖、节流）
-   - [ ] 边界情况处理（无标题、标题重复）
+5. **測試與優化**
+   - [ ] 測試各種 Markdown 標題格式
+   - [ ] 性能優化（防抖、節流）
+   - [ ] 邊界情況處理（無標題、標題重複）
 
-## 注意事项
+## 注意事項
 
-1. **标题唯一性**：确保生成的 ID 唯一，避免重复导致跳转错误（前端生成时已处理）
-2. **后端渲染时机**：目录解析应在 `handbook.rendered_content` 加载完成后进行
-3. **DOM 操作**：解析 HTML 后可能需要更新 DOM 中标题的 id（如果后端未生成）
-4. **性能考虑**：长手册可能有很多标题，使用 Intersection Observer 优化性能
-5. **兼容性**：确保与现有的词句嵌入功能（`{{exp:...}}`）不冲突
-6. **HTML 清理**：使用 DOMParser 解析 HTML，需确保安全性（已通过后端渲染保障）
+1. **標題唯一性**：確保生成的 ID 唯一，避免重複導致跳轉錯誤（前端生成時已處理）
+2. **後端渲染時機**：目錄解析應在 `handbook.rendered_content` 加載完成後進行
+3. **DOM 操作**：解析 HTML 後可能需要更新 DOM 中標題的 id（如果後端未生成）
+4. **性能考慮**：長手冊可能有很多標題，使用 Intersection Observer 優化性能
+5. **兼容性**：確保與現有的詞句嵌入功能（`{{exp:...}}`）不衝突
+6. **HTML 清理**：使用 DOMParser 解析 HTML，需確保安全性（已通過後端渲染保障）
 
-## 扩展功能（可选）
+## 擴展功能（可選）
 
-- 目录折叠/展开功能
-- 阅读进度条
-- 目录搜索功能
-- 自定义目录样式配置
+- 目錄摺疊/展開功能
+- 閱讀進度條
+- 目錄搜索功能
+- 自定義目錄樣式配置

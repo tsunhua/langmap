@@ -1,94 +1,94 @@
-# 异步导出系统设计文档
+# 異步導出系統設計文檔
 
 ## 1. 概述 (Overview)
-本文档概述了基于 Cloudflare Workers 平台的异步数据导出系统的技术设计。该系统旨在处理将大型数据集（特别是单词/句子的“收藏集”）导出为可下载的 ZIP 归档文件。通过利用 **Cloudflare Workers**、**Durable Objects** 和 **R2 Storage**，该系统确保了可扩展性、可靠性和成本效益，同时克服了标准无服务器函数的执行时间限制。
+本文檔概述了基於 Cloudflare Workers 平臺的異步數據導出系統的技術設計。該系統旨在處理將大型數據集（特別是單詞/句子的「收藏集」）導出爲可下載的 ZIP 歸檔文件。通過利用 **Cloudflare Workers**、**Durable Objects** 和 **R2 Storage**，該系統確保了可擴展性、可靠性和成本效益，同時克服了標準無服務器函數的執行時間限制。
 
-## 2. 架构 (Architecture)
+## 2. 架構 (Architecture)
 
-系统采用异步任务队列模式，将请求处理与繁重的导出逻辑解耦。
+系統採用異步任務隊列模式，將請求處理與繁重的導出邏輯解耦。
 
-### 2.1 高层架构图
+### 2.1 高層架構圖
 ```mermaid
 graph TD
-    Client[客户端 / 浏览器] -->|POST /api/export| API[API Worker]
-    API -->|转发请求| DO[Durable Object (导出引擎)]
-    DO -->|保存状态| Storage[DO Storage]
-    DO -->|分批查询| DB[数据库]
-    DO -->|流式传输 ZIP| R2[Cloudflare R2]
-    Client -->|轮询状态| API
-    API -->|获取状态| DO
+    Client[客戶端 / 瀏覽器] -->|POST /api/export| API[API Worker]
+    API -->|轉發請求| DO[Durable Object (導出引擎)]
+    DO -->|保存狀態| Storage[DO Storage]
+    DO -->|分批查詢| DB[數據庫]
+    DO -->|流式傳輸 ZIP| R2[Cloudflare R2]
+    Client -->|輪詢狀態| API
+    API -->|獲取狀態| DO
 ```
 
-### 2.2 组件职责
+### 2.2 組件職責
 
-| 组件 | 职责 |
+| 組件 | 職責 |
 |-----------|----------------|
-| **API Worker** | 客户端请求的入口点。负责验证输入参数，生成唯一的 Job ID，并将请求路由到特定的 Durable Object 实例。 |
-| **Durable Object** | **导出引擎。** 管理单个导出任务的生命周期。处理状态持久化（进度跟踪），执行分批数据检索，执行流式压缩（ZIP），并将生成的文件上传到 R2。 |
-| **Cloudflare R2** | 用于存储生成的导出文件的对象存储。提供安全的预签名 URL 或用于下载的公共访问权限。 |
+| **API Worker** | 客戶端請求的入口點。負責驗證輸入參數，生成唯一的 Job ID，並將請求路由到特定的 Durable Object 實例。 |
+| **Durable Object** | **導出引擎。** 管理單個導出任務的生命周期。處理狀態持久化（進度跟蹤），執行分批數據檢索，執行流式壓縮（ZIP），並將生成的文件上傳到 R2。 |
+| **Cloudflare R2** | 用於存儲生成的導出文件的對象存儲。提供安全的預籤名 URL 或用於下載的公共訪問權限。 |
 
-## 3. 设计理由 (Design Rationale)
+## 3. 設計理由 (Design Rationale)
 
-标准 Cloudflare Workers 有严格的 CPU（时间）和内存限制（例如 10ms - 30s CPU 时间，128MB 内存）。导出大型收藏集涉及：
-1.  **不可预测的数据量**：一个收藏集可能包含数千个条目。
-2.  **IO 延迟**：查询数据库和生成文件需要时间。
-3.  **内存限制**：将整个数据集加载到内存中进行压缩可能会导致 OOM（内存溢出）错误。
+標準 Cloudflare Workers 有嚴格的 CPU（時間）和內存限制（例如 10ms - 30s CPU 時間，128MB 內存）。導出大型收藏集涉及：
+1.  **不可預測的數據量**：一個收藏集可能包含數千個條目。
+2.  **IO 延遲**：查詢數據庫和生成文件需要時間。
+3.  **內存限制**：將整個數據集加載到內存中進行壓縮可能會導致 OOM（內存溢出）錯誤。
 
-**解决方案：**
-*   **异步处理**：Durable Objects 可以比标准 Workers 运行更长时间并持久化状态，使其成为长时运行任务的理想选择。
-*   **流式处理**：数据分块（流）处理，并直接通过管道传输到 ZIP 生成器，然后传输到 R2，从而最小化内存占用。
+**解決方案：**
+*   **異步處理**：Durable Objects 可以比標準 Workers 運行更長時間並持久化狀態，使其成爲長時運行任務的理想選擇。
+*   **流式處理**：數據分塊（流）處理，並直接通過管道傳輸到 ZIP 生成器，然後傳輸到 R2，從而最小化內存佔用。
 
-## 4. 数据模型 (Data Models)
+## 4. 數據模型 (Data Models)
 
-### 4.1 导出任务结构 (Export Job Structure)
-代表导出任务的核心数据结构。
+### 4.1 導出任務結構 (Export Job Structure)
+代表導出任務的核心數據結構。
 
 ```typescript
 interface ExportJob {
-  /** 导出任务的唯一标识符 */
+  /** 導出任務的唯一標識符 */
   jobId: string;
-  /** 导出任务的当前状态 */
+  /** 導出任務的當前狀態 */
   status: "pending" | "running" | "done" | "error";
-  /** 进度百分比 (0.0 到 1.0)，用于 UI 反馈 */
+  /** 進度百分比 (0.0 到 1.0)，用於 UI 反饋 */
   progress: number;
-  /** 任务创建的时间戳 */
+  /** 任務創建的時間戳 */
   createdAt: number;
-  /** 任务完成的时间戳 */
+  /** 任務完成的時間戳 */
   finishedAt?: number;
-  /** 导出的配置选项 */
+  /** 導出的配置選項 */
   options: ExportOptions;
-  /** 最终结果数据 */
+  /** 最終結果數據 */
   result?: {
     r2Key: string;
     downloadUrl?: string;
     sizeBytes?: number;
   };
-  /** 状态为 'error' 时的错误信息 */
+  /** 狀態爲 'error' 時的錯誤信息 */
   error?: string;
 }
 
 interface ExportOptions {
-  /** 要导出的收藏集 ID */
+  /** 要導出的收藏集 ID */
   collectionId: string;
-  /** 输出格式偏好 */
+  /** 輸出格式偏好 */
   format: "json" | "csv";
 }
 ```
 
-## 5. API 规范 (API Specification)
+## 5. API 規範 (API Specification)
 
-### 5.1 发起导出 (Initiate Export)
-启动一个新的导出任务。
+### 5.1 發起導出 (Initiate Export)
+啓動一個新的導出任務。
 
-*   **端点**: `POST /api/export`
-*   **请求体**:
+*   **端點**: `POST /api/export`
+*   **請求體**:
     ```json
     {
       "collectionId": "col_123456",
       "format": "json" // 或 "csv"
     }
     ```
-*   **响应**:
+*   **響應**:
     ```json
     {
       "jobId": "exp_1704423456789_abcd1234",
@@ -96,11 +96,11 @@ interface ExportOptions {
     }
     ```
 
-### 5.2 查询导出状态 (Check Export Status)
-轮询现有任务的状态。
+### 5.2 查詢導出狀態 (Check Export Status)
+輪詢現有任務的狀態。
 
-*   **端点**: `GET /api/export/{jobId}`
-*   **响应 (进行中)**:
+*   **端點**: `GET /api/export/{jobId}`
+*   **響應 (進行中)**:
     ```json
     {
       "status": "running",
@@ -108,7 +108,7 @@ interface ExportOptions {
       "generatedAt": 1704423456789
     }
     ```
-*   **响应 (已完成)**:
+*   **響應 (已完成)**:
     ```json
     {
       "status": "done",
@@ -118,13 +118,13 @@ interface ExportOptions {
     }
     ```
 
-## 6. 实现策略 (Implementation Strategy)
+## 6. 實現策略 (Implementation Strategy)
 
-### 6.1 Worker (调度器)
-Worker 拦截请求并通过 `jobId` 派生 ID 来实例化 `ExportDO`。
+### 6.1 Worker (調度器)
+Worker 攔截請求並通過 `jobId` 派生 ID 來實例化 `ExportDO`。
 
 ```javascript
-// Worker 伪代码
+// Worker 僞代碼
 export default {
   async fetch(req, env) {
     // ... 路由匹配 ...
@@ -132,7 +132,7 @@ export default {
     const doId = env.EXPORT_DO.idFromName(jobId);
     const stub = env.EXPORT_DO.get(doId);
     
-    // 异步触发启动方法
+    // 異步觸發啓動方法
     stub.fetch("https://do/start", { ... });
     
     return Response.json({ jobId, status: "pending" });
@@ -140,26 +140,26 @@ export default {
 }
 ```
 
-### 6.2 Durable Object (处理器)
-DO 管理“任务状态”并使用分页执行繁重的处理工作，以保持低内存使用率。
+### 6.2 Durable Object (處理器)
+DO 管理「任務狀態」並使用分頁執行繁重的處理工作，以保持低內存使用率。
 
-**核心逻辑：**
-1.  **初始化**：接收 `collectionId`，初始化状态 `status="running"`。
-2.  **流式传输**：创建一个 `TransformStream`。可写端流向 ZIP 生成器；可读端通过管道传输到 `R2.put()`。
-3.  **分页**：
-    *   分批查询数据库中的收藏集条目（例如，每页 100 条）。
-    *   将条目转换为所需格式（JSON/CSV）。
-    *   将文件添加到 ZIP 流（例如 `part_1.json` 或追加到单个 CSV）。
-    *   每批处理后在存储中更新 `progress`。
-4.  **完成**：关闭流，更新状态为 `status="done"`，并保存 R2 key。
+**核心邏輯：**
+1.  **初始化**：接收 `collectionId`，初始化狀態 `status="running"`。
+2.  **流式傳輸**：創建一個 `TransformStream`。可寫端流向 ZIP 生成器；可讀端通過管道傳輸到 `R2.put()`。
+3.  **分頁**：
+    *   分批查詢數據庫中的收藏集條目（例如，每頁 100 條）。
+    *   將條目轉換爲所需格式（JSON/CSV）。
+    *   將文件添加到 ZIP 流（例如 `part_1.json` 或追加到單個 CSV）。
+    *   每批處理後在存儲中更新 `progress`。
+4.  **完成**：關閉流，更新狀態爲 `status="done"`，並保存 R2 key。
 
 ```javascript
-// ExportDO.runExport 伪代码
+// ExportDO.runExport 僞代碼
 async runExport(options) {
   const { readable, writable } = new TransformStream();
-  // ... 初始化连接到 writable 的 zip writer ...
+  // ... 初始化連接到 writable 的 zip writer ...
   
-  // 启动 R2 上传，本质上与生成过程并行
+  // 啓動 R2 上傳，本質上與生成過程並行
   const uploadPromise = this.env.EXPORT_BUCKET.put(key, readable);
   
   const totalPages = await db.countPages(options.collectionId);
@@ -177,13 +177,13 @@ async runExport(options) {
 }
 ```
 
-## 7. 未来考量 (Future Considerations)
+## 7. 未來考量 (Future Considerations)
 
-### 7.1 幂等性与缓存 (Idempotency & Caching)
-*   **基于哈希的去重**：在创建新任务之前，对 `ExportOptions` 进行哈希处理。如果存在具有相同哈希值且最近已完成（例如 24 小时内）的任务，则直接返回现有结果，而不是重新处理。
+### 7.1 冪等性與緩存 (Idempotency & Caching)
+*   **基於哈希的去重**：在創建新任務之前，對 `ExportOptions` 進行哈希處理。如果存在具有相同哈希值且最近已完成（例如 24 小時內）的任務，則直接返回現有結果，而不是重新處理。
 
-### 7.2 Manifest 元数据 (Manifest Metadata)
-在生成的 ZIP 文件中包含一个 `manifest.json`，其中包含有关导出的元数据：
+### 7.2 Manifest 元數據 (Manifest Metadata)
+在生成的 ZIP 文件中包含一個 `manifest.json`，其中包含有關導出的元數據：
 ```json
 {
   "collectionId": "col_123456",
@@ -193,24 +193,24 @@ async runExport(options) {
 }
 ```
 
-### 7.3 错误处理与重试 (Error Handling & Retries)
-*   **检查点**：存储最后成功处理的页面索引。如果 DO 崩溃（虽然罕见但有可能），它可以在下一次 `fetch` 调用时或通过计划事件（alarms）从最后一个检查点恢复。
+### 7.3 錯誤處理與重試 (Error Handling & Retries)
+*   **檢查點**：存儲最後成功處理的頁面索引。如果 DO 崩潰（雖然罕見但有可能），它可以在下一次 `fetch` 調用時或通過計劃事件（alarms）從最後一個檢查點恢復。
 
 ## 8. UI 集成 (UI Integration)
 
-### 8.1 导出入口 (Export Entry Point)
-在“收藏集详情”页面增加一个“导出”按钮。
-*   **位置**：页面顶部操作栏，靠近“编辑”或“分享”按钮。
-*   **样式**：使用次级按钮样式（Secondary Button）或图标按钮（例如带有下载图标）。
+### 8.1 導出入口 (Export Entry Point)
+在「收藏集詳情」頁面增加一個「導出」按鈕。
+*   **位置**：頁面頂部操作欄，靠近「編輯」或「分享」按鈕。
+*   **樣式**：使用次級按鈕樣式（Secondary Button）或圖標按鈕（例如帶有下載圖標）。
 
 ### 8.2 交互流程 (User Flow)
-1.  **点击导出**：用户点击“导出”按钮。
-2.  **格式选择**：弹出一个模态框或下拉菜单，询问导出格式（JSON 或 CSV）。
-3.  **触发任务**：
-    *   前端调用 `POST /api/v1/export`。
-    *   UI 显示“正在准备导出...”或进度条。
-    *   前端开始每隔 1-2 秒轮询 `GET /api/v1/export/{jobId}`。
-4.  **下载**：
-    *   当状态变为 `done` 时，UI 显示“下载”按钮或自动触发下载。
-    *   链接指向 `result.url` (R2 的 URL)。
-    *   或者前端可以显示“导出成功”，用户点击通知进行下载。
+1.  **點擊導出**：用戶點擊「導出」按鈕。
+2.  **格式選擇**：彈出一個模態框或下拉菜單，詢問導出格式（JSON 或 CSV）。
+3.  **觸發任務**：
+    *   前端調用 `POST /api/v1/export`。
+    *   UI 顯示「正在準備導出...」或進度條。
+    *   前端開始每隔 1-2 秒輪詢 `GET /api/v1/export/{jobId}`。
+4.  **下載**：
+    *   當狀態變爲 `done` 時，UI 顯示「下載」按鈕或自動觸發下載。
+    *   鏈接指向 `result.url` (R2 的 URL)。
+    *   或者前端可以顯示「導出成功」，用戶點擊通知進行下載。

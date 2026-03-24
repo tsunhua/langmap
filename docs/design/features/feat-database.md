@@ -1,101 +1,101 @@
-# 数据库设计
+# 數據庫設計
 
 ## System Reminder
 
-**实现状态**：
-- ✅ Cloudflare D1 数据库已部署
-- ✅ 核心表结构已实现
-- ✅ 复合优化索引已部署 (013_optimization_indexes.sql)
-- ✅ 多级缓存机制已实施 (L1 Memory + L2 Edge Cache)
-- ✅ 反范式化统计已实施 (items_count & language_stats)
-- ✅ 数据库迁移脚本已规范化
-- ⏳ 数据备份策略待自动化
-- ✅ 数据库性能监控初步实现 (Edge Log)
+**實現狀態**：
+- ✅ Cloudflare D1 數據庫已部署
+- ✅ 核心表結構已實現
+- ✅ 複合優化索引已部署 (013_optimization_indexes.sql)
+- ✅ 多級緩存機制已實施 (L1 Memory + L2 Edge Cache)
+- ✅ 反範式化統計已實施 (items_count & language_stats)
+- ✅ 數據庫遷移腳本已規範化
+- ⏳ 數據備份策略待自動化
+- ✅ 數據庫性能監控初步實現 (Edge Log)
 
-**已实现的数据库表**：
-- `languages` - 语言表
-- `expressions` - 表达式主表
-- `expression_versions` - 版本历史表
-- `users` - 用户表
-- `collections` - 集合表 (含 `items_count` 冗余字段)
-- `collection_items` - 集合项目表
-- `email_verification_tokens` - 邮箱验证令牌表
-- `language_stats` - 语言词数统计表 (物化统计)
+**已實現的數據庫表**：
+- `languages` - 語言表
+- `expressions` - 表達式主表
+- `expression_versions` - 版本歷史表
+- `users` - 用戶表
+- `collections` - 集合表 (含 `items_count` 冗餘字段)
+- `collection_items` - 集合項目表
+- `email_verification_tokens` - 郵箱驗證令牌表
+- `language_stats` - 語言詞數統計表 (物化統計)
 
-**未实现的功能**：
-- 数据库迁移管理工具
-- 自动备份机制
-- 数据库性能监控
-- 读写分离（如需要）
-- 分库分表策略
+**未實現的功能**：
+- 數據庫遷移管理工具
+- 自動備份機制
+- 數據庫性能監控
+- 讀寫分離（如需要）
+- 分庫分表策略
 
 ---
 
 ## 概述
 
-LangMap 项目使用 Cloudflare D1 作为主数据库，这是一个兼容 SQLite 的边缘数据库。D1 提供了低延迟的全球分布式访问，非常适合需要快速响应的 Web 应用程序。
+LangMap 項目使用 Cloudflare D1 作爲主數據庫，這是一個兼容 SQLite 的邊緣數據庫。D1 提供了低延遲的全球分布式訪問，非常適合需要快速響應的 Web 應用程序。
 
-### 数据库选择理由
+### 數據庫選擇理由
 
-- **Cloudflare D1**：与 Cloudflare Workers 无缝集成，边缘部署
-- **SQLite 兼容**：熟悉的 SQL 语法，易于开发和测试
-- **低延迟**：全球分布式访问，就近响应
-- **Serverless**：无需管理数据库服务器
-- **成本效益**：按使用量计费，适合小到中型应用
+- **Cloudflare D1**：與 Cloudflare Workers 無縫集成，邊緣部署
+- **SQLite 兼容**：熟悉的 SQL 語法，易於開發和測試
+- **低延遲**：全球分布式訪問，就近響應
+- **Serverless**：無需管理數據庫服務器
+- **成本效益**：按使用量計費，適合小到中型應用
 
-### 数据库特性
+### 數據庫特性
 
-- **ACID 事务**：支持事务，保证数据一致性
-- **关系型**：支持复杂的关系查询和联表
-- **边缘部署**：数据分布在多个边缘节点
-- **自动扩展**：无需手动扩展数据库容量
-- **读取一致性**：提供最终一致性保证
+- **ACID 事務**：支持事務，保證數據一致性
+- **關係型**：支持複雜的關係查詢和聯表
+- **邊緣部署**：數據分布在多個邊緣節點
+- **自動擴展**：無需手動擴展數據庫容量
+- **讀取一致性**：提供最終一致性保證
 
-## 数据库架构
+## 數據庫架構
 
-### 表关系图
+### 表關係圖
 
 ```
-languages (语言表)
+languages (語言表)
   ↓ 1:N
-expressions (表达式主表)
+expressions (表達式主表)
   ↓ 1:N
-expression_versions (版本历史表)
+expression_versions (版本歷史表)
 
-languages (语言表)
+languages (語言表)
   ↔ 1:1
-language_stats (物化统计表)
+language_stats (物化統計表)
 
-users (用户表)
+users (用戶表)
   ↓ 1:N
 collections (集合表)
   ↓ 1:N
-collection_items (集合项目表)
+collection_items (集合項目表)
   ↓ N:1
-expressions (表达式主表)
+expressions (表達式主表)
 ```
 
-## 表结构详情
+## 表結構詳情
 
 ### 1. languages 表
 
-存储支持的语言及其地域信息。
+存儲支持的語言及其地域信息。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS languages (
     id INTEGER PRIMARY KEY NOT NULL,
-    code TEXT UNIQUE NOT NULL,              -- BCP-47 语言代码 (如 "en-US", "zh-CN")
-    name TEXT NOT NULL,                        -- 语言英文名称
-    native_name TEXT,                         -- 语言本地化名称
+    code TEXT UNIQUE NOT NULL,              -- BCP-47 語言代碼 (如 "en-US", "zh-CN")
+    name TEXT NOT NULL,                        -- 語言英文名稱
+    native_name TEXT,                         -- 語言本地化名稱
     direction TEXT DEFAULT 'ltr',              -- 文本方向: "ltr" 或 "rtl"
     is_active INTEGER DEFAULT 0,              -- 是否激活: 0=否, 1=是
-    region_code TEXT,                          -- 地区代码 (如 "US", "CN")
-    region_name TEXT,                          -- 地区名称 (如 "New York", "Beijing")
-    region_latitude TEXT,                       -- 地区纬度
-    region_longitude TEXT,                      -- 地区经度
-    group_name TEXT,                           -- 语群名称 (如 "闽南语", "吴语")
+    region_code TEXT,                          -- 地區代碼 (如 "US", "CN")
+    region_name TEXT,                          -- 地區名稱 (如 "New York", "Beijing")
+    region_latitude TEXT,                       -- 地區緯度
+    region_longitude TEXT,                      -- 地區經度
+    group_name TEXT,                           -- 語羣名稱 (如 "閩南語", "吳語")
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
@@ -108,36 +108,36 @@ CREATE TABLE IF NOT EXISTS languages (
 ```sql
 CREATE INDEX idx_languages_code ON languages(code);
 CREATE INDEX idx_languages_is_active ON languages(is_active);
-CREATE INDEX idx_languages_active_name ON languages(is_active, name); -- 优化常用语言列表
+CREATE INDEX idx_languages_active_name ON languages(is_active, name); -- 優化常用語言列表
 ```
 
-**字段说明**：
-- `id` - 主键，使用语言代码的哈希值
-- `code` - 唯一键，BCP-47 标准语言代码
-- `is_active` - 标识语言是否可用，只有激活的语言在前端显示
-- `region_*` - 支持语言的地域化信息，用于地图可视化
+**字段說明**：
+- `id` - 主鍵，使用語言代碼的哈希值
+- `code` - 唯一鍵，BCP-47 標準語言代碼
+- `is_active` - 標識語言是否可用，只有激活的語言在前端顯示
+- `region_*` - 支持語言的地域化信息，用於地圖可視化
 
 ### 2. expressions 表
 
-存储语言表达式的当前版本。
+存儲語言表達式的當前版本。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS expressions (
     id INTEGER PRIMARY KEY NOT NULL,
-    text TEXT NOT NULL,                         -- 表达式文本
-    meaning_id INTEGER,                          -- 关联的语义 ID
-    audio_url TEXT,                             -- 音频 URL
-    language_code TEXT NOT NULL,                 -- 语言代码
-    region_code TEXT,                            -- 地区代码
-    region_name TEXT,                            -- 地区名称
-    region_latitude TEXT,                         -- 地区纬度
-    region_longitude TEXT,                        -- 地区经度
-    tags TEXT,                                  -- JSON 数组，用于标签分类
-    source_type TEXT DEFAULT 'user',              -- 来源类型: "authoritative", "ai", "user"
-    source_ref TEXT,                             -- 来源引用 (书名、URL 等)
-    review_status TEXT DEFAULT 'pending',          -- 审核状态: "pending", "approved", "rejected"
+    text TEXT NOT NULL,                         -- 表達式文本
+    meaning_id INTEGER,                          -- 關聯的語義 ID
+    audio_url TEXT,                             -- 音頻 URL
+    language_code TEXT NOT NULL,                 -- 語言代碼
+    region_code TEXT,                            -- 地區代碼
+    region_name TEXT,                            -- 地區名稱
+    region_latitude TEXT,                         -- 地區緯度
+    region_longitude TEXT,                        -- 地區經度
+    tags TEXT,                                  -- JSON 數組，用於標籤分類
+    source_type TEXT DEFAULT 'user',              -- 來源類型: "authoritative", "ai", "user"
+    source_ref TEXT,                             -- 來源引用 (書名、URL 等)
+    review_status TEXT DEFAULT 'pending',          -- 審核狀態: "pending", "approved", "rejected"
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
@@ -152,36 +152,36 @@ CREATE TABLE IF NOT EXISTS expressions (
 CREATE INDEX idx_expressions_language_code ON expressions(language_code);
 CREATE INDEX idx_expressions_meaning_id ON expressions(meaning_id);
 CREATE INDEX idx_expressions_text ON expressions(text);
--- 复合索引：优化针对特定语言的分页列表
+-- 複合索引：優化針對特定語言的分頁列表
 CREATE INDEX idx_expressions_lang_meaning_created ON expressions(language_code, meaning_id, created_at DESC);
--- 复合索引：优化同步与去重检查
+-- 複合索引：優化同步與去重檢查
 CREATE INDEX idx_expressions_lang_text ON expressions(language_code, text);
 ```
 
-**字段说明**：
-- `id` - 主键，基于 `text + language_code` 计算的确定性哈希值，确保相同内容的词句具有唯一且稳定的 ID。
-- `meaning_id` - 语义锚点 ID（指向 expressions.id），用于将不同语言的同义词句分到同一组。同一组的词句共享相同的 `meaning_id`，通常该 ID 取自该组中第一个被创建或最主要的表达记录。
-- `tags` - JSON 格式存储标签，例如 `["home", "title"]`
-- `source_type` - 标识内容来源，AI 生成的内容可能自动审核通过
-- `review_status` - 用户提交的内容需要审核
-- `region_*` - 地域化信息，支持精细的地理定位
+**字段說明**：
+- `id` - 主鍵，基於 `text + language_code` 計算的確定性哈希值，確保相同內容的詞句具有唯一且穩定的 ID。
+- `meaning_id` - 語義錨點 ID（指向 expressions.id），用於將不同語言的同義詞句分到同一組。同一組的詞句共享相同的 `meaning_id`，通常該 ID 取自該組中第一個被創建或最主要的表達記錄。
+- `tags` - JSON 格式存儲標籤，例如 `["home", "title"]`
+- `source_type` - 標識內容來源，AI 生成的內容可能自動審核通過
+- `review_status` - 用戶提交的內容需要審核
+- `region_*` - 地域化信息，支持精細的地理定位
 
 ### 3. expression_versions 表
 
-存储表达式的所有历史版本，支持版本回滚。
+存儲表達式的所有歷史版本，支持版本回滾。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS expression_versions (
     id INTEGER PRIMARY KEY NOT NULL,
-    expression_id INTEGER NOT NULL,               -- 关联的表达式 ID
+    expression_id INTEGER NOT NULL,               -- 關聯的表達式 ID
     text TEXT NOT NULL,                         -- 版本文本
-    meaning_id INTEGER,                          -- 语义 ID
-    audio_url TEXT,                             -- 音频 URL
-    region_name TEXT,                            -- 地区名称
-    region_latitude TEXT,                         -- 地区纬度
-    region_longitude TEXT,                        -- 地区经度
+    meaning_id INTEGER,                          -- 語義 ID
+    audio_url TEXT,                             -- 音頻 URL
+    region_name TEXT,                            -- 地區名稱
+    region_latitude TEXT,                         -- 地區緯度
+    region_longitude TEXT,                        -- 地區經度
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (expression_id) REFERENCES expressions(id)
@@ -195,26 +195,26 @@ CREATE INDEX idx_expression_versions_expr_id ON expression_versions(expression_i
 CREATE INDEX idx_expression_versions_created_at ON expression_versions(created_at);
 ```
 
-**字段说明**：
-- `expression_id` - 指向当前表达式主表记录
-- `meaning_id` - 记录快照时的语义关联
-- 不包含 `source_type`, `review_status` - 这些字段只在主表中维护
+**字段說明**：
+- `expression_id` - 指向當前表達式主表記錄
+- `meaning_id` - 記錄快照時的語義關聯
+- 不包含 `source_type`, `review_status` - 這些字段只在主表中維護
 
 
 ### 5. users 表
 
-存储用户账户信息。
+存儲用戶賬戶信息。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY NOT NULL,
-    username TEXT UNIQUE NOT NULL,                 -- 用户名
-    email TEXT UNIQUE NOT NULL,                    -- 邮箱
-    password_hash TEXT NOT NULL,                   -- 密码哈希 (bcrypt)
+    username TEXT UNIQUE NOT NULL,                 -- 用戶名
+    email TEXT UNIQUE NOT NULL,                    -- 郵箱
+    password_hash TEXT NOT NULL,                   -- 密碼哈希 (bcrypt)
     role TEXT DEFAULT 'user',                      -- 角色: "user", "admin", "super_admin"
-    email_verified INTEGER DEFAULT 0,              -- 邮箱验证: 0=未验证, 1=已验证
+    email_verified INTEGER DEFAULT 0,              -- 郵箱驗證: 0=未驗證, 1=已驗證
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -228,21 +228,21 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 ```
 
-**字段说明**：
-- `role` - 定义用户权限级别
-- `email_verified` - 阻止未验证邮箱的用户登录
+**字段說明**：
+- `role` - 定義用戶權限級別
+- `email_verified` - 阻止未驗證郵箱的用戶登錄
 
 ### 7. email_verification_tokens 表
 
-存储邮箱验证令牌。
+存儲郵箱驗證令牌。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS email_verification_tokens (
-    token TEXT PRIMARY KEY NOT NULL,                -- 验证令牌
-    user_id INTEGER NOT NULL,                      -- 用户 ID
-    expires_at TEXT NOT NULL,                      -- 过期时间
+    token TEXT PRIMARY KEY NOT NULL,                -- 驗證令牌
+    user_id INTEGER NOT NULL,                      -- 用戶 ID
+    expires_at TEXT NOT NULL,                      -- 過期時間
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -255,24 +255,24 @@ CREATE INDEX idx_email_verification_tokens_user_id ON email_verification_tokens(
 CREATE INDEX idx_email_verification_tokens_expires_at ON email_verification_tokens(expires_at);
 ```
 
-**字段说明**：
-- `token` - 唯一标识，一次性使用
-- `expires_at` - 令牌有效期，通常设置为 1 小时
+**字段說明**：
+- `token` - 唯一標識，一次性使用
+- `expires_at` - 令牌有效期，通常設置爲 1 小時
 
 ### 8. collections 表
 
-存储用户的收藏集合。
+存儲用戶的收藏集合。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS collections (
     id INTEGER PRIMARY KEY NOT NULL,
-    user_id INTEGER NOT NULL,                      -- 创建者 ID
-    name TEXT NOT NULL,                            -- 集合名称
+    user_id INTEGER NOT NULL,                      -- 創建者 ID
+    name TEXT NOT NULL,                            -- 集合名稱
     description TEXT,                               -- 集合描述
-    is_public INTEGER DEFAULT 0,                    -- 是否公开: 0=私有, 1=公开
-    items_count INTEGER DEFAULT 0,                 -- 反范式化字段：集合项目总数
+    is_public INTEGER DEFAULT 0,                    -- 是否公開: 0=私有, 1=公開
+    items_count INTEGER DEFAULT 0,                 -- 反範式化字段：集合項目總數
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -284,26 +284,26 @@ CREATE TABLE IF NOT EXISTS collections (
 ```sql
 CREATE INDEX idx_collections_user_id ON collections(user_id);
 CREATE INDEX idx_collections_name ON collections(name);
--- 复合索引：优化公共/个人列表的分页排序
+-- 複合索引：優化公共/個人列表的分頁排序
 CREATE INDEX idx_collections_is_public_created ON collections(is_public, created_at DESC);
 CREATE INDEX idx_collections_user_created ON collections(user_id, created_at DESC);
 ```
 
-**字段说明**：
-- `is_public` - 标识集合是否对其他用户可见
+**字段說明**：
+- `is_public` - 標識集合是否對其他用戶可見
 
 ### 9. collection_items 表
 
-存储集合与表达式的关联。
+存儲集合與表達式的關聯。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS collection_items (
     id INTEGER PRIMARY KEY NOT NULL,
     collection_id INTEGER NOT NULL,                 -- 集合 ID
-    expression_id INTEGER NOT NULL,                  -- 表达式 ID
-    note TEXT,                                    -- 备注
+    expression_id INTEGER NOT NULL,                  -- 表達式 ID
+    note TEXT,                                    -- 備註
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(collection_id, expression_id),
     FOREIGN KEY (collection_id) REFERENCES collections(id),
@@ -316,61 +316,61 @@ CREATE TABLE IF NOT EXISTS collection_items (
 ```sql
 CREATE INDEX idx_collection_items_collection_id ON collection_items(collection_id);
 CREATE INDEX idx_collection_items_expression_id ON collection_items(expression_id);
--- 复合索引：优化集合详情页的加载
+-- 複合索引：優化集合詳情頁的加載
 CREATE INDEX idx_collection_items_query ON collection_items(collection_id, created_at DESC);
 ```
 
-**字段说明**：
-- `UNIQUE(collection_id, expression_id)` - 保证同一表达式在同一集合中只出现一次
-- `note` - 可选的添加说明
-- `items_count` (在 collections 表) - 每次增删 collection_items 时同步更新，避免昂贵的 COUNT 子查询。
+**字段說明**：
+- `UNIQUE(collection_id, expression_id)` - 保證同一表達式在同一集合中只出現一次
+- `note` - 可選的添加說明
+- `items_count` (在 collections 表) - 每次增刪 collection_items 時同步更新，避免昂貴的 COUNT 子查詢。
 
 ### 10. language_stats 表
 
-物化统计表，用于加速热力图和仪表盘的显示。
+物化統計表，用於加速熱力圖和儀錶盤的顯示。
 
-**表结构**：
+**表結構**：
 
 ```sql
 CREATE TABLE IF NOT EXISTS language_stats (
-    language_code TEXT PRIMARY KEY,               -- 语言代码
-    expression_count INTEGER DEFAULT 0             -- 该语言下的表达式总数
+    language_code TEXT PRIMARY KEY,               -- 語言代碼
+    expression_count INTEGER DEFAULT 0             -- 該語言下的表達式總數
 );
 ```
 
-**字段说明**：
-- 物化视图：取代了所有针对 `expressions` 表的 `GROUP BY language_code` 的聚合查询。
-- 维护机制：在 Expression 进行 CRUD 或批处理迁移时，由后端 Service 实时同步更新。
+**字段說明**：
+- 物化視圖：取代了所有針對 `expressions` 表的 `GROUP BY language_code` 的聚合查詢。
+- 維護機制：在 Expression 進行 CRUD 或批處理遷移時，由後端 Service 實時同步更新。
 
-## 索引设计
+## 索引設計
 
 ### 索引策略
 
-1. **主键索引**：所有表都有 `INTEGER PRIMARY KEY`
-2. **唯一索引**：用于保证数据唯一性
-3. **外键索引**：所有外键字段都创建索引
-4. **查询索引**：为常用查询条件创建索引
+1. **主鍵索引**：所有表都有 `INTEGER PRIMARY KEY`
+2. **唯一索引**：用於保證數據唯一性
+3. **外鍵索引**：所有外鍵字段都創建索引
+4. **查詢索引**：爲常用查詢條件創建索引
 
-### 索引性能考虑
+### 索引性能考慮
 
-- **避免过度索引**：索引会增加写入开销
-- **复合索引**：根据查询模式选择
-- **定期分析**：监控索引使用情况
+- **避免過度索引**：索引會增加寫入開銷
+- **複合索引**：根據查詢模式選擇
+- **定期分析**：監控索引使用情況
 
-### 未来优化
+### 未來優化
 
-- **全文索引 (FTS5)**：为 `expressions.text` 创建 FTS5 虚拟表，实现毫秒级前缀匹配与全文搜索。
-- **R2 整合**：针对静态资源（如音频、导出结果）的元数据管理优化
+- **全文索引 (FTS5)**：爲 `expressions.text` 創建 FTS5 虛擬表，實現毫秒級前綴匹配與全文搜索。
+- **R2 整合**：針對靜態資源（如音頻、導出結果）的元數據管理優化
 
-## 数据迁移
+## 數據遷移
 
-### 迁移策略
+### 遷移策略
 
-1. **版本化迁移**：每个迁移文件编号（001, 002, 003...）
-2. **幂等性**：迁移脚本可重复执行
-3. **回滚支持**：提供降级脚本
+1. **版本化遷移**：每個遷移文件編號（001, 002, 003...）
+2. **冪等性**：遷移腳本可重複執行
+3. **回滾支持**：提供降級腳本
 
-### 迁移示例
+### 遷移示例
 
 ```sql
 -- Migration 001: Add region fields to expressions
@@ -392,123 +392,123 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
 ALTER TABLE expressions ADD COLUMN tags TEXT;
 ```
 
-### 未来改进
+### 未來改進
 
-- **迁移框架**：自动化迁移管理
-- **迁移日志**：记录迁移历史
-- **数据校验**：迁移后验证数据完整性
+- **遷移框架**：自動化遷移管理
+- **遷移日誌**：記錄遷移歷史
+- **數據校驗**：遷移後驗證數據完整性
 
-## 性能优化
+## 性能優化
 
-### 1. 多级缓存策略 (Multi-layer Caching)
+### 1. 多級緩存策略 (Multi-layer Caching)
 
-为了抵消 Cloudflare D1 的 "Rows Read" 限制并提升响应性能，系统实施了三级缓存：
-- **L1 (Isolation Cache)**: 后端单次请求作用域内的 `languagesCache`，TTL 为 30 分钟。
-- **L2 (Edge Cache)**: 利用 Workers Cache API，在边缘节点缓存高频 GET 请求（热力图、搜索、UI 翻译等）。
-- **L3 (Materialized)**: 通过 `language_stats` 等物化表将聚合结果持久化，变 O(N) 为 O(1)。
+爲了抵消 Cloudflare D1 的 "Rows Read" 限制並提升響應性能，系統實施了三級緩存：
+- **L1 (Isolation Cache)**: 後端單次請求作用域內的 `languagesCache`，TTL 爲 30 分鐘。
+- **L2 (Edge Cache)**: 利用 Workers Cache API，在邊緣節點緩存高頻 GET 請求（熱力圖、搜索、UI 翻譯等）。
+- **L3 (Materialized)**: 通過 `language_stats` 等物化表將聚合結果持久化，變 O(N) 爲 O(1)。
 
-### 2. 反范式化设计 (De-normalization)
+### 2. 反範式化設計 (De-normalization)
 
-- **items_count**: 在 `collections` 表中冗余存储项目数量，消除列表展示时的统计开销。
+- **items_count**: 在 `collections` 表中冗餘存儲項目數量，消除列表展示時的統計開銷。
 
-### 3. 索引精细化
+### 3. 索引精細化
 
-- 针对分页查询（`created_at DESC`）普遍补充了复合索引。
-- 针对 UI 翻译（`WHERE collection.name = 'langmap'`）补充了 `idx_collections_name`。
+- 針對分頁查詢（`created_at DESC`）普遍補充了複合索引。
+- 針對 UI 翻譯（`WHERE collection.name = 'langmap'`）補充了 `idx_collections_name`。
 
-### 4. 批量操作优化
+### 4. 批量操作優化
 
-- **db.batch()**: 在进行批处理提交 (Upsert) 和 ID 迁移时，使用 D1 的原子批处理语句，大幅减少数据库往返次数。
+- **db.batch()**: 在進行批處理提交 (Upsert) 和 ID 遷移時，使用 D1 的原子批處理語句，大幅減少數據庫往返次數。
 
-### 5. 全文检索 (FTS5) 架构
+### 5. 全文檢索 (FTS5) 架構
 
-为了消除 `LIKE '%query%'` 带来的全表扫描（High Rows Read），系统引入了 FTS5 虚拟表：
-- **虚拟表**：`expressions_fts` (External Content 模式)。
-- **同步机制**：通过触发器（Trigger）在数据增删改时自动保持主表与搜索索引的实时同步。
-- **分词器**：使用 `unicode61` 以支持全球多语言字符的搜索。
+爲了消除 `LIKE '%query%'` 帶來的全表掃描（High Rows Read），系統引入了 FTS5 虛擬表：
+- **虛擬表**：`expressions_fts` (External Content 模式)。
+- **同步機制**：通過觸發器（Trigger）在數據增刪改時自動保持主表與搜索索引的實時同步。
+- **分詞器**：使用 `unicode61` 以支持全球多語言字符的搜索。
 
-### 事务管理
+### 事務管理
 
 ```sql
 BEGIN TRANSACTION;
--- 多个相关操作
+-- 多個相關操作
 COMMIT;
 ```
 
-### 连接池
+### 連接池
 
-- D1 自动管理连接
-- 无需手动配置连接池
-- 边缘节点自动路由
+- D1 自動管理連接
+- 無需手動配置連接池
+- 邊緣節點自動路由
 
-## 备份策略
+## 備份策略
 
-### 当前状态
+### 當前狀態
 
-- ❌ 自动备份未实现
-- ❌ 定期备份未实现
-- ⏳ 手动导出可用（通过 Wrangler CLI）
+- ❌ 自動備份未實現
+- ❌ 定期備份未實現
+- ⏳ 手動導出可用（通過 Wrangler CLI）
 
-### 建议策略
+### 建議策略
 
-1. **定期备份**：每日自动备份数据库
-2. **增量备份**：只备份变更数据
-3. **多地域备份**：备份到多个存储位置
-4. **备份验证**：定期验证备份的完整性
+1. **定期備份**：每日自動備份數據庫
+2. **增量備份**：只備份變更數據
+3. **多地域備份**：備份到多個存儲位置
+4. **備份驗證**：定期驗證備份的完整性
 
-### 备份命令
+### 備份命令
 
 ```bash
-# 导出数据库
+# 導出數據庫
 wrangler d1 export DB_NAME backup.sql
 
-# 导入数据库
+# 導入數據庫
 wrangler d1 execute DB_NAME --file=backup.sql
 ```
 
-## 数据安全
+## 數據安全
 
-### 访问控制
+### 訪問控制
 
-- **环境变量**：数据库凭证存储在 Cloudflare Workers 环境变量中
-- **最小权限**：应用只访问必要的表和字段
-- **API 鉴权**：JWT 认证保护敏感操作
+- **環境變量**：數據庫憑證存儲在 Cloudflare Workers 環境變量中
+- **最小權限**：應用只訪問必要的表和字段
+- **API 鑑權**：JWT 認證保護敏感操作
 
-### 数据加密
+### 數據加密
 
-- **传输加密**：HTTPS 加密所有数据库通信
-- **静态加密**：敏感字段（如密码）使用 bcrypt 哈希
-- **密钥管理**：使用 Cloudflare Secrets 管理敏感密钥
+- **傳輸加密**：HTTPS 加密所有數據庫通信
+- **靜態加密**：敏感字段（如密碼）使用 bcrypt 哈希
+- **密鑰管理**：使用 Cloudflare Secrets 管理敏感密鑰
 
-### 数据脱敏
+### 數據脫敏
 
-- **日志脱敏**：日志中不记录敏感信息
-- **API 响应**：不返回完整敏感数据
-- **错误消息**：避免泄露数据库结构
+- **日誌脫敏**：日誌中不記錄敏感信息
+- **API 響應**：不返回完整敏感數據
+- **錯誤消息**：避免泄露數據庫結構
 
-## 监控与维护
+## 監控與維護
 
-### 性能监控
+### 性能監控
 
-- **查询时间**：监控慢查询
-- **连接数**：监控并发连接
-- **错误率**：监控数据库错误
+- **查詢時間**：監控慢查詢
+- **連接數**：監控並發連接
+- **錯誤率**：監控數據庫錯誤
 
-### 维护任务
+### 維護任務
 
 - **索引重建**：定期重建索引
-- **数据清理**：删除过期数据
-- **统计更新**：更新缓存数据
+- **數據清理**：刪除過期數據
+- **統計更新**：更新緩存數據
 
-### 未来改进
+### 未來改進
 
-- **仪表盘**：实时监控数据库性能
-- **自动告警**：异常情况自动通知
-- **自优化**：自动调整数据库配置
+- **儀錶盤**：實時監控數據庫性能
+- **自動告警**：異常情況自動通知
+- **自優化**：自動調整數據庫配置
 
-## 相关文档
+## 相關文檔
 
-- [系统架构设计](../system/architecture.md)
-- [后端 API 指南](../../api/backend-guide.md)
-- [用户与权限系统](./feat-user-system.md)
-- [UI 翻译系统](./feat-ui-translation.md)
+- [系統架構設計](../system/architecture.md)
+- [後端 API 指南](../../api/backend-guide.md)
+- [用戶與權限系統](./feat-user-system.md)
+- [UI 翻譯系統](./feat-ui-translation.md)

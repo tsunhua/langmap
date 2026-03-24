@@ -1,52 +1,52 @@
-# 用户与权限系统设计
+# 用戶與權限系統設計
 
 ## System Reminder
 
-**设计来源**：本设计基于原始 `design_user.md` 和系统架构设计文档
+**設計來源**：本設計基於原始 `design_user.md` 和系統架構設計文檔
 
-**实现状态**：
-- ✅ 用户基础认证（注册、登录、登出）- 已实现
-- ✅ JWT 认证机制 - 已实现（Hono + jose）
-- ✅ 用户数据模型（users 表）- 已实现
-- ⏳ 邮箱验证功能 - 设计已定义，实现状态需确认
-- ⚠️ 用户角色管理（更新角色、分配权限）- 部分实现（仅超级管理员角色定义）
-- ❌ 修订审核队列 - 未实现（revisions 表未创建）
-- ❌ 两步验证 - 未实现
+**實現狀態**：
+- ✅ 用戶基礎認證（註冊、登錄、登出）- 已實現
+- ✅ JWT 認證機制 - 已實現（Hono + jose）
+- ✅ 用戶數據模型（users 表）- 已實現
+- ⏳ 郵箱驗證功能 - 設計已定義，實現狀態需確認
+- ⚠️ 用戶角色管理（更新角色、分配權限）- 部分實現（僅超級管理員角色定義）
+- ❌ 修訂審核隊列 - 未實現（revisions 表未創建）
+- ❌ 兩步驗證 - 未實現
 
-**未实现或需确认的功能**：
-- `POST /api/v1/users/:id/role` - 更新用户角色（仅超级管理员）
-- `PUT /api/v1/expressions/:id/revision/:revision_id/approve` - 审核内容修改
-- `GET /api/v1/auth/verify-email` - 验证邮箱
-- `POST /api/v1/auth/resend-verification` - 重发验证邮件
+**未實現或需確認的功能**：
+- `POST /api/v1/users/:id/role` - 更新用戶角色（僅超級管理員）
+- `PUT /api/v1/expressions/:id/revision/:revision_id/approve` - 審核內容修改
+- `GET /api/v1/auth/verify-email` - 驗證郵箱
+- `POST /api/v1/auth/resend-verification` - 重發驗證郵件
 
 ---
 
 ## 概述
 
-本文档描述了 LangMap 应用程序中用户管理和权限控制系统的设计。该系统包含三种用户角色：超级管理员、管理员和普通用户，每种角色具有不同的权限级别。
+本文檔描述了 LangMap 應用程序中用戶管理和權限控制系統的設計。該系統包含三種用戶角色：超級管理員、管理員和普通用戶，每種角色具有不同的權限級別。
 
-## 用户角色定义
+## 用戶角色定義
 
-### 1. 超级管理员 (Super Admin)
-- 权限最高级别
-- 可以批量删除内容
-- 可以管理所有用户账户
-- 可以分配其他用户的管理员权限
+### 1. 超級管理員 (Super Admin)
+- 權限最高級別
+- 可以批量刪除內容
+- 可以管理所有用戶賬戶
+- 可以分配其他用戶的管理員權限
 
-### 2. 管理员 (Admin)
-- 可以单条删除任何内容（包括其他用户提交的内容）
-- 可以编辑内容
-- 不能批量删除内容
+### 2. 管理員 (Admin)
+- 可以單條刪除任何內容（包括其他用戶提交的內容）
+- 可以編輯內容
+- 不能批量刪除內容
 
-### 3. 普通用户 (Regular User)
-- 只能删除自己提交的内容
-- 可以创建新的词条
-- 可以编辑自己提交的内容
-- 可以编辑他人提交的内容，但需要管理员审核后才能展示
+### 3. 普通用戶 (Regular User)
+- 只能刪除自己提交的內容
+- 可以創建新的詞條
+- 可以編輯自己提交的內容
+- 可以編輯他人提交的內容，但需要管理員審核後才能展示
 
-## 数据库设计
+## 數據庫設計
 
-### users 表结构
+### users 表結構
 
 ```sql
 CREATE TABLE users (
@@ -61,7 +61,7 @@ CREATE TABLE users (
 );
 ```
 
-### email_verification_tokens 表结构
+### email_verification_tokens 表結構
 
 ```sql
 CREATE TABLE email_verification_tokens (
@@ -73,7 +73,7 @@ CREATE TABLE email_verification_tokens (
 );
 ```
 
-### revisions 表结构（用于存储待审核的内容修改）
+### revisions 表結構（用於存儲待審核的內容修改）
 
 ```sql
 CREATE TABLE revisions (
@@ -93,15 +93,15 @@ CREATE TABLE revisions (
 );
 ```
 
-## API 接口设计
+## API 接口設計
 
-### 用户认证接口
+### 用戶認證接口
 
 #### POST /api/v1/auth/register
 
-创建新用户账户并发送邮箱验证邮件。
+創建新用戶賬戶並發送郵箱驗證郵件。
 
-**请求体：**
+**請求體：**
 ```json
 {
   "username": "string",
@@ -110,7 +110,7 @@ CREATE TABLE revisions (
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -127,9 +127,9 @@ CREATE TABLE revisions (
 
 #### POST /api/v1/auth/login
 
-用户登录并获取 JWT token。
+用戶登錄並獲取 JWT token。
 
-**请求体：**
+**請求體：**
 ```json
 {
   "email": "string",
@@ -137,7 +137,7 @@ CREATE TABLE revisions (
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -155,11 +155,11 @@ CREATE TABLE revisions (
 
 #### POST /api/v1/auth/logout
 
-用户登出。
+用戶登出。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -169,11 +169,11 @@ CREATE TABLE revisions (
 
 #### GET /api/v1/auth/verify-email
 
-验证邮箱并激活账户。
+驗證郵箱並激活賬戶。
 
-**查询参数：** `?token=xxx`
+**查詢參數：** `?token=xxx`
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -181,15 +181,15 @@ CREATE TABLE revisions (
 }
 ```
 
-### 用户管理接口
+### 用戶管理接口
 
 #### GET /api/v1/users/me
 
-获取当前用户信息。
+獲取當前用戶信息。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -206,18 +206,18 @@ CREATE TABLE revisions (
 
 #### PUT /api/v1/users/{id}/role
 
-更新用户角色（仅超级管理员）。
+更新用戶角色（僅超級管理員）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**请求体：**
+**請求體：**
 ```json
 {
   "role": "string" // 'super_admin', 'admin', 'user'
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -230,15 +230,15 @@ CREATE TABLE revisions (
 }
 ```
 
-### 内容管理接口
+### 內容管理接口
 
 #### DELETE /api/v1/expressions/{id}
 
-删除单个内容（管理员及以上）。
+刪除單個內容（管理員及以上）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -248,18 +248,18 @@ CREATE TABLE revisions (
 
 #### PUT /api/v1/expressions/{id}
 
-编辑内容（所有用户）。
+編輯內容（所有用戶）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**请求体：**
+**請求體：**
 ```json
 {
   "field": "value"
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -272,18 +272,18 @@ CREATE TABLE revisions (
 
 #### POST /api/v1/expressions/{id}/revision
 
-提交内容修改待审核（普通用户编辑他人内容时）。
+提交內容修改待審核（普通用戶編輯他人內容時）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**请求体：**
+**請求體：**
 ```json
 {
   "field": "new_value"
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -293,11 +293,11 @@ CREATE TABLE revisions (
 
 #### PUT /api/v1/expressions/{id}/revision/{revision_id}/approve
 
-审核内容修改（管理员及以上）。
+審核內容修改（管理員及以上）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -307,18 +307,18 @@ CREATE TABLE revisions (
 
 #### DELETE /api/v1/expressions/batch
 
-批量删除内容（仅超级管理员）。
+批量刪除內容（僅超級管理員）。
 
-**请求头：** `Authorization: Bearer <token>`
+**請求頭：** `Authorization: Bearer <token>`
 
-**请求体：**
+**請求體：**
 ```json
 {
   "ids": [1, 2, 3]
 }
 ```
 
-**响应：**
+**響應：**
 ```json
 {
   "success": true,
@@ -326,84 +326,84 @@ CREATE TABLE revisions (
 }
 ```
 
-## 前端实现要点
+## 前端實現要點
 
-### 权限控制组件
+### 權限控制組件
 
-根据不同用户角色显示不同的操作按钮：
+根據不同用戶角色顯示不同的操作按鈕：
 
-**普通用户：**
-- 只能看到删除自己提交内容的选项
-- 编辑他人内容时显示"提交修改待审核"按钮
-- 无法看到批量删除按钮
+**普通用戶：**
+- 只能看到刪除自己提交內容的選項
+- 編輯他人內容時顯示"提交修改待審核"按鈕
+- 無法看到批量刪除按鈕
 
-**管理员：**
-- 可以看到删除任何内容的选项
-- 可以看到审核待处理修改的界面
-- 无法看到批量删除按钮
+**管理員：**
+- 可以看到刪除任何內容的選項
+- 可以看到審核待處理修改的界面
+- 無法看到批量刪除按鈕
 
-**超级管理员：**
-- 可以看到所有删除选项，包括批量删除
+**超級管理員：**
+- 可以看到所有刪除選項，包括批量刪除
 
-### 登录/注册页面
+### 登錄/註冊頁面
 
-需要创建的 Vue 组件：
+需要創建的 Vue 組件：
 - `LoginPage.vue`
 - `RegisterPage.vue`
 - `UserProfile.vue`
 
-## 邮箱验证
+## 郵箱驗證
 
-### 验证流程
+### 驗證流程
 
-1. 用户注册时，后端创建账户（`email_verified = false`）
-2. 生成验证 token 并保存到 `email_verification_tokens` 表
-3. 调用邮件服务发送验证链接
-4. 用户点击验证链接，后端验证 token 并激活账户
-5. 激活后删除 token
+1. 用戶註冊時，後端創建賬戶（`email_verified = false`）
+2. 生成驗證 token 並保存到 `email_verification_tokens` 表
+3. 調用郵件服務發送驗證鏈接
+4. 用戶點擊驗證鏈接，後端驗證 token 並激活賬戶
+5. 激活後刪除 token
 
-### 安全考虑
+### 安全考慮
 
 - Token 一次性使用
-- Token 设置过期时间（1小时）
-- 未验证邮箱的用户禁止登录和关键操作
+- Token 設置過期時間（1小時）
+- 未驗證郵箱的用戶禁止登錄和關鍵操作
 
-## 安全考虑
+## 安全考慮
 
-1. 密码加密存储（使用 bcrypt 或其他安全哈希算法）
+1. 密碼加密存儲（使用 bcrypt 或其他安全哈希算法）
 2. JWT Token 管理
-3. 请求频率限制防止暴力破解
-4. 输入验证和清理防止 SQL 注入等攻击
-5. CORS 策略设置
-6. HTTPS 强制使用
-7. 邮箱验证机制
+3. 請求頻率限制防止暴力破解
+4. 輸入驗證和清理防止 SQL 注入等攻擊
+5. CORS 策略設置
+6. HTTPS 強制使用
+7. 郵箱驗證機制
 
-## 实现步骤
+## 實現步驟
 
-1. 创建用户相关的数据库表
-2. 实现用户认证 API（注册、登录、登出）
-3. 实现邮箱验证功能
-4. 实现 JWT 管理机制
-5. 添加用户角色检查中间件
-6. 修改现有内容删除接口以支持权限控制
-7. 实现内容修改和审核功能
-8. 创建前端登录/注册页面
-9. 根据用户角色动态显示操作按钮
-10. 实现修订提交和审核流程
-11. 测试各种权限场景
+1. 創建用戶相關的數據庫表
+2. 實現用戶認證 API（註冊、登錄、登出）
+3. 實現郵箱驗證功能
+4. 實現 JWT 管理機制
+5. 添加用戶角色檢查中間件
+6. 修改現有內容刪除接口以支持權限控制
+7. 實現內容修改和審核功能
+8. 創建前端登錄/註冊頁面
+9. 根據用戶角色動態顯示操作按鈕
+10. 實現修訂提交和審核流程
+11. 測試各種權限場景
 
-## 后续扩展
+## 後續擴展
 
-1. 密码重置功能
-2. OAuth 第三方登录（Google, GitHub等）
-3. 用户活动日志记录
-4. 更细粒度的权限控制
-5. 两步验证
+1. 密碼重置功能
+2. OAuth 第三方登錄（Google, GitHub等）
+3. 用戶活動日誌記錄
+4. 更細粒度的權限控制
+5. 兩步驗證
 
 ---
 
-## 相关文档
+## 相關文檔
 
-- [UI 翻译系统设计](./ui-translation.md)
-- [系统架构设计](./system-architecture.md)
-- [集合功能设计](./collection-feature.md)
+- [UI 翻譯系統設計](./ui-translation.md)
+- [系統架構設計](./system-architecture.md)
+- [集合功能設計](./collection-feature.md)

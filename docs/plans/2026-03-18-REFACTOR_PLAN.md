@@ -1,113 +1,113 @@
-# LangMap 前后端代码重构计划
+# LangMap 前後端代碼重構計劃
 
 **制定日期**: 2026年3月18日  
-**优先级**: 分三阶段执行
+**優先級**: 分三階段執行
 
 ---
 
-## 📊 现状分析
+## 📊 現狀分析
 
-### 后端 (Backend)
+### 後端 (Backend)
 - **框架**: Hono.js + Cloudflare Workers
-- **数据库**: Cloudflare D1 (SQLite)
-- **存储**: R2 Bucket (音频/导出)
-- **认证**: JWT + bcryptjs
-- **当前问题**:
-  - API v1.ts 文件过大，需要模块化拆分
-  - 缺少统一的错误处理层
-  - 数据库查询逻辑未充分抽象
-  - 缺少API文档和OpenAPI规范
-  - 环境变量管理不规范
-  - 缺少测试框架和单元测试
+- **數據庫**: Cloudflare D1 (SQLite)
+- **存儲**: R2 Bucket (音頻/導出)
+- **認證**: JWT + bcryptjs
+- **當前問題**:
+  - API v1.ts 文件過大，需要模塊化拆分
+  - 缺少統一的錯誤處理層
+  - 數據庫查詢邏輯未充分抽象
+  - 缺少API文檔和OpenAPI規範
+  - 環境變量管理不規範
+  - 缺少測試框架和單元測試
 
 ### 前端 (Frontend)
 - **框架**: Vue 3 + Composition API
 - **路由**: Vue Router 4
-- **国际化**: Vue i18n
-- **样式**: Tailwind CSS
-- **HTTP客户端**: Axios
-- **当前问题**:
-  - 组件划分不够清晰
-  - 状态管理缺失（无Pinia/Vuex）
-  - 重复的API调用逻辑
-  - 缺少错误处理标准化
-  - 缺少TypeScript类型定义
-  - 页面组件和业务逻辑混杂
+- **國際化**: Vue i18n
+- **樣式**: Tailwind CSS
+- **HTTP客戶端**: Axios
+- **當前問題**:
+  - 組件劃分不夠清晰
+  - 狀態管理缺失（無Pinia/Vuex）
+  - 重複的API調用邏輯
+  - 缺少錯誤處理標準化
+  - 缺少TypeScript類型定義
+  - 頁面組件和業務邏輯混雜
 
 ---
 
-## 🎯 重构目标
+## 🎯 重構目標
 
-1. **提高代码可维护性** - 模块化、单一职责
-2. **增强类型安全** - 完整的TypeScript类型定义
-3. **规范化错误处理** - 统一的异常管理
-4. **提升开发效率** - 自动化测试、文档生成
-5. **性能优化** - 代码分割、缓存策略
-6. **团队协作** - API文档、代码规范
+1. **提高代碼可維護性** - 模塊化、單一職責
+2. **增強類型安全** - 完整的TypeScript類型定義
+3. **規範化錯誤處理** - 統一的異常管理
+4. **提升開發效率** - 自動化測試、文檔生成
+5. **性能優化** - 代碼分割、緩存策略
+6. **團隊協作** - API文檔、代碼規範
 
 ---
 
-## 📋 第一阶段：架构和基础设施 (2-3周)
+## 📋 第一階段：架構和基礎設施 (2-3周)
 
-### 后端重构
+### 後端重構
 
-#### 1.1 API路由模块化
-**目标**: 将单一的 `v1.ts` 拆分为功能模块
+#### 1.1 API路由模塊化
+**目標**: 將單一的 `v1.ts` 拆分爲功能模塊
 
 ```
 backend/src/server/
 ├── routes/
-│   ├── auth.ts          # 认证相关
-│   ├── expressions.ts   # 表达式管理
-│   ├── languages.ts     # 语言管理
+│   ├── auth.ts          # 認證相關
+│   ├── expressions.ts   # 表達式管理
+│   ├── languages.ts     # 語言管理
 │   ├── collections.ts   # 收藏集合
-│   ├── users.ts         # 用户管理
-│   ├── export.ts        # 导出功能
-│   └── index.ts         # 路由汇总
+│   ├── users.ts         # 用戶管理
+│   ├── export.ts        # 導出功能
+│   └── index.ts         # 路由匯總
 ├── middleware/
-│   ├── auth.ts          # 认证中间件
-│   ├── error.ts         # 错误处理
-│   ├── validation.ts    # 数据验证
-│   └── logging.ts       # 日志记录
-├── schemas/             # Zod验证模式
+│   ├── auth.ts          # 認證中間件
+│   ├── error.ts         # 錯誤處理
+│   ├── validation.ts    # 數據驗證
+│   └── logging.ts       # 日誌記錄
+├── schemas/             # Zod驗證模式
 │   ├── auth.ts
 │   ├── expression.ts
 │   ├── user.ts
 │   └── collection.ts
-├── services/            # 业务逻辑
+├── services/            # 業務邏輯
 │   ├── auth.ts
 │   ├── expression.ts
 │   ├── user.ts
 │   └── collection.ts
 ├── db/
-│   ├── queries/         # 数据库查询
+│   ├── queries/         # 數據庫查詢
 │   │   ├── auth.ts
 │   │   ├── expression.ts
 │   │   └── ...
-│   └── migrations/      # 迁移文件
-├── types/               # 类型定义
-│   ├── api.ts           # API响应类型
-│   ├── entity.ts        # 数据实体
-│   └── error.ts         # 错误类型
+│   └── migrations/      # 遷移文件
+├── types/               # 類型定義
+│   ├── api.ts           # API響應類型
+│   ├── entity.ts        # 數據實體
+│   └── error.ts         # 錯誤類型
 └── utils/
     ├── jwt.ts           # JWT工具
     ├── password.ts
-    └── response.ts      # 标准响应格式
+    └── response.ts      # 標準響應格式
 ```
 
-**关键任务**:
-- [x] 创建文件夹结构
-- [x] 提取认证逻辑到 `services/auth.ts`
-- [x] 提取表达式逻辑到 `services/expression.ts`
-- [x] 使用Zod定义所有验证schema
-- [x] 统一使用 `utils/response.ts` 返回响应 (所有路由已更新使用统一响应格式)
+**關鍵任務**:
+- [x] 創建文件夾結構
+- [x] 提取認證邏輯到 `services/auth.ts`
+- [x] 提取表達式邏輯到 `services/expression.ts`
+- [x] 使用Zod定義所有驗證schema
+- [x] 統一使用 `utils/response.ts` 返迴響應 (所有路由已更新使用統一響應格式)
 
 
-#### 1.2 错误处理层
-**创建**: `backend/src/server/error/handler.ts`
+#### 1.2 錯誤處理層
+**創建**: `backend/src/server/error/handler.ts`
 
 ```typescript
-// 错误类型和处理
+// 錯誤類型和處理
 export class ApiError extends Error {
   constructor(
     public statusCode: number,
@@ -120,18 +120,18 @@ export class ApiError extends Error {
 }
 
 export const errorHandler = (error: unknown) => {
-  // 统一处理所有错误
+  // 統一處理所有錯誤
 }
 ```
 
-**关键任务**:
-- [ ] 定义标准错误响应格式
-- [ ] 创建自定义错误类
-- [ ] 添加全局错误处理中间件
-- [ ] 完善调试日志
+**關鍵任務**:
+- [ ] 定義標準錯誤響應格式
+- [ ] 創建自定義錯誤類
+- [ ] 添加全局錯誤處理中間件
+- [ ] 完善調試日誌
 
-#### 1.3 环境配置规范化
-**创建**：`backend/src/config.ts`
+#### 1.3 環境配置規範化
+**創建**：`backend/src/config.ts`
 
 ```typescript
 export const config = {
@@ -152,16 +152,16 @@ export const config = {
 }
 ```
 
-**关键任务**:
-- [x] 整合所有环境变量
-- [x] 创建 `.env.example`
-- [ ] 添加配置验证
+**關鍵任務**:
+- [x] 整合所有環境變量
+- [x] 創建 `.env.example`
+- [ ] 添加配置驗證
 
-#### 1.4 数据库查询层抽象
-**创建**: `backend/src/server/db/queries/`
+#### 1.4 數據庫查詢層抽象
+**創建**: `backend/src/server/db/queries/`
 
 ```typescript
-// 每个功能模块一个查询文件
+// 每個功能模塊一個查詢文件
 // 示例: queries/expression.ts
 export class ExpressionQueries {
   async findById(db: D1Database, id: number) { }
@@ -172,64 +172,64 @@ export class ExpressionQueries {
 }
 ```
 
-**关键任务**:
-- [ ] 提取所有SQL查询到专用模块
-- [ ] 创建参数化查询以防SQL注入
-- [ ] 添加查询日志
+**關鍵任務**:
+- [ ] 提取所有SQL查詢到專用模塊
+- [ ] 創建參數化查詢以防SQL注入
+- [ ] 添加查詢日誌
 
 ---
 
-### 前端重构
+### 前端重構
 
-#### 2.1 状态管理 (Pinia)
-**创建**: `web/src/stores/`
+#### 2.1 狀態管理 (Pinia)
+**創建**: `web/src/stores/`
 
 ```
 web/src/stores/
-├── auth.ts          # 认证状态
-├── expressions.ts   # 表达式列表
-├── user.ts         # 用户信息
-├── ui.ts           # UI状态
-└── index.ts        # 导出
+├── auth.ts          # 認證狀態
+├── expressions.ts   # 表達式列表
+├── user.ts         # 用戶信息
+├── ui.ts           # UI狀態
+└── index.ts        # 導出
 ```
 
-**关键任务**:
-- [x] 安装Pinia: `npm install pinia`
-- [x] 创建认证store
-- [x] 创建用户store
-- [ ] 迁移Axios调用到actions
+**關鍵任務**:
+- [x] 安裝Pinia: `npm install pinia`
+- [x] 創建認證store
+- [x] 創建用戶store
+- [ ] 遷移Axios調用到actions
 
-#### 2.2 API客户端层
-**创建**: `web/src/api/`
+#### 2.2 API客戶端層
+**創建**: `web/src/api/`
 
 ```
 web/src/api/
-├── client.ts           # Axios配置和拦截器
-├── auth.ts            # 认证API
-├── expressions.ts     # 表达式API
-├── languages.ts       # 语言API
+├── client.ts           # Axios配置和攔截器
+├── auth.ts            # 認證API
+├── expressions.ts     # 表達式API
+├── languages.ts       # 語言API
 ├── collections.ts     # 收藏集合API
-└── index.ts           # API导出
+└── index.ts           # API導出
 ```
 
-**关键任务**:
+**關鍵任務**:
 - [x] 集中Axios配置
-- [x] 添加请求/响应拦截器 (已更新以处理统一响应格式)
-- [x] 错误处理标准化 (统一错误处理)
-- [x] 添加请求loading状态
+- [x] 添加請求/響應攔截器 (已更新以處理統一響應格式)
+- [x] 錯誤處理標準化 (統一錯誤處理)
+- [x] 添加請求loading狀態
 
-#### 2.3 类型定义完善
-**创建**: `web/src/types/`
+#### 2.3 類型定義完善
+**創建**: `web/src/types/`
 
 ```typescript
-// types/api.ts - API响应类型
+// types/api.ts - API響應類型
 export interface ApiResponse<T> {
   code: number
   message: string
   data?: T
 }
 
-// types/models.ts - 数据模型
+// types/models.ts - 數據模型
 export interface Expression {
   id: number
   language: string
@@ -237,68 +237,68 @@ export interface Expression {
   // ...
 }
 
-// types/components.ts - 组件props类型
+// types/components.ts - 組件props類型
 ```
 
-**关键任务**:
-- [x] 统一API响应类型
-- [x] 定义所有数据模型
-- [x] 定义组件props类型
+**關鍵任務**:
+- [x] 統一API響應類型
+- [x] 定義所有數據模型
+- [x] 定義組件props類型
 
-#### 2.4 组件结构优化
-**重新组织**: `web/src/components/`
+#### 2.4 組件結構優化
+**重新組織**: `web/src/components/`
 
 ```
 web/src/components/
-├── common/            # 可复用组件
+├── common/            # 可復用組件
 │   ├── Button.vue
 │   ├── Modal.vue
 │   ├── Form.vue
 │   └── ...
-├── layout/            # 布局组件
+├── layout/            # 布局組件
 │   ├── Header.vue
 │   ├── Sidebar.vue
 │   └── Footer.vue
-├── features/          # 功能组件
+├── features/          # 功能組件
 │   ├── ExpressionCard.vue
 │   ├── LanguageSelector.vue
 │   └── ...
-└── README.md          # 组件文档
+└── README.md          # 組件文檔
 ```
 
-**关键任务**:
-- [x] 分类组件
-- [x] 提取公共逻辑到composables (useAuth.ts, useForm.ts, useExpressions.ts 已存在)
-- [x] 编写组件文档 (web/src/components/README.md 已创建)
+**關鍵任務**:
+- [x] 分類組件
+- [x] 提取公共邏輯到composables (useAuth.ts, useForm.ts, useExpressions.ts 已存在)
+- [x] 編寫組件文檔 (web/src/components/README.md 已創建)
 
 #### 2.5 Composables提取
-**创建**: `web/src/composables/`
+**創建**: `web/src/composables/`
 
 ```
 web/src/composables/
-├── useAuth.ts           # 认证逻辑
-├── useExpressions.ts    # 表达式获取
-├── useForm.ts          # 表单处理
+├── useAuth.ts           # 認證邏輯
+├── useExpressions.ts    # 表達式獲取
+├── useForm.ts          # 表單處理
 ├── useNotification.ts  # 通知
-└── useAsyncData.ts     # 异步数据加载
+└── useAsyncData.ts     # 異步數據加載
 ```
 
-**关键任务**:
-- [x] 提取表达式获取逻辑 (useExpressions.ts 已存在)
-- [x] 提取表单验证逻辑 (useForm.ts 已存在)
-- [x] 提取认证逻辑 (useAuth.ts 已存在)
+**關鍵任務**:
+- [x] 提取表達式獲取邏輯 (useExpressions.ts 已存在)
+- [x] 提取表單驗證邏輯 (useForm.ts 已存在)
+- [x] 提取認證邏輯 (useAuth.ts 已存在)
 
 ---
 
-## 📋 第二阶段：测试和文档 (2-3周)
+## 📋 第二階段：測試和文檔 (2-3周)
 
-### 后端测试
+### 後端測試
 
-#### 3.1 单元测试框架
-- [ ] 安装Vitest: `npm install vitest`
-- [ ] 配置测试环境
-- [ ] 为services编写单元测试
-- [ ] 目标覆盖率: 70%+
+#### 3.1 單元測試框架
+- [ ] 安裝Vitest: `npm install vitest`
+- [ ] 配置測試環境
+- [ ] 爲services編寫單元測試
+- [ ] 目標覆蓋率: 70%+
 
 ```
 backend/src/__tests__/
@@ -311,19 +311,19 @@ backend/src/__tests__/
     └── api/expressions.test.ts
 ```
 
-#### 3.2 API文档
-- [ ] 安装OpenAPI生成: `npm install -D @hono/typegen-hono-openapi`
-- [ ] 为所有API端点添加OpenAPI注释
-- [ ] 生成Swagger文档
-- [ ] 部署API文档到 `/api/docs`
+#### 3.2 API文檔
+- [ ] 安裝OpenAPI生成: `npm install -D @hono/typegen-hono-openapi`
+- [ ] 爲所有API端點添加OpenAPI注釋
+- [ ] 生成Swagger文檔
+- [ ] 部署API文檔到 `/api/docs`
 
-### 前端测试
+### 前端測試
 
-#### 3.3 单元和集成测试
-- [ ] 安装Vitest + Vue Test Utils
-- [ ] 为组件编写单元测试
-- [ ] 为store编写测试
-- [ ] 目标覆盖率: 60%+
+#### 3.3 單元和集成測試
+- [ ] 安裝Vitest + Vue Test Utils
+- [ ] 爲組件編寫單元測試
+- [ ] 爲store編寫測試
+- [ ] 目標覆蓋率: 60%+
 
 ```
 web/src/__tests__/
@@ -336,69 +336,69 @@ web/src/__tests__/
     └── api/expressions.test.ts
 ```
 
-#### 3.4 E2E测试
-- [ ] 安装Cypress或Playwright
-- [ ] 编写关键用户流程测试
-- [ ] 配置CI/CD测试自动化
+#### 3.4 E2E測試
+- [ ] 安裝Cypress或Playwright
+- [ ] 編寫關鍵用戶流程測試
+- [ ] 配置CI/CD測試自動化
 
-### 代码文档
+### 代碼文檔
 
-#### 3.5 API文档 (后端)
-- [ ] README.md - 项目概览
-- [ ] ARCHITECTURE.md - 架构说明
-- [ ] API_DOCS.md - API文档
-- [ ] DATABASE.md - 数据库架构
+#### 3.5 API文檔 (後端)
+- [ ] README.md - 項目概覽
+- [ ] ARCHITECTURE.md - 架構說明
+- [ ] API_DOCS.md - API文檔
+- [ ] DATABASE.md - 數據庫架構
 
-#### 3.6 代码文档 (前端)
-- [ ] COMPONENTS.md - 组件指南
-- [ ] STATE_MANAGEMENT.md - 状态管理说明
-- [ ] DEVELOPMENT.md - 开发指南
+#### 3.6 代碼文檔 (前端)
+- [ ] COMPONENTS.md - 組件指南
+- [ ] STATE_MANAGEMENT.md - 狀態管理說明
+- [ ] DEVELOPMENT.md - 開發指南
 
 ---
 
-## 📋 第三阶段：性能优化和部署 (1-2周)
+## 📋 第三階段：性能優化和部署 (1-2周)
 
-### 后端优化
+### 後端優化
 
-#### 4.1 缓存策略
-- [ ] 实现HTTP缓存头
-- [ ] 添加Cloudflare缓存规则
-- [ ] 为热门查询添加缓存
+#### 4.1 緩存策略
+- [ ] 實現HTTP緩存頭
+- [ ] 添加Cloudflare緩存規則
+- [ ] 爲熱門查詢添加緩存
 
-#### 4.2 数据库优化
-- [ ] 添加适当的数据库索引
-- [ ] 优化N+1查询问题
-- [ ] 添加数据库查询日志和监控
+#### 4.2 數據庫優化
+- [ ] 添加適當的數據庫索引
+- [ ] 優化N+1查詢問題
+- [ ] 添加數據庫查詢日誌和監控
 
 #### 4.3 API性能
-- [ ] 添加请求速率限制
-- [ ] 实现分页
-- [ ] 优化大数据响应
+- [ ] 添加請求速率限制
+- [ ] 實現分頁
+- [ ] 優化大數據響應
 
-### 前端优化
+### 前端優化
 
-#### 4.4 代码分割
-- [ ] 配置动态import实现路由代码分割
-- [ ] 预加载关键资源
-- [ ] 优化bundle大小
+#### 4.4 代碼分割
+- [ ] 配置動態import實現路由代碼分割
+- [ ] 預加載關鍵資源
+- [ ] 優化bundle大小
 
-#### 4.5 性能监控
-- [ ] 集成Web Vitals监控
-- [ ] 添加错误追踪 (Sentry)
-- [ ] 监控API响应时间
+#### 4.5 性能監控
+- [ ] 集成Web Vitals監控
+- [ ] 添加錯誤追蹤 (Sentry)
+- [ ] 監控API響應時間
 
-#### 4.6 构建优化
-- [ ] 配置Vite预构建
-- [ ] 优化CSS和JS压缩
-- [ ] 生成源地图用于生产调试
+#### 4.6 構建優化
+- [ ] 配置Vite預構建
+- [ ] 優化CSS和JS壓縮
+- [ ] 生成源地圖用於生產調試
 
 ### 部署和CI/CD
 
-#### 4.7 自动化部署
+#### 4.7 自動化部署
 - [ ] 配置GitHub Actions
-- [ ] 自动运行测试
-- [ ] 自动部署到预发布环境
-- [ ] 手动批准生产部署
+- [ ] 自動運行測試
+- [ ] 自動部署到預發布環境
+- [ ] 手動批准生產部署
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -406,145 +406,145 @@ name: Deploy
 on: [push, pull_request]
 jobs:
   test:
-    # 运行测试
+    # 運行測試
   deploy-staging:
     # 部署到staging
   deploy-production:
-    # 手动批准后部署
+    # 手動批准後部署
 ```
 
 ---
 
-## 🔄 重构顺序和优先级
+## 🔄 重構順序和優先級
 
-### Week 1-2: 后端基础架构
-1. **高优先级** (必须):
-    - [x] API路由模块化
-    - [ ] 错误处理层
-    - [x] 环境配置规范化
+### Week 1-2: 後端基礎架構
+1. **高優先級** (必須):
+    - [x] API路由模塊化
+    - [ ] 錯誤處理層
+    - [x] 環境配置規範化
 
-2. **中优先级** (应该):
-    - [ ] 数据库查询层抽象
-    - [x] 使用Zod验证
+2. **中優先級** (應該):
+    - [ ] 數據庫查詢層抽象
+    - [x] 使用Zod驗證
 
-### Week 3: 前端基础架构
-1. **高优先级** (必须):
-    - [x] 状态管理 (Pinia)
-    - [x] API客户端层
-    - [x] 类型定义完善
+### Week 3: 前端基礎架構
+1. **高優先級** (必須):
+    - [x] 狀態管理 (Pinia)
+    - [x] API客戶端層
+    - [x] 類型定義完善
 
-2. **中优先级** (应该):
-    - [x] 组件结构优化
+2. **中優先級** (應該):
+    - [x] 組件結構優化
     - [x] Composables提取
 
-### Week 4-5: 测试和文档
-1. **高优先级**:
-   - [ ] 后端单元测试
-   - [ ] 前端单元测试
-   - [ ] API文档
+### Week 4-5: 測試和文檔
+1. **高優先級**:
+   - [ ] 後端單元測試
+   - [ ] 前端單元測試
+   - [ ] API文檔
 
-2. **中优先级**:
-   - [ ] E2E测试
-   - [ ] 代码文档
+2. **中優先級**:
+   - [ ] E2E測試
+   - [ ] 代碼文檔
 
-### Week 6-7: 性能优化
-1. **中优先级**:
-   - [ ] 缓存策略
-   - [ ] 代码分割
-   - [ ] 构建优化
+### Week 6-7: 性能優化
+1. **中優先級**:
+   - [ ] 緩存策略
+   - [ ] 代碼分割
+   - [ ] 構建優化
 
-2. **低优先级**:
-   - [ ] 性能监控
-   - [ ] 细粒度优化
+2. **低優先級**:
+   - [ ] 性能監控
+   - [ ] 細粒度優化
 
 ---
 
-## 📦 依赖安装清单
+## 📦 依賴安裝清單
 
-### 后端
+### 後端
 ```bash
-# 数据验证
+# 數據驗證
 npm install zod @hono/zod-validator
 
-# 测试
+# 測試
 npm install -D vitest @testing-library/node
 
-# 日志
+# 日誌
 npm install pino
 
-# 监控/追踪
+# 監控/追蹤
 npm install @opentelemetry/api @opentelemetry/sdk-node
 ```
 
 ### 前端
 ```bash
-# 状态管理
+# 狀態管理
 npm install pinia
 
-# 表单/验证
+# 表單/驗證
 npm install vee-validate zod
 
-# 测试
+# 測試
 npm install -D vitest @testing-library/vue @vue/test-utils
 
 # Linting和格式化
 npm install -D eslint prettier eslint-plugin-vue
 
-# 性能监控
+# 性能監控
 npm install web-vitals
 ```
 
 ---
 
-## 🎯 成功指标
+## 🎯 成功指標
 
-### 代码质量
-- [ ] 类型覆盖率: 85%+
-- [ ] 测试覆盖率: 65%+ (后端 70%, 前端 60%)
-- [ ] ESLint通过率: 100%
-- [ ] 没有关键代码味问题
+### 代碼質量
+- [ ] 類型覆蓋率: 85%+
+- [ ] 測試覆蓋率: 65%+ (後端 70%, 前端 60%)
+- [ ] ESLint通過率: 100%
+- [ ] 沒有關鍵代碼味問題
 
 ### 性能
-- [ ] Lighthouse评分: 85+
+- [ ] Lighthouse評分: 85+
 - [ ] First Contentful Paint (FCP): < 1.5s
 - [ ] Time to Interactive (TTI): < 2.5s
-- [ ] API响应时间: < 200ms (中位数)
+- [ ] API響應時間: < 200ms (中位數)
 
-### 维护性
-- [ ] 所有公共API都有文档
-- [ ] 新文件都有类型定义
-- [ ] 代码审查时间降低30%
-- [ ] Bug修复时间缩短25%
-
----
-
-## 🚀 执行建议
-
-### 团队协作
-- **后端小组**: 专注阶段1的后端部分
-- **前端小组**: 同时进行阶段1的前端部分
-- **QA**: 准备测试用例，为阶段2做准备
-
-### 风险管理
-- 每阶段结束前进行代码审查
-- 保持旧代码兼容，逐步迁移
-- 使用Feature flags隐藏未完成的功能
-- 频繁merge到主分支 (日常)
-
-### 沟通
-- 每日站会 15分钟
-- 每周进度评审
-- 文档同步更新
+### 維護性
+- [ ] 所有公共API都有文檔
+- [ ] 新文件都有類型定義
+- [ ] 代碼審查時間降低30%
+- [ ] Bug修復時間縮短25%
 
 ---
 
-## 📚 相关文件
+## 🚀 執行建議
 
-- 现有项目: `/Users/share.lim/Documents/GitHub/langmap`
-- 后端源码: `backend/src`
-- 前端源码: `web/src`
-- 脚本: `scripts/`
+### 團隊協作
+- **後端小組**: 專注階段1的後端部分
+- **前端小組**: 同時進行階段1的前端部分
+- **QA**: 準備測試用例，爲階段2做準備
+
+### 風險管理
+- 每階段結束前進行代碼審查
+- 保持舊代碼兼容，逐步遷移
+- 使用Feature flags隱藏未完成的功能
+- 頻繁merge到主分支 (日常)
+
+### 溝通
+- 每日站會 15分鐘
+- 每周進度評審
+- 文檔同步更新
 
 ---
 
-**下一步**: 选择第一阶段的任务开始执行，或需要我详细解析某个模块的重构方案。
+## 📚 相關文件
+
+- 現有項目: `/Users/share.lim/Documents/GitHub/langmap`
+- 後端源碼: `backend/src`
+- 前端源碼: `web/src`
+- 腳本: `scripts/`
+
+---
+
+**下一步**: 選擇第一階段的任務開始執行，或需要我詳細解析某個模塊的重構方案。

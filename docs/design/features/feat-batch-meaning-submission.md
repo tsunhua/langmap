@@ -1,41 +1,41 @@
-# 功能设计：批量语义提交 (Batch Meaning Submission)
+# 功能設計：批量語義提交 (Batch Meaning Submission)
 
 ## 1. 概述
-用户可以一次性提交一组跨语言的词句，这些词句共享同一个语义（Meaning）。系统需要自动处理重复数据并建立正确的关联。同时，当某一词句因内容错误需要修正或重新关联时，系统应具备自动传播更新的能力，确保关联数据的一致性。
+用戶可以一次性提交一組跨語言的詞句，這些詞句共享同一個語義（Meaning）。系統需要自動處理重複數據並建立正確的關聯。同時，當某一詞句因內容錯誤需要修正或重新關聯時，系統應具備自動傳播更新的能力，確保關聯數據的一致性。
 
 ## 2. 核心流程
 
-### 2.1 提交阶段
-用户输入：一组 `{ language_code, text, region_code? }`。
-1. **ID 生成与查重**：
-   - 针对每一项提交，基于 `text + language_code`（哈希值）生成确定的 `expression_id`。
-   - 直接通过 `id` 在 `expressions` 表中查找是否存在。
-   - **命中**：复用现有的 `expression_id` 及其 `meaning_id` 状态。
-   - **未命中**：准备创建新记录。
-2. **语义锚点确认**：根据逻辑推断或选择一个 `expression_id` 作全组的 `meaning_id`。
-3. **建立关联**：将组内所有表达式的 `meaning_id` 设置为选定的锚点 ID。
+### 2.1 提交階段
+用戶輸入：一組 `{ language_code, text, region_code? }`。
+1. **ID 生成與查重**：
+   - 針對每一項提交，基於 `text + language_code`（哈希值）生成確定的 `expression_id`。
+   - 直接通過 `id` 在 `expressions` 表中查找是否存在。
+   - **命中**：復用現有的 `expression_id` 及其 `meaning_id` 狀態。
+   - **未命中**：準備創建新記錄。
+2. **語義錨點確認**：根據邏輯推斷或選擇一個 `expression_id` 作全組的 `meaning_id`。
+3. **建立關聯**：將組內所有表達式的 `meaning_id` 設置爲選定的錨點 ID。
 
-### 2.2 更新、纠正与关联传播
-当词句内容存在错误需要修正，或其语义归属需要调整时：
+### 2.2 更新、糾正與關聯傳播
+當詞句內容存在錯誤需要修正，或其語義歸屬需要調整時：
 
-1. **内容修正 (Correction)**：
-   - 用户修正 `expressions.text`。
-   - 系统检查是否有其他 `expression` 记录与新内容重叠。
-   - **合并逻辑**：如果修正后的内容与现有表达式重复，系统应将旧表达式的关联（如：所属的收藏夹、其他的语义组）迁移到现有表达式上，并标记旧记录为历史版本。
-2. **自动更新关联 (Automatic Propagation)**：
-   - 由于 `meaning_id` 绑定的是表达式 ID，一旦表达式内容更新，所有引用该表达式的语义图景都会自动反映新内容。
-   - **语义重组**：如果用户认为某词句不属于现有 `meaning` 组，将其移出后，系统应自动检查该 `meaning` 下是否还有剩余语言，若为空则清理该语义记录。
+1. **內容修正 (Correction)**：
+   - 用戶修正 `expressions.text`。
+   - 系統檢查是否有其他 `expression` 記錄與新內容重疊。
+   - **合併邏輯**：如果修正後的內容與現有表達式重複，系統應將舊錶達式的關聯（如：所屬的收藏夾、其他的語義組）遷移到現有表達式上，並標記舊記錄爲歷史版本。
+2. **自動更新關聯 (Automatic Propagation)**：
+   - 由於 `meaning_id` 綁定的是表達式 ID，一旦表達式內容更新，所有引用該表達式的語義圖景都會自動反映新內容。
+   - **語義重組**：如果用戶認爲某詞句不屬於現有 `meaning` 組，將其移出後，系統應自動檢查該 `meaning` 下是否還有剩餘語言，若爲空則清理該語義記錄。
 
-## 3. 记录模型与 API
+## 3. 記錄模型與 API
 
-### 3.1 数据模型定义
-- **Expressions (表达式)**: 继承现有的 `expressions` 表字段。
-  - `meaning_id`: 语义锚点 ID（指向 `expressions.id`），用于将不同语言的同义词句分到同一组（由后端智能推断）。
-  - `review_status`: 批量提交的新语料默认状态为 `pending`。
+### 3.1 數據模型定義
+- **Expressions (表達式)**: 繼承現有的 `expressions` 表字段。
+  - `meaning_id`: 語義錨點 ID（指向 `expressions.id`），用於將不同語言的同義詞句分到同一組（由後端智能推斷）。
+  - `review_status`: 批量提交的新語料默認狀態爲 `pending`。
 
-### 3.2 API 设计：批量提交
+### 3.2 API 設計：批量提交
 `POST /api/v1/expressions/batch`
-为保持接口简洁，客户端只需提交一组跨语言词句。
+爲保持接口簡潔，客戶端只需提交一組跨語言詞句。
 
 **Request Body**:
 ```json
@@ -45,7 +45,7 @@
       "language_code": "zh-CN",
       "text": "你好",
       "region_code": "CN",
-      "audio_url": "...",     // 参考单个表达式创建接口
+      "audio_url": "...",     // 參考單個表達式創建接口
       "tags": "[\"informal\"]",
       "source_type": "user"
     },
@@ -58,55 +58,55 @@
 }
 ```
 
-## 4. 智能语义锚点选择逻辑 (Intelligent Meaning Selection)
+## 4. 智能語義錨點選擇邏輯 (Intelligent Meaning Selection)
 
-后端在接收到批量提交后，将按以下步骤自动确定 `meaning_id`：
+後端在接收到批量提交後，將按以下步驟自動確定 `meaning_id`：
 
-1. **ID 计算与批量查重 (ID Generation & Batch Lookup)**：
-   - 为提交列表中的每一项生成 `expression_id`。
-   - 执行**单次批量查询**：`SELECT id, meaning_id FROM expressions WHERE id IN (:calc_ids)`，获取所有已存在的记录及其关联状态。
+1. **ID 計算與批量查重 (ID Generation & Batch Lookup)**：
+   - 爲提交列表中的每一項生成 `expression_id`。
+   - 執行**單次批量查詢**：`SELECT id, meaning_id FROM expressions WHERE id IN (:calc_ids)`，獲取所有已存在的記錄及其關聯狀態。
 
-2. **预排序 (Pre-sorting)**：
-   - 首先将提交的词句列表按以下**语言权重顺序**进行排列：
+2. **預排序 (Pre-sorting)**：
+   - 首先將提交的詞句列表按以下**語言權重順序**進行排列：
      - `en-GB`, `en-US`, `zh-TW`, `zh-CN`, `hi-IN`, `es-ES`, `fr-FR`, `ar-SA`, `bn-IN`, `pt-BR`, `ru-RU`, `ur-PK`, `id-ID`, `de-DE`, `ja-JP`, `ko-KR`, `tr-TR`, `it-IT`。
-   - 不在列表中的语言排在末尾。
+   - 不在列表中的語言排在末尾。
 
-3. **确定语义锚点 (Anchor Selection)**：
-   - **优先追溯**：遍历**排序后**的列表，根据第 1 步的批量查询结果进行匹配。若发现某个词句在库中已有 `meaning_id`，则全组立即复用该 `meaning_id`。
-   - **保底锚点**：若全组皆为新词（或均无现成关联），则取**排序后列表首位**记录的 `expression_id` 作为全组的 `meaning_id`。
+3. **確定語義錨點 (Anchor Selection)**：
+   - **優先追溯**：遍歷**排序後**的列表，根據第 1 步的批量查詢結果進行匹配。若發現某個詞句在庫中已有 `meaning_id`，則全組立即復用該 `meaning_id`。
+   - **保底錨點**：若全組皆爲新詞（或均無現成關聯），則取**排序後列表首位**記錄的 `expression_id` 作爲全組的 `meaning_id`。
 
-## 5. 业务细节处理 (Business Logic)
+## 5. 業務細節處理 (Business Logic)
 
-### 5.1 词句修正接口与引用迁移 (Update API & Migration)
-纠正词句内容时，由于 ID 系根据内容生成，系统将通过专门的接口执行以下原子操作：
+### 5.1 詞句修正接口與引用遷移 (Update API & Migration)
+糾正詞句內容時，由於 ID 系根據內容生成，系統將通過專門的接口執行以下原子操作：
 
-1. **接口定义**：`PATCH /api/v1/expressions/:id`
+1. **接口定義**：`PATCH /api/v1/expressions/:id`
 2. **操作流程**：
-   - **创建新记录**：根据新内容生成 `new_id` 并创建 `expressions` 记录（若 `new_id` 已存在则跳过创建）。
-   - **资产迁移 (Asset Migration)**：
-     - **关联迁移**：将所有 `meaning_id = old_id` 的记录更新为 `meaning_id = new_id`（级联连动）。
-     - **归属迁移**：将 `collection_items` 中原属于 `old_id` 的记录迁移至 `new_id`。
-     - **版本历史**：将 `old_id` 的记录转入 `expression_versions` 作为历史快照。
-   - **清理**：物理删除或标记失效 `old_id` 记录。
+   - **創建新記錄**：根據新內容生成 `new_id` 並創建 `expressions` 記錄（若 `new_id` 已存在則跳過創建）。
+   - **資產遷移 (Asset Migration)**：
+     - **關聯遷移**：將所有 `meaning_id = old_id` 的記錄更新爲 `meaning_id = new_id`（級聯連動）。
+     - **歸屬遷移**：將 `collection_items` 中原屬於 `old_id` 的記錄遷移至 `new_id`。
+     - **版本歷史**：將 `old_id` 的記錄轉入 `expression_versions` 作爲歷史快照。
+   - **清理**：物理刪除或標記失效 `old_id` 記錄。
 
-### 5.2 级联连动机制 (Cascading Mechanism)
-- **连动触发**：当「锚点」表达式（作为 `meaning_id` 的对象）发生上述迁移时，系统会扫描并更新数据库中所有引用旧 ID 的表达式。
-- **一致性保护**：此操作必须在数据库事务（Transaction）内完成，确保迁移过程中不会出现断点或孤立词句。
+### 5.2 級聯連動機制 (Cascading Mechanism)
+- **連動觸發**：當「錨點」表達式（作爲 `meaning_id` 的對象）發生上述遷移時，系統會掃描並更新數據庫中所有引用舊 ID 的表達式。
+- **一致性保護**：此操作必須在數據庫事務（Transaction）內完成，確保遷移過程中不會出現斷點或孤立詞句。
 
 ## 6. SQL 示例 (SQL Examples)
 
-### 6.1 批量提交中的查询与插入
+### 6.1 批量提交中的查詢與插入
 
-**1. ID 基准批量查重（计算 ID 后批量查找）：**
+**1. ID 基準批量查重（計算 ID 後批量查找）：**
 ```sql
--- 后端预先计算全组 calc_ids，一次性查出现有记录
+-- 後端預先計算全組 calc_ids，一次性查出現有記錄
 SELECT id, meaning_id 
 FROM expressions 
 WHERE id IN (:calc_ids);
 ```
 
-**2. 插入或更新表达式（UPSERT / 原子操作）：**
-使用 SQLite 的 `ON CONFLICT` 语法，可以在一条 SQL 中实现“不存在则插入，已存在则更新（如 tags, meaning_id 等）”：
+**2. 插入或更新表達式（UPSERT / 原子操作）：**
+使用 SQLite 的 `ON CONFLICT` 語法，可以在一條 SQL 中實現「不存在則插入，已存在則更新（如 tags, meaning_id 等）」：
 
 ```sql
 INSERT INTO expressions (id, text, language_code, region_code, meaning_id, tags, created_by)
@@ -118,26 +118,26 @@ ON CONFLICT(id) DO UPDATE SET
     updated_by = excluded.created_by;
 ```
 
-### 6.2 词句修正与级联迁移 (Cascading Update)
+### 6.2 詞句修正與級聯遷移 (Cascading Update)
 
-当词句 ID 因内容修改而变更（从 `old_id` 变为 `new_id`）时：
+當詞句 ID 因內容修改而變更（從 `old_id` 變爲 `new_id`）時：
 
-**1. 级联更新关联词句的语义指向：**
+**1. 級聯更新關聯詞句的語義指向：**
 ```sql
--- 将所有以此词句为“锚点”的关联词句全部指向新 ID
+-- 將所有以此詞句爲「錨點」的關聯詞句全部指向新 ID
 UPDATE expressions 
 SET meaning_id = :new_id 
 WHERE meaning_id = :old_id;
 ```
 
-**2. 迁移用户收藏记录：**
+**2. 遷移用戶收藏記錄：**
 ```sql
 UPDATE collection_items 
 SET expression_id = :new_id 
 WHERE expression_id = :old_id;
 ```
 
-**3. 归档旧版本：**
+**3. 歸檔舊版本：**
 ```sql
 INSERT INTO expression_versions (expression_id, text, meaning_id, created_by)
 SELECT id, text, meaning_id, created_by 
@@ -145,20 +145,20 @@ FROM expressions
 WHERE id = :old_id;
 ```
 
-**4. 清理旧记录：**
+**4. 清理舊記錄：**
 ```sql
 DELETE FROM expressions WHERE id = :old_id;
 ```
 
 ## 7. System Reminder
 
-**实现状态**：
-- ⏳ 需求定义：已完成（补充了智能锚点选择与级联逻辑）
-- ❌ 后端开发：未完成
-- ❌ 前端开发：未完成
-- ❌ API 测试：未完成
+**實現狀態**：
+- ⏳ 需求定義：已完成（補充了智能錨點選擇與級聯邏輯）
+- ❌ 後端開發：未完成
+- ❌ 前端開發：未完成
+- ❌ API 測試：未完成
 
 ---
-相关文档：
-- [数据库设计](./feat-database.md)
-- [产品需求文档 (PRD)](../../specs/PRD.md)
+相關文檔：
+- [數據庫設計](./feat-database.md)
+- [產品需求文檔 (PRD)](../../specs/PRD.md)

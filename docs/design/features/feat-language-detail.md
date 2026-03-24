@@ -1,41 +1,41 @@
-# 语言页面功能设计
+# 語言頁面功能設計
 
 ## System Reminder
 
-**实现状态**：
-- ✅ 后端 API 已存在 - `GET /api/v1/expressions` 支持 `language` 参数
-- ✅ 数据库查询支持 - `getExpressions()` 方法支持按语言过滤
-- ⏳ 前端语言页面 - 未实现
-- ⏳ 语言详情路由 - 需要添加
+**實現狀態**：
+- ✅ 後端 API 已存在 - `GET /api/v1/expressions` 支持 `language` 參數
+- ✅ 數據庫查詢支持 - `getExpressions()` 方法支持按語言過濾
+- ⏳ 前端語言頁面 - 未實現
+- ⏳ 語言詳情路由 - 需要添加
 
-**已实现的 API 端点**：
-- `GET /api/v1/expressions?lang=...&skip=...&limit=...` - 获取表达列表（支持按语言过滤）
-- `GET /api/v1/languages` - 获取语言列表
+**已實現的 API 端點**：
+- `GET /api/v1/expressions?lang=...&skip=...&limit=...` - 獲取表達列表（支持按語言過濾）
+- `GET /api/v1/languages` - 獲取語言列表
 
 ---
 
 ## 概述
 
-语言页面允许用户查看特定语言的所有词条，提供语言级别的浏览和导航功能。用户可以通过 `/languages/:code` 路径访问（如 `/languages/zh-CN`），查看该语言的所有表达式，并支持分页和搜索过滤。
+語言頁面允許用戶查看特定語言的所有詞條，提供語言級別的瀏覽和導航功能。用戶可以通過 `/languages/:code` 路徑訪問（如 `/languages/zh-CN`），查看該語言的所有表達式，並支持分頁和搜索過濾。
 
-## 数据模型
+## 數據模型
 
-### Language（语言）
+### Language（語言）
 
 ```typescript
 interface Language {
   id: number
-  code: string              // 语言代码，如 'zh-CN', 'en-US'
-  name: string              // 语言名称，如 '简体中文', 'English'
+  code: string              // 語言代碼，如 'zh-CN', 'en-US'
+  name: string              // 語言名稱，如 '簡體中文', 'English'
   is_active: boolean        // 是否激活
   created_by: string
   created_at: string
 }
 ```
 
-### Expression（词条）
+### Expression（詞條）
 
-现有字段，按 `language_code` 过滤：
+現有字段，按 `language_code` 過濾：
 
 ```typescript
 interface Expression {
@@ -43,7 +43,7 @@ interface Expression {
   text: string
   meaning_id?: number
   audio_url?: string
-  language_code: string      // 按此字段过滤
+  language_code: string      // 按此字段過濾
   region_code?: string
   region_name?: string
   tags?: string
@@ -56,18 +56,18 @@ interface Expression {
 
 
 
-## API 设计
+## API 設計
 
 ### GET /api/v1/expressions?lang=:code&skip=:skip&limit=:limit
 
-获取指定语言的词条列表（现有接口）。
+獲取指定語言的詞條列表（現有接口）。
 
-**查询参数**：
-- `language` (string) - 语言代码（必需，如 'zh-CN'）
-- `skip` (number) - 跳过数量（默认 0）
-- `limit` (number) - 返回数量限制（默认 20）
+**查詢參數**：
+- `language` (string) - 語言代碼（必需，如 'zh-CN'）
+- `skip` (number) - 跳過數量（默認 0）
+- `limit` (number) - 返回數量限制（默認 20）
 
-**响应**：
+**響應**：
 ```json
 {
   "results": [
@@ -89,7 +89,7 @@ interface Expression {
 
 
 
-## 前端实现
+## 前端實現
 
 ### 路由配置
 
@@ -104,15 +104,15 @@ interface Expression {
 }
 ```
 
-### LanguageDetail.vue 页面
+### LanguageDetail.vue 頁面
 
-**页面结构**：
+**頁面結構**：
 
 ```
 ┌──────────────────────────────────────────────────┐
 │  Language Header                                 │
 │  [Back]  中文 (zh-CN)                            │
-│  统计信息：1,250 词条 · 85.5% 覆盖率             │
+│  統計信息：1,250 詞條 · 85.5% 覆蓋率             │
 └──────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────┐
 │  Search & Filter                                 │
@@ -122,7 +122,7 @@ interface Expression {
 │  Expressions List                                │
 │  ┌────────────────────────────────────────────┐ │
 │  │ 你好                                      │ │
-│  │ [zh-CN] [地域] [音频] [标签]             │ │
+│  │ [zh-CN] [地域] [音頻] [標籤]             │ │
 │  └────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────┐ │
 │  │ 世界                                      │ │
@@ -136,30 +136,30 @@ interface Expression {
 
 **主要功能**：
 
-1. **头部信息**
-   - 语言名称和代码
-   - 返回首页按钮
-   - 分享按钮
+1. **頭部信息**
+   - 語言名稱和代碼
+   - 返回首頁按鈕
+   - 分享按鈕
 
-2. **搜索和过滤**
-   - 搜索框：在当前语言内搜索词条
-   - 排序选项：最新、最早、按拼音/字母
-   - 过滤选项：带音频、带地域、按地域过滤
+2. **搜索和過濾**
+   - 搜索框：在當前語言內搜索詞條
+   - 排序選項：最新、最早、按拼音/字母
+   - 過濾選項：帶音頻、帶地域、按地域過濾
 
-3. **词条列表**
-   - 显示词条文本
-   - 显示语言标签
-   - 显示地域信息（如果有）
-   - 音频播放按钮（如果有）
-   - 标签显示
-   - 点击跳转到详情页
+3. **詞條列表**
+   - 顯示詞條文本
+   - 顯示語言標籤
+   - 顯示地域信息（如果有）
+   - 音頻播放按鈕（如果有）
+   - 標籤顯示
+   - 點擊跳轉到詳情頁
 
-4. **分页**
-   - 上一页/下一页
-   - 页码导航
-   - 跳转到指定页
+4. **分頁**
+   - 上一頁/下一頁
+   - 頁碼導航
+   - 跳轉到指定頁
 
-**实现示例**：
+**實現示例**：
 
 ```vue
 <template>
@@ -287,7 +287,7 @@ export default {
 
     const fetchLanguageInfo = async () => {
       try {
-        // 获取语言信息
+        // 獲取語言信息
         const response = await fetch('/api/v1/languages')
         const languages = await response.json()
         const language = languages.find(l => l.code === languageCode.value)
@@ -305,7 +305,7 @@ export default {
         const skip = (currentPage.value - 1) * itemsPerPage
         let url = `/api/v1/expressions?lang=${languageCode.value}&skip=${skip}&limit=${itemsPerPage}`
 
-        // 搜索过滤
+        // 搜索過濾
         if (searchQuery.value) {
           url += `&q=${encodeURIComponent(searchQuery.value)}`
         }
@@ -375,7 +375,7 @@ export default {
       return pages
     })
 
-    // 防抖函数
+    // 防抖函數
     function debounce(func, wait) {
       let timeout
       return function executedFunction(...args) {
@@ -415,9 +415,9 @@ export default {
 </script>
 ```
 
-## 用户界面设计
+## 用戶界面設計
 
-### 页面布局
+### 頁面布局
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -445,61 +445,61 @@ export default {
 
 ### 交互流程
 
-1. **进入页面**
-   - 用户点击语言链接或输入 URL `/languages/zh-CN`
-   - 页面加载语言信息
-   - 加载第一页词条列表
+1. **進入頁面**
+   - 用戶點擊語言鏈接或輸入 URL `/languages/zh-CN`
+   - 頁面加載語言信息
+   - 加載第一頁詞條列表
 
-2. **搜索词条**
-   - 用户在搜索框输入关键词
-   - 实时过滤当前语言的词条
-   - 显示匹配结果
+2. **搜索詞條**
+   - 用戶在搜索框輸入關鍵詞
+   - 實時過濾當前語言的詞條
+   - 顯示匹配結果
 
-3. **排序和过滤**
-   - 用户选择排序方式（最新/最早/按文本）
-   - 页面重新排序显示
+3. **排序和過濾**
+   - 用戶選擇排序方式（最新/最早/按文本）
+   - 頁面重新排序顯示
 
-4. **浏览词条**
-   - 用户点击词条卡片
-   - 跳转到词条详情页 `/detail/:id`
+4. **瀏覽詞條**
+   - 用戶點擊詞條卡片
+   - 跳轉到詞條詳情頁 `/detail/:id`
 
-5. **分页浏览**
-   - 用户点击分页按钮
-   - 加载对应页的词条
+5. **分頁瀏覽**
+   - 用戶點擊分頁按鈕
+   - 加載對應頁的詞條
 
-## 性能优化
+## 性能優化
 
-### 后端优化
+### 後端優化
 
-- **边缘缓存**：对语言统计和热门语言词条列表使用 L2 缓存
-- **数据库索引**：确保 `language_code` 字段有索引
-- **分页查询**：使用 LIMIT 和 OFFSET 避免一次性返回过多数据
+- **邊緣緩存**：對語言統計和熱門語言詞條列表使用 L2 緩存
+- **數據庫索引**：確保 `language_code` 字段有索引
+- **分頁查詢**：使用 LIMIT 和 OFFSET 避免一次性返回過多數據
 
-### 前端优化
+### 前端優化
 
-- **虚拟滚动**：如果词条数量很大，考虑使用虚拟滚动
-- **防抖搜索**：搜索输入防抖，减少 API 调用
-- **缓存策略**：缓存已加载的页码数据
+- **虛擬滾動**：如果詞條數量很大，考慮使用虛擬滾動
+- **防抖搜索**：搜索輸入防抖，減少 API 調用
+- **緩存策略**：緩存已加載的頁碼數據
 
-## 国际化
+## 國際化
 
-需要添加的翻译键：
+需要添加的翻譯鍵：
 
 ```json
 {
-  "language_detail": "语言详情",
+  "language_detail": "語言詳情",
   "search_in_language": "在 {lang} 中搜索",
   "sort_newest": "最新",
   "sort_oldest": "最早",
   "sort_text": "按文本排序",
-  "no_expressions_found": "未找到词条",
-  "previous": "上一页",
-  "next": "下一页"
+  "no_expressions_found": "未找到詞條",
+  "previous": "上一頁",
+  "next": "下一頁"
 }
 ```
 
-## 相关文档
+## 相關文檔
 
-- [搜索功能设计](./feat-search.md)
-- [后端 API 指南](../../api/backend-guide.md)
-- [系统架构设计](../system/architecture.md)
+- [搜索功能設計](./feat-search.md)
+- [後端 API 指南](../../api/backend-guide.md)
+- [系統架構設計](../system/architecture.md)

@@ -1,147 +1,147 @@
-# LangMap 文档中心
+# LangMap 文檔中心
 
-欢迎来到 LangMap 项目的文档中心。本文档提供所有项目文档的导航和索引。
+歡迎來到 LangMap 項目的文檔中心。本文檔提供所有項目文檔的導航和索引。
 
-## 关于项目
+## 關於項目
 
-**LangMap** 是一个开源、社区驱动的在线语言地图项目，致力于收集世界各地的语言短语和表达方式，展示不同语言之间的差异，并为语言爱好者提供有价值的资源。
+**LangMap** 是一個開源、社區驅動的在線語言地圖項目，致力於收集世界各地的語言短語和表達方式，展示不同語言之間的差異，並爲語言愛好者提供有價值的資源。
 
-## 文档结构
+## 文檔結構
 
 ```
 docs/
-├── policies/              # 政策与合规文档
-├── design/                # 系统设计与架构文档
-│   ├── system/            # 总体系统架构
-│   └── features/          # 功能模块设计（使用 feat- 前缀）
-├── api/                   # API 接口文档
-├── guides/                # 实施与操作指南
-├── plans/                 # 计划与路线图
-├── specs/                 # 需求与规范文档
-└── README.md            # 文档导航索引（本文件）
+├── policies/              # 政策與合規文檔
+├── design/                # 系統設計與架構文檔
+│   ├── system/            # 總體系統架構
+│   └── features/          # 功能模塊設計（使用 feat- 前綴）
+├── api/                   # API 接口文檔
+├── guides/                # 實施與操作指南
+├── plans/                 # 計劃與路線圖
+├── specs/                 # 需求與規範文檔
+└── README.md            # 文檔導航索引（本文件）
 ```
 
-## 文档目录
+## 文檔目錄
 
-### 📋 政策与合规 (policies/)
-法律政策文档，定义平台的使用规则和数据处理规范。
+### 📋 政策與合規 (policies/)
+法律政策文檔，定義平臺的使用規則和數據處理規範。
 
-- **[terms-privacy-content.md](policies/terms-privacy-content.md)** - 服务条款、隐私政策与内容政策（英文版）
-- **[terms-privacy-content-zh.md](policies/terms-privacy-content-zh.md)** - 服务条款、隐私政策与内容政策（中文版）
+- **[terms-privacy-content.md](policies/terms-privacy-content.md)** - 服務條款、隱私政策與內容政策（英文版）
+- **[terms-privacy-content-zh.md](policies/terms-privacy-content-zh.md)** - 服務條款、隱私政策與內容政策（中文版）
 
-### 🏗️ 系统设计 (design/)
-系统架构、数据模型和功能设计的详细技术文档。
+### 🏗️ 系統設計 (design/)
+系統架構、數據模型和功能設計的詳細技術文檔。
 
-**总体架构 (system/)**
-- **[architecture.md](design/system/architecture.md)** - 系统总体架构设计（技术栈、数据模型、API 设计、已实现和未实现状态）
+**總體架構 (system/)**
+- **[architecture.md](design/system/architecture.md)** - 系統總體架構設計（技術棧、數據模型、API 設計、已實現和未實現狀態）
 
-**功能模块设计 (features/)**
-各功能模块的详细设计文档（统一使用 `feat-` 前缀），已标注实际实现状态。
+**功能模塊設計 (features/)**
+各功能模塊的詳細設計文檔（統一使用 `feat-` 前綴），已標註實際實現狀態。
 
-- **[feat-user-system.md](design/features/feat-user-system.md)** - 用户与权限系统（角色定义、数据库设计、API 接口、安全考虑、实现状态标注）
-- **[feat-collection.md](design/features/feat-collection.md)** - 集合（收藏夹）功能（数据模型、API 设计、前端交互、实现状态标注）
-- **[feat-handbook.md](design/features/feat-handbook.md)** - 学习手册功能（Markdown编辑、动态语言词句拉取、数据库与API设计、实现状态标注）
-- **[feat-export.md](design/features/feat-export.md)** - 异步导出系统（架构设计、数据模型、API 规范、实现状态标注）
-- **[feat-ui-translation.md](design/features/feat-ui-translation.md)** - UI 翻译系统（用户翻译界面、同步方案、审核工作流、实现状态标注）
-- **[feat-i18n.md](design/features/feat-i18n.md)** - 国际化动态语言支持（数据库模型、API 设计、前端实现方案、实现状态标注）
-- **[feat-dynamic-languages.md](design/features/feat-dynamic-languages.md)** - 前端动态语言支持（动态加载机制、语言切换流程、实现状态标注）
-- **[feat-search.md](design/features/feat-search.md)** - 搜索功能设计（API 设计、前端实现、搜索策略、实现状态标注）
-- **[feat-heatmap.md](design/features/feat-heatmap.md)** - 语言地图/热力图功能设计（数据模型、API 设计、可视化方案、实现状态标注）
-- **[feat-user-profile.md](design/features/feat-user-profile.md)** - 用户资料/个人中心设计（数据模型、API 设计、前端实现、实现状态标注）
-- **[feat-database.md](design/features/feat-database.md)** - 数据库设计（表结构、索引、迁移策略、性能优化、备份策略、实现状态标注）
-- **[feat-audio-upload.md](design/features/feat-audio-upload.md)** - 词条录音与上传功能（前端直传 R2、预签名设计、低成本架构、实现状态标注）
-- **[feat-image-expression.md](design/features/feat-image-expression.md)** - 图片词句功能（图片上传与压缩、R2 直传架构、language_code='image' 标识、前端动态输入方式切换、实现状态标注）
+- **[feat-user-system.md](design/features/feat-user-system.md)** - 用戶與權限系統（角色定義、數據庫設計、API 接口、安全考慮、實現狀態標註）
+- **[feat-collection.md](design/features/feat-collection.md)** - 集合（收藏夾）功能（數據模型、API 設計、前端交互、實現狀態標註）
+- **[feat-handbook.md](design/features/feat-handbook.md)** - 學習手冊功能（Markdown編輯、動態語言詞句拉取、數據庫與API設計、實現狀態標註）
+- **[feat-export.md](design/features/feat-export.md)** - 異步導出系統（架構設計、數據模型、API 規範、實現狀態標註）
+- **[feat-ui-translation.md](design/features/feat-ui-translation.md)** - UI 翻譯系統（用戶翻譯界面、同步方案、審核工作流、實現狀態標註）
+- **[feat-i18n.md](design/features/feat-i18n.md)** - 國際化動態語言支持（數據庫模型、API 設計、前端實現方案、實現狀態標註）
+- **[feat-dynamic-languages.md](design/features/feat-dynamic-languages.md)** - 前端動態語言支持（動態加載機制、語言切換流程、實現狀態標註）
+- **[feat-search.md](design/features/feat-search.md)** - 搜索功能設計（API 設計、前端實現、搜索策略、實現狀態標註）
+- **[feat-heatmap.md](design/features/feat-heatmap.md)** - 語言地圖/熱力圖功能設計（數據模型、API 設計、可視化方案、實現狀態標註）
+- **[feat-user-profile.md](design/features/feat-user-profile.md)** - 用戶資料/個人中心設計（數據模型、API 設計、前端實現、實現狀態標註）
+- **[feat-database.md](design/features/feat-database.md)** - 數據庫設計（表結構、索引、遷移策略、性能優化、備份策略、實現狀態標註）
+- **[feat-audio-upload.md](design/features/feat-audio-upload.md)** - 詞條錄音與上傳功能（前端直傳 R2、預籤名設計、低成本架構、實現狀態標註）
+- **[feat-image-expression.md](design/features/feat-image-expression.md)** - 圖片詞句功能（圖片上傳與壓縮、R2 直傳架構、language_code='image' 標識、前端動態輸入方式切換、實現狀態標註）
 
-### 🔌 API 文档 (api/)
-后端 API 的技术文档、端点说明和部署指南。
+### 🔌 API 文檔 (api/)
+後端 API 的技術文檔、端點說明和部署指南。
 
-- **[backend-guide.md](api/backend-guide.md)** - 后端部署与配置指南（数据库架构、API 端点、国际化实现）
-- **[statistics-api.md](api/statistics-api.md)** - 统计 API 设计（优化查询逻辑、缓存机制）
-- **[heatmap-api.md](api/heatmap-api.md)** - 热力图 API 设计（数据聚合、缓存策略）
+- **[backend-guide.md](api/backend-guide.md)** - 後端部署與配置指南（數據庫架構、API 端點、國際化實現）
+- **[statistics-api.md](api/statistics-api.md)** - 統計 API 設計（優化查詢邏輯、緩存機制）
+- **[heatmap-api.md](api/heatmap-api.md)** - 熱力圖 API 設計（數據聚合、緩存策略）
 
-### 📖 实施指南 (guides/)
-开发和部署的操作指南和最佳实践。
+### 📖 實施指南 (guides/)
+開發和部署的操作指南和最佳實踐。
 
-- **[corpus-acquisition.md](guides/corpus-acquisition.md)** - 语料获取指南（开源数据源、预处理、地域标注）
-- **[email-verification.md](guides/email-verification.md)** - 邮箱验证实施指南（Resend 集成、前后端实现）
+- **[corpus-acquisition.md](guides/corpus-acquisition.md)** - 語料獲取指南（開源數據源、預處理、地域標註）
+- **[email-verification.md](guides/email-verification.md)** - 郵箱驗證實施指南（Resend 集成、前後端實現）
 
-### 📋 计划与路线图 (plans/)
-项目开发计划、路线图和版本历史。
+### 📋 計劃與路線圖 (plans/)
+項目開發計劃、路線圖和版本歷史。
 
-- **[2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)** - iOS 应用设计文档（SwiftUI、MVVM 架构、核心屏幕）
+- **[2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)** - iOS 應用設計文檔（SwiftUI、MVVM 架構、核心屏幕）
 
-### 📄 需求与规范 (specs/)
-项目需求规范、业务分析与技术规格。
+### 📄 需求與規範 (specs/)
+項目需求規範、業務分析與技術規格。
 
-- **[BRD.md](specs/BRD.md)** - 业务需求文档（愿景、目标、市场分析）
-- **[PRD.md](specs/PRD.md)** - 产品需求文档（功能描述、用户流程）
-- **[SRS.md](specs/SRS.md)** - 系统需求规格说明（技术栈、系统架构、接口规范）
+- **[BRD.md](specs/BRD.md)** - 業務需求文檔（願景、目標、市場分析）
+- **[PRD.md](specs/PRD.md)** - 產品需求文檔（功能描述、用戶流程）
+- **[SRS.md](specs/SRS.md)** - 系統需求規格說明（技術棧、系統架構、接口規範）
 
-## 快速导航
+## 快速導航
 
-### 按主题查找
+### 按主題查找
 
-- **项目愿景与背景** → [specs/BRD.md](specs/BRD.md)
-- **产品核心功能** → [specs/PRD.md](specs/PRD.md)
-- **系统架构与技术栈** → [specs/SRS.md](specs/SRS.md), [design/system/architecture.md](design/system/architecture.md)
-- **用户系统** → [design/features/feat-user-system.md](design/features/feat-user-system.md)
-- **认证与安全** → [design/features/feat-user-system.md](design/features/feat-user-system.md), [guides/email-verification.md](guides/email-verification.md)
-- **国际化** → [design/features/feat-i18n.md](design/features/feat-i18n.md), [design/features/feat-ui-translation.md](design/features/feat-ui-translation.md)
-- **数据管理** → [design/system/architecture.md](design/system/architecture.md), [design/features/feat-collection.md](design/features/feat-collection.md)
-- **数据库设计** → [design/features/feat-database.md](design/features/feat-database.md)
+- **項目願景與背景** → [specs/BRD.md](specs/BRD.md)
+- **產品核心功能** → [specs/PRD.md](specs/PRD.md)
+- **系統架構與技術棧** → [specs/SRS.md](specs/SRS.md), [design/system/architecture.md](design/system/architecture.md)
+- **用戶系統** → [design/features/feat-user-system.md](design/features/feat-user-system.md)
+- **認證與安全** → [design/features/feat-user-system.md](design/features/feat-user-system.md), [guides/email-verification.md](guides/email-verification.md)
+- **國際化** → [design/features/feat-i18n.md](design/features/feat-i18n.md), [design/features/feat-ui-translation.md](design/features/feat-ui-translation.md)
+- **數據管理** → [design/system/architecture.md](design/system/architecture.md), [design/features/feat-collection.md](design/features/feat-collection.md)
+- **數據庫設計** → [design/features/feat-database.md](design/features/feat-database.md)
 - **搜索功能** → [design/features/feat-search.md](design/features/feat-search.md)
-- **语言地图** → [design/features/feat-heatmap.md](design/features/feat-heatmap.md)
-- **用户资料** → [design/features/feat-user-profile.md](design/features/feat-user-profile.md)
-- **API 参考** → [api/README.md](api/README.md)
+- **語言地圖** → [design/features/feat-heatmap.md](design/features/feat-heatmap.md)
+- **用戶資料** → [design/features/feat-user-profile.md](design/features/feat-user-profile.md)
+- **API 參考** → [api/README.md](api/README.md)
 - **部署指南** → [api/backend-guide.md](api/backend-guide.md), [guides/corpus-acquisition.md](guides/corpus-acquisition.md)
-- **开发计划** → [plans/2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)
+- **開發計劃** → [plans/2026-01-27-ios-app-design.md](plans/2026-01-27-ios-app-design.md)
 
 ### 按角色查找
 
-**开发者**
-- [系统需求规格 (SRS)](specs/SRS.md)
-- [总体架构设计](design/system/architecture.md)
-- [功能模块设计](design/features/)
-- [API 文档](api/)
+**開發者**
+- [系統需求規格 (SRS)](specs/SRS.md)
+- [總體架構設計](design/system/architecture.md)
+- [功能模塊設計](design/features/)
+- [API 文檔](api/)
 
-**产品经理**
-- [业务需求 (BRD)](specs/BRD.md)
-- [产品需求 (PRD)](specs/PRD.md)
-- [计划与路线图](plans/)
+**產品經理**
+- [業務需求 (BRD)](specs/BRD.md)
+- [產品需求 (PRD)](specs/PRD.md)
+- [計劃與路線圖](plans/)
 
-**运维人员**
-- [后端部署指南](api/backend-guide.md)
-- [系统架构设计](design/system/architecture.md)
+**運維人員**
+- [後端部署指南](api/backend-guide.md)
+- [系統架構設計](design/system/architecture.md)
 
-**用户**
-- [关于项目](specs/ABOUT_US.md)
-- [服务条款](policies/terms-privacy-content.md)
-- [隐私政策](policies/terms-privacy-content-zh.md)
+**用戶**
+- [關於項目](specs/ABOUT_US.md)
+- [服務條款](policies/terms-privacy-content.md)
+- [隱私政策](policies/terms-privacy-content-zh.md)
 
-## 文档规范
+## 文檔規範
 
-### 命名规范
+### 命名規範
 
-- **总体架构文档**：使用简洁的名称（如 `architecture.md`）
-- **功能模块文档**：使用 `feat-` 前缀（如 `feat-user-system.md`）
-- 标注要求：所有功能模块文档必须包含 system-reminder 章节
+- **總體架構文檔**：使用簡潔的名稱（如 `architecture.md`）
+- **功能模塊文檔**：使用 `feat-` 前綴（如 `feat-user-system.md`）
+- 標註要求：所有功能模塊文檔必須包含 system-reminder 章節
 
-### 更新文档
+### 更新文檔
 
-1. 在对应的目录下创建或更新文档
-2. 更新 README.md 以反映变更
-3. 提交代码时在 commit message 中说明文档更新
+1. 在對應的目錄下創建或更新文檔
+2. 更新 README.md 以反映變更
+3. 提交代碼時在 commit message 中說明文檔更新
 
-### 新增功能文档
+### 新增功能文檔
 
-对于新增的功能，应创建对应的设计文档：
+對於新增的功能，應創建對應的設計文檔：
 
-1. 在 `design/features/` 目录创建 `feat-{feature-name}.md`
-2. 参考现有功能文档的结构和格式
-3. 必须包含 system-reminder 章节，标注实现状态
-4. 更新 `design/features/README.md` 添加新文档链接
-5. 如有 API 变更，更新 `api/` 目录相关文档
+1. 在 `design/features/` 目錄創建 `feat-{feature-name}.md`
+2. 參考現有功能文檔的結構和格式
+3. 必須包含 system-reminder 章節，標註實現狀態
+4. 更新 `design/features/README.md` 添加新文檔鏈接
+5. 如有 API 變更，更新 `api/` 目錄相關文檔
 
 ---
 
-*本文档最后更新：2026年2月11日*
+*本文檔最後更新：2026年2月11日*
