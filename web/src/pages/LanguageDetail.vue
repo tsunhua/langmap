@@ -60,12 +60,12 @@
       <!-- Tag Filters -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1.5">包含标签</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $t('include_tags') }}</label>
           <input v-model="tagPrefix" type="text" placeholder="eg: langmap"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" @input="handleFilterChange" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1.5">排除标签</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5">{{ $t('exclude_tags') }}</label>
           <input v-model="excludeTagPrefix" type="text" placeholder="eg: langmap"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" @input="handleFilterChange" />
         </div>

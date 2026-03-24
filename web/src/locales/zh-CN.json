@@ -422,5 +422,7 @@
   "create_collection_failed": "创建收藏集失败，请重试。",
   "invalid_image_url_format": "图片 URL 格式无效",
   "must_be_logged_in_to_create_expressions": "您必须登录才能创建词句",
-  "session_expired_please_log_in_again": "会话已过期，请重新登录。"
+  "session_expired_please_log_in_again": "会话已过期，请重新登录。",
+  "include_tags": "包含标签",
+  "exclude_tags": "排除标签"
 }

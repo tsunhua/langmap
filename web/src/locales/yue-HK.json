@@ -419,5 +419,7 @@
   "create_collection_failed": "建立收藏集失敗，請再試一次。",
   "invalid_image_url_format": "圖片 URL 格式無效",
   "must_be_logged_in_to_create_expressions": "你必須登入先可以建立詞句",
-  "session_expired_please_log_in_again": "登入已過期，請重新登入。"
+  "session_expired_please_log_in_again": "登入已過期，請重新登入。",
+  "include_tags": "包含標籤",
+  "exclude_tags": "排除標籤"
 }

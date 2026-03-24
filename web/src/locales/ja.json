@@ -422,5 +422,7 @@
   "create_collection_failed": "コレクションの作成に失敗しました。もう一度お試しください。",
   "invalid_image_url_format": "画像URLの形式が無効です",
   "must_be_logged_in_to_create_expressions": "表現を作成するにはログインが必要です",
-  "session_expired_please_log_in_again": "セッションが期限切れです。再度ログインしてください。"
+  "session_expired_please_log_in_again": "セッションが期限切れです。再度ログインしてください。",
+  "include_tags": "タグを含める",
+  "exclude_tags": "タグを除外"
 }

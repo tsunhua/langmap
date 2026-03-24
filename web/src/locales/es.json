@@ -422,5 +422,7 @@
   "create_collection_failed": "Error al crear la colección. Por favor, inténtelo de nuevo.",
   "invalid_image_url_format": "Formato de URL de imagen inválido",
   "must_be_logged_in_to_create_expressions": "Debes iniciar sesión para crear expresiones",
-  "session_expired_please_log_in_again": "Sesión expirada. Por favor, inicia sesión de nuevo."
+  "session_expired_please_log_in_again": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+  "include_tags": "Incluir etiquetas",
+  "exclude_tags": "Excluir etiquetas"
 }
