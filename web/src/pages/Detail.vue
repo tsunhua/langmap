@@ -386,7 +386,8 @@ export default {
     const updateDynamicTitle = () => {
       if (item.value && item.value.text) {
         const langName = languagesApi.getLanguageDisplayName(item.value.language_code)
-        uiStore.pageTitle = `${item.value.text} - ${langName}`
+        const displayText = item.value.language_code === 'image' ? `#${item.value.id}` : item.value.text
+        uiStore.pageTitle = `${displayText} - ${langName}`
       }
     }
 
