@@ -374,6 +374,8 @@ export default {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim()
+      const count = _idSeen.get(base) ?? 0
+      _idSeen.set(base, count + 1)
       return count === 0 ? base : `${base}-${count}`
     }
 
