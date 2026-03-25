@@ -367,13 +367,14 @@ export default {
       setupScrollObserver()
     }
 
+    const _idSeen = new Map()
     const generateId = (text) => {
-      return text
+      const base = text
         .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim()
+      return count === 0 ? base : `${base}-${count}`
     }
 
     const scrollToSection = (id) => {
@@ -415,9 +416,13 @@ export default {
       const toc = tableOfContents.value
       const idx = toc.findIndex(t => t.id === item.id)
       if (idx === -1) return true
+      let currentLevel = item.level
       for (let i = idx - 1; i >= 0; i--) {
-        if (toc[i].level < item.level) {
+        if (toc[i].level < currentLevel) {
+          // Found the nearest ancestor at the next higher level
           if (collapsedItems.has(toc[i].id)) return false
+          currentLevel = toc[i].level
+          if (currentLevel === 1) break
         }
       }
       return true
