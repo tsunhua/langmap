@@ -184,7 +184,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { handbooksApi } from '../api/index.ts'
 import { languagesApi } from '../api/index.ts'
@@ -212,7 +212,7 @@ export default {
     const tableOfContents = ref([])
     const activeItemId = ref(null)
     const tocObserver = ref(null)
-    const collapsedItems = ref(new Set())
+    const collapsedItems = reactive(new Set())
 
     // Table of contents control
     const showMobileToc = ref(false)
@@ -391,21 +391,21 @@ export default {
 
     // Collapse helpers
     const toggleCollapse = (id) => {
-      const next = new Set(collapsedItems.value)
-      if (next.has(id)) {
-        next.delete(id)
+      if (collapsedItems.has(id)) {
+        collapsedItems.delete(id)
       } else {
-        next.add(id)
+        collapsedItems.add(id)
       }
-      collapsedItems.value = next
     }
 
     // Determine if a TOC item is a parent (has children below it)
     const hasChildren = (item) => {
-      const idx = tableOfContents.value.indexOf(item)
-      for (let i = idx + 1; i < tableOfContents.value.length; i++) {
-        if (tableOfContents.value[i].level > item.level) return true
-        if (tableOfContents.value[i].level <= item.level) break
+      const toc = tableOfContents.value
+      const idx = toc.findIndex(t => t.id === item.id)
+      if (idx === -1) return false
+      for (let i = idx + 1; i < toc.length; i++) {
+        if (toc[i].level > item.level) return true
+        if (toc[i].level <= item.level) break
       }
       return false
     }
@@ -413,11 +413,11 @@ export default {
     // Determine if a TOC item should be visible (none of its ancestors are collapsed)
     const isVisible = (item) => {
       const toc = tableOfContents.value
-      const idx = toc.indexOf(item)
+      const idx = toc.findIndex(t => t.id === item.id)
+      if (idx === -1) return true
       for (let i = idx - 1; i >= 0; i--) {
         if (toc[i].level < item.level) {
-          if (collapsedItems.value.has(toc[i].id)) return false
-          // Keep checking upward
+          if (collapsedItems.has(toc[i].id)) return false
         }
       }
       return true
