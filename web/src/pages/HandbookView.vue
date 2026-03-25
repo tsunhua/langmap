@@ -441,21 +441,33 @@ export default {
       const container = contentContainer.value
       if (!container) return
 
-      const headings = container.querySelectorAll('h1, h2, h3, h4')
+      const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4'))
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            activeItemId.value = entry.target.id
+      const updateActiveHeading = () => {
+        const scrollY = window.scrollY
+        const viewportHeight = window.innerHeight
+        // Find the last heading whose top is above the 30% mark of the viewport
+        let active = null
+        for (const heading of headings) {
+          const rect = heading.getBoundingClientRect()
+          if (rect.top <= viewportHeight * 0.3) {
+            active = heading
+          } else {
+            break
           }
-        })
-      }, {
-        rootMargin: '-10% 0px -80% 0px',
-        threshold: 0
-      })
+        }
+        if (active) {
+          activeItemId.value = active.id
+        } else if (headings.length > 0 && scrollY < 100) {
+          // At the very top, select first heading
+          activeItemId.value = headings[0].id
+        }
+      }
 
-      headings.forEach((heading) => observer.observe(heading))
-      tocObserver.value = observer
+      tocObserver.value = { disconnect: () => window.removeEventListener('scroll', updateActiveHeading) }
+      window.addEventListener('scroll', updateActiveHeading, { passive: true })
+      // Run once immediately
+      updateActiveHeading()
     }
 
     // Global helpers for rendered HTML interactions
