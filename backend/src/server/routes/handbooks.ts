@@ -42,7 +42,7 @@ function getLanguageColor(langCode: string, handbook: any): string {
       if (colors[langCode]) {
         return colors[langCode]
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   return generateLanguageColor(langCode)
 }
@@ -76,7 +76,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     breaks: true,
     linkify: false
   }).use(anchor, {
-    level: [1, 2, 3],
+    level: [1, 2, 3, 4],
     slugify: (s) => s
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
@@ -101,7 +101,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   const expressionsToFetch: { text: string, lang: string, id: number }[] = []
-  const midTags: Map<string, {text: string, mid: number, lang: string, expressionId: number}> = new Map()
+  const midTags: Map<string, { text: string, mid: number, lang: string, expressionId: number }> = new Map()
   const expressionIdCache: Map<string, number> = new Map()
   const fullText = `${titleToExtract}\n${description}\n${content}`
 
@@ -236,42 +236,42 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         meaningsHtml = ` <span class="handbook-meaning-title">
           <span class="handbook-visible-groups">
             ${showGroups.map((tg, index) => {
-              const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-              const languageElements = targetLangs.map(targetLang => {
-                const text = tg.translations[targetLang]
-                if (text) {
-                  const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
-                  const langClass = targetLang.replace('.', '-')
-                  // Render image expressions as <img> tags
-                  const textDisplay = targetLang === 'image'
-                    ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
-                    : text
-                  return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
-                }
-                return ''
-              }).filter(Boolean).join(' ')
-              return `${groupPrefix}${languageElements}`
-            }).join(' ')}
+          const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+          const languageElements = targetLangs.map(targetLang => {
+            const text = tg.translations[targetLang]
+            if (text) {
+              const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+              const langClass = targetLang.replace('.', '-')
+              // Render image expressions as <img> tags
+              const textDisplay = targetLang === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
+            }
+            return ''
+          }).filter(Boolean).join(' ')
+          return `${groupPrefix}${languageElements}`
+        }).join(' ')}
           </span>
           ${hiddenGroups.length > 0 ? `
             <span class="handbook-hidden-groups" style="display: none;">
               ${hiddenGroups.map((tg, index) => {
-                const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                const languageElements = targetLangs.map(targetLang => {
-                  const text = tg.translations[targetLang]
-                  if (text) {
-                    const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
-                    const langClass = targetLang.replace('.', '-')
-                    // Render image expressions as <img> tags
-                    const textDisplay = targetLang === 'image'
-                      ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
-                      : text
-                    return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
-                  }
-                  return ''
-                }).filter(Boolean).join(' ')
-                return `${groupPrefix}${languageElements}`
-              }).join(' ')}
+          const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+          const languageElements = targetLangs.map(targetLang => {
+            const text = tg.translations[targetLang]
+            if (text) {
+              const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+              const langClass = targetLang.replace('.', '-')
+              // Render image expressions as <img> tags
+              const textDisplay = targetLang === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
+            }
+            return ''
+          }).filter(Boolean).join(' ')
+          return `${groupPrefix}${languageElements}`
+        }).join(' ')}
             </span>
             <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
           ` : ''}
@@ -280,42 +280,42 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         meaningsHtml = ` <span class="handbook-meaning-content">
           <span class="handbook-visible-groups">
             ${showGroups.map((tg, index) => {
-              const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
-              const languageElements = targetLangs.map(targetLang => {
-                const text = tg.translations[targetLang]
-                if (text) {
-                  const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
-                  const langClass = targetLang.replace('.', '-')
-                  // Render image expressions as <img> tags
-                  const textDisplay = targetLang === 'image'
-                    ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
-                    : text
-                  return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
-                }
-                return ''
-              }).filter(Boolean).join(' ')
-              return `${groupPrefix}${languageElements}`
-            }).join(' ')}
+          const groupPrefix = translationGroups.length > 1 ? `<span style="color: #666;">${index + 1}:</span> ` : ''
+          const languageElements = targetLangs.map(targetLang => {
+            const text = tg.translations[targetLang]
+            if (text) {
+              const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+              const langClass = targetLang.replace('.', '-')
+              // Render image expressions as <img> tags
+              const textDisplay = targetLang === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
+            }
+            return ''
+          }).filter(Boolean).join(' ')
+          return `${groupPrefix}${languageElements}`
+        }).join(' ')}
           </span>
           ${hiddenGroups.length > 0 ? `
             <span class="handbook-hidden-groups" style="display: none;">
               ${hiddenGroups.map((tg, index) => {
-                const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
-                const languageElements = targetLangs.map(targetLang => {
-                  const text = tg.translations[targetLang]
-                  if (text) {
-                    const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
-                    const langClass = targetLang.replace('.', '-')
-                    // Render image expressions as <img> tags
-                    const textDisplay = targetLang === 'image'
-                      ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
-                      : text
-                    return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
-                  }
-                  return ''
-                }).filter(Boolean).join(' ')
-                return `${groupPrefix}${languageElements}`
-              }).join(' ')}
+          const groupPrefix = `<span style="color: #666;">${index + 3}:</span> `
+          const languageElements = targetLangs.map(targetLang => {
+            const text = tg.translations[targetLang]
+            if (text) {
+              const color = langColors[targetLang] || getLanguageColor(targetLang, handbook)
+              const langClass = targetLang.replace('.', '-')
+              // Render image expressions as <img> tags
+              const textDisplay = targetLang === 'image'
+                ? `<img src="${text}" class="handbook-image-expression" alt="expression image" />`
+                : text
+              return `<span class="lang-${langClass}" style="color: ${color}">${textDisplay}</span>`
+            }
+            return ''
+          }).filter(Boolean).join(' ')
+          return `${groupPrefix}${languageElements}`
+        }).join(' ')}
             </span>
             <span class="handbook-more-groups" style="cursor: pointer; color: #666; font-size: 0.9em; margin-left: 4px;" onclick="event.stopPropagation(); this.previousElementSibling.style.display = this.previousElementSibling.style.display === 'none' ? 'inline' : 'none'; this.textContent = this.textContent.includes('more') ? '+${hiddenGroups.length} less' : '+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>
           ` : ''}
@@ -365,21 +365,21 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
         }
       }
 
-        if (mid) {
-          const key = `mid_${mid}_${lang}`
-          const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
-          const expressionId = tagInfo?.expressionId
+      if (mid) {
+        const key = `mid_${mid}_${lang}`
+        const tagInfo = Array.from(midTags.values()).find(t => t.mid === mid && t.lang === lang)
+        const expressionId = tagInfo?.expressionId
 
-          if (expressionId) {
-            const expr = expressionMap[expressionId]
-            if (expr) {
-              const audioUrl = audioUrlCache.get(expr.id) || ''
-              return renderItem(expr.id, term, audioUrl, isTitle, lang, mid)
-            }
-            return `<span class="handbook-item-undefined">${term}</span>`
+        if (expressionId) {
+          const expr = expressionMap[expressionId]
+          if (expr) {
+            const audioUrl = audioUrlCache.get(expr.id) || ''
+            return renderItem(expr.id, term, audioUrl, isTitle, lang, mid)
           }
           return `<span class="handbook-item-undefined">${term}</span>`
         }
+        return `<span class="handbook-item-undefined">${term}</span>`
+      }
 
       try {
         const cacheKey = `${term}|${lang}`
