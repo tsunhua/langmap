@@ -12,11 +12,19 @@
           <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ $t('table_of_contents') }}
           </div>
           <div class="toc-list space-y-1">
-            <div v-for="item in tableOfContents" :key="item.id"
-              :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
-              @click="scrollToSection(item.id)">
-              {{ item.text }}
-            </div>
+            <template v-for="item in tableOfContents" :key="item.id">
+              <div v-if="isVisible(item)"
+                :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                @click="handleTocItemClick(item)">
+                <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                  <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+                <span class="toc-text">{{ item.text }}</span>
+              </div>
+            </template>
           </div>
         </div>
       </aside>
@@ -141,11 +149,19 @@
               </div>
               <div class="flex-1 overflow-y-auto px-4 py-6">
                 <div class="toc-list space-y-1">
-                  <div v-for="item in tableOfContents" :key="item.id"
-                    :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
-                    @click="onTocClick(item.id)">
-                    {{ item.text }}
-                  </div>
+                  <template v-for="item in tableOfContents" :key="item.id">
+                    <div v-if="isVisible(item)"
+                      :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                      @click="onTocMobileClick(item)">
+                      <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                        <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]"
+                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                      <span class="toc-text">{{ item.text }}</span>
+                    </div>
+                  </template>
                 </div>
               </div>
             </div>
@@ -196,6 +212,7 @@ export default {
     const tableOfContents = ref([])
     const activeItemId = ref(null)
     const tocObserver = ref(null)
+    const collapsedItems = ref(new Set())
 
     // Table of contents control
     const showMobileToc = ref(false)
@@ -306,7 +323,7 @@ export default {
         return
       }
 
-      const headings = container.querySelectorAll('h1, h2, h3')
+      const headings = container.querySelectorAll('h1, h2, h3, h4')
 
       if (headings.length === 0) {
         tableOfContents.value = []
@@ -372,6 +389,49 @@ export default {
       showMobileToc.value = false
     }
 
+    // Collapse helpers
+    const toggleCollapse = (id) => {
+      const next = new Set(collapsedItems.value)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      collapsedItems.value = next
+    }
+
+    // Determine if a TOC item is a parent (has children below it)
+    const hasChildren = (item) => {
+      const idx = tableOfContents.value.indexOf(item)
+      for (let i = idx + 1; i < tableOfContents.value.length; i++) {
+        if (tableOfContents.value[i].level > item.level) return true
+        if (tableOfContents.value[i].level <= item.level) break
+      }
+      return false
+    }
+
+    // Determine if a TOC item should be visible (none of its ancestors are collapsed)
+    const isVisible = (item) => {
+      const toc = tableOfContents.value
+      const idx = toc.indexOf(item)
+      for (let i = idx - 1; i >= 0; i--) {
+        if (toc[i].level < item.level) {
+          if (collapsedItems.value.has(toc[i].id)) return false
+          // Keep checking upward
+        }
+      }
+      return true
+    }
+
+    const handleTocItemClick = (item) => {
+      scrollToSection(item.id)
+    }
+
+    const onTocMobileClick = (item) => {
+      scrollToSection(item.id)
+      showMobileToc.value = false
+    }
+
     const setupScrollObserver = () => {
       // Clean up existing observer
       if (tocObserver.value) {
@@ -381,7 +441,7 @@ export default {
       const container = contentContainer.value
       if (!container) return
 
-      const headings = container.querySelectorAll('h1, h2, h3')
+      const headings = container.querySelectorAll('h1, h2, h3, h4')
 
       const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
@@ -594,7 +654,13 @@ export default {
       activeItemId,
       scrollToSection,
       onTocClick,
-      showMobileToc
+      showMobileToc,
+      collapsedItems,
+      toggleCollapse,
+      hasChildren,
+      isVisible,
+      handleTocItemClick,
+      onTocMobileClick
     }
   }
 }
@@ -638,6 +704,51 @@ export default {
   font-size: 0.8125rem;
 }
 
+.toc-item.toc-level-4 {
+  padding-left: 2.75rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toc-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toc-toggle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.toc-toggle:hover {
+  color: #6b7280;
+  background-color: #e5e7eb;
+}
+
+.toc-toggle-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 0.2s ease;
+}
+
+.toc-toggle-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
 .toc-item:hover:not(.active) {
   background-color: #f3f4f6;
   color: #374151;
@@ -656,6 +767,10 @@ export default {
 
 .toc-item.toc-level-3.active {
   padding-left: 1.875rem;
+}
+
+.toc-item.toc-level-4.active {
+  padding-left: 2.625rem;
 }
 
 /* Image expressions in handbook content */
