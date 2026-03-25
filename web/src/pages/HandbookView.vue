@@ -30,17 +30,13 @@
               <h1 class="text-xl md:text-2xl font-bold text-gray-800"
                 v-html="handbook.rendered_title || handbook.title"></h1>
               <p v-if="handbook.rendered_description || handbook.description"
-                class="text-sm text-gray-500 max-w-2xl leading-relaxed"
+                class="text-sm text-gray-500 max-w-2xl leading-relaxed mt-8"
                 v-html="handbook.rendered_description || handbook.description"></p>
-              <div class="text-[11px] text-gray-400">
-                <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
+              <div class="text-[11px] text-gray-400 mt-4">
                 <p v-if="handbook.created_by">{{ $t('created_by') }}: {{ handbook.created_by }}</p>
                 <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
+                <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
               </div>
-            </div>
-
-            <!-- Language Switcher & Edit Button -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <!-- Language Switcher -->
               <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-400 flex-shrink-0">{{ $t('learn_in') }}: </span>
@@ -71,7 +67,10 @@
                   </div>
                 </div>
               </div>
+            </div>
 
+            <!-- Edit Button -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <!-- Edit & Rerender Buttons -->
               <div class="flex items-center gap-2">
                 <button v-if="canRerender" @click="handleRerender"
