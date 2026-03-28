@@ -91,7 +91,8 @@ export const batchExpressionSchema = z.object({
     region_code: z.string().nullable().optional(),
     region_name: z.string().nullable().optional(),
     region_latitude: z.number().nullable().optional(),
-    region_longitude: z.number().nullable().optional()
+    region_longitude: z.number().nullable().optional(),
+    desc: z.string().nullable().optional()
   })).min(1).max(50),
   ensure_new_group: z.boolean().optional()
 }).superRefine((data, ctx) => {
