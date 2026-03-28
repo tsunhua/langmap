@@ -207,7 +207,17 @@ export class ExpressionQueries {
         region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
+        text = CASE WHEN excluded.text IS NOT NULL THEN excluded.text ELSE text END,
+        desc = CASE WHEN excluded.desc IS NOT NULL THEN excluded.desc ELSE desc END,
+        audio_url = CASE WHEN excluded.audio_url IS NOT NULL THEN excluded.audio_url ELSE audio_url END,
+        region_code = CASE WHEN excluded.region_code IS NOT NULL THEN excluded.region_code ELSE region_code END,
+        region_name = CASE WHEN excluded.region_name IS NOT NULL THEN excluded.region_name ELSE region_name END,
+        region_latitude = CASE WHEN excluded.region_latitude IS NOT NULL THEN excluded.region_latitude ELSE region_latitude END,
+        region_longitude = CASE WHEN excluded.region_longitude IS NOT NULL THEN excluded.region_longitude ELSE region_longitude END,
         tags = CASE WHEN excluded.tags IS NOT NULL THEN excluded.tags ELSE tags END,
+        source_type = CASE WHEN excluded.source_type IS NOT NULL THEN excluded.source_type ELSE source_type END,
+        source_ref = CASE WHEN excluded.source_ref IS NOT NULL THEN excluded.source_ref ELSE source_ref END,
+        review_status = CASE WHEN excluded.review_status IS NOT NULL THEN excluded.review_status ELSE review_status END,
         updated_at = CURRENT_TIMESTAMP,
         updated_by = CASE WHEN excluded.updated_by IS NOT NULL THEN excluded.updated_by ELSE updated_by END
       RETURNING *`
