@@ -4,6 +4,8 @@ LangMap is an open-source, community-driven language map platform that collects 
 
 LangMap 是一個開源、社區驅動的語言地圖平臺，致力於收集世界各地的語言短語和表達方式，展示不同語言之間的差異，爲語言愛好者提供有價值的學習資源。
 
+**[→ 開始使用 langmap.io](https://langmap.io/)**
+
 <!-- Keep these links. Translations will automatically update with the README. -->
 中文 |
 [English](https://zdoc.app/en/tsunhua/langmap) | 
