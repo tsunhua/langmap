@@ -108,6 +108,7 @@ export class ExpressionQueries {
     const bindValues = [
       data.id,
       data.text,
+      data.desc || null,
       data.audio_url || null,
       data.language_code,
       data.region_code || null,
@@ -124,9 +125,9 @@ export class ExpressionQueries {
 
     await this.db.prepare(
       `INSERT OR IGNORE INTO expressions (
-        id, text, audio_url, language_code, region_code, region_name, region_latitude,
+        id, text, desc, audio_url, language_code, region_code, region_name, region_latitude,
         region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(...bindValues).run()
 
     const resultExpr = await this.findById(data.id!)
@@ -185,6 +186,7 @@ export class ExpressionQueries {
     const bindValues = [
       data.id,
       data.text,
+      data.desc || null,
       data.audio_url || null,
       data.language_code,
       data.region_code || null,
@@ -201,9 +203,9 @@ export class ExpressionQueries {
 
     return this.db.prepare(
       `INSERT INTO expressions (
-        id, text, audio_url, language_code, region_code, region_name, region_latitude,
+        id, text, desc, audio_url, language_code, region_code, region_name, region_latitude,
         region_longitude, tags, source_type, source_ref, review_status, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         tags = CASE WHEN excluded.tags IS NOT NULL THEN excluded.tags ELSE tags END,
         updated_at = CURRENT_TIMESTAMP,
@@ -259,6 +261,7 @@ export class ExpressionQueries {
       id,
       version.expression_id || null,
       version.text || null,
+      version.desc || null,
       version.meaning_id !== undefined ? version.meaning_id : null,
       version.audio_url || null,
       version.region_name || null,
@@ -269,9 +272,9 @@ export class ExpressionQueries {
 
     const result = await this.db.prepare(
       `INSERT INTO expression_versions (
-        id, expression_id, text, meaning_id, audio_url, region_name, region_latitude,
+        id, expression_id, text, desc, meaning_id, audio_url, region_name, region_latitude,
         region_longitude, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).first<ExpressionVersion>()
 
     if (!result) throw new Error('Failed to create expression version')

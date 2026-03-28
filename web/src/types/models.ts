@@ -8,6 +8,7 @@ export interface ExpressionGroup {
 export interface Expression {
   id: number
   text: string
+  desc?: string | null
   language_code: string
   audio_url?: string
   created_by: string
