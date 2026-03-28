@@ -79,6 +79,7 @@
   "deleting": "Suppression...",
   "expression_not_found": "Expression introuvable",
   "collection_desc_placeholder": "De quoi parle cette collection ?",
+  "expression_desc_label": "Description",
   "expression_desc_placeholder": "Ajouter une description, des phrases d'exemple ou des notes d'utilisation (Markdown pris en charge)",
   "description": "Description",
   "detail_loading": "Chargement des détails de l'expression...",

@@ -79,6 +79,7 @@
   "deleting": "Eliminando...",
   "expression_not_found": "Expresión no encontrada",
   "collection_desc_placeholder": "¿De qué trata esta colección?",
+  "expression_desc_label": "Descripción",
   "expression_desc_placeholder": "Agregar descripción, oraciones de ejemplo o notas de uso (Markdown compatible)",
   "description": "Descripción",
   "detail_loading": "Cargando detalles de la expresión...",

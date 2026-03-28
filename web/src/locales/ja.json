@@ -80,6 +80,7 @@
   "deleting": "削除中...",
   "expression_not_found": "表現が見つかりません",
   "collection_desc_placeholder": "このコレクションについて何ですか？",
+  "expression_desc_label": "説明",
   "expression_desc_placeholder": "説明、例文、用法メモを追加（Markdown サポート）",
   "description": "説明",
   "title_label": "タイトル",

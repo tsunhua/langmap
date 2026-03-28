@@ -80,6 +80,7 @@
   "deleting": "刪除緊...",
   "expression_not_found": "詞句搵唔到",
   "collection_desc_placeholder": "呢個收藏係關於咩？",
+  "expression_desc_label": "說明",
   "expression_desc_placeholder": "加入說明、例句或者用法（支援 Markdown）",
   "description": "說明",
   "detail_loading": "正在載入詞句詳情...",
