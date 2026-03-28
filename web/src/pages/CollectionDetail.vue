@@ -11,7 +11,8 @@
           <div class="flex-grow">
             <div class="flex items-center gap-2 sm:gap-3 mb-2">
               <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ collection.name }}</h1>
-              <span v-if="collection.is_public" class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span v-if="collection.is_public"
+                class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
                 {{ $t('public') }}
               </span>
               <span v-else class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -128,7 +129,7 @@
             </label>
             <input v-model="form.name" type="text" required
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('desc_placeholder') || 'Enter details...'" />
+              :placeholder="$t('collection_desc_placeholder') || 'Enter details...'" />
           </div>
 
           <div class="mb-4">
@@ -137,7 +138,7 @@
             </label>
             <textarea v-model="form.description" rows="3"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('desc_placeholder') || 'Enter details...'"></textarea>
+              :placeholder="$t('collection_desc_placeholder') || 'Enter details...'"></textarea>
           </div>
 
           <div class="mb-6">
@@ -162,15 +163,9 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <ConfirmModal
-      v-model="showDeleteModal"
-      :message="deleteModalMessage"
-      :loading="submitting"
-      :loadingText="$t('deleting') || 'Deleting...'"
-      :confirmText="$t('delete') || 'Delete'"
-      @confirm="executeDelete"
-      @cancel="closeDeleteModal"
-    />
+    <ConfirmModal v-model="showDeleteModal" :message="deleteModalMessage" :loading="submitting"
+      :loadingText="$t('deleting') || 'Deleting...'" :confirmText="$t('delete') || 'Delete'" @confirm="executeDelete"
+      @cancel="closeDeleteModal" />
 
     <!-- Export Modal -->
     <div v-if="showExportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -346,7 +341,7 @@ export default {
       if (deleteModalType.value === 'item') {
         const item = targetItemToDelete.value
         if (!item) return
-        
+
         submitting.value = true
         try {
           const result = await collectionsApi.removeItem(collectionId, item.expression_id)

@@ -74,7 +74,7 @@
         <div v-if="isEditingDesc" class="border-t border-slate-100 bg-slate-50 px-4 py-3" @click.stop>
           <textarea v-model="descEditText" rows="3" maxlength="1000"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3 text-sm resize-y"
-            :placeholder="$t('desc_placeholder') || '添加描述、例句或用法說明（支持 Markdown）'"></textarea>
+            :placeholder="$t('expression_desc_placeholder')"></textarea>
           <div class="flex justify-between items-center mt-1.5">
             <span class="text-xs text-slate-400">{{ descEditText.length }} / 1000</span>
             <div class="flex gap-2">

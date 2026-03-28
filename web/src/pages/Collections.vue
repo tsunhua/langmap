@@ -107,7 +107,7 @@
             </label>
             <input v-model="form.name" type="text" required
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('desc_placeholder')" />
+              :placeholder="$t('collection_desc_placeholder')" />
           </div>
 
           <div class="mb-4">
@@ -116,7 +116,7 @@
             </label>
             <textarea v-model="form.description" rows="3"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              :placeholder="$t('desc_placeholder')"></textarea>
+              :placeholder="$t('collection_desc_placeholder')"></textarea>
           </div>
 
           <div class="mb-6">
@@ -141,14 +141,8 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <ConfirmModal
-      v-model="showDeleteModal"
-      :message="deleteMessage"
-      :loading="deleting"
-      :loadingText="$t('deleting') || 'Deleting...'"
-      :confirmText="$t('delete') || 'Delete'"
-      @confirm="executeDelete"
-    />
+    <ConfirmModal v-model="showDeleteModal" :message="deleteMessage" :loading="deleting"
+      :loadingText="$t('deleting') || 'Deleting...'" :confirmText="$t('delete') || 'Delete'" @confirm="executeDelete" />
   </div>
 </template>
 
@@ -208,7 +202,7 @@ export default {
             return
           }
         }
- 
+
         const result = await collectionsApi.getAll(params)
         if (result.success && result.data) {
           collections.value = result.data
