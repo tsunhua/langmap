@@ -411,7 +411,6 @@ export default {
     const descEditText = ref('')
     const descSaving = ref(false)
     const renderedDesc = ref('')
-    let descAbortController = null
 
     const canEditDesc = computed(() => {
       if (!props.editable || !currentUser.value) return false
@@ -444,42 +443,7 @@ export default {
         return
       }
 
-      if (descAbortController) descAbortController.abort()
-      descAbortController = new AbortController()
-      const signal = descAbortController.signal
-
       const sourceLang = props.item.language_code || ''
-      const expressionsToFetch = []
-
-      TEXT_LANG_REGEX.lastIndex = 0
-      let tlMatch
-      while ((tlMatch = TEXT_LANG_REGEX.exec(desc)) !== null) {
-        const term = tlMatch[1].trim()
-        const { lang } = parseTagParams(tlMatch[2], tlMatch[3], sourceLang)
-        const id = stableExpressionId(term, lang)
-        if (!expressionsToFetch.some(e => e.id === id)) {
-          expressionsToFetch.push({ id, term, lang })
-        }
-      }
-
-      let expressionMap = {}
-      if (expressionsToFetch.length > 0) {
-        try {
-          const res = await fetch('/api/v1/expressions/groups/batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: expressionsToFetch.map(e => e.id) }),
-            signal
-          })
-          if (res.ok) {
-            const data = await res.json()
-            expressionMap = data.data || data || {}
-          }
-        } catch (e) {
-          if (e.name === 'AbortError') return
-          console.error('Failed to fetch expression groups for desc:', e)
-        }
-      }
 
       const htmlPlaceholders = {}
       TEXT_LANG_REGEX.lastIndex = 0
@@ -499,28 +463,8 @@ export default {
         return originalTag.replace(TEXT_LANG_REGEX, (m, term, param1, param2) => {
           const { lang } = parseTagParams(param1, param2, sourceLang)
           const id = stableExpressionId(term.trim(), lang)
-          const groups = expressionMap[String(id)] || []
 
-          let meaningsHtml = ''
-          if (groups.length > 0) {
-            const showGroups = groups.slice(0, 2)
-            const hiddenGroups = groups.slice(2)
-            meaningsHtml = ` <span class="handbook-meaning-content"><span class="handbook-visible-groups">${showGroups.map((tg, idx) => {
-              const prefix = groups.length > 1 ? `<span style="color:#666">${idx + 1}:</span> ` : ''
-              return Object.entries(tg.translations).map(([lc, txt]) => {
-                const color = tg.lang_colors?.[lc] || '#666'
-                return `${prefix}<span style="color:${color}">${lc === 'image' ? `<img src="${txt}" class="handbook-image-expression" alt="" />` : txt}</span>`
-              }).join(' ')
-            }).join(' ')}</span>${hiddenGroups.length > 0 ? `<span class="handbook-hidden-groups" style="display:none">${hiddenGroups.map((tg, idx) => {
-              const prefix = `<span style="color:#666">${idx + 3}:</span> `
-              return Object.entries(tg.translations).map(([lc, txt]) => {
-                const color = tg.lang_colors?.[lc] || '#666'
-                return `${prefix}<span style="color:${color}">${lc === 'image' ? `<img src="${txt}" class="handbook-image-expression" alt="" />` : txt}</span>`
-              }).join(' ')
-            }).join(' ')}</span><span class="handbook-more-groups" style="cursor:pointer;color:#666;font-size:0.9em;margin-left:4px" onclick="event.stopPropagation();this.previousElementSibling.style.display=this.previousElementSibling.style.display==='none'?'inline':'none';this.textContent=this.textContent.includes('more')?'+${hiddenGroups.length} less':'+${hiddenGroups.length} more'">+${hiddenGroups.length} more</span>` : ''}</span>`
-          }
-
-          return `<span class="handbook-item" data-type="content" data-expression-id="${id}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id} } }))">${term.trim()}${meaningsHtml}</span>`
+          return `<span class="handbook-item" data-type="content" data-expression-id="${id}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id} } }))">${term.trim()}</span>`
         })
       })
 
@@ -539,11 +483,39 @@ export default {
       descEditText.value = ''
     }
 
+    function extractExpressionsFromDesc(descText, sourceLang) {
+      const expressions = []
+      TEXT_LANG_REGEX.lastIndex = 0
+      let match
+      while ((match = TEXT_LANG_REGEX.exec(descText)) !== null) {
+        const text = match[1].trim()
+        const param1 = match[2]
+        const param2 = match[3]
+        const { lang } = parseTagParams(param1, param2, sourceLang)
+        if (!expressions.some(e => e.text === text && e.language_code === lang)) {
+          expressions.push({ text, language_code: lang })
+        }
+      }
+      return expressions
+    }
+
     async function saveDesc() {
       const token = localStorage.getItem('authToken')
       if (!token) return
       descSaving.value = true
       try {
+        const expressionsToCreate = extractExpressionsFromDesc(descEditText.value, props.item.language_code || '')
+        if (expressionsToCreate.length > 0) {
+          const ensureRes = await fetch('/api/v1/expressions/ensure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ expressions: expressionsToCreate })
+          })
+          if (!ensureRes.ok) {
+            console.error('Failed to ensure expressions exist')
+          }
+        }
+
         const res = await fetch(`/api/v1/expressions/${props.item.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -754,7 +726,6 @@ export default {
         audioInstance = null
       }
       window.removeEventListener('handbook-expression-click', handleDescExpressionClick)
-      if (descAbortController) descAbortController.abort()
     })
 
     return {

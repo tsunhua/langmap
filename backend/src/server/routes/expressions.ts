@@ -271,36 +271,6 @@ expressionsRoutes.get('/:id/groups', async (c) => {
   }
 })
 
-/**
- * POST /api/v1/expressions/groups/batch
- * Get groups for multiple expressions by their IDs
- * Body: { ids: number[], languages?: string[] }
- */
-expressionsRoutes.post('/groups/batch', async (c) => {
-  try {
-    const db = createDatabaseService(c.env)
-    const body = await c.req.json()
-    const ids: number[] = body.ids
-
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return badRequest(c, 'ids must be a non-empty array')
-    }
-
-    const languages: string[] | undefined = body.languages
-
-    const groupsMap = await db.getExpressionsGroups(ids, languages)
-    const result: Record<string, any[]> = {}
-    groupsMap.forEach((groups, exprId) => {
-      result[String(exprId)] = groups
-    })
-
-    return success(c, result)
-  } catch (error: any) {
-    console.error('Error in POST /expressions/groups/batch:', error)
-    return internalError(c, 'Failed to fetch expression groups')
-  }
-})
-
 expressionsRoutes.patch('/:expr_id', requireAuth, async (c) => {
   try {
     const db = createDatabaseService(c.env)
