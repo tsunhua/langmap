@@ -103,12 +103,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span v-if="member.language_code !== 'image'" class="font-semibold text-slate-800">{{ member.text }}</span>
+                          <span v-if="member.language_code !== 'image'" class="text-lg font-semibold text-slate-800">{{ member.text }}</span>
                           <img v-else :src="member.text" class="group-image-thumb cursor-pointer" alt="Expression image" @click.stop="openImageModal(member.text)" />
                         </div>
-                        <div class="mt-1 text-sm text-slate-600">
+                        <div class="mt-1 text-xs text-slate-500">
                           <span>{{ getLanguageDisplayName(member.language_code) }}</span>
-                          <span v-if="member.region_name" class="ml-2">• {{ member.region_name }}</span>
+                          <span v-if="member.region_name" class="ml-1.5">• {{ member.region_name }}</span>
                         </div>
                       </div>
                       <ExpressionCard v-else :item="member" :image-size="'small'" />

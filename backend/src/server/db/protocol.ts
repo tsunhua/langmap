@@ -19,6 +19,7 @@ export interface Language {
 export interface Expression {
   id: number
   text: string
+  desc?: string | null
   audio_url?: string | null
   language_code: string
   region_code?: string
@@ -61,6 +62,7 @@ export interface ExpressionVersion {
   id: number
   expression_id: number
   text: string
+  desc?: string | null
   meaning_id?: number // @deprecated 使用 expression_meaning 表建立关联，此字段已废弃
   audio_url?: string | null
   region_name?: string

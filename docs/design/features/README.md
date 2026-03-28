@@ -48,6 +48,11 @@
 - **[feat-merge-meaning-groups.md](./feat-merge-meaning-groups.md)** - 合併詞句組
 - **[feat-search.md](./feat-search.md)** - 搜索功能
 - **[feat-smart-search-associate.md](./feat-smart-search-associate.md)** - 智能搜索關聯
+- **[feat-expression-desc.md](./feat-expression-desc.md)** - Expression 描述字段
+  - expressions 表新增 desc 字段（Markdown 格式）
+  - 詞句詳情頁 Markdown 渲染
+  - 描述編輯與創建流程集成
+  - 實施狀態：設計完成，待實現
 
 ### 語言與國際化
 
