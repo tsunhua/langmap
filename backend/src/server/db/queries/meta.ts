@@ -7,7 +7,7 @@ export class MetaQueries {
   async getStatistics(): Promise<Statistics> {
     const totalExpressions = await this.db.prepare('SELECT COUNT(*) as count FROM expressions').first<number>('count') || 0
     const totalLanguages = await this.db.prepare('SELECT COUNT(*) as count FROM languages').first<number>('count') || 0
-    const totalRegions = await this.db.prepare('SELECT COUNT(DISTINCT region_name) as count FROM expressions WHERE region_name IS NOT NULL').first<number>('count') || 0
+    const totalRegions = await this.db.prepare('SELECT COUNT(DISTINCT region_name) as count FROM languages WHERE region_name IS NOT NULL').first<number>('count') || 0
 
     return {
       total_expressions: totalExpressions,
