@@ -140,6 +140,10 @@ def generate_sql(csv_path, output_sql_path):
                         {"expression_id": eid, "meaning_id": first_eng_id}
                     )
             elif main_id:
+                self_meaning_key = f"self|{poj}"
+                if self_meaning_key not in processed_meanings:
+                    processed_meanings[self_meaning_key] = main_id
+                    meanings_data.append({"id": main_id, "text": self_meaning_key})
                 expression_meanings_data.append(
                     {"expression_id": main_id, "meaning_id": main_id}
                 )
