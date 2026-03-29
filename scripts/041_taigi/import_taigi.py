@@ -255,7 +255,7 @@ def generate_sql(csv_path, output_sql_path):
                     f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system', '{escape_sql(expr['desc'])}', '{TAG}'){comma}\n"
                 )
             f.write(
-                "ON CONFLICT(id) DO UPDATE SET text = excluded.text, desc = COALESCE(excluded.desc, expressions.desc), tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
+                f"ON CONFLICT(id) DO UPDATE SET text = excluded.text, desc = COALESCE(excluded.desc, expressions.desc), tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
             )
 
         for i in range(0, len(without_desc), BATCH_SIZE):
@@ -269,7 +269,7 @@ def generate_sql(csv_path, output_sql_path):
                     f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system', '{TAG}'){comma}\n"
                 )
             f.write(
-                "ON CONFLICT(id) DO UPDATE SET text = excluded.text, tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
+                f"ON CONFLICT(id) DO UPDATE SET text = excluded.text, tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
             )
 
         # Step 2: Multi-row insert meanings
