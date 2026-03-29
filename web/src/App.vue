@@ -54,6 +54,15 @@
           {{ $t('create_title') }}
         </router-link>
 
+        <router-link to="/languages"
+          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+          active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          {{ $t('languages_title') }}
+        </router-link>
+
         <router-link to="/collections"
           class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
@@ -73,14 +82,6 @@
           {{ $t('handbook_title') }}
         </router-link>
 
-        <router-link to="/languages"
-          class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
-          active-class="text-blue-600 bg-blue-50" @click="mobileMenuOpen = false">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          {{ $t('languages_title') }}
-        </router-link>
         <a href="https://github.com/tsunhua/langmap" target="_blank" rel="noopener noreferrer"
           class="flex items-center gap-2 py-2 px-4 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
           @click="mobileMenuOpen = false">
@@ -191,6 +192,15 @@
               </svg>
               {{ $t('create_title') }}
             </router-link>
+            <router-link to="/languages"
+              class="flex items-center gap-1.5 font-medium transition-colors text-slate-600 hover:text-slate-900"
+              active-class="!text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              {{ $t('languages_title') }}
+            </router-link>
 
             <!-- Resources Dropdown -->
             <div class="relative" ref="resourcesDropdown">
@@ -231,15 +241,6 @@
                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332 0.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332 0.477-4.5 1.253" />
                   </svg>
                   {{ $t('handbook_title') }}
-                </router-link>
-                <router-link to="/languages"
-                  class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" role="menuitem"
-                  @click="resourcesDropdownOpen = false">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                  {{ $t('languages_title') }}
                 </router-link>
                 <a href="https://github.com/tsunhua/langmap" target="_blank" rel="noopener noreferrer"
                   class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" role="menuitem"
