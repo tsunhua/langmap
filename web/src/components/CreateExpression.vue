@@ -30,7 +30,7 @@
         </div>
 
         <div v-if="language_code !== 'image'" class="mb-6">
-          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('desc_label') || '描述（可選）' }}</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('expression_desc_label')}}</label>
           <textarea v-model="desc" rows="3" maxlength="1000"
             class="block w-full rounded-md border border-slate-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 py-2 px-3 text-sm resize-y"
             :placeholder="$t('expression_desc_placeholder')"></textarea>

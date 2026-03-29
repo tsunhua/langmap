@@ -926,52 +926,10 @@ export default {
 
     // Handle SmartSearch create-new event (from search and associate tab)
     async function handleSmartSearchCreateNew(searchText) {
-      // 如果当前没有任何词句组，使用批量关联API让后端创建新的group_id
-      if (!groups.value || groups.value.length === 0) {
-        const token = localStorage.getItem('authToken')
-        if (!token) {
-          alert(t('login_required'))
-          return
-        }
-
-        try {
-          // 直接使用batch API创建新组，不需要弹窗
-          const batchRes = await fetch('/api/v1/expressions/batch', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              expressions: [
-                {
-                  id: item.value.id,
-                  text: item.value.text,
-                  language_code: item.value.language_code
-                }
-              ],
-              ensure_new_group: true
-            })
-          })
-
-          if (!batchRes.ok) {
-            const errorData = await batchRes.json()
-            throw new Error(errorData.error || 'Failed to create expression group')
-          }
-
-          // 刷新数据
-          await load()
-        } catch (e) {
-          console.error('Error creating expression:', e)
-          alert(t('failed_to_add_expression'))
-        }
-      } else {
-        // 如果已有词句组，打开创建弹窗
-        currentGroupIdForAssociation.value = null
-        initialTextForCreation.value = searchText
-        showCreateExpressionModal.value = true
-        shouldAssociateWithCurrent.value = false
-      }
+      currentGroupIdForAssociation.value = null
+      initialTextForCreation.value = searchText
+      showCreateExpressionModal.value = true
+      shouldAssociateWithCurrent.value = true
     }
 
     // Handle SmartSearch associate event (from search and associate tab)
