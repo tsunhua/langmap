@@ -482,7 +482,27 @@ export default {
       const currentItem = members.find(member => member.id === item.value.id)
       const otherMembers = members.filter(member => member.id !== item.value.id)
 
-      return currentItem ? [currentItem, ...otherMembers] : otherMembers
+      const currentLang = (item.value.language_code || '').toLowerCase()
+      const currentPrefix = (item.value.text || '').toLowerCase().split(/[\s-]/)[0]
+
+      const sorted = otherMembers.slice().sort((a, b) => {
+        const aLang = (a.language_code || '').toLowerCase()
+        const bLang = (b.language_code || '').toLowerCase()
+        const aText = (a.text || '').toLowerCase()
+        const bText = (b.text || '').toLowerCase()
+        const aPrefix = aText.split(/[\s-]/)[0]
+        const bPrefix = bText.split(/[\s-]/)[0]
+        const aSameLang = aLang === currentLang ? 0 : 1
+        const bSameLang = bLang === currentLang ? 0 : 1
+        if (aSameLang !== bSameLang) return aSameLang - bSameLang
+        const aSamePrefix = aPrefix === currentPrefix ? 0 : 1
+        const bSamePrefix = bPrefix === currentPrefix ? 0 : 1
+        if (aSamePrefix !== bSamePrefix) return aSamePrefix - bSamePrefix
+        if (aLang !== bLang) return aLang.localeCompare(bLang)
+        return aText.localeCompare(bText)
+      })
+
+      return currentItem ? [currentItem, ...sorted] : sorted
     })
 
     const currentGroupIds = computed(() => {
