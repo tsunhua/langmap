@@ -105,8 +105,10 @@
                 <tr v-if="showNewRow" class="border-t border-slate-100 bg-blue-50">
                   <td class="px-2 py-2 sm:px-3 sm:py-2">
                     <select v-model="newRowLanguage"
-                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">{{ $t('please_select_language') }}</option>
+                      class="w-full px-2 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      :disabled="loadingLanguages">
+                      <option v-if="loadingLanguages" value="" disabled>{{ $t('loading_languages') }}</option>
+                      <option v-else value="">{{ $t('please_select_language') }}</option>
                       <option v-for="lang in displayLanguages" :key="lang.code" :value="lang.code">
                         {{ lang.name }}
                       </option>
@@ -172,10 +174,10 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { expressionGroupsApi } from '../api/index.ts'
+import { expressionGroupsApi, languagesApi } from '../api/index.ts'
 import ImageUploader from './ImageUploader.vue'
 
 export default {
@@ -204,6 +206,30 @@ export default {
     const router = useRouter()
     const { t } = useI18n()
 
+    const allLanguages = ref([])
+    const loadingLanguages = ref(false)
+
+    const loadAllLanguages = async () => {
+      if (allLanguages.value.length > 0) return
+      loadingLanguages.value = true
+      try {
+        const result = await languagesApi.getAll()
+        if (result.success && result.data) {
+          allLanguages.value = result.data
+        }
+      } catch (err) {
+        console.error('Failed to load languages:', err)
+      } finally {
+        loadingLanguages.value = false
+      }
+    }
+
+    onMounted(() => {
+      if (!props.languages || props.languages.length === 0) {
+        loadAllLanguages()
+      }
+    })
+
     const loading = ref(false)
     const expressions = ref([])
     const groups = ref([])
@@ -224,11 +250,12 @@ export default {
       console.log('ExpressionGroupModal displayLanguages:', {
         propsLanguages: props.languages,
         propsLanguagesLength: props.languages?.length,
-        languagesArray: Array.isArray(props.languages) ? props.languages : 'not array'
+        languagesArray: Array.isArray(props.languages) ? props.languages : 'not array',
+        allLanguagesLength: allLanguages.value.length
       })
 
       if (!props.languages || !Array.isArray(props.languages) || props.languages.length === 0) {
-        return []
+        return allLanguages.value
       }
       return props.languages
     })
@@ -335,7 +362,8 @@ export default {
     })
 
     const getLanguageName = (code) => {
-      const lang = props.languages.find(l => l.code === code)
+      const langList = props.languages?.length > 0 ? props.languages : allLanguages.value
+      const lang = langList.find(l => l.code === code)
       return lang ? lang.name : code
     }
 
@@ -526,12 +554,16 @@ export default {
         expressions.value = []
         groups.value = []
         message.value = ''
+        if (!props.languages || props.languages.length === 0) {
+          loadAllLanguages()
+        }
         fetchGroupMembers()
       }
     })
 
     return {
       loading,
+      loadingLanguages,
       expressions,
       groups,
       currentGroupId,
