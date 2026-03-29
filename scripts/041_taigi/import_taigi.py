@@ -74,10 +74,10 @@ def generate_sql(csv_path, output_sql_path):
 
             desc = None
             if leku_poj:
-                leku_pojs = leku_poj.split('/')
+                leku_pojs = leku_poj.split("/")
                 for p in leku_pojs:
                     if not desc:
-                        desc = ''
+                        desc = ""
                     desc = desc + "- {{" + p + "}}" + "\n"
 
             # === Create main expression (PojUnicode) with desc ===
@@ -228,30 +228,49 @@ def generate_sql(csv_path, output_sql_path):
             f"-- Expressions: {len(expressions_data)}, Meanings: {len(meanings_data)}, Links: {len(expression_meanings_data)}\n\n"
         )
 
-        # Step 1: Insert expressions
+        # Step 1: Insert expressions (multi-row batch INSERT)
+        with_desc = [e for e in expressions_data if e["desc"]]
+        without_desc = [e for e in expressions_data if not e["desc"]]
+
         f.write("-- ============================================\n")
-        f.write("-- Step 1: Insert expressions (individual UPSERT)\n")
+        f.write(
+            "-- Step 1: Insert expressions (multi-row INSERT, 100 rows per batch)\n"
+        )
+        f.write(
+            f"--   With desc: {len(with_desc)}, Without desc: {len(without_desc)}\n"
+        )
         f.write("-- ============================================\n\n")
 
-        for expr in expressions_data:
-            if expr["desc"]:
+        TAG = '["1956 台灣白話基礎語句"]'
+        TAG_JSON = '"1956 台灣白話基礎語句"'
+
+        for i in range(0, len(with_desc), BATCH_SIZE):
+            batch = with_desc[i : i + BATCH_SIZE]
+            f.write(
+                "INSERT INTO expressions (id, text, language_code, source_type, review_status, created_by, desc, tags) VALUES\n"
+            )
+            for j, expr in enumerate(batch):
+                comma = "," if j < len(batch) - 1 else ""
                 f.write(
-                    f"INSERT INTO expressions (id, text, language_code, source_type, review_status, created_by, desc) VALUES\n"
+                    f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system', '{escape_sql(expr['desc'])}', '{TAG}'){comma}\n"
                 )
+            f.write(
+                "ON CONFLICT(id) DO UPDATE SET text = excluded.text, desc = COALESCE(excluded.desc, expressions.desc), tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
+            )
+
+        for i in range(0, len(without_desc), BATCH_SIZE):
+            batch = without_desc[i : i + BATCH_SIZE]
+            f.write(
+                "INSERT INTO expressions (id, text, language_code, source_type, review_status, created_by, tags) VALUES\n"
+            )
+            for j, expr in enumerate(batch):
+                comma = "," if j < len(batch) - 1 else ""
                 f.write(
-                    f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system', '{escape_sql(expr['desc'])}')\n"
+                    f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system', '{TAG}'){comma}\n"
                 )
-                f.write(
-                    f"ON CONFLICT(id) DO UPDATE SET text = excluded.text, desc = COALESCE(excluded.desc, expressions.desc);\n\n"
-                )
-            else:
-                f.write(
-                    f"INSERT INTO expressions (id, text, language_code, source_type, review_status, created_by) VALUES\n"
-                )
-                f.write(
-                    f"    ({expr['id']}, '{escape_sql(expr['text'])}', '{expr['language_code']}', 'dictionary', 'approved', 'system')\n"
-                )
-                f.write(f"ON CONFLICT(id) DO UPDATE SET text = excluded.text;\n\n")
+            f.write(
+                "ON CONFLICT(id) DO UPDATE SET text = excluded.text, tags = json_insert(COALESCE(expressions.tags, '[]'), '$[#]', '{TAG_JSON}');\n\n"
+            )
 
         # Step 2: Multi-row insert meanings
         f.write("\n-- ============================================\n")
