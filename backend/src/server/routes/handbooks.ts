@@ -342,7 +342,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       }
     }
 
-    const audioIcon = audioUrl ? `<span class="handbook-audio-icon" onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')" style="cursor: pointer;" title="Play">🔊</span>` : ''
+    const audioIcon = audioUrl ? `<span class="handbook-audio-icon" onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')" style="cursor: pointer;" title="Play">🗣️</span>` : ''
 
     // Render image expression if lang is 'image'
     const textDisplay = lang === 'image'
