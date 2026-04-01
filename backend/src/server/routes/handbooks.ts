@@ -153,6 +153,15 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   const expressionMap: Record<string, any> = {}
 
   const allExpressionIds = [...new Set([...expressionsToFetch.map(e => e.id)])]
+  
+  let rawExpressions: any[] = []
+  try {
+    rawExpressions = await db.getExpressionsByIds(allExpressionIds)
+  } catch(err) {
+    console.error('[renderHandbookInternal] Error fetching raw expressions:', err)
+  }
+  const rawExprMap = new Map(rawExpressions.map(e => [e.id, e]))
+
   let expressionGroupsMap: Map<number, any[]>
   try {
     expressionGroupsMap = await db.getExpressionsGroups(allExpressionIds, targetLangs)
@@ -162,12 +171,13 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   }
 
   expressionGroupsMap.forEach((groups, exprId) => {
-    const mainExpr = groups.find(g => g.expressions?.find(e => e.id === exprId))?.expressions?.find(e => e.id === exprId)
+    const mainExpr = groups.find(g => g.expressions?.find(e => e.id === exprId))?.expressions?.find(e => e.id === exprId) || rawExprMap.get(exprId)
     expressionMap[exprId] = {
       id: exprId,
       groups,
       language_code: mainExpr?.language_code || 'en',
-      text: mainExpr?.text || ''
+      text: mainExpr?.text || '',
+      audio_url: mainExpr?.audio_url
     }
     groups.forEach(group => {
       group.expressions.forEach(groupExpr => {
@@ -184,8 +194,17 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
   })
 
   expressionsToFetch.forEach(expr => {
+    const rawExpr = rawExprMap.get(expr.id)
     if (!expressionMap[expr.id]) {
-      expressionMap[expr.id] = { id: expr.id, groups: [] }
+      expressionMap[expr.id] = { 
+        id: expr.id, 
+        groups: [], 
+        language_code: rawExpr?.language_code || expr.lang, 
+        text: rawExpr?.text || expr.text, 
+        audio_url: rawExpr?.audio_url 
+      }
+    } else if (!expressionMap[expr.id].audio_url && rawExpr?.audio_url) {
+      expressionMap[expr.id].audio_url = rawExpr.audio_url
     }
   })
 
@@ -323,8 +342,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       }
     }
 
-    const audioIcon = audioUrl ? ` <span class="handbook-audio-icon">🔊</span>` : ''
-    const audioHandler = audioUrl ? `window.playHandbookAudio('${audioUrl}')` : ''
+    const audioIcon = audioUrl ? `<span class="handbook-audio-icon" onclick="event.stopPropagation(); window.playHandbookAudio('${audioUrl}')" style="cursor: pointer;" title="Play">🔊</span>` : ''
 
     // Render image expression if lang is 'image'
     const textDisplay = lang === 'image'
@@ -333,9 +351,13 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
 
     const meaningIdValue = meaningId !== undefined ? meaningId : 'null'
 
+    const clickHandler = lang === 'image'
+      ? `onclick="event.stopPropagation(); if(window.openHandbookImage) window.openHandbookImage('${text}');"`
+      : `onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } }));"`
+
     const result = isTitle
-      ? `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${textDisplay}${meaningsHtml}${audioIcon}</span>`
-      : `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('handbook-expression-click', { detail: { id: ${id}, meaningId: ${meaningIdValue} } })); ${audioHandler}">${textDisplay}${meaningsHtml}${audioIcon}</span>`
+      ? `<span class="handbook-item" data-type="title" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" ${clickHandler}>${audioIcon}${textDisplay}${meaningsHtml}</span>`
+      : `<span class="handbook-item" data-type="content" data-expression-id="${id}" data-meaning-id="${meaningId || ''}" ${clickHandler}>${audioIcon}${textDisplay}${meaningsHtml}</span>`
 
     return result
   }

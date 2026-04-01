@@ -113,6 +113,20 @@
           <ExpressionGroupModal :visible="showExpressionGroupModal" :expression-id="selectedExpressionId"
             :group-id="selectedGroupId" :languages="modalLanguages" @close="showExpressionGroupModal = false"
             @updated="handleExpressionGroupUpdated" />
+
+          <!-- Image Modal -->
+          <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+            @click.self="closeImageModal">
+            <div class="relative max-w-5xl max-h-[90vh]">
+              <button @click="closeImageModal"
+                class="absolute -top-4 -right-4 text-white bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full p-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <img :src="modalImageUrl" class="max-w-full max-h-[85vh] object-contain" alt="Full size handbook image" />
+            </div>
+          </div>
         </div>
       </main>
       <!-- Mobile TOC Floating Button -->
@@ -221,6 +235,10 @@ export default {
     const showExpressionGroupModal = ref(false)
     const selectedExpressionId = ref(null)
     const selectedGroupId = ref(null)
+
+    // Image modal
+    const showImageModal = ref(false)
+    const modalImageUrl = ref('')
 
     // Initialize languages from URL query params or handbook
     const setInitialLanguages = () => {
@@ -484,6 +502,17 @@ export default {
       audioPlayer.value.play()
     }
 
+    window.openHandbookImage = (url) => {
+      if (!url) return
+      modalImageUrl.value = url
+      showImageModal.value = true
+    }
+
+    const closeImageModal = () => {
+      showImageModal.value = false
+      modalImageUrl.value = ''
+    }
+
     window.navigateToExpression = (id) => {
       router.push(`/detail/${id}`)
     }
@@ -622,9 +651,22 @@ export default {
       return new Date(dateString).toLocaleDateString()
     }
 
+    // Capture click events during the capture phase to intercept handbook images and stop propagation
+    const captureImageClick = (e) => {
+      const target = e.target
+      if (target && target.tagName && target.tagName.toLowerCase() === 'img' && target.classList.contains('handbook-image-expression')) {
+        e.stopPropagation()
+        e.preventDefault()
+        if (window.openHandbookImage) {
+          window.openHandbookImage(target.src)
+        }
+      }
+    }
+
     onMounted(() => {
       fetchInitialData()
       window.addEventListener('handbook-expression-click', handleExpressionClick)
+      window.addEventListener('click', captureImageClick, true)
     })
 
     watch(() => handbook.value, (newHandbook) => {
@@ -641,6 +683,7 @@ export default {
 
     onUnmounted(() => {
       window.removeEventListener('handbook-expression-click', handleExpressionClick)
+      window.removeEventListener('click', captureImageClick, true)
       if (tocObserver.value) {
         tocObserver.value.disconnect()
       }
@@ -679,7 +722,10 @@ export default {
       hasChildren,
       isVisible,
       handleTocItemClick,
-      onTocMobileClick
+      onTocMobileClick,
+      showImageModal,
+      modalImageUrl,
+      closeImageModal
     }
   }
 }
