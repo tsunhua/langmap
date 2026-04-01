@@ -203,7 +203,7 @@ expressionsRoutes.post('/batch', requireAuth, async (c) => {
   }
 })
 
-expressionsRoutes.get('/:expr_id', cacheMiddleware(300), async (c) => {
+expressionsRoutes.get('/:expr_id', async (c) => {
   try {
     const db = createDatabaseService(c.env)
     const service = new ExpressionService(db)
