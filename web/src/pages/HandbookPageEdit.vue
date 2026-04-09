@@ -65,17 +65,19 @@
                   </div>
                 </div>
                 <div v-else>
-                  <div v-for="expr in searchResults" :key="expr.id"
-                    class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
-                    @click="insertAndClear(expr)">
-                    <div class="flex justify-between items-center w-full">
-                      <span v-if="expr.language_code !== 'image'" class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                      <img v-else :src="expr.text" class="h-12 w-12 object-contain rounded" alt="expression image" />
-                      <span
-                        class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
-                        expr.language_code }}</span>
+                  <template v-for="expr in searchResults" :key="expr?.id">
+                    <div v-if="expr"
+                      class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
+                      @click="insertAndClear(expr)">
+                      <div class="flex justify-between items-center w-full">
+                        <span v-if="expr.language_code !== 'image'" class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                        <img v-else :src="expr.text" class="h-12 w-12 object-contain rounded" alt="expression image" />
+                        <span
+                          class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
+                          expr.language_code }}</span>
+                      </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
               </div>
             </div>
@@ -431,6 +433,9 @@ export default {
             console.error('Create failed:', createResult.error || createResult.message)
             alert(t('handbook_save_failed'))
             return
+          }
+          if (!createResult.data || !createResult.data.id) {
+            throw new Error('Page creation succeeded but no ID was returned')
           }
           newPageId = createResult.data.id
         }

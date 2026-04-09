@@ -90,10 +90,17 @@ export const handbooksApi = {
     return response.data as ApiResponse<Handbook[]>
   },
 
-  async getById(id: number, targetLang?: string): Promise<ApiResponse<Handbook>> {
+  async getById(id: number, targetLang?: string, targetLangsParam?: string): Promise<ApiResponse<Handbook>> {
     let url = `/handbooks/${id}`
 
-    if (targetLang) {
+    if (targetLangsParam) {
+      // Use query param for multiple languages or path param for single language
+      if (targetLangsParam.includes(',')) {
+        url += `?target_langs=${encodeURIComponent(targetLangsParam)}`
+      } else {
+        url += `/${targetLangsParam}`
+      }
+    } else if (targetLang) {
       // Use query param for multiple languages or path param for single language
       if (targetLang.includes(',')) {
         url += `?target_lang=${encodeURIComponent(targetLang)}`

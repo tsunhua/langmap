@@ -6,43 +6,65 @@
     </div>
 
     <div v-else-if="handbook" :class="(tableOfContents.length > 0 || isMultiPage) ? 'flex gap-6 lg:flex-row flex-col' : ''">
-      <!-- Left Sidebar - Table of Contents -->
-      <aside v-if="tableOfContents.length > 0" class="handbook-toc hidden lg:block w-64 flex-shrink-0">
+      <!-- Navigation Sidebar (Unified TOC & Pages) -->
+      <aside v-if="tableOfContents.length > 0 || isMultiPage" class="handbook-navigation hidden lg:block w-64 flex-shrink-0">
         <div class="sticky top-8">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ $t('table_of_contents') }}
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            {{ isMultiPage ? $t('pages') : $t('table_of_contents') }}
           </div>
-          <div class="toc-list space-y-1">
-            <template v-for="item in tableOfContents" :key="item.id">
-              <div v-if="isVisible(item)"
-                :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
-                @click="handleTocItemClick(item)">
-                <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
-                  <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-                <span class="toc-text">{{ item.text }}</span>
+          
+          <div class="nav-list space-y-1">
+            <!-- Multi-page navigation -->
+            <template v-if="isMultiPage">
+              <div v-for="page in (pages || [])" :key="page?.id">
+                <!-- Page Title -->
+                <div 
+                  :class="['px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors mb-1', currentPageId === page?.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50']"
+                  @click="page && goToPage(page.id)">
+                  {{ page?.title }}
+                </div>
+                
+                <!-- Nested headings for active page -->
+                <div v-if="currentPageId === page?.id && tableOfContents.length > 0" class="ml-3 mb-2 space-y-1 border-l-2 border-blue-100 pl-1">
+                  <template v-for="(item, index) in tableOfContents" :key="item?.id || index">
+                    <div v-if="isVisible(item)"
+                      :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                      @click="handleTocItemClick(item)">
+                      <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                        <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                      <span class="toc-text text-xs">{{ item.text }}</span>
+                    </div>
+                  </template>
+                </div>
               </div>
+              
+              <!-- Add Page Button -->
+              <button v-if="canEdit" @click="goToNewPage"
+                class="w-full mt-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1">
+                <span class="text-lg leading-none">+</span> {{ $t('add_page') }}
+              </button>
             </template>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Multi-Page Sidebar -->
-      <aside v-if="isMultiPage" class="hidden lg:block w-56 flex-shrink-0">
-        <div class="sticky top-8">
-          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ $t('pages') }}</div>
-          <div class="space-y-1">
-            <div v-for="page in pages" :key="page.id"
-              :class="['px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors', currentPageId === page.id ? 'bg-blue-50 text-blue-700 font-medium border-l-3 border-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']"
-              @click="goToPage(page.id)">
-              {{ page.title }}
-            </div>
-            <button v-if="canEdit" @click="goToNewPage"
-              class="w-full mt-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1">
-              <span class="text-lg leading-none">+</span> {{ $t('add_page') }}
-            </button>
+            
+            <!-- Default single-page TOC -->
+            <template v-else>
+              <template v-for="(item, index) in tableOfContents" :key="item?.id || index">
+                <div v-if="isVisible(item)"
+                  :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                  @click="handleTocItemClick(item)">
+                  <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                    <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                  <span class="toc-text">{{ item.text }}</span>
+                </div>
+              </template>
+            </template>
           </div>
         </div>
       </aside>
@@ -54,11 +76,11 @@
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-gray-100">
             <div class="space-y-3 flex-1">
               <h1 class="text-xl md:text-2xl font-bold text-gray-800"
-                v-html="handbook.rendered_title || handbook.title"></h1>
-              <p v-if="handbook.rendered_description || handbook.description"
+                v-html="handbook?.rendered_title || handbook?.title"></h1>
+              <p v-if="handbook?.rendered_description || handbook?.description"
                 class="text-sm text-gray-500 max-w-2xl leading-relaxed mt-8"
-                v-html="handbook.rendered_description || handbook.description"></p>
-              <div class="text-[11px] text-gray-400 mt-4">
+                v-html="handbook?.rendered_description || handbook?.description"></p>
+              <div v-if="handbook" class="text-[11px] text-gray-400 mt-4">
                 <p v-if="handbook.created_by">{{ $t('created_by') }}: {{ handbook.created_by }}</p>
                 <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
                 <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
@@ -123,7 +145,7 @@
           <!-- Content -->
           <div ref="contentContainer"
             class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body"
-            v-html="handbook.rendered_content || handbook.content"></div>
+            v-html="handbook?.rendered_content || handbook?.content"></div>
 
           <!-- Audio Player Placeholder (Hidden) -->
           <audio ref="audioPlayer" class="hidden"></audio>
@@ -150,13 +172,13 @@
 
         <!-- Page Navigation -->
         <div v-if="isMultiPage && pages.length > 0" class="flex justify-between items-center py-4 border-t border-gray-100 mt-6">
-          <button v-if="prevPage" @click="goToPage(prevPage.id)"
+          <button v-if="prevPage && prevPage.id" @click="goToPage(prevPage.id)"
             class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
             &laquo; {{ $t('prev_page') }}
           </button>
           <span v-else></span>
           <span class="text-xs text-gray-400">{{ currentPageIndex + 1 }} / {{ pages.length }}</span>
-          <button v-if="nextPage" @click="goToPage(nextPage.id)"
+          <button v-if="nextPage && nextPage.id" @click="goToPage(nextPage.id)"
             class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
             {{ $t('next_page') }} &raquo;
           </button>
@@ -164,7 +186,7 @@
         </div>
       </main>
       <!-- Mobile TOC Floating Button -->
-      <button v-if="handbook && tableOfContents.length > 0"
+      <button v-if="handbook && (tableOfContents.length > 0 || isMultiPage)"
         class="lg:hidden fixed bottom-6 right-6 z-40 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center"
         @click="showMobileToc = true" :aria-label="$t('table_of_contents')">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,19 +218,51 @@
                 </button>
               </div>
               <div class="flex-1 overflow-y-auto px-4 py-6">
-                <div class="toc-list space-y-1">
-                  <template v-for="item in tableOfContents" :key="item.id">
-                    <div v-if="isVisible(item)"
-                      :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
-                      @click="onTocMobileClick(item)">
-                      <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
-                        <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]"
-                          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </span>
-                      <span class="toc-text">{{ item.text }}</span>
+                <div class="nav-list space-y-1">
+                  <!-- Multi-page navigation -->
+                  <template v-if="isMultiPage">
+                    <div v-for="page in (pages || [])" :key="page?.id">
+                      <!-- Page Title -->
+                      <div 
+                        :class="['px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors mb-1', currentPageId === page?.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50']"
+                        @click="onPageMobileClick(page)">
+                        {{ page?.title }}
+                      </div>
+                      
+                      <!-- Nested headings for active page -->
+                      <div v-if="currentPageId === page?.id && tableOfContents.length > 0" class="ml-3 mb-2 space-y-1 border-l-2 border-blue-100 pl-1">
+                        <template v-for="(item, index) in tableOfContents" :key="item?.id || index">
+                          <div v-if="isVisible(item)"
+                            :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                            @click="onTocMobileClick(item)">
+                            <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                              <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </span>
+                            <span class="toc-text text-xs">{{ item.text }}</span>
+                          </div>
+                        </template>
+                      </div>
                     </div>
+                  </template>
+                  
+                  <!-- Default single-page TOC -->
+                  <template v-else>
+                    <template v-for="(item, index) in tableOfContents" :key="item?.id || index">
+                      <div v-if="isVisible(item)"
+                        :class="['toc-item', `toc-level-${item.level}`, { 'active': activeItemId === item.id }]"
+                        @click="onTocMobileClick(item)">
+                        <span v-if="hasChildren(item)" class="toc-toggle" @click.stop="toggleCollapse(item.id)">
+                          <svg :class="['toc-toggle-icon', { 'collapsed': collapsedItems.has(item.id) }]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </span>
+                        <span class="toc-text">{{ item.text }}</span>
+                      </div>
+                    </template>
                   </template>
                 </div>
               </div>
@@ -299,6 +353,7 @@ export default {
 
     const fetchInitialData = async () => {
       loading.value = true
+      tableOfContents.value = [] // Clear TOC immediately on load/switch
       try {
         // Fetch languages if not loaded
         if (languages.value.length === 0) {
@@ -311,18 +366,27 @@ export default {
         console.log('[HandbookView] Fetching handbook data:', {
           handbookId: props.id,
           instructionLanguages: instructionLanguages.value,
-          targetLangsParam
+          targetLangsParam,
+          handbookIdType: typeof props.id,
+          handbookIdValue: props.id
         })
         const dataRes = await handbooksApi.getById(props.id, null, targetLangsParam)
         if (dataRes.success && dataRes.data) {
           const data = dataRes.data
+          console.log('[HandbookView] Full handbook data received:', data)
           handbook.value = data
 
           console.log('[HandbookView] Handbook data received:', {
             hasRenderedContent: !!data.rendered_content,
             renderedContentLength: data.rendered_content?.length,
             hasRenderedTitle: !!data.rendered_title,
-            isCached: data.is_cached
+            isCached: data.is_cached,
+            handbookId: data.id,
+            handbookIdType: typeof data.id,
+            handbookTitle: data.title,
+            handbookAuthor: data.author,
+            handbookHasPages: data.has_pages,
+            handbookUser_id: data.user_id
           })
 
           // Only set initial languages on first load
@@ -336,13 +400,14 @@ export default {
             isInitialized.value = true
           }
 
-          // Handle multi-page mode
-          if (data.has_pages === 1) {
-            const pagesResult = await handbooksApi.getPages(props.id)
-            if (pagesResult.success && pagesResult.data) {
-              pages.value = pagesResult.data
-            }
+          // Populate page list from handbook metadata immediately
+          if (data?.has_pages === 1 && data.pages) {
+            pages.value = data.pages
+            console.log('[HandbookView] Pages initialized from metadata:', pages.value.length)
+          }
 
+          // Handle multi-page initial navigation
+          if (data?.has_pages === 1) {
             if (props.pageId) {
               currentPageId.value = parseInt(props.pageId)
               const targetLangsParam = instructionLanguages.value.join(',')
@@ -356,9 +421,11 @@ export default {
                   content: pageData.content,
                   title: pageData.title
                 }
+                console.log('[HandbookView] Current page content loaded:', pageData.id)
               }
-            } else if (pages.value.length > 0) {
-              router.replace(`/handbooks/${props.id}/pages/${pages.value[0].id}`)
+            } else if (pages.value.length > 0 && pages.value[0]?.id) {
+              console.log('[HandbookView] Redirecting to first page:', pages.value[0].id)
+              router.replace(`/handbooks/${props.id}/pages/${pages.value[0].id}${route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''}`)
               return
             }
           }
@@ -381,10 +448,8 @@ export default {
     }
 
     const parseTableOfContents = async (retryCount = 0) => {
-      // 防止重复执行
-      if (tableOfContents.value.length > 0 && retryCount > 0) {
-        return
-      }
+      // Clear ID cache for every fresh parse to prevent stale suffixing between pages
+      _idSeen.clear()
 
       if (!handbook.value?.rendered_content) {
         tableOfContents.value = []
@@ -485,7 +550,7 @@ export default {
     // Determine if a TOC item is a parent (has children below it)
     const hasChildren = (item) => {
       const toc = tableOfContents.value
-      const idx = toc.findIndex(t => t.id === item.id)
+      const idx = toc.findIndex(t => t?.id === item?.id)
       if (idx === -1) return false
       for (let i = idx + 1; i < toc.length; i++) {
         if (toc[i].level > item.level) return true
@@ -497,13 +562,13 @@ export default {
     // Determine if a TOC item should be visible (none of its ancestors are collapsed)
     const isVisible = (item) => {
       const toc = tableOfContents.value
-      const idx = toc.findIndex(t => t.id === item.id)
+      const idx = toc.findIndex(t => t?.id === item?.id)
       if (idx === -1) return true
       let currentLevel = item.level
       for (let i = idx - 1; i >= 0; i--) {
         if (toc[i].level < currentLevel) {
           // Found the nearest ancestor at the next higher level
-          if (collapsedItems.has(toc[i].id)) return false
+          if (toc[i] && collapsedItems.has(toc[i].id)) return false
           currentLevel = toc[i].level
           if (currentLevel === 1) break
         }
@@ -593,12 +658,12 @@ export default {
     }
 
     const canEdit = computed(() => {
-      if (!handbook.value || !currentUser.value) return false
+      if (!handbook.value || !handbook.value.id || !currentUser.value) return false
       return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
     })
 
     const canRerender = computed(() => {
-      if (!handbook.value || !currentUser.value) return false
+      if (!handbook.value || !handbook.value.id || !currentUser.value) return false
       return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
     })
 
@@ -606,7 +671,7 @@ export default {
 
     const currentPageIndex = computed(() => {
       if (!pages.value.length || !currentPageId.value) return 0
-      return pages.value.findIndex(p => p.id === currentPageId.value)
+      return pages.value.findIndex(p => p?.id === currentPageId.value)
     })
 
     const prevPage = computed(() => {
@@ -730,6 +795,13 @@ export default {
       router.push(`/handbooks/${props.id}/pages/${pageId}${route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''}`)
     }
 
+    const onPageMobileClick = (page) => {
+      if (page) {
+        goToPage(page.id)
+        showMobileToc.value = false
+      }
+    }
+
     const goToNewPage = () => {
       router.push(`/handbooks/${props.id}/pages/new`)
     }
@@ -758,8 +830,27 @@ export default {
     })
 
     watch(() => handbook.value, (newHandbook) => {
-      if (newHandbook) {
-        document.title = `${newHandbook.rendered_title || newHandbook.title} - langmap`
+      if (newHandbook && newHandbook.id) {
+        console.log('[HandbookView] Setting document title with:', {
+          rendered_title: newHandbook.rendered_title,
+          title: newHandbook.title,
+          hasId: !!newHandbook.id
+        })
+        document.title = `${newHandbook.rendered_title || newHandbook.title || 'Handbook'} - langmap`
+      }
+    })
+
+    // Watch for route changes (navigating between pages in the same handbook)
+    watch(() => props.id, (newId, oldId) => {
+      if (newId !== oldId) {
+        isInitialized.value = false
+        fetchInitialData()
+      }
+    })
+
+    watch(() => props.pageId, (newPageId, oldPageId) => {
+      if (newPageId !== oldPageId) {
+        fetchInitialData()
       }
     })
 

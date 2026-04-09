@@ -119,6 +119,7 @@ export interface Handbook {
   author?: string
   published_at?: string
   has_pages?: number
+  pages?: Array<{ id: number; title: string; sort_order: number }>
 }
 
 export interface HandbookPage {

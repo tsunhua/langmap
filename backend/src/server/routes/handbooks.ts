@@ -77,7 +77,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     linkify: false
   }).use(anchor, {
     level: [1, 2, 3, 4],
-    slugify: (s) => s
+    slugify: (s: string) => s
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -170,8 +170,8 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
     throw err
   }
 
-  expressionGroupsMap.forEach((groups, exprId) => {
-    const mainExpr = groups.find(g => g.expressions?.find(e => e.id === exprId))?.expressions?.find(e => e.id === exprId) || rawExprMap.get(exprId)
+  expressionGroupsMap.forEach((groups, exprId: number) => {
+    const mainExpr = groups.find(g => g.expressions?.find((e: any) => e.id === exprId))?.expressions?.find((e: any) => e.id === exprId) || rawExprMap.get(exprId)
     expressionMap[exprId] = {
       id: exprId,
       groups,
@@ -180,7 +180,7 @@ async function renderHandbookInternal(c: Context, handbook: any, targetLangs: st
       audio_url: mainExpr?.audio_url
     }
     groups.forEach(group => {
-      group.expressions.forEach(groupExpr => {
+      group.expressions.forEach((groupExpr: any) => {
         if (groupExpr.id !== exprId && !expressionMap[groupExpr.id]) {
           expressionMap[groupExpr.id] = {
             ...groupExpr,
@@ -535,154 +535,6 @@ handbookRoutes.get('/', optionalAuth, async (c) => {
   }
 })
 
-// GET /:id/:target_lang? - Get handbook with optional rendering
-handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
-  console.log('[GET /:id/:target_lang?] START')
-  try {
-    const db = createDatabaseService(c.env)
-    const id = parseInt(c.req.param('id'))
-    const user = c.get('user')
-
-    console.log('[GET] Params:', {
-      id,
-      user: user?.id,
-      queryTargetLang: c.req.query('target_lang'),
-      queryTargetLangs: c.req.query('target_langs'),
-      paramTargetLang: c.req.param('target_lang')
-    })
-
-    if (isNaN(id)) return badRequest(c, 'Invalid ID')
-
-    console.log('[GET] Fetching handbook...')
-    const handbook = await db.getHandbookById(id)
-    if (!handbook) return notFound(c, 'Handbook')
-
-    console.log('[GET] Handbook fetched:', {
-      id: handbook.id,
-      title: handbook.title ? handbook.title.substring(0, 50) : 'NO TITLE',
-      target_lang: handbook.target_lang,
-      source_lang: handbook.source_lang,
-      contentLength: handbook.content?.length || 0
-    })
-
-    const targetLangsParam = c.req.query('target_langs') || c.req.query('target_lang') || c.req.param('target_lang')
-    let targetLangs: string[] = []
-
-    if (targetLangsParam) {
-      targetLangs = targetLangsParam.split(',').map(l => l.trim()).filter(Boolean)
-    }
-
-    console.log('[GET] Parsed targetLangs:', targetLangs)
-    console.log('[GET] Final targetLangs decision:', {
-      inputParam: targetLangsParam,
-      parsedTargetLangs: targetLangs,
-      handbookTargetLang: handbook.target_lang,
-      willUse: targetLangs.length > 0 ? 'PARSED' : 'HANDBOOK_DEFAULT',
-      finalTargetLangs: targetLangs.length > 0 ? targetLangs : (handbook.target_lang ? [handbook.target_lang] : [])
-    })
-
-    // IMPORTANT: Use handbook.target_lang as default BEFORE checking cache
-    if (targetLangs.length === 0) {
-      if (handbook.target_lang) {
-        // Split handbook.target_lang by comma to handle multiple languages
-        targetLangs = handbook.target_lang.split(',').map(l => l.trim()).filter(Boolean)
-        console.log('[GET] Using handbook target_lang:', handbook.target_lang)
-        console.log('[GET] Parsed targetLangs from handbook.target_lang:', targetLangs)
-      }
-    }
-
-    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
-      console.log('[GET] Access denied')
-      return forbidden(c, 'Access denied')
-    }
-
-    if (handbook.has_pages === 1) {
-      const pages = await db.getHandbookPageSummaries(id)
-      handbook.pages = pages
-    }
-
-    if (targetLangs.length > 0) {
-      const sortedTargetLangs = [...targetLangs].sort()
-      const cacheKey = sortedTargetLangs.join('|')
-      console.log('[GET] Checking cache for key:', cacheKey)
-      console.log('[GET] targetLangs before sort:', targetLangs)
-      console.log('[GET] targetLangs after sort:', sortedTargetLangs)
-
-      try {
-        const cachedRender = await db.getHandbookRender(id, cacheKey)
-        if (cachedRender) {
-          console.log('[GET] Cache hit!')
-          const result = success(c, {
-            ...handbook,
-            rendered_title: cachedRender.rendered_title,
-            rendered_description: cachedRender.rendered_description,
-            rendered_content: cachedRender.rendered_content,
-            is_cached: true
-          })
-          result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-          return result
-        }
-        console.log('[GET] Cache miss, rendering...')
-      } catch (cacheErr) {
-        console.error('[GET] Error checking cache:', cacheErr)
-      }
-
-      try {
-        console.log('[GET] Calling renderHandbookInternal...')
-        const renders = await renderHandbookInternal(c, handbook, targetLangs)
-        console.log('[GET] Renders received:', Object.keys(renders))
-
-        console.log('[GET] Saving to cache with key:', cacheKey)
-        await db.saveHandbookRender({
-          handbook_id: id,
-          target_lang: cacheKey,
-          ...renders
-        })
-        console.log('[GET] Saved to cache')
-
-        return c.json({
-          success: true,
-          data: {
-            ...handbook,
-            ...renders,
-            is_cached: false
-          }
-        }, {
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-          }
-        })
-      } catch (renderError) {
-        console.error('[GET] Render error:', renderError)
-        console.error('[GET] Render error type:', renderError?.constructor?.name)
-        console.error('[GET] Render error message:', renderError instanceof Error ? renderError.message : 'No message')
-        console.error('[GET] Render error stack:', renderError instanceof Error ? renderError.stack : 'No stack')
-        return c.json({
-          success: true,
-          data: handbook
-        }, {
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-          }
-        })
-      }
-    }
-
-    console.log('[GET] No target langs, returning handbook as-is')
-    return c.json({
-      success: true,
-      data: handbook
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-      }
-    })
-  } catch (error: any) {
-    console.error('[GET] Error in GET /handbooks/:id:', error)
-    console.error('[GET] Error stack:', error instanceof Error ? error.stack : 'No stack')
-    return internalError(c, 'Failed to fetch handbook')
-  }
-})
 
 // POST /preview - Preview handbook rendering
 handbookRoutes.post('/preview', requireAuth, async (c) => {
@@ -752,6 +604,9 @@ handbookRoutes.post('/', requireAuth, async (c) => {
 
     const handbook = await db.createHandbook({
       ...body,
+      author: body.author || null,
+      published_at: body.published_at || null,
+      has_pages: body.has_pages ? 1 : 0,
       user_id: user.id
     })
     await clearCache(c, '/api/v1/handbooks')
@@ -799,7 +654,12 @@ handbookRoutes.put('/:id', requireAuth, async (c) => {
     await db.invalidateHandbookRenders(id)
     await clearCache(c, `/api/v1/handbooks/${id}`)
 
-    const updated = await db.updateHandbook(id, body)
+    const updated = await db.updateHandbook(id, {
+      ...body,
+      author: body.author !== undefined ? body.author : undefined,
+      published_at: body.published_at !== undefined ? body.published_at : undefined,
+      has_pages: body.has_pages !== undefined ? (body.has_pages ? 1 : 0) : undefined
+    })
     return success(c, updated)
   } catch (error: any) {
     console.error('Error in PUT /handbooks/:id:', error)
@@ -847,9 +707,9 @@ handbookRoutes.delete('/:id', requireAuth, async (c) => {
       return forbidden(c, 'Access denied')
     }
 
-    const success = await db.deleteHandbook(id)
+    const isDeleted = await db.deleteHandbook(id)
     await clearCache(c, '/api/v1/handbooks')
-    return success(c, { success }, 'Handbook deleted successfully')
+    return success(c, { success: isDeleted }, 'Handbook deleted successfully')
   } catch (error: any) {
     console.error('Error in DELETE /handbooks/:id:', error)
     return internalError(c, 'Failed to delete handbook')
@@ -1162,13 +1022,162 @@ handbookRoutes.post('/:id/pages/preview', requireAuth, async (c) => {
       content: body.content || ''
     }
 
-    const targetLangs = body.target_lang ? body.target_lang.split(',').map(l => l.trim()).filter(Boolean) : []
+    const targetLangs = body.target_lang ? body.target_lang.split(',').map((l: string) => l.trim()).filter(Boolean) : []
     const renders = await renderHandbookInternal(c, tempHandbook, targetLangs)
 
     return success(c, renders)
   } catch (error: any) {
     console.error('Error in POST /handbooks/:id/pages/preview:', error)
     return internalError(c, 'Failed to preview handbook page')
+  }
+})
+
+// GET /:id/:target_lang? - Get handbook with optional rendering
+handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
+  console.log('[GET /:id/:target_lang?] START')
+  try {
+    const db = createDatabaseService(c.env)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    console.log('[GET] Params:', {
+      id,
+      user: user?.id,
+      queryTargetLang: c.req.query('target_lang'),
+      queryTargetLangs: c.req.query('target_langs'),
+      paramTargetLang: c.req.param('target_lang')
+    })
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+
+    console.log('[GET] Fetching handbook...')
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    console.log('[GET] Handbook fetched:', {
+      id: handbook.id,
+      title: handbook.title ? handbook.title.substring(0, 50) : 'NO TITLE',
+      target_lang: handbook.target_lang,
+      source_lang: handbook.source_lang,
+      contentLength: handbook.content?.length || 0
+    })
+
+    const targetLangsParam = c.req.query('target_langs') || c.req.query('target_lang') || c.req.param('target_lang')
+    let targetLangs: string[] = []
+
+    if (targetLangsParam) {
+      targetLangs = targetLangsParam.split(',').map(l => l.trim()).filter(Boolean)
+    }
+
+    console.log('[GET] Parsed targetLangs:', targetLangs)
+    console.log('[GET] Final targetLangs decision:', {
+      inputParam: targetLangsParam,
+      parsedTargetLangs: targetLangs,
+      handbookTargetLang: handbook.target_lang,
+      willUse: targetLangs.length > 0 ? 'PARSED' : 'HANDBOOK_DEFAULT',
+      finalTargetLangs: targetLangs.length > 0 ? targetLangs : (handbook.target_lang ? [handbook.target_lang] : [])
+    })
+
+    // IMPORTANT: Use handbook.target_lang as default BEFORE checking cache
+    if (targetLangs.length === 0) {
+      if (handbook.target_lang) {
+        // Split handbook.target_lang by comma to handle multiple languages
+        targetLangs = handbook.target_lang.split(',').map(l => l.trim()).filter(Boolean)
+        console.log('[GET] Using handbook target_lang:', handbook.target_lang)
+        console.log('[GET] Parsed targetLangs from handbook.target_lang:', targetLangs)
+      }
+    }
+
+    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
+      console.log('[GET] Access denied')
+      return forbidden(c, 'Access denied')
+    }
+
+    if (handbook.has_pages === 1) {
+      const pages = await db.getHandbookPageSummaries(id)
+      handbook.pages = pages
+    }
+
+    if (targetLangs.length > 0) {
+      const sortedTargetLangs = [...targetLangs].sort()
+      const cacheKey = sortedTargetLangs.join('|')
+      console.log('[GET] Checking cache for key:', cacheKey)
+      console.log('[GET] targetLangs before sort:', targetLangs)
+      console.log('[GET] targetLangs after sort:', sortedTargetLangs)
+
+      try {
+        const cachedRender = await db.getHandbookRender(id, cacheKey)
+        if (cachedRender) {
+          console.log('[GET] Cache hit!')
+          const result = success(c, {
+            ...handbook,
+            rendered_title: cachedRender.rendered_title,
+            rendered_description: cachedRender.rendered_description,
+            rendered_content: cachedRender.rendered_content,
+            is_cached: true
+          })
+          result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
+          return result
+        }
+        console.log('[GET] Cache miss, rendering...')
+      } catch (cacheErr) {
+        console.error('[GET] Error checking cache:', cacheErr)
+      }
+
+      try {
+        console.log('[GET] Calling renderHandbookInternal...')
+        const renders = await renderHandbookInternal(c, handbook, targetLangs)
+        console.log('[GET] Renders received:', Object.keys(renders))
+
+        console.log('[GET] Saving to cache with key:', cacheKey)
+        await db.saveHandbookRender({
+          handbook_id: id,
+          target_lang: cacheKey,
+          ...renders
+        })
+        console.log('[GET] Saved to cache')
+
+        return c.json({
+          success: true,
+          data: {
+            ...handbook,
+            ...renders,
+            is_cached: false
+          }
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          }
+        })
+      } catch (renderError) {
+        console.error('[GET] Render error:', renderError)
+        console.error('[GET] Render error type:', renderError?.constructor?.name)
+        console.error('[GET] Render error message:', renderError instanceof Error ? renderError.message : 'No message')
+        console.error('[GET] Render error stack:', renderError instanceof Error ? renderError.stack : 'No stack')
+        return c.json({
+          success: true,
+          data: handbook
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          }
+        })
+      }
+    }
+
+    console.log('[GET] No target langs, returning handbook as-is')
+    return c.json({
+      success: true,
+      data: handbook
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+      }
+    })
+  } catch (error: any) {
+    console.error('[GET] Error in GET /handbooks/:id:', error)
+    console.error('[GET] Error stack:', error instanceof Error ? error.stack : 'No stack')
+    return internalError(c, 'Failed to fetch handbook')
   }
 })
 

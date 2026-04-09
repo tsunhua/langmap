@@ -50,12 +50,15 @@ export class HandbookQueries {
       handbook.source_lang || null,
       handbook.target_lang || null,
       handbook.is_public ? 1 : 0,
-      handbook.lang_colors || '{}'
+      handbook.lang_colors || '{}',
+      handbook.author || null,
+      handbook.published_at || null,
+      handbook.has_pages || 0
     ]
 
     const result = await this.db.prepare(
-      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public, lang_colors)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO handbooks (id, user_id, title, description, content, source_lang, target_lang, is_public, lang_colors, author, published_at, has_pages)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     ).bind(...bindValues).first<Handbook>()
 
     if (!result) {
