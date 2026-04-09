@@ -596,6 +596,11 @@ handbookRoutes.get('/:id/:target_lang?', optionalAuth, async (c) => {
       return forbidden(c, 'Access denied')
     }
 
+    if (handbook.has_pages === 1) {
+      const pages = await db.getHandbookPageSummaries(id)
+      handbook.pages = pages
+    }
+
     if (targetLangs.length > 0) {
       const sortedTargetLangs = [...targetLangs].sort()
       const cacheKey = sortedTargetLangs.join('|')
@@ -848,6 +853,322 @@ handbookRoutes.delete('/:id', requireAuth, async (c) => {
   } catch (error: any) {
     console.error('Error in DELETE /handbooks/:id:', error)
     return internalError(c, 'Failed to delete handbook')
+  }
+})
+
+handbookRoutes.get('/:id/pages', optionalAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const id = parseInt(c.req.param('id'))
+    const user = c.get('user')
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
+      return forbidden(c, 'Access denied')
+    }
+
+    const pages = await db.getHandbookPages(id)
+    return success(c, pages)
+  } catch (error: any) {
+    console.error('Error in GET /handbooks/:id/pages:', error)
+    return internalError(c, 'Failed to fetch handbook pages')
+  }
+})
+
+handbookRoutes.get('/:id/pages/:pageId/:target_lang?', optionalAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const id = parseInt(c.req.param('id'))
+    const pageId = parseInt(c.req.param('pageId'))
+    const user = c.get('user')
+
+    if (isNaN(id) || isNaN(pageId)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (!handbook.is_public && (!user || user.id !== handbook.user_id)) {
+      return forbidden(c, 'Access denied')
+    }
+
+    const page = await db.getHandbookPageById(pageId)
+    if (!page || page.handbook_id !== id) return notFound(c, 'Page')
+
+    const targetLangsParam = c.req.query('target_langs') || c.req.query('target_lang') || c.req.param('target_lang')
+    let targetLangs: string[] = []
+    if (targetLangsParam) {
+      targetLangs = targetLangsParam.split(',').map(l => l.trim()).filter(Boolean)
+    }
+    if (targetLangs.length === 0 && handbook.target_lang) {
+      targetLangs = handbook.target_lang.split(',').map(l => l.trim()).filter(Boolean)
+    }
+
+    if (targetLangs.length > 0) {
+      const sortedTargetLangs = [...targetLangs].sort()
+      const cacheKey = sortedTargetLangs.join('|')
+
+      try {
+        const cachedRender = await db.getHandbookPageRender(pageId, cacheKey)
+        if (cachedRender) {
+          const result = success(c, {
+            ...page,
+            rendered_title: cachedRender.rendered_title,
+            rendered_content: cachedRender.rendered_content,
+            is_cached: true
+          })
+          result.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
+          return result
+        }
+      } catch (cacheErr) {
+        console.error('Error checking page render cache:', cacheErr)
+      }
+
+      const tempHandbook = {
+        ...handbook,
+        title: page.title,
+        content: page.content,
+        description: ''
+      }
+
+      try {
+        const renders = await renderHandbookInternal(c, tempHandbook, targetLangs)
+        await db.saveHandbookPageRender({
+          page_id: pageId,
+          target_lang: cacheKey,
+          ...renders
+        })
+        return c.json({
+          success: true,
+          data: {
+            ...page,
+            ...renders,
+            is_cached: false
+          }
+        }, {
+          headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' }
+        })
+      } catch (renderError) {
+        console.error('Error rendering page:', renderError)
+        return c.json({ success: true, data: page }, {
+          headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' }
+        })
+      }
+    }
+
+    return c.json({ success: true, data: page }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0' }
+    })
+  } catch (error: any) {
+    console.error('Error in GET /handbooks/:id/pages/:pageId:', error)
+    return internalError(c, 'Failed to fetch handbook page')
+  }
+})
+
+handbookRoutes.post('/:id/pages', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const body = await c.req.json()
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+    if (!body.title) return badRequest(c, 'Title is required')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return forbidden(c, 'Access denied')
+    }
+
+    const sourceLang = handbook.source_lang || ''
+    const content = body.content || ''
+    const expressions: Array<{ text: string, language_code: string }> = []
+    const regex = /\{\{(?:text:)?([^\}|}]+)(?:\|lang:([^\}|]+))?\}\}/g
+    let match
+    while ((match = regex.exec(content)) !== null) {
+      const text = match[1]
+      const lang = match[2] || sourceLang
+      if (text && lang && !expressions.some(e => e.text === text && e.language_code === lang)) {
+        expressions.push({ text, language_code: lang })
+      }
+    }
+    if (expressions.length > 0) {
+      await db.ensureExpressionsExist(expressions, user.username)
+    }
+
+    const page = await db.createHandbookPage({
+      handbook_id: id,
+      title: body.title,
+      content: body.content || '',
+      sort_order: body.sort_order || 0
+    })
+
+    await clearCache(c, `/api/v1/handbooks/${id}`)
+    return created(c, page)
+  } catch (error: any) {
+    console.error('Error in POST /handbooks/:id/pages:', error)
+    return internalError(c, 'Failed to create handbook page')
+  }
+})
+
+handbookRoutes.put('/:id/pages/:pageId', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const pageId = parseInt(c.req.param('pageId'))
+    const body = await c.req.json()
+
+    if (isNaN(id) || isNaN(pageId)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return forbidden(c, 'Access denied')
+    }
+
+    const sourceLang = handbook.source_lang || ''
+    const content = body.content || ''
+    const expressions: Array<{ text: string, language_code: string }> = []
+    const regex = /\{\{(?:text:)?([^\}|}]+)(?:\|lang:([^\}|]+))?\}\}/g
+    let match
+    while ((match = regex.exec(content)) !== null) {
+      const text = match[1]
+      const lang = match[2] || sourceLang
+      if (text && lang && !expressions.some(e => e.text === text && e.language_code === lang)) {
+        expressions.push({ text, language_code: lang })
+      }
+    }
+    if (expressions.length > 0) {
+      await db.ensureExpressionsExist(expressions, user.username)
+    }
+
+    await db.invalidateHandbookPageRenders(pageId)
+    await clearCache(c, `/api/v1/handbooks/${id}/pages/${pageId}`)
+
+    const updated = await db.updateHandbookPage(pageId, body)
+    return success(c, updated)
+  } catch (error: any) {
+    console.error('Error in PUT /handbooks/:id/pages/:pageId:', error)
+    return internalError(c, 'Failed to update handbook page')
+  }
+})
+
+handbookRoutes.put('/:id/pages/reorder', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const body = await c.req.json()
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+    if (!body.pages || !Array.isArray(body.pages)) return badRequest(c, 'Pages array is required')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return forbidden(c, 'Access denied')
+    }
+
+    await db.reorderHandbookPages(body.pages)
+    await clearCache(c, `/api/v1/handbooks/${id}`)
+
+    return success(c, null, 'Pages reordered successfully')
+  } catch (error: any) {
+    console.error('Error in PUT /handbooks/:id/pages/reorder:', error)
+    return internalError(c, 'Failed to reorder handbook pages')
+  }
+})
+
+handbookRoutes.delete('/:id/pages/:pageId', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const pageId = parseInt(c.req.param('pageId'))
+
+    if (isNaN(id) || isNaN(pageId)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return forbidden(c, 'Access denied')
+    }
+
+    const deleted = await db.deleteHandbookPage(pageId)
+    await clearCache(c, `/api/v1/handbooks/${id}`)
+
+    return success(c, { success: deleted }, 'Page deleted successfully')
+  } catch (error: any) {
+    console.error('Error in DELETE /handbooks/:id/pages/:pageId:', error)
+    return internalError(c, 'Failed to delete handbook page')
+  }
+})
+
+handbookRoutes.post('/:id/pages/:pageId/rerender', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const pageId = parseInt(c.req.param('pageId'))
+
+    if (isNaN(id) || isNaN(pageId)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (handbook.user_id !== user.id && user.role !== 'admin') {
+      return forbidden(c, 'Access denied')
+    }
+
+    await db.invalidateHandbookPageRenders(pageId)
+    await clearCache(c, `/api/v1/handbooks/${id}/pages/${pageId}`)
+
+    return success(c, null, 'Page render cache cleared successfully')
+  } catch (error: any) {
+    console.error('Error in POST /handbooks/:id/pages/:pageId/rerender:', error)
+    return internalError(c, 'Failed to rerender handbook page')
+  }
+})
+
+handbookRoutes.post('/:id/pages/preview', requireAuth, async (c) => {
+  try {
+    const db = createDatabaseService(c.env)
+    const user = c.get('user')
+    const id = parseInt(c.req.param('id'))
+    const body = await c.req.json()
+
+    if (isNaN(id)) return badRequest(c, 'Invalid ID')
+
+    const handbook = await db.getHandbookById(id)
+    if (!handbook) return notFound(c, 'Handbook')
+
+    if (!handbook.is_public && handbook.user_id !== user.id) {
+      return forbidden(c, 'Access denied')
+    }
+
+    const tempHandbook = {
+      ...handbook,
+      title: body.title || '',
+      description: '',
+      content: body.content || ''
+    }
+
+    const targetLangs = body.target_lang ? body.target_lang.split(',').map(l => l.trim()).filter(Boolean) : []
+    const renders = await renderHandbookInternal(c, tempHandbook, targetLangs)
+
+    return success(c, renders)
+  } catch (error: any) {
+    console.error('Error in POST /handbooks/:id/pages/preview:', error)
+    return internalError(c, 'Failed to preview handbook page')
   }
 })
 
