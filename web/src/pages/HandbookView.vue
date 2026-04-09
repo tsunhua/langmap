@@ -1,11 +1,11 @@
 <template>
   <div
-    :class="tableOfContents.length > 0 ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8' : 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8'">
+    :class="(tableOfContents.length > 0 || isMultiPage) ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8' : 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8'">
     <div v-if="loading" class="flex justify-center py-24">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     </div>
 
-    <div v-else-if="handbook" :class="tableOfContents.length > 0 ? 'flex gap-6 lg:flex-row flex-col' : ''">
+    <div v-else-if="handbook" :class="(tableOfContents.length > 0 || isMultiPage) ? 'flex gap-6 lg:flex-row flex-col' : ''">
       <!-- Left Sidebar - Table of Contents -->
       <aside v-if="tableOfContents.length > 0" class="handbook-toc hidden lg:block w-64 flex-shrink-0">
         <div class="sticky top-8">
@@ -29,8 +29,26 @@
         </div>
       </aside>
 
+      <!-- Multi-Page Sidebar -->
+      <aside v-if="isMultiPage" class="hidden lg:block w-56 flex-shrink-0">
+        <div class="sticky top-8">
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ $t('pages') }}</div>
+          <div class="space-y-1">
+            <div v-for="page in pages" :key="page.id"
+              :class="['px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors', currentPageId === page.id ? 'bg-blue-50 text-blue-700 font-medium border-l-3 border-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900']"
+              @click="goToPage(page.id)">
+              {{ page.title }}
+            </div>
+            <button v-if="canEdit" @click="goToNewPage"
+              class="w-full mt-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1">
+              <span class="text-lg leading-none">+</span> {{ $t('add_page') }}
+            </button>
+          </div>
+        </div>
+      </aside>
+
       <!-- Main Content -->
-      <main :class="tableOfContents.length > 0 ? 'max-w-4xl flex-1 min-w-0' : 'max-w-4xl'">
+      <main :class="(tableOfContents.length > 0 || isMultiPage) ? 'max-w-4xl flex-1 min-w-0' : 'max-w-4xl'">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200">
           <!-- Header -->
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-gray-100">
@@ -44,6 +62,7 @@
                 <p v-if="handbook.created_by">{{ $t('created_by') }}: {{ handbook.created_by }}</p>
                 <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
                 <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
+                <p v-if="handbook.author">{{ handbook.author }}<span v-if="handbook.published_at"> · {{ handbook.published_at?.substring(0, 4) }}</span></p>
               </div>
               <!-- Language Switcher -->
               <div class="flex items-center gap-2">
@@ -128,6 +147,21 @@
             </div>
           </div>
         </div>
+
+        <!-- Page Navigation -->
+        <div v-if="isMultiPage && pages.length > 0" class="flex justify-between items-center py-4 border-t border-gray-100 mt-6">
+          <button v-if="prevPage" @click="goToPage(prevPage.id)"
+            class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+            &laquo; {{ $t('prev_page') }}
+          </button>
+          <span v-else></span>
+          <span class="text-xs text-gray-400">{{ currentPageIndex + 1 }} / {{ pages.length }}</span>
+          <button v-if="nextPage" @click="goToPage(nextPage.id)"
+            class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+            {{ $t('next_page') }} &raquo;
+          </button>
+          <span v-else></span>
+        </div>
       </main>
       <!-- Mobile TOC Floating Button -->
       <button v-if="handbook && tableOfContents.length > 0"
@@ -208,7 +242,7 @@ import ExpressionGroupModal from '../components/ExpressionGroupModal.vue'
 export default {
   name: 'HandbookView',
   components: { ExpressionGroupModal },
-  props: ['id'],
+  props: ['id', 'pageId'],
   setup(props) {
     const router = useRouter()
     const route = router.currentRoute
@@ -227,6 +261,8 @@ export default {
     const activeItemId = ref(null)
     const tocObserver = ref(null)
     const collapsedItems = reactive(new Set())
+    const pages = ref([])
+    const currentPageId = ref(null)
 
     // Table of contents control
     const showMobileToc = ref(false)
@@ -298,6 +334,33 @@ export default {
               updateURLLanguages()
             }
             isInitialized.value = true
+          }
+
+          // Handle multi-page mode
+          if (data.has_pages === 1) {
+            const pagesResult = await handbooksApi.getPages(props.id)
+            if (pagesResult.success && pagesResult.data) {
+              pages.value = pagesResult.data
+            }
+
+            if (props.pageId) {
+              currentPageId.value = parseInt(props.pageId)
+              const targetLangsParam = instructionLanguages.value.join(',')
+              const pageResult = await handbooksApi.getPageById(props.id, props.pageId, targetLangsParam)
+              if (pageResult.success && pageResult.data) {
+                const pageData = pageResult.data
+                handbook.value = {
+                  ...data,
+                  rendered_title: pageData.rendered_title,
+                  rendered_content: pageData.rendered_content,
+                  content: pageData.content,
+                  title: pageData.title
+                }
+              }
+            } else if (pages.value.length > 0) {
+              router.replace(`/handbooks/${props.id}/pages/${pages.value[0].id}`)
+              return
+            }
           }
 
           // Parse table of contents after content is rendered
@@ -539,6 +602,23 @@ export default {
       return handbook.value.user_id === currentUser.value.id || currentUser.value.role === 'admin'
     })
 
+    const isMultiPage = computed(() => handbook.value?.has_pages === 1)
+
+    const currentPageIndex = computed(() => {
+      if (!pages.value.length || !currentPageId.value) return 0
+      return pages.value.findIndex(p => p.id === currentPageId.value)
+    })
+
+    const prevPage = computed(() => {
+      const idx = currentPageIndex.value
+      return idx > 0 ? pages.value[idx - 1] : null
+    })
+
+    const nextPage = computed(() => {
+      const idx = currentPageIndex.value
+      return idx < pages.value.length - 1 ? pages.value[idx + 1] : null
+    })
+
     const handleRerender = async () => {
       try {
         loading.value = true
@@ -646,6 +726,14 @@ export default {
       router.push(`/handbooks/${props.id}/edit`)
     }
 
+    const goToPage = (pageId) => {
+      router.push(`/handbooks/${props.id}/pages/${pageId}${route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''}`)
+    }
+
+    const goToNewPage = () => {
+      router.push(`/handbooks/${props.id}/pages/new`)
+    }
+
     const formatDate = (dateString) => {
       if (!dateString) return ''
       return new Date(dateString).toLocaleDateString()
@@ -725,7 +813,15 @@ export default {
       onTocMobileClick,
       showImageModal,
       modalImageUrl,
-      closeImageModal
+      closeImageModal,
+      pages,
+      currentPageId,
+      isMultiPage,
+      currentPageIndex,
+      prevPage,
+      nextPage,
+      goToPage,
+      goToNewPage
     }
   }
 }
