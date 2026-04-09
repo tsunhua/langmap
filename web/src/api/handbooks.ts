@@ -12,6 +12,10 @@ export interface Handbook {
   updated_by?: string
   rendered_content?: string
   target_lang?: string
+  author?: string
+  published_at?: string
+  has_pages?: number
+  page_count?: number
 }
 
 export interface CreateHandbookData {
@@ -20,6 +24,8 @@ export interface CreateHandbookData {
   content: string
   is_public?: number
   target_lang?: string
+  author?: string
+  published_at?: string
 }
 
 export interface UpdateHandbookData {
@@ -28,6 +34,32 @@ export interface UpdateHandbookData {
   content?: string
   is_public?: number
   target_lang?: string
+  author?: string
+  published_at?: string
+}
+
+export interface HandbookPage {
+  id: number
+  handbook_id: number
+  title: string
+  content: string
+  sort_order: number
+  created_at: string
+  updated_at?: string
+  rendered_content?: string
+  rendered_title?: string
+}
+
+export interface CreateHandbookPageData {
+  title: string
+  content?: string
+  sort_order?: number
+}
+
+export interface UpdateHandbookPageData {
+  title?: string
+  content?: string
+  sort_order?: number
 }
 
 export interface ApiResponse<T = any> {
@@ -92,6 +124,50 @@ export const handbooksApi = {
   async rerender(id: number): Promise<ApiResponse<{ message: string }>> {
     const response = await apiClient.post(`/handbooks/${id}/rerender`)
     return response.data as ApiResponse<{ message: string }>
+  },
+
+  async getPages(handbookId: number): Promise<ApiResponse<HandbookPage[]>> {
+    const response = await apiClient.get(`/handbooks/${handbookId}/pages`)
+    return response.data as ApiResponse<HandbookPage[]>
+  },
+
+  async getPageById(handbookId: number, pageId: number, targetLang?: string): Promise<ApiResponse<HandbookPage>> {
+    let url = `/handbooks/${handbookId}/pages/${pageId}`
+    if (targetLang) {
+      url += `?target_lang=${encodeURIComponent(targetLang)}`
+    }
+    const response = await apiClient.get(url)
+    return response.data as ApiResponse<HandbookPage>
+  },
+
+  async createPage(handbookId: number, data: CreateHandbookPageData): Promise<ApiResponse<HandbookPage>> {
+    const response = await apiClient.post(`/handbooks/${handbookId}/pages`, data)
+    return response.data as ApiResponse<HandbookPage>
+  },
+
+  async updatePage(handbookId: number, pageId: number, data: UpdateHandbookPageData): Promise<ApiResponse<HandbookPage>> {
+    const response = await apiClient.put(`/handbooks/${handbookId}/pages/${pageId}`, data)
+    return response.data as ApiResponse<HandbookPage>
+  },
+
+  async deletePage(handbookId: number, pageId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.delete(`/handbooks/${handbookId}/pages/${pageId}`)
+    return response.data as ApiResponse<null>
+  },
+
+  async reorderPages(handbookId: number, pages: Array<{ id: number; sort_order: number }>): Promise<ApiResponse<null>> {
+    const response = await apiClient.put(`/handbooks/${handbookId}/pages/reorder`, { pages })
+    return response.data as ApiResponse<null>
+  },
+
+  async rerenderPage(handbookId: number, pageId: number): Promise<ApiResponse<null>> {
+    const response = await apiClient.post(`/handbooks/${handbookId}/pages/${pageId}/rerender`)
+    return response.data as ApiResponse<null>
+  },
+
+  async previewPage(handbookId: number, data: { title?: string; content?: string; source_lang?: string; target_lang?: string }): Promise<ApiResponse<any>> {
+    const response = await apiClient.post(`/handbooks/${handbookId}/pages/preview`, data)
+    return response.data as ApiResponse<any>
   },
 
   async getExpressions(languageCode: string, meaningIds: number[]): Promise<ApiResponse<any[]>> {

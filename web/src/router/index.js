@@ -113,6 +113,26 @@ const routes = [
     name: 'HandbookView',
     component: () => import('../pages/HandbookView.vue'),
     props: true
+  },
+  {
+    path: '/handbooks/:id/pages/:pageId',
+    name: 'HandbookPageView',
+    component: () => import('../pages/HandbookView.vue'),
+    props: true
+  },
+  {
+    path: '/handbooks/:id/pages/:pageId/edit',
+    name: 'HandbookPageEdit',
+    component: () => import('../pages/HandbookPageEdit.vue'),
+    meta: { requiresAuth: true },
+    props: true
+  },
+  {
+    path: '/handbooks/:id/pages/new',
+    name: 'HandbookPageNew',
+    component: () => import('../pages/HandbookPageEdit.vue'),
+    meta: { requiresAuth: true },
+    props: true
   }
 ]
 
