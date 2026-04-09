@@ -58,6 +58,17 @@
               <textarea v-model="form.description" rows="2"
                 class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"></textarea>
             </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('author') }}</label>
+              <input v-model="form.author" type="text"
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 min-h-[44px]"
+                :placeholder="$t('author_placeholder') || 'Author name'" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('published_at') }}</label>
+              <input v-model="form.published_at" type="date"
+                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 min-h-[44px]" />
+            </div>
           </div>
 
           <!-- Right: Language Selectors -->
@@ -294,6 +305,8 @@ export default {
     const form = reactive({
       title: '',
       description: '',
+      author: '',
+      published_at: '',
       content: '',
       content_lang: '',
       instruction_langs: [],
@@ -484,6 +497,8 @@ export default {
           if (data) {
             form.title = data.title
             form.description = data.description || ''
+            form.author = data.author || ''
+            form.published_at = data.published_at || ''
             form.content = data.content
             form.content_lang = data.source_lang || ''
             form.instruction_langs = data.target_lang
