@@ -113,9 +113,23 @@ export interface Handbook {
   is_public: number
   created_at: string
   updated_at: string
-  renders?: string // JSON string for cached renders
-  lang_colors?: string // JSON string for custom language colors
-  created_by?: string // username from join
+  renders?: string
+  lang_colors?: string
+  created_by?: string
+  author?: string
+  published_at?: string
+  has_pages?: number
+}
+
+export interface HandbookPage {
+  id: number
+  handbook_id: number
+  title: string
+  content: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+  renders?: string
 }
 
 // Statistics interface
@@ -250,6 +264,25 @@ export abstract class AbstractDatabaseService {
     rendered_content: string;
   }): Promise<void>
   abstract invalidateHandbookRenders(id: number): Promise<void>
+
+  // Handbook Pages
+  abstract getHandbookPages(handbookId: number): Promise<HandbookPage[]>
+  abstract getHandbookPageById(id: number): Promise<HandbookPage | null>
+  abstract getHandbookPageSummaries(handbookId: number): Promise<Array<{ id: number; title: string; sort_order: number }>>
+  abstract createHandbookPage(page: Partial<HandbookPage>): Promise<HandbookPage>
+  abstract updateHandbookPage(id: number, page: Partial<HandbookPage>): Promise<HandbookPage>
+  abstract deleteHandbookPage(id: number): Promise<boolean>
+  abstract reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>): Promise<void>
+
+  // Handbook Page Renders
+  abstract getHandbookPageRender(id: number, targetLang: string): Promise<any | null>
+  abstract saveHandbookPageRender(renderData: {
+    page_id: number;
+    target_lang: string;
+    rendered_title: string;
+    rendered_content: string;
+  }): Promise<void>
+  abstract invalidateHandbookPageRenders(id: number): Promise<void>
 
   abstract stableExpressionId(text: string, language_code: string): number
   abstract formatTimestamps<T extends Record<string, any>>(obj: T): T
