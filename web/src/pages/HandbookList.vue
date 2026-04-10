@@ -55,6 +55,9 @@
               {{ $t('public') }}
             </span>
           </div>
+          <p v-if="handbook.author" class="text-gray-500 text-xs mb-1 truncate">
+            {{ handbook.author }}<span v-if="handbook.published_at"> · {{ handbook.published_at?.substring(0, 4) }}</span>
+          </p>
           <p v-if="handbook.description" class="text-gray-600 text-sm mb-2 line-clamp-3 leading-relaxed">
             {{ handbook.description }}
           </p>
@@ -71,7 +74,10 @@
         </div>
         <div
           class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-          <span>{{ formatDate(handbook.created_at) }}</span>
+          <div class="flex items-center gap-2">
+            <span>{{ formatDate(handbook.created_at) }}</span>
+            <span v-if="handbook.page_count > 0" class="text-blue-600">{{ handbook.page_count }} {{ $t('page_count') || 'pages' }}</span>
+          </div>
           <div v-if="isLoggedIn && activeTab === 'my'" class="flex gap-3" @click.stop>
             <button @click="goToEdit(handbook.id)" class="hover:text-blue-600 transition-colors">
               {{ $t('edit') }}
@@ -222,7 +228,7 @@ export default {
         const deleteResult = await handbooksApi.delete(handbookToDelete.value.id)
         if (!deleteResult.success) {
           console.error('Delete failed:', deleteResult.error || deleteResult.message)
-          alert('Failed to delete handbook. Please try again.')
+          alert(t('handbook_delete_failed'))
           deleting.value = false
           return
         }

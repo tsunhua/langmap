@@ -1,4 +1,4 @@
-import { AbstractDatabaseService, Language, Expression, Meaning, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook, UILocale, ExpressionGroup } from './protocol.js'
+import { AbstractDatabaseService, Language, Expression, Meaning, ExpressionVersion, User, Statistics, HeatmapData, Collection, CollectionItem, Handbook, HandbookPage, UILocale, ExpressionGroup } from './protocol.js'
 import { ExpressionQueries } from './queries/expression.js'
 import { UserQueries } from './queries/user.js'
 import { CollectionQueries } from './queries/collection.js'
@@ -775,6 +775,183 @@ export class D1DatabaseService extends AbstractDatabaseService {
 
   async invalidateHandbookRenders(id: number): Promise<void> {
     await this.handbookQueries.updateRenders(id, '{}')
+  }
+
+  // Handbook Pages
+  async getHandbookPages(handbookId: number): Promise<HandbookPage[]> {
+    const { results } = await this.db.prepare(
+      'SELECT * FROM handbook_pages WHERE handbook_id = ? ORDER BY sort_order ASC'
+    ).bind(handbookId).all<HandbookPage>()
+    return (results || []).map(p => this.formatTimestamps(p) as HandbookPage)
+  }
+
+  async getHandbookPageById(id: number): Promise<HandbookPage | null> {
+    const page = await this.db.prepare(
+      'SELECT * FROM handbook_pages WHERE id = ?'
+    ).bind(id).first<HandbookPage>()
+    if (!page) return null
+    return this.formatTimestamps(page) as HandbookPage
+  }
+
+  async getHandbookPageSummaries(handbookId: number): Promise<Array<{ id: number; title: string; sort_order: number }>> {
+    const { results } = await this.db.prepare(
+      'SELECT id, title, sort_order FROM handbook_pages WHERE handbook_id = ? ORDER BY sort_order ASC'
+    ).bind(handbookId).all<{ id: number; title: string; sort_order: number }>()
+    return results || []
+  }
+
+  async createHandbookPage(page: Partial<HandbookPage>): Promise<HandbookPage> {
+    const handbookId = page.handbook_id!
+    const title = page.title || ''
+    const id = this.stableHashId(`${handbookId}|${title}|${Date.now()}`)
+    const maxOrderResult = await this.db.prepare(
+      'SELECT MAX(sort_order) as max_order FROM handbook_pages WHERE handbook_id = ?'
+    ).bind(handbookId).first<{ max_order: number }>()
+    const sortOrder = (maxOrderResult?.max_order || 0) + 1
+
+    const result = await this.db.prepare(
+      `INSERT INTO handbook_pages (id, handbook_id, title, content, sort_order, renders)
+       VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
+    ).bind(id, handbookId, title, page.content || '', sortOrder, '{}').first<HandbookPage>()
+
+    if (!result) {
+      throw new Error('Failed to create handbook page')
+    }
+
+    await this.db.prepare(
+      'UPDATE handbooks SET has_pages = 1 WHERE id = ?'
+    ).bind(handbookId).run()
+
+    return this.formatTimestamps(result) as HandbookPage
+  }
+
+  async updateHandbookPage(id: number, page: Partial<HandbookPage>): Promise<HandbookPage> {
+    const fields: string[] = []
+    const values: any[] = []
+
+    if (page.title !== undefined) {
+      fields.push('title = ?')
+      values.push(page.title)
+    }
+    if (page.content !== undefined) {
+      fields.push('content = ?')
+      values.push(page.content)
+    }
+    if (page.sort_order !== undefined) {
+      fields.push('sort_order = ?')
+      values.push(page.sort_order)
+    }
+
+    if (fields.length === 0) {
+      const existing = await this.getHandbookPageById(id)
+      if (!existing) throw new Error('Handbook page not found')
+      return existing
+    }
+
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const result = await this.db.prepare(
+      `UPDATE handbook_pages SET ${fields.join(', ')} WHERE id = ? RETURNING *`
+    ).bind(...values).first<HandbookPage>()
+
+    if (!result) {
+      throw new Error('Failed to update handbook page')
+    }
+
+    await this.invalidateHandbookPageRenders(id)
+
+    return this.formatTimestamps(result) as HandbookPage
+  }
+
+  async deleteHandbookPage(id: number): Promise<boolean> {
+    const page = await this.getHandbookPageById(id)
+    if (!page) return false
+
+    const result = await this.db.prepare(
+      'DELETE FROM handbook_pages WHERE id = ?'
+    ).bind(id).run()
+
+    return (result.meta?.changes ?? 0) > 0
+  }
+
+  async reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>, handbookId: number): Promise<void> {
+    const pageIds = pages.map(p => p.id)
+    const placeholders = pageIds.map(() => '?').join(',')
+    const validPages = await this.db.prepare(
+      `SELECT id FROM handbook_pages WHERE id IN (${placeholders}) AND handbook_id = ?`
+    ).bind(...pageIds, handbookId).all<{ id: number }>()
+
+    const validIds = new Set((validPages.results || []).map(p => p.id))
+    const invalidIds = pageIds.filter(id => !validIds.has(id))
+    if (invalidIds.length > 0) {
+      throw new Error(`Pages ${invalidIds.join(', ')} do not belong to handbook ${handbookId}`)
+    }
+
+    const statements = pages.map(p =>
+      this.db.prepare('UPDATE handbook_pages SET sort_order = ? WHERE id = ?').bind(p.sort_order, p.id)
+    )
+    await this.db.batch(statements)
+  }
+
+  async getHandbookPageRender(id: number, targetLang: string): Promise<any | null> {
+    const result = await this.db.prepare(
+      'SELECT renders FROM handbook_pages WHERE id = ?'
+    ).bind(id).first<{ renders: string }>()
+
+    if (!result?.renders) return null
+
+    try {
+      const renders = JSON.parse(result.renders)
+      const render = renders[targetLang]
+      if (!render) return null
+
+      const renderedTime = render.at || 0
+      if (Date.now() - renderedTime > 7 * 24 * 3600 * 1000) {
+        return null
+      }
+
+      return render
+    } catch (e) {
+      console.error('Failed to parse handbook page renders:', e)
+      return null
+    }
+  }
+
+  async saveHandbookPageRender(renderData: {
+    page_id: number;
+    target_lang: string;
+    rendered_title: string;
+    rendered_content: string;
+  }): Promise<void> {
+    const currentResult = await this.db.prepare(
+      'SELECT renders FROM handbook_pages WHERE id = ?'
+    ).bind(renderData.page_id).first<{ renders: string }>()
+
+    let renders: any = {}
+    if (currentResult?.renders) {
+      try {
+        renders = JSON.parse(currentResult.renders)
+      } catch (e) {
+        console.error('Failed to parse current handbook page renders:', e)
+      }
+    }
+
+    renders[renderData.target_lang] = {
+      rendered_title: renderData.rendered_title,
+      rendered_content: renderData.rendered_content,
+      at: Date.now()
+    }
+
+    await this.db.prepare(
+      'UPDATE handbook_pages SET renders = ? WHERE id = ?'
+    ).bind(JSON.stringify(renders), renderData.page_id).run()
+  }
+
+  async invalidateHandbookPageRenders(id: number): Promise<void> {
+    await this.db.prepare(
+      'UPDATE handbook_pages SET renders = ? WHERE id = ?'
+    ).bind('{}', id).run()
   }
 
   // UI Locale methods (NEW - replaces UI translations)

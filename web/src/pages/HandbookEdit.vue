@@ -40,219 +40,292 @@
     </div>
 
     <div class="max-w-7xl mx-auto space-y-5">
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <!-- Title, Description & Language Settings -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-4">
-          <!-- Left: Title & Description -->
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('title_label') }}
-              </label>
-              <input v-model="form.title" type="text"
-                class="w-full text-base font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-3 min-h-[44px]"
-                :placeholder="$t('handbook_title_placeholder')" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
-              <textarea v-model="form.description" rows="2"
-                class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"></textarea>
-            </div>
-          </div>
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-200 mb-6">
+          <button @click="activeTab = 'basic'"
+            :class="['px-6 py-3 text-sm font-medium transition-colors border-b-2', activeTab === 'basic' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+            {{ $t('basic_info') || 'Basic Info' }}
+          </button>
+          <button v-if="isEditing" @click="activeTab = 'pages'"
+            :class="['px-6 py-3 text-sm font-medium transition-colors border-b-2', activeTab === 'pages' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+            {{ $t('page_management') || 'Page Management' }}
+          </button>
+        </div>
 
-          <!-- Right: Language Selectors -->
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('content_lang') }}
-              </label>
-              <select v-model="form.content_lang"
-                class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
-                <option value="" disabled>{{ $t('select_language') }}</option>
-                <option v-for="lang in languages" :key="lang.code" :value="lang.code">
-                  {{ lang.name }}
-                </option>
-              </select>
+        <div v-show="activeTab === 'basic'">
+          <!-- Title, Description & Language Settings -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-4">
+            <!-- Left: Title & Description -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                  <span class="text-red-500">*</span> {{ $t('title_label') }}
+                </label>
+                <input v-model="form.title" type="text"
+                  class="w-full text-base font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-3 min-h-[44px]"
+                  :placeholder="$t('handbook_title_placeholder')" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('description') }}</label>
+                <textarea v-model="form.description" rows="2"
+                  class="w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm min-h-[44px]"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('author') }}</label>
+                <input v-model="form.author" type="text"
+                  class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 min-h-[44px]"
+                  :placeholder="$t('author_placeholder') || 'Author name'" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">{{ $t('published_at') }}</label>
+                <input v-model="form.published_at" type="date"
+                  class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-3 min-h-[44px]" />
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1.5">
-                <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
-              </label>
-              <div class="flex items-center gap-2">
-                <div class="flex flex-wrap gap-1.5 items-center relative">
-                  <span v-for="lang in selectedInstructionLanguages" :key="lang.code" class="language-tag"
-                    :style="{ '--lang-color': getLanguageColor(lang) }" @click="openColorPicker(lang.code)"
-                    :title="$t('customize_color')">
-                    <span class="language-dot"></span>
+
+            <!-- Right: Language Selectors -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                  <span class="text-red-500">*</span> {{ $t('content_lang') }}
+                </label>
+                <select v-model="form.content_lang"
+                  class="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2.5 px-2.5 bg-white min-h-[44px] cursor-pointer">
+                  <option value="" disabled>{{ $t('select_language') }}</option>
+                  <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                     {{ lang.name }}
-                    <span class="language-remove" @click.stop="removeInstructionLanguage(lang.code)"
-                      :title="$t('remove_language')">×</span>
-                  </span>
-
-                  <button class="language-add"
-                    @click="showInstructionLanguageSelector = !showInstructionLanguageSelector"
-                    :title="$t('add_language')">
-                    +
-                  </button>
-
-                  <div v-if="showInstructionLanguageSelector" class="language-selector-dropdown">
-                    <div v-for="lang in availableInstructionLanguages" :key="lang.code" class="language-option"
-                      :style="{ '--lang-color': getLanguageColor(lang) }" @click="addInstructionLanguage(lang)">
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                  <span class="text-red-500">*</span> {{ $t('instruction_lang') }}
+                </label>
+                <div class="flex items-center gap-2">
+                  <div class="flex flex-wrap gap-1.5 items-center relative">
+                    <span v-for="lang in selectedInstructionLanguages" :key="lang.code" class="language-tag"
+                      :style="{ '--lang-color': getLanguageColor(lang) }" @click="openColorPicker(lang.code)"
+                      :title="$t('customize_color')">
                       <span class="language-dot"></span>
                       {{ lang.name }}
-                    </div>
-                  </div>
-                </div>
+                      <span class="language-remove" @click.stop="removeInstructionLanguage(lang.code)"
+                        :title="$t('remove_language')">×</span>
+                    </span>
 
-                <!-- Color Picker Modal -->
-                <div v-if="showColorPicker" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                  @click="closeColorPicker">
-                  <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full mx-4" @click.stop>
-                    <h3 class="text-lg font-semibold mb-4">{{ $t('customize_color') }}</h3>
-                    <p class="text-sm text-gray-600 mb-3">{{ selectedLanguageForColor?.name }}</p>
-                    <div class="flex items-center gap-4 mb-4">
-                      <input type="color" v-model="tempColor" class="w-16 h-16 cursor-pointer border-0 rounded-lg" />
-                      <div class="flex-1">
-                        <input type="text" v-model="tempColor"
-                          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase" maxlength="7" />
-                        <p class="text-xs text-gray-400 mt-1">{{ $t('color_hex_format') }}</p>
+                    <button class="language-add"
+                      @click="showInstructionLanguageSelector = !showInstructionLanguageSelector"
+                      :title="$t('add_language')">
+                      +
+                    </button>
+
+                    <div v-if="showInstructionLanguageSelector" class="language-selector-dropdown">
+                      <div v-for="lang in availableInstructionLanguages" :key="lang.code" class="language-option"
+                        :style="{ '--lang-color': getLanguageColor(lang) }" @click="addInstructionLanguage(lang)">
+                        <span class="language-dot"></span>
+                        {{ lang.name }}
                       </div>
                     </div>
-                    <div class="flex justify-end gap-2">
-                      <button @click="resetColorToDefault"
-                        class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        {{ $t('reset_to_default') }}
-                      </button>
-                      <button @click="saveColor"
-                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        {{ $t('save') }}
-                      </button>
-                    </div>
                   </div>
-                </div>
-              </div>
-              <input v-model="form.instruction_lang_prefix" type="text"
-                class="mt-2 w-full text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2 min-h-[44px]"
-                :placeholder="$t('lang_code_prefix')" />
-            </div>
-          </div>
-        </div>
 
-        <!-- Content Editor -->
-        <div class="mb-6">
-          <label class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="text-red-500">*</span> {{ $t('handbook_content_label') }}
-          </label>
-
-          <div :class="['grid gap-4', showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
-            <!-- Left Column: Editor -->
-            <div>
-              <!-- Expression Search with Preview Toggle -->
-              <div class="flex gap-2 mb-2">
-                <div class="relative flex-1">
-                  <input v-model="searchQuery" type="text"
-                    class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
-                    :placeholder="form.content_lang ? `🔍 ${$t('search_in_lang', { lang: form.content_lang })}` : ('🔍 ' + $t('insert_expression'))"
-                    @input="search" />
-
-                  <!-- Search Results Dropdown -->
-                  <div v-if="searchQuery && (searchResults.length > 0 || searching)"
-                    class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
-                    <div v-if="searching" class="p-4 text-center">
-                      <div
-                        class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full">
-                      </div>
-                    </div>
-                    <div v-else>
-                      <div v-for="expr in searchResults" :key="expr.id"
-                        class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
-                        @click="insertAndClear(expr)">
-                        <div class="flex justify-between items-center w-full">
-                          <span v-if="expr.language_code !== 'image'" class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
-                          <img v-else :src="expr.text" class="h-12 w-12 object-contain rounded" alt="expression image" />
-                          <span
-                            class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
-                            expr.language_code }}</span>
+                  <!-- Color Picker Modal -->
+                  <div v-if="showColorPicker" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    @click="closeColorPicker">
+                    <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full mx-4" @click.stop>
+                      <h3 class="text-lg font-semibold mb-4">{{ $t('customize_color') }}</h3>
+                      <p class="text-sm text-gray-600 mb-3">{{ selectedLanguageForColor?.name }}</p>
+                      <div class="flex items-center gap-4 mb-4">
+                        <input type="color" v-model="tempColor" class="w-16 h-16 cursor-pointer border-0 rounded-lg" />
+                        <div class="flex-1">
+                          <input type="text" v-model="tempColor"
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase" maxlength="7" />
+                          <p class="text-xs text-gray-400 mt-1">{{ $t('color_hex_format') }}</p>
                         </div>
                       </div>
+                      <div class="flex justify-end gap-2">
+                        <button @click="resetColorToDefault"
+                          class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                          {{ $t('reset_to_default') }}
+                        </button>
+                        <button @click="saveColor"
+                          class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          {{ $t('save') }}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <button @click="showPreview = !showPreview"
-                  :class="['min-h-[44px] px-3 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer border shrink-0', showPreview ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 border-gray-200']"
-                  :title="showPreview ? $t('hide_preview') : $t('show_preview')">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-4 h-4">
-                    <path v-if="showPreview" stroke-linecap="round" stroke-linejoin="round"
-                      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    <path v-else stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path v-if="!showPreview" stroke-linecap="round" stroke-linejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span class="hidden sm:inline">{{ showPreview ? $t('hide_preview') : $t('show_preview') }}</span>
-                </button>
+                <input v-model="form.instruction_lang_prefix" type="text"
+                  class="mt-2 w-full text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 py-2 px-2 min-h-[44px]"
+                  :placeholder="$t('lang_code_prefix')" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Editor (Only show if not in multi-page mode or as introduction) -->
+          <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              <span v-if="!form.has_pages" class="text-red-500">*</span> {{ form.has_pages ? ($t('introduction') || 'Introduction') : $t('handbook_content_label') }}
+            </label>
+
+            <div :class="['grid gap-4', showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
+              <!-- Left Column: Editor -->
+              <div>
+                <!-- Expression Search with Preview Toggle -->
+                <div class="flex gap-2 mb-2">
+                  <div class="relative flex-1">
+                    <input v-model="searchQuery" type="text"
+                      class="w-full pl-8 pr-3 py-2.5 sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 outline-none focus:bg-white min-h-[44px]"
+                      :placeholder="form.content_lang ? `🔍 ${$t('search_in_lang', { lang: form.content_lang })}` : ('🔍 ' + $t('insert_expression'))"
+                      @input="search" />
+
+                    <!-- Search Results Dropdown -->
+                    <div v-if="searchQuery && (searchResults.length > 0 || searching)"
+                      class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
+                      <div v-if="searching" class="p-4 text-center">
+                        <div
+                          class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full">
+                        </div>
+                      </div>
+                      <div v-else>
+                        <template v-for="expr in searchResults" :key="expr?.id">
+                          <div v-if="expr"
+                            class="p-2 sm:p-2.5 border-b border-gray-50 last:border-none hover:bg-blue-50 cursor-pointer transition-colors min-h-[44px] flex items-center"
+                            @click="insertAndClear(expr)">
+                            <div class="flex justify-between items-center w-full">
+                              <span v-if="expr.language_code !== 'image'" class="font-bold text-sm text-gray-800">{{ expr.text }}</span>
+                              <img v-else :src="expr.text" class="h-12 w-12 object-contain rounded" alt="expression image" />
+                              <span
+                                class="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold uppercase">{{
+                                expr.language_code }}</span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                  <button @click="showPreview = !showPreview"
+                    :class="['min-h-[44px] px-3 py-1 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 cursor-pointer border shrink-0', showPreview ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-500 hover:bg-gray-50 border-gray-200']"
+                    :title="showPreview ? $t('hide_preview') : $t('show_preview')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="w-4 h-4">
+                      <path v-if="showPreview" stroke-linecap="round" stroke-linejoin="round"
+                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      <path v-else stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path v-if="!showPreview" stroke-linecap="round" stroke-linejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="hidden sm:inline">{{ showPreview ? $t('hide_preview') : $t('show_preview') }}</span>
+                  </button>
+                </div>
+
+                <MdEditor ref="mdEditorRef" v-model="form.content" :preview="false" :htmlPreview="false"
+                  :noUploadImg="true" :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
+                  placeholder="Write your content here..."
+                  class="border border-gray-200 rounded-xl overflow-hidden"
+                  :style="{ height: showPreview ? '700px' : '760px' }" />
               </div>
 
-              <MdEditor ref="mdEditorRef" v-model="form.content" :preview="false" :htmlPreview="false"
-                :noUploadImg="true" :toolbarsExclude="['preview', 'htmlPreview', 'mermaid', 'katex', 'github']"
-                placeholder="Write your content here. Use {{word}}, {{text:word|lang:en-US}} or {{text:word|mid:123}} to insert expressions."
-                class="border border-gray-200 rounded-xl overflow-hidden"
-                :style="{ height: showPreview ? '700px' : '760px' }" />
+              <!-- Right Column: Preview -->
+              <div v-if="showPreview" class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 overflow-y-auto" :style="{ maxHeight: '760px' }">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                  <h3 class="text-sm font-semibold text-gray-700">{{ $t('preview') }}</h3>
+                </div>
+                <div v-if="previewLoading" class="min-h-[150px] flex items-center justify-center">
+                  <div class="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                </div>
+                <div v-else>
+                  <h1 class="text-xl sm:text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
+                  <p v-if="renderedDescription" class="mt-2 text-sm text-gray-500" v-html="renderedDescription"></p>
+                  <div class="prose prose-sm sm:prose-base max-w-none mt-6" v-html="renderedContent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Public & Multi-page Toggles -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" v-model="form.is_public" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <div>
+                  <span class="block text-sm font-medium text-gray-700">{{ $t('public_access') }}</span>
+                  <span class="text-[11px] text-gray-400">{{ $t('public_hint') }}</span>
+                </div>
+              </div>
             </div>
 
-            <!-- Right Column: Preview -->
-            <div v-if="showPreview" class="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-              <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <h3 class="text-sm font-semibold text-gray-700">{{ $t('preview') }}</h3>
-                <span v-if="previewLoading"
-                  class="ml-auto inline-block w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-              </div>
-
-              <div v-if="previewLoading" class="min-h-[150px] flex items-center justify-center">
-                <div class="text-center text-gray-500">
-                  <div
-                    class="animate-spin inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mb-2">
-                  </div>
-                  <p class="text-xs">{{ $t('loading_preview') }}</p>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" v-model="form.has_pages" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <div>
+                  <span class="block text-sm font-medium text-gray-700">{{ $t('multi_page_mode') || 'Multi-page Mode' }}</span>
+                  <span class="text-[11px] text-gray-400">{{ $t('multi_page_hint') || 'Enable multiple pages for this handbook' }}</span>
                 </div>
-              </div>
-              <div v-else>
-                <!-- Rendered Header in Preview -->
-                <div class="flex flex-col gap-4 pb-6 border-b border-gray-100">
-                  <div class="space-y-1.5 flex-1">
-                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800" v-html="renderedTitle"></h1>
-                    <p v-if="renderedDescription" class="text-sm text-gray-500 max-w-2xl leading-relaxed"
-                      v-html="renderedDescription"></p>
-                  </div>
-                </div>
-
-                <div
-                  class="prose prose-blue prose-headings:text-gray-800 prose-p:text-gray-600 prose-strong:text-gray-700 max-w-none leading-loose py-6 markdown-body prose-sm sm:prose-base"
-                  v-html="renderedContent"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Public Toggle -->
-        <div
-          class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" v-model="form.is_public" class="sr-only peer">
-            <div
-              class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-            </div>
-            <span class="ml-3 text-sm font-medium text-gray-700">{{ $t('public_access') }}</span>
-          </label>
-          <p class="text-[11px] text-gray-400">{{ $t('public_hint') }}</p>
-        </div>
+        <!-- Page Management Tab -->
+        <div v-show="activeTab === 'pages'">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">{{ $t('pages') }} ({{ pages.length }})</h3>
+            <button @click="addPage"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors cursor-pointer shadow-sm">
+              + {{ $t('add_page') || 'Add Page' }}
+            </button>
+          </div>
+
+          <div v-if="pages.length === 0" class="py-12 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+            <div class="text-4xl mb-3">📄</div>
+            <p class="text-gray-500 text-sm">{{ $t('no_pages_yet') || 'No pages added yet.' }}</p>
+          </div>
+
+          <div v-else class="space-y-2">
+            <template v-for="(page, index) in pages" :key="page?.id || index">
+              <div v-if="page"
+                class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all group">
+                <div class="flex items-center gap-4">
+                  <div class="flex flex-col gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
+                    <button @click="movePage(index, -1)" :disabled="index === 0" class="p-1 hover:bg-gray-100 rounded disabled:opacity-30 cursor-pointer">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/></svg>
+                    </button>
+                    <button @click="movePage(index, 1)" :disabled="index === pages.length - 1" class="p-1 hover:bg-gray-100 rounded disabled:opacity-30 cursor-pointer">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                    </button>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{{ page.title }}</h4>
+                    <p class="text-xs text-gray-500 mt-0.5">Order: {{ index + 1 }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button @click="editPage(page.id)"
+                    class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <button @click="deletePage(page.id)"
+                    class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div v-if="orderChanged" class="mt-6 flex justify-end">
+            <button @click="saveOrder" :disabled="savingOrder"
+              class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium cursor-pointer shadow-sm">
+              {{ savingOrder ? $t('saving') : ($t('save_order') || 'Save Order') }}
+            </button>
+          </div>
       </div>
     </div>
   </div>
@@ -294,13 +367,21 @@ export default {
     const form = reactive({
       title: '',
       description: '',
+      author: '',
+      published_at: '',
       content: '',
       content_lang: '',
       instruction_langs: [],
       is_public: false,
+      has_pages: true,
       instruction_lang_prefix: '',
       lang_colors: {}
     })
+
+    const activeTab = ref('basic')
+    const pages = ref([])
+    const savingOrder = ref(false)
+    const orderChanged = ref(false)
 
     const storageKey = computed(() => props.id ? `handbook_draft_${props.id}` : 'handbook_draft_new')
     const hasDraft = ref(false)
@@ -316,6 +397,7 @@ export default {
       content_lang: form.content_lang,
       instruction_langs: Array.isArray(form.instruction_langs) ? [...form.instruction_langs] : [],
       is_public: !!form.is_public,
+      has_pages: !!form.has_pages,
       instruction_lang_prefix: form.instruction_lang_prefix,
       lang_colors: form.lang_colors && typeof form.lang_colors === 'object' ? form.lang_colors : {}
     })
@@ -484,12 +566,15 @@ export default {
           if (data) {
             form.title = data.title
             form.description = data.description || ''
+            form.author = data.author || ''
+            form.published_at = data.published_at || ''
             form.content = data.content
             form.content_lang = data.source_lang || ''
             form.instruction_langs = data.target_lang
               ? data.target_lang.split(',').filter(l => l)
               : []
             form.is_public = !!data.is_public
+            form.has_pages = !!data.has_pages
             form.instruction_lang_prefix = data.instruction_lang_prefix || ''
 
             if (data.lang_colors) {
@@ -500,12 +585,81 @@ export default {
               }
             }
 
+            if (form.has_pages) {
+              fetchPages()
+            }
           }
         }
       } catch (error) {
         console.error('Failed to fetch handbook:', error)
         router.push('/handbooks')
       }
+    }
+
+    const fetchPages = async () => {
+      if (!props.id) return
+      try {
+        const response = await handbooksApi.getPages(props.id)
+        if (response.success && Array.isArray(response.data)) {
+          pages.value = response.data
+          orderChanged.value = false
+          console.log('[HandbookEdit] Pages fetched successfully:', pages.value.length)
+        } else {
+          console.error('[HandbookEdit] fetchPages returned non-array data:', response.data)
+          pages.value = []
+        }
+      } catch (error) {
+        console.error('Failed to fetch pages:', error)
+      }
+    }
+
+    const movePage = (index, direction) => {
+      const newIndex = index + direction
+      if (newIndex < 0 || newIndex >= pages.value.length) return
+
+      const list = [...pages.value]
+      const [moved] = list.splice(index, 1)
+      list.splice(newIndex, 0, moved)
+      pages.value = list
+      orderChanged.value = true
+    }
+
+    const saveOrder = async () => {
+      savingOrder.value = true
+      try {
+        const reorderData = pages.value
+          .filter(p => p && p.id)
+          .map((p, i) => ({ id: p.id, sort_order: i + 1 }))
+        
+        if (reorderData.length === 0) return
+        
+        await handbooksApi.reorderPages(props.id, reorderData)
+        orderChanged.value = false
+      } catch (error) {
+        console.error('Failed to save page order:', error)
+        alert(t('page_order_save_failed'))
+      } finally {
+        savingOrder.value = false
+      }
+    }
+
+    const deletePage = async (pageId) => {
+      if (!confirm(t('confirm_delete_page') || 'Are you sure you want to delete this page?')) return
+      try {
+        await handbooksApi.deletePage(props.id, pageId)
+        pages.value = pages.value.filter(p => p.id !== pageId)
+      } catch (error) {
+        console.error('Failed to delete page:', error)
+        alert(t('page_delete_failed'))
+      }
+    }
+
+    const addPage = () => {
+      router.push(`/handbooks/${props.id}/pages/new`)
+    }
+
+    const editPage = (pageId) => {
+      router.push(`/handbooks/${props.id}/pages/${pageId}/edit`)
     }
 
     const checkDraft = () => {
@@ -951,7 +1105,7 @@ export default {
         alert(t('title_required'))
         return
       }
-      if (!form.content.trim()) {
+      if (!form.has_pages && !form.content.trim()) {
         alert(t('content_required'))
         return
       }
@@ -973,6 +1127,9 @@ export default {
           source_lang: form.content_lang || null,
           target_lang: form.instruction_langs.length > 0 ? form.instruction_langs.join(',') : null,
           is_public: form.is_public,
+          author: form.author || null,
+          published_at: form.published_at || null,
+          has_pages: form.has_pages,
           instruction_lang_prefix: form.instruction_lang_prefix || null,
           lang_colors: JSON.stringify(form.lang_colors || {})
         }
@@ -991,6 +1148,9 @@ export default {
             console.error('Create failed:', createResult.error || createResult.message)
             alert(t('handbook_save_failed'))
             return
+          }
+          if (!createResult.data || !createResult.data.id) {
+            throw new Error('Create successful but no handbook ID returned')
           }
           handbookId = createResult.data.id
         }
@@ -1047,43 +1207,53 @@ export default {
       return true
     })
 
-    return {
-      isEditing,
-      saving,
-      showPreview,
-      previewLoading,
-      form,
-      languages,
-      availableInstructionLanguages,
-      selectedInstructionLanguages,
-      showInstructionLanguageSelector,
-      searchQuery,
-      searchResults,
-      searching,
-      mdEditorRef,
-      renderedContent,
-      renderedTitle,
-      renderedDescription,
-      search,
-      insertExpression,
-      insertAndClear,
-      save,
-      goBack,
-      hasDraft,
-      restoreDraft,
-      clearDraft,
-      getLanguageColor,
-      addInstructionLanguage,
-      removeInstructionLanguage,
-      showColorPicker,
-      selectedLanguageForColor,
-      tempColor,
-      openColorPicker,
-      closeColorPicker,
-      saveColor,
-      resetColorToDefault
+      return {
+        isEditing,
+        saving,
+        showPreview,
+        previewLoading,
+        form,
+        languages,
+        availableInstructionLanguages,
+        selectedInstructionLanguages,
+        showInstructionLanguageSelector,
+        searchQuery,
+        searchResults,
+        searching,
+        mdEditorRef,
+        renderedContent,
+        renderedTitle,
+        renderedDescription,
+        search,
+        insertExpression,
+        insertAndClear,
+        save,
+        goBack,
+        hasDraft,
+        restoreDraft,
+        clearDraft,
+        getLanguageColor,
+        addInstructionLanguage,
+        removeInstructionLanguage,
+        showColorPicker,
+        selectedLanguageForColor,
+        tempColor,
+        openColorPicker,
+        closeColorPicker,
+        saveColor,
+        resetColorToDefault,
+        activeTab,
+        pages,
+        orderChanged,
+        savingOrder,
+        fetchPages,
+        movePage,
+        saveOrder,
+        deletePage,
+        addPage,
+        editPage
+      }
     }
-  }
 }
 </script>
 
