@@ -273,7 +273,7 @@ export abstract class AbstractDatabaseService {
   abstract createHandbookPage(page: Partial<HandbookPage>): Promise<HandbookPage>
   abstract updateHandbookPage(id: number, page: Partial<HandbookPage>): Promise<HandbookPage>
   abstract deleteHandbookPage(id: number): Promise<boolean>
-  abstract reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>): Promise<void>
+  abstract reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>, handbookId: number): Promise<void>
 
   // Handbook Page Renders
   abstract getHandbookPageRender(id: number, targetLang: string): Promise<any | null>

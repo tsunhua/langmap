@@ -872,20 +872,22 @@ export class D1DatabaseService extends AbstractDatabaseService {
       'DELETE FROM handbook_pages WHERE id = ?'
     ).bind(id).run()
 
-    const remaining = await this.db.prepare(
-      'SELECT COUNT(*) as count FROM handbook_pages WHERE handbook_id = ?'
-    ).bind(page.handbook_id).first<{ count: number }>()
-
-    if (remaining && remaining.count === 0) {
-      await this.db.prepare(
-        'UPDATE handbooks SET has_pages = 0 WHERE id = ?'
-      ).bind(page.handbook_id).run()
-    }
-
     return (result.meta?.changes ?? 0) > 0
   }
 
-  async reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>): Promise<void> {
+  async reorderHandbookPages(pages: Array<{ id: number; sort_order: number }>, handbookId: number): Promise<void> {
+    const pageIds = pages.map(p => p.id)
+    const placeholders = pageIds.map(() => '?').join(',')
+    const validPages = await this.db.prepare(
+      `SELECT id FROM handbook_pages WHERE id IN (${placeholders}) AND handbook_id = ?`
+    ).bind(...pageIds, handbookId).all<{ id: number }>()
+
+    const validIds = new Set((validPages.results || []).map(p => p.id))
+    const invalidIds = pageIds.filter(id => !validIds.has(id))
+    if (invalidIds.length > 0) {
+      throw new Error(`Pages ${invalidIds.join(', ')} do not belong to handbook ${handbookId}`)
+    }
+
     const statements = pages.map(p =>
       this.db.prepare('UPDATE handbook_pages SET sort_order = ? WHERE id = ?').bind(p.sort_order, p.id)
     )

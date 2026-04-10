@@ -304,6 +304,7 @@
 <script>
 import { ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { handbooksApi } from '../api/index.ts'
 import { languagesApi } from '../api/index.ts'
 import { generateLanguageColor } from '../utils/languageUtils'
@@ -315,6 +316,7 @@ export default {
   props: ['id', 'pageId'],
   setup(props) {
     const router = useRouter()
+    const { t } = useI18n()
     const route = router.currentRoute
 
     // State

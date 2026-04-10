@@ -9,6 +9,7 @@
   "no_preview": "Preview will appear here",
   "page_order_save_failed": "Failed to save page order",
   "page_delete_failed": "Failed to delete page",
+  "confirm_delete_page": "Are you sure you want to delete this page?",
   "handbook_delete_failed": "Failed to delete handbook. Please try again.",
   "rerender_failed": "Failed to rerender handbook. Please try again.",
   "about": "About",

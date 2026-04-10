@@ -164,7 +164,7 @@
           <!-- Content Editor (Only show if not in multi-page mode or as introduction) -->
           <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-              <span class="text-red-500">*</span> {{ form.has_pages ? ($t('introduction') || 'Introduction') : $t('handbook_content_label') }}
+              <span v-if="!form.has_pages" class="text-red-500">*</span> {{ form.has_pages ? ($t('introduction') || 'Introduction') : $t('handbook_content_label') }}
             </label>
 
             <div :class="['grid gap-4', showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1']">
@@ -633,7 +633,7 @@ export default {
         
         if (reorderData.length === 0) return
         
-        await axios.put(`/api/v1/handbooks/${props.id}/pages/reorder`, { pages: reorderData })
+        await handbooksApi.reorderPages(props.id, reorderData)
         orderChanged.value = false
       } catch (error) {
         console.error('Failed to save page order:', error)
@@ -644,9 +644,9 @@ export default {
     }
 
     const deletePage = async (pageId) => {
-      if (!confirm('Are you sure you want to delete this page?')) return
+      if (!confirm(t('confirm_delete_page') || 'Are you sure you want to delete this page?')) return
       try {
-        await axios.delete(`/api/v1/handbooks/${props.id}/pages/${pageId}`)
+        await handbooksApi.deletePage(props.id, pageId)
         pages.value = pages.value.filter(p => p.id !== pageId)
       } catch (error) {
         console.error('Failed to delete page:', error)
@@ -1105,7 +1105,7 @@ export default {
         alert(t('title_required'))
         return
       }
-      if (!form.content.trim()) {
+      if (!form.has_pages && !form.content.trim()) {
         alert(t('content_required'))
         return
       }

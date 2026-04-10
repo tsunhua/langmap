@@ -9,6 +9,7 @@
   "no_preview": "預覽會喺呢度顯示",
   "page_order_save_failed": "儲存頁面排序失敗",
   "page_delete_failed": "刪除頁面失敗",
+  "confirm_delete_page": "你確定要刪除呢頁？",
   "handbook_delete_failed": "刪除手冊失敗，請重試。",
   "rerender_failed": "重新產生手冊失敗，請重試。",
   "about": "關於",

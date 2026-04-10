@@ -9,6 +9,7 @@
   "no_preview": "L'aperçu apparaîtra ici",
   "page_order_save_failed": "Échec de l'enregistrement de l'ordre des pages",
   "page_delete_failed": "Échec de la suppression de la page",
+  "confirm_delete_page": "Voulez-vous vraiment supprimer cette page ?",
   "handbook_delete_failed": "Échec de la suppression du manuel. Veuillez réessayer.",
   "rerender_failed": "Échec du rendu du manuel. Veuillez réessayer.",
   "about": "À propos",

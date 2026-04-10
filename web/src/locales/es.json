@@ -9,6 +9,7 @@
   "no_preview": "La vista previa aparecerá aquí",
   "page_order_save_failed": "Error al guardar el orden de las páginas",
   "page_delete_failed": "Error al eliminar la página",
+  "confirm_delete_page": "¿Está seguro de que desea eliminar esta página?",
   "handbook_delete_failed": "Error al eliminar el manual. Por favor, inténtelo de nuevo.",
   "rerender_failed": "Error al volver a renderizar el manual. Por favor, inténtelo de nuevo.",
   "about": "Acerca de",
