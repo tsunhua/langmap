@@ -16,6 +16,14 @@
           <div class="nav-list space-y-1">
             <!-- Multi-page navigation -->
             <template v-if="isMultiPage">
+              <!-- Introduction -->
+              <div 
+                :class="['px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors mb-2 border border-transparent shadow-sm flex items-center gap-2', !currentPageId ? 'bg-blue-600 text-white font-medium border-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100 hover:border-gray-200']"
+                @click="goToPage(null)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>{{ $t('introduction') }}</span>
+              </div>
+
               <div v-for="page in (pages || [])" :key="page?.id">
                 <!-- Page Title -->
                 <div 
@@ -221,6 +229,14 @@
                 <div class="nav-list space-y-1">
                   <!-- Multi-page navigation -->
                   <template v-if="isMultiPage">
+                    <!-- Introduction (Mobile) -->
+                    <div 
+                      :class="['px-3 py-3 rounded-lg cursor-pointer text-sm transition-colors mb-2 flex items-center gap-2', !currentPageId ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50']"
+                      @click="onPageMobileClick(null)">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                      {{ $t('introduction') }}
+                    </div>
+
                     <div v-for="page in (pages || [])" :key="page?.id">
                       <!-- Page Title -->
                       <div 
@@ -423,10 +439,6 @@ export default {
                 }
                 console.log('[HandbookView] Current page content loaded:', pageData.id)
               }
-            } else if (pages.value.length > 0 && pages.value[0]?.id) {
-              console.log('[HandbookView] Redirecting to first page:', pages.value[0].id)
-              router.replace(`/handbooks/${props.id}/pages/${pages.value[0].id}${route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''}`)
-              return
             }
           }
 
@@ -792,14 +804,21 @@ export default {
     }
 
     const goToPage = (pageId) => {
-      router.push(`/handbooks/${props.id}/pages/${pageId}${route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''}`)
+      const queryStr = route.value.query.target_lang ? '?target_lang=' + route.value.query.target_lang : ''
+      if (pageId) {
+        router.push(`/handbooks/${props.id}/pages/${pageId}${queryStr}`)
+      } else {
+        router.push(`/handbooks/${props.id}${queryStr}`)
+      }
     }
 
     const onPageMobileClick = (page) => {
       if (page) {
         goToPage(page.id)
-        showMobileToc.value = false
+      } else {
+        goToPage(null)
       }
+      showMobileToc.value = false
     }
 
     const goToNewPage = () => {
