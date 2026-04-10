@@ -88,11 +88,12 @@
               <p v-if="handbook?.rendered_description || handbook?.description"
                 class="text-sm text-gray-500 max-w-2xl leading-relaxed mt-8"
                 v-html="handbook?.rendered_description || handbook?.description"></p>
-              <div v-if="handbook" class="text-[11px] text-gray-400 mt-4">
+              <div v-if="handbook" class="flex flex-col gap-1.5 mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 text-xs text-gray-500">
+                <p v-if="handbook.author" class="text-gray-700">{{ $t('author') }}: {{ handbook.author }}</p>
+                <p v-if="handbook.published_at">{{ $t('published_at') }}: {{ handbook.published_at?.substring(0, 10) }}</p>
                 <p v-if="handbook.created_by">{{ $t('created_by') }}: {{ handbook.created_by }}</p>
-                <p>{{ $t('last_updated') }}: {{ formatDate(handbook.updated_at) }}</p>
+                <p>{{ $t('last_updated') }}: {{ handbook.updated_at?.substring(0, 10) }}</p>
                 <p v-if="sourceLanguageName">{{ $t('content_lang') }}: {{ sourceLanguageName }}</p>
-                <p v-if="handbook.author">{{ handbook.author }}<span v-if="handbook.published_at"> · {{ handbook.published_at?.substring(0, 4) }}</span></p>
               </div>
               <!-- Language Switcher -->
               <div class="flex items-center gap-2">
