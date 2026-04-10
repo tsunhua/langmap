@@ -637,7 +637,7 @@ export default {
         orderChanged.value = false
       } catch (error) {
         console.error('Failed to save page order:', error)
-        alert('Failed to save page order')
+        alert(t('page_order_save_failed'))
       } finally {
         savingOrder.value = false
       }
@@ -650,7 +650,7 @@ export default {
         pages.value = pages.value.filter(p => p.id !== pageId)
       } catch (error) {
         console.error('Failed to delete page:', error)
-        alert('Failed to delete page')
+        alert(t('page_delete_failed'))
       }
     }
 

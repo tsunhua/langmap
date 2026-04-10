@@ -690,7 +690,7 @@ export default {
         const rerenderResult = await handbooksApi.rerender(props.id)
         if (!rerenderResult.success) {
           console.error('Rerender failed:', rerenderResult.error || rerenderResult.message)
-          alert('Failed to rerender handbook. Please try again.')
+          alert(t('rerender_failed'))
           return
         }
         await fetchInitialData()

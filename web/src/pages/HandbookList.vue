@@ -228,7 +228,7 @@ export default {
         const deleteResult = await handbooksApi.delete(handbookToDelete.value.id)
         if (!deleteResult.success) {
           console.error('Delete failed:', deleteResult.error || deleteResult.message)
-          alert('Failed to delete handbook. Please try again.')
+          alert(t('handbook_delete_failed'))
           deleting.value = false
           return
         }
