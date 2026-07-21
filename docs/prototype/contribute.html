@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>贡献 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html">地图</a>
+        <a href="languages.html">语言</a>
+        <a href="handbooks.html">手册</a>
+        <a href="contribute.html" class="on">贡献</a>
+      </nav>
+      <span class="bar-spacer"></span>
+      <div class="top-stats" data-od-id="stats">
+        <span><b class="tabular">3,241</b> 今日贡献</span>
+      </div>
+    </header>
+
+    <div class="page-main">
+      <div class="ct-console">
+        <div class="contrib-ed" data-od-id="contrib-editor">
+          <div class="src-meta" data-od-id="src-meta">词条组: greeting.meal</div>
+          <table class="ct" data-od-id="translation-grid">
+            <thead>
+              <tr><th style="width:52px">语言</th><th>表达</th><th style="width:120px">地区</th><th style="width:60px"></th></tr>
+            </thead>
+            <tbody id="trans-body">
+              <tr>
+                <td><span class="lc">eng</span></td>
+                <td><input type="text" value="Have you eaten yet?" /></td>
+                <td><input type="text" placeholder="地区" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">cmn</span></td>
+                <td><input type="text" value="吃了吗" /></td>
+                <td><input type="text" value="北京" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">nan</span></td>
+                <td><input type="text" value="食饱未？" /></td>
+                <td><input type="text" value="汕头澄海" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">yue</span></td>
+                <td><input type="text" value="食咗飯未呀？" /></td>
+                <td><input type="text" value="香港" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">ja</span></td>
+                <td><input type="text" value="ご飯食べた？" /></td>
+                <td><input type="text" value="関西" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">ko</span></td>
+                <td><input type="text" value="밥 먹었어?" /></td>
+                <td><input type="text" value="서울" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">fr</span></td>
+                <td><input type="text" placeholder="输入法语表达…" /></td>
+                <td><input type="text" placeholder="地区" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+              <tr>
+                <td><span class="lc">vi</span></td>
+                <td><input type="text" placeholder="输入越南语表达…" /></td>
+                <td><input type="text" placeholder="地区" /></td>
+                <td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="ct-add-lang" data-od-id="add-lang">
+            <button class="ct-add-btn" data-action="add-lang" title="添加新语言表达">＋ 添加语言</button>
+            <div class="ct-add-row" style="display:none;">
+              <input type="text" class="ct-lang-code" placeholder="语言代码" style="width:72px" />
+              <input type="text" class="ct-lang-name" placeholder="表达" />
+              <input type="text" class="ct-lang-region" placeholder="地区" style="width:100px" />
+              <button class="btn btn-primary btn-sm" data-action="confirm-add">确认</button>
+              <button class="btn btn-sm" data-action="cancel-add">取消</button>
+            </div>
+          </div>
+          <div class="geo-row">
+            <label>坐标</label>
+            <input type="text" value="39.91°N · 116.39°E" />
+            <a href="index.html" class="btn btn-icon" title="在地图上定位">⌖</a>
+          </div>
+          <div class="submit-row">
+            <button type="button" class="btn btn-primary" style="height:32px;padding:0 16px;font-size:13px">提交</button>
+            <button type="button" class="btn" style="height:32px;padding:0 12px">保存草稿</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tbody = document.getElementById("trans-body");
+
+    // Delete row
+    tbody.addEventListener("click", e => {
+      const btn = e.target.closest(".ct-del-btn");
+      if (!btn) return;
+      const tr = btn.closest("tr");
+      tr.style.transition = "opacity .2s, max-height .2s";
+      tr.style.opacity = "0";
+      tr.style.maxHeight = "0";
+      tr.style.overflow = "hidden";
+      setTimeout(() => tr.remove(), 220);
+    });
+
+    // Add language: show inline form
+    document.querySelector("[data-action='add-lang']").addEventListener("click", () => {
+      const wrap = document.querySelector(".ct-add-lang");
+      wrap.querySelector("button[data-action='add-lang']").style.display = "none";
+      wrap.querySelector(".ct-add-row").style.display = "flex";
+      wrap.querySelector(".ct-lang-code").focus();
+    });
+
+    // Cancel add
+    document.querySelector("[data-action='cancel-add']").addEventListener("click", () => {
+      const wrap = document.querySelector(".ct-add-lang");
+      wrap.querySelector("button[data-action='add-lang']").style.display = "";
+      wrap.querySelector(".ct-add-row").style.display = "none";
+      wrap.querySelectorAll(".ct-add-row input").forEach(i => i.value = "");
+    });
+
+    // Confirm add
+    document.querySelector("[data-action='confirm-add']").addEventListener("click", () => {
+      const wrap = document.querySelector(".ct-add-lang");
+      const code = wrap.querySelector(".ct-lang-code").value.trim();
+      const text = wrap.querySelector(".ct-lang-name").value.trim();
+      const region = wrap.querySelector(".ct-lang-region").value.trim();
+      if (!code || !text) { wrap.querySelector(".ct-lang-code").focus(); return; }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td><span class="lc">${code}</span></td>` +
+        `<td><input type="text" value="${text}" /></td>` +
+        `<td><input type="text" value="${region}" /></td>` +
+        `<td class="ct-row-actions"><button class="ct-del-btn" title="删除">✕</button></td>`;
+      tbody.appendChild(tr);
+
+      wrap.querySelector("button[data-action='add-lang']").style.display = "";
+      wrap.querySelector(".ct-add-row").style.display = "none";
+      wrap.querySelectorAll(".ct-add-row input").forEach(i => i.value = "");
+    });
+  </script>
+</body>
+</html>

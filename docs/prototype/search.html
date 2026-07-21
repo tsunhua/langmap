@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>搜索 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html" class="on">地图</a>
+        <a href="languages.html">语言</a>
+        <a href="handbooks.html">手册</a>
+        <a href="contribute.html">贡献</a>
+      </nav>
+      <span class="bar-spacer"></span>
+      <div class="top-stats" data-od-id="stats">
+        <span><b class="tabular">128,420</b> expr</span>
+        <span><b class="tabular">86</b> lang</span>
+      </div>
+      <a class="btn btn-primary" href="contribute.html" data-od-id="nav-contrib">贡献词句</a>
+    </header>
+
+    <div class="page-main">
+      <div class="expl">
+        <!-- LEFT: results console (dot-grid) -->
+        <section class="expl-console" data-od-id="search-console">
+          <div class="expl-head">
+            <div class="expl-q">
+              <span class="mono" style="color:var(--muted)">⌕</span>
+              <input type="search" value="吃了吗" id="sq" aria-label="搜索词句" />
+              <button type="button" class="btn btn-primary">搜索</button>
+            </div>
+            <div class="expl-count">
+              <span><b class="tabular" style="color:var(--fg)">12</b> matches · 「吃了吗」</span>
+              <span>0.04s · 跨 6 语言</span>
+            </div>
+          </div>
+
+          <div class="expl-body">
+            <div class="filter-row">
+              <button type="button" class="chip on">全部</button>
+              <button type="button" class="chip">cmn</button>
+              <button type="button" class="chip">nan</button>
+              <button type="button" class="chip">yue</button>
+              <button type="button" class="chip">权威</button>
+              <button type="button" class="chip">有音频</button>
+            </div>
+
+            <ul class="result-list" data-od-id="result-list">
+              <li class="selected" data-go="entry-detail.html">
+                <span class="expr">吃了吗</span><span class="n">42k</span>
+                <span class="sub"><span class="lang">cmn</span><span>北京 · 权威</span><span style="color:var(--accent)">39.91°N · 116.39°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">食饱未？</span><span class="n">8.2k</span>
+                <span class="sub"><span class="lang">nan</span><span>汕头澄海 · 用户</span><span>23.35°N · 116.68°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">食咗飯未呀？</span><span class="n">6.9k</span>
+                <span class="sub"><span class="lang">yue</span><span>香港 · 用户</span><span>22.32°N · 114.17°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">Have you eaten yet?</span><span class="n">31k</span>
+                <span class="sub"><span class="lang">en</span><span>US · AI</span><span>38.90°N · 77.03°W</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">ご飯食べた？</span><span class="n">18k</span>
+                <span class="sub"><span class="lang">ja</span><span>関西 · 权威</span><span>34.69°N · 135.50°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">밥 먹었어?</span><span class="n">9.1k</span>
+                <span class="sub"><span class="lang">ko</span><span>서울 · 用户</span><span>37.57°N · 126.98°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">Tu as mangé ?</span><span class="n">4.2k</span>
+                <span class="sub"><span class="lang">fr</span><span>巴黎 · AI</span><span>48.86°N · 2.35°E</span></span>
+              </li>
+              <li data-go="entry-detail.html">
+                <span class="expr">Sudah makan?</span><span class="n">2.8k</span>
+                <span class="sub"><span class="lang">id</span><span>Jakarta · 用户</span><span>6.21°S · 106.85°E</span></span>
+              </li>
+            </ul>
+
+            <nav class="pager" aria-label="分页">
+              <span class="cur">1</span>
+              <a href="#">2</a>
+              <a href="#">3</a>
+              <span>…</span>
+              <a href="#">›</a>
+            </nav>
+          </div>
+        </section>
+
+        <!-- RIGHT: map preview + focus rail -->
+        <aside class="expl-side" data-od-id="search-side">
+          <div class="preview-map" data-od-id="preview-map" aria-label="匹配分布预览">
+            <div class="map-art"></div>
+            <div class="heat s3 on" style="left:58%;top:42%"><span class="pin-label">cmn · 北京 · 42k</span></div>
+            <div class="heat s2" style="left:62%;top:52%"><span class="pin-label">nan · 汕头 · 8.2k</span></div>
+            <div class="heat s2" style="left:64%;top:54%"><span class="pin-label">yue · 香港 · 6.9k</span></div>
+            <div class="heat s3" style="left:22%;top:40%"><span class="pin-label">en · US · 31k</span></div>
+            <div class="heat s2" style="left:78%;top:42%"><span class="pin-label">ja · 関西 · 18k</span></div>
+            <div class="heat s1" style="left:48%;top:36%"><span class="pin-label">fr · 巴黎 · 4.2k</span></div>
+            <div class="preview-legend">
+              <span><i class="lg" style="background:var(--heat-1)"></i>&lt;5k</span>
+              <span><i class="lg" style="background:var(--heat-2)"></i>&lt;50k</span>
+              <span><i class="lg" style="background:var(--heat-3)"></i>≥50k</span>
+            </div>
+          </div>
+
+          <div class="rail-card">
+            <h3>当前焦点</h3>
+            <div style="font-size:13px;font-weight:500;margin-bottom:4px;">东亚 · 问候语义组</div>
+            <div class="coord-display" style="margin:0;font-size:13px;">39.91°N · 116.39°E</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">greeting.meal · 12 表达 / 6 语言</div>
+          </div>
+
+          <a class="btn" href="index.html" style="width:100%;justify-content:center;">在地图工作面打开 →</a>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-tag">C · Atlas · 搜索</div>
+  <script>
+    document.querySelectorAll("[data-go]").forEach(el => {
+      el.addEventListener("click", () => { window.location.href = el.dataset.go; });
+    });
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        if (chip.textContent === "全部") {
+          document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+          chip.classList.add("on");
+        } else {
+          document.querySelector(".chip").classList.remove("on");
+          chip.classList.toggle("on");
+        }
+      });
+    });
+    document.getElementById("sq").addEventListener("keydown", e => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+  </script>
+</body>
+</html>

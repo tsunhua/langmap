@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API 接入 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html">地图</a>
+        <a href="languages.html">语言</a>
+        <a href="handbooks.html">手册</a>
+        <a href="contribute.html">贡献</a>
+      </nav>
+      <span class="bar-spacer"></span>
+      <div class="top-stats" data-od-id="stats">
+        <span><b class="tabular">128,420</b> expr</span>
+        <span><b class="tabular">86</b> lang</span>
+        <span><b class="tabular">50k</b> 免费/月</span>
+      </div>
+    </header>
+
+    <div class="page-main">
+      <div class="api-cols">
+        <div class="api-steps" data-od-id="api-steps">
+          <div style="margin-bottom:22px;">
+            <div class="step-n">STEP 01</div>
+            <div class="step-h">安装 SDK</div>
+            <div class="step-sub">支持 npm / yarn / pnpm，也可直接调用 REST API。</div>
+            <div class="code-block">$ <span class="cn">npm</span> install langmap-api</div>
+            <div class="sdk-strip">
+              <span class="sdk-b">JS / TS</span><span class="sdk-b">Python</span>
+              <span class="sdk-b">Go</span><span class="sdk-b">PHP</span>
+              <span class="sdk-b">Ruby</span><span class="sdk-b">REST</span>
+            </div>
+          </div>
+          <div style="margin-bottom:22px;">
+            <div class="step-n">STEP 02</div>
+            <div class="step-h">初始化客户端</div>
+            <div class="step-sub">在控制台获取 API Key，每月 50k 次免费额度，超量按量计费。</div>
+            <div class="code-block"><span class="ck">import</span> <span class="ca">LangMap</span> <span class="ck">from</span> <span class="cs">"langmap-api"</span>
+
+<span class="ck">const</span> lm = <span class="ck">new</span> <span class="ca">LangMap</span>({
+  key: <span class="cs">"lm_live_xxxxxxxxxxxx"</span>
+})</div>
+          </div>
+          <div>
+            <div class="step-n">STEP 03</div>
+            <div class="step-h">查询词句翻译</div>
+            <div class="step-sub">按词条 slug 或自由文本查询；响应含地区、来源质量与坐标。</div>
+            <div class="code-block"><span class="ck">const</span> res = <span class="ck">await</span> lm.lookup({
+  text:  <span class="cs">"Have you eaten yet?"</span>,
+  lang:  <span class="cs">"en"</span>,
+  group: <span class="cs">"greeting.meal"</span>
+})
+<span class="cm">// → { expressions: [...], total: 12 }</span></div>
+          </div>
+        </div>
+
+        <div class="api-term" data-od-id="api-terminal">
+          <div class="trm">
+            <div class="trm-bar">
+              <span>GET /v1/lookup · 响应示例</span>
+              <button type="button" class="copy-btn" data-copy="res1">复制</button>
+            </div>
+            <div class="trm-code" id="res1"><span class="cm">{</span>
+  <span class="ca">"expressions"</span>: [
+    {
+      <span class="ca">"id"</span>:      <span class="cs">"cmn-chitama-001"</span>,
+      <span class="ca">"lang"</span>:    <span class="cs">"cmn"</span>,
+      <span class="ca">"text"</span>:    <span class="cs">"吃了吗"</span>,
+      <span class="ca">"region"</span>:  <span class="cs">"Beijing"</span>,
+      <span class="ca">"coord"</span>:   { <span class="ca">"lat"</span>: <span class="cn">39.91</span>, <span class="ca">"lng"</span>: <span class="cn">116.39</span> },
+      <span class="ca">"source"</span>:  <span class="cs">"authoritative"</span>,
+      <span class="ca">"count"</span>:   <span class="cn">42108</span>
+    },
+    {
+      <span class="ca">"id"</span>:      <span class="cs">"nan-shibao-001"</span>,
+      <span class="ca">"lang"</span>:    <span class="cs">"nan"</span>,
+      <span class="ca">"text"</span>:    <span class="cs">"食饱未？"</span>,
+      <span class="ca">"region"</span>:  <span class="cs">"Shantou"</span>,
+      <span class="ca">"coord"</span>:   { <span class="ca">"lat"</span>: <span class="cn">23.35</span>, <span class="ca">"lng"</span>: <span class="cn">116.68</span> },
+      <span class="ca">"source"</span>:  <span class="cs">"community"</span>,
+      <span class="ca">"count"</span>:   <span class="cn">8204</span>
+    }
+  ],
+  <span class="ca">"total"</span>: <span class="cn">12</span>,
+  <span class="ca">"group"</span>: <span class="cs">"greeting.meal"</span>
+<span class="cm">}</span></div>
+          </div>
+
+          <div class="trm">
+            <div class="trm-bar"><span>覆盖徽章 · 嵌入你的站点</span></div>
+            <div class="trm-code"><span class="cm">&lt;!-- HTML --&gt;</span>
+<span class="ck">&lt;script</span> <span class="ca">src</span>=<span class="cs">"https://cdn.langmap.io/badge.js"</span>
+  <span class="ca">data-langs</span>=<span class="cs">"cmn,nan,yue,en,ja"</span>
+  <span class="ca">data-group</span>=<span class="cs">"greeting.meal"</span><span class="ck">&gt;&lt;/script&gt;</span>
+<span class="cm">// 渲染输出：</span>
+<span class="cs">✓ 5 种语言 · 由 LangMap 社区维护</span></div>
+          </div>
+
+          <div class="trm">
+            <div class="trm-bar"><span>端点参考</span><span style="font-family:var(--mono);font-size:10px">REST · v1</span></div>
+            <div class="trm-code" style="padding:8px 4px;white-space:normal;">
+              <table class="ep">
+                <tr><td style="color:oklch(0.65 0.10 195)">GET</td><td style="color:oklch(0.88 0.01 200)">/v1/lookup</td><td style="color:oklch(0.55 0.015 200)">查询词句</td></tr>
+                <tr><td style="color:oklch(0.65 0.10 195)">GET</td><td style="color:oklch(0.88 0.01 200)">/v1/groups</td><td style="color:oklch(0.55 0.015 200)">词条组列表</td></tr>
+                <tr><td style="color:oklch(0.75 0.12 55)">POST</td><td style="color:oklch(0.88 0.01 200)">/v1/contribute</td><td style="color:oklch(0.55 0.015 200)">提交词句</td></tr>
+                <tr><td style="color:oklch(0.65 0.10 195)">GET</td><td style="color:oklch(0.88 0.01 200)">/v1/coverage</td><td style="color:oklch(0.55 0.015 200)">覆盖徽章数据</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-tag">C · Atlas · API 接入</div>
+  <script>
+    document.querySelectorAll(".copy-btn").forEach(b => {
+      b.addEventListener("click", () => {
+        const id = b.dataset.copy;
+        const node = document.getElementById(id);
+        if (!node) return;
+        navigator.clipboard && navigator.clipboard.writeText(node.innerText);
+        const t = b.textContent; b.textContent = "已复制 ✓";
+        setTimeout(() => b.textContent = t, 1200);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>学习手册 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html">地图</a>
+        <a href="languages.html">语言</a>
+        <a href="handbooks.html" class="on">手册</a>
+        <a href="contribute.html">贡献</a>
+      </nav>
+      <span class="bar-spacer"></span>
+      <div class="top-stats" data-od-id="stats">
+        <span><b class="tabular">24</b> 手册</span>
+        <span><b class="tabular">186</b> 页</span>
+        <span><b class="tabular">86</b> lang</span>
+      </div>
+      <a class="btn btn-primary" href="handbook-view.html" data-od-id="nav-new-handbook">新建手册</a>
+    </header>
+
+    <div class="content-main">
+      <div class="hb-console">
+        <nav class="crumbs" data-od-id="crumbs">
+          <a href="index.html">地图</a><span class="sep">/</span><span>手册</span>
+        </nav>
+
+        <div class="hb-head">
+          <h1>学习手册 <span class="sub">· 24 册 / 186 页</span></h1>
+          <a class="btn" href="handbook-view.html">+ 创建手册</a>
+        </div>
+
+        <div class="hb-tabs" data-od-id="hb-tabs">
+          <button type="button" class="active" data-tab="mine">我的</button>
+          <button type="button" data-tab="shared">共享</button>
+        </div>
+
+        <div class="hb-grid" data-od-id="hb-grid">
+          <div class="hb-card" data-od-id="handbook-card-1" data-go="handbook-view.html">
+            <div class="hb-card-top">
+              <h3>闽南语入门手册</h3>
+              <span class="pub-tag pub-official">官方</span>
+            </div>
+            <div class="desc">涵盖闽南语基础发音、声调规则与日常问候用语，适合初学者从零开始学习潮汕、泉州、厦门等地闽南语方言。</div>
+            <div class="chips">
+              <span class="lang-chip">nan</span>
+              <span class="lang-chip">cmn</span>
+            </div>
+            <div class="hb-card-foot">
+              <span>2024-03</span>
+              <span>12 页</span>
+            </div>
+          </div>
+
+          <div class="hb-card" data-od-id="handbook-card-2" data-go="handbook-view.html">
+            <div class="hb-card-top">
+              <h3>客家话日常会话</h3>
+            </div>
+            <div class="desc">收录客家话高频会话场景，包括市场买卖、家庭称呼、节日习俗等，附带拼音标注和文化背景注释。</div>
+            <div class="chips">
+              <span class="lang-chip">hak</span>
+              <span class="lang-chip">cmn</span>
+            </div>
+            <div class="hb-card-foot">
+              <span>2024-06</span>
+              <span>8 页</span>
+            </div>
+          </div>
+
+          <div class="hb-card" data-od-id="handbook-card-3" data-go="handbook-view.html">
+            <div class="hb-card-top">
+              <h3>粤语拼音教程</h3>
+              <span class="pub-tag pub-official">官方</span>
+            </div>
+            <div class="desc">系统讲解粤语正字法与粤拼方案，对比普通话发音差异，辅以声调练习和常见粤语歌词实例解析。</div>
+            <div class="chips">
+              <span class="lang-chip">yue</span>
+              <span class="lang-chip">cmn</span>
+            </div>
+            <div class="hb-card-foot">
+              <span>2024-01</span>
+              <span>15 页</span>
+            </div>
+          </div>
+
+          <div class="hb-card" data-od-id="handbook-card-4" data-go="handbook-view.html">
+            <div class="hb-card-top">
+              <h3>吴语词汇对照</h3>
+            </div>
+            <div class="desc">整理苏州话、上海话、温州话等吴语区主要方言的词汇对照表，标注声调差异和词义演变路径。</div>
+            <div class="chips">
+              <span class="lang-chip">wuu</span>
+              <span class="lang-chip">cmn</span>
+            </div>
+            <div class="hb-card-foot">
+              <span>2024-09</span>
+              <span>6 页</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-tag">C · Atlas · 学习手册</div>
+  <script>
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-tab]").forEach(b => b.classList.remove("on"));
+        btn.classList.add("active");
+      });
+    });
+    document.querySelectorAll("[data-go]").forEach(el => {
+      el.addEventListener("click", () => { window.location.href = el.dataset.go; });
+    });
+  </script>
+</body>
+</html>

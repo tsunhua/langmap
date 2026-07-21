@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>收藏集 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="page" data-od-id="collections-page">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html">地图</a>
+        <a href="languages.html">语言</a>
+        <a href="handbooks.html">手册</a>
+        <a href="contribute.html" class="on">贡献</a>
+      </nav>
+    </header>
+
+    <div class="content-main">
+      <div class="cl-console" data-od-id="cl-console">
+
+        <!-- TAB: List view -->
+        <div data-panel="list">
+          <div class="cl-head">
+            <h1>收藏集 <span class="sub">· 4 个</span></h1>
+            <a class="btn btn-primary" href="#" data-od-id="new-collection">新建收藏集</a>
+          </div>
+
+          <div class="hb-tabs" data-od-id="cl-tabs">
+            <button class="active" data-tab="mine">我的收藏</button>
+            <button data-tab="shared">共享收藏</button>
+          </div>
+
+          <div class="cl-grid" data-od-id="cl-grid">
+            <div class="cl-card" data-od-id="cl-card-1" data-action="open-detail" data-collection-id="minnan-common">
+              <h3>闽南语常用语</h3>
+              <p class="desc">收录闽南语日常交际常用词汇与短句，涵盖问候、饮食、交通等场景。</p>
+              <span class="count">42 条</span>
+              <div class="cl-card-foot">
+                <span>2024-03</span>
+                <span class="dot dot-ok" title="已公开"></span>
+              </div>
+            </div>
+            <div class="cl-card" data-od-id="cl-card-2" data-action="open-detail" data-collection-id="hakka-proverbs">
+              <h3>客家谚语集</h3>
+              <p class="desc">汇集经典客家谚语与俗语，反映客家人勤俭持家的生活智慧。</p>
+              <span class="count">28 条</span>
+              <div class="cl-card-foot">
+                <span>2024-05</span>
+                <span class="dot dot-ok" title="已公开"></span>
+              </div>
+            </div>
+            <div class="cl-card" data-od-id="cl-card-3" data-action="open-detail" data-collection-id="cantonese-xiehouyu">
+              <h3>粤语歇后语</h3>
+              <p class="desc">粤语特有的歇后语汇编，以双关与谐音手法表达民间幽默与道理。</p>
+              <span class="count">15 条</span>
+              <div class="cl-card-foot">
+                <span>2024-07</span>
+                <span class="dot dot-w" title="草稿"></span>
+              </div>
+            </div>
+            <div class="cl-card" data-od-id="cl-card-4" data-action="open-detail" data-collection-id="dialect-map-annot">
+              <h3>方言地图标注</h3>
+              <p class="desc">各地方言地理分布标注数据，用于生成交互式方言地图图层。</p>
+              <span class="count">63 条</span>
+              <div class="cl-card-foot">
+                <span>2024-02</span>
+                <span class="dot dot-ok" title="已公开"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Detail view (hidden by default) -->
+        <div data-panel="detail" style="display:none;">
+          <nav class="crumbs" data-od-id="crumbs">
+            <a href="#" data-action="back-to-list">收藏集</a>
+            <span class="sep">/</span>
+            <span data-field="collection-name">闽南语常用语</span>
+          </nav>
+
+          <section class="cdet-head" data-collection-id="min-nan-common">
+            <h1 data-field="detail-title">闽南语常用语</h1>
+            <div class="cdet-meta">
+              <span data-field="detail-date">创建于 2024-03-15</span>
+              <span class="cdet-meta-sep">·</span>
+              <span data-field="detail-count">42 条</span>
+            </div>
+            <div class="cdet-actions">
+              <button class="btn btn-outline" data-action="edit" type="button">编辑</button>
+              <button class="btn btn-outline" data-action="export" type="button">导出</button>
+              <button class="btn btn-danger" data-action="delete" type="button">删除</button>
+            </div>
+          </section>
+
+          <section class="cdet-items" data-items-count="42">
+            <div class="cdet-item" data-item-id="1">
+              <span class="cdet-item-text">你好</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">福建</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+            <div class="cdet-item" data-item-id="2">
+              <span class="cdet-item-text">多谢</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">台湾</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+            <div class="cdet-item" data-item-id="3">
+              <span class="cdet-item-text">吃饱未</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">泉州</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+            <div class="cdet-item" data-item-id="4">
+              <span class="cdet-item-text">漂亮</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">厦门</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+            <div class="cdet-item" data-item-id="5">
+              <span class="cdet-item-text">多少钱</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">漳州</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+            <div class="cdet-item" data-item-id="6">
+              <span class="cdet-item-text">再见</span>
+              <span class="cdet-item-chip">nan-Hans</span>
+              <span class="cdet-item-region">福建</span>
+              <button class="cdet-item-remove" data-action="remove" type="button" aria-label="移除">×</button>
+            </div>
+          </section>
+
+          <nav class="pagination" data-page="1" data-total="7" aria-label="分页">
+            <button class="pagination-btn" disabled type="button" aria-label="上一页">‹</button>
+            <span class="pagination-current">1</span>
+            <a class="pagination-link" href="#page2">2</a>
+            <a class="pagination-link" href="#page3">3</a>
+            <a class="pagination-link" href="#page4">4</a>
+            <span class="pagination-dots">…</span>
+            <a class="pagination-link" href="#page7">7</a>
+            <a class="pagination-link" href="#page2" aria-label="下一页">›</a>
+          </nav>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.closest("[data-od-id='cl-tabs']").querySelectorAll("button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+    document.querySelectorAll("[data-action='open-detail']").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelector("[data-panel='list']").style.display = "none";
+        document.querySelector("[data-panel='detail']").style.display = "";
+      });
+    });
+    document.querySelectorAll("[data-action='back-to-list']").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.querySelector("[data-panel='detail']").style.display = "none";
+        document.querySelector("[data-panel='list']").style.display = "";
+      });
+    });
+  </script>
+</body>
+</html>

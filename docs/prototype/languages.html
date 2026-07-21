@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>语言列表 · LangMap Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="appbar" data-od-id="topbar">
+      <a href="index.html" class="brand" data-od-id="logo">LangMap <em>ATLAS</em></a>
+      <nav class="appnav" data-od-id="global-nav">
+        <a href="index.html">地图</a>
+        <a href="languages.html" class="on">语言</a>
+        <a href="handbooks.html">手册</a>
+        <a href="contribute.html">贡献</a>
+      </nav>
+      <span class="bar-spacer"></span>
+      <div class="top-stats" data-od-id="stats">
+        <span><b class="tabular">86</b> lang</span>
+        <span><b class="tabular">12</b> 语系</span>
+        <span><b class="tabular">412</b> region</span>
+      </div>
+      <a class="btn btn-primary" href="contribute.html" data-od-id="nav-contrib">贡献词句</a>
+    </header>
+
+    <div class="page-main" style="overflow:auto;">
+      <div class="lang-console">
+        <nav class="crumbs" data-od-id="crumbs">
+          <a href="index.html">地图</a><span class="sep">/</span><span>语言</span>
+        </nav>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <h1 style="font-size:22px;font-weight:600;letter-spacing:-0.02em;">语言 <span class="mono" style="font-size:13px;color:var(--muted);font-weight:400;">· 86 种 / 12 语系</span></h1>
+          <a class="btn" href="contribute.html">+ 添加语言</a>
+        </div>
+
+        <div class="lang-toolbar">
+          <input type="search" placeholder="按名称或语言码筛选…" />
+          <button type="button" class="chip on">全部</button>
+          <button type="button" class="chip">汉藏</button>
+          <button type="button" class="chip">印欧</button>
+          <button type="button" class="chip">南岛</button>
+          <button type="button" class="chip">南亚</button>
+          <button type="button" class="chip">孤立</button>
+        </div>
+
+        <ul class="lang-rows" data-od-id="lang-rows">
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">普通话</span><span class="en">Mandarin Chinese</span></span>
+            <span class="code">cmn</span>
+            <span class="geo">汉藏 · 中国华北</span>
+            <span class="cnt-wrap"><span class="cnt">42,108</span><span class="dot dot-ok" title="高覆盖"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">English</span><span class="en">English</span></span>
+            <span class="code">en</span>
+            <span class="geo">印欧 · 全球</span>
+            <span class="cnt-wrap"><span class="cnt">31,002</span><span class="dot dot-ok"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">日本語</span><span class="en">Japanese</span></span>
+            <span class="code">ja</span>
+            <span class="geo">日本 · 関東/関西</span>
+            <span class="cnt-wrap"><span class="cnt">18,441</span><span class="dot dot-ok"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">閩南語</span><span class="en">Hokkien / Minnan</span></span>
+            <span class="code">nan</span>
+            <span class="geo">汉藏 · 闽粤/东南亚</span>
+            <span class="cnt-wrap"><span class="cnt">8,204</span><span class="dot dot-w" title="待补充"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">粵語</span><span class="en">Cantonese</span></span>
+            <span class="code">yue</span>
+            <span class="geo">汉藏 · 粤港</span>
+            <span class="cnt-wrap"><span class="cnt">6,912</span><span class="dot dot-w"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">한국어</span><span class="en">Korean</span></span>
+            <span class="code">ko</span>
+            <span class="geo">韩语系 · 朝鲜半岛</span>
+            <span class="cnt-wrap"><span class="cnt">5,330</span><span class="dot dot-w"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">Français</span><span class="en">French</span></span>
+            <span class="code">fr</span>
+            <span class="geo">印欧 · 西欧/西非</span>
+            <span class="cnt-wrap"><span class="cnt">4,180</span><span class="dot dot-w"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">Bahasa Indonesia</span><span class="en">Indonesian</span></span>
+            <span class="code">id</span>
+            <span class="geo">南岛 · 印尼群岛</span>
+            <span class="cnt-wrap"><span class="cnt">2,840</span><span class="dot dot-nil" title="低覆盖"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">Tiếng Việt</span><span class="en">Vietnamese</span></span>
+            <span class="code">vi</span>
+            <span class="geo">南亚 · 越南</span>
+            <span class="cnt-wrap"><span class="cnt">2,610</span><span class="dot dot-nil"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">Wikang Filipino</span><span class="en">Filipino / Tagalog</span></span>
+            <span class="code">fil</span>
+            <span class="geo">南岛 · 菲律宾</span>
+            <span class="cnt-wrap"><span class="cnt">1,932</span><span class="dot dot-nil"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">Bahasa Melayu</span><span class="en">Malay</span></span>
+            <span class="code">ms</span>
+            <span class="geo">南岛 · 马来半岛</span>
+            <span class="cnt-wrap"><span class="cnt">1,704</span><span class="dot dot-nil"></span></span>
+          </li>
+          <li class="lang-row" data-go="language-detail.html">
+            <span class="nm-wrap"><span class="nm">客家話</span><span class="en">Hakka</span></span>
+            <span class="code">hak</span>
+            <span class="geo">汉藏 · 粤东/台湾</span>
+            <span class="cnt-wrap"><span class="cnt">988</span><span class="dot dot-nil"></span></span>
+          </li>
+        </ul>
+
+        <nav class="pager" aria-label="分页">
+          <a href="#">‹</a>
+          <span class="cur">1</span>
+          <a href="#">2</a>
+          <a href="#">3</a>
+          <span>…</span>
+          <a href="#">8</a>
+          <a href="#">›</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-tag">C · Atlas · 语言列表</div>
+  <script>
+    document.querySelectorAll("[data-go]").forEach(el => {
+      el.addEventListener("click", () => { window.location.href = el.dataset.go; });
+    });
+  </script>
+</body>
+</html>
