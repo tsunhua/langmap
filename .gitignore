@@ -51,3 +51,5 @@ coverage.xml
 .worktrees/
 
 *.sqlite
+
+.opencode/
