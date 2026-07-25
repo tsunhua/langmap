@@ -1,9 +1,18 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import axios from 'axios'
+
+interface User {
+  id: number
+  username: string
+  role: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<any>(null)
+  const user = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('token'))
+
+  const isLoggedIn = computed(() => !!token.value)
 
   if (token.value) {
     try {
@@ -15,11 +24,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function login(username: string, password: string) {
+    const { data } = await axios.post('/api/v1/auth/login', { username, password })
+    token.value = data.data.token
+    user.value = data.data.user
+    localStorage.setItem('token', data.data.token)
+  }
+
+  async function register(username: string, email: string, password: string) {
+    const { data } = await axios.post('/api/v1/auth/register', { username, email, password })
+    token.value = data.data.token
+    user.value = data.data.user
+    localStorage.setItem('token', data.data.token)
+  }
+
   function logout() {
     token.value = null
     user.value = null
     localStorage.removeItem('token')
   }
 
-  return { user, token, logout }
+  return { user, token, isLoggedIn, login, register, logout }
 })
