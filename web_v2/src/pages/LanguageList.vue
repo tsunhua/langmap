@@ -78,7 +78,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.lg-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
+.lg-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .lg-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
 .lg-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }

@@ -18,7 +18,7 @@ defineEmits<{ action: [] }>()
 <style scoped>
 .empty {
   text-align: center;
-  padding: 48px 20px;
+  padding: var(--space-xxl) var(--space-md);
   color: var(--muted);
   font-size: 13px;
 }

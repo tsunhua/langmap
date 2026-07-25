@@ -5,7 +5,7 @@
 </template>
 
 <style scoped>
-.spinner-wrap { display: flex; justify-content: center; padding: 40px; }
+.spinner-wrap { display: flex; justify-content: center; padding: var(--space-xl); }
 .spinner {
   width: 24px; height: 24px;
   border: 2px solid var(--border);

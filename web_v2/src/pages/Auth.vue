@@ -66,14 +66,14 @@ async function submit() {
 </template>
 
 <style scoped>
-.auth-page { max-width: 360px; margin: 60px auto; }
-.auth-form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-.auth-form .field { display: flex; flex-direction: column; gap: 4px; }
+.auth-page { max-width: 360px; margin: var(--page-pad-top) auto 0; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; margin-top: var(--space-md); }
+.auth-form .field { display: flex; flex-direction: column; gap: var(--space-xs); }
 .auth-form label { font-size: 13px; color: var(--muted); }
 .auth-form input { width: 100%; }
 .error { color: var(--down); font-size: 13px; }
-.toggle { text-align: center; margin-top: 16px; font-size: 14px; color: var(--muted); }
+.toggle { text-align: center; margin-top: var(--space-sm); font-size: 14px; color: var(--muted); }
 @media (max-width: 640px) {
-  .auth-page { margin: 24px auto; }
+  .auth-page { margin: var(--space-md) auto 0; }
 }
 </style>

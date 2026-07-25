@@ -165,13 +165,13 @@ async function save(status: string) {
 </template>
 
 <style scoped>
-.he-page { max-width: 760px; margin: 0 auto; padding: 30px 28px 100px; }
+.he-page { max-width: 760px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .he-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .he-back:hover { color: var(--fg); }
 .he-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .he-title { flex: 1; min-width: 0; font-size: 24px; font-weight: 600; font-family: var(--font); padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); }
 .he-title:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent); }
 .he-vis { padding: 8px 10px; }
-.he-actions { margin-bottom: 20px; }
-.error { color: var(--down); font-size: 13px; margin-top: 16px; }
+.he-actions { margin-bottom: var(--space-md); }
+.error { color: var(--down); font-size: 13px; margin-top: var(--space-base); }
 </style>

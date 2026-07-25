@@ -157,7 +157,7 @@ const sourceLabel = computed(() => {
 </template>
 
 <style scoped>
-.anchor { max-width: 920px; margin: 0 auto; padding: 30px 28px 100px; }
+.anchor { max-width: 920px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .crumbs {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 16px;
@@ -168,10 +168,10 @@ const sourceLabel = computed(() => {
 .anchor-title h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
 .anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .anchor-meta .coords { font-size: 11px; }
-.anchor-acts { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
 
 .expand-hop {
-  margin: 18px 0 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: var(--space-md) 0 var(--space-base); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   font-family: var(--mono); font-size: 11px; color: var(--muted);
 }
 .expand-hop button {
@@ -185,5 +185,5 @@ const sourceLabel = computed(() => {
 .hop-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 .hop-dot.off { background: var(--border); }
 
-.md-empty { display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 24px 0; }
+.md-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; }
 </style>

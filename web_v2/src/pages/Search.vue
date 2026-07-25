@@ -126,9 +126,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.se-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
-.se-hero { margin-bottom: 20px; }
-.se-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 16px; }
+.se-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
+.se-hero { margin-bottom: var(--space-md); }
+.se-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-base); }
 .se-qrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .se-qrow > :first-child { flex: 1; min-width: 0; }
 .se-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -140,5 +140,5 @@ onMounted(() => {
 .se-sort button.on { background: var(--fg); color: var(--surface); }
 .se-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .se-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
-.se-hint { font-family: var(--mono); font-size: 10px; text-align: center; padding: 40px; color: var(--faint); }
+.se-hint { font-family: var(--mono); font-size: 10px; text-align: center; padding: var(--space-xl); color: var(--faint); }
 </style>

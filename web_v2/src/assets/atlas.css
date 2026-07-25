@@ -25,6 +25,16 @@ html { -webkit-text-size-adjust: 100%; }
   --mono:        "IBM Plex Mono", ui-monospace, monospace;
   --r:           4px;
   --bar-h:       44px;
+  /* spacing scale */
+  --space-xxl: 48px;
+  --space-xl: 40px;
+  --space-lg: 32px;
+  --space-md: 20px;
+  --space-base: 16px;
+  --space-sm: 12px;
+  --space-xs: 8px;
+  --page-pad-top: 28px;
+  --page-pad-bottom: 80px;
 }
 
 /* ── Paper base ── */
@@ -69,7 +79,7 @@ a { color: inherit; text-decoration: none; }
 .btn-icon { width: 30px; padding: 0; display: grid; place-items: center; color: var(--muted); }
 
 /* Page shell */
-.page { max-width: 920px; margin: 0 auto; padding: 28px 28px 120px; }
+.page { max-width: 920px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 
 /* Cards */
 .card {
@@ -121,7 +131,7 @@ a { color: inherit; text-decoration: none; }
 /* Section header (對照集 / shared) */
 .nb-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  margin: 30px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  margin: var(--space-lg) 0 var(--space-sm); padding-bottom: 10px; border-bottom: 1px solid var(--border);
 }
 .nb-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
 .nb-head .nb-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }

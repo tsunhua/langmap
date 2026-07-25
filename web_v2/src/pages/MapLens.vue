@@ -200,7 +200,7 @@ onUnmounted(cleanup)
 </template>
 
 <style scoped>
-.lens-page { max-width: 1100px; margin: 0 auto; padding: 30px 28px 100px; }
+.lens-page { max-width: 1100px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .lens-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .lens-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
 .lens-back:hover { color: var(--fg); }

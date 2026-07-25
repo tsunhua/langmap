@@ -102,17 +102,17 @@ async function submit() {
 </template>
 
 <style scoped>
-.contrib-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
+.contrib-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .contrib-page h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
-.lead { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 24px; max-width: 60ch; }
+.lead { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: var(--space-xl); max-width: 60ch; }
 .lead b { color: var(--fg); font-weight: 500; }
 
-.contrib-grid { display: grid; grid-template-columns: 1fr 260px; gap: 36px; align-items: start; }
+.contrib-grid { display: grid; grid-template-columns: 1fr 260px; gap: var(--space-xl); align-items: start; }
 
 .ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
 .ex-head, .ex-row {
-  display: grid; grid-template-columns: 80px 1fr 140px 32px; gap: 10px; align-items: center;
-  padding: 8px 12px;
+  display: grid; grid-template-columns: 80px 1fr 140px 32px; gap: var(--space-xs); align-items: center;
+  padding: var(--space-xs) var(--space-sm);
 }
 .ex-head {
   border-bottom: 1px solid var(--border); background: var(--surface-2);
@@ -122,7 +122,7 @@ async function submit() {
 .ex-rows .ex-row:last-child { border-bottom: none; }
 .ex-row input {
   height: 32px; border: 1px solid var(--border); border-radius: var(--r);
-  background: var(--bg); padding: 0 9px; font-size: 13px; outline: none; min-width: 0;
+  background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;
 }
 .ex-row input:focus { border-color: var(--accent); }
 .ex-row .ex-lang { font-family: var(--mono); font-size: 12px; }
@@ -133,14 +133,14 @@ async function submit() {
 .ex-del:hover { color: var(--down); background: color-mix(in oklch, var(--down) 8%, var(--surface)); }
 .ex-add {
   width: 100%; border: none; border-top: 1px dashed var(--border); background: transparent;
-  color: var(--muted); cursor: pointer; padding: 11px; font-size: 12px;
+  color: var(--muted); cursor: pointer; padding: var(--space-xs); font-size: 12px;
   font-family: var(--mono); letter-spacing: 0.04em;
 }
 .ex-add:hover { color: var(--accent); background: var(--accent-soft); }
 
 .ex-counter {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin: 18px 0; padding: 12px 14px; background: var(--surface);
+  margin: var(--space-md) 0; padding: var(--space-xs) var(--space-sm); background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--r);
   font-size: 14px;
 }

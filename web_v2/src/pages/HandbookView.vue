@@ -80,7 +80,7 @@ watch(id, load)
         </ol>
       </section>
 
-      <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost" style="margin-top: 20px;">
+      <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost hb-edit-btn">
         編輯手冊
       </router-link>
     </main>
@@ -88,18 +88,19 @@ watch(id, load)
 </template>
 
 <style scoped>
-.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; padding: 30px 28px 100px; }
+.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .hv-toc { position: sticky; top: 60px; align-self: start; }
-.hv-toc-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.hv-toc-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--space-xs); }
 .hv-toc a { display: block; padding: 4px 8px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
 .hv-toc a:hover { color: var(--fg); background: var(--accent-soft); border-left-color: var(--accent); }
 .hv-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .hv-back:hover { color: var(--fg); }
+.hb-edit-btn { margin-top: var(--space-md); }
 .hv-content h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
 .hv-meta { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .hv-toc ol { list-style: none; padding: 0; margin: 0; }
-.hv-vote-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 13px; }
-.hv-section { margin-bottom: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+.hv-vote-row { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md); font-size: 13px; }
+.hv-section { margin-bottom: var(--space-md); padding-top: var(--space-sm); border-top: 1px solid var(--border); }
 .hv-section:first-of-type { border-top: none; padding-top: 0; }
 .hv-sec-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
 .hv-sec-head h2 { font-size: 16px; font-weight: 600; }
