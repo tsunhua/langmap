@@ -75,7 +75,8 @@ async function changeSort() {
 
 <style scoped>
 .hb-page { max-width: 1000px; margin: 0 auto; }
-.hb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.hb-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-.hb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.hb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.hb-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.hb-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.hb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 14px; }
 </style>

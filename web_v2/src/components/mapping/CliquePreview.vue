@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  expressions: Array<{ id: number; text: string; language_code: string }>
+  expressions: Array<{ text: string }>
 }>()
 
 const edgeCount = computed(() => {
@@ -12,12 +12,11 @@ const edgeCount = computed(() => {
 
 const nodes = computed(() => {
   const n = props.expressions.length
-  const cx = 110, cy = 110, r = 80
-  return props.expressions.map((e, i) => ({
-    ...e,
-    x: cx + r * Math.cos((2 * Math.PI * i) / Math.max(n, 1) - Math.PI / 2),
-    y: cy + r * Math.sin((2 * Math.PI * i) / Math.max(n, 1) - Math.PI / 2),
-  }))
+  const cx = 110, cy = 110, r = n <= 1 ? 0 : 78
+  return props.expressions.map((_, i) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
+  })
 })
 
 const allEdges = computed(() => {
@@ -36,28 +35,40 @@ const allEdges = computed(() => {
 
 <template>
   <div class="clique-card">
-    <h3>完全圖預覽</h3>
+    <h3>將建立的映射圖</h3>
     <svg viewBox="0 0 220 220" class="clique-svg">
-      <line v-for="(e, i) in allEdges" :key="'e'+i"
-        :x1="e.x1" :y1="e.y1" :x2="e.x2" :y2="e.y2"
-        stroke="#4A6FA5" stroke-width="1" opacity="0.4" />
-      <circle v-for="(n, i) in nodes" :key="'n'+i"
-        :cx="n.x" :cy="n.y" r="5"
-        fill="#8B4513" />
+      <line v-for="(e, i) in allEdges" :key="'e' + i"
+        :x1="e.x1.toFixed(1)" :y1="e.y1.toFixed(1)" :x2="e.x2.toFixed(1)" :y2="e.y2.toFixed(1)"
+        stroke="var(--edge)" stroke-width="1" opacity="0.4" />
+      <circle v-for="(n, i) in nodes" :key="'n' + i"
+        :cx="n.x.toFixed(1)" :cy="n.y.toFixed(1)" r="7"
+        fill="var(--accent)" stroke="var(--surface)" stroke-width="2" />
     </svg>
     <div class="clique-meta">
-      {{ expressions.length }} 個詞句 → {{ edgeCount }} 條映射
+      <span><b>{{ expressions.length }}</b> 節點</span>
+      <span><b>{{ edgeCount }}</b> 邊</span>
     </div>
+    <p class="clique-note">每條邊都是一條獨立的直接映射,可被個別讚/踩;低評分的會折疊。</p>
   </div>
 </template>
 
 <style scoped>
 .clique-card {
-  padding: 16px;
-  background: #F5F0E8;
-  border-radius: 4px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); padding: 14px;
 }
-.clique-card h3 { font-size: 14px; margin-bottom: 8px; }
-.clique-svg { width: 100%; max-width: 220px; display: block; margin: 0 auto; }
-.clique-meta { text-align: center; font-family: "IBM Plex Mono", monospace; font-size: 13px; margin-top: 8px; }
+.clique-card h3 {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.clique-svg { width: 100%; height: auto; display: block; }
+.clique-meta {
+  display: flex; gap: 14px; justify-content: center; margin-top: 6px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.clique-meta b { color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.clique-note {
+  font-size: 11px; color: var(--faint); line-height: 1.5; margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
 </style>

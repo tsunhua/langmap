@@ -92,10 +92,12 @@ async function changeSort(sort: string) {
 
 <style scoped>
 .ld-page { max-width: 900px; margin: 0 auto; }
-.ld-back { font-size: 14px; display: inline-block; margin-bottom: 12px; }
-.ld-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.ld-stats { display: flex; gap: 12px; margin-bottom: 20px; }
-.ld-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+.ld-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
+.ld-back:hover { color: var(--fg); }
+.ld-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .ld-sort { display: flex; gap: 4px; }
-.ld-list { background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 </style>

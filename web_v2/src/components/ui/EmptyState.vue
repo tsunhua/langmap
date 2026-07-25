@@ -19,6 +19,7 @@ defineEmits<{ action: [] }>()
 .empty {
   text-align: center;
   padding: 48px 20px;
-  color: #4A6FA5;
+  color: var(--muted);
+  font-size: 13px;
 }
 </style>

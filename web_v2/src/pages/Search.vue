@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSearch } from '@/composables/useSearch'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
@@ -7,22 +7,30 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import LanguageSelect from '@/components/language/LanguageSelect.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const route = useRoute()
 const { search } = useSearch()
 
+const PAGE = 20
 const query = ref((route.query.q as string) || '')
 const langs = ref<string[]>([])
 const sortBy = ref('hot')
 const results = ref<any[]>([])
 const total = ref(0)
 const loading = ref(false)
+const loadingMore = ref(false)
 const searched = ref(false)
 const loadError = ref('')
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
 async function doSearch() {
+  if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null }
   if (!query.value.trim()) {
     results.value = []
+    total.value = 0
+    searched.value = false
     return
   }
   loading.value = true
@@ -31,7 +39,8 @@ async function doSearch() {
     const data = await search(query.value, {
       lang: langs.value.join(','),
       sort: sortBy.value,
-      limit: 50,
+      limit: PAGE,
+      offset: 0,
     })
     results.value = data.items
     total.value = data.total
@@ -42,6 +51,33 @@ async function doSearch() {
     loading.value = false
   }
 }
+
+async function loadMore() {
+  if (loadingMore.value || results.value.length >= total.value) return
+  loadingMore.value = true
+  try {
+    const data = await search(query.value, {
+      lang: langs.value.join(','),
+      sort: sortBy.value,
+      limit: PAGE,
+      offset: results.value.length,
+    })
+    results.value = results.value.concat(data.items)
+  } catch {
+    // keep existing results on load-more failure
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+// Debounced search on query input.
+watch(query, () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(doSearch, 300)
+})
+
+// Re-search immediately when sort or language filter changes (only after a search has started).
+watch([sortBy, langs], () => { if (searched.value) doSearch() })
 
 onMounted(() => {
   if (query.value) doSearch()
@@ -59,11 +95,11 @@ onMounted(() => {
     </div>
 
     <div v-if="searched || loading" class="se-meta">
-      <span class="se-count">{{ total }} 個結果</span>
-      <div class="se-sort">
-        <button :class="['btn btn-sm', sortBy === 'hot' ? 'btn-primary' : 'btn-ghost']" @click="sortBy = 'hot'; doSearch()">熱門</button>
-        <button :class="['btn btn-sm', sortBy === 'new' ? 'btn-primary' : 'btn-ghost']" @click="sortBy = 'new'; doSearch()">最新</button>
-        <button :class="['btn btn-sm', sortBy === 'alpha' ? 'btn-primary' : 'btn-ghost']" @click="sortBy = 'alpha'; doSearch()">字母</button>
+      <span class="se-count"><b>{{ total }}</b> 個結果</span>
+      <div class="se-sort" role="group" aria-label="排序">
+        <button :class="['btn btn-sm', sortBy === 'hot' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'hot'" @click="sortBy = 'hot'">熱門</button>
+        <button :class="['btn btn-sm', sortBy === 'new' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'new'" @click="sortBy = 'new'">最新</button>
+        <button :class="['btn btn-sm', sortBy === 'alpha' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'alpha'" @click="sortBy = 'alpha'">字母</button>
       </div>
     </div>
 
@@ -73,13 +109,17 @@ onMounted(() => {
 
     <EmptyState v-else-if="searched && results.length === 0" message="找不到結果" />
 
-    <div v-else-if="results.length" class="se-list">
-      <ExpressionRow
-        v-for="r in results"
-        :key="r.id"
-        v-bind="r"
-      />
-    </div>
+    <template v-else-if="results.length">
+      <div class="se-list">
+        <ExpressionRow
+          v-for="r in results"
+          :key="r.id"
+          v-bind="r"
+        />
+      </div>
+      <Pagination :has-more="results.length < total" @load-more="loadMore" />
+      <p v-if="loadingMore" class="se-more" role="status">載入中…</p>
+    </template>
 
     <p v-else class="se-hint">輸入關鍵字開始搜尋</p>
   </div>
@@ -88,12 +128,14 @@ onMounted(() => {
 <style scoped>
 .se-page { max-width: 900px; margin: 0 auto; }
 .se-hero { margin-bottom: 20px; }
-.se-hero h1 { margin-bottom: 16px; }
-.se-qrow { display: flex; gap: 12px; }
-.se-qrow > :first-child { flex: 1; }
-.se-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.se-count { font-size: 13px; color: #4A6FA5; }
+.se-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 16px; }
+.se-qrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.se-qrow > :first-child { flex: 1; min-width: 0; }
+.se-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.se-count { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.se-count b { color: var(--fg); font-weight: 500; }
 .se-sort { display: flex; gap: 4px; }
-.se-list { background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.se-hint { text-align: center; padding: 40px; color: #4A6FA5; }
+.se-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.se-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.se-hint { font-family: var(--mono); font-size: 10px; text-align: center; padding: 40px; color: var(--faint); }
 </style>

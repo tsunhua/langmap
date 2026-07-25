@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHandbooks } from '@/composables/useHandbooks'
 import SectionEditor from '@/components/handbook/SectionEditor.vue'
+import { Plus } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
@@ -35,7 +36,7 @@ onMounted(async () => {
     visibility.value = hb.visibility
     sections.value = hb.sections.map((s: any) => ({
       title: s.title || '',
-      expressions: (s.expressions || []).map((e: any, i: number) => ({
+      expressions: (s.items || []).map((e: any, i: number) => ({
         id: e.expression_id,
         text: e.text,
         language_code: e.language_code,
@@ -111,8 +112,8 @@ async function save() {
     <router-link to="/handbooks" class="he-back">← 手冊列表</router-link>
 
     <div class="he-head">
-      <input v-model="title" class="he-title" placeholder="手冊標題" />
-      <select v-model="visibility" class="he-vis">
+      <input v-model="title" class="he-title" placeholder="手冊標題" aria-label="手冊標題" />
+      <select v-model="visibility" class="he-vis" aria-label="可見性">
         <option value="public">公開</option>
         <option value="private">私有</option>
       </select>
@@ -138,19 +139,21 @@ async function save() {
       @remove-expression="removeExprFromSection(i, $event)"
     />
 
-    <button class="btn btn-ghost" @click="addSection">＋ 新增章節</button>
+    <button class="btn btn-ghost" @click="addSection"><Plus :size="14" aria-hidden="true" /> 新增章節</button>
 
-    <p v-if="loadError && !isNew" class="error">{{ loadError }}</p>
-    <p v-if="saveError" class="error">{{ saveError }}</p>
+    <p v-if="loadError && !isNew" class="error" role="alert">{{ loadError }}</p>
+    <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
   </div>
 </template>
 
 <style scoped>
 .he-page { max-width: 760px; margin: 0 auto; }
-.he-back { font-size: 14px; display: inline-block; margin-bottom: 12px; }
-.he-head { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
-.he-title { flex: 1; font-size: 20px; font-family: "Noto Serif", serif; font-weight: 700; padding: 8px; border: 1px solid #EDE5D8; border-radius: 4px; }
-.he-vis { padding: 8px; }
+.he-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
+.he-back:hover { color: var(--fg); }
+.he-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.he-title { flex: 1; min-width: 0; font-size: 24px; font-weight: 600; font-family: var(--font); padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); }
+.he-title:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent); }
+.he-vis { padding: 8px 10px; }
 .he-actions { margin-bottom: 20px; }
-.error { color: #A03030; font-size: 13px; margin-top: 16px; }
+.error { color: var(--down); font-size: 13px; margin-top: 16px; }
 </style>

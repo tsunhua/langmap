@@ -23,19 +23,33 @@ else
   echo "  backend_v2/.dev.vars 已存在，略過"
 fi
 
-step "啟動 v2 後端（本地 D1，port ${PORT:-8789}）"
+step "確保後端相依套件已安裝"
+cd "$ROOT/backend_v2"
+[ -d node_modules ] || npm install
+
+step "確保本地 D1 schema 已遷移（無表才應用 schema.sql）"
+TABLE_COUNT=$(npx wrangler d1 execute langmap-v2 --local --command="SELECT count(*) as c FROM sqlite_master WHERE type='table';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
+if [ "${TABLE_COUNT:-0}" -eq 0 ]; then
+  echo "  本地 D1 無表，套用 schema.sql"
+  npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
+else
+  echo "  本地 D1 已有 ${TABLE_COUNT} 張表，略過遷移"
+fi
+
+step "建置前端並同步到後端託管目錄（web_v2/dist → backend_v2/public）"
+cd "$ROOT/web_v2"
+[ -d node_modules ] || npm install
+npm run build
+rm -rf "$ROOT/backend_v2/public/assets"
+cp -r dist/* "$ROOT/backend_v2/public/"
+
+step "啟動 v2（本地 D1 + 前端託管，port ${PORT:-8789}）"
 cd "$ROOT/backend_v2"
 npx wrangler dev --port "${PORT:-8789}" &
 BACKEND_PID=$!
 
-step "啟動前端（port 5173）"
-cd "$ROOT/web_v2"
-npx vite --port 5173 &
-FRONTEND_PID=$!
-
-trap 'echo ""; echo "停止所有服務…"; kill '"$BACKEND_PID"' '"$FRONTEND_PID"' 2>/dev/null; exit 0' INT TERM
+trap 'echo ""; echo "停止服務…"; kill '"$BACKEND_PID"' 2>/dev/null; exit 0' INT TERM
 echo ""
-echo "▶ v2 後端: http://localhost:${PORT:-8789}"
-echo "▶ 前端:    http://localhost:5173"
-echo "按 Ctrl+C 停止全部"
+echo "▶ v2: http://localhost:${PORT:-8789}（前端 + /api/v2）"
+echo "按 Ctrl+C 停止"
 wait || true

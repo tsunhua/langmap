@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import VotePill from './VotePill.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 defineProps<{
   mappings: Array<{
@@ -15,7 +16,8 @@ defineProps<{
 </script>
 
 <template>
-  <div class="mapping-list">
+  <EmptyState v-if="!mappings.length" message="尚無對照映射" />
+  <div v-else class="mapping-list">
     <div
       v-for="m in mappings"
       :key="m.expression_id"
@@ -44,8 +46,9 @@ defineProps<{
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-bottom: 1px solid #EDE5D8;
+  border-bottom: 1px solid var(--border);
 }
+.map-row:last-child { border-bottom: none; }
 .map-link {
   display: flex;
   align-items: center;
@@ -53,14 +56,16 @@ defineProps<{
   text-decoration: none;
   color: inherit;
   flex: 1;
+  min-width: 0;
 }
-.map-text { font-size: 14px; }
-.map-name { font-size: 12px; color: #4A6FA5; }
+.map-text { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-name { font-size: 12px; color: var(--muted); flex-shrink: 0; }
 .hop-tag {
+  font-family: var(--mono);
   font-size: 11px;
   padding: 1px 5px;
-  border-radius: 3px;
-  background: #E6F0FF;
-  color: #4A6FA5;
+  border-radius: var(--r);
+  border: 1px solid color-mix(in oklch, var(--edge) 35%, var(--border));
+  color: var(--edge);
 }
 </style>

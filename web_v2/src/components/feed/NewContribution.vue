@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ArrowLeftRight } from 'lucide-vue-next'
+
 defineProps<{
   id: string
   left_text: string
@@ -27,7 +29,7 @@ function timeAgo(dateStr?: string): string {
     <span class="new-body">
       <span class="new-pair">
         <span class="tx">{{ left_text }}</span>
-        <span class="arrow">↔</span>
+        <span class="arrow"><ArrowLeftRight :size="12" aria-hidden="true" /></span>
         <span class="tx">{{ right_text }}</span>
       </span>
       <span class="lang-badge">{{ left_lang }} · {{ right_lang }}</span>
@@ -45,33 +47,38 @@ function timeAgo(dateStr?: string): string {
   gap: 12px;
   align-items: center;
   padding: 11px 0;
-  border-bottom: 1px solid #EDE5D8;
+  border-bottom: 1px solid var(--border);
   color: inherit;
   text-decoration: none;
   cursor: pointer;
 }
 .new-row:last-child { border-bottom: none; }
-.new-row:hover .tx { color: #8B4513; }
+.new-row:hover .tx { color: var(--accent); }
 .new-kind {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #8B4513;
-  border: 1px solid #D4A574;
+  color: var(--accent);
+  border: 1px solid color-mix(in oklch, var(--accent) 40%, var(--border));
   padding: 2px 7px;
   border-radius: 2px;
   justify-self: start;
-  background: #F5E6D3;
+  background: var(--accent-soft);
 }
 .new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.new-pair { font-size: 14px; }
-.new-pair .arrow { color: #B0B0B0; margin: 0 4px; }
+.new-pair { font-size: 14px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.new-pair .arrow { color: var(--faint); margin: 0 4px; }
 .new-pair .tx { font-weight: 500; transition: color 0.12s; }
 .new-meta {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 10px;
-  color: #6B7280;
+  color: var(--muted);
   white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .new-row { grid-template-columns: auto 1fr; gap: 8px; }
+  .new-meta { white-space: normal; grid-column: 1 / -1; }
+  .new-kind { font-size: 8px; }
 }
 </style>

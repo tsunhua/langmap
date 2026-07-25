@@ -12,6 +12,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
       v-for="opt in options"
       :key="opt.value"
       :class="['seg-btn', { on: modelValue === opt.value }]"
+      :aria-pressed="modelValue === opt.value"
       @click="emit('update:modelValue', opt.value)"
     >
       {{ opt.label }}
@@ -22,21 +23,26 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 <style scoped>
 .seg {
   display: inline-flex;
-  border: 1px solid #EDE5D8;
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
   overflow: hidden;
 }
 .seg-btn {
   padding: 4px 12px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 12px;
   border: none;
   background: transparent;
+  color: var(--muted);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
+.seg-btn:hover { color: var(--fg); }
 .seg-btn.on {
-  background: #1A1A1A;
-  color: #fff;
+  background: var(--fg);
+  color: var(--surface);
+}
+@media (max-width: 768px) {
+  .seg-btn { min-height: 44px; padding: 10px 14px; }
 }
 </style>

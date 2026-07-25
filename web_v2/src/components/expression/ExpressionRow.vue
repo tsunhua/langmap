@@ -24,16 +24,23 @@ defineProps<{
 <style scoped>
 .ex-row {
   display: grid;
-  grid-template-columns: 1fr 70px 100px 60px 60px;
+  grid-template-columns: minmax(0,1fr) 70px 100px auto 60px;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-bottom: 1px solid #EDE5D8;
+  border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
   transition: background 0.1s;
 }
-.ex-row:hover { background: #F5F0E8; }
-.ex-tx { font-size: 14px; }
-.ex-maps { font-family: "IBM Plex Mono", monospace; color: #8B4513; font-size: 13px; }
+.ex-row:last-child { border-bottom: none; }
+.ex-row:hover { background: var(--bg); }
+.ex-row:hover .ex-tx { color: var(--accent); }
+.ex-tx { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-region { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-maps { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--accent); font-size: 13px; text-align: right; white-space: nowrap; }
+@media (max-width: 640px) {
+  .ex-row { grid-template-columns: 1fr auto auto; gap: 6px; padding: 8px 10px; }
+  .ex-region, .ex-src { display: none; }
+}
 </style>

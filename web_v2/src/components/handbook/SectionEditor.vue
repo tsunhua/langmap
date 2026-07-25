@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ExpressionPicker from '@/components/expression/ExpressionPicker.vue'
+import { ChevronUp, ChevronDown, X, Plus } from 'lucide-vue-next'
 
 defineProps<{
   title: string
@@ -28,12 +29,13 @@ const showPicker = ref(false)
         :value="title"
         class="he-sec-title"
         placeholder="章節標題"
+        aria-label="章節標題"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <div class="he-sec-actions">
-        <button class="btn btn-icon btn-ghost btn-sm" @click="emit('move-up')" title="上移">▲</button>
-        <button class="btn btn-icon btn-ghost btn-sm" @click="emit('move-down')" title="下移">▼</button>
-        <button class="btn btn-icon btn-ghost btn-sm" @click="emit('remove')" title="刪除">✕</button>
+        <button class="btn btn-icon btn-ghost btn-sm" aria-label="上移章節" @click="emit('move-up')"><ChevronUp :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" aria-label="下移章節" @click="emit('move-down')"><ChevronDown :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" aria-label="刪除章節" @click="emit('remove')"><X :size="14" aria-hidden="true" /></button>
       </div>
     </div>
 
@@ -42,12 +44,12 @@ const showPicker = ref(false)
         <span class="he-expr-num">{{ String(j + 1).padStart(2, '0') }}</span>
         <span class="he-expr-tx">{{ expr.text }}</span>
         <span class="lang-badge">{{ expr.language_code }}</span>
-        <button class="btn btn-icon btn-ghost btn-sm" @click="emit('remove-expression', expr.id)">✕</button>
+        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="`移除 ${expr.text}`" @click="emit('remove-expression', expr.id)"><X :size="14" aria-hidden="true" /></button>
       </div>
     </div>
 
     <button class="btn btn-ghost btn-sm" @click="showPicker = !showPicker">
-      {{ showPicker ? '收起' : '+ 新增詞句' }}
+      <Plus :size="14" aria-hidden="true" /> {{ showPicker ? '收起' : '新增詞句' }}
     </button>
 
     <ExpressionPicker v-if="showPicker" @select="emit('add-expression', $event); showPicker = false" />
@@ -55,12 +57,14 @@ const showPicker = ref(false)
 </template>
 
 <style scoped>
-.he-section { border: 1px solid #EDE5D8; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
-.he-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.he-sec-num { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #4A6FA5; }
-.he-sec-title { flex: 1; font-size: 15px; font-weight: 500; border: none; border-bottom: 1px solid #EDE5D8; padding: 4px 0; }
+.he-section { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; background: var(--surface); }
+.he-sec-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.he-sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.he-sec-title { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; border: none; border-bottom: 1px solid transparent; padding: 4px 0; background: transparent; }
+.he-sec-title:focus { outline: none; border-bottom-color: var(--accent); }
 .he-sec-actions { display: flex; gap: 2px; }
-.he-expr { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; }
-.he-expr-num { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #4A6FA5; width: 24px; }
-.he-expr-tx { flex: 1; }
+.he-expr-list { margin-bottom: 8px; }
+.he-expr { display: grid; grid-template-columns: 26px 1fr auto auto; align-items: center; gap: 8px; padding: 6px 4px; font-size: 13px; }
+.he-expr-num { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 26px; }
+.he-expr-tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

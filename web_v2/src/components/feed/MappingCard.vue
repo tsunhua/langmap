@@ -41,16 +41,16 @@ function scoreClass(score: number) {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #EDE5D8;
-  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
   padding: 10px 14px;
   cursor: pointer;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, box-shadow 0.12s;
   color: inherit;
   text-decoration: none;
 }
-.map-card:hover { border-color: #D4A574; }
+.map-card:hover { border-color: color-mix(in oklch, var(--accent) 45%, var(--border)); box-shadow: 0 2px 6px oklch(0 0 0 / 0.05); }
 .mc-node { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .mc-node.r { align-items: flex-end; text-align: right; }
 .mc-tx {
@@ -62,18 +62,18 @@ function scoreClass(score: number) {
   white-space: nowrap;
 }
 .mc-lc {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 10px;
-  color: #6B7280;
+  color: var(--muted);
 }
 .mc-edge { display: flex; align-items: center; gap: 5px; padding: 0; }
-.mc-line { height: 3px; width: 20px; background: #4A6FA5; border-radius: 2px; opacity: 0.7; }
+.mc-line { height: 3px; width: 20px; background: var(--edge); border-radius: 2px; opacity: 0.75; }
 .mc-score {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 500;
-  color: #8B4513;
+  color: var(--accent);
   white-space: nowrap;
 }
 .mc-edge.s4 .mc-line { width: 24px; height: 4px; }

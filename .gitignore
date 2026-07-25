@@ -2,6 +2,7 @@
 .DS_Store
 .vscode/
 .idea/
+.history/
 .ropeproject/
 .cache/
 *.log
@@ -21,6 +22,7 @@ venv/
 # Distribution / packaging
 build/
 dist/
+public/
 *.egg-info/
 
 # Tests

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLanguagesStore } from '@/stores/languages'
+import { X } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: string[]
@@ -11,6 +12,7 @@ const store = useLanguagesStore()
 const open = ref(false)
 const query = ref('')
 const inputRef = ref<HTMLInputElement>()
+const loadError = ref('')
 
 const selected = computed(() => props.modelValue)
 
@@ -38,8 +40,8 @@ function handleClickOutside(e: MouseEvent) {
 }
 
 onMounted(() => {
-  store.fetchLanguages()
   document.addEventListener('click', handleClickOutside)
+  store.fetchLanguages().catch(() => { loadError.value = '語言載入失敗' })
 })
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
@@ -49,13 +51,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     <div class="lang-select-tagwrap" @click="inputRef?.focus()">
       <span v-for="code in selected" :key="code" class="lang-tag">
         {{ code }}
-        <button @click.stop="remove(code)">✕</button>
+        <button :aria-label="`移除 ${code}`" @click.stop="remove(code)"><X :size="10" aria-hidden="true" /></button>
       </span>
       <input
         ref="inputRef"
         v-model="query"
         class="lang-select-input"
         placeholder="篩選語言…"
+        aria-label="篩選語言"
         @focus="open = true"
       />
     </div>
@@ -69,6 +72,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
         {{ l.name }} ({{ l.code }})
       </button>
     </div>
+    <div v-if="loadError" class="lang-err" role="alert">{{ loadError }}</div>
   </div>
 </template>
 
@@ -76,27 +80,30 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .lang-select { position: relative; }
 .lang-select-tagwrap {
   display: flex; flex-wrap: wrap; gap: 4px;
-  padding: 4px 8px; border: 1px solid #EDE5D8;
-  border-radius: 4px; background: #fff; min-height: 32px; cursor: text;
+  padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: var(--r); background: var(--surface); min-height: 32px; cursor: text;
 }
+.lang-select-tagwrap:focus-within { border-color: var(--accent); }
 .lang-tag {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 1px 6px; border-radius: 3px;
-  background: #F5E6D3; font-size: 12px;
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-family: var(--mono); font-size: 10px;
 }
-.lang-tag button { border: none; background: none; cursor: pointer; font-size: 10px; color: #4A6FA5; }
-.lang-select-input { border: none; outline: none; font-size: 13px; flex: 1; min-width: 80px; }
+.lang-tag button { border: none; background: none; cursor: pointer; font-size: 10px; color: var(--accent); display: grid; place-items: center; }
+.lang-select-input { border: none; outline: none; font-size: 13px; flex: 1; min-width: 80px; background: transparent; }
 .lang-select-dropdown {
   position: absolute; top: 100%; left: 0; right: 0;
   max-height: 200px; overflow-y: auto;
-  background: #fff; border: 1px solid #EDE5D8;
-  border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: 0 4px 12px oklch(0 0 0 / 0.1);
   z-index: 50;
 }
 .lang-opt {
   display: block; width: 100%; text-align: left;
   padding: 6px 10px; border: none; background: none;
-  font-size: 13px; cursor: pointer;
+  font-size: 13px; cursor: pointer; color: var(--fg);
 }
-.lang-opt:hover { background: #F5F0E8; }
+.lang-opt:hover { background: var(--accent-soft); }
+.lang-err { font-size: 11px; color: var(--down); margin-top: 4px; }
 </style>

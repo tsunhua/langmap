@@ -14,21 +14,22 @@ defineProps<{
 
 <style scoped>
 .stat-box {
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .stat-val {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 20px;
-  font-weight: 600;
-  color: #8B4513;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--fg);
 }
 .stat-lbl {
-  font-size: 12px;
-  color: #4A6FA5;
-  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 </style>

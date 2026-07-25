@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useFeed } from '@/composables/useFeed'
 import MappingCard from '@/components/feed/MappingCard.vue'
 import NewContribution from '@/components/feed/NewContribution.vue'
 import SegControl from '@/components/ui/SegControl.vue'
+import SearchBar from '@/components/ui/SearchBar.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
+const router = useRouter()
 const { hot, newest } = useFeed()
 
 const hotMappings = ref<any[]>([])
@@ -14,6 +17,12 @@ const newContribs = ref<any[]>([])
 const segment = ref('all')
 const loading = ref(true)
 const loadError = ref('')
+const searchQuery = ref('')
+
+function onSearch() {
+  const q = searchQuery.value.trim()
+  if (q) router.push({ path: '/search', query: { q } })
+}
 
 onMounted(async () => {
   loading.value = true
@@ -31,6 +40,10 @@ onMounted(async () => {
 
 <template>
   <div class="feed-page">
+    <div class="home-search">
+      <SearchBar v-model="searchQuery" placeholder="搜尋詞句…" :large="true" @search="onSearch" />
+    </div>
+
     <div class="feed-hero">
       <h1>動態</h1>
       <p>語義圖譜的最新脈動--熱門映射與新貢獻。</p>
@@ -85,25 +98,40 @@ onMounted(async () => {
 
 <style scoped>
 .feed-page { max-width: 760px; margin: 0 auto; }
+.home-search {
+  position: sticky;
+  top: 44px;
+  z-index: 90;
+  padding: 10px 0 12px;
+  margin-bottom: 16px;
+  background: color-mix(in oklch, var(--bg) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
 .feed-hero { margin-bottom: 28px; }
 .feed-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
-.feed-hero p { font-size: 13px; color: #6B7280; }
+.feed-hero p { font-size: 13px; color: var(--muted); }
 .feed-sec { margin-bottom: 34px; }
 .feed-sec-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #EDE5D8;
+  flex-wrap: wrap;
+  margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
 }
 .feed-sec-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
 .feed-sec-head .hint {
-  font-family: "IBM Plex Mono", monospace; font-size: 10px;
-  color: #B0B0B0; letter-spacing: 0.04em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--faint); letter-spacing: 0.04em; text-transform: uppercase;
 }
 .map-list { display: flex; flex-direction: column; gap: 5px; }
 .new-list { display: flex; flex-direction: column; }
 .feed-cta {
   margin-top: 8px; padding: 16px;
-  border: 1px dashed #EDE5D8; border-radius: 8px;
-  text-align: center; color: #6B7280; font-size: 13px;
+  border: 1px dashed var(--border); border-radius: 8px;
+  text-align: center; color: var(--muted); font-size: 13px;
 }
-.feed-cta a { color: #8B4513; font-weight: 500; }
+.feed-cta a { color: var(--accent); font-weight: 500; }
+.feed-cta a:hover { filter: brightness(1.08); }
+@media (max-width: 640px) {
+  .feed-hero { margin-bottom: 20px; }
+}
 </style>

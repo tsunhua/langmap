@@ -2,94 +2,174 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Atlas paper base styles */
-body {
-  font-family: "Inter", system-ui, sans-serif;
-  color: #1A1A1A;
-  background: #F5F0E8;
-  background-image: radial-gradient(circle, #E8C9A0 1px, transparent 1px);
-  background-size: 22px 22px;
-  line-height: 1.6;
+html { -webkit-text-size-adjust: 100%; }
+
+/* ═══════════════ Atlas v2 design tokens (ported from docs/prototype/v2/atlas2.css) ═══════════════
+   Shared DNA: warm paper surface + terracotta accent + blue graph edges + mono.
+   OKLCH keeps perceptual uniformity across light tints. */
+:root {
+  --bg:          oklch(0.975 0.008 85);   /* warm paper */
+  --surface:      oklch(1 0 0);           /* card / node fill */
+  --surface-2:    oklch(0.965 0.010 85);  /* table head / inset */
+  --fg:          oklch(0.20 0.015 55);   /* ink */
+  --muted:       oklch(0.52 0.010 200);  /* secondary text */
+  --faint:       oklch(0.72 0.008 200);  /* tertiary / hint */
+  --border:      oklch(0.88 0.008 95);
+  --accent:      oklch(0.64 0.16 35);    /* terracotta */
+  --accent-soft: oklch(0.96 0.04 35);
+  --edge:        oklch(0.62 0.13 245);   /* graph-edge blue */
+  --up:          oklch(0.60 0.14 155);   /* 讚 green */
+  --down:        oklch(0.60 0.17 25);     /* 踩 red */
+  --fold:        oklch(0.78 0.012 88);   /* folded / strike */
+  --font:        "Inter", system-ui, sans-serif;
+  --mono:        "IBM Plex Mono", ui-monospace, monospace;
+  --r:           4px;
+  --bar-h:       44px;
 }
 
-a { color: #8B4513; text-decoration: none; }
-a:hover { color: #A0522D; }
+/* ── Paper base ── */
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  background-image: radial-gradient(circle, oklch(0.90 0.010 88) 1px, transparent 1px);
+  background-size: 22px 22px;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-x: clip; /* clips stray horizontal overflow without breaking position: sticky */
+}
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--accent-soft); }
+.mono { font-family: var(--mono); font-size: 11px; }
 
 /* Appbar */
 .appbar {
   position: sticky; top: 0; z-index: 100;
-  display: flex; align-items: center; gap: 16px;
-  height: 44px; padding: 0 20px;
-  background: rgba(245, 240, 232, 0.85);
+  display: flex; align-items: center; gap: 12px;
+  height: var(--bar-h); padding: 0 14px;
+  background: color-mix(in oklch, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid #EDE5D8;
+  border-bottom: 1px solid var(--border);
 }
 
-/* Buttons */
+/* ── Buttons ── */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: 4px; border: 1px solid transparent;
-  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s;
+  height: 30px; padding: 0 12px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--surface);
+  font-weight: 500; font-size: 13px; color: var(--fg);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, filter 0.15s;
 }
-.btn-primary { background: #8B4513; color: #fff; }
-.btn-primary:hover { background: #A0522D; }
-.btn-ghost { border-color: #EDE5D8; background: transparent; }
-.btn-ghost:hover { background: #F5F0E8; }
-.btn-sm { padding: 3px 8px; font-size: 12px; }
-.btn-icon { padding: 4px; width: 28px; height: 28px; justify-content: center; }
+.btn:hover { background: var(--bg); border-color: oklch(0.78 0.06 35); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { filter: brightness(1.06); background: var(--accent); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--fg); }
+.btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+.btn-icon { width: 30px; padding: 0; display: grid; place-items: center; color: var(--muted); }
 
 /* Page shell */
 .page { max-width: 920px; margin: 0 auto; padding: 28px 28px 120px; }
 
 /* Cards */
 .card {
-  background: #fff; border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px;
+  background: var(--surface); border-radius: var(--r);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.05); padding: 16px;
 }
 
-/* Vote pill */
-.vote { display: inline-flex; align-items: center; gap: 4px; }
+/* ── Vote pill (lucide thumbs icons; joined-pill shape) ── */
+.vote { display: inline-flex; align-items: center; gap: 2px; }
 .vote button {
-  width: 28px; height: 28px; border-radius: 4px; border: 1px solid #EDE5D8;
-  background: transparent; cursor: pointer; font-size: 14px; transition: all 0.15s;
+  width: 26px; height: 26px; border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; color: var(--muted); display: grid; place-items: center; padding: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.vote button:hover { background: #F5F0E8; }
-.vote button.on.up { color: #2D7A3A; border-color: #2D7A3A; }
-.vote button.on.down { color: #A03030; border-color: #A03030; }
+.vote button:first-child { border-radius: var(--r) 0 0 var(--r); }
+.vote button:last-child { border-radius: 0 var(--r) var(--r) 0; border-left: none; }
+.vote button:hover { background: var(--bg); }
+.vote button.up.on { background: var(--up); color: #fff; border-color: var(--up); }
+.vote button.down.on { background: var(--down); color: #fff; border-color: var(--down); }
 .vote .score {
-  font-family: "IBM Plex Mono", monospace; font-size: 13px;
-  min-width: 32px; text-align: center;
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px;
+  min-width: 32px; text-align: center; padding: 0 6px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  height: 26px; display: grid; place-items: center;
+}
+.vote .score.neg { color: var(--down); }
+.vote-error {
+  font-family: var(--mono); font-size: 11px; color: var(--down); margin-left: 4px;
 }
 
 /* Language badge */
 .lang-badge {
-  display: inline-block; padding: 1px 6px; border-radius: 3px;
-  font-family: "IBM Plex Mono", monospace; font-size: 11px;
-  background: #F5F0E8; color: #4A6FA5;
+  display: inline-block;
+  font-family: var(--mono); font-size: 11px;
+  border: 1px solid var(--border); border-radius: 2px;
+  padding: 1px 6px; color: var(--fg); background: var(--surface);
 }
 
 /* Source tag */
 .src-tag {
-  display: inline-block; padding: 1px 5px; border-radius: 3px;
-  font-size: 11px; background: #F5F0E8;
+  display: inline-block;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px;
+  color: var(--muted); background: transparent;
 }
-.src-tag.auth { background: #F5E6D3; color: #8B4513; }
-.src-tag.ai { background: #E6F0FF; color: #4A6FA5; }
+.src-tag.auth { border-color: color-mix(in oklch, var(--up) 45%, var(--border)); color: var(--up); }
+.src-tag.ai { border-color: color-mix(in oklch, var(--accent) 40%, var(--border)); color: var(--accent); }
 
-/* Section header */
+/* Section header (對照集 / shared) */
 .nb-head {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 0; border-bottom: 1px solid #EDE5D8;
-  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 30px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
 }
+.nb-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.nb-head .nb-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.nb-head .nb-meta b { color: var(--fg); font-weight: 500; }
 
 /* Input */
 input, select {
-  padding: 6px 10px; border: 1px solid #EDE5D8; border-radius: 4px;
-  font-family: "Inter", sans-serif; font-size: 14px; background: #fff;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r);
+  font-family: var(--font); font-size: 14px; background: var(--surface); color: var(--fg);
 }
 input:focus, select:focus {
-  outline: none; border-color: #8B4513;
-  box-shadow: 0 0 0 2px rgba(139,69,19,0.15);
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
+}
+
+/* ── Keyboard focus ring (a11y) ───────────────────────── */
+/* Visible focus for interactive elements that lack their own focus style. */
+.btn:focus-visible,
+.btn-icon:focus-visible,
+a:focus-visible,
+.vote button:focus-visible,
+.seg-btn:focus-visible,
+.pin:focus-visible,
+.menu-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Reduced motion (a11y) ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Responsive shell ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .page { padding: 24px 20px 80px; }
+  /* ≥44pt touch targets + 16px inputs to stop iOS focus zoom */
+  .btn { min-height: 44px; padding: 8px 14px; }
+  .btn-icon { width: 44px; height: 44px; }
+  .vote button { width: 44px; height: 44px; }
+  .seg-btn { min-height: 44px; padding: 10px 12px; }
+  input, select { min-height: 44px; font-size: 16px; }
+}
+@media (max-width: 640px) {
+  .page { padding: 20px 16px 72px; }
 }

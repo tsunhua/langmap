@@ -8,12 +8,19 @@ const { search } = useExpressions()
 const query = ref('')
 const results = ref<any[]>([])
 const loading = ref(false)
+const error = ref('')
+const searched = ref(false)
 
 async function doSearch() {
-  if (!query.value.trim()) { results.value = []; return }
+  if (!query.value.trim()) { results.value = []; searched.value = false; return }
   loading.value = true
+  error.value = ''
   try {
     results.value = await search(query.value, undefined, 20)
+    searched.value = true
+  } catch (e: any) {
+    error.value = e.response?.data?.error || '搜尋失敗'
+    results.value = []
   } finally {
     loading.value = false
   }
@@ -23,10 +30,13 @@ async function doSearch() {
 <template>
   <div class="picker">
     <div class="picker-search">
-      <input v-model="query" placeholder="搜尋詞句…" @keydown.enter="doSearch" />
+      <input v-model="query" placeholder="搜尋詞句…" aria-label="搜尋詞句" @keydown.enter="doSearch" />
       <button class="btn btn-sm btn-ghost" @click="doSearch">搜尋</button>
     </div>
     <div class="picker-results">
+      <div v-if="loading" class="picker-hint">搜尋中…</div>
+      <div v-else-if="error" class="picker-hint err" role="alert">{{ error }}</div>
+      <div v-else-if="searched && results.length === 0" class="picker-hint">找不到詞句</div>
       <button
         v-for="r in results"
         :key="r.id"
@@ -40,14 +50,18 @@ async function doSearch() {
 </template>
 
 <style scoped>
-.picker { border: 1px solid #EDE5D8; border-radius: 4px; overflow: hidden; }
-.picker-search { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid #EDE5D8; }
+.picker { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.picker-search { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border); }
 .picker-search input { flex: 1; }
 .picker-results { max-height: 200px; overflow-y: auto; }
 .picker-item {
   display: flex; align-items: center; gap: 8px;
   width: 100%; text-align: left; padding: 6px 10px;
   border: none; background: none; cursor: pointer; font-size: 13px;
+  color: var(--fg);
 }
-.picker-item:hover { background: #F5F0E8; }
+.picker-item:hover { background: var(--accent-soft); }
+.picker-item:hover .lang-badge { border-color: color-mix(in oklch, var(--accent) 45%, var(--border)); }
+.picker-hint { padding: 8px 10px; font-size: 13px; color: var(--muted); }
+.picker-hint.err { color: var(--down); }
 </style>

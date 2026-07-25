@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TopNav from './components/nav/TopNav.vue'
+import SiteFooter from './components/nav/SiteFooter.vue'
 </script>
 
 <template>
@@ -7,4 +8,5 @@ import TopNav from './components/nav/TopNav.vue'
   <main class="page">
     <router-view />
   </main>
+  <SiteFooter />
 </template>

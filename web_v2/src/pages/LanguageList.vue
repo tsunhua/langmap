@@ -43,8 +43,10 @@ onMounted(async () => {
 
 <template>
   <div class="lg-page">
-    <h1>語言列表</h1>
-    <p style="color: #4A6FA5; margin: 8px 0 20px;">探索所有語言的詞句與映射</p>
+    <div class="lg-head">
+      <h1>語言列表</h1>
+      <p class="lg-sub">探索所有語言的詞句與映射</p>
+    </div>
 
     <div class="lg-stats">
       <StatBox :label="'種語言'" :value="languages.length" />
@@ -77,8 +79,10 @@ onMounted(async () => {
 
 <style scoped>
 .lg-page { max-width: 900px; margin: 0 auto; }
-.lg-stats { display: flex; gap: 12px; margin-bottom: 20px; }
-.lg-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+.lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.lg-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.lg-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.lg-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .lg-sort { display: flex; gap: 4px; }
-.lg-list { background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.lg-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 </style>

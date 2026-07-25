@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHandbooks } from '@/composables/useHandbooks'
 import VotePill from '@/components/mapping/VotePill.vue'
+import { ChevronRight } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
@@ -59,16 +60,16 @@ watch(id, load)
 
       <section v-for="(sec, i) in hb.sections" :key="sec.id" :id="`sec-${i}`" class="hv-section">
         <div class="hv-sec-head">
-          <span class="hv-sec-num">{{ i + 1 }}</span>
+          <span class="hv-sec-num">§{{ i + 1 }}</span>
           <h2>{{ sec.title || `章節 ${i + 1}` }}</h2>
         </div>
-        <ol v-if="sec.expressions?.length" class="hb-expr-list">
-          <li v-for="(expr, j) in sec.expressions" :key="expr.expression_id">
+        <ol v-if="sec.items?.length" class="hb-expr-list">
+          <li v-for="(expr, j) in sec.items" :key="expr.expression_id">
             <router-link :to="`/mapping/${expr.expression_id}`" class="hb-expr">
               <span class="hb-num">{{ j + 1 }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
               <span class="lang-badge">{{ expr.language_code }}</span>
-              <span class="hb-go">→</span>
+              <span class="hb-go"><ChevronRight :size="14" aria-hidden="true" /></span>
             </router-link>
           </li>
         </ol>
@@ -82,28 +83,33 @@ watch(id, load)
 </template>
 
 <style scoped>
-.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; max-width: 1000px; margin: 0 auto; }
+.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; }
 .hv-toc { position: sticky; top: 60px; align-self: start; }
-.hv-toc-label { font-family: "IBM Plex Mono", monospace; font-size: 11px; text-transform: uppercase; color: #4A6FA5; margin-bottom: 8px; }
-.hv-toc a { display: block; padding: 4px 0; font-size: 13px; color: #4A6FA5; text-decoration: none; }
-.hv-toc a:hover { color: #8B4513; }
-.hv-back { font-size: 14px; display: inline-block; margin-bottom: 12px; }
-.hv-meta { display: flex; gap: 10px; font-size: 13px; color: #4A6FA5; margin: 8px 0 16px; }
+.hv-toc-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.hv-toc a { display: block; padding: 4px 8px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.hv-toc a:hover { color: var(--fg); background: var(--accent-soft); border-left-color: var(--accent); }
+.hv-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
+.hv-back:hover { color: var(--fg); }
+.hv-content h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.hv-meta { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .hv-vote-row { margin-bottom: 20px; }
-.hv-section { margin-bottom: 24px; }
-.hv-sec-head { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #EDE5D8; }
-.hv-sec-num { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #4A6FA5; }
+.hv-section { margin-bottom: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+.hv-section:first-of-type { border-top: none; padding-top: 0; }
+.hv-sec-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.hv-sec-head h2 { font-size: 16px; font-weight: 600; }
+.hv-sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 .hb-expr-list { list-style: none; padding: 0; }
 .hb-expr {
   display: grid; grid-template-columns: 26px 1fr 56px 16px;
-  align-items: center; gap: 8px; padding: 6px 8px;
-  text-decoration: none; color: inherit; border-bottom: 1px solid #EDE5D8;
+  align-items: center; gap: 12px; padding: 9px 4px;
+  text-decoration: none; color: inherit; border-bottom: 1px solid var(--border);
 }
-.hb-expr:hover { background: #F5F0E8; }
-.hb-num { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #4A6FA5; }
-.hb-go { color: #8B4513; }
-@media (max-width: 700px) {
+.hb-expr:hover { background: var(--bg); }
+.hb-expr:hover .hb-tx { color: var(--accent); }
+.hb-num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.hb-go { color: var(--accent); }
+@media (max-width: 768px) {
   .hv-layout { grid-template-columns: 1fr; }
-  .hv-toc { position: static; }
+  .hv-toc { position: static; margin-bottom: 16px; }
 }
 </style>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Star } from 'lucide-vue-next'
+
 defineProps<{
   id: number
   title: string
@@ -12,10 +14,10 @@ defineProps<{
 <template>
   <router-link :to="`/handbook/${id}`" class="hb-card">
     <h3>{{ title }}</h3>
-    <div class="hb-card-meta">{{ section_count }} 章 · {{ expression_count }} 詞句</div>
+    <div class="hb-card-meta"><b>{{ section_count }}</b> 章 · <b>{{ expression_count }}</b> 詞句</div>
     <div class="hb-card-foot">
       <span v-if="author_username" class="hb-author">{{ author_username }}</span>
-      <span class="hb-score">★ {{ score }}</span>
+      <span class="hb-score"><Star :size="12" aria-hidden="true" /> {{ score }}</span>
     </div>
   </router-link>
 </template>
@@ -23,13 +25,19 @@ defineProps<{
 <style scoped>
 .hb-card {
   display: flex; flex-direction: column; gap: 8px;
-  padding: 16px; background: #fff;
-  border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  text-decoration: none; color: inherit; transition: box-shadow 0.15s;
+  padding: 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
-.hb-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.hb-card h3 { font-size: 15px; font-family: "Noto Serif", serif; }
-.hb-card-meta { font-size: 13px; color: #4A6FA5; }
-.hb-card-foot { display: flex; justify-content: space-between; font-size: 12px; color: #4A6FA5; margin-top: auto; }
-.hb-score { font-family: "IBM Plex Mono", monospace; color: #8B4513; }
+.hb-card:hover { border-color: color-mix(in oklch, var(--accent) 45%, var(--border)); box-shadow: 0 2px 6px oklch(0 0 0 / 0.05); }
+.hb-card h3 { font-size: 15px; font-weight: 600; }
+.hb-card-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.hb-card-meta b { color: var(--fg); font-weight: 500; }
+.hb-card-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--muted); margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.hb-score { color: var(--accent); }
 </style>
