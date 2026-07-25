@@ -5,12 +5,14 @@ import LanguageCard from '@/components/language/LanguageCard.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const { loading, list } = useLanguages()
 
 const languages = ref<any[]>([])
 const searchQuery = ref('')
 const sortBy = ref('count')
+const loadError = ref('')
 
 const filtered = computed(() => {
   let result = languages.value
@@ -31,7 +33,11 @@ const filtered = computed(() => {
 const totalExpressions = computed(() => languages.value.reduce((s: number, l: any) => s + l.expression_count, 0))
 
 onMounted(async () => {
-  languages.value = await list()
+  try {
+    languages.value = await list()
+  } catch (e: any) {
+    loadError.value = e.response?.data?.error || '載入失敗'
+  }
 })
 </script>
 
@@ -54,6 +60,10 @@ onMounted(async () => {
     </div>
 
     <LoadingSpinner v-if="loading" />
+
+    <EmptyState v-else-if="loadError" :message="loadError" />
+
+    <EmptyState v-else-if="filtered.length === 0" message="找不到語言" />
 
     <div v-else class="lg-list">
       <LanguageCard

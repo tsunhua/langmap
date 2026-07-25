@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLanguages } from '@/composables/useLanguages'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
@@ -15,9 +15,9 @@ const { loading, detail, expressions } = useLanguages()
 
 const lang = ref<any>(null)
 const exprs = ref<any[]>([])
-const total = ref(0)
 const searchQuery = ref('')
 const sortBy = ref('hot')
+const loadError = ref('')
 
 const filtered = computed(() => {
   if (!searchQuery.value) return exprs.value
@@ -25,23 +25,36 @@ const filtered = computed(() => {
   return exprs.value.filter((e: any) => e.text.toLowerCase().includes(q))
 })
 
-onMounted(async () => {
-  lang.value = await detail(code.value)
-  const data = await expressions(code.value, { sort: sortBy.value, limit: 100 })
-  exprs.value = data.items
-  total.value = data.total
-})
+async function load() {
+  lang.value = null
+  loadError.value = ''
+  try {
+    lang.value = await detail(code.value)
+    const data = await expressions(code.value, { sort: sortBy.value, limit: 100 })
+    exprs.value = data.items
+  } catch (e: any) {
+    loadError.value = e.response?.data?.error || '載入失敗'
+  }
+}
+
+onMounted(load)
+watch(code, load)
 
 async function changeSort(sort: string) {
   sortBy.value = sort
-  const data = await expressions(code.value, { sort, limit: 100 })
-  exprs.value = data.items
-  total.value = data.total
+  try {
+    const data = await expressions(code.value, { sort, limit: 100 })
+    exprs.value = data.items
+  } catch (e: any) {
+    loadError.value = e.response?.data?.error || '載入失敗'
+  }
 }
 </script>
 
 <template>
   <LoadingSpinner v-if="loading && !lang" />
+
+  <EmptyState v-else-if="loadError" :message="loadError" />
 
   <div v-else-if="lang" class="ld-page">
     <router-link to="/languages" class="ld-back">← 語言</router-link>
