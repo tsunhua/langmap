@@ -70,7 +70,7 @@ function timeAgo(dateStr?: string): string {
   background: var(--accent-soft);
 }
 .new-kind.expr { color: var(--edge); border-color: color-mix(in oklch, var(--edge) 35%, var(--border)); background: color-mix(in oklch, var(--edge) 8%, var(--surface)); }
-.new-body { display: flex; align-items: baseline; gap: 8px; width: max-content; justify-self: start; }
+.new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .new-pair { font-size: 14px; }
 .new-pair .arrow { color: var(--faint); margin: 0 4px; }
 .new-pair .tx { font-weight: 500; transition: color 0.12s; }
