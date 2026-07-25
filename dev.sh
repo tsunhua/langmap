@@ -36,20 +36,19 @@ else
   echo "  本地 D1 已有 ${TABLE_COUNT} 張表，略過遷移"
 fi
 
-step "建置前端並同步到後端託管目錄（web_v2/dist → backend_v2/public）"
-cd "$ROOT/web_v2"
-[ -d node_modules ] || npm install
-npm run build
-rm -rf "$ROOT/backend_v2/public/assets"
-cp -r dist/* "$ROOT/backend_v2/public/"
-
-step "啟動 v2（本地 D1 + 前端託管，port ${PORT:-8789}）"
+step "啟動後端 wrangler（port ${PORT:-8789}）"
 cd "$ROOT/backend_v2"
 npx wrangler dev --port "${PORT:-8789}" &
 BACKEND_PID=$!
 
-trap 'echo ""; echo "停止服務…"; kill '"$BACKEND_PID"' 2>/dev/null; exit 0' INT TERM
+step "啟動前端 Vite dev server（port 5173，HMR）"
+cd "$ROOT/web_v2"
+[ -d node_modules ] || npm install
+npx vite --host &
+FRONTEND_PID=$!
+
+trap 'echo ""; echo "停止服務…"; kill '"$BACKEND_PID"' '"$FRONTEND_PID"' 2>/dev/null; exit 0' INT TERM
 echo ""
-echo "▶ v2: http://localhost:${PORT:-8789}（前端 + /api/v2）"
+echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${PORT:-8789}）"
 echo "按 Ctrl+C 停止"
 wait || true
