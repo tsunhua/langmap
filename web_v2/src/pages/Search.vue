@@ -87,7 +87,7 @@ onMounted(() => {
 <template>
   <div class="se-page">
     <div class="se-hero">
-      <h1>搜尋</h1>
+      <h1>搜索詞句</h1>
       <div class="se-qrow">
         <SearchBar v-model="query" placeholder="搜尋詞句…" :large="true" @search="doSearch" />
         <LanguageSelect v-model="langs" />
@@ -97,9 +97,9 @@ onMounted(() => {
     <div v-if="searched || loading" class="se-meta">
       <span class="se-count"><b>{{ total }}</b> 個結果</span>
       <div class="se-sort" role="group" aria-label="排序">
-        <button :class="['btn btn-sm', sortBy === 'hot' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'hot'" @click="sortBy = 'hot'">熱門</button>
-        <button :class="['btn btn-sm', sortBy === 'new' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'new'" @click="sortBy = 'new'">最新</button>
-        <button :class="['btn btn-sm', sortBy === 'alpha' ? 'btn-primary' : 'btn-ghost']" :aria-pressed="sortBy === 'alpha'" @click="sortBy = 'alpha'">字母</button>
+        <button :class="{ on: sortBy === 'hot' }" @click="sortBy = 'hot'">熱門</button>
+        <button :class="{ on: sortBy === 'new' }" @click="sortBy = 'new'">最新</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">字母</button>
       </div>
     </div>
 
@@ -121,12 +121,12 @@ onMounted(() => {
       <p v-if="loadingMore" class="se-more" role="status">載入中…</p>
     </template>
 
-    <p v-else class="se-hint">輸入關鍵字開始搜尋</p>
+    <p v-else class="se-hint">提示:搜索目前比對詞句文字。依翻譯(語義)搜索之後補上。</p>
   </div>
 </template>
 
 <style scoped>
-.se-page { max-width: 900px; margin: 0 auto; }
+.se-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
 .se-hero { margin-bottom: 20px; }
 .se-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 16px; }
 .se-qrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
@@ -134,7 +134,10 @@ onMounted(() => {
 .se-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .se-count { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .se-count b { color: var(--fg); font-weight: 500; }
-.se-sort { display: flex; gap: 4px; }
+.se-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.se-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.se-sort button:hover { color: var(--fg); }
+.se-sort button.on { background: var(--fg); color: var(--surface); }
 .se-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .se-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
 .se-hint { font-family: var(--mono); font-size: 10px; text-align: center; padding: 40px; color: var(--faint); }
