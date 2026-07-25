@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useFeed } from '@/composables/useFeed'
 import MappingCard from '@/components/feed/MappingCard.vue'
 import NewContribution from '@/components/feed/NewContribution.vue'
 import SegControl from '@/components/ui/SegControl.vue'
-import SearchBar from '@/components/ui/SearchBar.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-const router = useRouter()
 const { hot, newest } = useFeed()
 
 const hotMappings = ref<any[]>([])
@@ -17,12 +14,7 @@ const newContribs = ref<any[]>([])
 const segment = ref('all')
 const loading = ref(true)
 const loadError = ref('')
-const searchQuery = ref('')
 
-function onSearch() {
-  const q = searchQuery.value.trim()
-  if (q) router.push({ path: '/search', query: { q } })
-}
 
 onMounted(async () => {
   loading.value = true
@@ -40,10 +32,6 @@ onMounted(async () => {
 
 <template>
   <div class="feed-page">
-    <div class="home-search">
-      <SearchBar v-model="searchQuery" placeholder="搜尋詞句…" :large="true" @search="onSearch" />
-    </div>
-
     <div class="feed-hero">
       <h1>動態</h1>
       <p>語義圖譜的最新脈動--熱門映射與新貢獻。</p>
@@ -97,17 +85,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.feed-page { max-width: 760px; margin: 0 auto; }
-.home-search {
-  position: sticky;
-  top: 44px;
-  z-index: 90;
-  padding: 10px 0 12px;
-  margin-bottom: 16px;
-  background: color-mix(in oklch, var(--bg) 90%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
-}
+.feed-page { max-width: 760px; margin: 0 auto; padding: 30px 28px 100px; }
 .feed-hero { margin-bottom: 28px; }
 .feed-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
 .feed-hero p { font-size: 13px; color: var(--muted); }
