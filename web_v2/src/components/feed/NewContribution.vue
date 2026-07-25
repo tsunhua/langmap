@@ -71,9 +71,17 @@ function timeAgo(dateStr?: string): string {
 }
 .new-kind.expr { color: var(--edge); border-color: color-mix(in oklch, var(--edge) 35%, var(--border)); background: color-mix(in oklch, var(--edge) 8%, var(--surface)); }
 .new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.new-pair { font-size: 14px; }
+.new-pair {
+  font-size: 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 .new-pair .arrow { color: var(--faint); margin: 0 4px; }
+.new-pair .arrow { display: inline-flex; align-items: center; }
 .new-pair .tx { font-weight: 500; transition: color 0.12s; }
+.new-body .lang-badge { margin-left: auto; }
 .new-meta {
   font-family: var(--mono);
   font-size: 10px;
