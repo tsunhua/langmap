@@ -3,10 +3,11 @@ import { ArrowLeftRight } from 'lucide-vue-next'
 
 defineProps<{
   id: string
+  type?: string
   left_text: string
   left_lang: string
-  right_text: string
-  right_lang: string
+  right_text?: string
+  right_lang?: string
   author?: string
   created_at?: string
 }>()
@@ -25,7 +26,9 @@ function timeAgo(dateStr?: string): string {
 
 <template>
   <router-link :to="`/mapping/${id}`" class="new-row">
-    <span class="new-kind">映射</span>
+    <span :class="['new-kind', { expr: type === 'expression' }]">
+      {{ type === 'expression' ? '詞句' : '映射' }}
+    </span>
     <span class="new-body">
       <span class="new-pair">
         <span class="tx">{{ left_text }}</span>
@@ -66,6 +69,7 @@ function timeAgo(dateStr?: string): string {
   justify-self: start;
   background: var(--accent-soft);
 }
+.new-kind.expr { color: var(--edge); border-color: color-mix(in oklch, var(--edge) 35%, var(--border)); background: color-mix(in oklch, var(--edge) 8%, var(--surface)); }
 .new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
 .new-pair { font-size: 14px; flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .new-pair .arrow { color: var(--faint); margin: 0 4px; }
