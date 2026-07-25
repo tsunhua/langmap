@@ -107,14 +107,14 @@ async function load() {
     langMap.value = lm
     anchor.value = expr
     mappingData.value = maps
-
-    await nextTick()
-    initMap()
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   } finally {
     loading.value = false
   }
+  if (loadError.value || !anchor.value) return
+  await nextTick()
+  initMap()
 }
 
 function initMap() {
