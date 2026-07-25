@@ -3,6 +3,11 @@ import { success, created, notFound, badRequest, paginated, forbidden } from '..
 import { requireAuth, optionalAuth } from '../middleware/auth';
 import type { Bindings, Variables } from '../types';
 
+function parseId(param: string): number | null {
+  const id = parseInt(param);
+  return isNaN(id) ? null : id;
+}
+
 const handbooks = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // GET / — list public handbooks
@@ -48,7 +53,8 @@ handbooks.get('/', optionalAuth, async (c) => {
 
 // GET /:id — handbook detail
 handbooks.get('/:id', optionalAuth, async (c) => {
-  const id = parseInt(c.req.param('id'));
+  const id = parseId(c.req.param('id'));
+  if (id === null) return badRequest(c, 'invalid_id');
 
   const handbook = await c.env.DB.prepare(
     `SELECT h.*, u.username as author_username
@@ -138,7 +144,8 @@ handbooks.post('/', requireAuth, async (c) => {
 
 // PUT /:id — update handbook
 handbooks.put('/:id', requireAuth, async (c) => {
-  const id = parseInt(c.req.param('id'));
+  const id = parseId(c.req.param('id'));
+  if (id === null) return badRequest(c, 'invalid_id');
   const user = c.get('user')!;
 
   const existing = await c.env.DB.prepare(
@@ -210,7 +217,8 @@ handbooks.put('/:id', requireAuth, async (c) => {
 
 // DELETE /:id — delete handbook
 handbooks.delete('/:id', requireAuth, async (c) => {
-  const id = parseInt(c.req.param('id'));
+  const id = parseId(c.req.param('id'));
+  if (id === null) return badRequest(c, 'invalid_id');
   const user = c.get('user')!;
 
   const existing = await c.env.DB.prepare(
@@ -227,7 +235,8 @@ handbooks.delete('/:id', requireAuth, async (c) => {
 
 // POST /:id/vote — vote on handbook
 handbooks.post('/:id/vote', requireAuth, async (c) => {
-  const handbookId = c.req.param('id');
+  const handbookId = parseId(c.req.param('id'));
+  if (handbookId === null) return badRequest(c, 'invalid_id');
   const user = c.get('user')!;
   const { direction } = await c.req.json<{ direction: 'up' | 'down' }>();
   if (direction !== 'up' && direction !== 'down') return badRequest(c, 'invalid_direction');
@@ -256,11 +265,11 @@ handbooks.post('/:id/vote', requireAuth, async (c) => {
 
   await c.env.DB.prepare(
     `UPDATE handbooks SET score = score + ? WHERE id = ?`
-  ).bind(voteDelta, parseInt(handbookId)).run();
+  ).bind(voteDelta, handbookId).run();
 
   const hb = await c.env.DB.prepare(
     `SELECT score FROM handbooks WHERE id = ?`
-  ).bind(parseInt(handbookId)).first<{ score: number }>();
+  ).bind(handbookId).first<{ score: number }>();
 
   return success(c, { score: hb?.score || 0 });
 });
