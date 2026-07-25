@@ -52,4 +52,7 @@ coverage.xml
 
 *.sqlite
 
-.opencode/
+.opencode/backend/remote-old.sql
+backend/remote-*.sql
+backend/remote-old.sql
+scripts/v2/v2-data.sql
