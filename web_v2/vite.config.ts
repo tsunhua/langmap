@@ -12,8 +12,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api/v2': 'http://localhost:8789',
-      '/api/v1': 'http://localhost:8787',
+      '/api/v2': 'http://localhost:8788',
     },
   },
 })

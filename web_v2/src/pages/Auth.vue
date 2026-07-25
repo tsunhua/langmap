@@ -18,7 +18,7 @@ async function submit() {
   submitting.value = true
   try {
     if (mode.value === 'login') {
-      await auth.login(username.value, password.value)
+      await auth.login(email.value, password.value)
     } else {
       await auth.register(username.value, email.value, password.value)
     }
@@ -36,11 +36,11 @@ async function submit() {
     <h1>{{ mode === 'login' ? '登入' : '註冊' }}</h1>
 
     <form class="auth-form" @submit.prevent="submit">
-      <div class="field">
+      <div v-if="mode === 'register'" class="field">
         <label for="auth-username">用戶名</label>
         <input id="auth-username" v-model="username" type="text" placeholder="用戶名" required autocomplete="username" />
       </div>
-      <div v-if="mode === 'register'" class="field">
+      <div class="field">
         <label for="auth-email">電郵</label>
         <input id="auth-email" v-model="email" type="email" placeholder="電郵" required autocomplete="email" />
       </div>

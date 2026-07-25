@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import api from '@/api/client'
 
 interface User {
   id: number
@@ -25,15 +25,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(username: string, password: string) {
-    const { data } = await axios.post('/api/v1/auth/login', { username, password })
+  async function login(email: string, password: string) {
+    const { data } = await api.post('/auth/login', { email, password })
     token.value = data.data.token
     user.value = data.data.user
     localStorage.setItem('token', data.data.token)
   }
 
   async function register(username: string, email: string, password: string) {
-    const { data } = await axios.post('/api/v1/auth/register', { username, email, password })
+    const { data } = await api.post('/auth/register', { username, email, password })
     token.value = data.data.token
     user.value = data.data.user
     localStorage.setItem('token', data.data.token)

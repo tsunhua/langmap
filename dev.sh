@@ -36,19 +36,40 @@ else
   echo "  本地 D1 已有 ${TABLE_COUNT} 張表，略過遷移"
 fi
 
-step "啟動後端 wrangler（port ${PORT:-8789}）"
+step "啟動後端 wrangler（port ${PORT:-8788}）"
 cd "$ROOT/backend_v2"
-npx wrangler dev --port "${PORT:-8789}" &
+npx wrangler dev --port "${PORT:-8788}" &
 BACKEND_PID=$!
+
+step "釋放可能殘留的 workerd 檢查器埠 9229（若屬於本 repo 的 workerd）"
+INSPECTOR_PID=$(lsof -t -iTCP:9229 -sTCP:LISTEN 2>/dev/null || true)
+if [ -n "$INSPECTOR_PID" ]; then
+  INSPECTOR_CMD=$(ps -p "$INSPECTOR_PID" -o args= 2>/dev/null || true)
+  if echo "$INSPECTOR_CMD" | grep -qE 'workerd|wrangler|langmap'; then
+    step "釋放 9229 (pid=$INSPECTOR_PID) — 因為命令看起來屬於本專案或 workerd"
+    kill "$INSPECTOR_PID" 2>/dev/null || true
+    sleep 1
+  else
+    echo "  9229 已被其他程序佔用: $INSPECTOR_CMD — 不會強行關閉，若需要請手動處理"
+  fi
+fi
+
+step "使用 v2 後端作為主要 local API，不再自動啟動舊版後端"
 
 step "啟動前端 Vite dev server（port 5173，HMR）"
 cd "$ROOT/web_v2"
 [ -d node_modules ] || npm install
-npx vite --host &
+npx vite --host --strictPort &
 FRONTEND_PID=$!
 
-trap 'echo ""; echo "停止服務…"; kill '"$BACKEND_PID"' '"$FRONTEND_PID"' 2>/dev/null; exit 0' INT TERM
+cleanup() {
+  echo ""
+  echo "停止服務…"
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+  exit 0
+}
+trap cleanup INT TERM
 echo ""
-echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${PORT:-8789}）"
+echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${PORT:-8788}）"
 echo "按 Ctrl+C 停止"
 wait || true

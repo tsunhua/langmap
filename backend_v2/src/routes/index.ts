@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import auth from './auth';
 import languages from './languages';
 import expressions from './expressions';
 import mappings from './mappings';
@@ -8,6 +9,7 @@ import feed from './feed';
 import search from './search';
 
 const api = new Hono();
+api.route('/auth', auth);
 api.route('/languages', languages);
 api.route('/expressions', expressions);
 api.route('/mappings', mappings);
