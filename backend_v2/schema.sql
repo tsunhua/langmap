@@ -36,6 +36,7 @@ CREATE TABLE languages (
     id INTEGER PRIMARY KEY NOT NULL,
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
+    name_en TEXT DEFAULT NULL,
     direction TEXT DEFAULT 'ltr',
     is_active INTEGER DEFAULT 0,
     region_code TEXT,

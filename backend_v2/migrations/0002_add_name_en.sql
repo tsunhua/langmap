@@ -1,0 +1,1 @@
+ALTER TABLE languages ADD COLUMN name_en TEXT DEFAULT NULL;
