@@ -5,6 +5,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/index.tsx",
   "assets": { "directory": "./public", "binding": "ASSETS" },
+  "vars": { "SECRET_KEY": "dev-secret-change-me-before-deploy" },
   "d1_databases": [
     { "binding": "DB", "database_name": "langmap-v2", "database_id": "REPLACE_AFTER_CREATE" }
   ],
