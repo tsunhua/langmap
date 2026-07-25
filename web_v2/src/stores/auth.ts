@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
   if (token.value) {
     try {
       const payload = JSON.parse(atob(token.value.split('.')[1]))
+      if (payload.exp && payload.exp * 1000 < Date.now()) throw new Error('expired')
       user.value = { id: payload.id, username: payload.username, role: payload.role }
     } catch {
       token.value = null
