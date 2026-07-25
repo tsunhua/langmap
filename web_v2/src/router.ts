@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/language/:code',    component: () => import('./pages/LanguageDetail.vue') },
     { path: '/search',            component: () => import('./pages/Search.vue') },
     { path: '/auth',              component: () => import('./pages/Auth.vue') },
+    { path: '/:pathMatch(.*)*',  component: () => import('./pages/NotFound.vue') },
   ],
 })
 
