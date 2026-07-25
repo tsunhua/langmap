@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
 import { useLanguages } from '@/composables/useLanguages'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +15,8 @@ const id = computed(() => parseInt(route.params.id as string))
 const { detail, mappings } = useExpressions()
 const { list } = useLanguages()
 
+const mapEl = ref<HTMLElement>()
+let map: L.Map | null = null
 const anchor = ref<any>(null)
 const mappingData = ref<any[]>([])
 const langMap = ref<Record<string, any>>({})
@@ -20,11 +24,20 @@ const loading = ref(true)
 const loadError = ref('')
 const activeId = ref<number | null>(null)
 
-function latLngToXY(lat: number, lng: number) {
-  const x = ((lng + 180) / 360) * 100
-  const y = ((90 - lat) / 180) * 100
-  return { x, y }
-}
+const pins = computed(() =>
+  mappingData.value
+    .filter((m: any) => langMap.value[m.language_code])
+    .map((m: any) => {
+      const lang = langMap.value[m.language_code]
+      return { ...m, lat: lang.region_latitude, lng: lang.region_longitude, region: lang.region_name || lang.name, tier: pinTier(m.score) }
+    })
+)
+
+const regionCount = computed(() => {
+  const regions = new Set(pins.value.map((p: any) => p.region))
+  if (anchor.value && anchorLang.value) regions.add(anchorLang.value.region_name || anchorLang.value.name)
+  return regions.size
+})
 
 function pinTier(score: number) {
   if (score >= 20) return 's3'
@@ -32,27 +45,50 @@ function pinTier(score: number) {
   return 's1'
 }
 
-// Plottable mappings: those whose language has geo coordinates.
-const pins = computed(() =>
-  mappingData.value
-    .filter((m: any) => langMap.value[m.language_code])
-    .map((m: any) => {
-      const lang = langMap.value[m.language_code]
-      const { x, y } = latLngToXY(lang.region_latitude, lang.region_longitude)
-      return { ...m, x, y, region: lang.region_name || lang.name, tier: pinTier(m.score) }
-    })
-)
-
 const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.language_code] : null)
-const anchorPos = computed(() => {
-  if (!anchorLang.value) return null
-  return latLngToXY(anchorLang.value.region_latitude, anchorLang.value.region_longitude)
-})
 
 function sync(exprId: number | null) { activeId.value = exprId }
 
 function openMapping(exprId: number) {
   router.push(`/mapping/${exprId}`)
+}
+
+function tierColor(tier: string) {
+  if (tier === 's3') return '#b83b3b'
+  if (tier === 's2') return '#c76c3a'
+  return '#c7a83a'
+}
+
+function addMarkers() {
+  if (!map) return
+  const m = map
+
+  if (anchorLang.value && anchor.value) {
+    const lang = anchorLang.value
+    const icon = L.divIcon({
+      className: 'pin-marker anchor-marker',
+      html: `<div class="pin-dot anchor-dot"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    })
+    L.marker([lang.region_latitude, lang.region_longitude], { icon })
+      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_code} · 錨點`)
+      .addTo(m)
+  }
+
+  pins.value.forEach(p => {
+    if (!p.lat || !p.lng) return
+    const color = tierColor(p.tier)
+    const icon = L.divIcon({
+      className: 'pin-marker',
+      html: `<div class="pin-dot" style="background:${color}"></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    })
+    L.marker([p.lat, p.lng], { icon })
+      .bindPopup(`<b>${p.text}</b><br/>${p.language_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`)
+      .addTo(m)
+  })
 }
 
 async function load() {
@@ -71,6 +107,9 @@ async function load() {
     langMap.value = lm
     anchor.value = expr
     mappingData.value = maps
+
+    await nextTick()
+    initMap()
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   } finally {
@@ -78,8 +117,32 @@ async function load() {
   }
 }
 
+function initMap() {
+  if (map) { map.remove(); map = null }
+  if (!mapEl.value) return
+
+  map = L.map(mapEl.value, { zoomControl: true }).setView([20, 0], 2)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map)
+
+  addMarkers()
+
+  if (pins.value.length > 0) {
+    const bounds = L.latLngBounds(pins.value.map(p => [p.lat, p.lng]))
+    if (anchorLang.value) bounds.extend([anchorLang.value.region_latitude, anchorLang.value.region_longitude])
+    map.fitBounds(bounds, { padding: [40, 40] })
+  }
+}
+
 onMounted(load)
-watch(id, load)
+watch(id, () => {
+  if (map) { map.remove(); map = null }
+  load()
+})
+
+function cleanup() { if (map) { map.remove(); map = null } }
+onUnmounted(cleanup)
 </script>
 
 <template>
@@ -92,58 +155,19 @@ watch(id, load)
       <div class="lens-head">
         <router-link :to="`/mapping/${id}`" class="lens-back">← 回對照集</router-link>
         <h1>概念分布:<span class="anc">{{ anchor.text }}</span></h1>
-        <span class="lens-meta">{{ pins.length + (anchorPos ? 1 : 0) }} 種語言</span>
+        <span class="lens-meta">{{ pins.length + 1 }} 種語言 · {{ regionCount }} 地區</span>
       </div>
 
       <EmptyState v-if="pins.length === 0" message="此概念尚無地理分布資料" />
 
       <div v-else class="lens-layout">
-        <div class="lens-map">
-          <div class="map-art" aria-hidden="true"></div>
-          <div class="map-graticule" aria-hidden="true"></div>
-
-          <button
-            v-if="anchorPos"
-            class="pin anchor"
-            :class="{ active: activeId === anchor.id }"
-            :style="{ left: anchorPos.x + '%', top: anchorPos.y + '%' }"
-            :aria-label="`${anchor.text} · ${anchor.language_code} · 錨點`"
-            @click="openMapping(anchor.id)"
-            @focus="sync(anchor.id)"
-            @blur="sync(null)"
-            @mouseenter="sync(anchor.id)"
-            @mouseleave="sync(null)"
-          >
-            <span class="pin-label">{{ anchor.text }} · {{ anchor.language_code }} · 錨點</span>
-          </button>
-
-          <button
-            v-for="p in pins"
-            :key="p.expression_id"
-            :class="['pin', p.tier, { active: activeId === p.expression_id }]"
-            :style="{ left: p.x + '%', top: p.y + '%' }"
-            :aria-label="`${p.text} · ${p.language_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`"
-            @click="openMapping(p.expression_id)"
-            @focus="sync(p.expression_id)"
-            @blur="sync(null)"
-            @mouseenter="sync(p.expression_id)"
-            @mouseleave="sync(null)"
-          >
-            <span class="pin-label">{{ p.text }} · {{ p.language_code }} · {{ p.region }} · {{ p.score >= 0 ? '+' : '' }}{{ p.score }}</span>
-          </button>
-
-          <div class="map-legend" aria-hidden="true">
-            <div class="lr"><span class="lg anchor"></span> 錨點</div>
-            <div class="lr"><span class="lg s3"></span> 評分高</div>
-            <div class="lr"><span class="lg s2"></span> 評分中</div>
-            <div class="lr"><span class="lg s1"></span> 評分低</div>
-          </div>
+        <div class="lens-map-wrap">
+          <div ref="mapEl" class="leaflet-map"></div>
         </div>
 
         <aside class="lens-list">
           <div class="lens-list-head">對照集成員</div>
           <router-link
-            v-if="anchorPos"
             :to="`/mapping/${id}`"
             :class="['lens-item', 'anchor', { active: activeId === anchor.id }]"
             @focus="sync(anchor.id)"
@@ -176,7 +200,7 @@ watch(id, load)
 </template>
 
 <style scoped>
-.lens-page { max-width: 1100px; margin: 0 auto; padding: 24px 28px 60px; }
+.lens-page { max-width: 1100px; margin: 0 auto; padding: 30px 28px 100px; }
 .lens-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .lens-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
 .lens-back:hover { color: var(--fg); }
@@ -185,72 +209,17 @@ watch(id, load)
 .lens-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 
 .lens-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: stretch; }
-.lens-map {
-  position: relative; height: 70vh; min-height: 420px;
+
+.lens-map-wrap {
   border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-  background:
-    radial-gradient(circle, oklch(0.90 0.010 88) 1px, transparent 1px) 0 0 / 18px 18px,
-    linear-gradient(oklch(0.84 0.030 218), oklch(0.80 0.025 218));
 }
-.map-art {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 200px 150px at 25% 40%, oklch(0.90 0.030 218 / 0.55) 0%, transparent 100%),
-    radial-gradient(ellipse 180px 120px at 65% 35%, oklch(0.90 0.030 218 / 0.55) 0%, transparent 100%),
-    radial-gradient(ellipse 120px 100px at 45% 65%, oklch(0.90 0.030 218 / 0.55) 0%, transparent 100%),
-    radial-gradient(ellipse 100px 80px at 80% 60%, oklch(0.90 0.030 218 / 0.55) 0%, transparent 100%);
+.leaflet-map {
+  width: 100%; height: 500px;
 }
-.map-graticule {
-  position: absolute; inset: 0; opacity: 0.25;
-  background-image:
-    linear-gradient(oklch(0.62 0.13 245) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.62 0.13 245) 1px, transparent 1px);
-  background-size: 10% 10%;
-}
-
-.pin {
-  position: absolute; transform: translate(-50%, -50%);
-  border: 2px solid #fff; border-radius: 50%; padding: 0;
-  box-shadow: 0 1px 4px oklch(0 0 0 / 0.3); cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
-}
-.pin:hover, .pin.active {
-  transform: translate(-50%, -50%) scale(1.25);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 35%, transparent), 0 0 16px color-mix(in oklch, var(--accent) 45%, transparent);
-  z-index: 4;
-}
-.pin.s3 { width: 24px; height: 24px; background: oklch(0.54 0.18 28); }
-.pin.s2 { width: 18px; height: 18px; background: oklch(0.64 0.16 35); }
-.pin.s1 { width: 12px; height: 12px; background: oklch(0.84 0.08 55); }
-.pin.anchor { width: 22px; height: 22px; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 25%, transparent); }
-
-.pin-label {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(100% + 6px);
-  background: var(--fg); color: var(--surface);
-  font-family: var(--mono); font-size: 10px;
-  padding: 3px 6px; border-radius: 2px; white-space: nowrap;
-  pointer-events: none; opacity: 0; transition: opacity 0.12s;
-}
-.pin:hover .pin-label, .pin.active .pin-label, .pin:focus-visible .pin-label { opacity: 1; }
-
-.map-legend {
-  position: absolute; left: 12px; bottom: 12px; z-index: 5;
-  background: color-mix(in oklch, var(--surface) 90%, transparent); backdrop-filter: blur(8px);
-  border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px;
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  display: flex; flex-direction: column; gap: 4px;
-}
-.map-legend .lr { display: flex; align-items: center; gap: 6px; }
-.map-legend .lg { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-.map-legend .lg.anchor { background: var(--accent); }
-.map-legend .lg.s3 { background: oklch(0.54 0.18 28); }
-.map-legend .lg.s2 { background: oklch(0.64 0.16 35); }
-.map-legend .lg.s1 { background: oklch(0.84 0.08 55); }
 
 .lens-list {
   border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
-  overflow: auto; max-height: 70vh;
+  overflow: auto; max-height: 500px;
 }
 .lens-list-head {
   padding: 10px 12px; font-family: var(--mono); font-size: 10px;
@@ -271,8 +240,27 @@ watch(id, load)
 
 @media (max-width: 768px) {
   .lens-layout { grid-template-columns: 1fr; }
-  .lens-map { height: 50vh; min-height: 300px; }
+  .leaflet-map { height: 350px; }
   .lens-list { max-height: none; }
   .lens-item { min-height: 44px; }
+}
+</style>
+
+<style>
+.pin-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.pin-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: transform 0.12s;
+}
+.pin-dot:hover { transform: scale(1.25); }
+.anchor-dot {
+  width: 20px; height: 20px;
+  background: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.25), 0 1px 4px rgba(0,0,0,0.3);
 }
 </style>
