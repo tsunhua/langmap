@@ -1,0 +1,11 @@
+{
+  "name": "langmap-migrate-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "migrate": "tsx migrate.ts"
+  },
+  "dependencies": { "better-sqlite3": "^11.0.0" },
+  "devDependencies": { "tsx": "^4.0.0", "vitest": "^2.0.0", "@types/better-sqlite3": "^7.0.0" }
+}

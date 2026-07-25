@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "langmap-backend-v2",
+  "compatibility_date": "2025-08-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./src/index.tsx",
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "langmap-v2", "database_id": "REPLACE_AFTER_CREATE" }
+  ],
+  "observability": { "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true } }
+}

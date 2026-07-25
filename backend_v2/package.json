@@ -1,0 +1,9 @@
+{
+  "name": "langmap-backend-v2",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": { "hono": "^4.0.0", "wrangler": "^4.0.0" }
+}
