@@ -19,19 +19,19 @@ function scoreClass(score: number) {
 
 <template>
   <router-link :to="`/mapping/${id}`" class="map-card">
-    <div class="mc-node">
-      <div class="mc-tx">{{ a_text }}</div>
-      <span class="lang-badge">{{ a_lang }}</span>
-    </div>
-    <div class="mc-edge">
-      <div :class="['mc-line', scoreClass(score)]"></div>
-      <span class="mc-score">{{ score }}</span>
-      <div :class="['mc-line', scoreClass(score)]"></div>
-    </div>
-    <div class="mc-node r">
-      <div class="mc-tx">{{ b_text }}</div>
-      <span class="lang-badge">{{ b_lang }}</span>
-    </div>
+    <span class="mc-node">
+      <span class="mc-tx">{{ a_text }}</span>
+      <span class="mc-lc">{{ a_lang }}</span>
+    </span>
+    <span :class="['mc-edge', scoreClass(score)]">
+      <span class="mc-line"></span>
+      <span class="mc-score">+{{ score }}</span>
+      <span class="mc-line"></span>
+    </span>
+    <span class="mc-node r">
+      <span class="mc-tx">{{ b_text }}</span>
+      <span class="mc-lc">{{ b_lang }}</span>
+    </span>
   </router-link>
 </template>
 
@@ -39,42 +39,45 @@ function scoreClass(score: number) {
 .map-card {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
   align-items: center;
-  padding: 14px 16px;
+  gap: 12px;
   background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  text-decoration: none;
+  border: 1px solid #EDE5D8;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.12s;
   color: inherit;
-  transition: box-shadow 0.15s;
+  text-decoration: none;
 }
-.map-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.mc-node { min-width: 0; }
-.mc-node.r { text-align: right; }
+.map-card:hover { border-color: #D4A574; }
+.mc-node { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mc-node.r { align-items: flex-end; text-align: right; }
 .mc-tx {
-  font-size: 15px;
-  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.mc-edge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+.mc-lc {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: #6B7280;
 }
-.mc-line {
-  width: 24px;
-  height: 2px;
-  background: #4A6FA5;
-  border-radius: 1px;
-}
-.mc-line.s3, .mc-line.s4 { height: 3px; width: 32px; }
-.mc-line.s4 { width: 40px; }
+.mc-edge { display: flex; align-items: center; gap: 5px; padding: 0; }
+.mc-line { height: 3px; width: 20px; background: #4A6FA5; border-radius: 2px; opacity: 0.7; }
 .mc-score {
   font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
-  color: #4A6FA5;
+  font-weight: 500;
+  color: #8B4513;
+  white-space: nowrap;
 }
+.mc-edge.s4 .mc-line { width: 24px; height: 4px; }
+.mc-edge.s3 .mc-line { width: 20px; height: 3px; }
+.mc-edge.s2 .mc-line { width: 16px; height: 2px; opacity: 0.5; }
+.mc-edge.s1 .mc-line { width: 13px; height: 2px; opacity: 0.35; }
 </style>
