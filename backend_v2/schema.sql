@@ -44,6 +44,8 @@ CREATE TABLE languages (
     region_latitude REAL,
     region_longitude REAL,
     group_name TEXT,
+    family TEXT DEFAULT NULL,
+    status_text TEXT DEFAULT NULL,
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
