@@ -41,9 +41,13 @@ watch(id, load)
   <div v-else-if="hb" class="hv-layout">
     <aside class="hv-toc">
       <div class="hv-toc-label">目錄</div>
-      <a v-for="(sec, i) in hb.sections" :key="sec.id" :href="`#sec-${i}`">
-        {{ sec.title || `章節 ${i + 1}` }}
-      </a>
+      <ol>
+        <li v-for="(sec, i) in hb.sections" :key="sec.id">
+          <a :href="`#sec-${i}`">
+            {{ i + 1 }} · {{ sec.title }}
+          </a>
+        </li>
+      </ol>
     </aside>
 
     <main class="hv-content">
@@ -55,6 +59,7 @@ watch(id, load)
       </div>
 
       <div class="hv-vote-row">
+        <span>這份手冊對你有幫助嗎？</span>
         <VotePill :target-id="String(hb.id)" target-type="handbook" :score="hb.score" />
       </div>
 
@@ -92,7 +97,8 @@ watch(id, load)
 .hv-back:hover { color: var(--fg); }
 .hv-content h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
 .hv-meta { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.hv-vote-row { margin-bottom: 20px; }
+.hv-toc ol { list-style: none; padding: 0; margin: 0; }
+.hv-vote-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 13px; }
 .hv-section { margin-bottom: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
 .hv-section:first-of-type { border-top: none; padding-top: 0; }
 .hv-sec-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
