@@ -2,6 +2,7 @@
 defineProps<{
   code: string
   name: string
+  name_en?: string
   expression_count: number
   region_name?: string
 }>()
@@ -11,6 +12,7 @@ defineProps<{
   <router-link :to="`/language/${code}`" class="lg-row">
     <div class="lg-name">
       <span class="nm">{{ name }}</span>
+      <span class="en" v-if="name_en">{{ name_en }}</span>
     </div>
     <span class="lg-code lang-badge">{{ code }}</span>
     <span class="lg-geo">{{ region_name || '-' }}</span>
@@ -34,6 +36,7 @@ defineProps<{
 .lg-row:hover { background: var(--bg); }
 .lg-name { min-width: 0; }
 .lg-name .nm { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-name .en { font-size: 11px; color: var(--muted); }
 .lg-geo { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lg-count {
   font-family: var(--mono);
