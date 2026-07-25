@@ -22,6 +22,7 @@ const sections = ref<Array<{
 const saving = ref(false)
 const loading = ref(true)
 const loadError = ref('')
+const saveError = ref('')
 
 onMounted(async () => {
   if (isNew.value) {
@@ -76,6 +77,7 @@ function removeExprFromSection(i: number, exprId: number) {
 
 async function save() {
   saving.value = true
+  saveError.value = ''
   try {
     const payload = {
       title: title.value,
@@ -93,7 +95,7 @@ async function save() {
       router.push(`/handbook/${id.value}`)
     }
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '儲存失敗'
+    saveError.value = e.response?.data?.error || '儲存失敗'
   } finally {
     saving.value = false
   }
@@ -139,6 +141,7 @@ async function save() {
     <button class="btn btn-ghost" @click="addSection">＋ 新增章節</button>
 
     <p v-if="loadError && !isNew" class="error">{{ loadError }}</p>
+    <p v-if="saveError" class="error">{{ saveError }}</p>
   </div>
 </template>
 
