@@ -75,16 +75,17 @@ watch(() => route.path, () => { menuOpen.value = false })
 <template>
   <header class="appbar">
     <router-link to="/" class="brand" aria-label="LangMap 首頁">
-      lang<span class="em">map</span>
+      Lang<span class="em">Map</span>
     </router-link>
 
     <nav class="appnav" aria-label="主要導覽">
-      <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
       <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">語言</router-link>
+      <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
     </nav>
 
     <form class="top-search" role="search" @submit.prevent="onSearch">
       <Search :size="14" aria-hidden="true" />
+      <kbd>/</kbd>
       <input
         ref="searchInput"
         v-model="searchQuery"
@@ -92,7 +93,6 @@ watch(() => route.path, () => { menuOpen.value = false })
         placeholder="搜尋詞句…"
         aria-label="搜尋詞句"
       />
-      <kbd>/</kbd>
       <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
     </form>
 
@@ -133,8 +133,8 @@ watch(() => route.path, () => { menuOpen.value = false })
           <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
         </form>
         <nav class="drawer-nav" aria-label="主要導覽">
-          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
           <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">語言</router-link>
+          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
         </nav>
         <div class="drawer-foot">
           <router-link to="/contribute" class="btn btn-primary">
@@ -154,26 +154,34 @@ watch(() => route.path, () => { menuOpen.value = false })
 
 <style scoped>
 .brand {
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.03em;
   color: var(--fg);
   text-decoration: none;
 }
 .brand .em {
   font-family: var(--mono);
-  font-size: 10px;
-  background: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
   color: #fff;
-  padding: 1px 5px;
+  padding: 2px 4px;
   border-radius: 2px;
-  margin-left: 2px;
-  vertical-align: super;
+  background: var(--accent);
+  margin: 0;
+  vertical-align: baseline;
+}
+.brand:hover {
+  border-color: var(--muted);
 }
 .appnav { display: flex; gap: 2px; margin-left: 8px; }
 .appnav a {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -192,9 +200,9 @@ watch(() => route.path, () => { menuOpen.value = false })
   color: var(--muted);
 }
 .top-search input {
-  width: 180px;
+  width: 220px;
   height: 30px;
-  padding: 0 10px 0 28px;
+  padding: 0 30px 0 28px;
   font-size: 13px;
   border: 1px solid var(--border);
   border-radius: var(--r);
@@ -204,9 +212,14 @@ watch(() => route.path, () => { menuOpen.value = false })
 .top-search input:focus { outline: none; border-color: var(--accent); }
 .top-search :deep(svg) { position: absolute; left: 8px; }
 .top-search kbd {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   font-family: var(--mono); font-size: 10px;
   border: 1px solid var(--border); border-radius: 2px;
   padding: 1px 5px; color: var(--muted); background: var(--surface);
+  pointer-events: none;
 }
 
 .user-badge {

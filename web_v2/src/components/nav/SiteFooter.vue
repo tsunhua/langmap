@@ -5,12 +5,6 @@
 <template>
   <footer class="site-foot">
     <div class="foot-inner">
-      <span class="brand">lang<span class="em">map</span> · atlas</span>
-      <nav class="foot-nav">
-        <a href="/api/v2" title="API 端點">API</a>
-        <router-link to="/handbooks">手冊</router-link>
-        <router-link to="/languages">語言</router-link>
-      </nav>
       <span class="copy">© {{ new Date().getFullYear() }} LangMap</span>
     </div>
   </footer>
@@ -26,14 +20,6 @@
   max-width: 920px; margin: 0 auto;
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; flex-wrap: wrap;
-}
-.brand {
-  font-weight: 600; font-size: 14px; color: var(--fg);
-}
-.brand .em {
-  font-family: var(--mono); font-size: 9px;
-  background: var(--accent); color: #fff; padding: 1px 3px;
-  border-radius: 2px; margin-left: 2px; vertical-align: super;
 }
 .foot-nav { display: flex; gap: 16px; }
 .foot-nav a {
