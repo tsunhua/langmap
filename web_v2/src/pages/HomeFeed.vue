@@ -7,20 +7,24 @@ import SegControl from '@/components/ui/SegControl.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
-const { loading, hot, newest } = useFeed()
+const { hot, newest } = useFeed()
 
 const hotMappings = ref<any[]>([])
 const newContribs = ref<any[]>([])
 const segment = ref('all')
+const loading = ref(true)
 const loadError = ref('')
 
 onMounted(async () => {
+  loading.value = true
   try {
     const [h, n] = await Promise.all([hot(20), newest(20)])
     hotMappings.value = h
     newContribs.value = n
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
+  } finally {
+    loading.value = false
   }
 })
 </script>
