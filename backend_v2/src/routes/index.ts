@@ -5,6 +5,8 @@ import expressions from './expressions';
 import mappings from './mappings';
 import contributions from './contributions';
 import handbooks from './handbooks';
+import feed from './feed';
+import search from './search';
 
 const api = new Hono();
 api.route('/', stub);
@@ -13,4 +15,6 @@ api.route('/expressions', expressions);
 api.route('/mappings', mappings);
 api.route('/contributions', contributions);
 api.route('/handbooks', handbooks);
+api.route('/feed', feed);
+api.route('/search', search);
 export default api;
