@@ -40,6 +40,14 @@ async function load() {
 onMounted(load)
 watch(code, load)
 
+const subtitle = computed(() => {
+  const parts = []
+  if (lang.value?.family) parts.push(lang.value.family)
+  if (lang.value?.status_text) parts.push(lang.value.status_text)
+  if (lang.value?.region_name) parts.push(lang.value.region_name)
+  return parts.join(' · ')
+})
+
 async function changeSort(sort: string) {
   sortBy.value = sort
   try {
@@ -63,6 +71,7 @@ async function changeSort(sort: string) {
       <h1>{{ lang.name }}</h1>
       <span class="lang-badge">{{ lang.code }}</span>
     </div>
+    <p class="ld-sub" v-if="subtitle">{{ subtitle }}</p>
 
     <div class="ld-stats">
       <StatBox :label="'詞句'" :value="lang.expression_count" />
@@ -100,4 +109,5 @@ async function changeSort(sort: string) {
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .ld-sort { display: flex; gap: 4px; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 </style>
