@@ -76,7 +76,7 @@ function removeExprFromSection(i: number, exprId: number) {
   sections.value[i].expressions = sections.value[i].expressions.filter(e => e.id !== exprId)
 }
 
-async function save() {
+async function save(status: string) {
   saving.value = true
   saveError.value = ''
   try {
@@ -87,6 +87,7 @@ async function save() {
         title: s.title,
         expressionIds: s.expressions.map(e => e.id),
       })),
+      status,
     }
     if (isNew.value) {
       const result = await create(payload)
@@ -120,8 +121,11 @@ async function save() {
     </div>
 
     <div class="he-actions">
-      <button class="btn btn-primary" :disabled="saving || !title" @click="save">
-        {{ saving ? '儲存中…' : '儲存' }}
+      <button class="btn" @click="save('draft')" :disabled="saving || !title">
+        {{ saving ? '儲存中…' : '儲存草稿' }}
+      </button>
+      <button class="btn btn-primary" @click="save('published')" :disabled="saving || !title">
+        {{ saving ? '儲存中…' : '發布' }}
       </button>
     </div>
 

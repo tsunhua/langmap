@@ -173,6 +173,7 @@ CREATE TABLE handbooks (
     user_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     visibility TEXT NOT NULL DEFAULT 'public',
+    status TEXT NOT NULL DEFAULT 'published',
     score INTEGER NOT NULL DEFAULT 0,
     created_at TEXT,
     updated_at TEXT,

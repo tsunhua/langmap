@@ -159,6 +159,7 @@ handbooks.put('/:id', requireAuth, async (c) => {
   const body = await c.req.json<{
     title?: string;
     visibility?: string;
+    status?: string;
     sections?: { title: string; expressionIds: number[] }[];
   }>();
 
@@ -168,6 +169,10 @@ handbooks.put('/:id', requireAuth, async (c) => {
   if (body.visibility !== undefined) {
     updates.push('visibility = ?');
     params.push(body.visibility === 'private' ? 'private' : 'public');
+  }
+  if (body.status !== undefined) {
+    updates.push('status = ?');
+    params.push(body.status === 'draft' ? 'draft' : 'published');
   }
   updates.push('updated_at = datetime("now")');
   params.push(id);
