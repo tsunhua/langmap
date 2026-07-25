@@ -37,16 +37,39 @@ contributions.post('/batch', requireAuth, async (c) => {
 
   const exprIds: number[] = [];
   const statements: D1Statement[] = [];
+  const seenExpressions = new Map<string, number>();
 
   for (const e of exprs) {
-    const id = fnv1a(`${e.text}|${e.lang}`);
+    const text = e.text?.trim() || '';
+    const lang = e.lang?.trim() || '';
+
+    if (!text || !lang) {
+      return badRequest(c, 'invalid_expression', 'Each expression needs non-empty text and language');
+    }
+
+    const key = `${text}|${lang}`;
+    const cachedId = seenExpressions.get(key);
+    if (cachedId !== undefined) {
+      exprIds.push(cachedId);
+      continue;
+    }
+
+    const existing = await c.env.DB.prepare(
+      `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
+    ).bind(text, lang).first<{ id: number }>();
+
+    const id = existing?.id ?? fnv1a(key);
+    seenExpressions.set(key, id);
     exprIds.push(id);
-    statements.push(
-      c.env.DB.prepare(
-        `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, source_type, created_by, review_status)
-         VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
-      ).bind(id, e.text, e.lang, e.region || null, user.username)
-    );
+
+    if (!existing) {
+      statements.push(
+        c.env.DB.prepare(
+          `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, source_type, created_by, review_status)
+           VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
+        ).bind(id, text, lang, e.region || null, user.username)
+      );
+    }
   }
 
   const edges = edgesForGroup(exprIds);
