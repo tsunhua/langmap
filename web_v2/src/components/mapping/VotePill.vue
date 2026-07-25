@@ -13,8 +13,11 @@ const emit = defineEmits<{ 'update:score': [score: number] }>()
 
 const currentVote = ref(props.userVote ?? null)
 const localScore = ref(props.score)
+const busy = ref(false)
 
 async function vote(direction: 'up' | 'down') {
+  if (busy.value) return
+  busy.value = true
   const prevVote = currentVote.value
   const prevScore = localScore.value
 
@@ -39,6 +42,8 @@ async function vote(direction: 'up' | 'down') {
   } catch {
     currentVote.value = prevVote
     localScore.value = prevScore
+  } finally {
+    busy.value = false
   }
 }
 </script>
