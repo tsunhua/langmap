@@ -147,7 +147,7 @@ async function save() {
 </template>
 
 <style scoped>
-.he-page { max-width: 760px; margin: 0 auto; }
+.he-page { max-width: 760px; margin: 0 auto; padding: 30px 28px 100px; }
 .he-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .he-back:hover { color: var(--fg); }
 .he-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }

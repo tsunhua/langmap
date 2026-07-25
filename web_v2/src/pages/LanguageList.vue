@@ -56,8 +56,8 @@ onMounted(async () => {
     <div class="lg-toolbar">
       <SearchBar v-model="searchQuery" placeholder="搜尋語言…" style="flex: 1;" />
       <div class="lg-sort">
-        <button :class="['btn btn-sm', sortBy === 'count' ? 'btn-primary' : 'btn-ghost']" @click="sortBy = 'count'">數量</button>
-        <button :class="['btn btn-sm', sortBy === 'alpha' ? 'btn-primary' : 'btn-ghost']" @click="sortBy = 'alpha'">A–Z</button>
+        <button :class="{ on: sortBy === 'count' }" @click="sortBy = 'count'">數量</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">A–Z</button>
       </div>
     </div>
 
@@ -78,11 +78,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.lg-page { max-width: 900px; margin: 0 auto; }
+.lg-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
 .lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .lg-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
 .lg-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .lg-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-.lg-sort { display: flex; gap: 4px; }
+.lg-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.lg-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.lg-sort button:hover { color: var(--fg); }
+.lg-sort button.on { background: var(--fg); color: var(--surface); }
 .lg-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 </style>

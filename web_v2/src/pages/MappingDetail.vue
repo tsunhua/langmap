@@ -157,7 +157,7 @@ const sourceLabel = computed(() => {
 </template>
 
 <style scoped>
-.anchor { max-width: 920px; margin: 0 auto; }
+.anchor { max-width: 920px; margin: 0 auto; padding: 30px 28px 100px; }
 .crumbs {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 16px;

@@ -83,7 +83,7 @@ watch(id, load)
 </template>
 
 <style scoped>
-.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; }
+.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; padding: 30px 28px 100px; }
 .hv-toc { position: sticky; top: 60px; align-self: start; }
 .hv-toc-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .hv-toc a { display: block; padding: 4px 8px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }

@@ -74,7 +74,7 @@ async function changeSort() {
 </template>
 
 <style scoped>
-.hb-page { max-width: 1000px; margin: 0 auto; }
+.hb-page { max-width: 1000px; margin: 0 auto; padding: 30px 28px 100px; }
 .hb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .hb-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .hb-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }

@@ -81,9 +81,9 @@ async function changeSort(sort: string) {
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" placeholder="搜尋詞句…" style="flex: 1;" />
       <div class="ld-sort">
-        <button :class="['btn btn-sm', sortBy === 'hot' ? 'btn-primary' : 'btn-ghost']" @click="changeSort('hot')">熱門</button>
-        <button :class="['btn btn-sm', sortBy === 'new' ? 'btn-primary' : 'btn-ghost']" @click="changeSort('new')">最新</button>
-        <button :class="['btn btn-sm', sortBy === 'alpha' ? 'btn-primary' : 'btn-ghost']" @click="changeSort('alpha')">字母</button>
+        <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">熱門</button>
+        <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">最新</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">字母</button>
       </div>
     </div>
 
@@ -100,14 +100,17 @@ async function changeSort(sort: string) {
 </template>
 
 <style scoped>
-.ld-page { max-width: 900px; margin: 0 auto; }
+.ld-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
 .ld-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .ld-back:hover { color: var(--fg); }
 .ld-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
 .ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-.ld-sort { display: flex; gap: 4px; }
+.ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.ld-sort button:hover { color: var(--fg); }
+.ld-sort button.on { background: var(--fg); color: var(--surface); }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 </style>
