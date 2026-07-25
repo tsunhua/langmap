@@ -45,7 +45,7 @@ const anchorPos = { x: 400, y: 230 }
         :x2="n.x"
         :y2="n.y"
         stroke="#4A6FA5"
-        :stroke-width="Math.max(1, n.score / 3)"
+        :stroke-width="Math.max(1, n.score / 2)"
         class="vb-edge"
       />
       <line
@@ -85,11 +85,13 @@ const anchorPos = { x: 400, y: 230 }
 <style scoped>
 .vb-stage {
   position: relative;
+  width: 800px;
+  max-width: 100%;
   height: 460px;
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  overflow: hidden;
+  overflow: auto;
 }
 .vb-svg {
   position: absolute;
