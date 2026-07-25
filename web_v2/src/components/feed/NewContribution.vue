@@ -66,7 +66,7 @@ function timeAgo(dateStr?: string): string {
   justify-self: start;
   background: var(--accent-soft);
 }
-.new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .new-pair { font-size: 14px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .new-pair .arrow { color: var(--faint); margin: 0 4px; }
 .new-pair .tx { font-weight: 500; transition: color 0.12s; }
