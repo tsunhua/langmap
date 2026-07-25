@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Atlas paper base styles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  color: #1A1A1A;
+  background: #F5F0E8;
+  background-image: radial-gradient(circle, #E8C9A0 1px, transparent 1px);
+  background-size: 22px 22px;
+  line-height: 1.6;
+}
+
+a { color: #8B4513; text-decoration: none; }
+a:hover { color: #A0522D; }
+
+/* Appbar */
+.appbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 16px;
+  height: 44px; padding: 0 20px;
+  background: rgba(245, 240, 232, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #EDE5D8;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 4px; border: 1px solid transparent;
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-primary { background: #8B4513; color: #fff; }
+.btn-primary:hover { background: #A0522D; }
+.btn-ghost { border-color: #EDE5D8; background: transparent; }
+.btn-ghost:hover { background: #F5F0E8; }
+.btn-sm { padding: 3px 8px; font-size: 12px; }
+.btn-icon { padding: 4px; width: 28px; height: 28px; justify-content: center; }
+
+/* Page shell */
+.page { max-width: 920px; margin: 0 auto; padding: 28px 28px 120px; }
+
+/* Cards */
+.card {
+  background: #fff; border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px;
+}
+
+/* Vote pill */
+.vote { display: inline-flex; align-items: center; gap: 4px; }
+.vote button {
+  width: 28px; height: 28px; border-radius: 4px; border: 1px solid #EDE5D8;
+  background: transparent; cursor: pointer; font-size: 14px; transition: all 0.15s;
+}
+.vote button:hover { background: #F5F0E8; }
+.vote button.on.up { color: #2D7A3A; border-color: #2D7A3A; }
+.vote button.on.down { color: #A03030; border-color: #A03030; }
+.vote .score {
+  font-family: "IBM Plex Mono", monospace; font-size: 13px;
+  min-width: 32px; text-align: center;
+}
+
+/* Language badge */
+.lang-badge {
+  display: inline-block; padding: 1px 6px; border-radius: 3px;
+  font-family: "IBM Plex Mono", monospace; font-size: 11px;
+  background: #F5F0E8; color: #4A6FA5;
+}
+
+/* Source tag */
+.src-tag {
+  display: inline-block; padding: 1px 5px; border-radius: 3px;
+  font-size: 11px; background: #F5F0E8;
+}
+.src-tag.auth { background: #F5E6D3; color: #8B4513; }
+.src-tag.ai { background: #E6F0FF; color: #4A6FA5; }
+
+/* Section header */
+.nb-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0; border-bottom: 1px solid #EDE5D8;
+  font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500;
+}
+
+/* Input */
+input, select {
+  padding: 6px 10px; border: 1px solid #EDE5D8; border-radius: 4px;
+  font-family: "Inter", sans-serif; font-size: 14px; background: #fff;
+}
+input:focus, select:focus {
+  outline: none; border-color: #8B4513;
+  box-shadow: 0 0 0 2px rgba(139,69,19,0.15);
+}
