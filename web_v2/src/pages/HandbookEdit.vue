@@ -76,6 +76,18 @@ function removeExprFromSection(i: number, exprId: number) {
   sections.value[i].expressions = sections.value[i].expressions.filter(e => e.id !== exprId)
 }
 
+function moveExpression(sectionId: number, itemId: number, direction: 'up' | 'down') {
+  const section = sections.value[sectionId]
+  if (!section) return
+  const idx = section.expressions.findIndex(e => e.id === itemId)
+  if (idx < 0) return
+  const newIdx = direction === 'up' ? idx - 1 : idx + 1
+  if (newIdx < 0 || newIdx >= section.expressions.length) return
+  const temp = section.expressions[idx]
+  section.expressions[idx] = section.expressions[newIdx]
+  section.expressions[newIdx] = temp
+}
+
 async function save(status: string) {
   saving.value = true
   saveError.value = ''
@@ -141,6 +153,8 @@ async function save(status: string) {
       @move-down="moveSection(i, 1)"
       @add-expression="addExprToSection(i, $event)"
       @remove-expression="removeExprFromSection(i, $event)"
+      @move-expr-up="(id) => moveExpression(i, id, 'up')"
+      @move-expr-down="(id) => moveExpression(i, id, 'down')"
     />
 
     <button class="btn btn-ghost" @click="addSection"><Plus :size="14" aria-hidden="true" /> 新增章節</button>

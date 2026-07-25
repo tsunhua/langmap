@@ -16,6 +16,8 @@ const emit = defineEmits<{
   'move-down': []
   'add-expression': [expr: any]
   'remove-expression': [id: number]
+  'move-expr-up': [id: number]
+  'move-expr-down': [id: number]
 }>()
 
 const showPicker = ref(false)
@@ -41,9 +43,12 @@ const showPicker = ref(false)
 
     <div class="he-expr-list">
       <div v-for="(expr, j) in expressions" :key="expr.id" class="he-expr">
+        <span class="he-expr-drag" aria-hidden="true">⠿</span>
         <span class="he-expr-num">{{ String(j + 1).padStart(2, '0') }}</span>
         <span class="he-expr-tx">{{ expr.text }}</span>
         <span class="lang-badge">{{ expr.language_code }}</span>
+        <button class="btn btn-icon btn-ghost btn-sm he-up" title="上移" @click="emit('move-expr-up', expr.id)"><ChevronUp :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm he-down" title="下移" @click="emit('move-expr-down', expr.id)"><ChevronDown :size="14" aria-hidden="true" /></button>
         <button class="btn btn-icon btn-ghost btn-sm" :aria-label="`移除 ${expr.text}`" @click="emit('remove-expression', expr.id)"><X :size="14" aria-hidden="true" /></button>
       </div>
     </div>
@@ -64,7 +69,8 @@ const showPicker = ref(false)
 .he-sec-title:focus { outline: none; border-bottom-color: var(--accent); }
 .he-sec-actions { display: flex; gap: 2px; }
 .he-expr-list { margin-bottom: 8px; }
-.he-expr { display: grid; grid-template-columns: 26px 1fr auto auto; align-items: center; gap: 8px; padding: 6px 4px; font-size: 13px; }
+.he-expr { display: grid; grid-template-columns: 18px 26px 1fr auto auto auto auto; align-items: center; gap: 8px; padding: 6px 4px; font-size: 13px; }
+.he-expr-drag { cursor: grab; color: var(--muted); font-size: 12px; user-select: none; }
 .he-expr-num { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 26px; }
 .he-expr-tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
