@@ -1,0 +1,305 @@
+/* LangMap · Atlas v2 — 重新想像後的設計 token + 三 variant
+   共用 DNA:暖紙面 + 陶土 accent + mono;為「圖譜 + 社群訊號」重造。 */
+:root {
+  --bg: oklch(0.975 0.008 85);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.010 85);
+  --fg: oklch(0.20 0.015 55);
+  --muted: oklch(0.52 0.010 200);
+  --faint: oklch(0.72 0.008 200);
+  --border: oklch(0.88 0.008 95);
+  --accent: oklch(0.64 0.16 35);
+  --accent-soft: oklch(0.96 0.04 35);
+  --edge: oklch(0.62 0.13 245);        /* 圖譜邊的藍 */
+  --up: oklch(0.60 0.14 155);          /* 讚:綠 */
+  --down: oklch(0.60 0.17 25);         /* 踩:紅 */
+  --fold: oklch(0.78 0.012 88);
+  --font: "Inter", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --r: 4px;
+  --bar-h: 44px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--fg);
+  font-size: 14px; line-height: 1.45;
+  background-image: radial-gradient(circle, oklch(0.86 0.010 88) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+::selection { background: var(--accent-soft); }
+.mono { font-family: var(--mono); font-size: 11px; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── APPBAR (新 IA: 手冊、語言 nav + 貢獻 CTA + 全域搜索) ── */
+.appbar {
+  display: flex; align-items: center; gap: 12px;
+  height: var(--bar-h); padding: 0 14px;
+  background: color-mix(in oklch, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 30;
+}
+.brand { font-weight: 600; font-size: 14px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 7px; }
+.brand em {
+  font-style: normal; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--accent); border: 1px solid oklch(0.84 0.07 35);
+  padding: 1px 5px; border-radius: 2px; background: var(--accent-soft);
+}
+.appnav { display: flex; gap: 2px; margin-left: 8px; }
+.appnav a {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  height: 28px; display: flex; align-items: center; padding: 0 12px;
+  color: var(--muted); border-radius: var(--r);
+}
+.appnav a:hover, .appnav a.on { color: var(--fg); background: var(--bg); }
+.bar-spacer { margin-left: auto; }
+.top-search {
+  display: flex; align-items: center; height: 30px; min-width: 200px; max-width: 360px; flex: 1;
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--bg); padding: 0 10px; gap: 8px;
+}
+.top-search:focus-within { border-color: var(--accent); }
+.top-search input { flex: 1; border: none; background: transparent; outline: none; font-size: 13px; min-width: 0; }
+.top-search input::placeholder { color: var(--muted); }
+.top-search kbd {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 2px; padding: 0 5px; background: var(--surface);
+}
+.lang-switch {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--surface);
+  height: 30px; padding: 0 10px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.lang-switch:hover { color: var(--fg); }
+.bar-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── BUTTONS ── */
+.btn {
+  height: 30px; padding: 0 12px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; font-weight: 500; font-size: 13px; color: var(--fg);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--bg); border-color: oklch(0.78 0.06 35); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+.btn-primary:hover { filter: brightness(1.06); background: var(--accent); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--fg); }
+.btn-icon { width: 30px; padding: 0; display: grid; place-items: center; color: var(--muted); }
+.btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+
+/* ── PAGE SHELL ── */
+.page { max-width: 920px; margin: 0 auto; padding: 28px 28px 120px; }
+
+/* ── ANCHOR HEADER (shared: the expression being viewed) ── */
+.anchor { margin-bottom: 26px; }
+.crumbs {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 16px;
+}
+.crumbs a:hover { color: var(--fg); }
+.crumbs .sep { opacity: 0.5; }
+.anchor-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.anchor-title h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+.anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+.lang-badge {
+  font-family: var(--mono); font-size: 11px; border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 2px; color: var(--fg); background: var(--surface);
+}
+.src-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  border: 1px solid var(--border); padding: 1px 6px; border-radius: 2px; color: var(--muted);
+}
+.src-tag.auth { border-color: color-mix(in oklch, var(--up) 45%, var(--border)); color: var(--up); }
+.src-tag.ai { border-color: color-mix(in oklch, var(--accent) 40%, var(--border)); color: var(--accent); }
+.anchor-acts { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ── 對照集 section header (shared) ── */
+.nb-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 30px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.nb-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.nb-head .nb-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.nb-head .nb-meta b { color: var(--fg); font-weight: 500; }
+
+/* vote pill — shared primitive */
+.vote { display: inline-flex; align-items: center; gap: 2px; }
+.vote button {
+  width: 26px; height: 26px; border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; font-size: 13px; line-height: 1; color: var(--muted);
+  display: grid; place-items: center; padding: 0;
+}
+.vote button:first-child { border-radius: var(--r) 0 0 var(--r); }
+.vote button:last-child { border-radius: 0 var(--r) var(--r) 0; border-left: none; }
+.vote button:hover { background: var(--bg); }
+.vote button.up.on { background: var(--up); color: white; border-color: var(--up); }
+.vote button.dn.on { background: var(--down); color: white; border-color: var(--down); }
+.vote .score {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px;
+  min-width: 32px; text-align: center; padding: 0 6px; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); height: 26px; display: grid; place-items: center;
+}
+.vote .score.neg { color: var(--down); }
+
+/* folded expander — shared */
+.folded-note {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--faint);
+}
+.folded-note button {
+  font-family: var(--mono); font-size: 11px; background: none; border: 1px dashed var(--border);
+  color: var(--muted); padding: 3px 8px; border-radius: var(--r); cursor: pointer;
+}
+.folded-note button:hover { color: var(--fg); border-color: var(--muted); }
+
+.expand-hop {
+  margin-top: 18px; display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.expand-hop button {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--surface); border: 1px solid var(--border); color: var(--fg);
+  padding: 6px 12px; border-radius: var(--r); cursor: pointer;
+}
+.expand-hop button:hover { border-color: var(--accent); color: var(--accent); }
+.hop-ring { display: inline-flex; gap: 3px; align-items: center; }
+.hop-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.hop-dot.off { background: var(--border); }
+
+/* ═══════════════ VARIANT A — 稠密表格 (reference) ═══════════════ */
+.va-table { width: 100%; border-collapse: collapse; }
+.va-table th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; font-weight: 500;
+}
+.va-table td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; }
+.va-table tr:hover td { background: var(--surface-2); }
+.va-table .lc { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; width: 56px; }
+.va-table .tx { font-weight: 500; min-width: 200px; }
+.va-table .rg { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.va-table .src { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.va-table .vcell { width: 130px; }
+.va-table tr.folded { display: none; }
+.va-table tr.folded.shown { display: table-row; }
+.va-table tr.folded td { color: var(--faint); background: var(--surface-2); }
+.va-table tr.folded .tx { text-decoration: line-through; text-decoration-color: var(--fold); }
+
+/* ═══════════════ VARIANT B — 徑向圖譜 (graph) ═══════════════ */
+.vb-stage {
+  position: relative; height: 460px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface);
+  background-image: radial-gradient(circle, oklch(0.90 0.010 88) 1px, transparent 1px);
+  background-size: 18px 18px;
+  overflow: hidden;
+}
+.vb-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vb-node {
+  position: absolute; transform: translate(-50%, -50%);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 8px 12px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center;
+  min-width: 90px; box-shadow: 0 1px 2px oklch(0 0 0 / 0.04); transition: transform 0.12s, box-shadow 0.12s;
+}
+.vb-node:hover { transform: translate(-50%, -50%) translateY(-2px); box-shadow: 0 4px 10px oklch(0 0 0 / 0.08); z-index: 4; }
+.vb-node .vb-lc { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 3px; font-weight: 400; }
+.vb-node.anchor {
+  background: var(--accent); color: white; border-color: var(--accent);
+  font-size: 16px; font-weight: 600; min-width: 110px; padding: 10px 16px;
+  box-shadow: 0 0 0 6px oklch(0.64 0.16 35 / 0.15);
+}
+.vb-node.anchor .vb-lc { color: oklch(0.92 0.04 35); }
+.vb-node.folded { opacity: 0.45; }
+.vb-node.folded .vb-tx { text-decoration: line-through; text-decoration-color: var(--fold); }
+.vb-vote {
+  position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+  display: none; z-index: 5;
+}
+.vb-node:hover .vb-vote { display: inline-flex; }
+.vb-legend {
+  position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 4px;
+  font-family: var(--mono); font-size: 10px; color: var(--muted); background: color-mix(in oklch, var(--surface) 90%, transparent);
+  border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px;
+}
+.vb-legend .lr { display: flex; align-items: center; gap: 6px; }
+.vb-legend .ln { width: 22px; height: 2px; background: var(--edge); }
+.vb-legend .ln.thin { height: 1px; opacity: 0.4; border-top: 1px dashed var(--edge); background: transparent; }
+
+/* ═══════════════ VARIANT C — 卡片/動態 (social) ═══════════════ */
+.vc-list { display: flex; flex-direction: column; gap: 10px; }
+.vc-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; transition: border-color 0.12s, box-shadow 0.12s;
+}
+.vc-card:hover { border-color: oklch(0.80 0.06 35); box-shadow: 0 2px 6px oklch(0 0 0 / 0.05); }
+.vc-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.vc-tx { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.vc-sub { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.vc-card.folded { background: var(--surface-2); border-style: dashed; opacity: 0.7; }
+.vc-card.folded .vc-tx { text-decoration: line-through; text-decoration-color: var(--fold); color: var(--muted); }
+.vc-card.folded .vote { display: none; }
+.vc-card.hidden-fold { display: none; }
+.vc-card.hidden-fold.shown { display: grid; }
+.vc-vote-big { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.vc-vote-big button {
+  width: 38px; height: 30px; border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; font-size: 16px; line-height: 1; color: var(--muted); display: grid; place-items: center;
+}
+.vc-vote-big button:first-child { border-radius: var(--r) var(--r) 0 0; }
+.vc-vote-big button:last-child { border-radius: 0 0 var(--r) var(--r); border-top: none; }
+.vc-vote-big button:hover { background: var(--bg); }
+.vc-vote-big button.up.on { background: var(--up); color: white; border-color: var(--up); }
+.vc-vote-big button.dn.on { background: var(--down); color: white; border-color: var(--down); }
+.vc-vote-big .vc-score {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500;
+  min-width: 38px; text-align: center; padding: 2px 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+}
+.vc-vote-big .vc-score.neg { color: var(--down); }
+
+/* variant visibility */
+.variant { display: none; }
+.variant.active { display: block; }
+
+/* ═══════════════ FLOATING SWITCHER ═══════════════ */
+.proto-switcher {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 4px; padding: 6px 8px;
+  background: var(--fg); color: var(--surface); border-radius: 999px;
+  box-shadow: 0 6px 20px oklch(0 0 0 / 0.22); font-family: var(--mono);
+}
+.proto-switcher button {
+  background: transparent; border: none; color: var(--surface); cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%; font-size: 15px; line-height: 1;
+  display: grid; place-items: center; opacity: 0.7;
+}
+.proto-switcher button:hover { opacity: 1; background: oklch(0.3 0.02 55); }
+.proto-switcher .ps-label { font-size: 11px; letter-spacing: 0.04em; padding: 0 8px; min-width: 150px; text-align: center; }
+.proto-switcher .ps-label b { color: var(--accent); font-weight: 600; }
+.proto-switcher .ps-tag {
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.5;
+  padding-left: 8px; margin-left: 4px; border-left: 1px solid oklch(0.4 0.02 55);
+}
+
+.proto-note {
+  position: fixed; top: 52px; right: 16px; z-index: 55;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: color-mix(in oklch, var(--surface) 92%, transparent); backdrop-filter: blur(6px);
+  border: 1px solid var(--border); border-radius: var(--r); padding: 6px 10px;
+  max-width: 220px; line-height: 1.5;
+}
+.proto-note b { color: var(--fg); }
+
+/* ── focus highlight(來自 ?focus=<lang> 參數,著重某映射)── */
+.vb-node.focus {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 0 4px oklch(0.64 0.16 35 / 0.28), 0 4px 12px oklch(0 0 0 / 0.12);
+  transform: translate(-50%, -50%) scale(1.12); z-index: 5;
+}
+.focus-note {
+  margin: 0 0 18px; padding: 8px 12px; background: var(--accent-soft);
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border));
+  border-radius: var(--r); font-size: 12px; color: var(--fg); line-height: 1.5;
+}
+.focus-note b { color: var(--accent); font-weight: 600; }

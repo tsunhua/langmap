@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>手冊 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .hb-page { max-width: 1000px; margin: 0 auto; padding: 30px 28px 100px; }
+    .hb-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+    .hb-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .hb-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+    .hb-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .hb-tabs button {
+      height: 34px; padding: 0 14px; border: none; background: transparent; cursor: pointer;
+      color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+      font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .hb-tabs button.on { color: var(--fg); border-bottom-color: var(--accent); }
+    .hb-tabs button:hover { color: var(--fg); }
+    .hb-results { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+    .hb-filters { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+    .hb-search {
+      flex: 1; min-width: 200px; height: 34px; border: 1px solid var(--border); border-radius: var(--r);
+      background: var(--surface); padding: 0 12px; font-size: 13px; outline: none;
+    }
+    .hb-search:focus { border-color: var(--accent); }
+
+    /* ── 可搜索多選語言 combobox ── */
+    .lang-select { position: relative; min-width: 230px; flex: 1; max-width: 360px; }
+    .lang-select-tagwrap {
+      display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+      min-height: 34px; padding: 3px 8px; border: 1px solid var(--border);
+      border-radius: var(--r); background: var(--surface); cursor: text;
+    }
+    .lang-select-tagwrap:focus-within { border-color: var(--accent); }
+    .lang-tag {
+      display: inline-flex; align-items: center; gap: 3px; font-family: var(--mono); font-size: 10px;
+      background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border));
+      padding: 1px 6px; border-radius: 999px; cursor: pointer;
+    }
+    .lang-tag .rm { opacity: 0.6; font-size: 9px; }
+    .lang-tag:hover .rm { opacity: 1; }
+    .lang-select-input { border: none; background: transparent; outline: none; font-size: 13px; min-width: 70px; flex: 1; padding: 2px 0; }
+    .lang-select-input::placeholder { color: var(--muted); }
+    .lang-select-dropdown {
+      position: absolute; top: calc(100% + 3px); left: 0; right: 0; z-index: 25;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: 0 6px 18px oklch(0 0 0 / 0.12); max-height: 260px; overflow: auto;
+    }
+    .lang-opt {
+      display: flex; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 11px;
+      border: none; background: transparent; cursor: pointer; font-size: 13px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .lang-opt:last-child { border-bottom: none; }
+    .lang-opt:hover { background: var(--bg); }
+    .lang-opt.sel { color: var(--accent); font-weight: 500; }
+    .lang-opt.sel::after { content: "✓"; font-family: var(--mono); font-size: 11px; }
+    .lang-opt .nm { color: var(--muted); font-size: 11px; }
+    .lang-empty { padding: 14px; text-align: center; color: var(--faint); font-size: 12px; }
+
+    .hb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+    .hb-card {
+      display: flex; flex-direction: column; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; color: inherit;
+    }
+    .hb-card:hover { border-color: oklch(0.80 0.06 35); box-shadow: 0 2px 8px oklch(0 0 0 / 0.05); }
+    .hb-card h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+    .hb-card-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .hb-card-meta b { color: var(--fg); font-weight: 500; }
+    .hb-langs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .hb-lang-chip { font-family: var(--mono); font-size: 10px; border: 1px solid var(--border); padding: 1px 5px; border-radius: 2px; color: var(--muted); }
+    .hb-card-foot {
+      display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px;
+      border-top: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.04em;
+    }
+    .hb-score { color: var(--accent); font-weight: 500; }
+    .empty-note { grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--faint); font-size: 13px; border: 1px dashed var(--border); border-radius: var(--r); }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="handbooks.html" class="on">手冊</a>
+      <a href="#">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="hb-page">
+    <div class="hb-head">
+      <div>
+        <h1>手冊</h1>
+        <p class="hb-sub">社群策展的學習清單——章節 + 有序詞句。</p>
+      </div>
+      <a class="btn btn-primary" href="handbook-edit.html">＋ 新建手冊</a>
+    </div>
+
+    <div class="hb-tabs">
+      <button class="on" type="button" data-mode="hot">熱門</button>
+      <button type="button" data-mode="new">最新</button>
+    </div>
+
+    <div class="hb-filters">
+      <input class="hb-search" id="hb-search" type="search" placeholder="搜索手冊標題或作者…" />
+      <div class="lang-select" id="lang-select">
+        <div class="lang-select-tagwrap" tabindex="-1">
+          <input class="lang-select-input" placeholder="篩選語言…" />
+        </div>
+        <div class="lang-select-dropdown" hidden></div>
+      </div>
+    </div>
+
+    <div class="hb-grid" id="grid">
+      <a class="hb-card" href="handbook-view.html" data-title="東亞問候語入門" data-author="@langmap-team" data-langs="cmn ja ko nan" data-score="512" data-date="2026-07-22">
+        <h3>東亞問候語入門</h3>
+        <div class="hb-card-meta"><b>3</b> 章 · <b>10</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">cmn</span><span class="hb-lang-chip">ja</span><span class="hb-lang-chip">ko</span><span class="hb-lang-chip">nan</span></div>
+        <div class="hb-card-foot"><span>@langmap-team</span><span><span class="hb-score">▲ 512</span> · 07-22</span></div>
+      </a>
+      <a class="hb-card" href="handbook-view.html" data-title="多語感謝表達" data-author="@wira" data-langs="cmn en ja ko vi" data-score="287" data-date="2026-07-18">
+        <h3>多語感謝表達</h3>
+        <div class="hb-card-meta"><b>3</b> 章 · <b>15</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">cmn</span><span class="hb-lang-chip">en</span><span class="hb-lang-chip">ja</span><span class="hb-lang-chip">ko</span><span class="hb-lang-chip">vi</span></div>
+        <div class="hb-card-foot"><span>@wira</span><span><span class="hb-score">▲ 287</span> · 07-18</span></div>
+      </a>
+      <a class="hb-card" href="handbook-view.html" data-title="日語敬語入門" data-author="@hana" data-langs="ja" data-score="203" data-date="2026-06-30">
+        <h3>日語敬語入門</h3>
+        <div class="hb-card-meta"><b>5</b> 章 · <b>12</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">ja</span></div>
+        <div class="hb-card-foot"><span>@hana</span><span><span class="hb-score">▲ 203</span> · 06-30</span></div>
+      </a>
+      <a class="hb-card" href="handbook-view.html" data-title="韓語初學者三十句" data-author="@yuki" data-langs="ko" data-score="156" data-date="2026-06-12">
+        <h3>韓語初學者三十句</h3>
+        <div class="hb-card-meta"><b>6</b> 章 · <b>30</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">ko</span></div>
+        <div class="hb-card-foot"><span>@yuki</span><span><span class="hb-score">▲ 156</span> · 06-12</span></div>
+      </a>
+      <a class="hb-card" href="handbook-view.html" data-title="閩南語日常用語" data-author="@lim" data-langs="nan" data-score="48" data-date="2026-07-24">
+        <h3>閩南語日常用語</h3>
+        <div class="hb-card-meta"><b>4</b> 章 · <b>8</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">nan</span></div>
+        <div class="hb-card-foot"><span>@lim</span><span><span class="hb-score">▲ 48</span> · 07-24</span></div>
+      </a>
+      <a class="hb-card" href="handbook-view.html" data-title="粵語飲食詞彙" data-author="@hk" data-langs="yue" data-score="31" data-date="2026-06-05">
+        <h3>粵語飲食詞彙</h3>
+        <div class="hb-card-meta"><b>2</b> 章 · <b>6</b> 詞句</div>
+        <div class="hb-langs"><span class="hb-lang-chip">yue</span></div>
+        <div class="hb-card-foot"><span>@hk</span><span><span class="hb-score">▲ 31</span> · 06-05</span></div>
+      </a>
+      <div class="empty-note" id="empty" style="display:none">沒有符合條件的手冊。</div>
+    </div>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>手冊列表 · 熱門/最新</div>
+
+  <script>
+    const LANGS = [["cmn","普通话"],["en","English"],["ja","日本語"],["ko","한국어"],["nan","閩南語"],["yue","粵語"],["fr","français"],["es","Español"],["de","Deutsch"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],["ru","Русский"],["pt","Português"],["it","Italiano"],["th","ไทย"],["ar","العربية"],["hi","हिन्दी"],["tr","Türkçe"],["nl","Nederlands"],["pl","Polski"]];
+
+    const grid = document.getElementById("grid");
+    const cards = [...grid.querySelectorAll(".hb-card")];
+    const empty = document.getElementById("empty");
+    const search = document.getElementById("hb-search");
+    const tabsBar = document.querySelector(".hb-tabs");
+    const tabs = [...tabsBar.querySelectorAll("button")];
+    const resultsLine = document.getElementById("results");
+    let q = "", mode = "hot", searchMode = false;
+    const activeLangs = new Set();
+
+    function sortCards() {
+      const by = searchMode ? "score" : mode;
+      const sorted = [...cards].sort((a, b) =>
+        by === "new"
+          ? b.dataset.date.localeCompare(a.dataset.date)
+          : Number(b.dataset.score) - Number(a.dataset.score)
+      );
+      sorted.forEach(c => grid.appendChild(c));
+      grid.appendChild(empty);
+    }
+
+    function setModeUI() {
+      tabsBar.style.display = searchMode ? "none" : "";
+      resultsLine.hidden = !searchMode;
+    }
+
+    function apply() {
+      let visible = 0;
+      cards.forEach(c => {
+        const title = c.dataset.title.toLowerCase();
+        const author = c.dataset.author.toLowerCase();
+        const langs = c.dataset.langs.split(" ");
+        const mQ = !q || title.includes(q) || author.includes(q);
+        const mL = activeLangs.size === 0 || [...activeLangs].some(l => langs.includes(l));
+        const show = mQ && mL;
+        c.style.display = show ? "" : "none";
+        if (show) visible++;
+      });
+      empty.style.display = visible ? "none" : "";
+      if (searchMode) {
+        let label = `搜索「${q}」`;
+        if (activeLangs.size) label += ` · 語言 ${[...activeLangs].join("、")}`;
+        resultsLine.textContent = `${label} · ${visible} 個結果`;
+      }
+    }
+
+    function refresh() {
+      searchMode = q.length > 0;
+      setModeUI();
+      sortCards();
+      apply();
+    }
+
+    search.addEventListener("input", () => { q = search.value.trim().toLowerCase(); refresh(); });
+    tabs.forEach(b => b.addEventListener("click", () => {
+      if (searchMode) return;
+      tabs.forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      mode = b.dataset.mode;
+      sortCards(); apply();
+    }));
+
+    // ── 語言 combobox ──
+    const langSelect = document.getElementById("lang-select");
+    const tagwrap = langSelect.querySelector(".lang-select-tagwrap");
+    const langInput = langSelect.querySelector(".lang-select-input");
+    const dropdown = langSelect.querySelector(".lang-select-dropdown");
+
+    function renderTags() {
+      [...tagwrap.querySelectorAll(".lang-tag")].forEach(t => t.remove());
+      [...activeLangs].forEach(l => {
+        const tag = document.createElement("span");
+        tag.className = "lang-tag"; tag.dataset.lang = l;
+        tag.innerHTML = l + ' <span class="rm">✕</span>';
+        tagwrap.insertBefore(tag, langInput);
+      });
+    }
+    function renderDropdown() {
+      const q2 = langInput.value.trim().toLowerCase();
+      const list = LANGS.filter(([c, n]) => !q2 || c.toLowerCase().includes(q2) || n.toLowerCase().includes(q2));
+      dropdown.innerHTML = list.length
+        ? list.map(([c, n]) => `<button class="lang-opt ${activeLangs.has(c) ? "sel" : ""}" data-lang="${c}" type="button"><span>${c}</span><span class="nm">${n}</span></button>`).join("")
+        : '<div class="lang-empty">無符合語言</div>';
+      dropdown.hidden = false;
+    }
+    langInput.addEventListener("focus", renderDropdown);
+    langInput.addEventListener("input", renderDropdown);
+    langInput.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !langInput.value && activeLangs.size) {
+        const arr = [...activeLangs]; activeLangs.delete(arr[arr.length - 1]);
+        renderTags(); renderDropdown(); apply();
+      }
+      if (e.key === "Escape") dropdown.hidden = true;
+    });
+    tagwrap.addEventListener("click", e => {
+      const tag = e.target.closest(".lang-tag");
+      if (tag) { activeLangs.delete(tag.dataset.lang); renderTags(); renderDropdown(); apply(); return; }
+      langInput.focus();
+    });
+    dropdown.addEventListener("click", e => {
+      const opt = e.target.closest(".lang-opt"); if (!opt) return;
+      const l = opt.dataset.lang;
+      if (activeLangs.has(l)) activeLangs.delete(l); else activeLangs.add(l);
+      langInput.value = "";
+      renderTags(); renderDropdown(); apply(); langInput.focus();
+    });
+    document.addEventListener("click", e => { if (!langSelect.contains(e.target)) dropdown.hidden = true; });
+
+    refresh();
+  </script>
+</body>
+</html>

@@ -59,3 +59,5 @@ node_modules/
 backend/remote-*.sql
 backend/remote-old.sql
 scripts/v2/v2-data.sql
+
+.opencode/

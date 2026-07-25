@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>搜索 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .se-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
+    .se-hero { margin-bottom: 20px; }
+    .se-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 14px; }
+    .se-qrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .se-q {
+      flex: 1; min-width: 240px; height: 44px; border: 1px solid var(--border); border-radius: var(--r);
+      background: var(--surface); padding: 0 16px; font-size: 16px; outline: none;
+    }
+    .se-q:focus { border-color: var(--accent); }
+
+    /* 語言 combobox(同手冊) */
+    .lang-select { position: relative; min-width: 220px; max-width: 340px; }
+    .lang-select-tagwrap { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 44px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); cursor: text; }
+    .lang-select-tagwrap:focus-within { border-color: var(--accent); }
+    .lang-tag { display: inline-flex; align-items: center; gap: 3px; font-family: var(--mono); font-size: 10px; background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border)); padding: 2px 7px; border-radius: 999px; cursor: pointer; }
+    .lang-tag .rm { opacity: 0.6; font-size: 9px; }
+    .lang-select-input { border: none; background: transparent; outline: none; font-size: 14px; min-width: 80px; flex: 1; padding: 2px 0; }
+    .lang-select-input::placeholder { color: var(--muted); }
+    .lang-select-dropdown { position: absolute; top: calc(100% + 3px); left: 0; right: 0; z-index: 25; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: 0 6px 18px oklch(0 0 0 / 0.12); max-height: 260px; overflow: auto; }
+    .lang-opt { display: flex; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 11px; border: none; background: transparent; cursor: pointer; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border); }
+    .lang-opt:last-child { border-bottom: none; }
+    .lang-opt:hover { background: var(--bg); }
+    .lang-opt.sel { color: var(--accent); font-weight: 500; }
+    .lang-opt.sel::after { content: "✓"; font-family: var(--mono); font-size: 11px; }
+    .lang-opt .nm { color: var(--muted); font-size: 11px; }
+    .lang-empty { padding: 14px; text-align: center; color: var(--faint); font-size: 12px; }
+
+    .se-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 14px; flex-wrap: wrap; }
+    .se-count { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .se-count b { color: var(--fg); font-weight: 500; }
+    .se-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .se-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 12px; }
+    .se-sort button.on { background: var(--fg); color: var(--surface); }
+
+    .se-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+    .ex-row { display: grid; grid-template-columns: 48px minmax(0,1fr) 110px 70px 80px; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--border); color: inherit; transition: background 0.1s; }
+    .se-list .ex-row:last-child { border-bottom: none; }
+    .ex-row:hover { background: var(--bg); }
+    .ex-row:hover .ex-tx { color: var(--accent); }
+    .ex-lc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .ex-tx { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ex-region { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ex-src { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .ex-src.auth { color: oklch(0.45 0.11 155); }
+    .ex-maps { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); text-align: right; white-space: nowrap; }
+    .se-empty { padding: 50px 30px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.6; }
+    .se-empty a { color: var(--accent); }
+    .se-hint { margin-top: 14px; font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.04em; }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="handbooks.html">手冊</a>
+      <a href="languages.html">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" value="你好" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="se-page">
+    <div class="se-hero">
+      <h1>搜索詞句</h1>
+      <div class="se-qrow">
+        <input class="se-q" id="se-q" type="search" placeholder="輸入文字、搜索全球詞句…" value="你好" />
+        <div class="lang-select" id="lang-select">
+          <div class="lang-select-tagwrap" tabindex="-1">
+            <input class="lang-select-input" placeholder="篩選語言…" />
+          </div>
+          <div class="lang-select-dropdown" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="se-meta">
+      <span class="se-count"><b id="se-count">2</b> 個結果</span>
+      <div class="se-sort" id="se-sort">
+        <button class="on" type="button" data-sort="hot">熱門</button>
+        <button type="button" data-sort="new">最新</button>
+        <button type="button" data-sort="alpha">字母</button>
+      </div>
+    </div>
+
+    <div class="se-list" id="se-list"></div>
+    <p class="se-hint">提示:搜索目前比對詞句文字。依翻譯(語義)搜索之後補上。</p>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>全局搜索</div>
+
+  <script>
+    const DATA = [
+      { tx: "你好", lc: "cmn", region: "普通話", src: "權威", maps: 28, date: "2026-07-20" },
+      { tx: "Hello", lc: "en", region: "全球", src: "權威", maps: 30, date: "2026-07-21" },
+      { tx: "こんにちは", lc: "ja", region: "日本", src: "權威", maps: 22, date: "2026-07-18" },
+      { tx: "안녕하세요", lc: "ko", region: "한국", src: "權威", maps: 19, date: "2026-07-16" },
+      { tx: "謝謝", lc: "cmn", region: "普通話", src: "權威", maps: 24, date: "2026-07-15" },
+      { tx: "Thank you", lc: "en", region: "全球", src: "權威", maps: 26, date: "2026-07-14" },
+      { tx: "食飽未？", lc: "nan", region: "汕頭", src: "用戶", maps: 8, date: "2026-07-24" },
+      { tx: "食咗飯未呀？", lc: "yue", region: "香港", src: "用戶", maps: 6, date: "2026-07-23" },
+      { tx: "ご飯食べた？", lc: "ja", region: "関西", src: "權威", maps: 18, date: "2026-07-12" },
+      { tx: "밥 먹었어?", lc: "ko", region: "서울", src: "用戶", maps: 9, date: "2026-07-09" },
+      { tx: "吃了吗", lc: "cmn", region: "北京", src: "權威", maps: 12, date: "2026-07-22" },
+      { tx: "Have you eaten yet?", lc: "en", region: "US", src: "權威", maps: 14, date: "2026-07-22" },
+      { tx: "再见", lc: "cmn", region: "普通話", src: "用戶", maps: 18, date: "2026-07-10" },
+      { tx: "Goodbye", lc: "en", region: "全球", src: "權威", maps: 20, date: "2026-07-08" },
+      { tx: "さようなら", lc: "ja", region: "日本", src: "權威", maps: 16, date: "2026-07-05" },
+      { tx: "沒問題", lc: "cmn", region: "普通話", src: "用戶", maps: 9, date: "2026-07-08" },
+      { tx: "No problem", lc: "en", region: "全球", src: "用戶", maps: 11, date: "2026-07-06" },
+      { tx: "Bonjour", lc: "fr", region: "巴黎", src: "權威", maps: 15, date: "2026-07-01" },
+      { tx: "你好嗎", lc: "cmn", region: "普通話", src: "用戶", maps: 10, date: "2026-06-28" },
+      { tx: "How are you", lc: "en", region: "全球", src: "權威", maps: 14, date: "2026-06-25" },
+      { tx: "Sudah makan?", lc: "id", region: "Jakarta", src: "用戶", maps: 5, date: "2026-07-24" },
+      { tx: "Tu as mangé ?", lc: "fr", region: "巴黎", src: "AI", maps: 4, date: "2026-06-20" }
+    ];
+
+    const LANGS = [["cmn","普通话"],["en","English"],["ja","日本語"],["ko","한국어"],["nan","閩南語"],["yue","粵語"],["fr","français"],["es","Español"],["de","Deutsch"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],["ru","Русский"],["pt","Português"],["th","ไทย"],["ar","العربية"],["hi","हिन्दी"]];
+
+    const list = document.getElementById("se-list");
+    const qInput = document.getElementById("se-q");
+    const countEl = document.getElementById("se-count");
+    const sortBtns = [...document.querySelectorAll("#se-sort button")];
+    let q = qInput.value.trim().toLowerCase(), sort = "hot";
+    const activeLangs = new Set();
+
+    function rowHTML(d) {
+      return `<a class="ex-row" href="detail.html"><span class="ex-lc">${d.lc}</span><span class="ex-tx">${d.tx}</span><span class="ex-region">${d.region}</span><span class="ex-src ${d.src === "權威" ? "auth" : ""}">${d.src}</span><span class="ex-maps">${d.maps} 映射</span></a>`;
+    }
+
+    function apply() {
+      let matched = DATA.filter(d => (!q || d.tx.toLowerCase().includes(q)) && (activeLangs.size === 0 || activeLangs.has(d.lc)));
+      matched.sort((a, b) => {
+        if (sort === "new") return b.date.localeCompare(a.date);
+        if (sort === "alpha") return a.tx.localeCompare(b.tx, "zh");
+        return b.maps - a.maps;
+      });
+      countEl.textContent = matched.length;
+      list.innerHTML = matched.length
+        ? matched.map(rowHTML).join("")
+        : `<div class="se-empty">沒有符合「${q}」的詞句。<br/><a href="contribute.html">貢獻這個詞句 →</a></div>`;
+    }
+
+    qInput.addEventListener("input", () => { q = qInput.value.trim().toLowerCase(); apply(); });
+    sortBtns.forEach(b => b.addEventListener("click", () => {
+      sortBtns.forEach(x => x.classList.remove("on"));
+      b.classList.add("on"); sort = b.dataset.sort; apply();
+    }));
+
+    // 語言 combobox
+    const langSelect = document.getElementById("lang-select");
+    const tagwrap = langSelect.querySelector(".lang-select-tagwrap");
+    const langInput = langSelect.querySelector(".lang-select-input");
+    const dropdown = langSelect.querySelector(".lang-select-dropdown");
+    function renderTags() {
+      [...tagwrap.querySelectorAll(".lang-tag")].forEach(t => t.remove());
+      [...activeLangs].forEach(l => {
+        const tag = document.createElement("span");
+        tag.className = "lang-tag"; tag.dataset.lang = l;
+        tag.innerHTML = l + ' <span class="rm">✕</span>';
+        tagwrap.insertBefore(tag, langInput);
+      });
+    }
+    function renderDropdown() {
+      const q2 = langInput.value.trim().toLowerCase();
+      const ls = LANGS.filter(([c, n]) => !q2 || c.toLowerCase().includes(q2) || n.toLowerCase().includes(q2));
+      dropdown.innerHTML = ls.length
+        ? ls.map(([c, n]) => `<button class="lang-opt ${activeLangs.has(c) ? "sel" : ""}" data-lang="${c}" type="button"><span>${c}</span><span class="nm">${n}</span></button>`).join("")
+        : '<div class="lang-empty">無符合語言</div>';
+      dropdown.hidden = false;
+    }
+    langInput.addEventListener("focus", renderDropdown);
+    langInput.addEventListener("input", renderDropdown);
+    langInput.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !langInput.value && activeLangs.size) {
+        const arr = [...activeLangs]; activeLangs.delete(arr[arr.length - 1]);
+        renderTags(); renderDropdown(); apply();
+      }
+      if (e.key === "Escape") dropdown.hidden = true;
+    });
+    tagwrap.addEventListener("click", e => {
+      const tag = e.target.closest(".lang-tag");
+      if (tag) { activeLangs.delete(tag.dataset.lang); renderTags(); renderDropdown(); apply(); return; }
+      langInput.focus();
+    });
+    dropdown.addEventListener("click", e => {
+      const opt = e.target.closest(".lang-opt"); if (!opt) return;
+      const l = opt.dataset.lang;
+      if (activeLangs.has(l)) activeLangs.delete(l); else activeLangs.add(l);
+      langInput.value = ""; renderTags(); renderDropdown(); apply(); langInput.focus();
+    });
+    document.addEventListener("click", e => { if (!langSelect.contains(e.target)) dropdown.hidden = true; });
+
+    apply();
+  </script>
+</body>
+</html>

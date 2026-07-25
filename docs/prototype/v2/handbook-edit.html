@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>編輯手冊 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .he-page { max-width: 760px; margin: 0 auto; padding: 26px 28px 120px; }
+    .he-top { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .he-top a { color: var(--muted); }
+    .he-top a:hover { color: var(--fg); }
+
+    .he-head { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+    .he-title {
+      flex: 1; min-width: 240px; font-size: 24px; font-weight: 600; letter-spacing: -0.02em;
+      border: 1px solid transparent; border-radius: var(--r); background: var(--surface);
+      padding: 6px 10px; outline: none;
+    }
+    .he-title:focus { border-color: var(--accent); background: var(--bg); }
+    .he-vis {
+      height: 36px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface);
+      padding: 0 10px; font-size: 13px; outline: none;
+    }
+    .he-actions { display: flex; gap: 8px; margin-bottom: 24px; }
+
+    /* ── 章節 ── */
+    #sections { display: flex; flex-direction: column; gap: 14px; }
+    .he-section { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 14px 16px; }
+    .he-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .he-sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); min-width: 28px; }
+    .he-sec-title {
+      flex: 1; font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+      border: 1px solid transparent; border-radius: var(--r); background: transparent; padding: 4px 8px; outline: none;
+    }
+    .he-sec-title:focus { border-color: var(--accent); background: var(--bg); }
+    .he-mini-btn {
+      width: 26px; height: 26px; border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+      border-radius: var(--r); cursor: pointer; font-size: 10px; display: grid; place-items: center; padding: 0;
+    }
+    .he-mini-btn:hover { color: var(--fg); background: var(--bg); }
+    .he-mini-btn.danger:hover { color: var(--down); border-color: color-mix(in oklch, var(--down) 40%, var(--border)); }
+    .he-sec-del-txt { width: auto; padding: 0 9px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* ── 詞句列 ── */
+    .he-expr-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    .he-expr {
+      display: grid; grid-template-columns: 24px 26px minmax(0, 1fr) 50px auto; gap: 8px; align-items: center;
+      padding: 6px 8px; border-radius: var(--r); background: var(--bg);
+    }
+    .he-expr:hover { background: color-mix(in oklch, var(--accent-soft) 60%, var(--bg)); }
+    .he-handle { color: var(--faint); font-size: 14px; cursor: grab; text-align: center; }
+    .he-expr-num { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+    .he-expr-tx { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .he-expr-lc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .he-expr-acts { display: flex; gap: 3px; }
+    .he-empty { padding: 14px 8px; color: var(--faint); font-size: 12px; text-align: center; }
+
+    .he-add-expr {
+      margin-top: 8px; background: transparent; border: 1px dashed var(--border); color: var(--muted);
+      padding: 7px; border-radius: var(--r); cursor: pointer; font-size: 12px; width: 100%; text-align: center;
+    }
+    .he-add-expr:hover { color: var(--accent); border-color: color-mix(in oklch, var(--accent) 40%, var(--border)); background: var(--accent-soft); }
+
+    /* ── 詞句揀選器 ── */
+    .he-picker { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+    .he-picker input { width: 100%; border: none; border-bottom: 1px solid var(--border); background: var(--bg); padding: 8px 11px; font-size: 13px; outline: none; }
+    .he-picker-results { max-height: 200px; overflow: auto; }
+    .he-picker-item {
+      display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 11px; border: none; background: transparent;
+      cursor: pointer; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .he-picker-item:last-child { border-bottom: none; }
+    .he-picker-item:hover { background: var(--accent-soft); }
+    .he-picker-item .tx { font-weight: 500; }
+    .he-picker-item .lc { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: auto; }
+
+    .he-add-section {
+      margin-top: 14px; background: transparent; border: 2px dashed var(--border); color: var(--muted);
+      padding: 14px; border-radius: 8px; cursor: pointer; font-size: 13px; width: 100%; text-align: center;
+    }
+    .he-add-section:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  </style>
+</head>
+<body>
+  <!-- ════════ APPBAR ════════ -->
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="handbooks.html" class="on">手冊</a>
+      <a href="#">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="he-page">
+    <div class="he-top">
+      <a href="handbooks.html">← 手冊</a><span>/</span><span>編輯</span>
+    </div>
+
+    <div class="he-head">
+      <input class="he-title" value="東亞問候語入門" />
+      <select class="he-vis"><option>公開</option><option>私有</option><option>官方</option></select>
+    </div>
+    <div class="he-actions">
+      <button class="btn" type="button">儲存草稿</button>
+      <button class="btn btn-primary" type="button">發布</button>
+    </div>
+
+    <div id="sections"></div>
+    <button class="he-add-section" id="add-section" type="button">＋ 新增章節</button>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>手冊編輯 · 章節 + 有序詞句</div>
+
+  <script>
+    // 可揀的現有詞句(mock)
+    const EXPRS = [
+      {tx:"吃了吗", lc:"cmn"}, {tx:"Have you eaten yet?", lc:"en"}, {tx:"食飽未？", lc:"nan"},
+      {tx:"食咗飯未呀？", lc:"yue"}, {tx:"ご飯食べた？", lc:"ja"}, {tx:"밥 먹었어?", lc:"ko"},
+      {tx:"你好", lc:"cmn"}, {tx:"Hello", lc:"en"}, {tx:"こんにちは", lc:"ja"}, {tx:"안녕하세요", lc:"ko"},
+      {tx:"再见", lc:"cmn"}, {tx:"Goodbye", lc:"en"}, {tx:"さようなら", lc:"ja"}, {tx:"안녕히 가세요", lc:"ko"},
+      {tx:"謝謝", lc:"cmn"}, {tx:"Thank you", lc:"en"}, {tx:"沒問題", lc:"cmn"}, {tx:"No problem", lc:"en"},
+      {tx:"面白い", lc:"ja"}, {tx:"Interesting", lc:"en"}, {tx:"Sudah makan?", lc:"id"}, {tx:"Tu as mangé ?", lc:"fr"}
+    ];
+
+    // 預填內容
+    const initial = [
+      { title: "基本問候", items: [{tx:"你好",lc:"cmn"},{tx:"こんにちは",lc:"ja"},{tx:"안녕하세요",lc:"ko"}] },
+      { title: "用餐問候", items: [{tx:"吃了吗",lc:"cmn"},{tx:"食飽未？",lc:"nan"},{tx:"ご飯食べた？",lc:"ja"},{tx:"밥 먹었어?",lc:"ko"}] },
+      { title: "道別", items: [{tx:"再见",lc:"cmn"},{tx:"さようなら",lc:"ja"},{tx:"안녕히 가세요",lc:"ko"}] }
+    ];
+
+    const sectionsEl = document.getElementById("sections");
+
+    function esc(s){ return s.replace(/"/g,"&quot;"); }
+
+    function sectionHTML(title, items) {
+      const rows = items.map((it, i) => `
+        <li class="he-expr">
+          <span class="he-handle">⠿</span>
+          <span class="he-expr-num">${String(i+1).padStart(2,"0")}</span>
+          <span class="he-expr-tx">${esc(it.tx)}</span>
+          <span class="he-expr-lc">${esc(it.lc)}</span>
+          <span class="he-expr-acts">
+            <button class="he-mini-btn" data-act="expr-up" title="上移">▲</button>
+            <button class="he-mini-btn" data-act="expr-down" title="下移">▼</button>
+            <button class="he-mini-btn danger" data-act="expr-del" title="移除">✕</button>
+          </span>
+        </li>`).join("");
+      return `
+        <div class="he-section">
+          <div class="he-sec-head">
+            <span class="he-sec-num"></span>
+            <input class="he-sec-title" value="${esc(title)}" placeholder="章節標題" />
+            <button class="he-mini-btn" data-act="sec-up" title="章節上移">▲</button>
+            <button class="he-mini-btn" data-act="sec-down" title="章節下移">▼</button>
+            <button class="he-mini-btn danger he-sec-del-txt" data-act="sec-del">刪除章節</button>
+          </div>
+          <ol class="he-expr-list">${rows || '<div class="he-empty">本章尚無詞句</div>'}</ol>
+          <button class="he-add-expr" data-act="open-picker" type="button">＋ 加入詞句</button>
+          <div class="he-picker" hidden>
+            <input type="text" placeholder="搜索現有詞句…" />
+            <div class="he-picker-results"></div>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      sectionsEl.innerHTML = initial.map(s => sectionHTML(s.title, s.items)).join("");
+      renumber();
+    }
+
+    function renumber() {
+      [...sectionsEl.children].forEach((sec, i) => {
+        sec.querySelector(".he-sec-num").textContent = "§" + (i + 1);
+        [...sec.querySelectorAll(".he-expr-num")].forEach((el, j) => el.textContent = String(j + 1).padStart(2, "0"));
+      });
+    }
+
+    // 揀選器
+    function openPicker(sec) {
+      const picker = sec.querySelector(".he-picker");
+      picker.hidden = false;
+      const input = picker.querySelector("input");
+      const results = picker.querySelector(".he-picker-results");
+      input.value = ""; input.focus();
+      const paint = () => {
+        const q = input.value.trim().toLowerCase();
+        const list = EXPRS.filter(e => !q || e.tx.toLowerCase().includes(q) || e.lc.includes(q)).slice(0, 8);
+        results.innerHTML = list.map(e => `<button class="he-picker-item" data-tx="${esc(e.tx)}" data-lc="${e.lc}"><span class="tx">${esc(e.tx)}</span><span class="lc">${e.lc}</span></button>`).join("") || '<div class="he-empty">無符合詞句</div>';
+      };
+      paint();
+      input.oninput = paint;
+    }
+
+    sectionsEl.addEventListener("click", ev => {
+      const btn = ev.target.closest("[data-act]");
+      if (!btn) return;
+      const sec = btn.closest(".he-section");
+      const act = btn.dataset.act;
+
+      if (act === "open-picker") { openPicker(sec); return; }
+
+      if (act === "sec-del") { sec.remove(); renumber(); return; }
+      if (act === "sec-up" || act === "sec-down") {
+        const sib = act === "sec-up" ? sec.previousElementSibling : sec.nextElementSibling;
+        if (sib) sectionsEl.insertBefore(act === "sec-up" ? sec : sib, act === "sec-up" ? sib : sec);
+        renumber(); return;
+      }
+
+      if (act === "expr-del") { btn.closest(".he-expr").remove(); renumber(); return; }
+      if (act === "expr-up" || act === "expr-down") {
+        const li = btn.closest(".he-expr");
+        const list = li.parentElement;
+        const sib = act === "expr-up" ? li.previousElementSibling : li.nextElementSibling;
+        if (sib) list.insertBefore(act === "expr-up" ? li : sib, act === "expr-up" ? sib : li);
+        renumber(); return;
+      }
+    });
+
+    // 揀選器內點選 → 加入該章節
+    sectionsEl.addEventListener("click", ev => {
+      const item = ev.target.closest(".he-picker-item");
+      if (!item) return;
+      const sec = item.closest(".he-section");
+      const list = sec.querySelector(".he-expr-list");
+      const empty = list.querySelector(".he-empty"); if (empty) empty.remove();
+      const li = document.createElement("li");
+      li.className = "he-expr";
+      li.innerHTML = `<span class="he-handle">⠿</span><span class="he-expr-num"></span><span class="he-expr-tx">${esc(item.dataset.tx)}</span><span class="he-expr-lc">${item.dataset.lc}</span><span class="he-expr-acts"><button class="he-mini-btn" data-act="expr-up">▲</button><button class="he-mini-btn" data-act="expr-down">▼</button><button class="he-mini-btn danger" data-act="expr-del">✕</button></span>`;
+      list.appendChild(li);
+      sec.querySelector(".he-picker").hidden = true;
+      renumber();
+    });
+
+    document.getElementById("add-section").addEventListener("click", () => {
+      initial.push({ title: "", items: [] }); // placeholder; we render from DOM though
+      // 直接 append 一個空章節(不靠 initial,因為使用者已經編輯過)
+      const div = document.createElement("div");
+      div.innerHTML = sectionHTML("", []);
+      sectionsEl.appendChild(div.firstElementChild);
+      renumber();
+      sectionsEl.lastElementChild.querySelector(".he-sec-title").focus();
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>語言 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .lg-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
+    .lg-head { margin-bottom: 6px; }
+    .lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .lg-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+    .lg-stat { display: flex; gap: 28px; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 16px; flex-wrap: wrap; }
+    .lg-stat .s .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 500; }
+    .lg-stat .s .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+    .lg-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .lg-search {
+      flex: 1; min-width: 200px; height: 34px; border: 1px solid var(--border); border-radius: var(--r);
+      background: var(--surface); padding: 0 12px; font-size: 13px; outline: none;
+    }
+    .lg-search:focus { border-color: var(--accent); }
+    .lg-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .lg-sort button {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 34px; padding: 0 14px;
+    }
+    .lg-sort button.on { background: var(--fg); color: var(--surface); }
+
+    .lg-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+    .lg-row {
+      display: grid; grid-template-columns: minmax(0, 1.8fr) 56px minmax(0, 1fr) auto;
+      gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); color: inherit; transition: background 0.1s;
+    }
+    .lg-list .lg-row:last-child { border-bottom: none; }
+    .lg-row:hover { background: var(--bg); }
+    .lg-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .lg-name .nm { font-weight: 500; font-size: 14px; }
+    .lg-name .en { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lg-code { font-family: var(--mono); font-size: 10px; border: 1px solid var(--border); padding: 1px 6px; border-radius: 2px; color: var(--muted); text-align: center; justify-self: start; }
+    .lg-geo { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lg-count { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; }
+    .lg-empty { padding: 40px; text-align: center; color: var(--faint); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="handbooks.html">手冊</a>
+      <a href="languages.html" class="on">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="lg-page">
+    <div class="lg-head">
+      <h1>語言</h1>
+      <p class="lg-sub">按語言瀏覽詞句——看看每種語言在圖譜裡有多少足跡。</p>
+    </div>
+    <div class="lg-stat">
+      <div class="s"><span class="v">86</span><span class="k">種語言</span></div>
+      <div class="s"><span class="v">128,420</span><span class="k">詞句</span></div>
+      <div class="s"><span class="v">412</span><span class="k">地區</span></div>
+    </div>
+
+    <div class="lg-toolbar">
+      <input class="lg-search" id="lg-search" type="search" placeholder="搜索語言名稱或代碼…" />
+      <div class="lg-sort" id="lg-sort">
+        <button class="on" type="button" data-sort="count">數量</button>
+        <button type="button" data-sort="alpha">A–Z</button>
+      </div>
+    </div>
+
+    <div class="lg-list" id="lg-list">
+      <a class="lg-row" href="language-detail.html" data-name="普通话 mandarin chinese" data-code="cmn"><div class="lg-name"><span class="nm">普通话</span><span class="en">Mandarin Chinese</span></div><span class="lg-code">cmn</span><span class="lg-geo">東亞</span><span class="lg-count">42,108</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="english" data-code="en"><div class="lg-name"><span class="nm">English</span><span class="en">English</span></div><span class="lg-code">en</span><span class="lg-geo">全球</span><span class="lg-count">31,002</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="日本語 japanese" data-code="ja"><div class="lg-name"><span class="nm">日本語</span><span class="en">Japanese</span></div><span class="lg-code">ja</span><span class="lg-geo">東亞</span><span class="lg-count">18,441</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="閩南語 min nan" data-code="nan"><div class="lg-name"><span class="nm">閩南語</span><span class="en">Min Nan</span></div><span class="lg-code">nan</span><span class="lg-geo">東亞 · 閩</span><span class="lg-count">8,204</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="粵語 cantonese yue" data-code="yue"><div class="lg-name"><span class="nm">粵語</span><span class="en">Cantonese</span></div><span class="lg-code">yue</span><span class="lg-geo">東亞 · 粵</span><span class="lg-count">6,912</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="한국어 korean" data-code="ko"><div class="lg-name"><span class="nm">한국어</span><span class="en">Korean</span></div><span class="lg-code">ko</span><span class="lg-geo">東亞</span><span class="lg-count">5,330</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="français french" data-code="fr"><div class="lg-name"><span class="nm">français</span><span class="en">French</span></div><span class="lg-code">fr</span><span class="lg-geo">歐洲</span><span class="lg-count">4,200</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="español spanish" data-code="es"><div class="lg-name"><span class="nm">Español</span><span class="en">Spanish</span></div><span class="lg-code">es</span><span class="lg-geo">歐洲 · 拉丁</span><span class="lg-count">3,800</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="deutsch german" data-code="de"><div class="lg-name"><span class="nm">Deutsch</span><span class="en">German</span></div><span class="lg-code">de</span><span class="lg-geo">歐洲</span><span class="lg-count">3,100</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="tiếng việt vietnamese" data-code="vi"><div class="lg-name"><span class="nm">Tiếng Việt</span><span class="en">Vietnamese</span></div><span class="lg-code">vi</span><span class="lg-geo">東南亞</span><span class="lg-count">2,800</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="bahasa indonesia" data-code="id"><div class="lg-name"><span class="nm">Bahasa Indonesia</span><span class="en">Indonesian</span></div><span class="lg-code">id</span><span class="lg-geo">東南亞</span><span class="lg-count">2,400</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="русский russian" data-code="ru"><div class="lg-name"><span class="nm">Русский</span><span class="en">Russian</span></div><span class="lg-code">ru</span><span class="lg-geo">歐洲 · 亞</span><span class="lg-count">2,100</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="português portuguese" data-code="pt"><div class="lg-name"><span class="nm">Português</span><span class="en">Portuguese</span></div><span class="lg-code">pt</span><span class="lg-geo">歐洲 · 拉丁</span><span class="lg-count">1,800</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="italiano italian" data-code="it"><div class="lg-name"><span class="nm">Italiano</span><span class="en">Italian</span></div><span class="lg-code">it</span><span class="lg-geo">歐洲</span><span class="lg-count">1,500</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="ไทย thai" data-code="th"><div class="lg-name"><span class="nm">ไทย</span><span class="en">Thai</span></div><span class="lg-code">th</span><span class="lg-geo">東南亞</span><span class="lg-count">1,200</span></a>
+      <a class="lg-row" href="language-detail.html" data-name="العربية arabic" data-code="ar"><div class="lg-name"><span class="nm">العربية</span><span class="en">Arabic</span></div><span class="lg-code">ar</span><span class="lg-geo">西亞 · 北非</span><span class="lg-count">1,050</span></a>
+      <div class="lg-empty" id="lg-empty" style="display:none">沒有符合的語言。</div>
+    </div>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>語言列表</div>
+
+  <script>
+    const list = document.getElementById("lg-list");
+    const rows = [...list.querySelectorAll(".lg-row")];
+    const empty = document.getElementById("lg-empty");
+    const search = document.getElementById("lg-search");
+    const sortBtns = [...document.querySelectorAll("#lg-sort button")];
+    let q = "", sort = "count";
+
+    function apply() {
+      let visible = 0;
+      const matched = rows.filter(r => {
+        const m = !q || r.dataset.name.includes(q) || r.dataset.code.includes(q);
+        if (m) visible++;
+        return m;
+      });
+      matched.sort((a, b) => {
+        if (sort === "alpha") return a.querySelector(".nm").textContent.localeCompare(b.querySelector(".nm").textContent);
+        return Number(b.querySelector(".lg-count").textContent.replace(/,/g, "")) - Number(a.querySelector(".lg-count").textContent.replace(/,/g, ""));
+      });
+      rows.forEach(r => list.removeChild(r));
+      matched.forEach(r => list.insertBefore(r, empty));
+      rows.forEach(r => r.style.display = r.dataset.name.includes(q) || r.dataset.code.includes(q) ? "" : "none");
+      empty.style.display = visible ? "none" : "";
+    }
+
+    search.addEventListener("input", () => { q = search.value.trim().toLowerCase(); apply(); });
+    sortBtns.forEach(b => b.addEventListener("click", () => {
+      sortBtns.forEach(x => x.classList.remove("on"));
+      b.classList.add("on"); sort = b.dataset.sort; apply();
+    }));
+  </script>
+</body>
+</html>

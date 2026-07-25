@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>概念分布 · 吃了吗 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .lens-page { max-width: 1100px; margin: 0 auto; padding: 24px 28px 60px; }
+    .lens-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+    .lens-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .lens-back:hover { color: var(--fg); }
+    .lens-head h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+    .lens-head h1 .anc { color: var(--accent); }
+    .lens-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    .lens-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: stretch; }
+
+    /* ── 地圖 ── */
+    .lens-map {
+      position: relative; height: 70vh; min-height: 420px; border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; background: oklch(0.84 0.030 218);
+    }
+    .map-art {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 38% 55% at 22% 48%, oklch(0.89 0.022 88) 0 70%, transparent 71%),
+        radial-gradient(ellipse 28% 42% at 48% 42%, oklch(0.89 0.022 88) 0 68%, transparent 69%),
+        radial-gradient(ellipse 22% 48% at 72% 50%, oklch(0.89 0.022 88) 0 65%, transparent 66%),
+        radial-gradient(ellipse 18% 28% at 58% 62%, oklch(0.89 0.022 88) 0 60%, transparent 61%),
+        radial-gradient(ellipse 14% 20% at 82% 68%, oklch(0.89 0.022 88) 0 55%, transparent 56%),
+        linear-gradient(180deg, oklch(0.84 0.030 218), oklch(0.82 0.035 218));
+      opacity: 0.95;
+    }
+    .map-graticule {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+      background-image:
+        linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px);
+      background-size: 10% 10%;
+    }
+    .pin {
+      position: absolute; transform: translate(-50%, -50%); border-radius: 50%;
+      border: 1px solid oklch(1 0 0 / 0.4); cursor: pointer; padding: 0;
+      box-shadow: 0 0 0 1px oklch(0.3 0.05 195 / 0.15);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .pin:hover, .pin.active {
+      transform: translate(-50%, -50%) scale(1.25);
+      box-shadow: 0 0 0 3px oklch(0.64 0.16 35 / 0.3), 0 0 16px oklch(0.64 0.16 35 / 0.5);
+      z-index: 4;
+    }
+    .pin.s3 { width: 28px; height: 28px; background: oklch(0.54 0.18 28); }
+    .pin.s2 { width: 20px; height: 20px; background: oklch(0.68 0.14 38); }
+    .pin.s1 { width: 14px; height: 14px; background: oklch(0.84 0.08 55); }
+    .pin.anchor { background: var(--accent); width: 26px; height: 26px; box-shadow: 0 0 0 4px oklch(0.64 0.16 35 / 0.25); }
+    .pin-label {
+      position: absolute; transform: translate(-50%, calc(-100% - 8px)); left: 50%;
+      background: var(--fg); color: var(--surface); font-family: var(--mono); font-size: 10px;
+      padding: 3px 6px; border-radius: 2px; white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity 0.12s;
+    }
+    .pin:hover .pin-label, .pin.active .pin-label { opacity: 1; }
+
+    .map-legend {
+      position: absolute; left: 12px; bottom: 12px; z-index: 5;
+      background: color-mix(in oklch, var(--surface) 90%, transparent); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: var(--r); padding: 8px 10px;
+      font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; flex-direction: column; gap: 4px;
+    }
+    .map-legend .lr { display: flex; align-items: center; gap: 6px; }
+    .map-legend .lg { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+    /* ── 成員清單 ── */
+    .lens-list { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: auto; max-height: 70vh; }
+    .lens-list-head { padding: 10px 12px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+    .lens-item {
+      display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center;
+      padding: 9px 12px; border-bottom: 1px solid var(--border); color: inherit; transition: background 0.1s;
+    }
+    .lens-item:last-child { border-bottom: none; }
+    .lens-item:hover, .lens-item.active { background: var(--accent-soft); }
+    .lens-item .lc { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .lens-item .tx { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lens-item .meta { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; white-space: nowrap; }
+    .lens-item.anchor .lc, .lens-item.anchor .meta { color: var(--accent); }
+    .lens-item.folded { opacity: 0.5; }
+    .lens-item.folded .tx { text-decoration: line-through; text-decoration-color: oklch(0.78 0.012 88); }
+
+    @media (max-width: 760px) {
+      .lens-layout { grid-template-columns: 1fr; }
+      .lens-map { height: 50vh; }
+      .lens-list { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="handbooks.html">手冊</a>
+      <a href="#">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="lens-page">
+    <div class="lens-head">
+      <a href="detail.html" class="lens-back">← 回對照集</a>
+      <h1>概念分布:<span class="anc">吃了吗</span></h1>
+      <span class="lens-meta">7 種語言 · 6 地區</span>
+    </div>
+
+    <div class="lens-layout">
+      <div class="lens-map">
+        <div class="map-art"></div>
+        <div class="map-graticule"></div>
+
+        <button class="pin anchor" style="left:82.3%;top:27.8%" data-lang="cmn" type="button">
+          <span class="pin-label">吃了吗 · cmn · 北京(錨點)</span>
+        </button>
+        <button class="pin s2" style="left:28.6%;top:28.4%" data-lang="en" type="button">
+          <span class="pin-label">Have you eaten? · en · US · +31</span>
+        </button>
+        <button class="pin s2" style="left:87.6%;top:30.7%" data-lang="ja" type="button">
+          <span class="pin-label">ご飯食べた? · ja · 関西 · +18</span>
+        </button>
+        <button class="pin s1" style="left:85.3%;top:29.1%" data-lang="ko" type="button">
+          <span class="pin-label">밥 먹었어? · ko · 서울 · +9</span>
+        </button>
+        <button class="pin s1" style="left:82.4%;top:37.0%" data-lang="nan" type="button">
+          <span class="pin-label">食飽未? · nan · 汕頭 · +8</span>
+        </button>
+        <button class="pin s1" style="left:79.7%;top:38.6%" data-lang="yue" type="button">
+          <span class="pin-label">食咗飯未呀? · yue · 香港 · +6</span>
+        </button>
+        <button class="pin s1" style="left:50.7%;top:22.9%" data-lang="fr" type="button">
+          <span class="pin-label">Tu as mangé ? · fr · 巴黎 · +4</span>
+        </button>
+
+        <div class="map-legend">
+          <div class="lr"><span class="lg" style="background:var(--accent)"></span> 錨點</div>
+          <div class="lr"><span class="lg" style="background:oklch(0.54 0.18 28)"></span> 評分高</div>
+          <div class="lr"><span class="lg" style="background:oklch(0.84 0.08 55)"></span> 評分低</div>
+        </div>
+      </div>
+
+      <aside class="lens-list">
+        <div class="lens-list-head">對照集成員</div>
+        <a class="lens-item anchor" href="detail.html" data-lang="cmn"><span class="lc">cmn</span><span class="tx">吃了吗</span><span class="meta">錨點</span></a>
+        <a class="lens-item" href="detail.html" data-lang="en"><span class="lc">en</span><span class="tx">Have you eaten?</span><span class="meta">+31</span></a>
+        <a class="lens-item" href="detail.html" data-lang="ja"><span class="lc">ja</span><span class="tx">ご飯食べた?</span><span class="meta">+18</span></a>
+        <a class="lens-item" href="detail.html" data-lang="ko"><span class="lc">ko</span><span class="tx">밥 먹었어?</span><span class="meta">+9</span></a>
+        <a class="lens-item" href="detail.html" data-lang="nan"><span class="lc">nan</span><span class="tx">食飽未?</span><span class="meta">+8</span></a>
+        <a class="lens-item" href="detail.html" data-lang="yue"><span class="lc">yue</span><span class="tx">食咗飯未呀?</span><span class="meta">+6</span></a>
+        <a class="lens-item" href="detail.html" data-lang="fr"><span class="lc">fr</span><span class="tx">Tu as mangé ?</span><span class="meta">+4</span></a>
+        <a class="lens-item folded" href="detail.html" data-lang="cmn2"><span class="lc">cmn</span><span class="tx">吃好了吗</span><span class="meta">−3 折疊</span></a>
+      </aside>
+    </div>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>地圖透鏡 · 概念分布</div>
+
+  <script>
+    // pin ↔ list 連動
+    const pins = [...document.querySelectorAll(".pin")];
+    const items = [...document.querySelectorAll(".lens-item")];
+    function sync(lang) {
+      pins.forEach(p => p.classList.toggle("active", p.dataset.lang === lang));
+      items.forEach(i => i.classList.toggle("active", i.dataset.lang === lang));
+    }
+    pins.forEach(p => p.addEventListener("mouseenter", () => sync(p.dataset.lang)));
+    items.forEach(i => i.addEventListener("mouseenter", () => sync(i.dataset.lang)));
+    document.querySelector(".lens-layout").addEventListener("mouseleave", () => sync(null));
+  </script>
+</body>
+</html>

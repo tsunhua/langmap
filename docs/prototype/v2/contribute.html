@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>批次貢獻 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    .contrib-page { max-width: 900px; margin: 0 auto; padding: 30px 28px 100px; }
+    .contrib-page h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .lead { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 24px; max-width: 60ch; }
+    .lead b { color: var(--fg); font-weight: 500; }
+
+    .contrib-grid { display: grid; grid-template-columns: 1fr 260px; gap: 36px; align-items: start; }
+
+    /* ── 詞句清單 ── */
+    .ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+    .ex-head, .ex-row {
+      display: grid; grid-template-columns: 80px 1fr 140px 32px; gap: 10px; align-items: center;
+      padding: 8px 12px;
+    }
+    .ex-head {
+      padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2);
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    }
+    #ex-rows .ex-row { border-bottom: 1px solid var(--border); }
+    #ex-rows .ex-row:last-child { border-bottom: none; }
+    .ex-row input {
+      height: 32px; border: 1px solid var(--border); border-radius: var(--r);
+      background: var(--bg); padding: 0 9px; font-size: 13px; outline: none; min-width: 0;
+    }
+    .ex-row input:focus { border-color: var(--accent); }
+    .ex-row .ex-lang { font-family: var(--mono); font-size: 12px; }
+    .ex-del {
+      width: 28px; height: 28px; border: none; background: transparent; color: var(--muted);
+      cursor: pointer; border-radius: var(--r); font-size: 13px; display: grid; place-items: center;
+    }
+    .ex-del:hover { color: var(--down); background: color-mix(in oklch, var(--down) 8%, var(--surface)); }
+    .ex-add {
+      width: 100%; border: none; border-top: 1px dashed var(--border); background: transparent;
+      color: var(--muted); cursor: pointer; padding: 11px; font-size: 12px;
+      font-family: var(--mono); letter-spacing: 0.04em;
+    }
+    .ex-add:hover { color: var(--accent); background: var(--accent-soft); }
+
+    /* ── 計數 ── */
+    .ex-counter {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin: 18px 0; padding: 12px 14px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r);
+      font-size: 14px;
+    }
+    .ex-counter b { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--accent); font-size: 16px; font-weight: 600; }
+    .ex-counter .arrow { color: var(--faint); }
+    .ex-counter .tag { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-left: auto; }
+    .ex-counter.warn b { color: var(--down); }
+
+    .ex-actions { display: flex; gap: 8px; }
+
+    /* ── 完全圖預覽(右欄)── */
+    .contrib-right { position: sticky; top: 60px; }
+    .clique-card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); padding: 14px; }
+    .clique-card h3 {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    #clique { width: 100%; height: auto; display: block; }
+    .clique-meta { display: flex; gap: 14px; justify-content: center; margin-top: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .clique-meta b { color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .clique-note { font-size: 11px; color: var(--faint); line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+    @media (max-width: 760px) {
+      .contrib-grid { grid-template-columns: 1fr; }
+      .contrib-right { position: static; }
+      .ex-head, .ex-row { grid-template-columns: 64px 1fr 100px 28px; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ════════ APPBAR ════════ -->
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="#">手冊</a>
+      <a href="#">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="contribute.html">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="contrib-page">
+    <h1>批次貢獻</h1>
+    <p class="lead">提交一組<b>表達同一件事</b>的詞句,系統會在兩兩之間建立直接映射(<b>完全圖</b>)。已存在的詞句會自動連結,不重複建立。</p>
+
+    <div class="contrib-grid">
+      <!-- 左:清單 -->
+      <div class="contrib-left">
+        <div class="ex-table">
+          <div class="ex-head">
+            <span>語言</span><span>詞句</span><span>地區</span><span></span>
+          </div>
+          <div id="ex-rows">
+            <div class="ex-row">
+              <input class="ex-lang" value="cmn" />
+              <input class="ex-text" value="吃了吗" />
+              <input class="ex-region" value="北京" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+            <div class="ex-row">
+              <input class="ex-lang" value="en" />
+              <input class="ex-text" value="Have you eaten yet?" />
+              <input class="ex-region" value="US" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+            <div class="ex-row">
+              <input class="ex-lang" value="nan" />
+              <input class="ex-text" value="食飽未？" />
+              <input class="ex-region" value="汕頭" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+            <div class="ex-row">
+              <input class="ex-lang" value="yue" />
+              <input class="ex-text" value="食咗飯未呀？" />
+              <input class="ex-region" value="香港" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+            <div class="ex-row">
+              <input class="ex-lang" value="ja" />
+              <input class="ex-text" value="ご飯食べた？" />
+              <input class="ex-region" value="関西" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+            <div class="ex-row">
+              <input class="ex-lang" value="ko" />
+              <input class="ex-text" value="밥 먹었어?" />
+              <input class="ex-region" value="서울" />
+              <button class="ex-del" title="刪除">✕</button>
+            </div>
+          </div>
+          <button class="ex-add" id="add-row">＋ 添加詞句</button>
+        </div>
+
+        <div class="ex-counter" id="counter">
+          <span><b id="cnt-n">6</b> 個詞句</span>
+          <span class="arrow">→</span>
+          <span><b id="cnt-e">15</b> 條直接映射</span>
+          <span class="tag">完全圖</span>
+        </div>
+
+        <div class="ex-actions">
+          <button class="btn btn-primary" type="button">提交</button>
+          <button class="btn" type="button">儲存草稿</button>
+        </div>
+      </div>
+
+      <!-- 右:完全圖預覽 -->
+      <div class="contrib-right">
+        <div class="clique-card">
+          <h3>將建立的映射圖</h3>
+          <svg id="clique" viewBox="0 0 220 220"></svg>
+          <div class="clique-meta">
+            <span><b id="clique-n">6</b> 節點</span>
+            <span><b id="clique-e">15</b> 邊</span>
+          </div>
+          <p class="clique-note">每條邊都是一條獨立的直接映射,可被個別讚/踩;低評分的會折疊。</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>批次貢獻 · 完全圖預覽</div>
+
+  <script>
+    const rowsEl = document.getElementById("ex-rows");
+    const svg = document.getElementById("clique");
+
+    function rowHTML() {
+      return `<div class="ex-row">
+        <input class="ex-lang" placeholder="語言" />
+        <input class="ex-text" placeholder="輸入詞句…" />
+        <input class="ex-region" placeholder="地區" />
+        <button class="ex-del" title="刪除">✕</button>
+      </div>`;
+    }
+
+    function render() {
+      const texts = [...rowsEl.querySelectorAll(".ex-text")].map(i => i.value.trim()).filter(Boolean);
+      const n = texts.length;
+      const e = n * (n - 1) / 2;
+
+      document.getElementById("cnt-n").textContent = n;
+      document.getElementById("cnt-e").textContent = e;
+      document.getElementById("clique-n").textContent = n;
+      document.getElementById("clique-e").textContent = e;
+      document.getElementById("counter").classList.toggle("warn", n < 2);
+
+      const cx = 110, cy = 110, r = n <= 1 ? 0 : 78;
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / n;
+        pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+      }
+      let lines = "";
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        lines += `<line x1="${pts[i][0].toFixed(1)}" y1="${pts[i][1].toFixed(1)}" x2="${pts[j][0].toFixed(1)}" y2="${pts[j][1].toFixed(1)}" stroke="oklch(0.62 0.13 245)" stroke-width="1" opacity="0.4"/>`;
+      }
+      let nodes = "";
+      for (let i = 0; i < n; i++) {
+        nodes += `<circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="7" fill="oklch(0.64 0.16 35)" stroke="var(--surface)" stroke-width="2"/>`;
+      }
+      svg.innerHTML = (n === 1 ? `<circle cx="${cx}" cy="${cy}" r="7" fill="oklch(0.64 0.16 35)" stroke="var(--surface)" stroke-width="2"/>` : lines + nodes);
+    }
+
+    rowsEl.addEventListener("input", render);
+    rowsEl.addEventListener("click", ev => {
+      const del = ev.target.closest(".ex-del");
+      if (!del) return;
+      del.closest(".ex-row").remove();
+      render();
+    });
+    document.getElementById("add-row").addEventListener("click", () => {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = rowHTML();
+      rowsEl.appendChild(wrap.firstElementChild);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

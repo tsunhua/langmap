@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>動態 · LangMap Atlas v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="atlas2.css" />
+  <style>
+    /* ── 動態首頁專屬 ── */
+    .feed-page { max-width: 760px; margin: 0 auto; padding: 30px 28px 100px; }
+    .feed-hero { margin-bottom: 28px; }
+    .feed-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .feed-hero p { font-size: 13px; color: var(--muted); }
+
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 4px; }
+    .seg button {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      border: none; background: var(--surface); color: var(--muted); cursor: pointer;
+      height: 30px; padding: 0 16px;
+    }
+    .seg button.on { background: var(--fg); color: var(--surface); }
+
+    .feed-sec { margin-bottom: 34px; }
+    .feed-sec-head {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .feed-sec-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+    .feed-sec-head .hint { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* 熱門:單卡 + 連接線(邊粗細=評分,呼應徑向圖譜)·密度對齊最新貢獻 */
+    .map-list { display: flex; flex-direction: column; gap: 5px; }
+    .map-card {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 14px; cursor: pointer; transition: border-color 0.12s; color: inherit;
+    }
+    .map-card:hover { border-color: oklch(0.80 0.06 35); }
+    .mc-node { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .mc-node.r { align-items: flex-end; text-align: right; }
+    .mc-tx { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mc-lc { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .mc-edge { display: flex; align-items: center; gap: 5px; padding: 0; }
+    .mc-line { height: 3px; width: 20px; background: var(--edge); border-radius: 2px; opacity: 0.7; }
+    .mc-score { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+    .map-card .mc-edge.s4 .mc-line { width: 24px; height: 4px; }
+    .map-card .mc-edge.s3 .mc-line { width: 20px; height: 3px; }
+    .map-card .mc-edge.s2 .mc-line { width: 16px; height: 2px; opacity: 0.5; }
+    .map-card .mc-edge.s1 .mc-line { width: 13px; height: 2px; opacity: 0.35; }
+
+    /* 最新:貢獻流水(整列可點 → 詳情頁) */
+    .new-list { display: flex; flex-direction: column; }
+    .new-row {
+      display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
+      padding: 11px 0; border-bottom: 1px solid var(--border);
+    }
+    .new-row:last-child { border-bottom: none; }
+    a.new-row { color: inherit; text-decoration: none; cursor: pointer; }
+    a.new-row:hover .tx { color: var(--accent); }
+    .new-kind {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--border));
+      padding: 2px 7px; border-radius: 2px; justify-self: start; background: var(--accent-soft);
+    }
+    .new-kind.expr { color: var(--edge); border-color: color-mix(in oklch, var(--edge) 35%, var(--border)); background: color-mix(in oklch, var(--edge) 8%, var(--surface)); }
+    .new-body { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+    .new-pair { font-size: 14px; }
+    .new-pair .arrow { color: var(--faint); margin: 0 4px; }
+    .new-pair .tx { font-weight: 500; }
+    .new-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+    .feed-cta {
+      margin-top: 8px; padding: 16px; border: 1px dashed var(--border); border-radius: 8px;
+      text-align: center; color: var(--muted); font-size: 13px;
+    }
+    .feed-cta a { color: var(--accent); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <!-- ════════ APPBAR ════════ -->
+  <header class="appbar">
+    <a href="home.html" class="brand">LangMap <em>ATLAS</em></a>
+    <nav class="appnav">
+      <a href="#">手冊</a>
+      <a href="#">語言</a>
+    </nav>
+    <span class="bar-spacer"></span>
+    <div class="top-search">
+      <span class="mono" style="color:var(--muted)">⌕</span>
+      <input type="search" placeholder="搜索詞句…" />
+      <kbd>/</kbd>
+    </div>
+    <button class="lang-switch" type="button">ZH-TW ▾</button>
+    <div class="bar-actions">
+      <a class="btn btn-primary" href="#">＋ 貢獻</a>
+    </div>
+  </header>
+
+  <main class="feed-page">
+    <div class="feed-hero">
+      <h1>動態</h1>
+      <p>語義圖譜的最新脈動——熱門映射與新貢獻。</p>
+      <div class="seg" style="margin-top:14px">
+        <button class="on">全部</button>
+        <button>熱門</button>
+        <button>最新</button>
+      </div>
+    </div>
+
+    <!-- ── 熱門映射 ── -->
+    <section class="feed-sec">
+      <div class="feed-sec-head">
+        <h2>熱門映射</h2>
+        <span class="hint">依評分 · 本週</span>
+      </div>
+      <div class="map-list">
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">你好</span><span class="mc-lc">cmn</span></span>
+          <span class="mc-edge s4"><span class="mc-line"></span><span class="mc-score">+240</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">Hello</span><span class="mc-lc">en</span></span>
+        </a>
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">謝謝</span><span class="mc-lc">cmn</span></span>
+          <span class="mc-edge s4"><span class="mc-line"></span><span class="mc-score">+180</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">Thank you</span><span class="mc-lc">en</span></span>
+        </a>
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">吃了吗</span><span class="mc-lc">cmn</span></span>
+          <span class="mc-edge s3"><span class="mc-line"></span><span class="mc-score">+31</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">Have you eaten?</span><span class="mc-lc">en</span></span>
+        </a>
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">再见</span><span class="mc-lc">cmn</span></span>
+          <span class="mc-edge s3"><span class="mc-line"></span><span class="mc-score">+120</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">Goodbye</span><span class="mc-lc">en</span></span>
+        </a>
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">沒問題</span><span class="mc-lc">cmn</span></span>
+          <span class="mc-edge s2"><span class="mc-line"></span><span class="mc-score">+95</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">No problem</span><span class="mc-lc">en</span></span>
+        </a>
+        <a class="map-card" href="detail.html?focus=en">
+          <span class="mc-node"><span class="mc-tx">面白い</span><span class="mc-lc">ja</span></span>
+          <span class="mc-edge s2"><span class="mc-line"></span><span class="mc-score">+72</span><span class="mc-line"></span></span>
+          <span class="mc-node r"><span class="mc-tx">Interesting</span><span class="mc-lc">en</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ── 最新貢獻 ── -->
+    <section class="feed-sec">
+      <div class="feed-sec-head">
+        <h2>最新貢獻</h2>
+        <span class="hint">映射 + 新詞句</span>
+      </div>
+      <div class="new-list">
+        <a class="new-row" href="detail.html?focus=nan">
+          <span class="new-kind">映射</span>
+          <span class="new-body"><span class="new-pair"><span class="tx">食飽未？</span><span class="arrow">↔</span><span class="tx">吃了吗</span></span><span class="lang-badge">nan · cmn</span></span>
+          <span class="new-meta">2 分鐘前 · @lim</span>
+        </a>
+        <a class="new-row" href="detail.html">
+          <span class="new-kind expr">詞句</span>
+          <span class="new-body"><span class="new-pair"><span class="tx">Sudah makan?</span></span><span class="lang-badge">id</span></span>
+          <span class="new-meta">8 分鐘前 · @wira</span>
+        </a>
+        <a class="new-row" href="detail.html?focus=ja">
+          <span class="new-kind">映射</span>
+          <span class="new-body"><span class="new-pair"><span class="tx">ご飯食べた？</span><span class="arrow">↔</span><span class="tx">吃了吗</span></span><span class="lang-badge">ja · cmn</span></span>
+          <span class="new-meta">15 分鐘前 · @hana</span>
+        </a>
+        <a class="new-row" href="detail.html">
+          <span class="new-kind expr">詞句</span>
+          <span class="new-body"><span class="new-pair"><span class="tx">食咗飯未呀？</span></span><span class="lang-badge">yue</span></span>
+          <span class="new-meta">23 分鐘前 · @hk</span>
+        </a>
+        <a class="new-row" href="detail.html?focus=ja">
+          <span class="new-kind">映射</span>
+          <span class="new-body"><span class="new-pair"><span class="tx">你好</span><span class="arrow">↔</span><span class="tx">こんにちは</span></span><span class="lang-badge">cmn · ja</span></span>
+          <span class="new-meta">41 分鐘前 · @yuki</span>
+        </a>
+      </div>
+      <div class="feed-cta">
+        沒看到你想找的？<a href="#">貢獻一個新映射 →</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="proto-note"><b>v2 prototype</b><br/>動態首頁 · 熱門 + 最新</div>
+</body>
+</html>
