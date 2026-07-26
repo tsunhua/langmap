@@ -16,15 +16,15 @@ step "停止殘留 wrangler"
 pkill -f "wrangler dev" 2>/dev/null || true
 
 step "確保 v2 本地 secret（.dev.vars）存在"
-if [ ! -f "$ROOT/backend_v2/.dev.vars" ]; then
-  echo "SECRET_KEY=\"$(openssl rand -hex 32)\"" > "$ROOT/backend_v2/.dev.vars"
-  echo "  已生成 backend_v2/.dev.vars"
+if [ ! -f "$ROOT/backend/.dev.vars" ]; then
+  echo "SECRET_KEY=\"$(openssl rand -hex 32)\"" > "$ROOT/backend/.dev.vars"
+  echo "  已生成 backend/.dev.vars"
 else
-  echo "  backend_v2/.dev.vars 已存在，略過"
+  echo "  backend/.dev.vars 已存在，略過"
 fi
 
 step "確保後端相依套件已安裝"
-cd "$ROOT/backend_v2"
+cd "$ROOT/backend"
 [ -d node_modules ] || npm install
 
 step "確保本地 D1 schema 已遷移（無表才應用 schema.sql）"
@@ -37,7 +37,7 @@ else
 fi
 
 step "啟動後端 wrangler（port ${PORT:-8788}）"
-cd "$ROOT/backend_v2"
+cd "$ROOT/backend"
 npx wrangler dev --port "${PORT:-8788}" &
 BACKEND_PID=$!
 
@@ -57,7 +57,7 @@ fi
 step "使用 v2 後端作為主要 local API，不再自動啟動舊版後端"
 
 step "啟動前端 Vite dev server（port 5173，HMR）"
-cd "$ROOT/web_v2"
+cd "$ROOT/web"
 [ -d node_modules ] || npm install
 npx vite --host --strictPort &
 FRONTEND_PID=$!

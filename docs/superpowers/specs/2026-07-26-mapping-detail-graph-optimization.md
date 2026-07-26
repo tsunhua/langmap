@@ -2,7 +2,7 @@
 
 **日期：** 2026-07-26  
 **狀態：** Implemented  
-**範圍：** `web_v2` 詞句詳情頁、對照圖譜及其後端查詢  
+**範圍：** `web` 詞句詳情頁、對照圖譜及其後端查詢  
 **目標頁面：** `/mapping/:id`  
 **驗證樣本：** `/mapping/1146386197`
 
@@ -680,29 +680,29 @@ height: clamp(520px, 68dvh, 820px);
 
 後端：
 
-- `backend_v2/src/routes/expressions.ts`
-- `backend_v2/tests/expressions.test.ts`
+- `backend/src/routes/expressions.ts`
+- `backend/tests/expressions.test.ts`
 
 前端：
 
-- `web_v2/src/pages/MappingDetail.vue`
-- `web_v2/src/composables/useExpressions.ts`
-- `web_v2/src/components/mapping/RadialGraph.vue`
-- `web_v2/src/components/mapping/MappingList.vue`
-- `web_v2/src/components/mapping/VotePill.vue`
-- `web_v2/src/assets/atlas.css`
+- `web/src/pages/MappingDetail.vue`
+- `web/src/composables/useExpressions.ts`
+- `web/src/components/mapping/RadialGraph.vue`
+- `web/src/components/mapping/MappingList.vue`
+- `web/src/components/mapping/VotePill.vue`
+- `web/src/assets/atlas.css`
 
 新增前端檔案：
 
-- `web_v2/src/components/mapping/MappingGraph.vue`
-- `web_v2/src/components/mapping/GraphToolbar.vue`
-- `web_v2/src/components/mapping/GraphNode.vue`
-- `web_v2/src/components/mapping/GraphInspector.vue`
-- `web_v2/src/components/mapping/MappingHierarchyList.vue`
-- `web_v2/src/components/mapping/mappingGraphTypes.ts`
-- `web_v2/src/components/mapping/mappingGraphLayout.ts`
-- `web_v2/src/composables/useMappingGraph.ts`
-- `web_v2/src/composables/useGraphViewport.ts`
+- `web/src/components/mapping/MappingGraph.vue`
+- `web/src/components/mapping/GraphToolbar.vue`
+- `web/src/components/mapping/GraphNode.vue`
+- `web/src/components/mapping/GraphInspector.vue`
+- `web/src/components/mapping/MappingHierarchyList.vue`
+- `web/src/components/mapping/mappingGraphTypes.ts`
+- `web/src/components/mapping/mappingGraphLayout.ts`
+- `web/src/composables/useMappingGraph.ts`
+- `web/src/composables/useGraphViewport.ts`
 
 ## 19. 風險與決策
 

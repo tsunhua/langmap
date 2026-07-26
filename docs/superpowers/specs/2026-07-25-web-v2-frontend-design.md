@@ -25,7 +25,7 @@
 ## 2. Project Structure
 
 ```
-web_v2/
+web/
 ├── index.html
 ├── package.json
 ├── vite.config.ts
@@ -573,7 +573,7 @@ interface MappingGraphResponse {
 ## 10. Development Setup
 
 ```bash
-cd web_v2
+cd web
 npm install
 npm run dev    # Vite dev server on :5173
 ```

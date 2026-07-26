@@ -4,7 +4,7 @@
 
 **狀態：** Proposed
 
-**範圍：** 全站 `language` domain、`expressions.language_code`、匯入腳本、`web_v2`、`backend_v2`、D1 schema、本站介面翻譯
+**範圍：** 全站 `language` domain、`expressions.language_code`、匯入腳本、`web`、`backend`、D1 schema、本站介面翻譯
 
 **不涉及：** `web/`、`backend/`、`apple/`、外部網站翻譯平台
 
@@ -14,7 +14,7 @@
 
 - 將全站詞句綁定的語言代碼正規化為「Glottolog languoid identity + canonical BCP 47 content tag」。
 - 以 Glottolog 5.3 作為語言／方言唯一 registry；LangMap 不建立自己的語言 identity。
-- 將 `web_v2` 的固定介面文案改為 key-based i18n。
+- 將 `web` 的固定介面文案改為 key-based i18n。
 - 任何已登入使用者都可以為已登記的 Glottolog/BCP 47 語系提交譯文。
 - 譯文直接成為 expression mapping，正式網站按社群分數選出最佳候選。
 - 語言切換器可搜尋並處理上百種介面語系。
@@ -26,9 +26,9 @@
 
 ## 2. 現況
 
-- `web_v2/src/components/nav/LangSwitcher.vue` 目前只顯示固定的 `ZH-TW`。
+- `web/src/components/nav/LangSwitcher.vue` 目前只顯示固定的 `ZH-TW`。
 - 前端沒有 i18n library，文案直接寫在 Vue template 或 TypeScript。
-- `backend_v2/schema.sql` 已有 `ui_locales(language_code, locale_json, ...)`，但沒有 route。
+- `backend/schema.sql` 已有 `ui_locales(language_code, locale_json, ...)`，但沒有 route。
 - 現有 `ui_locales.locale_json` 與 expression mapping 重複，且無法按詞句分數選譯。
 - `languages`、`expressions`、`expression_edges` 已提供詞句及語義關係模型。
 
@@ -316,7 +316,7 @@ migration 完成後：
 `en-US` 是唯一來源語系，完整 catalog 隨前端程式部署：
 
 ```text
-web_v2/src/locales/
+web/src/locales/
 ├── en.ts
 └── types.ts
 ```
@@ -354,7 +354,7 @@ export default {
 
 本站 i18n 只使用兩張表：locale 與 message；譯文直接使用既有 expressions、expression edges 及 votes。兩張表都帶 `project_id`，但現階段只有固定值 `langmap-web`，不建立 projects table 或管理功能。
 
-實作時新增 migration，並同步更新 `backend_v2/schema.sql`。現有 `ui_locales.locale_json` 不沿用；若已有資料，先轉換成 `langmap-web` mappings 後再移除。
+實作時新增 migration，並同步更新 `backend/schema.sql`。現有 `ui_locales.locale_json` 不沿用；若已有資料，先轉換成 `langmap-web` mappings 後再移除。
 
 ### 6.1 `ui_locales`
 
@@ -599,7 +599,7 @@ MVP 沿用現有角色：
 ### 9.1 模組
 
 ```text
-web_v2/src/
+web/src/
 ├── i18n/
 │   ├── index.ts
 │   ├── localeResolver.ts
@@ -760,8 +760,8 @@ UI locale 清單由匯入／部署設定產生，不提供「新建語言」表�
 新增 scripts：
 
 ```bash
-cd web_v2 && npm run i18n:check
-cd backend_v2 && npm run i18n:sync -- --dry-run
+cd web && npm run i18n:check
+cd backend && npm run i18n:sync -- --dry-run
 ```
 
 `i18n:check` 驗證：
@@ -916,7 +916,7 @@ coverage = 最高 mapping 分數 >= 0 的 active message 數 / active message �
 - 加入 pseudo-locale 及 missing-key CI。
 - 確認所有 expression、mapping、handbook、地圖與搜尋畫面顯示 canonical code 及 languoid name。
 
-完成條件：`web_v2` 沒有未列入例外的固定使用者文案，RTL 與長文案不阻塞主要流程。
+完成條件：`web` 沒有未列入例外的固定使用者文案，RTL 與長文案不阻塞主要流程。
 
 ## 16. 未來擴展縫
 

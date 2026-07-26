@@ -68,7 +68,7 @@ npx tsx migrate.ts "$OLDDB" ./v2-data.sql
 ### 3. 載入 v2 D1
 
 ```bash
-cd backend_v2
+cd backend
 npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
 # 用 sqlite3 直接載入（wrangler 對大檔案有 SQLITE_TOOBIG 限制）
 V2DB="$(find .wrangler/state/v3/d1 -name '*.sqlite' | grep -v cache | tail -1)"
@@ -161,4 +161,4 @@ Glottolog release。
 - **遠端重建**（之後）：`wrangler d1 create langmap-v2` → 填 database_id → 遠端跑 schema.sql → 遠端載 v2-data.sql
 - **prose 丟失**：舊手冊 Markdown 的非標記文字在遷移中被捨棄（新模型無 prose 欄位）
 - **collections 不遷**：v2 砍除收藏功能
-- **間接映射 / 折疊 / feed** 等查詢邏輯屬於下一份計畫（backend_v2 API）
+- **間接映射 / 折疊 / feed** 等查詢邏輯屬於下一份計畫（backend API）

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Align the Vue web_v2 implementation with the prototype/v2 design across all pages, plus switch MapLens to Leaflet.
+**Goal:** Align the Vue web implementation with the prototype/v2 design across all pages, plus switch MapLens to Leaflet.
 
 **Architecture:** Frontend CSS/template changes for visual alignment, schema migrations for missing fields, API changes to return new data, and Leaflet integration for MapLens.
 
@@ -13,28 +13,28 @@
 ## Task 1: Add `name_en` column to languages table
 
 **Files:**
-- Modify: `backend_v2/schema.sql`
-- Create: `backend_v2/migrations/0002_add_name_en.sql`
+- Modify: `backend/schema.sql`
+- Create: `backend/migrations/0002_add_name_en.sql`
 
 - [ ] **Step 1: Create migration file**
 
 ```sql
--- backend_v2/migrations/0002_add_name_en.sql
+-- backend/migrations/0002_add_name_en.sql
 ALTER TABLE languages ADD COLUMN name_en TEXT DEFAULT NULL;
 ```
 
 - [ ] **Step 2: Update schema.sql to include name_en**
 
-In `backend_v2/schema.sql`, add `name_en TEXT DEFAULT NULL` after the `name` column in the `languages` table definition.
+In `backend/schema.sql`, add `name_en TEXT DEFAULT NULL` after the `name` column in the `languages` table definition.
 
 - [ ] **Step 3: Apply migration locally**
 
-Run: `cd backend_v2 && npx wrangler d1 execute langmap-v2 --local --file=./migrations/0002_add_name_en.sql`
+Run: `cd backend && npx wrangler d1 execute langmap-v2 --local --file=./migrations/0002_add_name_en.sql`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/schema.sql backend_v2/migrations/0002_add_name_en.sql
+git add backend/schema.sql backend/migrations/0002_add_name_en.sql
 git commit -m "feat: add name_en column to languages table"
 ```
 
@@ -43,7 +43,7 @@ git commit -m "feat: add name_en column to languages table"
 ## Task 2: Update languages API to return `name_en`
 
 **Files:**
-- Modify: `backend_v2/src/routes/languages.ts`
+- Modify: `backend/src/routes/languages.ts`
 
 - [ ] **Step 1: Update GET /api/v2/languages query**
 
@@ -53,7 +53,7 @@ Verify by reading the query at lines 8-29 to confirm `l.*` is used.
 
 - [ ] **Step 2: Update LanguageList.vue to display name_en**
 
-In `web_v2/src/components/language/LanguageCard.vue`, add a second line showing the English name:
+In `web/src/components/language/LanguageCard.vue`, add a second line showing the English name:
 
 ```html
 <span class="nm">{{ name }}</span>
@@ -68,12 +68,12 @@ Add the `name_en` prop and the `.en` CSS:
 
 - [ ] **Step 3: Verify locally**
 
-Run `npm run dev` in web_v2, navigate to languages page, confirm English names appear.
+Run `npm run dev` in web, navigate to languages page, confirm English names appear.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/src/routes/languages.ts web_v2/src/components/language/LanguageCard.vue
+git add backend/src/routes/languages.ts web/src/components/language/LanguageCard.vue
 git commit -m "feat: display English name in language cards"
 ```
 
@@ -82,13 +82,13 @@ git commit -m "feat: display English name in language cards"
 ## Task 3: Add `family` and `status_text` to languages schema
 
 **Files:**
-- Modify: `backend_v2/schema.sql`
-- Create: `backend_v2/migrations/0003_add_lang_family_status.sql`
+- Modify: `backend/schema.sql`
+- Create: `backend/migrations/0003_add_lang_family_status.sql`
 
 - [ ] **Step 1: Create migration**
 
 ```sql
--- backend_v2/migrations/0003_add_lang_family_status.sql
+-- backend/migrations/0003_add_lang_family_status.sql
 ALTER TABLE languages ADD COLUMN family TEXT DEFAULT NULL;
 ALTER TABLE languages ADD COLUMN status_text TEXT DEFAULT NULL;
 ```
@@ -99,12 +99,12 @@ Add `family TEXT DEFAULT NULL` and `status_text TEXT DEFAULT NULL` to the langua
 
 - [ ] **Step 3: Apply migration locally**
 
-Run: `cd backend_v2 && npx wrangler d1 execute langmap-v2 --local --file=./migrations/0003_add_lang_family_status.sql`
+Run: `cd backend && npx wrangler d1 execute langmap-v2 --local --file=./migrations/0003_add_lang_family_status.sql`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/schema.sql backend_v2/migrations/0003_add_lang_family_status.sql
+git add backend/schema.sql backend/migrations/0003_add_lang_family_status.sql
 git commit -m "feat: add family and status_text columns to languages"
 ```
 
@@ -113,7 +113,7 @@ git commit -m "feat: add family and status_text columns to languages"
 ## Task 4: Update LanguageDetail to show subtitle
 
 **Files:**
-- Modify: `web_v2/src/pages/LanguageDetail.vue`
+- Modify: `web/src/pages/LanguageDetail.vue`
 
 - [ ] **Step 1: Add subtitle template**
 
@@ -144,7 +144,7 @@ const subtitle = computed(() => {
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/pages/LanguageDetail.vue
+git add web/src/pages/LanguageDetail.vue
 git commit -m "feat: add language subtitle with family/status/region"
 ```
 
@@ -153,15 +153,15 @@ git commit -m "feat: add language subtitle with family/status/region"
 ## Task 5: Update feed API to return `type` field
 
 **Files:**
-- Modify: `backend_v2/src/routes/feed.ts`
+- Modify: `backend/src/routes/feed.ts`
 
 - [ ] **Step 1: Check feed/new endpoint**
 
-Read `backend_v2/src/routes/feed.ts` lines 23-36. The endpoint already returns `type: 'mapping'` in the SELECT. Verify this is correct.
+Read `backend/src/routes/feed.ts` lines 23-36. The endpoint already returns `type: 'mapping'` in the SELECT. Verify this is correct.
 
 - [ ] **Step 2: Verify NewContribution.vue uses type prop**
 
-Read `web_v2/src/components/feed/NewContribution.vue`. Currently it always shows "映射". Need to add a `type` prop and conditionally render "詞句" with `.expr` class.
+Read `web/src/components/feed/NewContribution.vue`. Currently it always shows "映射". Need to add a `type` prop and conditionally render "詞句" with `.expr` class.
 
 - [ ] **Step 3: Update NewContribution.vue**
 
@@ -199,7 +199,7 @@ In NewContribution.vue scoped styles:
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend_v2/src/routes/feed.ts web_v2/src/components/feed/NewContribution.vue
+git add backend/src/routes/feed.ts web/src/components/feed/NewContribution.vue
 git commit -m "feat: support expression type in feed with .expr badge"
 ```
 
@@ -208,7 +208,7 @@ git commit -m "feat: support expression type in feed with .expr badge"
 ## Task 6: Revert HomeFeed CSS to prototype
 
 **Files:**
-- Modify: `web_v2/src/pages/HomeFeed.vue`
+- Modify: `web/src/pages/HomeFeed.vue`
 
 - [ ] **Step 1: Add page padding**
 
@@ -237,7 +237,7 @@ Remove the `.home-search` section from the template (lines 43-45) and its CSS (l
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/pages/HomeFeed.vue
+git add web/src/pages/HomeFeed.vue
 git commit -m "feat: align HomeFeed with prototype (padding, revert new-body, remove SearchBar)"
 ```
 
@@ -246,14 +246,14 @@ git commit -m "feat: align HomeFeed with prototype (padding, revert new-body, re
 ## Task 7: Add page padding to all pages
 
 **Files:**
-- Modify: `web_v2/src/pages/Search.vue`
-- Modify: `web_v2/src/pages/LanguageList.vue`
-- Modify: `web_v2/src/pages/LanguageDetail.vue`
-- Modify: `web_v2/src/pages/HandbookList.vue`
-- Modify: `web_v2/src/pages/HandbookView.vue`
-- Modify: `web_v2/src/pages/HandbookEdit.vue`
-- Modify: `web_v2/src/pages/Contribute.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
+- Modify: `web/src/pages/Search.vue`
+- Modify: `web/src/pages/LanguageList.vue`
+- Modify: `web/src/pages/LanguageDetail.vue`
+- Modify: `web/src/pages/HandbookList.vue`
+- Modify: `web/src/pages/HandbookView.vue`
+- Modify: `web/src/pages/HandbookEdit.vue`
+- Modify: `web/src/pages/Contribute.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
 
 - [ ] **Step 1: Add padding to each page**
 
@@ -268,7 +268,7 @@ Do the same for all pages, adjusting the class name to match each page's root el
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web_v2/src/pages/
+git add web/src/pages/
 git commit -m "feat: add consistent page padding across all pages"
 ```
 
@@ -277,9 +277,9 @@ git commit -m "feat: add consistent page padding across all pages"
 ## Task 8: Unify sort buttons to pill border style
 
 **Files:**
-- Modify: `web_v2/src/pages/Search.vue`
-- Modify: `web_v2/src/pages/LanguageList.vue`
-- Modify: `web_v2/src/pages/LanguageDetail.vue`
+- Modify: `web/src/pages/Search.vue`
+- Modify: `web/src/pages/LanguageList.vue`
+- Modify: `web/src/pages/LanguageDetail.vue`
 
 - [ ] **Step 1: Update Search.vue sort buttons**
 
@@ -317,7 +317,7 @@ Same pill style, adapt class names to `.ld-sort`.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/pages/Search.vue web_v2/src/pages/LanguageList.vue web_v2/src/pages/LanguageDetail.vue
+git add web/src/pages/Search.vue web/src/pages/LanguageList.vue web/src/pages/LanguageDetail.vue
 git commit -m "feat: unify sort buttons to pill border style across pages"
 ```
 
@@ -326,7 +326,7 @@ git commit -m "feat: unify sort buttons to pill border style across pages"
 ## Task 9: Update Search page title and hint
 
 **Files:**
-- Modify: `web_v2/src/pages/Search.vue`
+- Modify: `web/src/pages/Search.vue`
 
 - [ ] **Step 1: Change title**
 
@@ -339,7 +339,7 @@ Find the hint text and change "輸入關鍵字開始搜尋" to "提示:搜索目
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web_v2/src/pages/Search.vue
+git add web/src/pages/Search.vue
 git commit -m "feat: update Search page title and hint to match prototype"
 ```
 
@@ -348,7 +348,7 @@ git commit -m "feat: update Search page title and hint to match prototype"
 ## Task 10: HandbookEdit - Add expression reorder
 
 **Files:**
-- Modify: `web_v2/src/components/handbook/SectionEditor.vue`
+- Modify: `web/src/components/handbook/SectionEditor.vue`
 
 - [ ] **Step 1: Add ▲/▼ buttons to expression rows**
 
@@ -406,7 +406,7 @@ Wire up the events:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/components/handbook/SectionEditor.vue web_v2/src/pages/HandbookEdit.vue
+git add web/src/components/handbook/SectionEditor.vue web/src/pages/HandbookEdit.vue
 git commit -m "feat: add expression reorder with up/down buttons"
 ```
 
@@ -415,12 +415,12 @@ git commit -m "feat: add expression reorder with up/down buttons"
 ## Task 11: HandbookEdit - Split save into draft/publish
 
 **Files:**
-- Modify: `web_v2/src/pages/HandbookEdit.vue`
-- Modify: `backend_v2/src/routes/handbooks.ts`
+- Modify: `web/src/pages/HandbookEdit.vue`
+- Modify: `backend/src/routes/handbooks.ts`
 
 - [ ] **Step 1: Add `status` column to handbooks**
 
-Create migration `backend_v2/migrations/0004_add_handbook_status.sql`:
+Create migration `backend/migrations/0004_add_handbook_status.sql`:
 
 ```sql
 ALTER TABLE handbooks ADD COLUMN status TEXT NOT NULL DEFAULT 'published';
@@ -467,7 +467,7 @@ async function save(status: string) {
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/migrations/0004_add_handbook_status.sql backend_v2/schema.sql backend_v2/src/routes/handbooks.ts web_v2/src/pages/HandbookEdit.vue
+git add backend/migrations/0004_add_handbook_status.sql backend/schema.sql backend/src/routes/handbooks.ts web/src/pages/HandbookEdit.vue
 git commit -m "feat: split handbook save into draft and publish"
 ```
 
@@ -476,7 +476,7 @@ git commit -m "feat: split handbook save into draft and publish"
 ## Task 12: HandbookView - Add TOC numbering
 
 **Files:**
-- Modify: `web_v2/src/pages/HandbookView.vue`
+- Modify: `web/src/pages/HandbookView.vue`
 
 - [ ] **Step 1: Add numbering to TOC template**
 
@@ -493,7 +493,7 @@ Find the TOC list and add index-based numbering:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add web_v2/src/pages/HandbookView.vue
+git add web/src/pages/HandbookView.vue
 git commit -m "feat: add numbering to handbook TOC"
 ```
 
@@ -502,7 +502,7 @@ git commit -m "feat: add numbering to handbook TOC"
 ## Task 13: HandbookView - Add vote prompt text
 
 **Files:**
-- Modify: `web_v2/src/pages/HandbookView.vue`
+- Modify: `web/src/pages/HandbookView.vue`
 
 - [ ] **Step 1: Add prompt text above VotePill**
 
@@ -522,7 +522,7 @@ git commit -m "feat: add numbering to handbook TOC"
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web_v2/src/pages/HandbookView.vue
+git add web/src/pages/HandbookView.vue
 git commit -m "feat: add vote prompt text in handbook view"
 ```
 
@@ -531,12 +531,12 @@ git commit -m "feat: add vote prompt text in handbook view"
 ## Task 14: Install Leaflet and create MapLens component
 
 **Files:**
-- Modify: `web_v2/package.json`
-- Modify: `web_v2/src/pages/MapLens.vue`
+- Modify: `web/package.json`
+- Modify: `web/src/pages/MapLens.vue`
 
 - [ ] **Step 1: Install leaflet**
 
-Run: `cd web_v2 && npm install leaflet && npm install -D @types/leaflet`
+Run: `cd web && npm install leaflet && npm install -D @types/leaflet`
 
 - [ ] **Step 2: Replace MapLens.vue with Leaflet implementation**
 
@@ -607,7 +607,7 @@ The meta should show `{{ pins.length + 1 }} 種語言 · {{ regionCount }} 地�
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web_v2/package.json web_v2/package-lock.json web_v2/src/pages/MapLens.vue
+git add web/package.json web/package-lock.json web/src/pages/MapLens.vue
 git commit -m "feat: replace custom map with Leaflet in MapLens"
 ```
 
@@ -616,7 +616,7 @@ git commit -m "feat: replace custom map with Leaflet in MapLens"
 ## Task 15: Update feed API to return region count
 
 **Files:**
-- Modify: `backend_v2/src/routes/feed.ts`
+- Modify: `backend/src/routes/feed.ts`
 
 - [ ] **Step 1: Add region count to feed/hot query**
 
@@ -635,7 +635,7 @@ Same approach for the feed/new endpoint.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add backend_v2/src/routes/feed.ts
+git add backend/src/routes/feed.ts
 git commit -m "feat: add region count to feed endpoints"
 ```
 

@@ -23,10 +23,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BACKEND="$ROOT/backend"
-BACKEND_V2="$ROOT/backend_v2"
+backend="$ROOT/backend"
 V2_DATA="$SCRIPT_DIR/v2-data.sql"
-SCHEMA="$BACKEND_V2/schema.sql"
-V2_CONFIG="$BACKEND_V2/wrangler.jsonc"
+SCHEMA="$backend/schema.sql"
+V2_CONFIG="$backend/wrangler.jsonc"
 V2_DB_NAME="langmap-v2"
 OLD_DB_NAME="langmap"
 
@@ -45,7 +45,7 @@ find_old_sqlite() {
 
 # 找 v2 D1 sqlite 文件（hash 命名，排除 metadata）
 find_v2_sqlite() {
-  find "$BACKEND_V2/.wrangler/state/v3/d1/miniflare-D1DatabaseObject" \
+  find "$backend/.wrangler/state/v3/d1/miniflare-D1DatabaseObject" \
     -maxdepth 1 -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/null | head -1
 }
 
@@ -69,7 +69,7 @@ rebuild_fts() {
 cmd_setup() {
   if ! $REMOTE; then echo "✗ setup 仅用于 --remote"; exit 1; fi
   step "建立 remote v2 D1（$V2_DB_NAME）"
-  local out; out=$(cd "$BACKEND_V2" && npx wrangler d1 create "$V2_DB_NAME" 2>&1)
+  local out; out=$(cd "$backend" && npx wrangler d1 create "$V2_DB_NAME" 2>&1)
   echo "$out"
   local id; id=$(echo "$out" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
   if [ -z "$id" ]; then echo "✗ 抓不到 database_id（D1 可能已存在或未登录）"; exit 1; fi
@@ -82,7 +82,7 @@ cmd_setup() {
   fi
   note "已写入 database_id = $id"
   step "remote 跑 schema.sql"
-  cd "$BACKEND_V2" && npx wrangler d1 execute "$V2_DB_NAME" --remote --file=./schema.sql
+  cd "$backend" && npx wrangler d1 execute "$V2_DB_NAME" --remote --file=./schema.sql
   note "setup 完成，接下来可跑：./migrate.sh all --remote"
 }
 
@@ -109,7 +109,7 @@ load_local() {
   step "定位 v2 D1 sqlite（local）"
   local db; db=$(find_v2_sqlite)
   if [ -z "$db" ]; then
-    echo "✗ 找不到 v2 D1 sqlite（先在 backend_v2 跑一次 `npx wrangler dev` 初始化本地 D1）"; exit 1
+    echo "✗ 找不到 v2 D1 sqlite（先在 backend 跑一次 `npx wrangler dev` 初始化本地 D1）"; exit 1
   fi
   note "v2 D1: $db"
   step "重跑 schema.sql（清空+重建）"
@@ -125,7 +125,7 @@ load_local() {
 
 load_remote() {
   step "remote 载入：先 drop FTS triggers（载入前）"
-  cd "$BACKEND_V2"
+  cd "$backend"
   npx wrangler d1 execute "$V2_DB_NAME" --remote \
     --command="DROP TRIGGER IF EXISTS expressions_ai; DROP TRIGGER IF EXISTS expressions_ad; DROP TRIGGER IF EXISTS expressions_au; DROP TABLE IF EXISTS expressions_fts;"
   step "remote 载入：清空目标表（schema 已由 setup 建好，这里只清数据以保幂等）"
@@ -182,7 +182,7 @@ cmd_verify() {
   local q="SELECT 'expressions', count(*) FROM expressions UNION ALL SELECT 'expression_edges', count(*) FROM expression_edges UNION ALL SELECT 'handbook_section_items', count(*) FROM handbook_section_items UNION ALL SELECT 'handbooks', count(*) FROM handbooks UNION ALL SELECT 'handbook_sections', count(*) FROM handbook_sections;"
   if $REMOTE; then
     step "核对 remote v2 D1 行数"
-    cd "$BACKEND_V2" && npx wrangler d1 execute "$V2_DB_NAME" --remote --command="$q"
+    cd "$backend" && npx wrangler d1 execute "$V2_DB_NAME" --remote --command="$q"
   else
     step "核对 local v2 D1 行数"
     local db; db=$(find_v2_sqlite)

@@ -6,27 +6,27 @@ set -e
 
 echo "開始構建 LangMap v2 應用程式..."
 
-STATIC_DIR="backend_v2/public"
+STATIC_DIR="backend/public"
 echo "確保靜態目錄存在: $STATIC_DIR"
 mkdir -p "$STATIC_DIR"
 
 echo "清理之前的構建..."
 rm -rf "$STATIC_DIR"/*
 
-if [ ! -d "web_v2/node_modules" ]; then
+if [ ! -d "web/node_modules" ]; then
     echo "安裝前端依賴..."
-    cd web_v2
+    cd web
     npm install
     cd ..
 fi
 
 echo "構建前端應用..."
-cd web_v2
+cd web
 npm run build
 cd ..
 
 echo "複製構建檔案到後端 public 目錄..."
-cp -r web_v2/dist/* "$STATIC_DIR"/
+cp -r web/dist/* "$STATIC_DIR"/
 
 if [ -d "$STATIC_DIR" ] && [ "$(ls -A $STATIC_DIR)" ]; then
     echo "構建成功完成！"

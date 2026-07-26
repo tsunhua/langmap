@@ -1,4 +1,4 @@
-# backend_v2 資料模型 + 遷移 實作計畫
+# backend 資料模型 + 遷移 實作計畫
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,9 +14,9 @@
 
 ## File Structure
 
-- `backend_v2/schema.sql` — v2 完整 schema(保留 + 捨棄 + 新增)。
-- `backend_v2/wrangler.jsonc` — v2 後端的 wrangler 設定(D1 binding `langmap-v2`,local-first)。
-- `backend_v2/package.json` — 暫時只需要遷移/測試用依賴(wrangler、better-sqlite3、vitest);Hono app 留到下一份計畫。
+- `backend/schema.sql` — v2 完整 schema(保留 + 捨棄 + 新增)。
+- `backend/wrangler.jsonc` — v2 後端的 wrangler 設定(D1 binding `langmap-v2`,local-first)。
+- `backend/package.json` — 暫時只需要遷移/測試用依賴(wrangler、better-sqlite3、vitest);Hono app 留到下一份計畫。
 - `scripts/v2/package.json` — 遷移工具依賴(better-sqlite3、vitest、tsx)。
 - `scripts/v2/lib/edges.ts` — 純函式:一組 expression ids → 完全圖邊集合。
 - `scripts/v2/lib/handbook.ts` — 純函式:Markdown → 章節 + 有序詞句標記。
@@ -87,7 +87,7 @@ git commit -m "chore(v2-migrate): add remote D1 export for local migration"
 ## Task 1: v2 schema
 
 **Files:**
-- Create: `backend_v2/schema.sql`
+- Create: `backend/schema.sql`
 
 - [ ] **Step 1: 寫 schema**
 
@@ -95,7 +95,7 @@ git commit -m "chore(v2-migrate): add remote D1 export for local migration"
 
 ```sql
 -- LangMap v2 schema
--- Usage: cd backend_v2 && npx wrangler d1 execute langmap-v2 --local --file=../backend_v2/schema.sql
+-- Usage: cd backend && npx wrangler d1 execute langmap-v2 --local --file=../backend/schema.sql
 -- ⚠ 會 DROP 表,僅本地/重建遠端用。
 
 --------------------------------------------------------------------------------
@@ -314,7 +314,7 @@ CREATE INDEX idx_items_section_position ON handbook_section_items(section_id, po
 - [ ] **Step 2: 驗證 schema 可建立**
 
 ```bash
-cd backend_v2
+cd backend
 npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
 npx wrangler d1 execute langmap-v2 --local --command="SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
 ```
@@ -323,19 +323,19 @@ Expected: 看到 `expression_edges`、`votes`、`handbooks`、`handbook_sections
 - [ ] **Step 3: Commit**
 
 ```bash
-git add backend_v2/schema.sql
+git add backend/schema.sql
 git commit -m "feat(v2): add v2 schema (edges, votes, simplified handbooks)"
 ```
 
 ---
 
-## Task 2: backend_v2 / scripts/v2 專案骨架
+## Task 2: backend / scripts/v2 專案骨架
 
 **Files:**
-- Create: `backend_v2/wrangler.jsonc`、`backend_v2/package.json`
+- Create: `backend/wrangler.jsonc`、`backend/package.json`
 - Create: `scripts/v2/package.json`、`scripts/v2/tsconfig.json`
 
-- [ ] **Step 1: `backend_v2/wrangler.jsonc`**
+- [ ] **Step 1: `backend/wrangler.jsonc`**
 
 仿 `backend/wrangler.jsonc`,但 D1 binding 改成新資料庫、先不綁 R2/DO(`database_id` 之後用 `wrangler d1 create` 產生再填):
 
@@ -354,7 +354,7 @@ git commit -m "feat(v2): add v2 schema (edges, votes, simplified handbooks)"
 }
 ```
 
-- [ ] **Step 2: `backend_v2/package.json`**
+- [ ] **Step 2: `backend/package.json`**
 
 ```json
 {
@@ -406,8 +406,8 @@ Expected: `No test files found` 或 0 個測試(環境可跑)。
 - [ ] **Step 6: Commit**
 
 ```bash
-git add backend_v2/wrangler.jsonc backend_v2/package.json scripts/v2/
-git commit -m "chore(v2): scaffold backend_v2 + migration tooling"
+git add backend/wrangler.jsonc backend/package.json scripts/v2/
+git commit -m "chore(v2): scaffold backend + migration tooling"
 ```
 
 ---
@@ -761,7 +761,7 @@ cd ../scripts/v2 && npm run migrate -- "$OLDDB/../../$(basename $(dirname $OLDDB
   || npx tsx migrate.ts "$(ls -t ../../backend/.wrangler/state/v3/d1/**/db.sqlite | head -1)" ./v2-data.sql
 
 # 4) 載入 v2 schema + 遷移結果到本地 v2 D1
-cd ../../backend_v2 && npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
+cd ../../backend && npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
 npx wrangler d1 execute langmap-v2 --local --file=../scripts/v2/v2-data.sql
 ```
 Expected 摘要:`edges: 1`(101↔102)、`handbooks: 1 / sections: 1 / items: 2`(你好、Hello)、`missing-tags-skipped: 0`。
@@ -769,7 +769,7 @@ Expected 摘要:`edges: 1`(101↔102)、`handbooks: 1 / sections: 1 / items: 2`(
 - [ ] **Step 4: 查驗 v2 D1**
 
 ```bash
-cd backend_v2
+cd backend
 npx wrangler d1 execute langmap-v2 --local --command="SELECT count(*) AS edges FROM expression_edges"
 npx wrangler d1 execute langmap-v2 --local --command="SELECT count(*) AS items FROM handbook_section_items"
 ```
@@ -806,7 +806,7 @@ cd scripts/v2 && npx tsx migrate.ts "$OLDDB" ./v2-data.sql
 - [ ] **Step 3: 載入 v2 本地 D1 並驗證計數**
 
 ```bash
-cd ../backend_v2
+cd ../backend
 npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
 npx wrangler d1 execute langmap-v2 --local --file=../scripts/v2/v2-data.sql
 
@@ -823,7 +823,7 @@ Expected(合理性,非固定值):
 - [ ] **Step 4: 抽樣查 edges 正確性**
 
 ```bash
-cd backend_v2
+cd backend
 npx wrangler d1 execute langmap-v2 --local --command="SELECT * FROM expression_edges LIMIT 3"
 ```
 對照舊 `expression_meaning`:任一邊的 a、b 應曾在同一 meaning_id 出現。
@@ -840,7 +840,7 @@ git commit -m "docs(v2-migrate): record real-data migration validation"
 
 ## 備註
 
-- **遠端重建**(之後,本計畫之外):`wrangler d1 create langmap-v2`(拿 database_id 填進 `backend_v2/wrangler.jsonc`)→ 遠端跑 `schema.sql` → 遠端載 `v2-data.sql`。本計畫只做到本地驗證。
+- **遠端重建**(之後,本計畫之外):`wrangler d1 create langmap-v2`(拿 database_id 填進 `backend/wrangler.jsonc`)→ 遠端跑 `schema.sql` → 遠端載 `v2-data.sql`。本計畫只做到本地驗證。
 - **prose 丟失**:舊手冊 Markdown 的非標記文字在遷移中被捨棄(新模型無 prose 欄位)。已記於 ADR-0002。
 - **collections 不遷**:v2 砍除收藏功能,`collections`/`collection_items` 不複製。
-- **間接映射 / 折疊 / feed** 等查詢邏輯屬於下一份計畫(backend_v2 API)。
+- **間接映射 / 折疊 / feed** 等查詢邏輯屬於下一份計畫(backend API)。

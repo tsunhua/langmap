@@ -1,4 +1,4 @@
-# backend_v2 API 實作計畫
+# backend API 實作計畫
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,14 +8,14 @@
 
 **Tech Stack:** Hono 4, TypeScript, Cloudflare Workers, D1, jose (JWT)。
 
-**前置:** Plan A 已完成——`backend_v2/schema.sql` 已建,v2 D1 已有遷移資料（91K expressions, 112K edges, 4 handbooks）。
+**前置:** Plan A 已完成——`backend/schema.sql` 已建,v2 D1 已有遷移資料（91K expressions, 112K edges, 4 handbooks）。
 
 ---
 
 ## File Structure
 
 ```
-backend_v2/
+backend/
 ├── src/
 │   ├── index.tsx              # Hono app entry, mount routes
 │   ├── types.ts               # Bindings type, Variables type
@@ -42,18 +42,18 @@ backend_v2/
 ## Task 1: App scaffolding + auth + response utils
 
 **Files:**
-- Create: `backend_v2/src/index.tsx`
-- Create: `backend_v2/src/types.ts`
-- Create: `backend_v2/src/middleware/auth.ts`
-- Create: `backend_v2/src/utils/response.ts`
-- Create: `backend_v2/src/routes/index.ts`
-- Create: `backend_v2/src/routes/_stub.ts` (temporary stub route for smoke test)
-- Modify: `backend_v2/package.json` (add dependencies)
+- Create: `backend/src/index.tsx`
+- Create: `backend/src/types.ts`
+- Create: `backend/src/middleware/auth.ts`
+- Create: `backend/src/utils/response.ts`
+- Create: `backend/src/routes/index.ts`
+- Create: `backend/src/routes/_stub.ts` (temporary stub route for smoke test)
+- Modify: `backend/package.json` (add dependencies)
 
 - [ ] **Step 1: Install dependencies**
 
 ```bash
-cd backend_v2
+cd backend
 npm install hono jose zod
 npm install -D wrangler @cloudflare/workers-types
 ```
@@ -180,7 +180,7 @@ export default app;
 - [ ] **Step 8: Smoke test**
 
 ```bash
-cd backend_v2
+cd backend
 npx wrangler dev --port 8789
 # In another terminal:
 curl http://localhost:8789/api/v2/health
@@ -190,7 +190,7 @@ curl http://localhost:8789/api/v2/health
 - [ ] **Step 9: Commit**
 
 ```bash
-git add backend_v2/src/
+git add backend/src/
 git commit -m "feat(v2-api): scaffolding with auth, response utils, health endpoint"
 ```
 
@@ -199,8 +199,8 @@ git commit -m "feat(v2-api): scaffolding with auth, response utils, health endpo
 ## Task 2: Languages API
 
 **Files:**
-- Create: `backend_v2/src/routes/languages.ts`
-- Modify: `backend_v2/src/routes/index.ts` (mount)
+- Create: `backend/src/routes/languages.ts`
+- Modify: `backend/src/routes/index.ts` (mount)
 
 - [ ] **Step 1: Write test — list languages**
 
@@ -315,7 +315,7 @@ curl "http://localhost:8789/api/v2/languages/cmn/expressions?limit=3"
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend_v2/src/routes/languages.ts backend_v2/src/routes/index.ts
+git add backend/src/routes/languages.ts backend/src/routes/index.ts
 git commit -m "feat(v2-api): languages endpoints (list, detail, expressions)"
 ```
 
@@ -324,8 +324,8 @@ git commit -m "feat(v2-api): languages endpoints (list, detail, expressions)"
 ## Task 3: Expressions API
 
 **Files:**
-- Create: `backend_v2/src/routes/expressions.ts`
-- Modify: `backend_v2/src/routes/index.ts` (mount)
+- Create: `backend/src/routes/expressions.ts`
+- Modify: `backend/src/routes/index.ts` (mount)
 
 - [ ] **Step 1: Create `src/routes/expressions.ts`**
 
@@ -444,7 +444,7 @@ curl "http://localhost:8789/api/v2/expressions/search?q=hello&lang=en"
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/src/routes/expressions.ts backend_v2/src/routes/index.ts
+git add backend/src/routes/expressions.ts backend/src/routes/index.ts
 git commit -m "feat(v2-api): expressions endpoints (detail, mappings, search)"
 ```
 
@@ -453,9 +453,9 @@ git commit -m "feat(v2-api): expressions endpoints (detail, mappings, search)"
 ## Task 4: Mappings vote + Contributions batch
 
 **Files:**
-- Create: `backend_v2/src/routes/mappings.ts`
-- Create: `backend_v2/src/routes/contributions.ts`
-- Modify: `backend_v2/src/routes/index.ts`
+- Create: `backend/src/routes/mappings.ts`
+- Create: `backend/src/routes/contributions.ts`
+- Modify: `backend/src/routes/index.ts`
 
 - [ ] **Step 1: Create `src/routes/mappings.ts`**
 
@@ -609,7 +609,7 @@ curl -X POST http://localhost:8789/api/v2/contributions/batch \
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend_v2/src/routes/mappings.ts backend_v2/src/routes/contributions.ts backend_v2/src/routes/index.ts
+git add backend/src/routes/mappings.ts backend/src/routes/contributions.ts backend/src/routes/index.ts
 git commit -m "feat(v2-api): mapping vote + batch contribution endpoints"
 ```
 
@@ -618,8 +618,8 @@ git commit -m "feat(v2-api): mapping vote + batch contribution endpoints"
 ## Task 5: Handbooks API
 
 **Files:**
-- Create: `backend_v2/src/routes/handbooks.ts`
-- Modify: `backend_v2/src/routes/index.ts`
+- Create: `backend/src/routes/handbooks.ts`
+- Modify: `backend/src/routes/index.ts`
 
 - [ ] **Step 1: Create `src/routes/handbooks.ts`**
 
@@ -860,7 +860,7 @@ curl "http://localhost:8789/api/v2/handbooks/1539253276"
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend_v2/src/routes/handbooks.ts backend_v2/src/routes/index.ts
+git add backend/src/routes/handbooks.ts backend/src/routes/index.ts
 git commit -m "feat(v2-api): handbooks CRUD + vote endpoints"
 ```
 
@@ -869,9 +869,9 @@ git commit -m "feat(v2-api): handbooks CRUD + vote endpoints"
 ## Task 6: Feed + Search API
 
 **Files:**
-- Create: `backend_v2/src/routes/feed.ts`
-- Create: `backend_v2/src/routes/search.ts`
-- Modify: `backend_v2/src/routes/index.ts`
+- Create: `backend/src/routes/feed.ts`
+- Create: `backend/src/routes/search.ts`
+- Modify: `backend/src/routes/index.ts`
 
 - [ ] **Step 1: Create `src/routes/feed.ts`**
 
@@ -987,7 +987,7 @@ curl "http://localhost:8789/api/v2/search/expressions?q=hello&sort=hot"
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend_v2/src/routes/feed.ts backend_v2/src/routes/search.ts backend_v2/src/routes/index.ts
+git add backend/src/routes/feed.ts backend/src/routes/search.ts backend/src/routes/index.ts
 git commit -m "feat(v2-api): feed (hot/new) + global search endpoints"
 ```
 
@@ -1024,12 +1024,12 @@ curl "http://localhost:8789/api/v2/search/expressions?q=好&sort=hot&limit=5"
 
 - [ ] **Step 2: Remove stub route**
 
-Delete `backend_v2/src/routes/_stub.ts` and remove its import from `routes/index.ts`.
+Delete `backend/src/routes/_stub.ts` and remove its import from `routes/index.ts`.
 
 - [ ] **Step 3: Final commit**
 
 ```bash
-git add -A backend_v2/src/
+git add -A backend/src/
 git commit -m "feat(v2-api): complete API — all 13 endpoints operational"
 ```
 

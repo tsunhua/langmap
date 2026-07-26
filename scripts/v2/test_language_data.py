@@ -42,7 +42,7 @@ class LanguageDataTests(unittest.TestCase):
         self.assertEqual(db.execute("SELECT COUNT(*) FROM languoids").fetchone()[0], 0)
 
     def test_import_smoke_against_canonical_schema(self):
-        schema = (ROOT.parent.parent / "backend_v2" / "schema.sql").read_text(encoding="utf-8")
+        schema = (ROOT.parent.parent / "backend" / "schema.sql").read_text(encoding="utf-8")
         db = sqlite3.connect(":memory:")
         db.execute("PRAGMA foreign_keys=ON")
         db.executescript(schema)

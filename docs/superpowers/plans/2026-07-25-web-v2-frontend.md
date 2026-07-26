@@ -1,4 +1,4 @@
-# web_v2 Frontend Implementation Plan
+# web Frontend Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -17,7 +17,7 @@
 ## File Structure
 
 ```
-web_v2/
+web/
 ├── index.html                    # Google Fonts import + app mount
 ├── package.json
 ├── vite.config.ts                # Dev proxy to backend
@@ -56,22 +56,22 @@ web_v2/
 ## Task 1: Project Scaffolding
 
 **Files:**
-- Create: `web_v2/package.json`
-- Create: `web_v2/index.html`
-- Create: `web_v2/vite.config.ts`
-- Create: `web_v2/tailwind.config.ts`
-- Create: `web_v2/postcss.config.js`
-- Create: `web_v2/src/main.ts`
-- Create: `web_v2/src/App.vue`
-- Create: `web_v2/src/router.ts`
-- Create: `web_v2/src/api/client.ts`
-- Create: `web_v2/src/assets/atlas.css`
+- Create: `web/package.json`
+- Create: `web/index.html`
+- Create: `web/vite.config.ts`
+- Create: `web/tailwind.config.ts`
+- Create: `web/postcss.config.js`
+- Create: `web/src/main.ts`
+- Create: `web/src/App.vue`
+- Create: `web/src/router.ts`
+- Create: `web/src/api/client.ts`
+- Create: `web/src/assets/atlas.css`
 
 - [ ] **Step 1: Init project and install dependencies**
 
 ```bash
-mkdir -p web_v2/src/{api,composables,stores,pages,components/{nav,feed,mapping,expression,handbook,language,ui},assets}
-cd web_v2
+mkdir -p web/src/{api,composables,stores,pages,components/{nav,feed,mapping,expression,handbook,language,ui},assets}
+cd web
 npm init -y
 npm install vue vue-router pinia axios
 npm install -D vite @vitejs/plugin-vue typescript vue-tsc tailwindcss postcss autoprefixer
@@ -80,7 +80,7 @@ npx tailwindcss init -p
 
 - [ ] **Step 2: Create `package.json` scripts**
 
-Write `web_v2/package.json`:
+Write `web/package.json`:
 ```json
 {
   "name": "langmap-web-v2",
@@ -111,7 +111,7 @@ Write `web_v2/package.json`:
 
 - [ ] **Step 3: Create `index.html`**
 
-Write `web_v2/index.html`:
+Write `web/index.html`:
 ```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -132,7 +132,7 @@ Write `web_v2/index.html`:
 
 - [ ] **Step 4: Create `vite.config.ts`**
 
-Write `web_v2/vite.config.ts`:
+Write `web/vite.config.ts`:
 ```ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -151,7 +151,7 @@ export default defineConfig({
 
 - [ ] **Step 5: Create `tailwind.config.ts`**
 
-Write `web_v2/tailwind.config.ts`:
+Write `web/tailwind.config.ts`:
 ```ts
 import type { Config } from 'tailwindcss'
 
@@ -201,7 +201,7 @@ export default {
 
 - [ ] **Step 6: Create `src/assets/atlas.css`**
 
-Copy the core base styles from `docs/prototype/v2/atlas2.css` into `web_v2/src/assets/atlas.css`. Keep only the base/reset styles, not the page-specific ones:
+Copy the core base styles from `docs/prototype/v2/atlas2.css` into `web/src/assets/atlas.css`. Keep only the base/reset styles, not the page-specific ones:
 
 ```css
 /* Atlas paper base styles */
@@ -444,7 +444,7 @@ declare module '*.vue' {
 - [ ] **Step 13: Verify dev server runs**
 
 ```bash
-cd web_v2
+cd web
 npm install
 npm run dev
 # Visit http://localhost:5173 — should see "HomeFeed" placeholder
@@ -454,7 +454,7 @@ npm run dev
 - [ ] **Step 14: Commit**
 
 ```bash
-git add web_v2/
+git add web/
 git commit -m "feat(web-v2): project scaffolding — Vite, Tailwind, router, API client, atlas.css"
 ```
 
@@ -463,16 +463,16 @@ git commit -m "feat(web-v2): project scaffolding — Vite, Tailwind, router, API
 ## Task 2: Shared UI Components + TopNav
 
 **Files:**
-- Create: `web_v2/src/components/nav/TopNav.vue`
-- Create: `web_v2/src/components/ui/SearchBar.vue`
-- Create: `web_v2/src/components/ui/LoadingSpinner.vue`
-- Create: `web_v2/src/components/ui/EmptyState.vue`
-- Create: `web_v2/src/components/ui/SegControl.vue`
-- Create: `web_v2/src/components/ui/StatBox.vue`
-- Create: `web_v2/src/components/ui/Pagination.vue`
-- Create: `web_v2/src/components/expression/LangBadge.vue`
-- Create: `web_v2/src/components/mapping/VotePill.vue`
-- Modify: `web_v2/src/App.vue`
+- Create: `web/src/components/nav/TopNav.vue`
+- Create: `web/src/components/ui/SearchBar.vue`
+- Create: `web/src/components/ui/LoadingSpinner.vue`
+- Create: `web/src/components/ui/EmptyState.vue`
+- Create: `web/src/components/ui/SegControl.vue`
+- Create: `web/src/components/ui/StatBox.vue`
+- Create: `web/src/components/ui/Pagination.vue`
+- Create: `web/src/components/expression/LangBadge.vue`
+- Create: `web/src/components/mapping/VotePill.vue`
+- Modify: `web/src/App.vue`
 
 - [ ] **Step 1: Create `TopNav.vue`**
 
@@ -864,7 +864,7 @@ npm run dev
 - [ ] **Step 11: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): shared UI components — TopNav, SearchBar, VotePill, LangBadge, etc."
 ```
 
@@ -873,14 +873,14 @@ git commit -m "feat(web-v2): shared UI components — TopNav, SearchBar, VotePil
 ## Task 3: Auth Store + Languages Store + Composables
 
 **Files:**
-- Create: `web_v2/src/stores/auth.ts`
-- Create: `web_v2/src/stores/languages.ts`
-- Create: `web_v2/src/composables/useExpressions.ts`
-- Create: `web_v2/src/composables/useHandbooks.ts`
-- Create: `web_v2/src/composables/useLanguages.ts`
-- Create: `web_v2/src/composables/useFeed.ts`
-- Create: `web_v2/src/composables/useSearch.ts`
-- Create: `web_v2/src/pages/Auth.vue`
+- Create: `web/src/stores/auth.ts`
+- Create: `web/src/stores/languages.ts`
+- Create: `web/src/composables/useExpressions.ts`
+- Create: `web/src/composables/useHandbooks.ts`
+- Create: `web/src/composables/useLanguages.ts`
+- Create: `web/src/composables/useFeed.ts`
+- Create: `web/src/composables/useSearch.ts`
+- Create: `web/src/pages/Auth.vue`
 
 - [ ] **Step 1: Create `stores/auth.ts`**
 
@@ -1314,7 +1314,7 @@ npm run dev
 - [ ] **Step 10: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): stores (auth, languages) + composables + Auth page"
 ```
 
@@ -1323,10 +1323,10 @@ git commit -m "feat(web-v2): stores (auth, languages) + composables + Auth page"
 ## Task 4: LanguageList + LanguageDetail Pages
 
 **Files:**
-- Create: `web_v2/src/pages/LanguageList.vue`
-- Create: `web_v2/src/pages/LanguageDetail.vue`
-- Create: `web_v2/src/components/language/LanguageCard.vue`
-- Create: `web_v2/src/components/expression/ExpressionRow.vue`
+- Create: `web/src/pages/LanguageList.vue`
+- Create: `web/src/pages/LanguageDetail.vue`
+- Create: `web/src/components/language/LanguageCard.vue`
+- Create: `web/src/components/expression/ExpressionRow.vue`
 
 - [ ] **Step 1: Create `ExpressionRow.vue`**
 
@@ -1601,7 +1601,7 @@ npm run dev
 - [ ] **Step 6: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): LanguageList + LanguageDetail pages"
 ```
 
@@ -1610,9 +1610,9 @@ git commit -m "feat(web-v2): LanguageList + LanguageDetail pages"
 ## Task 5: HomeFeed + MappingCard
 
 **Files:**
-- Create: `web_v2/src/pages/HomeFeed.vue`
-- Create: `web_v2/src/components/feed/MappingCard.vue`
-- Create: `web_v2/src/components/feed/NewContribution.vue`
+- Create: `web/src/pages/HomeFeed.vue`
+- Create: `web/src/components/feed/MappingCard.vue`
+- Create: `web/src/components/feed/NewContribution.vue`
 
 - [ ] **Step 1: Create `MappingCard.vue`**
 
@@ -1869,7 +1869,7 @@ npm run dev
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): HomeFeed page with MappingCard + NewContribution"
 ```
 
@@ -1878,9 +1878,9 @@ git commit -m "feat(web-v2): HomeFeed page with MappingCard + NewContribution"
 ## Task 6: MappingDetail + RadialGraph
 
 **Files:**
-- Create: `web_v2/src/pages/MappingDetail.vue`
-- Create: `web_v2/src/components/mapping/RadialGraph.vue`
-- Create: `web_v2/src/components/mapping/MappingList.vue`
+- Create: `web/src/pages/MappingDetail.vue`
+- Create: `web/src/components/mapping/RadialGraph.vue`
+- Create: `web/src/components/mapping/MappingList.vue`
 
 - [ ] **Step 1: Create `RadialGraph.vue`**
 
@@ -2206,7 +2206,7 @@ npm run dev
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): MappingDetail page with RadialGraph + MappingList"
 ```
 
@@ -2215,8 +2215,8 @@ git commit -m "feat(web-v2): MappingDetail page with RadialGraph + MappingList"
 ## Task 7: Search + LanguageSelect
 
 **Files:**
-- Create: `web_v2/src/pages/Search.vue`
-- Create: `web_v2/src/components/language/LanguageSelect.vue`
+- Create: `web/src/pages/Search.vue`
+- Create: `web/src/components/language/LanguageSelect.vue`
 
 - [ ] **Step 1: Create `LanguageSelect.vue`**
 
@@ -2427,7 +2427,7 @@ npm run dev
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): Search page + LanguageSelect component"
 ```
 
@@ -2436,9 +2436,9 @@ git commit -m "feat(web-v2): Search page + LanguageSelect component"
 ## Task 8: Contribute + ExpressionPicker + CliquePreview
 
 **Files:**
-- Create: `web_v2/src/pages/Contribute.vue`
-- Create: `web_v2/src/components/expression/ExpressionPicker.vue`
-- Create: `web_v2/src/components/mapping/CliquePreview.vue`
+- Create: `web/src/pages/Contribute.vue`
+- Create: `web/src/components/expression/ExpressionPicker.vue`
+- Create: `web/src/components/mapping/CliquePreview.vue`
 
 - [ ] **Step 1: Create `ExpressionPicker.vue`**
 
@@ -2692,7 +2692,7 @@ npm run dev
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): Contribute page with ExpressionPicker + CliquePreview"
 ```
 
@@ -2701,9 +2701,9 @@ git commit -m "feat(web-v2): Contribute page with ExpressionPicker + CliquePrevi
 ## Task 9: HandbookList + HandbookView
 
 **Files:**
-- Create: `web_v2/src/pages/HandbookList.vue`
-- Create: `web_v2/src/pages/HandbookView.vue`
-- Create: `web_v2/src/components/handbook/HandbookCard.vue`
+- Create: `web/src/pages/HandbookList.vue`
+- Create: `web/src/pages/HandbookView.vue`
+- Create: `web/src/components/handbook/HandbookCard.vue`
 
 - [ ] **Step 1: Create `HandbookCard.vue`**
 
@@ -2925,7 +2925,7 @@ npm run dev
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): HandbookList + HandbookView pages"
 ```
 
@@ -2934,8 +2934,8 @@ git commit -m "feat(web-v2): HandbookList + HandbookView pages"
 ## Task 10: HandbookEdit
 
 **Files:**
-- Create: `web_v2/src/pages/HandbookEdit.vue`
-- Create: `web_v2/src/components/handbook/SectionEditor.vue`
+- Create: `web/src/pages/HandbookEdit.vue`
+- Create: `web/src/components/handbook/SectionEditor.vue`
 
 - [ ] **Step 1: Create `SectionEditor.vue`**
 
@@ -3154,7 +3154,7 @@ npm run dev
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): HandbookEdit page with SectionEditor"
 ```
 
@@ -3163,7 +3163,7 @@ git commit -m "feat(web-v2): HandbookEdit page with SectionEditor"
 ## Task 11: MapLens
 
 **Files:**
-- Create: `web_v2/src/pages/MapLens.vue`
+- Create: `web/src/pages/MapLens.vue`
 
 - [ ] **Step 1: Create `MapLens.vue`**
 
@@ -3306,7 +3306,7 @@ npm run dev
 - [ ] **Step 3: Commit**
 
 ```bash
-git add web_v2/src/
+git add web/src/
 git commit -m "feat(web-v2): MapLens page with SVG map + pins"
 ```
 
@@ -3317,7 +3317,7 @@ git commit -m "feat(web-v2): MapLens page with SVG map + pins"
 - [ ] **Step 1: Full smoke test**
 
 ```bash
-cd web_v2
+cd web
 npm run dev
 
 # Test all routes:
@@ -3339,7 +3339,7 @@ npm run dev
 - [ ] **Step 3: Final commit**
 
 ```bash
-git add -A web_v2/
+git add -A web/
 git commit -m "feat(web-v2): complete frontend — all 11 pages operational"
 ```
 

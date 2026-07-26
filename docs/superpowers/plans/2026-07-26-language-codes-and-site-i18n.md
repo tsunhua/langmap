@@ -8,7 +8,7 @@
 
 已完成可運行版本：Glottolog/BCP47 驗證與 pinned release tooling、一次性 migration manifest verifier、project-scoped locale/message API、bundle/workbench/batch/archive、`en-US`/`zh-Hant-TW`/`zh-Hans-CN` source catalogs、vue-i18n runtime、LangSwitcher、catalog check/sync、全站 production 文案遷移與完整 frontend/backend/tooling 測試。
 
-本地或遠端 D1 啟動前必須先執行 `cd backend_v2 && npm run db:migrate:local`（部署環境使用 `npm run db:migrate:remote`）；未套用 `0006_project_scoped_localization.sql` 時，locale API 不可使用舊版 `ui_locales` schema。
+本地或遠端 D1 啟動前必須先執行 `cd backend && npm run db:migrate:local`（部署環境使用 `npm run db:migrate:remote`）；未套用 `0006_project_scoped_localization.sql` 時，locale API 不可使用舊版 `ui_locales` schema。
 
 ## 目標與交付物
 
@@ -35,7 +35,7 @@
 - [ ] 凍結 `langmap-web`、`en`、`nan-Hant-x-chao1238`、`und-x-<glottocode>` 等 fixture，供後續測試共用。
 - [ ] 建立遷移 manifest 初稿：舊碼 → canonical code；無法映射的資料列要輸出錯誤清單並阻止正式遷移。
 
-**主要檔案：** `backend_v2/src/utils/`、`backend_v2/src/types.ts`、`scripts/`、`backend_v2/tests/`。
+**主要檔案：** `backend/src/utils/`、`backend/src/types.ts`、`scripts/`、`backend/tests/`。
 
 ## Phase 1：Glottolog 與語言資料基礎
 
@@ -69,7 +69,7 @@
 - [ ] 遷移完成後移除 alias runtime、舊碼 fallback、舊欄位相容分支；保留 manifest 作為歷史記錄。
 - [ ] 執行資料完整性檢查：expression ID 與 URL 不變，expression 數量、mapping 邊數、vote 數、語言統計與遷移前一致。
 
-**主要檔案：** `backend_v2/schema.sql`、`backend_v2/migrations/`、`scripts/v2/`、相關 routes/repositories/tests。
+**主要檔案：** `backend/schema.sql`、`backend/migrations/`、`scripts/v2/`、相關 routes/repositories/tests。
 
 ## Phase 3：本站 i18n 資料與後端 API
 
@@ -102,7 +102,7 @@
 
 **目的：** 讓本站以 `en` 啟動，並能在 100–500 個 locale 下穩定使用。
 
-- [ ] 安裝並初始化 `vue-i18n`；建立 `web_v2/src/locales/en.ts` source catalog，檢查 key、placeholder、plural pattern 與 `ui_messages`。
+- [ ] 安裝並初始化 `vue-i18n`；建立 `web/src/locales/en.ts` source catalog，檢查 key、placeholder、plural pattern 與 `ui_messages`。
 - [ ] 建立 localization API client、Pinia store/composable；`LOCALIZATION_PROJECT_ID = 'langmap-web'` 集中管理。
 - [ ] 先以內建 `en` mount，再非阻塞載入偏好 bundle；初始化順序為 active localStorage 偏好 → `navigator.languages` 精確/父級匹配 → `en`，禁止 `startsWith` 模糊匹配。
 - [ ] 來源語系不下載 bundle；載入失敗仍使用完整英文內建 catalog。
@@ -114,7 +114,7 @@
 - [ ] locale 空白搜尋先顯示 40 筆、接近底部再增加 40 筆；超過 500 且實測需要後才加入虛擬列表，不預載其他 bundle。
 - [ ] 加入 desktop/390px、長字串與 RTL 視覺驗收，沿用 `atlas.css` tokens；地圖/圖譜座標不鏡像。
 
-**主要檔案：** `web_v2/src/locales/`、`web_v2/src/api/`、`web_v2/src/stores/`、`web_v2/src/composables/`、`web_v2/src/components/`。
+**主要檔案：** `web/src/locales/`、`web/src/api/`、`web/src/stores/`、`web/src/composables/`、`web/src/components/`。
 
 ## Phase 5：社群翻譯工作台
 

@@ -70,13 +70,13 @@ Task 1 API 型別與遍歷核心
 
 **Files：**
 
-- Create: `backend_v2/src/utils/mappingGraph.ts`
-- Create: `backend_v2/tests/mappingGraph.test.ts`
-- Modify: `backend_v2/src/types.ts`
+- Create: `backend/src/utils/mappingGraph.ts`
+- Create: `backend/tests/mappingGraph.test.ts`
+- Modify: `backend/src/types.ts`
 
 - [ ] **Step 1：定義後端圖型別**
 
-在 `backend_v2/src/types.ts` 新增：
+在 `backend/src/types.ts` 新增：
 
 ```ts
 export interface MappingGraphNode {
@@ -124,7 +124,7 @@ export interface MappingGraphResponse {
 - [ ] **Step 3：確認測試先失敗**
 
 ```bash
-cd backend_v2
+cd backend
 npx vitest run tests/mappingGraph.test.ts
 ```
 
@@ -173,7 +173,7 @@ export async function buildMappingGraph(
 - [ ] **Step 5：執行純遍歷測試**
 
 ```bash
-cd backend_v2
+cd backend
 npx vitest run tests/mappingGraph.test.ts
 ```
 
@@ -182,7 +182,7 @@ Expected：全部通過。
 - [ ] **Step 6：Commit**
 
 ```bash
-git add backend_v2/src/types.ts backend_v2/src/utils/mappingGraph.ts backend_v2/tests/mappingGraph.test.ts
+git add backend/src/types.ts backend/src/utils/mappingGraph.ts backend/tests/mappingGraph.test.ts
 git commit -m "feat: add mapping graph traversal core"
 ```
 
@@ -192,8 +192,8 @@ git commit -m "feat: add mapping graph traversal core"
 
 **Files：**
 
-- Modify: `backend_v2/src/routes/expressions.ts`
-- Create: `backend_v2/tests/expressions-mappings.test.ts`
+- Modify: `backend/src/routes/expressions.ts`
+- Create: `backend/tests/expressions-mappings.test.ts`
 
 - [ ] **Step 1：加入 query 參數測試**
 
@@ -280,14 +280,14 @@ Expected：
 - [ ] **Step 6：執行後端測試**
 
 ```bash
-cd backend_v2
+cd backend
 npm test
 ```
 
 - [ ] **Step 7：Commit**
 
 ```bash
-git add backend_v2/src/routes/expressions.ts backend_v2/src/utils/mappingGraph.ts backend_v2/tests
+git add backend/src/routes/expressions.ts backend/src/utils/mappingGraph.ts backend/tests
 git commit -m "feat: return graph data from expression mappings API"
 ```
 
@@ -297,11 +297,11 @@ git commit -m "feat: return graph data from expression mappings API"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/mappingGraphTypes.ts`
-- Create: `web_v2/src/components/mapping/mappingGraphModel.ts`
-- Modify: `web_v2/src/composables/useExpressions.ts`
-- Modify: `web_v2/src/pages/MapLens.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
+- Create: `web/src/components/mapping/mappingGraphTypes.ts`
+- Create: `web/src/components/mapping/mappingGraphModel.ts`
+- Modify: `web/src/composables/useExpressions.ts`
+- Modify: `web/src/pages/MapLens.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
 
 - [ ] **Step 1：建立前端圖型別**
 
@@ -374,7 +374,7 @@ export function getPrimaryIncomingEdge(
 - [ ] **Step 6：前端 build**
 
 ```bash
-cd web_v2
+cd web
 npm run build
 ```
 
@@ -383,11 +383,11 @@ Expected：型別檢查通過，MapLens 和 MappingDetail 均可載入。
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/components/mapping/mappingGraphTypes.ts \
-  web_v2/src/components/mapping/mappingGraphModel.ts \
-  web_v2/src/composables/useExpressions.ts \
-  web_v2/src/pages/MapLens.vue \
-  web_v2/src/pages/MappingDetail.vue
+git add web/src/components/mapping/mappingGraphTypes.ts \
+  web/src/components/mapping/mappingGraphModel.ts \
+  web/src/composables/useExpressions.ts \
+  web/src/pages/MapLens.vue \
+  web/src/pages/MappingDetail.vue
 git commit -m "refactor: consume mapping graph response in web v2"
 ```
 
@@ -397,16 +397,16 @@ git commit -m "refactor: consume mapping graph response in web v2"
 
 **Files：**
 
-- Modify: `web_v2/package.json`
-- Modify: `web_v2/package-lock.json`
-- Modify: `web_v2/vite.config.ts`
-- Modify: `web_v2/tsconfig.json`
-- Create: `web_v2/src/test/setup.ts`
+- Modify: `web/package.json`
+- Modify: `web/package-lock.json`
+- Modify: `web/vite.config.ts`
+- Modify: `web/tsconfig.json`
+- Create: `web/src/test/setup.ts`
 
 - [ ] **Step 1：安裝測試與 D3 子套件**
 
 ```bash
-cd web_v2
+cd web
 npm install d3-hierarchy d3-zoom d3-drag
 npm install -D \
   @types/d3-hierarchy \
@@ -419,7 +419,7 @@ npm install -D \
 
 - [ ] **Step 2：新增 scripts**
 
-`web_v2/package.json`：
+`web/package.json`：
 
 ```json
 {
@@ -462,7 +462,7 @@ test: {
 - [ ] **Step 6：驗證**
 
 ```bash
-cd web_v2
+cd web
 npm test
 npm run build
 ```
@@ -470,8 +470,8 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/package.json web_v2/package-lock.json web_v2/vite.config.ts \
-  web_v2/tsconfig.json web_v2/src/test web_v2/src/components/mapping/mappingGraphModel.test.ts
+git add web/package.json web/package-lock.json web/vite.config.ts \
+  web/tsconfig.json web/src/test web/src/components/mapping/mappingGraphModel.test.ts
 git commit -m "test: add web v2 graph test foundation"
 ```
 
@@ -481,10 +481,10 @@ git commit -m "test: add web v2 graph test foundation"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/mappingGraphLayout.ts`
-- Create: `web_v2/src/components/mapping/mappingGraphLayout.test.ts`
-- Modify: `web_v2/src/components/mapping/mappingGraphModel.ts`
-- Modify: `web_v2/src/components/mapping/mappingGraphModel.test.ts`
+- Create: `web/src/components/mapping/mappingGraphLayout.ts`
+- Create: `web/src/components/mapping/mappingGraphLayout.test.ts`
+- Modify: `web/src/components/mapping/mappingGraphModel.ts`
+- Modify: `web/src/components/mapping/mappingGraphModel.test.ts`
 
 - [ ] **Step 1：建立固定 fixtures**
 
@@ -567,15 +567,15 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput
 - [ ] **Step 6：跑測試**
 
 ```bash
-cd web_v2
+cd web
 npm test -- mappingGraphModel mappingGraphLayout
 ```
 
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/components/mapping/mappingGraphModel* \
-  web_v2/src/components/mapping/mappingGraphLayout*
+git add web/src/components/mapping/mappingGraphModel* \
+  web/src/components/mapping/mappingGraphLayout*
 git commit -m "feat: add deterministic radial hierarchy layout"
 ```
 
@@ -585,11 +585,11 @@ git commit -m "feat: add deterministic radial hierarchy layout"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/MappingGraph.vue`
-- Create: `web_v2/src/components/mapping/GraphNode.vue`
-- Create: `web_v2/src/components/mapping/GraphEdges.vue`
-- Create: `web_v2/src/components/mapping/MappingGraph.test.ts`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
+- Create: `web/src/components/mapping/MappingGraph.vue`
+- Create: `web/src/components/mapping/GraphNode.vue`
+- Create: `web/src/components/mapping/GraphEdges.vue`
+- Create: `web/src/components/mapping/MappingGraph.test.ts`
+- Modify: `web/src/pages/MappingDetail.vue`
 
 - [ ] **Step 1：先寫渲染測試**
 
@@ -649,7 +649,7 @@ git commit -m "feat: add deterministic radial hierarchy layout"
 - [ ] **Step 6：視覺驗證**
 
 ```bash
-cd web_v2
+cd web
 npm test -- MappingGraph
 npm run build
 ```
@@ -663,11 +663,11 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/components/mapping/GraphNode.vue \
-  web_v2/src/components/mapping/GraphEdges.vue \
-  web_v2/src/components/mapping/MappingGraph.vue \
-  web_v2/src/components/mapping/MappingGraph.test.ts \
-  web_v2/src/pages/MappingDetail.vue
+git add web/src/components/mapping/GraphNode.vue \
+  web/src/components/mapping/GraphEdges.vue \
+  web/src/components/mapping/MappingGraph.vue \
+  web/src/components/mapping/MappingGraph.test.ts \
+  web/src/pages/MappingDetail.vue
 git commit -m "feat: render hierarchical mapping graph"
 ```
 
@@ -677,11 +677,11 @@ git commit -m "feat: render hierarchical mapping graph"
 
 **Files：**
 
-- Create: `web_v2/src/composables/useGraphViewport.ts`
-- Create: `web_v2/src/composables/useGraphViewport.test.ts`
-- Create: `web_v2/src/components/mapping/GraphToolbar.vue`
-- Create: `web_v2/src/components/mapping/GraphToolbar.test.ts`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
+- Create: `web/src/composables/useGraphViewport.ts`
+- Create: `web/src/composables/useGraphViewport.test.ts`
+- Create: `web/src/components/mapping/GraphToolbar.vue`
+- Create: `web/src/components/mapping/GraphToolbar.test.ts`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
 
 - [ ] **Step 1：先寫 transform helper 測試**
 
@@ -752,7 +752,7 @@ SVG 與節點必須在同一 world transform 下。
 - [ ] **Step 6：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test -- useGraphViewport GraphToolbar
 npm run build
 ```
@@ -760,9 +760,9 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/composables/useGraphViewport* \
-  web_v2/src/components/mapping/GraphToolbar* \
-  web_v2/src/components/mapping/MappingGraph.vue
+git add web/src/composables/useGraphViewport* \
+  web/src/components/mapping/GraphToolbar* \
+  web/src/components/mapping/MappingGraph.vue
 git commit -m "feat: add mapping graph pan and zoom controls"
 ```
 
@@ -772,11 +772,11 @@ git commit -m "feat: add mapping graph pan and zoom controls"
 
 **Files：**
 
-- Create: `web_v2/src/composables/useGraphDrag.ts`
-- Create: `web_v2/src/composables/useGraphDrag.test.ts`
-- Modify: `web_v2/src/components/mapping/GraphNode.vue`
-- Modify: `web_v2/src/components/mapping/GraphEdges.vue`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
+- Create: `web/src/composables/useGraphDrag.ts`
+- Create: `web/src/composables/useGraphDrag.test.ts`
+- Modify: `web/src/components/mapping/GraphNode.vue`
+- Modify: `web/src/components/mapping/GraphEdges.vue`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
 
 - [ ] **Step 1：先定義拖曳狀態**
 
@@ -830,7 +830,7 @@ GraphToolbar 的 reset：
 - [ ] **Step 6：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test -- useGraphDrag
 npm run build
 ```
@@ -838,10 +838,10 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/composables/useGraphDrag* \
-  web_v2/src/components/mapping/GraphNode.vue \
-  web_v2/src/components/mapping/GraphEdges.vue \
-  web_v2/src/components/mapping/MappingGraph.vue
+git add web/src/composables/useGraphDrag* \
+  web/src/components/mapping/GraphNode.vue \
+  web/src/components/mapping/GraphEdges.vue \
+  web/src/components/mapping/MappingGraph.vue
 git commit -m "feat: support draggable mapping graph nodes"
 ```
 
@@ -851,14 +851,14 @@ git commit -m "feat: support draggable mapping graph nodes"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/GraphInspector.vue`
-- Create: `web_v2/src/components/mapping/GraphInspector.test.ts`
-- Modify: `web_v2/src/components/mapping/mappingGraphModel.ts`
-- Modify: `web_v2/src/components/mapping/mappingGraphModel.test.ts`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
-- Modify: `web_v2/src/components/mapping/GraphNode.vue`
-- Modify: `web_v2/src/components/mapping/GraphEdges.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
+- Create: `web/src/components/mapping/GraphInspector.vue`
+- Create: `web/src/components/mapping/GraphInspector.test.ts`
+- Modify: `web/src/components/mapping/mappingGraphModel.ts`
+- Modify: `web/src/components/mapping/mappingGraphModel.test.ts`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
+- Modify: `web/src/components/mapping/GraphNode.vue`
+- Modify: `web/src/components/mapping/GraphEdges.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
 
 - [ ] **Step 1：先寫 path helper 測試**
 
@@ -916,7 +916,7 @@ getRelatedCrossEdges(nodeId, displayTree): MappingGraphEdge[]
 - [ ] **Step 6：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test -- mappingGraphModel GraphInspector MappingGraph
 npm run build
 ```
@@ -924,12 +924,12 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/components/mapping/GraphInspector* \
-  web_v2/src/components/mapping/mappingGraphModel* \
-  web_v2/src/components/mapping/MappingGraph.vue \
-  web_v2/src/components/mapping/GraphNode.vue \
-  web_v2/src/components/mapping/GraphEdges.vue \
-  web_v2/src/pages/MappingDetail.vue
+git add web/src/components/mapping/GraphInspector* \
+  web/src/components/mapping/mappingGraphModel* \
+  web/src/components/mapping/MappingGraph.vue \
+  web/src/components/mapping/GraphNode.vue \
+  web/src/components/mapping/GraphEdges.vue \
+  web/src/pages/MappingDetail.vue
 git commit -m "feat: add mapping graph selection and inspector"
 ```
 
@@ -939,13 +939,13 @@ git commit -m "feat: add mapping graph selection and inspector"
 
 **Files：**
 
-- Create: `web_v2/src/composables/useMappingGraph.ts`
-- Create: `web_v2/src/composables/useMappingGraph.test.ts`
-- Modify: `web_v2/src/components/mapping/GraphToolbar.vue`
-- Modify: `web_v2/src/components/mapping/GraphNode.vue`
-- Modify: `web_v2/src/components/mapping/GraphInspector.vue`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
+- Create: `web/src/composables/useMappingGraph.ts`
+- Create: `web/src/composables/useMappingGraph.test.ts`
+- Modify: `web/src/components/mapping/GraphToolbar.vue`
+- Modify: `web/src/components/mapping/GraphNode.vue`
+- Modify: `web/src/components/mapping/GraphInspector.vue`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
 
 - [ ] **Step 1：建立檢視狀態 composable**
 
@@ -1017,7 +1017,7 @@ Toolbar 支援：
 - [ ] **Step 7：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test -- useMappingGraph GraphToolbar GraphNode
 npm run build
 ```
@@ -1025,12 +1025,12 @@ npm run build
 - [ ] **Step 8：Commit**
 
 ```bash
-git add web_v2/src/composables/useMappingGraph* \
-  web_v2/src/components/mapping/GraphToolbar.vue \
-  web_v2/src/components/mapping/GraphNode.vue \
-  web_v2/src/components/mapping/GraphInspector.vue \
-  web_v2/src/components/mapping/MappingGraph.vue \
-  web_v2/src/pages/MappingDetail.vue
+git add web/src/composables/useMappingGraph* \
+  web/src/components/mapping/GraphToolbar.vue \
+  web/src/components/mapping/GraphNode.vue \
+  web/src/components/mapping/GraphInspector.vue \
+  web/src/components/mapping/MappingGraph.vue \
+  web/src/pages/MappingDetail.vue
 git commit -m "feat: add progressive mapping graph exploration"
 ```
 
@@ -1040,11 +1040,11 @@ git commit -m "feat: add progressive mapping graph exploration"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/MappingHierarchyList.vue`
-- Create: `web_v2/src/components/mapping/MappingHierarchyList.test.ts`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
-- Delete later: `web_v2/src/components/mapping/MappingList.vue`
+- Create: `web/src/components/mapping/MappingHierarchyList.vue`
+- Create: `web/src/components/mapping/MappingHierarchyList.test.ts`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
+- Delete later: `web/src/components/mapping/MappingList.vue`
 
 - [ ] **Step 1：先寫層級列表測試**
 
@@ -1092,7 +1092,7 @@ Emits：
 - [ ] **Step 6：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test -- MappingHierarchyList MappingGraph
 npm run build
 ```
@@ -1100,10 +1100,10 @@ npm run build
 - [ ] **Step 7：Commit**
 
 ```bash
-git add web_v2/src/components/mapping/MappingHierarchyList* \
-  web_v2/src/components/mapping/MappingGraph.vue \
-  web_v2/src/pages/MappingDetail.vue
-git rm web_v2/src/components/mapping/MappingList.vue
+git add web/src/components/mapping/MappingHierarchyList* \
+  web/src/components/mapping/MappingGraph.vue \
+  web/src/pages/MappingDetail.vue
+git rm web/src/components/mapping/MappingList.vue
 git commit -m "feat: add synchronized mapping hierarchy list"
 ```
 
@@ -1113,14 +1113,14 @@ git commit -m "feat: add synchronized mapping hierarchy list"
 
 **Files：**
 
-- Create: `web_v2/src/components/mapping/GraphMobileInspector.vue`
-- Create: `web_v2/src/components/mapping/MappingGraphSkeleton.vue`
-- Modify: `web_v2/src/pages/MappingDetail.vue`
-- Modify: `web_v2/src/components/mapping/MappingGraph.vue`
-- Modify: `web_v2/src/components/mapping/GraphToolbar.vue`
-- Modify: `web_v2/src/components/mapping/GraphInspector.vue`
-- Modify: `web_v2/src/composables/useMappingGraph.ts`
-- Modify: `web_v2/src/router.ts` only if query typing requires it
+- Create: `web/src/components/mapping/GraphMobileInspector.vue`
+- Create: `web/src/components/mapping/MappingGraphSkeleton.vue`
+- Modify: `web/src/pages/MappingDetail.vue`
+- Modify: `web/src/components/mapping/MappingGraph.vue`
+- Modify: `web/src/components/mapping/GraphToolbar.vue`
+- Modify: `web/src/components/mapping/GraphInspector.vue`
+- Modify: `web/src/composables/useMappingGraph.ts`
+- Modify: `web/src/router.ts` only if query typing requires it
 
 - [ ] **Step 1：建立行動版模式切換**
 
@@ -1209,7 +1209,7 @@ git commit -m "feat: add synchronized mapping hierarchy list"
 - [ ] **Step 8：測試與 build**
 
 ```bash
-cd web_v2
+cd web
 npm test
 npm run build
 ```
@@ -1217,10 +1217,10 @@ npm run build
 - [ ] **Step 9：Commit**
 
 ```bash
-git add web_v2/src/components/mapping \
-  web_v2/src/composables/useMappingGraph.ts \
-  web_v2/src/pages/MappingDetail.vue \
-  web_v2/src/router.ts
+git add web/src/components/mapping \
+  web/src/composables/useMappingGraph.ts \
+  web/src/pages/MappingDetail.vue \
+  web/src/router.ts
 git commit -m "feat: finish responsive mapping graph experience"
 ```
 
@@ -1230,8 +1230,8 @@ git commit -m "feat: finish responsive mapping graph experience"
 
 **Files：**
 
-- Delete: `web_v2/src/components/mapping/RadialGraph.vue`
-- Modify: `web_v2/src/assets/atlas.css`
+- Delete: `web/src/components/mapping/RadialGraph.vue`
+- Modify: `web/src/assets/atlas.css`
 - Modify: `docs/superpowers/specs/2026-07-25-web-v2-frontend-design.md`
 - Modify: `docs/superpowers/specs/2026-07-26-mapping-detail-graph-optimization.md`
 - Modify: `docs/superpowers/plans/2026-07-26-mapping-detail-graph-optimization.md`
@@ -1241,7 +1241,7 @@ git commit -m "feat: finish responsive mapping graph experience"
 確認沒有 import 後：
 
 ```bash
-git rm web_v2/src/components/mapping/RadialGraph.vue
+git rm web/src/components/mapping/RadialGraph.vue
 ```
 
 搜尋並移除：
@@ -1310,14 +1310,14 @@ Status: Implemented
 終端 B：
 
 ```bash
-cd backend_v2
+cd backend
 npm test
 ```
 
 終端 C：
 
 ```bash
-cd web_v2
+cd web
 npm test
 npm run build
 ```
@@ -1368,7 +1368,7 @@ git diff --check
 - [ ] **Step 10：Commit**
 
 ```bash
-git add web_v2 docs/superpowers
+git add web docs/superpowers
 git commit -m "docs: finalize mapping graph implementation"
 ```
 
@@ -1454,7 +1454,7 @@ Responsive:
 Verification:
 - backend tests: 17 passed (mappingGraph unit + route integration)
 - frontend tests: 73 passed (8 suites)
-- web_v2 build: passed
+- web build: passed
 - root build: pending (requires dev server)
 
 Follow-ups:

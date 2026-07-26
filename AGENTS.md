@@ -8,8 +8,8 @@
 
 ## 當前主線
 
-- 前端：`web_v2/`，Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS。
-- 後端：`backend_v2/`，Hono + TypeScript + Cloudflare Workers + D1。
+- 前端：`web/`，Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS。
+- 後端：`backend/`，Hono + TypeScript + Cloudflare Workers + D1。
 - API prefix：`/api/v2`，一般回應格式為 `{ success, data?, error?, message? }`。
 - `web/`、`backend/` 是舊版；除非需求明確指向，否則不要同步修改。
 - `apple/` 是獨立 SwiftUI 客戶端，不要在 Web/API 任務中順手修改。
@@ -17,11 +17,11 @@
 ## 目錄
 
 ```text
-web_v2/src/          pages / components / composables / stores / api / assets
-backend_v2/src/      index.tsx / routes / utils / types.ts
-backend_v2/tests/    Vitest 整合測試
-backend_v2/migrations/ D1 增量 migration
-backend_v2/schema.sql  新資料庫完整 schema
+web/src/          pages / components / composables / stores / api / assets
+backend/src/      index.tsx / routes / utils / types.ts
+backend/tests/    Vitest 整合測試
+backend/migrations/ D1 增量 migration
+backend/schema.sql  新資料庫完整 schema
 docs/superpowers/    specs / plans
 scripts/             資料匯入與維護
 ```
@@ -30,20 +30,20 @@ scripts/             資料匯入與維護
 
 ```bash
 ./dev.sh                 # Web :5173 + API :8788
-./build.sh               # build web_v2 → backend_v2/public
-cd web_v2 && npm run build
-cd backend_v2 && npm test
+./build.sh               # build web → backend/public
+cd web && npm run build
+cd backend && npm test
 ```
 
 - 後端整合測試依賴 `127.0.0.1:8788` 與本地 D1，執行前先啟動 Worker。
-- `web_v2/dist/`、`backend_v2/public/`、`.wrangler/` 是生成或本地狀態，不要手動修改。
+- `web/dist/`、`backend/public/`、`.wrangler/` 是生成或本地狀態，不要手動修改。
 
 ## 程式規範
 
 - Vue 使用 `<script setup lang="ts">`；避免新增 `any`。
 - 頁面負責組合，重用視圖放 component，重用邏輯放 composable。
-- 前端 API 統一經 `web_v2/src/api/client.ts`，不要寫死 base URL。
-- 後端新路由放 `backend_v2/src/routes/`，使用 `utils/response.ts` 的回應 helper。
+- 前端 API 統一經 `web/src/api/client.ts`，不要寫死 base URL。
+- 後端新路由放 `backend/src/routes/`，使用 `utils/response.ts` 的回應 helper。
 - API 契約變更時同步更新型別、composable、測試及相關規格。
 - schema 變更同時新增 migration 並更新 `schema.sql`。
 - 資料問題回到來源、匯入腳本或 migration 修正，不在前端寫死例外。
@@ -52,7 +52,7 @@ cd backend_v2 && npm test
 
 ## 前端設計
 
-- 沿用 `web_v2/src/assets/atlas.css` 的 tokens、暖紙張背景、陶土色主色、藍色關係線與低圓角。
+- 沿用 `web/src/assets/atlas.css` 的 tokens、暖紙張背景、陶土色主色、藍色關係線與低圓角。
 - 不另起顏色、陰影或圓角系統；不因 Tailwind 已安裝而機械式重寫 scoped CSS。
 - 圖示沿用 `lucide-vue-next`，不要手寫 SVG path。
 - 行動版不是桌面版的等比例縮小；觸控目標至少 44px。
@@ -80,7 +80,7 @@ cd backend_v2 && npm test
 
 ## 驗證與 Git
 
-- 前端變更至少執行 `cd web_v2 && npm run build`，並檢查相關桌面與行動 viewport。
+- 前端變更至少執行 `cd web && npm run build`，並檢查相關桌面與行動 viewport。
 - 後端變更執行相關測試；跨前後端變更再執行 `./build.sh` 與完整流程驗證。
 - 文件變更執行 `git diff --check` 並檢查連結。
 - 保留使用者既有未提交變更，不修改無關檔案。
