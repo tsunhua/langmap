@@ -1,10 +1,20 @@
 import { Hono } from 'hono';
-import { success, notFound } from '../utils/response';
+import { success, notFound, badRequest, conflict } from '../utils/response';
+import { requireAuth } from '../middleware/auth';
 import { buildMappingGraph, parseMappingHops } from '../utils/mappingGraph';
 import type { Bindings } from '../types';
 import type { LoadEdges, LoadExpressions, NeighborRow, ExpressionRow } from '../utils/mappingGraph';
 
 const expressions = new Hono<{ Bindings: Bindings }>();
+
+function fnv1a(str: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  return hash;
+}
 
 // GET /search — search for expression picker
 expressions.get('/search', async (c) => {
@@ -28,6 +38,75 @@ expressions.get('/search', async (c) => {
 
   const { results } = await c.env.DB.prepare(query).bind(...params).all();
   return success(c, results);
+});
+
+// POST / — create a single expression and optionally link it to another one
+expressions.post('/', requireAuth, async (c) => {
+  const user = c.get('user')!;
+  const body = await c.req.json<{
+    text?: string;
+    language_code?: string;
+    region_name?: string;
+    related_to?: number;
+  }>();
+
+  const text = body.text?.trim() || '';
+  const languageCode = body.language_code?.trim() || '';
+  const regionName = body.region_name?.trim() || '';
+
+  if (!text || !languageCode) {
+    return badRequest(c, 'invalid_expression', 'text and language_code are required');
+  }
+
+  const existing = await c.env.DB.prepare(
+    `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
+  ).bind(text, languageCode).first<{ id: number }>();
+
+  const expressionId = existing?.id ?? fnv1a(`${text}|${languageCode}`);
+  const statements: D1Statement[] = [];
+
+  if (!existing) {
+    statements.push(
+      c.env.DB.prepare(
+        `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, source_type, created_by, review_status)
+         VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
+      ).bind(expressionId, text, languageCode, regionName || null, user.username)
+    );
+  }
+
+  let mappingCreated = false;
+  if (body.related_to != null) {
+    const relatedId = Number(body.related_to);
+    if (!Number.isFinite(relatedId)) {
+      return badRequest(c, 'invalid_related_to', 'related_to must be a number');
+    }
+    if (relatedId === expressionId) {
+      return conflict(c, 'self_relation', 'Expression cannot map to itself');
+    }
+
+    const related = await c.env.DB.prepare(
+      `SELECT id FROM expressions WHERE id = ? LIMIT 1`
+    ).bind(relatedId).first<{ id: number }>();
+    if (!related) {
+      return badRequest(c, 'related_expression_not_found', 'related_to expression not found');
+    }
+
+    const edgeId = [Math.min(expressionId, relatedId), Math.max(expressionId, relatedId)].join('-');
+    statements.push(
+      c.env.DB.prepare(
+        `INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
+         VALUES (?, ?, ?, 0, 'manual', ?)`
+      ).bind(edgeId, Math.min(expressionId, relatedId), Math.max(expressionId, relatedId), user.username)
+    );
+    mappingCreated = true;
+  }
+
+  await c.env.DB.batch(statements);
+
+  return success(c, {
+    expressionId,
+    mappingCreated,
+  }, undefined, existing ? 200 : 201);
 });
 
 // GET /:id — expression detail

@@ -83,20 +83,19 @@ watch(() => route.path, () => { menuOpen.value = false })
       <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
     </nav>
 
-    <form v-if="route.path !== '/search'" class="top-search" role="search" @submit.prevent="onSearch">
-      <Search :size="14" aria-hidden="true" />
-      <kbd>/</kbd>
-      <input
-        ref="searchInput"
-        v-model="searchQuery"
-        type="search"
-        placeholder="搜尋詞句…"
-        aria-label="搜尋詞句"
-      />
-      <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
-    </form>
-
     <div class="right-group">
+      <form v-if="route.path !== '/search'" class="top-search" role="search" @submit.prevent="onSearch">
+        <Search :size="14" aria-hidden="true" />
+        <kbd>/</kbd>
+        <input
+          ref="searchInput"
+          v-model="searchQuery"
+          type="search"
+          placeholder="搜尋詞句…"
+          aria-label="搜尋詞句"
+        />
+        <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
+      </form>
       <router-link to="/contribute" class="btn btn-primary btn-sm contrib-btn">
         <Plus :size="14" aria-hidden="true" /> 貢獻
       </router-link>
@@ -196,7 +195,6 @@ watch(() => route.path, () => { menuOpen.value = false })
 .appnav a:hover, .appnav a.on { color: var(--fg); background: var(--bg); }
 
 .top-search {
-  margin-left: auto;
   display: flex; align-items: center; gap: 6px;
   position: relative;
   color: var(--muted);

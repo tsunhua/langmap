@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import api from '@/api/client'
 import { useExpressions } from '@/composables/useExpressions'
 import MappingGraph from '@/components/mapping/MappingGraph.vue'
 import MappingGraphSkeleton from '@/components/mapping/MappingGraphSkeleton.vue'
@@ -12,7 +13,7 @@ import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/map
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { ArrowUpRight, Plus, ChevronRight, Share2, List } from 'lucide-vue-next'
+import { ArrowUpRight, Plus, ChevronRight, Share2, List, X } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +35,12 @@ const isMobile = ref(false)
 
 const isFullscreen = ref(false)
 const MAX_HOPS = 3
+const showQuickAdd = ref(false)
+const quickAddText = ref('')
+const quickAddLang = ref('')
+const quickAddRegion = ref('')
+const quickAddSubmitting = ref(false)
+const quickAddError = ref('')
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
@@ -179,6 +186,48 @@ function toggleMobileMode() {
   mobileMode.value = mobileMode.value === 'graph' ? 'list' : 'graph'
 }
 
+function openQuickAdd() {
+  showQuickAdd.value = true
+  quickAddError.value = ''
+}
+
+function closeQuickAdd() {
+  showQuickAdd.value = false
+  quickAddError.value = ''
+}
+
+async function submitQuickAdd() {
+  const text = quickAddText.value.trim()
+  const languageCode = quickAddLang.value.trim()
+  const regionName = quickAddRegion.value.trim()
+  if (!text || !languageCode) {
+    quickAddError.value = '請輸入詞句與語言代碼'
+    return
+  }
+  quickAddSubmitting.value = true
+  quickAddError.value = ''
+  try {
+    const { data } = await api.post('/expressions', {
+      text,
+      language_code: languageCode,
+      region_name: regionName || undefined,
+      related_to: id.value,
+    })
+    const newId = data.data?.expressionId
+    closeQuickAdd()
+    quickAddText.value = ''
+    quickAddLang.value = ''
+    quickAddRegion.value = ''
+    if (newId && newId !== id.value) {
+      router.push(`/mapping/${newId}`)
+    }
+  } catch (e: any) {
+    quickAddError.value = e.response?.data?.message || e.response?.data?.error || '新增失敗'
+  } finally {
+    quickAddSubmitting.value = false
+  }
+}
+
 function expandAll() {
   collapsedIds.value = new Set()
 }
@@ -242,13 +291,43 @@ const sourceLabel = computed(() => {
     </div>
 
     <div class="anchor-acts">
-      <router-link :to="`/contribute`" class="btn btn-primary btn-sm">
-        <Plus :size="14" aria-hidden="true" /> 添加映射
-      </router-link>
+      <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
+        <Plus :size="14" aria-hidden="true" /> 添加詞句
+      </button>
       <router-link :to="`/map/${expr.id}`" class="btn btn-sm">
         <ArrowUpRight :size="14" aria-hidden="true" /> 在地圖看此概念
       </router-link>
     </div>
+
+    <section v-if="showQuickAdd" class="quick-add" aria-label="快速新增詞句">
+      <div class="qa-head">
+        <h2>快速新增詞句</h2>
+        <button class="qa-close" type="button" aria-label="關閉快速新增" @click="closeQuickAdd">
+          <X :size="16" aria-hidden="true" />
+        </button>
+      </div>
+      <p class="qa-lead">新增一個詞句，並直接和目前這個詞句建立映射。</p>
+      <div class="qa-grid">
+        <label>
+          <span>語言代碼</span>
+          <input v-model="quickAddLang" placeholder="例如 en / zh-Hant" aria-label="語言代碼" />
+        </label>
+        <label>
+          <span>地區</span>
+          <input v-model="quickAddRegion" placeholder="可選" aria-label="地區" />
+        </label>
+        <label class="qa-text">
+          <span>詞句</span>
+          <input v-model="quickAddText" placeholder="輸入詞句…" aria-label="詞句" />
+        </label>
+      </div>
+      <p v-if="quickAddError" class="qa-error" role="alert">{{ quickAddError }}</p>
+      <div class="qa-actions">
+        <button class="btn btn-primary btn-sm" type="button" :disabled="quickAddSubmitting" @click="submitQuickAdd">
+          {{ quickAddSubmitting ? '新增中…' : '新增並建立映射' }}
+        </button>
+      </div>
+    </section>
 
     <div class="nb-head">
       <h2>對照集</h2>
@@ -426,5 +505,69 @@ const sourceLabel = computed(() => {
 .anchor-meta .coords { font-size: 11px; }
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
 
+.quick-add {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  padding: 14px;
+}
+.qa-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.qa-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.qa-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: var(--r);
+}
+.qa-close:hover { color: var(--fg); background: var(--surface-2); }
+.qa-lead { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.qa-grid {
+  display: grid;
+  grid-template-columns: 160px 160px 1fr;
+  gap: 10px;
+}
+.qa-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.qa-grid input {
+  min-width: 0;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg);
+  padding: 0 10px;
+  font-size: 13px;
+}
+.qa-grid input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.qa-text { grid-column: 1 / -1; }
+.qa-error { margin: 10px 0 0; color: var(--down); font-size: 13px; }
+.qa-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+
 .md-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; }
+
+@media (max-width: 700px) {
+  .qa-grid { grid-template-columns: 1fr; }
+}
 </style>
