@@ -2,9 +2,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
-import RadialGraph from '@/components/mapping/RadialGraph.vue'
+import MappingGraph from '@/components/mapping/MappingGraph.vue'
 import MappingList from '@/components/mapping/MappingList.vue'
-import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
@@ -22,6 +21,7 @@ const graph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
 const loading = ref(true)
 const loadError = ref('')
+const selectedNodeId = ref<number | null>(null)
 
 const MAX_HOPS = 3
 
@@ -53,31 +53,38 @@ async function changeHops(h: 1 | 2 | 3) {
 }
 
 function selectNode(nodeId: number) {
+  selectedNodeId.value = nodeId
+}
+
+function navigateToNode(nodeId: number) {
+  if (nodeId === id.value) return
   router.push(`/mapping/${nodeId}`)
 }
 
-// TODO(remove in Task 6): bridge new graph shape to legacy RadialGraph/MappingList props.
-const legacyMappings = computed(() => {
+const directCount = computed(() => graph.value?.layer_counts[1] ?? 0)
+const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (graph.value?.layer_counts[3] ?? 0))
+
+const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
+
+const mappingList = computed(() => {
+  if (!graph.value) return []
   const g = graph.value
-  if (!g) return []
   return g.nodes
-    .filter((n) => n.depth === 1)
-    .map((n) => {
-      const edge = getPrimaryIncomingEdge(n.expression_id, g)
+    .filter(n => n.expression_id !== g.root_id)
+    .map(n => {
+      const edge = g.edges.find(e => e.target_id === n.expression_id)
       return {
+        edge_id: edge?.edge_id ?? null,
         expression_id: n.expression_id,
         text: n.text,
         language_code: n.language_code,
         language_name: n.language_name ?? '',
         score: edge?.score ?? 0,
-        hops: 1,
-        edge_id: edge?.edge_id ?? null,
+        hops: n.depth,
       }
     })
+    .sort((a, b) => a.hops - b.hops || b.score - a.score)
 })
-
-const directCount = computed(() => graph.value?.layer_counts[1] ?? 0)
-const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (graph.value?.layer_counts[3] ?? 0))
 
 const coords = computed(() => {
   const lat = expr.value?.region_latitude
@@ -136,36 +143,15 @@ const sourceLabel = computed(() => {
       </span>
     </div>
 
-    <template v-if="legacyMappings.length">
-      <RadialGraph
-        :anchor-id="expr.id"
-        :anchor-text="expr.text"
-        :anchor-lang="expr.language_code"
-        :mappings="legacyMappings"
+    <template v-if="hasMappings">
+      <MappingGraph
+        :graph="graph!"
+        :selected-node-id="selectedNodeId"
         @select="selectNode"
+        @navigate="navigateToNode"
       />
 
-      <div class="expand-hop">
-        <span>顯示半徑:</span>
-        <span class="hop-ring" :aria-label="`目前 ${hops} 跳`">
-          <i
-            v-for="h in MAX_HOPS"
-            :key="h"
-            class="hop-dot"
-            :class="{ off: h > hops }"
-          />
-        </span>
-        <button
-          v-if="hops < MAX_HOPS"
-          type="button"
-          @click="changeHops(Math.min(hops + 1, MAX_HOPS) as 1 | 2 | 3)"
-        >
-          展開至 {{ Math.min(hops + 1, MAX_HOPS) }} 跳 ->
-        </button>
-        <button v-else type="button" disabled>已展開 {{ MAX_HOPS }} 跳 ✓</button>
-      </div>
-
-      <MappingList :mappings="legacyMappings" />
+      <MappingList :mappings="mappingList" />
     </template>
 
     <div v-else class="md-empty">
@@ -190,21 +176,6 @@ const sourceLabel = computed(() => {
 .anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .anchor-meta .coords { font-size: 11px; }
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
-
-.expand-hop {
-  margin: var(--space-md) 0 var(--space-base); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-}
-.expand-hop button {
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
-  background: var(--surface); border: 1px solid var(--border); color: var(--fg);
-  padding: 6px 12px; border-radius: var(--r); cursor: pointer;
-}
-.expand-hop button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-.expand-hop button:disabled { color: var(--faint); cursor: default; }
-.hop-ring { display: inline-flex; gap: 3px; align-items: center; }
-.hop-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.hop-dot.off { background: var(--border); }
 
 .md-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; }
 </style>
