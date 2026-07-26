@@ -20,6 +20,66 @@ scripts/v2/
 
 ## 使用方式
 
+### 生產建立 v2 並只同步用戶資料
+
+此流程直接在 Cloudflare D1 之間同步 `users` 與
+`email_verification_tokens`，不需要先把舊資料庫完整下載到本地。
+`setup` 只允許建立不存在的目標資料庫，成功後會把新
+`database_id` 寫入 `backend/wrangler.jsonc` 並套用目前的
+`backend/schema.sql`。如果資料庫已建立、但 config 仍是
+`REPLACE_AFTER_CREATE`，再次執行 `setup` 會從遠端取得 ID 並接續未完成的
+初始化；若 config 已有正式 ID，則會拒絕覆蓋。
+
+```bash
+cd scripts/v2
+
+# 1. 建立 langmap-v2、寫入 binding 並建立 schema
+./migrate.sh setup --remote
+
+# 2. 從 langmap 同步用戶相關資料到 langmap-v2
+./migrate.sh sync-users --remote
+
+# 3. 核對主要表與 foreign key
+./migrate.sh verify --remote
+```
+
+來源及目標名稱可以覆寫：
+
+```bash
+OLD_DB_NAME=langmap \
+V2_DB_NAME=langmap-v2 \
+./migrate.sh sync-users --remote
+```
+
+若目標已經有用戶資料，腳本預設中止，避免重複或誤覆蓋。只有確認要
+替換時才使用：
+
+```bash
+./migrate.sh sync-users --remote --replace-users
+```
+
+`--replace-users` 會先刪除目標的驗證 token，再刪除目標用戶；如果目標
+已有投票、手冊等引用用戶的資料，foreign key 會阻止刪除。正式切換前
+應暫停註冊等寫入，再執行最後一次同步與核對。
+
+也可以指定本地 v1 SQLite 作為來源；腳本會以唯讀模式載入，並驗證
+`users`、`email_verification_tokens` 都存在：
+
+```bash
+./migrate.sh sync-users --remote \
+  --source-local /absolute/path/to/v1.sqlite
+```
+
+若本地來源需要覆蓋目標已有的用戶資料：
+
+```bash
+./migrate.sh sync-users --remote \
+  --source-local /absolute/path/to/v1.sqlite \
+  --replace-users
+```
+
+### 完整 v1 → v2 資料遷移
+
 ### 1. 同步遠端舊資料到本地
 
 ```bash

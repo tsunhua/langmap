@@ -12,7 +12,7 @@
   },
   "vars": { "SECRET_KEY": "dev-secret-change-me-before-deploy" },
   "d1_databases": [
-    { "binding": "DB", "database_name": "langmap-v2", "database_id": "REPLACE_AFTER_CREATE" }
+    { "binding": "DB", "database_name": "langmap-v2", "database_id": "69a50b71-8cff-4e50-9e73-1e9020d34bd3" }
   ],
   "observability": { "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true } }
 }
