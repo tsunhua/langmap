@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDisplayTree, getPrimaryIncomingEdge } from './mappingGraphModel'
+import { buildDisplayTree, getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse } from './mappingGraphTypes'
 
 function graphFrom(
@@ -131,6 +131,62 @@ describe('buildDisplayTree', () => {
     )
     const tree = buildDisplayTree(g)
     expect(tree.nodes.map((n) => n.id).sort((x, y) => x - y)).toEqual([1, 2, 3])
+  })
+})
+
+describe('getPathToRoot', () => {
+  it('returns [rootId] for root node', () => {
+    const tree = buildDisplayTree(graphFrom([[1, 0]], []))
+    expect(getPathToRoot(1, tree)).toEqual([1])
+  })
+
+  it('returns path from node up to root', () => {
+    const g = graphFrom(
+      [[1, 0], [2, 1], [3, 2]],
+      [['e1-2', 1, 2, 5], ['e2-3', 2, 3, 4]],
+    )
+    const tree = buildDisplayTree(g)
+    expect(getPathToRoot(3, tree)).toEqual([3, 2, 1])
+  })
+
+  it('returns correct path for depth-1 node', () => {
+    const g = graphFrom(
+      [[1, 0], [2, 1]],
+      [['e1-2', 1, 2, 5]],
+    )
+    const tree = buildDisplayTree(g)
+    expect(getPathToRoot(2, tree)).toEqual([2, 1])
+  })
+
+  it('returns [nodeId] when node not in tree', () => {
+    const tree = buildDisplayTree(graphFrom([[1, 0]], []))
+    expect(getPathToRoot(999, tree)).toEqual([999])
+  })
+})
+
+describe('getRelatedCrossEdges', () => {
+  it('returns empty array when no cross edges', () => {
+    const g = graphFrom(
+      [[1, 0], [2, 1]],
+      [['e1-2', 1, 2, 5]],
+    )
+    const tree = buildDisplayTree(g)
+    expect(getRelatedCrossEdges(2, tree)).toEqual([])
+  })
+
+  it('finds cross edges connected to the node', () => {
+    const g = graphFrom(
+      [[1, 0], [2, 1], [3, 1], [4, 2]],
+      [
+        ['e1-2', 1, 2, 10],
+        ['e1-3', 1, 3, 8],
+        ['e2-4', 2, 4, 4],
+        ['e3-4', 3, 4, 6],
+      ],
+    )
+    const tree = buildDisplayTree(g)
+    const edges = getRelatedCrossEdges(4, tree)
+    expect(edges.map((e) => e.edge_id)).toEqual(['e3-4'])
   })
 })
 

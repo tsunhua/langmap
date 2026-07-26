@@ -148,6 +148,31 @@ export function buildDisplayTree(
   return { nodes, treeEdges, crossEdges }
 }
 
+export function getPathToRoot(
+  nodeId: number,
+  tree: DisplayTree,
+): number[] {
+  const path: number[] = []
+  let current: number | null = nodeId
+  let guard = 0
+  while (current !== null && guard < 100) {
+    path.push(current)
+    const node = tree.nodes.find((n) => n.id === current)
+    current = node?.displayParentId ?? null
+    guard++
+  }
+  return path
+}
+
+export function getRelatedCrossEdges(
+  nodeId: number,
+  tree: DisplayTree,
+): MappingGraphEdge[] {
+  return tree.crossEdges.filter(
+    (e) => e.source_id === nodeId || e.target_id === nodeId,
+  )
+}
+
 function findEdgeBetween(
   edgeById: Map<string, MappingGraphEdge>,
   a: number,

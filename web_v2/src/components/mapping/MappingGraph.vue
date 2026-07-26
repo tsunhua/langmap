@@ -21,6 +21,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [id: number]
   navigate: [id: number]
+  clearSelection: []
 }>()
 
 const containerRef = ref<HTMLElement>()
@@ -115,6 +116,8 @@ const pathNodeIds = computed(() => {
 
 const currentSemanticLevel = computed<SemanticLevel>(() => props.semanticLevel ?? 'full')
 
+const showCrossEdges = computed(() => props.selectedNodeId != null)
+
 const viewport = useGraphViewport({
   containerRef: containerRef as any,
   worldRef: worldRef as any,
@@ -197,6 +200,9 @@ watch(
 function onSelectNode(id: number) {
   emit('select', id)
 }
+function onEscape() {
+  emit('clearSelection')
+}
 function onNavigateNode(id: number) {
   emit('navigate', id)
 }
@@ -212,7 +218,7 @@ const layerStats = computed(() => {
 
 <template>
   <div class="mapping-graph" role="region" aria-label="詞句對照圖譜">
-    <div ref="containerRef" class="graph-viewport">
+    <div ref="containerRef" class="graph-viewport" tabindex="-1" @keydown.escape="onEscape">
       <div ref="worldRef" class="graph-world">
         <GraphEdges
           :layout-nodes="effectiveLayoutNodes"
@@ -220,7 +226,7 @@ const layerStats = computed(() => {
           :cross-edges="layout.crossEdges"
           :selected-node-ids="selectedSet"
           :path-node-ids="pathNodeIds"
-          :show-cross-edges="false"
+          :show-cross-edges="showCrossEdges"
         />
         <GraphNode
           v-for="n in effectiveLayoutNodes"
