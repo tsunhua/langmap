@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ZoomIn, ZoomOut, Maximize2, Minus, RotateCcw, MoreHorizontal, List, Share2 } from 'lucide-vue-next'
+import { ZoomIn, ZoomOut, Maximize2, Minimize2, Minus, RotateCcw, MoreHorizontal, List, Share2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   zoomPercent: number
   currentHops: number
   maxHops: number
   mobileMode?: 'graph' | 'list'
+  isFullscreen?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   toggleMode: []
   expandAll: []
   collapseToFirst: []
+  toggleFullscreen: []
 }>()
 
 const showMore = ref(false)
@@ -78,11 +80,12 @@ function toggleMore() {
     <div class="tb-group">
       <button
         class="tb-btn"
-        aria-label="適應畫面"
-        title="適應畫面"
-        @click="emit('fit')"
+        :aria-label="isFullscreen ? '退出全屏' : '全屏'"
+        :title="isFullscreen ? '退出全屏' : '全屏'"
+        @click="emit('toggleFullscreen')"
       >
-        <Maximize2 :size="16" aria-hidden="true" />
+        <Maximize2 v-if="!isFullscreen" :size="16" aria-hidden="true" />
+        <Minimize2 v-else :size="16" aria-hidden="true" />
       </button>
       <button
         class="tb-btn tb-btn-hide-mobile"

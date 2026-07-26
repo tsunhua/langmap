@@ -10,6 +10,7 @@ const props = defineProps<{
   selectedNodeIds: Set<number>
   pathNodeIds: Set<number>
   showCrossEdges: boolean
+  bounds: { x: number; y: number; width: number; height: number }
 }>()
 
 const nodeById = computed(() => {
@@ -84,7 +85,7 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
 </script>
 
 <template>
-  <svg class="graph-edges" aria-hidden="true">
+  <svg class="graph-edges" aria-hidden="true" width="10000" height="10000">
     <line
       v-for="e in renderedEdges"
       :key="e.key"
@@ -105,8 +106,6 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
   overflow: visible;
   pointer-events: none;
 }

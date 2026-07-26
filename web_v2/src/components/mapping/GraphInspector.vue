@@ -9,7 +9,13 @@ const props = defineProps<{
   graph: MappingGraphResponse
   displayTree: DisplayTree
   anchorText: string
+  collapsedIds?: Set<number>
 }>()
+
+const isCollapsed = computed(() => {
+  if (!props.selectedNodeId) return false
+  return props.collapsedIds?.has(props.selectedNodeId) ?? false
+})
 
 const emit = defineEmits<{
   close: []
@@ -93,7 +99,7 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
         class="btn btn-sm"
         @click="emit('toggleCollapse', node.expression_id)"
       >
-        收合子分支
+        {{ isCollapsed ? '展開子分支' : '收合子分支' }}
       </button>
       <button
         class="btn btn-sm btn-primary"
@@ -187,6 +193,9 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
 }
 .gi-acts {
   margin-top: 4px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .gi-empty {
   justify-content: center;

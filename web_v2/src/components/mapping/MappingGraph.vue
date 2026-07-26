@@ -19,6 +19,7 @@ const props = defineProps<{
   collapsedIds?: Set<number>
   currentHops?: number
   maxHops?: number
+  isFullscreen?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -27,8 +28,10 @@ const emit = defineEmits<{
   clearSelection: []
   toggleCollapse: [id: number]
   changeHops: [hops: number]
+  toggleFullscreen: []
 }>()
 
+const graphRef = ref<HTMLElement>()
 const containerRef = ref<HTMLElement>()
 const worldRef = ref<HTMLElement>()
 const DEFAULT_NODE_SIZE: NodeSize = { width: 110, height: 40 }
@@ -119,12 +122,20 @@ const pathNodeIds = computed(() => {
   return ids
 })
 
-const showCrossEdges = computed(() => props.selectedNodeId != null)
+const showCrossEdges = true
 
 const viewport = useGraphViewport({
   containerRef: containerRef as any,
   worldRef: worldRef as any,
   bounds: layoutBounds,
+})
+
+const graphFullscreen = computed(() => props.isFullscreen ?? false)
+
+watch(() => props.isFullscreen, (fs) => {
+  if (fs === false) {
+    nextTick(() => viewport.fit())
+  }
 })
 
 const {
@@ -224,6 +235,10 @@ function onNavigateNode(id: number) {
   emit('navigate', id)
 }
 
+function onToggleFullscreen() {
+  emit('toggleFullscreen')
+}
+
 function centerOnNodeById(nodeId: number) {
   const node = layoutNodeById.value.get(nodeId)
   if (node) viewport.centerOnNode(node.x, node.y)
@@ -241,7 +256,7 @@ const layerStats = computed(() => {
 </script>
 
 <template>
-  <div class="mapping-graph" role="region" aria-label="詞句對照圖譜">
+  <div ref="graphRef" class="mapping-graph" :class="{ 'is-fullscreen': graphFullscreen }" role="region" aria-label="詞句對照圖譜">
     <div ref="containerRef" class="graph-viewport" tabindex="-1" @keydown.escape="onEscape">
       <div ref="worldRef" class="graph-world">
         <GraphEdges
@@ -251,6 +266,7 @@ const layerStats = computed(() => {
           :selected-node-ids="selectedSet"
           :path-node-ids="pathNodeIds"
           :show-cross-edges="showCrossEdges"
+          :bounds="layout.bounds"
         />
         <GraphNode
           v-for="n in effectiveLayoutNodes"
@@ -281,20 +297,15 @@ const layerStats = computed(() => {
       :zoom-percent="viewport.zoomPercent.value"
       :current-hops="props.currentHops ?? 1"
       :max-hops="props.maxHops ?? 1"
+      :is-fullscreen="graphFullscreen"
       @zoom-in="viewport.zoomIn"
       @zoom-out="viewport.zoomOut"
       @fit="viewport.fit"
       @actual-size="viewport.actualSize"
       @reset="handleReset"
       @change-hops="(h: number) => emit('changeHops', h as 1 | 2 | 3)"
+      @toggle-fullscreen="onToggleFullscreen"
     />
-    <div class="graph-legend">
-      <span class="lr">● 根節點</span>
-      <span class="lr">○ 一跳</span>
-      <span class="lr lr-d2">○ 二跳</span>
-      <span v-if="graph.layer_counts[3]" class="lr lr-d3">○ 三跳</span>
-      <span v-if="graph.truncated" class="lr lr-warn">另有 {{ graph.omitted_count }} 個未載入</span>
-    </div>
   </div>
 </template>
 
@@ -321,24 +332,4 @@ const layerStats = computed(() => {
   left: 0;
   transform-origin: 0 0;
 }
-.graph-legend {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  background: color-mix(in oklch, var(--surface) 90%, transparent);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 6px 10px;
-  max-width: calc(100% - 24px);
-}
-.graph-legend .lr { display: flex; align-items: center; gap: 4px; }
-.graph-legend .lr-d2 { opacity: 0.75; }
-.graph-legend .lr-d3 { opacity: 0.55; }
-.graph-legend .lr-warn { color: var(--accent); }
 </style>

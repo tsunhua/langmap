@@ -66,7 +66,7 @@ web_v2/
 │   │   │   ├── MappingCard.vue
 │   │   │   └── NewContribution.vue
 │   │   ├── mapping/
-│   │   │   ├── RadialGraph.vue
+│   │   │   ├── MappingGraph.vue
 │   │   │   ├── MappingList.vue
 │   │   │   └── VoteButton.vue
 │   │   ├── expression/
@@ -233,10 +233,10 @@ export function useExpressions() {
     }
   }
 
-  async function mappings(id: number, hops = 1) { ... }
+  async function mappingGraph(id: number, hops: 1 | 2 | 3 = 1) { ... }  // returns MappingGraphResponse
   async function search(q: string, lang?: string, limit = 10) { ... }
 
-  return { loading, error, detail, mappings, search }
+  return { loading, error, detail, mappingGraph, search }
 }
 ```
 
@@ -247,7 +247,7 @@ export function useExpressions() {
 | useFeed | GET | /feed/hot | limit |
 | useFeed | GET | /feed/new | limit |
 | useExpressions | GET | /expressions/:id | — |
-| useExpressions | GET | /expressions/:id/mappings | hops |
+| useExpressions | GET | /expressions/:id/mappings | hops | returns MappingGraphResponse
 | useExpressions | GET | /expressions/search | q, lang, limit |
 | useLanguages | GET | /languages | search, sort |
 | useLanguages | GET | /languages/:code | — |
@@ -343,22 +343,42 @@ All lazy-loaded. `App.vue` provides the layout shell (TopNav + `<router-view>`).
 
 **Prototype reference:** `docs/prototype/v2/detail.html`
 
-**Layout:** Full-width. Center: radial SVG graph. Below: mapping list table. Right sidebar: fold/expand controls, hop selector.
+**Layout:** Max-width 1280px. Desktop: two-column grid (graph + 280px inspector sidebar). Mobile (<768px): graph/list segmented toggle with bottom sheet inspector.
 
 **Components:**
-- `RadialGraph` — SVG radial layout, center = selected expression, nodes = mapped expressions, edges = connections (solid=1-hop, dashed=2-hop)
-- `MappingList` — table of all mappings with score, language, hop distance
-- `VoteButton` — up/down vote on each mapping edge
+- `MappingGraph` — d3-zoom + d3-drag powered radial hierarchy graph; semantic zoom (compact/medium/full), pan, fit, node selection
+- `GraphNode` — individual node with semantic zoom levels, collapse toggle, drag support
+- `GraphEdges` — SVG tree edges (parent→child) and cross edges (multi-path); score-based stroke width
+- `GraphToolbar` — zoom controls, hops segmented control (1/2/3), mobile more-menu for 100%/reset/expand-all/collapse-to-1
+- `GraphInspector` — desktop sidebar: path from root, primary edge score, VotePill, cross-edge count, collapse/navigate actions
+- `GraphMobileInspector` — mobile bottom sheet (`role="dialog"`, focus management, Escape dismiss)
+- `MappingHierarchyList` — tree-structured list with depth indentation, collapse/expand, selection sync with graph
+- `MappingGraphSkeleton` — loading skeleton with pulse animation
 
 **API calls:**
 - `GET /expressions/:id` → center expression detail
-- `GET /expressions/:id/mappings?hops=2` → all mappings (1-2 hops)
+- `GET /expressions/:id/mappings?hops=N` → returns `MappingGraphResponse` object (nodes, edges, layer_counts, truncated)
+
+**Response shape (graph):**
+```ts
+interface MappingGraphResponse {
+  root_id: number
+  requested_hops: 1 | 2 | 3
+  resolved_hops: 0 | 1 | 2 | 3
+  nodes: Array<{ expression_id: number; text: string; language_code: string; language_name: string | null; depth: number }>
+  edges: Array<{ edge_id: string; source_id: number; target_id: number; score: number; depth: number }>
+  layer_counts: Record<number, number>
+  truncated: boolean
+  omitted_count: number
+}
+```
 
 **Interactions:**
-- Click node in graph → re-center on that expression (navigate to new detail)
-- Vote on mapping → optimistic UI update
-- Hop selector slider (1, 2, 3) → re-fetch with new hops value
-- "Fold" toggle → collapse 2-hop nodes, show only 1-hop
+- Single-click node → select (path highlight + inspector). Double-click → navigate to `/mapping/:id`
+- Node drag (≥4px threshold) → position override. Reset → clear overrides + re-fit
+- Graph/list bidirectional sync: list selection calls `centerOnNode` on graph; graph selection scrolls list into view
+- URL state: `?hops=N&node=ID` persisted via `router.replace`; invalid node cleared
+- Mobile: bottom sheet on node selection; graph/list mode toggle; 44px touch targets
 
 ### 7.3 Contribute (`/contribute`)
 
@@ -585,7 +605,7 @@ Implementation will follow vertical slices — one page at a time, each page bri
 2. **Auth** — login/register (connects to v1 backend)
 3. **LanguageList + LanguageDetail** — simple CRUD pages, tests API layer
 4. **HomeFeed** — core experience, MappingCard + VoteButton components
-5. **MappingDetail** — RadialGraph (most complex component), 1-3 hops
+5. **MappingDetail** — MappingGraph (d3 radial hierarchy), 1-3 hops with semantic zoom and hierarchy list
 6. **Search** — global search with filters
 7. **Contribute** — ExpressionPicker, batch submission
 8. **HandbookList + HandbookView** — handbook reading

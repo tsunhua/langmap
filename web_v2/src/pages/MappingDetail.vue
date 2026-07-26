@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
 import MappingGraph from '@/components/mapping/MappingGraph.vue'
@@ -32,7 +32,20 @@ const graphRef = ref<{ centerOnNodeById: (id: number) => void } | null>(null)
 const mobileMode = ref<'graph' | 'list'>('list')
 const isMobile = ref(false)
 
+const isFullscreen = ref(false)
 const MAX_HOPS = 3
+
+function toggleFullscreen() {
+  isFullscreen.value = !isFullscreen.value
+  if (isFullscreen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+    nextTick(() => {
+      document.querySelector('.md-graph-area')?.scrollIntoView({ block: 'start' })
+    })
+  }
+}
 
 let mql: MediaQueryList | null = null
 let mqlListener: ((e: MediaQueryListEvent) => void) | null = null
@@ -266,29 +279,34 @@ const sourceLabel = computed(() => {
       </div>
 
       <div class="md-graph-area">
-        <template v-if="loading || updatingHops">
-          <MappingGraphSkeleton />
-        </template>
-        <template v-else-if="!isMobile || mobileMode === 'graph'">
-          <MappingGraph ref="graphRef"
-            :graph="graph!"
-            :selected-node-id="selectedNodeId"
-            :collapsed-ids="collapsedIds"
-            :current-hops="hops"
-            :max-hops="MAX_HOPS"
-            @select="selectNode"
-            @navigate="navigateToNode"
-            @clear-selection="clearSelection"
-            @toggle-collapse="toggleCollapse"
-            @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
-          />
-        </template>
+        <div class="md-graph-cell" :class="{ 'is-fullscreen': isFullscreen }">
+          <template v-if="loading || updatingHops">
+            <MappingGraphSkeleton />
+          </template>
+          <template v-else-if="!isMobile || mobileMode === 'graph'">
+            <MappingGraph ref="graphRef"
+              :graph="graph!"
+              :selected-node-id="selectedNodeId"
+              :collapsed-ids="collapsedIds"
+              :current-hops="hops"
+              :max-hops="MAX_HOPS"
+              :is-fullscreen="isFullscreen"
+              @select="selectNode"
+              @navigate="navigateToNode"
+              @clear-selection="clearSelection"
+              @toggle-collapse="toggleCollapse"
+              @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
+              @toggle-fullscreen="toggleFullscreen"
+            />
+          </template>
+        </div>
         <GraphInspector
           v-if="!isMobile"
           :selected-node-id="selectedNodeId"
           :graph="graph!"
           :display-tree="displayTree"
           :anchor-text="expr.text"
+          :collapsed-ids="collapsedIds"
           @close="clearSelection"
           @navigate="navigateToNode"
           @toggle-collapse="toggleCollapse"
@@ -312,6 +330,7 @@ const sourceLabel = computed(() => {
         :graph="graph!"
         :display-tree="displayTree"
         :anchor-text="expr.text"
+        :collapsed-ids="collapsedIds"
         @close="clearSelection"
         @navigate="navigateToNode"
         @toggle-collapse="toggleCollapse"
@@ -334,6 +353,10 @@ const sourceLabel = computed(() => {
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 16px;
   align-items: start;
+}
+.md-graph-cell {
+  position: relative;
+  min-width: 0;
 }
 @media (max-width: 900px) {
   .md-graph-area {
@@ -374,6 +397,22 @@ const sourceLabel = computed(() => {
 }
 .md-list-section {
   margin-top: 16px;
+}
+.md-graph-cell.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100dvh;
+  background: var(--surface);
+  background-image: radial-gradient(circle, oklch(0.90 0.010 88) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.md-graph-cell.is-fullscreen :deep(.mapping-graph),
+.md-graph-cell.is-fullscreen :deep(.graph-skeleton) {
+  height: 100dvh;
+  border: none;
+  border-radius: 0;
 }
 .crumbs {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;

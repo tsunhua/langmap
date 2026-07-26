@@ -48,14 +48,9 @@ const accessibleName = computed(() => {
 })
 
 const displayText = computed(() => {
-  if (props.semanticLevel === 'compact') {
-    return props.languageCode
-  }
-  if (props.semanticLevel === 'medium') {
-    const max = 18
-    return props.text.length > max ? props.text.slice(0, max) + '…' : props.text
-  }
-  return props.text
+  if (props.semanticLevel === 'full') return props.text
+  const max = props.semanticLevel === 'compact' ? 6 : 18
+  return props.text.length > max ? props.text.slice(0, max) + '…' : props.text
 })
 
 function onPointerDown(e: PointerEvent) {
@@ -85,7 +80,7 @@ function onPointerMove(e: PointerEvent) {
   const worldX = dragStartWorldX + dx
   const worldY = dragStartWorldY + dy
   const el = e.currentTarget as HTMLElement
-  el.style.transform = `translate3d(${worldX}px, ${worldY}px, 0)`
+  el.style.transform = `translate3d(${worldX}px, ${worldY}px, 0) translate(-50%, -50%)`
   emit('dragMove', props.nodeId, worldX, worldY)
 }
 
@@ -155,7 +150,7 @@ function onKeydown(e: KeyboardEvent) {
     tabindex="0"
     role="button"
     :aria-label="accessibleName"
-    :style="{ transform: `translate3d(${x}px, ${y}px, 0)` }"
+    :style="{ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)` }"
     @pointerdown="onPointerDown"
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
@@ -263,7 +258,7 @@ function onKeydown(e: KeyboardEvent) {
 
 .graph-node.level-compact {
   padding: 3px 6px;
-  min-width: 40px;
+  min-width: 56px;
 }
 .graph-node.level-compact .gn-text {
   font-size: 10px;

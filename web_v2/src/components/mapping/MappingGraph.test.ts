@@ -57,13 +57,13 @@ describe('MappingGraph', () => {
     expect(treeEdges.length).toBe(3)
   })
 
-  it('does not render cross edges by default', () => {
+  it('renders cross edges alongside tree edges', () => {
     const wrapper = mount(MappingGraph, {
       props: { graph: makeGraph() },
       global: { stubs: { teleport: true } },
     })
     const crossEdges = wrapper.findAll('[data-cross-edge]')
-    expect(crossEdges.length).toBe(0)
+    expect(crossEdges.length).toBe(1)
   })
 
   it('includes text, language and depth in node accessible name', () => {

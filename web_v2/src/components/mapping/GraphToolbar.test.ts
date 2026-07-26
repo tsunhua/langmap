@@ -22,10 +22,10 @@ describe('GraphToolbar', () => {
     expect(wrapper.emitted('zoomOut')).toHaveLength(1)
   })
 
-  it('emits fit on click', () => {
+  it('emits toggleFullscreen on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="適應畫面"]').trigger('click')
-    expect(wrapper.emitted('fit')).toHaveLength(1)
+    wrapper.find('button[aria-label="全屏"]').trigger('click')
+    expect(wrapper.emitted('toggleFullscreen')).toHaveLength(1)
   })
 
   it('emits actualSize on click', () => {

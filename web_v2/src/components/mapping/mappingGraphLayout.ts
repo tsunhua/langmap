@@ -100,18 +100,13 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
     }
   }
 
-  // 2. Compute subtree weight (visible leaf count, minimum 1 per node).
-  const computeWeight = (node: TreeNode): number => {
-    if (node.children.length === 0) {
-      node.weight = 1
-      return 1
-    }
-    let sum = 0
-    for (const c of node.children) sum += computeWeight(c)
-    node.weight = Math.max(1, sum)
-    return node.weight
+  // 2. Weight assignment: uniform for first ring, immediate children for deeper.
+  //    Keeping depth-1 uniform ensures the first ring stays evenly spaced
+  //    when deeper hops are expanded (subtree weight would otherwise
+  //    squeeze nodes with few descendants into tiny sectors).
+  for (const n of nodeById.values()) {
+    n.weight = n.depth <= 1 ? 1 : Math.max(1, n.children.length)
   }
-  computeWeight(root)
 
   // 3. Assign angular sectors top-down: root gets full circle.
   root.sector = { start: -Math.PI, end: Math.PI }
@@ -133,10 +128,9 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
   }
 
   // 4. Compute ring radius per depth.
-  //    For each depth, find the parent whose children occupy the tightest
-  //    angular sector (children-per-radian) and size the ring so those
-  //    children fit side-by-side without overlap. Falls back to the
-  //    full-circumference formula when sectors are uniform.
+  //    For each depth, size the ring so children fit side-by-side without
+  //    excessive overlap. A soft bound caps sector-driven radius growth;
+  //    remaining overlap is resolved by collision relaxation + relaxed clamping.
   const maxDepth = Math.max(...tree.nodes.map((n) => n.depth))
   const radii: number[] = new Array(maxDepth + 1).fill(0)
   radii[0] = 0
@@ -167,7 +161,6 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
       if (span <= 0) continue
       const arcNeeded = parent.children.reduce((s, c) => {
         const sz = sizeOf(c.id)
-        // Use the larger of width (tangential) and a min spacing.
         return s + Math.max(sz.width, sz.height) + gap
       }, 0)
       const r = arcNeeded / span
@@ -175,7 +168,11 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
     }
 
     const radiusByStep = radii[d - 1] + maxDiag + gap * 2
-    radii[d] = Math.max(radiusByCount, radiusBySector, radiusByStep)
+    // Soft bound: sector-driven radius cannot exceed 2× step growth.
+    // This prevents enormous rings when many children occupy a tight sector;
+    // remaining overlap is resolved by collision relaxation below.
+    const softBound = Math.max(radiusByStep, radiusByCount * 1.5)
+    radii[d] = Math.max(radiusByCount, Math.min(radiusBySector, softBound), radiusByStep)
   }
   for (const n of nodeById.values()) n.radius = radii[n.depth]
 
@@ -185,12 +182,17 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
     y: Math.sin(n.angle) * n.radius,
   })
 
-  // Helper used both inside the relaxation loop and at the end.
-  const clampToParentRaw = (node: TreeNode) => {
+  // Relaxed clamp used inside the collision loop — allows children to drift
+  // into neighbouring sectors so collision relaxation can converge without
+  // requiring an enormous ring radius.
+  const UP_TOLERANCE = 0.4 // radians ≈ 23°
+  const clampRelaxed = (node: TreeNode) => {
     for (const c of node.children) {
-      if (c.angle < node.sector.start) c.angle = node.sector.start
-      if (c.angle > node.sector.end) c.angle = node.sector.end
-      clampToParentRaw(c)
+      const lo = node.sector.start - UP_TOLERANCE
+      const hi = node.sector.end + UP_TOLERANCE
+      if (c.angle < lo) c.angle = lo
+      if (c.angle > hi) c.angle = hi
+      clampRelaxed(c)
     }
   }
 
@@ -221,8 +223,6 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
           const ov = overlapAmount(a, b)
           if (ov.x > 0 && ov.y > 0) {
             const r = Math.max(a.radius, b.radius, 1)
-            // Push apart by the amount needed to clear the larger overlap dimension,
-            // converted to angular displacement at this ring radius.
             const pushPx = Math.max(ov.x, ov.y)
             const da = (pushPx / r) * 0.6
             a.angle -= da
@@ -258,12 +258,11 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
         }
       }
     }
-    // Re-clamp to parent sector each iteration so cross-ring pushes don't drift.
-    clampToParentRaw(root)
+    clampRelaxed(root)
     if (moved === 0) break
   }
 
-  // 7. Final tolerance-clamped clamp to parent sector.
+  // 7. Final tight clamp to parent sector (minimal tolerance).
   const TOLERANCE = 0.02
   const clampToParent = (node: TreeNode) => {
     for (const c of node.children) {

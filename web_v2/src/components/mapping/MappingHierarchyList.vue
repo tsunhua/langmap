@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref } from 'vue'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
 import type { DisplayTree, MappingGraphResponse } from './mappingGraphTypes'
 
@@ -65,14 +65,6 @@ function flattenTree(): Array<{ id: number; depth: number; parent: number | null
 }
 
 const listRef = ref<HTMLElement>()
-
-watch(() => props.selectedNodeId, (id) => {
-  if (id == null) return
-  nextTick(() => {
-    const el = listRef.value?.querySelector<HTMLElement>(`[data-node-id="${id}"]`)
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  })
-})
 
 const flatList = computed(() => flattenTree())
 </script>

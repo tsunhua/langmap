@@ -9,7 +9,13 @@ const props = defineProps<{
   graph: MappingGraphResponse
   displayTree: DisplayTree
   anchorText: string
+  collapsedIds?: Set<number>
 }>()
+
+const isCollapsed = computed(() => {
+  if (!props.selectedNodeId) return false
+  return props.collapsedIds?.has(props.selectedNodeId) ?? false
+})
 
 const emit = defineEmits<{
   close: []
@@ -125,7 +131,7 @@ function onKeydown(e: KeyboardEvent) {
         class="btn btn-sm"
         @click="emit('toggleCollapse', node.expression_id)"
       >
-        收合子分支
+        {{ isCollapsed ? '展開子分支' : '收合子分支' }}
       </button>
       <button
         class="btn btn-sm btn-primary"

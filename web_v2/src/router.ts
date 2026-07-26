@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash }
+    if (to.path !== from.path) return { top: 0 }
+    return false
+  },
   routes: [
     { path: '/',                  component: () => import('./pages/HomeFeed.vue') },
     { path: '/mapping/:id',       component: () => import('./pages/MappingDetail.vue') },
