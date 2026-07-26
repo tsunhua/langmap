@@ -83,7 +83,7 @@ watch(() => route.path, () => { menuOpen.value = false })
       <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
     </nav>
 
-    <form class="top-search" role="search" @submit.prevent="onSearch">
+    <form v-if="route.path !== '/search'" class="top-search" role="search" @submit.prevent="onSearch">
       <Search :size="14" aria-hidden="true" />
       <kbd>/</kbd>
       <input
@@ -96,17 +96,19 @@ watch(() => route.path, () => { menuOpen.value = false })
       <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
     </form>
 
-    <span class="lang-inline"><LangSwitcher /></span>
+    <div class="right-group">
+      <router-link to="/contribute" class="btn btn-primary btn-sm contrib-btn">
+        <Plus :size="14" aria-hidden="true" /> 貢獻
+      </router-link>
 
-    <router-link to="/contribute" class="btn btn-primary btn-sm contrib-btn">
-      <Plus :size="14" aria-hidden="true" /> 貢獻
-    </router-link>
+      <span class="lang-inline"><LangSwitcher /></span>
 
-    <template v-if="auth.user">
-      <span class="user-badge auth-inline">{{ auth.user.username }}</span>
-      <button class="btn btn-ghost btn-sm auth-inline" @click="auth.logout()">登出</button>
-    </template>
-    <router-link v-else to="/auth" class="btn btn-ghost btn-sm auth-inline">登入</router-link>
+      <template v-if="auth.user">
+        <span class="user-badge auth-inline">{{ auth.user.username }}</span>
+        <button class="btn btn-ghost btn-sm auth-inline" @click="auth.logout()">登出</button>
+      </template>
+      <router-link v-else to="/auth" class="btn btn-ghost btn-sm auth-inline">登入</router-link>
+    </div>
 
     <button
       ref="toggleEl"
@@ -122,7 +124,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 
     <transition name="drawer">
       <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" aria-label="選單">
-        <form class="drawer-search" role="search" @submit.prevent="onSearch">
+        <form v-if="route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
           <Search :size="16" aria-hidden="true" />
           <input
             v-model="searchQuery"
@@ -222,6 +224,13 @@ watch(() => route.path, () => { menuOpen.value = false })
   pointer-events: none;
 }
 
+.right-group {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .user-badge {
   font-family: var(--mono); font-size: 11px;
   color: var(--muted);
@@ -285,8 +294,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 @media (max-width: 768px) {
   .appnav,
   .top-search,
-  .contrib-btn,
-  .auth-inline,
+  .right-group,
   .lang-inline {
     display: none;
   }

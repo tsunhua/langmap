@@ -18,7 +18,7 @@
 }
 .foot-inner {
   max-width: 920px; margin: 0 auto;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: center;
   gap: 16px; flex-wrap: wrap;
 }
 .foot-nav { display: flex; gap: 16px; }
@@ -33,6 +33,6 @@
   color: var(--muted);
 }
 @media (max-width: 640px) {
-  .foot-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .foot-inner { flex-direction: column; align-items: center; gap: 8px; }
 }
 </style>

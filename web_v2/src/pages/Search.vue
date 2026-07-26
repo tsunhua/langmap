@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useSearch } from '@/composables/useSearch'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
