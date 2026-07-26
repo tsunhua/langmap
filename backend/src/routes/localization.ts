@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { success, notFound, badRequest, created, forbidden } from '../utils/response';
 import { requireAuth } from '../middleware/auth';
 import type { Bindings, Variables } from '../types';
+import { expressionId, stableEdgeId } from '../utils/ids';
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 const PROJECT_ID = 'langmap-web';
@@ -10,15 +11,6 @@ const MAX_TEXT_CODEPOINTS = 4000;
 const FIRST_PARTY_LOCALES = [
   { code: 'en-US', native_name: 'English (United States)', direction: 'ltr', fallback_code: null, status: 'active' },
 ] as const;
-
-function expressionId(text: string, languageCode: string): number {
-  let hash = 0x811c9dc5;
-  for (const char of `${text}|${languageCode}`) {
-    hash ^= char.charCodeAt(0);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash;
-}
 
 function validProject(c: any, projectId: string) {
   return projectId === PROJECT_ID || notFound(c, 'PROJECT_NOT_FOUND');
@@ -129,7 +121,7 @@ async function createMapping(c: any, projectId: string, body: any) {
   let message = await sourceMessage(c, projectId, key) as any;
   if (!message && validText(body?.source_text)) {
     const sourceText = body.source_text.trim();
-    const sourceId = expressionId(sourceText, 'en-US');
+    const sourceId = await expressionId('en-US', sourceText);
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status, created_by)
        VALUES (?, ?, 'en-US', 'ui_i18n', ?, 'approved', ?)`
@@ -147,7 +139,7 @@ async function createMapping(c: any, projectId: string, body: any) {
     'SELECT id FROM expressions WHERE language_code = ? AND text = ? ORDER BY id LIMIT 1'
   ).bind(localeCode, text).first<{ id: number }>();
   if (!target) {
-    const id = expressionId(text, localeCode);
+    const id = await expressionId(localeCode, text);
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status, created_by)
        VALUES (?, ?, ?, 'ui_i18n', ?, 'pending', ?)`
@@ -155,7 +147,7 @@ async function createMapping(c: any, projectId: string, body: any) {
     target = await c.env.DB.prepare('SELECT id FROM expressions WHERE id = ?').bind(id).first<{ id: number }>();
   }
   if (!target) return badRequest(c, 'expression_create_failed');
-  const edgeId = `${Math.min(message.source_expression_id, target.id)}-${Math.max(message.source_expression_id, target.id)}`;
+  const edgeId = await stableEdgeId(message.source_expression_id, target.id);
   await c.env.DB.prepare(
     `INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
      VALUES (?, ?, ?, 0, 'ui_i18n', ?)`

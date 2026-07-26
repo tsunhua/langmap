@@ -5,17 +5,9 @@ import { buildMappingGraph, parseMappingHops } from '../utils/mappingGraph';
 import type { Bindings } from '../types';
 import type { LoadEdges, LoadExpressions, NeighborRow, ExpressionRow } from '../utils/mappingGraph';
 import { parseLanguageCode } from '../utils/languageCode';
+import { expressionId as computeExpressionId, stableEdgeId } from '../utils/ids';
 
 const expressions = new Hono<{ Bindings: Bindings }>();
-
-function fnv1a(str: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = (hash * 0x01000193) >>> 0;
-  }
-  return hash;
-}
 
 // GET /search — search for expression picker
 expressions.get('/search', async (c) => {
@@ -67,7 +59,7 @@ expressions.post('/', requireAuth, async (c) => {
     `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
   ).bind(text, languageCode).first<{ id: number }>();
 
-  const expressionId = existing?.id ?? fnv1a(`${text}|${languageCode}`);
+  const expressionId = existing?.id ?? await computeExpressionId(languageCode, text);
   const statements: D1Statement[] = [];
 
   if (!existing) {
@@ -96,7 +88,7 @@ expressions.post('/', requireAuth, async (c) => {
       return badRequest(c, 'related_expression_not_found', 'related_to expression not found');
     }
 
-    const edgeId = [Math.min(expressionId, relatedId), Math.max(expressionId, relatedId)].join('-');
+    const edgeId = await stableEdgeId(expressionId, relatedId);
     statements.push(
       c.env.DB.prepare(
         `INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)

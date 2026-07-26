@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
 
-LANGUAGE_CODE = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$")
+LANGUAGE_CODE = re.compile(r"^[A-Za-z]{1,3}(?:-[A-Za-z0-9]{1,8})*$")
 VARIANT_SEPARATOR = " | "
 LANGUAGE_ID_BITS = 16
 TEXT_ID_BITS = 37
@@ -67,8 +67,8 @@ def expression_id_segments(value: int) -> tuple[int, int]:
 
 
 def stable_edge_id(expression_a_id: int, expression_b_id: int) -> str:
-    digest = hashlib.sha256(f"{expression_a_id}|{expression_b_id}".encode()).hexdigest()
-    return f"csv-{digest[:32]}"
+    left, right = sorted((expression_a_id, expression_b_id))
+    return f"{left}-{right}"
 
 
 def infer_column_specs(csv_path: Path) -> list[ColumnSpec]:
@@ -161,6 +161,34 @@ def chunks(items: list, size: int):
         yield items[start : start + size]
 
 
+def load_lang_mapping(path: Path, value_column: str) -> dict[str, str]:
+    with path.open("r", encoding="utf-8-sig", newline="") as source:
+        reader = csv.DictReader(source)
+        headers = {name.strip() for name in (reader.fieldnames or [])}
+        if {"lang", value_column} - headers:
+            raise ValueError(f"CSV 需要 lang,{value_column} 欄位：{path}")
+        mapping: dict[str, str] = {}
+        for row in reader:
+            lang = (row.get("lang") or "").strip()
+            value = (row.get(value_column) or "").strip()
+            if not lang or not value:
+                continue
+            if lang in mapping and mapping[lang] != value:
+                raise ValueError(
+                    f"CSV 對 {lang} 的 {value_column} 有衝突：{mapping[lang]} / {value}"
+                )
+            mapping[lang] = value
+    return mapping
+
+
+def load_lang_tags(path: Path) -> dict[str, str]:
+    return load_lang_mapping(path, "tag")
+
+
+def load_lang_authors(path: Path) -> dict[str, str]:
+    return load_lang_mapping(path, "created_by")
+
+
 def write_sql_batches(
     output_dir: Path,
     expressions: list[Expression],
@@ -169,18 +197,33 @@ def write_sql_batches(
     source_type: str,
     source_ref: str,
     tag: str | None,
+    lang_tags: dict[str, str] | None,
+    default_created_by: str,
+    lang_authors: dict[str, str] | None,
 ) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     for old_file in output_dir.glob("*.sql"):
         old_file.unlink()
 
     files: list[Path] = []
-    tags = json.dumps([tag], ensure_ascii=False) if tag else None
+    default_tags = json.dumps([tag], ensure_ascii=False) if tag else None
+
+    def tags_for(language: str) -> str | None:
+        if lang_tags:
+            per_lang = lang_tags.get(language)
+            return json.dumps([per_lang], ensure_ascii=False) if per_lang else None
+        return default_tags
+
+    def created_by_for(language: str) -> str:
+        if lang_authors:
+            return lang_authors.get(language, default_created_by)
+        return default_created_by
 
     for index, batch in enumerate(chunks(expressions, batch_size), start=1):
         path = output_dir / f"expressions-{index:04d}.sql"
         values = []
         for expression in batch:
+            tags = tags_for(expression.language)
             values.append(
                 "("
                 + ", ".join(
@@ -191,7 +234,7 @@ def write_sql_batches(
                         sql_string(source_type),
                         sql_string(source_ref),
                         "'approved'",
-                        "'system'",
+                        sql_string(created_by_for(expression.language)),
                         "NULL" if tags is None else sql_string(tags),
                     ]
                 )
@@ -210,7 +253,7 @@ def write_sql_batches(
         path = output_dir / f"edges-{index:04d}.sql"
         values = [
             f"({sql_string(edge.id)}, {edge.expression_a_id}, {edge.expression_b_id}, "
-            f"0, 'batch', 'system')"
+            f"0, 'batch', {sql_string(default_created_by)})"
             for edge in batch
         ]
         path.write_text(
@@ -369,17 +412,32 @@ def sync_batches(
     database: str,
     remote: bool,
     persist_to: Path | None,
+    start_batch: int = 1,
 ) -> None:
     if shutil.which("npx") is None:
         raise RuntimeError("找不到 npx")
+    if start_batch > 1:
+        if start_batch > len(files):
+            raise ValueError(f"--start-batch {start_batch} 超出批次數 {len(files)}")
+        files = files[start_batch - 1 :]
     ensure_target_schema(config, database, remote, persist_to)
-    for index, sql_file in enumerate(files, start=1):
-        print(f"[{index}/{len(files)}] 同步 {sql_file.name}", file=sys.stderr)
+    for index, sql_file in enumerate(files, start=start_batch):
+        print(f"[{index}/{start_batch + len(files) - 1}] 同步 {sql_file.name}", file=sys.stderr)
         subprocess.run(
             wrangler_command(config, database, sql_file, remote, persist_to),
             check=True,
             cwd=config.parent,
         )
+
+
+def load_existing_batches(output_dir: Path) -> list[Path] | None:
+    files = sorted(output_dir.glob("*.sql"))
+    if not files:
+        return None
+    manifest_path = output_dir / "manifest.json"
+    if not manifest_path.is_file():
+        return None
+    return files
 
 
 def parser() -> argparse.ArgumentParser:
@@ -402,9 +460,30 @@ def parser() -> argparse.ArgumentParser:
     root.add_argument("--source-ref")
     root.add_argument("--tag")
     root.add_argument(
+        "--lang-tags",
+        type=Path,
+        help="CSV（欄位 lang,tag）指定每個語言的 tag；存在時忽略 --tag。",
+    )
+    root.add_argument(
+        "--created-by",
+        default="system",
+        help="expressions.created_by 的預設值；per-lang 未指定時使用。",
+    )
+    root.add_argument(
+        "--lang-authors",
+        type=Path,
+        help="CSV（欄位 lang,created_by）指定每個語言的 created_by；未列出的語言 fallback 到 --created-by。",
+    )
+    root.add_argument(
         "--output-dir",
         type=Path,
-        help="保留生成的 SQL；省略時使用臨時目錄並在結束後刪除。",
+        help="保留生成的 SQL；省略時使用臨時目錄並在結束後刪除。已存在 SQL 時會重複使用。",
+    )
+    root.add_argument(
+        "--start-batch",
+        type=int,
+        default=1,
+        help="從第 N 批開始同步（斷點續傳）；搭配 --output-dir 使用。",
     )
     root.add_argument("--dry-run", action="store_true", help="只生成 SQL，不執行 Wrangler。")
     return root
@@ -414,6 +493,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     if args.batch_size < 1:
         raise ValueError("--batch-size 必須大於 0")
+    if args.start_batch < 1:
+        raise ValueError("--start-batch 必須大於 0")
+    if args.start_batch > 1 and not args.output_dir:
+        raise ValueError("--start-batch 必須搭配 --output-dir，否則無法斷點續傳")
+
     csv_path = args.csv.resolve()
     if not csv_path.is_file():
         raise FileNotFoundError(f"找不到 CSV：{csv_path}")
@@ -422,49 +506,87 @@ def main(argv: list[str] | None = None) -> int:
         raise FileNotFoundError(f"找不到 Wrangler config：{config}")
     persist_to = resolve_persist_to(config, args.remote, args.persist_to)
 
-    specs = infer_column_specs(csv_path)
-    expressions, edges, rows = extract(csv_path, specs)
-    source_ref = args.source_ref or csv_path.name
-    print(
-        f"抽取完成：CSV {rows} 列、詞句 {len(expressions)} 筆、映射 {len(edges)} 筆",
-        file=sys.stderr,
-    )
-
+    existing_files: list[Path] | None = None
     if args.output_dir:
         output_dir = args.output_dir.resolve()
-        files = write_sql_batches(
-            output_dir,
-            expressions,
-            edges,
-            args.batch_size,
-            args.source_type,
-            source_ref,
-            args.tag,
-        )
-        if not args.dry_run:
-            sync_batches(
-                files, config, args.database, args.remote, persist_to
-            )
-        print(f"SQL：{output_dir}", file=sys.stderr)
-        return 0
+        if output_dir.is_dir():
+            existing_files = load_existing_batches(output_dir)
+            if existing_files:
+                print(
+                    f"找到既有 SQL {len(existing_files)} 個批次於 {output_dir}，重複使用（不重新抽取 CSV）",
+                    file=sys.stderr,
+                )
 
-    with tempfile.TemporaryDirectory(prefix="langmap-csv-d1-") as temporary:
-        output_dir = Path(temporary)
-        files = write_sql_batches(
-            output_dir,
-            expressions,
-            edges,
-            args.batch_size,
-            args.source_type,
-            source_ref,
-            args.tag,
+    lang_tags: dict[str, str] | None = None
+    if args.lang_tags is not None:
+        lang_tags_path = args.lang_tags.resolve()
+        if not lang_tags_path.is_file():
+            raise FileNotFoundError(f"找不到 lang-tags CSV：{lang_tags_path}")
+        lang_tags = load_lang_tags(lang_tags_path)
+        if args.tag:
+            print("--lang-tags 已提供，忽略 --tag", file=sys.stderr)
+
+    lang_authors: dict[str, str] | None = None
+    if args.lang_authors is not None:
+        lang_authors_path = args.lang_authors.resolve()
+        if not lang_authors_path.is_file():
+            raise FileNotFoundError(f"找不到 lang-authors CSV：{lang_authors_path}")
+        lang_authors = load_lang_authors(lang_authors_path)
+
+    if existing_files is not None:
+        files = existing_files
+    else:
+        specs = infer_column_specs(csv_path)
+        expressions, edges, rows = extract(csv_path, specs)
+        source_ref = args.source_ref or csv_path.name
+        print(
+            f"抽取完成：CSV {rows} 列、詞句 {len(expressions)} 筆、映射 {len(edges)} 筆",
+            file=sys.stderr,
         )
-        if not args.dry_run:
-            sync_batches(
-                files, config, args.database, args.remote, persist_to
+        if args.output_dir:
+            output_dir = args.output_dir.resolve()
+            files = write_sql_batches(
+                output_dir,
+                expressions,
+                edges,
+                args.batch_size,
+                args.source_type,
+                source_ref,
+                args.tag,
+                lang_tags,
+                args.created_by,
+                lang_authors,
             )
+            print(f"SQL：{output_dir}", file=sys.stderr)
         else:
-            raise ValueError("--dry-run 必須搭配 --output-dir，否則生成結果會被刪除")
+            with tempfile.TemporaryDirectory(prefix="langmap-csv-d1-") as temporary:
+                output_dir = Path(temporary)
+                files = write_sql_batches(
+                    output_dir,
+                    expressions,
+                    edges,
+                    args.batch_size,
+                    args.source_type,
+                    source_ref,
+                    args.tag,
+                    lang_tags,
+                    args.created_by,
+                    lang_authors,
+                )
+                if not args.dry_run:
+                    sync_batches(
+                        files, config, args.database, args.remote, persist_to,
+                        start_batch=args.start_batch,
+                    )
+                else:
+                    raise ValueError("--dry-run 必須搭配 --output-dir，否則生成結果會被刪除")
+            return 0
+
+    if not args.dry_run:
+        sync_batches(
+            files, config, args.database, args.remote, persist_to,
+            start_batch=args.start_batch,
+        )
     return 0
 
 

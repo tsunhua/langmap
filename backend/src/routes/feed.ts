@@ -7,7 +7,7 @@ const feed = new Hono<{ Bindings: Bindings }>();
 feed.get('/hot', async (c) => {
   const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '20') || 20, 1), 50);
   const { results } = await c.env.DB.prepare(
-    `SELECT ed.id, ed.score, ed.source,
+    `SELECT ed.id as edge_id, ed.expression_a_id as id, ed.score, ed.source,
       a.id as a_id, a.text as a_text, a.language_code as a_lang,
       b.id as b_id, b.text as b_text, b.language_code as b_lang,
       (SELECT COUNT(DISTINCT e2.region_code) FROM expressions e2 WHERE e2.id IN (ed.expression_a_id, ed.expression_b_id) AND e2.region_code IS NOT NULL) as region_count
@@ -25,7 +25,8 @@ feed.get('/new', async (c) => {
   const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '20') || 20, 1), 50);
   const { results } = await c.env.DB.prepare(
     `SELECT * FROM (
-       SELECT 'mapping' as type, ed.id, ed.created_at as created_at, ed.created_by as author,
+       SELECT 'mapping' as type, CAST(ed.expression_a_id AS TEXT) as id,
+         ed.created_at as created_at, ed.created_by as author,
          a.text as left_text, a.language_code as left_lang,
          b.text as right_text, b.language_code as right_lang,
          (SELECT COUNT(DISTINCT e2.region_code) FROM expressions e2

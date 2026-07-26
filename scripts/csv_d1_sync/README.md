@@ -98,3 +98,42 @@ python3 scripts/csv_d1_sync/csv_d1_sync.py data.cleaned.csv \
 高 16-bit 是 `lang_code` 的 SHA-256 派生前綴，低 37-bit 是詞句文本的
 SHA-256 派生 ID。映射兩端按 ID 排序，並使用 `INSERT OR IGNORE`，因此同一份
 資料可重跑且不覆寫既有內容。
+
+## 為每個語言指定 tag 與 created_by
+
+`--tag` 只能對整批詞句套同一個 tag。若不同語言需要不同 tag、或不同語言的
+`created_by` 要指向不同 contributor，改用兩個 CSV 對應表：
+
+```csv
+# lang_tags.csv
+lang,tag
+cieh-tc,1956 台灣白話基礎語句
+emoji,emoji-set
+zyg-jx,壯語錦繡
+```
+
+```csv
+# lang_authors.csv
+lang,created_by
+cieh-tc,user-abc
+emoji,user-xyz
+```
+
+```bash
+python3 scripts/csv_d1_sync/csv_d1_sync.py data.cleaned.csv \
+  --local \
+  --lang-tags scripts/csv_d1_sync/data/lang_tags.csv \
+  --lang-authors scripts/csv_d1_sync/data/lang_authors.csv \
+  --created-by system
+```
+
+規則：
+
+- `--lang-tags` 存在時忽略 `--tag`；表中未列出的語言 `tags` 欄寫入 `NULL`。
+- `--lang-authors` 表中未列出的語言，`expressions.created_by` fallback 到
+  `--created-by`（預設 `system`）。
+- `expression_edges.created_by` 一律使用 `--created-by`；跨語言邊無法對到
+  單一語言作者。
+- 兩個 CSV 欄位固定：`lang,tag` 與 `lang,created_by`；同 `lang` 出現衝突值
+  會直接報錯。
+

@@ -2,25 +2,17 @@ import { Hono } from 'hono';
 import { success, badRequest } from '../utils/response';
 import { requireAuth } from '../middleware/auth';
 import type { Bindings, Variables } from '../types';
+import { expressionId as computeExpressionId, stableEdgeId } from '../utils/ids';
 
 const contributions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-function fnv1a(str: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = (hash * 0x01000193) >>> 0;
-  }
-  return hash;
-}
-
-function edgesForGroup(memberIds: number[]): { id: string; a: number; b: number }[] {
+async function edgesForGroup(memberIds: number[]): Promise<{ id: string; a: number; b: number }[]> {
   const ids = [...new Set(memberIds)].sort((x, y) => x - y);
   const out: { id: string; a: number; b: number }[] = [];
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
       const a = ids[i], b = ids[j];
-      out.push({ id: `${a}-${b}`, a, b });
+      out.push({ id: await stableEdgeId(a, b), a, b });
     }
   }
   return out;
@@ -58,7 +50,7 @@ contributions.post('/batch', requireAuth, async (c) => {
       `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
     ).bind(text, lang).first<{ id: number }>();
 
-    const id = existing?.id ?? fnv1a(key);
+    const id = existing?.id ?? await computeExpressionId(lang, text);
     seenExpressions.set(key, id);
     exprIds.push(id);
 
@@ -72,7 +64,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     }
   }
 
-  const edges = edgesForGroup(exprIds);
+  const edges = await edgesForGroup(exprIds);
   for (const edge of edges) {
     statements.push(
       c.env.DB.prepare(
