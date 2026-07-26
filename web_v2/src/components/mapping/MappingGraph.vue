@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import GraphNode from './GraphNode.vue'
 import GraphEdges from './GraphEdges.vue'
+import GraphToolbar from './GraphToolbar.vue'
 import { buildDisplayTree } from './mappingGraphModel'
 import { layoutMappingGraph } from './mappingGraphLayout'
+import { useGraphViewport } from '@/composables/useGraphViewport'
 import type { LayoutNode } from './mappingGraphLayout'
-import type { MappingGraphResponse, NodeSize } from './mappingGraphTypes'
+import type { MappingGraphResponse, NodeSize, GraphBounds } from './mappingGraphTypes'
 
 type SemanticLevel = 'compact' | 'medium' | 'full'
 
@@ -20,7 +22,8 @@ const emit = defineEmits<{
   navigate: [id: number]
 }>()
 
-const viewportEl = ref<HTMLElement>()
+const containerRef = ref<HTMLElement>()
+const worldRef = ref<HTMLElement>()
 const DEFAULT_NODE_SIZE: NodeSize = { width: 110, height: 40 }
 
 const collapsedIds = ref<Set<number>>(new Set())
@@ -29,6 +32,17 @@ const nodeSizes = ref<Map<number, NodeSize>>(new Map())
 const displayTree = computed(() =>
   buildDisplayTree(props.graph, collapsedIds.value),
 )
+
+const layoutBounds = computed<GraphBounds>(() => {
+  if (!displayTree.value.nodes.length) {
+    return { x: 0, y: 0, width: 0, height: 0 }
+  }
+  return layoutMappingGraph({
+    rootId: props.graph.root_id,
+    tree: displayTree.value,
+    nodeSizes: nodeSizes.value.size > 0 ? nodeSizes.value : defaultSizes(),
+  }).bounds
+})
 
 const layout = computed(() => {
   if (!displayTree.value.nodes.length) {
@@ -100,12 +114,18 @@ const pathNodeIds = computed(() => {
 
 const currentSemanticLevel = computed<SemanticLevel>(() => props.semanticLevel ?? 'full')
 
+const viewport = useGraphViewport({
+  containerRef: containerRef as any,
+  worldRef: worldRef as any,
+  bounds: layoutBounds,
+})
+
 // --- node measurement (post-mount) ---
 let measured = false
 async function measureNodes() {
-  if (!viewportEl.value) return
+  if (!containerRef.value) return
   await nextTick()
-  const els = viewportEl.value.querySelectorAll<HTMLElement>('[data-node-id]')
+  const els = containerRef.value.querySelectorAll<HTMLElement>('[data-node-id]')
   if (!els.length) return
   const sizes = new Map<number, NodeSize>()
   let changed = false
@@ -155,8 +175,8 @@ const layerStats = computed(() => {
 
 <template>
   <div class="mapping-graph" role="region" aria-label="詞句對照圖譜">
-    <div ref="viewportEl" class="graph-viewport">
-      <div class="graph-world" :style="{ '--bounds-w': layout.bounds.width + 'px', '--bounds-h': layout.bounds.height + 'px' }">
+    <div ref="containerRef" class="graph-viewport">
+      <div ref="worldRef" class="graph-world">
         <GraphEdges
           :layout-nodes="layout.nodes"
           :tree-edges="layout.treeEdges"
@@ -186,6 +206,14 @@ const layerStats = computed(() => {
         />
       </div>
     </div>
+    <GraphToolbar
+      :zoom-percent="viewport.zoomPercent.value"
+      @zoom-in="viewport.zoomIn"
+      @zoom-out="viewport.zoomOut"
+      @fit="viewport.fit"
+      @actual-size="viewport.actualSize"
+      @reset="viewport.reset"
+    />
     <div class="graph-legend">
       <span class="lr">● 根節點</span>
       <span class="lr">○ 一跳</span>
@@ -215,11 +243,9 @@ const layerStats = computed(() => {
 }
 .graph-world {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
 }
 .graph-legend {
   position: absolute;
