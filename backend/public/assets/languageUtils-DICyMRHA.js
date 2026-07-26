@@ -1,1 +1,0 @@
-function l(s){let t=5381;for(let n=0;n<s.length;n++)t=(t<<5)+t+s.charCodeAt(n),t=t>>>0;const c=t%360,e=60+t%20,h=45+t%10,i=e/100,o=h/100,u=i*Math.min(o,1-o),a=n=>{const r=(n+c/30)%12,g=o-u*Math.max(Math.min(r-3,9-r,1),-1);return Math.round(255*g).toString(16).padStart(2,"0")};return`#${a(0)}${a(8)}${a(4)}`}export{l as g};
