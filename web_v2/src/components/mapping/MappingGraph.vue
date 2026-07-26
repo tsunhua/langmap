@@ -224,6 +224,13 @@ function onNavigateNode(id: number) {
   emit('navigate', id)
 }
 
+function centerOnNodeById(nodeId: number) {
+  const node = layoutNodeById.value.get(nodeId)
+  if (node) viewport.centerOnNode(node.x, node.y)
+}
+
+defineExpose({ centerOnNodeById })
+
 const layerStats = computed(() => {
   const parts: string[] = []
   for (const [depth, count] of Object.entries(props.graph.layer_counts)) {

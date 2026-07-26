@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
 import MappingGraph from '@/components/mapping/MappingGraph.vue'
 import GraphInspector from '@/components/mapping/GraphInspector.vue'
-import MappingList from '@/components/mapping/MappingList.vue'
+import MappingHierarchyList from '@/components/mapping/MappingHierarchyList.vue'
 import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
@@ -25,6 +25,7 @@ const loading = ref(true)
 const loadError = ref('')
 const selectedNodeId = ref<number | null>(null)
 const collapsedIds = ref<Set<number>>(new Set())
+const graphRef = ref<{ centerOnNodeById: (id: number) => void } | null>(null)
 
 const MAX_HOPS = 3
 
@@ -88,25 +89,10 @@ const displayTree = computed<DisplayTree>(() => {
   return buildDisplayTree(graph.value)
 })
 
-const mappingList = computed(() => {
-  if (!graph.value) return []
-  const g = graph.value
-  return g.nodes
-    .filter(n => n.expression_id !== g.root_id)
-    .map(n => {
-      const edge = g.edges.find(e => e.target_id === n.expression_id)
-      return {
-        edge_id: edge?.edge_id ?? null,
-        expression_id: n.expression_id,
-        text: n.text,
-        language_code: n.language_code,
-        language_name: n.language_name ?? '',
-        score: edge?.score ?? 0,
-        hops: n.depth,
-      }
-    })
-    .sort((a, b) => a.hops - b.hops || b.score - a.score)
-})
+function selectNodeFromList(nodeId: number) {
+  selectedNodeId.value = nodeId
+  graphRef.value?.centerOnNodeById(nodeId)
+}
 
 const coords = computed(() => {
   const lat = expr.value?.region_latitude
@@ -167,7 +153,7 @@ const sourceLabel = computed(() => {
 
     <template v-if="hasMappings">
       <div class="md-graph-area">
-        <MappingGraph
+        <MappingGraph ref="graphRef"
           :graph="graph!"
           :selected-node-id="selectedNodeId"
           :collapsed-ids="collapsedIds"
@@ -190,7 +176,14 @@ const sourceLabel = computed(() => {
         />
       </div>
 
-      <MappingList :mappings="mappingList" />
+      <MappingHierarchyList
+        :tree="displayTree"
+        :graph="graph!"
+        :selected-node-id="selectedNodeId"
+        :collapsed-ids="collapsedIds"
+        @select="selectNodeFromList"
+        @toggle-collapse="toggleCollapse"
+      />
     </template>
 
     <div v-else class="md-empty">
