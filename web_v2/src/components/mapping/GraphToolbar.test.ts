@@ -43,7 +43,7 @@ describe('GraphToolbar', () => {
   it('all zoom buttons have accessible labels', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(5)
+    expect(buttons.length).toBe(6)
     for (const btn of buttons) {
       expect(btn.attributes('aria-label')).toBeTruthy()
     }

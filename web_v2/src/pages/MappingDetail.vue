@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
 import MappingGraph from '@/components/mapping/MappingGraph.vue'
-import GraphInspector from '@/components/mapping/GraphInspector.vue'
+import MappingGraphSkeleton from '@/components/mapping/MappingGraphSkeleton.vue'
 import MappingHierarchyList from '@/components/mapping/MappingHierarchyList.vue'
+import GraphInspector from '@/components/mapping/GraphInspector.vue'
+import GraphMobileInspector from '@/components/mapping/GraphMobileInspector.vue'
 import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { ArrowUpRight, Plus, ChevronRight } from 'lucide-vue-next'
+import { ArrowUpRight, Plus, ChevronRight, Share2, List } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,21 +24,53 @@ const expr = ref<any>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
 const loading = ref(true)
+const updatingHops = ref(false)
 const loadError = ref('')
 const selectedNodeId = ref<number | null>(null)
 const collapsedIds = ref<Set<number>>(new Set())
 const graphRef = ref<{ centerOnNodeById: (id: number) => void } | null>(null)
+const mobileMode = ref<'graph' | 'list'>('list')
+const isMobile = ref(false)
 
 const MAX_HOPS = 3
+
+let mql: MediaQueryList | null = null
+let mqlListener: ((e: MediaQueryListEvent) => void) | null = null
+
+function parseHops(value: unknown): 1 | 2 | 3 {
+  const n = typeof value === 'string' ? parseInt(value) : NaN
+  if (n === 2) return 2
+  if (n === 3) return 3
+  return 1
+}
+
+function initFromUrl() {
+  const h = route.query.hops
+  if (h) hops.value = parseHops(h)
+  const n = route.query.node
+  if (n) {
+    const nodeId = parseInt(n as string)
+    if (!isNaN(nodeId)) selectedNodeId.value = nodeId
+  }
+}
+
+function syncUrl() {
+  const query: Record<string, string> = {}
+  if (hops.value > 1) query.hops = String(hops.value)
+  if (selectedNodeId.value) query.node = String(selectedNodeId.value)
+  router.replace({ query })
+}
 
 async function load() {
   expr.value = null
   graph.value = null
   loading.value = true
+  updatingHops.value = false
   loadError.value = ''
   try {
     expr.value = await detail(id.value)
     graph.value = await mappingGraph(id.value, hops.value)
+    trySelectNodeFromUrl()
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   } finally {
@@ -44,17 +78,60 @@ async function load() {
   }
 }
 
-onMounted(load)
-watch(id, load)
+function trySelectNodeFromUrl() {
+  const n = route.query.node
+  if (!n || !graph.value) return
+  const nodeId = parseInt(n as string)
+  if (isNaN(nodeId)) return
+  const exists = graph.value.nodes.some((node) => node.expression_id === nodeId)
+  if (exists) {
+    selectedNodeId.value = nodeId
+  } else {
+    selectedNodeId.value = null
+    router.replace({ query: { hops: hops.value > 1 ? String(hops.value) : undefined } })
+  }
+}
+
+onMounted(() => {
+  initFromUrl()
+  load()
+  mql = window.matchMedia('(max-width: 767px)')
+  isMobile.value = mql.matches
+  mqlListener = (e: MediaQueryListEvent) => {
+    isMobile.value = e.matches
+    if (!e.matches) mobileMode.value = 'list'
+  }
+  mql.addEventListener('change', mqlListener)
+})
+
+onUnmounted(() => {
+  if (mql && mqlListener) {
+    mql.removeEventListener('change', mqlListener)
+  }
+})
+
+watch(id, () => {
+  collapsedIds.value = new Set()
+  selectedNodeId.value = null
+  initFromUrl()
+  load()
+})
 
 async function changeHops(h: 1 | 2 | 3) {
   hops.value = h
+  updatingHops.value = true
   try {
     graph.value = await mappingGraph(id.value, h)
+    trySelectNodeFromUrl()
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
+  } finally {
+    updatingHops.value = false
   }
 }
+
+watch(hops, () => syncUrl())
+watch(selectedNodeId, () => syncUrl())
 
 function selectNode(nodeId: number) {
   selectedNodeId.value = nodeId
@@ -79,6 +156,28 @@ function navigateToNode(nodeId: number) {
   router.push(`/mapping/${nodeId}`)
 }
 
+function selectNodeFromList(nodeId: number) {
+  selectedNodeId.value = nodeId
+  graphRef.value?.centerOnNodeById(nodeId)
+  if (isMobile.value) mobileMode.value = 'graph'
+}
+
+function toggleMobileMode() {
+  mobileMode.value = mobileMode.value === 'graph' ? 'list' : 'graph'
+}
+
+function expandAll() {
+  collapsedIds.value = new Set()
+}
+
+function collapseToFirst() {
+  if (!graph.value) return
+  const firstHopIds = graph.value.nodes
+    .filter((n) => n.depth === 1)
+    .map((n) => n.expression_id)
+  collapsedIds.value = new Set(firstHopIds)
+}
+
 const directCount = computed(() => graph.value?.layer_counts[1] ?? 0)
 const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (graph.value?.layer_counts[3] ?? 0))
 
@@ -88,11 +187,6 @@ const displayTree = computed<DisplayTree>(() => {
   if (!graph.value) return { nodes: [], treeEdges: [], crossEdges: [] }
   return buildDisplayTree(graph.value)
 })
-
-function selectNodeFromList(nodeId: number) {
-  selectedNodeId.value = nodeId
-  graphRef.value?.centerOnNodeById(nodeId)
-}
 
 const coords = computed(() => {
   const lat = expr.value?.region_latitude
@@ -111,9 +205,9 @@ const sourceLabel = computed(() => {
 </script>
 
 <template>
-  <LoadingSpinner v-if="loading" />
+  <LoadingSpinner v-if="loading && !graph" />
 
-  <EmptyState v-else-if="loadError" :message="loadError" />
+  <EmptyState v-else-if="loadError && !graph" :message="loadError" />
 
   <div v-else-if="expr" class="anchor">
     <nav class="crumbs" aria-label="麵包屑">
@@ -152,20 +246,45 @@ const sourceLabel = computed(() => {
     </div>
 
     <template v-if="hasMappings">
+      <div v-if="isMobile" class="md-mobile-bar">
+        <button
+          class="md-mode-btn"
+          :class="{ active: mobileMode === 'graph' }"
+          aria-label="圖譜模式"
+          @click="toggleMobileMode"
+        >
+          <Share2 :size="14" aria-hidden="true" /> 圖譜
+        </button>
+        <button
+          class="md-mode-btn"
+          :class="{ active: mobileMode === 'list' }"
+          aria-label="列表模式"
+          @click="toggleMobileMode"
+        >
+          <List :size="14" aria-hidden="true" /> 列表
+        </button>
+      </div>
+
       <div class="md-graph-area">
-        <MappingGraph ref="graphRef"
-          :graph="graph!"
-          :selected-node-id="selectedNodeId"
-          :collapsed-ids="collapsedIds"
-          :current-hops="hops"
-          :max-hops="MAX_HOPS"
-          @select="selectNode"
-          @navigate="navigateToNode"
-          @clear-selection="clearSelection"
-          @toggle-collapse="toggleCollapse"
-          @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
-        />
+        <template v-if="loading || updatingHops">
+          <MappingGraphSkeleton />
+        </template>
+        <template v-else-if="!isMobile || mobileMode === 'graph'">
+          <MappingGraph ref="graphRef"
+            :graph="graph!"
+            :selected-node-id="selectedNodeId"
+            :collapsed-ids="collapsedIds"
+            :current-hops="hops"
+            :max-hops="MAX_HOPS"
+            @select="selectNode"
+            @navigate="navigateToNode"
+            @clear-selection="clearSelection"
+            @toggle-collapse="toggleCollapse"
+            @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
+          />
+        </template>
         <GraphInspector
+          v-if="!isMobile"
           :selected-node-id="selectedNodeId"
           :graph="graph!"
           :display-tree="displayTree"
@@ -176,12 +295,25 @@ const sourceLabel = computed(() => {
         />
       </div>
 
-      <MappingHierarchyList
-        :tree="displayTree"
-        :graph="graph!"
+      <div v-if="!isMobile || mobileMode === 'list'" class="md-list-section">
+        <MappingHierarchyList
+          :tree="displayTree"
+          :graph="graph!"
+          :selected-node-id="selectedNodeId"
+          :collapsed-ids="collapsedIds"
+          @select="selectNodeFromList"
+          @toggle-collapse="toggleCollapse"
+        />
+      </div>
+
+      <GraphMobileInspector
+        v-if="isMobile"
         :selected-node-id="selectedNodeId"
-        :collapsed-ids="collapsedIds"
-        @select="selectNodeFromList"
+        :graph="graph!"
+        :display-tree="displayTree"
+        :anchor-text="expr.text"
+        @close="clearSelection"
+        @navigate="navigateToNode"
         @toggle-collapse="toggleCollapse"
       />
     </template>
@@ -207,6 +339,41 @@ const sourceLabel = computed(() => {
   .md-graph-area {
     grid-template-columns: 1fr;
   }
+}
+.md-mobile-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  width: fit-content;
+}
+.md-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.md-mode-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.md-mode-btn:not(.active):hover {
+  color: var(--accent);
+}
+.md-mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.md-list-section {
+  margin-top: 16px;
 }
 .crumbs {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
