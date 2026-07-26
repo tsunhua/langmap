@@ -1,20 +1,55 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHandbooks } from '@/composables/useHandbooks'
+import { useExpressions } from '@/composables/useExpressions'
 import VotePill from '@/components/mapping/VotePill.vue'
-import { ChevronRight } from 'lucide-vue-next'
+import { PanelRightOpen } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import HandbookExpressionInspector, {
+  type HandbookExpressionDetail,
+} from '@/components/handbook/HandbookExpressionInspector.vue'
+import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
+
+interface HandbookItem {
+  expression_id: number
+  text: string
+  language_code: string
+  language_name?: string | null
+}
+
+interface HandbookSection {
+  id: number
+  title?: string | null
+  items?: HandbookItem[]
+}
+
+interface HandbookDetail {
+  id: number
+  title: string
+  author_username?: string | null
+  visibility?: string | null
+  score: number
+  sections: HandbookSection[]
+}
 
 const route = useRoute()
 const id = computed(() => parseInt(route.params.id as string))
 
 const { detail } = useHandbooks()
+const { detail: expressionDetail, mappingGraph } = useExpressions()
 
-const hb = ref<any>(null)
+const hb = ref<HandbookDetail | null>(null)
 const loading = ref(true)
 const loadError = ref('')
+const selectedExpression = ref<HandbookExpressionDetail | null>(null)
+const inspectorLoading = ref(false)
+const inspectorError = ref('')
+const relationGraph = ref<MappingGraphResponse | null>(null)
+const relationLoading = ref(false)
+const relationError = ref('')
+let selectionRequest = 0
 
 async function load() {
   hb.value = null
@@ -29,8 +64,82 @@ async function load() {
   }
 }
 
-onMounted(load)
-watch(id, load)
+async function selectExpression(item: HandbookItem) {
+  await selectExpressionById(item.expression_id, {
+    id: item.expression_id,
+    text: item.text,
+    language_code: item.language_code,
+    language_name: item.language_name,
+  })
+}
+
+async function selectExpressionById(
+  expressionId: number,
+  optimisticExpression?: HandbookExpressionDetail,
+) {
+  const request = ++selectionRequest
+  selectedExpression.value = optimisticExpression ?? selectedExpression.value
+  inspectorLoading.value = true
+  inspectorError.value = ''
+  relationGraph.value = null
+  relationLoading.value = true
+  relationError.value = ''
+
+  const [detailResult, graphResult] = await Promise.allSettled([
+    expressionDetail(expressionId) as Promise<HandbookExpressionDetail>,
+    mappingGraph(expressionId, 1),
+  ])
+  if (request !== selectionRequest) return
+
+  if (detailResult.status === 'fulfilled') {
+    selectedExpression.value = detailResult.value
+  } else {
+    inspectorError.value = '無法載入詞句資訊'
+  }
+  if (graphResult.status === 'fulfilled') {
+    relationGraph.value = graphResult.value
+  } else {
+    relationError.value = '無法載入相關詞句'
+  }
+  inspectorLoading.value = false
+  relationLoading.value = false
+}
+
+function selectRelatedExpression(expressionId: number) {
+  const node = relationGraph.value?.nodes.find(
+    candidate => candidate.expression_id === expressionId,
+  )
+  return selectExpressionById(expressionId, node ? {
+    id: node.expression_id,
+    text: node.text,
+    language_code: node.language_code,
+    language_name: node.language_name,
+  } : undefined)
+}
+
+function closeInspector() {
+  selectionRequest++
+  selectedExpression.value = null
+  inspectorLoading.value = false
+  inspectorError.value = ''
+  relationGraph.value = null
+  relationLoading.value = false
+  relationError.value = ''
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && selectedExpression.value) closeInspector()
+}
+
+onMounted(() => {
+  load()
+  window.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+watch(id, () => {
+  closeInspector()
+  load()
+})
 </script>
 
 <template>
@@ -70,12 +179,19 @@ watch(id, load)
         </div>
         <ol v-if="sec.items?.length" class="hb-expr-list">
           <li v-for="(expr, j) in sec.items" :key="expr.expression_id">
-            <router-link :to="`/mapping/${expr.expression_id}`" class="hb-expr">
-              <span class="hb-num">{{ j + 1 }}</span>
+            <button
+              type="button"
+              class="hb-expr"
+              :class="{ selected: selectedExpression?.id === expr.expression_id }"
+              :aria-expanded="selectedExpression?.id === expr.expression_id"
+              aria-controls="handbook-expression-inspector"
+              @click="selectExpression(expr)"
+            >
+              <span class="hb-num">{{ String(j + 1).padStart(2, '0') }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
               <span class="lang-badge">{{ expr.language_code }}</span>
-              <span class="hb-go"><ChevronRight :size="14" aria-hidden="true" /></span>
-            </router-link>
+              <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
+            </button>
           </li>
         </ol>
       </section>
@@ -84,39 +200,108 @@ watch(id, load)
         編輯手冊
       </router-link>
     </main>
+
+    <HandbookExpressionInspector
+      id="handbook-expression-inspector"
+      :expression="selectedExpression"
+      :loading="inspectorLoading"
+      :error="inspectorError"
+      :graph="relationGraph"
+      :graph-loading="relationLoading"
+      :graph-error="relationError"
+      @close="closeInspector"
+      @select-expression="selectRelatedExpression"
+    />
   </div>
 </template>
 
 <style scoped>
-.hv-layout { display: grid; grid-template-columns: 220px 1fr; gap: 36px; max-width: 1000px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
-.hv-toc { position: sticky; top: 60px; align-self: start; }
+.hv-layout {
+  display: grid;
+  grid-template-columns: 176px minmax(540px, 760px) minmax(240px, 292px);
+  align-items: start;
+  gap: 36px;
+  width: min(calc(100vw - 56px), 1380px);
+  margin-left: 50%;
+  transform: translateX(-50%);
+  padding: var(--page-pad-top) 28px var(--page-pad-bottom);
+}
+.hv-toc { position: sticky; top: calc(var(--bar-h) + 24px); align-self: start; min-width: 0; }
 .hv-toc-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--space-xs); }
-.hv-toc a { display: block; padding: 4px 8px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.hv-toc a { display: block; padding: 6px 9px; font-size: 13px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hv-toc a:hover { color: var(--fg); background: var(--accent-soft); border-left-color: var(--accent); }
+.hv-content { min-width: 0; }
 .hv-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .hv-back:hover { color: var(--fg); }
 .hb-edit-btn { margin-top: var(--space-md); }
-.hv-content h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.hv-content h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
 .hv-meta { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .hv-toc ol { list-style: none; padding: 0; margin: 0; }
 .hv-vote-row { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md); font-size: 13px; }
-.hv-section { margin-bottom: var(--space-md); padding-top: var(--space-sm); border-top: 1px solid var(--border); }
+.hv-section { scroll-margin-top: calc(var(--bar-h) + 20px); margin-bottom: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
 .hv-section:first-of-type { border-top: none; padding-top: 0; }
 .hv-sec-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.hv-sec-head h2 { font-size: 16px; font-weight: 600; }
+.hv-sec-head h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .hv-sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 .hb-expr-list { list-style: none; padding: 0; }
 .hb-expr {
-  display: grid; grid-template-columns: 26px 1fr 56px 16px;
-  align-items: center; gap: 12px; padding: 9px 4px;
-  text-decoration: none; color: inherit; border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto 18px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--r);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
 }
-.hb-expr:hover { background: var(--bg); }
+.hb-expr:hover { background: var(--surface); }
 .hb-expr:hover .hb-tx { color: var(--accent); }
-.hb-num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.hb-go { color: var(--accent); }
+.hb-expr.selected { background: var(--accent-soft); box-shadow: inset 2px 0 var(--accent); }
+.hb-expr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hb-num { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.hb-tx { min-width: 0; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-go { display: grid; place-items: center; color: var(--faint); }
+.hb-expr:hover .hb-go, .hb-expr.selected .hb-go { color: var(--accent); }
+
+@media (max-width: 1200px) {
+  .hv-layout {
+    grid-template-columns: 160px minmax(0, 760px) 0;
+    width: min(calc(100vw - 48px), 1020px);
+    gap: 28px;
+  }
+}
 @media (max-width: 768px) {
-  .hv-layout { grid-template-columns: 1fr; }
-  .hv-toc { position: static; margin-bottom: 16px; }
+  .hv-layout {
+    grid-template-columns: minmax(0, 1fr) 0;
+    width: 100vw;
+    gap: 0;
+    padding: 22px 20px 72px;
+  }
+  .hv-toc {
+    grid-column: 1;
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 24px;
+  }
+  .hv-toc-label { width: 100%; }
+  .hv-toc ol { display: flex; gap: 4px; max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
+  .hv-toc li { flex: 0 0 auto; }
+  .hv-toc a { min-height: 44px; display: flex; align-items: center; border-left: 0; border-bottom: 2px solid transparent; }
+  .hv-content { grid-column: 1; }
+  .hb-expr { grid-template-columns: 24px minmax(0, 1fr) auto 20px; min-height: 44px; padding: 7px 6px; }
+}
+@media (max-width: 480px) {
+  .hv-layout { padding-inline: 16px; }
+  .hb-expr { gap: 8px; }
+  .hv-vote-row { align-items: flex-start; flex-direction: column; }
 }
 </style>
