@@ -2,6 +2,7 @@
 set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 PORT=""
+LOCAL_D1_STATE="$ROOT/backend/.wrangler/state"
 
 for arg in "$@"; do
   case "$arg" in
@@ -28,17 +29,17 @@ cd "$ROOT/backend"
 [ -d node_modules ] || npm install
 
 step "確保本地 D1 schema 已遷移（無表才應用 schema.sql）"
-TABLE_COUNT=$(npx wrangler d1 execute langmap-v2 --local --command="SELECT count(*) as c FROM sqlite_master WHERE type='table';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
+TABLE_COUNT=$(npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" --command="SELECT count(*) as c FROM sqlite_master WHERE type='table';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
 if [ "${TABLE_COUNT:-0}" -eq 0 ]; then
   echo "  本地 D1 無表，套用 schema.sql"
-  npx wrangler d1 execute langmap-v2 --local --file=./schema.sql
+  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" --file=./schema.sql
 else
   echo "  本地 D1 已有 ${TABLE_COUNT} 張表，略過遷移"
 fi
 
 step "啟動後端 wrangler（port ${PORT:-8788}）"
 cd "$ROOT/backend"
-npx wrangler dev --port "${PORT:-8788}" &
+npx wrangler dev --persist-to "$LOCAL_D1_STATE" --port "${PORT:-8788}" &
 BACKEND_PID=$!
 
 step "釋放可能殘留的 workerd 檢查器埠 9229（若屬於本 repo 的 workerd）"

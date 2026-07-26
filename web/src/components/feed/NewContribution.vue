@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 defineProps<{
-  id: string
+  id: string | number
   type?: string
   left_text: string
   left_lang: string
@@ -34,10 +34,14 @@ function timeAgo(dateStr?: string): string {
     <span class="new-body">
       <span class="new-pair">
         <span class="tx">{{ left_text }}</span>
-        <span class="arrow"><ArrowLeftRight :size="12" aria-hidden="true" /></span>
-        <span class="tx">{{ right_text }}</span>
+        <template v-if="type !== 'expression' && right_text">
+          <span class="arrow"><ArrowLeftRight :size="12" aria-hidden="true" /></span>
+          <span class="tx">{{ right_text }}</span>
+        </template>
       </span>
-      <span class="lang-badge">{{ left_lang }} · {{ right_lang }}</span>
+      <span class="lang-badge">
+        {{ type === 'expression' || !right_lang ? left_lang : `${left_lang} · ${right_lang}` }}
+      </span>
     </span>
     <span class="new-meta">
       <template v-if="timeAgo(created_at)">{{ timeAgo(created_at) }} · </template>@{{ author || t('components.anonymous') }}
