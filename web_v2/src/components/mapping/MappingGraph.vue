@@ -16,19 +16,24 @@ const props = defineProps<{
   graph: MappingGraphResponse
   selectedNodeId?: number | null
   semanticLevel?: SemanticLevel
+  collapsedIds?: Set<number>
+  currentHops?: number
+  maxHops?: number
 }>()
 
 const emit = defineEmits<{
   select: [id: number]
   navigate: [id: number]
   clearSelection: []
+  toggleCollapse: [id: number]
+  changeHops: [hops: number]
 }>()
 
 const containerRef = ref<HTMLElement>()
 const worldRef = ref<HTMLElement>()
 const DEFAULT_NODE_SIZE: NodeSize = { width: 110, height: 40 }
 
-const collapsedIds = ref<Set<number>>(new Set())
+const collapsedIds = computed<Set<number>>(() => props.collapsedIds ?? new Set())
 const nodeSizes = ref<Map<number, NodeSize>>(new Map())
 
 const displayTree = computed(() =>
@@ -114,8 +119,6 @@ const pathNodeIds = computed(() => {
   return ids
 })
 
-const currentSemanticLevel = computed<SemanticLevel>(() => props.semanticLevel ?? 'full')
-
 const showCrossEdges = computed(() => props.selectedNodeId != null)
 
 const viewport = useGraphViewport({
@@ -131,6 +134,16 @@ const {
   resetPositions,
   setActiveDrag,
 } = useGraphDrag()
+
+const zoomBasedLevel = ref<SemanticLevel>('full')
+const currentSemanticLevel = computed<SemanticLevel>(() => props.semanticLevel ?? zoomBasedLevel.value)
+
+watch(() => viewport.zoomPercent.value, (pct) => {
+  const next: SemanticLevel = pct < 45 ? 'compact' : pct < 80 ? 'medium' : 'full'
+  if (next !== zoomBasedLevel.value) {
+    zoomBasedLevel.value = next
+  }
+})
 
 const worldScale = computed(() => Math.max(0.25, viewport.zoomPercent.value / 100))
 
@@ -158,6 +171,10 @@ function onDragEnd(nodeId: number, worldX: number, worldY: number) {
 function handleReset() {
   viewport.reset()
   resetPositions()
+}
+
+function onToggleCollapse(nodeId: number) {
+  emit('toggleCollapse', nodeId)
 }
 
 // --- node measurement (post-mount) ---
@@ -249,16 +266,20 @@ const layerStats = computed(() => {
           @navigate="onNavigateNode"
           @drag-move="onDragMove"
           @drag-end="onDragEnd"
+          @toggle-collapse="onToggleCollapse"
         />
       </div>
     </div>
     <GraphToolbar
       :zoom-percent="viewport.zoomPercent.value"
+      :current-hops="props.currentHops ?? 1"
+      :max-hops="props.maxHops ?? 1"
       @zoom-in="viewport.zoomIn"
       @zoom-out="viewport.zoomOut"
       @fit="viewport.fit"
       @actual-size="viewport.actualSize"
       @reset="handleReset"
+      @change-hops="(h: number) => emit('changeHops', h as 1 | 2 | 3)"
     />
     <div class="graph-legend">
       <span class="lr">● 根節點</span>

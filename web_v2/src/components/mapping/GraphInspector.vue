@@ -14,6 +14,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   navigate: [id: number]
+  toggleCollapse: [id: number]
 }>()
 
 const node = computed(() => {
@@ -88,6 +89,12 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     </div>
 
     <div v-if="node.expression_id !== graph.root_id" class="gi-acts">
+      <button
+        class="btn btn-sm"
+        @click="emit('toggleCollapse', node.expression_id)"
+      >
+        收合子分支
+      </button>
       <button
         class="btn btn-sm btn-primary"
         @click="emit('navigate', node.expression_id)"

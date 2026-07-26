@@ -25,6 +25,7 @@ const emit = defineEmits<{
   navigate: [id: number]
   dragMove: [nodeId: number, worldX: number, worldY: number]
   dragEnd: [nodeId: number, worldX: number, worldY: number]
+  toggleCollapse: [id: number]
 }>()
 
 const DRAG_THRESHOLD = 4
@@ -120,6 +121,14 @@ function onClick() {
   if (dragDidMove) return
   emit('select', props.nodeId)
 }
+function onToggleCollapse(e: MouseEvent) {
+  e.stopPropagation()
+  emit('toggleCollapse', props.nodeId)
+}
+function onToggleCollapseKey(e: KeyboardEvent) {
+  e.stopPropagation()
+  emit('toggleCollapse', props.nodeId)
+}
 function onDblclick() {
   emit('navigate', props.nodeId)
 }
@@ -155,7 +164,16 @@ function onKeydown(e: KeyboardEvent) {
     <span class="gn-text">{{ displayText }}</span>
     <span v-if="semanticLevel !== 'compact'" class="gn-meta">
       <span class="gn-lang">{{ languageCode }}</span>
-      <span v-if="semanticLevel === 'full' && childCount > 0" class="gn-children">+{{ childCount }}</span>
+      <span
+        v-if="semanticLevel === 'full' && childCount > 0"
+        class="gn-children"
+        role="button"
+        tabindex="0"
+        :aria-label="`${childCount} 個子節點，點擊收合`"
+        @click.stop="onToggleCollapse"
+        @keydown.enter.stop="onToggleCollapseKey"
+        @keydown.space.prevent.stop="onToggleCollapseKey"
+      >+{{ childCount }}</span>
     </span>
   </div>
 </template>

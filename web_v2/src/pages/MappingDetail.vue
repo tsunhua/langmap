@@ -24,6 +24,7 @@ const hops = ref<1 | 2 | 3>(1)
 const loading = ref(true)
 const loadError = ref('')
 const selectedNodeId = ref<number | null>(null)
+const collapsedIds = ref<Set<number>>(new Set())
 
 const MAX_HOPS = 3
 
@@ -60,6 +61,16 @@ function selectNode(nodeId: number) {
 
 function clearSelection() {
   selectedNodeId.value = null
+}
+
+function toggleCollapse(nodeId: number) {
+  const next = new Set(collapsedIds.value)
+  if (next.has(nodeId)) {
+    next.delete(nodeId)
+  } else {
+    next.add(nodeId)
+  }
+  collapsedIds.value = next
 }
 
 function navigateToNode(nodeId: number) {
@@ -150,7 +161,7 @@ const sourceLabel = computed(() => {
       <h2>對照集</h2>
       <span class="nb-meta">
         <b>{{ directCount }}</b> 直接映射<template v-if="indirectCount"> · <b>{{ indirectCount }}</b> 間接</template>
-        · 預設 <b>{{ hops }} 跳</b><template v-if="hops < MAX_HOPS"> · 可展開至 {{ MAX_HOPS }} 跳</template>
+        · <b>{{ hops }}</b> 跳
       </span>
     </div>
 
@@ -159,9 +170,14 @@ const sourceLabel = computed(() => {
         <MappingGraph
           :graph="graph!"
           :selected-node-id="selectedNodeId"
+          :collapsed-ids="collapsedIds"
+          :current-hops="hops"
+          :max-hops="MAX_HOPS"
           @select="selectNode"
           @navigate="navigateToNode"
           @clear-selection="clearSelection"
+          @toggle-collapse="toggleCollapse"
+          @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
         />
         <GraphInspector
           :selected-node-id="selectedNodeId"
@@ -170,6 +186,7 @@ const sourceLabel = computed(() => {
           :anchor-text="expr.text"
           @close="clearSelection"
           @navigate="navigateToNode"
+          @toggle-collapse="toggleCollapse"
         />
       </div>
 
