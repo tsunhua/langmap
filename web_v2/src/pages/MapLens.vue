@@ -9,6 +9,9 @@ import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -101,7 +104,7 @@ function addMarkers() {
       iconAnchor: [12, 12]
     })
     L.marker([lang.region_latitude, lang.region_longitude], { icon })
-      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_code} · 錨點`)
+      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_code} · ${t('mapLens.anchor')}`)
       .addTo(m)
   }
 
@@ -137,7 +140,7 @@ async function load() {
     anchor.value = expr
     graph.value = g
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('mapLens.loadFailed')
   } finally {
     loading.value = false
   }
@@ -182,12 +185,12 @@ onUnmounted(cleanup)
 
     <template v-else-if="anchor">
       <div class="lens-head">
-        <router-link :to="`/mapping/${id}`" class="lens-back">← 回對照集</router-link>
-        <h1>概念分布:<span class="anc">{{ anchor.text }}</span></h1>
-        <span class="lens-meta">{{ pins.length + 1 }} 種語言 · {{ regionCount }} 地區</span>
+        <router-link :to="`/mapping/${id}`" class="lens-back">← {{ t('mapLens.back') }}</router-link>
+        <h1>{{ t('mapLens.title') }}:<span class="anc">{{ anchor.text }}</span></h1>
+        <span class="lens-meta">{{ t('mapLens.languages', { count: pins.length + 1 }) }} · {{ t('mapLens.regions', { count: regionCount }) }}</span>
       </div>
 
-      <EmptyState v-if="pins.length === 0" message="此概念尚無地理分布資料" />
+      <EmptyState v-if="pins.length === 0" :message="t('mapLens.noData')" />
 
       <div v-else class="lens-layout">
         <div class="lens-map-wrap">
@@ -195,7 +198,7 @@ onUnmounted(cleanup)
         </div>
 
         <aside class="lens-list">
-          <div class="lens-list-head">對照集成員</div>
+          <div class="lens-list-head">{{ t('mapLens.members') }}</div>
           <router-link
             :to="`/mapping/${id}`"
             :class="['lens-item', 'anchor', { active: activeId === anchor.id }]"
@@ -206,7 +209,7 @@ onUnmounted(cleanup)
           >
             <span class="lc">{{ anchor.language_code }}</span>
             <span class="tx">{{ anchor.text }}</span>
-            <span class="meta">錨點</span>
+            <span class="meta">{{ t('mapLens.anchor') }}</span>
           </router-link>
           <router-link
             v-for="p in pins"

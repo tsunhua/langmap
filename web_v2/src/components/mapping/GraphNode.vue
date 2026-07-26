@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 type SemanticLevel = 'compact' | 'medium' | 'full'
 
@@ -19,6 +20,7 @@ const props = defineProps<{
   semanticLevel: SemanticLevel
   worldScale: number
 }>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   select: [id: number]
@@ -42,8 +44,8 @@ let pointerId = -1
 const accessibleName = computed(() => {
   const parts = [props.text, props.languageCode]
   if (props.languageName) parts.push(props.languageName)
-  parts.push(`深度 ${props.depth}`)
-  if (props.score !== null) parts.push(`評分 ${props.score}`)
+  parts.push(t('components.depth', { depth: props.depth }))
+  if (props.score !== null) parts.push(`${t('components.mappingScore')}: ${props.score}`)
   return parts.join(' · ')
 })
 
@@ -164,7 +166,7 @@ function onKeydown(e: KeyboardEvent) {
         class="gn-children"
         role="button"
         tabindex="0"
-        :aria-label="`${childCount} 個子節點，點擊收合`"
+        :aria-label="t('components.childNodes', { count: childCount })"
         @click.stop="onToggleCollapse"
         @keydown.enter.stop="onToggleCollapseKey"
         @keydown.space.prevent.stop="onToggleCollapseKey"

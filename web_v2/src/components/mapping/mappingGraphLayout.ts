@@ -263,7 +263,7 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
   }
 
   // 7. Final tight clamp to parent sector (minimal tolerance).
-  const TOLERANCE = 0.02
+  const TOLERANCE = 0.4
   const clampToParent = (node: TreeNode) => {
     for (const c of node.children) {
       const lo = node.sector.start - TOLERANCE

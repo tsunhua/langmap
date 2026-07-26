@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import VotePill from './VotePill.vue'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
@@ -11,6 +12,7 @@ const props = defineProps<{
   anchorText: string
   collapsedIds?: Set<number>
 }>()
+const { t } = useI18n()
 
 const isCollapsed = computed(() => {
   if (!props.selectedNodeId) return false
@@ -88,7 +90,7 @@ function onKeydown(e: KeyboardEvent) {
     ref="sheetRef"
     class="gm-sheet"
     role="dialog"
-    aria-label="節點資訊"
+    :aria-label="t('components.nodeInfo')"
     tabindex="-1"
     @keydown="onKeydown"
   >
@@ -98,22 +100,22 @@ function onKeydown(e: KeyboardEvent) {
 
     <div class="gm-head">
       <h3 class="gm-title">{{ node.text }}</h3>
-      <button class="gm-close" aria-label="關閉" @click="emit('close')">&times;</button>
+      <button class="gm-close" :aria-label="t('common.close')" @click="emit('close')">&times;</button>
     </div>
 
     <div class="gm-meta">
       <span class="gm-lang">{{ node.language_code }}</span>
       <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
-      <span class="gm-depth">深度 {{ node.depth }}</span>
+      <span class="gm-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
 
     <div class="gm-section">
-      <span class="gm-label">來源路徑</span>
+      <span class="gm-label">{{ t('components.sourcePath') }}</span>
       <span class="gm-path">{{ pathText }}</span>
     </div>
 
     <div v-if="primaryEdge" class="gm-score">
-      <span class="gm-label">映射評分</span>
+      <span class="gm-label">{{ t('components.mappingScore') }}</span>
       <VotePill
         :target-id="primaryEdge.edge_id"
         target-type="mapping"
@@ -122,8 +124,8 @@ function onKeydown(e: KeyboardEvent) {
     </div>
 
     <div v-if="crossEdgeCount > 0" class="gm-multipath">
-      <span class="gm-label">其他關係</span>
-      <span class="gm-count">{{ crossEdgeCount }} 條</span>
+      <span class="gm-label">{{ t('components.otherRelations') }}</span>
+      <span class="gm-count">{{ t('components.relationCount', { count: crossEdgeCount }) }}</span>
     </div>
 
     <div v-if="node.expression_id !== graph.root_id" class="gm-acts">
@@ -131,13 +133,13 @@ function onKeydown(e: KeyboardEvent) {
         class="btn btn-sm"
         @click="emit('toggleCollapse', node.expression_id)"
       >
-        {{ isCollapsed ? '展開子分支' : '收合子分支' }}
+        {{ isCollapsed ? t('components.expandBranch') : t('components.collapseBranch') }}
       </button>
       <button
         class="btn btn-sm btn-primary"
         @click="emit('navigate', node.expression_id)"
       >
-        查看詞句詳情
+        {{ t('components.viewExpression') }}
       </button>
     </div>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
 import type { DisplayTree, MappingGraphResponse } from './mappingGraphTypes'
 
@@ -9,6 +10,7 @@ const props = defineProps<{
   selectedNodeId: number | null
   collapsedIds: Set<number>
 }>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   select: [id: number]
@@ -70,7 +72,7 @@ const flatList = computed(() => flattenTree())
 </script>
 
 <template>
-  <div ref="listRef" class="hierarchy-list" role="tree" aria-label="映射階層列表">
+  <div ref="listRef" class="hierarchy-list" role="tree" :aria-label="t('components.hierarchyList')">
     <div
       v-for="item in flatList"
       :key="item.id"
@@ -92,7 +94,7 @@ const flatList = computed(() => flattenTree())
       <button
         v-if="hasChildren(item.id)"
         class="hl-toggle"
-        :aria-label="collapsedIds.has(item.id) ? '展開' : '收合'"
+        :aria-label="collapsedIds.has(item.id) ? t('components.expand') : t('components.collapse')"
         @click.stop="emit('toggleCollapse', item.id)"
       >
         <ChevronRight
@@ -109,7 +111,7 @@ const flatList = computed(() => flattenTree())
       <span v-else class="hl-spacer" />
 
       <span v-if="item.id === graph.root_id" class="hl-text hl-root-text">
-        {{ graph.nodes.find(n => n.expression_id === graph.root_id)?.text ?? '根節點' }}
+        {{ graph.nodes.find(n => n.expression_id === graph.root_id)?.text ?? t('components.rootNode') }}
       </span>
       <template v-else>
         <span class="hl-text">{{ nodeText(item.id) }}</span>

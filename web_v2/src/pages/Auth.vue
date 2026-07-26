@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const mode = ref<'login' | 'register'>('login')
 const username = ref('')
@@ -24,7 +26,7 @@ async function submit() {
     }
     router.push('/')
   } catch (e: any) {
-    errorMsg.value = e.response?.data?.message || '操作失敗'
+    errorMsg.value = e.response?.data?.message || t('auth.operationFailed')
   } finally {
     submitting.value = false
   }
@@ -33,33 +35,33 @@ async function submit() {
 
 <template>
   <div class="auth-page">
-    <h1>{{ mode === 'login' ? '登入' : '註冊' }}</h1>
+    <h1>{{ mode === 'login' ? t('auth.login') : t('auth.register') }}</h1>
 
     <form class="auth-form" @submit.prevent="submit">
       <div v-if="mode === 'register'" class="field">
-        <label for="auth-username">用戶名</label>
-        <input id="auth-username" v-model="username" type="text" placeholder="用戶名" required autocomplete="username" />
+        <label for="auth-username">{{ t('auth.username') }}</label>
+        <input id="auth-username" v-model="username" type="text" :placeholder="t('auth.username')" required autocomplete="username" />
       </div>
       <div class="field">
-        <label for="auth-email">電郵</label>
-        <input id="auth-email" v-model="email" type="email" placeholder="電郵" required autocomplete="email" />
+        <label for="auth-email">{{ t('auth.email') }}</label>
+        <input id="auth-email" v-model="email" type="email" :placeholder="t('auth.email')" required autocomplete="email" />
       </div>
       <div class="field">
-        <label for="auth-password">密碼</label>
-        <input id="auth-password" v-model="password" type="password" placeholder="密碼" required autocomplete="current-password" />
+        <label for="auth-password">{{ t('auth.password') }}</label>
+        <input id="auth-password" v-model="password" type="password" :placeholder="t('auth.password')" required autocomplete="current-password" />
       </div>
 
       <p v-if="errorMsg" class="error" role="alert">{{ errorMsg }}</p>
 
       <button type="submit" class="btn btn-primary" :disabled="submitting">
-        {{ submitting ? '處理中…' : (mode === 'login' ? '登入' : '註冊') }}
+        {{ submitting ? t('auth.processing') : (mode === 'login' ? t('auth.login') : t('auth.register')) }}
       </button>
     </form>
 
     <p class="toggle">
-      {{ mode === 'login' ? '沒有帳號？' : '已有帳號？' }}
+      {{ mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount') }}
       <a href="#" @click.prevent="mode = mode === 'login' ? 'register' : 'login'">
-        {{ mode === 'login' ? '註冊' : '登入' }}
+        {{ mode === 'login' ? t('auth.register') : t('auth.login') }}
       </a>
     </p>
   </div>

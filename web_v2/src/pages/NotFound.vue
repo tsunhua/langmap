@@ -1,8 +1,13 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+</script>
+
 <template>
   <div class="nf-page">
     <h1>404</h1>
-    <p>頁面不存在</p>
-    <router-link to="/" class="btn btn-ghost">回首頁</router-link>
+    <p>{{ t('errors.pageMissing') }}</p>
+    <router-link to="/" class="btn btn-ghost">{{ t('errors.home') }}</router-link>
   </div>
 </template>
 

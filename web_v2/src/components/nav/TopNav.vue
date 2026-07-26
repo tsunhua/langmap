@@ -4,10 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Search, Menu, X, Plus } from 'lucide-vue-next'
 import LangSwitcher from './LangSwitcher.vue'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const menuOpen = ref(false)
@@ -74,13 +76,13 @@ watch(() => route.path, () => { menuOpen.value = false })
 
 <template>
   <header class="appbar">
-    <router-link to="/" class="brand" aria-label="LangMap 首頁">
+    <router-link to="/" class="brand" :aria-label="`${t('nav.home')} LangMap`">
       Lang<span class="em">Map</span>
     </router-link>
 
-    <nav class="appnav" aria-label="主要導覽">
-      <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">語言</router-link>
-      <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
+    <nav class="appnav" :aria-label="t('nav.menu')">
+      <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
+      <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
     </nav>
 
     <div class="right-group">
@@ -91,29 +93,29 @@ watch(() => route.path, () => { menuOpen.value = false })
           ref="searchInput"
           v-model="searchQuery"
           type="search"
-          placeholder="搜尋詞句…"
-          aria-label="搜尋詞句"
+          :placeholder="`${t('nav.searchExpressions')}…`"
+          :aria-label="t('nav.searchExpressions')"
         />
-        <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
+        <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
       </form>
       <router-link to="/contribute" class="btn btn-primary btn-sm contrib-btn">
-        <Plus :size="14" aria-hidden="true" /> 貢獻
+        <Plus :size="14" aria-hidden="true" /> {{ t('nav.contribute') }}
       </router-link>
 
       <span class="lang-inline"><LangSwitcher /></span>
 
       <template v-if="auth.user">
         <span class="user-badge auth-inline">{{ auth.user.username }}</span>
-        <button class="btn btn-ghost btn-sm auth-inline" @click="auth.logout()">登出</button>
+        <button class="btn btn-ghost btn-sm auth-inline" @click="auth.logout()">{{ t('nav.signOut') }}</button>
       </template>
-      <router-link v-else to="/auth" class="btn btn-ghost btn-sm auth-inline">登入</router-link>
+      <router-link v-else to="/auth" class="btn btn-ghost btn-sm auth-inline">{{ t('nav.signIn') }}</router-link>
     </div>
 
     <button
       ref="toggleEl"
       class="menu-toggle"
       :class="{ on: menuOpen }"
-      :aria-label="menuOpen ? '關閉選單' : '開啟選單'"
+      :aria-label="menuOpen ? t('nav.closeMenu') : t('nav.openMenu')"
       :aria-expanded="menuOpen"
       @click="toggleMenu"
     >
@@ -122,31 +124,31 @@ watch(() => route.path, () => { menuOpen.value = false })
     </button>
 
     <transition name="drawer">
-      <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" aria-label="選單">
+      <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" :aria-label="t('nav.menu')">
         <form v-if="route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
           <Search :size="16" aria-hidden="true" />
           <input
             v-model="searchQuery"
             type="search"
-            placeholder="搜尋詞句…"
-            aria-label="搜尋詞句"
+            :placeholder="`${t('nav.searchExpressions')}…`"
+            :aria-label="t('nav.searchExpressions')"
           />
-          <button type="submit" class="sr-submit" aria-label="送出搜尋">搜尋</button>
+          <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
         </form>
-        <nav class="drawer-nav" aria-label="主要導覽">
-          <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">語言</router-link>
-          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">手冊</router-link>
+        <nav class="drawer-nav" :aria-label="t('nav.menu')">
+          <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
+          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
         </nav>
         <div class="drawer-foot">
           <router-link to="/contribute" class="btn btn-primary">
-            <Plus :size="14" aria-hidden="true" /> 貢獻
+            <Plus :size="14" aria-hidden="true" /> {{ t('nav.contribute') }}
           </router-link>
           <LangSwitcher />
           <template v-if="auth.user">
             <span class="user-badge">{{ auth.user.username }}</span>
-            <button class="btn btn-ghost" @click="auth.logout()">登出</button>
+            <button class="btn btn-ghost" @click="auth.logout()">{{ t('nav.signOut') }}</button>
           </template>
-          <router-link v-else to="/auth" class="btn btn-ghost">登入</router-link>
+          <router-link v-else to="/auth" class="btn btn-ghost">{{ t('nav.signIn') }}</router-link>
         </div>
       </div>
     </transition>

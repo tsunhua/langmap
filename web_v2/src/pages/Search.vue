@@ -8,9 +8,11 @@ import LanguageSelect from '@/components/language/LanguageSelect.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const { search } = useSearch()
+const { t } = useI18n()
 
 const PAGE = 20
 const query = ref((route.query.q as string) || '')
@@ -46,7 +48,7 @@ async function doSearch() {
     total.value = data.total
     searched.value = true
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '搜尋失敗'
+    loadError.value = e.response?.data?.error || t('search.loadFailed')
   } finally {
     loading.value = false
   }
@@ -87,19 +89,19 @@ onMounted(() => {
 <template>
   <div class="se-page">
     <div class="se-hero">
-      <h1>搜索詞句</h1>
+      <h1>{{ t('search.title') }}</h1>
       <div class="se-qrow">
-        <SearchBar v-model="query" placeholder="搜尋詞句…" :large="true" @search="doSearch" />
+        <SearchBar v-model="query" :placeholder="t('search.placeholder')" :large="true" @search="doSearch" />
         <LanguageSelect v-model="langs" />
       </div>
     </div>
 
     <div v-if="searched || loading" class="se-meta">
-      <span class="se-count"><b>{{ total }}</b> 個結果</span>
-      <div class="se-sort" role="group" aria-label="排序">
-        <button :class="{ on: sortBy === 'hot' }" @click="sortBy = 'hot'">熱門</button>
-        <button :class="{ on: sortBy === 'new' }" @click="sortBy = 'new'">最新</button>
-        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">字母</button>
+      <span class="se-count">{{ t('search.results', { count: total }) }}</span>
+      <div class="se-sort" role="group" :aria-label="t('search.sort')">
+        <button :class="{ on: sortBy === 'hot' }" @click="sortBy = 'hot'">{{ t('search.popular') }}</button>
+        <button :class="{ on: sortBy === 'new' }" @click="sortBy = 'new'">{{ t('search.newest') }}</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">{{ t('search.alphabetical') }}</button>
       </div>
     </div>
 
@@ -107,7 +109,7 @@ onMounted(() => {
 
     <EmptyState v-else-if="loadError" :message="loadError" />
 
-    <EmptyState v-else-if="searched && results.length === 0" message="找不到結果" />
+    <EmptyState v-else-if="searched && results.length === 0" :message="t('search.noResults')" />
 
     <template v-else-if="results.length">
       <div class="se-list">
@@ -118,10 +120,10 @@ onMounted(() => {
         />
       </div>
       <Pagination :has-more="results.length < total" @load-more="loadMore" />
-      <p v-if="loadingMore" class="se-more" role="status">載入中…</p>
+      <p v-if="loadingMore" class="se-more" role="status">{{ t('common.loading') }}</p>
     </template>
 
-    <p v-else class="se-hint">提示:搜索目前比對詞句文字。依翻譯(語義)搜索之後補上。</p>
+    <p v-else class="se-hint">{{ t('search.hint') }}</p>
   </div>
 </template>
 

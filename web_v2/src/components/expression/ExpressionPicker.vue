@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useExpressions } from '@/composables/useExpressions'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const emit = defineEmits<{ select: [expr: { id: number; text: string; language_code: string }] }>()
 
@@ -19,7 +21,7 @@ async function doSearch() {
     results.value = await search(query.value, undefined, 20)
     searched.value = true
   } catch (e: any) {
-    error.value = e.response?.data?.error || '搜尋失敗'
+    error.value = e.response?.data?.error || t('search.loadFailed')
     results.value = []
   } finally {
     loading.value = false
@@ -30,13 +32,13 @@ async function doSearch() {
 <template>
   <div class="picker">
     <div class="picker-search">
-      <input v-model="query" placeholder="搜尋詞句…" aria-label="搜尋詞句" @keydown.enter="doSearch" />
-      <button class="btn btn-sm btn-ghost" @click="doSearch">搜尋</button>
+      <input v-model="query" :placeholder="t('components.searchExpressions')" :aria-label="t('components.searchExpressions')" @keydown.enter="doSearch" />
+      <button class="btn btn-sm btn-ghost" @click="doSearch">{{ t('components.search') }}</button>
     </div>
     <div class="picker-results">
-      <div v-if="loading" class="picker-hint">搜尋中…</div>
+      <div v-if="loading" class="picker-hint">{{ t('components.searching') }}</div>
       <div v-else-if="error" class="picker-hint err" role="alert">{{ error }}</div>
-      <div v-else-if="searched && results.length === 0" class="picker-hint">找不到詞句</div>
+      <div v-else-if="searched && results.length === 0" class="picker-hint">{{ t('components.noExpressions') }}</div>
       <button
         v-for="r in results"
         :key="r.id"

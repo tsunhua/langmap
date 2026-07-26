@@ -23,14 +23,34 @@ DROP TABLE IF EXISTS meanings;
 DROP TABLE IF EXISTS email_verification_tokens;
 DROP TABLE IF EXISTS language_stats;
 DROP TABLE IF EXISTS ui_locales;
+DROP TABLE IF EXISTS ui_messages;
 DROP TABLE IF EXISTS expression_versions;
 DROP TABLE IF EXISTS expressions;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS languages;
+DROP TABLE IF EXISTS languoids;
 
 --------------------------------------------------------------------------------
 -- 1. Core tables
 --------------------------------------------------------------------------------
+
+CREATE TABLE languoids (
+    id TEXT PRIMARY KEY NOT NULL,
+    glottocode TEXT UNIQUE NOT NULL,
+    preferred_name TEXT NOT NULL,
+    level TEXT NOT NULL CHECK (level IN ('family', 'language', 'dialect')),
+    iso639_3 TEXT,
+    parent_id TEXT,
+    latitude REAL,
+    longitude REAL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'retired')),
+    source_version TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES languoids(id)
+);
+CREATE INDEX idx_languoids_glottocode ON languoids(glottocode);
+CREATE INDEX idx_languoids_iso639_3 ON languoids(iso639_3);
 
 CREATE TABLE languages (
     id INTEGER PRIMARY KEY NOT NULL,
@@ -51,6 +71,10 @@ CREATE TABLE languages (
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE languages ADD COLUMN languoid_id TEXT;
+ALTER TABLE languages ADD COLUMN base_language TEXT;
+ALTER TABLE languages ADD COLUMN script_code TEXT;
+ALTER TABLE languages ADD COLUMN source_version TEXT;
 CREATE INDEX idx_languages_code ON languages(code);
 CREATE INDEX idx_languages_name ON languages(name);
 CREATE INDEX idx_languages_is_active ON languages(is_active);
@@ -210,15 +234,39 @@ CREATE INDEX idx_handbook_section_items_section ON handbook_section_items(sectio
 --------------------------------------------------------------------------------
 
 CREATE TABLE ui_locales (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    language_code TEXT UNIQUE NOT NULL,
-    locale_json TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    code TEXT NOT NULL,
+    native_name TEXT NOT NULL,
+    direction TEXT NOT NULL DEFAULT 'ltr' CHECK (direction IN ('ltr', 'rtl')),
+    fallback_code TEXT,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'draft', 'archived')),
+    mapping_revision INTEGER NOT NULL DEFAULT 0,
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    ,PRIMARY KEY (project_id, code)
+    ,FOREIGN KEY (code) REFERENCES languages(code)
+    ,FOREIGN KEY (project_id, fallback_code) REFERENCES ui_locales(project_id, code)
 );
-CREATE INDEX idx_ui_locales_language_code ON ui_locales(language_code);
+CREATE INDEX idx_ui_locales_code ON ui_locales(code);
+
+CREATE TABLE ui_messages (
+    project_id TEXT NOT NULL,
+    key TEXT NOT NULL,
+    description TEXT,
+    scope TEXT NOT NULL DEFAULT 'global',
+    message_format TEXT NOT NULL DEFAULT 'text',
+    source_expression_id INTEGER NOT NULL,
+    placeholders_json TEXT,
+    source_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'retired')),
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (project_id, key),
+    FOREIGN KEY (source_expression_id) REFERENCES expressions(id)
+);
+CREATE INDEX idx_ui_messages_source ON ui_messages(project_id, source_expression_id);
 
 --------------------------------------------------------------------------------
 -- 6. FTS5 on expressions

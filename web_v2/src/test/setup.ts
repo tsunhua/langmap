@@ -1,8 +1,10 @@
 /// <reference types="vitest/globals" />
 import { afterEach } from 'vitest'
-import { enableAutoUnmount } from '@vue/test-utils'
+import { config, enableAutoUnmount } from '@vue/test-utils'
+import { i18n } from '@/locales'
 
 enableAutoUnmount(afterEach)
+config.global.plugins = [i18n]
 
 if (typeof globalThis.ResizeObserver === 'undefined') {
   class ResizeObserverMock {

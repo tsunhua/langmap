@@ -37,6 +37,20 @@ mappings.post('/:id/vote', requireAuth, async (c) => {
     `UPDATE expression_edges SET score = score + ? WHERE id = ?`
   ).bind(voteDelta, edgeId).run();
 
+  // UI bundles are cached by locale revision; a vote can change their winner.
+  await c.env.DB.prepare(
+    `UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+     WHERE (project_id, code) IN (
+       SELECT m.project_id, te.language_code
+       FROM ui_messages m
+       JOIN expression_edges ed ON ed.id = ?
+       JOIN expressions te ON te.id = CASE
+         WHEN ed.expression_a_id = m.source_expression_id THEN ed.expression_b_id
+         ELSE ed.expression_a_id END
+       WHERE m.status = 'active'
+     )`
+  ).bind(edgeId).run();
+
   const edge = await c.env.DB.prepare(
     `SELECT score FROM expression_edges WHERE id = ?`
   ).bind(edgeId).first<{ score: number }>();

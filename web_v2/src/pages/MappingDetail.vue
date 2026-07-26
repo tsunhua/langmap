@@ -14,6 +14,9 @@ import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { ArrowUpRight, Plus, ChevronRight, Share2, List, X } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -92,7 +95,7 @@ async function load() {
     graph.value = await mappingGraph(id.value, hops.value)
     trySelectNodeFromUrl()
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
   } finally {
     loading.value = false
   }
@@ -144,7 +147,7 @@ async function changeHops(h: 1 | 2 | 3) {
     graph.value = await mappingGraph(id.value, h)
     trySelectNodeFromUrl()
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
   } finally {
     updatingHops.value = false
   }
@@ -201,7 +204,7 @@ async function submitQuickAdd() {
   const languageCode = quickAddLang.value.trim()
   const regionName = quickAddRegion.value.trim()
   if (!text || !languageCode) {
-    quickAddError.value = '請輸入詞句與語言代碼'
+    quickAddError.value = t('mappingDetail.enterRequired')
     return
   }
   quickAddSubmitting.value = true
@@ -222,7 +225,7 @@ async function submitQuickAdd() {
       router.push(`/mapping/${newId}`)
     }
   } catch (e: any) {
-    quickAddError.value = e.response?.data?.message || e.response?.data?.error || '新增失敗'
+    quickAddError.value = e.response?.data?.message || e.response?.data?.error || t('mappingDetail.addFailed')
   } finally {
     quickAddSubmitting.value = false
   }
@@ -258,11 +261,11 @@ const coords = computed(() => {
 })
 
 const sourceLabel = computed(() => {
-  const t = expr.value?.source_type
-  if (t === 'auth') return '權威'
-  if (t === 'ai') return 'AI'
-  if (t === 'user') return '用戶'
-  return t || ''
+  const sourceType = expr.value?.source_type
+  if (sourceType === 'auth') return t('mappingDetail.authority')
+  if (sourceType === 'ai') return 'AI'
+  if (sourceType === 'user') return t('mappingDetail.user')
+  return sourceType || ''
 })
 </script>
 
@@ -272,8 +275,8 @@ const sourceLabel = computed(() => {
   <EmptyState v-else-if="loadError && !graph" :message="loadError" />
 
   <div v-else-if="expr" class="anchor">
-    <nav class="crumbs" aria-label="麵包屑">
-      <router-link to="/">首頁</router-link>
+    <nav class="crumbs" :aria-label="t('mappingDetail.breadcrumb')">
+      <router-link to="/">{{ t('mappingDetail.home') }}</router-link>
       <span class="sep">/</span>
       <span>{{ expr.text }}</span>
     </nav>
@@ -292,48 +295,48 @@ const sourceLabel = computed(() => {
 
     <div class="anchor-acts">
       <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
-        <Plus :size="14" aria-hidden="true" /> 添加詞句
+        <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
       </button>
       <router-link :to="`/map/${expr.id}`" class="btn btn-sm">
-        <ArrowUpRight :size="14" aria-hidden="true" /> 在地圖看此概念
+        <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
     </div>
 
-    <section v-if="showQuickAdd" class="quick-add" aria-label="快速新增詞句">
+    <section v-if="showQuickAdd" class="quick-add" :aria-label="t('mappingDetail.quickAdd')">
       <div class="qa-head">
-        <h2>快速新增詞句</h2>
-        <button class="qa-close" type="button" aria-label="關閉快速新增" @click="closeQuickAdd">
+        <h2>{{ t('mappingDetail.quickAdd') }}</h2>
+        <button class="qa-close" type="button" :aria-label="t('mappingDetail.closeQuickAdd')" @click="closeQuickAdd">
           <X :size="16" aria-hidden="true" />
         </button>
       </div>
-      <p class="qa-lead">新增一個詞句，並直接和目前這個詞句建立映射。</p>
+      <p class="qa-lead">{{ t('mappingDetail.quickAddLead') }}</p>
       <div class="qa-grid">
         <label>
-          <span>語言代碼</span>
-          <input v-model="quickAddLang" placeholder="例如 en / zh-Hant" aria-label="語言代碼" />
+          <span>{{ t('mappingDetail.languageCode') }}</span>
+          <input v-model="quickAddLang" :placeholder="t('mappingDetail.languageCodePlaceholder')" :aria-label="t('mappingDetail.languageCode')" />
         </label>
         <label>
-          <span>地區</span>
-          <input v-model="quickAddRegion" placeholder="可選" aria-label="地區" />
+          <span>{{ t('mappingDetail.region') }}</span>
+          <input v-model="quickAddRegion" :placeholder="t('mappingDetail.optional')" :aria-label="t('mappingDetail.region')" />
         </label>
         <label class="qa-text">
-          <span>詞句</span>
-          <input v-model="quickAddText" placeholder="輸入詞句…" aria-label="詞句" />
+          <span>{{ t('mappingDetail.expression') }}</span>
+          <input v-model="quickAddText" :placeholder="t('mappingDetail.expressionPlaceholder')" :aria-label="t('mappingDetail.expression')" />
         </label>
       </div>
       <p v-if="quickAddError" class="qa-error" role="alert">{{ quickAddError }}</p>
       <div class="qa-actions">
         <button class="btn btn-primary btn-sm" type="button" :disabled="quickAddSubmitting" @click="submitQuickAdd">
-          {{ quickAddSubmitting ? '新增中…' : '新增並建立映射' }}
+          {{ quickAddSubmitting ? t('mappingDetail.adding') : t('mappingDetail.addAndMap') }}
         </button>
       </div>
     </section>
 
     <div class="nb-head">
-      <h2>對照集</h2>
+      <h2>{{ t('mappingDetail.mappingSet') }}</h2>
       <span class="nb-meta">
-        <b>{{ directCount }}</b> 直接映射<template v-if="indirectCount"> · <b>{{ indirectCount }}</b> 間接</template>
-        · <b>{{ hops }}</b> 跳
+        <b>{{ directCount }}</b> {{ t('mappingDetail.direct') }}<template v-if="indirectCount"> · <b>{{ indirectCount }}</b> {{ t('mappingDetail.indirect') }}</template>
+        · <b>{{ hops }}</b> {{ t('mappingDetail.hops') }}
       </span>
     </div>
 
@@ -342,18 +345,18 @@ const sourceLabel = computed(() => {
         <button
           class="md-mode-btn"
           :class="{ active: mobileMode === 'graph' }"
-          aria-label="圖譜模式"
+          :aria-label="t('mappingDetail.graph')"
           @click="toggleMobileMode"
         >
-          <Share2 :size="14" aria-hidden="true" /> 圖譜
+          <Share2 :size="14" aria-hidden="true" /> {{ t('mappingDetail.graph') }}
         </button>
         <button
           class="md-mode-btn"
           :class="{ active: mobileMode === 'list' }"
-          aria-label="列表模式"
+          :aria-label="t('mappingDetail.list')"
           @click="toggleMobileMode"
         >
-          <List :size="14" aria-hidden="true" /> 列表
+          <List :size="14" aria-hidden="true" /> {{ t('mappingDetail.list') }}
         </button>
       </div>
 
@@ -417,9 +420,9 @@ const sourceLabel = computed(() => {
     </template>
 
     <div v-else class="md-empty">
-      <EmptyState message="尚無對照映射" />
+      <EmptyState :message="t('mappingDetail.noMappings')" />
       <router-link to="/contribute" class="btn btn-primary btn-sm">
-        <ChevronRight :size="14" aria-hidden="true" /> 貢獻映射
+        <ChevronRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.contribute') }}
       </router-link>
     </div>
   </div>

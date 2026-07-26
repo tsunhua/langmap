@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
+const { t } = useI18n()
 
 const props = defineProps<{
   graph: MappingGraphResponse | null
@@ -24,11 +26,11 @@ const directCount = computed(() => props.graph?.layer_counts[1] ?? 0)
 <template>
   <section class="hr-preview" aria-labelledby="hr-title">
     <div class="hr-heading">
-      <h3 id="hr-title">相關詞句</h3>
-      <span v-if="graph && directCount">{{ directCount }} 個</span>
+      <h3 id="hr-title">{{ t('components.relatedExpressions') }}</h3>
+      <span v-if="graph && directCount">{{ directCount }}</span>
     </div>
 
-    <div v-if="loading" class="hr-loading" role="status" aria-label="載入相關詞句">
+    <div v-if="loading" class="hr-loading" role="status" :aria-label="t('components.loadingRelated')">
       <span></span>
       <span></span>
       <span></span>
@@ -37,11 +39,11 @@ const directCount = computed(() => props.graph?.layer_counts[1] ?? 0)
     <p v-else-if="error" class="hr-error">{{ error }}</p>
 
     <p v-else-if="graph && directCount === 0" class="hr-empty">
-      目前沒有直接映射。
+      {{ t('components.noDirectMappings') }}
     </p>
 
-    <div v-else-if="graph" class="hr-graph" role="group" aria-label="詞句關係圖">
-      <ul class="hr-branches" aria-label="直接映射詞句">
+    <div v-else-if="graph" class="hr-graph" role="group" :aria-label="t('components.relatedExpressions')">
+      <ul class="hr-branches" :aria-label="t('components.directMappingList')">
         <li v-for="node in directNodes" :key="node.expression_id">
           <button type="button" @click="$emit('select', node.expression_id)">
             <span>{{ node.text }}</span>
@@ -51,7 +53,7 @@ const directCount = computed(() => props.graph?.layer_counts[1] ?? 0)
       </ul>
 
       <p v-if="directCount > directNodes.length" class="hr-more">
-        尚有 {{ directCount - directNodes.length }} 個映射，完整關係圖中可查看。
+        {{ t('components.moreMappings', { count: directCount - directNodes.length }) }}
       </p>
     </div>
   </section>

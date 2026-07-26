@@ -10,7 +10,7 @@ export function useLanguages() {
     error.value = null
     try {
       const { data } = await api.get('/languages', { params })
-      return data.data
+      return Array.isArray(data.data) ? data.data : (data.data?.items || [])
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e

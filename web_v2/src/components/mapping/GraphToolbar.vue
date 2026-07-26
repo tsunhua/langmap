@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ZoomIn, ZoomOut, Maximize2, Minimize2, Minus, RotateCcw, MoreHorizontal, List, Share2 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const props = defineProps<{
   zoomPercent: number
@@ -37,13 +39,13 @@ function toggleMore() {
 </script>
 
 <template>
-  <div class="graph-toolbar" role="toolbar" aria-label="圖譜工具列">
+  <div class="graph-toolbar" role="toolbar" :aria-label="t('components.graphToolbar')">
     <template v-if="mobileMode !== undefined">
       <div class="tb-group tb-mode">
         <button
           class="tb-btn tb-mode-btn"
           :class="{ active: mobileMode === 'graph' }"
-          aria-label="圖譜模式"
+          :aria-label="t('components.graphMode')"
           @click="emit('toggleMode')"
         >
           <Share2 :size="16" aria-hidden="true" />
@@ -51,7 +53,7 @@ function toggleMore() {
         <button
           class="tb-btn tb-mode-btn"
           :class="{ active: mobileMode === 'list' }"
-          aria-label="列表模式"
+          :aria-label="t('components.listMode')"
           @click="emit('toggleMode')"
         >
           <List :size="16" aria-hidden="true" />
@@ -61,16 +63,16 @@ function toggleMore() {
     <div class="tb-group">
       <button
         class="tb-btn"
-        aria-label="放大"
-        title="放大"
+        :aria-label="t('components.zoomIn')"
+        :title="t('components.zoomIn')"
         @click="emit('zoomIn')"
       >
         <ZoomIn :size="16" aria-hidden="true" />
       </button>
       <button
         class="tb-btn"
-        aria-label="縮小"
-        title="縮小"
+        :aria-label="t('components.zoomOut')"
+        :title="t('components.zoomOut')"
         @click="emit('zoomOut')"
       >
         <ZoomOut :size="16" aria-hidden="true" />
@@ -80,8 +82,8 @@ function toggleMore() {
     <div class="tb-group">
       <button
         class="tb-btn"
-        :aria-label="isFullscreen ? '退出全屏' : '全屏'"
-        :title="isFullscreen ? '退出全屏' : '全屏'"
+        :aria-label="isFullscreen ? t('components.exitFullscreen') : t('components.fullscreen')"
+        :title="isFullscreen ? t('components.exitFullscreen') : t('components.fullscreen')"
         @click="emit('toggleFullscreen')"
       >
         <Maximize2 v-if="!isFullscreen" :size="16" aria-hidden="true" />
@@ -89,16 +91,16 @@ function toggleMore() {
       </button>
       <button
         class="tb-btn tb-btn-hide-mobile"
-        aria-label="實際大小 100%"
-        title="實際大小"
+        :aria-label="t('components.actualSize')"
+        :title="t('components.actualSize')"
         @click="emit('actualSize')"
       >
         <Minus :size="16" aria-hidden="true" />
       </button>
       <button
         class="tb-btn tb-btn-hide-mobile"
-        aria-label="重置佈局"
-        title="重置佈局"
+        :aria-label="t('components.resetLayout')"
+        :title="t('components.resetLayout')"
         @click="emit('reset')"
       >
         <RotateCcw :size="16" aria-hidden="true" />
@@ -107,8 +109,8 @@ function toggleMore() {
     <div class="tb-group tb-group-more-mobile">
       <button
         class="tb-btn"
-        aria-label="更多操作"
-        title="更多操作"
+        :aria-label="t('components.moreActions')"
+        :title="t('components.moreActions')"
         @click="toggleMore"
       >
         <MoreHorizontal :size="16" aria-hidden="true" />
@@ -119,40 +121,40 @@ function toggleMore() {
           role="menuitem"
           @click="emit('actualSize'); showMore = false"
         >
-          實際大小 100%
+          {{ t('components.actualSize') }}
         </button>
         <button
           class="tb-more-item"
           role="menuitem"
           @click="emit('reset'); showMore = false"
         >
-          重置佈局
+          {{ t('components.resetLayout') }}
         </button>
         <button
           class="tb-more-item"
           role="menuitem"
           @click="emit('expandAll'); showMore = false"
         >
-          展開全部
+          {{ t('components.expandAll') }}
         </button>
         <button
           class="tb-more-item"
           role="menuitem"
           @click="emit('collapseToFirst'); showMore = false"
         >
-          收合至一跳
+          {{ t('components.collapseToFirst') }}
         </button>
       </div>
     </div>
     <div v-if="showMore" class="tb-overlay" @click="showMore = false" />
     <div v-if="maxHops > 1" class="tb-group">
-      <span class="tb-label">跳數</span>
+      <span class="tb-label">{{ t('components.hops') }}</span>
       <button
         v-for="h in hopsOptions"
         :key="h"
         class="tb-hop"
         :class="{ active: currentHops === h }"
-        :aria-label="`${h} 跳`"
+        :aria-label="`${h} ${t('components.hops')}`"
         :aria-pressed="currentHops === h"
         @click="emit('changeHops', h)"
       >

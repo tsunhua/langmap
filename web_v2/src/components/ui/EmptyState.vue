@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 defineProps<{
   message?: string
   actionLabel?: string
@@ -8,7 +10,7 @@ defineEmits<{ action: [] }>()
 
 <template>
   <div class="empty">
-    <p>{{ message || '暫無資料' }}</p>
+    <p>{{ message || t('components.empty') }}</p>
     <button v-if="actionLabel" class="btn btn-ghost btn-sm" @click="$emit('action')">
       {{ actionLabel }}
     </button>

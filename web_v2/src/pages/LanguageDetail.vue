@@ -7,6 +7,9 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const code = computed(() => route.params.code as string)
@@ -33,7 +36,7 @@ async function load() {
     const data = await expressions(code.value, { sort: sortBy.value, limit: 100 })
     exprs.value = data.items
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
   }
 }
 
@@ -54,7 +57,7 @@ async function changeSort(sort: string) {
     const data = await expressions(code.value, { sort, limit: 100 })
     exprs.value = data.items
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
   }
 }
 </script>
@@ -65,7 +68,7 @@ async function changeSort(sort: string) {
   <EmptyState v-else-if="loadError" :message="loadError" />
 
   <div v-else-if="lang" class="ld-page">
-    <router-link to="/languages" class="ld-back">← 語言</router-link>
+    <router-link to="/languages" class="ld-back">← {{ t('languageDetail.back') }}</router-link>
 
     <div class="ld-title">
       <h1>{{ lang.name }}</h1>
@@ -74,20 +77,20 @@ async function changeSort(sort: string) {
     <p class="ld-sub" v-if="subtitle">{{ subtitle }}</p>
 
     <div class="ld-stats">
-      <StatBox :label="'詞句'" :value="lang.expression_count" />
-      <StatBox :label="'已映射'" :value="lang.mapped_expression_count" />
+      <StatBox :label="t('languageDetail.expressions')" :value="lang.expression_count" />
+      <StatBox :label="t('languageDetail.mapped')" :value="lang.mapped_expression_count" />
     </div>
 
     <div class="ld-toolbar">
-      <SearchBar v-model="searchQuery" placeholder="搜尋詞句…" style="flex: 1;" />
+      <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
       <div class="ld-sort">
-        <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">熱門</button>
-        <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">最新</button>
-        <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">字母</button>
+        <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
+        <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">{{ t('languageDetail.alphabetical') }}</button>
       </div>
     </div>
 
-    <EmptyState v-if="filtered.length === 0" message="找不到詞句" />
+    <EmptyState v-if="filtered.length === 0" :message="t('languageDetail.noResults')" />
 
     <div v-else class="ld-list">
       <ExpressionRow

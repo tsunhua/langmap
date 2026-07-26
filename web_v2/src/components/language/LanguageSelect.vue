@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLanguagesStore } from '@/stores/languages'
 import { X } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: string[]
@@ -41,7 +43,7 @@ function handleClickOutside(e: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  store.fetchLanguages().catch(() => { loadError.value = '語言載入失敗' })
+  store.fetchLanguages().catch(() => { loadError.value = t('components.languageLoadFailed') })
 })
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
@@ -51,14 +53,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     <div class="lang-select-tagwrap" @click="inputRef?.focus()">
       <span v-for="code in selected" :key="code" class="lang-tag">
         {{ code }}
-        <button :aria-label="`移除 ${code}`" @click.stop="remove(code)"><X :size="10" aria-hidden="true" /></button>
+        <button :aria-label="t('components.removeLanguage', { code })" @click.stop="remove(code)"><X :size="10" aria-hidden="true" /></button>
       </span>
       <input
         ref="inputRef"
         v-model="query"
         class="lang-select-input"
-        placeholder="篩選語言…"
-        aria-label="篩選語言"
+        :placeholder="t('components.filterLanguages')"
+        :aria-label="t('components.filterLanguages')"
         @focus="open = true"
       />
     </div>

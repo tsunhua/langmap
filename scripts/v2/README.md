@@ -110,6 +110,54 @@ sqlite3 "$V2DB" "SELECT count(*) FROM expressions; SELECT count(*) FROM expressi
 
 ## 注意事項
 
+## Glottolog release tooling
+
+`glottolog_import.py` 只接受 repository 內（或 CI artifact）的 pinned
+CLDF/CSV，不會在執行時連線下載資料。release 下載、簽名/來源審查與
+checksum 固定應在 CI job 完成；import job 只讀取該 artifact。建議 artifact
+至少包含官方 release 的 `languoids.csv`、checksum 檔與下載來源，並把實際
+SHA-256 傳入命令：
+
+```bash
+# 例：先由 CI 下載並檢查官方 archived release（不要讓應用程式 runtime 下載）
+# curl --fail --location --output artifacts/glottolog-5.3/languoids.csv <官方固定 URL>
+# sha256sum --check artifacts/glottolog-5.3/SHA256SUMS
+
+python3 glottolog_import.py path/to/languoids.csv \
+  --source-version 5.3 \
+  --expected-sha256 "<SHA256SUMS 中的值>" \
+  --source-url "<官方 archived release URL>" \
+  --manifest glottolog-5.3.manifest.json
+```
+
+輸出的 manifest 是本次輸入的可重現紀錄（release、格式、檔名、SHA-256、
+row count、Glottocode count 與來源 URL），應與 dataset 一起保存並提交。若
+checksum 不符，命令會在解析前 fail fast；不應以重新下載或猜測另一版本繼續。
+
+正式寫入資料庫前先在 staging database 執行相同命令（省略 `--database` 只
+會驗證及輸出 manifest）。有既有資料庫時，import 會先計算 `added`、`updated`、
+`retired`、`unchanged` diff，再在單一 transaction upsert；可用輸出統計作為
+部署 gate。release 中消失的 id 只會標記 `retired`，不會改指其他 languoid。
+
+若需要更新 SQLite/D1 export，會在單一 transaction 內 upsert，重跑結果
+相同；本 release 消失的 id 只會標記 `retired`，不會改指其他 languoid：
+
+```bash
+python3 glottolog_import.py path/to/languoids.csv \
+  --source-version 5.3 --database path/to/local.sqlite
+```
+
+一次性的舊語言碼 manifest 使用獨立驗證器；它不會猜測 script、region 或
+Glottocode，也不會產生 runtime alias：
+
+```bash
+python3 language_migration.py fixtures/language-migration.json \
+  --codes observed-language-codes.txt
+```
+
+正式匯入前應先通過驗證器與人工 review；`fixtures/` 僅供測試，不代表完整
+Glottolog release。
+
 - **遠端重建**（之後）：`wrangler d1 create langmap-v2` → 填 database_id → 遠端跑 schema.sql → 遠端載 v2-data.sql
 - **prose 丟失**：舊手冊 Markdown 的非標記文字在遷移中被捨棄（新模型無 prose 欄位）
 - **collections 不遷**：v2 砍除收藏功能

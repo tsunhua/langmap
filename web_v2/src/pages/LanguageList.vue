@@ -6,8 +6,10 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
 
 const { loading, list } = useLanguages()
+const { t } = useI18n()
 
 const languages = ref<any[]>([])
 const searchQuery = ref('')
@@ -36,7 +38,7 @@ onMounted(async () => {
   try {
     languages.value = await list()
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('languagesPage.loadFailed')
   }
 })
 </script>
@@ -44,20 +46,20 @@ onMounted(async () => {
 <template>
   <div class="lg-page">
     <div class="lg-head">
-      <h1>語言列表</h1>
-      <p class="lg-sub">探索所有語言的詞句與映射</p>
+      <h1>{{ t('languagesPage.title') }}</h1>
+      <p class="lg-sub">{{ t('languagesPage.subtitle') }}</p>
     </div>
 
     <div class="lg-stats">
-      <StatBox :label="'種語言'" :value="languages.length" />
-      <StatBox :label="'詞句'" :value="totalExpressions.toLocaleString()" />
+      <StatBox :label="t('languagesPage.languageCount')" :value="languages.length" />
+      <StatBox :label="t('languagesPage.expressionCount')" :value="totalExpressions.toLocaleString()" />
     </div>
 
     <div class="lg-toolbar">
-      <SearchBar v-model="searchQuery" placeholder="搜尋語言…" style="flex: 1;" />
+      <SearchBar v-model="searchQuery" :placeholder="t('languagesPage.searchPlaceholder')" style="flex: 1;" />
       <div class="lg-sort">
-        <button :class="{ on: sortBy === 'count' }" @click="sortBy = 'count'">數量</button>
-        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">A–Z</button>
+        <button :class="{ on: sortBy === 'count' }" @click="sortBy = 'count'">{{ t('languagesPage.sortCount') }}</button>
+        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">{{ t('languagesPage.sortAlphabetical') }}</button>
       </div>
     </div>
 
@@ -65,7 +67,7 @@ onMounted(async () => {
 
     <EmptyState v-else-if="loadError" :message="loadError" />
 
-    <EmptyState v-else-if="filtered.length === 0" message="找不到語言" />
+    <EmptyState v-else-if="filtered.length === 0" :message="t('languagesPage.noResults')" />
 
     <div v-else class="lg-list">
       <LanguageCard

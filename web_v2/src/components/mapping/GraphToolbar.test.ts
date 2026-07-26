@@ -12,31 +12,31 @@ describe('GraphToolbar', () => {
 
   it('emits zoomIn on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="放大"]').trigger('click')
+    wrapper.find('button[aria-label="Zoom in"]').trigger('click')
     expect(wrapper.emitted('zoomIn')).toHaveLength(1)
   })
 
   it('emits zoomOut on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="縮小"]').trigger('click')
+    wrapper.find('button[aria-label="Zoom out"]').trigger('click')
     expect(wrapper.emitted('zoomOut')).toHaveLength(1)
   })
 
   it('emits toggleFullscreen on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="全屏"]').trigger('click')
+    wrapper.find('button[aria-label="Fullscreen"]').trigger('click')
     expect(wrapper.emitted('toggleFullscreen')).toHaveLength(1)
   })
 
   it('emits actualSize on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="實際大小 100%"]').trigger('click')
+    wrapper.find('button[aria-label="Actual size 100%"]').trigger('click')
     expect(wrapper.emitted('actualSize')).toHaveLength(1)
   })
 
   it('emits reset on click', () => {
     const wrapper = mount(GraphToolbar, { props: baseProps })
-    wrapper.find('button[aria-label="重置佈局"]').trigger('click')
+    wrapper.find('button[aria-label="Reset layout"]').trigger('click')
     expect(wrapper.emitted('reset')).toHaveLength(1)
   })
 
@@ -51,7 +51,7 @@ describe('GraphToolbar', () => {
 
   it('shows hops segment when maxHops > 1', () => {
     const wrapper = mount(GraphToolbar, { props: { ...baseProps, maxHops: 3 } })
-    expect(wrapper.text()).toContain('跳數')
+    expect(wrapper.text()).toContain('Hops')
     const hops = wrapper.findAll('.tb-hop')
     expect(hops.length).toBe(3)
   })

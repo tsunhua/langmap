@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 </script>
 
 <template>
-  <div class="graph-skeleton" role="status" aria-label="載入圖譜中">
+  <div class="graph-skeleton" role="status" :aria-label="t('components.graphLoading')">
     <div class="gs-ring">
       <div class="gs-dot gs-center" />
       <div class="gs-dot gs-ring-1" />
@@ -10,7 +12,7 @@
       <div class="gs-dot gs-ring-3" />
       <div class="gs-dot gs-ring-4" />
     </div>
-    <span class="gs-text">載入圖譜中...</span>
+    <span class="gs-text">{{ t('components.graphLoading') }}</span>
   </div>
 </template>
 

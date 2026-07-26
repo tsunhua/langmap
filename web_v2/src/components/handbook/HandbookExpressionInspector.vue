@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowUpRight, MapPin, X } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import HandbookRelationPreview from '@/components/handbook/HandbookRelationPreview.vue'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
@@ -27,10 +28,12 @@ defineEmits<{
   selectExpression: [id: number]
 }>()
 
+const { t } = useI18n()
+
 function sourceLabel(type?: string | null) {
-  if (type === 'auth') return '權威'
-  if (type === 'ai') return 'AI'
-  if (type === 'user') return '用戶'
+  if (type === 'auth') return t('handbook.sourceAuthority')
+  if (type === 'ai') return t('handbook.sourceAi')
+  if (type === 'user') return t('handbook.sourceUser')
   return type || ''
 }
 </script>
@@ -39,12 +42,12 @@ function sourceLabel(type?: string | null) {
   <aside
     class="hi-panel"
     :class="{ open: expression || loading || error }"
-    aria-label="詞句資訊"
+    :aria-label="t('handbook.expressionInfo')"
     :aria-hidden="!expression && !loading && !error"
   >
     <div class="hi-head">
-      <span>詞句資訊</span>
-      <button class="hi-close" type="button" aria-label="關閉詞句資訊" @click="$emit('close')">
+      <span>{{ t('handbook.expressionInfo') }}</span>
+      <button class="hi-close" type="button" :aria-label="t('handbook.closeExpressionInfo')" @click="$emit('close')">
         <X :size="16" aria-hidden="true" />
       </button>
     </div>
@@ -65,15 +68,15 @@ function sourceLabel(type?: string | null) {
 
       <dl class="hi-facts">
         <div>
-          <dt>語言</dt>
+          <dt>{{ t('handbook.locale') }}</dt>
           <dd>{{ expression.language_name || expression.language_code }}</dd>
         </div>
         <div v-if="expression.region_name">
-          <dt>地區</dt>
+          <dt>{{ t('handbook.region') }}</dt>
           <dd><MapPin :size="13" aria-hidden="true" />{{ expression.region_name }}</dd>
         </div>
         <div v-if="sourceLabel(expression.source_type)">
-          <dt>來源</dt>
+          <dt>{{ t('handbook.source') }}</dt>
           <dd>
             <span :class="['src-tag', expression.source_type]">
               {{ sourceLabel(expression.source_type) }}
@@ -90,14 +93,14 @@ function sourceLabel(type?: string | null) {
       />
 
       <router-link :to="`/mapping/${expression.id}`" class="hi-detail-link">
-        查看完整關係圖
+        {{ t('handbook.viewFullGraph') }}
         <ArrowUpRight :size="15" aria-hidden="true" />
       </router-link>
     </div>
 
     <div v-else class="hi-empty">
-      <p>選擇一個詞句</p>
-      <span>詞句的語言、地區與來源會顯示在這裡。</span>
+      <p>{{ t('handbook.selectExpression') }}</p>
+      <span>{{ t('handbook.expressionInfoHint') }}</span>
     </div>
   </aside>
 </template>

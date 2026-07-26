@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 defineProps<{
   hasMore: boolean
 }>()
@@ -7,7 +9,7 @@ defineEmits<{ loadMore: [] }>()
 
 <template>
   <div v-if="hasMore" class="pag">
-    <button class="btn btn-ghost" @click="$emit('loadMore')">載入更多</button>
+    <button class="btn btn-ghost" @click="$emit('loadMore')">{{ t('components.loadMore') }}</button>
   </div>
 </template>
 

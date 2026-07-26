@@ -6,26 +6,36 @@ const languages = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/v2/languages — list all languages with expression counts
 languages.get('/', async (c) => {
-  const search = c.req.query('search') || '';
+  const search = c.req.query('q') || c.req.query('search') || '';
+  const level = c.req.query('level') || '';
+  const script = c.req.query('script') || '';
   const sort = c.req.query('sort') || 'count'; // count | alpha
+  const limit = Math.min(Math.max(Number(c.req.query('limit') || 50) || 50, 1), 100);
+  const offset = Math.max(Number(c.req.query('offset') || 0) || 0, 0);
 
   let query = `SELECT l.*, COALESCE(s.expression_count, 0) as expression_count
-    FROM languages l LEFT JOIN language_stats s ON l.code = s.language_code`;
-  const params: string[] = [];
+    FROM languages l LEFT JOIN language_stats s ON l.code = s.language_code
+    LEFT JOIN languoids g ON g.id = l.languoid_id`;
+  const params: (string | number)[] = [];
+  const filters: string[] = [];
 
   if (search) {
-    query += ` WHERE l.name LIKE ? OR l.code LIKE ?`;
-    params.push(`%${search}%`, `%${search}%`);
+    filters.push(`(l.name LIKE ? OR l.name_en LIKE ? OR l.code LIKE ? OR g.preferred_name LIKE ? OR g.glottocode LIKE ? OR g.iso639_3 LIKE ?)`);
+    params.push(...Array(6).fill(`%${search}%`));
   }
+  if (level) { filters.push('g.level = ?'); params.push(level); }
+  if (script) { filters.push('l.script_code = ?'); params.push(script); }
+  if (filters.length) query += ` WHERE ${filters.join(' AND ')}`;
 
   const SORT_MAP: Record<string, string> = {
     count: 'expression_count DESC, l.name',
     alpha: 'l.name',
   };
-  query += ` ORDER BY ${SORT_MAP[sort] || SORT_MAP.count}`;
+  query += ` ORDER BY ${SORT_MAP[sort] || SORT_MAP.count}, l.code LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
 
   const { results } = await c.env.DB.prepare(query).bind(...params).all();
-  return success(c, results);
+  return success(c, { items: results, limit, offset, has_more: results.length === limit });
 });
 
 // GET /api/v2/languages/:code — language detail
@@ -44,7 +54,19 @@ languages.get('/:code', async (c) => {
      WHERE e.language_code = ?`
   ).bind(code).first<{ count: number }>();
 
-  return success(c, { ...lang, mapped_expression_count: mappedCount?.count || 0 });
+  return success(c, {
+    ...lang,
+    language: {
+      code: lang.code,
+      languoid_id: lang.languoid_id,
+      glottocode: (lang.languoid_id as string | null)?.replace(/^glotto:/, '') || null,
+      name: lang.name,
+      script: lang.script_code,
+      region: lang.region_code,
+      direction: lang.direction,
+    },
+    mapped_expression_count: mappedCount?.count || 0,
+  });
 });
 
 // GET /api/v2/languages/:code/expressions — expressions in a language

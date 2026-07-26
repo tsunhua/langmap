@@ -3,8 +3,10 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import CliquePreview from '@/components/mapping/CliquePreview.vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 
 interface Row {
   key: number
@@ -40,7 +42,7 @@ async function submit() {
     .filter(r => r.lang.trim() !== '')
     .map(r => ({ lang: r.lang.trim(), text: r.text.trim(), region: r.region.trim() || undefined }))
   if (payload.length < 2) {
-    error.value = '需要至少 2 個含語言與詞句的列'
+    error.value = t('contribute.minRows')
     return
   }
   submitting.value = true
@@ -49,7 +51,7 @@ async function submit() {
     await api.post('/contributions/batch', { expressions: payload })
     router.push('/')
   } catch (e: any) {
-    error.value = e.response?.data?.error || '提交失敗'
+    error.value = e.response?.data?.error || t('contribute.submitFailed')
   } finally {
     submitting.value = false
   }
@@ -58,38 +60,38 @@ async function submit() {
 
 <template>
   <div class="contrib-page">
-    <h1>批次貢獻</h1>
-    <p class="lead">提交一組<b>表達同一件事</b>的詞句,系統會在兩兩之間建立直接映射(<b>完全圖</b>)。已存在的詞句會自動連結,不重複建立。</p>
+    <h1>{{ t('contribute.title') }}</h1>
+    <p class="lead">{{ t('contribute.lead') }}</p>
 
     <div class="contrib-grid">
       <div class="contrib-left">
         <div class="ex-table">
           <div class="ex-head">
-            <span>語言</span><span>詞句</span><span>地區</span><span></span>
+            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('contribute.region') }}</span><span></span>
           </div>
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
-              <input class="ex-lang" v-model="row.lang" placeholder="語言" aria-label="語言" />
-              <input class="ex-text" v-model="row.text" placeholder="輸入詞句…" aria-label="詞句" />
-              <input class="ex-region" v-model="row.region" placeholder="地區" aria-label="地區" />
-              <button class="ex-del" title="刪除" aria-label="刪除列" @click="removeRow(row.key)">✕</button>
+              <input class="ex-lang" v-model="row.lang" :placeholder="t('contribute.language')" :aria-label="t('contribute.language')" />
+              <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
+              <input class="ex-region" v-model="row.region" :placeholder="t('contribute.region')" :aria-label="t('contribute.region')" />
+              <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)">✕</button>
             </div>
           </div>
-          <button class="ex-add" type="button" @click="addRow">＋ 添加詞句</button>
+          <button class="ex-add" type="button" @click="addRow">{{ t('contribute.addExpression') }}</button>
         </div>
 
         <div :class="['ex-counter', { warn: nodeCount < 2 }]">
-          <span><b>{{ nodeCount }}</b> 個詞句</span>
+          <span>{{ t('contribute.expressionCount', { count: nodeCount }) }}</span>
           <span class="arrow">→</span>
-          <span><b>{{ edgeCount }}</b> 條直接映射</span>
-          <span class="tag">完全圖</span>
+          <span>{{ t('contribute.directMappingCount', { count: edgeCount }) }}</span>
+          <span class="tag">{{ t('contribute.completeGraph') }}</span>
         </div>
 
         <p v-if="error" class="error" role="alert">{{ error }}</p>
 
         <div class="ex-actions">
           <button class="btn btn-primary" type="button" :disabled="nodeCount < 2 || submitting" @click="submit">
-            {{ submitting ? '提交中…' : '提交' }}
+            {{ submitting ? t('contribute.submitting') : t('contribute.submit') }}
           </button>
         </div>
       </div>

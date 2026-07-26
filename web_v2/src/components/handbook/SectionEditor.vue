@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ExpressionPicker from '@/components/expression/ExpressionPicker.vue'
 import { ChevronUp, ChevronDown, X, Plus } from 'lucide-vue-next'
 
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const showPicker = ref(false)
+const { t } = useI18n()
 </script>
 
 <template>
@@ -30,14 +32,14 @@ const showPicker = ref(false)
       <input
         :value="title"
         class="he-sec-title"
-        placeholder="章節標題"
-        aria-label="章節標題"
+        :placeholder="t('handbook.sectionTitle')"
+        :aria-label="t('handbook.sectionTitle')"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <div class="he-sec-actions">
-        <button class="btn btn-icon btn-ghost btn-sm" aria-label="上移章節" @click="emit('move-up')"><ChevronUp :size="14" aria-hidden="true" /></button>
-        <button class="btn btn-icon btn-ghost btn-sm" aria-label="下移章節" @click="emit('move-down')"><ChevronDown :size="14" aria-hidden="true" /></button>
-        <button class="btn btn-icon btn-ghost btn-sm" aria-label="刪除章節" @click="emit('remove')"><X :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="t('handbook.moveSectionUp')" @click="emit('move-up')"><ChevronUp :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="t('handbook.moveSectionDown')" @click="emit('move-down')"><ChevronDown :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="t('handbook.deleteSection')" @click="emit('remove')"><X :size="14" aria-hidden="true" /></button>
       </div>
     </div>
 
@@ -47,14 +49,14 @@ const showPicker = ref(false)
         <span class="he-expr-num">{{ String(j + 1).padStart(2, '0') }}</span>
         <span class="he-expr-tx">{{ expr.text }}</span>
         <span class="lang-badge">{{ expr.language_code }}</span>
-        <button class="btn btn-icon btn-ghost btn-sm he-up" title="上移" @click="emit('move-expr-up', expr.id)"><ChevronUp :size="14" aria-hidden="true" /></button>
-        <button class="btn btn-icon btn-ghost btn-sm he-down" title="下移" @click="emit('move-expr-down', expr.id)"><ChevronDown :size="14" aria-hidden="true" /></button>
-        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="`移除 ${expr.text}`" @click="emit('remove-expression', expr.id)"><X :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm he-up" :title="t('handbook.moveUp')" @click="emit('move-expr-up', expr.id)"><ChevronUp :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm he-down" :title="t('handbook.moveDown')" @click="emit('move-expr-down', expr.id)"><ChevronDown :size="14" aria-hidden="true" /></button>
+        <button class="btn btn-icon btn-ghost btn-sm" :aria-label="t('handbook.removeExpression', { text: expr.text })" @click="emit('remove-expression', expr.id)"><X :size="14" aria-hidden="true" /></button>
       </div>
     </div>
 
     <button class="btn btn-ghost btn-sm" @click="showPicker = !showPicker">
-      <Plus :size="14" aria-hidden="true" /> {{ showPicker ? '收起' : '新增詞句' }}
+      <Plus :size="14" aria-hidden="true" /> {{ showPicker ? t('handbook.collapsePicker') : t('handbook.addExpression') }}
     </button>
 
     <ExpressionPicker v-if="showPicker" @select="emit('add-expression', $event); showPicker = false" />

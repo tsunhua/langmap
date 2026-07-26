@@ -6,6 +6,9 @@ import SectionEditor from '@/components/handbook/SectionEditor.vue'
 import { Plus } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -44,7 +47,7 @@ onMounted(async () => {
       })),
     }))
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('handbook.loadFailed')
   } finally {
     loading.value = false
   }
@@ -109,7 +112,7 @@ async function save(status: string) {
       router.push(`/handbook/${id.value}`)
     }
   } catch (e: any) {
-    saveError.value = e.response?.data?.error || '儲存失敗'
+    saveError.value = e.response?.data?.error || t('handbook.loadFailed')
   } finally {
     saving.value = false
   }
@@ -122,22 +125,22 @@ async function save(status: string) {
   <EmptyState v-else-if="loadError && isNew" :message="loadError" />
 
   <div v-else class="he-page">
-    <router-link to="/handbooks" class="he-back">← 手冊列表</router-link>
+    <router-link to="/handbooks" class="he-back">← {{ t('handbook.back') }}</router-link>
 
     <div class="he-head">
-      <input v-model="title" class="he-title" placeholder="手冊標題" aria-label="手冊標題" />
-      <select v-model="visibility" class="he-vis" aria-label="可見性">
-        <option value="public">公開</option>
-        <option value="private">私有</option>
+      <input v-model="title" class="he-title" :placeholder="t('handbook.titlePlaceholder')" :aria-label="t('handbook.titlePlaceholder')" />
+      <select v-model="visibility" class="he-vis" :aria-label="t('handbook.visibility')">
+        <option value="public">{{ t('handbook.public') }}</option>
+        <option value="private">{{ t('handbook.private') }}</option>
       </select>
     </div>
 
     <div class="he-actions">
       <button class="btn" @click="save('draft')" :disabled="saving || !title">
-        {{ saving ? '儲存中…' : '儲存草稿' }}
+        {{ saving ? t('handbook.saving') : t('handbook.saveDraft') }}
       </button>
       <button class="btn btn-primary" @click="save('published')" :disabled="saving || !title">
-        {{ saving ? '儲存中…' : '發布' }}
+        {{ saving ? t('handbook.saving') : t('handbook.publish') }}
       </button>
     </div>
 
@@ -157,7 +160,7 @@ async function save(status: string) {
       @move-expr-down="(id) => moveExpression(i, id, 'down')"
     />
 
-    <button class="btn btn-ghost" @click="addSection"><Plus :size="14" aria-hidden="true" /> 新增章節</button>
+    <button class="btn btn-ghost" @click="addSection"><Plus :size="14" aria-hidden="true" /> {{ t('handbook.addSection') }}</button>
 
     <p v-if="loadError && !isNew" class="error" role="alert">{{ loadError }}</p>
     <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>

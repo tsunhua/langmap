@@ -6,8 +6,10 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import SegControl from '@/components/ui/SegControl.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
 
 const { list } = useHandbooks()
+const { t } = useI18n()
 
 const handbooks = ref<any[]>([])
 const searchQuery = ref('')
@@ -28,7 +30,7 @@ async function load() {
     const data = await list({ sort: sortBy.value, limit: 50 })
     handbooks.value = data.items
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('handbooks.loadFailed')
   } finally {
     loading.value = false
   }
@@ -44,24 +46,24 @@ async function changeSort() {
 <template>
   <div class="hb-page">
     <div class="hb-head">
-      <h1>手冊</h1>
-      <router-link to="/handbook/new/edit" class="btn btn-primary btn-sm">新建手冊</router-link>
+      <h1>{{ t('handbooks.title') }}</h1>
+      <router-link to="/handbook/new/edit" class="btn btn-primary btn-sm">{{ t('handbooks.create') }}</router-link>
     </div>
 
     <div class="hb-toolbar">
       <SegControl
         v-model="sortBy"
-        :options="[{ value: 'new', label: '最新' }, { value: 'hot', label: '熱門' }]"
+        :options="[{ value: 'new', label: t('handbooks.newest') }, { value: 'hot', label: t('handbooks.popular') }]"
         @update:model-value="changeSort"
       />
-      <SearchBar v-model="searchQuery" placeholder="搜尋手冊…" style="max-width: 300px;" />
+      <SearchBar v-model="searchQuery" :placeholder="t('handbooks.searchPlaceholder')" style="max-width: 300px;" />
     </div>
 
     <LoadingSpinner v-if="loading" />
 
     <EmptyState v-else-if="loadError" :message="loadError" />
 
-    <EmptyState v-else-if="filtered.length === 0" message="找不到手冊" />
+    <EmptyState v-else-if="filtered.length === 0" :message="t('handbooks.noResults')" />
 
     <div v-else class="hb-grid">
       <HandbookCard

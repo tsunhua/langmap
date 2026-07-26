@@ -7,6 +7,9 @@ import VotePill from '@/components/mapping/VotePill.vue'
 import { PanelRightOpen } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import HandbookExpressionInspector, {
   type HandbookExpressionDetail,
 } from '@/components/handbook/HandbookExpressionInspector.vue'
@@ -58,7 +61,7 @@ async function load() {
   try {
     hb.value = await detail(id.value)
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('handbook.loadFailed')
   } finally {
     loading.value = false
   }
@@ -94,12 +97,12 @@ async function selectExpressionById(
   if (detailResult.status === 'fulfilled') {
     selectedExpression.value = detailResult.value
   } else {
-    inspectorError.value = '無法載入詞句資訊'
+    inspectorError.value = t('handbook.inspectorFailed')
   }
   if (graphResult.status === 'fulfilled') {
     relationGraph.value = graphResult.value
   } else {
-    relationError.value = '無法載入相關詞句'
+    relationError.value = t('handbook.relationsFailed')
   }
   inspectorLoading.value = false
   relationLoading.value = false
@@ -149,7 +152,7 @@ watch(id, () => {
 
   <div v-else-if="hb" class="hv-layout">
     <aside class="hv-toc">
-      <div class="hv-toc-label">目錄</div>
+      <div class="hv-toc-label">{{ t('handbook.toc') }}</div>
       <ol>
         <li v-for="(sec, i) in hb.sections" :key="sec.id">
           <a :href="`#sec-${i}`">
@@ -160,7 +163,7 @@ watch(id, () => {
     </aside>
 
     <main class="hv-content">
-      <router-link to="/handbooks" class="hv-back">← 手冊列表</router-link>
+      <router-link to="/handbooks" class="hv-back">← {{ t('handbook.back') }}</router-link>
       <h1>{{ hb.title }}</h1>
       <div class="hv-meta">
         <span v-if="hb.author_username">{{ hb.author_username }}</span>
@@ -168,14 +171,14 @@ watch(id, () => {
       </div>
 
       <div class="hv-vote-row">
-        <span>這份手冊對你有幫助嗎？</span>
+        <span>{{ t('handbook.helpful') }}</span>
         <VotePill :target-id="String(hb.id)" target-type="handbook" :score="hb.score" />
       </div>
 
       <section v-for="(sec, i) in hb.sections" :key="sec.id" :id="`sec-${i}`" class="hv-section">
         <div class="hv-sec-head">
           <span class="hv-sec-num">§{{ i + 1 }}</span>
-          <h2>{{ sec.title || `章節 ${i + 1}` }}</h2>
+          <h2>{{ sec.title || t('handbook.chapter', { number: i + 1 }) }}</h2>
         </div>
         <ol v-if="sec.items?.length" class="hb-expr-list">
           <li v-for="(expr, j) in sec.items" :key="expr.expression_id">
@@ -197,7 +200,7 @@ watch(id, () => {
       </section>
 
       <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost hb-edit-btn">
-        編輯手冊
+        {{ t('handbook.edit') }}
       </router-link>
     </main>
 

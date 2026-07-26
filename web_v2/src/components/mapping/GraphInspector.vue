@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import VotePill from './VotePill.vue'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
@@ -11,6 +12,7 @@ const props = defineProps<{
   anchorText: string
   collapsedIds?: Set<number>
 }>()
+const { t } = useI18n()
 
 const isCollapsed = computed(() => {
   if (!props.selectedNodeId) return false
@@ -62,26 +64,26 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     v-if="selectedNodeId && node"
     class="graph-inspector"
     role="region"
-    aria-label="節點資訊"
+    :aria-label="t('components.nodeInfo')"
   >
     <div class="gi-head">
       <h3 class="gi-title">{{ node.text }}</h3>
-      <button class="gi-close" aria-label="關閉資訊面板" @click="emit('close')">&times;</button>
+      <button class="gi-close" :aria-label="t('components.closeInfoPanel')" @click="emit('close')">&times;</button>
     </div>
 
     <div class="gi-meta">
       <span class="gi-lang">{{ node.language_code }}</span>
       <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
-      <span class="gi-depth">深度 {{ node.depth }}</span>
+      <span class="gi-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
 
     <div class="gi-section">
-      <span class="gi-label">來源路徑</span>
+      <span class="gi-label">{{ t('components.sourcePath') }}</span>
       <span class="gi-path">{{ pathText }}</span>
     </div>
 
     <div v-if="primaryEdge" class="gi-score">
-      <span class="gi-label">映射評分</span>
+      <span class="gi-label">{{ t('components.mappingScore') }}</span>
       <VotePill
         :target-id="primaryEdge.edge_id"
         target-type="mapping"
@@ -90,8 +92,8 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     </div>
 
     <div v-if="crossEdgeCount > 0" class="gi-multipath">
-      <span class="gi-label">其他關係</span>
-      <span class="gi-count">{{ crossEdgeCount }} 條</span>
+      <span class="gi-label">{{ t('components.otherRelations') }}</span>
+      <span class="gi-count">{{ t('components.relationCount', { count: crossEdgeCount }) }}</span>
     </div>
 
     <div v-if="node.expression_id !== graph.root_id" class="gi-acts">
@@ -99,20 +101,20 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
         class="btn btn-sm"
         @click="emit('toggleCollapse', node.expression_id)"
       >
-        {{ isCollapsed ? '展開子分支' : '收合子分支' }}
+        {{ isCollapsed ? t('components.expandBranch') : t('components.collapseBranch') }}
       </button>
       <button
         class="btn btn-sm btn-primary"
         @click="emit('navigate', node.expression_id)"
       >
-        查看詞句詳情
+        {{ t('components.viewExpression') }}
       </button>
     </div>
   </div>
 
   <div v-else class="graph-inspector gi-empty">
-    <p class="gi-hint">選取圖譜中的節點以查看詳細資訊</p>
-    <p class="gi-stats">{{ graph.nodes.length - 1 }} 個映射節點 · {{ graph.edges.length }} 條關係</p>
+    <p class="gi-hint">{{ t('components.selectNodeHint') }}</p>
+    <p class="gi-stats">{{ t('components.graphStats', { nodes: graph.nodes.length - 1, edges: graph.edges.length }) }}</p>
   </div>
 </template>
 

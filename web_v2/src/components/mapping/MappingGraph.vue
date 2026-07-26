@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import GraphNode from './GraphNode.vue'
 import GraphEdges from './GraphEdges.vue'
 import GraphToolbar from './GraphToolbar.vue'
@@ -21,6 +22,7 @@ const props = defineProps<{
   maxHops?: number
   isFullscreen?: boolean
 }>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   select: [id: number]
@@ -249,14 +251,14 @@ defineExpose({ centerOnNodeById })
 const layerStats = computed(() => {
   const parts: string[] = []
   for (const [depth, count] of Object.entries(props.graph.layer_counts)) {
-    parts.push(`${depth}跳 ${count}`)
+    parts.push(`${t('components.depth', { depth })}: ${count}`)
   }
   return parts.join(' · ')
 })
 </script>
 
 <template>
-  <div ref="graphRef" class="mapping-graph" :class="{ 'is-fullscreen': graphFullscreen }" role="region" aria-label="詞句對照圖譜">
+  <div ref="graphRef" class="mapping-graph" :class="{ 'is-fullscreen': graphFullscreen }" role="region" :aria-label="t('components.graphLabel')">
     <div ref="containerRef" class="graph-viewport" tabindex="-1" @keydown.escape="onEscape">
       <div ref="worldRef" class="graph-world">
         <GraphEdges

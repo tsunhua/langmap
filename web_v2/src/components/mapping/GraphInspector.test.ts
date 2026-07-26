@@ -36,9 +36,9 @@ describe('GraphInspector', () => {
         anchorText: 'root',
       },
     })
-    expect(wrapper.text()).toContain('選取圖譜中的節點')
-    expect(wrapper.text()).toContain('2 個映射節點')
-    expect(wrapper.text()).toContain('2 條關係')
+    expect(wrapper.text()).toContain('Select a node in the graph')
+    expect(wrapper.text()).toContain('2 mapped nodes')
+    expect(wrapper.text()).toContain('2 relations')
   })
 
   it('shows selected node text and language', () => {
@@ -129,6 +129,6 @@ describe('GraphInspector', () => {
         anchorText: 'root',
       },
     })
-    expect(wrapper.text()).toContain('深度 2')
+    expect(wrapper.text()).toContain('Depth 2')
   })
 })

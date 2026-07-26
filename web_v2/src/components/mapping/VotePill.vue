@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 import api from '@/api/client'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const props = defineProps<{
   targetId: string
@@ -45,7 +47,7 @@ async function vote(direction: 'up' | 'down') {
   } catch {
     currentVote.value = prevVote
     localScore.value = prevScore
-    error.value = '投票失敗，已還原'
+    error.value = t('components.voteFailed')
   } finally {
     busy.value = false
   }
@@ -58,7 +60,7 @@ async function vote(direction: 'up' | 'down') {
       :class="['up', { on: currentVote === 1 }]"
       :aria-pressed="currentVote === 1"
       :disabled="busy"
-      aria-label="讚"
+      :aria-label="t('components.upvote')"
       @click="vote('up')"
     ><ThumbsUp :size="14" aria-hidden="true" /></button>
     <span class="score">{{ localScore }}</span>
@@ -66,7 +68,7 @@ async function vote(direction: 'up' | 'down') {
       :class="['down', { on: currentVote === -1 }]"
       :aria-pressed="currentVote === -1"
       :disabled="busy"
-      aria-label="踩"
+      :aria-label="t('components.downvote')"
       @click="vote('down')"
     ><ThumbsDown :size="14" aria-hidden="true" /></button>
     <span v-if="error" class="vote-error" role="alert">{{ error }}</span>

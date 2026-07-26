@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const props = defineProps<{
   modelValue: string
   placeholder?: string
@@ -14,8 +16,8 @@ const emit = defineEmits<{
   <input
     type="search"
     :value="modelValue"
-    :placeholder="placeholder || '搜尋…'"
-    :aria-label="placeholder || '搜尋'"
+    :placeholder="placeholder || t('components.search') + '…'"
+    :aria-label="placeholder || t('components.search')"
     :class="['search-input', { large }]"
     @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     @keydown.enter="emit('search')"

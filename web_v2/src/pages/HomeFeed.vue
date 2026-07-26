@@ -6,8 +6,10 @@ import NewContribution from '@/components/feed/NewContribution.vue'
 import SegControl from '@/components/ui/SegControl.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { useI18n } from 'vue-i18n'
 
 const { hot, newest } = useFeed()
+const { t } = useI18n()
 
 const hotMappings = ref<any[]>([])
 const newContribs = ref<any[]>([])
@@ -23,7 +25,7 @@ onMounted(async () => {
     hotMappings.value = h
     newContribs.value = n
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || '載入失敗'
+    loadError.value = e.response?.data?.error || t('errors.loadFailed')
   } finally {
     loading.value = false
   }
@@ -33,14 +35,14 @@ onMounted(async () => {
 <template>
   <div class="feed-page">
     <div class="feed-hero">
-      <h1>動態</h1>
-      <p>語義圖譜的最新脈動--熱門映射與新貢獻。</p>
+      <h1>{{ t('feed.title') }}</h1>
+      <p>{{ t('feed.subtitle') }}</p>
       <SegControl
         v-model="segment"
         :options="[
-          { value: 'all', label: '全部' },
-          { value: 'hot', label: '熱門' },
-          { value: 'new', label: '最新' },
+          { value: 'all', label: t('feed.all') },
+          { value: 'hot', label: t('feed.hot') },
+          { value: 'new', label: t('feed.newest') },
         ]"
       />
     </div>
@@ -52,8 +54,8 @@ onMounted(async () => {
     <template v-else>
       <section v-if="segment !== 'new'" class="feed-sec">
         <div class="feed-sec-head">
-          <h2>熱門映射</h2>
-          <span class="hint">依評分 · 本週</span>
+          <h2>{{ t('feed.popularMappings') }}</h2>
+          <span class="hint">{{ t('feed.ratedThisWeek') }}</span>
         </div>
         <div class="map-list">
           <MappingCard
@@ -66,8 +68,8 @@ onMounted(async () => {
 
       <section v-if="segment !== 'hot'" class="feed-sec">
         <div class="feed-sec-head">
-          <h2>最新貢獻</h2>
-          <span class="hint">映射 + 新詞句</span>
+          <h2>{{ t('feed.newContributions') }}</h2>
+          <span class="hint">{{ t('feed.mappingsAndExpressions') }}</span>
         </div>
         <div class="new-list">
           <NewContribution
@@ -77,7 +79,7 @@ onMounted(async () => {
           />
         </div>
         <div class="feed-cta">
-          沒看到你想找的？<router-link to="/contribute">貢獻一個新映射 -></router-link>
+          {{ t('feed.missing') }} <router-link to="/contribute">{{ t('feed.contributeMapping') }}</router-link>
         </div>
       </section>
     </template>

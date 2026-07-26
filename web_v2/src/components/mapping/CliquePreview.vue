@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   expressions: Array<{ text: string }>
@@ -35,7 +38,7 @@ const allEdges = computed(() => {
 
 <template>
   <div class="clique-card">
-    <h3>將建立的映射圖</h3>
+    <h3>{{ t('components.cliqueTitle') }}</h3>
     <svg viewBox="0 0 220 220" class="clique-svg">
       <line v-for="(e, i) in allEdges" :key="'e' + i"
         :x1="e.x1.toFixed(1)" :y1="e.y1.toFixed(1)" :x2="e.x2.toFixed(1)" :y2="e.y2.toFixed(1)"
@@ -45,10 +48,10 @@ const allEdges = computed(() => {
         fill="var(--accent)" stroke="var(--surface)" stroke-width="2" />
     </svg>
     <div class="clique-meta">
-      <span><b>{{ expressions.length }}</b> 節點</span>
-      <span><b>{{ edgeCount }}</b> 邊</span>
+      <span>{{ t('components.nodeCount', { count: expressions.length }) }}</span>
+      <span>{{ t('components.edgeCount', { count: edgeCount }) }}</span>
     </div>
-    <p class="clique-note">每條邊都是一條獨立的直接映射,可被個別讚/踩;低評分的會折疊。</p>
+    <p class="clique-note">{{ t('components.cliqueNote') }}</p>
   </div>
 </template>
 

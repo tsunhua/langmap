@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeftRight } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 defineProps<{
   id: string
@@ -16,18 +18,18 @@ function timeAgo(dateStr?: string): string {
   if (!dateStr) return ''
   const diff = Date.now() - new Date(dateStr).getTime()
   const min = Math.floor(diff / 60000)
-  if (min < 1) return '剛剛'
-  if (min < 60) return `${min} 分鐘前`
+  if (min < 1) return t('components.justNow')
+  if (min < 60) return t('components.minutesAgo', { count: min })
   const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr} 小時前`
-  return `${Math.floor(hr / 24)} 天前`
+  if (hr < 24) return t('components.hoursAgo', { count: hr })
+  return t('components.daysAgo', { count: Math.floor(hr / 24) })
 }
 </script>
 
 <template>
   <router-link :to="`/mapping/${id}`" class="new-row">
     <span :class="['new-kind', { expr: type === 'expression' }]">
-      {{ type === 'expression' ? '詞句' : '映射' }}
+      {{ type === 'expression' ? t('components.expression') : t('components.mapping') }}
     </span>
     <span class="new-body">
       <span class="new-pair">
@@ -38,7 +40,7 @@ function timeAgo(dateStr?: string): string {
       <span class="lang-badge">{{ left_lang }} · {{ right_lang }}</span>
     </span>
     <span class="new-meta">
-      <template v-if="timeAgo(created_at)">{{ timeAgo(created_at) }} · </template>@{{ author || '匿名' }}
+      <template v-if="timeAgo(created_at)">{{ timeAgo(created_at) }} · </template>@{{ author || t('components.anonymous') }}
     </span>
   </router-link>
 </template>

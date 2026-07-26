@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Star } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 defineProps<{
   id: number
@@ -14,7 +16,7 @@ defineProps<{
 <template>
   <router-link :to="`/handbook/${id}`" class="hb-card">
     <h3>{{ title }}</h3>
-    <div class="hb-card-meta"><b>{{ section_count }}</b> 章 · <b>{{ expression_count }}</b> 詞句</div>
+    <div class="hb-card-meta"><b>{{ section_count }}</b> {{ t('handbooks.sections') }} · <b>{{ expression_count }}</b> {{ t('components.expression') }}</div>
     <div class="hb-card-foot">
       <span v-if="author_username" class="hb-author">{{ author_username }}</span>
       <span class="hb-score"><Star :size="12" aria-hidden="true" /> {{ score }}</span>
