@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
 import RadialGraph from '@/components/mapping/RadialGraph.vue'
 import MappingList from '@/components/mapping/MappingList.vue'
+import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
+import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -13,11 +15,11 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => parseInt(route.params.id as string))
 
-const { detail, mappings } = useExpressions()
+const { detail, mappingGraph } = useExpressions()
 
 const expr = ref<any>(null)
-const mappingData = ref<any[]>([])
-const hops = ref(1)
+const graph = ref<MappingGraphResponse | null>(null)
+const hops = ref<1 | 2 | 3>(1)
 const loading = ref(true)
 const loadError = ref('')
 
@@ -25,12 +27,12 @@ const MAX_HOPS = 3
 
 async function load() {
   expr.value = null
-  mappingData.value = []
+  graph.value = null
   loading.value = true
   loadError.value = ''
   try {
     expr.value = await detail(id.value)
-    mappingData.value = await mappings(id.value, hops.value)
+    graph.value = await mappingGraph(id.value, hops.value)
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   } finally {
@@ -41,10 +43,10 @@ async function load() {
 onMounted(load)
 watch(id, load)
 
-async function changeHops(h: number) {
+async function changeHops(h: 1 | 2 | 3) {
   hops.value = h
   try {
-    mappingData.value = await mappings(id.value, h)
+    graph.value = await mappingGraph(id.value, h)
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   }
@@ -54,9 +56,28 @@ function selectNode(nodeId: number) {
   router.push(`/mapping/${nodeId}`)
 }
 
-// 對照集 meta — direct (1-hop) vs indirect (2-hop) counts
-const directCount = computed(() => mappingData.value.filter(m => m.hops === 1).length)
-const indirectCount = computed(() => mappingData.value.filter(m => m.hops === 2).length)
+// TODO(remove in Task 6): bridge new graph shape to legacy RadialGraph/MappingList props.
+const legacyMappings = computed(() => {
+  const g = graph.value
+  if (!g) return []
+  return g.nodes
+    .filter((n) => n.depth === 1)
+    .map((n) => {
+      const edge = getPrimaryIncomingEdge(n.expression_id, g)
+      return {
+        expression_id: n.expression_id,
+        text: n.text,
+        language_code: n.language_code,
+        language_name: n.language_name ?? '',
+        score: edge?.score ?? 0,
+        hops: 1,
+        edge_id: edge?.edge_id ?? null,
+      }
+    })
+})
+
+const directCount = computed(() => graph.value?.layer_counts[1] ?? 0)
+const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (graph.value?.layer_counts[3] ?? 0))
 
 const coords = computed(() => {
   const lat = expr.value?.region_latitude
@@ -115,12 +136,12 @@ const sourceLabel = computed(() => {
       </span>
     </div>
 
-    <template v-if="mappingData.length">
+    <template v-if="legacyMappings.length">
       <RadialGraph
         :anchor-id="expr.id"
         :anchor-text="expr.text"
         :anchor-lang="expr.language_code"
-        :mappings="mappingData"
+        :mappings="legacyMappings"
         @select="selectNode"
       />
 
@@ -137,14 +158,14 @@ const sourceLabel = computed(() => {
         <button
           v-if="hops < MAX_HOPS"
           type="button"
-          @click="changeHops(Math.min(hops + 1, MAX_HOPS))"
+          @click="changeHops(Math.min(hops + 1, MAX_HOPS) as 1 | 2 | 3)"
         >
-          展開至 {{ Math.min(hops + 1, MAX_HOPS) }} 跳 →
+          展開至 {{ Math.min(hops + 1, MAX_HOPS) }} 跳 ->
         </button>
         <button v-else type="button" disabled>已展開 {{ MAX_HOPS }} 跳 ✓</button>
       </div>
 
-      <MappingList :mappings="mappingData" />
+      <MappingList :mappings="legacyMappings" />
     </template>
 
     <div v-else class="md-empty">

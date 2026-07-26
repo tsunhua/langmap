@@ -5,6 +5,8 @@ import { useExpressions } from '@/composables/useExpressions'
 import { useLanguages } from '@/composables/useLanguages'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
+import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -12,34 +14,61 @@ const route = useRoute()
 const router = useRouter()
 const id = computed(() => parseInt(route.params.id as string))
 
-const { detail, mappings } = useExpressions()
+const { detail, mappingGraph } = useExpressions()
 const { list } = useLanguages()
 
 const mapEl = ref<HTMLElement>()
 let map: L.Map | null = null
 const anchor = ref<any>(null)
-const mappingData = ref<any[]>([])
+const graph = ref<MappingGraphResponse | null>(null)
 const langMap = ref<Record<string, any>>({})
 const loading = ref(true)
 const loadError = ref('')
 const activeId = ref<number | null>(null)
 
-const pins = computed(() =>
-  mappingData.value
-    .filter((m: any) => langMap.value[m.language_code])
-    .map((m: any) => {
-      const lang = langMap.value[m.language_code]
-      return { ...m, lat: lang.region_latitude, lng: lang.region_longitude, region: lang.region_name || lang.name, tier: pinTier(m.score) }
+interface Pin {
+  expression_id: number
+  text: string
+  language_code: string
+  score: number
+  lat: number
+  lng: number
+  region: string
+  tier: 's1' | 's2' | 's3'
+}
+
+const pins = computed<Pin[]>(() => {
+  const g = graph.value
+  if (!g) return []
+  const lm = langMap.value
+  const out: Pin[] = []
+  for (const n of g.nodes) {
+    if (n.depth === 0) continue
+    const lang = lm[n.language_code]
+    if (!lang || !lang.region_latitude || !lang.region_longitude) continue
+    const edge = getPrimaryIncomingEdge(n.expression_id, g)
+    const score = edge?.score ?? 0
+    out.push({
+      expression_id: n.expression_id,
+      text: n.text,
+      language_code: n.language_code,
+      score,
+      lat: lang.region_latitude,
+      lng: lang.region_longitude,
+      region: lang.region_name || lang.name,
+      tier: pinTier(score),
     })
-)
+  }
+  return out
+})
 
 const regionCount = computed(() => {
-  const regions = new Set(pins.value.map((p: any) => p.region))
+  const regions = new Set(pins.value.map((p) => p.region))
   if (anchor.value && anchorLang.value) regions.add(anchorLang.value.region_name || anchorLang.value.name)
   return regions.size
 })
 
-function pinTier(score: number) {
+function pinTier(score: number): 's1' | 's2' | 's3' {
   if (score >= 20) return 's3'
   if (score >= 5) return 's2'
   return 's1'
@@ -95,18 +124,18 @@ async function load() {
   loading.value = true
   loadError.value = ''
   anchor.value = null
-  mappingData.value = []
+  graph.value = null
   try {
-    const [langs, expr, maps] = await Promise.all([
+    const [langs, expr, g] = await Promise.all([
       list(),
       detail(id.value),
-      mappings(id.value, 2),
+      mappingGraph(id.value, 2),
     ])
     const lm: Record<string, any> = {}
     for (const l of langs) if (l.region_latitude && l.region_longitude) lm[l.code] = l
     langMap.value = lm
     anchor.value = expr
-    mappingData.value = maps
+    graph.value = g
   } catch (e: any) {
     loadError.value = e.response?.data?.error || '載入失敗'
   } finally {

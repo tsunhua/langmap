@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import api from '@/api/client'
+import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 
 export function useExpressions() {
   const loading = ref(false)
@@ -19,12 +20,12 @@ export function useExpressions() {
     }
   }
 
-  async function mappings(id: number, hops = 1) {
+  async function mappingGraph(id: number, hops: 1 | 2 | 3 = 1): Promise<MappingGraphResponse> {
     loading.value = true
     error.value = null
     try {
       const { data } = await api.get(`/expressions/${id}/mappings`, { params: { hops } })
-      return data.data
+      return data.data as MappingGraphResponse
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -47,5 +48,5 @@ export function useExpressions() {
     }
   }
 
-  return { loading, error, detail, mappings, search }
+  return { loading, error, detail, mappingGraph, search }
 }
