@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 type SemanticLevel = 'compact' | 'medium' | 'full'
 
@@ -17,9 +17,26 @@ const props = defineProps<{
   isRoot: boolean
   isSelected: boolean
   semanticLevel: SemanticLevel
+  worldScale: number
 }>()
 
-const emit = defineEmits<{ select: [id: number]; navigate: [id: number] }>()
+const emit = defineEmits<{
+  select: [id: number]
+  navigate: [id: number]
+  dragMove: [nodeId: number, worldX: number, worldY: number]
+  dragEnd: [nodeId: number, worldX: number, worldY: number]
+}>()
+
+const DRAG_THRESHOLD = 4
+const dragging = ref(false)
+
+let nodeEl: HTMLElement | null = null
+let dragStartScreenX = 0
+let dragStartScreenY = 0
+let dragStartWorldX = 0
+let dragStartWorldY = 0
+let dragDidMove = false
+let pointerId = -1
 
 const accessibleName = computed(() => {
   const parts = [props.text, props.languageCode]
@@ -40,7 +57,67 @@ const displayText = computed(() => {
   return props.text
 })
 
+function onPointerDown(e: PointerEvent) {
+  if (e.button !== 0 || props.isRoot) return
+  nodeEl = e.currentTarget as HTMLElement
+  nodeEl.setPointerCapture(e.pointerId)
+  pointerId = e.pointerId
+  nodeEl.addEventListener('pointermove', onPointerMove)
+  nodeEl.addEventListener('pointerup', onPointerUp)
+  nodeEl.addEventListener('pointercancel', onPointerCancel)
+  dragStartScreenX = e.clientX
+  dragStartScreenY = e.clientY
+  dragStartWorldX = props.x
+  dragStartWorldY = props.y
+  dragDidMove = false
+  dragging.value = true
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (e.pointerId !== pointerId) return
+  const k = props.worldScale
+  const dx = (e.clientX - dragStartScreenX) / k
+  const dy = (e.clientY - dragStartScreenY) / k
+  if (Math.abs(e.clientX - dragStartScreenX) > DRAG_THRESHOLD || Math.abs(e.clientY - dragStartScreenY) > DRAG_THRESHOLD) {
+    dragDidMove = true
+  }
+  const worldX = dragStartWorldX + dx
+  const worldY = dragStartWorldY + dy
+  const el = e.currentTarget as HTMLElement
+  el.style.transform = `translate3d(${worldX}px, ${worldY}px, 0)`
+  emit('dragMove', props.nodeId, worldX, worldY)
+}
+
+function onPointerUp(e: PointerEvent) {
+  if (e.pointerId !== pointerId) return
+  cleanup()
+  if (dragDidMove) {
+    const k = props.worldScale
+    const dx = (e.clientX - dragStartScreenX) / k
+    const dy = (e.clientY - dragStartScreenY) / k
+    const worldX = dragStartWorldX + dx
+    const worldY = dragStartWorldY + dy
+    emit('dragEnd', props.nodeId, worldX, worldY)
+  }
+  dragging.value = false
+}
+
+function onPointerCancel() {
+  cleanup()
+  dragging.value = false
+}
+
+function cleanup() {
+  if (nodeEl) {
+    nodeEl.removeEventListener('pointermove', onPointerMove)
+    nodeEl.removeEventListener('pointerup', onPointerUp)
+    nodeEl.removeEventListener('pointercancel', onPointerCancel)
+    nodeEl = null
+  }
+}
+
 function onClick() {
+  if (dragDidMove) return
   emit('select', props.nodeId)
 }
 function onDblclick() {
@@ -60,6 +137,7 @@ function onKeydown(e: KeyboardEvent) {
     :class="{
       anchor: isRoot,
       selected: isSelected,
+      dragging,
       [`depth-${depth}`]: true,
       [`level-${semanticLevel}`]: true,
     }"
@@ -69,6 +147,7 @@ function onKeydown(e: KeyboardEvent) {
     role="button"
     :aria-label="accessibleName"
     :style="{ transform: `translate3d(${x}px, ${y}px, 0)` }"
+    @pointerdown="onPointerDown"
     @click.stop="onClick"
     @dblclick.stop="onDblclick"
     @keydown="onKeydown"
@@ -101,6 +180,7 @@ function onKeydown(e: KeyboardEvent) {
   transition: border-color 0.12s, box-shadow 0.12s;
   will-change: transform;
   user-select: none;
+  touch-action: none;
 }
 .graph-node:hover {
   border-color: var(--accent);
@@ -110,6 +190,11 @@ function onKeydown(e: KeyboardEvent) {
 .graph-node:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+.graph-node.dragging {
+  transition: none;
+  z-index: 20;
+  box-shadow: 0 6px 20px oklch(0 0 0 / 0.12);
 }
 .gn-text {
   display: block;

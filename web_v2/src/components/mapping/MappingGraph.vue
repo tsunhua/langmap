@@ -6,6 +6,7 @@ import GraphToolbar from './GraphToolbar.vue'
 import { buildDisplayTree } from './mappingGraphModel'
 import { layoutMappingGraph } from './mappingGraphLayout'
 import { useGraphViewport } from '@/composables/useGraphViewport'
+import { useGraphDrag } from '@/composables/useGraphDrag'
 import type { LayoutNode } from './mappingGraphLayout'
 import type { MappingGraphResponse, NodeSize, GraphBounds } from './mappingGraphTypes'
 
@@ -120,6 +121,42 @@ const viewport = useGraphViewport({
   bounds: layoutBounds,
 })
 
+const {
+  positionOverrides,
+  activeDrag,
+  applyOverride,
+  resetPositions,
+  setActiveDrag,
+} = useGraphDrag()
+
+const worldScale = computed(() => Math.max(0.25, viewport.zoomPercent.value / 100))
+
+const effectiveLayoutNodes = computed<LayoutNode[]>(() => {
+  return layout.value.nodes.map(n => {
+    const o = positionOverrides.value.get(n.id)
+    const d = activeDrag.value?.nodeId === n.id
+      ? { x: activeDrag.value.worldX, y: activeDrag.value.worldY }
+      : null
+    const override = o ?? d
+    if (!override) return n
+    return { ...n, x: override.x, y: override.y }
+  })
+})
+
+function onDragMove(nodeId: number, worldX: number, worldY: number) {
+  setActiveDrag({ nodeId, worldX, worldY })
+}
+
+function onDragEnd(nodeId: number, worldX: number, worldY: number) {
+  setActiveDrag(null)
+  applyOverride(nodeId, worldX, worldY)
+}
+
+function handleReset() {
+  viewport.reset()
+  resetPositions()
+}
+
 // --- node measurement (post-mount) ---
 let measured = false
 async function measureNodes() {
@@ -178,7 +215,7 @@ const layerStats = computed(() => {
     <div ref="containerRef" class="graph-viewport">
       <div ref="worldRef" class="graph-world">
         <GraphEdges
-          :layout-nodes="layout.nodes"
+          :layout-nodes="effectiveLayoutNodes"
           :tree-edges="layout.treeEdges"
           :cross-edges="layout.crossEdges"
           :selected-node-ids="selectedSet"
@@ -186,7 +223,7 @@ const layerStats = computed(() => {
           :show-cross-edges="false"
         />
         <GraphNode
-          v-for="n in layout.nodes"
+          v-for="n in effectiveLayoutNodes"
           :key="n.id"
           :node-id="n.id"
           :text="graph.nodes.find(gn => gn.expression_id === n.id)?.text ?? ''"
@@ -201,8 +238,11 @@ const layerStats = computed(() => {
           :is-root="n.id === graph.root_id"
           :is-selected="selectedNodeId === n.id"
           :semantic-level="currentSemanticLevel"
+          :world-scale="worldScale"
           @select="onSelectNode"
           @navigate="onNavigateNode"
+          @drag-move="onDragMove"
+          @drag-end="onDragEnd"
         />
       </div>
     </div>
@@ -212,7 +252,7 @@ const layerStats = computed(() => {
       @zoom-out="viewport.zoomOut"
       @fit="viewport.fit"
       @actual-size="viewport.actualSize"
-      @reset="viewport.reset"
+      @reset="handleReset"
     />
     <div class="graph-legend">
       <span class="lr">● 根節點</span>
