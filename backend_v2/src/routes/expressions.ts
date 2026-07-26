@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { success, notFound } from '../utils/response';
+import { buildMappingGraph, parseMappingHops } from '../utils/mappingGraph';
 import type { Bindings } from '../types';
+import type { LoadEdges, LoadExpressions, NeighborRow, ExpressionRow } from '../utils/mappingGraph';
 
 const expressions = new Hono<{ Bindings: Bindings }>();
 
@@ -40,49 +42,58 @@ expressions.get('/:id', async (c) => {
   return success(c, expr);
 });
 
-// GET /:id/mappings — all mappings (1-2 hops)
+// GET /:id/mappings — graph of mappings within 1-3 hops from the root expression
 expressions.get('/:id/mappings', async (c) => {
   const id = parseInt(c.req.param('id'));
-  const hops = Math.min(Math.max(parseInt(c.req.query('hops') || '1') || 1, 1), 3);
 
-  const { results: direct } = await c.env.DB.prepare(
-    `SELECT ed.id as edge_id, ed.score,
-      CASE WHEN ed.expression_a_id = ? THEN ed.expression_b_id ELSE ed.expression_a_id END as expression_id,
-      e.text, e.language_code, l.name as language_name
-     FROM expression_edges ed
-     INNER JOIN expressions e ON e.id = CASE WHEN ed.expression_a_id = ? THEN ed.expression_b_id ELSE ed.expression_a_id END
-     LEFT JOIN languages l ON e.language_code = l.code
-     WHERE ed.expression_a_id = ? OR ed.expression_b_id = ?
-     ORDER BY ed.score DESC`
-  ).bind(id, id, id, id).all();
+  const root = await c.env.DB.prepare(
+    `SELECT id FROM expressions WHERE id = ?`
+  ).bind(id).first();
+  if (!root) return notFound(c, 'Expression');
 
-  const allMappings = direct.map((d: any) => ({ ...d, hops: 1 }));
+  const requestedHops = parseMappingHops(c.req.query('hops'));
 
-  if (hops >= 2) {
-    const directIds = new Set([id, ...direct.map((d: any) => d.expression_id)]);
-    const idsJson = JSON.stringify([...directIds]);
+  // D1 limits bound parameters per query. Keep chunks well under that ceiling.
+  // loadEdges binds each id twice (two IN clauses), so its chunk is the smaller one.
+  const EDGE_CHUNK = 40;
+  const EXPR_CHUNK = 90;
 
-    const { results: second } = await c.env.DB.prepare(
-      `SELECT DISTINCT
-        CASE WHEN ed.expression_a_id IN (SELECT value FROM json_each(?))
-          THEN ed.expression_b_id ELSE ed.expression_a_id END as expression_id,
-        e.text, e.language_code, l.name as language_name, ed.score
-       FROM expression_edges ed
-       INNER JOIN expressions e ON e.id = CASE WHEN ed.expression_a_id IN (SELECT value FROM json_each(?))
-         THEN ed.expression_b_id ELSE ed.expression_a_id END
-       LEFT JOIN languages l ON e.language_code = l.code
-       WHERE (ed.expression_a_id IN (SELECT value FROM json_each(?))
-           OR ed.expression_b_id IN (SELECT value FROM json_each(?)))
-       ORDER BY ed.score DESC LIMIT 100`
-    ).bind(idsJson, idsJson, idsJson, idsJson).all();
+  const loadEdges: LoadEdges = async (frontierIds: number[]): Promise<NeighborRow[]> => {
+    if (frontierIds.length === 0) return [];
+    const out: NeighborRow[] = [];
+    for (let i = 0; i < frontierIds.length; i += EDGE_CHUNK) {
+      const chunk = frontierIds.slice(i, i + EDGE_CHUNK);
+      const placeholders = chunk.map(() => '?').join(',');
+      const { results } = await c.env.DB.prepare(
+        `SELECT id as edge_id, expression_a_id, expression_b_id, score
+         FROM expression_edges
+         WHERE expression_a_id IN (${placeholders}) OR expression_b_id IN (${placeholders})
+         ORDER BY score DESC, id ASC`
+      ).bind(...chunk, ...chunk).all<NeighborRow>();
+      out.push(...results);
+    }
+    return out;
+  };
 
-    allMappings.push(...second
-      .filter((s: any) => !directIds.has(s.expression_id))
-      .map((s: any) => ({ ...s, hops: 2, edge_id: null }))
-    );
-  }
+  const loadExpressions: LoadExpressions = async (ids: number[]): Promise<ExpressionRow[]> => {
+    if (ids.length === 0) return [];
+    const out: ExpressionRow[] = [];
+    for (let i = 0; i < ids.length; i += EXPR_CHUNK) {
+      const chunk = ids.slice(i, i + EXPR_CHUNK);
+      const placeholders = chunk.map(() => '?').join(',');
+      const { results } = await c.env.DB.prepare(
+        `SELECT e.id as expression_id, e.text, e.language_code, l.name as language_name
+         FROM expressions e LEFT JOIN languages l ON e.language_code = l.code
+         WHERE e.id IN (${placeholders})
+         ORDER BY e.id ASC`
+      ).bind(...chunk).all<ExpressionRow>();
+      out.push(...results);
+    }
+    return out;
+  };
 
-  return success(c, allMappings);
+  const graph = await buildMappingGraph(id, requestedHops, loadEdges, loadExpressions);
+  return success(c, graph);
 });
 
 export default expressions;
