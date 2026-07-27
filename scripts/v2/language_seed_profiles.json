@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "languages": [
+    {"code": "und", "name": "Undetermined", "name_en": "Undetermined", "glottocode": null, "origin": "system", "reason": "iana-und"},
+    {"code": "x-emoji", "name": "Emoji 表情", "name_en": "Emoji", "glottocode": null, "origin": "system", "reason": "special-content"},
+    {"code": "x-image", "name": "圖片", "name_en": "Image", "glottocode": null, "origin": "system", "reason": "special-content"},
+    {"code": "en-US", "name": "English (United States)", "name_en": "English (United States)", "glottocode": "stan1293", "origin": "seed", "reason": "first-party"},
+    {"code": "en-GB", "name": "English (United Kingdom)", "name_en": "English (United Kingdom)", "glottocode": "stan1293", "origin": "seed", "reason": "first-party"},
+    {"code": "swh", "name": "Swahili", "name_en": "Swahili", "glottocode": "swah1253", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "ral", "name": "Raltic", "name_en": "Raltic", "glottocode": "ralt1242", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "zyg-x-yang1286", "name": "Zhuang (Yangwang)", "name_en": "Zhuang (Yangwang)", "glottocode": "yang1286", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "wuu-x-ouji1238", "name": "Wu (Oujiang)", "name_en": "Wu (Oujiang)", "glottocode": "ouji1238", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "wuu-x-taiz1238", "name": "Wu (Taizhou)", "name_en": "Wu (Taizhou)", "glottocode": "taiz1238", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-x-chao1239", "name": "Min Nan (Chaozhou)", "name_en": "Min Nan (Chaozhou)", "glottocode": "chao1239", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Latn-TW-tailo", "name": "臺灣台語（臺羅）", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Latn-TW-pehoeji", "name": "臺灣台語（白話字）", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "zh-Hans-CN", "name": "简体中文", "name_en": "Simplified Chinese", "glottocode": "mand1415", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "zh-Hant-TW", "name": "繁體中文", "name_en": "Traditional Chinese", "glottocode": "mand1415", "origin": "seed", "reason": "existing-online-code"}
+  ]
+}

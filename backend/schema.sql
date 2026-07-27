@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS ui_messages;
 DROP TABLE IF EXISTS expression_versions;
 DROP TABLE IF EXISTS expressions;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS language_subtags;
 DROP TABLE IF EXISTS languages;
 DROP TABLE IF EXISTS languoids;
 
@@ -52,6 +53,18 @@ CREATE TABLE languoids (
 CREATE INDEX idx_languoids_glottocode ON languoids(glottocode);
 CREATE INDEX idx_languoids_iso639_3 ON languoids(iso639_3);
 
+CREATE TABLE language_subtags (
+    type TEXT NOT NULL,
+    value TEXT NOT NULL,
+    descriptions TEXT NOT NULL DEFAULT '[]',
+    prefixes TEXT NOT NULL DEFAULT '[]',
+    preferred_value TEXT,
+    suppress_script TEXT,
+    deprecated TEXT,
+    PRIMARY KEY (type, value)
+);
+CREATE INDEX idx_language_subtags_type ON language_subtags(type);
+
 CREATE TABLE languages (
     id INTEGER PRIMARY KEY NOT NULL,
     code TEXT UNIQUE NOT NULL,
@@ -75,6 +88,18 @@ ALTER TABLE languages ADD COLUMN languoid_id TEXT;
 ALTER TABLE languages ADD COLUMN base_language TEXT;
 ALTER TABLE languages ADD COLUMN script_code TEXT;
 ALTER TABLE languages ADD COLUMN source_version TEXT;
+ALTER TABLE languages ADD COLUMN description TEXT;
+ALTER TABLE languages ADD COLUMN variants_json TEXT;
+ALTER TABLE languages ADD COLUMN private_use_json TEXT;
+ALTER TABLE languages ADD COLUMN variety_key TEXT;
+ALTER TABLE languages ADD COLUMN glottocode TEXT;
+ALTER TABLE languages ADD COLUMN origin TEXT;
+ALTER TABLE languages ADD COLUMN community_reason TEXT;
+ALTER TABLE languages ADD COLUMN alternate_names_json TEXT;
+ALTER TABLE languages ADD COLUMN references_json TEXT;
+ALTER TABLE languages ADD COLUMN parent_languoid_id TEXT;
+ALTER TABLE languages ADD COLUMN latitude REAL;
+ALTER TABLE languages ADD COLUMN longitude REAL;
 CREATE INDEX idx_languages_code ON languages(code);
 CREATE INDEX idx_languages_name ON languages(name);
 CREATE INDEX idx_languages_is_active ON languages(is_active);

@@ -7,14 +7,14 @@ from pathlib import Path
 from glottolog_import import read_languoids, validate_languoids, import_sqlite, release_manifest, verify_sha256, release_diff
 from language_migration import validate_manifest
 from sync_language_registry import (
-    _profile_tags,
-    _variant_tag,
     canonical_case,
-    language_rows,
+    canonical_seed_code,
+    direction_for_script,
     parse_iana_registry,
-    online_code_migrations,
+    render_registry_sql,
+    seed_language_rows,
+    split_canonical_seed_code,
     write_languages,
-    _special_content_rows,
 )
 
 ROOT = Path(__file__).parent
@@ -117,125 +117,6 @@ Added: 2005-10-16
         variant = next(row for row in rows if row.type == "variant")
         self.assertEqual(variant.prefixes, ("sl",))
 
-    def test_language_rows_separate_content_tags_from_languoids(self):
-        languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
-        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
-%%
-Type: script
-Subtag: Hant
-Description: Traditional Han
-Added: 2005-10-16
-%%
-Type: script
-Subtag: Bopo
-Description: Bopomofo
-Added: 2005-10-16
-%%
-Type: script
-Subtag: Hanb
-Description: Han with Bopomofo
-Added: 2016-02-26
-%%
-Type: region
-Subtag: TW
-Description: Taiwan
-Added: 2005-10-16
-%%
-Type: variant
-Subtag: example
-Description: Example
-Added: 2026-01-01
-Prefix: nan
-""")
-        profiles = {
-            "iso639_3_to_bcp47": {"cmn": "zh"},
-            "chinese_priority": {
-                "combinations": {
-                    "nan": [{"script": "Hant", "regions": ["TW"]}],
-                    "zh": [
-                        {"script": "Hant", "regions": ["TW"]},
-                        {"script": "Bopo", "regions": ["TW"]},
-                        {"script": "Hanb", "regions": ["TW"]},
-                    ],
-                },
-            },
-            "major_regions": {},
-        }
-        expanded = list(language_rows(languoids, subtags, profiles))
-        self.assertIn("nan-Hant-TW", [row["code"] for row in expanded])
-        self.assertIn("zh-Hant-TW", [row["code"] for row in expanded])
-        self.assertIn("zh-Bopo-TW", [row["code"] for row in expanded])
-        self.assertIn("zh-Hanb-TW", [row["code"] for row in expanded])
-        self.assertNotIn("nan-Bopo-TW", [row["code"] for row in expanded])
-        self.assertNotIn("nan-Hanb-TW", [row["code"] for row in expanded])
-        self.assertIn("nan-example", [row["code"] for row in expanded])
-        self.assertNotIn("nan-Hant", [row["code"] for row in expanded])
-        self.assertNotIn("nan-TW", [row["code"] for row in expanded])
-        self.assertNotIn("zh-Hant", [row["code"] for row in expanded])
-        self.assertNotIn("zh-TW", [row["code"] for row in expanded])
-        self.assertNotIn("zh", [row["code"] for row in expanded])
-        self.assertNotIn("nan", [row["code"] for row in expanded])
-        self.assertTrue(all(row["languoid_id"].startswith("glotto:") for row in expanded))
-        self.assertEqual(canonical_case(["nan", "hant", "tw"]), "nan-Hant-TW")
-
-    def test_languoid_without_iso_uses_ancestor_and_private_glottocode(self):
-        root, dialect, language = read_languoids(
-            ROOT / "fixtures/glottolog-mini.csv", "5.3"
-        )
-        without_iso = dialect.__class__(
-            **{**dialect.__dict__, "iso639_3": None, "parent_id": language.id}
-        )
-        rows = list(language_rows(
-            [root, language, without_iso],
-            [],
-            {
-                "iso639_3_to_bcp47": {"cmn": "zh"},
-                "chinese_priority": {},
-                "major_regions": {},
-            },
-        ))
-        self.assertIn("zh-x-chao1238", [row["code"] for row in rows])
-        self.assertEqual(
-            [row["code"] for row in rows if row["languoid_id"] == without_iso.id],
-            ["zh-x-chao1238"],
-        )
-
-    def test_zh_dialect_is_split_by_script_without_region_expansion(self):
-        root, dialect, language = read_languoids(
-            ROOT / "fixtures/glottolog-mini.csv", "5.3"
-        )
-        without_iso = dialect.__class__(
-            **{**dialect.__dict__, "iso639_3": None, "parent_id": language.id}
-        )
-        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
-%%
-Type: script
-Subtag: Hans
-Description: Han (Simplified variant)
-Added: 2005-10-16
-%%
-Type: script
-Subtag: Hant
-Description: Han (Traditional variant)
-Added: 2005-10-16
-""")
-        profiles = {
-            "iso639_3_to_bcp47": {"cmn": "zh"},
-            "chinese_priority": {
-                "glottolog_roots": ["mand1415"],
-                "required_scripts": ["Hans", "Hant"],
-            },
-            "major_regions": {},
-        }
-        rows = list(language_rows([root, language, without_iso], subtags, profiles))
-        dialect_codes = [
-            row["code"] for row in rows if row["languoid_id"] == without_iso.id
-        ]
-        self.assertEqual(
-            dialect_codes,
-            ["zh-Hans-x-chao1238", "zh-Hant-x-chao1238"],
-        )
-
     def test_cartesian_writer_removes_partial_output_when_caller_handles_error(self):
         target = ROOT / "fixtures/languages-overflow.tmp.csv"
         try:
@@ -248,108 +129,139 @@ Added: 2005-10-16
         finally:
             target.unlink(missing_ok=True)
 
-    def test_language_csv_is_globally_sorted_by_code(self):
-        target = ROOT / "fixtures/languages-sorted.tmp.csv"
-        rows = [
-            {field: "" for field in (
-                "code", "name", "name_en", "direction", "is_active",
-                "region_code", "languoid_id", "base_language",
-                "script_code", "source_version",
-            )}
-            for _ in range(3)
-        ]
-        rows[0]["code"] = "yue-Hant-HK"
-        rows[1]["code"] = "en-US"
-        rows[2]["code"] = "x-image"
-        try:
-            write_languages(target, rows, 10)
-            with target.open(encoding="utf-8") as handle:
-                written = list(csv.DictReader(handle))
-            self.assertEqual(
-                [row["code"] for row in written],
-                ["en-US", "x-image", "yue-Hant-HK"],
-            )
-        finally:
-            target.unlink(missing_ok=True)
-
-    def test_online_legacy_codes_have_explicit_canonical_migrations(self):
-        profiles = json.loads((ROOT / "language_profiles.json").read_text(encoding="utf-8"))
-        self.assertEqual(
-            online_code_migrations(profiles),
-            {
-                "nan-TW-Latn-tailo": "nan-Latn-TW-tailo",
-                "nan-TW-Latn-pehoeji": "nan-Latn-TW-pehoeji",
-            },
-        )
-
-    def test_jyutping_gets_latin_script_without_generic_yue_tags(self):
-        self.assertEqual(
-            _variant_tag("yue", "jyutping", "Latn"),
-            "yue-Latn-jyutping",
-        )
+    def test_seed_profiles_are_the_only_generated_languages(self):
+        languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
+        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
+%%
+Type: language
+Subtag: nan
+Description: Min Nan Chinese
+Added: 2005-10-16
+%%
+Type: script
+Subtag: Hant
+Description: Han (Traditional variant)
+Added: 2005-10-16
+""")
         profiles = {
-            "chinese_priority": {
-                "required_scripts": ["Hans", "Hant", "Latn"],
-                "combinations": {
-                    "yue": [{"script": "Hant", "regions": ["HK"]}],
+            "version": 2,
+            "languages": [
+                {
+                    "code": "nan-Hant-x-chao1238",
+                    "name": "潮州話",
+                    "name_en": "Chaozhou",
+                    "glottocode": "chao1238",
+                    "origin": "seed",
+                    "reason": "existing-online-code",
                 },
-                "omit_base": ["yue"],
-            },
-            "major_regions": {},
+                {
+                    "code": "x-emoji",
+                    "name": "Emoji 表情",
+                    "name_en": "Emoji",
+                    "glottocode": None,
+                    "origin": "system",
+                    "reason": "special-content",
+                },
+            ],
         }
-        tags = _profile_tags(
-            "yue",
-            "",
+        rows = list(seed_language_rows(
             profiles,
-            {"Hans", "Hant", "Latn"},
-            {"HK", "CN", "MO"},
-            True,
+            subtags,
+            {row.glottocode: row for row in languoids},
+        ))
+        self.assertEqual(
+            [row["code"] for row in rows],
+            ["nan-Hant-x-chao1238", "x-emoji"],
         )
-        self.assertEqual(tags, ["yue-Hant-HK"])
+        self.assertEqual(rows[0]["variety_key"], "glotto:chao1238")
+        self.assertTrue(rows[1]["variety_key"].startswith("system:"))
 
-    def test_known_latin_orthography_variants_get_explicit_script(self):
-        for prefix, variant, expected in [
-            ("kyh", "unifon", "kyh-Latn-unifon"),
-            ("lld", "anpezo", "lld-Latn-anpezo"),
-            ("lld", "fascia", "lld-Latn-fascia"),
-            ("lld", "fodom", "lld-Latn-fodom"),
-            ("lld", "gherd", "lld-Latn-gherd"),
-            ("lld", "valbadia", "lld-Latn-valbadia"),
-            ("ltg", "ltg1929", "ltg-Latn-ltg1929"),
-            ("ltg", "ltg2007", "ltg-Latn-ltg2007"),
-        ]:
-            with self.subTest(variant=variant):
-                self.assertEqual(_variant_tag(prefix, variant, "Latn"), expected)
-
-    def test_only_allowlisted_private_content_codes_are_generated(self):
-        profiles = json.loads((ROOT / "language_profiles.json").read_text(encoding="utf-8"))
-        rows = _special_content_rows(profiles)
-        self.assertEqual([row["code"] for row in rows], ["x-emoji", "x-image"])
-        self.assertTrue(all(not row["languoid_id"] for row in rows))
-        with self.assertRaises(ValueError):
-            _special_content_rows({
-                "special_content_codes": [{
-                    "code": "x-arbitrary",
-                    "name": "任意",
-                    "name_en": "Arbitrary",
-                    "direction": "ltr",
-                }],
-            })
-
-    def test_profile_expansion_replaces_generic_base(self):
+    def test_registry_sql_loads_into_canonical_schema(self):
+        languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
+        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
+%%
+Type: language
+Subtag: cmn
+Description: Mandarin
+Added: 2005-10-16
+%%
+Type: script
+Subtag: Hans
+Description: Han (Simplified variant)
+Added: 2005-10-16
+""")
         profiles = {
-            "chinese_priority": {},
-            "major_regions": {"en": ["US", "GB"]},
+            "version": 2,
+            "languages": [
+                {
+                    "code": "cmn-Hans",
+                    "name": "Mandarin",
+                    "name_en": "Mandarin",
+                    "glottocode": "mand1415",
+                    "origin": "seed",
+                    "reason": "existing-online-code",
+                },
+                {
+                    "code": "x-emoji",
+                    "name": "Emoji 表情",
+                    "name_en": "Emoji",
+                    "glottocode": None,
+                    "origin": "system",
+                    "reason": "special-content",
+                },
+            ],
         }
-        tags = _profile_tags(
-            "en",
-            "",
-            profiles,
-            set(),
-            {"US", "GB"},
-            False,
+        seed_rows = list(seed_language_rows(
+            profiles, subtags, {row.glottocode: row for row in languoids}
+        ))
+        schema = (ROOT.parent.parent / "backend" / "schema.sql").read_text(encoding="utf-8")
+        db = sqlite3.connect(":memory:")
+        db.execute("PRAGMA foreign_keys=ON")
+        db.executescript(schema)
+        db.executescript(render_registry_sql(languoids, subtags, seed_rows))
+        self.assertEqual(
+            db.execute("SELECT code FROM languages ORDER BY code").fetchall(),
+            [("cmn-Hans",), ("x-emoji",)],
         )
-        self.assertEqual(tags, ["en-US", "en-GB"])
+        self.assertGreater(
+            db.execute("SELECT COUNT(*) FROM language_subtags").fetchone()[0], 0,
+        )
+
+    def test_canonical_seed_code_rejects_unregistered_language(self):
+        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
+%%
+Type: language
+Subtag: en
+Description: English
+Added: 2005-10-16
+""")
+        registered = {(row.type, row.value.lower()): row for row in subtags if not row.deprecated}
+        with self.assertRaises(ValueError):
+            canonical_seed_code("zz", registered)
+
+    def test_split_canonical_seed_code_parses_components(self):
+        result = split_canonical_seed_code("nan-Hant-TW-tailo")
+        self.assertEqual(result["language"], "nan")
+        self.assertEqual(result["script"], "Hant")
+        self.assertEqual(result["region"], "TW")
+        self.assertEqual(result["variants"], ["tailo"])
+        self.assertEqual(result["private_use"], [])
+
+    def test_split_canonical_seed_code_handles_private_use(self):
+        result = split_canonical_seed_code("x-emoji")
+        self.assertEqual(result["language"], "x")
+        self.assertEqual(result["script"], None)
+        self.assertEqual(result["region"], None)
+        self.assertEqual(result["private_use"], ["x-emoji"])
+
+    def test_direction_for_script_returns_rtl_for_arab_family(self):
+        self.assertEqual(direction_for_script("Arab"), "rtl")
+        self.assertEqual(direction_for_script("Hebr"), "rtl")
+        self.assertEqual(direction_for_script("Latn"), "ltr")
+        self.assertEqual(direction_for_script(None), "ltr")
+
+    def test_canonical_case(self):
+        self.assertEqual(canonical_case(["nan", "hant", "tw"]), "nan-Hant-TW")
 
 
 if __name__ == "__main__":

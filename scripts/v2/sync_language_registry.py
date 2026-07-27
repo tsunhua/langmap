@@ -4,9 +4,8 @@
 `languoids.csv` 一列對應一個 Glottolog identity。BCP 47 的 script、region、
 variant 組合另寫入 `languages.csv`，因為它們不是新的 languoid。
 
-預設輸出全部 languoid 的 base tag、IANA variant prefix，以及
-language_profiles.json 明確列出的高價值 script/region 組合。它不生成無語義
-依據的全球笛卡兒積。
+使用明確的 seed profiles（language_seed_profiles.json）定義要產生的 BCP 47
+language tag，取代舊版的笛卡兒積展開。
 """
 from __future__ import annotations
 
@@ -31,7 +30,7 @@ GLOTTOLOG_5_3_URL = (
     "EAEA0-608B-9919-A962-0/glottolog_languoid.csv.zip"
 )
 USER_AGENT = "LangMap language registry sync/1.0"
-DEFAULT_PROFILES = Path(__file__).with_name("language_profiles.json")
+DEFAULT_PROFILES = Path(__file__).with_name("language_seed_profiles.json")
 
 
 @dataclass(frozen=True)
@@ -165,290 +164,158 @@ def canonical_case(parts: Iterable[str]) -> str:
     return "-".join(result)
 
 
-def _variant_tag(prefix: str, variant: str, script: str | None) -> str:
-    parts = prefix.split("-")
-    has_script = any(len(part) == 4 and part.isalpha() for part in parts[1:])
-    if script and not has_script:
-        parts.insert(1, script)
-    return canonical_case([*parts, variant])
+def sql_literal(value: object) -> str:
+    """Escape a value for safe inclusion in a SQL literal."""
+    if value is None:
+        return "NULL"
+    text = str(value).replace("'", "''")
+    return f"'{text}'"
 
 
-def language_rows(
-    languoids: Iterable[Languoid],
-    subtags: Iterable[Subtag],
-    profiles: dict,
-) -> Iterator[dict[str, str]]:
-    languoid_list = list(languoids)
-    by_id = {row.id: row for row in languoid_list}
-    active = [row for row in subtags if not row.deprecated and not row.preferred_value]
-    registered_scripts = {row.value for row in active if row.type == "script"}
-    registered_regions = {row.value for row in active if row.type == "region"}
-    variants = [row for row in active if row.type == "variant"]
-    variant_scripts = profiles.get("variant_scripts", {})
-    if not isinstance(variant_scripts, dict):
-        raise ValueError("variant_scripts 必須是 JSON object")
-    for variant, script in variant_scripts.items():
-        if not isinstance(variant, str) or not isinstance(script, str):
-            raise ValueError("variant_scripts 的 key/value 必須是字串")
-        if script not in registered_scripts:
-            raise ValueError(f"variant {variant} 使用未登記的 script: {script}")
-    variant_tags = {
-        _variant_tag(prefix, variant.value, variant_scripts.get(variant.value))
-        for variant in variants
-        for prefix in variant.prefixes
-    }
-    omitted_generated = profiles.get("omit_generated_codes", [])
-    if not isinstance(omitted_generated, list) or not all(
-        isinstance(code, str) for code in omitted_generated
-    ):
-        raise ValueError("omit_generated_codes 必須是字串陣列")
-    variant_tags.difference_update(omitted_generated)
-    by_iso = {
-        row.iso639_3.lower(): row
-        for row in languoid_list
-        if row.iso639_3 and row.level in {"language", "dialect"}
-    }
-    primary_aliases = _iana_primary_aliases(active)
-    configured_aliases = profiles.get("iso639_3_to_bcp47", {})
-    if not isinstance(configured_aliases, dict):
-        raise ValueError("iso639_3_to_bcp47 必須是 JSON object")
-    primary_aliases.update(configured_aliases)
-    by_content_base = {
-        primary_aliases.get(iso, iso): languoid for iso, languoid in by_iso.items()
-    }
+# ---------------------------------------------------------------------------
+# Seed-based language row generation
+# ---------------------------------------------------------------------------
 
-    owners: dict[str, str] = {}
-    languoid_profiles: list[tuple[str, str, Languoid]] = []
-    for languoid in languoid_list:
-        if languoid.level not in {"language", "dialect"}:
-            continue
-        iso = _nearest_iso(languoid, by_id)
-        base = primary_aliases.get(iso, iso) if iso else "und"
-        private = "" if languoid.iso639_3 else languoid.glottocode
-        languoid_profiles.append((base.lower(), private, languoid))
+def canonical_seed_code(
+    value: str,
+    registered: dict[tuple[str, str], Subtag],
+) -> str:
+    """Validate a canonical seed code against IANA and return canonical casing.
 
-    for base, private, languoid in sorted(
-        languoid_profiles, key=lambda item: (item[0], item[1], item[2].id)
-    ):
-        chinese = profiles.get("chinese_priority", {})
-        roots = chinese.get("glottolog_roots", [])
-        if not isinstance(roots, list) or not all(isinstance(root, str) for root in roots):
-            raise ValueError("chinese_priority.glottolog_roots 必須是字串陣列")
-        is_sinitic = _descends_from(
-            languoid, {f"glotto:{root}" for root in roots}, by_id
-        )
-        candidates = _profile_tags(
-            base, private, profiles, registered_scripts, registered_regions, is_sinitic
-        )
-        for code in candidates:
-            if code in owners:
-                continue
-            owners[code] = languoid.id
-            parts = code.split("-")
-            yield _language_row(code, languoid, parts)
-
-    # Prefix 是 IANA 對 variant 有語義的官方提示；不把 variant 乘到所有語言。
-    for tag in sorted(variant_tags):
-        base = tag.split("-", 1)[0].lower()
-        languoid = by_content_base.get(base)
-        if not languoid or tag in owners:
-            continue
-        owners[tag] = languoid.id
-        yield _language_row(tag, languoid, tag.split("-"))
-
-    for required in _required_online_codes(profiles):
-        tag = required["canonical"]
-        expected_id = f"glotto:{required['glottocode']}"
-        if tag in owners:
-            if owners[tag] != expected_id:
-                raise ValueError(
-                    f"required online code {tag} 指向 {owners[tag]}，預期 {expected_id}"
-                )
-            continue
-        languoid = by_id.get(expected_id)
-        if not languoid:
-            raise ValueError(f"required online code {tag} 缺少 {expected_id}")
-        _validate_required_tag(tag, required["glottocode"], active)
-        owners[tag] = languoid.id
-        yield _language_row(tag, languoid, tag.split("-"))
-
-    for row in _special_content_rows(profiles):
-        code = row["code"]
-        if code in owners:
-            raise ValueError(f"special content code 與語言 tag 衝突: {code}")
-        owners[code] = ""
-        yield row
-
-
-def _iana_primary_aliases(subtags: Iterable[Subtag]) -> dict[str, str]:
-    """Derive ISO 639-3 → shortest BCP 47 primary tags from IANA descriptions."""
-    languages = [row for row in subtags if row.type == "language"]
-    short_by_description: dict[str, str] = {}
-    for row in languages:
-        if len(row.value) == 2:
-            for description in row.descriptions:
-                short_by_description.setdefault(description.casefold(), row.value.lower())
-    aliases: dict[str, str] = {}
-    for row in languages:
-        if len(row.value) != 3:
-            continue
-        matches = {
-            short_by_description[description.casefold()]
-            for description in row.descriptions
-            if description.casefold() in short_by_description
-        }
-        if len(matches) == 1:
-            aliases[row.value.lower()] = matches.pop()
-    return aliases
-
-
-def _required_online_codes(profiles: dict) -> list[dict[str, str]]:
-    rows = profiles.get("required_online_codes", [])
-    if not isinstance(rows, list):
-        raise ValueError("required_online_codes 必須是陣列")
-    result: list[dict[str, str]] = []
-    for row in rows:
-        if (
-            not isinstance(row, dict)
-            or not all(isinstance(row.get(key), str) for key in ("observed", "canonical", "glottocode"))
-        ):
-            raise ValueError("required_online_codes 每項必須包含 observed/canonical/glottocode")
-        result.append(row)
-    return result
-
-
-def _validate_required_tag(tag: str, glottocode: str, subtags: Iterable[Subtag]) -> None:
-    parts = tag.split("-")
-    registered = {
-        (row.type, row.value.lower())
-        for row in subtags
-        if not row.deprecated and not row.preferred_value
-    }
-    if ("language", parts[0].lower()) not in registered:
-        raise ValueError(f"required online code 使用未登記的 language: {tag}")
+    Accepts public BCP 47 tags and system private-use codes (x-emoji, x-image).
+    Raises ValueError for invalid or unregistered tags.
+    """
+    if value in ("x-emoji", "x-image"):
+        return value
+    parts = value.split("-")
+    if len(parts) < 1 or not parts[0]:
+        raise ValueError(f"seed code must start with a language subtag: {value}")
+    lang = parts[0].lower()
+    if ("language", lang) not in registered:
+        raise ValueError(f"seed code uses unregistered language subtag: {value}")
     private_index = next(
-        (index for index, part in enumerate(parts) if part.lower() == "x"), len(parts)
+        (i for i, p in enumerate(parts) if p.lower() == "x"), len(parts)
     )
     public = parts[1:private_index]
-    script_positions = [index for index, part in enumerate(public) if len(part) == 4 and part.isalpha()]
+    script_positions = [i for i, p in enumerate(public) if len(p) == 4 and p.isalpha()]
     region_positions = [
-        index for index, part in enumerate(public)
-        if (len(part) == 2 and part.isalpha()) or (len(part) == 3 and part.isdigit())
+        i for i, p in enumerate(public)
+        if (len(p) == 2 and p.isalpha()) or (len(p) == 3 and p.isdigit())
     ]
     if script_positions and region_positions and script_positions[0] > region_positions[0]:
-        raise ValueError(f"required online code 不是 canonical BCP 47 次序: {tag}")
-    if private_index < len(parts) and parts[private_index + 1:] != [glottocode]:
-        raise ValueError(f"required online code private-use 與 Glottocode 不一致: {tag}")
+        raise ValueError(f"seed code is not canonical BCP 47 order: {value}")
+    for p in public:
+        pl = p.lower()
+        if len(p) == 4 and p.isalpha():
+            if ("script", pl) not in registered:
+                raise ValueError(f"seed code uses unregistered script: {p}")
+        elif (len(p) == 2 and p.isalpha()) or (len(p) == 3 and p.isdigit()):
+            if ("region", pl) not in registered:
+                raise ValueError(f"seed code uses unregistered region: {p}")
+        elif len(p) <= 8 and all(c.isalnum() for c in p):
+            pass
+        else:
+            raise ValueError(f"seed code contains invalid public subtag: {p}")
+    return canonical_case(parts)
 
 
-def online_code_migrations(profiles: dict) -> dict[str, str]:
+def split_canonical_seed_code(value: str) -> dict[str, object]:
+    """Parse a canonical seed code into its BCP 47 components."""
+    if value in ("x-emoji", "x-image"):
+        return {
+            "language": "x",
+            "script": None,
+            "region": None,
+            "variants": [],
+            "private_use": [value],
+        }
+    parts = value.split("-")
+    language = parts[0]
+    private_index = next(
+        (i for i, p in enumerate(parts) if p.lower() == "x"), len(parts)
+    )
+    public = parts[1:private_index]
+    private_use = parts[private_index + 1:] if private_index < len(parts) else []
+    script = None
+    region = None
+    variants: list[str] = []
+    for p in public:
+        if len(p) == 4 and p.isalpha():
+            script = p
+        elif (len(p) == 2 and p.isalpha()) or (len(p) == 3 and p.isdigit()):
+            region = p
+        else:
+            variants.append(p)
     return {
-        row["observed"]: row["canonical"]
-        for row in _required_online_codes(profiles)
-        if row["observed"] != row["canonical"]
+        "language": language,
+        "script": script,
+        "region": region,
+        "variants": variants,
+        "private_use": private_use,
     }
 
 
-def _special_content_rows(profiles: dict) -> list[dict[str, str]]:
-    entries = profiles.get("special_content_codes", [])
-    if not isinstance(entries, list):
-        raise ValueError("special_content_codes 必須是陣列")
-    rows: list[dict[str, str]] = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            raise ValueError("special_content_codes 每項必須是 object")
-        code = entry.get("code")
-        if code not in {"x-emoji", "x-image"}:
-            raise ValueError(f"不允許的 private-use-only content code: {code}")
-        if not all(isinstance(entry.get(key), str) for key in ("name", "name_en", "direction")):
-            raise ValueError(f"{code} 缺少 name/name_en/direction")
-        rows.append({
+# Script families that use right-to-left text direction.
+_RTL_SCRIPT_FAMILIES = frozenset({
+    "Arab", "Hebr", "Thaa", "Syrc", "Nkoo", "Rohg", "Adlm",
+})
+
+
+def direction_for_script(script: str | None) -> str:
+    """Return 'rtl' for Arab-family scripts, 'ltr' otherwise."""
+    if script is None:
+        return "ltr"
+    for family in _RTL_SCRIPT_FAMILIES:
+        if script == family or script.startswith(family):
+            return "rtl"
+    return "ltr"
+
+
+def seed_language_rows(
+    profiles: dict,
+    subtags: list[Subtag],
+    languoids_by_code: dict[str, Languoid],
+) -> Iterator[dict[str, str]]:
+    """Yield language rows from explicit seed entries in the profiles JSON."""
+    registered = {
+        (row.type, row.value.lower()): row
+        for row in subtags
+        if not row.deprecated
+    }
+    seen: set[str] = set()
+    for entry in sorted(profiles["languages"], key=lambda row: row["code"]):
+        code = canonical_seed_code(entry["code"], registered)
+        if code in seen:
+            raise ValueError(f"duplicate seed code: {code}")
+        seen.add(code)
+        glottocode = entry.get("glottocode")
+        languoid = languoids_by_code.get(glottocode) if glottocode else None
+        if glottocode and languoid is None:
+            raise ValueError(f"unknown Glottocode: {glottocode}")
+        parts = split_canonical_seed_code(code)
+        yield {
             "code": code,
             "name": entry["name"],
-            "name_en": entry["name_en"],
-            "direction": entry["direction"],
-            "is_active": "0",
-            "region_code": "",
-            "languoid_id": "",
-            "base_language": "x",
-            "script_code": "",
-            "source_version": "langmap-special-1",
-        })
-    return rows
-
-
-def _profile_tags(
-    base: str,
-    private: str,
-    profiles: dict,
-    registered_scripts: set[str],
-    registered_regions: set[str],
-    is_sinitic: bool,
-) -> list[str]:
-    suffix = ["x", private] if private else []
-    chinese = profiles.get("chinese_priority", {})
-    result = [canonical_case([base, *suffix])]
-    required_scripts = _validated_profile_values(
-        chinese.get("required_scripts", []), registered_scripts, "required script"
-    )
-    # A Glottocode-specific Sinitic dialect distinguishes writing systems,
-    # but never inherits ancestor regions.
-    if private:
-        if is_sinitic:
-            return [
-                canonical_case([base, script, *suffix])
-                for script in required_scripts
-            ]
-        return result
-    combinations = chinese.get("combinations", {})
-    if not isinstance(combinations, dict):
-        raise ValueError("chinese_priority.combinations 必須是 JSON object")
-    if base in combinations:
-        # A configured expansion replaces its generic base; only leaf tags
-        # are useful in the selectable content registry.
-        result = []
-        entries = combinations[base]
-        if not isinstance(entries, list):
-            raise ValueError(f"chinese combination {base} 必須是陣列")
-        for entry in entries:
-            if not isinstance(entry, dict) or not isinstance(entry.get("script"), str):
-                raise ValueError(f"chinese combination {base} 缺少 script")
-            script = _validated_profile_values(
-                [entry["script"]], registered_scripts, "script"
-            )[0]
-            regions = _validated_profile_values(
-                entry.get("regions", []), registered_regions, "region"
-            )
-            result.extend(
-                canonical_case([base, script, region])
-                for region in regions
-            )
-    elif is_sinitic:
-        result = []
-        result.extend(canonical_case([base, script]) for script in required_scripts)
-    else:
-        regions = _validated_profile_values(
-            profiles.get("major_regions", {}).get(base, []),
-            registered_regions,
-            "region",
-        )
-        if regions:
-            result = []
-        result.extend(canonical_case([base, region, *suffix]) for region in regions)
-    return result
-
-
-def _validated_profile_values(
-    values: object,
-    registered: set[str],
-    kind: str,
-) -> list[str]:
-    if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
-        raise ValueError(f"profile {kind} 必須是字串陣列")
-    unknown = sorted(set(values) - registered)
-    if unknown:
-        raise ValueError(f"profile 含未登記的 {kind}: {', '.join(unknown)}")
-    return values
+            "name_en": entry.get("name_en") or "",
+            "description": entry.get("description") or "",
+            "direction": direction_for_script(parts["script"]),
+            "base_language": parts["language"],
+            "script_code": parts["script"] or "",
+            "region_code": parts["region"] or "",
+            "variants_json": json.dumps(parts["variants"], separators=(",", ":")),
+            "private_use_json": json.dumps(parts["private_use"], separators=(",", ":")),
+            "variety_key": (
+                f"glotto:{glottocode}" if glottocode else f"system:{code}"
+            ),
+            "glottocode": glottocode or "",
+            "origin": entry["origin"],
+            "community_reason": "",
+            "alternate_names_json": "[]",
+            "references_json": "[]",
+            "parent_languoid_id": languoid.parent_id if languoid else "",
+            "latitude": "" if not languoid or languoid.latitude is None else str(languoid.latitude),
+            "longitude": "" if not languoid or languoid.longitude is None else str(languoid.longitude),
+        }
 
 
 def read_profiles(path: Path) -> dict:
@@ -458,58 +325,12 @@ def read_profiles(path: Path) -> dict:
     return value
 
 
-def _nearest_iso(languoid: Languoid, by_id: dict[str, Languoid]) -> str | None:
-    current = languoid
-    seen: set[str] = set()
-    while True:
-        if current.iso639_3:
-            return current.iso639_3
-        if not current.parent_id or current.parent_id in seen:
-            return None
-        seen.add(current.id)
-        current = by_id[current.parent_id]
-
-
-def _descends_from(
-    languoid: Languoid,
-    roots: set[str],
-    by_id: dict[str, Languoid],
-) -> bool:
-    current = languoid
-    seen: set[str] = set()
-    while True:
-        if current.id in roots:
-            return True
-        if not current.parent_id or current.parent_id in seen:
-            return False
-        seen.add(current.id)
-        current = by_id[current.parent_id]
-
-
-def _language_row(code: str, languoid: Languoid, parts: list[str]) -> dict[str, str]:
-    script = next((part for part in parts[1:] if len(part) == 4 and part.isalpha()), "")
-    region = next(
-        (part for part in parts[1:] if (len(part) == 2 and part.isalpha()) or
-         (len(part) == 3 and part.isdigit())),
-        "",
-    )
-    return {
-        "code": code,
-        "name": languoid.preferred_name,
-        "name_en": languoid.preferred_name,
-        "direction": "rtl" if script in {"Adlm", "Arab", "Hebr", "Nkoo", "Rohg", "Syrc", "Thaa"} else "ltr",
-        "is_active": "0",
-        "region_code": region,
-        "languoid_id": languoid.id,
-        "base_language": parts[0].lower(),
-        "script_code": script,
-        "source_version": languoid.source_version,
-    }
-
-
 LANGUAGE_FIELDS = (
-    "code", "name", "name_en", "direction", "is_active", "region_code",
-    "languoid_id", "base_language", "script_code", "source_version",
+    "code", "name", "name_en", "description", "direction",
+    "base_language", "script_code", "region_code", "variants_json",
+    "private_use_json", "variety_key", "glottocode", "origin",
+    "community_reason", "alternate_names_json", "references_json",
+    "parent_languoid_id", "latitude", "longitude",
 )
 
 
@@ -526,6 +347,117 @@ def write_languages(path: Path, rows: Iterable[dict[str, str]], max_tags: int) -
         for row in values:
             writer.writerow(row)
     return count
+
+
+# ---------------------------------------------------------------------------
+# SQL generation
+# ---------------------------------------------------------------------------
+
+def render_languoid_insert(row: Languoid) -> str:
+    """Return an idempotent INSERT statement for one languoid row."""
+    cols = (
+        "id", "glottocode", "preferred_name", "level", "iso639_3", "parent_id",
+        "latitude", "longitude", "source_version",
+    )
+    vals = (
+        sql_literal(row.id), sql_literal(row.glottocode),
+        sql_literal(row.preferred_name), sql_literal(row.level),
+        sql_literal(row.iso639_3) if row.iso639_3 else "NULL",
+        sql_literal(row.parent_id) if row.parent_id else "NULL",
+        str(row.latitude) if row.latitude is not None else "NULL",
+        str(row.longitude) if row.longitude is not None else "NULL",
+        sql_literal(row.source_version),
+    )
+    return (
+        f"INSERT INTO languoids ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
+        "ON CONFLICT(id) DO UPDATE SET glottocode=excluded.glottocode, "
+        "preferred_name=excluded.preferred_name, level=excluded.level, "
+        "iso639_3=excluded.iso639_3, parent_id=excluded.parent_id, "
+        "latitude=excluded.latitude, longitude=excluded.longitude, "
+        "source_version=excluded.source_version;"
+    )
+
+
+def render_subtag_insert(row: Subtag) -> str:
+    """Return an idempotent INSERT statement for one IANA subtag."""
+    cols = (
+        "type", "value", "descriptions", "prefixes",
+        "preferred_value", "suppress_script", "deprecated",
+    )
+    vals = (
+        sql_literal(row.type), sql_literal(row.value),
+        sql_literal(json.dumps(list(row.descriptions), ensure_ascii=False)),
+        sql_literal(json.dumps(list(row.prefixes), ensure_ascii=False)),
+        sql_literal(row.preferred_value) if row.preferred_value else "NULL",
+        sql_literal(row.suppress_script) if row.suppress_script else "NULL",
+        sql_literal(row.deprecated) if row.deprecated else "NULL",
+    )
+    return (
+        f"INSERT INTO language_subtags ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
+        "ON CONFLICT(type, value) DO UPDATE SET "
+        "descriptions=excluded.descriptions, prefixes=excluded.prefixes, "
+        "preferred_value=excluded.preferred_value, "
+        "suppress_script=excluded.suppress_script, deprecated=excluded.deprecated;"
+    )
+
+
+def render_language_insert(row: dict[str, str]) -> str:
+    """Return an idempotent INSERT statement for one language row."""
+    cols = (
+        "code", "name", "name_en", "description", "direction",
+        "base_language", "script_code", "region_code", "variants_json",
+        "private_use_json", "variety_key", "glottocode", "origin",
+        "community_reason", "alternate_names_json", "references_json",
+        "parent_languoid_id", "latitude", "longitude",
+    )
+    vals = (
+        sql_literal(row["code"]), sql_literal(row["name"]),
+        sql_literal(row["name_en"]), sql_literal(row["description"]),
+        sql_literal(row["direction"]), sql_literal(row["base_language"]),
+        sql_literal(row["script_code"]), sql_literal(row["region_code"]),
+        sql_literal(row["variants_json"]), sql_literal(row["private_use_json"]),
+        sql_literal(row["variety_key"]), sql_literal(row["glottocode"]),
+        sql_literal(row["origin"]), sql_literal(row["community_reason"]),
+        sql_literal(row["alternate_names_json"]), sql_literal(row["references_json"]),
+        sql_literal(row["parent_languoid_id"]),
+        sql_literal(row["latitude"]) if row["latitude"] else "NULL",
+        sql_literal(row["longitude"]) if row["longitude"] else "NULL",
+    )
+    return (
+        f"INSERT INTO languages ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
+        "ON CONFLICT(code) DO UPDATE SET "
+        "name=excluded.name, name_en=excluded.name_en, "
+        "description=excluded.description, direction=excluded.direction, "
+        "base_language=excluded.base_language, script_code=excluded.script_code, "
+        "region_code=excluded.region_code, variants_json=excluded.variants_json, "
+        "private_use_json=excluded.private_use_json, "
+        "variety_key=excluded.variety_key, glottocode=excluded.glottocode, "
+        "origin=excluded.origin, community_reason=excluded.community_reason, "
+        "alternate_names_json=excluded.alternate_names_json, "
+        "references_json=excluded.references_json, "
+        "parent_languoid_id=excluded.parent_languoid_id, "
+        "latitude=excluded.latitude, longitude=excluded.longitude;"
+    )
+
+
+def render_registry_sql(
+    languoids: list[Languoid],
+    subtags: list[Subtag],
+    languages: list[dict[str, str]],
+) -> str:
+    """Generate a complete, idempotent SQL script for the language registry."""
+    statements = ["BEGIN;"]
+    statements.extend(render_languoid_insert(row) for row in languoids)
+    statements.extend(
+        render_subtag_insert(row)
+        for row in sorted(subtags, key=lambda row: (row.type, row.value.lower()))
+    )
+    statements.extend(
+        render_language_insert(row)
+        for row in sorted(languages, key=lambda row: row["code"])
+    )
+    statements.append("COMMIT;")
+    return "\n".join(statements) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -561,18 +493,20 @@ def main(argv: list[str] | None = None) -> int:
         languoid_count = write_languoids(args.output / "languoids.csv", languoids)
         subtag_count = write_subtags(args.output / "iana-subtags.json", file_date, subtags)
         languages_path = args.output / "languages.csv"
+        seed_rows = list(seed_language_rows(
+            profiles, subtags, {row.glottocode: row for row in languoids}
+        ))
         try:
             language_count = write_languages(
                 languages_path,
-                language_rows(languoids, subtags, profiles),
+                seed_rows,
                 args.max_tags,
             )
         except Exception:
             languages_path.unlink(missing_ok=True)
             raise
-        migrations = online_code_migrations(profiles)
         (args.output / "online-code-migrations.json").write_text(
-            json.dumps(migrations, ensure_ascii=False, indent=2) + "\n",
+            json.dumps({}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         manifest = {
@@ -593,12 +527,15 @@ def main(argv: list[str] | None = None) -> int:
                 "profile_file": args.profiles.name,
                 "language_tag_count": language_count,
                 "max_tags": args.max_tags,
-                "required_online_code_count": len(_required_online_codes(profiles)),
-                "online_code_migration_count": len(migrations),
             },
         }
         (args.output / "manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        sql_path = args.output / "language-registry.sql"
+        sql_path.write_text(
+            render_registry_sql(languoids, subtags, seed_rows),
             encoding="utf-8",
         )
         print(json.dumps(manifest, ensure_ascii=False, indent=2))
