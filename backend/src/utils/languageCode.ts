@@ -99,3 +99,6 @@ export function parseStoredLanguageCode(
 export function isLanguageCode(value: string): boolean {
   return parseStoredLanguageCode(value) !== null;
 }
+
+/** @deprecated Use parseStoredLanguageCode */
+export const parseLanguageCode = parseStoredLanguageCode;

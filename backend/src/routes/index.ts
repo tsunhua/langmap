@@ -9,11 +9,13 @@ import feed from './feed';
 import search from './search';
 import localization from './localization';
 import languoids from './languoids';
+import languageRegistry from './languageRegistry';
 
 const api = new Hono();
 api.route('/auth', auth);
 api.route('/languages', languages);
 api.route('/languoids', languoids);
+api.route('/language-registry', languageRegistry);
 api.route('/expressions', expressions);
 api.route('/mappings', mappings);
 api.route('/contributions', contributions);

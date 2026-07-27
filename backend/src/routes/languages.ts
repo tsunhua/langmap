@@ -1,15 +1,61 @@
 import { Hono } from 'hono';
-import { success, notFound, paginated } from '../utils/response';
-import type { Bindings } from '../types';
+import { success, notFound, paginated, badRequest, created, conflict, forbidden, tooManyRequests } from '../utils/response';
+import { requireAuth } from '../middleware/auth';
+import { previewLanguage, createLanguage, PreviewRequestSchema, CreateRequestSchema, LanguageCreationError } from '../services/languageCreation';
+import type { Bindings, Variables } from '../types';
 
-const languages = new Hono<{ Bindings: Bindings }>();
+const languages = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-// GET /api/v2/languages — list all languages with expression counts
+languages.post('/preview', requireAuth, async (c) => {
+  try {
+    const body = await c.req.json();
+    const result = await previewLanguage(c.env.DB, body);
+    return success(c, result);
+  } catch (err: unknown) {
+    if (err instanceof LanguageCreationError) {
+      return badRequest(c, err.code, err.message);
+    }
+    if (err instanceof Error && err.name === 'ZodError') {
+      return badRequest(c, 'VALIDATION_FAILED', err.message);
+    }
+    throw err;
+  }
+});
+
+languages.post('/', requireAuth, async (c) => {
+  const user = c.get('user');
+  if (!user) return;
+
+  try {
+    const userRow = await c.env.DB.prepare(
+      'SELECT email_verified FROM users WHERE id = ?'
+    ).bind(user.id).first<{ email_verified: number }>();
+
+    if (!userRow || userRow.email_verified !== 1) {
+      return forbidden(c, 'VERIFIED_EMAIL_REQUIRED', 'Email verification required to create languages');
+    }
+
+    const body = await c.req.json();
+    const result = await createLanguage(c.env.DB, user.id, body);
+    return created(c, { language: result });
+  } catch (err: unknown) {
+    if (err instanceof LanguageCreationError) {
+      if (err.code === 'RATE_LIMITED') return tooManyRequests(c, err.code, err.message);
+      if (err.code === 'LANGUAGE_CODE_EXISTS') return conflict(c, err.code, err.message);
+      return badRequest(c, err.code, err.message);
+    }
+    if (err instanceof Error && err.name === 'ZodError') {
+      return badRequest(c, 'VALIDATION_FAILED', err.message);
+    }
+    throw err;
+  }
+});
+
 languages.get('/', async (c) => {
   const search = c.req.query('q') || c.req.query('search') || '';
   const level = c.req.query('level') || '';
   const script = c.req.query('script') || '';
-  const sort = c.req.query('sort') || 'count'; // count | alpha
+  const sort = c.req.query('sort') || 'count';
   const limit = Math.min(Math.max(Number(c.req.query('limit') || 50) || 50, 1), 100);
   const offset = Math.max(Number(c.req.query('offset') || 0) || 0, 0);
 
@@ -20,25 +66,41 @@ languages.get('/', async (c) => {
   const filters: string[] = [];
 
   if (search) {
-    filters.push(`(l.name LIKE ? OR l.name_en LIKE ? OR l.code LIKE ? OR g.preferred_name LIKE ? OR g.glottocode LIKE ? OR g.iso639_3 LIKE ?)`);
-    params.push(...Array(6).fill(`%${search}%`));
+    const escapedSearch = search.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    filters.push(`(l.name LIKE ? ESCAPE '\\' OR l.name_en LIKE ? ESCAPE '\\' OR l.code LIKE ? ESCAPE '\\' OR l.glottocode LIKE ? ESCAPE '\\' OR g.preferred_name LIKE ? ESCAPE '\\' OR g.iso639_3 LIKE ? ESCAPE '\\' OR l.alternate_names_json LIKE ? ESCAPE '\\')`);
+    params.push(...Array(7).fill(`%${escapedSearch}%`));
   }
   if (level) { filters.push('g.level = ?'); params.push(level); }
   if (script) { filters.push('l.script_code = ?'); params.push(script); }
   if (filters.length) query += ` WHERE ${filters.join(' AND ')}`;
 
   const SORT_MAP: Record<string, string> = {
-    count: 'expression_count DESC, l.name',
-    alpha: 'l.name',
+    count: 'expression_count DESC, l.name ASC, l.code ASC',
+    alpha: 'l.name ASC, l.code ASC',
   };
-  query += ` ORDER BY ${SORT_MAP[sort] || SORT_MAP.count}, l.code LIMIT ? OFFSET ?`;
+  query += ` ORDER BY ${SORT_MAP[sort] || SORT_MAP.count} LIMIT ? OFFSET ?`;
   params.push(limit, offset);
 
   const { results } = await c.env.DB.prepare(query).bind(...params).all();
-  return success(c, { items: results, limit, offset, has_more: results.length === limit });
+
+  const items = results.map((row: Record<string, unknown>) => ({
+    code: row.code,
+    name: row.name,
+    name_en: row.name_en,
+    description: row.description,
+    direction: row.direction,
+    base_language: row.base_language,
+    script_code: row.script_code,
+    region_code: row.region_code,
+    variety_key: row.variety_key,
+    glottocode: row.glottocode,
+    origin: row.origin,
+    expression_count: row.expression_count,
+  }));
+
+  return success(c, { items, limit, offset, has_more: results.length === limit });
 });
 
-// GET /api/v2/languages/:code — language detail
 languages.get('/:code', async (c) => {
   const code = c.req.param('code');
   const lang = await c.env.DB.prepare(
@@ -55,20 +117,24 @@ languages.get('/:code', async (c) => {
   ).bind(code).first<{ count: number }>();
 
   return success(c, {
-    ...lang,
     language: {
-      code: lang.code,
-      glottocode: lang.glottocode || null,
-      name: lang.name,
-      script: lang.script_code,
-      region: lang.region_code,
-      direction: lang.direction,
+      code: (lang as Record<string, unknown>).code,
+      name: (lang as Record<string, unknown>).name,
+      name_en: (lang as Record<string, unknown>).name_en,
+      description: (lang as Record<string, unknown>).description,
+      direction: (lang as Record<string, unknown>).direction,
+      base_language: (lang as Record<string, unknown>).base_language,
+      script_code: (lang as Record<string, unknown>).script_code,
+      region_code: (lang as Record<string, unknown>).region_code,
+      variety_key: (lang as Record<string, unknown>).variety_key,
+      glottocode: (lang as Record<string, unknown>).glottocode,
+      origin: (lang as Record<string, unknown>).origin,
+      expression_count: (lang as Record<string, unknown>).expression_count,
     },
     mapped_expression_count: mappedCount?.count || 0,
   });
 });
 
-// GET /api/v2/languages/:code/expressions — expressions in a language
 languages.get('/:code/expressions', async (c) => {
   const code = c.req.param('code');
   const sort = c.req.query('sort') || 'new';
