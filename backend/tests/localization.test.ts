@@ -39,6 +39,45 @@ describe('localization pure rules', () => {
   });
 });
 
+describe('localization mutation-boundary guard', () => {
+  const BASE_URL = 'http://127.0.0.1:8788';
+
+  async function registerUser(username: string): Promise<string> {
+    const res = await fetch(`${BASE_URL}/api/v2/auth/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, email: `${username}@example.com`, password: 'pass1234' }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json() as { data: { token: string } };
+    return body.data.token;
+  }
+
+  it('rejects locale creation with an unregistered language code', async () => {
+    const token = await registerUser(`loc-unreg-${Date.now()}`);
+    const res = await fetch(`${BASE_URL}/api/v2/localization/projects/langmap-web/locales`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ code: 'en-x-unlisted' }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { success: boolean; error: string };
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+  });
+
+  it('rejects mapping target with an unregistered locale code', async () => {
+    const token = await registerUser(`map-unreg-${Date.now()}`);
+    const res = await fetch(`${BASE_URL}/api/v2/localization/projects/langmap-web/mappings`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ key: 'test-key', locale_code: 'en-x-unlisted', text: 'Hello' }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { success: boolean; error: string };
+    expect(body.error).toBe('invalid_locale_code');
+  });
+});
+
 describe('localization schema contract', () => {
   const schema = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
 

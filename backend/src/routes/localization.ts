@@ -3,6 +3,7 @@ import { success, notFound, badRequest, created, forbidden } from '../utils/resp
 import { requireAuth } from '../middleware/auth';
 import type { Bindings, Variables } from '../types';
 import { expressionId, stableEdgeId } from '../utils/ids';
+import { requireRegisteredLanguage } from '../services/languageRegistry';
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 const PROJECT_ID = 'langmap-web';
@@ -115,6 +116,8 @@ async function createMapping(c: any, projectId: string, body: any) {
   if (typeof body?.key !== 'string' || !body.key.trim() || typeof body?.locale_code !== 'string' || !validText(body?.text)) return badRequest(c, 'invalid_mapping');
   const key = body.key.trim();
   const localeCode = body.locale_code.trim();
+  const lang = await requireRegisteredLanguage(c.env.DB, localeCode);
+  if (!lang) return badRequest(c, 'invalid_locale_code');
   const locale = await projectLocale(c, projectId, localeCode) as any;
   if (!locale) return badRequest(c, 'invalid_locale_code');
   if (locale.status === 'archived') return badRequest(c, 'locale_not_translatable');
@@ -243,8 +246,8 @@ localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
   let body: any; try { body = await c.req.json(); } catch { return badRequest(c, 'invalid_json'); }
   const code = typeof body?.code === 'string' ? body.code.trim() : '';
   if (!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(code) || code === 'en-US') return badRequest(c, 'invalid_locale_code');
-  const language = await c.env.DB.prepare('SELECT code, name, name_en, direction FROM languages WHERE code = ?').bind(code).first<any>();
-  if (!language) return notFound(c, 'Language registry entry');
+  const language = await requireRegisteredLanguage(c.env.DB, code);
+  if (!language) return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language');
   await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en-US', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
   const locale = await projectLocale(c, projectId, code);
   return created(c, locale);

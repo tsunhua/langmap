@@ -24,7 +24,7 @@ async function contribute(token: string, texts: string[]): Promise<number[]> {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
-      expressions: texts.map((t) => ({ lang: 'en', text: t })),
+      expressions: texts.map((t) => ({ lang: 'en-US', text: t })),
     }),
   });
   expect(res.status).toBe(200);
@@ -123,6 +123,44 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
 
     const bodyJunk = await json(await fetch(`${BASE_URL}/api/v2/expressions/${a}/mappings?hops=abc`));
     expect(bodyJunk.data.requested_hops).toBe(1);
+  });
+
+  it('rejects expression creation with an unregistered language code', async () => {
+    const token = await register(`unreg-expr-${Date.now()}`);
+    const res = await fetch(`${BASE_URL}/api/v2/expressions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        text: 'not allowed',
+        language_code: 'en-x-unlisted',
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+  });
+
+  it('rejects contribution batch with any unregistered language code', async () => {
+    const token = await register(`unreg-contrib-${Date.now()}`);
+    const res = await fetch(`${BASE_URL}/api/v2/contributions/batch`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        expressions: [
+          { lang: 'en-US', text: 'known' },
+          { lang: 'en-x-unlisted', text: 'unknown' },
+        ],
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
   });
 
   it('responds 404 for a missing root expression', async () => {

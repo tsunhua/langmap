@@ -3,6 +3,7 @@ import { success, badRequest } from '../utils/response';
 import { requireAuth } from '../middleware/auth';
 import type { Bindings, Variables } from '../types';
 import { expressionId as computeExpressionId, stableEdgeId } from '../utils/ids';
+import { requireRegisteredLanguage } from '../services/languageRegistry';
 
 const contributions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -26,6 +27,17 @@ contributions.post('/batch', requireAuth, async (c) => {
 
   if (!exprs || exprs.length < 2) return badRequest(c, 'need_at_least_2_expressions');
   if (exprs.length > 50) return badRequest(c, 'too_many_expressions');
+
+  const uniqueLangs = [...new Set(exprs.map(e => e.lang?.trim() || ''))];
+  for (const lang of uniqueLangs) {
+    if (!lang) {
+      return badRequest(c, 'invalid_expression', 'Each expression needs non-empty text and language');
+    }
+    const reg = await requireRegisteredLanguage(c.env.DB, lang);
+    if (!reg) {
+      return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language', { codes: uniqueLangs });
+    }
+  }
 
   const exprIds: number[] = [];
   const statements: D1Statement[] = [];

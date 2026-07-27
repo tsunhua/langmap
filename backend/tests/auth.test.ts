@@ -29,7 +29,7 @@ describe('v2 auth smoke', () => {
     const registerBody = await registerResponse.json();
     const token = registerBody.data.token;
 
-    const query = "SELECT COUNT(*) as c FROM expressions WHERE text = '你好' AND language_code = 'zh-CN';";
+    const query = "SELECT COUNT(*) as c FROM expressions WHERE text = '你好' AND language_code = 'zh-Hans-CN';";
     const beforeOutput = execFileSync('npx', ['wrangler', 'd1', 'execute', 'langmap-v2', '--local', '--command', query], {
       cwd: process.cwd(),
       encoding: 'utf-8',
@@ -44,7 +44,7 @@ describe('v2 auth smoke', () => {
       },
       body: JSON.stringify({
         expressions: [
-          { lang: 'zh-CN', text: '你好' },
+          { lang: 'zh-Hans-CN', text: '你好' },
           { lang: 'en-US', text: 'Hello' },
         ],
       }),

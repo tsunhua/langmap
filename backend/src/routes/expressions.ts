@@ -4,8 +4,8 @@ import { requireAuth } from '../middleware/auth';
 import { buildMappingGraph, parseMappingHops } from '../utils/mappingGraph';
 import type { Bindings } from '../types';
 import type { LoadEdges, LoadExpressions, NeighborRow, ExpressionRow } from '../utils/mappingGraph';
-import { parseLanguageCode } from '../utils/languageCode';
 import { expressionId as computeExpressionId, stableEdgeId } from '../utils/ids';
+import { requireRegisteredLanguage } from '../services/languageRegistry';
 
 const expressions = new Hono<{ Bindings: Bindings }>();
 
@@ -50,9 +50,10 @@ expressions.post('/', requireAuth, async (c) => {
   if (!text || !languageCode) {
     return badRequest(c, 'invalid_expression', 'text and language_code are required');
   }
-  const parsedLanguage = parseLanguageCode(languageCode);
-  if (!parsedLanguage || parsedLanguage.code !== languageCode) {
-    return badRequest(c, 'invalid_language_code', 'language_code must be a canonical BCP 47 tag');
+
+  const language = await requireRegisteredLanguage(c.env.DB, languageCode);
+  if (!language) {
+    return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language');
   }
 
   const existing = await c.env.DB.prepare(

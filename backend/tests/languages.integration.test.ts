@@ -171,6 +171,32 @@ describe('language creation API', () => {
   });
 });
 
+describe('language-registry mutation boundary', () => {
+  it('rejects contribution batch containing an unregistered language code', async () => {
+    const token = await register(`langbound-${Date.now()}`);
+    const res = await post('/api/v2/contributions/batch', token, {
+      expressions: [
+        { lang: 'en-US', text: 'known word' },
+        { lang: 'en-x-unlisted', text: 'unregistered word' },
+      ],
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { success: boolean; error: string };
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+  });
+
+  it('rejects expression creation with an unregistered language code', async () => {
+    const token = await register(`langexpr-${Date.now()}`);
+    const res = await post('/api/v2/expressions', token, {
+      text: 'not allowed',
+      language_code: 'en-x-unlisted',
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { success: boolean; error: string };
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+  });
+});
+
 describe('language-registry subtag API', () => {
   it('rejects missing type', async () => {
     const response = await get('/api/v2/language-registry/subtags');
