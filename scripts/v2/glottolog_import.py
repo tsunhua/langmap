@@ -49,16 +49,21 @@ def read_languoids(csv_path: Path, source_version: str) -> list[Languoid]:
             raise ValueError("languoid CSV has no header")
         result: list[Languoid] = []
         for number, row in enumerate(rows, 2):
-            glottocode = (_value(row, "Glottocode", "glottocode") or "").lower()
+            # Official Glottolog 5.3 `languoid.csv` uses lowercase `id`
+            # for the Glottocode; older CLDF exports may expose Glottocode.
+            glottocode = (_value(row, "Glottocode", "glottocode", "ID", "id") or "").lower()
             name = _value(row, "Name", "name", "preferred_name") or ""
             level = (_value(row, "Level", "level") or "").lower()
             # CLDF uses ID as a stable languoid identifier; prefer glottocode
             # when the fixture does not provide a separate identifier.
             ident = _value(row, "ID", "id") or f"glotto:{glottocode}"
-            parent = _value(row, "Parent_ID", "Parent", "parent_id", "parent")
+            parent = _value(
+                row, "Parent_ID", "Parent", "parent_id", "parent",
+                "Family_ID", "family_id",
+            )
             if parent and not parent.startswith("glotto:"):
                 parent = f"glotto:{parent}"
-            iso = _value(row, "ISO639P3code", "iso639_3", "ISO639-3")
+            iso = _value(row, "ISO639P3code", "iso639P3code", "iso639_3", "ISO639-3")
             lat = _number(_value(row, "Latitude", "latitude"), number, "latitude")
             lon = _number(_value(row, "Longitude", "longitude"), number, "longitude")
             if not GLOTTOCODE.fullmatch(glottocode):
@@ -102,6 +107,7 @@ def validate_languoids(items: Iterable[Languoid]) -> None:
     if len(codes) != len(set(codes)):
         raise ValueError("duplicate Glottocode")
     known = set(ids)
+    by_id = {item.id: item for item in rows}
     for item in rows:
         if item.parent_id and item.parent_id not in known:
             raise ValueError(f"{item.id}: parent {item.parent_id} is absent")
@@ -115,8 +121,7 @@ def validate_languoids(items: Iterable[Languoid]) -> None:
             if current.id in seen:
                 raise ValueError(f"parent cycle includes {current.id}")
             seen.add(current.id)
-            parent = next(node for node in rows if node.id == current.parent_id)
-            current = parent
+            current = by_id[current.parent_id]
 
 
 def release_manifest(

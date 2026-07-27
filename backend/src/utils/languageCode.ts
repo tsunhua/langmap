@@ -5,10 +5,14 @@
 const SUBTAG = /^[A-Za-z0-9]{1,8}$/;
 const PRIMARY = /^[A-Za-z]{2,8}$/;
 const GLOTTOCODE = /^[a-z0-9]{8}$/;
+const SPECIAL_PRIVATE_CODES = new Set(['x-emoji', 'x-image']);
 
 export function parseLanguageCode(value: string): { code: string; glottocode?: string } | null {
   const code = value.trim();
   if (!code || code.length > 255) return null;
+  if (SPECIAL_PRIVATE_CODES.has(code.toLowerCase())) {
+    return { code: code.toLowerCase() };
+  }
   const parts = code.split('-');
   if (!PRIMARY.test(parts[0])) return null;
   let privateIndex = parts.findIndex((part) => part.toLowerCase() === 'x');

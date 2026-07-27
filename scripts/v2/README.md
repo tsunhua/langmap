@@ -172,6 +172,14 @@ sqlite3 "$V2DB" "SELECT count(*) FROM expressions; SELECT count(*) FROM expressi
 
 ## Glottolog release tooling
 
+三個工具的責任不同：
+
+| 工具 | 用途 | 是否連線 |
+|---|---|---:|
+| `sync_language_registry.py` | 從官方來源同步並產生完整 registry artifact | 是；`--offline` 除外 |
+| `glottolog_import.py` | 驗證 pinned `languoids.csv`，或 upsert 到 SQLite/D1 export | 否 |
+| `language_migration.py` | 一次性驗證舊 code 到 canonical code 的人工映射 | 否 |
+
 `glottolog_import.py` 只接受 repository 內（或 CI artifact）的 pinned
 CLDF/CSV，不會在執行時連線下載資料。release 下載、簽名/來源審查與
 checksum 固定應在 CI job 完成；import job 只讀取該 artifact。建議 artifact
@@ -217,6 +225,69 @@ python3 language_migration.py fixtures/language-migration.json \
 
 正式匯入前應先通過驗證器與人工 review；`fixtures/` 僅供測試，不代表完整
 Glottolog release。
+
+### 從官方 registry 同步全量資料
+
+`sync_language_registry.py` 會從 Glottolog 5.3 與 IANA Language Subtag
+Registry 下載官方原始檔，保留 raw artifact 與 SHA-256，並產生：
+
+- `languoids.csv`：完全符合 `languoids` 表欄位，一個 Glottocode 一列。
+- `iana-subtags.json`：完整 language、extlang、script、region、variant、
+  grandfathered 與 redundant registry。
+- `languages.csv`：符合 `languages` content tag 欄位；包含所有 languoid 的
+  canonical base tag、IANA variant 候選及 `language_profiles.json` 指定的
+  主要 script/region 組合，全部保持 `is_active=0`，最終全域按 `code`
+  由 a 到 z 穩定排序。
+- `manifest.json`：來源 URL、版本、IANA File-Date、checksum 與筆數。
+- `online-code-migrations.json`：線上既有但非 canonical 的 code 到新 code
+  的一次性遷移映射。
+
+```bash
+cd scripts/v2
+python3 sync_language_registry.py \
+  --output artifacts/language-registry-5.3
+```
+
+下載後可完全離線重現：
+
+```bash
+python3 sync_language_registry.py \
+  --output artifacts/language-registry-5.3 \
+  --offline
+```
+
+BCP 47 的 region、script、variant 是 content tag 屬性，不是 Glottolog
+identity，因此不會複製進 `languoids`。展開規則保存在
+`language_profiles.json`：`zh`、`nan`、`yue` 各自使用精確
+script/region 白名單，不共享地區集合，也不作交叉相乘。例如 `nan` 只生成
+`nan-Hans-CN`、`nan-Hant-CN`、`nan-Hant-TW`、`nan-Latn-TW`；羅馬字
+variant 另由 IANA 與線上 required code 生成。不另生成 `zh-Hant`、`zh-TW`
+這類已有完整細分組合
+的中間行。其他主要語言只生成列出的主要地區，例如 `en-US`、`en-GB`。
+注音只限定生成 `zh-Bopo-TW`（純注音）與 `zh-Hanb-TW`（漢字搭配注音），
+不套用到其他 Sinitic language 或 dialect。
+registry 只輸出 profile 葉節點：有 region 展開時不保留 base，有
+script/region 完整組合時不生成 script-only 或 region-only 中間標籤。
+例如不生成 `yue`、`yue-HK`、`en`，只保留 `yue-Hant-HK`、`en-US` 等
+完整項；`jyutping` variant 強制標記拉丁 script，生成
+`yue-Latn-jyutping`，不生成 script 不明的 `yue-jyutping`。
+IANA variant 的 `Prefix` 不保證包含書寫系統；`variant_scripts` 保存有來源
+依據的補充，例如 Unifon、Ladin 各書寫標準及 Latgalian 1929/2007 正字法
+均補為 `Latn`。這是 variant metadata，不以名稱猜測未知項目。
+已有更具體線上標籤的 `nan-Latn-TW-tailo`／`pehoeji` 會取代無地區的
+泛化 variant tag。
+Glottolog Sinitic 分支下的其他 language 一律生成 `Hans`、`Hant`、`Latn`
+三種 script；沒有獨立 ISO code 的 dialect 生成
+`base-Hans/Hant/Latn-x-<glottocode>`，但不繼承任何 region。
+
+`required_online_codes` 是硬性資料契約：現有線上詞句使用的 code 必須能解析
+到指定 Glottocode 並出現在輸出。舊資料中的 `nan-TW-Latn-tailo` 與
+`nan-TW-Latn-pehoeji` 因 script/region 次序不符合 BCP 47，分別遷移至
+`nan-Latn-TW-tailo` 與 `nan-Latn-TW-pehoeji`，不作 runtime alias。
+
+`x-emoji` 與 `x-image` 是 private-use-only 的非語言內容類型，不建立
+Glottolog identity；輸出中的 `languoid_id` 為空，且預設不啟用。白名單只
+允許這兩項，不接受任意 `x-*`。
 
 - **遠端重建**（之後）：`wrangler d1 create langmap-v2` → 填 database_id → 遠端跑 schema.sql → 遠端載 v2-data.sql
 - **prose 丟失**：舊手冊 Markdown 的非標記文字在遷移中被捨棄（新模型無 prose 欄位）
