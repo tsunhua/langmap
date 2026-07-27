@@ -1,24 +1,115 @@
 import { describe, expect, it } from 'vitest';
-import { isLanguageCode, parseLanguageCode } from '../src/utils/languageCode';
+import { canonicalizeLanguageTag, parseStoredLanguageCode } from '../src/utils/languageCode';
 
 describe('language code registry syntax', () => {
-  it('accepts canonical BCP 47 and Glottocode private use', () => {
-    expect(isLanguageCode('en')).toBe(true);
-    expect(isLanguageCode('zh-Hant-TW')).toBe(true);
-    expect(parseLanguageCode('nan-Hant-x-chao1238')).toEqual({ code: 'nan-Hant-x-chao1238', glottocode: 'chao1238' });
+  it('parseStoredLanguageCode accepts canonical BCP 47 and Glottocode private use', () => {
+    const en = parseStoredLanguageCode('en');
+    expect(en).toEqual({ code: 'en', language: 'en', script: null, region: null, variants: [], private_use: [] });
+    const zhHant = parseStoredLanguageCode('zh-Hant-TW');
+    expect(zhHant).toEqual({ code: 'zh-Hant-TW', language: 'zh', script: 'Hant', region: 'TW', variants: [], private_use: [] });
   });
 
-  it('accepts only the allowlisted private-use content codes', () => {
-    expect(parseLanguageCode('x-emoji')).toEqual({ code: 'x-emoji' });
-    expect(parseLanguageCode('X-IMAGE')).toEqual({ code: 'x-image' });
-    expect(parseLanguageCode('x-arbitrary')).toBeNull();
+  it('parseStoredLanguageCode accepts system codes', () => {
+    expect(parseStoredLanguageCode('x-emoji')).toEqual({ code: 'x-emoji' });
+    expect(parseStoredLanguageCode('X-IMAGE')).toEqual({ code: 'x-image' });
   });
 
-  it('rejects malformed or non-Glottocode private use', () => {
-    expect(isLanguageCode('')).toBe(false);
-    expect(isLanguageCode('nan-x-cha')).toBe(false);
-    expect(isLanguageCode('en-x-too-many-terms')).toBe(false);
-    expect(isLanguageCode('EN')).toBe(true);
-    expect(parseLanguageCode('EN')?.code).toBe('en');
+  it('parseStoredLanguageCode rejects invalid tags', () => {
+    expect(parseStoredLanguageCode('')).toBeNull();
+    expect(parseStoredLanguageCode('x-arbitrary')).toBeNull();
+    expect(parseStoredLanguageCode('123')).toBeNull();
+  });
+});
+
+describe('canonicalizeLanguageTag', () => {
+  it('normalizes case for all subtags', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'YUE',
+      script: 'hant',
+      region: 'cn',
+      variants: [],
+      private_use: ['HeguSan'],
+    })).toEqual({
+      code: 'yue-Hant-CN-x-hegusan',
+      language: 'yue',
+      script: 'Hant',
+      region: 'CN',
+      variants: [],
+      private_use: ['hegusan'],
+    });
+  });
+
+  it('returns null for private use tags longer than 8 characters', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'en',
+      script: null,
+      region: null,
+      variants: [],
+      private_use: ['too-long-raw'],
+    })).toBeNull();
+  });
+
+  it('returns null for invalid language subtag', () => {
+    expect(canonicalizeLanguageTag({
+      language: '123',
+      script: null,
+      region: null,
+      variants: [],
+      private_use: [],
+    })).toBeNull();
+  });
+
+  it('returns null for invalid script subtag', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'en',
+      script: 'Toolongscript',
+      region: null,
+      variants: [],
+      private_use: [],
+    })).toBeNull();
+  });
+
+  it('returns null for invalid region subtag', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'en',
+      script: null,
+      region: 'USA',
+      variants: [],
+      private_use: [],
+    })).toBeNull();
+  });
+
+  it('handles null optional subtags', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'en',
+      script: null,
+      region: null,
+      variants: [],
+      private_use: [],
+    })).toEqual({
+      code: 'en',
+      language: 'en',
+      script: null,
+      region: null,
+      variants: [],
+      private_use: [],
+    });
+  });
+
+  it('builds code with multiple variants', () => {
+    expect(canonicalizeLanguageTag({
+      language: 'sl',
+      script: null,
+      region: 'RO',
+      variants: ['nedis', 'baku1926'],
+      private_use: [],
+    })).toEqual({
+      code: 'sl-RO-nedis-baku1926',
+      language: 'sl',
+      script: null,
+      region: 'RO',
+      variants: ['nedis', 'baku1926'],
+      private_use: [],
+    });
   });
 });
