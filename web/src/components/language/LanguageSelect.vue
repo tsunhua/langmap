@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLanguagesStore } from '@/stores/languages'
+import { listRegistryLanguages } from '@/api/languages'
+import type { RegistryLanguage } from '@/api/languages'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
@@ -15,20 +17,46 @@ const open = ref(false)
 const query = ref('')
 const inputRef = ref<HTMLInputElement>()
 const loadError = ref('')
+const searchResults = ref<RegistryLanguage[]>([])
+const loading = ref(false)
 
 const selected = computed(() => props.modelValue)
 
+let searchController: AbortController | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+async function search(q: string) {
+  searchController?.abort()
+  if (!q.trim()) {
+    searchResults.value = []
+    return
+  }
+  searchController = new AbortController()
+  loading.value = true
+  try {
+    searchResults.value = await listRegistryLanguages(q, searchController.signal)
+  } catch {
+    searchResults.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function onQueryChange() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => search(query.value), 200)
+}
+
 const filtered = computed(() => {
-  const q = query.value.toLowerCase()
-  return store.languages
+  return searchResults.value
     .filter(l => !selected.value.includes(l.code))
-    .filter(l => !q || l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q))
     .slice(0, 20)
 })
 
 function add(code: string) {
   emit('update:modelValue', [...selected.value, code])
   query.value = ''
+  searchResults.value = []
 }
 
 function remove(code: string) {
@@ -45,14 +73,18 @@ onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   store.fetchLanguages().catch(() => { loadError.value = t('components.languageLoadFailed') })
 })
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  searchController?.abort()
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 </script>
 
 <template>
   <div class="lang-select">
     <div class="lang-select-tagwrap" @click="inputRef?.focus()">
       <span v-for="code in selected" :key="code" class="lang-tag">
-        {{ code }}
+        {{ store.getName(code) || code }}
         <button :aria-label="t('components.removeLanguage', { code })" @click.stop="remove(code)"><X :size="10" aria-hidden="true" /></button>
       </span>
       <input
@@ -62,9 +94,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
         :placeholder="t('components.filterLanguages')"
         :aria-label="t('components.filterLanguages')"
         @focus="open = true"
+        @input="onQueryChange"
       />
     </div>
-    <div v-if="open && filtered.length" class="lang-select-dropdown">
+    <div v-if="open && (filtered.length > 0 || loading)" class="lang-select-dropdown">
+      <div v-if="loading" class="lang-loading">{{ t('common.loading') }}</div>
       <button
         v-for="l in filtered"
         :key="l.code"
@@ -107,5 +141,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   font-size: 13px; cursor: pointer; color: var(--fg);
 }
 .lang-opt:hover { background: var(--accent-soft); }
+.lang-loading { padding: 6px 10px; font-size: 12px; color: var(--muted); text-align: center; }
 .lang-err { font-size: 11px; color: var(--down); margin-top: 4px; }
 </style>
