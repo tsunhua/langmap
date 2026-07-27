@@ -25,9 +25,9 @@ languoids.get('/', async (c) => {
   if (level) { where.push('l.level = ?'); params.push(level); }
   if (script) { where.push('c.script_code = ?'); params.push(script); }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const query = `SELECT l.*, c.code AS content_code FROM languoids l LEFT JOIN languages c ON c.languoid_id = l.id ${clause} ORDER BY l.preferred_name, l.id LIMIT ? OFFSET ?`;
+  const query = `SELECT l.*, c.code AS content_code FROM languoids l LEFT JOIN languages c ON c.glottocode = l.glottocode ${clause} ORDER BY l.preferred_name, l.id LIMIT ? OFFSET ?`;
   const { results } = await c.env.DB.prepare(query).bind(...params, limit, offset).all();
-  const total = await c.env.DB.prepare(`SELECT COUNT(*) AS count FROM languoids l LEFT JOIN languages c ON c.languoid_id = l.id ${clause}`).bind(...params).first<{ count: number }>();
+  const total = await c.env.DB.prepare(`SELECT COUNT(*) AS count FROM languoids l LEFT JOIN languages c ON c.glottocode = l.glottocode ${clause}`).bind(...params).first<{ count: number }>();
   return paginated(c, results, total?.count || 0, offset, limit);
 });
 

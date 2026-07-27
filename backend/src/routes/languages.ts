@@ -15,7 +15,7 @@ languages.get('/', async (c) => {
 
   let query = `SELECT l.*, COALESCE(s.expression_count, 0) as expression_count
     FROM languages l LEFT JOIN language_stats s ON l.code = s.language_code
-    LEFT JOIN languoids g ON g.id = l.languoid_id`;
+    LEFT JOIN languoids g ON g.glottocode = l.glottocode`;
   const params: (string | number)[] = [];
   const filters: string[] = [];
 
@@ -58,8 +58,7 @@ languages.get('/:code', async (c) => {
     ...lang,
     language: {
       code: lang.code,
-      languoid_id: lang.languoid_id,
-      glottocode: (lang.languoid_id as string | null)?.replace(/^glotto:/, '') || null,
+      glottocode: lang.glottocode || null,
       name: lang.name,
       script: lang.script_code,
       region: lang.region_code,

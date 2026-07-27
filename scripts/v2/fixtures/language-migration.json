@@ -2,6 +2,6 @@
   "manifest_version": 1,
   "mappings": {
     "nan-x-cha": {"action": "map-to-glottolog", "canonical": "nan-Hant-x-chao1238"},
-    "en_US": {"action": "canonicalize", "canonical": "en"}
+    "en_US": {"action": "canonicalize", "canonical": "en-US"}
   }
 }

@@ -446,7 +446,7 @@ def render_registry_sql(
     languages: list[dict[str, str]],
 ) -> str:
     """Generate a complete, idempotent SQL script for the language registry."""
-    statements = ["BEGIN;"]
+    statements = []
     statements.extend(render_languoid_insert(row) for row in languoids)
     statements.extend(
         render_subtag_insert(row)
@@ -456,7 +456,6 @@ def render_registry_sql(
         render_language_insert(row)
         for row in sorted(languages, key=lambda row: row["code"])
     )
-    statements.append("COMMIT;")
     return "\n".join(statements) + "\n"
 
 

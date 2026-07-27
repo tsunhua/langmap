@@ -234,10 +234,8 @@ Registry 下載官方原始檔，保留 raw artifact 與 SHA-256，並產生：
 - `languoids.csv`：完全符合 `languoids` 表欄位，一個 Glottocode 一列。
 - `iana-subtags.json`：完整 language、extlang、script、region、variant、
   grandfathered 與 redundant registry。
-- `languages.csv`：符合 `languages` content tag 欄位；包含所有 languoid 的
-  canonical base tag、IANA variant 候選及 `language_profiles.json` 指定的
-  主要 script/region 組合，全部保持 `is_active=0`，最終全域按 `code`
-  由 a 到 z 穩定排序。
+- `languages.csv`：符合 `languages` 單一 profile 表欄位；包含 seed
+  profiles 指定的 BCP 47 tag，全域按 `code` 由 a 到 z 穩定排序。
 - `manifest.json`：來源 URL、版本、IANA File-Date、checksum 與筆數。
 - `online-code-migrations.json`：線上既有但非 canonical 的 code 到新 code
   的一次性遷移映射。
@@ -258,9 +256,10 @@ python3 sync_language_registry.py \
 
 BCP 47 的 region、script、variant 是 content tag 屬性，不是 Glottolog
 identity，因此不會複製進 `languoids`。展開規則保存在
-`language_profiles.json`：`zh`、`nan`、`yue` 各自使用精確
-script/region 白名單，不共享地區集合，也不作交叉相乘。例如 `nan` 只生成
-`nan-Hans-CN`、`nan-Hant-CN`、`nan-Hant-TW`、`nan-Latn-TW`；羅馬字
+`language_seed_profiles.json`：明確定義要產生的 BCP 47 language tag，
+取代舊版的笛卡兒積展開。例如 `nan` 使用精確 script/region
+組合，不共享地區集合，也不作交叉相乘。例如 `nan` 只生成
+`nan-Latn-TW-tailo`、`nan-Latn-TW-pehoeji` 等。羅馬字
 variant 另由 IANA 與線上 required code 生成。不另生成 `zh-Hant`、`zh-TW`
 這類已有完整細分組合
 的中間行。其他主要語言只生成列出的主要地區，例如 `en-US`、`en-GB`。

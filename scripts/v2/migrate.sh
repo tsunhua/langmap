@@ -182,6 +182,9 @@ cmd_setup() {
   note "已写入 database_id = $id"
   step "remote 跑 schema.sql"
   wrangler d1 execute "$V2_DB_NAME" --remote --file=./schema.sql
+  step "載入 pinned language-registry.sql"
+  wrangler d1 execute "$V2_DB_NAME" --remote \
+    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
   step "确认 remote schema"
   local table_count
   table_count=$(remote_scalar "$V2_DB_NAME" \
@@ -218,6 +221,8 @@ load_local() {
   note "v2 D1: $db"
   step "重跑 schema.sql（清空+重建）"
   sqlite3 "$db" < "$SCHEMA"
+  step "載入 pinned language-registry.sql（幂等）"
+  sqlite3 "$db" < "$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
   step "drop FTS triggers"
   drop_fts "$db"
   step "载入 v2-data.sql（sqlite3 直载，绕过 SQLITE_TOOBIG）"
@@ -235,6 +240,9 @@ load_remote() {
   step "remote 载入：清空目标表（schema 已由 setup 建好，这里只清数据以保幂等）"
   wrangler d1 execute "$V2_DB_NAME" --remote \
     --command="DELETE FROM handbook_section_items; DELETE FROM handbook_sections; DELETE FROM handbooks; DELETE FROM votes; DELETE FROM ui_messages; DELETE FROM ui_locales; DELETE FROM expression_edges; DELETE FROM expression_versions; DELETE FROM expressions; DELETE FROM email_verification_tokens; DELETE FROM users; DELETE FROM language_stats; DELETE FROM languages; DELETE FROM languoids;"
+  step "載入 pinned language-registry.sql（幂等）"
+  wrangler d1 execute "$V2_DB_NAME" --remote \
+    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
   step "remote 载入：分批载入 v2-data.sql（每批 ${REMOTE_BATCH} 行；遇 SQLITE_TOOBIG 请减小 REMOTE_BATCH）"
   remote_batch_load "${V2_DATA}"
   step "remote 载入：重建 FTS + reindex"

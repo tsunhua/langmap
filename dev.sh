@@ -33,8 +33,15 @@ TABLE_COUNT=$(npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1
 if [ "${TABLE_COUNT:-0}" -eq 0 ]; then
   echo "  本地 D1 無表，套用 schema.sql"
   npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" --file=./schema.sql
+  echo "  載入 pinned language-registry.sql"
+  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
+    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
 else
-  echo "  本地 D1 已有 ${TABLE_COUNT} 張表，略過遷移"
+  echo "  本地 D1 已有 ${TABLE_COUNT} 張表，套用增量遷移"
+  npx wrangler d1 migrations apply langmap-v2 --local --persist-to "$LOCAL_D1_STATE" 2>/dev/null || true
+  echo "  載入 pinned language-registry.sql（幂等）"
+  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
+    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
 fi
 
 step "啟動後端 wrangler（port ${PORT:-8788}）"

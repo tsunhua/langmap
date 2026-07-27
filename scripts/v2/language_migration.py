@@ -32,10 +32,9 @@ def validate_manifest(manifest: dict, observed_codes: set[str] | None = None) ->
         if not isinstance(target, str) or not TAG.fullmatch(target):
             errors.append(f"{old}: canonical must be a BCP47 tag")
             continue
-        canonical = target.lower()
-        if canonical in targets and targets[canonical] != old:
-            errors.append(f"duplicate canonical target {canonical}: {targets[canonical]} and {old}")
-        targets[canonical] = old
+        if target in targets and targets[target] != old:
+            errors.append(f"duplicate canonical target {target}: {targets[target]} and {old}")
+        targets[target] = old
     if observed_codes:
         missing = sorted(observed_codes - set(mappings))
         if missing:

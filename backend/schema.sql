@@ -63,47 +63,39 @@ CREATE TABLE language_subtags (
     deprecated TEXT,
     PRIMARY KEY (type, value)
 );
-CREATE INDEX idx_language_subtags_type ON language_subtags(type);
+CREATE INDEX idx_language_subtags_search
+  ON language_subtags(type, value);
 
 CREATE TABLE languages (
-    id INTEGER PRIMARY KEY NOT NULL,
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    name_en TEXT DEFAULT NULL,
+    name_en TEXT,
+    description TEXT,
     direction TEXT DEFAULT 'ltr',
-    is_active INTEGER DEFAULT 0,
+    base_language TEXT,
+    script_code TEXT,
     region_code TEXT,
-    region_name TEXT,
-    region_latitude REAL,
-    region_longitude REAL,
-    group_name TEXT,
-    family TEXT DEFAULT NULL,
-    status_text TEXT DEFAULT NULL,
+    variants_json TEXT,
+    private_use_json TEXT,
+    variety_key TEXT NOT NULL,
+    glottocode TEXT,
+    origin TEXT NOT NULL DEFAULT 'seed',
+    community_reason TEXT,
+    alternate_names_json TEXT,
+    references_json TEXT,
+    parent_languoid_id TEXT,
+    latitude REAL,
+    longitude REAL,
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
-ALTER TABLE languages ADD COLUMN languoid_id TEXT;
-ALTER TABLE languages ADD COLUMN base_language TEXT;
-ALTER TABLE languages ADD COLUMN script_code TEXT;
-ALTER TABLE languages ADD COLUMN source_version TEXT;
-ALTER TABLE languages ADD COLUMN description TEXT;
-ALTER TABLE languages ADD COLUMN variants_json TEXT;
-ALTER TABLE languages ADD COLUMN private_use_json TEXT;
-ALTER TABLE languages ADD COLUMN variety_key TEXT;
-ALTER TABLE languages ADD COLUMN glottocode TEXT;
-ALTER TABLE languages ADD COLUMN origin TEXT;
-ALTER TABLE languages ADD COLUMN community_reason TEXT;
-ALTER TABLE languages ADD COLUMN alternate_names_json TEXT;
-ALTER TABLE languages ADD COLUMN references_json TEXT;
-ALTER TABLE languages ADD COLUMN parent_languoid_id TEXT;
-ALTER TABLE languages ADD COLUMN latitude REAL;
-ALTER TABLE languages ADD COLUMN longitude REAL;
-CREATE INDEX idx_languages_code ON languages(code);
 CREATE INDEX idx_languages_name ON languages(name);
-CREATE INDEX idx_languages_is_active ON languages(is_active);
-CREATE INDEX idx_languages_active_name ON languages(is_active, name);
+CREATE INDEX idx_languages_variety_key ON languages(variety_key);
+CREATE INDEX idx_languages_glottocode ON languages(glottocode);
+CREATE INDEX idx_languages_base_script_region
+  ON languages(base_language, script_code, region_code);
 
 CREATE TABLE expressions (
     id INTEGER PRIMARY KEY NOT NULL,
@@ -123,7 +115,8 @@ CREATE TABLE expressions (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    desc TEXT DEFAULT NULL
+    desc TEXT DEFAULT NULL,
+    FOREIGN KEY (language_code) REFERENCES languages(code)
 );
 CREATE INDEX idx_expressions_text ON expressions(text);
 CREATE INDEX idx_expressions_language_code ON expressions(language_code);

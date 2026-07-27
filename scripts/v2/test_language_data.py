@@ -82,7 +82,7 @@ class LanguageDataTests(unittest.TestCase):
         manifest = json.loads((ROOT / "fixtures/language-migration.json").read_text())
         self.assertEqual(validate_manifest(manifest, {"nan-x-cha", "en_US"}), [])
         self.assertTrue(validate_manifest(manifest, {"unknown"}))
-        manifest["mappings"]["legacy"] = {"action": "keep", "canonical": "en"}
+        manifest["mappings"]["legacy"] = {"action": "keep", "canonical": "en-US"}
         self.assertTrue(any("duplicate canonical" in error for error in validate_manifest(manifest)))
 
     def test_parent_cycle_is_rejected(self):
@@ -262,6 +262,28 @@ Added: 2005-10-16
 
     def test_canonical_case(self):
         self.assertEqual(canonical_case(["nan", "hant", "tw"]), "nan-Hant-TW")
+
+    def test_language_schema_is_single_profile_table(self):
+        schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
+        self.assertIn("variety_key TEXT NOT NULL", schema)
+        self.assertIn("CREATE TABLE language_subtags", schema)
+        self.assertNotIn("language_varieties", schema)
+        self.assertNotIn("languoid_id TEXT\n", schema)
+        self.assertNotIn("is_active INTEGER", schema)
+
+    def test_language_migration_preserves_canonical_codes(self):
+        manifest = {
+            "mappings": {
+                "en-US": {"action": "keep", "canonical": "en-US"},
+                "nan-TW-Latn-tailo": {
+                    "action": "canonicalize",
+                    "canonical": "nan-Latn-TW-tailo",
+                },
+            }
+        }
+        self.assertEqual(validate_manifest(
+            manifest, {"en-US", "nan-TW-Latn-tailo"}
+        ), [])
 
 
 if __name__ == "__main__":
