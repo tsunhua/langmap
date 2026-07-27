@@ -431,7 +431,9 @@ def sync_batches(
 
 
 def load_existing_batches(output_dir: Path) -> list[Path] | None:
-    files = sorted(output_dir.glob("*.sql"))
+    expressions = sorted(output_dir.glob("expressions-*.sql"))
+    edges = sorted(output_dir.glob("edges-*.sql"))
+    files = expressions + edges
     if not files:
         return None
     manifest_path = output_dir / "manifest.json"
