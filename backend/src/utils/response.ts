@@ -51,7 +51,11 @@ export const tooManyRequests = (
   c: Context,
   error = 'RATE_LIMITED',
   message?: string,
-) => c.json<ErrorResponse>({ success: false, error, message }, 429)
+  retryAfterSeconds = 86400,
+) => {
+  c.header('Retry-After', String(retryAfterSeconds))
+  return c.json<ErrorResponse>({ success: false, error, message }, 429)
+}
 
 export const internalError = (c: Context, error: string = 'Internal server error', message?: string) => {
   return c.json<ErrorResponse>({ success: false, error: 'INTERNAL_SERVER_ERROR', message: message || error }, 500)
