@@ -168,6 +168,76 @@ sqlite3 "$V2DB" "SELECT count(*) FROM expressions; SELECT count(*) FROM expressi
 - **missing-tags-skipped**: 2 = 舊手冊標記的 (text,lang) 在 expressions 查不到（可能 lang 預設不符或該表達式已刪）
 - **items**: 1,767 = 舊手冊 Markdown 中抽出的有序詞句引用
 
+## 社群語言建立工作流
+
+### Schema 與 registry 載入順序
+
+本地或遠端資料庫初始化時，必須先套用 `backend/schema.sql`（或執行
+migrations），**再**載入 `language-registry.sql`。registry SQL 包含
+`languoids`、`language_subtags` 與明確 `languages` seed，這些資料有
+foreign key 依賴（`languages.glottocode` → `languoids.glottocode`），
+顛倒順序會導致 FK 違規。
+
+### 明確 seed 取代組合展開
+
+`languages` 表只包含明確指定的 seed 項目（第一方 UI locale、`und`、
+`x-emoji`、`x-image` 及 `language_seed_profiles.json` 定義的 BCP 47
+tag）。不再對所有 Glottolog languoids 批量生成 base tag、展開 major
+regions 或為 Sinitic descendants 乘上 script。需要新語言時，由已登入
+使用者透過 `POST /api/v2/languages` 建立。
+
+### 離線重現 registry artifacts
+
+`artifacts/language-registry-5.3/` 中的檔案可在無網路环境下重現：
+
+```bash
+cd scripts/v2
+python3 sync_language_registry.py \
+  --output artifacts/language-registry-5.3 \
+  --offline
+```
+
+`--offline` 模式使用已下載的 raw artifact，不連線。重新生成後
+`language-registry.sql` 的內容固定（排序與 upsert 語句），
+重跑結果相同。
+
+### 既有 canonical code 不變
+
+migration 完成後，既有合法 `languages.code`（如 `en-US`、`zh-Hant-TW`、
+`nan-Latn-TW-tailo`）保持不變。`expressions.language_code`、
+`ui_locales.code` 等引用欄位同步更新至新表中的 canonical code。
+只有少數不合法或非 canonical 的舊 code 才在 migration 中被明確映射。
+
+### 測試指令
+
+```bash
+# Python 單元測試（語言資料驗證）
+cd scripts/v2 && python3 -m unittest test_language_data.py
+
+# TypeScript 單元測試（邊與手冊邏輯）
+cd scripts/v2 && npm test
+
+# 後端單元測試（不需要 dev server）
+cd backend && npm test
+
+# 後端整合測試（需要 dev server 在 localhost:8788）
+cd backend && npm run test:integration
+
+# 前端單元測試
+cd web && npm test
+
+# i18n key 完整性檢查
+cd web && npm run i18n:check
+
+# 完整 build
+cd web && npm run build
+# 或
+./build.sh
+```
+
+整合測試依賴 `127.0.0.1:8788` 與本地 D1，執行前需先啟動 Worker
+（`./dev.sh` 或 `npx wrangler dev`）。
+
 ## 注意事項
 
 ## Glottolog release tooling
