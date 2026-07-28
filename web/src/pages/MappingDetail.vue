@@ -14,6 +14,7 @@ import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { ArrowUpRight, Plus, ChevronRight, Share2, List, X } from 'lucide-vue-next'
+import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -194,6 +195,10 @@ function openQuickAdd() {
   quickAddError.value = ''
 }
 
+function handleLangCreated(lang: { code: string; name: string }) {
+  quickAddLang.value = lang.code
+}
+
 function closeQuickAdd() {
   showQuickAdd.value = false
   quickAddError.value = ''
@@ -311,10 +316,7 @@ const sourceLabel = computed(() => {
       </div>
       <p class="qa-lead">{{ t('mappingDetail.quickAddLead') }}</p>
       <div class="qa-grid">
-        <label>
-          <span>{{ t('mappingDetail.languageCode') }}</span>
-          <input v-model="quickAddLang" :placeholder="t('mappingDetail.languageCodePlaceholder')" :aria-label="t('mappingDetail.languageCode')" />
-        </label>
+        <LanguagePicker v-model="quickAddLang" :label="t('mappingDetail.languageCode')" @created="handleLangCreated" />
         <label>
           <span>{{ t('mappingDetail.region') }}</span>
           <input v-model="quickAddRegion" :placeholder="t('mappingDetail.optional')" :aria-label="t('mappingDetail.region')" />
@@ -541,7 +543,7 @@ const sourceLabel = computed(() => {
 .qa-lead { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .qa-grid {
   display: grid;
-  grid-template-columns: 160px 160px 1fr;
+  grid-template-columns: 1fr 160px 1fr;
   gap: 10px;
 }
 .qa-grid label {

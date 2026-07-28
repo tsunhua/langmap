@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import CliquePreview from '@/components/mapping/CliquePreview.vue'
+import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -71,7 +72,7 @@ async function submit() {
           </div>
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
-              <input class="ex-lang" v-model="row.lang" :placeholder="t('contribute.language')" :aria-label="t('contribute.language')" />
+              <LanguagePicker v-model="row.lang" :label="t('contribute.language')" :allow-create="true" />
               <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
               <input class="ex-region" v-model="row.region" :placeholder="t('contribute.region')" :aria-label="t('contribute.region')" />
               <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)">✕</button>
@@ -90,7 +91,7 @@ async function submit() {
         <p v-if="error" class="error" role="alert">{{ error }}</p>
 
         <div class="ex-actions">
-          <button class="btn btn-primary" type="button" :disabled="nodeCount < 2 || submitting" @click="submit">
+          <button class="btn btn-primary" type="button" data-action="submit-contribution" :disabled="nodeCount < 2 || submitting" @click="submit">
             {{ submitting ? t('contribute.submitting') : t('contribute.submit') }}
           </button>
         </div>
@@ -113,7 +114,7 @@ async function submit() {
 
 .ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
 .ex-head, .ex-row {
-  display: grid; grid-template-columns: 80px 1fr 140px 32px; gap: var(--space-xs); align-items: center;
+  display: grid; grid-template-columns: 180px 1fr 140px 32px; gap: var(--space-xs); align-items: start;
   padding: var(--space-xs) var(--space-sm);
 }
 .ex-head {
@@ -127,7 +128,6 @@ async function submit() {
   background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;
 }
 .ex-row input:focus { border-color: var(--accent); }
-.ex-row .ex-lang { font-family: var(--mono); font-size: 12px; }
 .ex-del {
   width: 28px; height: 28px; border: none; background: transparent; color: var(--muted);
   cursor: pointer; border-radius: var(--r); font-size: 13px; display: grid; place-items: center;
@@ -159,6 +159,7 @@ async function submit() {
 @media (max-width: 760px) {
   .contrib-grid { grid-template-columns: 1fr; }
   .contrib-right { position: static; }
-  .ex-head, .ex-row { grid-template-columns: 64px 1fr 100px 28px; gap: 8px; }
+  .ex-head, .ex-row { grid-template-columns: 1fr; gap: 8px; }
+  .ex-head span:first-child { display: none; }
 }
 </style>

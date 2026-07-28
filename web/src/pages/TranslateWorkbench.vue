@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Search, Send, Languages } from 'lucide-vue-next'
 import { listUiLocales, getUiMessages, getTranslationWorkbench, submitTranslationMappings, addUiLocale, type TranslationWorkbench, type WorkbenchMessage, type UiLocale, LOCALIZATION_PROJECT_ID } from '@/api/localization'
 import { listRegistryLanguages, type RegistryLanguage } from '@/api/languages'
+import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import { en } from '@/locales/en'
@@ -92,6 +93,10 @@ async function chooseLocale(next: string) {
     router.push(`/translate/${encodeURIComponent(next)}`)
   } catch (e: any) { error.value = e.response?.data?.message || t('translate.loadFailed') }
 }
+
+async function handleTargetCreated(lang: { code: string; name: string }) {
+  await chooseLocale(lang.code)
+}
 async function refreshLocales() { locales.value = await listUiLocales(LOCALIZATION_PROJECT_ID) }
 async function submitBatch() {
   if (!auth.isLoggedIn || !workbench.value || !draftCount.value) return
@@ -137,11 +142,13 @@ watch(referenceLocale, (val) => { if (val && loaded.value && code.value) loadWor
         <h1>{{ t('translate.title') }}</h1>
         <p class="translate-sub">{{ t('translate.subtitle') }}</p>
       </div>
-      <label class="locale-select">{{ t('translate.locale') }}
-        <select :value="code" :aria-label="t('translate.selectLocale')" @change="chooseLocale(($event.target as HTMLSelectElement).value)">
-          <option v-for="item in targetLanguages" :key="item.code" :value="item.code" :disabled="'status' in item && item.status === 'archived'">{{ ('native_name' in item && item.native_name) || item.name || ('name_en' in item && item.name_en) }} · {{ item.code }}</option>
-        </select>
-      </label>
+      <LanguagePicker
+        :model-value="code"
+        :label="t('translate.locale')"
+        :allow-create="true"
+        @update:model-value="chooseLocale"
+        @created="handleTargetCreated"
+      />
       <label class="locale-select">{{ t('translate.reference') }}
         <select v-model="referenceLocale"><option v-for="item in locales.filter(item => item.code !== code)" :key="item.code" :value="item.code">{{ item.native_name || item.name }} · {{ item.code }}</option></select>
       </label>
