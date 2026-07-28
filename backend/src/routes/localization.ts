@@ -117,7 +117,7 @@ async function createMapping(c: any, projectId: string, body: any) {
   const key = body.key.trim();
   const localeCode = body.locale_code.trim();
   const lang = await requireRegisteredLanguage(c.env.DB, localeCode);
-  if (!lang) return badRequest(c, 'invalid_locale_code');
+  if (!lang) return badRequest(c, 'INVALID_LANGUAGE_CODE');
   const locale = await projectLocale(c, projectId, localeCode) as any;
   if (!locale) return badRequest(c, 'invalid_locale_code');
   if (locale.status === 'archived') return badRequest(c, 'locale_not_translatable');

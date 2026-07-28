@@ -82,7 +82,7 @@ const reasons = [
         :aria-describedby="errors.reason ? 'meta-reason-error' : undefined"
         @change="emit('update:reason', ($event.target as HTMLSelectElement).value as typeof reason || null)"
       >
-        <option value="" disabled>Select a reason…</option>
+        <option value="" disabled>{{ t('languageCreate.metadataReasonPlaceholder') }}</option>
         <option v-for="r in reasons" :key="r.value" :value="r.value">
           {{ t(r.labelKey) }}
         </option>

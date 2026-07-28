@@ -31,6 +31,7 @@ const query = ref('')
 const searchResults = ref<RegistryLanguage[]>([])
 const loading = ref(false)
 const dialogOpen = ref(false)
+const activeIndex = ref(-1)
 const listId = `picker-list-${Math.random().toString(36).slice(2, 8)}`
 
 const selectedLanguage = computed(() =>
@@ -43,6 +44,10 @@ const displayOptions = computed(() => {
   return searchResults.value.filter(
     l => l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q),
   ).slice(0, 20)
+})
+
+watch(displayOptions, () => {
+  activeIndex.value = displayOptions.value.length > 0 ? 0 : -1
 })
 
 let searchController: AbortController | null = null
@@ -105,6 +110,26 @@ function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && open.value) {
     open.value = false
     e.preventDefault()
+    return
+  }
+  if (!open.value) {
+    if (e.key === 'ArrowDown') {
+      open.value = true
+      e.preventDefault()
+    }
+    return
+  }
+  const opts = displayOptions.value
+  if (opts.length === 0) return
+  if (e.key === 'ArrowDown') {
+    activeIndex.value = (activeIndex.value + 1) % opts.length
+    e.preventDefault()
+  } else if (e.key === 'ArrowUp') {
+    activeIndex.value = activeIndex.value <= 0 ? opts.length - 1 : activeIndex.value - 1
+    e.preventDefault()
+  } else if (e.key === 'Enter' && activeIndex.value >= 0) {
+    selectLanguage(opts[activeIndex.value].code)
+    e.preventDefault()
   }
 }
 </script>
@@ -138,6 +163,7 @@ function onKeydown(e: KeyboardEvent) {
         :aria-label="label"
         :aria-expanded="open"
         :aria-controls="listId"
+        :aria-activedescendant="activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined"
         :placeholder="t('languagePicker.placeholder')"
         class="picker-input"
         @focus="open = true"
@@ -152,10 +178,13 @@ function onKeydown(e: KeyboardEvent) {
       >
         <div v-if="loading" class="picker-loading">{{ t('common.loading') }}</div>
         <button
-          v-for="l in displayOptions"
+          v-for="(l, i) in displayOptions"
           :key="l.code"
+          :id="`${listId}-opt-${i}`"
           role="option"
           class="picker-option"
+          :class="{ 'picker-option-active': i === activeIndex }"
+          :aria-selected="i === activeIndex"
           @mousedown.prevent="selectLanguage(l.code)"
         >
           <span class="picker-option-name">{{ l.name }}</span>
@@ -221,8 +250,8 @@ function onKeydown(e: KeyboardEvent) {
   color: var(--muted);
 }
 .picker-clear {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: none;
   cursor: pointer;
@@ -290,6 +319,9 @@ function onKeydown(e: KeyboardEvent) {
   color: var(--fg);
 }
 .picker-option:hover {
+  background: var(--accent-soft);
+}
+.picker-option-active {
   background: var(--accent-soft);
 }
 .picker-option-name {

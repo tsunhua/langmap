@@ -56,6 +56,10 @@ interface D1Database {
   prepare(sql: string): D1Statement;
 }
 
+function escapeLike(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
 function safeJsonParse<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
   try {
@@ -131,9 +135,10 @@ export async function previewLanguage(
     profiles = profileResult.results.map(rowToLanguageRow);
   }
 
+  const escapedName = escapeLike(meta.name);
   const similarResult = await db.prepare(
-    'SELECT * FROM languages WHERE name LIKE ? OR name_en LIKE ? ORDER BY name, code LIMIT 10'
-  ).bind(`%${meta.name}%`, `%${meta.name}%`).all<Record<string, unknown>>();
+    'SELECT * FROM languages WHERE name LIKE ? ESCAPE \'\\\' OR name_en LIKE ? ESCAPE \'\\\' ORDER BY name, code LIMIT 10'
+  ).bind(`%${escapedName}%`, `%${escapedName}%`).all<Record<string, unknown>>();
   const similar = similarResult.results.map(rowToLanguageRow);
 
   const requiredMetadata: string[] = [];
@@ -192,43 +197,52 @@ export async function createLanguage(
     throw new LanguageCreationError('LANGUAGE_CODE_EXISTS', `Language code ${tag.code} already exists`);
   }
 
-  const insertResult = await db.prepare(
-    `INSERT INTO languages (
-      code, name, name_en, description, direction, base_language,
-      script_code, region_code, variants_json, private_use_json,
-      variety_key, glottocode, origin, community_reason,
-      alternate_names_json, references_json, parent_languoid_id,
-      latitude, longitude, created_by
-    )
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    WHERE (
-      SELECT COUNT(*) FROM languages
-      WHERE created_by = ? AND created_at >= datetime('now', '-1 day')
-    ) < ?`
-  ).bind(
-    tag.code,
-    meta.name,
-    meta.name_en,
-    meta.description,
-    registryResult.direction,
-    baseLanguage,
-    tag.script,
-    tag.region,
-    JSON.stringify(tag.variants),
-    JSON.stringify(tag.private_use),
-    varietyKey,
-    glottocode,
-    'community',
-    meta.reason,
-    JSON.stringify(meta.alternate_names),
-    JSON.stringify(meta.references),
-    meta.parent_languoid_id,
-    meta.latitude,
-    meta.longitude,
-    String(userId),
-    String(userId),
-    DAILY_LIMIT,
-  ).run();
+  let insertResult;
+  try {
+    insertResult = await db.prepare(
+      `INSERT INTO languages (
+        code, name, name_en, description, direction, base_language,
+        script_code, region_code, variants_json, private_use_json,
+        variety_key, glottocode, origin, community_reason,
+        alternate_names_json, references_json, parent_languoid_id,
+        latitude, longitude, created_by
+      )
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      WHERE (
+        SELECT COUNT(*) FROM languages
+        WHERE created_by = ? AND created_at >= datetime('now', '-1 day')
+      ) < ?`
+    ).bind(
+      tag.code,
+      meta.name,
+      meta.name_en,
+      meta.description,
+      registryResult.direction,
+      baseLanguage,
+      tag.script,
+      tag.region,
+      JSON.stringify(tag.variants),
+      JSON.stringify(tag.private_use),
+      varietyKey,
+      glottocode,
+      'community',
+      meta.reason,
+      JSON.stringify(meta.alternate_names),
+      JSON.stringify(meta.references),
+      meta.parent_languoid_id,
+      meta.latitude,
+      meta.longitude,
+      String(userId),
+      String(userId),
+      DAILY_LIMIT,
+    ).run();
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/UNIQUE constraint failed/i.test(msg)) {
+      throw new LanguageCreationError('LANGUAGE_CODE_EXISTS', `Language code ${tag.code} already exists`);
+    }
+    throw e;
+  }
 
   if (insertResult.meta.changes === 0) {
     throw new LanguageCreationError('RATE_LIMITED', `Daily limit of ${DAILY_LIMIT} languages reached`);

@@ -44,7 +44,7 @@ const canAdvance = computed(() => {
     case 2:
       return true
     case 3:
-      return validateMetadata()
+      return Object.keys(metadataErrors.value).length === 0
     case 4:
       return true
     default:
@@ -66,7 +66,16 @@ function validateMetadata(): boolean {
   return Object.keys(errors).length === 0
 }
 
+watch(
+  () => creation.step.value,
+  (step) => {
+    if (step === 3) validateMetadata()
+    else metadataErrors.value = {}
+  },
+)
+
 function nextStep() {
+  if (creation.step.value === 3 && !validateMetadata()) return
   if (!canAdvance.value) return
   if (creation.step.value < 4) {
     creation.goToStep((creation.step.value + 1) as 1 | 2 | 3 | 4)
@@ -151,7 +160,7 @@ onUnmounted(() => {
       ref="dialogRef"
       role="dialog"
       aria-modal="true"
-      :aria-label="t('languageCreate.previewTitle')"
+      :aria-label="t('languageCreate.dialogLabel')"
       class="dialog-overlay"
       @keydown="trapFocus"
     >

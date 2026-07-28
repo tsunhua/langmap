@@ -35,7 +35,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     }
     const reg = await requireRegisteredLanguage(c.env.DB, lang);
     if (!reg) {
-      return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language', { codes: uniqueLangs });
+      return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language', { codes: [lang] });
     }
   }
 

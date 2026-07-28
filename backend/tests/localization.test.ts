@@ -74,7 +74,7 @@ describe('localization mutation-boundary guard', () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { success: boolean; error: string };
-    expect(body.error).toBe('invalid_locale_code');
+    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
   });
 });
 
