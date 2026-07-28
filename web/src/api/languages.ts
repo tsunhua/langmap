@@ -91,12 +91,12 @@ export async function listLanguageSubtags(
 ): Promise<RegistrySubtag[]> {
   const params: Record<string, string> = { type, q: query }
   if (prefix) params.prefix = prefix
-  const { data } = await api.get('/languages/subtags', { params, signal })
+  const { data } = await api.get('/language-registry/subtags', { params, signal })
   return data.data?.items ?? []
 }
 
 export async function searchLanguoids(query: string, signal?: AbortSignal): Promise<LanguoidCandidate[]> {
-  const { data } = await api.get('/languages/languoids/search', {
+  const { data } = await api.get('/languoids', {
     params: { q: query },
     signal,
   })
