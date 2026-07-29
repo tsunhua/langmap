@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useLanguageCreation } from '@/composables/useLanguageCreation'
 import LanguageSubtagSelect from './LanguageSubtagSelect.vue'
 import type { LanguageSubtags, RegistrySubtag } from '@/api/languages'
 
@@ -16,7 +15,6 @@ const emit = defineEmits<{
   validityChange: [valid: boolean]
 }>()
 
-const creation = useLanguageCreation()
 const statusMessage = ref('')
 
 function emitUpdate(subtags: LanguageSubtags) {
@@ -88,7 +86,7 @@ watch(
       <LanguageSubtagSelect
         :label="t('languageCreate.subtagLanguage')"
         :model-value="modelValue.language"
-        :options="creation.subtagOptions.value"
+        type="language"
         :placeholder="t('languageCreate.subtagSearch')"
         @update:model-value="updateLanguage"
       />
@@ -98,7 +96,7 @@ watch(
       <LanguageSubtagSelect
         :label="t('languageCreate.subtagScript')"
         :model-value="modelValue.script || ''"
-        :options="creation.subtagOptions.value.filter(o => o.type === 'script')"
+        type="script"
         :placeholder="t('languageCreate.subtagSearch')"
         @update:model-value="updateScript"
       />
@@ -108,7 +106,7 @@ watch(
       <LanguageSubtagSelect
         :label="t('languageCreate.subtagRegion')"
         :model-value="modelValue.region || ''"
-        :options="creation.subtagOptions.value.filter(o => o.type === 'region')"
+        type="region"
         :placeholder="t('languageCreate.subtagSearch')"
         @update:model-value="updateRegion"
       />
@@ -130,7 +128,8 @@ watch(
       <LanguageSubtagSelect
         :label="t('languageCreate.subtagVariant')"
         model-value=""
-        :options="creation.subtagOptions.value.filter(o => o.type === 'variant')"
+        type="variant"
+        :prefix="modelValue.language || undefined"
         :placeholder="t('languageCreate.subtagSearch')"
         @select="handleVariantSelect"
       />

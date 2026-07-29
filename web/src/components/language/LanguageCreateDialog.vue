@@ -200,7 +200,9 @@ onUnmounted(() => {
               :candidates="creation.languoidOptions.value"
               :selected-glottocode="creation.glottocode.value"
               :loading="creation.loadingLanguoids.value"
+              :initial-query="creation.subtags.value.language"
               @select="creation.glottocode.value = $event; glottocodeSelected = true"
+              @search="creation.searchLanguoids($event)"
             />
           </div>
 
@@ -209,7 +211,9 @@ onUnmounted(() => {
               :candidates="creation.languoidOptions.value"
               :selected-glottocode="creation.glottocode.value"
               :loading="creation.loadingLanguoids.value"
+              :initial-query="creation.subtags.value.language"
               @select="creation.glottocode.value = $event; glottocodeSelected = true"
+              @search="creation.searchLanguoids($event)"
             />
           </div>
 

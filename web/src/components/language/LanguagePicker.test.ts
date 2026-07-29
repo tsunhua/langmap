@@ -69,6 +69,16 @@ describe('LanguagePicker', () => {
     expect(wrapper.find('[data-action="create-language"]').exists()).toBe(false)
   })
 
+  it('hides create option when a language is selected', async () => {
+    const store = useLanguagesStore()
+    store.upsertLanguage(mockLanguage)
+
+    const wrapper = mount(LanguagePicker, {
+      props: { modelValue: 'en', label: 'Language', allowCreate: true },
+    })
+    expect(wrapper.find('[data-action="create-language"]').exists()).toBe(false)
+  })
+
   it('opens the create dialog when create is clicked', async () => {
     const wrapper = mount(LanguagePicker, {
       props: { modelValue: '', label: 'Language', allowCreate: true },

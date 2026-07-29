@@ -76,6 +76,8 @@ watch(query, () => {
 })
 
 function selectLanguage(code: string) {
+  const found = searchResults.value.find(l => l.code === code)
+  if (found) store.upsertLanguage(found)
   emit('update:modelValue', code)
   query.value = ''
   open.value = false
@@ -191,13 +193,22 @@ function onKeydown(e: KeyboardEvent) {
           <span class="picker-option-code">{{ l.code }}</span>
         </button>
         <div v-if="!loading && displayOptions.length === 0 && query.length >= 2" class="picker-empty">
-          {{ t('languagePicker.noResults') }}
+          <span>{{ t('languagePicker.noResults') }}</span>
+          <button
+            v-if="allowCreate"
+            class="picker-empty-create"
+            data-action="create-language"
+            @mousedown.prevent="openCreateDialog"
+          >
+            <Plus :size="12" />
+            {{ t('languagePicker.createLanguage') }}
+          </button>
         </div>
       </div>
     </div>
 
     <button
-      v-if="allowCreate"
+      v-if="allowCreate && !selectedLanguage"
       class="picker-create btn btn-ghost"
       data-action="create-language"
       @click="openCreateDialog"
@@ -303,6 +314,30 @@ function onKeydown(e: KeyboardEvent) {
   font-size: 13px;
   color: var(--muted);
   text-align: center;
+}
+.picker-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.picker-empty-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 36px;
+}
+.picker-empty-create:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 .picker-option {
   display: flex;

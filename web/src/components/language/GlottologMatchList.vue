@@ -1,23 +1,63 @@
 <script setup lang="ts">
+import { ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Search } from 'lucide-vue-next'
 import type { LanguoidCandidate } from '@/api/languages'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   candidates: LanguoidCandidate[]
   selectedGlottocode: string | null
   loading: boolean
+  initialQuery?: string
 }>()
 
 const emit = defineEmits<{
   select: [glottocode: string | null]
+  search: [query: string]
 }>()
+
+const query = ref(props.initialQuery || '')
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(
+  () => props.initialQuery,
+  (val) => {
+    if (val) {
+      query.value = val
+      emit('search', val)
+    }
+  },
+)
+
+function onInput() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    if (query.value.trim()) emit('search', query.value.trim())
+  }, 300)
+}
+
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 </script>
 
 <template>
   <div class="glottolog-match">
     <p class="match-hint">{{ t('languageCreate.glottologChoose') }}</p>
+
+    <div class="match-search">
+      <Search :size="14" aria-hidden="true" />
+      <input
+        v-model="query"
+        type="search"
+        :placeholder="t('languageCreate.glottologSearchPlaceholder')"
+        :aria-label="t('languageCreate.glottologSearchPlaceholder')"
+        class="match-search-input"
+        @input="onInput"
+      />
+    </div>
 
     <div v-if="loading" class="match-loading">
       {{ t('common.loading') }}
@@ -80,6 +120,31 @@ const emit = defineEmits<{
 .match-hint {
   font-size: 13px;
   color: var(--muted);
+}
+.match-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  min-height: 44px;
+  color: var(--muted);
+}
+.match-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--fg);
+  min-height: 44px;
+}
+.match-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
 }
 .match-loading {
   font-size: 13px;
