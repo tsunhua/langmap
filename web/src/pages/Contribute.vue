@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import CliquePreview from '@/components/mapping/CliquePreview.vue'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
+import TagInput from '@/components/ui/TagInput.vue'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -13,11 +14,11 @@ interface Row {
   key: number
   lang: string
   text: string
-  region: string
+  tags: string
 }
 
 let keySeq = 0
-const newRow = (): Row => ({ key: keySeq++, lang: '', text: '', region: '' })
+const newRow = (): Row => ({ key: keySeq++, lang: '', text: '', tags: '' })
 const rows = ref<Row[]>([newRow(), newRow()])
 
 const submitting = ref(false)
@@ -41,7 +42,7 @@ function removeRow(key: number) {
 async function submit() {
   const payload = validRows.value
     .filter(r => r.lang.trim() !== '')
-    .map(r => ({ lang: r.lang.trim(), text: r.text.trim(), region: r.region.trim() || undefined }))
+    .map(r => ({ lang: r.lang.trim(), text: r.text.trim(), tags: r.tags.trim() || undefined }))
   if (payload.length < 2) {
     error.value = t('contribute.minRows')
     return
@@ -68,13 +69,13 @@ async function submit() {
       <div class="contrib-left">
         <div class="ex-table">
           <div class="ex-head">
-            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('contribute.region') }}</span><span></span>
+            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('contribute.tags') }}</span><span></span>
           </div>
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
               <LanguagePicker v-model="row.lang" :label="t('contribute.language')" :allow-create="true" />
               <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
-              <input class="ex-region" v-model="row.region" :placeholder="t('contribute.region')" :aria-label="t('contribute.region')" />
+              <TagInput v-model="row.tags" :placeholder="t('contribute.tags')" />
               <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)">✕</button>
             </div>
           </div>
@@ -114,7 +115,7 @@ async function submit() {
 
 .ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
 .ex-head, .ex-row {
-  display: grid; grid-template-columns: 180px 1fr 140px 32px; gap: var(--space-xs); align-items: start;
+  display: grid; grid-template-columns: 140px 1fr 80px 32px; gap: var(--space-xs); align-items: start;
   padding: var(--space-xs) var(--space-sm);
 }
 .ex-head {
@@ -123,6 +124,16 @@ async function submit() {
 }
 .ex-rows .ex-row { border-bottom: 1px solid var(--border); }
 .ex-rows .ex-row:last-child { border-bottom: none; }
+.ex-row .lang-picker { position: relative; }
+.ex-row .lang-picker :deep(.picker-label) { display: none; }
+.ex-row .lang-picker :deep(.picker-selected),
+.ex-row .lang-picker :deep(.picker-input) {
+  min-height: 32px; padding: 4px 10px;
+}
+.ex-row .lang-picker :deep(.picker-clear) {
+  width: 28px; height: 28px;
+}
+.ex-row .lang-picker :deep(.picker-create) { display: none; }
 .ex-row input {
   height: 32px; border: 1px solid var(--border); border-radius: var(--r);
   background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;

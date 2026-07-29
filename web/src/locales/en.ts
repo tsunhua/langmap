@@ -72,7 +72,7 @@ export const en = {
     lead: 'Submit a group of expressions that mean the same thing. The system creates direct mappings between every pair. Existing expressions are linked automatically without duplicates.',
     language: 'Language',
     expression: 'Expression',
-    region: 'Region',
+    tags: 'Tags',
     delete: 'Delete',
     addExpression: '+ Add expression',
     expressionCount: '{count} expressions',

@@ -22,7 +22,7 @@ async function edgesForGroup(memberIds: number[]): Promise<{ id: string; a: numb
 contributions.post('/batch', requireAuth, async (c) => {
   const user = c.get('user')!;
   const { expressions: exprs } = await c.req.json<{
-    expressions: { lang: string; text: string; region?: string }[];
+    expressions: { lang: string; text: string; tags?: string }[];
   }>();
 
   if (!exprs || exprs.length < 2) return badRequest(c, 'need_at_least_2_expressions');
@@ -69,9 +69,9 @@ contributions.post('/batch', requireAuth, async (c) => {
     if (!existing) {
       statements.push(
         c.env.DB.prepare(
-          `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, source_type, created_by, review_status)
+          `INSERT OR IGNORE INTO expressions (id, text, language_code, tags, source_type, created_by, review_status)
            VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
-        ).bind(id, text, lang, e.region || null, user.username)
+        ).bind(id, text, lang, e.tags || null, user.username)
       );
     }
   }
