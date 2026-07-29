@@ -1,6 +1,6 @@
 ALTER TABLE ui_locales RENAME TO ui_locales_legacy;
 
-CREATE TABLE ui_locales (
+CREATE TABLE IF NOT EXISTS ui_locales (
   project_id TEXT NOT NULL,
   code TEXT NOT NULL,
   native_name TEXT NOT NULL,
@@ -24,7 +24,7 @@ WHERE l.code IS NOT NULL;
 
 DROP TABLE ui_locales_legacy;
 
-CREATE TABLE ui_messages (
+CREATE TABLE IF NOT EXISTS ui_messages (
   project_id TEXT NOT NULL,
   key TEXT NOT NULL,
   description TEXT,

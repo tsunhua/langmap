@@ -38,7 +38,54 @@ if [ "${TABLE_COUNT:-0}" -eq 0 ]; then
     --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
 else
   echo "  本地 D1 已有 ${TABLE_COUNT} 張表，套用增量遷移"
-  npx wrangler d1 migrations apply langmap-v2 --local --persist-to "$LOCAL_D1_STATE" 2>/dev/null || true
+  npx wrangler d1 migrations apply langmap-v2 --local --persist-to "$LOCAL_D1_STATE" || true
+  echo "  確保 language_subtags 表存在（幂等）"
+  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
+    --command="CREATE TABLE IF NOT EXISTS language_subtags (
+      type TEXT NOT NULL,
+      value TEXT NOT NULL,
+      descriptions TEXT NOT NULL DEFAULT '[]',
+      prefixes TEXT NOT NULL DEFAULT '[]',
+      preferred_value TEXT,
+      suppress_script TEXT,
+      deprecated TEXT,
+      PRIMARY KEY (type, value)
+    );"
+  echo "  檢查 languages 表是否需要重建（老 schema 缺少欄位）"
+  HAS_DESC=$(npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
+    --command="SELECT COUNT(*) as c FROM pragma_table_info('languages') WHERE name='description';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
+  if [ "${HAS_DESC:-0}" -eq 0 ]; then
+    echo "  languages 表是舊 schema，重建為新版⋯"
+    npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
+      --command="DROP TABLE IF EXISTS languages_v2;
+      CREATE TABLE languages_v2 (
+        code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, name_en TEXT,
+        description TEXT, direction TEXT DEFAULT 'ltr',
+        base_language TEXT, script_code TEXT, region_code TEXT,
+        variants_json TEXT, private_use_json TEXT,
+        variety_key TEXT NOT NULL DEFAULT 'migration', glottocode TEXT,
+        origin TEXT NOT NULL DEFAULT 'seed', community_reason TEXT,
+        alternate_names_json TEXT, references_json TEXT,
+        parent_languoid_id TEXT, latitude REAL, longitude REAL,
+        created_by TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO languages_v2
+        (code, name, name_en, direction, base_language, script_code,
+         region_code, created_by, created_at, updated_by, updated_at)
+      SELECT code, name, name_en, direction, base_language, script_code,
+             region_code, created_by, created_at, updated_by, updated_at
+      FROM languages;
+      DROP TABLE languages;
+      ALTER TABLE languages_v2 RENAME TO languages;
+      CREATE INDEX IF NOT EXISTS idx_languages_name ON languages(name);
+      CREATE INDEX IF NOT EXISTS idx_languages_variety_key ON languages(variety_key);
+      CREATE INDEX IF NOT EXISTS idx_languages_glottocode ON languages(glottocode);
+      CREATE INDEX IF NOT EXISTS idx_languages_base_script_region
+        ON languages(base_language, script_code, region_code);"
+  else
+    echo "  languages 表 schema 已是最新版，跳過重建"
+  fi
   echo "  載入 pinned language-registry.sql（幂等）"
   npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
     --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
