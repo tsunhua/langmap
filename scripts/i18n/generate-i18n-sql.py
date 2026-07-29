@@ -3,24 +3,25 @@
 Generate SQL to import UI translations for a locale.
 
 Usage:
-  python3 scripts/generate-i18n-sql.py zh-CN scripts/i18n/zh-CN.json
-
-Pipe to wrangler:
-  python3 scripts/generate-i18n-sql.py zh-CN scripts/i18n/zh-CN.json \\
-    | wrangler d1 execute langmap-v2 --command "$(cat)"
+  python3 scripts/i18n/generate-i18n-sql.py \\
+    zh-Hant-TW scripts/i18n/zh-Hant-TW.json
 
 The JSON format is { "key": "translation", ... } — keys match en.ts dotted paths.
 """
+
+from __future__ import annotations
 
 import hashlib
 import json
 import re
 import sys
+from pathlib import Path
 
 PROJECT_ID = 'langmap-web'
 LANGUAGE_ID_BITS = 16
 TEXT_ID_BITS = 37
-EN_TS_PATH = 'web/src/locales/en.ts'
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+EN_TS_PATH = PROJECT_ROOT / 'web/src/locales/en.ts'
 
 
 def hash_segment(content: str, bits: int) -> int:
@@ -184,7 +185,11 @@ VALUES ('{edge_id}', {src_id}, {tgt_id}, 0, 'ui_i18n');
 def main():
     if len(sys.argv) != 3:
         print(f'Usage: {sys.argv[0]} <locale_code> <translations.json>', file=sys.stderr)
-        print(f'  e.g. {sys.argv[0]} zh-CN scripts/i18n/zh-CN.json', file=sys.stderr)
+        print(
+            f'  e.g. {sys.argv[0]} zh-Hant-TW '
+            'scripts/i18n/zh-Hant-TW.json',
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     locale_code = sys.argv[1]
@@ -206,7 +211,7 @@ def main():
     try:
         source_map = parse_en_ts(EN_TS_PATH)
     except FileNotFoundError:
-        print(f'Error: {EN_TS_PATH} not found — run from project root', file=sys.stderr)
+        print(f'Error: source catalog not found at {EN_TS_PATH}', file=sys.stderr)
         sys.exit(1)
 
     # Validate keys

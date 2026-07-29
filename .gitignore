@@ -61,5 +61,6 @@ node_modules/
 remote-*.sql
 remote-old.sql
 scripts/v2/v2-data.sql
+scripts/i18n/*-import.sql
 
 .opencode/
