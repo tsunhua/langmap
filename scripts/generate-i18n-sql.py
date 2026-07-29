@@ -47,7 +47,6 @@ def stable_edge_id(a: int, b: int) -> str:
 def parse_en_ts(path: str) -> dict[str, str]:
     with open(path) as f:
         lines = f.readlines()
-
     stack: list[str] = []
     result: dict[str, str] = {}
     in_value = False
@@ -58,61 +57,55 @@ def parse_en_ts(path: str) -> dict[str, str]:
         stripped = line.strip()
         if not stripped or stripped.startswith('//') or stripped.startswith('*'):
             continue
-
-        # as const / export … → skip
         if stripped.startswith('export ') or stripped == '} as const':
             continue
-
-        # Close brace — pop stack
-        if stripped == '},' or stripped == '}' or stripped == '},' or stripped == '};':
+        if stripped in ('},', '}', '};'):
             if in_value:
                 in_value = False
                 value_buf = []
             if stack:
                 stack.pop()
             continue
-
-        # If we're inside a single-quoted value, accumulate until closing
         if in_value:
             value_buf.append(line.rstrip())
             full = ''.join(value_buf)
-            # Count unescaped quotes
-            if full.count(quote_char) % 2 == 0 and full.endswith("',") or full.endswith("'"):
+            q = re.escape(quote_char)
+            if full.count(quote_char) % 2 == 0 and (full.endswith("',") or full.endswith("'")):
                 in_value = False
-                m = re.match(rf".*{quote_char}(.*){quote_char}\s*,?\s*$", full, re.DOTALL)
-                if m:
-                    val = m.group(1).replace(f"\\{quote_char}", quote_char)
-                    if stack:
-                        result['.'.join(stack)] = val
+                m = re.match(rf'.*{q}(.*){q}\s*,?\s*$', full, re.DOTALL)
+                if m and stack:
+                    result['.'.join(stack)] = m.group(1).replace(f'\\{quote_char}', quote_char)
                 value_buf = []
             continue
-
-        # Key: 'value' or Key: { (start of nested object)
         key_match = re.match(r'^\s*(\w+)\s*:\s*', stripped)
         if not key_match:
             continue
         key = key_match.group(1)
         rest = stripped[key_match.end():]
-
         if rest.startswith('{'):
-            # Nested object: nav: {
-            stack.append(key)
+            if rest.strip().endswith('},') or rest.strip().endswith('}'):
+                inner = rest.strip()
+                if inner.endswith(','):
+                    inner = inner[:-1]
+                if inner.startswith('{') and inner.endswith('}'):
+                    inner = inner[1:-1].strip()
+                    for pair in re.findall(r"(\w+):\s*'((?:[^'\\]|\\.)*)'", inner):
+                        result['.'.join(stack + [key, pair[0]])] = pair[1].replace("\\'", "'")
+            else:
+                stack.append(key)
         elif rest.startswith("'") or rest.startswith('"'):
-            # Single line value: key: 'value',
             q = rest[0]
-            # Find the closing quote — handle simple cases
-            val_match = re.match(rf"^{q}((?:[^{q}\\]|\\.)*){q}\s*,?\s*$", rest)
+            qe = re.escape(q)
+            val_match = re.match(rf'^{qe}((?:[^{qe}\\]|\\.)*){qe}\s*,?\s*$', rest)
             if val_match:
-                val = val_match.group(1).replace(f"\\{q}", q)
+                val = val_match.group(1).replace(f'\\{q}', q)
                 if stack:
                     result['.'.join(stack + [key])] = val
             else:
-                # Multi-line value starts
                 in_value = True
                 value_buf = [line.rstrip()]
                 quote_char = q
                 stack.append(key)
-
     return result
 
 
