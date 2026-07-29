@@ -1,0 +1,22 @@
+{
+  "nav.home": "首页",
+  "nav.languages": "语言",
+  "nav.handbooks": "手册",
+  "nav.contribute": "贡献",
+  "nav.signIn": "登录",
+  "nav.signOut": "退出",
+  "common.search": "搜索",
+  "common.submit": "提交",
+  "common.cancel": "取消",
+  "common.close": "关闭",
+  "common.loading": "加载中…",
+  "common.language": "语言",
+  "common.languages": "语言",
+  "contribute.title": "批量贡献",
+  "contribute.language": "语言",
+  "contribute.expression": "词句",
+  "contribute.tags": "标签",
+  "contribute.delete": "删除",
+  "contribute.submit": "提交",
+  "contribute.submitting": "提交中…"
+}
