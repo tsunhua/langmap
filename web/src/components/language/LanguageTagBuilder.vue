@@ -82,12 +82,15 @@ watch(
 
 <template>
   <div class="tag-builder">
+    <p class="required-hint">{{ t('languageCreate.requiredHint') }}</p>
+
     <div data-field="language">
       <LanguageSubtagSelect
         :label="t('languageCreate.subtagLanguage')"
         :model-value="modelValue.language"
         type="language"
         :placeholder="t('languageCreate.subtagSearch')"
+        required
         @update:model-value="updateLanguage"
       />
     </div>
@@ -98,6 +101,7 @@ watch(
         :model-value="modelValue.script || ''"
         type="script"
         :placeholder="t('languageCreate.subtagSearch')"
+        optional
         @update:model-value="updateScript"
       />
     </div>
@@ -108,12 +112,16 @@ watch(
         :model-value="modelValue.region || ''"
         type="region"
         :placeholder="t('languageCreate.subtagSearch')"
+        optional
         @update:model-value="updateRegion"
       />
     </div>
 
     <div data-field="variants">
-      <label class="subtag-label">{{ t('languageCreate.subtagVariant') }}</label>
+      <label class="subtag-label">
+        {{ t('languageCreate.subtagVariant') }}
+        <span class="field-optional">({{ t('languageCreate.optional') }})</span>
+      </label>
       <div class="variant-tags" v-if="modelValue.variants.length">
         <span v-for="v in modelValue.variants" :key="v" class="variant-tag">
           {{ v }}
@@ -131,6 +139,7 @@ watch(
         type="variant"
         :prefix="modelValue.language || undefined"
         :placeholder="t('languageCreate.subtagSearch')"
+        hide-label
         @select="handleVariantSelect"
       />
     </div>
@@ -152,12 +161,22 @@ watch(
   flex-direction: column;
   gap: 12px;
 }
+.required-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: right;
+}
 .subtag-label {
   display: block;
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
   margin-bottom: 4px;
+}
+.field-optional {
+  color: var(--faint);
+  font-weight: 400;
 }
 .variant-tags {
   display: flex;

@@ -40,9 +40,9 @@ const currentStepTitle = computed(() => stepTitles.value[creation.step.value - 1
 const canAdvance = computed(() => {
   switch (creation.step.value) {
     case 1:
-      return tagValid.value && glottocodeSelected.value
+      return tagValid.value
     case 2:
-      return true
+      return glottocodeSelected.value
     case 3:
       return Object.keys(metadataErrors.value).length === 0
     case 4:
@@ -195,21 +195,13 @@ onUnmounted(() => {
               @update:model-value="creation.subtags.value = $event"
               @validity-change="tagValid = $event"
             />
-            <div class="step-divider" />
-            <GlottologMatchList
-              :candidates="creation.languoidOptions.value"
-              :selected-glottocode="creation.glottocode.value"
-              :loading="creation.loadingLanguoids.value"
-              :initial-query="creation.subtags.value.language"
-              @select="creation.glottocode.value = $event; glottocodeSelected = true"
-              @search="creation.searchLanguoids($event)"
-            />
           </div>
 
           <div v-else-if="creation.step.value === 2">
             <GlottologMatchList
               :candidates="creation.languoidOptions.value"
               :selected-glottocode="creation.glottocode.value"
+              :has-selection="glottocodeSelected"
               :loading="creation.loadingLanguoids.value"
               :initial-query="creation.subtags.value.language"
               @select="creation.glottocode.value = $event; glottocodeSelected = true"

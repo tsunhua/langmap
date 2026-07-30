@@ -54,6 +54,31 @@ describe('LanguageSubtagSelect', () => {
     expect(listLanguageSubtags).toHaveBeenCalledWith('language', 'zh', undefined, expect.any(AbortSignal))
   })
 
+  it('finishes loading and renders the API response for es', async () => {
+    vi.mocked(listLanguageSubtags).mockResolvedValueOnce([
+      {
+        type: 'language',
+        subtag: 'es',
+        descriptions: ['Spanish', 'Castilian'],
+        prefixes: [],
+        preferred_value: null,
+        suppress_script: 'Latn',
+        deprecated_at: null,
+      },
+    ])
+
+    const wrapper = mount(LanguageSubtagSelect, {
+      props: { label: 'Language', modelValue: '', type: 'language' },
+    })
+    await wrapper.get('input').setValue('es')
+    await vi.advanceTimersByTimeAsync(250)
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Loading')
+    expect(wrapper.get('[role="option"]').text()).toContain('es')
+    expect(wrapper.get('[role="option"]').text()).toContain('Spanish')
+  })
+
   it('supports keyboard selection in the subtag combobox', async () => {
     const wrapper = mount(LanguageSubtagSelect, {
       props: { label: 'Language', modelValue: '', type: 'language' },

@@ -29,6 +29,8 @@ const reasons = [
 
 <template>
   <form class="metadata-form" @submit.prevent>
+    <p class="required-hint">{{ t('languageCreate.requiredHint') }}</p>
+
     <div class="form-field">
       <label for="meta-name" class="field-label">{{ t('languageCreate.metadataName') }} *</label>
       <input
@@ -36,6 +38,7 @@ const reasons = [
         type="text"
         :value="name"
         class="field-input"
+        required
         :aria-invalid="!!errors.name"
         :aria-describedby="errors.name ? 'meta-name-error' : undefined"
         @input="emit('update:name', ($event.target as HTMLInputElement).value)"
@@ -46,7 +49,10 @@ const reasons = [
     </div>
 
     <div class="form-field">
-      <label for="meta-name-en" class="field-label">{{ t('languageCreate.metadataNameEn') }}</label>
+      <label for="meta-name-en" class="field-label">
+        {{ t('languageCreate.metadataNameEn') }}
+        <span class="field-optional">({{ t('languageCreate.optional') }})</span>
+      </label>
       <input
         id="meta-name-en"
         type="text"
@@ -63,6 +69,7 @@ const reasons = [
         :value="description"
         rows="3"
         class="field-input field-textarea"
+        required
         :aria-invalid="!!errors.description"
         :aria-describedby="errors.description ? 'meta-desc-error' : undefined"
         @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
@@ -78,6 +85,7 @@ const reasons = [
         id="meta-reason"
         :value="reason || ''"
         class="field-input"
+        required
         :aria-invalid="!!errors.reason"
         :aria-describedby="errors.reason ? 'meta-reason-error' : undefined"
         @change="emit('update:reason', ($event.target as HTMLSelectElement).value as typeof reason || null)"
@@ -100,6 +108,12 @@ const reasons = [
   flex-direction: column;
   gap: 16px;
 }
+.required-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: right;
+}
 .form-field {
   display: flex;
   flex-direction: column;
@@ -109,6 +123,10 @@ const reasons = [
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
+}
+.field-optional {
+  color: var(--faint);
+  font-weight: 400;
 }
 .field-input {
   width: 100%;

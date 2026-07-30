@@ -23,7 +23,8 @@ languageRegistry.get('/subtags', async (c) => {
     return badRequest(c, 'INVALID_TYPE', `type must be one of: ${VALID_TYPES.join(', ')}`);
   }
 
-  const escapedQ = escapeLike(q.slice(0, MAX_Q));
+  const normalizedQ = q.slice(0, MAX_Q);
+  const escapedQ = escapeLike(normalizedQ);
   const escapedPrefix = escapeLike(prefix.slice(0, MAX_Q));
 
   let query = 'SELECT type, value, descriptions, prefixes, preferred_value, suppress_script, deprecated FROM language_subtags WHERE type = ?';
@@ -39,7 +40,15 @@ languageRegistry.get('/subtags', async (c) => {
     params.push(`%${escapedPrefix}%`);
   }
 
-  query += ' ORDER BY value ASC LIMIT ?';
+  if (escapedQ) {
+    query += ' ORDER BY CASE'
+      + ' WHEN value = ? COLLATE NOCASE THEN 0'
+      + ' WHEN value LIKE ? ESCAPE \'\\\' THEN 1'
+      + ' ELSE 2 END, value ASC LIMIT ?';
+    params.push(normalizedQ, `${escapedQ}%`);
+  } else {
+    query += ' ORDER BY value ASC LIMIT ?';
+  }
   params.push(String(limit));
 
   const { results } = await c.env.DB.prepare(query).bind(...params).all();

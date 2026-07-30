@@ -49,6 +49,7 @@ export const en = {
   languagesPage: {
     title: 'Languages',
     subtitle: 'Explore expressions and mappings across all languages',
+    addLanguage: 'Add language',
     languageCount: 'Languages',
     expressionCount: 'Expressions',
     searchPlaceholder: 'Search languages…',
@@ -180,6 +181,8 @@ export const en = {
     subtagRegion: 'Region',
     subtagVariant: 'Variant',
     subtagSearch: 'Search subtags…',
+    requiredHint: '* Required',
+    optional: 'Optional',
     provisionalTag: 'Provisional tag',
     variantsRemoved: '{count} variant(s) removed',
     variantRemoved: '1 variant removed',

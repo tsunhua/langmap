@@ -9,6 +9,9 @@ const props = defineProps<{
   type: 'language' | 'script' | 'region' | 'variant'
   prefix?: string
   placeholder?: string
+  hideLabel?: boolean
+  required?: boolean
+  optional?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -139,7 +142,11 @@ onUnmounted(() => {
 
 <template>
   <div class="subtag-select">
-    <label class="subtag-label">{{ label }}</label>
+    <label v-if="!hideLabel" class="subtag-label">
+      {{ label }}
+      <span v-if="required" aria-hidden="true">*</span>
+      <span v-else-if="optional" class="field-optional">({{ $t('languageCreate.optional') }})</span>
+    </label>
     <input
       ref="input"
       type="text"
@@ -149,7 +156,9 @@ onUnmounted(() => {
       :aria-expanded="open"
       :aria-controls="listId"
       :aria-activedescendant="activeDescendant"
+      :aria-required="required || undefined"
       :placeholder="placeholder"
+      :required="required"
       class="subtag-input"
       @input="onInput"
       @focus="openDropdown"
@@ -193,6 +202,10 @@ onUnmounted(() => {
   font-weight: 500;
   color: var(--muted);
   margin-bottom: 4px;
+}
+.field-optional {
+  color: var(--faint);
+  font-weight: 400;
 }
 .subtag-input {
   width: 100%;

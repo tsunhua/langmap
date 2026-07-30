@@ -9,6 +9,7 @@ const { t } = useI18n()
 const props = defineProps<{
   candidates: LanguoidCandidate[]
   selectedGlottocode: string | null
+  hasSelection: boolean
   loading: boolean
   initialQuery?: string
 }>()
@@ -29,6 +30,7 @@ watch(
       emit('search', val)
     }
   },
+  { immediate: true },
 )
 
 function onInput() {
@@ -45,7 +47,9 @@ onUnmounted(() => {
 
 <template>
   <div class="glottolog-match">
-    <p class="match-hint">{{ t('languageCreate.glottologChoose') }}</p>
+    <p id="glottolog-choice-label" class="match-hint">
+      {{ t('languageCreate.glottologChoose') }} *
+    </p>
 
     <div class="match-search">
       <Search :size="14" aria-hidden="true" />
@@ -59,55 +63,64 @@ onUnmounted(() => {
       />
     </div>
 
-    <div v-if="loading" class="match-loading">
-      {{ t('common.loading') }}
-    </div>
+    <div
+      class="match-options"
+      role="radiogroup"
+      aria-labelledby="glottolog-choice-label"
+      aria-required="true"
+    >
+      <div v-if="loading" class="match-loading">
+        {{ t('common.loading') }}
+      </div>
 
-    <div v-else-if="candidates.length" class="match-list">
-      <p class="match-count">{{ t('languageCreate.glottologCandidates', { count: candidates.length }) }}</p>
+      <div v-else-if="candidates.length" class="match-list">
+        <p class="match-count">{{ t('languageCreate.glottologCandidates', { count: candidates.length }) }}</p>
+        <label
+          v-for="c in candidates"
+          :key="c.id"
+          class="match-item"
+          :class="{ selected: selectedGlottocode === c.glottocode }"
+        >
+          <input
+            type="radio"
+            name="glottolog-match"
+            :value="c.glottocode"
+            :checked="selectedGlottocode === c.glottocode"
+            class="match-radio"
+            required
+            @change="emit('select', c.glottocode)"
+          />
+          <div class="match-info">
+            <span class="match-name">{{ c.preferred_name }}</span>
+            <span class="match-meta">
+              <span class="match-level">{{ t(`languageCreate.glottologLevel${c.level === 'language' ? 'Language' : 'Dialect'}`) }}</span>
+              <span class="match-code">{{ c.glottocode }}</span>
+              <span v-if="c.iso639_3" class="match-iso">ISO 639-3: {{ c.iso639_3 }}</span>
+            </span>
+            <span v-if="c.parent_name" class="match-parent">{{ c.parent_name }}</span>
+          </div>
+        </label>
+      </div>
+
       <label
-        v-for="c in candidates"
-        :key="c.id"
-        class="match-item"
-        :class="{ selected: selectedGlottocode === c.glottocode }"
+        class="match-item no-match"
+        :class="{ selected: hasSelection && selectedGlottocode === null }"
       >
         <input
           type="radio"
           name="glottolog-match"
-          :value="c.glottocode"
-          :checked="selectedGlottocode === c.glottocode"
+          value="no-match"
+          :checked="hasSelection && selectedGlottocode === null"
           class="match-radio"
-          @change="emit('select', c.glottocode)"
+          data-choice="no-match"
+          required
+          @change="emit('select', null)"
         />
-        <div class="match-info">
-          <span class="match-name">{{ c.preferred_name }}</span>
-          <span class="match-meta">
-            <span class="match-level">{{ t(`languageCreate.glottologLevel${c.level === 'language' ? 'Language' : 'Dialect'}`) }}</span>
-            <span class="match-code">{{ c.glottocode }}</span>
-            <span v-if="c.iso639_3" class="match-iso">ISO 639-3: {{ c.iso639_3 }}</span>
-          </span>
-          <span v-if="c.parent_name" class="match-parent">{{ c.parent_name }}</span>
-        </div>
+        <span class="match-info">
+          <span class="match-name">{{ t('languageCreate.glottologNoMatch') }}</span>
+        </span>
       </label>
     </div>
-
-    <label
-      class="match-item no-match"
-      :class="{ selected: selectedGlottocode === null }"
-    >
-      <input
-        type="radio"
-        name="glottolog-match"
-        value="no-match"
-        :checked="selectedGlottocode === null && selectedGlottocode !== undefined"
-        class="match-radio"
-        data-choice="no-match"
-        @change="emit('select', null)"
-      />
-      <span class="match-info">
-        <span class="match-name">{{ t('languageCreate.glottologNoMatch') }}</span>
-      </span>
-    </label>
   </div>
 </template>
 
@@ -150,6 +163,11 @@ onUnmounted(() => {
   font-size: 13px;
   color: var(--muted);
   padding: 12px 0;
+}
+.match-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .match-count {
   font-size: 12px;

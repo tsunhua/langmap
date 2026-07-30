@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-const BASE_URL = 'http://127.0.0.1:8788';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
 
 async function register(username: string): Promise<string> {
   const response = await fetch(`${BASE_URL}/api/v2/auth/register`, {
@@ -218,6 +218,16 @@ describe('language-registry subtag API', () => {
     expect(Array.isArray(body.data.items)).toBe(true);
   });
 
+  it('ranks an exact subtag match before broader description matches', async () => {
+    const response = await get('/api/v2/language-registry/subtags?type=language&q=es');
+    expect(response.status).toBe(200);
+    const body = await response.json() as {
+      success: boolean;
+      data: { items: Array<{ value: string }> };
+    };
+    expect(body.data.items[0]?.value).toBe('es');
+  });
+
   it('clamps limit to max 50', async () => {
     const response = await get('/api/v2/language-registry/subtags?type=language&limit=100');
     expect(response.status).toBe(200);
@@ -240,5 +250,24 @@ describe('languoids API', () => {
     if (body.data.items.length > 0) {
       expect(Array.isArray(body.data.items[0].profiles)).toBe(true);
     }
+  });
+
+  it('expands an IANA language subtag and ranks matchable Glottolog candidates', async () => {
+    const response = await get('/api/v2/languoids?q=es&matchable=1');
+    expect(response.status).toBe(200);
+    const body = await response.json() as {
+      success: boolean;
+      data: {
+        items: Array<{
+          preferred_name: string;
+          level: string;
+          iso639_3: string | null;
+        }>;
+      };
+    };
+
+    expect(body.data.items[0]?.preferred_name).toBe('Spanish');
+    expect(body.data.items[0]?.iso639_3).toBe('spa');
+    expect(body.data.items.every(item => ['language', 'dialect'].includes(item.level))).toBe(true);
   });
 });

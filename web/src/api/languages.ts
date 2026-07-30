@@ -18,6 +18,16 @@ export interface RegistrySubtag {
   deprecated_at: string | null
 }
 
+interface RegistrySubtagResponse {
+  type: RegistrySubtag['type']
+  value: string
+  descriptions: string | string[]
+  prefixes: string | string[]
+  preferred_value: string | null
+  suppress_script: string | null
+  deprecated: string | null
+}
+
 export interface RegistryLanguage {
   code: string
   name: string
@@ -92,12 +102,31 @@ export async function listLanguageSubtags(
   const params: Record<string, string> = { type, q: query }
   if (prefix) params.prefix = prefix
   const { data } = await api.get('/language-registry/subtags', { params, signal })
-  return data.data?.items ?? []
+  const items = (data.data?.items ?? []) as RegistrySubtagResponse[]
+  return items.map(item => ({
+    type: item.type,
+    subtag: item.value,
+    descriptions: parseStringArray(item.descriptions),
+    prefixes: parseStringArray(item.prefixes),
+    preferred_value: item.preferred_value,
+    suppress_script: item.suppress_script,
+    deprecated_at: item.deprecated,
+  }))
+}
+
+function parseStringArray(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value
+  try {
+    const parsed: unknown = JSON.parse(value)
+    return Array.isArray(parsed) && parsed.every(item => typeof item === 'string') ? parsed : []
+  } catch {
+    return []
+  }
 }
 
 export async function searchLanguoids(query: string, signal?: AbortSignal): Promise<LanguoidCandidate[]> {
   const { data } = await api.get('/languoids', {
-    params: { q: query },
+    params: { q: query, matchable: '1' },
     signal,
   })
   return data.data?.items ?? []

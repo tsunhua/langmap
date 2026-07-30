@@ -15,7 +15,7 @@ const GlottologStub = {
   props: ['candidates', 'selectedGlottocode', 'loading'],
   emits: ['select'],
   template: `
-    <div>
+    <div data-test="glottolog-match">
       <button data-choice="no-match" @click="$emit('select', null)">no match</button>
     </div>
   `,
@@ -54,7 +54,7 @@ describe('LanguageCreateDialog', () => {
     expect(document.body.textContent).toContain('Language tag')
   })
 
-  it('requires an explicit Glottolog choice', async () => {
+  it('keeps Glottolog matching in step 2', async () => {
     const wrapper = mount(LanguageCreateDialog, {
       props: { open: true },
       global: {
@@ -68,20 +68,20 @@ describe('LanguageCreateDialog', () => {
       },
     })
 
+    expect(document.body.querySelector('[data-test="glottolog-match"]')).toBeNull()
+
     const validTag = document.body.querySelector('[data-test="valid-tag"]') as HTMLElement
     validTag.click()
     await wrapper.vm.$nextTick()
 
     const nextBtn = document.body.querySelector('[data-action="next"]') as HTMLButtonElement
     expect(nextBtn).not.toBeNull()
-    expect(nextBtn.disabled).toBe(true)
-
-    const noMatch = document.body.querySelector('[data-choice="no-match"]') as HTMLElement
-    expect(noMatch).not.toBeNull()
-    noMatch.click()
+    expect(nextBtn.disabled).toBe(false)
+    nextBtn.click()
     await wrapper.vm.$nextTick()
 
-    expect(nextBtn.disabled).toBe(false)
+    expect(document.body.querySelector('[data-test="glottolog-match"]')).not.toBeNull()
+    expect((document.body.querySelector('[data-action="next"]') as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('emits close when Escape is pressed', async () => {
@@ -125,14 +125,14 @@ describe('LanguageCreateDialog', () => {
     validTag.click()
     await wrapper.vm.$nextTick()
 
-    const noMatch = document.body.querySelector('[data-choice="no-match"]') as HTMLElement
-    noMatch.click()
-    await wrapper.vm.$nextTick()
-
     const nextBtn = document.body.querySelector('[data-action="next"]') as HTMLElement
     nextBtn.click()
     await wrapper.vm.$nextTick()
     expect(document.body.textContent).toContain('Glottolog')
+
+    const noMatch = document.body.querySelector('[data-choice="no-match"]') as HTMLElement
+    noMatch.click()
+    await wrapper.vm.$nextTick()
 
     // Step 2 -> Step 3
     const nextBtn2 = document.body.querySelector('[data-action="next"]') as HTMLElement
