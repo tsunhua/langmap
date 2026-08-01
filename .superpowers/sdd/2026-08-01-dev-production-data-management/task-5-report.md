@@ -279,3 +279,112 @@ Interpretation:
 - `stored_fingerprint` 仍為 `null`，表示 failed rebuild 沒有建立成功 baseline metadata；
 - `rebuild_required` 仍為 `true`，所以第二輪 `./dev.sh --port=<another port>` 不會是 fingerprint-hit / `local verify` 路徑，而只會再次走 rebuild；
 - 為避免重複長時間 real rebuild 且仍無法滿足 reviewer 要求，本次沒有偽造第二輪啟動證據，而是如實記錄前置條件未成立。
+
+## Reviewer follow-up addendum 2 — isolated `/private/tmp` checkout
+
+Date: Saturday, August 1, 2026
+
+### Isolation strategy
+
+為避免影響另一個專案 `backend_v2` 的 Wrangler 殘留程序（8788），真機 evidence 改在受控 isolated checkout 進行：
+
+- isolated root: `/private/tmp/langmap-task5-isolated.9ezGnR`
+- copied source: `dev.sh`、`backend/`、`web/`、`scripts/`
+- shared read-only dependencies:
+  - `backend/node_modules -> /Users/lim/Documents/Code/tsunhua/langmap/backend/node_modules`
+  - `web/node_modules -> /Users/lim/Documents/Code/tsunhua/langmap/web/node_modules`
+- isolated logs: `WRANGLER_LOG_PATH=/private/tmp/langmap-task5-isolated.9ezGnR/wrangler-logs`
+- isolated local state: defaulted inside the isolated checkout under `backend/.wrangler/state`
+
+### First isolated attempt — wrapper setup failure
+
+Command:
+
+```bash
+bash -x ./dev.sh --rebuild --port=8795
+```
+
+Initial isolated wrapper configuration accidentally set `WRANGLER_LOG=debug`, which polluted Wrangler `--json`
+stdout. In the same attempt, isolated `backend/.env` was also absent, causing extra warning output.
+
+Observed failure:
+
+```text
+LocalRebuildError: invalid wrangler JSON output: 🪵  Writing logs to ".../wrangler-logs/..."
+.env file not found at ".../backend/.env"
+```
+
+Action taken:
+
+- removed `WRANGLER_LOG=debug`
+- created an empty isolated `backend/.env`
+
+This was a wrapper/setup issue, not the final real-dev verdict.
+
+### Corrected isolated rebuild attempt — actual real-dev result
+
+Command:
+
+```bash
+bash -x ./dev.sh --rebuild --port=8795
+```
+
+Bounded Python subprocess wrapper summary:
+
+```json
+{
+  "root": "/private/tmp/langmap-task5-isolated.9ezGnR",
+  "startup_message_seen": false,
+  "backend_health_ok": false,
+  "frontend_http_ok": false,
+  "sigterm_sent": false,
+  "returncode": 1,
+  "backend_pidfile_exists_after": false,
+  "frontend_pidfile_exists_after": false
+}
+```
+
+Observed failure tail:
+
+```text
++ BACKEND_PORT=8795
++ FORCE_REBUILD=1
+...
++ step '依旗標強制重建 local D1'
++ manage.sh local rebuild
+Traceback (most recent call last):
+  ...
+lib.verify.LocalVerificationError: count mismatch, translation ownership mismatch, orphan references detected
+...
+lib.local.LocalRebuildError: count mismatch, translation ownership mismatch, orphan references detected
+❌ dev.sh 失敗：第 173 行
+```
+
+Interpretation:
+
+- 在 isolated `/private/tmp` checkout 中，`dev.sh --rebuild` 已不依賴 current repo active state，也未碰 `backend_v2`；
+- corrected isolated real-dev 仍然無法成功 rebuild；
+- 失敗點仍是 local rebuild verification，而不是 process cleanup、sandbox listen、或 current repo 汙染；
+- 因 rebuild 未成功，所以 backend/frontend startup evidence 與 bounded SIGTERM cleanup evidence 在真機路徑上都無法成立。
+
+### Second isolated launch / fingerprint-hit feasibility check
+
+Read-only command:
+
+```bash
+cd /private/tmp/langmap-task5-isolated.9ezGnR
+WRANGLER_LOG_PATH=/private/tmp/langmap-task5-isolated.9ezGnR/wrangler-logs ./scripts/db/manage.sh local status
+```
+
+Observed result:
+
+```json
+{"environment":"local","command":"status","repo_root":"/private/tmp/langmap-task5-isolated.9ezGnR","desired_fingerprint":"4b4aaf72d68f2a551c83eb0d5b0c5df663a7cc37678e7761442894a118cba5d8","stored_fingerprint":null,"state_exists":true,"rebuild_required":true}
+```
+
+Interpretation:
+
+- isolated checkout 在 corrected rebuild failure 後，`stored_fingerprint` 仍為 `null`；
+- 因此第二次 `./dev.sh --port=<p2>` 不可能誠實地走 fingerprint-hit / `local verify` 路徑；
+- 若繼續跑第二次 `dev.sh`，只會再次進入 rebuild，而不是 reviewer 要求的 verify path；
+- 本報告因此如實記錄：在 isolated real-dev 條件下，第二次 fingerprint-hit evidence 仍無法成立，原因是第一輪 rebuild verification 已失敗。
