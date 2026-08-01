@@ -11,10 +11,12 @@ from sync_language_registry import (
     canonical_seed_code,
     direction_for_script,
     parse_iana_registry,
+    seed_location_rows,
     render_registry_sql,
     seed_language_rows,
     split_canonical_seed_code,
     write_languages,
+    write_locations,
 )
 
 ROOT = Path(__file__).parent
@@ -280,6 +282,22 @@ Added: 2005-10-16
         self.assertNotIn("CREATE TABLE places", schema)
         self.assertNotIn("geometry", schema.lower())
         self.assertNotIn("polygon", schema.lower())
+
+    def test_locations_are_validated_and_stably_sorted(self):
+        subtags = [
+            type("Subtag", (), {"type": "region", "value": "HK", "deprecated": None})(),
+            type("Subtag", (), {"type": "script", "value": "Hans", "deprecated": None})(),
+        ]
+        rows = list(seed_location_rows({"locations": [
+            {"variety_key": "glotto:yue", "city_name": "香港", "city_name_en": "Hong Kong",
+             "territory_code": "HK", "script_code": "Hans", "latitude": 22.3193,
+             "longitude": 114.1694, "reference": "ref"},
+        ]}, {"glotto:yue"}, subtags))
+        self.assertEqual(rows[0]["city_name"], "香港")
+        self.assertEqual(list(seed_location_rows({"locations": []}, set(), subtags)), [])
+
+        with self.assertRaisesRegex(ValueError, "unknown variety_key"):
+            list(seed_location_rows({"locations": [{"variety_key": "missing"}]}, set(), subtags))
 
     def test_language_migration_preserves_canonical_codes(self):
         manifest = {

@@ -361,3 +361,4 @@ Glottolog identity；輸出中的 `languoid_id` 為空，且預設不啟用。�
 - **遠端重建**（之後）：`wrangler d1 create langmap-v2` → 填 database_id → 遠端跑 schema.sql → 遠端載 v2-data.sql
 - **prose 丟失**：舊手冊 Markdown 的非標記文字在遷移中被捨棄（新模型無 prose 欄位）- **collections 不遷**：v2 砍除收藏功能
 - **間接映射 / 折疊 / feed** 等查詢邏輯屬於下一份計畫（backend API）
+`language-locations.csv` 由 profiles 頂層的 `locations` 產生，記錄語言變體的代表性城市點；它是探索用資料，不代表完整語言分布。

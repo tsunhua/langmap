@@ -318,6 +318,68 @@ def seed_language_rows(
         }
 
 
+LOCATION_FIELDS = (
+    "variety_key", "city_name", "city_name_en", "territory_code", "script_code",
+    "latitude", "longitude", "reference",
+)
+
+
+def seed_location_rows(
+    profiles: dict,
+    variety_keys: set[str],
+    subtags: list[Subtag],
+) -> Iterator[dict[str, str]]:
+    """Validate and yield representative city rows from seed profiles."""
+    registered = {
+        (row.type, row.value.upper() if row.type == "region" else row.value.title() if row.type == "script" else row.value.lower())
+        for row in subtags if not row.deprecated
+    }
+    seen: set[tuple[str, str, str, str]] = set()
+    locations = profiles.get("locations", [])
+    if not isinstance(locations, list):
+        raise ValueError("locations 必須是 JSON array")
+    for entry in sorted(locations, key=lambda row: (
+        row.get("variety_key", ""), row.get("city_name", ""),
+        row.get("territory_code", ""), row.get("script_code", ""),
+    )):
+        if not isinstance(entry, dict):
+            raise ValueError("location 必須是 JSON object")
+        variety_key = entry.get("variety_key", "")
+        city_name = str(entry.get("city_name", "")).strip()
+        territory_code = str(entry.get("territory_code", "")).upper()
+        script_code = str(entry.get("script_code", "")).title()
+        reference = str(entry.get("reference", "")).strip()
+        if variety_key not in variety_keys:
+            raise ValueError(f"unknown variety_key: {variety_key}")
+        if not city_name or not reference:
+            raise ValueError("location city_name/reference 不可為空")
+        if ("region", territory_code) not in registered:
+            raise ValueError(f"location uses unregistered territory: {territory_code}")
+        if script_code and ("script", script_code) not in registered:
+            raise ValueError(f"location uses unregistered script: {script_code}")
+        try:
+            latitude = float(entry["latitude"])
+            longitude = float(entry["longitude"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("location latitude/longitude 必須是數字") from exc
+        if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+            raise ValueError("location latitude/longitude 超出範圍")
+        key = (variety_key, city_name, territory_code, script_code)
+        if key in seen:
+            raise ValueError(f"duplicate location: {key}")
+        seen.add(key)
+        yield {
+            "variety_key": variety_key,
+            "city_name": city_name,
+            "city_name_en": str(entry.get("city_name_en", "")).strip(),
+            "territory_code": territory_code,
+            "script_code": script_code,
+            "latitude": str(latitude),
+            "longitude": str(longitude),
+            "reference": reference,
+        }
+
+
 def read_profiles(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
@@ -347,6 +409,15 @@ def write_languages(path: Path, rows: Iterable[dict[str, str]], max_tags: int) -
         for row in values:
             writer.writerow(row)
     return count
+
+
+def write_locations(path: Path, rows: Iterable[dict[str, str]]) -> int:
+    values = sorted(rows, key=lambda row: tuple(row[field].casefold() for field in LOCATION_FIELDS))
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=LOCATION_FIELDS)
+        writer.writeheader()
+        writer.writerows(values)
+    return len(values)
 
 
 # ---------------------------------------------------------------------------
@@ -440,10 +511,22 @@ def render_language_insert(row: dict[str, str]) -> str:
     )
 
 
+def render_location_insert(row: dict[str, str]) -> str:
+    cols = ", ".join(LOCATION_FIELDS)
+    vals = ", ".join(sql_literal(row[field]) for field in LOCATION_FIELDS)
+    return (
+        f"INSERT INTO language_locations ({cols}) VALUES ({vals}) "
+        "ON CONFLICT(variety_key, city_name, territory_code, script_code) DO UPDATE SET "
+        "city_name_en=excluded.city_name_en, latitude=excluded.latitude, "
+        "longitude=excluded.longitude, reference=excluded.reference;"
+    )
+
+
 def render_registry_sql(
     languoids: list[Languoid],
     subtags: list[Subtag],
     languages: list[dict[str, str]],
+    locations: list[dict[str, str]] | None = None,
 ) -> str:
     """Generate a complete, idempotent SQL script for the language registry."""
     statements = []
@@ -455,6 +538,10 @@ def render_registry_sql(
     statements.extend(
         render_language_insert(row)
         for row in sorted(languages, key=lambda row: row["code"])
+    )
+    statements.extend(
+        render_location_insert(row)
+        for row in sorted(locations or [], key=lambda row: tuple(row[field] for field in LOCATION_FIELDS))
     )
     return "\n".join(statements) + "\n"
 
@@ -495,6 +582,11 @@ def main(argv: list[str] | None = None) -> int:
         seed_rows = list(seed_language_rows(
             profiles, subtags, {row.glottocode: row for row in languoids}
         ))
+        location_rows = list(seed_location_rows(
+            profiles,
+            {row["variety_key"] for row in seed_rows},
+            subtags,
+        ))
         try:
             language_count = write_languages(
                 languages_path,
@@ -525,6 +617,9 @@ def main(argv: list[str] | None = None) -> int:
                 "profile_version": profiles.get("version"),
                 "profile_file": args.profiles.name,
                 "language_tag_count": language_count,
+                "language_location_count": write_locations(
+                    args.output / "language-locations.csv", location_rows
+                ),
                 "max_tags": args.max_tags,
             },
         }
@@ -534,7 +629,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         sql_path = args.output / "language-registry.sql"
         sql_path.write_text(
-            render_registry_sql(languoids, subtags, seed_rows),
+            render_registry_sql(languoids, subtags, seed_rows, location_rows),
             encoding="utf-8",
         )
         print(json.dumps(manifest, ensure_ascii=False, indent=2))
