@@ -11,6 +11,7 @@ The JSON format is { "key": "translation", ... } — keys match en.ts dotted pat
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hashlib
 import json
 import re
@@ -18,10 +19,23 @@ import sys
 from pathlib import Path
 
 PROJECT_ID = 'langmap-web'
+SOURCE_LANGUAGE_CODE = 'en-US'
 LANGUAGE_ID_BITS = 16
 TEXT_ID_BITS = 37
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EN_TS_PATH = PROJECT_ROOT / 'web/src/locales/en.ts'
+
+
+@dataclass(frozen=True)
+class TranslationRow:
+    locale_code: str
+    key: str
+    source_text: str
+    translation_text: str
+    source_expression_id: int
+    target_expression_id: int
+    edge_id: str
+    source_ref: str
 
 
 def hash_segment(content: str, bits: int) -> int:
@@ -125,8 +139,64 @@ def sql_value(v: str | None) -> str:
     return f"'{q(v)}'"
 
 
-def generate_sql(locale_code: str, translations: dict[str, str],
-                 source_map: dict[str, str]) -> str:
+def validate_locale_code(locale_code: str) -> None:
+    if not re.match(r'^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$', locale_code):
+        raise ValueError(f'invalid locale code "{locale_code}"')
+
+
+def load_translations(path: Path) -> dict[str, str]:
+    data = json.loads(path.read_text(encoding='utf-8'))
+    if not isinstance(data, dict):
+        raise ValueError('translations file must be a JSON object { "key": "text", ... }')
+    translations: dict[str, str] = {}
+    for key, value in data.items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise ValueError('translations file must be a JSON object of string keys and string values')
+        translations[key] = value
+    return translations
+
+
+def find_unknown_keys(translations: dict[str, str], source_map: dict[str, str]) -> list[str]:
+    return sorted(key for key in translations if key not in source_map)
+
+
+def build_translation_rows(
+    locale_code: str,
+    translations: dict[str, str],
+    source_map: dict[str, str],
+    *,
+    source_language_code: str = SOURCE_LANGUAGE_CODE,
+    expression_id_fn=expression_id,
+    stable_edge_id_fn=stable_edge_id,
+) -> list[TranslationRow]:
+    validate_locale_code(locale_code)
+    unknown = find_unknown_keys(translations, source_map)
+    if unknown:
+        joined = ', '.join(unknown)
+        raise ValueError(f'unknown source key(s) for {locale_code}: {joined}')
+
+    rows: list[TranslationRow] = []
+    for key in sorted(translations.keys()):
+        translation_text = translations[key]
+        source_text = source_map[key]
+        source_expression_id = expression_id_fn(source_language_code, source_text)
+        target_expression_id = expression_id_fn(locale_code, translation_text)
+        rows.append(
+            TranslationRow(
+                locale_code=locale_code,
+                key=key,
+                source_text=source_text,
+                translation_text=translation_text,
+                source_expression_id=source_expression_id,
+                target_expression_id=target_expression_id,
+                edge_id=stable_edge_id_fn(source_expression_id, target_expression_id),
+                source_ref=f'{PROJECT_ID}:{key}',
+            )
+        )
+    return rows
+
+
+def render_locale_sql(locale_code: str, rows: list[TranslationRow]) -> str:
     lines: list[str] = []
     lines.append(f'-- Generated i18n import for {locale_code}')
     lines.append(f'-- Project: {PROJECT_ID}')
@@ -142,40 +212,36 @@ FROM languages l WHERE l.code = '{locale_code}';
     lines.append('')
 
     # 2. Process each translation
-    sorted_keys = sorted(translations.keys())
-    lines.append(f'-- 2. Translations ({len(sorted_keys)} keys)')
+    lines.append(f'-- 2. Translations ({len(rows)} keys)')
 
-    for key in sorted_keys:
-        translation = translations[key]
-        source_text = source_map.get(key)
-        if not source_text:
-            print(f'  ⚠  Skipping "{key}": source text not found in en.ts', file=sys.stderr)
-            continue
-
-        # Compute IDs
-        src_id = expression_id('en-US', source_text)
-        tgt_id = expression_id(locale_code, translation)
-        edge_id = stable_edge_id(src_id, tgt_id)
-        source_ref = f'{PROJECT_ID}:{key}'
-
+    for row in rows:
         lines.append(f"""
--- {key}
+-- {row.key}
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES ({src_id}, '{q(source_text)}', 'en-US', 'ui_i18n', '{source_ref}', 'approved');
+VALUES ({row.source_expression_id}, '{q(row.source_text)}', '{SOURCE_LANGUAGE_CODE}', 'ui_i18n', '{row.source_ref}', 'approved');
 
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
-VALUES ('{PROJECT_ID}', '{key}', {src_id}, '[]', '{src_id}', 'active');
+VALUES ('{PROJECT_ID}', '{row.key}', {row.source_expression_id}, '[]', '{row.source_expression_id}', 'active');
 
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES ({tgt_id}, '{q(translation)}', '{locale_code}', 'ui_i18n', '{source_ref}', 'pending');
+VALUES ({row.target_expression_id}, '{q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('{edge_id}', {src_id}, {tgt_id}, 0, 'ui_i18n');
+VALUES ('{row.edge_id}', {row.source_expression_id}, {row.target_expression_id}, 0, 'ui_i18n');
 """.strip())
         lines.append('')
 
     lines.append('-- Done')
     return '\n'.join(lines)
+
+
+def generate_sql(
+    locale_code: str,
+    translations: dict[str, str],
+    source_map: dict[str, str],
+) -> str:
+    rows = build_translation_rows(locale_code, translations, source_map)
+    return render_locale_sql(locale_code, rows)
 
 
 # ---------------------------------------------------------------------------
@@ -193,36 +259,25 @@ def main():
         sys.exit(1)
 
     locale_code = sys.argv[1]
-    trans_path = sys.argv[2]
+    trans_path = Path(sys.argv[2])
 
-    # Validate locale code
-    if not re.match(r'^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$', locale_code):
-        print(f'Error: invalid locale code "{locale_code}"', file=sys.stderr)
-        sys.exit(1)
-
-    # Load translation JSON
-    with open(trans_path) as f:
-        translations = json.load(f)
-    if not isinstance(translations, dict):
-        print('Error: translations file must be a JSON object { "key": "text", ... }', file=sys.stderr)
-        sys.exit(1)
-
-    # Parse source map from en.ts
     try:
+        validate_locale_code(locale_code)
+        translations = load_translations(trans_path)
+
         source_map = parse_en_ts(EN_TS_PATH)
     except FileNotFoundError:
         print(f'Error: source catalog not found at {EN_TS_PATH}', file=sys.stderr)
         sys.exit(1)
+    except ValueError as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        sys.exit(1)
 
-    # Validate keys
-    unknown = [k for k in translations if k not in source_map]
-    if unknown:
-        print(f'Warning: {len(unknown)} key(s) not found in en.ts (will be skipped):', file=sys.stderr)
-        for k in unknown:
-            print(f'  - {k}', file=sys.stderr)
-
-    sql = generate_sql(locale_code, translations, source_map)
-    print(sql)
+    try:
+        print(generate_sql(locale_code, translations, source_map))
+    except ValueError as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

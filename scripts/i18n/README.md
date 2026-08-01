@@ -1,16 +1,55 @@
-# UI 翻譯匯入
+# UI 翻譯 bundle
 
-將 JSON 翻譯檔轉成 SQL，再匯入 Cloudflare D1。翻譯鍵需對應
-`web/src/locales/en.ts` 的巢狀路徑。
+受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
+`web/src/locales/en.ts`，first-party locale JSON 目前包含：
 
-## 翻譯檔
+- `zh-Hans-CN.json`
+- `zh-Hant-TW.json`
+- `es-ES.json`
+- `ja-JP.json`
 
-- `zh-Hans-CN.json`：簡體中文（中國）
-- `zh-Hant-TW.json`：繁體中文（台灣）
-- `es-ES.json`：西班牙文（西班牙）
-- `ja-JP.json`：日文（日本）
+翻譯鍵需對應 `web/src/locales/en.ts` 的巢狀路徑。
 
-格式為扁平 JSON：
+## 生成 bundle
+
+產物固定寫到 `scripts/i18n/artifacts/system-ui/`：
+
+- `system-ui.sql`
+- `manifest.json`
+
+```bash
+python3 scripts/i18n/generate-bundle.py
+```
+
+如需指定測試輸入或輸出目錄：
+
+```bash
+python3 scripts/i18n/generate-bundle.py \
+  --source-catalog /tmp/en.ts \
+  --locale zh-Hant-TW=/tmp/zh-Hant-TW.json \
+  --locale zh-Hans-CN=/tmp/zh-Hans-CN.json \
+  --locale es-ES=/tmp/es-ES.json \
+  --locale ja-JP=/tmp/ja-JP.json \
+  --output-dir /tmp/system-ui-bundle
+```
+
+manifest 會記錄 schema version、project/scope、source checksums、locale/message/
+translation counts，以及輸出 SQL 的 SHA-256。生成失敗時不會替換既有 artifact。
+
+## Local compatibility wrapper
+
+本地匯入改為先重建 bundle，再一次載入單一 SQL：
+
+```bash
+scripts/i18n/import-all.sh --local
+```
+
+`--remote` 已停用。production 寫入改由 production data manager 接手；此 wrapper
+不再直接對 remote D1 執行匯入。
+
+## 單語系 SQL
+
+若只需檢查單一 locale 的 SQL，既有 generator 仍可用：
 
 ```json
 {
@@ -19,30 +58,11 @@
 }
 ```
 
-## 一鍵生成與匯入
-
-批次腳本會生成全部四個語言的 SQL 至暫存目錄，依序匯入後自動清理。
-
-```bash
-scripts/i18n/import-all.sh --local
-```
-
-遠端模式會列出目標語言，輸入 `yes` 後才會寫入：
-
-```bash
-scripts/i18n/import-all.sh --remote
-```
-
-如只需生成單一語言：
-
 ```bash
 python3 scripts/i18n/generate-i18n-sql.py \
   zh-Hant-TW scripts/i18n/zh-Hant-TW.json \
   > /tmp/langmap-zh-Hant-TW-import.sql
 ```
 
-生成器會建立 locale、UI message、翻譯詞句與語義關係；重複執行時使用
-`INSERT OR IGNORE`。找不到英文原文的未知鍵會略過並在 stderr 顯示警告。
-
-`scripts/i18n/*-import.sql` 已加入 `.gitignore`。若曾建立在專案內，可用
-`git check-ignore scripts/i18n/<locale>-import.sql` 確認不會被 Git 追蹤。
+此 generator 會保留既有 deterministic `expression_id` / `stable_edge_id` 與
+SQL insert semantics，但未知 source key 會直接 fail，不再 warning/skip。

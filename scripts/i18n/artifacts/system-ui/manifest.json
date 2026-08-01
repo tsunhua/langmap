@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "project_id": "langmap-web",
+  "ownership_scope": "managed-system-ui",
+  "locale_codes": [
+    "es-ES",
+    "ja-JP",
+    "zh-Hans-CN",
+    "zh-Hant-TW"
+  ],
+  "counts": {
+    "locale_count": 4,
+    "message_count": 312,
+    "translation_count": 1228
+  },
+  "inputs": {
+    "source_catalog": {
+      "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
+      "sha256": "23ee2bf5ed32a022db249e49f75c9804bf1866024affaab10e8eaba5ee300d50"
+    },
+    "locales": {
+      "es-ES": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/es-ES.json",
+        "sha256": "98da85086beceefe9981912918ee193c86dd7e342f4c206d420951e9fa84368a"
+      },
+      "ja-JP": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/ja-JP.json",
+        "sha256": "9ea6a6275bd41051f3abab66b247abccfe093113051601667aa85bb616c7040c"
+      },
+      "zh-Hans-CN": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/zh-Hans-CN.json",
+        "sha256": "1ec4df8768aba2579c36913f045b3785b1400c520240e9b604fbf7ab2ba59966"
+      },
+      "zh-Hant-TW": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/zh-Hant-TW.json",
+        "sha256": "0c554163e4082aad1ababec82c4c4a983fe63e7687f446209725914780c56b5c"
+      }
+    }
+  },
+  "artifacts": {
+    "system_ui_sql": {
+      "path": "system-ui.sql",
+      "sha256": "5415772e6438b05c5d08aac345e551e87da265558d960465b3c5e152936742c0"
+    }
+  }
+}

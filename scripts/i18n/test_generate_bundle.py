@@ -1,0 +1,303 @@
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import textwrap
+import unittest
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+GENERATE_BUNDLE = REPO_ROOT / "scripts" / "i18n" / "generate-bundle.py"
+GENERATE_SQL = REPO_ROOT / "scripts" / "i18n" / "generate-i18n-sql.py"
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise AssertionError(f"unable to load module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+class GenerateBundleTests(unittest.TestCase):
+    maxDiff = None
+
+    def _write_fixture_tree(self, root: Path, *, es_extra: dict[str, str] | None = None) -> tuple[Path, dict[str, Path]]:
+        catalog_path = root / "web" / "src" / "locales" / "en.ts"
+        catalog_path.parent.mkdir(parents=True, exist_ok=True)
+        catalog_path.write_text(
+            textwrap.dedent(
+                """\
+                export const en = {
+                  auth: {
+                    noAccount: "Don't have an account?",
+                  },
+                  common: {
+                    search: 'Search',
+                  },
+                  search: {
+                    hint: "L'été arrive",
+                  },
+                } as const
+
+                export type MessageSchema = typeof en
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        locale_dir = root / "scripts" / "i18n"
+        locale_dir.mkdir(parents=True, exist_ok=True)
+        locales = {
+            "zh-Hans-CN": {
+                "auth.noAccount": "还没有账号？",
+                "common.search": "搜索",
+                "search.hint": "L'été 即将到来",
+            },
+            "zh-Hant-TW": {
+                "auth.noAccount": "還沒有帳號？",
+                "common.search": "搜尋",
+                "search.hint": "L'été 即將到來",
+            },
+            "es-ES": {
+                "auth.noAccount": "¿No tienes una cuenta?",
+                "common.search": "Buscar",
+                "search.hint": "L'été llega",
+            },
+            "ja-JP": {
+                "auth.noAccount": "アカウントをお持ちではありませんか？",
+                "common.search": "検索",
+                "search.hint": "L'été が来ます",
+            },
+        }
+        if es_extra:
+            locales["es-ES"].update(es_extra)
+
+        paths: dict[str, Path] = {}
+        for code, payload in locales.items():
+            path = locale_dir / f"{code}.json"
+            path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            paths[code] = path
+        return catalog_path, paths
+
+    def _run_cli(self, *, catalog_path: Path, locale_paths: dict[str, Path], output_dir: Path) -> subprocess.CompletedProcess[str]:
+        args = [
+            sys.executable,
+            str(GENERATE_BUNDLE),
+            "--source-catalog",
+            str(catalog_path),
+            "--output-dir",
+            str(output_dir),
+        ]
+        for code in ("zh-Hant-TW", "ja-JP", "es-ES", "zh-Hans-CN"):
+            args.extend(["--locale", f"{code}={locale_paths[code]}"])
+        return subprocess.run(
+            args,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def _create_sqlite_schema(self, db: sqlite3.Connection) -> None:
+        db.executescript(
+            """
+            CREATE TABLE languages (
+              code TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              direction TEXT NOT NULL
+            );
+            CREATE TABLE expressions (
+              id INTEGER PRIMARY KEY,
+              text TEXT NOT NULL,
+              language_code TEXT NOT NULL,
+              source_type TEXT,
+              source_ref TEXT,
+              review_status TEXT
+            );
+            CREATE TABLE ui_locales (
+              project_id TEXT NOT NULL,
+              code TEXT NOT NULL,
+              native_name TEXT NOT NULL,
+              direction TEXT NOT NULL,
+              status TEXT NOT NULL,
+              PRIMARY KEY (project_id, code)
+            );
+            CREATE TABLE ui_messages (
+              project_id TEXT NOT NULL,
+              key TEXT NOT NULL,
+              source_expression_id INTEGER NOT NULL,
+              placeholders_json TEXT,
+              source_hash TEXT NOT NULL,
+              status TEXT NOT NULL,
+              PRIMARY KEY (project_id, key)
+            );
+            CREATE TABLE expression_edges (
+              id TEXT PRIMARY KEY,
+              expression_a_id INTEGER NOT NULL,
+              expression_b_id INTEGER NOT NULL,
+              score INTEGER NOT NULL,
+              source TEXT NOT NULL
+            );
+            """
+        )
+        db.executemany(
+            "INSERT INTO languages (code, name, direction) VALUES (?, ?, ?)",
+            [
+                ("zh-Hans-CN", "简体中文（中国）", "ltr"),
+                ("zh-Hant-TW", "繁體中文（台灣）", "ltr"),
+                ("es-ES", "Español (España)", "ltr"),
+                ("ja-JP", "日本語（日本）", "ltr"),
+            ],
+        )
+
+    def test_cli_generates_manifest_sql_and_idempotent_bundle(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+        self.assertTrue(GENERATE_SQL.exists(), "generate-i18n-sql.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+
+            result = self._run_cli(
+                catalog_path=catalog_path,
+                locale_paths=locale_paths,
+                output_dir=output_dir,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+            manifest_path = output_dir / "manifest.json"
+            sql_path = output_dir / "system-ui.sql"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            sql_text = sql_path.read_text(encoding="utf-8")
+
+            self.assertEqual(manifest["schema_version"], 1)
+            self.assertEqual(manifest["project_id"], "langmap-web")
+            self.assertEqual(manifest["ownership_scope"], "managed-system-ui")
+            self.assertEqual(
+                manifest["locale_codes"],
+                ["es-ES", "ja-JP", "zh-Hans-CN", "zh-Hant-TW"],
+            )
+            self.assertEqual(
+                manifest["counts"],
+                {"locale_count": 4, "message_count": 3, "translation_count": 12},
+            )
+            self.assertEqual(
+                manifest["inputs"]["source_catalog"]["sha256"],
+                sha256_text(catalog_path.read_text(encoding="utf-8")),
+            )
+            for code, path in locale_paths.items():
+                self.assertEqual(
+                    manifest["inputs"]["locales"][code]["sha256"],
+                    sha256_text(path.read_text(encoding="utf-8")),
+                )
+            self.assertEqual(
+                manifest["artifacts"]["system_ui_sql"]["sha256"],
+                sha256_text(sql_text),
+            )
+
+            self.assertIn("INSERT INTO ui_locales", sql_text)
+            self.assertIn("INSERT OR IGNORE INTO ui_messages", sql_text)
+            self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
+            self.assertNotIn("DELETE FROM", sql_text)
+            self.assertIn("Don''t have an account?", sql_text)
+            self.assertLess(sql_text.index("-- Locale es-ES"), sql_text.index("-- Locale ja-JP"))
+            self.assertLess(sql_text.index("-- auth.noAccount"), sql_text.index("-- common.search"))
+            self.assertLess(sql_text.index("-- common.search"), sql_text.index("-- search.hint"))
+
+            db = sqlite3.connect(":memory:")
+            try:
+                self._create_sqlite_schema(db)
+                db.executescript(sql_text)
+                first_counts = {
+                    table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                    for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
+                }
+                db.executescript(sql_text)
+                second_counts = {
+                    table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                    for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
+                }
+            finally:
+                db.close()
+
+            self.assertEqual(second_counts, first_counts)
+
+    def test_cli_fails_on_unknown_source_key_and_keeps_existing_artifacts(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(
+                temp_root,
+                es_extra={"missing.key": "desconocido"},
+            )
+            output_dir = temp_root / "artifacts" / "system-ui"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            manifest_path = output_dir / "manifest.json"
+            sql_path = output_dir / "system-ui.sql"
+            manifest_path.write_text('{"sentinel":"manifest"}\n', encoding="utf-8")
+            sql_path.write_text("-- sentinel sql\n", encoding="utf-8")
+
+            result = self._run_cli(
+                catalog_path=catalog_path,
+                locale_paths=locale_paths,
+                output_dir=output_dir,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing.key", result.stderr)
+            self.assertEqual(manifest_path.read_text(encoding="utf-8"), '{"sentinel":"manifest"}\n')
+            self.assertEqual(sql_path.read_text(encoding="utf-8"), "-- sentinel sql\n")
+
+    def test_detects_deterministic_id_collisions_for_different_text(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+            module = load_module("generate_bundle", GENERATE_BUNDLE)
+
+            def collision_expression_id(language_code: str, text: str) -> int:
+                if language_code == "es-ES":
+                    return 999
+                return module.i18n_sql.expression_id(language_code, text)
+
+            with self.assertRaisesRegex(ValueError, "expression_id collision"):
+                module.generate_bundle(
+                    source_catalog_path=catalog_path,
+                    locale_paths=locale_paths,
+                    output_dir=output_dir,
+                    expression_id_fn=collision_expression_id,
+                )
+
+    def test_generate_i18n_sql_rejects_unknown_keys_instead_of_skipping(self) -> None:
+        self.assertTrue(GENERATE_SQL.exists(), "generate-i18n-sql.py should exist")
+        module = load_module("generate_i18n_sql", GENERATE_SQL)
+        source_map = {"common.search": "Search"}
+        translations = {"common.search": "Buscar", "missing.key": "Desconocido"}
+
+        with self.assertRaisesRegex(ValueError, "missing.key"):
+            module.generate_sql("es-ES", translations, source_map)
+
+
+if __name__ == "__main__":
+    unittest.main()

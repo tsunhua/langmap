@@ -3,8 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-LOCALES=(zh-Hans-CN zh-Hant-TW es-ES ja-JP)
+PROJECT_ROOT="${LANGMAP_PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+BUNDLE_SQL="$PROJECT_ROOT/scripts/i18n/artifacts/system-ui/system-ui.sql"
 
 usage() {
   echo "Usage: $0 --local | --remote" >&2
@@ -17,16 +17,11 @@ fi
 
 case "$1" in
   --local)
-    mode="--local"
     ;;
   --remote)
-    mode="--remote"
-    echo "即將匯入遠端 D1：${LOCALES[*]}"
-    read -r -p "輸入 yes 繼續： " confirmation
-    if [[ "$confirmation" != "yes" ]]; then
-      echo "已取消遠端匯入。"
-      exit 1
-    fi
+    echo "已停用：remote UI translation import 已移轉到 production data manager。" >&2
+    echo "請改用對應的 production manager 指令；此 wrapper 不再直接寫入 production。" >&2
+    exit 1
     ;;
   *)
     usage
@@ -34,23 +29,14 @@ case "$1" in
     ;;
 esac
 
-temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/langmap-i18n.XXXXXX")"
-trap 'rm -rf "$temp_dir"' EXIT
+echo "生成 managed system UI bundle..."
+python3 "$SCRIPT_DIR/generate-bundle.py"
 
-for locale in "${LOCALES[@]}"; do
-  echo "生成 $locale SQL..."
-  python3 "$SCRIPT_DIR/generate-i18n-sql.py" \
-    "$locale" "$SCRIPT_DIR/$locale.json" \
-    > "$temp_dir/$locale-import.sql"
-done
+echo "匯入 local bundle..."
+(
+  cd "$PROJECT_ROOT/backend"
+  npx wrangler d1 execute langmap-v2 \
+    --local --file "$BUNDLE_SQL"
+)
 
-for locale in "${LOCALES[@]}"; do
-  echo "匯入 $locale ($mode)..."
-  (
-    cd "$PROJECT_ROOT/backend"
-    npx wrangler d1 execute langmap-v2 \
-      "$mode" --file "$temp_dir/$locale-import.sql"
-  )
-done
-
-echo "全部語言匯入完成。"
+echo "managed system UI bundle 匯入完成。"
