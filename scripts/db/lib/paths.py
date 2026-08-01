@@ -134,3 +134,11 @@ class ProjectPaths:
     @property
     def local_rebuild_lock_path(self) -> Path:
         return self.operations_dir / "local-rebuild.lock"
+
+    @property
+    def production_inventory_report_path(self) -> Path:
+        return self.state_dir / "production" / "inventory.json"
+
+    @property
+    def production_baseline_path(self) -> Path:
+        return self.repo_root / "scripts" / "db" / "production-baseline.json"

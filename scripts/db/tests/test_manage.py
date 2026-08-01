@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 MANAGE_PY = REPO_ROOT / "scripts" / "db" / "manage.py"
 PATHS_PY = REPO_ROOT / "scripts" / "db" / "lib" / "paths.py"
 RUNNER_PY = REPO_ROOT / "scripts" / "db" / "lib" / "runner.py"
+PRODUCTION_FIXTURE_WRANGLER = REPO_ROOT / "scripts" / "db" / "tests" / "fixtures" / "wrangler-production"
 
 
 def run_manage(
@@ -114,7 +115,7 @@ class ManageCliTests(unittest.TestCase):
         self.assertIn("invalid choice", result.stderr)
 
     def test_production_accepts_only_supported_commands(self) -> None:
-        for command in ("inventory", "plan", "apply", "verify"):
+        for command in ("plan", "apply", "verify"):
             with self.subTest(command=command):
                 result = run_manage("production", command)
                 self.assertEqual(
@@ -122,6 +123,31 @@ class ManageCliTests(unittest.TestCase):
                     0,
                     msg=f"expected production {command} to be accepted: {result.stderr}",
                 )
+
+        build_fixture_repo, fixture_wrangler = _load_local_fixture_helpers()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture_root = Path(temp_dir)
+            build_fixture_repo(fixture_root)
+            (fixture_root / "backend" / "wrangler.jsonc").write_text(
+                '{"d1_databases":[{"database_name":"langmap-v2",'
+                '"database_id":"69a50b71-8cff-4e50-9e73-1e9020d34bd3"}]}\n',
+                encoding="utf-8",
+            )
+            result = run_manage(
+                "--repo-root",
+                str(fixture_root),
+                "production",
+                "inventory",
+                env={
+                    **dict(os.environ),
+                    "LANGMAP_WRANGLER_BIN": str(PRODUCTION_FIXTURE_WRANGLER),
+                },
+            )
+            self.assertEqual(
+                result.returncode,
+                0,
+                msg=f"expected production inventory to be accepted: {result.stderr}",
+            )
 
         result = run_manage("production", "status")
 

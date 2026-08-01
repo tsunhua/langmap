@@ -9,6 +9,7 @@ from typing import Callable
 from lib.fingerprint import build_local_status
 from lib.local import rebuild_local_state, verify_local_environment
 from lib.paths import ProjectPaths
+from lib.production import inventory_production
 
 
 Handler = Callable[[ProjectPaths, argparse.Namespace], int]
@@ -33,7 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     production_parser = environment_parser.add_parser("production")
     production_commands = production_parser.add_subparsers(dest="command", required=True)
-    for command in ("inventory", "plan", "apply", "verify"):
+    inventory_parser = production_commands.add_parser("inventory")
+    inventory_parser.set_defaults(handler=_production_inventory_handler)
+    for command in ("plan", "apply", "verify"):
         subparser = production_commands.add_parser(command)
         subparser.set_defaults(handler=_stub_handler)
 
@@ -82,6 +85,22 @@ def _local_rebuild_handler(paths: ProjectPaths, args: argparse.Namespace) -> int
 def _local_verify_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
     payload = verify_local_environment(paths, wrangler_bin=_wrangler_bin_from_env())
     print(json.dumps(payload, ensure_ascii=False))
+    return 0
+
+
+def _production_inventory_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    report = inventory_production(paths, wrangler_bin=_wrangler_bin_from_env())
+    summary = {
+        "status": report["status"],
+        "environment": "production",
+        "database_name": report["identity"]["database_name"],
+        "database_id": report["identity"]["database_id"],
+        "schema_object_count": len(report["schema_objects"]),
+        "migration_count": len(report["migrations"]["applied"]),
+        "counts": report["counts"],
+        "report_path": str(paths.production_inventory_report_path),
+    }
+    print(json.dumps(summary, ensure_ascii=False))
     return 0
 
 

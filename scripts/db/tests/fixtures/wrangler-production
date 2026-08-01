@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+
+DATABASE_NAME = "langmap-v2"
+DATABASE_ID = "69a50b71-8cff-4e50-9e73-1e9020d34bd3"
+
+
+def main(argv: list[str]) -> int:
+    log_path = os.environ.get("FAKE_PRODUCTION_WRANGLER_LOG")
+    if log_path:
+        with Path(log_path).open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(argv, ensure_ascii=False) + "\n")
+    if argv[:3] == ["d1", "info", DATABASE_NAME]:
+        print(json.dumps({"database": {"name": DATABASE_NAME, "uuid": DATABASE_ID}}))
+        return 0
+    if argv[:3] != ["d1", "execute", DATABASE_NAME] or "--command" not in argv:
+        print("unsupported production fake command", file=sys.stderr)
+        return 2
+    sql = argv[argv.index("--command") + 1]
+    lowered = sql.lower()
+    if any(token in lowered for token in ("insert", "update", "delete", "drop", "alter", "replace")):
+        print("mutation reached fake production", file=sys.stderr)
+        return 3
+    if "sqlite_master" in lowered:
+        rows = [
+            {"kind": "schema", "type": "table", "name": "languages", "sql": "CREATE TABLE languages"},
+            {"kind": "schema", "type": "index", "name": "idx_languages_name", "sql": "CREATE INDEX idx_languages_name"},
+            {"kind": "schema", "type": "trigger", "name": "expressions_ai", "sql": "CREATE TRIGGER expressions_ai"},
+            {"kind": "column", "table_name": "languages", "name": "code", "column_type": "TEXT"},
+            {"kind": "column", "table_name": "languages", "name": "name", "column_type": "TEXT"},
+            {"kind": "migration", "name": "0002_init.sql"},
+            {"kind": "migration", "name": "0003_seed.sql"},
+        ]
+        print(json.dumps([{"results": rows}]))
+        return 0
+    metrics = [
+        ("languages", 62),
+        ("languoids", 27177),
+        ("language_locations", 45),
+        ("expressions", 1308),
+        ("expression_edges", 1058),
+        ("ui_locales", 4),
+        ("ui_messages", 312),
+        ("managed_ui_messages", 312),
+        ("managed_ui_edges", 1058),
+        ("orphan_languages", 0),
+        ("orphan_ui_messages", 0),
+        ("orphan_expression_edges", 0),
+    ]
+    print(json.dumps([{"results": [{"metric": metric, "count": count}]} for metric, count in metrics]))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
