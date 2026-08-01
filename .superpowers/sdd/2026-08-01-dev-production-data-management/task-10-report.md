@@ -14,7 +14,7 @@
 
 Passed:
 
-- DB manager suite: 62 tests.
+- DB manager suite: 64 tests.
 - i18n generator suite: 8 tests.
 - i18n import wrapper: pass.
 - v2 TypeScript suite: 7 tests.
@@ -41,3 +41,6 @@ that the plan exposed aggregate reference counts without managed keys. These gap
 before final acceptance: `production verify` now runs inventory, baseline, and orphan checks;
 inventory includes project-scoped UI message ownership keys; and plan uses the ownership-aware
 key diff with insert/update/unchanged/manual-review/delete counts (delete remains zero).
+
+Final rerun after these corrections: `python3 -m unittest discover -s scripts/db/tests -p
+'test_*.py'` — 64 tests passed.
