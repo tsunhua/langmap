@@ -30,3 +30,6 @@ No production command was run. The fake Wrangler received only `info` and SELECT
   pure key-level diff helper is ready for Task 8's approved data migration execution;
   full per-row remote reference planning remains intentionally read-only until ownership
   queries are expanded with the production schema contract.
+
+Completion-audit follow-up: inventory now collects project-scoped managed UI keys and the
+plan emits the per-key ownership diff. The previous aggregate-only limitation is resolved.

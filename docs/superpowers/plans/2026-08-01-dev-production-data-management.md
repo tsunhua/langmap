@@ -2,7 +2,7 @@
 
 > 對應規格：`docs/superpowers/specs/2026-08-01-dev-production-data-management-design.md`
 >
-> 狀態：待實作。
+> 狀態：已實作（Task 1–10 完成）；production mutation 仍要求 operator 明確授權。
 
 ## 1. 交付目標
 

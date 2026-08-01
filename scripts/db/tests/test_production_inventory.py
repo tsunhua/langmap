@@ -222,6 +222,30 @@ class ProductionInventoryTests(unittest.TestCase):
             journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
             self.assertIn('"previous_bookmark": "previous-bookmark-123"', journal)
 
+    def test_verify_checks_baseline_and_orphan_counts_read_only(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+
+            from lib.production import inventory_production, verify_production  # noqa: E402
+
+            inventory = inventory_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = verify_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+
+            self.assertEqual(result["status"], "ok")
+            self.assertEqual(result["counts"]["orphan_expression_edges"], 0)
+
 
 class ReferenceDiffTests(unittest.TestCase):
     def test_reference_diff_never_deletes_artifact_missing_remote_rows(self) -> None:

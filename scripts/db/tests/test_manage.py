@@ -115,16 +115,7 @@ class ManageCliTests(unittest.TestCase):
         self.assertIn("invalid choice", result.stderr)
 
     def test_production_accepts_only_supported_commands(self) -> None:
-        for command in ("verify",):
-            with self.subTest(command=command):
-                result = run_manage("production", command)
-                self.assertEqual(
-                    result.returncode,
-                    0,
-                    msg=f"expected production {command} to be accepted: {result.stderr}",
-                )
-
-        build_fixture_repo, fixture_wrangler = _load_local_fixture_helpers()
+        build_fixture_repo, _ = _load_local_fixture_helpers()
         with tempfile.TemporaryDirectory() as temp_dir:
             fixture_root = Path(temp_dir)
             build_fixture_repo(fixture_root)

@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from lib import journal
 from lib import migrations
+from lib.reference import diff_owned_references
 from lib.paths import ProjectPaths
 from lib.runner import CommandError, run_command
 
@@ -116,6 +117,11 @@ def inventory_production(
         for table in sorted({str(row["table_name"]) for row in schema_rows if row.get("kind") == "column"})
     }
     counts = {str(row["metric"]): int(row["count"]) for row in count_rows if "metric" in row}
+    managed_keys = {
+        str(row["key"]): str(row.get("source_hash") or "")
+        for row in count_rows
+        if row.get("kind") == "ui_key"
+    }
     report = {
         "status": "ok",
         "environment": "production",
@@ -136,6 +142,7 @@ def inventory_production(
             "system_ui_project": "langmap-web",
             "system_ui_messages": counts.get("managed_ui_messages", 0),
             "system_ui_edges": counts.get("managed_ui_edges", 0),
+            "system_ui_keys": managed_keys,
         },
     }
     journal.write_json_report(report_path or paths.production_inventory_report_path, report)
@@ -257,6 +264,13 @@ def plan_production(
         key: "unchanged" if expected_refs[key] == actual_refs[key] else "manual-review"
         for key in expected_refs
     }
+    desired_keys = _load_bundle_message_keys(paths.system_ui_sql_path)
+    remote_keys = inventory["ownership"].get("system_ui_keys", {})
+    key_diff = diff_owned_references(
+        desired_keys,
+        remote_keys,
+        owned_keys=set(remote_keys),
+    )
     plan = {
         "status": "blocked" if baseline_error else "ready",
         "environment": "production",
@@ -267,15 +281,17 @@ def plan_production(
         "pending_migrations": pending_migrations,
         "migration_risks": migration_risks,
         "reference_diff": {
+            "managed_keys": key_diff.counts,
+            "missing_keys": list(key_diff.inserts),
+            "changed_keys": list(key_diff.updates),
+            "manual_review_keys": list(key_diff.manual_review),
             "expected": expected_refs,
             "actual": actual_refs,
             "actions": reference_actions,
-            "counts": {
-                "insert": 0,
-                "update": 0,
+            "counts": key_diff.counts,
+            "aggregate_counts": {
                 "unchanged": sum(action == "unchanged" for action in reference_actions.values()),
                 "manual_review": sum(action == "manual-review" for action in reference_actions.values()),
-                "delete": 0,
             },
         },
         "risk": "high" if pending_migrations or baseline_error else "low",
@@ -286,9 +302,37 @@ def plan_production(
             "language_registry": str(paths.language_registry_sql_path.relative_to(paths.repo_root)),
             "system_ui": str(paths.system_ui_sql_path.relative_to(paths.repo_root)),
         },
+        "approved_data_migration": None,
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
     return plan
+
+
+def verify_production(
+    paths: ProjectPaths,
+    *,
+    wrangler_bin: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
+    baseline = check_baseline(paths, inventory)
+    orphan_counts = {
+        key: value
+        for key, value in inventory["counts"].items()
+        if key.startswith("orphan_") and value
+    }
+    if orphan_counts:
+        raise ProductionInventoryError(
+            "production orphan references detected: " + json.dumps(orphan_counts, sort_keys=True)
+        )
+    return {
+        "status": "ok",
+        "environment": "production",
+        "identity": inventory["identity"],
+        "baseline": baseline,
+        "counts": inventory["counts"],
+        "ownership": inventory["ownership"],
+    }
 
 
 def apply_production(
@@ -331,6 +375,17 @@ def apply_production(
         journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
         if plan.get("pending_migrations"):
             executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
+        approved_data_migration = plan.get("approved_data_migration")
+        if approved_data_migration:
+            data_path = _resolve_managed_artifact(paths, str(approved_data_migration))
+            executor.mutate(
+                ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
+            )
+        else:
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {**operation, "status": "data-migration-skipped"},
+            )
         executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.language_registry_sql_path)])
         executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.system_ui_sql_path)])
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
@@ -389,6 +444,7 @@ def restore_production(
                 "--remote",
                 "--bookmark",
                 bookmark,
+                "--json",
             ]
         )
         previous_bookmark = _extract_bookmark(json.loads(restore_result))
@@ -424,6 +480,17 @@ def _load_plan(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ProductionInventoryError("production plan must be an object")
     return payload
+
+
+def _resolve_managed_artifact(paths: ProjectPaths, relative_path: str) -> Path:
+    candidate = (paths.repo_root / relative_path).resolve()
+    try:
+        candidate.relative_to(paths.repo_root)
+    except ValueError as exc:
+        raise ProductionInventoryError("approved data migration escapes repository") from exc
+    if not candidate.is_file():
+        raise ProductionInventoryError("approved data migration artifact is missing")
+    return candidate
 
 
 def _extract_bookmark(payload: Any) -> str:
@@ -468,6 +535,15 @@ def classify_migration_risk(path: Path) -> str:
     if any(token in sql for token in ("insert ", "create table", "create index")):
         return "medium"
     return "low"
+
+
+def _load_bundle_message_keys(sql_path: Path) -> dict[str, str]:
+    sql = sql_path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        r"INSERT OR IGNORE INTO ui_messages\s*\([^)]*\)\s*VALUES\s*\(\s*'langmap-web'\s*,\s*'((?:[^']|'')*)'\s*,\s*\d+\s*,\s*'[^']*'\s*,\s*'((?:[^']|'')*)'",
+        re.IGNORECASE | re.DOTALL,
+    )
+    return {key.replace("''", "'"): source_hash for key, source_hash in pattern.findall(sql)}
 
 
 def _required_identity_value(payload: dict[str, Any], key: str) -> str:
@@ -522,6 +598,7 @@ SELECT 'ui_locales' AS metric, COUNT(*) AS count FROM ui_locales;
 SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';
 SELECT 'managed_ui_edges' AS metric, COUNT(*) FROM expression_edges WHERE source = 'ui_i18n';
+SELECT 'ui_key' AS kind, key, source_hash FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY key;
 SELECT 'orphan_languages' AS metric, COUNT(*) FROM languages WHERE variety_key NOT LIKE 'system:%' AND (TRIM(COALESCE(glottocode, '')) = '' OR NOT EXISTS (SELECT 1 FROM languoids WHERE languoids.glottocode = languages.glottocode));
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;
 SELECT 'orphan_expression_edges' AS metric, COUNT(*) FROM expression_edges x LEFT JOIN expressions a ON a.id = x.expression_a_id LEFT JOIN expressions b ON b.id = x.expression_b_id WHERE a.id IS NULL OR b.id IS NULL;

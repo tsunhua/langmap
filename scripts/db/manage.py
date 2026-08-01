@@ -9,7 +9,13 @@ from typing import Callable
 from lib.fingerprint import build_local_status
 from lib.local import rebuild_local_state, verify_local_environment
 from lib.paths import ProjectPaths
-from lib.production import apply_production, inventory_production, plan_production, restore_production
+from lib.production import (
+    apply_production,
+    inventory_production,
+    plan_production,
+    restore_production,
+    verify_production,
+)
 
 
 Handler = Callable[[ProjectPaths, argparse.Namespace], int]
@@ -44,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     apply_parser.add_argument("--confirm-production", required=True)
     apply_parser.set_defaults(handler=_production_apply_handler)
     verify_parser = production_commands.add_parser("verify")
-    verify_parser.set_defaults(handler=_stub_handler)
+    verify_parser.set_defaults(handler=_production_verify_handler)
 
     restore_parser = production_commands.add_parser("restore")
     restore_parser.add_argument("bookmark")
@@ -126,6 +132,12 @@ def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> 
         confirmation=args.confirm_production,
         wrangler_bin=_wrangler_bin_from_env(),
     )
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+def _production_verify_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    result = verify_production(paths, wrangler_bin=_wrangler_bin_from_env())
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

@@ -33,3 +33,11 @@ behavior was validated only with the fake Wrangler fixture.
   present in the current plan; the stage boundary is ready for a future metadata contract.
 - Provider-specific error payload enrichment and stronger normalized remote SQL fingerprints can
   be added without bypassing the existing safety gates.
+
+## Completion-audit correction
+
+The audit after the first Task 10 commit found that `production verify` was still a stub and
+that the plan exposed aggregate reference counts without managed keys. These gaps were corrected
+before final acceptance: `production verify` now runs inventory, baseline, and orphan checks;
+inventory includes project-scoped UI message ownership keys; and plan uses the ownership-aware
+key diff with insert/update/unchanged/manual-review/delete counts (delete remains zero).
