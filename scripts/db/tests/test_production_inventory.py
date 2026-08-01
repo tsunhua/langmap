@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -245,6 +247,43 @@ class ProductionInventoryTests(unittest.TestCase):
 
             self.assertEqual(result["status"], "ok")
             self.assertEqual(result["counts"]["orphan_expression_edges"], 0)
+
+    def test_manage_cli_routes_production_verify(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+
+            from lib.production import inventory_production  # noqa: E402
+
+            inventory = inventory_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "scripts/db/manage.py"),
+                    "--repo-root",
+                    str(root),
+                    "production",
+                    "verify",
+                ],
+                cwd=REPO_ROOT,
+                env={**os.environ, "LANGMAP_WRANGLER_BIN": str(FAKE_WRANGLER)},
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertEqual(json.loads(result.stdout)["status"], "ok")
 
 
 class ReferenceDiffTests(unittest.TestCase):
