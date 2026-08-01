@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Callable
 
+from lib.fingerprint import build_local_status
 from lib.paths import ProjectPaths
 
 
@@ -47,6 +48,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _stub_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    if args.environment == "local" and args.command == "status":
+        print(json.dumps(build_local_status(paths), ensure_ascii=False))
+        return 0
+
     payload = {
         "environment": args.environment,
         "command": args.command,

@@ -1,0 +1,66 @@
+{
+  "baseline_created_at": "2026-08-01T00:00:00Z",
+  "baseline_git_commit": "aa384e42",
+  "migrations": [
+    {
+      "sequence": 2,
+      "filename": "0002_add_name_en.sql",
+      "size": 60,
+      "sha256": "171eeb4db39e4970240b52f4c6f76a2c9c458e1068f3ab018a4b210be5e26bf8"
+    },
+    {
+      "sequence": 3,
+      "filename": "0003_add_lang_family_status.sql",
+      "size": 123,
+      "sha256": "d9685e6df5e8bc6b4c25f4804d1ce64b993df87a55ef0be5443315ed82211b3e"
+    },
+    {
+      "sequence": 4,
+      "filename": "0004_add_handbook_status.sql",
+      "size": 75,
+      "sha256": "947a22eec829d2045493922183de455ea4765c4957253956888cb88fd936e86f"
+    },
+    {
+      "sequence": 5,
+      "filename": "0005_add_languoid_registry.sql",
+      "size": 944,
+      "sha256": "cb105081d8736fd81d9228fb50a714b354a38da149042a931634c661b38bcb99"
+    },
+    {
+      "sequence": 6,
+      "filename": "0006_project_scoped_localization.sql",
+      "size": 1698,
+      "sha256": "071b31d71a08fd1b2ef1ced135e43cebca32e2a79ffe859d4af89fa4c7fa80b8"
+    },
+    {
+      "sequence": 7,
+      "filename": "0007_seed_first_party_ui_locales.sql",
+      "size": 529,
+      "sha256": "80ddf0280d23636cc3f64151f85f86fb7fee47e1e2eb2d702b5b171fa77245e1"
+    },
+    {
+      "sequence": 8,
+      "filename": "0008_apply_ui_locale_activation_policy.sql",
+      "size": 486,
+      "sha256": "ed86efabe666521d7945115ae07a18d00aa3cdc91e08111ba657cd87be80936e"
+    },
+    {
+      "sequence": 9,
+      "filename": "0009_only_en_us_active_ui_locale.sql",
+      "size": 317,
+      "sha256": "5fdfc237bbe4887a36a9bc2cdee544031db886d91a7945ee26361f1be63cd9a4"
+    },
+    {
+      "sequence": 10,
+      "filename": "0010_rebuild_language_registry.sql",
+      "size": 5637,
+      "sha256": "949c7bc1c476b1918ca449c7813a80ebad1f4f40e5c4bb74f853049526339f0f"
+    },
+    {
+      "sequence": 11,
+      "filename": "0011_add_language_locations.sql",
+      "size": 715,
+      "sha256": "28174c053665f635b42d97cb04d448ad2407843ba4ef3c0e360de39e4341077e"
+    }
+  ]
+}
