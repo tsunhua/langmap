@@ -81,6 +81,17 @@ async function changeSort(sort: string) {
       <StatBox :label="t('languageDetail.mapped')" :value="lang.mapped_expression_count" />
     </div>
 
+    <section v-if="lang.representative_cities?.length" class="ld-cities" aria-labelledby="representative-cities-title">
+      <h2 id="representative-cities-title">{{ t('languageDetail.representativeCities') }}</h2>
+      <p class="ld-cities-note">{{ t('languageDetail.representativeCitiesNote') }}</p>
+      <ul>
+        <li v-for="city in lang.representative_cities" :key="`${city.city_name}-${city.territory_code}-${city.script_code}`">
+          <span>{{ city.city_name }}</span>
+          <small>{{ city.city_name_en }} · {{ city.territory_code }}<template v-if="city.script_code"> · {{ city.script_code }}</template></small>
+        </li>
+      </ul>
+    </section>
+
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
       <div class="ld-sort">
@@ -116,4 +127,11 @@ async function changeSort(sort: string) {
 .ld-sort button.on { background: var(--fg); color: var(--surface); }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.ld-cities { border-bottom: 1px solid var(--border); margin-bottom: 18px; padding-bottom: 16px; }
+.ld-cities h2 { font-size: 16px; font-weight: 600; }
+.ld-cities-note { color: var(--muted); font-size: 12px; margin: 4px 0 10px; }
+.ld-cities ul { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.ld-cities li { min-width: 150px; border: 1px solid var(--border); background: var(--surface); padding: 8px 10px; }
+.ld-cities li span, .ld-cities li small { display: block; }
+.ld-cities li small { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 3px; }
 </style>

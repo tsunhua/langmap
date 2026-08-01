@@ -116,6 +116,13 @@ languages.get('/:code', async (c) => {
      WHERE e.language_code = ?`
   ).bind(code).first<{ count: number }>();
 
+  const locations = await c.env.DB.prepare(
+    `SELECT city_name, city_name_en, territory_code, script_code, latitude, longitude, reference
+     FROM language_locations
+     WHERE variety_key = ? AND (script_code = ? OR script_code = '')
+     ORDER BY city_name ASC, territory_code ASC`
+  ).bind((lang as Record<string, unknown>).variety_key, (lang as Record<string, unknown>).script_code || '').all();
+
   return success(c, {
     language: {
       code: (lang as Record<string, unknown>).code,
@@ -130,6 +137,7 @@ languages.get('/:code', async (c) => {
       glottocode: (lang as Record<string, unknown>).glottocode,
       origin: (lang as Record<string, unknown>).origin,
       expression_count: (lang as Record<string, unknown>).expression_count,
+      representative_cities: locations.results,
     },
     mapped_expression_count: mappedCount?.count || 0,
   });

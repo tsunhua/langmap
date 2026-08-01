@@ -43,6 +43,17 @@ export interface RegistryLanguage {
   glottocode: string | null
   origin: 'seed' | 'glottolog' | 'community' | 'system'
   expression_count?: number
+  representative_cities?: RepresentativeCity[]
+}
+
+export interface RepresentativeCity {
+  city_name: string
+  city_name_en: string | null
+  territory_code: string
+  script_code: string
+  latitude: number
+  longitude: number
+  reference: string
 }
 
 export interface LanguoidCandidate {
