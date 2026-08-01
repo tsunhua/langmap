@@ -189,6 +189,39 @@ class ProductionInventoryTests(unittest.TestCase):
             journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
             self.assertIn('"status": "succeeded"', journal)
 
+    def test_restore_verifies_after_restore_and_records_previous_bookmark(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+
+            from lib.production import inventory_production, restore_production  # noqa: E402
+
+            inventory = inventory_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = restore_production(
+                paths,
+                bookmark="bookmark-123",
+                database_name="langmap-v2",
+                confirmation="langmap-v2",
+                wrangler_bin=FAKE_WRANGLER,
+                env={"FAKE_PRODUCTION_ALLOW_MUTATIONS": "1"},
+            )
+
+            self.assertEqual(result["status"], "succeeded")
+            self.assertEqual(result["previous_bookmark"], "previous-bookmark-123")
+            journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
+            self.assertIn('"previous_bookmark": "previous-bookmark-123"', journal)
+
 
 class ReferenceDiffTests(unittest.TestCase):
     def test_reference_diff_never_deletes_artifact_missing_remote_rows(self) -> None:

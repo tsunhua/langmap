@@ -28,6 +28,12 @@ def main(argv: list[str]) -> int:
             return 3
         print(json.dumps({"success": True}))
         return 0
+    if argv[:4] == ["d1", "time-travel", "restore", DATABASE_NAME]:
+        if not os.environ.get("FAKE_PRODUCTION_ALLOW_MUTATIONS"):
+            print("mutation reached fake production", file=sys.stderr)
+            return 3
+        print(json.dumps({"previous_bookmark": "previous-bookmark-123"}))
+        return 0
     if argv[:3] != ["d1", "execute", DATABASE_NAME] or "--command" not in argv:
         if argv[:3] == ["d1", "execute", DATABASE_NAME] and "--file" in argv and os.environ.get("FAKE_PRODUCTION_ALLOW_MUTATIONS"):
             print(json.dumps({"success": True}))

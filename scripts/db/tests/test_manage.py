@@ -166,18 +166,15 @@ class ManageCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("unrecognized arguments", result.stderr)
 
-    def test_restore_accepts_exactly_one_bookmark(self) -> None:
+    def test_restore_requires_explicit_database_confirmation(self) -> None:
         result = run_manage("production", "restore", "bookmark-123")
 
-        self.assertEqual(
-            result.returncode,
-            0,
-            msg=f"expected restore bookmark to be accepted: {result.stderr}",
-        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("database-name", result.stderr)
 
         extra = run_manage("production", "restore", "bookmark-123", "extra")
         self.assertEqual(extra.returncode, 2)
-        self.assertIn("unrecognized arguments", extra.stderr)
+        self.assertIn("database-name", extra.stderr)
 
 
 class ProjectPathsTests(unittest.TestCase):

@@ -9,7 +9,7 @@ from typing import Callable
 from lib.fingerprint import build_local_status
 from lib.local import rebuild_local_state, verify_local_environment
 from lib.paths import ProjectPaths
-from lib.production import apply_production, inventory_production, plan_production
+from lib.production import apply_production, inventory_production, plan_production, restore_production
 
 
 Handler = Callable[[ProjectPaths, argparse.Namespace], int]
@@ -48,7 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     restore_parser = production_commands.add_parser("restore")
     restore_parser.add_argument("bookmark")
-    restore_parser.set_defaults(handler=_stub_handler)
+    restore_parser.add_argument("--database-name", required=True)
+    restore_parser.add_argument("--confirm-production", required=True)
+    restore_parser.set_defaults(handler=_production_restore_handler)
 
     return parser
 
@@ -120,6 +122,18 @@ def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> 
     result = apply_production(
         paths,
         plan_path=args.plan,
+        database_name=args.database_name,
+        confirmation=args.confirm_production,
+        wrangler_bin=_wrangler_bin_from_env(),
+    )
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+def _production_restore_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    result = restore_production(
+        paths,
+        bookmark=args.bookmark,
         database_name=args.database_name,
         confirmation=args.confirm_production,
         wrangler_bin=_wrangler_bin_from_env(),

@@ -348,6 +348,74 @@ def apply_production(
         raise
 
 
+def restore_production(
+    paths: ProjectPaths,
+    *,
+    bookmark: str,
+    database_name: str,
+    confirmation: str,
+    wrangler_bin: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    _validate_bookmark(bookmark)
+    configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
+    if database_name != configured["database_name"] or confirmation != configured["database_name"]:
+        raise ProductionInventoryError("production database name confirmation mismatch")
+    executor = ProductionExecutor(
+        paths=paths,
+        wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
+        env=env,
+    )
+    operation = {
+        "operation_id": uuid.uuid4().hex,
+        "status": "started",
+        "database": configured,
+        "bookmark": bookmark,
+        "failed_stage": None,
+    }
+    journal.append_operation(paths.production_operation_journal_path, operation)
+    try:
+        current = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
+        operation["pre_restore_inventory"] = {
+            "schema_object_count": len(current["schema_objects"]),
+            "migration_count": len(current["migrations"]["applied"]),
+        }
+        restore_result = executor.mutate(
+            [
+                "d1",
+                "time-travel",
+                "restore",
+                database_name,
+                "--remote",
+                "--bookmark",
+                bookmark,
+            ]
+        )
+        previous_bookmark = _extract_bookmark(json.loads(restore_result))
+        operation["previous_bookmark"] = previous_bookmark
+        after = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
+        check_baseline(paths, after)
+        journal.append_operation(
+            paths.production_operation_journal_path,
+            {**operation, "status": "succeeded", "verified": True},
+        )
+        return {
+            "status": "succeeded",
+            "operation_id": operation["operation_id"],
+            "previous_bookmark": previous_bookmark,
+        }
+    except Exception as exc:
+        journal.append_operation(
+            paths.production_operation_journal_path,
+            {
+                **operation,
+                "status": "needs_manual_intervention",
+                "error": str(exc),
+            },
+        )
+        raise
+
+
 def _load_plan(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -360,7 +428,7 @@ def _load_plan(path: Path) -> dict[str, Any]:
 
 def _extract_bookmark(payload: Any) -> str:
     if isinstance(payload, dict):
-        for key in ("bookmark", "current_bookmark"):
+        for key in ("bookmark", "current_bookmark", "previous_bookmark"):
             value = payload.get(key)
             if isinstance(value, str) and value.strip():
                 return value.strip()
@@ -376,6 +444,13 @@ def _extract_bookmark(payload: Any) -> str:
             except ProductionInventoryError:
                 pass
     raise ProductionInventoryError("Time Travel bookmark was not returned")
+
+
+def _validate_bookmark(bookmark: str) -> None:
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", bookmark) or not re.fullmatch(
+        r"[A-Za-z0-9._:-]{8,256}", bookmark
+    ):
+        raise ProductionInventoryError("invalid or unsupported Time Travel bookmark")
 
 
 def _current_git_commit(paths: ProjectPaths) -> str:
