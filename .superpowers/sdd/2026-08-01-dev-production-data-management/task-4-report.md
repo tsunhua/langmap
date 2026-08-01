@@ -496,3 +496,89 @@ verify 核心結果：
 
 - 沙箱內直接執行真 Wrangler 仍可能遭遇 `listen EPERM 127.0.0.1`；
 - 但在非沙箱、隔離 `/private/tmp` checkout 與 120 秒 per-command timeout 下，2026-08-01 的 bounded real probe 已成功完成 rebuild + verify。
+
+## Scoped re-review follow-up（Saturday, August 1, 2026）
+
+### 本輪只改 verification
+
+- 沒有重跑 real temporary probe；沿用上一輪已成功的 bounded real probe 結果。
+- 本輪修改範圍只在 Task 4 verification：
+  - `scripts/db/lib/verify.py`
+  - `scripts/db/tests/test_verify.py`
+
+### 實作補強摘要
+
+- `ui_i18n` ownership verification 不再只檢 expected ownership set 的計數。
+  - 新增 actual ownership set 抽取：
+    - 從 DB 內 `expression_edges` + canonical source expression `source_ref` + target expression 抽出實際 `ui_i18n` ownership；
+    - 使用等價 ownership key：`(message.key, target language_code, target_expression_id)`。
+  - 對 bundle expected ownership 與 actual ownership 做雙向比較：
+    - missing → fail
+    - extra → fail
+  - `orphans.edges` 會把 structural orphan edges 與 ownership extra 一起反映出來，避免「兩端都合法但不屬於 bundle ownership」的 edge 被漏報。
+- fallback parser 現在正確支援反向 edge：
+  - `expression_a_id = target, expression_b_id = source`
+  - 以及原本的正向 edge
+
+### 本輪 TDD
+
+RED：
+
+```bash
+python3 -m unittest scripts.db.tests.test_verify -v
+```
+
+結果：
+
+```text
+ERROR: test_verify_accepts_reverse_ui_i18n_edge_orientation_in_fallback_parser
+lib.local.LocalRebuildError: count mismatch
+
+FAIL: test_verify_rejects_extra_ui_i18n_edge_outside_bundle_ownership
+AssertionError: LocalVerificationError not raised
+```
+
+root cause：
+
+- verify 只統計 expected ownership count，沒有把 DB 實際 `ui_i18n` ownership set 與 bundle expected set 做雙向比較，所以 extra edge 會漏報；
+- fallback parser 只接受 source→target 單向 edge，遇到反向 edge 會少算 expected ownership，導致 rebuild/verify 失敗。
+
+GREEN：
+
+```bash
+python3 -m unittest scripts.db.tests.test_verify -v
+python3 -m unittest scripts.db.tests.test_local_rebuild scripts.db.tests.test_verify -v
+python3 -m unittest discover -s scripts/db/tests -v
+git diff --check
+```
+
+結果：
+
+```text
+Ran 11 tests in 4.611s
+
+OK
+
+Ran 16 tests in 5.938s
+
+OK
+
+Ran 48 tests in 7.867s
+
+OK
+```
+
+- `git diff --check` 無輸出，exit code 0。
+
+### fake regression 證據
+
+- `test_verify_rejects_extra_ui_i18n_edge_outside_bundle_ownership`
+  - 在完成 rebuild 後，直接往 sqlite 插入一條額外 `ui_i18n` edge：
+    - `1001 -> 2002`
+  - 兩端 expression 都合法，但這條 edge 不屬於 bundle ownership；
+  - verify 現在必須 fail。
+- `test_verify_accepts_reverse_ui_i18n_edge_orientation_in_fallback_parser`
+  - 將 fixture `system-ui.sql` 的一條 edge 改成反向：
+    - `('1001-2001', 2001, 1001, 0, 'ui_i18n')`
+  - rebuild + verify 仍必須成功；
+  - `ui_translation_mappings.actual == 4`。

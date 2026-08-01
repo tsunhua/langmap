@@ -111,6 +111,72 @@ class VerifyTests(unittest.TestCase):
             self.assertEqual(report["counts"]["ui_messages"]["actual"], 3)
             self.assertEqual(report["counts"]["ui_translation_mappings"]["actual"], 4)
 
+    def test_verify_rejects_extra_ui_i18n_edge_outside_bundle_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+
+            from lib import local as local_lib  # noqa: E402
+            from lib import verify as verify_lib  # noqa: E402
+
+            local_lib.rebuild_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+                owner="test-owner",
+                created_at="2026-08-01T00:00:00Z",
+            )
+
+            database_path = paths.local_d1_state_dir / "fake-d1.sqlite3"
+            connection = sqlite3.connect(database_path)
+            try:
+                connection.execute(
+                    "INSERT INTO expression_edges (id, expression_a_id, expression_b_id, score, source) VALUES (?, ?, ?, ?, ?)",
+                    ("1001-2002-extra", 1001, 2002, 0, "ui_i18n"),
+                )
+                connection.commit()
+            finally:
+                connection.close()
+
+            with self.assertRaises(verify_lib.LocalVerificationError):
+                verify_lib.verify_local_state(
+                    paths,
+                    wrangler_bin=FIXTURE_WRANGLER,
+                    env={},
+                )
+
+    def test_verify_accepts_reverse_ui_i18n_edge_orientation_in_fallback_parser(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+
+            sql = paths.system_ui_sql_path.read_text(encoding="utf-8")
+            sql = sql.replace(
+                "('1001-2001', 1001, 2001, 0, 'ui_i18n')",
+                "('1001-2001', 2001, 1001, 0, 'ui_i18n')",
+            )
+            paths.system_ui_sql_path.write_text(sql, encoding="utf-8")
+
+            from lib import local as local_lib  # noqa: E402
+            from lib import verify as verify_lib  # noqa: E402
+
+            local_lib.rebuild_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+                owner="test-owner",
+                created_at="2026-08-01T00:00:00Z",
+            )
+
+            report = verify_lib.verify_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+            )
+
+            self.assertEqual(report["status"], "ok")
+            self.assertEqual(report["counts"]["ui_translation_mappings"]["actual"], 4)
+
     def test_executor_passes_configured_timeout_to_runner(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

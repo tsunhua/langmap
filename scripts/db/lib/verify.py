@@ -114,6 +114,16 @@ def verify_local_state(
         project_id=PROJECT_ID,
         locale_codes=locale_codes,
     )
+    actual_translation_mappings = _load_actual_ui_translation_mappings(
+        executor,
+        state_dir,
+        project_id=PROJECT_ID,
+        locale_codes=locale_codes,
+    )
+    translation_mismatches = _compare_ui_translation_mappings(
+        expected_translation_mappings,
+        actual_translation_mappings,
+    )
 
     count_rows = executor.execute_query(
         state_dir,
@@ -124,7 +134,6 @@ SELECT COUNT(*) AS language_subtags FROM language_subtags;
 SELECT COUNT(*) AS language_locations FROM language_locations;
 SELECT COUNT(*) AS ui_locales FROM ui_locales WHERE project_id = '{PROJECT_ID}';
 SELECT COUNT(*) AS ui_messages FROM ui_messages WHERE project_id = '{PROJECT_ID}';
-{_build_ui_translation_mapping_count_query(expected_translation_mappings, project_id=PROJECT_ID)}
 SELECT GROUP_CONCAT(code, ',') AS active_locale_codes
 FROM (
   SELECT code
@@ -225,8 +234,26 @@ WHERE edge.source = 'ui_i18n'
             },
             "ui_translation_mappings": {
                 "expected": int(ui_counts["translation_count"]),
-                "actual": int(actual_counts["ui_translation_mappings"]),
+                "actual": len(actual_translation_mappings),
             },
+        },
+        "translation_mappings": {
+            "missing": [
+                {
+                    "key": item.key,
+                    "language_code": item.language_code,
+                    "target_expression_id": item.target_expression_id,
+                }
+                for item in translation_mismatches["missing"]
+            ],
+            "extra": [
+                {
+                    "key": item.key,
+                    "language_code": item.language_code,
+                    "target_expression_id": item.target_expression_id,
+                }
+                for item in translation_mismatches["extra"]
+            ],
         },
         "active_locale_codes": {
             "expected": expected_active_codes,
@@ -236,7 +263,7 @@ WHERE edge.source = 'ui_i18n'
             "languages": int(actual_counts["orphan_languages"]),
             "locales": int(actual_counts["orphan_locales"]),
             "messages": int(actual_counts["orphan_messages"]),
-            "edges": int(actual_counts["orphan_edges"]),
+            "edges": int(actual_counts["orphan_edges"]) + len(translation_mismatches["extra"]),
         },
     }
 
@@ -249,6 +276,8 @@ WHERE edge.source = 'ui_i18n'
         if payload["expected"] != payload["actual"]:
             mismatches.append("count mismatch")
             break
+    if translation_mismatches["missing"] or translation_mismatches["extra"]:
+        mismatches.append("translation ownership mismatch")
     if expected_active_codes != actual_active_codes:
         mismatches.append("active locale policy mismatch")
     if any(report["orphans"].values()):
@@ -358,8 +387,63 @@ def _load_expected_ui_translation_mappings(
     locale_set = set(locale_codes)
     mappings = _parse_ui_translation_comment_blocks(sql, locale_set)
     if mappings:
-        return mappings
-    return _parse_ui_translation_fallback(sql, project_id=project_id, locale_codes=locale_set)
+        return _dedupe_ui_translation_mappings(mappings)
+    return _dedupe_ui_translation_mappings(
+        _parse_ui_translation_fallback(sql, project_id=project_id, locale_codes=locale_set)
+    )
+
+
+def _load_actual_ui_translation_mappings(
+    executor: LocalWranglerExecutor,
+    persist_to: Path,
+    *,
+    project_id: str,
+    locale_codes: list[str],
+) -> list[UiTranslationMapping]:
+    escaped_locale_codes = ["'" + code.replace("'", "''") + "'" for code in locale_codes]
+    locale_code_sql = ", ".join(escaped_locale_codes) or "''"
+    rows = executor.execute_query(
+        persist_to,
+        f"""
+SELECT m.key, te.language_code, te.id AS target_expression_id
+FROM expression_edges edge
+JOIN expressions se
+  ON se.id = edge.expression_a_id
+JOIN expressions te
+  ON te.id = edge.expression_b_id
+JOIN ui_messages m
+  ON m.project_id = '{_escape_sql_literal(project_id)}'
+ AND m.source_expression_id = se.id
+ AND se.source_ref = m.project_id || ':' || m.key
+WHERE edge.source = 'ui_i18n'
+  AND te.language_code IN ({locale_code_sql})
+UNION
+SELECT m.key, te.language_code, te.id AS target_expression_id
+FROM expression_edges edge
+JOIN expressions se
+  ON se.id = edge.expression_b_id
+JOIN expressions te
+  ON te.id = edge.expression_a_id
+JOIN ui_messages m
+  ON m.project_id = '{_escape_sql_literal(project_id)}'
+ AND m.source_expression_id = se.id
+ AND se.source_ref = m.project_id || ':' || m.key
+WHERE edge.source = 'ui_i18n'
+  AND te.language_code IN ({locale_code_sql})
+ORDER BY m.key, te.language_code, te.id;
+""".strip(),
+    )
+    mappings: list[UiTranslationMapping] = []
+    for result in rows:
+        for row in result.get("results", []):
+            mappings.append(
+                UiTranslationMapping(
+                    key=str(row["key"]),
+                    language_code=str(row["language_code"]),
+                    target_expression_id=int(row["target_expression_id"]),
+                )
+            )
+    return _dedupe_ui_translation_mappings(mappings)
 
 
 def _parse_ui_translation_comment_blocks(
@@ -433,55 +517,51 @@ def _parse_ui_translation_fallback(
             continue
         expression_a_id = int(match.group("expression_a_id"))
         expression_b_id = int(match.group("expression_b_id"))
-        if expression_a_id not in messages_by_source_id or expression_b_id not in translated_expressions:
+        source_expression_id: int | None = None
+        target_expression_id: int | None = None
+        if expression_a_id in messages_by_source_id and expression_b_id in translated_expressions:
+            source_expression_id = expression_a_id
+            target_expression_id = expression_b_id
+        elif expression_b_id in messages_by_source_id and expression_a_id in translated_expressions:
+            source_expression_id = expression_b_id
+            target_expression_id = expression_a_id
+        if source_expression_id is None or target_expression_id is None:
             continue
-        language_code, source_ref = translated_expressions[expression_b_id]
-        for key in messages_by_source_id[expression_a_id]:
+        language_code, source_ref = translated_expressions[target_expression_id]
+        for key in messages_by_source_id[source_expression_id]:
             if source_ref != f"{project_id}:{key}":
                 continue
             mappings.append(
                 UiTranslationMapping(
                     key=key,
                     language_code=language_code,
-                    target_expression_id=expression_b_id,
+                    target_expression_id=target_expression_id,
                 )
             )
     return mappings
 
 
-def _build_ui_translation_mapping_count_query(
-    mappings: list[UiTranslationMapping],
-    *,
-    project_id: str,
-) -> str:
-    if not mappings:
-        return "SELECT 0 AS ui_translation_mappings;"
+def _compare_ui_translation_mappings(
+    expected: list[UiTranslationMapping],
+    actual: list[UiTranslationMapping],
+) -> dict[str, list[UiTranslationMapping]]:
+    expected_set = set(expected)
+    actual_set = set(actual)
+    return {
+        "missing": sorted(expected_set - actual_set, key=_ui_translation_sort_key),
+        "extra": sorted(actual_set - expected_set, key=_ui_translation_sort_key),
+    }
 
-    values_sql = ",\n  ".join(
-        f"('{_escape_sql_literal(mapping.key)}', '{_escape_sql_literal(mapping.language_code)}', {mapping.target_expression_id})"
-        for mapping in mappings
-    )
-    return f"""
-WITH expected_ui_translation_mappings(key, language_code, target_expression_id) AS (
-  VALUES
-  {values_sql}
-)
-SELECT COUNT(*) AS ui_translation_mappings
-FROM expected_ui_translation_mappings expected
-JOIN ui_messages m
-  ON m.project_id = '{_escape_sql_literal(project_id)}'
- AND m.key = expected.key
-JOIN expression_edges edge
-  ON edge.source = 'ui_i18n'
- AND (
-      (edge.expression_a_id = m.source_expression_id AND edge.expression_b_id = expected.target_expression_id)
-      OR
-      (edge.expression_b_id = m.source_expression_id AND edge.expression_a_id = expected.target_expression_id)
- )
-JOIN expressions te
-  ON te.id = expected.target_expression_id
- AND te.language_code = expected.language_code;
-""".strip()
+
+def _dedupe_ui_translation_mappings(
+    mappings: list[UiTranslationMapping],
+) -> list[UiTranslationMapping]:
+    unique = sorted(set(mappings), key=_ui_translation_sort_key)
+    return list(unique)
+
+
+def _ui_translation_sort_key(mapping: UiTranslationMapping) -> tuple[str, str, int]:
+    return (mapping.key, mapping.language_code, mapping.target_expression_id)
 
 
 def _rows_to_singletons(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
