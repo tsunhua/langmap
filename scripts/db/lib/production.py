@@ -41,6 +41,23 @@ class ProductionExecutor:
             ]
         )
 
+    def bookmark(self, database_name: str) -> dict[str, Any]:
+        return self._run(
+            [str(self.wrangler_bin), "d1", "time-travel", "info", database_name, "--remote", "--json"]
+        )
+
+    def mutate(self, args: list[str]) -> str:
+        try:
+            result = run_command(
+                [str(self.wrangler_bin), *args],
+                cwd=self.paths.backend_dir,
+                env=self.env,
+                timeout=self.timeout_seconds,
+            )
+        except CommandError as exc:
+            raise ProductionInventoryError(str(exc)) from exc
+        return result.stdout
+
     def _run(self, args: list[str]) -> Any:
         try:
             result = run_command(
@@ -263,9 +280,110 @@ def plan_production(
         },
         "risk": "high" if pending_migrations or baseline_error else "low",
         "mutation_allowed": False,
+        "git_commit": _current_git_commit(paths),
+        "migration_checksums": inventory["migrations"]["checksums"],
+        "artifacts": {
+            "language_registry": str(paths.language_registry_sql_path.relative_to(paths.repo_root)),
+            "system_ui": str(paths.system_ui_sql_path.relative_to(paths.repo_root)),
+        },
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
     return plan
+
+
+def apply_production(
+    paths: ProjectPaths,
+    *,
+    plan_path: Path,
+    database_name: str,
+    confirmation: str,
+    wrangler_bin: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    plan = _load_plan(plan_path)
+    configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
+    if plan.get("status") != "ready":
+        raise ProductionInventoryError("production plan is not ready")
+    if database_name != configured["database_name"] or confirmation != configured["database_name"]:
+        raise ProductionInventoryError("production database name confirmation mismatch")
+    if plan.get("identity") != configured:
+        raise ProductionInventoryError("production plan identity mismatch")
+    if plan.get("git_commit") != _current_git_commit(paths):
+        raise ProductionInventoryError("production plan Git commit mismatch")
+    executor = ProductionExecutor(
+        paths=paths,
+        wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
+        env=env,
+    )
+    operation = {
+        "operation_id": str(plan["operation_id"]),
+        "status": "started",
+        "database": configured,
+        "plan_path": str(plan_path),
+        "failed_stage": None,
+    }
+    journal.append_operation(paths.production_operation_journal_path, operation)
+    try:
+        remote_identity = normalize_remote_identity(executor.info(database_name))
+        assert_identity(configured, remote_identity)
+        bookmark = _extract_bookmark(executor.bookmark(database_name))
+        operation["bookmark"] = bookmark
+        journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
+        if plan.get("pending_migrations"):
+            executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
+        executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.language_registry_sql_path)])
+        executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.system_ui_sql_path)])
+        verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
+        check_baseline(paths, verified)
+        journal.append_operation(
+            paths.production_operation_journal_path,
+            {**operation, "status": "succeeded", "verified": True},
+        )
+        return {"status": "succeeded", "bookmark": bookmark, "operation_id": operation["operation_id"]}
+    except Exception as exc:
+        journal.append_operation(
+            paths.production_operation_journal_path,
+            {**operation, "status": "failed", "error": str(exc)},
+        )
+        raise
+
+
+def _load_plan(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProductionInventoryError("production plan is missing or invalid") from exc
+    if not isinstance(payload, dict):
+        raise ProductionInventoryError("production plan must be an object")
+    return payload
+
+
+def _extract_bookmark(payload: Any) -> str:
+    if isinstance(payload, dict):
+        for key in ("bookmark", "current_bookmark"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        for value in payload.values():
+            try:
+                return _extract_bookmark(value)
+            except ProductionInventoryError:
+                pass
+    elif isinstance(payload, list):
+        for value in payload:
+            try:
+                return _extract_bookmark(value)
+            except ProductionInventoryError:
+                pass
+    raise ProductionInventoryError("Time Travel bookmark was not returned")
+
+
+def _current_git_commit(paths: ProjectPaths) -> str:
+    try:
+        result = run_command(["git", "rev-parse", "HEAD"], cwd=paths.repo_root)
+    except CommandError as exc:
+        raise ProductionInventoryError("unable to determine current Git commit") from exc
+    return result.stdout.strip()
 
 
 def classify_migration_risk(path: Path) -> str:

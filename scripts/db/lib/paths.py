@@ -146,3 +146,7 @@ class ProjectPaths:
     @property
     def production_plan_dir(self) -> Path:
         return self.state_dir / "production" / "plans"
+
+    @property
+    def production_operation_journal_path(self) -> Path:
+        return self.state_dir / "production" / "operations.jsonl"

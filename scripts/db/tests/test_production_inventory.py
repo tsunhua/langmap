@@ -5,6 +5,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts.db.tests.test_local_rebuild import build_fixture_repo
 
@@ -110,11 +111,12 @@ class ProductionInventoryTests(unittest.TestCase):
 
             from lib.production import plan_production  # noqa: E402
 
-            plan = plan_production(
-                paths,
-                wrangler_bin=FAKE_WRANGLER,
-                env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
-            )
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                plan = plan_production(
+                    paths,
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+                )
 
             self.assertEqual(plan["status"], "blocked")
             self.assertFalse(plan["mutation_allowed"])
@@ -125,6 +127,67 @@ class ProductionInventoryTests(unittest.TestCase):
                 self.assertNotIn("INSERT", line.upper())
                 self.assertNotIn("UPDATE", line.upper())
                 self.assertNotIn("DELETE", line.upper())
+
+    def test_apply_requires_confirmation_and_bookmarks_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+
+            from lib.production import apply_production, inventory_production  # noqa: E402
+
+            inventory = inventory_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            plan_path = paths.production_plan_dir / "fixture-plan.json"
+            plan_path.parent.mkdir(parents=True, exist_ok=True)
+            plan_path.write_text(
+                json.dumps(
+                    {
+                        "status": "ready",
+                        "operation_id": "fixture-operation",
+                        "identity": inventory["identity"],
+                        "git_commit": "fixture-commit",
+                        "pending_migrations": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            from lib import production as production_lib  # noqa: E402
+
+            with mock.patch.object(production_lib, "_current_git_commit", return_value="fixture-commit"):
+                result = apply_production(
+                    paths,
+                    plan_path=plan_path,
+                    database_name="langmap-v2",
+                    confirmation="langmap-v2",
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={
+                        "FAKE_PRODUCTION_WRANGLER_LOG": str(log_path),
+                        "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
+                    },
+                )
+
+            self.assertEqual(result["status"], "succeeded")
+            calls = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+            time_travel_index = next(i for i, call in enumerate(calls) if "time-travel" in call)
+            mutation_indices = [
+                i for i, call in enumerate(calls) if "--file" in call or "migrations" in call
+            ]
+            self.assertTrue(mutation_indices)
+            self.assertLess(time_travel_index, min(mutation_indices))
+            journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
+            self.assertIn('"status": "succeeded"', journal)
 
 
 class ReferenceDiffTests(unittest.TestCase):

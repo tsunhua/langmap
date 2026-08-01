@@ -19,7 +19,19 @@ def main(argv: list[str]) -> int:
     if argv[:3] == ["d1", "info", DATABASE_NAME]:
         print(json.dumps({"database": {"name": DATABASE_NAME, "uuid": DATABASE_ID}}))
         return 0
+    if argv[:4] == ["d1", "time-travel", "info", DATABASE_NAME]:
+        print(json.dumps({"bookmark": "bookmark-123"}))
+        return 0
+    if argv[:4] == ["d1", "migrations", "apply", DATABASE_NAME]:
+        if not os.environ.get("FAKE_PRODUCTION_ALLOW_MUTATIONS"):
+            print("mutation reached fake production", file=sys.stderr)
+            return 3
+        print(json.dumps({"success": True}))
+        return 0
     if argv[:3] != ["d1", "execute", DATABASE_NAME] or "--command" not in argv:
+        if argv[:3] == ["d1", "execute", DATABASE_NAME] and "--file" in argv and os.environ.get("FAKE_PRODUCTION_ALLOW_MUTATIONS"):
+            print(json.dumps({"success": True}))
+            return 0
         print("unsupported production fake command", file=sys.stderr)
         return 2
     sql = argv[argv.index("--command") + 1]

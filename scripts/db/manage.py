@@ -9,7 +9,7 @@ from typing import Callable
 from lib.fingerprint import build_local_status
 from lib.local import rebuild_local_state, verify_local_environment
 from lib.paths import ProjectPaths
-from lib.production import inventory_production, plan_production
+from lib.production import apply_production, inventory_production, plan_production
 
 
 Handler = Callable[[ProjectPaths, argparse.Namespace], int]
@@ -38,9 +38,13 @@ def build_parser() -> argparse.ArgumentParser:
     inventory_parser.set_defaults(handler=_production_inventory_handler)
     plan_parser = production_commands.add_parser("plan")
     plan_parser.set_defaults(handler=_production_plan_handler)
-    for command in ("apply", "verify"):
-        subparser = production_commands.add_parser(command)
-        subparser.set_defaults(handler=_stub_handler)
+    apply_parser = production_commands.add_parser("apply")
+    apply_parser.add_argument("--plan", type=Path, required=True)
+    apply_parser.add_argument("--database-name", required=True)
+    apply_parser.add_argument("--confirm-production", required=True)
+    apply_parser.set_defaults(handler=_production_apply_handler)
+    verify_parser = production_commands.add_parser("verify")
+    verify_parser.set_defaults(handler=_stub_handler)
 
     restore_parser = production_commands.add_parser("restore")
     restore_parser.add_argument("bookmark")
@@ -110,6 +114,18 @@ def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> i
     plan = plan_production(paths, wrangler_bin=_wrangler_bin_from_env())
     print(json.dumps(plan, ensure_ascii=False))
     return 0 if plan["status"] == "ready" else 1
+
+
+def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    result = apply_production(
+        paths,
+        plan_path=args.plan,
+        database_name=args.database_name,
+        confirmation=args.confirm_production,
+        wrangler_bin=_wrangler_bin_from_env(),
+    )
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
 
 
 def _wrangler_bin_from_env() -> Path | None:
