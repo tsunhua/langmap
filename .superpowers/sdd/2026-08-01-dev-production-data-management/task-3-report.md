@@ -289,3 +289,129 @@ Conclusion：
 3. artifact replacement 已做 staging + rollback 保護，能避免生成或驗證失敗時覆蓋既有
    結果；但檔案系統層級仍不是單一目錄 swap transaction。以目前需求來說已足夠隔離
    失敗結果，但若未來 artifact 數量增加，可能值得升級為版本化目錄 + pointer 切換。
+
+## Reviewer fixes appended on 2026-08-01
+
+### Fix commit
+
+```text
+ddd7749cf0a81026fd4a043b24699620c1a71571
+```
+
+Commit message：
+
+```text
+fix: harden system ui bundle provenance
+```
+
+### Reviewer finding 1 — single snapshot provenance
+
+- `generate-bundle.py` 現在會對 source catalog 與四個 pinned locale 各讀取一次 bytes。
+- SQL generation、manifest checksum、解析結果都共用同一份 in-memory snapshot。
+- `generate-i18n-sql.py` 補上 `parse_en_ts_bytes` / `load_translations_bytes`，避免 bundle generator
+  為了重用既有邏輯而重新讀檔。
+
+新增 TDD coverage：
+
+- `test_generate_bundle_uses_single_read_snapshot_for_manifest_and_sql`
+
+這個測試透過 `read_bytes_fn` hook 強制任何 path 只允許讀一次；若 generator 在 manifest
+階段重讀檔案，測試會直接失敗。
+
+### Reviewer finding 2 — pinned locale fail-closed
+
+- bundle 現在只接受且必須剛好包含：
+  - `es-ES`
+  - `ja-JP`
+  - `zh-Hans-CN`
+  - `zh-Hant-TW`
+- locale 順序固定為上述穩定排序。
+- 缺少 locale、額外 locale、重複 locale override 都會 fail fast。
+
+新增 TDD coverage：
+
+- `test_cli_rejects_missing_or_extra_locale_set`
+
+### Reviewer finding 3 — atomic rollback regression test
+
+- `replace_artifacts()` 現在抽出可測的 `replace_fn` / `rollback_replace_fn` 注入點。
+- 新增中途 replace 失敗的回歸測試，驗證既有 `system-ui.sql` 與 `manifest.json`
+  bytes 會被 rollback 保留。
+
+新增 TDD coverage：
+
+- `test_replace_artifacts_rolls_back_if_replace_fails_midway`
+
+### Reviewer-fix RED
+
+Command:
+
+```bash
+python3 scripts/i18n/test_generate_bundle.py
+```
+
+Result:
+
+```text
+..F.E.E
+
+FAIL: test_cli_rejects_missing_or_extra_locale_set
+AssertionError: 0 == 0
+
+ERROR: test_generate_bundle_uses_single_read_snapshot_for_manifest_and_sql
+TypeError: generate_bundle() got an unexpected keyword argument 'read_bytes_fn'
+
+ERROR: test_replace_artifacts_rolls_back_if_replace_fails_midway
+TypeError: replace_artifacts() got an unexpected keyword argument 'replace_fn'
+```
+
+Interpretation：
+
+- 現有實作尚未提供 snapshot hook。
+- locale set 尚未 fail-closed。
+- atomic writer 尚未暴露可測 failure injection。
+
+### Reviewer-fix GREEN
+
+Command:
+
+```bash
+python3 scripts/i18n/test_generate_bundle.py
+```
+
+Result:
+
+```text
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.304s
+
+OK
+```
+
+### Reviewer-fix verification
+
+Commands:
+
+```bash
+bash scripts/i18n/test-import-all.sh
+git diff --check
+python3 scripts/i18n/generate-bundle.py
+shasum -a 256 scripts/i18n/artifacts/system-ui/system-ui.sql scripts/i18n/artifacts/system-ui/manifest.json
+python3 scripts/i18n/generate-bundle.py
+shasum -a 256 scripts/i18n/artifacts/system-ui/system-ui.sql scripts/i18n/artifacts/system-ui/manifest.json
+```
+
+Observed:
+
+- `bash scripts/i18n/test-import-all.sh` → `PASS: import-all bundle wrapper behavior`
+- `git diff --check` → no output
+- bundle regenerate before/after fix validation:
+  - `system-ui.sql`: `5415772e6438b05c5d08aac345e551e87da265558d960465b3c5e152936742c0`
+  - `manifest.json`: `13331cde7246b80d7d821ffee5286f039e9a9abb2f0b57b39f0afc094d7b01fe`
+
+Additional idempotency check stayed unchanged:
+
+```json
+{"first": {"ui_locales": 4, "ui_messages": 312, "expressions": 1308, "expression_edges": 1058}, "second": {"ui_locales": 4, "ui_messages": 312, "expressions": 1308, "expression_edges": 1058}}
+```
