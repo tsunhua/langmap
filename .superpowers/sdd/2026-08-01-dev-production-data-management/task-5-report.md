@@ -388,3 +388,61 @@ Interpretation:
 - 因此第二次 `./dev.sh --port=<p2>` 不可能誠實地走 fingerprint-hit / `local verify` 路徑；
 - 若繼續跑第二次 `dev.sh`，只會再次進入 rebuild，而不是 reviewer 要求的 verify path；
 - 本報告因此如實記錄：在 isolated real-dev 條件下，第二次 fingerprint-hit evidence 仍無法成立，原因是第一輪 rebuild verification 已失敗。
+
+## Verification fix and final real-dev evidence
+
+### Root cause and fix
+
+Real rebuild exposed a data-model detail that the first verification implementation did not model:
+the deterministic UI expression IDs intentionally allow multiple message keys to share one source
+expression, and `expression_edges` de-duplicates identical expression pairs. Therefore an expression's
+single `source_ref` cannot be used as the ownership key for a message. The verifier now:
+
+- records the source expression ID in each expected and actual mapping;
+- matches actual mappings by `ui_messages.source_expression_id`, not source `source_ref`;
+- compares expected and actual logical mappings while treating a shared expression edge as managed when
+  its normalized source/target pair belongs to any bundle mapping;
+- continues to reject `ui_i18n` edges whose normalized pair is outside the bundle; and
+- reports logical translation coverage, preserving the manifest's 1228 translation count.
+
+Regression coverage was added for multiple message keys sharing one source expression. The full DB
+test suite passes: `55 tests, OK`.
+
+### Repository-local real rebuild and verify
+
+```text
+./scripts/db/manage.sh local rebuild
+status: rebuilt
+fingerprint: 4b4aaf72d68f2a551c83eb0d5b0c5df663a7cc37678e7761442894a118cba5d8
+
+./scripts/db/manage.sh local verify
+status: ok
+languages: 62
+languoids: 27177
+language_subtags: 9296
+language_locations: 45
+ui_locales: 4
+ui_messages: 312
+ui_translation_mappings: 1228
+orphans: languages=0, locales=0, messages=0, edges=0
+```
+
+### Real `dev.sh` flow
+
+First run:
+
+```bash
+./dev.sh --rebuild --port=8796
+```
+
+Result: rebuild succeeded, backend became ready on `http://localhost:8796`, frontend became ready on
+`http://localhost:5173`, and Ctrl-C cleanup stopped only the repository-owned backend/frontend PIDs.
+
+Second run:
+
+```bash
+./dev.sh --port=8797
+```
+
+Result: output contained `fingerprint hit，驗證 local D1`; verification returned the same counts and
+zero orphan references, then both local servers became ready. Ctrl-C cleanup completed successfully.

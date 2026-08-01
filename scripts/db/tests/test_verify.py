@@ -111,6 +111,49 @@ class VerifyTests(unittest.TestCase):
             self.assertEqual(report["counts"]["ui_messages"]["actual"], 3)
             self.assertEqual(report["counts"]["ui_translation_mappings"]["actual"], 4)
 
+    def test_verify_accepts_shared_source_expression_for_multiple_message_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+
+            ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
+            ui_manifest["counts"]["message_count"] = 3
+            ui_manifest["counts"]["translation_count"] = 5
+            paths.ui_bundle_manifest_path.write_text(
+                json.dumps(ui_manifest, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with paths.system_ui_sql_path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    "\n"
+                    "INSERT INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status) VALUES "
+                    "('langmap-web', 'greeting.salutation', 1001, '[]', '1001-salutation', 'active');\n"
+                    "INSERT INTO expressions (id, text, language_code, source_type, source_ref, review_status) VALUES "
+                    "(2003, 'Saludos', 'es-ES', 'ui_i18n', 'langmap-web:greeting.salutation', 'pending');\n"
+                    "INSERT INTO expression_edges (id, expression_a_id, expression_b_id, score, source) VALUES "
+                    "('1001-2003', 1001, 2003, 0, 'ui_i18n');\n"
+                )
+
+            from lib import local as local_lib  # noqa: E402
+            from lib import verify as verify_lib  # noqa: E402
+
+            local_lib.rebuild_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+                owner="test-owner",
+                created_at="2026-08-01T00:00:00Z",
+            )
+
+            report = verify_lib.verify_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+            )
+
+            self.assertEqual(report["status"], "ok")
+            self.assertEqual(report["counts"]["ui_translation_mappings"]["actual"], 5)
+
     def test_verify_rejects_extra_ui_i18n_edge_outside_bundle_ownership(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

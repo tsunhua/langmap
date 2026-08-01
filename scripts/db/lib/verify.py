@@ -38,6 +38,7 @@ class SchemaObject:
 class UiTranslationMapping:
     key: str
     language_code: str
+    source_expression_id: int
     target_expression_id: int
 
 
@@ -234,7 +235,7 @@ WHERE edge.source = 'ui_i18n'
             },
             "ui_translation_mappings": {
                 "expected": int(ui_counts["translation_count"]),
-                "actual": len(actual_translation_mappings),
+                "actual": translation_mismatches["managed_count"],
             },
         },
         "translation_mappings": {
@@ -405,7 +406,7 @@ def _load_actual_ui_translation_mappings(
     rows = executor.execute_query(
         persist_to,
         f"""
-SELECT m.key, te.language_code, te.id AS target_expression_id
+SELECT m.key, m.source_expression_id, te.language_code, te.id AS target_expression_id
 FROM expression_edges edge
 JOIN expressions se
   ON se.id = edge.expression_a_id
@@ -414,11 +415,10 @@ JOIN expressions te
 JOIN ui_messages m
   ON m.project_id = '{_escape_sql_literal(project_id)}'
  AND m.source_expression_id = se.id
- AND se.source_ref = m.project_id || ':' || m.key
 WHERE edge.source = 'ui_i18n'
   AND te.language_code IN ({locale_code_sql})
 UNION
-SELECT m.key, te.language_code, te.id AS target_expression_id
+SELECT m.key, m.source_expression_id, te.language_code, te.id AS target_expression_id
 FROM expression_edges edge
 JOIN expressions se
   ON se.id = edge.expression_b_id
@@ -427,7 +427,6 @@ JOIN expressions te
 JOIN ui_messages m
   ON m.project_id = '{_escape_sql_literal(project_id)}'
  AND m.source_expression_id = se.id
- AND se.source_ref = m.project_id || ':' || m.key
 WHERE edge.source = 'ui_i18n'
   AND te.language_code IN ({locale_code_sql})
 ORDER BY m.key, te.language_code, te.id;
@@ -440,6 +439,7 @@ ORDER BY m.key, te.language_code, te.id;
                 UiTranslationMapping(
                     key=str(row["key"]),
                     language_code=str(row["language_code"]),
+                    source_expression_id=int(row["source_expression_id"]),
                     target_expression_id=int(row["target_expression_id"]),
                 )
             )
@@ -466,11 +466,25 @@ def _parse_ui_translation_comment_blocks(
         language_code = expression_match.group("language_code")
         if language_code not in locale_codes:
             continue
+        edge_match = re.search(
+            r"VALUES\s*\(\s*'[^']+'\s*,\s*(?P<a_id>\d+)\s*,\s*(?P<b_id>\d+)\s*,\s*-?\d+\s*,\s*'ui_i18n'\s*\)",
+            body,
+            re.DOTALL,
+        )
+        if edge_match is None:
+            continue
+        target_expression_id = int(expression_match.group("id"))
+        edge_ids = (int(edge_match.group("a_id")), int(edge_match.group("b_id")))
+        if target_expression_id not in edge_ids:
+            continue
         mappings.append(
             UiTranslationMapping(
                 key=match.group("key"),
                 language_code=language_code,
-                target_expression_id=int(expression_match.group("id")),
+                source_expression_id=(
+                    edge_ids[1] if edge_ids[0] == target_expression_id else edge_ids[0]
+                ),
+                target_expression_id=target_expression_id,
             )
         )
     return mappings
@@ -535,6 +549,7 @@ def _parse_ui_translation_fallback(
                 UiTranslationMapping(
                     key=key,
                     language_code=language_code,
+                    source_expression_id=source_expression_id,
                     target_expression_id=target_expression_id,
                 )
             )
@@ -544,12 +559,30 @@ def _parse_ui_translation_fallback(
 def _compare_ui_translation_mappings(
     expected: list[UiTranslationMapping],
     actual: list[UiTranslationMapping],
-) -> dict[str, list[UiTranslationMapping]]:
+) -> dict[str, Any]:
     expected_set = set(expected)
     actual_set = set(actual)
+    expected_pairs = {
+        _normalize_translation_pair(item.source_expression_id, item.target_expression_id)
+        for item in expected_set
+    }
+    missing = sorted(expected_set - actual_set, key=_ui_translation_sort_key)
+    extra = sorted(
+        (
+            item
+            for item in actual_set
+            if _normalize_translation_pair(
+                item.source_expression_id,
+                item.target_expression_id,
+            )
+            not in expected_pairs
+        ),
+        key=_ui_translation_sort_key,
+    )
     return {
-        "missing": sorted(expected_set - actual_set, key=_ui_translation_sort_key),
-        "extra": sorted(actual_set - expected_set, key=_ui_translation_sort_key),
+        "missing": missing,
+        "extra": extra,
+        "managed_count": len(expected_set) - len(missing),
     }
 
 
@@ -562,6 +595,10 @@ def _dedupe_ui_translation_mappings(
 
 def _ui_translation_sort_key(mapping: UiTranslationMapping) -> tuple[str, str, int]:
     return (mapping.key, mapping.language_code, mapping.target_expression_id)
+
+
+def _normalize_translation_pair(source_expression_id: int, target_expression_id: int) -> tuple[int, int]:
+    return tuple(sorted((source_expression_id, target_expression_id)))
 
 
 def _rows_to_singletons(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
