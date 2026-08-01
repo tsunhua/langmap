@@ -1,0 +1,46 @@
+variety_key,city_name,city_name_en,territory_code,script_code,latitude,longitude,reference
+glotto:beng1280,Dhaka,Dhaka,BD,,23.8103,90.4125,https://glottolog.org/resource/languoid/id/beng1280
+glotto:hakk1236,Meizhou,Meizhou,CN,Hans,24.2991,116.1225,https://glottolog.org/resource/languoid/id/hakk1236
+glotto:hakk1236,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/hakk1236
+glotto:hind1269,Delhi,Delhi,IN,,28.6139,77.209,https://glottolog.org/resource/languoid/id/hind1269
+glotto:indo1316,Jakarta,Jakarta,ID,,-6.2088,106.8456,https://glottolog.org/resource/languoid/id/indo1316
+glotto:ital1282,Rome,Rome,IT,,41.9028,12.4964,https://glottolog.org/resource/languoid/id/ital1282
+glotto:kaza1248,Almaty,Almaty,KZ,Cyrl,43.2389,76.8897,https://glottolog.org/resource/languoid/id/kaza1248
+glotto:kaza1248,Urumqi,Urumqi,CN,Arab,43.8256,87.6168,https://glottolog.org/resource/languoid/id/kaza1248
+glotto:kirg1245,Bishkek,Bishkek,KG,Cyrl,42.8746,74.5698,https://glottolog.org/resource/languoid/id/kirg1245
+glotto:kore1280,Pyongyang,Pyongyang,KP,,39.0392,125.7625,https://glottolog.org/resource/languoid/id/kore1280
+glotto:kore1280,Seoul,Seoul,KR,,37.5665,126.978,https://glottolog.org/resource/languoid/id/kore1280
+glotto:kore1280,Yanji,Yanji,CN,,42.9068,129.5089,https://glottolog.org/resource/languoid/id/kore1280
+glotto:mand1415,Beijing,Beijing,CN,Hans,39.9042,116.4074,https://glottolog.org/resource/languoid/id/mand1415
+glotto:mand1415,Hong Kong,Hong Kong,HK,Hant,22.3193,114.1694,https://glottolog.org/resource/languoid/id/mand1415
+glotto:mand1415,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/mand1415
+glotto:mara1378,Mumbai,Mumbai,IN,,19.076,72.8777,https://glottolog.org/resource/languoid/id/mara1378
+glotto:minb1236,Jian'ou,Jian'ou,CN,Hans,27.039,118.321,https://glottolog.org/resource/languoid/id/minb1236
+glotto:mind1253,Fuzhou,Fuzhou,CN,Hans,26.0745,119.2965,https://glottolog.org/resource/languoid/id/mind1253
+glotto:minn1241,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/minn1241
+glotto:minn1241,Xiamen,Xiamen,CN,Hans,24.4798,118.0894,https://glottolog.org/resource/languoid/id/minn1241
+glotto:nucl1301,Ankara,Ankara,TR,,39.9334,32.8597,https://glottolog.org/resource/languoid/id/nucl1301
+glotto:nucl1643,Tokyo,Tokyo,JP,,35.6762,139.6503,https://glottolog.org/resource/languoid/id/nucl1643
+glotto:panj1256,Lahore,Lahore,PK,,31.5204,74.3587,https://glottolog.org/resource/languoid/id/panj1256
+glotto:port1283,Lisbon,Lisbon,PT,,38.7223,-9.1393,https://glottolog.org/resource/languoid/id/port1283
+glotto:russ1263,Moscow,Moscow,RU,,55.7558,37.6173,https://glottolog.org/resource/languoid/id/russ1263
+glotto:stan1288,Madrid,Madrid,ES,,40.4168,-3.7038,https://glottolog.org/resource/languoid/id/stan1288
+glotto:stan1290,Paris,Paris,FR,,48.8566,2.3522,https://glottolog.org/resource/languoid/id/stan1290
+glotto:stan1293,London,London,GB,,51.5074,-0.1278,https://glottolog.org/resource/languoid/id/stan1293
+glotto:stan1295,Berlin,Berlin,DE,,52.52,13.405,https://glottolog.org/resource/languoid/id/stan1295
+glotto:stan1318,Riyadh,Riyadh,SA,,24.7136,46.6753,https://glottolog.org/resource/languoid/id/stan1318
+glotto:swah1253,Dar es Salaam,Dar es Salaam,TZ,,-6.7924,39.2083,https://glottolog.org/resource/languoid/id/swah1253
+glotto:thai1261,Bangkok,Bangkok,TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/thai1261
+glotto:tibe1272,Lhasa,Lhasa,CN,Tibt,29.65,91.1,https://glottolog.org/resource/languoid/id/tibe1272
+glotto:uigh1240,Kashgar,Kashgar,CN,Arab,39.4704,75.9898,https://glottolog.org/resource/languoid/id/uigh1240
+glotto:urdu1245,Islamabad,Islamabad,PK,,33.6844,73.0479,https://glottolog.org/resource/languoid/id/urdu1245
+glotto:viet1252,Hanoi,Hanoi,VN,,21.0278,105.8342,https://glottolog.org/resource/languoid/id/viet1252
+glotto:wuch1236,Shanghai,Shanghai,CN,Hans,31.2304,121.4737,https://glottolog.org/resource/languoid/id/wuch1236
+glotto:xian1251,Changsha,Changsha,CN,Hans,28.2282,112.9388,https://glottolog.org/resource/languoid/id/xian1251
+glotto:yuec1235,Guangzhou,Guangzhou,CN,Hans,23.1291,113.2644,https://glottolog.org/resource/languoid/id/yuec1235
+glotto:yuec1235,Hong Kong,Hong Kong,HK,Hant,22.3193,114.1694,https://glottolog.org/resource/languoid/id/yuec1235
+glotto:yuec1235,Macau,Macau,MO,Hant,22.1987,113.5439,https://glottolog.org/resource/languoid/id/yuec1235
+system:fa-IR,Tehran,Tehran,IR,,35.6892,51.389,https://www.iranicaonline.org/articles/persian-language-i
+system:mn-Cyrl-MN,Ulaanbaatar,Ulaanbaatar,MN,Cyrl,47.8864,106.9057,https://www.ethnologue.com/language/mon/
+system:mn-Mong-CN,Hohhot,Hohhot,CN,Mong,40.8426,111.7492,https://www.ethnologue.com/language/mvf/
+system:za-Latn-CN,Nanning,Nanning,CN,Latn,22.817,108.3665,https://www.ethnologue.com/language/zha/
