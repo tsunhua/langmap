@@ -64,3 +64,6 @@ scripts/v2/v2-data.sql
 scripts/i18n/*-import.sql
 
 .opencode/
+/scripts/db/state/
+!/scripts/db/state/
+!/scripts/db/state/README.md
