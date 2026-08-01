@@ -386,6 +386,29 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertNotEqual(extra_result.returncode, 0)
             self.assertIn("fr-FR", extra_result.stderr)
 
+    def test_cli_rejects_duplicate_locale_override(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+
+            result = self._run_cli_with_locale_args(
+                catalog_path=catalog_path,
+                output_dir=output_dir,
+                locale_args=[
+                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
+                    f"ja-JP={locale_paths['ja-JP']}",
+                    f"es-ES={locale_paths['es-ES']}",
+                    f"zh-Hans-CN={locale_paths['zh-Hans-CN']}",
+                    f"es-ES={locale_paths['es-ES']}",
+                ],
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("duplicate locale override: es-ES", result.stderr)
+
     def test_replace_artifacts_rolls_back_if_replace_fails_midway(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
 

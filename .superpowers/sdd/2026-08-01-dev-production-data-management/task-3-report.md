@@ -415,3 +415,39 @@ Additional idempotency check stayed unchanged:
 ```json
 {"first": {"ui_locales": 4, "ui_messages": 312, "expressions": 1308, "expression_edges": 1058}, "second": {"ui_locales": 4, "ui_messages": 312, "expressions": 1308, "expression_edges": 1058}}
 ```
+
+## Scoped re-review append on 2026-08-01
+
+Reviewer follow-up identified one remaining coverage gap: duplicate locale override rejection was implemented in `parse_locale_args()`, but not covered by a CLI regression test.
+
+### Coverage update
+
+- 新增 `test_cli_rejects_duplicate_locale_override`
+- 驗證 duplicate `--locale es-ES=...` 會讓 CLI fail fast，且 stderr 包含 `duplicate locale override: es-ES`
+
+### TDD note
+
+這次 scoped fix 是 coverage-only。實作行為在前一個 fix commit 已存在，因此新增 regression test 後立即通過；沒有額外 production code 變更需求。
+
+Command:
+
+```bash
+python3 scripts/i18n/test_generate_bundle.py
+```
+
+Result:
+
+```text
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.383s
+
+OK
+```
+
+Additional verification:
+
+```text
+bash scripts/i18n/test-import-all.sh -> PASS: import-all bundle wrapper behavior
+git diff --check -> no output
+```
