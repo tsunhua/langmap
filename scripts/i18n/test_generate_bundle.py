@@ -114,6 +114,25 @@ class GenerateBundleTests(unittest.TestCase):
             check=False,
         )
 
+    def _run_cli_with_locale_args(self, *, catalog_path: Path, locale_args: list[str], output_dir: Path) -> subprocess.CompletedProcess[str]:
+        args = [
+            sys.executable,
+            str(GENERATE_BUNDLE),
+            "--source-catalog",
+            str(catalog_path),
+            "--output-dir",
+            str(output_dir),
+        ]
+        for item in locale_args:
+            args.extend(["--locale", item])
+        return subprocess.run(
+            args,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def _create_sqlite_schema(self, db: sqlite3.Connection) -> None:
         db.executescript(
             """
@@ -288,6 +307,125 @@ class GenerateBundleTests(unittest.TestCase):
                     output_dir=output_dir,
                     expression_id_fn=collision_expression_id,
                 )
+
+    def test_generate_bundle_uses_single_read_snapshot_for_manifest_and_sql(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+            module = load_module("generate_bundle_snapshot", GENERATE_BUNDLE)
+
+            call_counts: dict[Path, int] = {}
+            original_bytes = {
+                catalog_path.resolve(): catalog_path.read_bytes(),
+                **{path.resolve(): path.read_bytes() for path in locale_paths.values()},
+            }
+
+            def read_bytes_once(path: Path) -> bytes:
+                resolved = Path(path).resolve()
+                call_counts[resolved] = call_counts.get(resolved, 0) + 1
+                if call_counts[resolved] > 1:
+                    raise AssertionError(f"unexpected reread of {resolved}")
+                payload = original_bytes[resolved]
+                if resolved == catalog_path.resolve():
+                    catalog_path.write_text("export const en = {} as const\n", encoding="utf-8")
+                return payload
+
+            manifest = module.generate_bundle(
+                source_catalog_path=catalog_path,
+                locale_paths=locale_paths,
+                output_dir=output_dir,
+                read_bytes_fn=read_bytes_once,
+            )
+
+            self.assertEqual(
+                set(call_counts.keys()),
+                {catalog_path.resolve(), *(path.resolve() for path in locale_paths.values())},
+            )
+            self.assertTrue(all(count == 1 for count in call_counts.values()))
+            self.assertEqual(
+                manifest["inputs"]["source_catalog"]["sha256"],
+                hashlib.sha256(original_bytes[catalog_path.resolve()]).hexdigest(),
+            )
+
+    def test_cli_rejects_missing_or_extra_locale_set(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+
+            missing_result = self._run_cli_with_locale_args(
+                catalog_path=catalog_path,
+                output_dir=output_dir,
+                locale_args=[
+                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
+                    f"ja-JP={locale_paths['ja-JP']}",
+                    f"es-ES={locale_paths['es-ES']}",
+                ],
+            )
+            self.assertNotEqual(missing_result.returncode, 0)
+            self.assertIn("zh-Hans-CN", missing_result.stderr)
+
+            extra_path = temp_root / "scripts" / "i18n" / "fr-FR.json"
+            extra_path.write_text(json.dumps({"common.search": "Chercher"}, ensure_ascii=False), encoding="utf-8")
+            extra_result = self._run_cli_with_locale_args(
+                catalog_path=catalog_path,
+                output_dir=output_dir,
+                locale_args=[
+                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
+                    f"ja-JP={locale_paths['ja-JP']}",
+                    f"es-ES={locale_paths['es-ES']}",
+                    f"zh-Hans-CN={locale_paths['zh-Hans-CN']}",
+                    f"fr-FR={extra_path}",
+                ],
+            )
+            self.assertNotEqual(extra_result.returncode, 0)
+            self.assertIn("fr-FR", extra_result.stderr)
+
+    def test_replace_artifacts_rolls_back_if_replace_fails_midway(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            output_dir = temp_root / "artifacts" / "system-ui"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            manifest_path = output_dir / "manifest.json"
+            sql_path = output_dir / "system-ui.sql"
+            manifest_original = b'{"sentinel":"manifest-before"}\n'
+            sql_original = b"-- sentinel sql before\n"
+            manifest_path.write_bytes(manifest_original)
+            sql_path.write_bytes(sql_original)
+
+            module = load_module("generate_bundle_replace", GENERATE_BUNDLE)
+            staging_dir = temp_root / "staging"
+            staging_dir.mkdir()
+            staged_sql_path = staging_dir / "system-ui.sql"
+            staged_manifest_path = staging_dir / "manifest.json"
+            staged_sql_path.write_text("-- new sql\n", encoding="utf-8")
+            staged_manifest_path.write_text('{"sentinel":"manifest-after"}\n', encoding="utf-8")
+
+            calls: list[tuple[str, str]] = []
+
+            def flaky_replace(src: Path, dst: Path) -> None:
+                calls.append((src.name, dst.name))
+                if dst.name == "manifest.json":
+                    raise OSError("boom during manifest replace")
+                Path(src).replace(dst)
+
+            with self.assertRaisesRegex(OSError, "boom during manifest replace"):
+                module.replace_artifacts(
+                    output_dir,
+                    staged_sql_path,
+                    staged_manifest_path,
+                    replace_fn=flaky_replace,
+                )
+
+            self.assertEqual(sql_path.read_bytes(), sql_original)
+            self.assertEqual(manifest_path.read_bytes(), manifest_original)
 
     def test_generate_i18n_sql_rejects_unknown_keys_instead_of_skipping(self) -> None:
         self.assertTrue(GENERATE_SQL.exists(), "generate-i18n-sql.py should exist")

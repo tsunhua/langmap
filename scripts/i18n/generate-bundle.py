@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import importlib.util
 import json
@@ -22,6 +23,7 @@ DEFAULT_LOCALE_PATHS = {
     'es-ES': PROJECT_ROOT / 'scripts/i18n/es-ES.json',
     'ja-JP': PROJECT_ROOT / 'scripts/i18n/ja-JP.json',
 }
+REQUIRED_LOCALE_CODES = ('es-ES', 'ja-JP', 'zh-Hans-CN', 'zh-Hant-TW')
 SCHEMA_VERSION = 1
 OWNERSHIP_SCOPE = 'managed-system-ui'
 
@@ -44,32 +46,87 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 
+def sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+@dataclass(frozen=True)
+class LocaleSnapshot:
+    path: Path
+    raw_bytes: bytes
+    translations: dict[str, str]
+
+
+@dataclass(frozen=True)
+class BundleSnapshot:
+    source_catalog_path: Path
+    source_catalog_bytes: bytes
+    source_map: dict[str, str]
+    locales: dict[str, LocaleSnapshot]
+
+
 def normalize_locale_paths(locale_paths: dict[str, Path]) -> dict[str, Path]:
-    normalized: dict[str, Path] = {}
-    for code, path in locale_paths.items():
-        normalized[code] = Path(path).resolve()
-    return dict(sorted(normalized.items()))
+    normalized = {code: Path(path).resolve() for code, path in locale_paths.items()}
+    expected = set(REQUIRED_LOCALE_CODES)
+    actual = set(normalized.keys())
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing or extra:
+        problems: list[str] = []
+        if missing:
+            problems.append(f'missing locale(s): {", ".join(missing)}')
+        if extra:
+            problems.append(f'unexpected locale(s): {", ".join(extra)}')
+        raise ValueError(
+            f'bundle locale set must be exactly {", ".join(REQUIRED_LOCALE_CODES)}; '
+            + '; '.join(problems)
+        )
+    return {code: normalized[code] for code in REQUIRED_LOCALE_CODES}
 
 
-def load_locale_rows(
+def load_bundle_snapshot(
     source_catalog_path: Path,
     locale_paths: dict[str, Path],
+    *,
+    read_bytes_fn=None,
+) -> BundleSnapshot:
+    reader = read_bytes_fn or Path.read_bytes
+    normalized_locale_paths = normalize_locale_paths(locale_paths)
+    source_catalog_path = Path(source_catalog_path).resolve()
+    source_catalog_bytes = reader(source_catalog_path)
+    source_map = i18n_sql.parse_en_ts_bytes(source_catalog_bytes)
+    locales: dict[str, LocaleSnapshot] = {}
+    for locale_code, path in normalized_locale_paths.items():
+        locale_bytes = reader(path)
+        locales[locale_code] = LocaleSnapshot(
+            path=path,
+            raw_bytes=locale_bytes,
+            translations=i18n_sql.load_translations_bytes(locale_bytes),
+        )
+    return BundleSnapshot(
+        source_catalog_path=source_catalog_path,
+        source_catalog_bytes=source_catalog_bytes,
+        source_map=source_map,
+        locales=locales,
+    )
+
+
+def build_rows_by_locale(
+    snapshot: BundleSnapshot,
     *,
     expression_id_fn=i18n_sql.expression_id,
     stable_edge_id_fn=i18n_sql.stable_edge_id,
 ):
-    source_map = i18n_sql.parse_en_ts(source_catalog_path)
-    rows_by_locale = {}
-    for locale_code, path in normalize_locale_paths(locale_paths).items():
-        translations = i18n_sql.load_translations(path)
-        rows_by_locale[locale_code] = i18n_sql.build_translation_rows(
+    return {
+        locale_code: i18n_sql.build_translation_rows(
             locale_code,
-            translations,
-            source_map,
+            locale_snapshot.translations,
+            snapshot.source_map,
             expression_id_fn=expression_id_fn,
             stable_edge_id_fn=stable_edge_id_fn,
         )
-    return source_map, rows_by_locale
+        for locale_code, locale_snapshot in snapshot.locales.items()
+    }
 
 
 def validate_deterministic_ids(source_map, rows_by_locale) -> None:
@@ -170,34 +227,32 @@ VALUES ('{row.edge_id}', {row.source_expression_id}, {row.target_expression_id},
 
 def build_manifest(
     *,
-    source_catalog_path: Path,
-    locale_paths: dict[str, Path],
+    snapshot: BundleSnapshot,
     source_map,
     rows_by_locale,
     sql_text: str,
 ) -> dict:
-    normalized_locale_paths = normalize_locale_paths(locale_paths)
     return {
         'schema_version': SCHEMA_VERSION,
         'project_id': i18n_sql.PROJECT_ID,
         'ownership_scope': OWNERSHIP_SCOPE,
-        'locale_codes': list(normalized_locale_paths.keys()),
+        'locale_codes': list(snapshot.locales.keys()),
         'counts': {
-            'locale_count': len(normalized_locale_paths),
+            'locale_count': len(snapshot.locales),
             'message_count': len(source_map),
             'translation_count': sum(len(rows) for rows in rows_by_locale.values()),
         },
         'inputs': {
             'source_catalog': {
-                'path': str(source_catalog_path.resolve()),
-                'sha256': sha256_text(source_catalog_path.read_text(encoding='utf-8')),
+                'path': str(snapshot.source_catalog_path),
+                'sha256': sha256_bytes(snapshot.source_catalog_bytes),
             },
             'locales': {
                 locale_code: {
-                    'path': str(path),
-                    'sha256': sha256_text(path.read_text(encoding='utf-8')),
+                    'path': str(locale_snapshot.path),
+                    'sha256': sha256_bytes(locale_snapshot.raw_bytes),
                 }
-                for locale_code, path in normalized_locale_paths.items()
+                for locale_code, locale_snapshot in snapshot.locales.items()
             },
         },
         'artifacts': {
@@ -222,7 +277,17 @@ def stage_artifacts(output_dir: Path, sql_text: str, manifest: dict) -> tuple[Pa
     return staging_dir, sql_path, manifest_path
 
 
-def replace_artifacts(output_dir: Path, staged_sql_path: Path, staged_manifest_path: Path) -> None:
+def replace_artifacts(
+    output_dir: Path,
+    staged_sql_path: Path,
+    staged_manifest_path: Path,
+    *,
+    copy_fn=shutil.copy2,
+    replace_fn=None,
+    rollback_replace_fn=None,
+) -> None:
+    forward_replace = replace_fn or (lambda src, dst: Path(src).replace(dst))
+    rollback_replace = rollback_replace_fn or (lambda src, dst: Path(src).replace(dst))
     targets = {
         output_dir / 'system-ui.sql': staged_sql_path,
         output_dir / 'manifest.json': staged_manifest_path,
@@ -235,16 +300,16 @@ def replace_artifacts(output_dir: Path, staged_sql_path: Path, staged_manifest_p
             existed_before[target] = target.exists()
             if target.exists():
                 backup_path = target.with_suffix(target.suffix + '.bak')
-                shutil.copy2(target, backup_path)
+                copy_fn(target, backup_path)
                 backups[target] = backup_path
         for target, staged_path in targets.items():
-            staged_path.replace(target)
+            forward_replace(staged_path, target)
             replaced_targets.append(target)
     except Exception:
         for target in replaced_targets:
             backup_path = backups.get(target)
             if backup_path is not None and backup_path.exists():
-                backup_path.replace(target)
+                rollback_replace(backup_path, target)
             elif not existed_before.get(target, False) and target.exists():
                 target.unlink()
         raise
@@ -261,22 +326,24 @@ def generate_bundle(
     output_dir: Path,
     expression_id_fn=i18n_sql.expression_id,
     stable_edge_id_fn=i18n_sql.stable_edge_id,
+    read_bytes_fn=None,
 ) -> dict:
-    source_catalog_path = Path(source_catalog_path).resolve()
     output_dir = Path(output_dir).resolve()
-    normalized_locale_paths = normalize_locale_paths(locale_paths)
-    source_map, rows_by_locale = load_locale_rows(
+    snapshot = load_bundle_snapshot(
         source_catalog_path,
-        normalized_locale_paths,
+        locale_paths,
+        read_bytes_fn=read_bytes_fn,
+    )
+    rows_by_locale = build_rows_by_locale(
+        snapshot,
         expression_id_fn=expression_id_fn,
         stable_edge_id_fn=stable_edge_id_fn,
     )
-    validate_deterministic_ids(source_map, rows_by_locale)
-    sql_text = render_bundle_sql(source_map, rows_by_locale)
+    validate_deterministic_ids(snapshot.source_map, rows_by_locale)
+    sql_text = render_bundle_sql(snapshot.source_map, rows_by_locale)
     manifest = build_manifest(
-        source_catalog_path=source_catalog_path,
-        locale_paths=normalized_locale_paths,
-        source_map=source_map,
+        snapshot=snapshot,
+        source_map=snapshot.source_map,
         rows_by_locale=rows_by_locale,
         sql_text=sql_text,
     )
@@ -309,6 +376,8 @@ def parse_locale_args(items: list[str]) -> dict[str, Path]:
         if '=' not in item:
             raise ValueError(f'invalid --locale value "{item}": expected LOCALE_CODE=/path/to/file.json')
         locale_code, raw_path = item.split('=', 1)
+        if locale_code in locale_paths:
+            raise ValueError(f'duplicate locale override: {locale_code}')
         locale_paths[locale_code] = Path(raw_path)
     return locale_paths
 

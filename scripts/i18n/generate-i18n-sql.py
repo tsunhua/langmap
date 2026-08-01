@@ -60,8 +60,15 @@ def stable_edge_id(a: int, b: int) -> str:
 # ---------------------------------------------------------------------------
 
 def parse_en_ts(path: str) -> dict[str, str]:
-    with open(path) as f:
-        lines = f.readlines()
+    return parse_en_ts_text(Path(path).read_text(encoding='utf-8'))
+
+
+def parse_en_ts_bytes(data: bytes) -> dict[str, str]:
+    return parse_en_ts_text(data.decode('utf-8'))
+
+
+def parse_en_ts_text(content: str) -> dict[str, str]:
+    lines = content.splitlines()
     stack: list[str] = []
     result: dict[str, str] = {}
     in_value = False
@@ -82,7 +89,7 @@ def parse_en_ts(path: str) -> dict[str, str]:
                 stack.pop()
             continue
         if in_value:
-            value_buf.append(line.rstrip())
+            value_buf.append(line)
             full = ''.join(value_buf)
             q = re.escape(quote_char)
             if full.count(quote_char) % 2 == 0 and (full.endswith("',") or full.endswith("'")):
@@ -118,7 +125,7 @@ def parse_en_ts(path: str) -> dict[str, str]:
                     result['.'.join(stack + [key])] = val
             else:
                 in_value = True
-                value_buf = [line.rstrip()]
+                value_buf = [line]
                 quote_char = q
                 stack.append(key)
     return result
@@ -145,7 +152,15 @@ def validate_locale_code(locale_code: str) -> None:
 
 
 def load_translations(path: Path) -> dict[str, str]:
-    data = json.loads(path.read_text(encoding='utf-8'))
+    return load_translations_text(path.read_text(encoding='utf-8'))
+
+
+def load_translations_bytes(data: bytes) -> dict[str, str]:
+    return load_translations_text(data.decode('utf-8'))
+
+
+def load_translations_text(content: str) -> dict[str, str]:
+    data = json.loads(content)
     if not isinstance(data, dict):
         raise ValueError('translations file must be a JSON object { "key": "text", ... }')
     translations: dict[str, str] = {}
