@@ -64,6 +64,19 @@ npm run dev
 
 後端使用 `wrangler dev --remote` 連接遠程 D1 數據庫進行開發。
 
+### 本地全棧開發
+
+```bash
+./dev.sh
+```
+
+`./dev.sh` 會先檢查本地 bootstrap fingerprint，再透過 `scripts/db/manage.sh local status|rebuild|verify`
+管理 repo 專屬的本地 D1 狀態，最後啟動後端 Wrangler 與前端 Vite。
+
+- `./dev.sh --rebuild`：強制重建本地 D1 bootstrap。
+- `./dev.sh --no-rebuild`：禁止自動重建；若 fingerprint 不一致會直接失敗。
+- `./dev.sh --port=8790`：將本地 API 綁到指定埠，前端仍代理到該埠。
+
 ### 完整構建
 
 ```bash

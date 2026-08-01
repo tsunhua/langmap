@@ -1,20 +1,131 @@
 #!/usr/bin/env bash
-set -e
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-PORT=""
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd -P)"
+BACKEND_PORT="8788"
+FORCE_REBUILD=0
+ALLOW_REBUILD=1
+
 LOCAL_D1_STATE="$ROOT/backend/.wrangler/state"
+DEV_RUNTIME_DIR="$ROOT/scripts/db/state/dev-runtime"
+BACKEND_PIDFILE="$DEV_RUNTIME_DIR/backend.pid"
+FRONTEND_PIDFILE="$DEV_RUNTIME_DIR/frontend.pid"
+MANAGE_BIN="${LANGMAP_DB_MANAGER_BIN:-manage.sh}"
+BACKEND_PID=""
+FRONTEND_PID=""
+CLEANUP_DONE=0
+
+export PATH="$ROOT/scripts/db:$PATH"
+
+usage() {
+  cat <<'EOF' >&2
+Usage: ./dev.sh [--rebuild | --no-rebuild] [--port=<backend-port>]
+EOF
+}
+
+trap 'echo "❌ $(basename "$0") 失敗：第 $LINENO 行" >&2' ERR
+
+step() { echo "▶ $*" >&2; }
+
+ensure_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "缺少必要指令：$1" >&2
+    exit 1
+  fi
+}
+
+read_pidfile() {
+  local pidfile="$1"
+  if [ ! -f "$pidfile" ]; then
+    return 1
+  fi
+  tr -d '[:space:]' < "$pidfile"
+}
+
+matches_repo_process() {
+  local pid="$1"
+  local role="$2"
+  local command_line
+
+  command_line="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+  if [ -z "$command_line" ]; then
+    return 1
+  fi
+
+  case "$role" in
+    backend)
+      [[ "$command_line" == *"wrangler dev"* && "$command_line" == *"$ROOT"* ]]
+      ;;
+    frontend)
+      [[ "$command_line" == *"vite"* && "$command_line" == *"$ROOT"* ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+stop_pidfile_process() {
+  local pidfile="$1"
+  local role="$2"
+  local pid
+
+  pid="$(read_pidfile "$pidfile" || true)"
+  if [ -n "$pid" ] && matches_repo_process "$pid" "$role"; then
+    step "停止本 repo 殘留 ${role} process (pid=$pid)"
+    kill "$pid" 2>/dev/null || true
+  fi
+
+  rm -f "$pidfile"
+}
+
+cleanup() {
+  if [ "$CLEANUP_DONE" -eq 1 ]; then
+    return
+  fi
+  CLEANUP_DONE=1
+
+  if [ -n "$BACKEND_PID" ] || [ -n "$FRONTEND_PID" ] || [ -f "$BACKEND_PIDFILE" ] || [ -f "$FRONTEND_PIDFILE" ]; then
+    echo ""
+    echo "停止服務…"
+  fi
+
+  stop_pidfile_process "$BACKEND_PIDFILE" backend
+  stop_pidfile_process "$FRONTEND_PIDFILE" frontend
+}
+
+trap 'cleanup' EXIT
+trap 'exit 0' INT TERM
 
 for arg in "$@"; do
   case "$arg" in
-    --port=*) PORT="${arg#--port=}" ;;
+    --rebuild)
+      FORCE_REBUILD=1
+      ;;
+    --no-rebuild)
+      ALLOW_REBUILD=0
+      ;;
+    --port=*)
+      BACKEND_PORT="${arg#--port=}"
+      ;;
+    *)
+      usage
+      exit 2
+      ;;
   esac
 done
 
-trap 'echo "❌ $(basename "$0") 失敗：第 $LINENO 行" >&2' ERR
-step() { echo "▶ $*" >&2; }
+if [ "$FORCE_REBUILD" -eq 1 ] && [ "$ALLOW_REBUILD" -eq 0 ]; then
+  echo "不能同時指定 --rebuild 與 --no-rebuild" >&2
+  exit 2
+fi
 
-step "停止殘留 wrangler"
-pkill -f "wrangler dev" 2>/dev/null || true
+ensure_command "$MANAGE_BIN"
+mkdir -p "$DEV_RUNTIME_DIR"
+
+step "停止本 repo 殘留服務"
+stop_pidfile_process "$BACKEND_PIDFILE" backend
+stop_pidfile_process "$FRONTEND_PIDFILE" frontend
 
 step "確保 v2 本地 secret（.dev.vars）存在"
 if [ ! -f "$ROOT/backend/.dev.vars" ]; then
@@ -28,103 +139,56 @@ step "確保後端相依套件已安裝"
 cd "$ROOT/backend"
 [ -d node_modules ] || npm install
 
-step "確保本地 D1 schema 已遷移（無表才應用 schema.sql）"
-TABLE_COUNT=$(npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" --command="SELECT count(*) as c FROM sqlite_master WHERE type='table';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
-if [ "${TABLE_COUNT:-0}" -eq 0 ]; then
-  echo "  本地 D1 無表，套用 schema.sql"
-  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" --file=./schema.sql
-  echo "  載入 pinned language-registry.sql"
-  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
-    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
+step "確保前端相依套件已安裝"
+cd "$ROOT/web"
+[ -d node_modules ] || npm install
+
+step "決定 local bootstrap 流程"
+cd "$ROOT"
+if [ "$FORCE_REBUILD" -eq 1 ]; then
+  step "依旗標強制重建 local D1"
+  "$MANAGE_BIN" local rebuild
 else
-  echo "  本地 D1 已有 ${TABLE_COUNT} 張表，套用增量遷移"
-  npx wrangler d1 migrations apply langmap-v2 --local --persist-to "$LOCAL_D1_STATE" || true
-  echo "  確保 language_subtags 表存在（幂等）"
-  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
-    --command="CREATE TABLE IF NOT EXISTS language_subtags (
-      type TEXT NOT NULL,
-      value TEXT NOT NULL,
-      descriptions TEXT NOT NULL DEFAULT '[]',
-      prefixes TEXT NOT NULL DEFAULT '[]',
-      preferred_value TEXT,
-      suppress_script TEXT,
-      deprecated TEXT,
-      PRIMARY KEY (type, value)
-    );"
-  echo "  檢查 languages 表是否需要重建（老 schema 缺少欄位）"
-  HAS_DESC=$(npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
-    --command="SELECT COUNT(*) as c FROM pragma_table_info('languages') WHERE name='description';" 2>/dev/null | grep -oE '"c": [0-9]+' | grep -oE '[0-9]+')
-  if [ "${HAS_DESC:-0}" -eq 0 ]; then
-    echo "  languages 表是舊 schema，重建為新版⋯"
-    npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
-      --command="DROP TABLE IF EXISTS languages_v2;
-      CREATE TABLE languages_v2 (
-        code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, name_en TEXT,
-        description TEXT, direction TEXT DEFAULT 'ltr',
-        base_language TEXT, script_code TEXT, region_code TEXT,
-        variants_json TEXT, private_use_json TEXT,
-        variety_key TEXT NOT NULL DEFAULT 'migration', glottocode TEXT,
-        origin TEXT NOT NULL DEFAULT 'seed', community_reason TEXT,
-        alternate_names_json TEXT, references_json TEXT,
-        parent_languoid_id TEXT, latitude REAL, longitude REAL,
-        created_by TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_by TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-      INSERT OR IGNORE INTO languages_v2
-        (code, name, name_en, direction, base_language, script_code,
-         region_code, created_by, created_at, updated_by, updated_at)
-      SELECT code, name, name_en, direction, base_language, script_code,
-             region_code, created_by, created_at, updated_by, updated_at
-      FROM languages;
-      DROP TABLE languages;
-      ALTER TABLE languages_v2 RENAME TO languages;
-      CREATE INDEX IF NOT EXISTS idx_languages_name ON languages(name);
-      CREATE INDEX IF NOT EXISTS idx_languages_variety_key ON languages(variety_key);
-      CREATE INDEX IF NOT EXISTS idx_languages_glottocode ON languages(glottocode);
-      CREATE INDEX IF NOT EXISTS idx_languages_base_script_region
-        ON languages(base_language, script_code, region_code);"
+  status_json="$("$MANAGE_BIN" local status)"
+  rebuild_required="$(
+    printf '%s' "$status_json" | python3 -c 'import json, sys
+payload = json.load(sys.stdin)
+value = payload.get("rebuild_required")
+if not isinstance(value, bool):
+    raise SystemExit("status missing boolean rebuild_required")
+print("true" if value else "false")'
+  )"
+
+  if [ "$rebuild_required" = "true" ]; then
+    if [ "$ALLOW_REBUILD" -eq 0 ]; then
+      echo "local D1 需要重建，但收到 --no-rebuild；請先執行 ./dev.sh --rebuild。" >&2
+      exit 1
+    fi
+    step "fingerprint miss，重建 local D1"
+    "$MANAGE_BIN" local rebuild
   else
-    echo "  languages 表 schema 已是最新版，跳過重建"
+    step "fingerprint hit，驗證 local D1"
+    "$MANAGE_BIN" local verify
   fi
-  echo "  載入 pinned language-registry.sql（幂等）"
-  npx wrangler d1 execute langmap-v2 --local --persist-to "$LOCAL_D1_STATE" \
-    --file="$ROOT/scripts/v2/artifacts/language-registry-5.3/language-registry.sql"
 fi
 
-step "啟動後端 wrangler（port ${PORT:-8788}）"
+step "啟動後端 wrangler（port ${BACKEND_PORT}）"
 cd "$ROOT/backend"
-npx wrangler dev --persist-to "$LOCAL_D1_STATE" --port "${PORT:-8788}" &
+npx wrangler dev \
+  --config "$ROOT/backend/wrangler.jsonc" \
+  --persist-to "$LOCAL_D1_STATE" \
+  --port "$BACKEND_PORT" &
 BACKEND_PID=$!
-
-step "釋放可能殘留的 workerd 檢查器埠 9229（若屬於本 repo 的 workerd）"
-INSPECTOR_PID=$(lsof -t -iTCP:9229 -sTCP:LISTEN 2>/dev/null || true)
-if [ -n "$INSPECTOR_PID" ]; then
-  INSPECTOR_CMD=$(ps -p "$INSPECTOR_PID" -o args= 2>/dev/null || true)
-  if echo "$INSPECTOR_CMD" | grep -qE 'workerd|wrangler|langmap'; then
-    step "釋放 9229 (pid=$INSPECTOR_PID) — 因為命令看起來屬於本專案或 workerd"
-    kill "$INSPECTOR_PID" 2>/dev/null || true
-    sleep 1
-  else
-    echo "  9229 已被其他程序佔用: $INSPECTOR_CMD — 不會強行關閉，若需要請手動處理"
-  fi
-fi
-
-step "使用 v2 後端作為主要 local API，不再自動啟動舊版後端"
+printf '%s\n' "$BACKEND_PID" > "$BACKEND_PIDFILE"
 
 step "啟動前端 Vite dev server（port 5173，HMR）"
 cd "$ROOT/web"
-[ -d node_modules ] || npm install
-npx vite --host --strictPort &
+npx vite --host --strictPort --config "$ROOT/web/vite.config.ts" &
 FRONTEND_PID=$!
+printf '%s\n' "$FRONTEND_PID" > "$FRONTEND_PIDFILE"
 
-cleanup() {
-  echo ""
-  echo "停止服務…"
-  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
-  exit 0
-}
-trap cleanup INT TERM
 echo ""
-echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${PORT:-8788}）"
+echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${BACKEND_PORT}）"
 echo "按 Ctrl+C 停止"
-wait || true
+
+wait "$BACKEND_PID" "$FRONTEND_PID"
