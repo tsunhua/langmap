@@ -271,6 +271,16 @@ Added: 2005-10-16
         self.assertNotIn("languoid_id TEXT\n", schema)
         self.assertNotIn("is_active INTEGER", schema)
 
+    def test_language_locations_schema_is_minimal_and_indexed(self):
+        schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
+        self.assertIn("CREATE TABLE language_locations", schema)
+        self.assertIn("PRIMARY KEY (variety_key, city_name, territory_code, script_code)", schema)
+        self.assertIn("CREATE INDEX idx_language_locations_variety", schema)
+        self.assertIn("CREATE INDEX idx_language_locations_city", schema)
+        self.assertNotIn("CREATE TABLE places", schema)
+        self.assertNotIn("geometry", schema.lower())
+        self.assertNotIn("polygon", schema.lower())
+
     def test_language_migration_preserves_canonical_codes(self):
         manifest = {
             "mappings": {

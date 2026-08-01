@@ -97,6 +97,22 @@ CREATE INDEX idx_languages_glottocode ON languages(glottocode);
 CREATE INDEX idx_languages_base_script_region
   ON languages(base_language, script_code, region_code);
 
+CREATE TABLE language_locations (
+    variety_key TEXT NOT NULL,
+    city_name TEXT NOT NULL,
+    city_name_en TEXT,
+    territory_code TEXT NOT NULL,
+    script_code TEXT NOT NULL DEFAULT '',
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    reference TEXT NOT NULL,
+    PRIMARY KEY (variety_key, city_name, territory_code, script_code)
+);
+CREATE INDEX idx_language_locations_variety
+  ON language_locations(variety_key);
+CREATE INDEX idx_language_locations_city
+  ON language_locations(city_name, territory_code);
+
 CREATE TABLE expressions (
     id INTEGER PRIMARY KEY NOT NULL,
     text TEXT NOT NULL,
