@@ -46,29 +46,30 @@ class ProjectPaths:
     def ensure_safe_cleanup_target(
         self, candidate: Path, *, allowed_root: Path | None = None
     ) -> Path:
+        boundary_root = (
+            allowed_root.resolve(strict=False)
+            if allowed_root is not None
+            else self.repo_root.resolve()
+        )
         resolved = candidate.resolve(strict=False)
+        resolved_parent = candidate.parent.resolve(strict=False)
         forbidden = {
             Path("/").resolve(),
             Path.home().resolve(),
             self.repo_root.resolve(),
         }
-        if resolved in forbidden:
+        if resolved in forbidden or resolved_parent in forbidden:
             raise ValueError(f"unsafe cleanup target: {resolved}")
 
-        try:
-            candidate.relative_to(candidate.parent)
-        except ValueError as exc:
-            raise ValueError(f"invalid cleanup target: {candidate}") from exc
+        if resolved == boundary_root:
+            raise ValueError(f"cleanup target cannot be root: {resolved}")
 
-        if allowed_root is not None:
-            allowed_resolved = allowed_root.resolve(strict=False)
-            if resolved == allowed_resolved:
-                raise ValueError(f"cleanup target cannot be root: {resolved}")
+        for path_to_check in (resolved_parent, resolved):
             try:
-                resolved.relative_to(allowed_resolved)
+                path_to_check.relative_to(boundary_root)
             except ValueError as exc:
                 raise ValueError(
-                    f"cleanup target escapes allowed root: {resolved}"
+                    f"cleanup target escapes allowed root: {path_to_check}"
                 ) from exc
 
         return resolved

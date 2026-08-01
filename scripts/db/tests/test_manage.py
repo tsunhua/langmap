@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -143,12 +144,33 @@ class ProjectPathsTests(unittest.TestCase):
             temp_root = Path(temp_dir)
             allowed = temp_root / "allowed"
             allowed.mkdir()
+            external_root = Path(tempfile.mkdtemp())
+            self.addCleanup(lambda: shutil.rmtree(external_root))
             escape = temp_root / "escape"
-            escape.symlink_to(Path.home())
+            escape.symlink_to(external_root, target_is_directory=True)
 
             self.assertEqual(paths.ensure_safe_cleanup_target(allowed), allowed.resolve())
             with self.assertRaises(ValueError):
                 paths.ensure_safe_cleanup_target(escape)
+
+    def test_rejects_cleanup_target_inside_symlinked_parent_directory(self) -> None:
+        if not PATHS_PY.exists():
+            self.fail("paths.py missing")
+
+        paths_module = load_module(PATHS_PY, "db_paths")
+        paths = paths_module.ProjectPaths.discover(REPO_ROOT)
+
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp_dir:
+            temp_root = Path(temp_dir)
+            external_root = Path(tempfile.mkdtemp())
+            self.addCleanup(lambda: shutil.rmtree(external_root))
+            outside_child = external_root / "child"
+            outside_child.mkdir()
+            jump = temp_root / "jump"
+            jump.symlink_to(external_root, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                paths.ensure_safe_cleanup_target(jump / "child")
 
 
 class RunnerTests(unittest.TestCase):
