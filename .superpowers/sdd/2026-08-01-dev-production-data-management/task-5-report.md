@@ -190,13 +190,11 @@ Commit message:
 refactor: make dev startup use reproducible data bootstrap
 ```
 
-Commit hash:
+Implementation commit hash:
 
 ```text
-PENDING
+23005ad
 ```
-
-This section will be updated after the commit is created.
 
 ## Remaining concerns
 
