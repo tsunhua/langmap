@@ -142,3 +142,7 @@ class ProjectPaths:
     @property
     def production_baseline_path(self) -> Path:
         return self.repo_root / "scripts" / "db" / "production-baseline.json"
+
+    @property
+    def production_plan_dir(self) -> Path:
+        return self.state_dir / "production" / "plans"

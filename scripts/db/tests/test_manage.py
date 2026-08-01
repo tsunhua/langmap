@@ -115,7 +115,7 @@ class ManageCliTests(unittest.TestCase):
         self.assertIn("invalid choice", result.stderr)
 
     def test_production_accepts_only_supported_commands(self) -> None:
-        for command in ("plan", "apply", "verify"):
+        for command in ("apply", "verify"):
             with self.subTest(command=command):
                 result = run_manage("production", command)
                 self.assertEqual(

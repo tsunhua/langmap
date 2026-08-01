@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -178,7 +179,10 @@ def assert_identity(configured: dict[str, str], remote: dict[str, str]) -> None:
 
 
 def check_baseline(paths: ProjectPaths, inventory: dict[str, Any]) -> dict[str, Any]:
-    baseline = json.loads(paths.production_baseline_path.read_text(encoding="utf-8"))
+    try:
+        baseline = json.loads(paths.production_baseline_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProductionInventoryError("production baseline is missing or invalid") from exc
     if baseline.get("identity") != inventory.get("identity"):
         raise ProductionInventoryError("production baseline identity mismatch")
     expected_objects = {
@@ -196,6 +200,81 @@ def check_baseline(paths: ProjectPaths, inventory: dict[str, Any]) -> dict[str, 
     if applied != set(expected_migrations):
         raise ProductionInventoryError("production migration history baseline mismatch")
     return {"status": "ok", "schema_objects": len(actual_objects), "migration_count": len(expected_migrations)}
+
+
+def plan_production(
+    paths: ProjectPaths,
+    *,
+    wrangler_bin: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
+    operation_id = uuid.uuid4().hex
+    baseline_error: str | None = None
+    try:
+        schema_preflight = check_baseline(paths, inventory)
+    except ProductionInventoryError as exc:
+        schema_preflight = {"status": "blocked"}
+        baseline_error = str(exc)
+
+    expected_migrations = list(inventory["migrations"]["expected"])
+    applied_migrations = set(inventory["migrations"]["applied"])
+    pending_migrations = [name for name in expected_migrations if name not in applied_migrations]
+    migration_risks = {
+        name: classify_migration_risk(paths.migrations_dir / name)
+        for name in pending_migrations
+    }
+    language_manifest = json.loads(paths.language_manifest_path.read_text(encoding="utf-8"))
+    ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
+    expected_refs = {
+        "languages": str(language_manifest["generation"]["language_tag_count"]),
+        "language_locations": str(language_manifest["generation"]["language_location_count"]),
+        "ui_messages": str(ui_manifest["counts"]["message_count"]),
+        "ui_translations": str(ui_manifest["counts"]["translation_count"]),
+    }
+    actual_refs = {
+        key: str(inventory["counts"].get(key, 0))
+        for key in expected_refs
+    }
+    reference_actions = {
+        key: "unchanged" if expected_refs[key] == actual_refs[key] else "manual-review"
+        for key in expected_refs
+    }
+    plan = {
+        "status": "blocked" if baseline_error else "ready",
+        "environment": "production",
+        "operation_id": operation_id,
+        "identity": inventory["identity"],
+        "schema_preflight": schema_preflight,
+        "schema_preflight_error": baseline_error,
+        "pending_migrations": pending_migrations,
+        "migration_risks": migration_risks,
+        "reference_diff": {
+            "expected": expected_refs,
+            "actual": actual_refs,
+            "actions": reference_actions,
+            "counts": {
+                "insert": 0,
+                "update": 0,
+                "unchanged": sum(action == "unchanged" for action in reference_actions.values()),
+                "manual_review": sum(action == "manual-review" for action in reference_actions.values()),
+                "delete": 0,
+            },
+        },
+        "risk": "high" if pending_migrations or baseline_error else "low",
+        "mutation_allowed": False,
+    }
+    journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
+    return plan
+
+
+def classify_migration_risk(path: Path) -> str:
+    sql = path.read_text(encoding="utf-8").lower()
+    if any(token in sql for token in ("drop table", "delete from", "update ", "alter table", "rename to")):
+        return "high"
+    if any(token in sql for token in ("insert ", "create table", "create index")):
+        return "medium"
+    return "low"
 
 
 def _required_identity_value(payload: dict[str, Any], key: str) -> str:

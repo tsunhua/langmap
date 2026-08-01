@@ -9,7 +9,7 @@ from typing import Callable
 from lib.fingerprint import build_local_status
 from lib.local import rebuild_local_state, verify_local_environment
 from lib.paths import ProjectPaths
-from lib.production import inventory_production
+from lib.production import inventory_production, plan_production
 
 
 Handler = Callable[[ProjectPaths, argparse.Namespace], int]
@@ -36,7 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
     production_commands = production_parser.add_subparsers(dest="command", required=True)
     inventory_parser = production_commands.add_parser("inventory")
     inventory_parser.set_defaults(handler=_production_inventory_handler)
-    for command in ("plan", "apply", "verify"):
+    plan_parser = production_commands.add_parser("plan")
+    plan_parser.set_defaults(handler=_production_plan_handler)
+    for command in ("apply", "verify"):
         subparser = production_commands.add_parser(command)
         subparser.set_defaults(handler=_stub_handler)
 
@@ -102,6 +104,12 @@ def _production_inventory_handler(paths: ProjectPaths, args: argparse.Namespace)
     }
     print(json.dumps(summary, ensure_ascii=False))
     return 0
+
+
+def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
+    plan = plan_production(paths, wrangler_bin=_wrangler_bin_from_env())
+    print(json.dumps(plan, ensure_ascii=False))
+    return 0 if plan["status"] == "ready" else 1
 
 
 def _wrangler_bin_from_env() -> Path | None:

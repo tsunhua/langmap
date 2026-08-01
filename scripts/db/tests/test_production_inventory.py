@@ -102,3 +102,40 @@ class ProductionInventoryTests(unittest.TestCase):
             result = check_baseline(paths, report)
             self.assertEqual(result["status"], "ok")
 
+    def test_plan_is_read_only_and_blocks_on_baseline_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+
+            from lib.production import plan_production  # noqa: E402
+
+            plan = plan_production(
+                paths,
+                wrangler_bin=FAKE_WRANGLER,
+                env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+            )
+
+            self.assertEqual(plan["status"], "blocked")
+            self.assertFalse(plan["mutation_allowed"])
+            self.assertTrue(plan["operation_id"])
+            self.assertEqual(plan["reference_diff"]["counts"]["delete"], 0)
+            self.assertTrue((paths.production_plan_dir / f"{plan['operation_id']}.json").exists())
+            for line in log_path.read_text(encoding="utf-8").splitlines():
+                self.assertNotIn("INSERT", line.upper())
+                self.assertNotIn("UPDATE", line.upper())
+                self.assertNotIn("DELETE", line.upper())
+
+
+class ReferenceDiffTests(unittest.TestCase):
+    def test_reference_diff_never_deletes_artifact_missing_remote_rows(self) -> None:
+        from lib.reference import diff_owned_references
+
+        diff = diff_owned_references(
+            {"managed.a": "new", "managed.b": "same"},
+            {"managed.a": "old", "managed.b": "same", "remote.only": "keep"},
+            owned_keys={"managed.a", "managed.b"},
+        )
+
+        self.assertEqual(diff.counts, {"insert": 0, "update": 1, "unchanged": 1, "manual_review": 1, "delete": 0})
+        self.assertIn("remote.only", diff.manual_review)
