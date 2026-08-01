@@ -27,11 +27,13 @@ def rebuild_local_state(
     env: Mapping[str, str] | None = None,
     owner: str = "scripts/db/manage.py",
     created_at: str = "2026-08-01T00:00:00Z",
+    timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
     executor = LocalWranglerExecutor(
         paths=paths,
         wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
         env=env,
+        timeout_seconds=timeout_seconds,
     )
     desired_fingerprint = compute_bootstrap_fingerprint(default_fingerprint_inputs(paths))
     active_state_dir = paths.ensure_safe_cleanup_target(
@@ -64,6 +66,7 @@ def rebuild_local_state(
             env=env,
             persist_to=temp_state_dir,
             write_report=False,
+            timeout_seconds=timeout_seconds,
         )
         metadata_payloads = {
             paths.local_fingerprint_path: {
@@ -98,8 +101,14 @@ def verify_local_environment(
     *,
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
+    timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
-    return verify_local_state(paths, wrangler_bin=wrangler_bin, env=env)
+    return verify_local_state(
+        paths,
+        wrangler_bin=wrangler_bin,
+        env=env,
+        timeout_seconds=timeout_seconds,
+    )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -114,10 +123,12 @@ def _activate_transactionally(
     metadata_payloads: dict[Path, dict[str, Any]],
 ) -> None:
     metadata_snapshot = _capture_metadata_snapshot(metadata_payloads.keys())
+    metadata_root = next(iter(metadata_payloads)).parent
+    metadata_root.mkdir(parents=True, exist_ok=True)
     staged_metadata_dir = Path(
         tempfile.mkdtemp(
             prefix="local-d1-metadata-",
-            dir=str(next(iter(metadata_payloads)).parent),
+            dir=str(metadata_root),
         )
     )
     staged_metadata = _stage_metadata_files(staged_metadata_dir, metadata_payloads)

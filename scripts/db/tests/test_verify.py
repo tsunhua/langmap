@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -69,6 +70,77 @@ class VerifyTests(unittest.TestCase):
 
             written = json.loads((paths.local_state_dir / "verification-report.json").read_text(encoding="utf-8"))
             self.assertEqual(written["status"], "ok")
+
+    def test_verify_counts_only_translation_mappings_owned_by_message_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+
+            ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
+            ui_manifest["counts"]["message_count"] = 3
+            ui_manifest["counts"]["translation_count"] = 4
+            paths.ui_bundle_manifest_path.write_text(
+                json.dumps(ui_manifest, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with paths.system_ui_sql_path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    "\n"
+                    "INSERT INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status) VALUES\n"
+                    "  ('langmap-web', 'greeting.optional', 1001, '[]', '1001-optional', 'active');\n"
+                )
+
+            from lib import local as local_lib  # noqa: E402
+            from lib import verify as verify_lib  # noqa: E402
+
+            local_lib.rebuild_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+                owner="test-owner",
+                created_at="2026-08-01T00:00:00Z",
+            )
+
+            report = verify_lib.verify_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={},
+            )
+
+            self.assertEqual(report["status"], "ok")
+            self.assertEqual(report["counts"]["ui_messages"]["actual"], 3)
+            self.assertEqual(report["counts"]["ui_translation_mappings"]["actual"], 4)
+
+    def test_executor_passes_configured_timeout_to_runner(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+
+            from lib import verify as verify_lib  # noqa: E402
+            from lib.runner import CommandResult  # noqa: E402
+
+            executor = verify_lib.LocalWranglerExecutor(
+                paths=paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={"FAKE_WRANGLER_LOG_PATH": str(root / "ignored.log")},
+                timeout_seconds=7.5,
+            )
+
+            with mock.patch.object(
+                verify_lib,
+                "run_command",
+                return_value=CommandResult(
+                    args=("fake",),
+                    returncode=0,
+                    stdout="[]",
+                    stderr="",
+                ),
+            ) as mocked_run:
+                rows = executor.execute_query(paths.local_d1_state_dir, "SELECT 1;")
+
+            self.assertEqual(rows, [])
+            _, kwargs = mocked_run.call_args
+            self.assertEqual(kwargs["timeout"], 7.5)
 
     def test_verify_rejects_unknown_migration_rows(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

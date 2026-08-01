@@ -349,9 +349,150 @@ Result:
   - triggers = 3
   - sample tables 含 `expression_edges`、`expressions`、`expressions_fts`。
 
+## Important follow-up（2026-08-01）
+
+### 實作補強摘要
+
+- `scripts/db/lib/verify.py`
+  - 修正 `ui_translation_mappings` 驗證邏輯，不再只靠 DB 內 `source_expression_id + target language_code` 直接聚合。
+  - 改為先從 `scripts/i18n/artifacts/system-ui/system-ui.sql` 建立 expected ownership map，再驗證對應 `expression_edges` 與 target expression 是否存在：
+    - 真實 artifact 走 comment block parser；
+    - fixture / fake SQL 走簡化 fallback parser。
+  - `LocalWranglerExecutor` 新增 `timeout_seconds`，預設由 30 秒提升為 120 秒，並傳遞給 `run_command()`。
+- `scripts/db/lib/local.py`
+  - `rebuild_local_state()` / `verify_local_environment()` 都支援 `timeout_seconds` thread-through。
+  - transactional metadata staging 先確保 `paths.local_state_dir` 存在，避免第一次 rebuild 在空 checkout 上因 `tempfile.mkdtemp(dir=...)` 的 parent 不存在而失敗。
+- 測試補強
+  - `test_verify_counts_only_translation_mappings_owned_by_message_key`
+  - `test_executor_passes_configured_timeout_to_runner`
+  - `test_rebuild_creates_missing_local_metadata_directory`
+
+### 本輪 TDD
+
+RED 1（translation ownership + timeout）：
+
+```bash
+python3 -m unittest scripts.db.tests.test_verify -v
+```
+
+結果：
+
+```text
+ERROR: test_executor_passes_configured_timeout_to_runner
+TypeError: __init__() got an unexpected keyword argument 'timeout_seconds'
+
+ERROR: test_verify_counts_only_translation_mappings_owned_by_message_key
+lib.local.LocalRebuildError: count mismatch
+```
+
+GREEN 1：
+
+```bash
+python3 -m unittest scripts.db.tests.test_verify -v
+```
+
+結果：
+
+```text
+Ran 9 tests in 2.993s
+
+OK
+```
+
+RED 2（real probe 暴露第一次 rebuild metadata dir 缺失）：
+
+```bash
+python3 -m unittest scripts.db.tests.test_local_rebuild -v
+```
+
+結果：
+
+```text
+ERROR: test_rebuild_creates_missing_local_metadata_directory
+lib.local.LocalRebuildError: [Errno 2] No such file or directory: '.../scripts/db/state/local/local-d1-metadata-...'
+```
+
+GREEN 2：
+
+```bash
+python3 -m unittest scripts.db.tests.test_local_rebuild scripts.db.tests.test_verify -v
+python3 -m unittest discover -s scripts/db/tests -v
+git diff --check
+```
+
+結果：
+
+```text
+Ran 14 tests in 4.252s
+
+OK
+
+Ran 46 tests in 6.107s
+
+OK
+```
+
+- `git diff --check` 無輸出，exit code 0。
+
+### fake regression 證據
+
+- `test_verify_counts_only_translation_mappings_owned_by_message_key`
+  - 在 fixture 中額外加入 `greeting.optional`，共用 `greeting.hello` 的 `source_expression_id`；
+  - manifest 仍要求 translation count = 4；
+  - rebuild + verify 必須維持 `ui_translation_mappings.actual == 4`，證明 verify 不會把別的 key 的同文字 edge 誤算進來。
+- `test_executor_passes_configured_timeout_to_runner`
+  - 驗證 executor 的 `timeout_seconds=7.5` 會實際傳入 `run_command(timeout=7.5)`。
+- `test_rebuild_creates_missing_local_metadata_directory`
+  - 先刪除 `paths.local_state_dir`；
+  - rebuild 仍必須成功並重新建立 fingerprint / verification report。
+
+### real isolated temporary probe（成功）
+
+日期：
+
+- Saturday, August 1, 2026
+
+Bounded command：
+
+```bash
+python3 -c '... fresh /private/tmp checkout ... manage.py --repo-root <checkout> local rebuild ... local verify ...'
+```
+
+結果：
+
+- probe root：`/private/tmp/langmap-task4-probe-jaier639`
+- isolated checkout：`/private/tmp/langmap-task4-probe-jaier639/repo`
+- isolated state path：`/private/tmp/langmap-task4-probe-jaier639/repo/backend/.wrangler/state`
+- Wrangler log：`/private/tmp/langmap-task4-probe-jaier639/runtime/wrangler.log`
+- rebuild return code = 0
+- verify return code = 0
+
+rebuild stdout：
+
+```json
+{"status":"rebuilt","fingerprint":"4b4aaf72d68f2a551c83eb0d5b0c5df663a7cc37678e7761442894a118cba5d8","verification_report_path":"/private/tmp/langmap-task4-probe-jaier639/repo/scripts/db/state/local/verification-report.json","state_dir":"/private/tmp/langmap-task4-probe-jaier639/repo/backend/.wrangler/state"}
+```
+
+verify 核心結果：
+
+- schema objects：missing = 0, mismatched_sql = 0
+- applied migrations = expected migrations（10 entries）
+- languages = 62
+- languoids = 27177
+- language_subtags = 9296
+- language_locations = 45
+- ui_locales = 4
+- ui_messages = 312
+- ui_translation_mappings = 1228
+- active locale codes = `["es-ES", "ja-JP", "zh-Hans-CN", "zh-Hant-TW"]`
+- orphans = 0 / 0 / 0 / 0
+
+產生的 sqlite：
+
+- `/private/tmp/langmap-task4-probe-jaier639/repo/backend/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/bd307851d5b3a26cc62a7676aaddf233be3dd42df75be4ee22cccb6a574322c2.sqlite`
+- `/private/tmp/langmap-task4-probe-jaier639/repo/backend/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/metadata.sqlite`
+
 ## 未解決疑慮
 
-- 真 Wrangler 的 full rebuild + verify 仍無法在目前桌面環境中穩定完成：
-  - 沙箱內會遭遇 `listen EPERM 127.0.0.1`；
-  - 非沙箱 bounded probe 雖可越過該權限點，但在 language registry 匯入階段 20 秒內未完成。
-- 因此本次 GREEN 仍以 fake Wrangler fixture 為可重複驗證主體；real Wrangler 已按 reviewer 要求嘗試並完整記錄實際阻塞結果。
+- 沙箱內直接執行真 Wrangler 仍可能遭遇 `listen EPERM 127.0.0.1`；
+- 但在非沙箱、隔離 `/private/tmp` checkout 與 120 秒 per-command timeout 下，2026-08-01 的 bounded real probe 已成功完成 rebuild + verify。

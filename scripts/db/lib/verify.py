@@ -34,6 +34,13 @@ class SchemaObject:
     normalized_sql: str
 
 
+@dataclass(frozen=True)
+class UiTranslationMapping:
+    key: str
+    language_code: str
+    target_expression_id: int
+
+
 class LocalVerificationError(RuntimeError):
     def __init__(self, message: str, *, report: dict[str, Any] | None = None) -> None:
         super().__init__(message)
@@ -45,6 +52,7 @@ class LocalWranglerExecutor:
     paths: ProjectPaths
     wrangler_bin: Path
     env: Mapping[str, str] | None = None
+    timeout_seconds: float = 120.0
 
     def execute_file(self, persist_to: Path, sql_path: Path) -> list[dict[str, Any]]:
         return self._run([str(self.wrangler_bin), "d1", "execute", "DB", "--local", "--persist-to", str(persist_to), "--file", str(sql_path), "--json"])
@@ -54,7 +62,12 @@ class LocalWranglerExecutor:
 
     def _run(self, args: list[str]) -> list[dict[str, Any]]:
         try:
-            result = run_command(args, cwd=self.paths.backend_dir, env=self.env)
+            result = run_command(
+                args,
+                cwd=self.paths.backend_dir,
+                env=self.env,
+                timeout=self.timeout_seconds,
+            )
         except CommandError as exc:
             message = _extract_command_error_message(exc)
             raise LocalVerificationError(message) from exc
@@ -71,8 +84,14 @@ def verify_local_state(
     env: Mapping[str, str] | None = None,
     persist_to: Path | None = None,
     write_report: bool = True,
+    timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
-    executor = LocalWranglerExecutor(paths=paths, wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"), env=env)
+    executor = LocalWranglerExecutor(
+        paths=paths,
+        wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
+        env=env,
+        timeout_seconds=timeout_seconds,
+    )
     state_dir = persist_to or paths.local_d1_state_dir
 
     locked = _load_verified_migration_lock(paths)
@@ -90,6 +109,11 @@ def verify_local_state(
     locale_codes = [str(code) for code in ui_manifest.get("locale_codes", [])]
     escaped_locale_codes = ["'" + code.replace("'", "''") + "'" for code in locale_codes]
     locale_code_sql = ", ".join(escaped_locale_codes) or "''"
+    expected_translation_mappings = _load_expected_ui_translation_mappings(
+        paths.system_ui_sql_path,
+        project_id=PROJECT_ID,
+        locale_codes=locale_codes,
+    )
 
     count_rows = executor.execute_query(
         state_dir,
@@ -100,22 +124,7 @@ SELECT COUNT(*) AS language_subtags FROM language_subtags;
 SELECT COUNT(*) AS language_locations FROM language_locations;
 SELECT COUNT(*) AS ui_locales FROM ui_locales WHERE project_id = '{PROJECT_ID}';
 SELECT COUNT(*) AS ui_messages FROM ui_messages WHERE project_id = '{PROJECT_ID}';
-SELECT COUNT(*) AS ui_translation_mappings
-FROM (
-  SELECT m.key, te.language_code
-  FROM ui_messages m
-  JOIN expression_edges edge
-    ON edge.source = 'ui_i18n'
-   AND (edge.expression_a_id = m.source_expression_id OR edge.expression_b_id = m.source_expression_id)
-  JOIN expressions te
-    ON te.id = CASE
-      WHEN edge.expression_a_id = m.source_expression_id THEN edge.expression_b_id
-      ELSE edge.expression_a_id
-    END
-  WHERE m.project_id = '{PROJECT_ID}'
-    AND te.language_code IN ({locale_code_sql})
-  GROUP BY m.key, te.language_code
-);
+{_build_ui_translation_mapping_count_query(expected_translation_mappings, project_id=PROJECT_ID)}
 SELECT GROUP_CONCAT(code, ',') AS active_locale_codes
 FROM (
   SELECT code
@@ -339,6 +348,142 @@ def _compare_expected_schema_objects(
     return {"missing": missing, "mismatched_sql": mismatched_sql}
 
 
+def _load_expected_ui_translation_mappings(
+    sql_path: Path,
+    *,
+    project_id: str,
+    locale_codes: list[str],
+) -> list[UiTranslationMapping]:
+    sql = sql_path.read_text(encoding="utf-8")
+    locale_set = set(locale_codes)
+    mappings = _parse_ui_translation_comment_blocks(sql, locale_set)
+    if mappings:
+        return mappings
+    return _parse_ui_translation_fallback(sql, project_id=project_id, locale_codes=locale_set)
+
+
+def _parse_ui_translation_comment_blocks(
+    sql: str,
+    locale_codes: set[str],
+) -> list[UiTranslationMapping]:
+    mappings: list[UiTranslationMapping] = []
+    block_pattern = re.compile(r"^-- (?P<key>[^\n]+)\n(?P<body>.*?)(?=^-- |\Z)", re.MULTILINE | re.DOTALL)
+    expression_pattern = re.compile(
+        r"VALUES\s*\(\s*(?P<id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?P<language_code>[^']+)'\s*,\s*'ui_i18n'\s*,",
+        re.DOTALL,
+    )
+    for match in block_pattern.finditer(sql):
+        body = match.group("body")
+        if "INSERT OR IGNORE INTO expression_edges" not in body:
+            continue
+        expression_match = expression_pattern.search(body)
+        if expression_match is None:
+            continue
+        language_code = expression_match.group("language_code")
+        if language_code not in locale_codes:
+            continue
+        mappings.append(
+            UiTranslationMapping(
+                key=match.group("key"),
+                language_code=language_code,
+                target_expression_id=int(expression_match.group("id")),
+            )
+        )
+    return mappings
+
+
+def _parse_ui_translation_fallback(
+    sql: str,
+    *,
+    project_id: str,
+    locale_codes: set[str],
+) -> list[UiTranslationMapping]:
+    ui_message_pattern = re.compile(
+        r"\(\s*'(?P<project_id>[^']+)'\s*,\s*'(?P<key>[^']+)'\s*,\s*(?P<source_expression_id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?:[^']|'')*'\s*,\s*'(?:[^']|'')*'\s*\)"
+    )
+    expression_pattern = re.compile(
+        r"\(\s*(?P<id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?P<language_code>[^']+)'\s*,\s*'(?P<source_type>[^']*)'\s*,\s*'(?P<source_ref>[^']*)'\s*,\s*'(?:[^']|'')*'\s*\)"
+    )
+    edge_pattern = re.compile(
+        r"\(\s*'[^']+'\s*,\s*(?P<expression_a_id>\d+)\s*,\s*(?P<expression_b_id>\d+)\s*,\s*-?\d+\s*,\s*'(?P<source>[^']+)'\s*\)"
+    )
+
+    messages_by_source_id: dict[int, list[str]] = {}
+    for match in ui_message_pattern.finditer(sql):
+        if match.group("project_id") != project_id:
+            continue
+        source_expression_id = int(match.group("source_expression_id"))
+        messages_by_source_id.setdefault(source_expression_id, []).append(match.group("key"))
+
+    translated_expressions: dict[int, tuple[str, str]] = {}
+    for match in expression_pattern.finditer(sql):
+        if match.group("source_type") != "ui_i18n":
+            continue
+        language_code = match.group("language_code")
+        if language_code not in locale_codes:
+            continue
+        translated_expressions[int(match.group("id"))] = (
+            language_code,
+            match.group("source_ref"),
+        )
+
+    mappings: list[UiTranslationMapping] = []
+    for match in edge_pattern.finditer(sql):
+        if match.group("source") != "ui_i18n":
+            continue
+        expression_a_id = int(match.group("expression_a_id"))
+        expression_b_id = int(match.group("expression_b_id"))
+        if expression_a_id not in messages_by_source_id or expression_b_id not in translated_expressions:
+            continue
+        language_code, source_ref = translated_expressions[expression_b_id]
+        for key in messages_by_source_id[expression_a_id]:
+            if source_ref != f"{project_id}:{key}":
+                continue
+            mappings.append(
+                UiTranslationMapping(
+                    key=key,
+                    language_code=language_code,
+                    target_expression_id=expression_b_id,
+                )
+            )
+    return mappings
+
+
+def _build_ui_translation_mapping_count_query(
+    mappings: list[UiTranslationMapping],
+    *,
+    project_id: str,
+) -> str:
+    if not mappings:
+        return "SELECT 0 AS ui_translation_mappings;"
+
+    values_sql = ",\n  ".join(
+        f"('{_escape_sql_literal(mapping.key)}', '{_escape_sql_literal(mapping.language_code)}', {mapping.target_expression_id})"
+        for mapping in mappings
+    )
+    return f"""
+WITH expected_ui_translation_mappings(key, language_code, target_expression_id) AS (
+  VALUES
+  {values_sql}
+)
+SELECT COUNT(*) AS ui_translation_mappings
+FROM expected_ui_translation_mappings expected
+JOIN ui_messages m
+  ON m.project_id = '{_escape_sql_literal(project_id)}'
+ AND m.key = expected.key
+JOIN expression_edges edge
+  ON edge.source = 'ui_i18n'
+ AND (
+      (edge.expression_a_id = m.source_expression_id AND edge.expression_b_id = expected.target_expression_id)
+      OR
+      (edge.expression_b_id = m.source_expression_id AND edge.expression_a_id = expected.target_expression_id)
+ )
+JOIN expressions te
+  ON te.id = expected.target_expression_id
+ AND te.language_code = expected.language_code;
+""".strip()
+
+
 def _rows_to_singletons(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
     payload: dict[str, Any] = {}
     for result in results:
@@ -425,6 +570,10 @@ def _normalize_sql(value: str) -> str:
     normalized = normalized.replace('"', "").replace("`", "")
     normalized = re.sub(r"\s+", " ", normalized)
     return normalized.lower()
+
+
+def _escape_sql_literal(value: str) -> str:
+    return value.replace("'", "''")
 
 
 def _extract_command_error_message(exc: CommandError) -> str:

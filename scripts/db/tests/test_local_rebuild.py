@@ -268,6 +268,28 @@ def read_fake_log(path: Path) -> list[dict[str, str]]:
 
 
 class LocalRebuildTests(unittest.TestCase):
+    def test_rebuild_creates_missing_local_metadata_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+            log_path = root / "fake-wrangler.log"
+            shutil.rmtree(paths.local_state_dir)
+
+            from lib import local as local_lib  # noqa: E402
+
+            result = local_lib.rebuild_local_state(
+                paths,
+                wrangler_bin=FIXTURE_WRANGLER,
+                env={"FAKE_WRANGLER_LOG_PATH": str(log_path)},
+                owner="test-owner",
+                created_at="2026-08-01T00:00:00Z",
+            )
+
+            self.assertEqual(result["status"], "rebuilt")
+            self.assertTrue(paths.local_state_dir.exists())
+            self.assertTrue(paths.local_fingerprint_path.exists())
+            self.assertTrue(paths.local_verification_report_path.exists())
+
     def test_rebuild_swaps_active_state_only_after_success(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
