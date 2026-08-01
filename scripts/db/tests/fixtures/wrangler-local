@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import sys
+from pathlib import Path
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 4 or argv[0:2] != ["d1", "execute"]:
+        print("unsupported fake wrangler invocation", file=sys.stderr)
+        return 2
+
+    args = argv[2:]
+    persist_to = Path(_value_after(args, "--persist-to"))
+    db_path = persist_to / "fake-d1.sqlite3"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if "--file" in args:
+        sql_path = Path(_value_after(args, "--file"))
+        sql_text = sql_path.read_text(encoding="utf-8")
+        mode = "file"
+        subject = str(sql_path)
+    elif "--command" in args:
+        sql_text = _value_after(args, "--command")
+        mode = "command"
+        subject = sql_text
+    else:
+        print("expected --file or --command", file=sys.stderr)
+        return 2
+
+    _log_invocation(
+        {
+            "mode": mode,
+            "persist_to": str(persist_to),
+            "subject": subject,
+        }
+    )
+
+    failure_token = os.environ.get("FAKE_WRANGLER_FAIL_ON")
+    if failure_token and failure_token in subject:
+        print(json.dumps({"error": {"text": f"forced failure for {failure_token}"}}))
+        return 1
+
+    connection = sqlite3.connect(db_path)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON;")
+    try:
+        results = []
+        for statement in _split_sql(sql_text):
+            cursor = connection.execute(statement)
+            if cursor.description:
+                rows = [dict(row) for row in cursor.fetchall()]
+            else:
+                rows = []
+            results.append(
+                {
+                    "results": rows,
+                    "success": True,
+                    "meta": {"duration": 0},
+                }
+            )
+        connection.commit()
+    finally:
+        connection.close()
+
+    print(json.dumps(results, ensure_ascii=False))
+    return 0
+
+
+def _value_after(args: list[str], flag: str) -> str:
+    index = args.index(flag)
+    try:
+        return args[index + 1]
+    except IndexError as exc:
+        raise SystemExit(f"missing value for {flag}") from exc
+
+
+def _split_sql(script: str) -> list[str]:
+    statements: list[str] = []
+    buffer = ""
+    for line in script.splitlines(keepends=True):
+        buffer += line
+        if sqlite3.complete_statement(buffer):
+            statement = buffer.strip()
+            if statement:
+                statements.append(statement)
+            buffer = ""
+    trailing = buffer.strip()
+    if trailing:
+        statements.append(trailing)
+    return statements
+
+
+def _log_invocation(payload: dict[str, str]) -> None:
+    log_path = os.environ.get("FAKE_WRANGLER_LOG_PATH")
+    if not log_path:
+        return
+    with Path(log_path).open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

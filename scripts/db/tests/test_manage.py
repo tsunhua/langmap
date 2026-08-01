@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -15,12 +16,17 @@ PATHS_PY = REPO_ROOT / "scripts" / "db" / "lib" / "paths.py"
 RUNNER_PY = REPO_ROOT / "scripts" / "db" / "lib" / "runner.py"
 
 
-def run_manage(*args: str) -> subprocess.CompletedProcess[str]:
+def run_manage(
+    *args: str,
+    cwd: Path = REPO_ROOT,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(MANAGE_PY), *args],
         capture_output=True,
         text=True,
-        cwd=REPO_ROOT,
+        cwd=cwd,
+        env=env,
     )
 
 
@@ -32,6 +38,18 @@ def load_module(module_path: Path, module_name: str):
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _load_local_fixture_helpers():
+    try:
+        from scripts.db.tests.test_local_rebuild import (  # type: ignore
+            FIXTURE_WRANGLER,
+            build_fixture_repo,
+        )
+    except ImportError:
+        from test_local_rebuild import FIXTURE_WRANGLER, build_fixture_repo  # type: ignore
+
+    return build_fixture_repo, FIXTURE_WRANGLER
 
 
 class ManageCliTests(unittest.TestCase):
@@ -50,14 +68,45 @@ class ManageCliTests(unittest.TestCase):
         self.assertIn("production", result.stderr)
 
     def test_local_accepts_only_supported_commands(self) -> None:
-        for command in ("status", "rebuild", "verify"):
-            with self.subTest(command=command):
-                result = run_manage("local", command)
-                self.assertEqual(
-                    result.returncode,
-                    0,
-                    msg=f"expected local {command} to be accepted: {result.stderr}",
-                )
+        status_result = run_manage("local", "status")
+        self.assertEqual(
+            status_result.returncode,
+            0,
+            msg=f"expected local status to be accepted: {status_result.stderr}",
+        )
+
+        build_fixture_repo, fixture_wrangler = _load_local_fixture_helpers()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture_root = Path(temp_dir)
+            build_fixture_repo(fixture_root)
+            command_env = {
+                **dict(os.environ),
+                "LANGMAP_WRANGLER_BIN": str(fixture_wrangler),
+            }
+            rebuild_result = run_manage(
+                "--repo-root",
+                str(fixture_root),
+                "local",
+                "rebuild",
+                env=command_env,
+            )
+            self.assertEqual(
+                rebuild_result.returncode,
+                0,
+                msg=f"expected local rebuild to be accepted: {rebuild_result.stderr}",
+            )
+            verify_result = run_manage(
+                "--repo-root",
+                str(fixture_root),
+                "local",
+                "verify",
+                env=command_env,
+            )
+            self.assertEqual(
+                verify_result.returncode,
+                0,
+                msg=f"expected local verify to be accepted: {verify_result.stderr}",
+            )
 
         result = run_manage("local", "inventory")
 
@@ -211,7 +260,6 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("boom", error.stderr)
         self.assertIn("**REDACTED**", error.command_text)
         self.assertNotIn("token-123", error.command_text)
-
 
 if __name__ == "__main__":
     unittest.main()

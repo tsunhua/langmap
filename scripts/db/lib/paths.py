@@ -31,7 +31,9 @@ class ProjectPaths:
         artifacts_dir = state_dir / "artifacts"
         operations_dir = state_dir / "operations"
         local_d1_state_dir = backend_dir / ".wrangler" / "state"
-        language_manifest_path = root / "scripts" / "v2" / "fixtures" / "language-migration.json"
+        language_manifest_path = (
+            root / "scripts" / "v2" / "artifacts" / "language-registry-5.3" / "manifest.json"
+        )
         ui_bundle_manifest_path = (
             root / "scripts" / "i18n" / "artifacts" / "system-ui" / "manifest.json"
         )
@@ -61,7 +63,11 @@ class ProjectPaths:
         )
 
     def ensure_safe_cleanup_target(
-        self, candidate: Path, *, allowed_root: Path | None = None
+        self,
+        candidate: Path,
+        *,
+        allowed_root: Path | None = None,
+        allow_exact_root: bool = False,
     ) -> Path:
         boundary_root = (
             allowed_root.resolve(strict=False)
@@ -78,10 +84,14 @@ class ProjectPaths:
         if resolved in forbidden or resolved_parent in forbidden:
             raise ValueError(f"unsafe cleanup target: {resolved}")
 
-        if resolved == boundary_root:
+        if resolved == boundary_root and not allow_exact_root:
             raise ValueError(f"cleanup target cannot be root: {resolved}")
 
-        for path_to_check in (resolved_parent, resolved):
+        paths_to_check = (resolved_parent, resolved)
+        if allow_exact_root and resolved == boundary_root:
+            paths_to_check = (resolved,)
+
+        for path_to_check in paths_to_check:
             try:
                 path_to_check.relative_to(boundary_root)
             except ValueError as exc:
@@ -90,3 +100,37 @@ class ProjectPaths:
                 ) from exc
 
         return resolved
+
+    @property
+    def schema_path(self) -> Path:
+        return self.backend_dir / "schema.sql"
+
+    @property
+    def language_registry_sql_path(self) -> Path:
+        return (
+            self.repo_root
+            / "scripts"
+            / "v2"
+            / "artifacts"
+            / "language-registry-5.3"
+            / "language-registry.sql"
+        )
+
+    @property
+    def system_ui_sql_path(self) -> Path:
+        return (
+            self.repo_root
+            / "scripts"
+            / "i18n"
+            / "artifacts"
+            / "system-ui"
+            / "system-ui.sql"
+        )
+
+    @property
+    def local_verification_report_path(self) -> Path:
+        return self.local_state_dir / "verification-report.json"
+
+    @property
+    def local_rebuild_lock_path(self) -> Path:
+        return self.operations_dir / "local-rebuild.lock"

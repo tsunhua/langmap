@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,7 +47,7 @@ def run_command(
     completed = subprocess.run(
         list(args),
         cwd=str(cwd),
-        env=dict(env) if env is not None else None,
+        env={**os.environ, **dict(env)} if env is not None else None,
         capture_output=True,
         text=True,
         timeout=timeout,
