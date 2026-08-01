@@ -313,6 +313,13 @@ Added: 2005-10-16
             manifest, {"en-US", "nan-TW-Latn-tailo"}
         ), [])
 
+    def test_language_migration_allows_explicit_many_to_one_canonicalization(self):
+        manifest = {"mappings": {
+            "yue-Hans-CN": {"action": "canonicalize", "canonical": "yue-Hans"},
+            "yue-Hans-SG": {"action": "canonicalize", "canonical": "yue-Hans"},
+        }}
+        self.assertEqual(validate_manifest(manifest), [])
+
 
 if __name__ == "__main__":
     unittest.main()

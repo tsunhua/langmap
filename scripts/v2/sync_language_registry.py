@@ -596,8 +596,14 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             languages_path.unlink(missing_ok=True)
             raise
-        (args.output / "online-code-migrations.json").write_text(
-            json.dumps({}, ensure_ascii=False, indent=2) + "\n",
+        migration_path = args.output / "online-code-migrations.json"
+        migration_manifest = profiles.get("online_code_migrations")
+        if migration_manifest is None and migration_path.exists():
+            migration_manifest = json.loads(migration_path.read_text(encoding="utf-8"))
+        if migration_manifest is None:
+            migration_manifest = {"mappings": {}}
+        migration_path.write_text(
+            json.dumps(migration_manifest, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         manifest = {

@@ -33,8 +33,11 @@ def validate_manifest(manifest: dict, observed_codes: set[str] | None = None) ->
             errors.append(f"{old}: canonical must be a BCP47 tag")
             continue
         if target in targets and targets[target] != old:
-            errors.append(f"duplicate canonical target {target}: {targets[target]} and {old}")
-        targets[target] = old
+            previous = mappings[targets[target]]
+            if entry["action"] != "canonicalize" or previous.get("action") != "canonicalize":
+                errors.append(f"duplicate canonical target {target}: {targets[target]} and {old}")
+        else:
+            targets[target] = old
     if observed_codes:
         missing = sorted(observed_codes - set(mappings))
         if missing:
