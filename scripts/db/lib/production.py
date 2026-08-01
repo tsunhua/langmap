@@ -244,10 +244,21 @@ def plan_production(
     expected_migrations = list(inventory["migrations"]["expected"])
     applied_migrations = set(inventory["migrations"]["applied"])
     pending_migrations = [name for name in expected_migrations if name not in applied_migrations]
-    migration_risks = {
-        name: classify_migration_risk(paths.migrations_dir / name)
-        for name in pending_migrations
-    }
+    migration_risks: dict[str, Any] = {}
+    metadata_errors: list[str] = []
+    for name in pending_migrations:
+        migration_path = paths.migrations_dir / name
+        risk = classify_migration_risk(migration_path)
+        entry: dict[str, Any] = {"classification": risk}
+        if risk == "high":
+            try:
+                entry["metadata"] = load_migration_metadata(migration_path)
+            except ProductionInventoryError as exc:
+                entry["metadata_status"] = "missing-or-invalid"
+                metadata_errors.append(f"{name}: {exc}")
+        migration_risks[name] = entry
+    if metadata_errors:
+        baseline_error = "; ".join(metadata_errors)
     language_manifest = json.loads(paths.language_manifest_path.read_text(encoding="utf-8"))
     ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
     expected_refs = {
@@ -537,6 +548,26 @@ def classify_migration_risk(path: Path) -> str:
     return "low"
 
 
+def load_migration_metadata(path: Path) -> dict[str, Any]:
+    metadata_path = path.with_suffix(".meta.json")
+    try:
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProductionInventoryError(f"high-risk migration metadata missing: {metadata_path}") from exc
+    if not isinstance(payload, dict):
+        raise ProductionInventoryError(f"migration metadata must be an object: {metadata_path}")
+    for key in ("preflight", "postflight"):
+        if not isinstance(payload.get(key), list) or not payload[key]:
+            raise ProductionInventoryError(f"migration metadata requires non-empty {key}: {metadata_path}")
+    if payload.get("reversible") is not True:
+        raise ProductionInventoryError(f"migration metadata must declare reversible=true: {metadata_path}")
+    return {
+        "preflight": [str(item) for item in payload["preflight"]],
+        "postflight": [str(item) for item in payload["postflight"]],
+        "reversible": True,
+    }
+
+
 def _load_bundle_message_keys(sql_path: Path) -> dict[str, str]:
     sql = sql_path.read_text(encoding="utf-8")
     pattern = re.compile(
@@ -594,6 +625,12 @@ SELECT 'languoids' AS metric, COUNT(*) AS count FROM languoids;
 SELECT 'language_locations' AS metric, COUNT(*) AS count FROM language_locations;
 SELECT 'expressions' AS metric, COUNT(*) AS count FROM expressions;
 SELECT 'expression_edges' AS metric, COUNT(*) AS count FROM expression_edges;
+SELECT 'users' AS metric, COUNT(*) AS count FROM users;
+SELECT 'email_verification_tokens' AS metric, COUNT(*) AS count FROM email_verification_tokens;
+SELECT 'handbooks' AS metric, COUNT(*) AS count FROM handbooks;
+SELECT 'handbook_sections' AS metric, COUNT(*) AS count FROM handbook_sections;
+SELECT 'handbook_section_items' AS metric, COUNT(*) AS count FROM handbook_section_items;
+SELECT 'votes' AS metric, COUNT(*) AS count FROM votes;
 SELECT 'ui_locales' AS metric, COUNT(*) AS count FROM ui_locales;
 SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';

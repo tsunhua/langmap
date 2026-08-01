@@ -14,7 +14,7 @@
 
 Passed:
 
-- DB manager suite: 64 tests.
+- DB manager suite: 65 tests.
 - i18n generator suite: 8 tests.
 - i18n import wrapper: pass.
 - v2 TypeScript suite: 7 tests.
@@ -43,4 +43,5 @@ inventory includes project-scoped UI message ownership keys; and plan uses the o
 key diff with insert/update/unchanged/manual-review/delete counts (delete remains zero).
 
 Final rerun after these corrections: `python3 -m unittest discover -s scripts/db/tests -p
-'test_*.py'` — 64 tests passed.
+'test_*.py'` — 65 tests passed. The inventory also records core application counts for
+users, verification tokens, handbooks, handbook sections/items, and votes.

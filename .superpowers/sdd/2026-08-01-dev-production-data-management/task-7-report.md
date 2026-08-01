@@ -33,3 +33,6 @@ No production command was run. The fake Wrangler received only `info` and SELECT
 
 Completion-audit follow-up: inventory now collects project-scoped managed UI keys and the
 plan emits the per-key ownership diff. The previous aggregate-only limitation is resolved.
+
+High-risk pending migrations now require a sidecar `.meta.json` with non-empty preflight and
+postflight assertions plus `reversible=true`; missing metadata blocks the plan.

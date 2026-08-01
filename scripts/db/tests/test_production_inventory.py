@@ -298,3 +298,26 @@ class ReferenceDiffTests(unittest.TestCase):
 
         self.assertEqual(diff.counts, {"insert": 0, "update": 1, "unchanged": 1, "manual_review": 1, "delete": 0})
         self.assertIn("remote.only", diff.manual_review)
+
+    def test_high_risk_migration_requires_reversible_preflight_and_postflight_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            migration = Path(temp_dir) / "0012_rebuild.sql"
+            migration.write_text("ALTER TABLE languages RENAME TO languages_old;\n", encoding="utf-8")
+
+            from lib.production import ProductionInventoryError, load_migration_metadata  # noqa: E402
+
+            with self.assertRaises(ProductionInventoryError):
+                load_migration_metadata(migration)
+
+            metadata = migration.with_suffix(".meta.json")
+            metadata.write_text(
+                json.dumps(
+                    {
+                        "preflight": ["assert languages exists"],
+                        "postflight": ["assert languages row count reconciles"],
+                        "reversible": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(load_migration_metadata(migration)["reversible"], True)
