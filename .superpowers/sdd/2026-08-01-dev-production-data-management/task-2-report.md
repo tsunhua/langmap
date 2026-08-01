@@ -174,3 +174,65 @@ True
 
 - `dev fixture version` 目前先以 `scripts/v2/fixtures/language-migration.json` 的版本欄位作為 fallback；之後若 Task 4/Task 5 定義專用 fixture manifest，fingerprint input 應切到該明確來源。
 - `manage.py local status` 目前只報告 fingerprint / state 狀態，不會建立或修復 state；這符合 Task 2 範圍，但後續 task 需要接上實際 rebuild / verify 流程。
+
+## 2026-08-01 Reviewer Fix Append
+
+### 修正摘要
+
+- `discover_migrations()` 不再略過 hidden entries；migration 目錄中只要出現任何不符合 `NNNN_name.sql` 的項目，包括 `.DS_Store`，都會直接失敗。
+- `sync_migration_lock()` 現在會驗證既有 lock entries 與實際 discovery 的 `sequence`、`filename`、`size`、`sha256` 完全一致；手改已發布 entry 的 sequence 會在 `update=False` 被拒絕。
+- `compute_bootstrap_fingerprint()` 移除絕對路徑依賴；fingerprint 只由檔案存在性與內容摘要，以及 fixture version 組成，所以相同內容在不同 checkout root 會得到相同 fingerprint。
+
+### RED
+
+命令：
+
+```bash
+python3 -m unittest scripts.db.tests.test_migrations scripts.db.tests.test_fingerprint -v
+```
+
+結果：
+
+```text
+test_discover_rejects_hidden_entry (scripts.db.tests.test_migrations.MigrationDiscoveryTests) ... FAIL
+test_sync_lock_rejects_tampered_sequence (scripts.db.tests.test_migrations.MigrationLockTests) ... FAIL
+test_fingerprint_ignores_checkout_root_when_contents_match (scripts.db.tests.test_fingerprint.FingerprintTests) ... FAIL
+
+======================================================================
+FAIL: test_discover_rejects_hidden_entry (scripts.db.tests.test_migrations.MigrationDiscoveryTests)
+----------------------------------------------------------------------
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_sync_lock_rejects_tampered_sequence (scripts.db.tests.test_migrations.MigrationLockTests)
+----------------------------------------------------------------------
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_fingerprint_ignores_checkout_root_when_contents_match (scripts.db.tests.test_fingerprint.FingerprintTests)
+----------------------------------------------------------------------
+AssertionError: differing fingerprints for identical contents under different temp roots
+```
+
+### GREEN
+
+命令：
+
+```bash
+python3 -m unittest scripts.db.tests.test_migrations scripts.db.tests.test_fingerprint -v
+python3 -m unittest discover -s scripts/db/tests -v
+git diff --check
+```
+
+結果：
+
+```text
+targeted reviewer fix tests: 18 passed
+full scripts/db tests: 31 passed
+git diff --check: no output
+```
+
+### Reviewer note on report hash
+
+- Minor deferred：`task-2-report.md` 內的舊「提交 hash」欄位仍保留先前值，不再為了 self-referential commit hash 反覆 amend。
+- 這次 reviewer fix 的實際 commit hash 以本次提交與 ledger 為準。

@@ -43,6 +43,15 @@ class MigrationDiscoveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "invalid migration filename"):
                 migrations_lib.discover_migrations(temp_root)
 
+    def test_discover_rejects_hidden_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            (temp_root / "0002_schema.sql").write_text("SELECT 1;\n", encoding="utf-8")
+            (temp_root / ".DS_Store").write_text("finder noise", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "invalid migration filename"):
+                migrations_lib.discover_migrations(temp_root)
+
     def test_discover_rejects_duplicate_sequence(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_root = Path(temp_dir)
@@ -200,6 +209,30 @@ class MigrationLockTests(unittest.TestCase):
             )
             written = json.loads(lock_path.read_text(encoding="utf-8"))
             self.assertEqual(written, updated)
+
+    def test_sync_lock_rejects_tampered_sequence(self) -> None:
+        with self._make_migrations_dir() as temp_dir:
+            temp_root = Path(temp_dir)
+            lock_path = temp_root.parent / f"{temp_root.name}-migration-lock.json"
+            migrations_lib.sync_migration_lock(
+                temp_root,
+                lock_path,
+                update=True,
+                baseline_created_at="2026-08-01T00:00:00Z",
+                git_commit="abc1234",
+            )
+            payload = json.loads(lock_path.read_text(encoding="utf-8"))
+            payload["migrations"][0]["sequence"] = 9999
+            lock_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "published migration sequence changed"):
+                migrations_lib.sync_migration_lock(
+                    temp_root,
+                    lock_path,
+                    update=False,
+                    baseline_created_at="2026-08-01T00:00:00Z",
+                    git_commit="abc1234",
+                )
 
 
 if __name__ == "__main__":

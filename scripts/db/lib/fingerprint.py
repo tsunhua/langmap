@@ -81,9 +81,8 @@ def load_stored_fingerprint(path: Path) -> str | None:
 
 def _describe_file(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"path": str(path), "exists": False}
+        return {"exists": False}
     return {
-        "path": str(path),
         "exists": True,
         "size": path.stat().st_size,
         "sha256": _sha256_path(path),

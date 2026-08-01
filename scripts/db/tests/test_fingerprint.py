@@ -90,6 +90,16 @@ class FingerprintTests(unittest.TestCase):
 
         self.assertEqual(first, second)
 
+    def test_fingerprint_ignores_checkout_root_when_contents_match(self) -> None:
+        with tempfile.TemporaryDirectory() as first_dir, tempfile.TemporaryDirectory() as second_dir:
+            first_inputs = self._write_inputs(Path(first_dir))
+            second_inputs = self._write_inputs(Path(second_dir))
+
+            first = fingerprint_lib.compute_bootstrap_fingerprint(first_inputs)
+            second = fingerprint_lib.compute_bootstrap_fingerprint(second_inputs)
+
+        self.assertEqual(first, second)
+
 
 class OperationLockTests(unittest.TestCase):
     def test_second_process_is_rejected_with_owner_and_time(self) -> None:

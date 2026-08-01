@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +29,6 @@ def discover_migrations(migrations_dir: Path) -> list[MigrationFile]:
     migrations: list[MigrationFile] = []
     seen_sequences: dict[int, str] = {}
     for entry in sorted(migrations_dir.iterdir(), key=lambda path: path.name):
-        if entry.name.startswith("."):
-            continue
         if entry.is_symlink():
             raise ValueError(f"migration entry cannot be a symlink: {entry.name}")
         if not entry.is_file():
@@ -106,18 +104,7 @@ def sync_migration_lock(
         migration = discovered_by_filename.get(filename)
         if migration is None:
             raise ValueError(f"missing migration file from lock: {filename}")
-        if migration.sha256 != locked_entry["sha256"]:
-            raise ValueError(f"published migration checksum changed: {filename}")
-        if migration.size != locked_entry["size"]:
-            raise ValueError(f"published migration size changed: {filename}")
-        verified_entries.append(
-            {
-                "sequence": migration.sequence,
-                "filename": migration.filename,
-                "size": migration.size,
-                "sha256": migration.sha256,
-            }
-        )
+        verified_entries.append(_verify_locked_entry(locked_entry, migration))
 
     new_entries = [
         {
@@ -170,6 +157,31 @@ def _load_lock(lock_path: Path) -> dict[str, Any]:
     if not isinstance(payload.get("migrations"), list):
         raise ValueError(f"invalid migration lock entries: {lock_path}")
     return payload
+
+
+def _verify_locked_entry(
+    locked_entry: dict[str, Any], migration: MigrationFile
+) -> dict[str, Any]:
+    if int(locked_entry["sequence"]) != migration.sequence:
+        raise ValueError(
+            f"published migration sequence changed: {migration.filename}"
+        )
+    if locked_entry["filename"] != migration.filename:
+        raise ValueError(
+            f"published migration filename changed: {migration.filename}"
+        )
+    if locked_entry["sha256"] != migration.sha256:
+        raise ValueError(
+            f"published migration checksum changed: {migration.filename}"
+        )
+    if int(locked_entry["size"]) != migration.size:
+        raise ValueError(f"published migration size changed: {migration.filename}")
+    return {
+        "sequence": migration.sequence,
+        "filename": migration.filename,
+        "size": migration.size,
+        "sha256": migration.sha256,
+    }
 
 
 def _write_lock(lock_path: Path, payload: dict[str, Any]) -> None:
