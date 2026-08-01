@@ -1,6 +1,6 @@
 # Dev 與 Production 資料管理體系設計
 
-> 狀態：設計已確認，待編寫實作計畫。
+> 狀態：已實作（Task 1–10 完成）；production mutation 仍要求 operator 明確授權。
 >
 > 範圍：Cloudflare D1 schema migration、reference data 同步、dev bootstrap、
 > production 操作與回復。本文不改變應用程式的資料模型。

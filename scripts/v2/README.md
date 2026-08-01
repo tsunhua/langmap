@@ -1,5 +1,9 @@
 # LangMap v2 Migration Tooling
 
+> 警告：本文件的 `--remote` 命令只屬首次 v1 → v2 historical migration。日常
+> production schema/data/reference 操作必須使用 `./scripts/db/manage.sh`，不要直接
+> 執行 remote migration、remote SQL 或 `--replace-users`。
+
 從舊版 D1（meanings 組模型）遷移到 v2 D1（pairwise edges 模型）。
 
 ## 架構

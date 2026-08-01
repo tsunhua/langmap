@@ -101,6 +101,22 @@ npm run dev
 }
 ```
 
+### 資料庫安全操作
+
+日常資料庫操作統一經過 `scripts/db/manage.sh`：
+
+```bash
+./scripts/db/manage.sh local status
+./scripts/db/manage.sh local rebuild
+./scripts/db/manage.sh local verify
+./scripts/db/manage.sh production inventory
+./scripts/db/manage.sh production plan
+```
+
+`production inventory`、`production plan` 只讀；`production apply` 與 `production restore`
+必須使用已審核的 plan、完整資料庫名稱與明確確認字串。它們不會自動 deploy。詳見
+[資料庫 runbooks](./docs/runbooks/)。不要直接使用 Wrangler remote migration 或 D1 SQL。
+
 ### 貢獻指南
 
 1. Fork 本倉庫

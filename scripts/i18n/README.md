@@ -47,6 +47,10 @@ scripts/i18n/import-all.sh --local
 `--remote` 已停用。production 寫入改由 production data manager 接手；此 wrapper
 不再直接對 remote D1 執行匯入。
 
+production 只可先執行 `./scripts/db/manage.sh production inventory|plan`，經人工審核
+後再依 [production data release runbook](../../docs/runbooks/production-data-release.md)
+執行受保護的 apply。
+
 ## 單語系 SQL
 
 若只需檢查單一 locale 的 SQL，既有 generator 仍可用：
