@@ -202,6 +202,18 @@ class ProjectPathsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 paths.ensure_safe_cleanup_target(escape)
 
+    def test_rejects_allowed_root_sibling_escape(self) -> None:
+        if not PATHS_PY.exists():
+            self.fail("paths.py missing")
+
+        paths_module = load_module(PATHS_PY, "db_paths")
+        paths = paths_module.ProjectPaths.discover(REPO_ROOT)
+
+        allowed_root = paths.local_d1_state_dir
+        sibling = allowed_root.parent / "state-sibling"
+        with self.assertRaises(ValueError):
+            paths.ensure_safe_cleanup_target(sibling, allowed_root=allowed_root)
+
     def test_rejects_cleanup_target_inside_symlinked_parent_directory(self) -> None:
         if not PATHS_PY.exists():
             self.fail("paths.py missing")

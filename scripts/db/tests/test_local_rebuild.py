@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -306,6 +307,8 @@ class LocalRebuildTests(unittest.TestCase):
             finally:
                 connection.close()
             self.assertEqual([row[0] for row in applied], ["0002_init.sql", "0003_seed.sql"])
+            backups = list(paths.local_d1_state_dir.parent.glob("state-backup-*"))
+            self.assertEqual(backups, [])
 
     def test_rebuild_failure_preserves_active_state_and_exposes_temp_dir(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -333,6 +336,8 @@ class LocalRebuildTests(unittest.TestCase):
             self.assertTrue(sentinel.exists())
             self.assertTrue(context.exception.temp_state_dir.exists())
             self.assertIn("system-ui.sql", str(context.exception))
+            backups = list(paths.local_d1_state_dir.parent.glob("state-backup-*"))
+            self.assertEqual(backups, [])
 
     def test_rebuild_refuses_to_write_baseline_when_schema_invariants_fail(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -361,6 +366,51 @@ class LocalRebuildTests(unittest.TestCase):
             finally:
                 connection.close()
             self.assertIsNone(table)
+
+    def test_rebuild_restores_active_state_and_metadata_when_post_swap_write_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = build_fixture_repo(root)
+            paths.local_d1_state_dir.mkdir(parents=True, exist_ok=True)
+            active_marker = paths.local_d1_state_dir / "keep.txt"
+            active_marker.write_text("old-active", encoding="utf-8")
+            paths.local_fingerprint_path.parent.mkdir(parents=True, exist_ok=True)
+            paths.local_fingerprint_path.write_text('{"fingerprint":"old"}\n', encoding="utf-8")
+            paths.local_verification_report_path.write_text('{"status":"old"}\n', encoding="utf-8")
+
+            from lib import local as local_lib  # noqa: E402
+
+            original_replace_path = local_lib._replace_path
+            call_count = {"count": 0}
+
+            def flaky_replace_path(source: Path, destination: Path) -> None:
+                call_count["count"] += 1
+                if call_count["count"] == 2:
+                    raise OSError("forced metadata write failure")
+                original_replace_path(source, destination)
+
+            with mock.patch.object(local_lib, "_replace_path", side_effect=flaky_replace_path):
+                with self.assertRaises(local_lib.LocalRebuildError) as context:
+                    local_lib.rebuild_local_state(
+                        paths,
+                        wrangler_bin=FIXTURE_WRANGLER,
+                        env={},
+                        owner="test-owner",
+                        created_at="2026-08-01T00:00:00Z",
+                    )
+
+            self.assertIn("forced metadata write failure", str(context.exception))
+            self.assertEqual(active_marker.read_text(encoding="utf-8"), "old-active")
+            self.assertEqual(
+                paths.local_fingerprint_path.read_text(encoding="utf-8"),
+                '{"fingerprint":"old"}\n',
+            )
+            self.assertEqual(
+                paths.local_verification_report_path.read_text(encoding="utf-8"),
+                '{"status":"old"}\n',
+            )
+            backups = list(paths.local_d1_state_dir.parent.glob("state-backup-*"))
+            self.assertEqual(backups, [])
 
 
 if __name__ == "__main__":

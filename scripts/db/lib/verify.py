@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -19,11 +20,18 @@ CREATE_MIGRATIONS_TABLE_SQL = """CREATE TABLE IF NOT EXISTS "d1_migrations"(
 );"""
 
 OBJECT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("table", re.compile(r"^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE | re.MULTILINE)),
-    ("table", re.compile(r"^\s*CREATE\s+VIRTUAL\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE | re.MULTILINE)),
-    ("index", re.compile(r"^\s*CREATE\s+INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE | re.MULTILINE)),
-    ("trigger", re.compile(r"^\s*CREATE\s+TRIGGER\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE | re.MULTILINE)),
+    ("table", re.compile(r"^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>\"[^\"]+\"|`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)),
+    ("virtual_table", re.compile(r"^\s*CREATE\s+VIRTUAL\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>\"[^\"]+\"|`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)),
+    ("index", re.compile(r"^\s*CREATE\s+INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>\"[^\"]+\"|`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)),
+    ("trigger", re.compile(r"^\s*CREATE\s+TRIGGER\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>\"[^\"]+\"|`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)),
 )
+
+
+@dataclass(frozen=True)
+class SchemaObject:
+    kind: str
+    name: str
+    normalized_sql: str
 
 
 class LocalVerificationError(RuntimeError):
@@ -67,21 +75,10 @@ def verify_local_state(
     executor = LocalWranglerExecutor(paths=paths, wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"), env=env)
     state_dir = persist_to or paths.local_d1_state_dir
 
-    schema_names = _load_expected_schema_names(paths.schema_path)
-    actual_objects = _load_actual_schema_names(executor, state_dir)
-    missing_objects = {
-        kind: sorted(expected - actual_objects.get(kind, set()))
-        for kind, expected in schema_names.items()
-        if expected - actual_objects.get(kind, set())
-    }
-
-    locked = migrations_lib.sync_migration_lock(
-        paths.migrations_dir,
-        paths.migration_lock_path,
-        update=False,
-        baseline_created_at="ignored",
-        git_commit="ignored",
-    )
+    locked = _load_verified_migration_lock(paths)
+    expected_objects = _load_expected_schema_objects(paths.schema_path)
+    actual_objects = _load_actual_schema_objects(executor, state_dir)
+    schema_mismatches = _compare_expected_schema_objects(expected_objects, actual_objects)
     applied_names = _first_row_values(
         executor.execute_query(state_dir, 'SELECT name FROM d1_migrations ORDER BY id;')
     )
@@ -176,7 +173,14 @@ WHERE edge.source = 'ui_i18n'
     report = {
         "status": "ok",
         "schema_objects": {
-            "missing": missing_objects,
+            "missing": [
+                {"kind": item.kind, "name": item.name}
+                for item in schema_mismatches["missing"]
+            ],
+            "mismatched_sql": [
+                {"kind": expected.kind, "name": expected.name}
+                for expected, _ in schema_mismatches["mismatched_sql"]
+            ],
         },
         "migrations": {
             "expected_names": expected_names,
@@ -228,7 +232,7 @@ WHERE edge.source = 'ui_i18n'
     }
 
     mismatches: list[str] = []
-    if any(missing_objects.values()):
+    if schema_mismatches["missing"] or schema_mismatches["mismatched_sql"]:
         mismatches.append("missing schema objects")
     if applied_names != expected_names:
         mismatches.append("migration baseline mismatch")
@@ -256,24 +260,21 @@ def write_migration_baseline(
     executor: LocalWranglerExecutor,
     persist_to: Path,
 ) -> list[str]:
-    expected_objects = _load_expected_schema_names(paths.schema_path)
-    actual_objects = _load_actual_schema_names(executor, persist_to)
-    required_tables = {"languages", "languoids", "language_subtags", "language_locations", "ui_locales", "ui_messages", "expression_edges"}
-    missing_required = required_tables - actual_objects.get("table", set())
-    if missing_required:
+    expected_objects = _load_expected_schema_objects(paths.schema_path)
+    actual_objects = _load_actual_schema_objects(executor, persist_to)
+    schema_mismatches = _compare_expected_schema_objects(expected_objects, actual_objects)
+    if schema_mismatches["missing"] or schema_mismatches["mismatched_sql"]:
+        names = [
+            f"{item.kind}:{item.name}" for item in schema_mismatches["missing"]
+        ] + [
+            f"{expected.kind}:{expected.name}"
+            for expected, _ in schema_mismatches["mismatched_sql"]
+        ]
         raise LocalVerificationError(
-            "schema invariants missing before baseline: " + ", ".join(sorted(missing_required))
+            "schema invariants missing before baseline: " + ", ".join(sorted(names))
         )
-    if expected_objects["trigger"] - actual_objects.get("trigger", set()):
-        raise LocalVerificationError("schema triggers missing before baseline")
 
-    locked = migrations_lib.sync_migration_lock(
-        paths.migrations_dir,
-        paths.migration_lock_path,
-        update=False,
-        baseline_created_at="ignored",
-        git_commit="ignored",
-    )
+    locked = _load_verified_migration_lock(paths)
     migration_names = [entry["filename"] for entry in locked["migrations"]]
     statements = [CREATE_MIGRATIONS_TABLE_SQL, 'DELETE FROM "d1_migrations";']
     for name in migration_names:
@@ -283,18 +284,20 @@ def write_migration_baseline(
     return migration_names
 
 
-def _load_expected_schema_names(schema_path: Path) -> dict[str, set[str]]:
+def _load_expected_schema_objects(schema_path: Path) -> dict[tuple[str, str], SchemaObject]:
     sql = schema_path.read_text(encoding="utf-8")
-    names: dict[str, set[str]] = {"table": set(), "index": set(), "trigger": set()}
-    for kind, pattern in OBJECT_PATTERNS:
-        for match in pattern.finditer(sql):
-            names[kind].add(match.group("name"))
-    return names
+    objects: dict[tuple[str, str], SchemaObject] = {}
+    for statement in _split_sql(sql):
+        schema_object = _parse_schema_object(statement)
+        if schema_object is None:
+            continue
+        objects[(schema_object.kind, schema_object.name)] = schema_object
+    return objects
 
 
-def _load_actual_schema_names(
+def _load_actual_schema_objects(
     executor: LocalWranglerExecutor, persist_to: Path
-) -> dict[str, set[str]]:
+) -> dict[tuple[str, str], SchemaObject]:
     rows = executor.execute_query(
         persist_to,
         """
@@ -302,15 +305,38 @@ SELECT type, name, sql
 FROM sqlite_master
 WHERE type IN ('table', 'index', 'trigger')
   AND name NOT LIKE 'sqlite_%'
+  AND name != 'd1_migrations'
 ORDER BY type, name;
 """.strip(),
     )
-    actual: dict[str, set[str]] = {"table": set(), "index": set(), "trigger": set()}
+    actual: dict[tuple[str, str], SchemaObject] = {}
     for row in rows[0]["results"]:
-        entry_type = row["type"]
-        if entry_type in actual:
-            actual[entry_type].add(row["name"])
+        sql = row.get("sql")
+        if not sql:
+            continue
+        schema_object = _parse_actual_schema_object(
+            entry_type=str(row["type"]),
+            name=str(row["name"]),
+            sql=str(sql),
+        )
+        actual[(schema_object.kind, schema_object.name)] = schema_object
     return actual
+
+
+def _compare_expected_schema_objects(
+    expected: dict[tuple[str, str], SchemaObject],
+    actual: dict[tuple[str, str], SchemaObject],
+) -> dict[str, Any]:
+    missing: list[SchemaObject] = []
+    mismatched_sql: list[tuple[SchemaObject, SchemaObject]] = []
+    for key, expected_object in expected.items():
+        actual_object = actual.get(key)
+        if actual_object is None:
+            missing.append(expected_object)
+            continue
+        if actual_object.normalized_sql != expected_object.normalized_sql:
+            mismatched_sql.append((expected_object, actual_object))
+    return {"missing": missing, "mismatched_sql": mismatched_sql}
 
 
 def _rows_to_singletons(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
@@ -342,6 +368,63 @@ def _split_codes(value: Any) -> list[str]:
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _load_verified_migration_lock(paths: ProjectPaths) -> dict[str, Any]:
+    try:
+        return migrations_lib.sync_migration_lock(
+            paths.migrations_dir,
+            paths.migration_lock_path,
+            update=False,
+            baseline_created_at="ignored",
+            git_commit="ignored",
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise LocalVerificationError(f"migration lock verification failed: {exc}") from exc
+
+
+def _split_sql(script: str) -> list[str]:
+    statements: list[str] = []
+    buffer = ""
+    for line in script.splitlines(keepends=True):
+        buffer += line
+        if sqlite3.complete_statement(buffer):
+            statement = buffer.strip()
+            if statement:
+                statements.append(statement)
+            buffer = ""
+    trailing = buffer.strip()
+    if trailing:
+        statements.append(trailing)
+    return statements
+
+
+def _parse_schema_object(statement: str) -> SchemaObject | None:
+    for kind, pattern in OBJECT_PATTERNS:
+        match = pattern.match(statement)
+        if match is None:
+            continue
+        name = _strip_identifier_quotes(match.group("name"))
+        return SchemaObject(kind=kind, name=name, normalized_sql=_normalize_sql(statement))
+    return None
+
+
+def _parse_actual_schema_object(*, entry_type: str, name: str, sql: str) -> SchemaObject:
+    kind = "virtual_table" if entry_type == "table" and re.match(r"^\s*CREATE\s+VIRTUAL\s+TABLE", sql, re.IGNORECASE) else entry_type
+    return SchemaObject(kind=kind, name=name, normalized_sql=_normalize_sql(sql))
+
+
+def _strip_identifier_quotes(value: str) -> str:
+    if (value.startswith('"') and value.endswith('"')) or (value.startswith("`") and value.endswith("`")):
+        return value[1:-1]
+    return value
+
+
+def _normalize_sql(value: str) -> str:
+    normalized = value.strip().rstrip(";")
+    normalized = normalized.replace('"', "").replace("`", "")
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.lower()
 
 
 def _extract_command_error_message(exc: CommandError) -> str:

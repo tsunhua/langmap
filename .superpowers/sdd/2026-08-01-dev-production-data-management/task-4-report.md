@@ -195,6 +195,163 @@ wrangler d1 migrations apply ... --local --persist-to /private/tmp/langmap-task4
 
 此 probe 反而驗證了 Task 4 的核心需求：若沒有先建立受控 baseline，Wrangler 會錯把既有 published migrations 視為待套用。
 
+## Reviewer findings follow-up（2026-08-01）
+
+### 實作補強摘要
+
+- `scripts/db/lib/local.py`
+  - 將 active state 切換改為 transactional swap：
+    - 先 snapshot 既有 metadata；
+    - 先把新 fingerprint / verification report 寫到 staged metadata；
+    - 若已有 active state，先 rename 到 sibling backup；
+    - 再把 temp state rename 成 active；
+    - 最後才以 `os.replace()` commit metadata；
+    - swap 後任一步失敗都會 rollback active state 與 metadata；
+    - 只有整體成功才清理 backup。
+- `scripts/db/lib/verify.py`
+  - schema invariant 從「硬編碼少數 table/trigger」提升為完整 schema object set：
+    - `table`
+    - `virtual_table`
+    - `index`
+    - `trigger`
+  - baseline 與 verify 都以 `(kind, name, normalized_sql)` 完整集合比對。
+  - migration lock 驗證不再只是把 checksum 抄進 report，而是先驗 `filename/size/sha256` 全部一致；任何 repo drift 或 lock tamper 都直接 fail，並統一轉成 `LocalVerificationError`。
+- 測試補強
+  - `test_rebuild_restores_active_state_and_metadata_when_post_swap_write_fails`
+  - `test_verify_rejects_missing_expected_index_before_baseline`
+  - `test_verify_rejects_missing_expected_trigger_before_baseline`
+  - `test_verify_rejects_missing_expected_virtual_table_before_baseline`
+  - `test_verify_rejects_repo_migration_checksum_drift`
+  - `test_verify_rejects_tampered_lock_checksum`
+  - `test_rejects_allowed_root_sibling_escape`
+
+### Reviewer-fix TDD
+
+RED（reviewer findings focused suite）：
+
+```bash
+python3 -m unittest scripts.db.tests.test_local_rebuild scripts.db.tests.test_verify -v
+```
+
+結果：
+
+```text
+FAIL: test_rebuild_restores_active_state_and_metadata_when_post_swap_write_fails
+AssertionError: LocalRebuildError not raised
+```
+
+root cause：
+
+- 當時唯一仍然 RED 的 case 不是 rollback 邏輯本身，而是測試把失敗打在 staging `_write_json`，沒有真正覆蓋 reviewer 要求的「swap 後 metadata commit 失敗」。
+
+GREEN（修正測試注入點、補 schema/checksum/object coverage 後）：
+
+```bash
+python3 -m unittest scripts.db.tests.test_local_rebuild scripts.db.tests.test_verify -v
+```
+
+結果：
+
+```text
+Ran 11 tests in 3.557s
+
+OK
+```
+
+完整驗證：
+
+```bash
+python3 -m unittest discover -s scripts/db/tests -v
+git diff --check
+```
+
+結果：
+
+```text
+Ran 43 tests in 5.350s
+
+OK
+```
+
+- `git diff --check` 無輸出，exit code 0。
+
+### fake Wrangler / rollback / baseline 證據
+
+- `test_rebuild_restores_active_state_and_metadata_when_post_swap_write_fails`
+  - 以 monkeypatch 對 post-swap `_replace_path()` 第二次 metadata replace 強制失敗；
+  - 驗證：
+    - 舊 active state sentinel `keep.txt` 內容仍為 `old-active`；
+    - 舊 fingerprint 仍為 `{"fingerprint":"old"}`；
+    - 舊 verification report 仍為 `{"status":"old"}`；
+    - `state-backup-*` sibling 不殘留。
+- `test_verify_rejects_missing_expected_index_before_baseline`
+- `test_verify_rejects_missing_expected_trigger_before_baseline`
+- `test_verify_rejects_missing_expected_virtual_table_before_baseline`
+  - 三者都使用 fake Wrangler skip fixture 製造 schema object 缺失；
+  - rebuild 皆必須 fail；
+  - 並確認 temp sqlite 中不存在 `d1_migrations` table，證明 baseline 沒有先被盲寫。
+- `test_verify_rejects_repo_migration_checksum_drift`
+  - 直接改寫 repo migration 內容，verify 必須 fail。
+- `test_verify_rejects_tampered_lock_checksum`
+  - 直接篡改 `migration-lock.json` 的 `sha256`，verify 必須 fail。
+- `test_rejects_allowed_root_sibling_escape`
+  - 驗證 `allowed_root=paths.local_d1_state_dir` 時，sibling path 仍被拒絕。
+
+### real temporary Wrangler（本輪 reviewer follow-up）
+
+本輪使用的真實 Wrangler binary：
+
+```text
+/Users/lim/Documents/Code/tsunhua/langmap/backend/node_modules/.bin/wrangler
+```
+
+所有 real probe 都只使用 `/private/tmp/langmap-task4-real-*`，沒有碰 `backend/.wrangler/state`，且將 `HOME` / `XDG_CONFIG_HOME` / `XDG_DATA_HOME` / `WRANGLER_LOG_PATH` 全部導到同一個 temporary root。
+
+1. 沙箱內完整 rebuild + verify probe
+
+Command:
+
+```bash
+python3 -c '... rebuild_local_state(...); verify_local_environment(...) ...'
+```
+
+Result:
+
+```text
+{"probe_root":"/private/tmp/langmap-task4-real-4ajdbjmg","error_type":"LocalRebuildError","error":"Error: listen EPERM: operation not permitted 127.0.0.1 ...","temp_state_dir":"/private/tmp/langmap-task4-real-4ajdbjmg/local-d1-rebuild-uzi9zfqb"}
+```
+
+2. 非沙箱 bounded probe（20 秒上限）
+
+Command:
+
+```bash
+python3 -c '... signal.alarm(20); rebuild_local_state(...); verify_local_environment(...) ...'
+```
+
+Result:
+
+```text
+{"probe_root":"/private/tmp/langmap-task4-real-5i9qgue9","error_type":"LocalRebuildError","error":"real wrangler probe timed out after 20s","temp_state_dir":"/private/tmp/langmap-task4-real-5i9qgue9/local-d1-rebuild-p4s1hx9d"}
+```
+
+後續只讀檢查：
+
+- `wrangler.log` 顯示：
+  - 第一個 `d1 execute --file backend/schema.sql` 已成功；
+  - `78 commands executed successfully`；
+  - 第二個 `d1 execute --file scripts/v2/artifacts/language-registry-5.3/language-registry.sql` 開始後，在 20 秒上限內未完成。
+- timeout 時 temporary sqlite 仍已存在：
+  - `/private/tmp/langmap-task4-real-5i9qgue9/local-d1-rebuild-p4s1hx9d/v3/d1/miniflare-D1DatabaseObject/bd307851d5b3a26cc62a7676aaddf233be3dd42df75be4ee22cccb6a574322c2.sqlite`
+- 只讀檢查顯示 timeout 前 DB 內已有 partial schema：
+  - tables = 22
+  - indexes = 34
+  - triggers = 3
+  - sample tables 含 `expression_edges`、`expressions`、`expressions_fts`。
+
 ## 未解決疑慮
 
-- 真 Wrangler 在目前環境仍受 sandbox / desktop 權限限制，不適合拿來做穩定 GREEN；本次以 fake Wrangler fixture 完成可重複測試，並在此明確記錄限制。
+- 真 Wrangler 的 full rebuild + verify 仍無法在目前桌面環境中穩定完成：
+  - 沙箱內會遭遇 `listen EPERM 127.0.0.1`；
+  - 非沙箱 bounded probe 雖可越過該權限點，但在 language registry 匯入階段 20 秒內未完成。
+- 因此本次 GREEN 仍以 fake Wrangler fixture 為可重複驗證主體；real Wrangler 已按 reviewer 要求嘗試並完整記錄實際阻塞結果。

@@ -44,12 +44,15 @@ def main(argv: list[str]) -> int:
         print(json.dumps({"error": {"text": f"forced failure for {failure_token}"}}))
         return 1
 
+    skip_token = os.environ.get("FAKE_WRANGLER_SKIP_PATTERN")
     connection = sqlite3.connect(db_path)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON;")
     try:
         results = []
         for statement in _split_sql(sql_text):
+            if skip_token and skip_token in statement:
+                continue
             cursor = connection.execute(statement)
             if cursor.description:
                 rows = [dict(row) for row in cursor.fetchall()]
