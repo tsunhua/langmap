@@ -201,3 +201,81 @@ Implementation commit hash:
 - 真機 `./dev.sh --rebuild` 與第二次 fingerprint-hit evidence 尚未完成；
 - 目前對 Task 5 的高信心證據來自 fake orchestration tests 與 repo-level unittest 綠燈；
 - 若後續需要補齊真機 evidence，應在允許 Wrangler listen / logging 且避免長時間 blocking 的環境中完成。
+
+## Reviewer follow-up addendum — Saturday, August 1, 2026
+
+### Additional focused test hardening
+
+To lock out broad process cleanup regressions, `scripts/db/tests/test_dev_sh.py` now asserts that the fake `pkill`
+binary is never called in every orchestration path. If `dev.sh` reintroduces `pkill -f ...`, the shell test suite now
+fails.
+
+Focused rerun:
+
+```text
+Ran 6 tests in 8.165s
+
+OK
+```
+
+Relevant full rerun:
+
+```text
+Ran 42 tests in 15.949s
+
+OK
+```
+
+### Real local rebuild attempt with current timeout=120 manager
+
+Command:
+
+```bash
+bash -x ./dev.sh --rebuild --port=8791
+```
+
+Observed trace before manager handoff:
+
+```text
++ BACKEND_PORT=8791
++ FORCE_REBUILD=1
+...
++ step '依旗標強制重建 local D1'
++ manage.sh local rebuild
+```
+
+Observed terminal failure after the bounded wait:
+
+```text
+lib.verify.LocalVerificationError: count mismatch, translation ownership mismatch, orphan references detected
+...
+lib.local.LocalRebuildError: count mismatch, translation ownership mismatch, orphan references detected
+❌ dev.sh 失敗：第 173 行
+```
+
+Interpretation:
+
+- 這次已不是 sandbox `EPERM`；
+- 也不是無界等待；`manage.sh local rebuild` 在 timeout=120 內返回了明確失敗；
+- 失敗點是 local rebuild 完成資料載入後，verification 直接拒絕 baseline，因而 `dev.sh` 沒有進入 Wrangler/Vite startup；
+- 因為第一輪真機 rebuild 未成功，所以本 reviewer finding 要求的「成功啟動後 bounded stop」證據在目前 repo local state 上無法誠實聲稱完成。
+
+### Second launch / fingerprint-hit follow-up
+
+Read-only status check after the failed rebuild attempt:
+
+```bash
+./scripts/db/manage.sh local status
+```
+
+Observed result:
+
+```json
+{"environment":"local","command":"status","repo_root":"/Users/lim/Documents/Code/tsunhua/langmap","desired_fingerprint":"4b4aaf72d68f2a551c83eb0d5b0c5df663a7cc37678e7761442894a118cba5d8","stored_fingerprint":null,"state_exists":true,"rebuild_required":true}
+```
+
+Interpretation:
+
+- `stored_fingerprint` 仍為 `null`，表示 failed rebuild 沒有建立成功 baseline metadata；
+- `rebuild_required` 仍為 `true`，所以第二輪 `./dev.sh --port=<another port>` 不會是 fingerprint-hit / `local verify` 路徑，而只會再次走 rebuild；
+- 為避免重複長時間 real rebuild 且仍無法滿足 reviewer 要求，本次沒有偽造第二輪啟動證據，而是如實記錄前置條件未成立。

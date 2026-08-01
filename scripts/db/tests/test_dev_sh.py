@@ -28,6 +28,13 @@ def read_log(path: Path) -> list[str]:
     return [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def assert_no_pkill_calls(testcase: unittest.TestCase, log_lines: list[str]) -> None:
+    testcase.assertFalse(
+        any(line.startswith("pkill\t") for line in log_lines),
+        msg=f"unexpected broad pkill cleanup: {log_lines}",
+    )
+
+
 def wait_for(predicate, *, timeout: float = 10.0, interval: float = 0.1) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -262,6 +269,7 @@ class DevShellTests(unittest.TestCase):
                 ["manage\tlocal status", "manage\tlocal verify"],
             )
             self.assertNotIn("manage\tlocal rebuild", log_lines)
+            assert_no_pkill_calls(self, log_lines)
             self.assertTrue(any(line.startswith("server-start\tbackend") for line in log_lines))
             self.assertTrue(any(line.startswith("server-start\tfrontend") for line in log_lines))
 
@@ -295,6 +303,7 @@ class DevShellTests(unittest.TestCase):
                 ["manage\tlocal status", "manage\tlocal rebuild"],
             )
             self.assertNotIn("manage\tlocal verify", log_lines)
+            assert_no_pkill_calls(self, log_lines)
             self.assertTrue(any(line.startswith("server-start\tbackend") for line in log_lines))
             self.assertTrue(any(line.startswith("server-start\tfrontend") for line in log_lines))
 
@@ -329,6 +338,7 @@ class DevShellTests(unittest.TestCase):
             )
             self.assertNotIn("manage\tlocal status", log_lines)
             self.assertNotIn("manage\tlocal verify", log_lines)
+            assert_no_pkill_calls(self, log_lines)
 
     def test_no_rebuild_fails_without_starting_servers(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -351,6 +361,7 @@ class DevShellTests(unittest.TestCase):
                 [line for line in log_lines if line.startswith("manage\t")],
                 ["manage\tlocal status"],
             )
+            assert_no_pkill_calls(self, log_lines)
             self.assertFalse(any(line.startswith("npx\twrangler dev") for line in log_lines))
             self.assertFalse(any(line.startswith("npx\tvite") for line in log_lines))
 
@@ -391,6 +402,7 @@ class DevShellTests(unittest.TestCase):
                         [line for line in log_lines if line.startswith("manage\t")],
                         expected_manage,
                     )
+                    assert_no_pkill_calls(self, log_lines)
                     self.assertFalse(any(line.startswith("npx\twrangler dev") for line in log_lines))
                     self.assertFalse(any(line.startswith("npx\tvite") for line in log_lines))
 
@@ -442,6 +454,7 @@ class DevShellTests(unittest.TestCase):
                 line for line in log_lines if line.startswith("server-start\tbackend")
             )
             self.assertIn("--port 9911", backend_start)
+            assert_no_pkill_calls(self, log_lines)
             self.assertTrue(any(line == "server-stop\tbackend" for line in log_lines))
             self.assertTrue(any(line == "server-stop\tfrontend" for line in log_lines))
             self.assertFalse((runtime_dir / BACKEND_PIDFILE.name).exists())
