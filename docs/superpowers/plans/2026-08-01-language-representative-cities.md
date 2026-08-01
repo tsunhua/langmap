@@ -1,6 +1,6 @@
 # 語言代表性城市實作計畫
 
-> 狀態：待實作。
+> 狀態：核心功能已實作；線上 code audit/migration 待取得 observed codes 後執行。
 >
 > 對應規格：`docs/superpowers/specs/2026-08-01-language-representative-cities-design.md`
 

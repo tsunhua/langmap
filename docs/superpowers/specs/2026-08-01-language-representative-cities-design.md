@@ -1,6 +1,8 @@
 # 語言代表性城市設計
 
-> 狀態：設計已確認，尚未實作。
+> 狀態：已實作核心 schema、生成器、seed data、API 與語言詳情列表。
+>
+> 尚未執行線上 observed code migration；目前 region code 仍保留作為內容變體。
 
 ## 1. 背景
 
