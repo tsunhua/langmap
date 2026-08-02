@@ -878,3 +878,8 @@ rule moves to the inbound alias layer instead."
 - 瀏覽器送 `zh-TW` 仍能協商到 `cmn-Hant`
 - `cmn-Hans` 代表城市含 Singapore，不含 Hong Kong
 - `alternate_names_json` 保留「普通话」「國語」等各政體自稱
+
+## 已知非阻塞事項（非本次遷移造成）
+
+- `manage.sh local verify` 仍回報兩項 mismatch：`languages` count（seed 65 vs 實際 113）與 orphan languages（48）。兩者同源——歷次後端整合測試在共用本地 dev DB 累積的個人語言 tag（`en-x-*` 及測試用 `ral` 等），0015 套用前即存在，與 cmn 遷移無關。其餘項目（schema objects、migration baseline、ui_locales/ui_messages/translation/active locale、orphan locales/messages/edges）全部對齊。
+- fingerprint（`scripts/db/state/local/fingerprint.json`）未更新：因 migration-lock 與 manifest 已改，`./dev.sh` 會判定 fingerprint miss 而**重建清空 expressions**。需重建 seed 後再跑 dev.sh，或改用 `./dev.sh --no-rebuild`（亦會先要求重建）。
