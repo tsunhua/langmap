@@ -7,7 +7,7 @@ const globalI18n = i18n.global as unknown as { locale: { value: string } }
 
 vi.mock('@/api/localization', () => ({
   listUiLocales: vi.fn().mockResolvedValue([
-    { code: 'en-US', name: 'English', native_name: 'English', status: 'active' },
+    { code: 'en', name: 'English', native_name: 'English', status: 'active' },
     { code: 'zh-Hans', name: 'Simplified Chinese', native_name: '简体中文', status: 'active' },
   ]),
   getUiMessages: vi.fn().mockResolvedValue({ locale: 'zh-Hans', messages: {} }),
@@ -26,7 +26,7 @@ describe('localization store', () => {
       },
     })
     setActivePinia(createPinia())
-    globalI18n.locale.value = 'en-US'
+    globalI18n.locale.value = 'en'
   })
 
   it('restores the selected interface language after loading locales', async () => {

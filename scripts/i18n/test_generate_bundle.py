@@ -178,6 +178,7 @@ class GenerateBundleTests(unittest.TestCase):
         db.executemany(
             "INSERT INTO languages (code, name, direction) VALUES (?, ?, ?)",
             [
+                ("en", "English", "ltr"),
                 ("zh-Hans", "简体中文", "ltr"),
                 ("zh-Hant", "繁體中文", "ltr"),
                 ("es", "Español", "ltr"),
@@ -212,11 +213,11 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(manifest["ownership_scope"], "managed-system-ui")
             self.assertEqual(
                 manifest["locale_codes"],
-                ["es", "ja", "zh-Hans", "zh-Hant"],
+                ["en", "es", "ja", "zh-Hans", "zh-Hant"],
             )
             self.assertEqual(
                 manifest["counts"],
-                {"locale_count": 4, "message_count": 3, "translation_count": 12},
+                {"locale_count": 5, "message_count": 3, "translation_count": 12},
             )
             self.assertEqual(
                 manifest["inputs"]["source_catalog"]["sha256"],
@@ -233,6 +234,7 @@ class GenerateBundleTests(unittest.TestCase):
             )
 
             self.assertIn("INSERT INTO ui_locales", sql_text)
+            self.assertIn("-- Locale en", sql_text)
             self.assertIn("INSERT OR IGNORE INTO ui_messages", sql_text)
             self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
             self.assertNotIn("DELETE FROM", sql_text)

@@ -172,7 +172,8 @@ def render_bundle_sql(source_map, rows_by_locale) -> str:
     lines.append(f'-- Ownership scope: {OWNERSHIP_SCOPE}')
     lines.append('')
     lines.append('-- 1. Upsert locale metadata')
-    for locale_code in sorted(rows_by_locale.keys()):
+    managed_locale_codes = sorted({i18n_sql.SOURCE_LANGUAGE_CODE, *rows_by_locale.keys()})
+    for locale_code in managed_locale_codes:
         lines.append(f'-- Locale {locale_code}')
         lines.append(
             f"""
@@ -236,9 +237,9 @@ def build_manifest(
         'schema_version': SCHEMA_VERSION,
         'project_id': i18n_sql.PROJECT_ID,
         'ownership_scope': OWNERSHIP_SCOPE,
-        'locale_codes': list(snapshot.locales.keys()),
+        'locale_codes': sorted({i18n_sql.SOURCE_LANGUAGE_CODE, *snapshot.locales.keys()}),
         'counts': {
-            'locale_count': len(snapshot.locales),
+            'locale_count': len(snapshot.locales) + 1,
             'message_count': len(source_map),
             'translation_count': sum(len(rows) for rows in rows_by_locale.values()),
         },

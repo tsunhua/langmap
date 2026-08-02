@@ -41,8 +41,8 @@
       "canonical": "wuu-x-taiz1238"
     },
     "nan-x-chao1239": {
-      "action": "keep",
-      "canonical": "nan-x-chao1239"
+      "action": "canonicalize",
+      "canonical": "nan-Hant-x-chao1238"
     },
     "nan-Latn-TW-tailo": {
       "action": "keep",

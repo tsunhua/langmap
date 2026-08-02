@@ -40,7 +40,7 @@ export const useLocalizationStore = defineStore('localization', () => {
         const bundle = await getUiMessages(code)
         globalI18n.setLocaleMessage(code, bundle.messages)
       } catch {
-        // vue-i18n falls back to the built-in en-US source catalog.
+        // vue-i18n falls back to the built-in English source catalog.
       }
     }
     globalI18n.locale.value = code

@@ -19,7 +19,7 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/api/localization', () => ({
   listUiLocales: vi.fn().mockResolvedValue([
-    { code: 'en-US', name: 'English', native_name: 'English', status: 'active' },
+    { code: 'en', name: 'English', native_name: 'English', status: 'active' },
     { code: 'zh-TW', name: 'Chinese (Traditional)', native_name: '繁體中文', status: 'active' },
   ]),
   getUiMessages: vi.fn().mockResolvedValue({ locale: 'zh-TW', messages: {} }),

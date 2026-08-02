@@ -347,6 +347,52 @@ Added: 2005-10-16
             "yue-Hant-HK", "yue-Hant-MO", "wuu-Hans-CN", "ug-Arab-CN",
         }.isdisjoint(codes))
 
+    def test_seed_profiles_include_common_and_reviewed_variant_layers(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        codes = {profile["code"] for profile in profiles["languages"]}
+
+        self.assertTrue({
+            "en", "en-US", "en-GB",
+            "pt", "pt-BR",
+            "ko", "ko-KR", "ko-KP",
+            "yue-Hant",
+        }.issubset(codes))
+
+    def test_chaozhou_profiles_use_exact_glottocode_for_each_script(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+
+        expected = {
+            "nan-Hans-x-chao1238",
+            "nan-Hant-x-chao1238",
+            "nan-Latn-x-chao1238",
+        }
+        self.assertTrue(expected.issubset(by_code))
+        self.assertNotIn("nan-x-chao1239", by_code)
+        for code in expected:
+            self.assertEqual(by_code[code]["glottocode"], "chao1238")
+
+    def test_expression_schema_tracks_common_variant_classification(self):
+        schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
+        self.assertIn("variation_status TEXT NOT NULL DEFAULT 'unclassified'", schema)
+        self.assertIn("variation_status IN ('unclassified', 'shared', 'variant')", schema)
+
+        db = sqlite3.connect(":memory:")
+        db.executescript(schema)
+        db.execute(
+            "INSERT INTO languages (code, name, variety_key) VALUES ('en', 'English', 'test:en')"
+        )
+        db.execute("INSERT INTO expressions (id, text, language_code) VALUES (1, 'book', 'en')")
+        self.assertEqual(
+            db.execute("SELECT variation_status FROM expressions WHERE id = 1").fetchone()[0],
+            "unclassified",
+        )
+        with self.assertRaises(sqlite3.IntegrityError):
+            db.execute(
+                "INSERT INTO expressions (id, text, language_code, variation_status) "
+                "VALUES (2, 'colour', 'en', 'unknown')"
+            )
+
     def test_seed_profiles_publish_reviewed_code_migration_matrix(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
         migration_manifest = profiles.get("online_code_migrations")

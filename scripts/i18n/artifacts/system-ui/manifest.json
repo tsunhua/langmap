@@ -3,13 +3,14 @@
   "project_id": "langmap-web",
   "ownership_scope": "managed-system-ui",
   "locale_codes": [
+    "en",
     "es",
     "ja",
     "zh-Hans",
     "zh-Hant"
   ],
   "counts": {
-    "locale_count": 4,
+    "locale_count": 5,
     "message_count": 312,
     "translation_count": 1228
   },
@@ -40,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "abe0059f28c1b56301ef67181e4bb8343e91ce2b04d9242f62be2851dac458bd"
+      "sha256": "c1f50f1364d0adaf8f8ce3096e0816c396afe788cc5e05598b26146e268c3fda"
     }
   }
 }

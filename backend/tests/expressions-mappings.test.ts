@@ -143,6 +143,45 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
     expect(body.error).toBe('INVALID_LANGUAGE_CODE');
   });
 
+  it('stores an explicit expression variation classification', async () => {
+    const token = await register(`variation-${Date.now()}`);
+    const text = `shared-${Math.random().toString(36).slice(2, 8)}`;
+    const created = await fetch(`${BASE_URL}/api/v2/expressions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        text,
+        language_code: 'en',
+        variation_status: 'shared',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const createdBody = await json(created);
+
+    const detail = await fetch(`${BASE_URL}/api/v2/expressions/${createdBody.data.expressionId}`);
+    expect(detail.status).toBe(200);
+    const detailBody = await json(detail);
+    expect(detailBody.data.variation_status).toBe('shared');
+
+    const invalid = await fetch(`${BASE_URL}/api/v2/expressions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        text: `${text}-invalid`,
+        language_code: 'en',
+        variation_status: 'unknown',
+      }),
+    });
+    expect(invalid.status).toBe(400);
+    expect((await json(invalid)).error).toBe('invalid_variation_status');
+  });
+
   it('rejects contribution batch with any unregistered language code', async () => {
     const token = await register(`unreg-contrib-${Date.now()}`);
     const res = await fetch(`${BASE_URL}/api/v2/contributions/batch`, {

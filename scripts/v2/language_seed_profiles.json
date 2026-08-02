@@ -4,6 +4,7 @@
     {"code": "und", "name": "Undetermined", "name_en": "Undetermined", "glottocode": null, "origin": "system", "reason": "iana-und"},
     {"code": "x-emoji", "name": "Emoji 表情", "name_en": "Emoji", "glottocode": null, "origin": "system", "reason": "special-content"},
     {"code": "x-image", "name": "圖片", "name_en": "Image", "glottocode": null, "origin": "system", "reason": "special-content"},
+    {"code": "en", "name": "English", "name_en": "English", "glottocode": "stan1293", "origin": "seed", "reason": "major-world-language"},
     {"code": "en-US", "name": "English (United States)", "name_en": "English (United States)", "glottocode": "stan1293", "origin": "seed", "reason": "first-party"},
     {"code": "en-GB", "name": "English (United Kingdom)", "name_en": "English (United Kingdom)", "glottocode": "stan1293", "origin": "seed", "reason": "first-party"},
     {"code": "swh", "name": "Swahili", "name_en": "Swahili", "glottocode": "swah1253", "origin": "seed", "reason": "existing-online-code"},
@@ -11,7 +12,9 @@
     {"code": "zyg-x-yang1286", "name": "Zhuang (Yangwang)", "name_en": "Zhuang (Yangwang)", "glottocode": "yang1286", "origin": "seed", "reason": "existing-online-code"},
     {"code": "wuu-x-ouji1238", "name": "Wu (Oujiang)", "name_en": "Wu (Oujiang)", "glottocode": "ouji1238", "origin": "seed", "reason": "existing-online-code"},
     {"code": "wuu-x-taiz1238", "name": "Wu (Taizhou)", "name_en": "Wu (Taizhou)", "glottocode": "taiz1238", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "nan-x-chao1239", "name": "Min Nan (Chaozhou)", "name_en": "Min Nan (Chaozhou)", "glottocode": "chao1239", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Hans-x-chao1238", "name": "潮州话", "name_en": "Chaozhou (Simplified)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Hant-x-chao1238", "name": "潮州話", "name_en": "Chaozhou (Traditional)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Latn-x-chao1238", "name": "Tiê-chiu-uē", "name_en": "Chaozhou (Latin)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-TW-tailo", "name": "臺灣台語（臺羅）", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-TW-pehoeji", "name": "臺灣台語（白話字）", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "zh-Hans", "name": "简体中文", "name_en": "Chinese (Simplified)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
@@ -31,7 +34,8 @@
     ,{"code": "ko", "name": "조선어", "name_en": "Korean", "glottocode": "kore1280", "origin": "seed", "reason": "regional-east-asia-language"}
     ,{"code": "mr", "name": "मराठी", "name_en": "Marathi", "glottocode": "mara1378", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "pa-Guru", "name": "ਪੰਜਾਬੀ", "name_en": "Punjabi (Gurmukhi)", "glottocode": "panj1256", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "pt-BR", "name": "Português", "name_en": "Portuguese", "glottocode": "port1283", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "pt", "name": "Português", "name_en": "Portuguese", "glottocode": "port1283", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "pt-BR", "name": "Português do Brasil", "name_en": "Portuguese (Brazil)", "glottocode": "port1283", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "ru", "name": "Русский", "name_en": "Russian", "glottocode": "russ1263", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "th", "name": "ไทย", "name_en": "Thai", "glottocode": "thai1261", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "tr", "name": "Türkçe", "name_en": "Turkish", "glottocode": "nucl1301", "origin": "seed", "reason": "major-world-language"}
@@ -73,7 +77,7 @@
       "zyg-x-yang1286": {"action": "keep", "canonical": "zyg-x-yang1286"},
       "wuu-x-ouji1238": {"action": "keep", "canonical": "wuu-x-ouji1238"},
       "wuu-x-taiz1238": {"action": "keep", "canonical": "wuu-x-taiz1238"},
-      "nan-x-chao1239": {"action": "keep", "canonical": "nan-x-chao1239"},
+      "nan-x-chao1239": {"action": "canonicalize", "canonical": "nan-Hant-x-chao1238"},
       "nan-Latn-TW-tailo": {"action": "keep", "canonical": "nan-Latn-TW-tailo"},
       "nan-Latn-TW-pehoeji": {"action": "keep", "canonical": "nan-Latn-TW-pehoeji"},
       "zh-Hans-CN": {"action": "canonicalize", "canonical": "zh-Hans"},

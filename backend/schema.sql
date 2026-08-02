@@ -126,6 +126,8 @@ CREATE TABLE expressions (
     source_type TEXT DEFAULT 'user',
     source_ref TEXT,
     review_status TEXT DEFAULT 'pending',
+    variation_status TEXT NOT NULL DEFAULT 'unclassified'
+      CHECK (variation_status IN ('unclassified', 'shared', 'variant')),
     meaning_id INTEGER,
     created_by TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,

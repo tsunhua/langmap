@@ -7,10 +7,11 @@ import { requireRegisteredLanguage } from '../services/languageRegistry';
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 const PROJECT_ID = 'langmap-web';
+const SOURCE_LOCALE = 'en';
 const MAX_BATCH = 100;
 const MAX_TEXT_CODEPOINTS = 4000;
 const FIRST_PARTY_LOCALES = [
-  { code: 'en-US', native_name: 'English (United States)', direction: 'ltr', fallback_code: null, status: 'active' },
+  { code: SOURCE_LOCALE, native_name: 'English', direction: 'ltr', fallback_code: null, status: 'active' },
 ] as const;
 
 function validProject(c: any, projectId: string) {
@@ -21,7 +22,7 @@ async function projectLocale(c: any, projectId: string, code?: string) {
   const sql = code
     ? 'SELECT * FROM ui_locales WHERE project_id = ? AND code = ?'
     : `SELECT * FROM ui_locales WHERE project_id = ? AND status = 'active'
-        ORDER BY CASE WHEN code = 'en-US' THEN 0 ELSE 1 END, native_name, code`;
+        ORDER BY CASE WHEN code = 'en' THEN 0 ELSE 1 END, native_name, code`;
   if (code) {
     const row = await c.env.DB.prepare(sql).bind(projectId, code).first();
     return row || FIRST_PARTY_LOCALES.find(locale => locale.code === code) || null;
@@ -29,7 +30,7 @@ async function projectLocale(c: any, projectId: string, code?: string) {
   const result = await c.env.DB.prepare(sql).bind(projectId).all();
   const byCode = new Map((result.results ?? []).map((row: any) => [row.code, row]));
   for (const locale of FIRST_PARTY_LOCALES) if (!byCode.has(locale.code)) byCode.set(locale.code, { project_id: projectId, ...locale, mapping_revision: 0 });
-  return { results: [...byCode.values()].sort((a: any, b: any) => (a.code === 'en-US' ? -1 : b.code === 'en-US' ? 1 : String(a.native_name).localeCompare(String(b.native_name)) || a.code.localeCompare(b.code)) ) };
+  return { results: [...byCode.values()].sort((a: any, b: any) => (a.code === SOURCE_LOCALE ? -1 : b.code === SOURCE_LOCALE ? 1 : String(a.native_name).localeCompare(String(b.native_name)) || a.code.localeCompare(b.code)) ) };
 }
 
 export function parentLocaleCodes(code: string): string[] {
@@ -54,7 +55,7 @@ async function fallbackChain(c: any, projectId: string, locale: any): Promise<st
     const row = await projectLocale(c, projectId, parent) as any;
     if (row && row.status !== 'archived') add(parent);
   }
-  add('en-US');
+  add(SOURCE_LOCALE);
   return chain.slice(0, 5);
 }
 
@@ -124,10 +125,10 @@ async function createMapping(c: any, projectId: string, body: any) {
   let message = await sourceMessage(c, projectId, key) as any;
   if (!message && validText(body?.source_text)) {
     const sourceText = body.source_text.trim();
-    const sourceId = await expressionId('en-US', sourceText);
+    const sourceId = await expressionId(SOURCE_LOCALE, sourceText);
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status, created_by)
-       VALUES (?, ?, 'en-US', 'ui_i18n', ?, 'approved', ?)`
+       VALUES (?, ?, 'en', 'ui_i18n', ?, 'approved', ?)`
     ).bind(sourceId, sourceText, `${projectId}:${key}`, c.get('user')?.username ?? null).run();
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
@@ -164,7 +165,7 @@ localization.get('/projects/:projectId/locales', async (c) => {
   const projectError = validProject(c, projectId);
   if (projectError !== true) return projectError;
   const result = await projectLocale(c, projectId);
-  return success(c, { project_id: projectId, source_locale: 'en-US', locales: result.results ?? [] });
+  return success(c, { project_id: projectId, source_locale: SOURCE_LOCALE, locales: result.results ?? [] });
 });
 
 localization.get('/projects/:projectId/locales/:code/messages', async (c) => {
@@ -245,10 +246,10 @@ localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
   if (projectError !== true) return projectError;
   let body: any; try { body = await c.req.json(); } catch { return badRequest(c, 'invalid_json'); }
   const code = typeof body?.code === 'string' ? body.code.trim() : '';
-  if (!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(code) || code === 'en-US') return badRequest(c, 'invalid_locale_code');
+  if (!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(code) || code === SOURCE_LOCALE) return badRequest(c, 'invalid_locale_code');
   const language = await requireRegisteredLanguage(c.env.DB, code);
   if (!language) return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language');
-  await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en-US', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
+  await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
   const locale = await projectLocale(c, projectId, code);
   return created(c, locale);
 });
@@ -278,7 +279,7 @@ localization.post('/projects/:projectId/locales/:code/archive', requireAuth, asy
   const code = c.req.param('code');
   const locale = await projectLocale(c, projectId, code) as any;
   if (!locale) return notFound(c, 'Locale');
-  if (code === 'en-US') return badRequest(c, 'cannot_archive_source_locale');
+  if (code === SOURCE_LOCALE) return badRequest(c, 'cannot_archive_source_locale');
   await c.env.DB.prepare("UPDATE ui_locales SET status = 'archived', updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE project_id = ? AND code = ?").bind(c.get('user')?.username, projectId, code).run();
   return success(c, { project_id: projectId, locale: code, status: 'archived' });
 });

@@ -67,6 +67,18 @@
       "filename": "0012_canonicalize_language_content_profiles.sql",
       "size": 6676,
       "sha256": "0cd55a9b11e6eec0cf52dc11b7a1be0fab87ee75c3e2cd1fbfba6e7ce7b89243"
+    },
+    {
+      "sequence": 13,
+      "filename": "0013_add_expression_variation_status.sql",
+      "size": 158,
+      "sha256": "ddf88a26e47bac49c12ba82db9d221f1ba213a6b3ff65cf4cf752bd02d627a74"
+    },
+    {
+      "sequence": 14,
+      "filename": "0014_use_base_english_ui_locale.sql",
+      "size": 754,
+      "sha256": "73612eff095aaf5705bb7dc0629fcf575bd55bc7a34b22892138cb619e76b76f"
     }
   ]
 }

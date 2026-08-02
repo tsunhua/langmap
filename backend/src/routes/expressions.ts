@@ -39,6 +39,7 @@ expressions.post('/', requireAuth, async (c) => {
   const body = await c.req.json<{
     text?: string;
     language_code?: string;
+    variation_status?: 'unclassified' | 'shared' | 'variant';
     region_name?: string;
     related_to?: number;
   }>();
@@ -46,9 +47,13 @@ expressions.post('/', requireAuth, async (c) => {
   const text = body.text?.trim() || '';
   const languageCode = body.language_code?.trim() || '';
   const regionName = body.region_name?.trim() || '';
+  const variationStatus = body.variation_status || 'unclassified';
 
   if (!text || !languageCode) {
     return badRequest(c, 'invalid_expression', 'text and language_code are required');
+  }
+  if (!['unclassified', 'shared', 'variant'].includes(variationStatus)) {
+    return badRequest(c, 'invalid_variation_status', 'variation_status must be unclassified, shared, or variant');
   }
 
   const language = await requireRegisteredLanguage(c.env.DB, languageCode);
@@ -66,9 +71,9 @@ expressions.post('/', requireAuth, async (c) => {
   if (!existing) {
     statements.push(
       c.env.DB.prepare(
-        `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, source_type, created_by, review_status)
-         VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
-      ).bind(expressionId, text, languageCode, regionName || null, user.username)
+        `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, variation_status, source_type, created_by, review_status)
+         VALUES (?, ?, ?, ?, ?, 'user', ?, 'pending')`
+      ).bind(expressionId, text, languageCode, regionName || null, variationStatus, user.username)
     );
   }
 

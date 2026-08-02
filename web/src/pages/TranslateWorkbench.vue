@@ -73,7 +73,7 @@ async function loadWorkbench(codeToLoad: string) {
       draft.value = { ...initialTranslation.value }
       draftLocale.value = codeToLoad
     }
-    if (referenceLocale.value && referenceLocale.value !== 'en-US') {
+    if (referenceLocale.value && referenceLocale.value !== 'en') {
       const remoteReference = (await getUiMessages(referenceLocale.value)).messages as Record<string, string>
       referenceMessages.value = remoteReference
     } else {
@@ -119,11 +119,11 @@ onMounted(async () => {
     await refreshLocales()
     registryLanguages.value = await listRegistryLanguages()
     if (!code.value) {
-      const target = locales.value.find((item) => item.code !== 'en-US' && item.status !== 'archived') || locales.value[0]
+      const target = locales.value.find((item) => item.code !== 'en' && item.status !== 'archived') || locales.value[0]
       if (target) return router.replace(`/translate/${encodeURIComponent(target.code)}`)
     }
     if (!referenceLocale.value) {
-      const ref = locales.value.find((item) => item.code !== code.value && item.code !== 'en-US' && item.status !== 'archived')
+      const ref = locales.value.find((item) => item.code !== code.value && item.code !== 'en' && item.status !== 'archived')
       if (ref) referenceLocale.value = ref.code
     }
     loaded.value = true
@@ -165,7 +165,7 @@ watch(referenceLocale, (val) => { if (val && loaded.value && code.value) loadWor
     <p v-else-if="error" class="state error">{{ error }}</p>
     <div v-else class="translation-table-wrap">
       <table class="translation-table"><thead><tr><th>Key</th><th>{{ t('translate.source') }}</th><th>{{ t('translate.reference') }}</th><th>{{ t('translate.translation') }}</th></tr></thead><tbody>
-        <tr v-for="item in filteredMessages" :key="item.key"><td><code>{{ item.key }}</code><small v-if="item.description">{{ item.description }}</small></td><td>{{ item.source_text }}</td><td>{{ referenceLocale === 'en-US' ? item.source_text : (referenceMessages[item.key] || '—') }}</td><td><textarea v-model="draft[item.key]" :placeholder="t('translate.inputPlaceholder')" :aria-label="t('translate.translateKey', { key: item.key })" rows="2" /><small v-if="bestCandidate(item)">score {{ bestCandidate(item)?.score }}</small></td></tr>
+        <tr v-for="item in filteredMessages" :key="item.key"><td><code>{{ item.key }}</code><small v-if="item.description">{{ item.description }}</small></td><td>{{ item.source_text }}</td><td>{{ referenceLocale === 'en' ? item.source_text : (referenceMessages[item.key] || '—') }}</td><td><textarea v-model="draft[item.key]" :placeholder="t('translate.inputPlaceholder')" :aria-label="t('translate.translateKey', { key: item.key })" rows="2" /><small v-if="bestCandidate(item)">score {{ bestCandidate(item)?.score }}</small></td></tr>
       </tbody></table><p v-if="!filteredMessages.length" class="state">{{ t('translate.noResults') }}</p>
     </div>
     <p v-if="!auth.isLoggedIn" class="login-note">{{ t('translate.loginNote') }}</p>
