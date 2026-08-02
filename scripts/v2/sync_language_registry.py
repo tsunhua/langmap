@@ -310,7 +310,9 @@ def seed_language_rows(
             "glottocode": glottocode or "",
             "origin": entry["origin"],
             "community_reason": "",
-            "alternate_names_json": "[]",
+            "alternate_names_json": json.dumps(
+                entry.get("alternate_names") or [], ensure_ascii=False, separators=(",", ":")
+            ),
             "references_json": "[]",
             "parent_languoid_id": languoid.parent_id if languoid else "",
             "latitude": "" if not languoid or languoid.latitude is None else str(languoid.latitude),

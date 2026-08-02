@@ -186,6 +186,67 @@ Added: 2005-10-16
         self.assertEqual(rows[0]["variety_key"], "glotto:chao1238")
         self.assertTrue(rows[1]["variety_key"].startswith("system:"))
 
+    def test_seed_alternate_names_reach_the_registry_rows(self):
+        languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
+        _, subtags = parse_iana_registry("""File-Date: 2026-06-15
+%%
+Type: language
+Subtag: cmn
+Description: Mandarin Chinese
+Added: 2005-10-16
+%%
+Type: language
+Subtag: ja
+Description: Japanese
+Added: 2005-10-16
+%%
+Type: script
+Subtag: Hans
+Description: Han (Simplified variant)
+Added: 2005-10-16
+""")
+        profiles = {
+            "version": 3,
+            "languages": [
+                {
+                    "code": "cmn-Hans",
+                    "name": "华语",
+                    "name_en": "Mandarin Chinese (Simplified)",
+                    "glottocode": "mand1415",
+                    "origin": "seed",
+                    "reason": "major-east-asia-language",
+                    "alternate_names": ["普通话", "国语", "汉语"],
+                },
+                {
+                    "code": "ja",
+                    "name": "日本語",
+                    "name_en": "Japanese",
+                    "glottocode": None,
+                    "origin": "seed",
+                    "reason": "major-east-asia-language",
+                },
+            ],
+        }
+        rows = {
+            row["code"]: row
+            for row in seed_language_rows(
+                profiles, subtags, {row.glottocode: row for row in languoids}
+            )
+        }
+
+        self.assertEqual(
+            json.loads(rows["cmn-Hans"]["alternate_names_json"]),
+            ["普通话", "国语", "汉语"],
+        )
+        self.assertEqual(json.loads(rows["ja"]["alternate_names_json"]), [])
+
+    def test_real_seed_carries_mandarin_alternate_names(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+
+        self.assertIn("普通话", by_code["cmn-Hans"]["alternate_names"])
+        self.assertIn("國語", by_code["cmn-Hant"]["alternate_names"])
+
     def test_registry_sql_loads_into_canonical_schema(self):
         languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
         _, subtags = parse_iana_registry("""File-Date: 2026-06-15
