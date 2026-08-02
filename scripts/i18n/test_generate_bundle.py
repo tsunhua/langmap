@@ -261,6 +261,57 @@ class GenerateBundleTests(unittest.TestCase):
 
             self.assertEqual(second_counts, first_counts)
 
+    def test_pairwise_translation_edges_form_a_clique_per_key(self) -> None:
+        self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            catalog_path, locale_paths = self._write_fixture_tree(temp_root)
+            output_dir = temp_root / "artifacts" / "system-ui"
+
+            result = self._run_cli(
+                catalog_path=catalog_path,
+                locale_paths=locale_paths,
+                output_dir=output_dir,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            sql_text = (output_dir / "system-ui.sql").read_text(encoding="utf-8")
+
+            db = sqlite3.connect(":memory:")
+            try:
+                self._create_sqlite_schema(db)
+                db.executescript(sql_text)
+                edge_rows = db.execute(
+                    "SELECT expression_a_id, expression_b_id FROM expression_edges"
+                ).fetchall()
+            finally:
+                db.close()
+
+            # Each key's node set: the en source plus every locale target.
+            module = load_module("generate_bundle_clique", GENERATE_BUNDLE)
+            source_map = module.i18n_sql.parse_en_ts_text(catalog_path.read_text(encoding="utf-8"))
+            locales = {
+                code: module.i18n_sql.load_translations_text(path.read_text(encoding="utf-8"))
+                for code, path in locale_paths.items()
+            }
+            expected_nodes: dict[str, set[int]] = {}
+            for key, source_text in source_map.items():
+                nodes = {module.i18n_sql.expression_id("en", source_text)}
+                for locale_code, translations in locales.items():
+                    nodes.add(module.i18n_sql.expression_id(locale_code, translations[key]))
+                expected_nodes[key] = nodes
+
+            # Every unordered pair within a key's node set must have an edge.
+            edges = {tuple(sorted((a, b))) for a, b in edge_rows}
+            expected_pairs: set[tuple[int, int]] = set()
+            for key, nodes in expected_nodes.items():
+                ordered = sorted(nodes)
+                for i in range(len(ordered)):
+                    for j in range(i + 1, len(ordered)):
+                        expected_pairs.add((ordered[i], ordered[j]))
+            self.assertEqual(edges, expected_pairs)
+            self.assertEqual(len(edge_rows), len(expected_pairs))
+
     def test_cli_fails_on_unknown_source_key_and_keeps_existing_artifacts(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
 

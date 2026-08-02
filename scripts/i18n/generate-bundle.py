@@ -129,7 +129,32 @@ def build_rows_by_locale(
     }
 
 
-def validate_deterministic_ids(source_map, rows_by_locale) -> None:
+def build_clique_edges(rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> dict[str, list[tuple[str, int, int]]]:
+    """Per-key pairwise clique edges.
+
+    For each key, collect the source expression plus every locale target
+    expression, then emit one edge for each unordered pair. Returns a mapping
+    from key to a sorted list of (edge_id, expression_a_id, expression_b_id)
+    with expression_a_id < expression_b_id.
+    """
+    key_ids: dict[str, set[int]] = {}
+    for locale_code, rows in rows_by_locale.items():
+        for row in rows:
+            ids = key_ids.setdefault(row.key, set())
+            ids.add(row.source_expression_id)
+            ids.add(row.target_expression_id)
+    cliques: dict[str, list[tuple[str, int, int]]] = {}
+    for key in sorted(key_ids):
+        sorted_ids = sorted(key_ids[key])
+        cliques[key] = [
+            (stable_edge_id_fn(a, b), a, b)
+            for i, a in enumerate(sorted_ids)
+            for b in sorted_ids[i + 1:]
+        ]
+    return cliques
+
+
+def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> None:
     expression_registry: dict[int, tuple[str, str]] = {}
     edge_registry: dict[str, tuple[int, int]] = {}
 
@@ -164,8 +189,17 @@ def validate_deterministic_ids(source_map, rows_by_locale) -> None:
                 )
             edge_registry[row.edge_id] = edge_payload
 
+    for key, edges in build_clique_edges(rows_by_locale, stable_edge_id_fn=stable_edge_id_fn).items():
+        for edge_id, a, b in edges:
+            existing_edge = edge_registry.get(edge_id)
+            if existing_edge is not None and existing_edge != (a, b):
+                raise ValueError(
+                    f'edge_id collision for {key}: {edge_id} maps to {existing_edge!r} and {(a, b)!r}'
+                )
+            edge_registry[edge_id] = (a, b)
 
-def render_bundle_sql(source_map, rows_by_locale) -> str:
+
+def render_bundle_sql(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> str:
     lines: list[str] = []
     lines.append('-- Generated managed system UI translation bundle')
     lines.append(f'-- Project: {i18n_sql.PROJECT_ID}')
@@ -207,6 +241,7 @@ VALUES ('{i18n_sql.PROJECT_ID}', '{key}', {source_expression_id}, '[]', '{source
 
     translation_count = sum(len(rows) for rows in rows_by_locale.values())
     lines.append(f'-- 3. Translation expressions and edges ({translation_count} rows)')
+    clique_edges = build_clique_edges(rows_by_locale, stable_edge_id_fn=stable_edge_id_fn)
     for locale_code in sorted(rows_by_locale.keys()):
         lines.append(f'-- Locale {locale_code}')
         for row in rows_by_locale[locale_code]:
@@ -215,9 +250,17 @@ VALUES ('{i18n_sql.PROJECT_ID}', '{key}', {source_expression_id}, '[]', '{source
 -- {row.key}
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
 VALUES ({row.target_expression_id}, '{i18n_sql.q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
+""".strip()
+            )
+            lines.append('')
 
+    for key in sorted(clique_edges.keys()):
+        lines.append(f'-- Pairwise clique: {key}')
+        for edge_id, a, b in clique_edges[key]:
+            lines.append(
+                f"""
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('{row.edge_id}', {row.source_expression_id}, {row.target_expression_id}, 0, 'ui_i18n');
+VALUES ('{edge_id}', {a}, {b}, 0, 'ui_i18n');
 """.strip()
             )
             lines.append('')
@@ -340,8 +383,8 @@ def generate_bundle(
         expression_id_fn=expression_id_fn,
         stable_edge_id_fn=stable_edge_id_fn,
     )
-    validate_deterministic_ids(snapshot.source_map, rows_by_locale)
-    sql_text = render_bundle_sql(snapshot.source_map, rows_by_locale)
+    validate_deterministic_ids(snapshot.source_map, rows_by_locale, stable_edge_id_fn=stable_edge_id_fn)
+    sql_text = render_bundle_sql(snapshot.source_map, rows_by_locale, stable_edge_id_fn=stable_edge_id_fn)
     manifest = build_manifest(
         snapshot=snapshot,
         source_map=snapshot.source_map,
