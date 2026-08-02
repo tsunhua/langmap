@@ -4,7 +4,7 @@ Generate SQL to import UI translations for a locale.
 
 Usage:
   python3 scripts/i18n/generate-i18n-sql.py \\
-    zh-Hant scripts/i18n/zh-Hant-TW.json
+    cmn-Hant scripts/i18n/cmn-Hant.json
 
 The JSON format is { "key": "translation", ... } — keys match en.ts dotted paths.
 """
@@ -267,8 +267,8 @@ def main():
     if len(sys.argv) != 3:
         print(f'Usage: {sys.argv[0]} <locale_code> <translations.json>', file=sys.stderr)
         print(
-            f'  e.g. {sys.argv[0]} zh-Hant '
-            'scripts/i18n/zh-Hant-TW.json',
+            f'  e.g. {sys.argv[0]} cmn-Hant '
+            'scripts/i18n/cmn-Hant.json',
             file=sys.stderr,
         )
         sys.exit(1)

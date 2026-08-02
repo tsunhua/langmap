@@ -3,11 +3,11 @@
   "project_id": "langmap-web",
   "ownership_scope": "managed-system-ui",
   "locale_codes": [
+    "cmn-Hans",
+    "cmn-Hant",
     "en",
     "es",
-    "ja",
-    "zh-Hans",
-    "zh-Hant"
+    "ja"
   ],
   "counts": {
     "locale_count": 5,
@@ -17,31 +17,31 @@
   "inputs": {
     "source_catalog": {
       "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
-      "sha256": "23ee2bf5ed32a022db249e49f75c9804bf1866024affaab10e8eaba5ee300d50"
+      "sha256": "6048847056a2e4b63de946edad238e03c098d0fa8e4dc0f9cca3c3b723ed12ec"
     },
     "locales": {
+      "cmn-Hans": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans.json",
+        "sha256": "4186c34a752c24358d125e88ce60c165d6cfb77d5ba35df22375900d68aa9661"
+      },
+      "cmn-Hant": {
+        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant.json",
+        "sha256": "1b782d3a89dae0278a7a122578b8bd7a8b6e16d73046ce108327840404b8f48e"
+      },
       "es": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/es-ES.json",
-        "sha256": "98da85086beceefe9981912918ee193c86dd7e342f4c206d420951e9fa84368a"
+        "sha256": "4df714204b83947f7a28584ff5c987a03fcaa008e59da7dfd36c040b2cf87582"
       },
       "ja": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/ja-JP.json",
-        "sha256": "9ea6a6275bd41051f3abab66b247abccfe093113051601667aa85bb616c7040c"
-      },
-      "zh-Hans": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/zh-Hans-CN.json",
-        "sha256": "1ec4df8768aba2579c36913f045b3785b1400c520240e9b604fbf7ab2ba59966"
-      },
-      "zh-Hant": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/zh-Hant-TW.json",
-        "sha256": "0c554163e4082aad1ababec82c4c4a983fe63e7687f446209725914780c56b5c"
+        "sha256": "479edae54e46482f945a8fb8d3b4865837a74a63b5abd8f030c4b600b47bf50f"
       }
     }
   },
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "c1f50f1364d0adaf8f8ce3096e0816c396afe788cc5e05598b26146e268c3fda"
+      "sha256": "14b40f85b30f935779c5421e995d252afc85dbd66d37bb9f7ade2f638491f65e"
     }
   }
 }

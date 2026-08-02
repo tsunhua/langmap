@@ -208,7 +208,7 @@
   "mappingDetail.closeQuickAdd": "关闭快速新增",
   "mappingDetail.quickAddLead": "新增词句并直接映射到当前词句。",
   "mappingDetail.languageCode": "语言代码",
-  "mappingDetail.languageCodePlaceholder": "例如 en / zh-Hant",
+  "mappingDetail.languageCodePlaceholder": "例如 en / cmn-Hant",
   "mappingDetail.region": "地区",
   "mappingDetail.optional": "选填",
   "mappingDetail.expression": "词句",

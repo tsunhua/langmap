@@ -3,6 +3,24 @@
 -- Ownership scope: managed-system-ui
 
 -- 1. Upsert locale metadata
+-- Locale cmn-Hans
+INSERT INTO ui_locales (project_id, code, native_name, direction, status)
+SELECT 'langmap-web', 'cmn-Hans', l.name, l.direction, 'active'
+FROM languages l WHERE l.code = 'cmn-Hans'
+ON CONFLICT(project_id, code) DO UPDATE SET
+  native_name = excluded.native_name,
+  direction = excluded.direction,
+  status = excluded.status;
+
+-- Locale cmn-Hant
+INSERT INTO ui_locales (project_id, code, native_name, direction, status)
+SELECT 'langmap-web', 'cmn-Hant', l.name, l.direction, 'active'
+FROM languages l WHERE l.code = 'cmn-Hant'
+ON CONFLICT(project_id, code) DO UPDATE SET
+  native_name = excluded.native_name,
+  direction = excluded.direction,
+  status = excluded.status;
+
 -- Locale en
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
 SELECT 'langmap-web', 'en', l.name, l.direction, 'active'
@@ -25,24 +43,6 @@ ON CONFLICT(project_id, code) DO UPDATE SET
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
 SELECT 'langmap-web', 'ja', l.name, l.direction, 'active'
 FROM languages l WHERE l.code = 'ja'
-ON CONFLICT(project_id, code) DO UPDATE SET
-  native_name = excluded.native_name,
-  direction = excluded.direction,
-  status = excluded.status;
-
--- Locale zh-Hans
-INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'zh-Hans', l.name, l.direction, 'active'
-FROM languages l WHERE l.code = 'zh-Hans'
-ON CONFLICT(project_id, code) DO UPDATE SET
-  native_name = excluded.native_name,
-  direction = excluded.direction,
-  status = excluded.status;
-
--- Locale zh-Hant
-INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'zh-Hant', l.name, l.direction, 'active'
-FROM languages l WHERE l.code = 'zh-Hant'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -1808,10 +1808,10 @@ VALUES ('langmap-web', 'mappingDetail.languageCode', 8771920539132885, '[]', '87
 
 -- mappingDetail.languageCodePlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (8771919700012927, 'e.g. en / zh-Hant', 'en', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'approved');
+VALUES (8772027619502019, 'e.g. en / cmn-Hant', 'en', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'approved');
 
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
-VALUES ('langmap-web', 'mappingDetail.languageCodePlaceholder', 8771919700012927, '[]', '8771919700012927', 'active');
+VALUES ('langmap-web', 'mappingDetail.languageCodePlaceholder', 8772027619502019, '[]', '8772027619502019', 'active');
 
 -- mappingDetail.list
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
@@ -2234,6 +2234,4306 @@ INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeh
 VALUES ('langmap-web', 'translate.translation', 8771951513286657, '[]', '8771951513286657', 'active');
 
 -- 3. Translation expressions and edges (1228 rows)
+-- Locale cmn-Hans
+-- auth.email
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621602037776514, '邮箱', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.email', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621602037776514-8771988929111883', 8771988929111883, 621602037776514, 0, 'ui_i18n');
+
+-- auth.haveAccount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621588717753951, '已有账号？', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.haveAccount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621588717753951-8771987324928109', 8771987324928109, 621588717753951, 0, 'ui_i18n');
+
+-- auth.login
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511971723699, '登录', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.login', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511971723699-8771985319534907', 8771985319534907, 621511971723699, 0, 'ui_i18n');
+
+-- auth.noAccount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621582912905561, '还没有账号？', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.noAccount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621582912905561-8771920874847316', 8771920874847316, 621582912905561, 0, 'ui_i18n');
+
+-- auth.operationFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621600592853315, '操作失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.operationFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621600592853315-8771934955742921', 8771934955742921, 621600592853315, 0, 'ui_i18n');
+
+-- auth.password
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621500875124347, '密码', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.password', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621500875124347-8771993838728081', 8771993838728081, 621500875124347, 0, 'ui_i18n');
+
+-- auth.processing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576153008690, '处理中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.processing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576153008690-8772001046060388', 8772001046060388, 621576153008690, 0, 'ui_i18n');
+
+-- auth.register
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621564893522065, '创建账号', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.register', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621564893522065-8771964374844751', 8771964374844751, 621564893522065, 0, 'ui_i18n');
+
+-- auth.username
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621601350518403, '用户名', 'cmn-Hans', 'ui_i18n', 'langmap-web:auth.username', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621601350518403-8772029311767367', 8772029311767367, 621601350518403, 0, 'ui_i18n');
+
+-- common.cancel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621630088753162, '取消', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.cancel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621630088753162-8772001703307290', 8772001703307290, 621630088753162, 0, 'ui_i18n');
+
+-- common.close
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621623071332858, '关闭', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.close', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621623071332858-8771958345505312', 8771958345505312, 621623071332858, 0, 'ui_i18n');
+
+-- common.language
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.language', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771930947571421', 8771930947571421, 621613822452950, 0, 'ui_i18n');
+
+-- common.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771966685762373', 8771966685762373, 621613822452950, 0, 'ui_i18n');
+
+-- common.loading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621618381563941, '加载中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.loading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621618381563941-8771908386278726', 8771908386278726, 621618381563941, 0, 'ui_i18n');
+
+-- common.search
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621537801676387, '搜索', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.search', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621537801676387-8772018337291447', 8772018337291447, 621537801676387, 0, 'ui_i18n');
+
+-- common.submit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621544933948613, '提交', 'cmn-Hans', 'ui_i18n', 'langmap-web:common.submit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621544933948613-8771955384790296', 8771955384790296, 621544933948613, 0, 'ui_i18n');
+
+-- components.actualSize
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621580400261048, '实际尺寸 100%', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.actualSize', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621580400261048-8771913559728006', 8771913559728006, 621580400261048, 0, 'ui_i18n');
+
+-- components.anonymous
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621555962172508, '匿名', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.anonymous', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621555962172508-8771963881461252', 8771963881461252, 621555962172508, 0, 'ui_i18n');
+
+-- components.childNodes
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621567799904066, '{count} 个子节点；点击收起', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.childNodes', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621567799904066-8772032837909466', 8772032837909466, 621567799904066, 0, 'ui_i18n');
+
+-- components.cliqueNote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621622966141657, '每条边皆为可投票的独立直接映射；低分映射自动收起', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.cliqueNote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621622966141657-8772028933737015', 8772028933737015, 621622966141657, 0, 'ui_i18n');
+
+-- components.cliqueTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621634782671351, '待建立的映射图谱', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.cliqueTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621634782671351-8771990687804642', 8771990687804642, 621634782671351, 0, 'ui_i18n');
+
+-- components.closeInfoPanel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621584800732719, '关闭信息面板', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.closeInfoPanel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621584800732719-8771923580873788', 8771923580873788, 621584800732719, 0, 'ui_i18n');
+
+-- components.collapse
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621513324243028, '收起', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.collapse', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621513324243028-8772025115555117', 8772025115555117, 621513324243028, 0, 'ui_i18n');
+
+-- components.collapseBranch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621630929120155, '收起子分支', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.collapseBranch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621630929120155-8772021975712328', 8772021975712328, 621630929120155, 0, 'ui_i18n');
+
+-- components.collapseToFirst
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621621321102465, '收起至第一层', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.collapseToFirst', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621621321102465-8771963062101045', 8771963062101045, 621621321102465, 0, 'ui_i18n');
+
+-- components.daysAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621564285445652, '{count} 天前', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.daysAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621564285445652-8772016085305408', 8772016085305408, 621564285445652, 0, 'ui_i18n');
+
+-- components.depth
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621623974669976, '深度 {depth}', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.depth', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621623974669976-8772018587383663', 8772018587383663, 621623974669976, 0, 'ui_i18n');
+
+-- components.directMappingList
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621600065598840, '直接映射词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.directMappingList', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621600065598840-8771921679343522', 8771921679343522, 621600065598840, 0, 'ui_i18n');
+
+-- components.downvote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621544921188987, '踩', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.downvote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621544921188987-8771992127181974', 8771992127181974, 621544921188987, 0, 'ui_i18n');
+
+-- components.edgeCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511208977190, '{count} 条边', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.edgeCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511208977190-8771907018302878', 8771907018302878, 621511208977190, 0, 'ui_i18n');
+
+-- components.empty
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621537847190824, '暂无数据', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.empty', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621537847190824-8772000424294921', 8772000424294921, 621537847190824, 0, 'ui_i18n');
+
+-- components.exitFullscreen
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621596351420434, '退出全屏', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.exitFullscreen', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621596351420434-8771995527490116', 8771995527490116, 621596351420434, 0, 'ui_i18n');
+
+-- components.expand
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621503220470884, '展开', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.expand', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621503220470884-8771957005515059', 8771957005515059, 621503220470884, 0, 'ui_i18n');
+
+-- components.expandAll
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621581024840276, '全部展开', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.expandAll', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621581024840276-8772033758268399', 8772033758268399, 621581024840276, 0, 'ui_i18n');
+
+-- components.expandBranch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621527223363526, '展开子分支', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.expandBranch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621527223363526-8771937729949713', 8771937729949713, 621527223363526, 0, 'ui_i18n');
+
+-- components.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621612481725569, '词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621612481725569-8772028411030279', 8772028411030279, 621612481725569, 0, 'ui_i18n');
+
+-- components.filterLanguages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621536054208970, '筛选语言…', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.filterLanguages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621536054208970-8771975185705787', 8771975185705787, 621536054208970, 0, 'ui_i18n');
+
+-- components.fullscreen
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533307295537, '全屏', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.fullscreen', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533307295537-8771984311379866', 8771984311379866, 621533307295537, 0, 'ui_i18n');
+
+-- components.graphLabel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621582580373210, '词句映射图谱', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.graphLabel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621582580373210-8771940176065576', 8771940176065576, 621582580373210, 0, 'ui_i18n');
+
+-- components.graphLoading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621578722652638, '加载图谱…', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.graphLoading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621578722652638-8771930916265390', 8771930916265390, 621578722652638, 0, 'ui_i18n');
+
+-- components.graphMode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621608390065632, '图谱模式', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.graphMode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621608390065632-8772018055755937', 8772018055755937, 621608390065632, 0, 'ui_i18n');
+
+-- components.graphStats
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621507349296248, '{nodes} 个映射节点 · {edges} 个关系', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.graphStats', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621507349296248-8771930566920504', 8771930566920504, 621507349296248, 0, 'ui_i18n');
+
+-- components.graphToolbar
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621601285198757, '图谱工具栏', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.graphToolbar', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621601285198757-8771957995007293', 8771957995007293, 621601285198757, 0, 'ui_i18n');
+
+-- components.hierarchyList
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621522125496685, '映射层级列表', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.hierarchyList', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621522125496685-8771972530005685', 8771972530005685, 621522125496685, 0, 'ui_i18n');
+
+-- components.hops
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621520182221799, '跳数', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.hops', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621520182221799-8771929108158859', 8771929108158859, 621520182221799, 0, 'ui_i18n');
+
+-- components.hoursAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621587847460750, '{count} 小时前', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.hoursAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621587847460750-8771972038859703', 8771972038859703, 621587847460750, 0, 'ui_i18n');
+
+-- components.justNow
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621609089353120, '刚刚', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.justNow', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621609089353120-8772006156641051', 8772006156641051, 621609089353120, 0, 'ui_i18n');
+
+-- components.languageLoadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621629400448738, '无法加载语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.languageLoadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621629400448738-8771907230355366', 8771907230355366, 621629400448738, 0, 'ui_i18n');
+
+-- components.listMode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621570411930378, '列表模式', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.listMode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621570411930378-8771978209325624', 8771978209325624, 621570411930378, 0, 'ui_i18n');
+
+-- components.loadMore
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621567432943506, '加载更多', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.loadMore', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621567432943506-8771968298248581', 8771968298248581, 621567432943506, 0, 'ui_i18n');
+
+-- components.loadingRelated
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621602043741562, '加载相关词句中', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.loadingRelated', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621602043741562-8771918922470710', 8771918922470710, 621602043741562, 0, 'ui_i18n');
+
+-- components.mapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621535475963735, '映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.mapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621535475963735-8772009894682686', 8772009894682686, 621535475963735, 0, 'ui_i18n');
+
+-- components.mappingScore
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621634660667764, '映射评分', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.mappingScore', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621634660667764-8772001613332908', 8772001613332908, 621634660667764, 0, 'ui_i18n');
+
+-- components.minutesAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621507479968431, '{count} 分钟前', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.minutesAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621507479968431-8772029891163450', 8772029891163450, 621507479968431, 0, 'ui_i18n');
+
+-- components.moreActions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621560252478476, '更多操作', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.moreActions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621560252478476-8771927265880728', 8771927265880728, 621560252478476, 0, 'ui_i18n');
+
+-- components.moreMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533707436794, '完整图谱中还有 {count} 个映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.moreMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533707436794-8771978296601845', 8771978296601845, 621533707436794, 0, 'ui_i18n');
+
+-- components.noDirectMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621510549860914, '暂无直接映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.noDirectMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621510549860914-8771916846886490', 8771916846886490, 621510549860914, 0, 'ui_i18n');
+
+-- components.noExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621520700942960, '找不到相符词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.noExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621520700942960-8771950851535873', 8771950851535873, 621520700942960, 0, 'ui_i18n');
+
+-- components.nodeCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621532523991675, '{count} 个节点', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.nodeCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621532523991675-8771915754603204', 8771915754603204, 621532523991675, 0, 'ui_i18n');
+
+-- components.nodeInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621617277420487, '节点信息', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.nodeInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621617277420487-8772032217763299', 8772032217763299, 621617277420487, 0, 'ui_i18n');
+
+-- components.otherRelations
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621599699207504, '其他关系', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.otherRelations', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621599699207504-8772011775552074', 8772011775552074, 621599699207504, 0, 'ui_i18n');
+
+-- components.relatedExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621505218461957, '相关词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.relatedExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621505218461957-8771996275317129', 8771996275317129, 621505218461957, 0, 'ui_i18n');
+
+-- components.relationCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621630982829395, '{count} 个关系', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.relationCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621630982829395-8771905570354775', 8771905570354775, 621630982829395, 0, 'ui_i18n');
+
+-- components.removeLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621506696643103, '移除 {code}', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.removeLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621506696643103-8771968148353493', 8771968148353493, 621506696643103, 0, 'ui_i18n');
+
+-- components.resetLayout
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576612987454, '重置布局', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.resetLayout', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576612987454-8771923590138278', 8771923590138278, 621576612987454, 0, 'ui_i18n');
+
+-- components.rootNode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621519137673835, '根节点', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.rootNode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621519137673835-8771991096471187', 8771991096471187, 621519137673835, 0, 'ui_i18n');
+
+-- components.search
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621537801676387, '搜索', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.search', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621537801676387-8772018337291447', 8772018337291447, 621537801676387, 0, 'ui_i18n');
+
+-- components.searchExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530915401975, '搜索词句…', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.searchExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530915401975-8771934172254861', 8771934172254861, 621530915401975, 0, 'ui_i18n');
+
+-- components.searching
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621631605374857, '搜索中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.searching', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621631605374857-8771951969125148', 8771951969125148, 621631605374857, 0, 'ui_i18n');
+
+-- components.selectNodeHint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621569508430592, '在图谱中选取节点以查看详情', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.selectNodeHint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621569508430592-8771969317410200', 8771969317410200, 621569508430592, 0, 'ui_i18n');
+
+-- components.sourcePath
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621513685690927, '来源路径', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.sourcePath', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621513685690927-8771977750841844', 8771977750841844, 621513685690927, 0, 'ui_i18n');
+
+-- components.upvote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621599567970844, '赞', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.upvote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621599567970844-8772016238570208', 8772016238570208, 621599567970844, 0, 'ui_i18n');
+
+-- components.viewExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621605730741159, '查看词句详情', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.viewExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621605730741159-8771995720429284', 8771995720429284, 621605730741159, 0, 'ui_i18n');
+
+-- components.voteFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533859833551, '投票失败，已撤销', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.voteFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533859833551-8772020751025198', 8772020751025198, 621533859833551, 0, 'ui_i18n');
+
+-- components.zoomIn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621566125227538, '放大', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.zoomIn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621566125227538-8772017398603959', 8772017398603959, 621566125227538, 0, 'ui_i18n');
+
+-- components.zoomOut
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511938033885, '缩小', 'cmn-Hans', 'ui_i18n', 'langmap-web:components.zoomOut', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511938033885-8772017289371875', 8772017289371875, 621511938033885, 0, 'ui_i18n');
+
+-- contribute.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621519087775625, '+ 添加词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621519087775625-8771945073983212', 8771945073983212, 621519087775625, 0, 'ui_i18n');
+
+-- contribute.completeGraph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621577366296527, '完全图', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.completeGraph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621577366296527-8771921254303111', 8771921254303111, 621577366296527, 0, 'ui_i18n');
+
+-- contribute.delete
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621509861484180, '删除', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.delete', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621509861484180-8771944300238713', 8771944300238713, 621509861484180, 0, 'ui_i18n');
+
+-- contribute.directMappingCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621599559343081, '{count} 个直接映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.directMappingCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621599559343081-8771968945113345', 8771968945113345, 621599559343081, 0, 'ui_i18n');
+
+-- contribute.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621612481725569, '词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621612481725569-8772028411030279', 8772028411030279, 621612481725569, 0, 'ui_i18n');
+
+-- contribute.expressionCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621564047422899, '{count} 个词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.expressionCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621564047422899-8771918589046163', 8771918589046163, 621564047422899, 0, 'ui_i18n');
+
+-- contribute.expressionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621633142288382, '输入词句…', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.expressionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621633142288382-8771975160452098', 8771975160452098, 621633142288382, 0, 'ui_i18n');
+
+-- contribute.language
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.language', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771930947571421', 8771930947571421, 621613822452950, 0, 'ui_i18n');
+
+-- contribute.lead
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621619646963854, '提交一组含义相同的词句。系统会在每对之间创建直接映射。已有词句会自动关联，不会产生重复。', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.lead', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621619646963854-8771938370927027', 8771938370927027, 621619646963854, 0, 'ui_i18n');
+
+-- contribute.minRows
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621594673122420, '至少需要 2 行，每行需填写语言和词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.minRows', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621594673122420-8771996574983759', 8771996574983759, 621594673122420, 0, 'ui_i18n');
+
+-- contribute.submit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621544933948613, '提交', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.submit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621544933948613-8771955384790296', 8771955384790296, 621544933948613, 0, 'ui_i18n');
+
+-- contribute.submitFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621508494350823, '提交失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.submitFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621508494350823-8771930781451254', 8771930781451254, 621508494350823, 0, 'ui_i18n');
+
+-- contribute.submitting
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621501868375740, '提交中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.submitting', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621501868375740-8771996654725718', 8771996654725718, 621501868375740, 0, 'ui_i18n');
+
+-- contribute.tags
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621607199838131, '标签', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.tags', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607199838131-8772023049338365', 8772023049338365, 621607199838131, 0, 'ui_i18n');
+
+-- contribute.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621598682446444, '批量提交', 'cmn-Hans', 'ui_i18n', 'langmap-web:contribute.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621598682446444-8771967116778370', 8771967116778370, 621598682446444, 0, 'ui_i18n');
+
+-- errors.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621610106546987, '返回首页', 'cmn-Hans', 'ui_i18n', 'langmap-web:errors.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621610106546987-8771954914944651', 8771954914944651, 621610106546987, 0, 'ui_i18n');
+
+-- errors.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502704994870, '无法加载', 'cmn-Hans', 'ui_i18n', 'langmap-web:errors.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502704994870-8771936602672507', 8771936602672507, 621502704994870, 0, 'ui_i18n');
+
+-- errors.pageMissing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621522894116235, '页面未找到', 'cmn-Hans', 'ui_i18n', 'langmap-web:errors.pageMissing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621522894116235-8771958158698832', 8771958158698832, 621522894116235, 0, 'ui_i18n');
+
+-- feed.all
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621607270890617, '全部', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.all', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607270890617-8771912696777795', 8771912696777795, 621607270890617, 0, 'ui_i18n');
+
+-- feed.contributeMapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621628730870910, '提交映射 →', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.contributeMapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621628730870910-8771952067596101', 8771952067596101, 621628730870910, 0, 'ui_i18n');
+
+-- feed.hot
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.hot', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511407101153-8771957966582874', 8771957966582874, 621511407101153, 0, 'ui_i18n');
+
+-- feed.mappingsAndExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621551546598953, '映射 + 新词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.mappingsAndExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621551546598953-8771971172552785', 8771971172552785, 621551546598953, 0, 'ui_i18n');
+
+-- feed.missing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621569107941743, '找不到所需内容？', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.missing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621569107941743-8771964553678580', 8771964553678580, 621569107941743, 0, 'ui_i18n');
+
+-- feed.newContributions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621520570466129, '新贡献', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.newContributions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621520570466129-8772013263074963', 8772013263074963, 621520570466129, 0, 'ui_i18n');
+
+-- feed.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621518282475489, '最新', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621518282475489-8771912463566270', 8771912463566270, 621518282475489, 0, 'ui_i18n');
+
+-- feed.popularMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621609912316706, '热门映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.popularMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621609912316706-8771956320455891', 8771956320455891, 621609912316706, 0, 'ui_i18n');
+
+-- feed.ratedThisWeek
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621566209833903, '按评分 · 本周', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.ratedThisWeek', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621566209833903-8772001941683119', 8772001941683119, 621566209833903, 0, 'ui_i18n');
+
+-- feed.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621575665413182, '语义图的最新脉动——热门映射和新贡献。', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621575665413182-8771985464043467', 8771985464043467, 621575665413182, 0, 'ui_i18n');
+
+-- feed.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621523265720136, '动态', 'cmn-Hans', 'ui_i18n', 'langmap-web:feed.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621523265720136-8771928668652497', 8771928668652497, 621523265720136, 0, 'ui_i18n');
+
+-- handbook.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621632915135294, '新增词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621632915135294-8772033519106127', 8772033519106127, 621632915135294, 0, 'ui_i18n');
+
+-- handbook.addSection
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621555487350935, '新增章节', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.addSection', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621555487350935-8772013343930223', 8772013343930223, 621555487350935, 0, 'ui_i18n');
+
+-- handbook.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621616486518241, '手册列表', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621616486518241-8771985524903836', 8771985524903836, 621616486518241, 0, 'ui_i18n');
+
+-- handbook.chapter
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621636224007189, '第 {number} 章', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.chapter', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621636224007189-8771974942670538', 8771974942670538, 621636224007189, 0, 'ui_i18n');
+
+-- handbook.closeExpressionInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621565811109597, '关闭词句信息', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.closeExpressionInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621565811109597-8771948835977551', 8771948835977551, 621565811109597, 0, 'ui_i18n');
+
+-- handbook.collapsePicker
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621513324243028, '收起', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.collapsePicker', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621513324243028-8772025115555117', 8772025115555117, 621513324243028, 0, 'ui_i18n');
+
+-- handbook.deleteSection
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621503370077885, '删除章节', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.deleteSection', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621503370077885-8771922363562335', 8771922363562335, 621503370077885, 0, 'ui_i18n');
+
+-- handbook.edit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621606674831318, '编辑手册', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.edit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621606674831318-8771954520730023', 8771954520730023, 621606674831318, 0, 'ui_i18n');
+
+-- handbook.expressionInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621504524872083, '词句信息', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.expressionInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621504524872083-8771958749403912', 8771958749403912, 621504524872083, 0, 'ui_i18n');
+
+-- handbook.expressionInfoHint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576314999481, '词句的语言、地区和来源将显示在此处。', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.expressionInfoHint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576314999481-8771969048222271', 8771969048222271, 621576314999481, 0, 'ui_i18n');
+
+-- handbook.helpful
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621590525964635, '这本手册有帮助吗？', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.helpful', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621590525964635-8771919030282571', 8771919030282571, 621590525964635, 0, 'ui_i18n');
+
+-- handbook.inspectorFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621545702423393, '无法加载词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.inspectorFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621545702423393-8772001956145712', 8772001956145712, 621545702423393, 0, 'ui_i18n');
+
+-- handbook.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502704994870, '无法加载', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502704994870-8771936602672507', 8771936602672507, 621502704994870, 0, 'ui_i18n');
+
+-- handbook.locale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.locale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771930947571421', 8771930947571421, 621613822452950, 0, 'ui_i18n');
+
+-- handbook.moveDown
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621560751851138, '下移', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.moveDown', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621560751851138-8772015839426216', 8772015839426216, 621560751851138, 0, 'ui_i18n');
+
+-- handbook.moveSectionDown
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621552835744717, '下移章节', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.moveSectionDown', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621552835744717-8771974741123489', 8771974741123489, 621552835744717, 0, 'ui_i18n');
+
+-- handbook.moveSectionUp
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621592971280231, '上移章节', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.moveSectionUp', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621592971280231-8771974343227837', 8771974343227837, 621592971280231, 0, 'ui_i18n');
+
+-- handbook.moveUp
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621546624693751, '上移', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.moveUp', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621546624693751-8772035822327586', 8772035822327586, 621546624693751, 0, 'ui_i18n');
+
+-- handbook.private
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621592251543860, '私密', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.private', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621592251543860-8771981388316157', 8771981388316157, 621592251543860, 0, 'ui_i18n');
+
+-- handbook.public
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621571197525036, '公开', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.public', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621571197525036-8771978356150928', 8771978356150928, 621571197525036, 0, 'ui_i18n');
+
+-- handbook.publish
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621617451571475, '发布', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.publish', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621617451571475-8771952311782197', 8771952311782197, 621617451571475, 0, 'ui_i18n');
+
+-- handbook.region
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621578251195832, '地区', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.region', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621578251195832-8771968624126325', 8771968624126325, 621578251195832, 0, 'ui_i18n');
+
+-- handbook.relationsFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621563026652984, '无法加载相关词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.relationsFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621563026652984-8771991960796854', 8771991960796854, 621563026652984, 0, 'ui_i18n');
+
+-- handbook.removeExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621545593416436, '移除 {text}', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.removeExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621545593416436-8771948377233166', 8771948377233166, 621545593416436, 0, 'ui_i18n');
+
+-- handbook.saveDraft
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621571708259605, '保存草稿', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.saveDraft', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621571708259605-8771974360984879', 8771974360984879, 621571708259605, 0, 'ui_i18n');
+
+-- handbook.saving
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621617735345921, '保存中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.saving', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621617735345921-8771980391249065', 8771980391249065, 621617735345921, 0, 'ui_i18n');
+
+-- handbook.sectionTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621604035135598, '章节标题', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.sectionTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621604035135598-8771935521942479', 8771935521942479, 621604035135598, 0, 'ui_i18n');
+
+-- handbook.selectExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621547952412765, '选择词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.selectExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621547952412765-8771975315975664', 8771975315975664, 621547952412765, 0, 'ui_i18n');
+
+-- handbook.source
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621625362897376, '来源', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.source', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621625362897376-8771933750484319', 8771933750484319, 621625362897376, 0, 'ui_i18n');
+
+-- handbook.sourceAi
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621549970259583, 'AI', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.sourceAi', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621549970259583-8771954789056127', 8771954789056127, 621549970259583, 0, 'ui_i18n');
+
+-- handbook.sourceAuthority
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621548230292240, '权威', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.sourceAuthority', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621548230292240-8772029059057248', 8772029059057248, 621548230292240, 0, 'ui_i18n');
+
+-- handbook.sourceUser
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621527738542412, '用户', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.sourceUser', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621527738542412-8772034803281550', 8772034803281550, 621527738542412, 0, 'ui_i18n');
+
+-- handbook.titlePlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621623851179498, '手册标题', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.titlePlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621623851179498-8771918701696347', 8771918701696347, 621623851179498, 0, 'ui_i18n');
+
+-- handbook.toc
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621630997387962, '目录', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.toc', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621630997387962-8771915172364840', 8771915172364840, 621630997387962, 0, 'ui_i18n');
+
+-- handbook.viewFullGraph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621589661783895, '查看完整关系图', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.viewFullGraph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621589661783895-8771928949232797', 8771928949232797, 621589661783895, 0, 'ui_i18n');
+
+-- handbook.visibility
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621527075878206, '可见性', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbook.visibility', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621527075878206-8772029984927123', 8772029984927123, 621527075878206, 0, 'ui_i18n');
+
+-- handbooks.create
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621507515155907, '新建手册', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.create', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621507515155907-8771984354571011', 8771984354571011, 621507515155907, 0, 'ui_i18n');
+
+-- handbooks.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621519839327005, '加载手册失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621519839327005-8771915400044673', 8771915400044673, 621519839327005, 0, 'ui_i18n');
+
+-- handbooks.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621518282475489, '最新', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621518282475489-8771912463566270', 8771912463566270, 621518282475489, 0, 'ui_i18n');
+
+-- handbooks.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621510183019398, '未找到手册', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621510183019398-8772007530341875', 8772007530341875, 621510183019398, 0, 'ui_i18n');
+
+-- handbooks.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511407101153-8771957966582874', 8771957966582874, 621511407101153, 0, 'ui_i18n');
+
+-- handbooks.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621562913920985, '搜索手册…', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621562913920985-8772031472567985', 8772031472567985, 621562913920985, 0, 'ui_i18n');
+
+-- handbooks.sections
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621571539946589, '章节', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.sections', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621571539946589-8771981869623564', 8771981869623564, 621571539946589, 0, 'ui_i18n');
+
+-- handbooks.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621626021115777, '手册', 'cmn-Hans', 'ui_i18n', 'langmap-web:handbooks.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621626021115777-8771945183617329', 8771945183617329, 621626021115777, 0, 'ui_i18n');
+
+-- languageCreate.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621619551581079, '上一步', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621619551581079-8772024038803789', 8772024038803789, 621619551581079, 0, 'ui_i18n');
+
+-- languageCreate.cancel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621630088753162, '取消', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.cancel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621630088753162-8772001703307290', 8772001703307290, 621630088753162, 0, 'ui_i18n');
+
+-- languageCreate.close
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621623071332858, '关闭', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.close', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621623071332858-8771958345505312', 8771958345505312, 621623071332858, 0, 'ui_i18n');
+
+-- languageCreate.create
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621557237350474, '创建语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.create', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621557237350474-8771972155504688', 8771972155504688, 621557237350474, 0, 'ui_i18n');
+
+-- languageCreate.createFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533630586836, '语言创建失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.createFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533630586836-8772008975730714', 8772008975730714, 621533630586836, 0, 'ui_i18n');
+
+-- languageCreate.creating
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621563655158386, '创建中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.creating', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621563655158386-8771943301451236', 8771943301451236, 621563655158386, 0, 'ui_i18n');
+
+-- languageCreate.errorDescription
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621539436319835, '请输入描述', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorDescription', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621539436319835-8771986788835322', 8771986788835322, 621539436319835, 0, 'ui_i18n');
+
+-- languageCreate.errorGlottolog
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621570986400428, '请选择 Glottolog 匹配或选择「无匹配」', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorGlottolog', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621570986400428-8771982145239141', 8771982145239141, 621570986400428, 0, 'ui_i18n');
+
+-- languageCreate.errorName
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621541708454338, '请输入语言名称', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorName', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621541708454338-8771921060819264', 8771921060819264, 621541708454338, 0, 'ui_i18n');
+
+-- languageCreate.errorReason
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621503593024592, '请选择仅限社区创建的原因', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorReason', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621503593024592-8771926836463632', 8771926836463632, 621503593024592, 0, 'ui_i18n');
+
+-- languageCreate.errorTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621524806904742, '请输入语言子标签以继续', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621524806904742-8772026576042326', 8772026576042326, 621524806904742, 0, 'ui_i18n');
+
+-- languageCreate.glottologCandidates
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511982898336, '找到 {count} 个候选', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologCandidates', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511982898336-8771956461019812', 8771956461019812, 621511982898336, 0, 'ui_i18n');
+
+-- languageCreate.glottologChoose
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621607370165678, '选择匹配或标明无合适条目', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologChoose', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607370165678-8772033726980358', 8772033726980358, 621607370165678, 0, 'ui_i18n');
+
+-- languageCreate.glottologExactMatch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621510628568465, '匹配此候选', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologExactMatch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621510628568465-8772036217067472', 8772036217067472, 621510628568465, 0, 'ui_i18n');
+
+-- languageCreate.glottologLevelDialect
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621539405295908, '方言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelDialect', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621539405295908-8771959645210043', 8771959645210043, 621539405295908, 0, 'ui_i18n');
+
+-- languageCreate.glottologLevelLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771953851734414', 8771953851734414, 621613822452950, 0, 'ui_i18n');
+
+-- languageCreate.glottologNoMatch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621536814724037, 'Glottolog 无合适条目', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologNoMatch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621536814724037-8771907658003091', 8771907658003091, 621536814724037, 0, 'ui_i18n');
+
+-- languageCreate.glottologSearchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621591829811359, '搜索 Glottolog…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologSearchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621591829811359-8771972676692740', 8771972676692740, 621591829811359, 0, 'ui_i18n');
+
+-- languageCreate.metadataDescription
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533363709574, '描述', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataDescription', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533363709574-8771937301075282', 8771937301075282, 621533363709574, 0, 'ui_i18n');
+
+-- languageCreate.metadataDescriptionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621536049013188, '描述此语言或变体…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataDescriptionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621536049013188-8771929062150956', 8771929062150956, 621536049013188, 0, 'ui_i18n');
+
+-- languageCreate.metadataName
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621624606083157, '名称', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataName', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621624606083157-8771913536651859', 8771913536651859, 621624606083157, 0, 'ui_i18n');
+
+-- languageCreate.metadataNameEn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511464036343, '英文名称', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataNameEn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511464036343-8772035648862723', 8772035648862723, 621511464036343, 0, 'ui_i18n');
+
+-- languageCreate.metadataReason
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621549895529942, '为何此语言未收录于 Glottolog？', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReason', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621549895529942-8771965397553798', 8771965397553798, 621549895529942, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonCommunity
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621532294924709, '社区特定用法', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonCommunity', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621532294924709-8772029121364869', 8772029121364869, 621532294924709, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonEmerging
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621625979488773, '新兴变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonEmerging', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621625979488773-8771911763851130', 8771911763851130, 621625979488773, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonMissing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621573768784259, 'Glottolog 未收录', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonMissing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621573768784259-8772027448793331', 8772027448793331, 621573768784259, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonOther
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621594753650058, '其他', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonOther', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621594753650058-8771907717721822', 8771907717721822, 621594753650058, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621553154318529, '选择原因…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621553154318529-8771908744199257', 8771908744199257, 621553154318529, 0, 'ui_i18n');
+
+-- languageCreate.next
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621587727960659, '下一步', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.next', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621587727960659-8771946058185965', 8771946058185965, 621587727960659, 0, 'ui_i18n');
+
+-- languageCreate.previewCanonicalCode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613167090520, '规范代码', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewCanonicalCode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613167090520-8771986283559204', 8771986283559204, 621613167090520, 0, 'ui_i18n');
+
+-- languageCreate.previewExisting
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621510719810863, '此语言已存在', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewExisting', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621510719810863-8771963047592058', 8771963047592058, 621510719810863, 0, 'ui_i18n');
+
+-- languageCreate.previewExistingAction
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621521147714649, '使用现有语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewExistingAction', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621521147714649-8771911987565882', 8771911987565882, 621521147714649, 0, 'ui_i18n');
+
+-- languageCreate.previewTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621557237350474, '创建语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621557237350474-8771972155504688', 8771972155504688, 621557237350474, 0, 'ui_i18n');
+
+-- languageCreate.previewWarnings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621533463407021, '警告', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewWarnings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621533463407021-8771976682274382', 8771976682274382, 621533463407021, 0, 'ui_i18n');
+
+-- languageCreate.provisionalTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530919991439, '临时标签', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.provisionalTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530919991439-8771969301691665', 8771969301691665, 621530919991439, 0, 'ui_i18n');
+
+-- languageCreate.stepGlottolog
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621545172021295, 'Glottolog 匹配', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepGlottolog', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621545172021295-8771926452848847', 8771926452848847, 621545172021295, 0, 'ui_i18n');
+
+-- languageCreate.stepMetadata
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621609040326093, '元数据', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepMetadata', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621609040326093-8771988865126091', 8771988865126091, 621609040326093, 0, 'ui_i18n');
+
+-- languageCreate.stepPreview
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621517519496288, '预览并创建', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepPreview', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621517519496288-8772002442315415', 8772002442315415, 621517519496288, 0, 'ui_i18n');
+
+-- languageCreate.stepTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621624131855771, '语言标签', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621624131855771-8771982332401463', 8771982332401463, 621624131855771, 0, 'ui_i18n');
+
+-- languageCreate.subtagLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771930947571421', 8771930947571421, 621613822452950, 0, 'ui_i18n');
+
+-- languageCreate.subtagRegion
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621578251195832, '地区', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagRegion', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621578251195832-8771968624126325', 8771968624126325, 621578251195832, 0, 'ui_i18n');
+
+-- languageCreate.subtagScript
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621597452286074, '文字', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagScript', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597452286074-8771976361115614', 8771976361115614, 621597452286074, 0, 'ui_i18n');
+
+-- languageCreate.subtagSearch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621512824307161, '搜索子标签…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagSearch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621512824307161-8772015391400398', 8772015391400398, 621512824307161, 0, 'ui_i18n');
+
+-- languageCreate.subtagVariant
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621627512961534, '变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagVariant', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621627512961534-8771923711808765', 8771923711808765, 621627512961534, 0, 'ui_i18n');
+
+-- languageCreate.variantRemoved
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621541359767956, '已移除 1 个变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.variantRemoved', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621541359767956-8772011217159086', 8772011217159086, 621541359767956, 0, 'ui_i18n');
+
+-- languageCreate.variantsRemoved
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621526864460743, '已移除 {count} 个变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621526864460743-8771998528580369', 8771998528580369, 621526864460743, 0, 'ui_i18n');
+
+-- languageDetail.alphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621519610903643, '按字母排序', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621519610903643-8772039352640020', 8772039352640020, 621519610903643, 0, 'ui_i18n');
+
+-- languageDetail.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771966685762373', 8771966685762373, 621613822452950, 0, 'ui_i18n');
+
+-- languageDetail.expressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621612481725569, '词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.expressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621612481725569-8772004481370898', 8772004481370898, 621612481725569, 0, 'ui_i18n');
+
+-- languageDetail.latest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621518282475489, '最新', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.latest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621518282475489-8771912463566270', 8771912463566270, 621518282475489, 0, 'ui_i18n');
+
+-- languageDetail.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502704994870, '无法加载', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502704994870-8771936602672507', 8771936602672507, 621502704994870, 0, 'ui_i18n');
+
+-- languageDetail.mapped
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621573120557033, '已映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.mapped', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621573120557033-8771947211108180', 8771947211108180, 621573120557033, 0, 'ui_i18n');
+
+-- languageDetail.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621592521672516, '没有找到词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621592521672516-8771950851535873', 8771950851535873, 621592521672516, 0, 'ui_i18n');
+
+-- languageDetail.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511407101153-8771957966582874', 8771957966582874, 621511407101153, 0, 'ui_i18n');
+
+-- languageDetail.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530915401975, '搜索词句…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530915401975-8771934172254861', 8771934172254861, 621530915401975, 0, 'ui_i18n');
+
+-- languagePicker.clear
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621625783501312, '清除选择', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagePicker.clear', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621625783501312-8771904155296746', 8771904155296746, 621625783501312, 0, 'ui_i18n');
+
+-- languagePicker.createLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621543671445625, '创建新语言或变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagePicker.createLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621543671445625-8772010209718094', 8772010209718094, 621543671445625, 0, 'ui_i18n');
+
+-- languagePicker.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621634912041438, '无匹配语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagePicker.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621634912041438-8771905467432581', 8771905467432581, 621634912041438, 0, 'ui_i18n');
+
+-- languagePicker.placeholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621525022824768, '搜索语言…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagePicker.placeholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621525022824768-8771957308068965', 8771957308068965, 621525022824768, 0, 'ui_i18n');
+
+-- languageSwitcher.browserSuggested
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621504840632262, '浏览器推荐', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.browserSuggested', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621504840632262-8771943861429001', 8771943861429001, 621504840632262, 0, 'ui_i18n');
+
+-- languageSwitcher.helpTranslate
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621606607567839, '协助翻译 LangMap', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.helpTranslate', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621606607567839-8771962203854555', 8771962203854555, 621606607567839, 0, 'ui_i18n');
+
+-- languageSwitcher.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621581895141561, '无匹配的语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621581895141561-8771905467432581', 8771905467432581, 621581895141561, 0, 'ui_i18n');
+
+-- languageSwitcher.recent
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621593214561614, '最近使用的语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.recent', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621593214561614-8772017158300851', 8772017158300851, 621593214561614, 0, 'ui_i18n');
+
+-- languagesPage.expressionCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621612481725569, '词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.expressionCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621612481725569-8772004481370898', 8772004481370898, 621612481725569, 0, 'ui_i18n');
+
+-- languagesPage.languageCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.languageCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771966685762373', 8771966685762373, 621613822452950, 0, 'ui_i18n');
+
+-- languagesPage.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621629400448738, '无法加载语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621629400448738-8771907230355366', 8771907230355366, 621629400448738, 0, 'ui_i18n');
+
+-- languagesPage.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621597226980466, '未找到语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597226980466-8772015486738705', 8772015486738705, 621597226980466, 0, 'ui_i18n');
+
+-- languagesPage.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621525022824768, '搜索语言…', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621525022824768-8771957308068965', 8771957308068965, 621525022824768, 0, 'ui_i18n');
+
+-- languagesPage.sortAlphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621568581479692, 'A–Z', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.sortAlphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621568581479692-8771973400276236', 8771973400276236, 621568581479692, 0, 'ui_i18n');
+
+-- languagesPage.sortCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621549917554714, '按数量', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.sortCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621549917554714-8771994726877247', 8771994726877247, 621549917554714, 0, 'ui_i18n');
+
+-- languagesPage.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621598805636397, '浏览所有语言的词句与映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621598805636397-8772027985468400', 8772027985468400, 621598805636397, 0, 'ui_i18n');
+
+-- languagesPage.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:languagesPage.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771966685762373', 8771966685762373, 621613822452950, 0, 'ui_i18n');
+
+-- mapLens.anchor
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621607061501187, '锚点', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.anchor', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607061501187-8771952725719815', 8771952725719815, 621607061501187, 0, 'ui_i18n');
+
+-- mapLens.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621520481522538, '返回映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621520481522538-8771984993053397', 8771984993053397, 621520481522538, 0, 'ui_i18n');
+
+-- mapLens.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621540209040212, '{count} 种语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621540209040212-8771995851022194', 8771995851022194, 621540209040212, 0, 'ui_i18n');
+
+-- mapLens.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502704994870, '无法加载', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502704994870-8771936602672507', 8771936602672507, 621502704994870, 0, 'ui_i18n');
+
+-- mapLens.members
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621528044032034, '映射成员', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.members', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621528044032034-8771950928148051', 8771950928148051, 621528044032034, 0, 'ui_i18n');
+
+-- mapLens.noData
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621584123999187, '此概念无地理分布数据', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.noData', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621584123999187-8771989613412250', 8771989613412250, 621584123999187, 0, 'ui_i18n');
+
+-- mapLens.regions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621568117521580, '{count} 个地区', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.regions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621568117521580-8772012470644251', 8772012470644251, 621568117521580, 0, 'ui_i18n');
+
+-- mapLens.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621549841102126, '概念分布', 'cmn-Hans', 'ui_i18n', 'langmap-web:mapLens.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621549841102126-8771918829802721', 8771918829802721, 621549841102126, 0, 'ui_i18n');
+
+-- mappingDetail.addAndMap
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621625707935597, '新增并建立映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addAndMap', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621625707935597-8771969898159421', 8771969898159421, 621625707935597, 0, 'ui_i18n');
+
+-- mappingDetail.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621632915135294, '新增词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621632915135294-8772033519106127', 8772033519106127, 621632915135294, 0, 'ui_i18n');
+
+-- mappingDetail.addFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621524749180428, '无法新增词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621524749180428-8771908944297462', 8771908944297462, 621524749180428, 0, 'ui_i18n');
+
+-- mappingDetail.adding
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621565503156952, '新增中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.adding', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621565503156952-8771928703559647', 8771928703559647, 621565503156952, 0, 'ui_i18n');
+
+-- mappingDetail.authority
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621548230292240, '权威', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.authority', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621548230292240-8772029059057248', 8772029059057248, 621548230292240, 0, 'ui_i18n');
+
+-- mappingDetail.breadcrumb
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621629949445493, '面包屑', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.breadcrumb', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621629949445493-8772001620797917', 8772001620797917, 621629949445493, 0, 'ui_i18n');
+
+-- mappingDetail.closeQuickAdd
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621594727964390, '关闭快速新增', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.closeQuickAdd', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621594727964390-8771978190877962', 8771978190877962, 621594727964390, 0, 'ui_i18n');
+
+-- mappingDetail.contribute
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621568892281069, '贡献映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.contribute', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621568892281069-8772005931944793', 8772005931944793, 621568892281069, 0, 'ui_i18n');
+
+-- mappingDetail.direct
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621532655956794, '直接映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.direct', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621532655956794-8771956479287686', 8771956479287686, 621532655956794, 0, 'ui_i18n');
+
+-- mappingDetail.enterRequired
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621625331682982, '请输入词句与语言代码', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.enterRequired', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621625331682982-8771956618196526', 8771956618196526, 621625331682982, 0, 'ui_i18n');
+
+-- mappingDetail.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621612481725569, '词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621612481725569-8772028411030279', 8772028411030279, 621612481725569, 0, 'ui_i18n');
+
+-- mappingDetail.expressionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621633142288382, '输入词句…', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.expressionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621633142288382-8771952819511586', 8771952819511586, 621633142288382, 0, 'ui_i18n');
+
+-- mappingDetail.graph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621538507341460, '图谱', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.graph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621538507341460-8771971766539087', 8771971766539087, 621538507341460, 0, 'ui_i18n');
+
+-- mappingDetail.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502526170045, '首页', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502526170045-8771987694898855', 8771987694898855, 621502526170045, 0, 'ui_i18n');
+
+-- mappingDetail.hops
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621520182221799, '跳数', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.hops', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621520182221799-8771987564932373', 8771987564932373, 621520182221799, 0, 'ui_i18n');
+
+-- mappingDetail.indirect
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621526813032897, '间接', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.indirect', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621526813032897-8772028520330484', 8772028520330484, 621526813032897, 0, 'ui_i18n');
+
+-- mappingDetail.languageCode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621505462898990, '语言代码', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.languageCode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621505462898990-8771920539132885', 8771920539132885, 621505462898990, 0, 'ui_i18n');
+
+-- mappingDetail.languageCodePlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621632349108903, '例如 en / cmn-Hant', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621632349108903-8772027619502019', 8772027619502019, 621632349108903, 0, 'ui_i18n');
+
+-- mappingDetail.list
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621589226011821, '列表', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.list', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621589226011821-8771992537520761', 8771992537520761, 621589226011821, 0, 'ui_i18n');
+
+-- mappingDetail.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502704994870, '无法加载', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502704994870-8771936602672507', 8771936602672507, 621502704994870, 0, 'ui_i18n');
+
+-- mappingDetail.mappingSet
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621556916566624, '映射集合', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.mappingSet', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621556916566624-8772011172535505', 8772011172535505, 621556916566624, 0, 'ui_i18n');
+
+-- mappingDetail.noMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576283673894, '尚无映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.noMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576283673894-8772036040577861', 8772036040577861, 621576283673894, 0, 'ui_i18n');
+
+-- mappingDetail.optional
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621566123078497, '选填', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.optional', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621566123078497-8771986434294618', 8771986434294618, 621566123078497, 0, 'ui_i18n');
+
+-- mappingDetail.quickAdd
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621536771157934, '快速新增词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.quickAdd', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621536771157934-8772035320845087', 8772035320845087, 621536771157934, 0, 'ui_i18n');
+
+-- mappingDetail.quickAddLead
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621548981540858, '新增词句并直接映射到当前词句。', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.quickAddLead', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621548981540858-8771923205204397', 8771923205204397, 621548981540858, 0, 'ui_i18n');
+
+-- mappingDetail.region
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621578251195832, '地区', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.region', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621578251195832-8771968624126325', 8771968624126325, 621578251195832, 0, 'ui_i18n');
+
+-- mappingDetail.user
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621527738542412, '用户', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.user', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621527738542412-8772034803281550', 8772034803281550, 621527738542412, 0, 'ui_i18n');
+
+-- mappingDetail.viewMap
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621603370109430, '在地图上查看此概念', 'cmn-Hans', 'ui_i18n', 'langmap-web:mappingDetail.viewMap', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621603370109430-8772021818623523', 8772021818623523, 621603370109430, 0, 'ui_i18n');
+
+-- nav.closeMenu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621528148699345, '关闭菜单', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.closeMenu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621528148699345-8772008345770010', 8772008345770010, 621528148699345, 0, 'ui_i18n');
+
+-- nav.contribute
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621618171568542, '贡献', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.contribute', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621618171568542-8772022393103823', 8772022393103823, 621618171568542, 0, 'ui_i18n');
+
+-- nav.handbooks
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621626021115777, '手册', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.handbooks', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621626021115777-8771945183617329', 8771945183617329, 621626021115777, 0, 'ui_i18n');
+
+-- nav.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621502526170045, '首页', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621502526170045-8771987694898855', 8771987694898855, 621502526170045, 0, 'ui_i18n');
+
+-- nav.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621613822452950, '语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621613822452950-8771966685762373', 8771966685762373, 621613822452950, 0, 'ui_i18n');
+
+-- nav.menu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621627037268184, '菜单', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.menu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621627037268184-8771933905283078', 8771933905283078, 621627037268184, 0, 'ui_i18n');
+
+-- nav.openMenu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621505570042922, '打开菜单', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.openMenu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621505570042922-8771988489117883', 8771988489117883, 621505570042922, 0, 'ui_i18n');
+
+-- nav.searchExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576399979931, '搜索词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.searchExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576399979931-8772000153561666', 8772000153561666, 621576399979931, 0, 'ui_i18n');
+
+-- nav.signIn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511971723699, '登录', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.signIn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511971723699-8771985319534907', 8771985319534907, 621511971723699, 0, 'ui_i18n');
+
+-- nav.signOut
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621591649386941, '退出登录', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.signOut', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621591649386941-8771987956311474', 8771987956311474, 621591649386941, 0, 'ui_i18n');
+
+-- nav.submitSearch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621634654736746, '提交搜索', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.submitSearch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621634654736746-8772033727162136', 8772033727162136, 621634654736746, 0, 'ui_i18n');
+
+-- nav.switchLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621582680139112, '切换界面语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:nav.switchLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621582680139112-8771905685377287', 8771905685377287, 621582680139112, 0, 'ui_i18n');
+
+-- search.alphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621531604322002, '按字母顺序', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.alphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621531604322002-8772039352640020', 8772039352640020, 621531604322002, 0, 'ui_i18n');
+
+-- search.hint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621563927893510, '提示：目前搜索匹配词句原文。翻译（语义）搜索即将推出。', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.hint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621563927893510-8771909635790690', 8771909635790690, 621563927893510, 0, 'ui_i18n');
+
+-- search.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621560112384357, '搜索失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621560112384357-8771929026122151', 8771929026122151, 621560112384357, 0, 'ui_i18n');
+
+-- search.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621518282475489, '最新', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621518282475489-8771912463566270', 8771912463566270, 621518282475489, 0, 'ui_i18n');
+
+-- search.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621609616348658, '未找到结果', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621609616348658-8771927555767000', 8771927555767000, 621609616348658, 0, 'ui_i18n');
+
+-- search.placeholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530915401975, '搜索词句…', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.placeholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530915401975-8771934172254861', 8771934172254861, 621530915401975, 0, 'ui_i18n');
+
+-- search.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621511407101153-8771957966582874', 8771957966582874, 621511407101153, 0, 'ui_i18n');
+
+-- search.results
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621561441430227, '{count} 个结果', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.results', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621561441430227-8772014433488480', 8772014433488480, 621561441430227, 0, 'ui_i18n');
+
+-- search.sort
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621521611254818, '排序', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.sort', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621521611254818-8772001210440828', 8772001210440828, 621521611254818, 0, 'ui_i18n');
+
+-- search.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621576399979931, '搜索词句', 'cmn-Hans', 'ui_i18n', 'langmap-web:search.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621576399979931-8772000153561666', 8772000153561666, 621576399979931, 0, 'ui_i18n');
+
+-- translate.addLocale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621614981680878, '添加要翻译的语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.addLocale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621614981680878-8771973106595188', 8771973106595188, 621614981680878, 0, 'ui_i18n');
+
+-- translate.batchSubmit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621573098876711, '提交 {count} 条翻译', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.batchSubmit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621573098876711-8771943172288619', 8771943172288619, 621573098876711, 0, 'ui_i18n');
+
+-- translate.candidate
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621574346025447, '当前翻译', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.candidate', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621574346025447-8771982470884397', 8771982470884397, 621574346025447, 0, 'ui_i18n');
+
+-- translate.chooseRegistryLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621518127654735, '选择已注册的语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.chooseRegistryLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621518127654735-8772018182873778', 8772018182873778, 621518127654735, 0, 'ui_i18n');
+
+-- translate.coverage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530911084888, '翻译覆盖率', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.coverage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530911084888-8772013113555302', 8772013113555302, 621530911084888, 0, 'ui_i18n');
+
+-- translate.displayed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621618861918186, '显示 {count} 条', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.displayed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621618861918186-8772040929892299', 8772040929892299, 621618861918186, 0, 'ui_i18n');
+
+-- translate.eyebrow
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621549597150469, '社区本地化', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.eyebrow', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621549597150469-8771973543137726', 8771973543137726, 621549597150469, 0, 'ui_i18n');
+
+-- translate.inputPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621550113486379, '输入翻译…', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.inputPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621550113486379-8771990724594742', 8771990724594742, 621550113486379, 0, 'ui_i18n');
+
+-- translate.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621574232350044, '无法加载翻译工作台', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621574232350044-8771920552784072', 8771920552784072, 621574232350044, 0, 'ui_i18n');
+
+-- translate.loading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621618381563941, '加载中…', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.loading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621618381563941-8771908386278726', 8771908386278726, 621618381563941, 0, 'ui_i18n');
+
+-- translate.locale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621534643306437, '目标语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.locale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621534643306437-8771996866079300', 8771996866079300, 621534643306437, 0, 'ui_i18n');
+
+-- translate.localesFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621584110117464, '无法加载语言列表', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.localesFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621584110117464-8771965827772292', 8771965827772292, 621584110117464, 0, 'ui_i18n');
+
+-- translate.loginNote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621589006719824, '登录后可提交翻译；候选翻译按映射分数排序，无正分候选时使用回退文本。', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.loginNote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621589006719824-8771995706904988', 8771995706904988, 621589006719824, 0, 'ui_i18n');
+
+-- translate.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621558173453572, '未找到匹配文本。', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621558173453572-8771904910396271', 8771904910396271, 621558173453572, 0, 'ui_i18n');
+
+-- translate.preview
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621544576776709, '预览', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.preview', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621544576776709-8771969689937165', 8771969689937165, 621544576776709, 0, 'ui_i18n');
+
+-- translate.reference
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621620093667024, '参考语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.reference', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621620093667024-8772009963987850', 8772009963987850, 621620093667024, 0, 'ui_i18n');
+
+-- translate.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621606948519729, '搜索键名或原文…', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621606948519729-8771962647026930', 8771962647026930, 621606948519729, 0, 'ui_i18n');
+
+-- translate.selectLocale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621614000243725, '选择翻译语言', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.selectLocale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621614000243725-8772037474898823', 8772037474898823, 621614000243725, 0, 'ui_i18n');
+
+-- translate.source
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621634918836773, '英文原文', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.source', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621634918836773-8772014752541923', 8772014752541923, 621634918836773, 0, 'ui_i18n');
+
+-- translate.start
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621611504344099, '开始', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.start', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621611504344099-8772036201600543', 8772036201600543, 621611504344099, 0, 'ui_i18n');
+
+-- translate.submitFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621508494350823, '提交失败', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.submitFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621508494350823-8771930781451254', 8771930781451254, 621508494350823, 0, 'ui_i18n');
+
+-- translate.submitMapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621623982082968, '提交映射', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.submitMapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621623982082968-8771938026129323', 8771938026129323, 621623982082968, 0, 'ui_i18n');
+
+-- translate.submitted
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621572228974192, '已提交', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.submitted', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621572228974192-8771906650908176', 8771906650908176, 621572228974192, 0, 'ui_i18n');
+
+-- translate.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621595287369138, '帮助让 LangMap 界面文本更自然、更实用。', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621595287369138-8771968758684575', 8771968758684575, 621595287369138, 0, 'ui_i18n');
+
+-- translate.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621591322906198, '翻译工作台', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621591322906198-8772002773137414', 8772002773137414, 621591322906198, 0, 'ui_i18n');
+
+-- translate.translateKey
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621530803549974, '翻译 {key}', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.translateKey', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621530803549974-8771936438281310', 8771936438281310, 621530803549974, 0, 'ui_i18n');
+
+-- translate.translated
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621565207174795, '已翻译', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.translated', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621565207174795-8771916786083827', 8771916786083827, 621565207174795, 0, 'ui_i18n');
+
+-- translate.translation
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (621582006304906, '翻译', 'cmn-Hans', 'ui_i18n', 'langmap-web:translate.translation', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621582006304906-8771951513286657', 8771951513286657, 621582006304906, 0, 'ui_i18n');
+
+-- Locale cmn-Hant
+-- auth.email
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007614343702804, '電子郵件', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.email', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007614343702804-8771988929111883', 8771988929111883, 5007614343702804, 0, 'ui_i18n');
+
+-- auth.haveAccount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007621479566354, '已經有帳號了？', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.haveAccount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007621479566354-8771987324928109', 8771987324928109, 5007621479566354, 0, 'ui_i18n');
+
+-- auth.login
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639590295621, '登入', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.login', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639590295621-8771985319534907', 8771985319534907, 5007639590295621, 0, 'ui_i18n');
+
+-- auth.noAccount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627704026606, '還沒有帳號？', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.noAccount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627704026606-8771920874847316', 8771920874847316, 5007627704026606, 0, 'ui_i18n');
+
+-- auth.operationFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007614423188991, '操作失敗', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.operationFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007614423188991-8771934955742921', 8771934955742921, 5007614423188991, 0, 'ui_i18n');
+
+-- auth.password
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612220362916, '密碼', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.password', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612220362916-8771993838728081', 8771993838728081, 5007612220362916, 0, 'ui_i18n');
+
+-- auth.processing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007725611799844, '處理中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.processing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007725611799844-8772001046060388', 8772001046060388, 5007725611799844, 0, 'ui_i18n');
+
+-- auth.register
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007671207548191, '建立帳號', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.register', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007671207548191-8771964374844751', 8771964374844751, 5007671207548191, 0, 'ui_i18n');
+
+-- auth.username
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007680446645128, '使用者名稱', 'cmn-Hant', 'ui_i18n', 'langmap-web:auth.username', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007680446645128-8772029311767367', 8772029311767367, 5007680446645128, 0, 'ui_i18n');
+
+-- common.cancel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719410905098, '取消', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.cancel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719410905098-8772001703307290', 8772001703307290, 5007719410905098, 0, 'ui_i18n');
+
+-- common.close
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007689820830527, '關閉', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.close', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007689820830527-8771958345505312', 8771958345505312, 5007689820830527, 0, 'ui_i18n');
+
+-- common.language
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.language', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771930947571421', 8771930947571421, 5007686050335421, 0, 'ui_i18n');
+
+-- common.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771966685762373', 8771966685762373, 5007686050335421, 0, 'ui_i18n');
+
+-- common.loading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007714792299881, '載入中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.loading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007714792299881-8771908386278726', 8771908386278726, 5007714792299881, 0, 'ui_i18n');
+
+-- common.search
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616919201563, '搜尋', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.search', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616919201563-8772018337291447', 8772018337291447, 5007616919201563, 0, 'ui_i18n');
+
+-- common.submit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007634256100549, '提交', 'cmn-Hant', 'ui_i18n', 'langmap-web:common.submit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007634256100549-8771955384790296', 8771955384790296, 5007634256100549, 0, 'ui_i18n');
+
+-- components.actualSize
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007664079797464, '實際尺寸 100%', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.actualSize', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007664079797464-8771913559728006', 8771913559728006, 5007664079797464, 0, 'ui_i18n');
+
+-- components.anonymous
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007645284324444, '匿名', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.anonymous', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007645284324444-8771963881461252', 8771963881461252, 5007645284324444, 0, 'ui_i18n');
+
+-- components.childNodes
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007702581978885, '{count} 個子節點；點選收合', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.childNodes', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007702581978885-8772032837909466', 8772032837909466, 5007702581978885, 0, 'ui_i18n');
+
+-- components.cliqueNote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719877543988, '每條邊皆為可投票的獨立直接對應；低分對應自動收合', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.cliqueNote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719877543988-8772028933737015', 8772028933737015, 5007719877543988, 0, 'ui_i18n');
+
+-- components.cliqueTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007704173494076, '待建立的對應圖譜', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.cliqueTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007704173494076-8771990687804642', 8771990687804642, 5007704173494076, 0, 'ui_i18n');
+
+-- components.closeInfoPanel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007689431702074, '關閉資訊面板', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.closeInfoPanel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007689431702074-8771923580873788', 8771923580873788, 5007689431702074, 0, 'ui_i18n');
+
+-- components.collapse
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007699956620865, '收合', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.collapse', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007699956620865-8772025115555117', 8772025115555117, 5007699956620865, 0, 'ui_i18n');
+
+-- components.collapseBranch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007645015767181, '收合子分支', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.collapseBranch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007645015767181-8772021975712328', 8772021975712328, 5007645015767181, 0, 'ui_i18n');
+
+-- components.collapseToFirst
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007595961233188, '收合至第一層', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.collapseToFirst', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007595961233188-8771963062101045', 8771963062101045, 5007595961233188, 0, 'ui_i18n');
+
+-- components.daysAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007653607597588, '{count} 天前', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.daysAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007653607597588-8772016085305408', 8772016085305408, 5007653607597588, 0, 'ui_i18n');
+
+-- components.depth
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007713296821912, '深度 {depth}', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.depth', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007713296821912-8772018587383663', 8772018587383663, 5007713296821912, 0, 'ui_i18n');
+
+-- components.directMappingList
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007632499803129, '直接對應詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.directMappingList', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007632499803129-8771921679343522', 8771921679343522, 5007632499803129, 0, 'ui_i18n');
+
+-- components.downvote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007676302773923, '倒讚', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.downvote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007676302773923-8771992127181974', 8771992127181974, 5007676302773923, 0, 'ui_i18n');
+
+-- components.edgeCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007610872283909, '{count} 條邊', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.edgeCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007610872283909-8771907018302878', 8771907018302878, 5007610872283909, 0, 'ui_i18n');
+
+-- components.empty
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007718158178684, '目前沒有資料', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.empty', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007718158178684-8772000424294921', 8772000424294921, 5007718158178684, 0, 'ui_i18n');
+
+-- components.exitFullscreen
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007630277892706, '退出全螢幕', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.exitFullscreen', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007630277892706-8771995527490116', 8771995527490116, 5007630277892706, 0, 'ui_i18n');
+
+-- components.expand
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007605443475820, '展開', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.expand', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007605443475820-8771957005515059', 8771957005515059, 5007605443475820, 0, 'ui_i18n');
+
+-- components.expandAll
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007614402616386, '全部展開', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.expandAll', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007614402616386-8772033758268399', 8772033758268399, 5007614402616386, 0, 'ui_i18n');
+
+-- components.expandBranch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007666498461092, '展開子分支', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.expandBranch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007666498461092-8771937729949713', 8771937729949713, 5007666498461092, 0, 'ui_i18n');
+
+-- components.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677367822286, '詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677367822286-8772028411030279', 8772028411030279, 5007677367822286, 0, 'ui_i18n');
+
+-- components.filterLanguages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007619045608811, '篩選語言…', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.filterLanguages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007619045608811-8771975185705787', 8771975185705787, 5007619045608811, 0, 'ui_i18n');
+
+-- components.fullscreen
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007615648193963, '全螢幕', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.fullscreen', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007615648193963-8771984311379866', 8771984311379866, 5007615648193963, 0, 'ui_i18n');
+
+-- components.graphLabel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007593929819522, '詞句對應圖譜', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.graphLabel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007593929819522-8771940176065576', 8771940176065576, 5007593929819522, 0, 'ui_i18n');
+
+-- components.graphLoading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007648501514002, '載入圖譜…', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.graphLoading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007648501514002-8771930916265390', 8771930916265390, 5007648501514002, 0, 'ui_i18n');
+
+-- components.graphMode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007653399408528, '圖譜模式', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.graphMode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007653399408528-8772018055755937', 8772018055755937, 5007653399408528, 0, 'ui_i18n');
+
+-- components.graphStats
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007673908076374, '{nodes} 個對應節點 · {edges} 個關係', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.graphStats', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007673908076374-8771930566920504', 8771930566920504, 5007673908076374, 0, 'ui_i18n');
+
+-- components.graphToolbar
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007594593238964, '圖譜工具列', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.graphToolbar', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007594593238964-8771957995007293', 8771957995007293, 5007594593238964, 0, 'ui_i18n');
+
+-- components.hierarchyList
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007692426337371, '對應階層列表', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.hierarchyList', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007692426337371-8771972530005685', 8771972530005685, 5007692426337371, 0, 'ui_i18n');
+
+-- components.hops
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007642787446540, '跳數', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.hops', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007642787446540-8771929108158859', 8771929108158859, 5007642787446540, 0, 'ui_i18n');
+
+-- components.hoursAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007721636959323, '{count} 小時前', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.hoursAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007721636959323-8771972038859703', 8771972038859703, 5007721636959323, 0, 'ui_i18n');
+
+-- components.justNow
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007646716314926, '剛剛', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.justNow', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007646716314926-8772006156641051', 8772006156641051, 5007646716314926, 0, 'ui_i18n');
+
+-- components.languageLoadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007697617594999, '無法載入語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.languageLoadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007697617594999-8771907230355366', 8771907230355366, 5007697617594999, 0, 'ui_i18n');
+
+-- components.listMode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007659734082314, '列表模式', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.listMode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007659734082314-8771978209325624', 8771978209325624, 5007659734082314, 0, 'ui_i18n');
+
+-- components.loadMore
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007685178542888, '載入更多', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.loadMore', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007685178542888-8771968298248581', 8771968298248581, 5007685178542888, 0, 'ui_i18n');
+
+-- components.loadingRelated
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007716284963225, '載入相關詞句中', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.loadingRelated', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007716284963225-8771918922470710', 8771918922470710, 5007716284963225, 0, 'ui_i18n');
+
+-- components.mapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007716733049626, '對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.mapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007716733049626-8772009894682686', 8772009894682686, 5007716733049626, 0, 'ui_i18n');
+
+-- components.mappingScore
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612653383173, '對應評分', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.mappingScore', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612653383173-8772001613332908', 8772001613332908, 5007612653383173, 0, 'ui_i18n');
+
+-- components.minutesAgo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007678902177409, '{count} 分鐘前', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.minutesAgo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007678902177409-8772029891163450', 8772029891163450, 5007678902177409, 0, 'ui_i18n');
+
+-- components.moreActions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007649574630412, '更多操作', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.moreActions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007649574630412-8771927265880728', 8771927265880728, 5007649574630412, 0, 'ui_i18n');
+
+-- components.moreMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007703636047370, '完整圖譜中還有 {count} 個對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.moreMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007703636047370-8771978296601845', 8771978296601845, 5007703636047370, 0, 'ui_i18n');
+
+-- components.noDirectMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007704561508622, '尚無直接對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.noDirectMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007704561508622-8771916846886490', 8771916846886490, 5007704561508622, 0, 'ui_i18n');
+
+-- components.noExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007631488747725, '找不到相符詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.noExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007631488747725-8771950851535873', 8771950851535873, 5007631488747725, 0, 'ui_i18n');
+
+-- components.nodeCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007615484784739, '{count} 個節點', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.nodeCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007615484784739-8771915754603204', 8771915754603204, 5007615484784739, 0, 'ui_i18n');
+
+-- components.nodeInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007663242416278, '節點資訊', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.nodeInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007663242416278-8772032217763299', 8772032217763299, 5007663242416278, 0, 'ui_i18n');
+
+-- components.otherRelations
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007716960745199, '其他關係', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.otherRelations', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007716960745199-8772011775552074', 8772011775552074, 5007716960745199, 0, 'ui_i18n');
+
+-- components.relatedExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007718262607438, '相關詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.relatedExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007718262607438-8771996275317129', 8771996275317129, 5007718262607438, 0, 'ui_i18n');
+
+-- components.relationCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007592907990660, '{count} 個關係', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.relationCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007592907990660-8771905570354775', 8771905570354775, 5007592907990660, 0, 'ui_i18n');
+
+-- components.removeLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007596018795039, '移除 {code}', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.removeLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007596018795039-8771968148353493', 8771968148353493, 5007596018795039, 0, 'ui_i18n');
+
+-- components.resetLayout
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686676910649, '重設版面配置', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.resetLayout', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686676910649-8771923590138278', 8771923590138278, 5007686676910649, 0, 'ui_i18n');
+
+-- components.rootNode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007631688692581, '根節點', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.rootNode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007631688692581-8771991096471187', 8771991096471187, 5007631688692581, 0, 'ui_i18n');
+
+-- components.search
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616919201563, '搜尋', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.search', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616919201563-8772018337291447', 8772018337291447, 5007616919201563, 0, 'ui_i18n');
+
+-- components.searchExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719245960463, '搜尋詞句…', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.searchExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719245960463-8771934172254861', 8771934172254861, 5007719245960463, 0, 'ui_i18n');
+
+-- components.searching
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616358119612, '搜尋中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.searching', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616358119612-8771951969125148', 8771951969125148, 5007616358119612, 0, 'ui_i18n');
+
+-- components.selectNodeHint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007706065604142, '在圖譜中選取節點以檢視詳情', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.selectNodeHint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007706065604142-8771969317410200', 8771969317410200, 5007706065604142, 0, 'ui_i18n');
+
+-- components.sourcePath
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007602227146017, '來源路徑', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.sourcePath', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007602227146017-8771977750841844', 8771977750841844, 5007602227146017, 0, 'ui_i18n');
+
+-- components.upvote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007659776390736, '讚', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.upvote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007659776390736-8772016238570208', 8772016238570208, 5007659776390736, 0, 'ui_i18n');
+
+-- components.viewExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007656034240842, '檢視詞句詳情', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.viewExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007656034240842-8771995720429284', 8771995720429284, 5007656034240842, 0, 'ui_i18n');
+
+-- components.voteFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007617944539717, '投票失敗，已復原', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.voteFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007617944539717-8772020751025198', 8772020751025198, 5007617944539717, 0, 'ui_i18n');
+
+-- components.zoomIn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007655447379474, '放大', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.zoomIn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007655447379474-8772017398603959', 8772017398603959, 5007655447379474, 0, 'ui_i18n');
+
+-- components.zoomOut
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007638292700252, '縮小', 'cmn-Hant', 'ui_i18n', 'langmap-web:components.zoomOut', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007638292700252-8772017289371875', 8772017289371875, 5007638292700252, 0, 'ui_i18n');
+
+-- contribute.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007687964088072, '+ 新增詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007687964088072-8771945073983212', 8771945073983212, 5007687964088072, 0, 'ui_i18n');
+
+-- contribute.completeGraph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007632704103951, '完全圖', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.completeGraph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007632704103951-8771921254303111', 8771921254303111, 5007632704103951, 0, 'ui_i18n');
+
+-- contribute.delete
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007683775636965, '刪除', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.delete', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007683775636965-8771944300238713', 8771944300238713, 5007683775636965, 0, 'ui_i18n');
+
+-- contribute.directMappingCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007712158631130, '{count} 個直接對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.directMappingCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007712158631130-8771968945113345', 8771968945113345, 5007712158631130, 0, 'ui_i18n');
+
+-- contribute.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677367822286, '詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677367822286-8772028411030279', 8772028411030279, 5007677367822286, 0, 'ui_i18n');
+
+-- contribute.expressionCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007688910713580, '{count} 個詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.expressionCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007688910713580-8771918589046163', 8771918589046163, 5007688910713580, 0, 'ui_i18n');
+
+-- contribute.expressionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007712825900255, '輸入詞句…', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.expressionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007712825900255-8771975160452098', 8771975160452098, 5007712825900255, 0, 'ui_i18n');
+
+-- contribute.language
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.language', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771930947571421', 8771930947571421, 5007686050335421, 0, 'ui_i18n');
+
+-- contribute.lead
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007624706027461, '提交一組意義相同的詞句。系統會在每對之間建立直接對應。已有詞句會自動關聯，不會重複。', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.lead', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007624706027461-8771938370927027', 8771938370927027, 5007624706027461, 0, 'ui_i18n');
+
+-- contribute.minRows
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007657490121622, '至少需要 2 行，每行需填寫語言和詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.minRows', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007657490121622-8771996574983759', 8771996574983759, 5007657490121622, 0, 'ui_i18n');
+
+-- contribute.submit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007634256100549, '提交', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.submit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007634256100549-8771955384790296', 8771955384790296, 5007634256100549, 0, 'ui_i18n');
+
+-- contribute.submitFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007668571582958, '提交失敗', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.submitFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007668571582958-8771930781451254', 8771930781451254, 5007668571582958, 0, 'ui_i18n');
+
+-- contribute.submitting
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007591190527676, '提交中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.submitting', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007591190527676-8771996654725718', 8771996654725718, 5007591190527676, 0, 'ui_i18n');
+
+-- contribute.tags
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007724233614761, '標籤', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.tags', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007724233614761-8772023049338365', 8772023049338365, 5007724233614761, 0, 'ui_i18n');
+
+-- contribute.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007610321371389, '批次提交', 'cmn-Hant', 'ui_i18n', 'langmap-web:contribute.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007610321371389-8771967116778370', 8771967116778370, 5007610321371389, 0, 'ui_i18n');
+
+-- errors.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007628054228699, '回首頁', 'cmn-Hant', 'ui_i18n', 'langmap-web:errors.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007628054228699-8771954914944651', 8771954914944651, 5007628054228699, 0, 'ui_i18n');
+
+-- errors.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612565795990, '無法載入', 'cmn-Hant', 'ui_i18n', 'langmap-web:errors.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612565795990-8771936602672507', 8771936602672507, 5007612565795990, 0, 'ui_i18n');
+
+-- errors.pageMissing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007700661507051, '找不到頁面', 'cmn-Hant', 'ui_i18n', 'langmap-web:errors.pageMissing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007700661507051-8771958158698832', 8771958158698832, 5007700661507051, 0, 'ui_i18n');
+
+-- feed.all
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007696593042553, '全部', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.all', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007696593042553-8771912696777795', 8771912696777795, 5007696593042553, 0, 'ui_i18n');
+
+-- feed.contributeMapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007697654264236, '提交對應 →', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.contributeMapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007697654264236-8771952067596101', 8771952067596101, 5007697654264236, 0, 'ui_i18n');
+
+-- feed.hot
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.hot', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007723174663984-8771957966582874', 8771957966582874, 5007723174663984, 0, 'ui_i18n');
+
+-- feed.mappingsAndExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007704834982248, '對應 + 新詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.mappingsAndExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007704834982248-8771971172552785', 8771971172552785, 5007704834982248, 0, 'ui_i18n');
+
+-- feed.missing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007651456204393, '找不到所需內容？', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.missing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007651456204393-8771964553678580', 8771964553678580, 5007651456204393, 0, 'ui_i18n');
+
+-- feed.newContributions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007692081840569, '新貢獻', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.newContributions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007692081840569-8772013263074963', 8772013263074963, 5007692081840569, 0, 'ui_i18n');
+
+-- feed.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607604627425, '最新', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607604627425-8771912463566270', 8771912463566270, 5007607604627425, 0, 'ui_i18n');
+
+-- feed.popularMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007651287991650, '熱門對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.popularMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007651287991650-8771956320455891', 8771956320455891, 5007651287991650, 0, 'ui_i18n');
+
+-- feed.ratedThisWeek
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007683734867414, '依評分 · 本週', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.ratedThisWeek', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007683734867414-8772001941683119', 8772001941683119, 5007683734867414, 0, 'ui_i18n');
+
+-- feed.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607552896777, '語意圖的最新脈動——熱門對應與新貢獻。', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607552896777-8771985464043467', 8771985464043467, 5007607552896777, 0, 'ui_i18n');
+
+-- feed.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007644716158679, '動態', 'cmn-Hant', 'ui_i18n', 'langmap-web:feed.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007644716158679-8771928668652497', 8771928668652497, 5007644716158679, 0, 'ui_i18n');
+
+-- handbook.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007593801262702, '新增詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007593801262702-8772033519106127', 8772033519106127, 5007593801262702, 0, 'ui_i18n');
+
+-- handbook.addSection
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007621223436095, '新增章節', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.addSection', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007621223436095-8772013343930223', 8772013343930223, 5007621223436095, 0, 'ui_i18n');
+
+-- handbook.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007705487696316, '手冊列表', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007705487696316-8771985524903836', 8771985524903836, 5007705487696316, 0, 'ui_i18n');
+
+-- handbook.chapter
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007725546159125, '第 {number} 章', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.chapter', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007725546159125-8771974942670538', 8771974942670538, 5007725546159125, 0, 'ui_i18n');
+
+-- handbook.closeExpressionInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007684636104458, '關閉詞句資訊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.closeExpressionInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007684636104458-8771948835977551', 8771948835977551, 5007684636104458, 0, 'ui_i18n');
+
+-- handbook.collapsePicker
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007699956620865, '收合', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.collapsePicker', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007699956620865-8772025115555117', 8772025115555117, 5007699956620865, 0, 'ui_i18n');
+
+-- handbook.deleteSection
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007654344983501, '刪除章節', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.deleteSection', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007654344983501-8771922363562335', 8771922363562335, 5007654344983501, 0, 'ui_i18n');
+
+-- handbook.edit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007692600987662, '編輯手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.edit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007692600987662-8771954520730023', 8771954520730023, 5007692600987662, 0, 'ui_i18n');
+
+-- handbook.expressionInfo
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007589776612357, '詞句資訊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.expressionInfo', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007589776612357-8771958749403912', 8771958749403912, 5007589776612357, 0, 'ui_i18n');
+
+-- handbook.expressionInfoHint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007715097855572, '詞句的語言、地區和來源將顯示在此處。', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.expressionInfoHint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007715097855572-8771969048222271', 8771969048222271, 5007715097855572, 0, 'ui_i18n');
+
+-- handbook.helpful
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007661380133877, '這本手冊有幫助嗎？', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.helpful', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007661380133877-8771919030282571', 8771919030282571, 5007661380133877, 0, 'ui_i18n');
+
+-- handbook.inspectorFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007683593103509, '無法載入詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.inspectorFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007683593103509-8772001956145712', 8772001956145712, 5007683593103509, 0, 'ui_i18n');
+
+-- handbook.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612565795990, '無法載入', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612565795990-8771936602672507', 8771936602672507, 5007612565795990, 0, 'ui_i18n');
+
+-- handbook.locale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.locale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771930947571421', 8771930947571421, 5007686050335421, 0, 'ui_i18n');
+
+-- handbook.moveDown
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007650074003074, '下移', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.moveDown', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007650074003074-8772015839426216', 8772015839426216, 5007650074003074, 0, 'ui_i18n');
+
+-- handbook.moveSectionDown
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007643815006434, '下移章節', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.moveSectionDown', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007643815006434-8771974741123489', 8771974741123489, 5007643815006434, 0, 'ui_i18n');
+
+-- handbook.moveSectionUp
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007629520277872, '上移章節', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.moveSectionUp', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007629520277872-8771974343227837', 8771974343227837, 5007629520277872, 0, 'ui_i18n');
+
+-- handbook.moveUp
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007635946845687, '上移', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.moveUp', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007635946845687-8772035822327586', 8772035822327586, 5007635946845687, 0, 'ui_i18n');
+
+-- handbook.private
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007681573695796, '私密', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.private', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007681573695796-8771981388316157', 8771981388316157, 5007681573695796, 0, 'ui_i18n');
+
+-- handbook.public
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007615308903108, '公開', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.public', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007615308903108-8771978356150928', 8771978356150928, 5007615308903108, 0, 'ui_i18n');
+
+-- handbook.publish
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007715503546725, '發布', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.publish', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007715503546725-8771952311782197', 8771952311782197, 5007715503546725, 0, 'ui_i18n');
+
+-- handbook.region
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007606447559182, '地區', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.region', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007606447559182-8771968624126325', 8771968624126325, 5007606447559182, 0, 'ui_i18n');
+
+-- handbook.relationsFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007647776203665, '無法載入相關詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.relationsFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007647776203665-8771991960796854', 8771991960796854, 5007647776203665, 0, 'ui_i18n');
+
+-- handbook.removeExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007634915568372, '移除 {text}', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.removeExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007634915568372-8771948377233166', 8771948377233166, 5007634915568372, 0, 'ui_i18n');
+
+-- handbook.saveDraft
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007699981092513, '儲存草稿', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.saveDraft', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007699981092513-8771974360984879', 8771974360984879, 5007699981092513, 0, 'ui_i18n');
+
+-- handbook.saving
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007672351176404, '儲存中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.saving', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007672351176404-8771980391249065', 8771980391249065, 5007672351176404, 0, 'ui_i18n');
+
+-- handbook.sectionTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007660957209707, '章節標題', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.sectionTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007660957209707-8771935521942479', 8771935521942479, 5007660957209707, 0, 'ui_i18n');
+
+-- handbook.selectExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007709281377350, '選擇詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.selectExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007709281377350-8771975315975664', 8771975315975664, 5007709281377350, 0, 'ui_i18n');
+
+-- handbook.source
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007640017262719, '來源', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.source', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007640017262719-8771933750484319', 8771933750484319, 5007640017262719, 0, 'ui_i18n');
+
+-- handbook.sourceAi
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639292411519, 'AI', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.sourceAi', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639292411519-8771954789056127', 8771954789056127, 5007639292411519, 0, 'ui_i18n');
+
+-- handbook.sourceAuthority
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007653154549251, '權威', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.sourceAuthority', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007653154549251-8772029059057248', 8772029059057248, 5007653154549251, 0, 'ui_i18n');
+
+-- handbook.sourceUser
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007698014440035, '使用者', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.sourceUser', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007698014440035-8772034803281550', 8772034803281550, 5007698014440035, 0, 'ui_i18n');
+
+-- handbook.titlePlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007721876393826, '手冊標題', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.titlePlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007721876393826-8771918701696347', 8771918701696347, 5007721876393826, 0, 'ui_i18n');
+
+-- handbook.toc
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007673469054467, '目錄', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.toc', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007673469054467-8771915172364840', 8771915172364840, 5007673469054467, 0, 'ui_i18n');
+
+-- handbook.viewFullGraph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007626802923211, '檢視完整關係圖', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.viewFullGraph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007626802923211-8771928949232797', 8771928949232797, 5007626802923211, 0, 'ui_i18n');
+
+-- handbook.visibility
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007664124762008, '可見性', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbook.visibility', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007664124762008-8772029984927123', 8772029984927123, 5007664124762008, 0, 'ui_i18n');
+
+-- handbooks.create
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007674260849921, '新增手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.create', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007674260849921-8771984354571011', 8771984354571011, 5007674260849921, 0, 'ui_i18n');
+
+-- handbooks.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007697223313857, '無法載入手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007697223313857-8771915400044673', 8771915400044673, 5007697223313857, 0, 'ui_i18n');
+
+-- handbooks.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607604627425, '最新', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607604627425-8771912463566270', 8771912463566270, 5007607604627425, 0, 'ui_i18n');
+
+-- handbooks.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007651447365556, '找不到手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007651447365556-8772007530341875', 8772007530341875, 5007651447365556, 0, 'ui_i18n');
+
+-- handbooks.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007723174663984-8771957966582874', 8771957966582874, 5007723174663984, 0, 'ui_i18n');
+
+-- handbooks.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007610205072363, '搜尋手冊…', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007610205072363-8772031472567985', 8772031472567985, 5007610205072363, 0, 'ui_i18n');
+
+-- handbooks.sections
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007696274158000, '章節', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.sections', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007696274158000-8771981869623564', 8771981869623564, 5007696274158000, 0, 'ui_i18n');
+
+-- handbooks.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616497851729, '手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:handbooks.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616497851729-8771945183617329', 8771945183617329, 5007616497851729, 0, 'ui_i18n');
+
+-- languageCreate.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007708873733015, '上一步', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007708873733015-8772024038803789', 8772024038803789, 5007708873733015, 0, 'ui_i18n');
+
+-- languageCreate.cancel
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719410905098, '取消', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.cancel', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719410905098-8772001703307290', 8772001703307290, 5007719410905098, 0, 'ui_i18n');
+
+-- languageCreate.close
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007689820830527, '關閉', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.close', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007689820830527-8771958345505312', 8771958345505312, 5007689820830527, 0, 'ui_i18n');
+
+-- languageCreate.create
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007714911250327, '建立語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.create', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007714911250327-8771972155504688', 8771972155504688, 5007714911250327, 0, 'ui_i18n');
+
+-- languageCreate.createFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007597198368045, '語言建立失敗', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.createFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007597198368045-8772008975730714', 8772008975730714, 5007597198368045, 0, 'ui_i18n');
+
+-- languageCreate.creating
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007709442998063, '建立中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.creating', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007709442998063-8771943301451236', 8771943301451236, 5007709442998063, 0, 'ui_i18n');
+
+-- languageCreate.errorDescription
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007626843100894, '請輸入描述', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorDescription', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007626843100894-8771986788835322', 8771986788835322, 5007626843100894, 0, 'ui_i18n');
+
+-- languageCreate.errorGlottolog
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007687627379699, '請選擇 Glottolog 比對或選擇「無比對」', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorGlottolog', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007687627379699-8771982145239141', 8771982145239141, 5007687627379699, 0, 'ui_i18n');
+
+-- languageCreate.errorName
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007648090148139, '請輸入語言名稱', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorName', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007648090148139-8771921060819264', 8771921060819264, 5007648090148139, 0, 'ui_i18n');
+
+-- languageCreate.errorReason
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007676948961841, '請選擇僅限社群建立的原因', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorReason', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007676948961841-8771926836463632', 8771926836463632, 5007676948961841, 0, 'ui_i18n');
+
+-- languageCreate.errorTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007669554516997, '請輸入語言子標籤以繼續', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007669554516997-8772026576042326', 8772026576042326, 5007669554516997, 0, 'ui_i18n');
+
+-- languageCreate.glottologCandidates
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007618048454812, '找到 {count} 個候選', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologCandidates', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007618048454812-8771956461019812', 8771956461019812, 5007618048454812, 0, 'ui_i18n');
+
+-- languageCreate.glottologChoose
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627044113620, '選擇比對或標示無合適條目', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologChoose', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627044113620-8772033726980358', 8772033726980358, 5007627044113620, 0, 'ui_i18n');
+
+-- languageCreate.glottologExactMatch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627246296906, '比對此候選', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologExactMatch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627246296906-8772036217067472', 8772036217067472, 5007627246296906, 0, 'ui_i18n');
+
+-- languageCreate.glottologLevelDialect
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007628727447844, '方言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelDialect', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007628727447844-8771959645210043', 8771959645210043, 5007628727447844, 0, 'ui_i18n');
+
+-- languageCreate.glottologLevelLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771953851734414', 8771953851734414, 5007686050335421, 0, 'ui_i18n');
+
+-- languageCreate.glottologNoMatch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007618367015503, 'Glottolog 無合適條目', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologNoMatch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007618367015503-8771907658003091', 8771907658003091, 5007618367015503, 0, 'ui_i18n');
+
+-- languageCreate.glottologSearchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007599831540403, '搜尋 Glottolog…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologSearchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007599831540403-8771972676692740', 8771972676692740, 5007599831540403, 0, 'ui_i18n');
+
+-- languageCreate.metadataDescription
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007622685861510, '描述', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataDescription', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007622685861510-8771937301075282', 8771937301075282, 5007622685861510, 0, 'ui_i18n');
+
+-- languageCreate.metadataDescriptionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007697091449319, '描述此語言或變體…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataDescriptionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007697091449319-8771929062150956', 8771929062150956, 5007697091449319, 0, 'ui_i18n');
+
+-- languageCreate.metadataName
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007691754656057, '名稱', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataName', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007691754656057-8771913536651859', 8771913536651859, 5007691754656057, 0, 'ui_i18n');
+
+-- languageCreate.metadataNameEn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686396809507, '英文名稱', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataNameEn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686396809507-8772035648862723', 8772035648862723, 5007686396809507, 0, 'ui_i18n');
+
+-- languageCreate.metadataReason
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007666737026570, '為何此語言未收錄於 Glottolog？', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReason', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007666737026570-8771965397553798', 8771965397553798, 5007666737026570, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonCommunity
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007718755726151, '社群特定用法', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonCommunity', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007718755726151-8772029121364869', 8772029121364869, 5007718755726151, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonEmerging
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007675740525147, '新興變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonEmerging', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007675740525147-8771911763851130', 8771911763851130, 5007675740525147, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonMissing
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007664503679853, 'Glottolog 未收錄', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonMissing', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007664503679853-8772027448793331', 8772027448793331, 5007664503679853, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonOther
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007684075801994, '其他', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonOther', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007684075801994-8771907717721822', 8771907717721822, 5007684075801994, 0, 'ui_i18n');
+
+-- languageCreate.metadataReasonPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007723619810454, '選擇原因…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007723619810454-8771908744199257', 8771908744199257, 5007723619810454, 0, 'ui_i18n');
+
+-- languageCreate.next
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677050112595, '下一步', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.next', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677050112595-8771946058185965', 8771946058185965, 5007677050112595, 0, 'ui_i18n');
+
+-- languageCreate.previewCanonicalCode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007682439694929, '標準代碼', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewCanonicalCode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007682439694929-8771986283559204', 8771986283559204, 5007682439694929, 0, 'ui_i18n');
+
+-- languageCreate.previewExisting
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007617405498846, '此語言已存在', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewExisting', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007617405498846-8771963047592058', 8771963047592058, 5007617405498846, 0, 'ui_i18n');
+
+-- languageCreate.previewExistingAction
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007653787396426, '使用現有語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewExistingAction', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007653787396426-8771911987565882', 8771911987565882, 5007653787396426, 0, 'ui_i18n');
+
+-- languageCreate.previewTitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007714911250327, '建立語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewTitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007714911250327-8771972155504688', 8771972155504688, 5007714911250327, 0, 'ui_i18n');
+
+-- languageCreate.previewWarnings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007622785558957, '警告', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewWarnings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007622785558957-8771976682274382', 8771976682274382, 5007622785558957, 0, 'ui_i18n');
+
+-- languageCreate.provisionalTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007588377772568, '暫時標籤', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.provisionalTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007588377772568-8771969301691665', 8771969301691665, 5007588377772568, 0, 'ui_i18n');
+
+-- languageCreate.stepGlottolog
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627610417528, 'Glottolog 比對', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepGlottolog', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627610417528-8771926452848847', 8771926452848847, 5007627610417528, 0, 'ui_i18n');
+
+-- languageCreate.stepMetadata
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007700656768439, '中繼資料', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepMetadata', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007700656768439-8771988865126091', 8771988865126091, 5007700656768439, 0, 'ui_i18n');
+
+-- languageCreate.stepPreview
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007666482555601, '預覽並建立', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepPreview', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007666482555601-8772002442315415', 8772002442315415, 5007666482555601, 0, 'ui_i18n');
+
+-- languageCreate.stepTag
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007590245386211, '語言標籤', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepTag', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007590245386211-8771982332401463', 8771982332401463, 5007590245386211, 0, 'ui_i18n');
+
+-- languageCreate.subtagLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771930947571421', 8771930947571421, 5007686050335421, 0, 'ui_i18n');
+
+-- languageCreate.subtagRegion
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007606447559182, '地區', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagRegion', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007606447559182-8771968624126325', 8771968624126325, 5007606447559182, 0, 'ui_i18n');
+
+-- languageCreate.subtagScript
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686774438010, '文字', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagScript', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686774438010-8771976361115614', 8771976361115614, 5007686774438010, 0, 'ui_i18n');
+
+-- languageCreate.subtagSearch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007684970546194, '搜尋子標籤…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagSearch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007684970546194-8772015391400398', 8772015391400398, 5007684970546194, 0, 'ui_i18n');
+
+-- languageCreate.subtagVariant
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007592228510523, '變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagVariant', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007592228510523-8771923711808765', 8771923711808765, 5007592228510523, 0, 'ui_i18n');
+
+-- languageCreate.variantRemoved
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007590313937733, '已移除 1 個變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.variantRemoved', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007590313937733-8772011217159086', 8772011217159086, 5007590313937733, 0, 'ui_i18n');
+
+-- languageCreate.variantsRemoved
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007588420544733, '已移除 {count} 個變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007588420544733-8771998528580369', 8771998528580369, 5007588420544733, 0, 'ui_i18n');
+
+-- languageDetail.alphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007699791662801, '依字母排序', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007699791662801-8772039352640020', 8772039352640020, 5007699791662801, 0, 'ui_i18n');
+
+-- languageDetail.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771966685762373', 8771966685762373, 5007686050335421, 0, 'ui_i18n');
+
+-- languageDetail.expressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677367822286, '詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.expressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677367822286-8772004481370898', 8772004481370898, 5007677367822286, 0, 'ui_i18n');
+
+-- languageDetail.latest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607604627425, '最新', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.latest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607604627425-8771912463566270', 8771912463566270, 5007607604627425, 0, 'ui_i18n');
+
+-- languageDetail.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612565795990, '無法載入', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612565795990-8771936602672507', 8771936602672507, 5007612565795990, 0, 'ui_i18n');
+
+-- languageDetail.mapped
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007593308176568, '已對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.mapped', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007593308176568-8771947211108180', 8771947211108180, 5007593308176568, 0, 'ui_i18n');
+
+-- languageDetail.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007598177691071, '找不到詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007598177691071-8771950851535873', 8771950851535873, 5007598177691071, 0, 'ui_i18n');
+
+-- languageDetail.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007723174663984-8771957966582874', 8771957966582874, 5007723174663984, 0, 'ui_i18n');
+
+-- languageDetail.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719245960463, '搜尋詞句…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719245960463-8771934172254861', 8771934172254861, 5007719245960463, 0, 'ui_i18n');
+
+-- languagePicker.clear
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007636186300534, '清除選擇', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagePicker.clear', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007636186300534-8771904155296746', 8771904155296746, 5007636186300534, 0, 'ui_i18n');
+
+-- languagePicker.createLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007691700443714, '建立新語言或變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagePicker.createLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007691700443714-8772010209718094', 8772010209718094, 5007691700443714, 0, 'ui_i18n');
+
+-- languagePicker.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007683164932514, '無符合語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagePicker.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007683164932514-8771905467432581', 8771905467432581, 5007683164932514, 0, 'ui_i18n');
+
+-- languagePicker.placeholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627415698210, '搜尋語言…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagePicker.placeholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627415698210-8771957308068965', 8771957308068965, 5007627415698210, 0, 'ui_i18n');
+
+-- languageSwitcher.browserSuggested
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007606685493697, '瀏覽器推薦', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.browserSuggested', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007606685493697-8771943861429001', 8771943861429001, 5007606685493697, 0, 'ui_i18n');
+
+-- languageSwitcher.helpTranslate
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007618562378039, '協助翻譯 LangMap', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.helpTranslate', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007618562378039-8771962203854555', 8771962203854555, 5007618562378039, 0, 'ui_i18n');
+
+-- languageSwitcher.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007633264109331, '無符合的語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007633264109331-8771905467432581', 8771905467432581, 5007633264109331, 0, 'ui_i18n');
+
+-- languageSwitcher.recent
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007647416136718, '最近使用的語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.recent', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007647416136718-8772017158300851', 8772017158300851, 5007647416136718, 0, 'ui_i18n');
+
+-- languagesPage.expressionCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677367822286, '詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.expressionCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677367822286-8772004481370898', 8772004481370898, 5007677367822286, 0, 'ui_i18n');
+
+-- languagesPage.languageCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.languageCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771966685762373', 8771966685762373, 5007686050335421, 0, 'ui_i18n');
+
+-- languagesPage.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007697617594999, '無法載入語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007697617594999-8771907230355366', 8771907230355366, 5007697617594999, 0, 'ui_i18n');
+
+-- languagesPage.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007611270278095, '找不到語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007611270278095-8772015486738705', 8772015486738705, 5007611270278095, 0, 'ui_i18n');
+
+-- languagesPage.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627415698210, '搜尋語言…', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627415698210-8771957308068965', 8771957308068965, 5007627415698210, 0, 'ui_i18n');
+
+-- languagesPage.sortAlphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007657903631628, 'A–Z', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.sortAlphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007657903631628-8771973400276236', 8771973400276236, 5007657903631628, 0, 'ui_i18n');
+
+-- languagesPage.sortCount
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007635983364209, '依數量', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.sortCount', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007635983364209-8771994726877247', 8771994726877247, 5007635983364209, 0, 'ui_i18n');
+
+-- languagesPage.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007698283679918, '瀏覽所有語言的詞句與對應關係', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007698283679918-8772027985468400', 8772027985468400, 5007698283679918, 0, 'ui_i18n');
+
+-- languagesPage.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:languagesPage.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771966685762373', 8771966685762373, 5007686050335421, 0, 'ui_i18n');
+
+-- mapLens.anchor
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616460095425, '錨點', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.anchor', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616460095425-8771952725719815', 8771952725719815, 5007616460095425, 0, 'ui_i18n');
+
+-- mapLens.back
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007644591976536, '回到對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.back', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007644591976536-8771984993053397', 8771984993053397, 5007644591976536, 0, 'ui_i18n');
+
+-- mapLens.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007624521919809, '{count} 種語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007624521919809-8771995851022194', 8771995851022194, 5007624521919809, 0, 'ui_i18n');
+
+-- mapLens.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612565795990, '無法載入', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612565795990-8771936602672507', 8771936602672507, 5007612565795990, 0, 'ui_i18n');
+
+-- mapLens.members
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007637378619197, '對應成員', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.members', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007637378619197-8771950928148051', 8771950928148051, 5007637378619197, 0, 'ui_i18n');
+
+-- mapLens.noData
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007636589081846, '此概念無地理分佈資料', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.noData', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007636589081846-8771989613412250', 8771989613412250, 5007636589081846, 0, 'ui_i18n');
+
+-- mapLens.regions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007630380442571, '{count} 個地區', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.regions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007630380442571-8772012470644251', 8772012470644251, 5007630380442571, 0, 'ui_i18n');
+
+-- mapLens.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007661457547908, '概念分佈', 'cmn-Hant', 'ui_i18n', 'langmap-web:mapLens.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007661457547908-8771918829802721', 8771918829802721, 5007661457547908, 0, 'ui_i18n');
+
+-- mappingDetail.addAndMap
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007618961599305, '新增並建立對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addAndMap', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007618961599305-8771969898159421', 8771969898159421, 5007618961599305, 0, 'ui_i18n');
+
+-- mappingDetail.addExpression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007593801262702, '新增詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addExpression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007593801262702-8772033519106127', 8772033519106127, 5007593801262702, 0, 'ui_i18n');
+
+-- mappingDetail.addFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007648084274560, '無法新增詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007648084274560-8771908944297462', 8771908944297462, 5007648084274560, 0, 'ui_i18n');
+
+-- mappingDetail.adding
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007654825308888, '新增中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.adding', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007654825308888-8771928703559647', 8771928703559647, 5007654825308888, 0, 'ui_i18n');
+
+-- mappingDetail.authority
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007653154549251, '權威', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.authority', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007653154549251-8772029059057248', 8772029059057248, 5007653154549251, 0, 'ui_i18n');
+
+-- mappingDetail.breadcrumb
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007604754627169, '麵包屑', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.breadcrumb', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007604754627169-8772001620797917', 8772001620797917, 5007604754627169, 0, 'ui_i18n');
+
+-- mappingDetail.closeQuickAdd
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007659340309069, '關閉快速新增', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.closeQuickAdd', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007659340309069-8771978190877962', 8771978190877962, 5007659340309069, 0, 'ui_i18n');
+
+-- mappingDetail.contribute
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639645796554, '貢獻對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.contribute', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639645796554-8772005931944793', 8772005931944793, 5007639645796554, 0, 'ui_i18n');
+
+-- mappingDetail.direct
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007684044855210, '直接對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.direct', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007684044855210-8771956479287686', 8771956479287686, 5007684044855210, 0, 'ui_i18n');
+
+-- mappingDetail.enterRequired
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007714663533142, '請輸入詞句與語言代碼', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.enterRequired', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007714663533142-8771956618196526', 8771956618196526, 5007714663533142, 0, 'ui_i18n');
+
+-- mappingDetail.expression
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007677367822286, '詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.expression', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007677367822286-8772028411030279', 8772028411030279, 5007677367822286, 0, 'ui_i18n');
+
+-- mappingDetail.expressionPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007712825900255, '輸入詞句…', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.expressionPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007712825900255-8771952819511586', 8771952819511586, 5007712825900255, 0, 'ui_i18n');
+
+-- mappingDetail.graph
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007622731744905, '圖譜', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.graph', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007622731744905-8771971766539087', 8771971766539087, 5007622731744905, 0, 'ui_i18n');
+
+-- mappingDetail.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007679835556648, '首頁', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007679835556648-8771987694898855', 8771987694898855, 5007679835556648, 0, 'ui_i18n');
+
+-- mappingDetail.hops
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007642787446540, '跳數', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.hops', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007642787446540-8771987564932373', 8771987564932373, 5007642787446540, 0, 'ui_i18n');
+
+-- mappingDetail.indirect
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007632364442496, '間接', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.indirect', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007632364442496-8772028520330484', 8772028520330484, 5007632364442496, 0, 'ui_i18n');
+
+-- mappingDetail.languageCode
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607272748740, '語言代碼', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.languageCode', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607272748740-8771920539132885', 8771920539132885, 5007607272748740, 0, 'ui_i18n');
+
+-- mappingDetail.languageCodePlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007721671260839, '例如 en / cmn-Hant', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007721671260839-8772027619502019', 8772027619502019, 5007721671260839, 0, 'ui_i18n');
+
+-- mappingDetail.list
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007678548163757, '列表', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.list', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007678548163757-8771992537520761', 8771992537520761, 5007678548163757, 0, 'ui_i18n');
+
+-- mappingDetail.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612565795990, '無法載入', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612565795990-8771936602672507', 8771936602672507, 5007612565795990, 0, 'ui_i18n');
+
+-- mappingDetail.mappingSet
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007687256123416, '對應集合', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.mappingSet', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007687256123416-8772011172535505', 8772011172535505, 5007687256123416, 0, 'ui_i18n');
+
+-- mappingDetail.noMappings
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007692209345238, '尚無對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.noMappings', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007692209345238-8772036040577861', 8772036040577861, 5007692209345238, 0, 'ui_i18n');
+
+-- mappingDetail.optional
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007617997040870, '選填', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.optional', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007617997040870-8771986434294618', 8771986434294618, 5007617997040870, 0, 'ui_i18n');
+
+-- mappingDetail.quickAdd
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007595971465190, '快速新增詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.quickAdd', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007595971465190-8772035320845087', 8772035320845087, 5007595971465190, 0, 'ui_i18n');
+
+-- mappingDetail.quickAddLead
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007594723011393, '新增詞句並直接對應到目前詞句。', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.quickAddLead', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007594723011393-8771923205204397', 8771923205204397, 5007594723011393, 0, 'ui_i18n');
+
+-- mappingDetail.region
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007606447559182, '地區', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.region', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007606447559182-8771968624126325', 8771968624126325, 5007606447559182, 0, 'ui_i18n');
+
+-- mappingDetail.user
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007698014440035, '使用者', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.user', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007698014440035-8772034803281550', 8772034803281550, 5007698014440035, 0, 'ui_i18n');
+
+-- mappingDetail.viewMap
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007640862331505, '在地圖上檢視此概念', 'cmn-Hant', 'ui_i18n', 'langmap-web:mappingDetail.viewMap', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007640862331505-8772021818623523', 8772021818623523, 5007640862331505, 0, 'ui_i18n');
+
+-- nav.closeMenu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007693939192039, '關閉選單', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.closeMenu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007693939192039-8772008345770010', 8772008345770010, 5007693939192039, 0, 'ui_i18n');
+
+-- nav.contribute
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007659312132322, '貢獻', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.contribute', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007659312132322-8772022393103823', 8772022393103823, 5007659312132322, 0, 'ui_i18n');
+
+-- nav.handbooks
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007616497851729, '手冊', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.handbooks', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007616497851729-8771945183617329', 8771945183617329, 5007616497851729, 0, 'ui_i18n');
+
+-- nav.home
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007679835556648, '首頁', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.home', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007679835556648-8771987694898855', 8771987694898855, 5007679835556648, 0, 'ui_i18n');
+
+-- nav.languages
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007686050335421, '語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.languages', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686050335421-8771966685762373', 8771966685762373, 5007686050335421, 0, 'ui_i18n');
+
+-- nav.menu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007636266685617, '選單', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.menu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007636266685617-8771933905283078', 8771933905283078, 5007636266685617, 0, 'ui_i18n');
+
+-- nav.openMenu
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007609510542097, '開啟選單', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.openMenu', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007609510542097-8771988489117883', 8771988489117883, 5007609510542097, 0, 'ui_i18n');
+
+-- nav.searchExpressions
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007620572246307, '搜尋詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.searchExpressions', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007620572246307-8772000153561666', 8772000153561666, 5007620572246307, 0, 'ui_i18n');
+
+-- nav.signIn
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639590295621, '登入', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.signIn', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639590295621-8771985319534907', 8771985319534907, 5007639590295621, 0, 'ui_i18n');
+
+-- nav.signOut
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007708913964853, '登出', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.signOut', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007708913964853-8771987956311474', 8771987956311474, 5007708913964853, 0, 'ui_i18n');
+
+-- nav.submitSearch
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007612541759384, '送出搜尋', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.submitSearch', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007612541759384-8772033727162136', 8772033727162136, 5007612541759384, 0, 'ui_i18n');
+
+-- nav.switchLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007604626753830, '切換介面語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:nav.switchLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007604626753830-8771905685377287', 8771905685377287, 5007604626753830, 0, 'ui_i18n');
+
+-- search.alphabetical
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007611082246671, '依字母順序', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.alphabetical', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007611082246671-8772039352640020', 8772039352640020, 5007611082246671, 0, 'ui_i18n');
+
+-- search.hint
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007627118912543, '提示：目前搜尋比對詞句原文。語意搜尋即將推出。', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.hint', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007627118912543-8771909635790690', 8771909635790690, 5007627118912543, 0, 'ui_i18n');
+
+-- search.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007675217228270, '搜尋失敗', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007675217228270-8771929026122151', 8771929026122151, 5007675217228270, 0, 'ui_i18n');
+
+-- search.newest
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007607604627425, '最新', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.newest', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007607604627425-8771912463566270', 8771912463566270, 5007607604627425, 0, 'ui_i18n');
+
+-- search.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007628857270641, '找不到結果', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007628857270641-8771927555767000', 8771927555767000, 5007628857270641, 0, 'ui_i18n');
+
+-- search.placeholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007719245960463, '搜尋詞句…', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.placeholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007719245960463-8771934172254861', 8771934172254861, 5007719245960463, 0, 'ui_i18n');
+
+-- search.popular
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.popular', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007723174663984-8771957966582874', 8771957966582874, 5007723174663984, 0, 'ui_i18n');
+
+-- search.results
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007601799021572, '{count} 個結果', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.results', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007601799021572-8772014433488480', 8772014433488480, 5007601799021572, 0, 'ui_i18n');
+
+-- search.sort
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007610933406754, '排序', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.sort', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007610933406754-8772001210440828', 8772001210440828, 5007610933406754, 0, 'ui_i18n');
+
+-- search.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007620572246307, '搜尋詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web:search.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007620572246307-8772000153561666', 8772000153561666, 5007620572246307, 0, 'ui_i18n');
+
+-- translate.addLocale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007701111943484, '新增要翻譯的語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.addLocale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007701111943484-8771973106595188', 8771973106595188, 5007701111943484, 0, 'ui_i18n');
+
+-- translate.batchSubmit
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007685276703229, '提交 {count} 筆翻譯', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.batchSubmit', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007685276703229-8771943172288619', 8771943172288619, 5007685276703229, 0, 'ui_i18n');
+
+-- translate.candidate
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007638769043670, '目前翻譯', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.candidate', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007638769043670-8771982470884397', 8771982470884397, 5007638769043670, 0, 'ui_i18n');
+
+-- translate.chooseRegistryLanguage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007632719804286, '選擇已註冊的語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.chooseRegistryLanguage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007632719804286-8772018182873778', 8772018182873778, 5007632719804286, 0, 'ui_i18n');
+
+-- translate.coverage
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007722286376090, '翻譯涵蓋率', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.coverage', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007722286376090-8772013113555302', 8772013113555302, 5007722286376090, 0, 'ui_i18n');
+
+-- translate.displayed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007669482945438, '顯示 {count} 筆', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.displayed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007669482945438-8772040929892299', 8772040929892299, 5007669482945438, 0, 'ui_i18n');
+
+-- translate.eyebrow
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007649179923360, '社群本地化', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.eyebrow', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007649179923360-8771973543137726', 8771973543137726, 5007649179923360, 0, 'ui_i18n');
+
+-- translate.inputPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007705329276957, '輸入翻譯…', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.inputPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007705329276957-8771990724594742', 8771990724594742, 5007705329276957, 0, 'ui_i18n');
+
+-- translate.loadFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007590615844034, '無法載入翻譯工作台', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.loadFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007590615844034-8771920552784072', 8771920552784072, 5007590615844034, 0, 'ui_i18n');
+
+-- translate.loading
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007714792299881, '載入中…', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.loading', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007714792299881-8771908386278726', 8771908386278726, 5007714792299881, 0, 'ui_i18n');
+
+-- translate.locale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639334552984, '目標語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.locale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639334552984-8771996866079300', 8771996866079300, 5007639334552984, 0, 'ui_i18n');
+
+-- translate.localesFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007673136995116, '無法載入語言列表', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.localesFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007673136995116-8771965827772292', 8771965827772292, 5007673136995116, 0, 'ui_i18n');
+
+-- translate.loginNote
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007678852433197, '登入後可提交翻譯；候選翻譯依對應分數排序，無正分候選時使用備用文字。', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.loginNote', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007678852433197-8771995706904988', 8771995706904988, 5007678852433197, 0, 'ui_i18n');
+
+-- translate.noResults
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007642659981518, '找不到相符文字。', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.noResults', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007642659981518-8771904910396271', 8771904910396271, 5007642659981518, 0, 'ui_i18n');
+
+-- translate.preview
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007722751923074, '預覽', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.preview', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007722751923074-8771969689937165', 8771969689937165, 5007722751923074, 0, 'ui_i18n');
+
+-- translate.reference
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007629812324352, '參考語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.reference', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007629812324352-8772009963987850', 8772009963987850, 5007629812324352, 0, 'ui_i18n');
+
+-- translate.searchPlaceholder
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007711211452857, '搜尋鍵名或原文…', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.searchPlaceholder', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007711211452857-8771962647026930', 8771962647026930, 5007711211452857, 0, 'ui_i18n');
+
+-- translate.selectLocale
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007640133975371, '選擇翻譯語言', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.selectLocale', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007640133975371-8772037474898823', 8772037474898823, 5007640133975371, 0, 'ui_i18n');
+
+-- translate.source
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007724240988709, '英文原文', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.source', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007724240988709-8772014752541923', 8772014752541923, 5007724240988709, 0, 'ui_i18n');
+
+-- translate.start
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007683612794808, '開始', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.start', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007683612794808-8772036201600543', 8772036201600543, 5007683612794808, 0, 'ui_i18n');
+
+-- translate.submitFailed
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007668571582958, '提交失敗', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.submitFailed', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007668571582958-8771930781451254', 8771930781451254, 5007668571582958, 0, 'ui_i18n');
+
+-- translate.submitMapping
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007639458948889, '提交對應', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.submitMapping', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007639458948889-8771938026129323', 8771938026129323, 5007639458948889, 0, 'ui_i18n');
+
+-- translate.submitted
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007661551126128, '已提交', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.submitted', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007661551126128-8771906650908176', 8771906650908176, 5007661551126128, 0, 'ui_i18n');
+
+-- translate.subtitle
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007610183826600, '幫助讓 LangMap 介面文字更自然、更實用。', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.subtitle', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007610183826600-8771968758684575', 8771968758684575, 5007610183826600, 0, 'ui_i18n');
+
+-- translate.title
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007658925626223, '翻譯工作台', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.title', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007658925626223-8772002773137414', 8772002773137414, 5007658925626223, 0, 'ui_i18n');
+
+-- translate.translateKey
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007684179658069, '翻譯 {key}', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.translateKey', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007684179658069-8771936438281310', 8771936438281310, 5007684179658069, 0, 'ui_i18n');
+
+-- translate.translated
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007692016340526, '已翻譯', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.translated', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007692016340526-8771916786083827', 8771916786083827, 5007692016340526, 0, 'ui_i18n');
+
+-- translate.translation
+INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+VALUES (5007642036856395, '翻譯', 'cmn-Hant', 'ui_i18n', 'langmap-web:translate.translation', 'pending');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007642036856395-8771951513286657', 8771951513286657, 5007642036856395, 0, 'ui_i18n');
+
 -- Locale es
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
@@ -3959,10 +8259,10 @@ VALUES ('682827335594089-8771920539132885', 8771920539132885, 682827335594089, 0
 
 -- mappingDetail.languageCodePlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (682798659849548, 'ej. en / zh-Hant', 'es', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
+VALUES (682876869018337, 'ej. en / cmn-Hant', 'es', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('682798659849548-8771919700012927', 8771919700012927, 682798659849548, 0, 'ui_i18n');
+VALUES ('682876869018337-8772027619502019', 8772027619502019, 682876869018337, 0, 'ui_i18n');
 
 -- mappingDetail.list
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
@@ -6109,10 +10409,10 @@ VALUES ('5667697302661086-8771920539132885', 8771920539132885, 5667697302661086,
 
 -- mappingDetail.languageCodePlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5667657482722815, '例：en / zh-Hant', 'ja', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
+VALUES (5667592694812107, '例：en / cmn-Hant', 'ja', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5667657482722815-8771919700012927', 8771919700012927, 5667657482722815, 0, 'ui_i18n');
+VALUES ('5667592694812107-8772027619502019', 8772027619502019, 5667592694812107, 0, 'ui_i18n');
 
 -- mappingDetail.list
 INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
@@ -6533,4305 +10833,5 @@ VALUES (5667601297578574, '翻訳', 'ja', 'ui_i18n', 'langmap-web:translate.tran
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('5667601297578574-8771951513286657', 8771951513286657, 5667601297578574, 0, 'ui_i18n');
-
--- Locale zh-Hans
--- auth.email
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642115394617474, '邮箱', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.email', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642115394617474-8771988929111883', 8771988929111883, 6642115394617474, 0, 'ui_i18n');
-
--- auth.haveAccount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642102074594911, '已有账号？', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.haveAccount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642102074594911-8771987324928109', 8771987324928109, 6642102074594911, 0, 'ui_i18n');
-
--- auth.login
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642025328564659, '登录', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.login', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642025328564659-8771985319534907', 8771985319534907, 6642025328564659, 0, 'ui_i18n');
-
--- auth.noAccount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642096269746521, '还没有账号？', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.noAccount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642096269746521-8771920874847316', 8771920874847316, 6642096269746521, 0, 'ui_i18n');
-
--- auth.operationFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642113949694275, '操作失败', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.operationFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642113949694275-8771934955742921', 8771934955742921, 6642113949694275, 0, 'ui_i18n');
-
--- auth.password
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642014231965307, '密码', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.password', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642014231965307-8771993838728081', 8771993838728081, 6642014231965307, 0, 'ui_i18n');
-
--- auth.processing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089509849650, '处理中…', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.processing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089509849650-8772001046060388', 8772001046060388, 6642089509849650, 0, 'ui_i18n');
-
--- auth.register
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642078250363025, '创建账号', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.register', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642078250363025-8771964374844751', 8771964374844751, 6642078250363025, 0, 'ui_i18n');
-
--- auth.username
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642114707359363, '用户名', 'zh-Hans', 'ui_i18n', 'langmap-web:auth.username', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642114707359363-8772029311767367', 8772029311767367, 6642114707359363, 0, 'ui_i18n');
-
--- common.cancel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642143445594122, '取消', 'zh-Hans', 'ui_i18n', 'langmap-web:common.cancel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642143445594122-8772001703307290', 8772001703307290, 6642143445594122, 0, 'ui_i18n');
-
--- common.close
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642136428173818, '关闭', 'zh-Hans', 'ui_i18n', 'langmap-web:common.close', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642136428173818-8771958345505312', 8771958345505312, 6642136428173818, 0, 'ui_i18n');
-
--- common.language
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:common.language', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771930947571421', 8771930947571421, 6642127179293910, 0, 'ui_i18n');
-
--- common.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:common.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771966685762373', 8771966685762373, 6642127179293910, 0, 'ui_i18n');
-
--- common.loading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642131738404901, '加载中…', 'zh-Hans', 'ui_i18n', 'langmap-web:common.loading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642131738404901-8771908386278726', 8771908386278726, 6642131738404901, 0, 'ui_i18n');
-
--- common.search
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642051158517347, '搜索', 'zh-Hans', 'ui_i18n', 'langmap-web:common.search', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642051158517347-8772018337291447', 8772018337291447, 6642051158517347, 0, 'ui_i18n');
-
--- common.submit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642058290789573, '提交', 'zh-Hans', 'ui_i18n', 'langmap-web:common.submit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642058290789573-8771955384790296', 8771955384790296, 6642058290789573, 0, 'ui_i18n');
-
--- components.actualSize
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642093757102008, '实际尺寸 100%', 'zh-Hans', 'ui_i18n', 'langmap-web:components.actualSize', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642093757102008-8771913559728006', 8771913559728006, 6642093757102008, 0, 'ui_i18n');
-
--- components.anonymous
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642069319013468, '匿名', 'zh-Hans', 'ui_i18n', 'langmap-web:components.anonymous', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642069319013468-8771963881461252', 8771963881461252, 6642069319013468, 0, 'ui_i18n');
-
--- components.childNodes
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642081156745026, '{count} 个子节点；点击收起', 'zh-Hans', 'ui_i18n', 'langmap-web:components.childNodes', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642081156745026-8772032837909466', 8772032837909466, 6642081156745026, 0, 'ui_i18n');
-
--- components.cliqueNote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642136322982617, '每条边皆为可投票的独立直接映射；低分映射自动收起', 'zh-Hans', 'ui_i18n', 'langmap-web:components.cliqueNote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642136322982617-8772028933737015', 8772028933737015, 6642136322982617, 0, 'ui_i18n');
-
--- components.cliqueTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642148139512311, '待建立的映射图谱', 'zh-Hans', 'ui_i18n', 'langmap-web:components.cliqueTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642148139512311-8771990687804642', 8771990687804642, 6642148139512311, 0, 'ui_i18n');
-
--- components.closeInfoPanel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642098157573679, '关闭信息面板', 'zh-Hans', 'ui_i18n', 'langmap-web:components.closeInfoPanel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642098157573679-8771923580873788', 8771923580873788, 6642098157573679, 0, 'ui_i18n');
-
--- components.collapse
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642026681083988, '收起', 'zh-Hans', 'ui_i18n', 'langmap-web:components.collapse', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642026681083988-8772025115555117', 8772025115555117, 6642026681083988, 0, 'ui_i18n');
-
--- components.collapseBranch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642144285961115, '收起子分支', 'zh-Hans', 'ui_i18n', 'langmap-web:components.collapseBranch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642144285961115-8772021975712328', 8772021975712328, 6642144285961115, 0, 'ui_i18n');
-
--- components.collapseToFirst
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642134677943425, '收起至第一层', 'zh-Hans', 'ui_i18n', 'langmap-web:components.collapseToFirst', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642134677943425-8771963062101045', 8771963062101045, 6642134677943425, 0, 'ui_i18n');
-
--- components.daysAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642077642286612, '{count} 天前', 'zh-Hans', 'ui_i18n', 'langmap-web:components.daysAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642077642286612-8772016085305408', 8772016085305408, 6642077642286612, 0, 'ui_i18n');
-
--- components.depth
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642137331510936, '深度 {depth}', 'zh-Hans', 'ui_i18n', 'langmap-web:components.depth', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642137331510936-8772018587383663', 8772018587383663, 6642137331510936, 0, 'ui_i18n');
-
--- components.directMappingList
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642113422439800, '直接映射词句', 'zh-Hans', 'ui_i18n', 'langmap-web:components.directMappingList', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642113422439800-8771921679343522', 8771921679343522, 6642113422439800, 0, 'ui_i18n');
-
--- components.downvote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642058278029947, '踩', 'zh-Hans', 'ui_i18n', 'langmap-web:components.downvote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642058278029947-8771992127181974', 8771992127181974, 6642058278029947, 0, 'ui_i18n');
-
--- components.edgeCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024565818150, '{count} 条边', 'zh-Hans', 'ui_i18n', 'langmap-web:components.edgeCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024565818150-8771907018302878', 8771907018302878, 6642024565818150, 0, 'ui_i18n');
-
--- components.empty
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642051204031784, '暂无数据', 'zh-Hans', 'ui_i18n', 'langmap-web:components.empty', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642051204031784-8772000424294921', 8772000424294921, 6642051204031784, 0, 'ui_i18n');
-
--- components.exitFullscreen
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642109708261394, '退出全屏', 'zh-Hans', 'ui_i18n', 'langmap-web:components.exitFullscreen', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642109708261394-8771995527490116', 8771995527490116, 6642109708261394, 0, 'ui_i18n');
-
--- components.expand
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016577311844, '展开', 'zh-Hans', 'ui_i18n', 'langmap-web:components.expand', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016577311844-8771957005515059', 8771957005515059, 6642016577311844, 0, 'ui_i18n');
-
--- components.expandAll
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642094381681236, '全部展开', 'zh-Hans', 'ui_i18n', 'langmap-web:components.expandAll', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642094381681236-8772033758268399', 8772033758268399, 6642094381681236, 0, 'ui_i18n');
-
--- components.expandBranch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642040580204486, '展开子分支', 'zh-Hans', 'ui_i18n', 'langmap-web:components.expandBranch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642040580204486-8771937729949713', 8771937729949713, 6642040580204486, 0, 'ui_i18n');
-
--- components.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642125838566529, '词句', 'zh-Hans', 'ui_i18n', 'langmap-web:components.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642125838566529-8772028411030279', 8772028411030279, 6642125838566529, 0, 'ui_i18n');
-
--- components.filterLanguages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642049411049930, '筛选语言…', 'zh-Hans', 'ui_i18n', 'langmap-web:components.filterLanguages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642049411049930-8771975185705787', 8771975185705787, 6642049411049930, 0, 'ui_i18n');
-
--- components.fullscreen
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642046664136497, '全屏', 'zh-Hans', 'ui_i18n', 'langmap-web:components.fullscreen', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642046664136497-8771984311379866', 8771984311379866, 6642046664136497, 0, 'ui_i18n');
-
--- components.graphLabel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642095937214170, '词句映射图谱', 'zh-Hans', 'ui_i18n', 'langmap-web:components.graphLabel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642095937214170-8771940176065576', 8771940176065576, 6642095937214170, 0, 'ui_i18n');
-
--- components.graphLoading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642092079493598, '加载图谱…', 'zh-Hans', 'ui_i18n', 'langmap-web:components.graphLoading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642092079493598-8771930916265390', 8771930916265390, 6642092079493598, 0, 'ui_i18n');
-
--- components.graphMode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642121746906592, '图谱模式', 'zh-Hans', 'ui_i18n', 'langmap-web:components.graphMode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642121746906592-8772018055755937', 8772018055755937, 6642121746906592, 0, 'ui_i18n');
-
--- components.graphStats
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642020706137208, '{nodes} 个映射节点 · {edges} 个关系', 'zh-Hans', 'ui_i18n', 'langmap-web:components.graphStats', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642020706137208-8771930566920504', 8771930566920504, 6642020706137208, 0, 'ui_i18n');
-
--- components.graphToolbar
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642114642039717, '图谱工具栏', 'zh-Hans', 'ui_i18n', 'langmap-web:components.graphToolbar', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642114642039717-8771957995007293', 8771957995007293, 6642114642039717, 0, 'ui_i18n');
-
--- components.hierarchyList
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642035482337645, '映射层级列表', 'zh-Hans', 'ui_i18n', 'langmap-web:components.hierarchyList', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642035482337645-8771972530005685', 8771972530005685, 6642035482337645, 0, 'ui_i18n');
-
--- components.hops
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642033539062759, '跳数', 'zh-Hans', 'ui_i18n', 'langmap-web:components.hops', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642033539062759-8771929108158859', 8771929108158859, 6642033539062759, 0, 'ui_i18n');
-
--- components.hoursAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642101204301710, '{count} 小时前', 'zh-Hans', 'ui_i18n', 'langmap-web:components.hoursAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642101204301710-8771972038859703', 8771972038859703, 6642101204301710, 0, 'ui_i18n');
-
--- components.justNow
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642122446194080, '刚刚', 'zh-Hans', 'ui_i18n', 'langmap-web:components.justNow', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642122446194080-8772006156641051', 8772006156641051, 6642122446194080, 0, 'ui_i18n');
-
--- components.languageLoadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642142757289698, '无法加载语言', 'zh-Hans', 'ui_i18n', 'langmap-web:components.languageLoadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642142757289698-8771907230355366', 8771907230355366, 6642142757289698, 0, 'ui_i18n');
-
--- components.listMode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642083768771338, '列表模式', 'zh-Hans', 'ui_i18n', 'langmap-web:components.listMode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642083768771338-8771978209325624', 8771978209325624, 6642083768771338, 0, 'ui_i18n');
-
--- components.loadMore
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642080789784466, '加载更多', 'zh-Hans', 'ui_i18n', 'langmap-web:components.loadMore', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642080789784466-8771968298248581', 8771968298248581, 6642080789784466, 0, 'ui_i18n');
-
--- components.loadingRelated
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642115400582522, '加载相关词句中', 'zh-Hans', 'ui_i18n', 'langmap-web:components.loadingRelated', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642115400582522-8771918922470710', 8771918922470710, 6642115400582522, 0, 'ui_i18n');
-
--- components.mapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642048832804695, '映射', 'zh-Hans', 'ui_i18n', 'langmap-web:components.mapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642048832804695-8772009894682686', 8772009894682686, 6642048832804695, 0, 'ui_i18n');
-
--- components.mappingScore
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642148017508724, '映射评分', 'zh-Hans', 'ui_i18n', 'langmap-web:components.mappingScore', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642148017508724-8772001613332908', 8772001613332908, 6642148017508724, 0, 'ui_i18n');
-
--- components.minutesAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642020836809391, '{count} 分钟前', 'zh-Hans', 'ui_i18n', 'langmap-web:components.minutesAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642020836809391-8772029891163450', 8772029891163450, 6642020836809391, 0, 'ui_i18n');
-
--- components.moreActions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642073609319436, '更多操作', 'zh-Hans', 'ui_i18n', 'langmap-web:components.moreActions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642073609319436-8771927265880728', 8771927265880728, 6642073609319436, 0, 'ui_i18n');
-
--- components.moreMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642047064277754, '完整图谱中还有 {count} 个映射', 'zh-Hans', 'ui_i18n', 'langmap-web:components.moreMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642047064277754-8771978296601845', 8771978296601845, 6642047064277754, 0, 'ui_i18n');
-
--- components.noDirectMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642023906701874, '暂无直接映射', 'zh-Hans', 'ui_i18n', 'langmap-web:components.noDirectMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642023906701874-8771916846886490', 8771916846886490, 6642023906701874, 0, 'ui_i18n');
-
--- components.noExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642034057783920, '找不到相符词句', 'zh-Hans', 'ui_i18n', 'langmap-web:components.noExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642034057783920-8771950851535873', 8771950851535873, 6642034057783920, 0, 'ui_i18n');
-
--- components.nodeCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642045880832635, '{count} 个节点', 'zh-Hans', 'ui_i18n', 'langmap-web:components.nodeCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642045880832635-8771915754603204', 8771915754603204, 6642045880832635, 0, 'ui_i18n');
-
--- components.nodeInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642130634261447, '节点信息', 'zh-Hans', 'ui_i18n', 'langmap-web:components.nodeInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642130634261447-8772032217763299', 8772032217763299, 6642130634261447, 0, 'ui_i18n');
-
--- components.otherRelations
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642113056048464, '其他关系', 'zh-Hans', 'ui_i18n', 'langmap-web:components.otherRelations', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642113056048464-8772011775552074', 8772011775552074, 6642113056048464, 0, 'ui_i18n');
-
--- components.relatedExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642018575302917, '相关词句', 'zh-Hans', 'ui_i18n', 'langmap-web:components.relatedExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642018575302917-8771996275317129', 8771996275317129, 6642018575302917, 0, 'ui_i18n');
-
--- components.relationCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642144339670355, '{count} 个关系', 'zh-Hans', 'ui_i18n', 'langmap-web:components.relationCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642144339670355-8771905570354775', 8771905570354775, 6642144339670355, 0, 'ui_i18n');
-
--- components.removeLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642020053484063, '移除 {code}', 'zh-Hans', 'ui_i18n', 'langmap-web:components.removeLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642020053484063-8771968148353493', 8771968148353493, 6642020053484063, 0, 'ui_i18n');
-
--- components.resetLayout
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089969828414, '重置布局', 'zh-Hans', 'ui_i18n', 'langmap-web:components.resetLayout', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089969828414-8771923590138278', 8771923590138278, 6642089969828414, 0, 'ui_i18n');
-
--- components.rootNode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642032494514795, '根节点', 'zh-Hans', 'ui_i18n', 'langmap-web:components.rootNode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642032494514795-8771991096471187', 8771991096471187, 6642032494514795, 0, 'ui_i18n');
-
--- components.search
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642051158517347, '搜索', 'zh-Hans', 'ui_i18n', 'langmap-web:components.search', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642051158517347-8772018337291447', 8772018337291447, 6642051158517347, 0, 'ui_i18n');
-
--- components.searchExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044272242935, '搜索词句…', 'zh-Hans', 'ui_i18n', 'langmap-web:components.searchExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044272242935-8771934172254861', 8771934172254861, 6642044272242935, 0, 'ui_i18n');
-
--- components.searching
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642144962215817, '搜索中…', 'zh-Hans', 'ui_i18n', 'langmap-web:components.searching', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642144962215817-8771951969125148', 8771951969125148, 6642144962215817, 0, 'ui_i18n');
-
--- components.selectNodeHint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642082865271552, '在图谱中选取节点以查看详情', 'zh-Hans', 'ui_i18n', 'langmap-web:components.selectNodeHint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642082865271552-8771969317410200', 8771969317410200, 6642082865271552, 0, 'ui_i18n');
-
--- components.sourcePath
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642027042531887, '来源路径', 'zh-Hans', 'ui_i18n', 'langmap-web:components.sourcePath', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642027042531887-8771977750841844', 8771977750841844, 6642027042531887, 0, 'ui_i18n');
-
--- components.upvote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642112924811804, '赞', 'zh-Hans', 'ui_i18n', 'langmap-web:components.upvote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642112924811804-8772016238570208', 8772016238570208, 6642112924811804, 0, 'ui_i18n');
-
--- components.viewExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642119087582119, '查看词句详情', 'zh-Hans', 'ui_i18n', 'langmap-web:components.viewExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642119087582119-8771995720429284', 8771995720429284, 6642119087582119, 0, 'ui_i18n');
-
--- components.voteFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642047216674511, '投票失败，已撤销', 'zh-Hans', 'ui_i18n', 'langmap-web:components.voteFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642047216674511-8772020751025198', 8772020751025198, 6642047216674511, 0, 'ui_i18n');
-
--- components.zoomIn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642079482068498, '放大', 'zh-Hans', 'ui_i18n', 'langmap-web:components.zoomIn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642079482068498-8772017398603959', 8772017398603959, 6642079482068498, 0, 'ui_i18n');
-
--- components.zoomOut
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642025294874845, '缩小', 'zh-Hans', 'ui_i18n', 'langmap-web:components.zoomOut', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642025294874845-8772017289371875', 8772017289371875, 6642025294874845, 0, 'ui_i18n');
-
--- contribute.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642032444616585, '+ 添加词句', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642032444616585-8771945073983212', 8771945073983212, 6642032444616585, 0, 'ui_i18n');
-
--- contribute.completeGraph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642090723137487, '完全图', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.completeGraph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642090723137487-8771921254303111', 8771921254303111, 6642090723137487, 0, 'ui_i18n');
-
--- contribute.delete
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642023218325140, '删除', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.delete', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642023218325140-8771944300238713', 8771944300238713, 6642023218325140, 0, 'ui_i18n');
-
--- contribute.directMappingCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642112916184041, '{count} 个直接映射', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.directMappingCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642112916184041-8771968945113345', 8771968945113345, 6642112916184041, 0, 'ui_i18n');
-
--- contribute.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642125838566529, '词句', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642125838566529-8772028411030279', 8772028411030279, 6642125838566529, 0, 'ui_i18n');
-
--- contribute.expressionCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642077404263859, '{count} 个词句', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.expressionCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642077404263859-8771918589046163', 8771918589046163, 6642077404263859, 0, 'ui_i18n');
-
--- contribute.expressionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642146499129342, '输入词句…', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.expressionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642146499129342-8771975160452098', 8771975160452098, 6642146499129342, 0, 'ui_i18n');
-
--- contribute.language
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.language', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771930947571421', 8771930947571421, 6642127179293910, 0, 'ui_i18n');
-
--- contribute.lead
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642133003804814, '提交一组含义相同的词句。系统会在每对之间创建直接映射。已有词句会自动关联，不会产生重复。', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.lead', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642133003804814-8771938370927027', 8771938370927027, 6642133003804814, 0, 'ui_i18n');
-
--- contribute.minRows
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642108029963380, '至少需要 2 行，每行需填写语言和词句', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.minRows', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642108029963380-8771996574983759', 8771996574983759, 6642108029963380, 0, 'ui_i18n');
-
--- contribute.submit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642058290789573, '提交', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.submit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642058290789573-8771955384790296', 8771955384790296, 6642058290789573, 0, 'ui_i18n');
-
--- contribute.submitFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642021851191783, '提交失败', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.submitFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642021851191783-8771930781451254', 8771930781451254, 6642021851191783, 0, 'ui_i18n');
-
--- contribute.submitting
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642015225216700, '提交中…', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.submitting', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642015225216700-8771996654725718', 8771996654725718, 6642015225216700, 0, 'ui_i18n');
-
--- contribute.tags
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120556679091, '标签', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.tags', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120556679091-8772023049338365', 8772023049338365, 6642120556679091, 0, 'ui_i18n');
-
--- contribute.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642112039287404, '批量提交', 'zh-Hans', 'ui_i18n', 'langmap-web:contribute.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642112039287404-8771967116778370', 8771967116778370, 6642112039287404, 0, 'ui_i18n');
-
--- errors.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642123463387947, '返回首页', 'zh-Hans', 'ui_i18n', 'langmap-web:errors.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642123463387947-8771954914944651', 8771954914944651, 6642123463387947, 0, 'ui_i18n');
-
--- errors.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016061835830, '无法加载', 'zh-Hans', 'ui_i18n', 'langmap-web:errors.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016061835830-8771936602672507', 8771936602672507, 6642016061835830, 0, 'ui_i18n');
-
--- errors.pageMissing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642036250957195, '页面未找到', 'zh-Hans', 'ui_i18n', 'langmap-web:errors.pageMissing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642036250957195-8771958158698832', 8771958158698832, 6642036250957195, 0, 'ui_i18n');
-
--- feed.all
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120627731577, '全部', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.all', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120627731577-8771912696777795', 8771912696777795, 6642120627731577, 0, 'ui_i18n');
-
--- feed.contributeMapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642142087711870, '提交映射 →', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.contributeMapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642142087711870-8771952067596101', 8771952067596101, 6642142087711870, 0, 'ui_i18n');
-
--- feed.hot
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024763942113, '热门', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.hot', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024763942113-8771957966582874', 8771957966582874, 6642024763942113, 0, 'ui_i18n');
-
--- feed.mappingsAndExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642064903439913, '映射 + 新词句', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.mappingsAndExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642064903439913-8771971172552785', 8771971172552785, 6642064903439913, 0, 'ui_i18n');
-
--- feed.missing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642082464782703, '找不到所需内容？', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.missing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642082464782703-8771964553678580', 8771964553678580, 6642082464782703, 0, 'ui_i18n');
-
--- feed.newContributions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642033927307089, '新贡献', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.newContributions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642033927307089-8772013263074963', 8772013263074963, 6642033927307089, 0, 'ui_i18n');
-
--- feed.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642031639316449, '最新', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642031639316449-8771912463566270', 8771912463566270, 6642031639316449, 0, 'ui_i18n');
-
--- feed.popularMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642123269157666, '热门映射', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.popularMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642123269157666-8771956320455891', 8771956320455891, 6642123269157666, 0, 'ui_i18n');
-
--- feed.ratedThisWeek
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642079566674863, '按评分 · 本周', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.ratedThisWeek', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642079566674863-8772001941683119', 8772001941683119, 6642079566674863, 0, 'ui_i18n');
-
--- feed.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089022254142, '语义图的最新脉动——热门映射和新贡献。', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089022254142-8771985464043467', 8771985464043467, 6642089022254142, 0, 'ui_i18n');
-
--- feed.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642036622561096, '动态', 'zh-Hans', 'ui_i18n', 'langmap-web:feed.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642036622561096-8771928668652497', 8771928668652497, 6642036622561096, 0, 'ui_i18n');
-
--- handbook.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642146271976254, '新增词句', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642146271976254-8772033519106127', 8772033519106127, 6642146271976254, 0, 'ui_i18n');
-
--- handbook.addSection
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642068844191895, '新增章节', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.addSection', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642068844191895-8772013343930223', 8772013343930223, 6642068844191895, 0, 'ui_i18n');
-
--- handbook.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642129843359201, '手册列表', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642129843359201-8771985524903836', 8771985524903836, 6642129843359201, 0, 'ui_i18n');
-
--- handbook.chapter
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642149580848149, '第 {number} 章', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.chapter', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642149580848149-8771974942670538', 8771974942670538, 6642149580848149, 0, 'ui_i18n');
-
--- handbook.closeExpressionInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642079167950557, '关闭词句信息', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.closeExpressionInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642079167950557-8771948835977551', 8771948835977551, 6642079167950557, 0, 'ui_i18n');
-
--- handbook.collapsePicker
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642026681083988, '收起', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.collapsePicker', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642026681083988-8772025115555117', 8772025115555117, 6642026681083988, 0, 'ui_i18n');
-
--- handbook.deleteSection
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016726918845, '删除章节', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.deleteSection', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016726918845-8771922363562335', 8771922363562335, 6642016726918845, 0, 'ui_i18n');
-
--- handbook.edit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120031672278, '编辑手册', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.edit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120031672278-8771954520730023', 8771954520730023, 6642120031672278, 0, 'ui_i18n');
-
--- handbook.expressionInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642017881713043, '词句信息', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.expressionInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642017881713043-8771958749403912', 8771958749403912, 6642017881713043, 0, 'ui_i18n');
-
--- handbook.expressionInfoHint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089671840441, '词句的语言、地区和来源将显示在此处。', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.expressionInfoHint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089671840441-8771969048222271', 8771969048222271, 6642089671840441, 0, 'ui_i18n');
-
--- handbook.helpful
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642103882805595, '这本手册有帮助吗？', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.helpful', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642103882805595-8771919030282571', 8771919030282571, 6642103882805595, 0, 'ui_i18n');
-
--- handbook.inspectorFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642059059264353, '无法加载词句', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.inspectorFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642059059264353-8772001956145712', 8772001956145712, 6642059059264353, 0, 'ui_i18n');
-
--- handbook.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016061835830, '无法加载', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016061835830-8771936602672507', 8771936602672507, 6642016061835830, 0, 'ui_i18n');
-
--- handbook.locale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.locale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771930947571421', 8771930947571421, 6642127179293910, 0, 'ui_i18n');
-
--- handbook.moveDown
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642074108692098, '下移', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.moveDown', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642074108692098-8772015839426216', 8772015839426216, 6642074108692098, 0, 'ui_i18n');
-
--- handbook.moveSectionDown
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642066192585677, '下移章节', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.moveSectionDown', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642066192585677-8771974741123489', 8771974741123489, 6642066192585677, 0, 'ui_i18n');
-
--- handbook.moveSectionUp
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642106328121191, '上移章节', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.moveSectionUp', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642106328121191-8771974343227837', 8771974343227837, 6642106328121191, 0, 'ui_i18n');
-
--- handbook.moveUp
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642059981534711, '上移', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.moveUp', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642059981534711-8772035822327586', 8772035822327586, 6642059981534711, 0, 'ui_i18n');
-
--- handbook.private
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642105608384820, '私密', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.private', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642105608384820-8771981388316157', 8771981388316157, 6642105608384820, 0, 'ui_i18n');
-
--- handbook.public
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642084554365996, '公开', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.public', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642084554365996-8771978356150928', 8771978356150928, 6642084554365996, 0, 'ui_i18n');
-
--- handbook.publish
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642130808412435, '发布', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.publish', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642130808412435-8771952311782197', 8771952311782197, 6642130808412435, 0, 'ui_i18n');
-
--- handbook.region
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642091608036792, '地区', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.region', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642091608036792-8771968624126325', 8771968624126325, 6642091608036792, 0, 'ui_i18n');
-
--- handbook.relationsFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642076383493944, '无法加载相关词句', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.relationsFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642076383493944-8771991960796854', 8771991960796854, 6642076383493944, 0, 'ui_i18n');
-
--- handbook.removeExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642058950257396, '移除 {text}', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.removeExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642058950257396-8771948377233166', 8771948377233166, 6642058950257396, 0, 'ui_i18n');
-
--- handbook.saveDraft
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642085065100565, '保存草稿', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.saveDraft', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642085065100565-8771974360984879', 8771974360984879, 6642085065100565, 0, 'ui_i18n');
-
--- handbook.saving
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642131092186881, '保存中…', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.saving', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642131092186881-8771980391249065', 8771980391249065, 6642131092186881, 0, 'ui_i18n');
-
--- handbook.sectionTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642117391976558, '章节标题', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.sectionTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642117391976558-8771935521942479', 8771935521942479, 6642117391976558, 0, 'ui_i18n');
-
--- handbook.selectExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642061309253725, '选择词句', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.selectExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642061309253725-8771975315975664', 8771975315975664, 6642061309253725, 0, 'ui_i18n');
-
--- handbook.source
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642138719738336, '来源', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.source', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642138719738336-8771933750484319', 8771933750484319, 6642138719738336, 0, 'ui_i18n');
-
--- handbook.sourceAi
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642063327100543, 'AI', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.sourceAi', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642063327100543-8771954789056127', 8771954789056127, 6642063327100543, 0, 'ui_i18n');
-
--- handbook.sourceAuthority
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642061587133200, '权威', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.sourceAuthority', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642061587133200-8772029059057248', 8772029059057248, 6642061587133200, 0, 'ui_i18n');
-
--- handbook.sourceUser
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642041095383372, '用户', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.sourceUser', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642041095383372-8772034803281550', 8772034803281550, 6642041095383372, 0, 'ui_i18n');
-
--- handbook.titlePlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642137208020458, '手册标题', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.titlePlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642137208020458-8771918701696347', 8771918701696347, 6642137208020458, 0, 'ui_i18n');
-
--- handbook.toc
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642144354228922, '目录', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.toc', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642144354228922-8771915172364840', 8771915172364840, 6642144354228922, 0, 'ui_i18n');
-
--- handbook.viewFullGraph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642103018624855, '查看完整关系图', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.viewFullGraph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642103018624855-8771928949232797', 8771928949232797, 6642103018624855, 0, 'ui_i18n');
-
--- handbook.visibility
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642040432719166, '可见性', 'zh-Hans', 'ui_i18n', 'langmap-web:handbook.visibility', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642040432719166-8772029984927123', 8772029984927123, 6642040432719166, 0, 'ui_i18n');
-
--- handbooks.create
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642020871996867, '新建手册', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.create', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642020871996867-8771984354571011', 8771984354571011, 6642020871996867, 0, 'ui_i18n');
-
--- handbooks.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642033196167965, '加载手册失败', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642033196167965-8771915400044673', 8771915400044673, 6642033196167965, 0, 'ui_i18n');
-
--- handbooks.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642031639316449, '最新', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642031639316449-8771912463566270', 8771912463566270, 6642031639316449, 0, 'ui_i18n');
-
--- handbooks.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642023539860358, '未找到手册', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642023539860358-8772007530341875', 8772007530341875, 6642023539860358, 0, 'ui_i18n');
-
--- handbooks.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024763942113, '热门', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024763942113-8771957966582874', 8771957966582874, 6642024763942113, 0, 'ui_i18n');
-
--- handbooks.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642076270761945, '搜索手册…', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642076270761945-8772031472567985', 8772031472567985, 6642076270761945, 0, 'ui_i18n');
-
--- handbooks.sections
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642084896787549, '章节', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.sections', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642084896787549-8771981869623564', 8771981869623564, 6642084896787549, 0, 'ui_i18n');
-
--- handbooks.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642139377956737, '手册', 'zh-Hans', 'ui_i18n', 'langmap-web:handbooks.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642139377956737-8771945183617329', 8771945183617329, 6642139377956737, 0, 'ui_i18n');
-
--- languageCreate.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642132908422039, '上一步', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642132908422039-8772024038803789', 8772024038803789, 6642132908422039, 0, 'ui_i18n');
-
--- languageCreate.cancel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642143445594122, '取消', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.cancel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642143445594122-8772001703307290', 8772001703307290, 6642143445594122, 0, 'ui_i18n');
-
--- languageCreate.close
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642136428173818, '关闭', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.close', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642136428173818-8771958345505312', 8771958345505312, 6642136428173818, 0, 'ui_i18n');
-
--- languageCreate.create
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642070594191434, '创建语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.create', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642070594191434-8771972155504688', 8771972155504688, 6642070594191434, 0, 'ui_i18n');
-
--- languageCreate.createFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642046987427796, '语言创建失败', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.createFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642046987427796-8772008975730714', 8772008975730714, 6642046987427796, 0, 'ui_i18n');
-
--- languageCreate.creating
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642077011999346, '创建中…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.creating', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642077011999346-8771943301451236', 8771943301451236, 6642077011999346, 0, 'ui_i18n');
-
--- languageCreate.errorDescription
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642052793160795, '请输入描述', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorDescription', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642052793160795-8771986788835322', 8771986788835322, 6642052793160795, 0, 'ui_i18n');
-
--- languageCreate.errorGlottolog
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642084343241388, '请选择 Glottolog 匹配或选择「无匹配」', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorGlottolog', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642084343241388-8771982145239141', 8771982145239141, 6642084343241388, 0, 'ui_i18n');
-
--- languageCreate.errorName
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642055065295298, '请输入语言名称', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorName', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642055065295298-8771921060819264', 8771921060819264, 6642055065295298, 0, 'ui_i18n');
-
--- languageCreate.errorReason
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016949865552, '请选择仅限社区创建的原因', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorReason', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016949865552-8771926836463632', 8771926836463632, 6642016949865552, 0, 'ui_i18n');
-
--- languageCreate.errorTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642038163745702, '请输入语言子标签以继续', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.errorTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642038163745702-8772026576042326', 8772026576042326, 6642038163745702, 0, 'ui_i18n');
-
--- languageCreate.glottologCandidates
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642025339739296, '找到 {count} 个候选', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologCandidates', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642025339739296-8771956461019812', 8771956461019812, 6642025339739296, 0, 'ui_i18n');
-
--- languageCreate.glottologChoose
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120727006638, '选择匹配或标明无合适条目', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologChoose', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120727006638-8772033726980358', 8772033726980358, 6642120727006638, 0, 'ui_i18n');
-
--- languageCreate.glottologExactMatch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642023985409425, '匹配此候选', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologExactMatch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642023985409425-8772036217067472', 8772036217067472, 6642023985409425, 0, 'ui_i18n');
-
--- languageCreate.glottologLevelDialect
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642052762136868, '方言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelDialect', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642052762136868-8771959645210043', 8771959645210043, 6642052762136868, 0, 'ui_i18n');
-
--- languageCreate.glottologLevelLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771953851734414', 8771953851734414, 6642127179293910, 0, 'ui_i18n');
-
--- languageCreate.glottologNoMatch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642050171564997, 'Glottolog 无合适条目', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologNoMatch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642050171564997-8771907658003091', 8771907658003091, 6642050171564997, 0, 'ui_i18n');
-
--- languageCreate.glottologSearchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642105186652319, '搜索 Glottolog…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.glottologSearchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642105186652319-8771972676692740', 8771972676692740, 6642105186652319, 0, 'ui_i18n');
-
--- languageCreate.metadataDescription
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642046720550534, '描述', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataDescription', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642046720550534-8771937301075282', 8771937301075282, 6642046720550534, 0, 'ui_i18n');
-
--- languageCreate.metadataDescriptionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642049405854148, '描述此语言或变体…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataDescriptionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642049405854148-8771929062150956', 8771929062150956, 6642049405854148, 0, 'ui_i18n');
-
--- languageCreate.metadataName
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642137962924117, '名称', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataName', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642137962924117-8771913536651859', 8771913536651859, 6642137962924117, 0, 'ui_i18n');
-
--- languageCreate.metadataNameEn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024820877303, '英文名称', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataNameEn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024820877303-8772035648862723', 8772035648862723, 6642024820877303, 0, 'ui_i18n');
-
--- languageCreate.metadataReason
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642063252370902, '为何此语言未收录于 Glottolog？', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReason', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642063252370902-8771965397553798', 8771965397553798, 6642063252370902, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonCommunity
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642045651765669, '社区特定用法', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonCommunity', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642045651765669-8772029121364869', 8772029121364869, 6642045651765669, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonEmerging
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642139336329733, '新兴变体', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonEmerging', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642139336329733-8771911763851130', 8771911763851130, 6642139336329733, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonMissing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642087125625219, 'Glottolog 未收录', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonMissing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642087125625219-8772027448793331', 8772027448793331, 6642087125625219, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonOther
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642108110491018, '其他', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonOther', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642108110491018-8771907717721822', 8771907717721822, 6642108110491018, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642066511159489, '选择原因…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642066511159489-8771908744199257', 8771908744199257, 6642066511159489, 0, 'ui_i18n');
-
--- languageCreate.next
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642101084801619, '下一步', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.next', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642101084801619-8771946058185965', 8771946058185965, 6642101084801619, 0, 'ui_i18n');
-
--- languageCreate.previewCanonicalCode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642126523931480, '规范代码', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewCanonicalCode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642126523931480-8771986283559204', 8771986283559204, 6642126523931480, 0, 'ui_i18n');
-
--- languageCreate.previewExisting
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024076651823, '此语言已存在', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewExisting', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024076651823-8771963047592058', 8771963047592058, 6642024076651823, 0, 'ui_i18n');
-
--- languageCreate.previewExistingAction
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642034504555609, '使用现有语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewExistingAction', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642034504555609-8771911987565882', 8771911987565882, 6642034504555609, 0, 'ui_i18n');
-
--- languageCreate.previewTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642070594191434, '创建语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642070594191434-8771972155504688', 8771972155504688, 6642070594191434, 0, 'ui_i18n');
-
--- languageCreate.previewWarnings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642046820247981, '警告', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.previewWarnings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642046820247981-8771976682274382', 8771976682274382, 6642046820247981, 0, 'ui_i18n');
-
--- languageCreate.provisionalTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044276832399, '临时标签', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.provisionalTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044276832399-8771969301691665', 8771969301691665, 6642044276832399, 0, 'ui_i18n');
-
--- languageCreate.stepGlottolog
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642058528862255, 'Glottolog 匹配', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepGlottolog', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642058528862255-8771926452848847', 8771926452848847, 6642058528862255, 0, 'ui_i18n');
-
--- languageCreate.stepMetadata
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642122397167053, '元数据', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepMetadata', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642122397167053-8771988865126091', 8771988865126091, 6642122397167053, 0, 'ui_i18n');
-
--- languageCreate.stepPreview
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642030876337248, '预览并创建', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepPreview', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642030876337248-8772002442315415', 8772002442315415, 6642030876337248, 0, 'ui_i18n');
-
--- languageCreate.stepTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642137488696731, '语言标签', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.stepTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642137488696731-8771982332401463', 8771982332401463, 6642137488696731, 0, 'ui_i18n');
-
--- languageCreate.subtagLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771930947571421', 8771930947571421, 6642127179293910, 0, 'ui_i18n');
-
--- languageCreate.subtagRegion
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642091608036792, '地区', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagRegion', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642091608036792-8771968624126325', 8771968624126325, 6642091608036792, 0, 'ui_i18n');
-
--- languageCreate.subtagScript
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642110809127034, '文字', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagScript', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642110809127034-8771976361115614', 8771976361115614, 6642110809127034, 0, 'ui_i18n');
-
--- languageCreate.subtagSearch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642026181148121, '搜索子标签…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagSearch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642026181148121-8772015391400398', 8772015391400398, 6642026181148121, 0, 'ui_i18n');
-
--- languageCreate.subtagVariant
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642140869802494, '变体', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.subtagVariant', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642140869802494-8771923711808765', 8771923711808765, 6642140869802494, 0, 'ui_i18n');
-
--- languageCreate.variantRemoved
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642054716608916, '已移除 1 个变体', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.variantRemoved', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642054716608916-8772011217159086', 8772011217159086, 6642054716608916, 0, 'ui_i18n');
-
--- languageCreate.variantsRemoved
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642040221301703, '已移除 {count} 个变体', 'zh-Hans', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642040221301703-8771998528580369', 8771998528580369, 6642040221301703, 0, 'ui_i18n');
-
--- languageDetail.alphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642032967744603, '按字母排序', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642032967744603-8772039352640020', 8772039352640020, 6642032967744603, 0, 'ui_i18n');
-
--- languageDetail.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771966685762373', 8771966685762373, 6642127179293910, 0, 'ui_i18n');
-
--- languageDetail.expressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642125838566529, '词句', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.expressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642125838566529-8772004481370898', 8772004481370898, 6642125838566529, 0, 'ui_i18n');
-
--- languageDetail.latest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642031639316449, '最新', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.latest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642031639316449-8771912463566270', 8771912463566270, 6642031639316449, 0, 'ui_i18n');
-
--- languageDetail.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016061835830, '无法加载', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016061835830-8771936602672507', 8771936602672507, 6642016061835830, 0, 'ui_i18n');
-
--- languageDetail.mapped
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642086477397993, '已映射', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.mapped', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642086477397993-8771947211108180', 8771947211108180, 6642086477397993, 0, 'ui_i18n');
-
--- languageDetail.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642105878513476, '没有找到词句', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642105878513476-8771950851535873', 8771950851535873, 6642105878513476, 0, 'ui_i18n');
-
--- languageDetail.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024763942113, '热门', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024763942113-8771957966582874', 8771957966582874, 6642024763942113, 0, 'ui_i18n');
-
--- languageDetail.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044272242935, '搜索词句…', 'zh-Hans', 'ui_i18n', 'langmap-web:languageDetail.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044272242935-8771934172254861', 8771934172254861, 6642044272242935, 0, 'ui_i18n');
-
--- languagePicker.clear
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642139140342272, '清除选择', 'zh-Hans', 'ui_i18n', 'langmap-web:languagePicker.clear', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642139140342272-8771904155296746', 8771904155296746, 6642139140342272, 0, 'ui_i18n');
-
--- languagePicker.createLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642057028286585, '创建新语言或变体', 'zh-Hans', 'ui_i18n', 'langmap-web:languagePicker.createLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642057028286585-8772010209718094', 8772010209718094, 6642057028286585, 0, 'ui_i18n');
-
--- languagePicker.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642148268882398, '无匹配语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languagePicker.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642148268882398-8771905467432581', 8771905467432581, 6642148268882398, 0, 'ui_i18n');
-
--- languagePicker.placeholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642038379665728, '搜索语言…', 'zh-Hans', 'ui_i18n', 'langmap-web:languagePicker.placeholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642038379665728-8771957308068965', 8771957308068965, 6642038379665728, 0, 'ui_i18n');
-
--- languageSwitcher.browserSuggested
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642018197473222, '浏览器推荐', 'zh-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.browserSuggested', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642018197473222-8771943861429001', 8771943861429001, 6642018197473222, 0, 'ui_i18n');
-
--- languageSwitcher.helpTranslate
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642119964408799, '协助翻译 LangMap', 'zh-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.helpTranslate', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642119964408799-8771962203854555', 8771962203854555, 6642119964408799, 0, 'ui_i18n');
-
--- languageSwitcher.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642095251982521, '无匹配的语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642095251982521-8771905467432581', 8771905467432581, 6642095251982521, 0, 'ui_i18n');
-
--- languageSwitcher.recent
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642106571402574, '最近使用的语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languageSwitcher.recent', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642106571402574-8772017158300851', 8772017158300851, 6642106571402574, 0, 'ui_i18n');
-
--- languagesPage.expressionCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642125838566529, '词句', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.expressionCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642125838566529-8772004481370898', 8772004481370898, 6642125838566529, 0, 'ui_i18n');
-
--- languagesPage.languageCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.languageCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771966685762373', 8771966685762373, 6642127179293910, 0, 'ui_i18n');
-
--- languagesPage.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642142757289698, '无法加载语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642142757289698-8771907230355366', 8771907230355366, 6642142757289698, 0, 'ui_i18n');
-
--- languagesPage.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642110583821426, '未找到语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642110583821426-8772015486738705', 8772015486738705, 6642110583821426, 0, 'ui_i18n');
-
--- languagesPage.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642038379665728, '搜索语言…', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642038379665728-8771957308068965', 8771957308068965, 6642038379665728, 0, 'ui_i18n');
-
--- languagesPage.sortAlphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642081938320652, 'A–Z', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.sortAlphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642081938320652-8771973400276236', 8771973400276236, 6642081938320652, 0, 'ui_i18n');
-
--- languagesPage.sortCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642063274395674, '按数量', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.sortCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642063274395674-8771994726877247', 8771994726877247, 6642063274395674, 0, 'ui_i18n');
-
--- languagesPage.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642112162477357, '浏览所有语言的词句与映射', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642112162477357-8772027985468400', 8772027985468400, 6642112162477357, 0, 'ui_i18n');
-
--- languagesPage.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:languagesPage.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771966685762373', 8771966685762373, 6642127179293910, 0, 'ui_i18n');
-
--- mapLens.anchor
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120418342147, '锚点', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.anchor', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120418342147-8771952725719815', 8771952725719815, 6642120418342147, 0, 'ui_i18n');
-
--- mapLens.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642033838363498, '返回映射', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642033838363498-8771984993053397', 8771984993053397, 6642033838363498, 0, 'ui_i18n');
-
--- mapLens.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642053565881172, '{count} 种语言', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642053565881172-8771995851022194', 8771995851022194, 6642053565881172, 0, 'ui_i18n');
-
--- mapLens.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016061835830, '无法加载', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016061835830-8771936602672507', 8771936602672507, 6642016061835830, 0, 'ui_i18n');
-
--- mapLens.members
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642041400872994, '映射成员', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.members', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642041400872994-8771950928148051', 8771950928148051, 6642041400872994, 0, 'ui_i18n');
-
--- mapLens.noData
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642097480840147, '此概念无地理分布数据', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.noData', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642097480840147-8771989613412250', 8771989613412250, 6642097480840147, 0, 'ui_i18n');
-
--- mapLens.regions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642081474362540, '{count} 个地区', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.regions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642081474362540-8772012470644251', 8772012470644251, 6642081474362540, 0, 'ui_i18n');
-
--- mapLens.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642063197943086, '概念分布', 'zh-Hans', 'ui_i18n', 'langmap-web:mapLens.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642063197943086-8771918829802721', 8771918829802721, 6642063197943086, 0, 'ui_i18n');
-
--- mappingDetail.addAndMap
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642139064776557, '新增并建立映射', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addAndMap', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642139064776557-8771969898159421', 8771969898159421, 6642139064776557, 0, 'ui_i18n');
-
--- mappingDetail.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642146271976254, '新增词句', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642146271976254-8772033519106127', 8772033519106127, 6642146271976254, 0, 'ui_i18n');
-
--- mappingDetail.addFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642038106021388, '无法新增词句', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.addFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642038106021388-8771908944297462', 8771908944297462, 6642038106021388, 0, 'ui_i18n');
-
--- mappingDetail.adding
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642078859997912, '新增中…', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.adding', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642078859997912-8771928703559647', 8771928703559647, 6642078859997912, 0, 'ui_i18n');
-
--- mappingDetail.authority
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642061587133200, '权威', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.authority', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642061587133200-8772029059057248', 8772029059057248, 6642061587133200, 0, 'ui_i18n');
-
--- mappingDetail.breadcrumb
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642143306286453, '面包屑', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.breadcrumb', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642143306286453-8772001620797917', 8772001620797917, 6642143306286453, 0, 'ui_i18n');
-
--- mappingDetail.closeQuickAdd
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642108084805350, '关闭快速新增', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.closeQuickAdd', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642108084805350-8771978190877962', 8771978190877962, 6642108084805350, 0, 'ui_i18n');
-
--- mappingDetail.contribute
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642082249122029, '贡献映射', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.contribute', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642082249122029-8772005931944793', 8772005931944793, 6642082249122029, 0, 'ui_i18n');
-
--- mappingDetail.direct
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642046012797754, '直接映射', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.direct', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642046012797754-8771956479287686', 8771956479287686, 6642046012797754, 0, 'ui_i18n');
-
--- mappingDetail.enterRequired
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642138688523942, '请输入词句与语言代码', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.enterRequired', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642138688523942-8771956618196526', 8771956618196526, 6642138688523942, 0, 'ui_i18n');
-
--- mappingDetail.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642125838566529, '词句', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642125838566529-8772028411030279', 8772028411030279, 6642125838566529, 0, 'ui_i18n');
-
--- mappingDetail.expressionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642146499129342, '输入词句…', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.expressionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642146499129342-8771952819511586', 8771952819511586, 6642146499129342, 0, 'ui_i18n');
-
--- mappingDetail.graph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642051864182420, '图谱', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.graph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642051864182420-8771971766539087', 8771971766539087, 6642051864182420, 0, 'ui_i18n');
-
--- mappingDetail.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642015883011005, '首页', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642015883011005-8771987694898855', 8771987694898855, 6642015883011005, 0, 'ui_i18n');
-
--- mappingDetail.hops
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642033539062759, '跳数', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.hops', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642033539062759-8771987564932373', 8771987564932373, 6642033539062759, 0, 'ui_i18n');
-
--- mappingDetail.indirect
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642040169873857, '间接', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.indirect', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642040169873857-8772028520330484', 8772028520330484, 6642040169873857, 0, 'ui_i18n');
-
--- mappingDetail.languageCode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642018819739950, '语言代码', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.languageCode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642018819739950-8771920539132885', 8771920539132885, 6642018819739950, 0, 'ui_i18n');
-
--- mappingDetail.languageCodePlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642043949420875, '例如 en / zh-Hant', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642043949420875-8771919700012927', 8771919700012927, 6642043949420875, 0, 'ui_i18n');
-
--- mappingDetail.list
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642102582852781, '列表', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.list', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642102582852781-8771992537520761', 8771992537520761, 6642102582852781, 0, 'ui_i18n');
-
--- mappingDetail.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642016061835830, '无法加载', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642016061835830-8771936602672507', 8771936602672507, 6642016061835830, 0, 'ui_i18n');
-
--- mappingDetail.mappingSet
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642070273407584, '映射集合', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.mappingSet', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642070273407584-8772011172535505', 8772011172535505, 6642070273407584, 0, 'ui_i18n');
-
--- mappingDetail.noMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089640514854, '尚无映射', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.noMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089640514854-8772036040577861', 8772036040577861, 6642089640514854, 0, 'ui_i18n');
-
--- mappingDetail.optional
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642079479919457, '选填', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.optional', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642079479919457-8771986434294618', 8771986434294618, 6642079479919457, 0, 'ui_i18n');
-
--- mappingDetail.quickAdd
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642050127998894, '快速新增词句', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.quickAdd', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642050127998894-8772035320845087', 8772035320845087, 6642050127998894, 0, 'ui_i18n');
-
--- mappingDetail.quickAddLead
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642062338381818, '新增词句并直接映射到当前词句。', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.quickAddLead', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642062338381818-8771923205204397', 8771923205204397, 6642062338381818, 0, 'ui_i18n');
-
--- mappingDetail.region
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642091608036792, '地区', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.region', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642091608036792-8771968624126325', 8771968624126325, 6642091608036792, 0, 'ui_i18n');
-
--- mappingDetail.user
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642041095383372, '用户', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.user', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642041095383372-8772034803281550', 8772034803281550, 6642041095383372, 0, 'ui_i18n');
-
--- mappingDetail.viewMap
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642116726950390, '在地图上查看此概念', 'zh-Hans', 'ui_i18n', 'langmap-web:mappingDetail.viewMap', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642116726950390-8772021818623523', 8772021818623523, 6642116726950390, 0, 'ui_i18n');
-
--- nav.closeMenu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642041505540305, '关闭菜单', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.closeMenu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642041505540305-8772008345770010', 8772008345770010, 6642041505540305, 0, 'ui_i18n');
-
--- nav.contribute
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642131528409502, '贡献', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.contribute', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642131528409502-8772022393103823', 8772022393103823, 6642131528409502, 0, 'ui_i18n');
-
--- nav.handbooks
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642139377956737, '手册', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.handbooks', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642139377956737-8771945183617329', 8771945183617329, 6642139377956737, 0, 'ui_i18n');
-
--- nav.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642015883011005, '首页', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642015883011005-8771987694898855', 8771987694898855, 6642015883011005, 0, 'ui_i18n');
-
--- nav.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127179293910, '语言', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127179293910-8771966685762373', 8771966685762373, 6642127179293910, 0, 'ui_i18n');
-
--- nav.menu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642140394109144, '菜单', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.menu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642140394109144-8771933905283078', 8771933905283078, 6642140394109144, 0, 'ui_i18n');
-
--- nav.openMenu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642018926883882, '打开菜单', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.openMenu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642018926883882-8771988489117883', 8771988489117883, 6642018926883882, 0, 'ui_i18n');
-
--- nav.searchExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089756820891, '搜索词句', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.searchExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089756820891-8772000153561666', 8772000153561666, 6642089756820891, 0, 'ui_i18n');
-
--- nav.signIn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642025328564659, '登录', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.signIn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642025328564659-8771985319534907', 8771985319534907, 6642025328564659, 0, 'ui_i18n');
-
--- nav.signOut
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642105006227901, '退出登录', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.signOut', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642105006227901-8771987956311474', 8771987956311474, 6642105006227901, 0, 'ui_i18n');
-
--- nav.submitSearch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642148011577706, '提交搜索', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.submitSearch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642148011577706-8772033727162136', 8772033727162136, 6642148011577706, 0, 'ui_i18n');
-
--- nav.switchLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642096036980072, '切换界面语言', 'zh-Hans', 'ui_i18n', 'langmap-web:nav.switchLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642096036980072-8771905685377287', 8771905685377287, 6642096036980072, 0, 'ui_i18n');
-
--- search.alphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044961162962, '按字母顺序', 'zh-Hans', 'ui_i18n', 'langmap-web:search.alphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044961162962-8772039352640020', 8772039352640020, 6642044961162962, 0, 'ui_i18n');
-
--- search.hint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642077284734470, '提示：目前搜索匹配词句原文。翻译（语义）搜索即将推出。', 'zh-Hans', 'ui_i18n', 'langmap-web:search.hint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642077284734470-8771909635790690', 8771909635790690, 6642077284734470, 0, 'ui_i18n');
-
--- search.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642073469225317, '搜索失败', 'zh-Hans', 'ui_i18n', 'langmap-web:search.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642073469225317-8771929026122151', 8771929026122151, 6642073469225317, 0, 'ui_i18n');
-
--- search.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642031639316449, '最新', 'zh-Hans', 'ui_i18n', 'langmap-web:search.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642031639316449-8771912463566270', 8771912463566270, 6642031639316449, 0, 'ui_i18n');
-
--- search.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642122973189618, '未找到结果', 'zh-Hans', 'ui_i18n', 'langmap-web:search.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642122973189618-8771927555767000', 8771927555767000, 6642122973189618, 0, 'ui_i18n');
-
--- search.placeholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044272242935, '搜索词句…', 'zh-Hans', 'ui_i18n', 'langmap-web:search.placeholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044272242935-8771934172254861', 8771934172254861, 6642044272242935, 0, 'ui_i18n');
-
--- search.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642024763942113, '热门', 'zh-Hans', 'ui_i18n', 'langmap-web:search.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642024763942113-8771957966582874', 8771957966582874, 6642024763942113, 0, 'ui_i18n');
-
--- search.results
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642074798271187, '{count} 个结果', 'zh-Hans', 'ui_i18n', 'langmap-web:search.results', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642074798271187-8772014433488480', 8772014433488480, 6642074798271187, 0, 'ui_i18n');
-
--- search.sort
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642034968095778, '排序', 'zh-Hans', 'ui_i18n', 'langmap-web:search.sort', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642034968095778-8772001210440828', 8772001210440828, 6642034968095778, 0, 'ui_i18n');
-
--- search.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642089756820891, '搜索词句', 'zh-Hans', 'ui_i18n', 'langmap-web:search.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642089756820891-8772000153561666', 8772000153561666, 6642089756820891, 0, 'ui_i18n');
-
--- translate.addLocale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642128338521838, '添加要翻译的语言', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.addLocale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642128338521838-8771973106595188', 8771973106595188, 6642128338521838, 0, 'ui_i18n');
-
--- translate.batchSubmit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642086455717671, '提交 {count} 条翻译', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.batchSubmit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642086455717671-8771943172288619', 8771943172288619, 6642086455717671, 0, 'ui_i18n');
-
--- translate.candidate
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642087702866407, '当前翻译', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.candidate', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642087702866407-8771982470884397', 8771982470884397, 6642087702866407, 0, 'ui_i18n');
-
--- translate.chooseRegistryLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642031484495695, '选择已注册的语言', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.chooseRegistryLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642031484495695-8772018182873778', 8772018182873778, 6642031484495695, 0, 'ui_i18n');
-
--- translate.coverage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044267925848, '翻译覆盖率', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.coverage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044267925848-8772013113555302', 8772013113555302, 6642044267925848, 0, 'ui_i18n');
-
--- translate.displayed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642132218759146, '显示 {count} 条', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.displayed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642132218759146-8772040929892299', 8772040929892299, 6642132218759146, 0, 'ui_i18n');
-
--- translate.eyebrow
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642062953991429, '社区本地化', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.eyebrow', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642062953991429-8771973543137726', 8771973543137726, 6642062953991429, 0, 'ui_i18n');
-
--- translate.inputPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642063470327339, '输入翻译…', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.inputPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642063470327339-8771990724594742', 8771990724594742, 6642063470327339, 0, 'ui_i18n');
-
--- translate.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642087589191004, '无法加载翻译工作台', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642087589191004-8771920552784072', 8771920552784072, 6642087589191004, 0, 'ui_i18n');
-
--- translate.loading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642131738404901, '加载中…', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.loading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642131738404901-8771908386278726', 8771908386278726, 6642131738404901, 0, 'ui_i18n');
-
--- translate.locale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642048000147397, '目标语言', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.locale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642048000147397-8771996866079300', 8771996866079300, 6642048000147397, 0, 'ui_i18n');
-
--- translate.localesFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642097466958424, '无法加载语言列表', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.localesFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642097466958424-8771965827772292', 8771965827772292, 6642097466958424, 0, 'ui_i18n');
-
--- translate.loginNote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642102363560784, '登录后可提交翻译；候选翻译按映射分数排序，无正分候选时使用回退文本。', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.loginNote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642102363560784-8771995706904988', 8771995706904988, 6642102363560784, 0, 'ui_i18n');
-
--- translate.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642071530294532, '未找到匹配文本。', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642071530294532-8771904910396271', 8771904910396271, 6642071530294532, 0, 'ui_i18n');
-
--- translate.preview
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642057933617669, '预览', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.preview', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642057933617669-8771969689937165', 8771969689937165, 6642057933617669, 0, 'ui_i18n');
-
--- translate.reference
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642133450507984, '参考语言', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.reference', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642133450507984-8772009963987850', 8772009963987850, 6642133450507984, 0, 'ui_i18n');
-
--- translate.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642120305360689, '搜索键名或原文…', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642120305360689-8771962647026930', 8771962647026930, 6642120305360689, 0, 'ui_i18n');
-
--- translate.selectLocale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642127357084685, '选择翻译语言', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.selectLocale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642127357084685-8772037474898823', 8772037474898823, 6642127357084685, 0, 'ui_i18n');
-
--- translate.source
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642148275677733, '英文原文', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.source', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642148275677733-8772014752541923', 8772014752541923, 6642148275677733, 0, 'ui_i18n');
-
--- translate.start
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642124861185059, '开始', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.start', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642124861185059-8772036201600543', 8772036201600543, 6642124861185059, 0, 'ui_i18n');
-
--- translate.submitFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642021851191783, '提交失败', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.submitFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642021851191783-8771930781451254', 8771930781451254, 6642021851191783, 0, 'ui_i18n');
-
--- translate.submitMapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642137338923928, '提交映射', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.submitMapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642137338923928-8771938026129323', 8771938026129323, 6642137338923928, 0, 'ui_i18n');
-
--- translate.submitted
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642085585815152, '已提交', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.submitted', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642085585815152-8771906650908176', 8771906650908176, 6642085585815152, 0, 'ui_i18n');
-
--- translate.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642108644210098, '帮助让 LangMap 界面文本更自然、更实用。', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642108644210098-8771968758684575', 8771968758684575, 6642108644210098, 0, 'ui_i18n');
-
--- translate.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642104679747158, '翻译工作台', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642104679747158-8772002773137414', 8772002773137414, 6642104679747158, 0, 'ui_i18n');
-
--- translate.translateKey
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642044160390934, '翻译 {key}', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.translateKey', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642044160390934-8771936438281310', 8771936438281310, 6642044160390934, 0, 'ui_i18n');
-
--- translate.translated
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642078564015755, '已翻译', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.translated', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642078564015755-8771916786083827', 8771916786083827, 6642078564015755, 0, 'ui_i18n');
-
--- translate.translation
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (6642095363145866, '翻译', 'zh-Hans', 'ui_i18n', 'langmap-web:translate.translation', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('6642095363145866-8771951513286657', 8771951513286657, 6642095363145866, 0, 'ui_i18n');
-
--- Locale zh-Hant
--- auth.email
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127323672176916, '電子郵件', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.email', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127323672176916-8771988929111883', 8771988929111883, 5127323672176916, 0, 'ui_i18n');
-
--- auth.haveAccount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127330808040466, '已經有帳號了？', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.haveAccount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127330808040466-8771987324928109', 8771987324928109, 5127330808040466, 0, 'ui_i18n');
-
--- auth.login
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348918769733, '登入', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.login', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348918769733-8771985319534907', 8771985319534907, 5127348918769733, 0, 'ui_i18n');
-
--- auth.noAccount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127337032500718, '還沒有帳號？', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.noAccount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127337032500718-8771920874847316', 8771920874847316, 5127337032500718, 0, 'ui_i18n');
-
--- auth.operationFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127323751663103, '操作失敗', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.operationFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127323751663103-8771934955742921', 8771934955742921, 5127323751663103, 0, 'ui_i18n');
-
--- auth.password
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321548837028, '密碼', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.password', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321548837028-8771993838728081', 8771993838728081, 5127321548837028, 0, 'ui_i18n');
-
--- auth.processing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127434940273956, '處理中…', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.processing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127434940273956-8772001046060388', 8772001046060388, 5127434940273956, 0, 'ui_i18n');
-
--- auth.register
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127380536022303, '建立帳號', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.register', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127380536022303-8771964374844751', 8771964374844751, 5127380536022303, 0, 'ui_i18n');
-
--- auth.username
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127389775119240, '使用者名稱', 'zh-Hant', 'ui_i18n', 'langmap-web:auth.username', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127389775119240-8772029311767367', 8772029311767367, 5127389775119240, 0, 'ui_i18n');
-
--- common.cancel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428739379210, '取消', 'zh-Hant', 'ui_i18n', 'langmap-web:common.cancel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428739379210-8772001703307290', 8772001703307290, 5127428739379210, 0, 'ui_i18n');
-
--- common.close
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127399149304639, '關閉', 'zh-Hant', 'ui_i18n', 'langmap-web:common.close', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127399149304639-8771958345505312', 8771958345505312, 5127399149304639, 0, 'ui_i18n');
-
--- common.language
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:common.language', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771930947571421', 8771930947571421, 5127395378809533, 0, 'ui_i18n');
-
--- common.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:common.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771966685762373', 8771966685762373, 5127395378809533, 0, 'ui_i18n');
-
--- common.loading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424120773993, '載入中…', 'zh-Hant', 'ui_i18n', 'langmap-web:common.loading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424120773993-8771908386278726', 8771908386278726, 5127424120773993, 0, 'ui_i18n');
-
--- common.search
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127326247675675, '搜尋', 'zh-Hant', 'ui_i18n', 'langmap-web:common.search', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127326247675675-8772018337291447', 8772018337291447, 5127326247675675, 0, 'ui_i18n');
-
--- common.submit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127343584574661, '提交', 'zh-Hant', 'ui_i18n', 'langmap-web:common.submit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127343584574661-8771955384790296', 8771955384790296, 5127343584574661, 0, 'ui_i18n');
-
--- components.actualSize
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127373408271576, '實際尺寸 100%', 'zh-Hant', 'ui_i18n', 'langmap-web:components.actualSize', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127373408271576-8771913559728006', 8771913559728006, 5127373408271576, 0, 'ui_i18n');
-
--- components.anonymous
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127354612798556, '匿名', 'zh-Hant', 'ui_i18n', 'langmap-web:components.anonymous', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127354612798556-8771963881461252', 8771963881461252, 5127354612798556, 0, 'ui_i18n');
-
--- components.childNodes
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127411910452997, '{count} 個子節點；點選收合', 'zh-Hant', 'ui_i18n', 'langmap-web:components.childNodes', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127411910452997-8772032837909466', 8772032837909466, 5127411910452997, 0, 'ui_i18n');
-
--- components.cliqueNote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127429206018100, '每條邊皆為可投票的獨立直接對應；低分對應自動收合', 'zh-Hant', 'ui_i18n', 'langmap-web:components.cliqueNote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127429206018100-8772028933737015', 8772028933737015, 5127429206018100, 0, 'ui_i18n');
-
--- components.cliqueTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127413501968188, '待建立的對應圖譜', 'zh-Hant', 'ui_i18n', 'langmap-web:components.cliqueTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127413501968188-8771990687804642', 8771990687804642, 5127413501968188, 0, 'ui_i18n');
-
--- components.closeInfoPanel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127398760176186, '關閉資訊面板', 'zh-Hant', 'ui_i18n', 'langmap-web:components.closeInfoPanel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127398760176186-8771923580873788', 8771923580873788, 5127398760176186, 0, 'ui_i18n');
-
--- components.collapse
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409285094977, '收合', 'zh-Hant', 'ui_i18n', 'langmap-web:components.collapse', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409285094977-8772025115555117', 8772025115555117, 5127409285094977, 0, 'ui_i18n');
-
--- components.collapseBranch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127354344241293, '收合子分支', 'zh-Hant', 'ui_i18n', 'langmap-web:components.collapseBranch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127354344241293-8772021975712328', 8772021975712328, 5127354344241293, 0, 'ui_i18n');
-
--- components.collapseToFirst
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127305289707300, '收合至第一層', 'zh-Hant', 'ui_i18n', 'langmap-web:components.collapseToFirst', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127305289707300-8771963062101045', 8771963062101045, 5127305289707300, 0, 'ui_i18n');
-
--- components.daysAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127362936071700, '{count} 天前', 'zh-Hant', 'ui_i18n', 'langmap-web:components.daysAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127362936071700-8772016085305408', 8772016085305408, 5127362936071700, 0, 'ui_i18n');
-
--- components.depth
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127422625296024, '深度 {depth}', 'zh-Hant', 'ui_i18n', 'langmap-web:components.depth', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127422625296024-8772018587383663', 8772018587383663, 5127422625296024, 0, 'ui_i18n');
-
--- components.directMappingList
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127341828277241, '直接對應詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:components.directMappingList', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127341828277241-8771921679343522', 8771921679343522, 5127341828277241, 0, 'ui_i18n');
-
--- components.downvote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127385631248035, '倒讚', 'zh-Hant', 'ui_i18n', 'langmap-web:components.downvote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127385631248035-8771992127181974', 8771992127181974, 5127385631248035, 0, 'ui_i18n');
-
--- components.edgeCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127320200758021, '{count} 條邊', 'zh-Hant', 'ui_i18n', 'langmap-web:components.edgeCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127320200758021-8771907018302878', 8771907018302878, 5127320200758021, 0, 'ui_i18n');
-
--- components.empty
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127427486652796, '目前沒有資料', 'zh-Hant', 'ui_i18n', 'langmap-web:components.empty', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127427486652796-8772000424294921', 8772000424294921, 5127427486652796, 0, 'ui_i18n');
-
--- components.exitFullscreen
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127339606366818, '退出全螢幕', 'zh-Hant', 'ui_i18n', 'langmap-web:components.exitFullscreen', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127339606366818-8771995527490116', 8771995527490116, 5127339606366818, 0, 'ui_i18n');
-
--- components.expand
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127314771949932, '展開', 'zh-Hant', 'ui_i18n', 'langmap-web:components.expand', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127314771949932-8771957005515059', 8771957005515059, 5127314771949932, 0, 'ui_i18n');
-
--- components.expandAll
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127323731090498, '全部展開', 'zh-Hant', 'ui_i18n', 'langmap-web:components.expandAll', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127323731090498-8772033758268399', 8772033758268399, 5127323731090498, 0, 'ui_i18n');
-
--- components.expandBranch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127375826935204, '展開子分支', 'zh-Hant', 'ui_i18n', 'langmap-web:components.expandBranch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127375826935204-8771937729949713', 8771937729949713, 5127375826935204, 0, 'ui_i18n');
-
--- components.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386696296398, '詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:components.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386696296398-8772028411030279', 8772028411030279, 5127386696296398, 0, 'ui_i18n');
-
--- components.filterLanguages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127328374082923, '篩選語言…', 'zh-Hant', 'ui_i18n', 'langmap-web:components.filterLanguages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127328374082923-8771975185705787', 8771975185705787, 5127328374082923, 0, 'ui_i18n');
-
--- components.fullscreen
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127324976668075, '全螢幕', 'zh-Hant', 'ui_i18n', 'langmap-web:components.fullscreen', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127324976668075-8771984311379866', 8771984311379866, 5127324976668075, 0, 'ui_i18n');
-
--- components.graphLabel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127303258293634, '詞句對應圖譜', 'zh-Hant', 'ui_i18n', 'langmap-web:components.graphLabel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127303258293634-8771940176065576', 8771940176065576, 5127303258293634, 0, 'ui_i18n');
-
--- components.graphLoading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127357829988114, '載入圖譜…', 'zh-Hant', 'ui_i18n', 'langmap-web:components.graphLoading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127357829988114-8771930916265390', 8771930916265390, 5127357829988114, 0, 'ui_i18n');
-
--- components.graphMode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127362727882640, '圖譜模式', 'zh-Hant', 'ui_i18n', 'langmap-web:components.graphMode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127362727882640-8772018055755937', 8772018055755937, 5127362727882640, 0, 'ui_i18n');
-
--- components.graphStats
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127383236550486, '{nodes} 個對應節點 · {edges} 個關係', 'zh-Hant', 'ui_i18n', 'langmap-web:components.graphStats', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127383236550486-8771930566920504', 8771930566920504, 5127383236550486, 0, 'ui_i18n');
-
--- components.graphToolbar
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127303921713076, '圖譜工具列', 'zh-Hant', 'ui_i18n', 'langmap-web:components.graphToolbar', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127303921713076-8771957995007293', 8771957995007293, 5127303921713076, 0, 'ui_i18n');
-
--- components.hierarchyList
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401754811483, '對應階層列表', 'zh-Hant', 'ui_i18n', 'langmap-web:components.hierarchyList', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401754811483-8771972530005685', 8771972530005685, 5127401754811483, 0, 'ui_i18n');
-
--- components.hops
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127352115920652, '跳數', 'zh-Hant', 'ui_i18n', 'langmap-web:components.hops', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127352115920652-8771929108158859', 8771929108158859, 5127352115920652, 0, 'ui_i18n');
-
--- components.hoursAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127430965433435, '{count} 小時前', 'zh-Hant', 'ui_i18n', 'langmap-web:components.hoursAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127430965433435-8771972038859703', 8771972038859703, 5127430965433435, 0, 'ui_i18n');
-
--- components.justNow
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127356044789038, '剛剛', 'zh-Hant', 'ui_i18n', 'langmap-web:components.justNow', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127356044789038-8772006156641051', 8772006156641051, 5127356044789038, 0, 'ui_i18n');
-
--- components.languageLoadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127406946069111, '無法載入語言', 'zh-Hant', 'ui_i18n', 'langmap-web:components.languageLoadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127406946069111-8771907230355366', 8771907230355366, 5127406946069111, 0, 'ui_i18n');
-
--- components.listMode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127369062556426, '列表模式', 'zh-Hant', 'ui_i18n', 'langmap-web:components.listMode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127369062556426-8771978209325624', 8771978209325624, 5127369062556426, 0, 'ui_i18n');
-
--- components.loadMore
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127394507017000, '載入更多', 'zh-Hant', 'ui_i18n', 'langmap-web:components.loadMore', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127394507017000-8771968298248581', 8771968298248581, 5127394507017000, 0, 'ui_i18n');
-
--- components.loadingRelated
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127425613437337, '載入相關詞句中', 'zh-Hant', 'ui_i18n', 'langmap-web:components.loadingRelated', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127425613437337-8771918922470710', 8771918922470710, 5127425613437337, 0, 'ui_i18n');
-
--- components.mapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127426061523738, '對應', 'zh-Hant', 'ui_i18n', 'langmap-web:components.mapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127426061523738-8772009894682686', 8772009894682686, 5127426061523738, 0, 'ui_i18n');
-
--- components.mappingScore
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321981857285, '對應評分', 'zh-Hant', 'ui_i18n', 'langmap-web:components.mappingScore', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321981857285-8772001613332908', 8772001613332908, 5127321981857285, 0, 'ui_i18n');
-
--- components.minutesAgo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127388230651521, '{count} 分鐘前', 'zh-Hant', 'ui_i18n', 'langmap-web:components.minutesAgo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127388230651521-8772029891163450', 8772029891163450, 5127388230651521, 0, 'ui_i18n');
-
--- components.moreActions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127358903104524, '更多操作', 'zh-Hant', 'ui_i18n', 'langmap-web:components.moreActions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127358903104524-8771927265880728', 8771927265880728, 5127358903104524, 0, 'ui_i18n');
-
--- components.moreMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127412964521482, '完整圖譜中還有 {count} 個對應', 'zh-Hant', 'ui_i18n', 'langmap-web:components.moreMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127412964521482-8771978296601845', 8771978296601845, 5127412964521482, 0, 'ui_i18n');
-
--- components.noDirectMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127413889982734, '尚無直接對應', 'zh-Hant', 'ui_i18n', 'langmap-web:components.noDirectMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127413889982734-8771916846886490', 8771916846886490, 5127413889982734, 0, 'ui_i18n');
-
--- components.noExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127340817221837, '找不到相符詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:components.noExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127340817221837-8771950851535873', 8771950851535873, 5127340817221837, 0, 'ui_i18n');
-
--- components.nodeCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127324813258851, '{count} 個節點', 'zh-Hant', 'ui_i18n', 'langmap-web:components.nodeCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127324813258851-8771915754603204', 8771915754603204, 5127324813258851, 0, 'ui_i18n');
-
--- components.nodeInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127372570890390, '節點資訊', 'zh-Hant', 'ui_i18n', 'langmap-web:components.nodeInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127372570890390-8772032217763299', 8772032217763299, 5127372570890390, 0, 'ui_i18n');
-
--- components.otherRelations
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127426289219311, '其他關係', 'zh-Hant', 'ui_i18n', 'langmap-web:components.otherRelations', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127426289219311-8772011775552074', 8772011775552074, 5127426289219311, 0, 'ui_i18n');
-
--- components.relatedExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127427591081550, '相關詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:components.relatedExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127427591081550-8771996275317129', 8771996275317129, 5127427591081550, 0, 'ui_i18n');
-
--- components.relationCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127302236464772, '{count} 個關係', 'zh-Hant', 'ui_i18n', 'langmap-web:components.relationCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127302236464772-8771905570354775', 8771905570354775, 5127302236464772, 0, 'ui_i18n');
-
--- components.removeLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127305347269151, '移除 {code}', 'zh-Hant', 'ui_i18n', 'langmap-web:components.removeLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127305347269151-8771968148353493', 8771968148353493, 5127305347269151, 0, 'ui_i18n');
-
--- components.resetLayout
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127396005384761, '重設版面配置', 'zh-Hant', 'ui_i18n', 'langmap-web:components.resetLayout', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127396005384761-8771923590138278', 8771923590138278, 5127396005384761, 0, 'ui_i18n');
-
--- components.rootNode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127341017166693, '根節點', 'zh-Hant', 'ui_i18n', 'langmap-web:components.rootNode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127341017166693-8771991096471187', 8771991096471187, 5127341017166693, 0, 'ui_i18n');
-
--- components.search
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127326247675675, '搜尋', 'zh-Hant', 'ui_i18n', 'langmap-web:components.search', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127326247675675-8772018337291447', 8772018337291447, 5127326247675675, 0, 'ui_i18n');
-
--- components.searchExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428574434575, '搜尋詞句…', 'zh-Hant', 'ui_i18n', 'langmap-web:components.searchExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428574434575-8771934172254861', 8771934172254861, 5127428574434575, 0, 'ui_i18n');
-
--- components.searching
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127325686593724, '搜尋中…', 'zh-Hant', 'ui_i18n', 'langmap-web:components.searching', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127325686593724-8771951969125148', 8771951969125148, 5127325686593724, 0, 'ui_i18n');
-
--- components.selectNodeHint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127415394078254, '在圖譜中選取節點以檢視詳情', 'zh-Hant', 'ui_i18n', 'langmap-web:components.selectNodeHint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127415394078254-8771969317410200', 8771969317410200, 5127415394078254, 0, 'ui_i18n');
-
--- components.sourcePath
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127311555620129, '來源路徑', 'zh-Hant', 'ui_i18n', 'langmap-web:components.sourcePath', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127311555620129-8771977750841844', 8771977750841844, 5127311555620129, 0, 'ui_i18n');
-
--- components.upvote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127369104864848, '讚', 'zh-Hant', 'ui_i18n', 'langmap-web:components.upvote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127369104864848-8772016238570208', 8772016238570208, 5127369104864848, 0, 'ui_i18n');
-
--- components.viewExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127365362714954, '檢視詞句詳情', 'zh-Hant', 'ui_i18n', 'langmap-web:components.viewExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127365362714954-8771995720429284', 8771995720429284, 5127365362714954, 0, 'ui_i18n');
-
--- components.voteFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127327273013829, '投票失敗，已復原', 'zh-Hant', 'ui_i18n', 'langmap-web:components.voteFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127327273013829-8772020751025198', 8772020751025198, 5127327273013829, 0, 'ui_i18n');
-
--- components.zoomIn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127364775853586, '放大', 'zh-Hant', 'ui_i18n', 'langmap-web:components.zoomIn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127364775853586-8772017398603959', 8772017398603959, 5127364775853586, 0, 'ui_i18n');
-
--- components.zoomOut
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127347621174364, '縮小', 'zh-Hant', 'ui_i18n', 'langmap-web:components.zoomOut', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127347621174364-8772017289371875', 8772017289371875, 5127347621174364, 0, 'ui_i18n');
-
--- contribute.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127397292562184, '+ 新增詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127397292562184-8771945073983212', 8771945073983212, 5127397292562184, 0, 'ui_i18n');
-
--- contribute.completeGraph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127342032578063, '完全圖', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.completeGraph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127342032578063-8771921254303111', 8771921254303111, 5127342032578063, 0, 'ui_i18n');
-
--- contribute.delete
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393104111077, '刪除', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.delete', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393104111077-8771944300238713', 8771944300238713, 5127393104111077, 0, 'ui_i18n');
-
--- contribute.directMappingCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127421487105242, '{count} 個直接對應', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.directMappingCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127421487105242-8771968945113345', 8771968945113345, 5127421487105242, 0, 'ui_i18n');
-
--- contribute.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386696296398, '詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386696296398-8772028411030279', 8772028411030279, 5127386696296398, 0, 'ui_i18n');
-
--- contribute.expressionCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127398239187692, '{count} 個詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.expressionCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127398239187692-8771918589046163', 8771918589046163, 5127398239187692, 0, 'ui_i18n');
-
--- contribute.expressionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127422154374367, '輸入詞句…', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.expressionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127422154374367-8771975160452098', 8771975160452098, 5127422154374367, 0, 'ui_i18n');
-
--- contribute.language
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.language', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771930947571421', 8771930947571421, 5127395378809533, 0, 'ui_i18n');
-
--- contribute.lead
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127334034501573, '提交一組意義相同的詞句。系統會在每對之間建立直接對應。已有詞句會自動關聯，不會重複。', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.lead', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127334034501573-8771938370927027', 8771938370927027, 5127334034501573, 0, 'ui_i18n');
-
--- contribute.minRows
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127366818595734, '至少需要 2 行，每行需填寫語言和詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.minRows', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127366818595734-8771996574983759', 8771996574983759, 5127366818595734, 0, 'ui_i18n');
-
--- contribute.submit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127343584574661, '提交', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.submit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127343584574661-8771955384790296', 8771955384790296, 5127343584574661, 0, 'ui_i18n');
-
--- contribute.submitFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127377900057070, '提交失敗', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.submitFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127377900057070-8771930781451254', 8771930781451254, 5127377900057070, 0, 'ui_i18n');
-
--- contribute.submitting
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127300519001788, '提交中…', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.submitting', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127300519001788-8771996654725718', 8771996654725718, 5127300519001788, 0, 'ui_i18n');
-
--- contribute.tags
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127433562088873, '標籤', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.tags', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127433562088873-8772023049338365', 8772023049338365, 5127433562088873, 0, 'ui_i18n');
-
--- contribute.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127319649845501, '批次提交', 'zh-Hant', 'ui_i18n', 'langmap-web:contribute.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127319649845501-8771967116778370', 8771967116778370, 5127319649845501, 0, 'ui_i18n');
-
--- errors.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127337382702811, '回首頁', 'zh-Hant', 'ui_i18n', 'langmap-web:errors.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127337382702811-8771954914944651', 8771954914944651, 5127337382702811, 0, 'ui_i18n');
-
--- errors.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321894270102, '無法載入', 'zh-Hant', 'ui_i18n', 'langmap-web:errors.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321894270102-8771936602672507', 8771936602672507, 5127321894270102, 0, 'ui_i18n');
-
--- errors.pageMissing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409989981163, '找不到頁面', 'zh-Hant', 'ui_i18n', 'langmap-web:errors.pageMissing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409989981163-8771958158698832', 8771958158698832, 5127409989981163, 0, 'ui_i18n');
-
--- feed.all
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127405921516665, '全部', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.all', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127405921516665-8771912696777795', 8771912696777795, 5127405921516665, 0, 'ui_i18n');
-
--- feed.contributeMapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127406982738348, '提交對應 →', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.contributeMapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127406982738348-8771952067596101', 8771952067596101, 5127406982738348, 0, 'ui_i18n');
-
--- feed.hot
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432503138096, '熱門', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.hot', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432503138096-8771957966582874', 8771957966582874, 5127432503138096, 0, 'ui_i18n');
-
--- feed.mappingsAndExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127414163456360, '對應 + 新詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.mappingsAndExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127414163456360-8771971172552785', 8771971172552785, 5127414163456360, 0, 'ui_i18n');
-
--- feed.missing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127360784678505, '找不到所需內容？', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.missing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127360784678505-8771964553678580', 8771964553678580, 5127360784678505, 0, 'ui_i18n');
-
--- feed.newContributions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401410314681, '新貢獻', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.newContributions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401410314681-8772013263074963', 8772013263074963, 5127401410314681, 0, 'ui_i18n');
-
--- feed.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316933101537, '最新', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316933101537-8771912463566270', 8771912463566270, 5127316933101537, 0, 'ui_i18n');
-
--- feed.popularMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127360616465762, '熱門對應', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.popularMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127360616465762-8771956320455891', 8771956320455891, 5127360616465762, 0, 'ui_i18n');
-
--- feed.ratedThisWeek
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393063341526, '依評分 · 本週', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.ratedThisWeek', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393063341526-8772001941683119', 8772001941683119, 5127393063341526, 0, 'ui_i18n');
-
--- feed.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316881370889, '語意圖的最新脈動——熱門對應與新貢獻。', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316881370889-8771985464043467', 8771985464043467, 5127316881370889, 0, 'ui_i18n');
-
--- feed.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127354044632791, '動態', 'zh-Hant', 'ui_i18n', 'langmap-web:feed.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127354044632791-8771928668652497', 8771928668652497, 5127354044632791, 0, 'ui_i18n');
-
--- handbook.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127303129736814, '新增詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127303129736814-8772033519106127', 8772033519106127, 5127303129736814, 0, 'ui_i18n');
-
--- handbook.addSection
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127330551910207, '新增章節', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.addSection', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127330551910207-8772013343930223', 8772013343930223, 5127330551910207, 0, 'ui_i18n');
-
--- handbook.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127414816170428, '手冊列表', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127414816170428-8771985524903836', 8771985524903836, 5127414816170428, 0, 'ui_i18n');
-
--- handbook.chapter
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127434874633237, '第 {number} 章', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.chapter', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127434874633237-8771974942670538', 8771974942670538, 5127434874633237, 0, 'ui_i18n');
-
--- handbook.closeExpressionInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393964578570, '關閉詞句資訊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.closeExpressionInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393964578570-8771948835977551', 8771948835977551, 5127393964578570, 0, 'ui_i18n');
-
--- handbook.collapsePicker
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409285094977, '收合', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.collapsePicker', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409285094977-8772025115555117', 8772025115555117, 5127409285094977, 0, 'ui_i18n');
-
--- handbook.deleteSection
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127363673457613, '刪除章節', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.deleteSection', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127363673457613-8771922363562335', 8771922363562335, 5127363673457613, 0, 'ui_i18n');
-
--- handbook.edit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401929461774, '編輯手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.edit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401929461774-8771954520730023', 8771954520730023, 5127401929461774, 0, 'ui_i18n');
-
--- handbook.expressionInfo
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127299105086469, '詞句資訊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.expressionInfo', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127299105086469-8771958749403912', 8771958749403912, 5127299105086469, 0, 'ui_i18n');
-
--- handbook.expressionInfoHint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424426329684, '詞句的語言、地區和來源將顯示在此處。', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.expressionInfoHint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424426329684-8771969048222271', 8771969048222271, 5127424426329684, 0, 'ui_i18n');
-
--- handbook.helpful
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127370708607989, '這本手冊有幫助嗎？', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.helpful', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127370708607989-8771919030282571', 8771919030282571, 5127370708607989, 0, 'ui_i18n');
-
--- handbook.inspectorFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127392921577621, '無法載入詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.inspectorFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127392921577621-8772001956145712', 8772001956145712, 5127392921577621, 0, 'ui_i18n');
-
--- handbook.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321894270102, '無法載入', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321894270102-8771936602672507', 8771936602672507, 5127321894270102, 0, 'ui_i18n');
-
--- handbook.locale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.locale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771930947571421', 8771930947571421, 5127395378809533, 0, 'ui_i18n');
-
--- handbook.moveDown
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127359402477186, '下移', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.moveDown', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127359402477186-8772015839426216', 8772015839426216, 5127359402477186, 0, 'ui_i18n');
-
--- handbook.moveSectionDown
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127353143480546, '下移章節', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.moveSectionDown', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127353143480546-8771974741123489', 8771974741123489, 5127353143480546, 0, 'ui_i18n');
-
--- handbook.moveSectionUp
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127338848751984, '上移章節', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.moveSectionUp', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127338848751984-8771974343227837', 8771974343227837, 5127338848751984, 0, 'ui_i18n');
-
--- handbook.moveUp
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127345275319799, '上移', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.moveUp', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127345275319799-8772035822327586', 8772035822327586, 5127345275319799, 0, 'ui_i18n');
-
--- handbook.private
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127390902169908, '私密', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.private', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127390902169908-8771981388316157', 8771981388316157, 5127390902169908, 0, 'ui_i18n');
-
--- handbook.public
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127324637377220, '公開', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.public', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127324637377220-8771978356150928', 8771978356150928, 5127324637377220, 0, 'ui_i18n');
-
--- handbook.publish
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424832020837, '發布', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.publish', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424832020837-8771952311782197', 8771952311782197, 5127424832020837, 0, 'ui_i18n');
-
--- handbook.region
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127315776033294, '地區', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.region', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127315776033294-8771968624126325', 8771968624126325, 5127315776033294, 0, 'ui_i18n');
-
--- handbook.relationsFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127357104677777, '無法載入相關詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.relationsFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127357104677777-8771991960796854', 8771991960796854, 5127357104677777, 0, 'ui_i18n');
-
--- handbook.removeExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127344244042484, '移除 {text}', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.removeExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127344244042484-8771948377233166', 8771948377233166, 5127344244042484, 0, 'ui_i18n');
-
--- handbook.saveDraft
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409309566625, '儲存草稿', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.saveDraft', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409309566625-8771974360984879', 8771974360984879, 5127409309566625, 0, 'ui_i18n');
-
--- handbook.saving
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127381679650516, '儲存中…', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.saving', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127381679650516-8771980391249065', 8771980391249065, 5127381679650516, 0, 'ui_i18n');
-
--- handbook.sectionTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127370285683819, '章節標題', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.sectionTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127370285683819-8771935521942479', 8771935521942479, 5127370285683819, 0, 'ui_i18n');
-
--- handbook.selectExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127418609851462, '選擇詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.selectExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127418609851462-8771975315975664', 8771975315975664, 5127418609851462, 0, 'ui_i18n');
-
--- handbook.source
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127349345736831, '來源', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.source', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127349345736831-8771933750484319', 8771933750484319, 5127349345736831, 0, 'ui_i18n');
-
--- handbook.sourceAi
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348620885631, 'AI', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.sourceAi', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348620885631-8771954789056127', 8771954789056127, 5127348620885631, 0, 'ui_i18n');
-
--- handbook.sourceAuthority
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127362483023363, '權威', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.sourceAuthority', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127362483023363-8772029059057248', 8772029059057248, 5127362483023363, 0, 'ui_i18n');
-
--- handbook.sourceUser
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127407342914147, '使用者', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.sourceUser', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127407342914147-8772034803281550', 8772034803281550, 5127407342914147, 0, 'ui_i18n');
-
--- handbook.titlePlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127431204867938, '手冊標題', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.titlePlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127431204867938-8771918701696347', 8771918701696347, 5127431204867938, 0, 'ui_i18n');
-
--- handbook.toc
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127382797528579, '目錄', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.toc', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127382797528579-8771915172364840', 8771915172364840, 5127382797528579, 0, 'ui_i18n');
-
--- handbook.viewFullGraph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336131397323, '檢視完整關係圖', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.viewFullGraph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336131397323-8771928949232797', 8771928949232797, 5127336131397323, 0, 'ui_i18n');
-
--- handbook.visibility
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127373453236120, '可見性', 'zh-Hant', 'ui_i18n', 'langmap-web:handbook.visibility', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127373453236120-8772029984927123', 8772029984927123, 5127373453236120, 0, 'ui_i18n');
-
--- handbooks.create
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127383589324033, '新增手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.create', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127383589324033-8771984354571011', 8771984354571011, 5127383589324033, 0, 'ui_i18n');
-
--- handbooks.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127406551787969, '無法載入手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127406551787969-8771915400044673', 8771915400044673, 5127406551787969, 0, 'ui_i18n');
-
--- handbooks.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316933101537, '最新', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316933101537-8771912463566270', 8771912463566270, 5127316933101537, 0, 'ui_i18n');
-
--- handbooks.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127360775839668, '找不到手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127360775839668-8772007530341875', 8772007530341875, 5127360775839668, 0, 'ui_i18n');
-
--- handbooks.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432503138096, '熱門', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432503138096-8771957966582874', 8771957966582874, 5127432503138096, 0, 'ui_i18n');
-
--- handbooks.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127319533546475, '搜尋手冊…', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127319533546475-8772031472567985', 8772031472567985, 5127319533546475, 0, 'ui_i18n');
-
--- handbooks.sections
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127405602632112, '章節', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.sections', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127405602632112-8771981869623564', 8771981869623564, 5127405602632112, 0, 'ui_i18n');
-
--- handbooks.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127325826325841, '手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:handbooks.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127325826325841-8771945183617329', 8771945183617329, 5127325826325841, 0, 'ui_i18n');
-
--- languageCreate.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127418202207127, '上一步', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127418202207127-8772024038803789', 8772024038803789, 5127418202207127, 0, 'ui_i18n');
-
--- languageCreate.cancel
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428739379210, '取消', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.cancel', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428739379210-8772001703307290', 8772001703307290, 5127428739379210, 0, 'ui_i18n');
-
--- languageCreate.close
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127399149304639, '關閉', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.close', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127399149304639-8771958345505312', 8771958345505312, 5127399149304639, 0, 'ui_i18n');
-
--- languageCreate.create
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424239724439, '建立語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.create', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424239724439-8771972155504688', 8771972155504688, 5127424239724439, 0, 'ui_i18n');
-
--- languageCreate.createFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127306526842157, '語言建立失敗', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.createFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127306526842157-8772008975730714', 8772008975730714, 5127306526842157, 0, 'ui_i18n');
-
--- languageCreate.creating
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127418771472175, '建立中…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.creating', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127418771472175-8771943301451236', 8771943301451236, 5127418771472175, 0, 'ui_i18n');
-
--- languageCreate.errorDescription
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336171575006, '請輸入描述', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorDescription', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336171575006-8771986788835322', 8771986788835322, 5127336171575006, 0, 'ui_i18n');
-
--- languageCreate.errorGlottolog
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127396955853811, '請選擇 Glottolog 比對或選擇「無比對」', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorGlottolog', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127396955853811-8771982145239141', 8771982145239141, 5127396955853811, 0, 'ui_i18n');
-
--- languageCreate.errorName
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127357418622251, '請輸入語言名稱', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorName', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127357418622251-8771921060819264', 8771921060819264, 5127357418622251, 0, 'ui_i18n');
-
--- languageCreate.errorReason
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386277435953, '請選擇僅限社群建立的原因', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorReason', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386277435953-8771926836463632', 8771926836463632, 5127386277435953, 0, 'ui_i18n');
-
--- languageCreate.errorTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127378882991109, '請輸入語言子標籤以繼續', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.errorTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127378882991109-8772026576042326', 8772026576042326, 5127378882991109, 0, 'ui_i18n');
-
--- languageCreate.glottologCandidates
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127327376928924, '找到 {count} 個候選', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologCandidates', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127327376928924-8771956461019812', 8771956461019812, 5127327376928924, 0, 'ui_i18n');
-
--- languageCreate.glottologChoose
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336372587732, '選擇比對或標示無合適條目', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologChoose', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336372587732-8772033726980358', 8772033726980358, 5127336372587732, 0, 'ui_i18n');
-
--- languageCreate.glottologExactMatch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336574771018, '比對此候選', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologExactMatch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336574771018-8772036217067472', 8772036217067472, 5127336574771018, 0, 'ui_i18n');
-
--- languageCreate.glottologLevelDialect
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127338055921956, '方言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelDialect', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127338055921956-8771959645210043', 8771959645210043, 5127338055921956, 0, 'ui_i18n');
-
--- languageCreate.glottologLevelLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologLevelLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771953851734414', 8771953851734414, 5127395378809533, 0, 'ui_i18n');
-
--- languageCreate.glottologNoMatch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127327695489615, 'Glottolog 無合適條目', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologNoMatch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127327695489615-8771907658003091', 8771907658003091, 5127327695489615, 0, 'ui_i18n');
-
--- languageCreate.glottologSearchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127309160014515, '搜尋 Glottolog…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.glottologSearchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127309160014515-8771972676692740', 8771972676692740, 5127309160014515, 0, 'ui_i18n');
-
--- languageCreate.metadataDescription
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127332014335622, '描述', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataDescription', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127332014335622-8771937301075282', 8771937301075282, 5127332014335622, 0, 'ui_i18n');
-
--- languageCreate.metadataDescriptionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127406419923431, '描述此語言或變體…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataDescriptionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127406419923431-8771929062150956', 8771929062150956, 5127406419923431, 0, 'ui_i18n');
-
--- languageCreate.metadataName
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401083130169, '名稱', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataName', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401083130169-8771913536651859', 8771913536651859, 5127401083130169, 0, 'ui_i18n');
-
--- languageCreate.metadataNameEn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395725283619, '英文名稱', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataNameEn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395725283619-8772035648862723', 8772035648862723, 5127395725283619, 0, 'ui_i18n');
-
--- languageCreate.metadataReason
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127376065500682, '為何此語言未收錄於 Glottolog？', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReason', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127376065500682-8771965397553798', 8771965397553798, 5127376065500682, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonCommunity
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428084200263, '社群特定用法', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonCommunity', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428084200263-8772029121364869', 8772029121364869, 5127428084200263, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonEmerging
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127385068999259, '新興變體', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonEmerging', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127385068999259-8771911763851130', 8771911763851130, 5127385068999259, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonMissing
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127373832153965, 'Glottolog 未收錄', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonMissing', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127373832153965-8772027448793331', 8772027448793331, 5127373832153965, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonOther
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393404276106, '其他', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonOther', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393404276106-8771907717721822', 8771907717721822, 5127393404276106, 0, 'ui_i18n');
-
--- languageCreate.metadataReasonPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432948284566, '選擇原因…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.metadataReasonPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432948284566-8771908744199257', 8771908744199257, 5127432948284566, 0, 'ui_i18n');
-
--- languageCreate.next
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386378586707, '下一步', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.next', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386378586707-8771946058185965', 8771946058185965, 5127386378586707, 0, 'ui_i18n');
-
--- languageCreate.previewCanonicalCode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127391768169041, '標準代碼', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewCanonicalCode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127391768169041-8771986283559204', 8771986283559204, 5127391768169041, 0, 'ui_i18n');
-
--- languageCreate.previewExisting
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127326733972958, '此語言已存在', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewExisting', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127326733972958-8771963047592058', 8771963047592058, 5127326733972958, 0, 'ui_i18n');
-
--- languageCreate.previewExistingAction
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127363115870538, '使用現有語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewExistingAction', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127363115870538-8771911987565882', 8771911987565882, 5127363115870538, 0, 'ui_i18n');
-
--- languageCreate.previewTitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424239724439, '建立語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewTitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424239724439-8771972155504688', 8771972155504688, 5127424239724439, 0, 'ui_i18n');
-
--- languageCreate.previewWarnings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127332114033069, '警告', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.previewWarnings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127332114033069-8771976682274382', 8771976682274382, 5127332114033069, 0, 'ui_i18n');
-
--- languageCreate.provisionalTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127297706246680, '暫時標籤', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.provisionalTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127297706246680-8771969301691665', 8771969301691665, 5127297706246680, 0, 'ui_i18n');
-
--- languageCreate.stepGlottolog
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336938891640, 'Glottolog 比對', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepGlottolog', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336938891640-8771926452848847', 8771926452848847, 5127336938891640, 0, 'ui_i18n');
-
--- languageCreate.stepMetadata
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409985242551, '中繼資料', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepMetadata', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409985242551-8771988865126091', 8771988865126091, 5127409985242551, 0, 'ui_i18n');
-
--- languageCreate.stepPreview
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127375811029713, '預覽並建立', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepPreview', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127375811029713-8772002442315415', 8772002442315415, 5127375811029713, 0, 'ui_i18n');
-
--- languageCreate.stepTag
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127299573860323, '語言標籤', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.stepTag', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127299573860323-8771982332401463', 8771982332401463, 5127299573860323, 0, 'ui_i18n');
-
--- languageCreate.subtagLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771930947571421', 8771930947571421, 5127395378809533, 0, 'ui_i18n');
-
--- languageCreate.subtagRegion
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127315776033294, '地區', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagRegion', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127315776033294-8771968624126325', 8771968624126325, 5127315776033294, 0, 'ui_i18n');
-
--- languageCreate.subtagScript
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127396102912122, '文字', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagScript', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127396102912122-8771976361115614', 8771976361115614, 5127396102912122, 0, 'ui_i18n');
-
--- languageCreate.subtagSearch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127394299020306, '搜尋子標籤…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagSearch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127394299020306-8772015391400398', 8772015391400398, 5127394299020306, 0, 'ui_i18n');
-
--- languageCreate.subtagVariant
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127301556984635, '變體', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.subtagVariant', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127301556984635-8771923711808765', 8771923711808765, 5127301556984635, 0, 'ui_i18n');
-
--- languageCreate.variantRemoved
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127299642411845, '已移除 1 個變體', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.variantRemoved', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127299642411845-8772011217159086', 8772011217159086, 5127299642411845, 0, 'ui_i18n');
-
--- languageCreate.variantsRemoved
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127297749018845, '已移除 {count} 個變體', 'zh-Hant', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127297749018845-8771998528580369', 8771998528580369, 5127297749018845, 0, 'ui_i18n');
-
--- languageDetail.alphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127409120136913, '依字母排序', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127409120136913-8772039352640020', 8772039352640020, 5127409120136913, 0, 'ui_i18n');
-
--- languageDetail.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771966685762373', 8771966685762373, 5127395378809533, 0, 'ui_i18n');
-
--- languageDetail.expressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386696296398, '詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.expressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386696296398-8772004481370898', 8772004481370898, 5127386696296398, 0, 'ui_i18n');
-
--- languageDetail.latest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316933101537, '最新', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.latest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316933101537-8771912463566270', 8771912463566270, 5127316933101537, 0, 'ui_i18n');
-
--- languageDetail.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321894270102, '無法載入', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321894270102-8771936602672507', 8771936602672507, 5127321894270102, 0, 'ui_i18n');
-
--- languageDetail.mapped
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127302636650680, '已對應', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.mapped', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127302636650680-8771947211108180', 8771947211108180, 5127302636650680, 0, 'ui_i18n');
-
--- languageDetail.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127307506165183, '找不到詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127307506165183-8771950851535873', 8771950851535873, 5127307506165183, 0, 'ui_i18n');
-
--- languageDetail.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432503138096, '熱門', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432503138096-8771957966582874', 8771957966582874, 5127432503138096, 0, 'ui_i18n');
-
--- languageDetail.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428574434575, '搜尋詞句…', 'zh-Hant', 'ui_i18n', 'langmap-web:languageDetail.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428574434575-8771934172254861', 8771934172254861, 5127428574434575, 0, 'ui_i18n');
-
--- languagePicker.clear
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127345514774646, '清除選擇', 'zh-Hant', 'ui_i18n', 'langmap-web:languagePicker.clear', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127345514774646-8771904155296746', 8771904155296746, 5127345514774646, 0, 'ui_i18n');
-
--- languagePicker.createLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401028917826, '建立新語言或變體', 'zh-Hant', 'ui_i18n', 'langmap-web:languagePicker.createLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401028917826-8772010209718094', 8772010209718094, 5127401028917826, 0, 'ui_i18n');
-
--- languagePicker.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127392493406626, '無符合語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languagePicker.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127392493406626-8771905467432581', 8771905467432581, 5127392493406626, 0, 'ui_i18n');
-
--- languagePicker.placeholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336744172322, '搜尋語言…', 'zh-Hant', 'ui_i18n', 'langmap-web:languagePicker.placeholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336744172322-8771957308068965', 8771957308068965, 5127336744172322, 0, 'ui_i18n');
-
--- languageSwitcher.browserSuggested
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316013967809, '瀏覽器推薦', 'zh-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.browserSuggested', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316013967809-8771943861429001', 8771943861429001, 5127316013967809, 0, 'ui_i18n');
-
--- languageSwitcher.helpTranslate
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127327890852151, '協助翻譯 LangMap', 'zh-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.helpTranslate', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127327890852151-8771962203854555', 8771962203854555, 5127327890852151, 0, 'ui_i18n');
-
--- languageSwitcher.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127342592583443, '無符合的語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127342592583443-8771905467432581', 8771905467432581, 5127342592583443, 0, 'ui_i18n');
-
--- languageSwitcher.recent
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127356744610830, '最近使用的語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languageSwitcher.recent', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127356744610830-8772017158300851', 8772017158300851, 5127356744610830, 0, 'ui_i18n');
-
--- languagesPage.expressionCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386696296398, '詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.expressionCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386696296398-8772004481370898', 8772004481370898, 5127386696296398, 0, 'ui_i18n');
-
--- languagesPage.languageCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.languageCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771966685762373', 8771966685762373, 5127395378809533, 0, 'ui_i18n');
-
--- languagesPage.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127406946069111, '無法載入語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127406946069111-8771907230355366', 8771907230355366, 5127406946069111, 0, 'ui_i18n');
-
--- languagesPage.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127320598752207, '找不到語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127320598752207-8772015486738705', 8772015486738705, 5127320598752207, 0, 'ui_i18n');
-
--- languagesPage.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336744172322, '搜尋語言…', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336744172322-8771957308068965', 8771957308068965, 5127336744172322, 0, 'ui_i18n');
-
--- languagesPage.sortAlphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127367232105740, 'A–Z', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.sortAlphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127367232105740-8771973400276236', 8771973400276236, 5127367232105740, 0, 'ui_i18n');
-
--- languagesPage.sortCount
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127345311838321, '依數量', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.sortCount', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127345311838321-8771994726877247', 8771994726877247, 5127345311838321, 0, 'ui_i18n');
-
--- languagesPage.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127407612154030, '瀏覽所有語言的詞句與對應關係', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127407612154030-8772027985468400', 8772027985468400, 5127407612154030, 0, 'ui_i18n');
-
--- languagesPage.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:languagesPage.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771966685762373', 8771966685762373, 5127395378809533, 0, 'ui_i18n');
-
--- mapLens.anchor
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127325788569537, '錨點', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.anchor', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127325788569537-8771952725719815', 8771952725719815, 5127325788569537, 0, 'ui_i18n');
-
--- mapLens.back
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127353920450648, '回到對應', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.back', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127353920450648-8771984993053397', 8771984993053397, 5127353920450648, 0, 'ui_i18n');
-
--- mapLens.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127333850393921, '{count} 種語言', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127333850393921-8771995851022194', 8771995851022194, 5127333850393921, 0, 'ui_i18n');
-
--- mapLens.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321894270102, '無法載入', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321894270102-8771936602672507', 8771936602672507, 5127321894270102, 0, 'ui_i18n');
-
--- mapLens.members
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127346707093309, '對應成員', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.members', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127346707093309-8771950928148051', 8771950928148051, 5127346707093309, 0, 'ui_i18n');
-
--- mapLens.noData
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127345917555958, '此概念無地理分佈資料', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.noData', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127345917555958-8771989613412250', 8771989613412250, 5127345917555958, 0, 'ui_i18n');
-
--- mapLens.regions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127339708916683, '{count} 個地區', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.regions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127339708916683-8772012470644251', 8772012470644251, 5127339708916683, 0, 'ui_i18n');
-
--- mapLens.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127370786022020, '概念分佈', 'zh-Hant', 'ui_i18n', 'langmap-web:mapLens.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127370786022020-8771918829802721', 8771918829802721, 5127370786022020, 0, 'ui_i18n');
-
--- mappingDetail.addAndMap
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127328290073417, '新增並建立對應', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addAndMap', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127328290073417-8771969898159421', 8771969898159421, 5127328290073417, 0, 'ui_i18n');
-
--- mappingDetail.addExpression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127303129736814, '新增詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addExpression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127303129736814-8772033519106127', 8772033519106127, 5127303129736814, 0, 'ui_i18n');
-
--- mappingDetail.addFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127357412748672, '無法新增詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.addFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127357412748672-8771908944297462', 8771908944297462, 5127357412748672, 0, 'ui_i18n');
-
--- mappingDetail.adding
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127364153783000, '新增中…', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.adding', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127364153783000-8771928703559647', 8771928703559647, 5127364153783000, 0, 'ui_i18n');
-
--- mappingDetail.authority
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127362483023363, '權威', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.authority', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127362483023363-8772029059057248', 8772029059057248, 5127362483023363, 0, 'ui_i18n');
-
--- mappingDetail.breadcrumb
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127314083101281, '麵包屑', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.breadcrumb', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127314083101281-8772001620797917', 8772001620797917, 5127314083101281, 0, 'ui_i18n');
-
--- mappingDetail.closeQuickAdd
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127368668783181, '關閉快速新增', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.closeQuickAdd', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127368668783181-8771978190877962', 8771978190877962, 5127368668783181, 0, 'ui_i18n');
-
--- mappingDetail.contribute
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348974270666, '貢獻對應', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.contribute', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348974270666-8772005931944793', 8772005931944793, 5127348974270666, 0, 'ui_i18n');
-
--- mappingDetail.direct
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393373329322, '直接對應', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.direct', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393373329322-8771956479287686', 8771956479287686, 5127393373329322, 0, 'ui_i18n');
-
--- mappingDetail.enterRequired
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127423992007254, '請輸入詞句與語言代碼', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.enterRequired', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127423992007254-8771956618196526', 8771956618196526, 5127423992007254, 0, 'ui_i18n');
-
--- mappingDetail.expression
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127386696296398, '詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.expression', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127386696296398-8772028411030279', 8772028411030279, 5127386696296398, 0, 'ui_i18n');
-
--- mappingDetail.expressionPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127422154374367, '輸入詞句…', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.expressionPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127422154374367-8771952819511586', 8771952819511586, 5127422154374367, 0, 'ui_i18n');
-
--- mappingDetail.graph
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127332060219017, '圖譜', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.graph', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127332060219017-8771971766539087', 8771971766539087, 5127332060219017, 0, 'ui_i18n');
-
--- mappingDetail.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127389164030760, '首頁', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127389164030760-8771987694898855', 8771987694898855, 5127389164030760, 0, 'ui_i18n');
-
--- mappingDetail.hops
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127352115920652, '跳數', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.hops', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127352115920652-8771987564932373', 8771987564932373, 5127352115920652, 0, 'ui_i18n');
-
--- mappingDetail.indirect
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127341692916608, '間接', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.indirect', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127341692916608-8772028520330484', 8772028520330484, 5127341692916608, 0, 'ui_i18n');
-
--- mappingDetail.languageCode
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316601222852, '語言代碼', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.languageCode', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316601222852-8771920539132885', 8771920539132885, 5127316601222852, 0, 'ui_i18n');
-
--- mappingDetail.languageCodePlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127329243205963, '例如 en / zh-Hant', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.languageCodePlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127329243205963-8771919700012927', 8771919700012927, 5127329243205963, 0, 'ui_i18n');
-
--- mappingDetail.list
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127387876637869, '列表', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.list', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127387876637869-8771992537520761', 8771992537520761, 5127387876637869, 0, 'ui_i18n');
-
--- mappingDetail.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321894270102, '無法載入', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321894270102-8771936602672507', 8771936602672507, 5127321894270102, 0, 'ui_i18n');
-
--- mappingDetail.mappingSet
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127396584597528, '對應集合', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.mappingSet', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127396584597528-8772011172535505', 8772011172535505, 5127396584597528, 0, 'ui_i18n');
-
--- mappingDetail.noMappings
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401537819350, '尚無對應', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.noMappings', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401537819350-8772036040577861', 8772036040577861, 5127401537819350, 0, 'ui_i18n');
-
--- mappingDetail.optional
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127327325514982, '選填', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.optional', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127327325514982-8771986434294618', 8771986434294618, 5127327325514982, 0, 'ui_i18n');
-
--- mappingDetail.quickAdd
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127305299939302, '快速新增詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.quickAdd', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127305299939302-8772035320845087', 8772035320845087, 5127305299939302, 0, 'ui_i18n');
-
--- mappingDetail.quickAddLead
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127304051485505, '新增詞句並直接對應到目前詞句。', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.quickAddLead', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127304051485505-8771923205204397', 8771923205204397, 5127304051485505, 0, 'ui_i18n');
-
--- mappingDetail.region
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127315776033294, '地區', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.region', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127315776033294-8771968624126325', 8771968624126325, 5127315776033294, 0, 'ui_i18n');
-
--- mappingDetail.user
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127407342914147, '使用者', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.user', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127407342914147-8772034803281550', 8772034803281550, 5127407342914147, 0, 'ui_i18n');
-
--- mappingDetail.viewMap
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127350190805617, '在地圖上檢視此概念', 'zh-Hant', 'ui_i18n', 'langmap-web:mappingDetail.viewMap', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127350190805617-8772021818623523', 8772021818623523, 5127350190805617, 0, 'ui_i18n');
-
--- nav.closeMenu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127403267666151, '關閉選單', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.closeMenu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127403267666151-8772008345770010', 8772008345770010, 5127403267666151, 0, 'ui_i18n');
-
--- nav.contribute
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127368640606434, '貢獻', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.contribute', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127368640606434-8772022393103823', 8772022393103823, 5127368640606434, 0, 'ui_i18n');
-
--- nav.handbooks
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127325826325841, '手冊', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.handbooks', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127325826325841-8771945183617329', 8771945183617329, 5127325826325841, 0, 'ui_i18n');
-
--- nav.home
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127389164030760, '首頁', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.home', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127389164030760-8771987694898855', 8771987694898855, 5127389164030760, 0, 'ui_i18n');
-
--- nav.languages
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127395378809533, '語言', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.languages', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127395378809533-8771966685762373', 8771966685762373, 5127395378809533, 0, 'ui_i18n');
-
--- nav.menu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127345595159729, '選單', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.menu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127345595159729-8771933905283078', 8771933905283078, 5127345595159729, 0, 'ui_i18n');
-
--- nav.openMenu
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127318839016209, '開啟選單', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.openMenu', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127318839016209-8771988489117883', 8771988489117883, 5127318839016209, 0, 'ui_i18n');
-
--- nav.searchExpressions
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127329900720419, '搜尋詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.searchExpressions', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127329900720419-8772000153561666', 8772000153561666, 5127329900720419, 0, 'ui_i18n');
-
--- nav.signIn
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348918769733, '登入', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.signIn', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348918769733-8771985319534907', 8771985319534907, 5127348918769733, 0, 'ui_i18n');
-
--- nav.signOut
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127418242438965, '登出', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.signOut', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127418242438965-8771987956311474', 8771987956311474, 5127418242438965, 0, 'ui_i18n');
-
--- nav.submitSearch
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127321870233496, '送出搜尋', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.submitSearch', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127321870233496-8772033727162136', 8772033727162136, 5127321870233496, 0, 'ui_i18n');
-
--- nav.switchLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127313955227942, '切換介面語言', 'zh-Hant', 'ui_i18n', 'langmap-web:nav.switchLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127313955227942-8771905685377287', 8771905685377287, 5127313955227942, 0, 'ui_i18n');
-
--- search.alphabetical
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127320410720783, '依字母順序', 'zh-Hant', 'ui_i18n', 'langmap-web:search.alphabetical', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127320410720783-8772039352640020', 8772039352640020, 5127320410720783, 0, 'ui_i18n');
-
--- search.hint
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127336447386655, '提示：目前搜尋比對詞句原文。語意搜尋即將推出。', 'zh-Hant', 'ui_i18n', 'langmap-web:search.hint', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127336447386655-8771909635790690', 8771909635790690, 5127336447386655, 0, 'ui_i18n');
-
--- search.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127384545702382, '搜尋失敗', 'zh-Hant', 'ui_i18n', 'langmap-web:search.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127384545702382-8771929026122151', 8771929026122151, 5127384545702382, 0, 'ui_i18n');
-
--- search.newest
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127316933101537, '最新', 'zh-Hant', 'ui_i18n', 'langmap-web:search.newest', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127316933101537-8771912463566270', 8771912463566270, 5127316933101537, 0, 'ui_i18n');
-
--- search.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127338185744753, '找不到結果', 'zh-Hant', 'ui_i18n', 'langmap-web:search.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127338185744753-8771927555767000', 8771927555767000, 5127338185744753, 0, 'ui_i18n');
-
--- search.placeholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127428574434575, '搜尋詞句…', 'zh-Hant', 'ui_i18n', 'langmap-web:search.placeholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127428574434575-8771934172254861', 8771934172254861, 5127428574434575, 0, 'ui_i18n');
-
--- search.popular
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432503138096, '熱門', 'zh-Hant', 'ui_i18n', 'langmap-web:search.popular', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432503138096-8771957966582874', 8771957966582874, 5127432503138096, 0, 'ui_i18n');
-
--- search.results
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127311127495684, '{count} 個結果', 'zh-Hant', 'ui_i18n', 'langmap-web:search.results', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127311127495684-8772014433488480', 8772014433488480, 5127311127495684, 0, 'ui_i18n');
-
--- search.sort
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127320261880866, '排序', 'zh-Hant', 'ui_i18n', 'langmap-web:search.sort', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127320261880866-8772001210440828', 8772001210440828, 5127320261880866, 0, 'ui_i18n');
-
--- search.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127329900720419, '搜尋詞句', 'zh-Hant', 'ui_i18n', 'langmap-web:search.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127329900720419-8772000153561666', 8772000153561666, 5127329900720419, 0, 'ui_i18n');
-
--- translate.addLocale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127410440417596, '新增要翻譯的語言', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.addLocale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127410440417596-8771973106595188', 8771973106595188, 5127410440417596, 0, 'ui_i18n');
-
--- translate.batchSubmit
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127394605177341, '提交 {count} 筆翻譯', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.batchSubmit', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127394605177341-8771943172288619', 8771943172288619, 5127394605177341, 0, 'ui_i18n');
-
--- translate.candidate
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348097517782, '目前翻譯', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.candidate', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348097517782-8771982470884397', 8771982470884397, 5127348097517782, 0, 'ui_i18n');
-
--- translate.chooseRegistryLanguage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127342048278398, '選擇已註冊的語言', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.chooseRegistryLanguage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127342048278398-8772018182873778', 8772018182873778, 5127342048278398, 0, 'ui_i18n');
-
--- translate.coverage
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127431614850202, '翻譯涵蓋率', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.coverage', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127431614850202-8772013113555302', 8772013113555302, 5127431614850202, 0, 'ui_i18n');
-
--- translate.displayed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127378811419550, '顯示 {count} 筆', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.displayed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127378811419550-8772040929892299', 8772040929892299, 5127378811419550, 0, 'ui_i18n');
-
--- translate.eyebrow
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127358508397472, '社群本地化', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.eyebrow', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127358508397472-8771973543137726', 8771973543137726, 5127358508397472, 0, 'ui_i18n');
-
--- translate.inputPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127414657751069, '輸入翻譯…', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.inputPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127414657751069-8771990724594742', 8771990724594742, 5127414657751069, 0, 'ui_i18n');
-
--- translate.loadFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127299944318146, '無法載入翻譯工作台', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.loadFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127299944318146-8771920552784072', 8771920552784072, 5127299944318146, 0, 'ui_i18n');
-
--- translate.loading
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127424120773993, '載入中…', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.loading', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127424120773993-8771908386278726', 8771908386278726, 5127424120773993, 0, 'ui_i18n');
-
--- translate.locale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348663027096, '目標語言', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.locale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348663027096-8771996866079300', 8771996866079300, 5127348663027096, 0, 'ui_i18n');
-
--- translate.localesFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127382465469228, '無法載入語言列表', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.localesFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127382465469228-8771965827772292', 8771965827772292, 5127382465469228, 0, 'ui_i18n');
-
--- translate.loginNote
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127388180907309, '登入後可提交翻譯；候選翻譯依對應分數排序，無正分候選時使用備用文字。', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.loginNote', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127388180907309-8771995706904988', 8771995706904988, 5127388180907309, 0, 'ui_i18n');
-
--- translate.noResults
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127351988455630, '找不到相符文字。', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.noResults', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127351988455630-8771904910396271', 8771904910396271, 5127351988455630, 0, 'ui_i18n');
-
--- translate.preview
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127432080397186, '預覽', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.preview', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127432080397186-8771969689937165', 8771969689937165, 5127432080397186, 0, 'ui_i18n');
-
--- translate.reference
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127339140798464, '參考語言', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.reference', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127339140798464-8772009963987850', 8772009963987850, 5127339140798464, 0, 'ui_i18n');
-
--- translate.searchPlaceholder
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127420539926969, '搜尋鍵名或原文…', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.searchPlaceholder', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127420539926969-8771962647026930', 8771962647026930, 5127420539926969, 0, 'ui_i18n');
-
--- translate.selectLocale
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127349462449483, '選擇翻譯語言', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.selectLocale', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127349462449483-8772037474898823', 8772037474898823, 5127349462449483, 0, 'ui_i18n');
-
--- translate.source
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127433569462821, '英文原文', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.source', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127433569462821-8772014752541923', 8772014752541923, 5127433569462821, 0, 'ui_i18n');
-
--- translate.start
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127392941268920, '開始', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.start', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127392941268920-8772036201600543', 8772036201600543, 5127392941268920, 0, 'ui_i18n');
-
--- translate.submitFailed
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127377900057070, '提交失敗', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.submitFailed', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127377900057070-8771930781451254', 8771930781451254, 5127377900057070, 0, 'ui_i18n');
-
--- translate.submitMapping
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127348787423001, '提交對應', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.submitMapping', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127348787423001-8771938026129323', 8771938026129323, 5127348787423001, 0, 'ui_i18n');
-
--- translate.submitted
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127370879600240, '已提交', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.submitted', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127370879600240-8771906650908176', 8771906650908176, 5127370879600240, 0, 'ui_i18n');
-
--- translate.subtitle
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127319512300712, '幫助讓 LangMap 介面文字更自然、更實用。', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.subtitle', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127319512300712-8771968758684575', 8771968758684575, 5127319512300712, 0, 'ui_i18n');
-
--- translate.title
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127368254100335, '翻譯工作台', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.title', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127368254100335-8772002773137414', 8772002773137414, 5127368254100335, 0, 'ui_i18n');
-
--- translate.translateKey
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127393508132181, '翻譯 {key}', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.translateKey', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127393508132181-8771936438281310', 8771936438281310, 5127393508132181, 0, 'ui_i18n');
-
--- translate.translated
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127401344814638, '已翻譯', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.translated', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127401344814638-8771916786083827', 8771916786083827, 5127401344814638, 0, 'ui_i18n');
-
--- translate.translation
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
-VALUES (5127351365330507, '翻譯', 'zh-Hant', 'ui_i18n', 'langmap-web:translate.translation', 'pending');
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('5127351365330507-8771951513286657', 8771951513286657, 5127351365330507, 0, 'ui_i18n');
 
 -- Done

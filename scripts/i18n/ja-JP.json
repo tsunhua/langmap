@@ -208,7 +208,7 @@
   "mappingDetail.closeQuickAdd": "クイック追加を閉じる",
   "mappingDetail.quickAddLead": "表現を追加し、現在の表現に直接マップします。",
   "mappingDetail.languageCode": "言語コード",
-  "mappingDetail.languageCodePlaceholder": "例：en / zh-Hant",
+  "mappingDetail.languageCodePlaceholder": "例：en / cmn-Hant",
   "mappingDetail.region": "地域",
   "mappingDetail.optional": "任意",
   "mappingDetail.expression": "表現",

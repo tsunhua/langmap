@@ -61,12 +61,12 @@ class GenerateBundleTests(unittest.TestCase):
         locale_dir = root / "scripts" / "i18n"
         locale_dir.mkdir(parents=True, exist_ok=True)
         locales = {
-            "zh-Hans": {
+            "cmn-Hans": {
                 "auth.noAccount": "还没有账号？",
                 "common.search": "搜索",
                 "search.hint": "L'été 即将到来",
             },
-            "zh-Hant": {
+            "cmn-Hant": {
                 "auth.noAccount": "還沒有帳號？",
                 "common.search": "搜尋",
                 "search.hint": "L'été 即將到來",
@@ -104,7 +104,7 @@ class GenerateBundleTests(unittest.TestCase):
             "--output-dir",
             str(output_dir),
         ]
-        for code in ("zh-Hant", "ja", "es", "zh-Hans"):
+        for code in ("cmn-Hant", "ja", "es", "cmn-Hans"):
             args.extend(["--locale", f"{code}={locale_paths[code]}"])
         return subprocess.run(
             args,
@@ -179,8 +179,8 @@ class GenerateBundleTests(unittest.TestCase):
             "INSERT INTO languages (code, name, direction) VALUES (?, ?, ?)",
             [
                 ("en", "English", "ltr"),
-                ("zh-Hans", "简体中文", "ltr"),
-                ("zh-Hant", "繁體中文", "ltr"),
+                ("cmn-Hans", "华语", "ltr"),
+                ("cmn-Hant", "華語", "ltr"),
                 ("es", "Español", "ltr"),
                 ("ja", "日本語", "ltr"),
             ],
@@ -213,7 +213,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(manifest["ownership_scope"], "managed-system-ui")
             self.assertEqual(
                 manifest["locale_codes"],
-                ["en", "es", "ja", "zh-Hans", "zh-Hant"],
+                ["cmn-Hans", "cmn-Hant", "en", "es", "ja"],
             )
             self.assertEqual(
                 manifest["counts"],
@@ -364,13 +364,13 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"cmn-Hant={locale_paths['cmn-Hant']}",
                     f"ja={locale_paths['ja']}",
                     f"es={locale_paths['es']}",
                 ],
             )
             self.assertNotEqual(missing_result.returncode, 0)
-            self.assertIn("zh-Hans", missing_result.stderr)
+            self.assertIn("cmn-Hans", missing_result.stderr)
 
             extra_path = temp_root / "scripts" / "i18n" / "fr-FR.json"
             extra_path.write_text(json.dumps({"common.search": "Chercher"}, ensure_ascii=False), encoding="utf-8")
@@ -378,10 +378,10 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"cmn-Hant={locale_paths['cmn-Hant']}",
                     f"ja={locale_paths['ja']}",
                     f"es={locale_paths['es']}",
-                    f"zh-Hans={locale_paths['zh-Hans']}",
+                    f"cmn-Hans={locale_paths['cmn-Hans']}",
                     f"fr-FR={extra_path}",
                 ],
             )
@@ -400,10 +400,10 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"cmn-Hant={locale_paths['cmn-Hant']}",
                     f"ja={locale_paths['ja']}",
                     f"es={locale_paths['es']}",
-                    f"zh-Hans={locale_paths['zh-Hans']}",
+                    f"cmn-Hans={locale_paths['cmn-Hans']}",
                     f"es={locale_paths['es']}",
                 ],
             )

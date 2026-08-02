@@ -208,7 +208,7 @@
   "mappingDetail.closeQuickAdd": "Cerrar adición rápida",
   "mappingDetail.quickAddLead": "Añade una expresión y relaciónala directamente con la expresión actual.",
   "mappingDetail.languageCode": "Código de idioma",
-  "mappingDetail.languageCodePlaceholder": "ej. en / zh-Hant",
+  "mappingDetail.languageCodePlaceholder": "ej. en / cmn-Hant",
   "mappingDetail.region": "Región",
   "mappingDetail.optional": "Opcional",
   "mappingDetail.expression": "Expresión",
