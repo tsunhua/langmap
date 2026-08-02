@@ -8,9 +8,9 @@ const globalI18n = i18n.global as unknown as { locale: { value: string } }
 vi.mock('@/api/localization', () => ({
   listUiLocales: vi.fn().mockResolvedValue([
     { code: 'en', name: 'English', native_name: 'English', status: 'active' },
-    { code: 'zh-Hans', name: 'Simplified Chinese', native_name: '简体中文', status: 'active' },
+    { code: 'cmn-Hans', name: 'Mandarin Chinese (Simplified)', native_name: '华语', status: 'active' },
   ]),
-  getUiMessages: vi.fn().mockResolvedValue({ locale: 'zh-Hans', messages: {} }),
+  getUiMessages: vi.fn().mockResolvedValue({ locale: 'cmn-Hans', messages: {} }),
 }))
 
 describe('localization store', () => {
@@ -30,22 +30,22 @@ describe('localization store', () => {
   })
 
   it('restores the selected interface language after loading locales', async () => {
-    localStorage.setItem('langmap.locale', 'zh-Hans')
+    localStorage.setItem('langmap.locale', 'cmn-Hans')
 
     const store = useLocalizationStore()
     await store.loadLocales()
 
-    expect(store.locale).toBe('zh-Hans')
-    expect(globalI18n.locale.value).toBe('zh-Hans')
-    expect(document.documentElement.lang).toBe('zh-Hans')
+    expect(store.locale).toBe('cmn-Hans')
+    expect(globalI18n.locale.value).toBe('cmn-Hans')
+    expect(document.documentElement.lang).toBe('cmn-Hans')
   })
 
   it('persists the selected interface language for the next page load', async () => {
     const store = useLocalizationStore()
     await store.loadLocales()
 
-    await store.setLocale('zh-Hans')
+    await store.setLocale('cmn-Hans')
 
-    expect(localStorage.getItem('langmap.locale')).toBe('zh-Hans')
+    expect(localStorage.getItem('langmap.locale')).toBe('cmn-Hans')
   })
 })

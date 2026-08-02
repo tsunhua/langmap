@@ -105,10 +105,10 @@ describe('TranslateWorkbench language picker integration', () => {
     await wrapper.vm.$nextTick()
 
     const pickerInput = wrapper.get('.stub-picker input.picker-input')
-    await pickerInput.setValue('zh-Hans-SG')
+    await pickerInput.setValue('cmn-Hans-SG')
     await wrapper.vm.$nextTick()
 
-    expect(mockPush).toHaveBeenCalledWith('/translate/zh-Hans-SG')
+    expect(mockPush).toHaveBeenCalledWith('/translate/cmn-Hans-SG')
   })
 
   it('does not replace reference locale when selecting a new target', async () => {

@@ -57,10 +57,10 @@ describe('Contribute page with LanguagePicker', () => {
     const wrapper = mountPage()
     const pickerInputs = wrapper.findAll('.stub-picker input.picker-input')
     await pickerInputs[0].setValue('yue-Hant-CN-x-hegusan')
-    await pickerInputs[1].setValue('zh-Hans')
+    await pickerInputs[1].setValue('cmn-Hans')
 
     expect((wrapper.vm as any).rows[0].lang).toBe('yue-Hant-CN-x-hegusan')
-    expect((wrapper.vm as any).rows[1].lang).toBe('zh-Hans')
+    expect((wrapper.vm as any).rows[1].lang).toBe('cmn-Hans')
   })
 
   it('submits canonical language codes from picker, not free-text', async () => {
@@ -69,7 +69,7 @@ describe('Contribute page with LanguagePicker', () => {
 
     const pickerInputs = wrapper.findAll('.stub-picker input.picker-input')
     await pickerInputs[0].setValue('yue-Hant-CN-x-hegusan')
-    await pickerInputs[1].setValue('zh-Hans')
+    await pickerInputs[1].setValue('cmn-Hans')
 
     const textInputs = wrapper.findAll('input.ex-text')
     await textInputs[0].setValue('hello')
@@ -80,7 +80,7 @@ describe('Contribute page with LanguagePicker', () => {
     expect(api.post).toHaveBeenCalledWith('/contributions/batch', {
       expressions: expect.arrayContaining([
         expect.objectContaining({ lang: 'yue-Hant-CN-x-hegusan' }),
-        expect.objectContaining({ lang: 'zh-Hans' }),
+        expect.objectContaining({ lang: 'cmn-Hans' }),
       ]),
     })
   })
