@@ -22,6 +22,11 @@ export function resolveLocale(input: string | null | undefined, available: reado
   if (exact) return exact
   try {
     const canonical = Intl.getCanonicalLocales(value)[0]
+    const alias = mandarinAlias(canonical)
+    if (alias) {
+      const aliased = available.find(code => code.toLowerCase() === alias.toLowerCase())
+      if (aliased) return aliased
+    }
     for (const candidate of localeFallbackChain(canonical)) {
       const availableCode = available.find(code => code.toLowerCase() === candidate.toLowerCase())
       if (availableCode) return availableCode
@@ -30,6 +35,32 @@ export function resolveLocale(input: string | null | undefined, available: reado
   } catch {
     return DEFAULT_LOCALE
   }
+}
+
+/**
+ * Browsers only ever send the zh macrolanguage, never cmn, so inbound tags need
+ * mapping onto the precise Mandarin locales or Chinese users fall back to English.
+ */
+const LEGACY_MANDARIN_ALIASES: Record<string, string> = {
+  'zh': 'cmn-Hans',
+  'zh-hans': 'cmn-Hans',
+  'zh-cn': 'cmn-Hans',
+  'zh-sg': 'cmn-Hans',
+  'zh-my': 'cmn-Hans',
+  'zh-hant': 'cmn-Hant',
+  'zh-tw': 'cmn-Hant',
+  'zh-hk': 'cmn-Hant',
+  'zh-mo': 'cmn-Hant',
+}
+
+function mandarinAlias(locale: string): string | null {
+  const lower = locale.toLowerCase()
+  if (!lower.startsWith('zh')) return null
+  for (const candidate of localeFallbackChain(lower)) {
+    const alias = LEGACY_MANDARIN_ALIASES[candidate]
+    if (alias) return alias
+  }
+  return null
 }
 
 export function localeFallbackChain(locale: string): string[] {
