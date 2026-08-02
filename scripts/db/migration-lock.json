@@ -79,6 +79,12 @@
       "filename": "0014_use_base_english_ui_locale.sql",
       "size": 754,
       "sha256": "73612eff095aaf5705bb7dc0629fcf575bd55bc7a34b22892138cb619e76b76f"
+    },
+    {
+      "sequence": 15,
+      "filename": "0015_migrate_mandarin_content_tags.sql",
+      "size": 5963,
+      "sha256": "75b26eb1c31d04ba3e80ca8a2a7eb4eeea0e376bd7ecac012549e7ce8b6c36f7"
     }
   ]
 }

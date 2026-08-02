@@ -400,15 +400,28 @@ picker stops showing 简体中文/繁體中文 for what is really Mandarin."
 
 本任務只改本地 D1 狀態，不產生 commit。`.wrangler/` 是本地狀態，不進版控。
 
-- [ ] **Step 1: 套用 migration**
+- [x] **Step 1: 套用 migration**
+
+**先備份，再用 drop-FTS 手術式套用（`sqlite3` 直載）**。本檔原註記「`wrangler d1 migrations apply` 走 D1 引擎，不受 FTS 阻擋」是**錯的**：wrangler **本地** miniflare D1 也擋 FTS 虛擬表寫入（`SQLITE_AUTH`，trusted_schema 限制），`0015` 的 `UPDATE expressions` 經 `expressions_au` 觸發器寫入 `expressions_fts` 會失敗。`--remote` 才不受限，所以此流程只影響本地。
 
 ```bash
-cd backend && npm run db:migrate:local 2>&1 | tail -15
+export DB="./backend/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/bd307851d5b3a26cc62a7676aaddf233be3dd42df75be4ee22cccb6a574322c2.sqlite"
+cp "$DB" /tmp/langmap-pre-0015-backup.sqlite
+sqlite3 "$DB" "DROP TRIGGER IF EXISTS expressions_ai; DROP TRIGGER IF EXISTS expressions_ad; DROP TRIGGER IF EXISTS expressions_au; DROP TABLE IF EXISTS expressions_fts;"
+sqlite3 "$DB" < backend/migrations/0015_migrate_mandarin_content_tags.sql   # exit=0
+sqlite3 "$DB" "CREATE VIRTUAL TABLE IF NOT EXISTS expressions_fts USING fts5(text, content='expressions', content_rowid='id', tokenize='unicode61');
+CREATE TRIGGER expressions_ai AFTER INSERT ON expressions BEGIN INSERT INTO expressions_fts(rowid, text) VALUES (new.id, new.text); END;
+CREATE TRIGGER expressions_ad AFTER DELETE ON expressions BEGIN INSERT INTO expressions_fts(expressions_fts, rowid, text) VALUES ('delete', old.id, old.text); END;
+CREATE TRIGGER expressions_au AFTER UPDATE ON expressions BEGIN INSERT INTO expressions_fts(expressions_fts, rowid, text) VALUES ('delete', old.id, old.text); INSERT INTO expressions_fts(rowid, text) VALUES (new.id, new.text); END;
+INSERT INTO expressions_fts(rowid, text) SELECT id, text FROM expressions;"
+sqlite3 "$DB" "INSERT INTO d1_migrations (name) VALUES ('0015_migrate_mandarin_content_tags.sql');"
 ```
 
-預期：`0015_migrate_mandarin_content_tags.sql` 顯示為已套用。目前最新為 `0014`，故只會執行 `0015` 一支。
+此模式與 `scripts/v2/migrate.sh` 的 `drop_fts`/`rebuild_fts` 一致（該腳本第 145-158 行）。`0015` 只改 `language_code`，FTS 只存 `text`，故 drop 期間的更新不影響索引內容；重建時重新 populate。
 
-**若改用 `sqlite3` CLI 直接灌入 SQL 檔，必須加 `-cmd "PRAGMA trusted_schema=ON;"`**，否則 `expressions_au` 觸發器寫入 `expressions_fts` 虛擬表會被拒絕（`unsafe use of virtual table`），造成半套用狀態。這是 CLI 的預設安全限制，非 migration 缺陷 —— 在未套用任何 migration 的乾淨副本上，單純 `UPDATE expressions SET text = text` 也會同樣報錯。`wrangler d1 migrations apply` 走 D1 引擎，不受此限制。同一個 pragma 也適用於下一步的 registry SQL。
+**不要走 `manage.sh local rebuild`**：重建流程（`scripts/db/lib/local.py:59-62`）只載入 schema + registry + system-ui，**會清空全部 expressions**（1319 列），且 `scripts/v2/v2-data.sql` 內是未正規化的 `zh-TW`/`zh-CN` 舊碼，無法還原當前正規化狀態。
+
+`manage.sh local verify` 的 languages 計數 mismatch（65 vs 77）與孤兒語言為 **0015 前即存在**（v2-data.sql 遺留的 `en-x-*`、`fa`、`mn-*`、`und` 等），與本次遷移無關；translation mappings 與 active locale mismatch 則在 Task 7 重新產製 system-ui artifacts 後清除。
 
 - [ ] **Step 2: 套用 registry SQL**
 
