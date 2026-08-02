@@ -15,8 +15,8 @@
     {"code": "nan-Hans-x-chao1238", "name": "潮州话", "name_en": "Chaozhou (Simplified)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Hant-x-chao1238", "name": "潮州話", "name_en": "Chaozhou (Traditional)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-x-chao1238", "name": "Tiê-chiu-uē", "name_en": "Chaozhou (Latin)", "glottocode": "chao1238", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "nan-Latn-TW-tailo", "name": "臺灣台語（臺羅）", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "nan-Latn-TW-pehoeji", "name": "臺灣台語（白話字）", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Latn-TW-tailo", "name": "Tâi-uân Uē", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
+    {"code": "nan-Latn-TW-pehoeji", "name": "Tâi-oân Ōe", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "zh-Hans", "name": "简体中文", "name_en": "Chinese (Simplified)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
     {"code": "zh-Hant", "name": "繁體中文", "name_en": "Chinese (Traditional)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
     {"code": "ar", "name": "العربية", "name_en": "Arabic", "glottocode": "stan1318", "origin": "seed", "reason": "major-world-language"},
@@ -47,14 +47,14 @@
     ,{"code": "yue-Hans", "name": "粤语", "name_en": "Cantonese (Simplified)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "hsn-Hant", "name": "湘語", "name_en": "Xiang Chinese (Traditional)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "hsn-Hans", "name": "湘语", "name_en": "Xiang Chinese (Simplified)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hak-Hant", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Traditional)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hak-Hans", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Simplified)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "cdo-Hant", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Traditional)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "cdo-Hans", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Simplified)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mnp-Hant", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Traditional)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mnp-Hans", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Simplified)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "nan-Hans", "name": "Bân-lâm-gú", "name_en": "Min Nan Chinese (Simplified)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "nan-Hant", "name": "Bân-lâm-gú", "name_en": "Min Nan Chinese (Traditional)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hak-Hant", "name": "客家話", "name_en": "Hakka Chinese (Traditional)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hak-Hans", "name": "客家话", "name_en": "Hakka Chinese (Simplified)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cdo-Hant", "name": "閩東語", "name_en": "Min Dong Chinese (Traditional)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cdo-Hans", "name": "闽东语", "name_en": "Min Dong Chinese (Simplified)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mnp-Hant", "name": "閩北語", "name_en": "Min Bei Chinese (Traditional)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mnp-Hans", "name": "闽北语", "name_en": "Min Bei Chinese (Simplified)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "nan-Hans", "name": "闽南语", "name_en": "Min Nan Chinese (Simplified)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "nan-Hant", "name": "閩南語", "name_en": "Min Nan Chinese (Traditional)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "bo-Tibt", "name": "བོད་སྐད་", "name_en": "Tibetan", "glottocode": "tibe1272", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "ug-Arab", "name": "ئۇيغۇرچە", "name_en": "Uyghur", "glottocode": "uigh1240", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "mn-Mong", "name": "ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ", "name_en": "Mongolian (Traditional Script)", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
