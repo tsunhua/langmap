@@ -126,11 +126,20 @@ onMounted(loadLanguages)
 .lg-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
 .lg-sort button:hover { color: var(--fg); }
 .lg-sort button.on { background: var(--fg); color: var(--surface); }
-.lg-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.lg-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
 
 @media (max-width: 640px) {
   .lg-page { padding-right: 16px; padding-left: 16px; }
   .lg-head { align-items: stretch; flex-direction: column; gap: 16px; }
   .lg-create { justify-content: center; width: 100%; }
+  .lg-list { grid-template-columns: minmax(0, 1fr) auto; }
 }
 </style>
