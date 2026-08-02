@@ -408,6 +408,8 @@ cd backend && npm run db:migrate:local 2>&1 | tail -15
 
 預期：`0015_migrate_mandarin_content_tags.sql` 顯示為已套用。目前最新為 `0014`，故只會執行 `0015` 一支。
 
+**若改用 `sqlite3` CLI 直接灌入 SQL 檔，必須加 `-cmd "PRAGMA trusted_schema=ON;"`**，否則 `expressions_au` 觸發器寫入 `expressions_fts` 虛擬表會被拒絕（`unsafe use of virtual table`），造成半套用狀態。這是 CLI 的預設安全限制，非 migration 缺陷 —— 在未套用任何 migration 的乾淨副本上，單純 `UPDATE expressions SET text = text` 也會同樣報錯。`wrangler d1 migrations apply` 走 D1 引擎，不受此限制。同一個 pragma 也適用於下一步的 registry SQL。
+
 - [ ] **Step 2: 套用 registry SQL**
 
 registry SQL 是純 upsert，負責寫入 `cmn-*` 的 curated 名稱、`alternate_names_json` 與城市列。
