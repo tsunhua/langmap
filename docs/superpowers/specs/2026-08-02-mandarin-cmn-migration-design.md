@@ -96,7 +96,8 @@ UI locale 層額外需要入站別名映射，原因：瀏覽器 `Accept-Languag
 
 ### F. 測試更新
 
-- `scripts/v2/test_language_data.py:338,346,432,447,462,465`：預期 code 集合改 `cmn-*`。
+- `scripts/v2/test_language_data.py:338`：`test_seed_profiles_do_not_use_regions_as_language_geography` 的預期 code 集合改 `cmn-*`。同檔第 346 行的 `isdisjoint` 斷言維持不動（帶 region 的舊 code 本就該不存在）。
+- `scripts/v2/test_language_data.py:432,447,462,465` **不可改動**。這些是 `test_content_profile_migration_preserves_references_and_merges_stats` 的夾具，該測試載入並斷言 `0012_canonicalize_language_content_profiles.sql` 的實際行為（`zh-Hant-TW` → `zh-Hant`）。那是已發生的歷史，改成 `cmn-*` 會讓測試斷言 `0012` 從未做過的事。`0015` 的行為由 Task 4 以獨立測試或 DB 副本試跑驗證。
 - `scripts/v2/test_language_data.py`：新增一項斷言，驗證 seed 的 `alternate_names` 會寫入 `alternate_names_json`（`cmn-Hans` 應含「普通话」），並確認未提供該欄位的語言仍為 `[]`。
 - `backend/tests/languageCode.test.ts:8-9`：`parseStoredLanguageCode` 案例改 `cmn-Hant-TW` → language `cmn`。
 - `backend/tests/localization.test.ts:7`：`parentLocaleCodes('cmn-Hant-TW')` 應為 `['cmn-Hant', 'cmn']`。其餘 `locale_code` 夾具改 `cmn-Hant` / `cmn`。
