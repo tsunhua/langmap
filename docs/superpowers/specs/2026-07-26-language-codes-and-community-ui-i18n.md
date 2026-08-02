@@ -72,7 +72,7 @@
 | 概念 | 例子 | 責任 |
 |---|---|---|
 | content language | `yue` | 既有詞句所屬語言 |
-| UI locale | `en-US`、`zh-Hant-TW`、`zh-Hans-CN` | 本站介面採用的語系 |
+| UI locale | `en-US`、`cmn-Hant`、`cmn-Hans` | 本站介面採用的語系 |
 | message key | `nav.contribute` | 程式碼引用的穩定介面位置 |
 
 ### 4.1 與 expression 模型的關係
@@ -156,7 +156,7 @@ language[-Script][-REGION][-variant...][-x-private...]
 
 若正式 BCP 47 部分已能唯一表示相同 languoid，不重複附加 Glottocode。例如 `yue-Hant` 不應機械式變成 `yue-Hant-x-yue...`。
 
-UI locale 是介面協商標籤，可以沿用生態系慣例的 `zh-Hant-TW`；expression content tag 則應盡可能使用精確的 `cmn-Hant-TW`、`yue-Hant` 等。兩者都由同一 `languages` registry 驗證，但不要求 UI locale 與某段 expression 使用相同粒度。
+UI locale 與 expression content tag 都使用精確標籤，例如 `cmn-Hant`、`yue-Hant`。兩者都由同一 `languages` registry 驗證，但不要求 UI locale 與某段 expression 使用相同粒度。瀏覽器只會送出 `zh` macrolanguage 標籤，因此入站語系協商在 `web/src/locales/index.ts` 將 `zh-*` 別名解析到對應的 `cmn-*`；別名不進入 registry，也不作為可選語系對外顯示。
 
 `x-` 後是 private-use convention，不是 IANA 對 Glottocode 的正式承認。LangMap 約定：
 
@@ -521,8 +521,8 @@ allowed: { "count": "number" }
     "source_locale": "en",
     "locales": [
       {
-        "code": "zh-Hant-TW",
-        "native_name": "繁體中文",
+        "code": "cmn-Hant",
+        "native_name": "華語",
         "direction": "ltr",
         "revision": 12,
         "translated": 438,
@@ -543,10 +543,10 @@ allowed: { "count": "number" }
   "success": true,
   "data": {
     "project_id": "langmap-web",
-    "locale": "zh-Hant-TW",
+    "locale": "cmn-Hant",
     "direction": "ltr",
     "revision": 12,
-    "fallback_chain": ["zh-Hant-TW", "en"],
+    "fallback_chain": ["cmn-Hant", "en"],
     "messages": {
       "nav.home": "首頁",
       "search.resultCount": "找到 {count} 筆結果"
@@ -560,7 +560,7 @@ allowed: { "count": "number" }
 - 對每個 active message 按第 6.3 節規則選出最高分 target expression。
 - response value 直接使用獲勝 expression 的 `text`。
 - 來源語系已內建，不需重複下載完整 bundle。
-- 回傳 `ETag: "loc-langmap-web-zh-Hant-TW-r12"`，revision 來自該 project/locale 的 `mapping_revision`。
+- 回傳 `ETag: "loc-langmap-web-cmn-Hant-r12"`，revision 來自該 project/locale 的 `mapping_revision`。
 - 使用 `Cache-Control: public, max-age=300, stale-while-revalidate=86400`。
 - 相同 `If-None-Match` 回傳 `304`。
 - bundle 先不按 scope 拆分；gzip 超過 100 KB 或 active keys 超過 2,000 才加入 scope 載入。
@@ -857,7 +857,7 @@ coverage = 最高 mapping 分數 >= 0 的 active message 數 / active message �
 至少測試：
 
 - `en`：來源及基本 LTR。
-- `zh-Hant-TW`：本站主要目標語系。
+- `cmn-Hant`：本站主要目標語系。
 - `de`：長字串。
 - `ar`：RTL 及複數。
 - `ja`：無空格文字。
