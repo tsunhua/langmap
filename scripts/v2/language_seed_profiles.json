@@ -18,7 +18,7 @@
     {"code": "nan-Latn-TW-tailo", "name": "Tâi-uân Uē", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-TW-pehoeji", "name": "Tâi-oân Ōe", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "zh-Hans", "name": "简体中文", "name_en": "Chinese (Simplified)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
-    {"code": "zh-Hant", "name": "繁體中文", "name_en": "Chinese (Traditional)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
+    {"code": "zh-Hant", "name": "中文", "name_en": "Chinese (Traditional)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
     {"code": "ar", "name": "العربية", "name_en": "Arabic", "glottocode": "stan1318", "origin": "seed", "reason": "major-world-language"},
     {"code": "bn", "name": "বাংলা", "name_en": "Bengali", "glottocode": "beng1280", "origin": "seed", "reason": "major-world-language"},
     {"code": "de", "name": "Deutsch", "name_en": "German", "glottocode": "stan1295", "origin": "seed", "reason": "major-world-language"},
