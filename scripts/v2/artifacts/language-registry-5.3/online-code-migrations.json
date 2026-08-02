@@ -52,21 +52,29 @@
       "action": "keep",
       "canonical": "nan-Latn-TW-pehoeji"
     },
+    "zh-Hans": {
+      "action": "canonicalize",
+      "canonical": "cmn-Hans"
+    },
+    "zh-Hant": {
+      "action": "canonicalize",
+      "canonical": "cmn-Hant"
+    },
     "zh-Hans-CN": {
       "action": "canonicalize",
-      "canonical": "zh-Hans"
+      "canonical": "cmn-Hans"
     },
     "zh-Hant-TW": {
       "action": "canonicalize",
-      "canonical": "zh-Hant"
+      "canonical": "cmn-Hant"
     },
     "zh-Hant-HK": {
       "action": "canonicalize",
-      "canonical": "zh-Hant"
+      "canonical": "cmn-Hant"
     },
     "zh-Hant-MO": {
       "action": "canonicalize",
-      "canonical": "zh-Hant"
+      "canonical": "cmn-Hant"
     },
     "ar-SA": {
       "action": "canonicalize",

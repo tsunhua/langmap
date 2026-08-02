@@ -4,6 +4,8 @@ bn,বাংলা,Bengali,,ltr,bn,,,[],[],glotto:beng1280,beng1280,seed,,[],[],
 bo-Tibt,བོད་སྐད་,Tibetan,,ltr,bo,Tibt,,[],[],glotto:tibe1272,tibe1272,seed,,[],[],glotto:cent2346,28.3681,90.1872
 cdo-Hans,闽东语,Min Dong Chinese (Simplified),,ltr,cdo,Hans,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
 cdo-Hant,閩東語,Min Dong Chinese (Traditional),,ltr,cdo,Hant,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
+cmn-Hans,华语,Mandarin Chinese (Simplified),,ltr,cmn,Hans,,[],[],glotto:mand1415,mand1415,seed,,"[""普通话"",""国语"",""汉语""]",[],glotto:mand1471,40.0209,116.228
+cmn-Hant,華語,Mandarin Chinese (Traditional),,ltr,cmn,Hant,,[],[],glotto:mand1415,mand1415,seed,,"[""國語"",""漢語""]",[],glotto:mand1471,40.0209,116.228
 de,Deutsch,German,,ltr,de,,,[],[],glotto:stan1295,stan1295,seed,,[],[],glotto:glob1243,48.649,12.4676
 en,English,English,,ltr,en,,,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
 en-GB,English (United Kingdom),English (United Kingdom),,ltr,en,,GB,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
@@ -61,6 +63,4 @@ x-image,圖片,Image,,ltr,x,,,[],"[""x-image""]",system:x-image,,system,,[],[],,
 yue-Hans,粤语,Cantonese (Simplified),,ltr,yue,Hans,,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
 yue-Hant,粵語,Cantonese (Traditional),,ltr,yue,Hant,,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
 za-Latn,Vaƅcuengh,Zhuang,,ltr,za,Latn,,[],[],system:za-Latn,,seed,,[],[],,,
-zh-Hans,简体中文,Chinese (Simplified),,ltr,zh,Hans,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
-zh-Hant,中文,Chinese (Traditional),,ltr,zh,Hant,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
 zyg-Latn-x-yang1286,Yangzhuang,Zhuang (Yangwang),,ltr,zyg,Latn,,[],"[""yang1286""]",glotto:yang1286,yang1286,seed,,[],[],glotto:deba1238,23.091864,106.393188
