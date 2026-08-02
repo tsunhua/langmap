@@ -59,8 +59,9 @@ languages.get('/', async (c) => {
   const limit = Math.min(Math.max(Number(c.req.query('limit') || 50) || 50, 1), 100);
   const offset = Math.max(Number(c.req.query('offset') || 0) || 0, 0);
 
-  let query = `SELECT l.*, COALESCE(s.expression_count, 0) as expression_count
-    FROM languages l LEFT JOIN language_stats s ON l.code = s.language_code
+  let query = `SELECT l.*,
+    (SELECT COUNT(*) FROM expressions e WHERE e.language_code = l.code) as expression_count
+    FROM languages l
     LEFT JOIN languoids g ON g.glottocode = l.glottocode`;
   const params: (string | number)[] = [];
   const filters: string[] = [];
@@ -104,8 +105,9 @@ languages.get('/', async (c) => {
 languages.get('/:code', async (c) => {
   const code = c.req.param('code');
   const lang = await c.env.DB.prepare(
-    `SELECT l.*, COALESCE(s.expression_count, 0) as expression_count
-     FROM languages l LEFT JOIN language_stats s ON l.code = s.language_code
+    `SELECT l.*,
+       (SELECT COUNT(*) FROM expressions e WHERE e.language_code = l.code) as expression_count
+     FROM languages l
      WHERE l.code = ?`
   ).bind(code).first();
   if (!lang) return notFound(c, 'Language');
@@ -123,22 +125,21 @@ languages.get('/:code', async (c) => {
      ORDER BY city_name ASC, territory_code ASC`
   ).bind((lang as Record<string, unknown>).variety_key, (lang as Record<string, unknown>).script_code || '').all();
 
+  const l = lang as Record<string, unknown>;
   return success(c, {
-    language: {
-      code: (lang as Record<string, unknown>).code,
-      name: (lang as Record<string, unknown>).name,
-      name_en: (lang as Record<string, unknown>).name_en,
-      description: (lang as Record<string, unknown>).description,
-      direction: (lang as Record<string, unknown>).direction,
-      base_language: (lang as Record<string, unknown>).base_language,
-      script_code: (lang as Record<string, unknown>).script_code,
-      region_code: (lang as Record<string, unknown>).region_code,
-      variety_key: (lang as Record<string, unknown>).variety_key,
-      glottocode: (lang as Record<string, unknown>).glottocode,
-      origin: (lang as Record<string, unknown>).origin,
-      expression_count: (lang as Record<string, unknown>).expression_count,
-      representative_cities: locations.results,
-    },
+    code: l.code,
+    name: l.name,
+    name_en: l.name_en,
+    description: l.description,
+    direction: l.direction,
+    base_language: l.base_language,
+    script_code: l.script_code,
+    region_code: l.region_code,
+    variety_key: l.variety_key,
+    glottocode: l.glottocode,
+    origin: l.origin,
+    expression_count: l.expression_count,
+    representative_cities: locations.results,
     mapped_expression_count: mappedCount?.count || 0,
   });
 });

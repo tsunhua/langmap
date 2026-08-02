@@ -4,7 +4,8 @@ defineProps<{
   name: string
   name_en?: string
   expression_count: number
-  region_name?: string
+  script_code?: string
+  direction?: string
 }>()
 </script>
 
@@ -15,8 +16,12 @@ defineProps<{
       <span class="en" v-if="name_en">{{ name_en }}</span>
     </div>
     <span class="lg-code lang-badge">{{ code }}</span>
-    <span class="lg-geo">{{ region_name || '-' }}</span>
-    <span class="lg-count">{{ expression_count }}</span>
+    <span class="lg-geo">
+      <span v-if="script_code" class="lg-script">{{ script_code }}</span>
+      <span v-if="direction === 'rtl'" class="lg-rtl" title="right-to-left">rtl</span>
+      <span v-if="!script_code && direction !== 'rtl'" class="lg-dim">—</span>
+    </span>
+    <span class="lg-count">{{ expression_count.toLocaleString() }}</span>
   </router-link>
 </template>
 
@@ -35,9 +40,12 @@ defineProps<{
 .lg-row:last-child { border-bottom: none; }
 .lg-row:hover { background: var(--bg); }
 .lg-name { min-width: 0; }
-.lg-name .nm { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lg-name .en { font-size: 11px; color: var(--muted); }
-.lg-geo { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-name .nm { display: block; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-name .en { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-geo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); overflow: hidden; white-space: nowrap; }
+.lg-script { overflow: hidden; text-overflow: ellipsis; }
+.lg-rtl { color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
+.lg-dim { color: var(--border); }
 .lg-count {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;

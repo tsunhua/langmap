@@ -45,9 +45,9 @@ watch(code, load)
 
 const subtitle = computed(() => {
   const parts = []
-  if (lang.value?.family) parts.push(lang.value.family)
-  if (lang.value?.status_text) parts.push(lang.value.status_text)
-  if (lang.value?.region_name) parts.push(lang.value.region_name)
+  if (lang.value?.name_en) parts.push(lang.value.name_en)
+  if (lang.value?.script_code) parts.push(lang.value.script_code)
+  if (lang.value?.glottocode) parts.push(lang.value.glottocode)
   return parts.join(' · ')
 })
 
@@ -108,6 +108,7 @@ async function changeSort(sort: string) {
         v-for="expr in filtered"
         :key="expr.id"
         v-bind="expr"
+        :show-language="false"
       />
     </div>
   </div>
