@@ -335,7 +335,7 @@ Added: 2005-10-16
         self.assertTrue({
             "ar", "bn", "de", "es", "fa", "fr", "hi", "id", "it", "ja",
             "mr", "pa-Guru", "ru", "th", "tr", "ur", "vi",
-            "zh-Hans", "zh-Hant", "yue-Hans", "yue-Hant",
+            "cmn-Hans", "cmn-Hant", "yue-Hans", "yue-Hant",
             "wuu-Hans", "wuu-Hant", "hsn-Hans", "hsn-Hant",
             "hak-Hans", "hak-Hant", "cdo-Hans", "cdo-Hant",
             "mnp-Hans", "mnp-Hant", "nan-Hans", "nan-Hant",
