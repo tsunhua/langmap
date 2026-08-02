@@ -5,8 +5,8 @@ describe('language code registry syntax', () => {
   it('parseStoredLanguageCode accepts canonical BCP 47 and Glottocode private use', () => {
     const en = parseStoredLanguageCode('en');
     expect(en).toEqual({ code: 'en', language: 'en', script: null, region: null, variants: [], private_use: [] });
-    const zhHant = parseStoredLanguageCode('zh-Hant-TW');
-    expect(zhHant).toEqual({ code: 'zh-Hant-TW', language: 'zh', script: 'Hant', region: 'TW', variants: [], private_use: [] });
+    const cmnHant = parseStoredLanguageCode('cmn-Hant-TW');
+    expect(cmnHant).toEqual({ code: 'cmn-Hant-TW', language: 'cmn', script: 'Hant', region: 'TW', variants: [], private_use: [] });
   });
 
   it('parseStoredLanguageCode accepts system codes', () => {

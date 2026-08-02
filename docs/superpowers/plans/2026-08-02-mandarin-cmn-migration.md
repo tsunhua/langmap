@@ -696,8 +696,9 @@ them alongside the cmn migration makes filename and bundle code agree."
 **Files:**
 - Modify: `backend/tests/languageCode.test.ts:8-9`
 - Modify: `backend/tests/localization.test.ts:7,30-38`
+- Modify: `backend/tests/auth.test.ts:41,51`（整合測試提交 `zh-Hans`，遷移後該 code 未註冊會被 400 拒）
 
-這兩處只是把示例標籤換成遷移後的形式，驗證的是 BCP 47 解析與 locale 回退邏輯本身，不是 `zh` 這個特定值。
+這幾處只是把示例標籤換成遷移後的形式，驗證的是 BCP 47 解析與 locale 回退邏輯本身，不是 `zh` 這個特定值。`languageRegistry.test.ts:91,94` 的 `zh` 是 deprecated-subtag 邏輯的合成夾具，保留。
 
 - [ ] **Step 1: 改 languageCode.test.ts**
 
@@ -739,7 +740,7 @@ cd backend && npm test 2>&1 | tail -25
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend/tests/languageCode.test.ts backend/tests/localization.test.ts
+git add backend/tests/languageCode.test.ts backend/tests/localization.test.ts backend/tests/auth.test.ts
 git commit -m "test: use cmn tags in language code and locale fixtures"
 ```
 

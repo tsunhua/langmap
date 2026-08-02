@@ -4,7 +4,7 @@ import { parentLocaleCodes, placeholders, samePlaceholders, selectLocalizedRows,
 
 describe('localization pure rules', () => {
   it('builds BCP47 parent candidates from most specific to least specific', () => {
-    expect(parentLocaleCodes('zh-Hant-TW')).toEqual(['zh-Hant', 'zh']);
+    expect(parentLocaleCodes('cmn-Hant-TW')).toEqual(['cmn-Hant', 'cmn']);
     expect(parentLocaleCodes('en')).toEqual([]);
   });
 
@@ -27,15 +27,15 @@ describe('localization pure rules', () => {
   it('selects locale first, then score, creation time and expression id', () => {
     const rows = [
       { key: 'greeting', locale_code: 'en', text: 'English', score: 100, edge_created_at: '2026-01-01', target_id: 2 },
-      { key: 'greeting', locale_code: 'zh-Hant', text: '較早', score: 1, edge_created_at: '2026-01-01', target_id: 9 },
-      { key: 'greeting', locale_code: 'zh-Hant', text: '較高分', score: 5, edge_created_at: '2026-01-02', target_id: 8 },
-      { key: 'farewell', locale_code: 'zh', text: '再見', score: 0, edge_created_at: '2026-01-01', target_id: 7 },
+      { key: 'greeting', locale_code: 'cmn-Hant', text: '較早', score: 1, edge_created_at: '2026-01-01', target_id: 9 },
+      { key: 'greeting', locale_code: 'cmn-Hant', text: '較高分', score: 5, edge_created_at: '2026-01-02', target_id: 8 },
+      { key: 'farewell', locale_code: 'cmn', text: '再見', score: 0, edge_created_at: '2026-01-01', target_id: 7 },
     ];
-    expect(selectLocalizedRows(rows, ['zh-Hant', 'zh', 'en'])).toEqual({ greeting: '較高分', farewell: '再見' });
+    expect(selectLocalizedRows(rows, ['cmn-Hant', 'cmn', 'en'])).toEqual({ greeting: '較高分', farewell: '再見' });
     expect(selectLocalizedRows([
-      { key: 'x', locale_code: 'zh-Hant', text: '後建', score: 2, edge_created_at: '2026-02-01', target_id: 10 },
-      { key: 'x', locale_code: 'zh-Hant', text: '先建', score: 2, edge_created_at: '2026-01-01', target_id: 11 },
-    ], ['zh-Hant'])).toEqual({ x: '先建' });
+      { key: 'x', locale_code: 'cmn-Hant', text: '後建', score: 2, edge_created_at: '2026-02-01', target_id: 10 },
+      { key: 'x', locale_code: 'cmn-Hant', text: '先建', score: 2, edge_created_at: '2026-01-01', target_id: 11 },
+    ], ['cmn-Hant'])).toEqual({ x: '先建' });
   });
 });
 
