@@ -1,5 +1,7 @@
 # 全站語言代碼與本站社群介面翻譯規格
 
+> 更新：本文件中把 `languages.code` 同時作為語言身份與內容 tag 的資料模型決策，已由 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md) 取代；BCP 47 驗證、Glottolog 對齊與 UI locale negotiation 等其餘決策仍有效。
+
 **日期：** 2026-07-26
 
 **狀態：** Proposed

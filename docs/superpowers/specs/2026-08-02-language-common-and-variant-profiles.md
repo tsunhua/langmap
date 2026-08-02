@@ -1,6 +1,8 @@
 # 語言共通層與變體層設計
 
 > 狀態：已確認，待實作。
+>
+> 更新：本文件「`/languages` 繼續逐 profile 顯示」的決策，已由 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md) 取代；`variation_status` 與共通／地方變體內容的其餘決策仍有效。
 
 ## 1. 決策
 

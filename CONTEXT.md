@@ -4,6 +4,14 @@ LangMap 是收集世界各地語言詞句、展示跨語言對照的社群平台
 
 ## 核心資料
 
+**語言變體 (Language Variety)**:
+使用者認知中可承載詞句的語言或方言，例如華語、粵語或潮州話；同一語言變體可以有多個內容 profile。
+_Avoid_: language profile、書寫系統、BCP 47 tag
+
+**內容 Profile (Language Profile)**:
+一個語言變體下，用 canonical BCP 47 tag 精確描述書寫系統、地區或其他內容差異的形式，例如 `cmn-Hant` 或 `nan-Latn-TW-tailo`。
+_Avoid_: 語言、語言變體、UI locale
+
 **詞句 (Expression)**:
 某個語言裡的一段具體話語(詞或短語),是平台最基礎的單位。
 _Avoid_: 詞條(易與詞典「詞條」混淆)

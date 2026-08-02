@@ -1,5 +1,7 @@
 # 社群新增語言與自定義方言變種規格
 
+> 更新：本文件「一列 language 就是一個內容 profile」及「不另建 `language_varieties` 表」的決策，已由 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md) 取代；建立、驗證與 Glottolog 對齊流程需依新分層模型調整。
+
 **日期：** 2026-07-27
 
 **狀態：** Proposed
