@@ -4,8 +4,18 @@ bn,বাংলা,Bengali,,ltr,bn,,,[],[],glotto:beng1280,beng1280,seed,,[],[],
 bo-Tibt,བོད་སྐད་,Tibetan,,ltr,bo,Tibt,,[],[],glotto:tibe1272,tibe1272,seed,,[],[],glotto:cent2346,28.3681,90.1872
 cdo-Hans,闽东语,Min Dong Chinese (Simplified),,ltr,cdo,Hans,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
 cdo-Hant,閩東語,Min Dong Chinese (Traditional),,ltr,cdo,Hant,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
+cjy-Hans,晋语,Jin Chinese (Simplified),,ltr,cjy,Hans,,[],[],glotto:jiny1235,jiny1235,seed,,[],[],glotto:nort3155,38.8284,111.278
+cjy-Hant,晉語,Jin Chinese (Traditional),,ltr,cjy,Hant,,[],[],glotto:jiny1235,jiny1235,seed,,[],[],glotto:nort3155,38.8284,111.278
 cmn-Hans,华语,Mandarin Chinese (Simplified),,ltr,cmn,Hans,,[],[],glotto:mand1415,mand1415,seed,,"[""普通话"",""国语"",""汉语""]",[],glotto:mand1471,40.0209,116.228
 cmn-Hant,華語,Mandarin Chinese (Traditional),,ltr,cmn,Hant,,[],[],glotto:mand1415,mand1415,seed,,"[""國語"",""漢語""]",[],glotto:mand1471,40.0209,116.228
+cnp-Hans,桂北平话,Northern Pinghua (Simplified),,ltr,cnp,Hans,,[],[],glotto:nort3268,nort3268,seed,,[],[],glotto:ping1245,25.218,110.045
+cnp-Hant,桂北平話,Northern Pinghua (Traditional),,ltr,cnp,Hant,,[],[],glotto:nort3268,nort3268,seed,,[],[],glotto:ping1245,25.218,110.045
+cpx-Hans,莆仙话,Pu-Xian Chinese (Simplified),,ltr,cpx,Hans,,[],[],glotto:puxi1243,puxi1243,seed,,[],[],glotto:sout3421,25.37,118.68
+cpx-Hant,莆仙話,Pu-Xian Chinese (Traditional),,ltr,cpx,Hant,,[],[],glotto:puxi1243,puxi1243,seed,,[],[],glotto:sout3421,25.37,118.68
+csp-Hans,桂南平话,Southern Pinghua (Simplified),,ltr,csp,Hans,,[],[],glotto:sout3250,sout3250,seed,,[],[],glotto:ping1245,23.011,108.093
+csp-Hant,桂南平話,Southern Pinghua (Traditional),,ltr,csp,Hant,,[],[],glotto:sout3250,sout3250,seed,,[],[],glotto:ping1245,23.011,108.093
+czo-Hans,闽中语,Min Zhong Chinese (Simplified),,ltr,czo,Hans,,[],[],glotto:minz1235,minz1235,seed,,[],[],glotto:inla1267,26.0686,117.376
+czo-Hant,閩中語,Min Zhong Chinese (Traditional),,ltr,czo,Hant,,[],[],glotto:minz1235,minz1235,seed,,[],[],glotto:inla1267,26.0686,117.376
 de,Deutsch,German,,ltr,de,,,[],[],glotto:stan1295,stan1295,seed,,[],[],glotto:glob1243,48.649,12.4676
 en,English,English,,ltr,en,,,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
 en-GB,English (United Kingdom),English (United Kingdom),,ltr,en,,GB,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
@@ -13,6 +23,8 @@ en-US,English (United States),English (United States),,ltr,en,,US,[],[],glotto:s
 es,Español,Spanish,,ltr,es,,,[],[],glotto:stan1288,stan1288,seed,,[],[],glotto:cast1243,40.4414,-1.11788
 fa,فارسی,Persian,,ltr,fa,,,[],[],system:fa,,seed,,[],[],,,
 fr,Français,French,,ltr,fr,,,[],[],glotto:stan1290,stan1290,seed,,[],[],glotto:glob1239,48.0,2.0
+gan-Hans,赣语,Gan Chinese (Simplified),,ltr,gan,Hans,,[],[],glotto:ganc1239,ganc1239,seed,,[],[],glotto:midd1354,27.9896,115.166
+gan-Hant,贛語,Gan Chinese (Traditional),,ltr,gan,Hant,,[],[],glotto:ganc1239,ganc1239,seed,,[],[],glotto:midd1354,27.9896,115.166
 hak-Hans,客家话,Hakka Chinese (Simplified),,ltr,hak,Hans,,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
 hak-Hant,客家話,Hakka Chinese (Traditional),,ltr,hak,Hant,,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
 hi,हिन्दी,Hindi,,ltr,hi,,,[],[],glotto:hind1269,hind1269,seed,,[],[],glotto:hind1270,25.0,77.0

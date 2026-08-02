@@ -12,10 +12,10 @@
     "subtag_count": 9296
   },
   "generation": {
-    "profile_version": 3,
+    "profile_version": 4,
     "profile_file": "language_seed_profiles.json",
-    "language_tag_count": 65,
-    "language_location_count": 57,
+    "language_tag_count": 77,
+    "language_location_count": 63,
     "max_tags": 100000
   }
 }

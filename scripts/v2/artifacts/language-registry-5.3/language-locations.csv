@@ -1,10 +1,12 @@
 variety_key,city_name,city_name_en,territory_code,script_code,latitude,longitude,reference
 glotto:beng1280,Dhaka,Dhaka,BD,,23.8103,90.4125,https://glottolog.org/resource/languoid/id/beng1280
+glotto:ganc1239,Nanchang,Nanchang,CN,Hans,28.682,115.8579,https://glottolog.org/resource/languoid/id/ganc1239
 glotto:hakk1236,Meizhou,Meizhou,CN,Hans,24.2991,116.1225,https://glottolog.org/resource/languoid/id/hakk1236
 glotto:hakk1236,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/hakk1236
 glotto:hind1269,Delhi,Delhi,IN,,28.6139,77.209,https://glottolog.org/resource/languoid/id/hind1269
 glotto:indo1316,Jakarta,Jakarta,ID,,-6.2088,106.8456,https://glottolog.org/resource/languoid/id/indo1316
 glotto:ital1282,Rome,Rome,IT,,41.9028,12.4964,https://glottolog.org/resource/languoid/id/ital1282
+glotto:jiny1235,Taiyuan,Taiyuan,CN,Hans,37.8706,112.5489,https://glottolog.org/resource/languoid/id/jiny1235
 glotto:kaza1248,Almaty,Almaty,KZ,Cyrl,43.2389,76.8897,https://glottolog.org/resource/languoid/id/kaza1248
 glotto:kaza1248,Urumqi,Urumqi,CN,Arab,43.8256,87.6168,https://glottolog.org/resource/languoid/id/kaza1248
 glotto:kirg1245,Bishkek,Bishkek,KG,Cyrl,42.8746,74.5698,https://glottolog.org/resource/languoid/id/kirg1245
@@ -19,12 +21,16 @@ glotto:minb1236,Jian'ou,Jian'ou,CN,Hans,27.039,118.321,https://glottolog.org/res
 glotto:mind1253,Fuzhou,Fuzhou,CN,Hans,26.0745,119.2965,https://glottolog.org/resource/languoid/id/mind1253
 glotto:minn1241,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/minn1241
 glotto:minn1241,Xiamen,Xiamen,CN,Hans,24.4798,118.0894,https://glottolog.org/resource/languoid/id/minn1241
+glotto:minz1235,Sanming,Sanming,CN,Hans,26.2634,117.6394,https://glottolog.org/resource/languoid/id/minz1235
+glotto:nort3268,Guilin,Guilin,CN,Hans,25.2742,110.29,https://glottolog.org/resource/languoid/id/nort3268
 glotto:nucl1301,Ankara,Ankara,TR,,39.9334,32.8597,https://glottolog.org/resource/languoid/id/nucl1301
 glotto:nucl1643,Tokyo,Tokyo,JP,,35.6762,139.6503,https://glottolog.org/resource/languoid/id/nucl1643
 glotto:panj1256,ਚੰਡੀਗੜ੍ਹ,Chandigarh,IN,Guru,30.7333,76.7794,https://glottolog.org/resource/languoid/id/panj1256
 glotto:port1283,Lisbon,Lisbon,PT,,38.7223,-9.1393,https://glottolog.org/resource/languoid/id/port1283
 glotto:port1283,São Paulo,São Paulo,BR,,-23.5505,-46.6333,https://glottolog.org/resource/languoid/id/port1283
+glotto:puxi1243,Putian,Putian,CN,Hans,25.454,119.0078,https://glottolog.org/resource/languoid/id/puxi1243
 glotto:russ1263,Moscow,Moscow,RU,,55.7558,37.6173,https://glottolog.org/resource/languoid/id/russ1263
+glotto:sout3250,Nanning,Nanning,CN,Hans,22.817,108.3665,https://glottolog.org/resource/languoid/id/sout3250
 glotto:stan1288,Bogotá,Bogotá,CO,,4.711,-74.0721,https://glottolog.org/resource/languoid/id/stan1288
 glotto:stan1288,Buenos Aires,Buenos Aires,AR,,-34.6037,-58.3816,https://glottolog.org/resource/languoid/id/stan1288
 glotto:stan1288,Madrid,Madrid,ES,,40.4168,-3.7038,https://glottolog.org/resource/languoid/id/stan1288
