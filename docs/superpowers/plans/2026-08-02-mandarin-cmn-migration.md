@@ -882,4 +882,4 @@ rule moves to the inbound alias layer instead."
 ## 已知非阻塞事項（非本次遷移造成）
 
 - `manage.sh local verify` 仍回報兩項 mismatch：`languages` count（seed 65 vs 實際 113）與 orphan languages（48）。兩者同源——歷次後端整合測試在共用本地 dev DB 累積的個人語言 tag（`en-x-*` 及測試用 `ral` 等），0015 套用前即存在，與 cmn 遷移無關。其餘項目（schema objects、migration baseline、ui_locales/ui_messages/translation/active locale、orphan locales/messages/edges）全部對齊。
-- fingerprint（`scripts/db/state/local/fingerprint.json`）未更新：因 migration-lock 與 manifest 已改，`./dev.sh` 會判定 fingerprint miss 而**重建清空 expressions**。需重建 seed 後再跑 dev.sh，或改用 `./dev.sh --no-rebuild`（亦會先要求重建）。
+- `./dev.sh` 的 fingerprint miss 觸發 rebuild 是既有設計：rebuild 以 schema + registry + system-ui 重建乾淨 seed，expressions 表只剩 ui_i18n 內容。0015 手術式套用是為了在既有 dev DB 上**就地保留**已匯入的社區詞句；若接受重建後重新匯入，直接跑 dev.sh 即可。唯一要留意的是 `scripts/v2/v2-data.sql` 仍是舊 zh code，重建後直接重匯入會復發 zh 標籤——需先更新匯入源，或匯入後再套一次 0015。
