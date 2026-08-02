@@ -29,16 +29,16 @@
       "canonical": "ral"
     },
     "zyg-x-yang1286": {
-      "action": "keep",
-      "canonical": "zyg-x-yang1286"
+      "action": "canonicalize",
+      "canonical": "zyg-Latn-x-yang1286"
     },
     "wuu-x-ouji1238": {
-      "action": "keep",
-      "canonical": "wuu-x-ouji1238"
+      "action": "canonicalize",
+      "canonical": "wuu-Hant-x-ouji1238"
     },
     "wuu-x-taiz1238": {
-      "action": "keep",
-      "canonical": "wuu-x-taiz1238"
+      "action": "canonicalize",
+      "canonical": "wuu-Hant-x-taiz1238"
     },
     "nan-x-chao1239": {
       "action": "canonicalize",

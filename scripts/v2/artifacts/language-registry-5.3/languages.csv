@@ -51,9 +51,11 @@ und,Undetermined,Undetermined,,ltr,und,,,[],[],system:und,,system,,[],[],,,
 ur,اردو,Urdu,,ltr,ur,,,[],[],glotto:urdu1245,urdu1245,seed,,[],[],glotto:hind1270,25.0,67.0
 vi,Tiếng Việt,Vietnamese,,ltr,vi,,,[],[],glotto:viet1252,viet1252,seed,,[],[],glotto:viet1251,20.681188,105.774071
 wuu-Hans,吴语,Wu Chinese (Simplified),,ltr,wuu,Hans,,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
+wuu-Hans-x-ouji1238,温州话,"Wu (Oujiang, Simplified)",,ltr,wuu,Hans,,[],"[""ouji1238""]",glotto:ouji1238,ouji1238,seed,,[],[],glotto:wuic1234,27.94043,120.63338
+wuu-Hans-x-taiz1238,台州话,"Wu (Taizhou, Simplified)",,ltr,wuu,Hans,,[],"[""taiz1238""]",glotto:taiz1238,taiz1238,seed,,[],[],glotto:wuch1236,,
 wuu-Hant,吳語,Wu Chinese (Traditional),,ltr,wuu,Hant,,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
-wuu-x-ouji1238,Wu (Oujiang),Wu (Oujiang),,ltr,wuu,,,[],"[""ouji1238""]",glotto:ouji1238,ouji1238,seed,,[],[],glotto:wuic1234,27.94043,120.63338
-wuu-x-taiz1238,Wu (Taizhou),Wu (Taizhou),,ltr,wuu,,,[],"[""taiz1238""]",glotto:taiz1238,taiz1238,seed,,[],[],glotto:wuch1236,,
+wuu-Hant-x-ouji1238,溫州話,"Wu (Oujiang, Traditional)",,ltr,wuu,Hant,,[],"[""ouji1238""]",glotto:ouji1238,ouji1238,seed,,[],[],glotto:wuic1234,27.94043,120.63338
+wuu-Hant-x-taiz1238,台州話,"Wu (Taizhou, Traditional)",,ltr,wuu,Hant,,[],"[""taiz1238""]",glotto:taiz1238,taiz1238,seed,,[],[],glotto:wuch1236,,
 x-emoji,Emoji 表情,Emoji,,ltr,x,,,[],"[""x-emoji""]",system:x-emoji,,system,,[],[],,,
 x-image,圖片,Image,,ltr,x,,,[],"[""x-image""]",system:x-image,,system,,[],[],,,
 yue-Hans,粤语,Cantonese (Simplified),,ltr,yue,Hans,,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
@@ -61,4 +63,4 @@ yue-Hant,粵語,Cantonese (Traditional),,ltr,yue,Hant,,[],[],glotto:yuec1235,yue
 za-Latn,Vaƅcuengh,Zhuang,,ltr,za,Latn,,[],[],system:za-Latn,,seed,,[],[],,,
 zh-Hans,简体中文,Chinese (Simplified),,ltr,zh,Hans,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
 zh-Hant,中文,Chinese (Traditional),,ltr,zh,Hant,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
-zyg-x-yang1286,Zhuang (Yangwang),Zhuang (Yangwang),,ltr,zyg,,,[],"[""yang1286""]",glotto:yang1286,yang1286,seed,,[],[],glotto:deba1238,23.091864,106.393188
+zyg-Latn-x-yang1286,Yangzhuang,Zhuang (Yangwang),,ltr,zyg,Latn,,[],"[""yang1286""]",glotto:yang1286,yang1286,seed,,[],[],glotto:deba1238,23.091864,106.393188
