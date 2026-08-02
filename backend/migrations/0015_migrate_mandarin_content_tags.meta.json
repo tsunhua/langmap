@@ -1,0 +1,11 @@
+{
+  "preflight": [
+    "Inventory distinct Mandarin language codes and verify every observed legacy zh code is covered by online-code-migrations.json.",
+    "Verify the official D1 recovery bookmark can be created before mutation."
+  ],
+  "postflight": [
+    "Verify zero orphan expression, UI locale, and language statistics references to the legacy zh codes.",
+    "Confirm the macrolanguage codes are absent and the cmn canonical targets are present, including migrated UI locale native names."
+  ],
+  "reversible": true
+}
