@@ -3,10 +3,10 @@
 受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
 `web/src/locales/en.ts`，first-party locale JSON 目前包含：
 
-- `zh-Hans-CN.json`
-- `zh-Hant-TW.json`
-- `es-ES.json`
-- `ja-JP.json`
+- `zh-Hans-CN.json`（bundle code：`zh-Hans`）
+- `zh-Hant-TW.json`（bundle code：`zh-Hant`）
+- `es-ES.json`（bundle code：`es`）
+- `ja-JP.json`（bundle code：`ja`）
 
 翻譯鍵需對應 `web/src/locales/en.ts` 的巢狀路徑。
 
@@ -26,10 +26,10 @@ python3 scripts/i18n/generate-bundle.py
 ```bash
 python3 scripts/i18n/generate-bundle.py \
   --source-catalog /tmp/en.ts \
-  --locale zh-Hant-TW=/tmp/zh-Hant-TW.json \
-  --locale zh-Hans-CN=/tmp/zh-Hans-CN.json \
-  --locale es-ES=/tmp/es-ES.json \
-  --locale ja-JP=/tmp/ja-JP.json \
+  --locale zh-Hant=/tmp/zh-Hant-TW.json \
+  --locale zh-Hans=/tmp/zh-Hans-CN.json \
+  --locale es=/tmp/es-ES.json \
+  --locale ja=/tmp/ja-JP.json \
   --output-dir /tmp/system-ui-bundle
 ```
 
@@ -64,8 +64,8 @@ production 只可先執行 `./scripts/db/manage.sh production inventory|plan`，
 
 ```bash
 python3 scripts/i18n/generate-i18n-sql.py \
-  zh-Hant-TW scripts/i18n/zh-Hant-TW.json \
-  > /tmp/langmap-zh-Hant-TW-import.sql
+  zh-Hant scripts/i18n/zh-Hant-TW.json \
+  > /tmp/langmap-zh-Hant-import.sql
 ```
 
 此 generator 會保留既有 deterministic `expression_id` / `stable_edge_id` 與

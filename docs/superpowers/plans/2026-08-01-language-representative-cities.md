@@ -1,6 +1,6 @@
 # 語言代表性城市實作計畫
 
-> 狀態：核心功能已實作；線上 code audit/migration 待取得 observed codes 後執行。
+> 狀態：Task 1–6 已實作；production apply 仍須先取得 observed codes 並由 operator 明確確認。
 >
 > 對應規格：`docs/superpowers/specs/2026-08-01-language-representative-cities-design.md`
 
@@ -184,6 +184,9 @@ data: seed representative language cities
 
 ### Task 4：審核並遷移不必要的 region code
 
+**實作結果：完成。** 已產生 reviewed matrix、`0012` migration、sidecar
+preflight/postflight metadata 與本地整合測試；尚未執行 production apply。
+
 **Files**
 
 - Modify: `scripts/v2/language_seed_profiles.json`
@@ -213,8 +216,9 @@ data: seed representative language cities
    - `keep`：region 代表真實 content／UI locale 慣例；
    - `collapse`：region 只代表使用地，改由 location row 表達；
    - `manual-review`：證據不足，不自動變更。
-2. 明確保留第一方 UI locale 與確有內容差異的 profile。不得因本功能機械移除
-   `en-US`、`zh-Hant-TW` 等 region。
+2. 明確保留確有內容差異的 profile，例如 `en-US`、`en-GB`、`pt-BR`、
+   `ko-KR`、`ko-KP`。第一方 UI locale 與 content profile 同步收斂為
+   `es`、`ja`、`zh-Hans`、`zh-Hant`。
 3. 對可收斂案例建立顯式映射，例如候選：
 
    ```text
@@ -225,7 +229,8 @@ data: seed representative language cities
    mn-Mong-CN   → mn-Mong
    ```
 
-   這些只代表待審核候選，不得在沒有內容慣例與線上引用證據時直接套用。
+   這些候選已通過 seed 與 migration review；production 套用前仍須以 observed
+   codes 完成 preflight。
 4. 調整 migration validator，允許明確且安全的 many-to-one canonical target；
    同時拒絕循環、target 不存在、未覆蓋 observed code 與 `manual-review` 自動套用。
 5. 讓 generator 從已 review 的 profile migration 設定生成

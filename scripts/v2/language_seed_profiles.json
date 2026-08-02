@@ -14,56 +14,119 @@
     {"code": "nan-x-chao1239", "name": "Min Nan (Chaozhou)", "name_en": "Min Nan (Chaozhou)", "glottocode": "chao1239", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-TW-tailo", "name": "臺灣台語（臺羅）", "name_en": "Taiwanese Hokkien (Tâi-lô)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
     {"code": "nan-Latn-TW-pehoeji", "name": "臺灣台語（白話字）", "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)", "glottocode": "minn1241", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "zh-Hans-CN", "name": "简体中文", "name_en": "Simplified Chinese", "glottocode": "mand1415", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "zh-Hant-TW", "name": "繁體中文", "name_en": "Traditional Chinese (Taiwan)", "glottocode": "mand1415", "origin": "seed", "reason": "existing-online-code"},
-    {"code": "zh-Hant-HK", "name": "中文（香港）", "name_en": "Traditional Chinese (Hong Kong)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
-    {"code": "zh-Hant-MO", "name": "中文（澳門）", "name_en": "Traditional Chinese (Macao)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "ar-SA", "name": "العربية", "name_en": "Arabic", "glottocode": "stan1318", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "bn-BD", "name": "বাংলা", "name_en": "Bengali", "glottocode": "beng1280", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "de-DE", "name": "Deutsch", "name_en": "German", "glottocode": "stan1295", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "es-ES", "name": "Español", "name_en": "Spanish", "glottocode": "stan1288", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "fa-IR", "name": "فارسی", "name_en": "Persian", "glottocode": null, "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "fr-FR", "name": "Français", "name_en": "French", "glottocode": "stan1290", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "hi-IN", "name": "हिन्दी", "name_en": "Hindi", "glottocode": "hind1269", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "id-ID", "name": "Bahasa Indonesia", "name_en": "Indonesian", "glottocode": "indo1316", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "it-IT", "name": "Italiano", "name_en": "Italian", "glottocode": "ital1282", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "ja-JP", "name": "日本語", "name_en": "Japanese", "glottocode": "nucl1643", "origin": "seed", "reason": "major-world-language"}
+    {"code": "zh-Hans", "name": "简体中文", "name_en": "Chinese (Simplified)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
+    {"code": "zh-Hant", "name": "繁體中文", "name_en": "Chinese (Traditional)", "glottocode": "mand1415", "origin": "seed", "reason": "major-east-asia-language"},
+    {"code": "ar", "name": "العربية", "name_en": "Arabic", "glottocode": "stan1318", "origin": "seed", "reason": "major-world-language"},
+    {"code": "bn", "name": "বাংলা", "name_en": "Bengali", "glottocode": "beng1280", "origin": "seed", "reason": "major-world-language"},
+    {"code": "de", "name": "Deutsch", "name_en": "German", "glottocode": "stan1295", "origin": "seed", "reason": "major-world-language"},
+    {"code": "es", "name": "Español", "name_en": "Spanish", "glottocode": "stan1288", "origin": "seed", "reason": "major-world-language"},
+    {"code": "fa", "name": "فارسی", "name_en": "Persian", "glottocode": null, "origin": "seed", "reason": "major-world-language"},
+    {"code": "fr", "name": "Français", "name_en": "French", "glottocode": "stan1290", "origin": "seed", "reason": "major-world-language"},
+    {"code": "hi", "name": "हिन्दी", "name_en": "Hindi", "glottocode": "hind1269", "origin": "seed", "reason": "major-world-language"},
+    {"code": "id", "name": "Bahasa Indonesia", "name_en": "Indonesian", "glottocode": "indo1316", "origin": "seed", "reason": "major-world-language"},
+    {"code": "it", "name": "Italiano", "name_en": "Italian", "glottocode": "ital1282", "origin": "seed", "reason": "major-world-language"},
+    {"code": "ja", "name": "日本語", "name_en": "Japanese", "glottocode": "nucl1643", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "ko-KR", "name": "한국어", "name_en": "Korean (South Korea)", "glottocode": "kore1280", "origin": "seed", "reason": "major-east-asia-language"}
     ,{"code": "ko-KP", "name": "조선말", "name_en": "Korean (North Korea)", "glottocode": "kore1280", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "ko-CN", "name": "조선어", "name_en": "Korean (China)", "glottocode": "kore1280", "origin": "seed", "reason": "regional-east-asia-language"}
-    ,{"code": "mr-IN", "name": "मराठी", "name_en": "Marathi", "glottocode": "mara1378", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "pa-PK", "name": "ਪੰਜਾਬੀ", "name_en": "Punjabi", "glottocode": "panj1256", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "ko", "name": "조선어", "name_en": "Korean", "glottocode": "kore1280", "origin": "seed", "reason": "regional-east-asia-language"}
+    ,{"code": "mr", "name": "मराठी", "name_en": "Marathi", "glottocode": "mara1378", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "pa-Guru", "name": "ਪੰਜਾਬੀ", "name_en": "Punjabi (Gurmukhi)", "glottocode": "panj1256", "origin": "seed", "reason": "major-world-language"}
     ,{"code": "pt-BR", "name": "Português", "name_en": "Portuguese", "glottocode": "port1283", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "ru-RU", "name": "Русский", "name_en": "Russian", "glottocode": "russ1263", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "th-TH", "name": "ไทย", "name_en": "Thai", "glottocode": "thai1261", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "tr-TR", "name": "Türkçe", "name_en": "Turkish", "glottocode": "nucl1301", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "ur-PK", "name": "اردو", "name_en": "Urdu", "glottocode": "urdu1245", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "vi-VN", "name": "Tiếng Việt", "name_en": "Vietnamese", "glottocode": "viet1252", "origin": "seed", "reason": "major-world-language"}
-    ,{"code": "wuu-Hant-CN", "name": "吳語", "name_en": "Wu Chinese (Traditional)", "glottocode": "wuch1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "wuu-Hans-CN", "name": "吴语", "name_en": "Wu Chinese (Simplified)", "glottocode": "wuch1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "yue-Hant-HK", "name": "粵語", "name_en": "Cantonese (Hong Kong)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "yue-Hant-MO", "name": "粵語", "name_en": "Cantonese (Macao)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "yue-Hans-CN", "name": "粤语", "name_en": "Cantonese (Mainland China)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hsn-Hant-CN", "name": "湘語", "name_en": "Xiang Chinese (Traditional)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hsn-Hans-CN", "name": "湘语", "name_en": "Xiang Chinese (Simplified)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hak-Hant-TW", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Taiwan)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "hak-Hans-CN", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Mainland China)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "cdo-Hant-CN", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Traditional)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "cdo-Hans-CN", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Simplified)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mnp-Hant-CN", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Traditional)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mnp-Hans-CN", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Simplified)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "nan-Hans-CN", "name": "Bân-lâm-gú", "name_en": "Min Nan Chinese (Mainland China)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "nan-Hant-TW", "name": "Bân-lâm-gú", "name_en": "Taiwanese Hokkien", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "bo-Tibt-CN", "name": "བོད་སྐད་", "name_en": "Tibetan", "glottocode": "tibe1272", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "ug-Arab-CN", "name": "ئۇيغۇرچە", "name_en": "Uyghur", "glottocode": "uigh1240", "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mn-Mong-CN", "name": "ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ", "name_en": "Mongolian (Traditional Script, China)", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "mn-Cyrl-MN", "name": "Монгол хэл", "name_en": "Mongolian (Mongolia)", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
-    ,{"code": "kk-Arab-CN", "name": "قازاق تىلى", "name_en": "Kazakh (China)", "glottocode": "kaza1248", "origin": "seed", "reason": "regional-east-asia-language"}
-    ,{"code": "kk-Cyrl-KZ", "name": "Қазақ тілі", "name_en": "Kazakh (Kazakhstan)", "glottocode": "kaza1248", "origin": "seed", "reason": "major-central-asia-language"}
-    ,{"code": "ky-Arab-CN", "name": "قىرعىز تىلى", "name_en": "Kyrgyz (China)", "glottocode": "kirg1245", "origin": "seed", "reason": "regional-east-asia-language"}
-    ,{"code": "ky-Cyrl-KG", "name": "Кыргызча", "name_en": "Kyrgyz (Kyrgyzstan)", "glottocode": "kirg1245", "origin": "seed", "reason": "major-central-asia-language"}
-    ,{"code": "za-Latn-CN", "name": "Vaƅcuengh", "name_en": "Zhuang", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "ru", "name": "Русский", "name_en": "Russian", "glottocode": "russ1263", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "th", "name": "ไทย", "name_en": "Thai", "glottocode": "thai1261", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "tr", "name": "Türkçe", "name_en": "Turkish", "glottocode": "nucl1301", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "ur", "name": "اردو", "name_en": "Urdu", "glottocode": "urdu1245", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "vi", "name": "Tiếng Việt", "name_en": "Vietnamese", "glottocode": "viet1252", "origin": "seed", "reason": "major-world-language"}
+    ,{"code": "wuu-Hant", "name": "吳語", "name_en": "Wu Chinese (Traditional)", "glottocode": "wuch1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "wuu-Hans", "name": "吴语", "name_en": "Wu Chinese (Simplified)", "glottocode": "wuch1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "yue-Hant", "name": "粵語", "name_en": "Cantonese (Traditional)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "yue-Hans", "name": "粤语", "name_en": "Cantonese (Simplified)", "glottocode": "yuec1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hsn-Hant", "name": "湘語", "name_en": "Xiang Chinese (Traditional)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hsn-Hans", "name": "湘语", "name_en": "Xiang Chinese (Simplified)", "glottocode": "xian1251", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hak-Hant", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Traditional)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "hak-Hans", "name": "Hak-fa-ngî", "name_en": "Hakka Chinese (Simplified)", "glottocode": "hakk1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cdo-Hant", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Traditional)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cdo-Hans", "name": "Mìng-dĕ̤ng-ngṳ̄", "name_en": "Min Dong Chinese (Simplified)", "glottocode": "mind1253", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mnp-Hant", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Traditional)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mnp-Hans", "name": "Bân-lă̤-ngṳ̄", "name_en": "Min Bei Chinese (Simplified)", "glottocode": "minb1236", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "nan-Hans", "name": "Bân-lâm-gú", "name_en": "Min Nan Chinese (Simplified)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "nan-Hant", "name": "Bân-lâm-gú", "name_en": "Min Nan Chinese (Traditional)", "glottocode": "minn1241", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "bo-Tibt", "name": "བོད་སྐད་", "name_en": "Tibetan", "glottocode": "tibe1272", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "ug-Arab", "name": "ئۇيغۇرچە", "name_en": "Uyghur", "glottocode": "uigh1240", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mn-Mong", "name": "ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ", "name_en": "Mongolian (Traditional Script)", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "mn-Cyrl", "name": "Монгол хэл", "name_en": "Mongolian (Cyrillic)", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "kk-Arab", "name": "قازاق تىلى", "name_en": "Kazakh (Arabic Script)", "glottocode": "kaza1248", "origin": "seed", "reason": "regional-east-asia-language"}
+    ,{"code": "kk-Cyrl", "name": "Қазақ тілі", "name_en": "Kazakh (Cyrillic)", "glottocode": "kaza1248", "origin": "seed", "reason": "major-central-asia-language"}
+    ,{"code": "ky-Arab", "name": "قىرعىز تىلى", "name_en": "Kyrgyz (Arabic Script)", "glottocode": "kirg1245", "origin": "seed", "reason": "regional-east-asia-language"}
+    ,{"code": "ky-Cyrl", "name": "Кыргызча", "name_en": "Kyrgyz (Cyrillic)", "glottocode": "kirg1245", "origin": "seed", "reason": "major-central-asia-language"}
+    ,{"code": "za-Latn", "name": "Vaƅcuengh", "name_en": "Zhuang", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
   ],
+  "online_code_migrations": {
+    "mappings": {
+      "und": {"action": "keep", "canonical": "und"},
+      "x-emoji": {"action": "keep", "canonical": "x-emoji"},
+      "x-image": {"action": "keep", "canonical": "x-image"},
+      "en-US": {"action": "keep", "canonical": "en-US"},
+      "en-GB": {"action": "keep", "canonical": "en-GB"},
+      "swh": {"action": "keep", "canonical": "swh"},
+      "ral": {"action": "keep", "canonical": "ral"},
+      "zyg-x-yang1286": {"action": "keep", "canonical": "zyg-x-yang1286"},
+      "wuu-x-ouji1238": {"action": "keep", "canonical": "wuu-x-ouji1238"},
+      "wuu-x-taiz1238": {"action": "keep", "canonical": "wuu-x-taiz1238"},
+      "nan-x-chao1239": {"action": "keep", "canonical": "nan-x-chao1239"},
+      "nan-Latn-TW-tailo": {"action": "keep", "canonical": "nan-Latn-TW-tailo"},
+      "nan-Latn-TW-pehoeji": {"action": "keep", "canonical": "nan-Latn-TW-pehoeji"},
+      "zh-Hans-CN": {"action": "canonicalize", "canonical": "zh-Hans"},
+      "zh-Hant-TW": {"action": "canonicalize", "canonical": "zh-Hant"},
+      "zh-Hant-HK": {"action": "canonicalize", "canonical": "zh-Hant"},
+      "zh-Hant-MO": {"action": "canonicalize", "canonical": "zh-Hant"},
+      "ar-SA": {"action": "canonicalize", "canonical": "ar"},
+      "bn-BD": {"action": "canonicalize", "canonical": "bn"},
+      "de-DE": {"action": "canonicalize", "canonical": "de"},
+      "es-ES": {"action": "canonicalize", "canonical": "es"},
+      "fa-IR": {"action": "canonicalize", "canonical": "fa"},
+      "fr-FR": {"action": "canonicalize", "canonical": "fr"},
+      "hi-IN": {"action": "canonicalize", "canonical": "hi"},
+      "id-ID": {"action": "canonicalize", "canonical": "id"},
+      "it-IT": {"action": "canonicalize", "canonical": "it"},
+      "ja-JP": {"action": "canonicalize", "canonical": "ja"},
+      "ko-KR": {"action": "keep", "canonical": "ko-KR"},
+      "ko-KP": {"action": "keep", "canonical": "ko-KP"},
+      "ko-CN": {"action": "canonicalize", "canonical": "ko"},
+      "mr-IN": {"action": "canonicalize", "canonical": "mr"},
+      "pa-PK": {"action": "canonicalize", "canonical": "pa-Guru"},
+      "pt-BR": {"action": "keep", "canonical": "pt-BR"},
+      "ru-RU": {"action": "canonicalize", "canonical": "ru"},
+      "th-TH": {"action": "canonicalize", "canonical": "th"},
+      "tr-TR": {"action": "canonicalize", "canonical": "tr"},
+      "ur-PK": {"action": "canonicalize", "canonical": "ur"},
+      "vi-VN": {"action": "canonicalize", "canonical": "vi"},
+      "wuu-Hant-CN": {"action": "canonicalize", "canonical": "wuu-Hant"},
+      "wuu-Hans-CN": {"action": "canonicalize", "canonical": "wuu-Hans"},
+      "yue-Hant-HK": {"action": "canonicalize", "canonical": "yue-Hant"},
+      "yue-Hant-MO": {"action": "canonicalize", "canonical": "yue-Hant"},
+      "yue-Hans-CN": {"action": "canonicalize", "canonical": "yue-Hans"},
+      "hsn-Hant-CN": {"action": "canonicalize", "canonical": "hsn-Hant"},
+      "hsn-Hans-CN": {"action": "canonicalize", "canonical": "hsn-Hans"},
+      "hak-Hant-TW": {"action": "canonicalize", "canonical": "hak-Hant"},
+      "hak-Hans-CN": {"action": "canonicalize", "canonical": "hak-Hans"},
+      "cdo-Hant-CN": {"action": "canonicalize", "canonical": "cdo-Hant"},
+      "cdo-Hans-CN": {"action": "canonicalize", "canonical": "cdo-Hans"},
+      "mnp-Hant-CN": {"action": "canonicalize", "canonical": "mnp-Hant"},
+      "mnp-Hans-CN": {"action": "canonicalize", "canonical": "mnp-Hans"},
+      "nan-Hans-CN": {"action": "canonicalize", "canonical": "nan-Hans"},
+      "nan-Hant-TW": {"action": "canonicalize", "canonical": "nan-Hant"},
+      "bo-Tibt-CN": {"action": "canonicalize", "canonical": "bo-Tibt"},
+      "ug-Arab-CN": {"action": "canonicalize", "canonical": "ug-Arab"},
+      "mn-Mong-CN": {"action": "canonicalize", "canonical": "mn-Mong"},
+      "mn-Cyrl-MN": {"action": "canonicalize", "canonical": "mn-Cyrl"},
+      "kk-Arab-CN": {"action": "canonicalize", "canonical": "kk-Arab"},
+      "kk-Cyrl-KZ": {"action": "canonicalize", "canonical": "kk-Cyrl"},
+      "ky-Arab-CN": {"action": "canonicalize", "canonical": "ky-Arab"},
+      "ky-Cyrl-KG": {"action": "canonicalize", "canonical": "ky-Cyrl"},
+      "za-Latn-CN": {"action": "canonicalize", "canonical": "za-Latn"}
+    }
+  },
   "locations": [
     {"variety_key":"glotto:stan1293","city_name":"London","city_name_en":"London","territory_code":"GB","script_code":"","latitude":51.5074,"longitude":-0.1278,"reference":"https://glottolog.org/resource/languoid/id/stan1293"},
     {"variety_key":"glotto:swah1253","city_name":"Dar es Salaam","city_name_en":"Dar es Salaam","territory_code":"TZ","script_code":"","latitude":-6.7924,"longitude":39.2083,"reference":"https://glottolog.org/resource/languoid/id/swah1253"},
@@ -74,7 +137,7 @@
     {"variety_key":"glotto:beng1280","city_name":"Dhaka","city_name_en":"Dhaka","territory_code":"BD","script_code":"","latitude":23.8103,"longitude":90.4125,"reference":"https://glottolog.org/resource/languoid/id/beng1280"},
     {"variety_key":"glotto:stan1295","city_name":"Berlin","city_name_en":"Berlin","territory_code":"DE","script_code":"","latitude":52.5200,"longitude":13.4050,"reference":"https://glottolog.org/resource/languoid/id/stan1295"},
     {"variety_key":"glotto:stan1288","city_name":"Madrid","city_name_en":"Madrid","territory_code":"ES","script_code":"","latitude":40.4168,"longitude":-3.7038,"reference":"https://glottolog.org/resource/languoid/id/stan1288"},
-    {"variety_key":"system:fa-IR","city_name":"Tehran","city_name_en":"Tehran","territory_code":"IR","script_code":"","latitude":35.6892,"longitude":51.3890,"reference":"https://www.iranicaonline.org/articles/persian-language-i"},
+    {"variety_key":"system:fa","city_name":"Tehran","city_name_en":"Tehran","territory_code":"IR","script_code":"","latitude":35.6892,"longitude":51.3890,"reference":"https://www.iranicaonline.org/articles/persian-language-i"},
     {"variety_key":"glotto:stan1290","city_name":"Paris","city_name_en":"Paris","territory_code":"FR","script_code":"","latitude":48.8566,"longitude":2.3522,"reference":"https://glottolog.org/resource/languoid/id/stan1290"},
     {"variety_key":"glotto:hind1269","city_name":"Delhi","city_name_en":"Delhi","territory_code":"IN","script_code":"","latitude":28.6139,"longitude":77.2090,"reference":"https://glottolog.org/resource/languoid/id/hind1269"},
     {"variety_key":"glotto:indo1316","city_name":"Jakarta","city_name_en":"Jakarta","territory_code":"ID","script_code":"","latitude":-6.2088,"longitude":106.8456,"reference":"https://glottolog.org/resource/languoid/id/indo1316"},
@@ -84,7 +147,7 @@
     {"variety_key":"glotto:kore1280","city_name":"Pyongyang","city_name_en":"Pyongyang","territory_code":"KP","script_code":"","latitude":39.0392,"longitude":125.7625,"reference":"https://glottolog.org/resource/languoid/id/kore1280"},
     {"variety_key":"glotto:kore1280","city_name":"Yanji","city_name_en":"Yanji","territory_code":"CN","script_code":"","latitude":42.9068,"longitude":129.5089,"reference":"https://glottolog.org/resource/languoid/id/kore1280"},
     {"variety_key":"glotto:mara1378","city_name":"Mumbai","city_name_en":"Mumbai","territory_code":"IN","script_code":"","latitude":19.0760,"longitude":72.8777,"reference":"https://glottolog.org/resource/languoid/id/mara1378"},
-    {"variety_key":"glotto:panj1256","city_name":"Lahore","city_name_en":"Lahore","territory_code":"PK","script_code":"","latitude":31.5204,"longitude":74.3587,"reference":"https://glottolog.org/resource/languoid/id/panj1256"},
+    {"variety_key":"glotto:panj1256","city_name":"ਚੰਡੀਗੜ੍ਹ","city_name_en":"Chandigarh","territory_code":"IN","script_code":"Guru","latitude":30.7333,"longitude":76.7794,"reference":"https://glottolog.org/resource/languoid/id/panj1256"},
     {"variety_key":"glotto:port1283","city_name":"Lisbon","city_name_en":"Lisbon","territory_code":"PT","script_code":"","latitude":38.7223,"longitude":-9.1393,"reference":"https://glottolog.org/resource/languoid/id/port1283"},
     {"variety_key":"glotto:russ1263","city_name":"Moscow","city_name_en":"Moscow","territory_code":"RU","script_code":"","latitude":55.7558,"longitude":37.6173,"reference":"https://glottolog.org/resource/languoid/id/russ1263"},
     {"variety_key":"glotto:thai1261","city_name":"Bangkok","city_name_en":"Bangkok","territory_code":"TH","script_code":"","latitude":13.7563,"longitude":100.5018,"reference":"https://glottolog.org/resource/languoid/id/thai1261"},
@@ -104,11 +167,11 @@
     {"variety_key":"glotto:minn1241","city_name":"Taipei","city_name_en":"Taipei","territory_code":"TW","script_code":"Hant","latitude":25.0330,"longitude":121.5654,"reference":"https://glottolog.org/resource/languoid/id/minn1241"},
     {"variety_key":"glotto:tibe1272","city_name":"Lhasa","city_name_en":"Lhasa","territory_code":"CN","script_code":"Tibt","latitude":29.6500,"longitude":91.1000,"reference":"https://glottolog.org/resource/languoid/id/tibe1272"},
     {"variety_key":"glotto:uigh1240","city_name":"Kashgar","city_name_en":"Kashgar","territory_code":"CN","script_code":"Arab","latitude":39.4704,"longitude":75.9898,"reference":"https://glottolog.org/resource/languoid/id/uigh1240"},
-    {"variety_key":"system:mn-Mong-CN","city_name":"Hohhot","city_name_en":"Hohhot","territory_code":"CN","script_code":"Mong","latitude":40.8426,"longitude":111.7492,"reference":"https://www.ethnologue.com/language/mvf/"},
-    {"variety_key":"system:mn-Cyrl-MN","city_name":"Ulaanbaatar","city_name_en":"Ulaanbaatar","territory_code":"MN","script_code":"Cyrl","latitude":47.8864,"longitude":106.9057,"reference":"https://www.ethnologue.com/language/mon/"},
+    {"variety_key":"system:mn-Mong","city_name":"Hohhot","city_name_en":"Hohhot","territory_code":"CN","script_code":"Mong","latitude":40.8426,"longitude":111.7492,"reference":"https://www.ethnologue.com/language/mvf/"},
+    {"variety_key":"system:mn-Cyrl","city_name":"Ulaanbaatar","city_name_en":"Ulaanbaatar","territory_code":"MN","script_code":"Cyrl","latitude":47.8864,"longitude":106.9057,"reference":"https://www.ethnologue.com/language/mon/"},
     {"variety_key":"glotto:kaza1248","city_name":"Almaty","city_name_en":"Almaty","territory_code":"KZ","script_code":"Cyrl","latitude":43.2389,"longitude":76.8897,"reference":"https://glottolog.org/resource/languoid/id/kaza1248"},
     {"variety_key":"glotto:kaza1248","city_name":"Urumqi","city_name_en":"Urumqi","territory_code":"CN","script_code":"Arab","latitude":43.8256,"longitude":87.6168,"reference":"https://glottolog.org/resource/languoid/id/kaza1248"},
     {"variety_key":"glotto:kirg1245","city_name":"Bishkek","city_name_en":"Bishkek","territory_code":"KG","script_code":"Cyrl","latitude":42.8746,"longitude":74.5698,"reference":"https://glottolog.org/resource/languoid/id/kirg1245"},
-    {"variety_key":"system:za-Latn-CN","city_name":"Nanning","city_name_en":"Nanning","territory_code":"CN","script_code":"Latn","latitude":22.8170,"longitude":108.3665,"reference":"https://www.ethnologue.com/language/zha/"}
+    {"variety_key":"system:za-Latn","city_name":"Nanning","city_name_en":"Nanning","territory_code":"CN","script_code":"Latn","latitude":22.8170,"longitude":108.3665,"reference":"https://www.ethnologue.com/language/zha/"}
   ]
 }

@@ -35,6 +35,22 @@ class MigrationDiscoveryTests(unittest.TestCase):
         self.assertTrue(all(migration.sha256 for migration in migrations))
         self.assertEqual(migrations[0].size, (FIXTURES_DIR / "0002_schema.sql").stat().st_size)
 
+    def test_discover_migrations_ignores_review_metadata_sidecars(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            (temp_root / "0002_schema.sql").write_text("SELECT 1;\n", encoding="utf-8")
+            (temp_root / "0002_schema.meta.json").write_text(
+                json.dumps({"preflight": ["check"], "postflight": ["verify"], "reversible": True}),
+                encoding="utf-8",
+            )
+
+            try:
+                migrations = migrations_lib.discover_migrations(temp_root)
+            except ValueError as exc:
+                self.fail(f"metadata sidecar must not be treated as a migration: {exc}")
+
+        self.assertEqual([migration.filename for migration in migrations], ["0002_schema.sql"])
+
     def test_discover_rejects_invalid_filename(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_root = Path(temp_dir)

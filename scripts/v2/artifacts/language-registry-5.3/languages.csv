@@ -1,63 +1,60 @@
 code,name,name_en,description,direction,base_language,script_code,region_code,variants_json,private_use_json,variety_key,glottocode,origin,community_reason,alternate_names_json,references_json,parent_languoid_id,latitude,longitude
-ar-SA,العربية,Arabic,,ltr,ar,,SA,[],[],glotto:stan1318,stan1318,seed,,[],[],glotto:arab1395,27.9625,43.8525
-bn-BD,বাংলা,Bengali,,ltr,bn,,BD,[],[],glotto:beng1280,beng1280,seed,,[],[],glotto:gaud1238,24.0,90.0
-bo-Tibt-CN,བོད་སྐད་,Tibetan,,ltr,bo,Tibt,CN,[],[],glotto:tibe1272,tibe1272,seed,,[],[],glotto:cent2346,28.3681,90.1872
-cdo-Hans-CN,Mìng-dĕ̤ng-ngṳ̄,Min Dong Chinese (Simplified),,ltr,cdo,Hans,CN,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
-cdo-Hant-CN,Mìng-dĕ̤ng-ngṳ̄,Min Dong Chinese (Traditional),,ltr,cdo,Hant,CN,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
-de-DE,Deutsch,German,,ltr,de,,DE,[],[],glotto:stan1295,stan1295,seed,,[],[],glotto:glob1243,48.649,12.4676
+ar,العربية,Arabic,,ltr,ar,,,[],[],glotto:stan1318,stan1318,seed,,[],[],glotto:arab1395,27.9625,43.8525
+bn,বাংলা,Bengali,,ltr,bn,,,[],[],glotto:beng1280,beng1280,seed,,[],[],glotto:gaud1238,24.0,90.0
+bo-Tibt,བོད་སྐད་,Tibetan,,ltr,bo,Tibt,,[],[],glotto:tibe1272,tibe1272,seed,,[],[],glotto:cent2346,28.3681,90.1872
+cdo-Hans,Mìng-dĕ̤ng-ngṳ̄,Min Dong Chinese (Simplified),,ltr,cdo,Hans,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
+cdo-Hant,Mìng-dĕ̤ng-ngṳ̄,Min Dong Chinese (Traditional),,ltr,cdo,Hant,,[],[],glotto:mind1253,mind1253,seed,,[],[],glotto:coas1318,26.0,119.5
+de,Deutsch,German,,ltr,de,,,[],[],glotto:stan1295,stan1295,seed,,[],[],glotto:glob1243,48.649,12.4676
 en-GB,English (United Kingdom),English (United Kingdom),,ltr,en,,GB,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
 en-US,English (United States),English (United States),,ltr,en,,US,[],[],glotto:stan1293,stan1293,seed,,[],[],glotto:macr1271,53.0,-1.0
-es-ES,Español,Spanish,,ltr,es,,ES,[],[],glotto:stan1288,stan1288,seed,,[],[],glotto:cast1243,40.4414,-1.11788
-fa-IR,فارسی,Persian,,ltr,fa,,IR,[],[],system:fa-IR,,seed,,[],[],,,
-fr-FR,Français,French,,ltr,fr,,FR,[],[],glotto:stan1290,stan1290,seed,,[],[],glotto:glob1239,48.0,2.0
-hak-Hans-CN,Hak-fa-ngî,Hakka Chinese (Mainland China),,ltr,hak,Hans,CN,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
-hak-Hant-TW,Hak-fa-ngî,Hakka Chinese (Taiwan),,ltr,hak,Hant,TW,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
-hi-IN,हिन्दी,Hindi,,ltr,hi,,IN,[],[],glotto:hind1269,hind1269,seed,,[],[],glotto:hind1270,25.0,77.0
-hsn-Hans-CN,湘语,Xiang Chinese (Simplified),,ltr,hsn,Hans,CN,[],[],glotto:xian1251,xian1251,seed,,[],[],glotto:midd1354,27.66847,111.47112
-hsn-Hant-CN,湘語,Xiang Chinese (Traditional),,ltr,hsn,Hant,CN,[],[],glotto:xian1251,xian1251,seed,,[],[],glotto:midd1354,27.66847,111.47112
-id-ID,Bahasa Indonesia,Indonesian,,ltr,id,,ID,[],[],glotto:indo1316,indo1316,seed,,[],[],glotto:stan1327,-7.33458,109.716
-it-IT,Italiano,Italian,,ltr,it,,IT,[],[],glotto:ital1282,ital1282,seed,,[],[],glotto:cent2427,43.0464,12.6489
-ja-JP,日本語,Japanese,,ltr,ja,,JP,[],[],glotto:nucl1643,nucl1643,seed,,[],[],glotto:japa1258,35.0,135.0
-kk-Arab-CN,قازاق تىلى,Kazakh (China),,rtl,kk,Arab,CN,[],[],glotto:kaza1248,kaza1248,seed,,[],[],glotto:sout2701,51.17,71.454
-kk-Cyrl-KZ,Қазақ тілі,Kazakh (Kazakhstan),,ltr,kk,Cyrl,KZ,[],[],glotto:kaza1248,kaza1248,seed,,[],[],glotto:sout2701,51.17,71.454
-ko-CN,조선어,Korean (China),,ltr,ko,,CN,[],[],glotto:kore1280,kore1280,seed,,[],[],glotto:kore1284,37.54,126.98
+es,Español,Spanish,,ltr,es,,,[],[],glotto:stan1288,stan1288,seed,,[],[],glotto:cast1243,40.4414,-1.11788
+fa,فارسی,Persian,,ltr,fa,,,[],[],system:fa,,seed,,[],[],,,
+fr,Français,French,,ltr,fr,,,[],[],glotto:stan1290,stan1290,seed,,[],[],glotto:glob1239,48.0,2.0
+hak-Hans,Hak-fa-ngî,Hakka Chinese (Simplified),,ltr,hak,Hans,,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
+hak-Hant,Hak-fa-ngî,Hakka Chinese (Traditional),,ltr,hak,Hant,,[],[],glotto:hakk1236,hakk1236,seed,,[],[],glotto:midd1354,25.0,116.0
+hi,हिन्दी,Hindi,,ltr,hi,,,[],[],glotto:hind1269,hind1269,seed,,[],[],glotto:hind1270,25.0,77.0
+hsn-Hans,湘语,Xiang Chinese (Simplified),,ltr,hsn,Hans,,[],[],glotto:xian1251,xian1251,seed,,[],[],glotto:midd1354,27.66847,111.47112
+hsn-Hant,湘語,Xiang Chinese (Traditional),,ltr,hsn,Hant,,[],[],glotto:xian1251,xian1251,seed,,[],[],glotto:midd1354,27.66847,111.47112
+id,Bahasa Indonesia,Indonesian,,ltr,id,,,[],[],glotto:indo1316,indo1316,seed,,[],[],glotto:stan1327,-7.33458,109.716
+it,Italiano,Italian,,ltr,it,,,[],[],glotto:ital1282,ital1282,seed,,[],[],glotto:cent2427,43.0464,12.6489
+ja,日本語,Japanese,,ltr,ja,,,[],[],glotto:nucl1643,nucl1643,seed,,[],[],glotto:japa1258,35.0,135.0
+kk-Arab,قازاق تىلى,Kazakh (Arabic Script),,rtl,kk,Arab,,[],[],glotto:kaza1248,kaza1248,seed,,[],[],glotto:sout2701,51.17,71.454
+kk-Cyrl,Қазақ тілі,Kazakh (Cyrillic),,ltr,kk,Cyrl,,[],[],glotto:kaza1248,kaza1248,seed,,[],[],glotto:sout2701,51.17,71.454
+ko,조선어,Korean,,ltr,ko,,,[],[],glotto:kore1280,kore1280,seed,,[],[],glotto:kore1284,37.54,126.98
 ko-KP,조선말,Korean (North Korea),,ltr,ko,,KP,[],[],glotto:kore1280,kore1280,seed,,[],[],glotto:kore1284,37.54,126.98
 ko-KR,한국어,Korean (South Korea),,ltr,ko,,KR,[],[],glotto:kore1280,kore1280,seed,,[],[],glotto:kore1284,37.54,126.98
-ky-Arab-CN,قىرعىز تىلى,Kyrgyz (China),,rtl,ky,Arab,CN,[],[],glotto:kirg1245,kirg1245,seed,,[],[],glotto:east2791,42.0,74.0
-ky-Cyrl-KG,Кыргызча,Kyrgyz (Kyrgyzstan),,ltr,ky,Cyrl,KG,[],[],glotto:kirg1245,kirg1245,seed,,[],[],glotto:east2791,42.0,74.0
-mn-Cyrl-MN,Монгол хэл,Mongolian (Mongolia),,ltr,mn,Cyrl,MN,[],[],system:mn-Cyrl-MN,,seed,,[],[],,,
-mn-Mong-CN,ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ,"Mongolian (Traditional Script, China)",,ltr,mn,Mong,CN,[],[],system:mn-Mong-CN,,seed,,[],[],,,
-mnp-Hans-CN,Bân-lă̤-ngṳ̄,Min Bei Chinese (Simplified),,ltr,mnp,Hans,CN,[],[],glotto:minb1236,minb1236,seed,,[],[],glotto:minb1244,27.05,118.32
-mnp-Hant-CN,Bân-lă̤-ngṳ̄,Min Bei Chinese (Traditional),,ltr,mnp,Hant,CN,[],[],glotto:minb1236,minb1236,seed,,[],[],glotto:minb1244,27.05,118.32
-mr-IN,मराठी,Marathi,,ltr,mr,,IN,[],[],glotto:mara1378,mara1378,seed,,[],[],glotto:mode1268,17.9344,76.6665
-nan-Hans-CN,Bân-lâm-gú,Min Nan Chinese (Mainland China),,ltr,nan,Hans,CN,[],[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
-nan-Hant-TW,Bân-lâm-gú,Taiwanese Hokkien,,ltr,nan,Hant,TW,[],[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
+ky-Arab,قىرعىز تىلى,Kyrgyz (Arabic Script),,rtl,ky,Arab,,[],[],glotto:kirg1245,kirg1245,seed,,[],[],glotto:east2791,42.0,74.0
+ky-Cyrl,Кыргызча,Kyrgyz (Cyrillic),,ltr,ky,Cyrl,,[],[],glotto:kirg1245,kirg1245,seed,,[],[],glotto:east2791,42.0,74.0
+mn-Cyrl,Монгол хэл,Mongolian (Cyrillic),,ltr,mn,Cyrl,,[],[],system:mn-Cyrl,,seed,,[],[],,,
+mn-Mong,ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ,Mongolian (Traditional Script),,ltr,mn,Mong,,[],[],system:mn-Mong,,seed,,[],[],,,
+mnp-Hans,Bân-lă̤-ngṳ̄,Min Bei Chinese (Simplified),,ltr,mnp,Hans,,[],[],glotto:minb1236,minb1236,seed,,[],[],glotto:minb1244,27.05,118.32
+mnp-Hant,Bân-lă̤-ngṳ̄,Min Bei Chinese (Traditional),,ltr,mnp,Hant,,[],[],glotto:minb1236,minb1236,seed,,[],[],glotto:minb1244,27.05,118.32
+mr,मराठी,Marathi,,ltr,mr,,,[],[],glotto:mara1378,mara1378,seed,,[],[],glotto:mode1268,17.9344,76.6665
+nan-Hans,Bân-lâm-gú,Min Nan Chinese (Simplified),,ltr,nan,Hans,,[],[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
+nan-Hant,Bân-lâm-gú,Min Nan Chinese (Traditional),,ltr,nan,Hant,,[],[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
 nan-Latn-TW-pehoeji,臺灣台語（白話字）,Taiwanese Hokkien (Pe̍h-ōe-jī),,ltr,nan,Latn,TW,"[""pehoeji""]",[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
 nan-Latn-TW-tailo,臺灣台語（臺羅）,Taiwanese Hokkien (Tâi-lô),,ltr,nan,Latn,TW,"[""tailo""]",[],glotto:minn1241,minn1241,seed,,[],[],glotto:sout3424,24.5,118.17
 nan-x-chao1239,Min Nan (Chaozhou),Min Nan (Chaozhou),,ltr,nan,,,[],"[""chao1239""]",glotto:chao1239,chao1239,seed,,[],[],glotto:minn1241,,
-pa-PK,ਪੰਜਾਬੀ,Punjabi,,ltr,pa,,PK,[],[],glotto:panj1256,panj1256,seed,,[],[],glotto:east2727,30.0368,75.6702
+pa-Guru,ਪੰਜਾਬੀ,Punjabi (Gurmukhi),,ltr,pa,Guru,,[],[],glotto:panj1256,panj1256,seed,,[],[],glotto:east2727,30.0368,75.6702
 pt-BR,Português,Portuguese,,ltr,pt,,BR,[],[],glotto:port1283,port1283,seed,,[],[],glotto:braz1247,39.91,-8.1
 ral,Raltic,Raltic,,ltr,ral,,,[],[],glotto:ralt1242,ralt1242,seed,,[],[],glotto:pait1250,25.0201,94.7381
-ru-RU,Русский,Russian,,ltr,ru,,RU,[],[],glotto:russ1263,russ1263,seed,,[],[],glotto:east1426,59.0,50.0
+ru,Русский,Russian,,ltr,ru,,,[],[],glotto:russ1263,russ1263,seed,,[],[],glotto:east1426,59.0,50.0
 swh,Swahili,Swahili,,ltr,swh,,,[],[],glotto:swah1253,swah1253,seed,,[],[],glotto:momb1256,-8.25605,37.624
-th-TH,ไทย,Thai,,ltr,th,,TH,[],[],glotto:thai1261,thai1261,seed,,[],[],glotto:laot1235,14.192,100.671
-tr-TR,Türkçe,Turkish,,ltr,tr,,TR,[],[],glotto:nucl1301,nucl1301,seed,,[],[],glotto:west2406,39.8667,32.8667
-ug-Arab-CN,ئۇيغۇرچە,Uyghur,,rtl,ug,Arab,CN,[],[],glotto:uigh1240,uigh1240,seed,,[],[],glotto:uigh1243,43.88,87.38
+th,ไทย,Thai,,ltr,th,,,[],[],glotto:thai1261,thai1261,seed,,[],[],glotto:laot1235,14.192,100.671
+tr,Türkçe,Turkish,,ltr,tr,,,[],[],glotto:nucl1301,nucl1301,seed,,[],[],glotto:west2406,39.8667,32.8667
+ug-Arab,ئۇيغۇرچە,Uyghur,,rtl,ug,Arab,,[],[],glotto:uigh1240,uigh1240,seed,,[],[],glotto:uigh1243,43.88,87.38
 und,Undetermined,Undetermined,,ltr,und,,,[],[],system:und,,system,,[],[],,,
-ur-PK,اردو,Urdu,,ltr,ur,,PK,[],[],glotto:urdu1245,urdu1245,seed,,[],[],glotto:hind1270,25.0,67.0
-vi-VN,Tiếng Việt,Vietnamese,,ltr,vi,,VN,[],[],glotto:viet1252,viet1252,seed,,[],[],glotto:viet1251,20.681188,105.774071
-wuu-Hans-CN,吴语,Wu Chinese (Simplified),,ltr,wuu,Hans,CN,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
-wuu-Hant-CN,吳語,Wu Chinese (Traditional),,ltr,wuu,Hant,CN,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
+ur,اردو,Urdu,,ltr,ur,,,[],[],glotto:urdu1245,urdu1245,seed,,[],[],glotto:hind1270,25.0,67.0
+vi,Tiếng Việt,Vietnamese,,ltr,vi,,,[],[],glotto:viet1252,viet1252,seed,,[],[],glotto:viet1251,20.681188,105.774071
+wuu-Hans,吴语,Wu Chinese (Simplified),,ltr,wuu,Hans,,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
+wuu-Hant,吳語,Wu Chinese (Traditional),,ltr,wuu,Hant,,[],[],glotto:wuch1236,wuch1236,seed,,[],[],glotto:wuic1234,29.8621,119.682
 wuu-x-ouji1238,Wu (Oujiang),Wu (Oujiang),,ltr,wuu,,,[],"[""ouji1238""]",glotto:ouji1238,ouji1238,seed,,[],[],glotto:wuic1234,27.94043,120.63338
 wuu-x-taiz1238,Wu (Taizhou),Wu (Taizhou),,ltr,wuu,,,[],"[""taiz1238""]",glotto:taiz1238,taiz1238,seed,,[],[],glotto:wuch1236,,
 x-emoji,Emoji 表情,Emoji,,ltr,x,,,[],"[""x-emoji""]",system:x-emoji,,system,,[],[],,,
 x-image,圖片,Image,,ltr,x,,,[],"[""x-image""]",system:x-image,,system,,[],[],,,
-yue-Hans-CN,粤语,Cantonese (Mainland China),,ltr,yue,Hans,CN,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
-yue-Hant-HK,粵語,Cantonese (Hong Kong),,ltr,yue,Hant,HK,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
-yue-Hant-MO,粵語,Cantonese (Macao),,ltr,yue,Hant,MO,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
-za-Latn-CN,Vaƅcuengh,Zhuang,,ltr,za,Latn,CN,[],[],system:za-Latn-CN,,seed,,[],[],,,
-zh-Hans-CN,简体中文,Simplified Chinese,,ltr,zh,Hans,CN,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
-zh-Hant-HK,中文（香港）,Traditional Chinese (Hong Kong),,ltr,zh,Hant,HK,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
-zh-Hant-MO,中文（澳門）,Traditional Chinese (Macao),,ltr,zh,Hant,MO,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
-zh-Hant-TW,繁體中文,Traditional Chinese (Taiwan),,ltr,zh,Hant,TW,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
+yue-Hans,粤语,Cantonese (Simplified),,ltr,yue,Hans,,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
+yue-Hant,粵語,Cantonese (Traditional),,ltr,yue,Hant,,[],[],glotto:yuec1235,yuec1235,seed,,[],[],glotto:yuep1234,23.0,113.0
+za-Latn,Vaƅcuengh,Zhuang,,ltr,za,Latn,,[],[],system:za-Latn,,seed,,[],[],,,
+zh-Hans,简体中文,Chinese (Simplified),,ltr,zh,Hans,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
+zh-Hant,繁體中文,Chinese (Traditional),,ltr,zh,Hant,,[],[],glotto:mand1415,mand1415,seed,,[],[],glotto:mand1471,40.0209,116.228
 zyg-x-yang1286,Zhuang (Yangwang),Zhuang (Yangwang),,ltr,zyg,,,[],"[""yang1286""]",glotto:yang1286,yang1286,seed,,[],[],glotto:deba1238,23.091864,106.393188

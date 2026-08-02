@@ -404,7 +404,7 @@ def write_languages(path: Path, rows: Iterable[dict[str, str]], max_tags: int) -
             f"候選 tag 超過 --max-tags={max_tags}；未寫入 languages.csv"
         )
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=LANGUAGE_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=LANGUAGE_FIELDS, lineterminator="\n")
         writer.writeheader()
         for row in values:
             writer.writerow(row)
@@ -414,7 +414,7 @@ def write_languages(path: Path, rows: Iterable[dict[str, str]], max_tags: int) -
 def write_locations(path: Path, rows: Iterable[dict[str, str]]) -> int:
     values = sorted(rows, key=lambda row: tuple(row[field].casefold() for field in LOCATION_FIELDS))
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=LOCATION_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=LOCATION_FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(values)
     return len(values)

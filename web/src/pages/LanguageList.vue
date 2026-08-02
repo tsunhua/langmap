@@ -41,7 +41,7 @@ const totalExpressions = computed(() => languages.value.reduce((s: number, l: an
 async function loadLanguages() {
   loadError.value = ''
   try {
-    languages.value = await list()
+    languages.value = await list({ limit: 100 })
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languagesPage.loadFailed')
   }

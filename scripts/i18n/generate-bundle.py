@@ -18,12 +18,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE_CATALOG = PROJECT_ROOT / 'web/src/locales/en.ts'
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / 'scripts/i18n/artifacts/system-ui'
 DEFAULT_LOCALE_PATHS = {
-    'zh-Hans-CN': PROJECT_ROOT / 'scripts/i18n/zh-Hans-CN.json',
-    'zh-Hant-TW': PROJECT_ROOT / 'scripts/i18n/zh-Hant-TW.json',
-    'es-ES': PROJECT_ROOT / 'scripts/i18n/es-ES.json',
-    'ja-JP': PROJECT_ROOT / 'scripts/i18n/ja-JP.json',
+    'zh-Hans': PROJECT_ROOT / 'scripts/i18n/zh-Hans-CN.json',
+    'zh-Hant': PROJECT_ROOT / 'scripts/i18n/zh-Hant-TW.json',
+    'es': PROJECT_ROOT / 'scripts/i18n/es-ES.json',
+    'ja': PROJECT_ROOT / 'scripts/i18n/ja-JP.json',
 }
-REQUIRED_LOCALE_CODES = ('es-ES', 'ja-JP', 'zh-Hans-CN', 'zh-Hant-TW')
+REQUIRED_LOCALE_CODES = ('es', 'ja', 'zh-Hans', 'zh-Hant')
 SCHEMA_VERSION = 1
 OWNERSHIP_SCOPE = 'managed-system-ui'
 

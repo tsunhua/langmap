@@ -1,8 +1,7 @@
 # 語言代表性城市設計
 
-> 狀態：已實作核心 schema、生成器、seed data、API 與語言詳情列表。
->
-> 尚未執行線上 observed code migration；目前 region code 仍保留作為內容變體。
+> 狀態：已實作。純地理用途的 region 已從 seed content profiles 移除，並提供
+> 經審核的 code migration matrix 與 `0012` 安全遷移；尚未執行 production mutation。
 
 ## 1. 背景
 
@@ -181,7 +180,7 @@ languages.code
 
 ## 8. 現有資料調整
 
-實作時需人工審核目前 `language_seed_profiles.json`：
+目前 `language_seed_profiles.json` 已依下列規則完成審核：
 
 - 將純粹為表達使用地而加入的 region 從 code 移除。
 - 將城市資訊搬到 `locations`。
@@ -191,16 +190,15 @@ languages.code
 - `und`、`x-emoji`、`x-image` 不需要代表性城市。
 - 既有特殊方言 profile 若無可靠城市來源，可暫時沒有 location。
 
-例如粵語可收斂為 content profile：
+粵語已收斂為 content profile：
 
 ```text
 yue-Hans
 yue-Hant
 ```
 
-並以 location rows 表示廣州、香港與澳門。若審核證明香港或澳門存在必須由
-region 表達的內容慣例，則保留對應 region profile；城市資料仍不取代該
-content 差異。
+並以 location rows 表示廣州、香港與澳門。日後若有可驗證、且無法由 script
+表達的內容慣例差異，應另行設計 profile，不以城市資料反推 region。
 
 ## 9. 驗證與錯誤處理
 

@@ -331,18 +331,15 @@ python3 sync_language_registry.py \
 BCP 47 的 region、script、variant 是 content tag 屬性，不是 Glottolog
 identity，因此不會複製進 `languoids`。展開規則保存在
 `language_seed_profiles.json`：明確定義要產生的 BCP 47 language tag，
-取代舊版的笛卡兒積展開。例如 `nan` 使用精確 script/region
-組合，不共享地區集合，也不作交叉相乘。例如 `nan` 只生成
-`nan-Latn-TW-tailo`、`nan-Latn-TW-pehoeji` 等。羅馬字
-variant 另由 IANA 與線上 required code 生成。不另生成 `zh-Hant`、`zh-TW`
-這類已有完整細分組合
-的中間行。其他主要語言只生成列出的主要地區，例如 `en-US`、`en-GB`。
+取代舊版的笛卡兒積展開。region 只在確有內容慣例差異時保留，例如
+`en-US`、`en-GB` 與 `pt-BR`；代表性城市或主要使用地不構成 region 的理由。
+漢字及其他多書寫系統以 script profile 表達，例如 `zh-Hans`、`zh-Hant`、
+`yue-Hans`、`yue-Hant`。具正式正字法 variant 的
+`nan-Latn-TW-tailo`、`nan-Latn-TW-pehoeji` 則保留其完整 registered prefix。
 注音只限定生成 `zh-Bopo-TW`（純注音）與 `zh-Hanb-TW`（漢字搭配注音），
 不套用到其他 Sinitic language 或 dialect。
-registry 只輸出 profile 葉節點：有 region 展開時不保留 base，有
-script/region 完整組合時不生成 script-only 或 region-only 中間標籤。
-例如不生成 `yue`、`yue-HK`、`en`，只保留 `yue-Hant-HK`、`en-US` 等
-完整項；`jyutping` variant 強制標記拉丁 script，生成
+registry 只輸出經策展的 content profiles，不從城市資料反向展開 region。
+例如粵語輸出 `yue-Hans`、`yue-Hant`；`jyutping` variant 強制標記拉丁 script，生成
 `yue-Latn-jyutping`，不生成 script 不明的 `yue-jyutping`。
 IANA variant 的 `Prefix` 不保證包含書寫系統；`variant_scripts` 保存有來源
 依據的補充，例如 Unifon、Ladin 各書寫標準及 Latgalian 1929/2007 正字法

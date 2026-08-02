@@ -21,7 +21,7 @@ glotto:minn1241,Taipei,Taipei,TW,Hant,25.033,121.5654,https://glottolog.org/reso
 glotto:minn1241,Xiamen,Xiamen,CN,Hans,24.4798,118.0894,https://glottolog.org/resource/languoid/id/minn1241
 glotto:nucl1301,Ankara,Ankara,TR,,39.9334,32.8597,https://glottolog.org/resource/languoid/id/nucl1301
 glotto:nucl1643,Tokyo,Tokyo,JP,,35.6762,139.6503,https://glottolog.org/resource/languoid/id/nucl1643
-glotto:panj1256,Lahore,Lahore,PK,,31.5204,74.3587,https://glottolog.org/resource/languoid/id/panj1256
+glotto:panj1256,ਚੰਡੀਗੜ੍ਹ,Chandigarh,IN,Guru,30.7333,76.7794,https://glottolog.org/resource/languoid/id/panj1256
 glotto:port1283,Lisbon,Lisbon,PT,,38.7223,-9.1393,https://glottolog.org/resource/languoid/id/port1283
 glotto:russ1263,Moscow,Moscow,RU,,55.7558,37.6173,https://glottolog.org/resource/languoid/id/russ1263
 glotto:stan1288,Madrid,Madrid,ES,,40.4168,-3.7038,https://glottolog.org/resource/languoid/id/stan1288
@@ -40,7 +40,7 @@ glotto:xian1251,Changsha,Changsha,CN,Hans,28.2282,112.9388,https://glottolog.org
 glotto:yuec1235,Guangzhou,Guangzhou,CN,Hans,23.1291,113.2644,https://glottolog.org/resource/languoid/id/yuec1235
 glotto:yuec1235,Hong Kong,Hong Kong,HK,Hant,22.3193,114.1694,https://glottolog.org/resource/languoid/id/yuec1235
 glotto:yuec1235,Macau,Macau,MO,Hant,22.1987,113.5439,https://glottolog.org/resource/languoid/id/yuec1235
-system:fa-IR,Tehran,Tehran,IR,,35.6892,51.389,https://www.iranicaonline.org/articles/persian-language-i
-system:mn-Cyrl-MN,Ulaanbaatar,Ulaanbaatar,MN,Cyrl,47.8864,106.9057,https://www.ethnologue.com/language/mon/
-system:mn-Mong-CN,Hohhot,Hohhot,CN,Mong,40.8426,111.7492,https://www.ethnologue.com/language/mvf/
-system:za-Latn-CN,Nanning,Nanning,CN,Latn,22.817,108.3665,https://www.ethnologue.com/language/zha/
+system:fa,Tehran,Tehran,IR,,35.6892,51.389,https://www.iranicaonline.org/articles/persian-language-i
+system:mn-Cyrl,Ulaanbaatar,Ulaanbaatar,MN,Cyrl,47.8864,106.9057,https://www.ethnologue.com/language/mon/
+system:mn-Mong,Hohhot,Hohhot,CN,Mong,40.8426,111.7492,https://www.ethnologue.com/language/mvf/
+system:za-Latn,Nanning,Nanning,CN,Latn,22.817,108.3665,https://www.ethnologue.com/language/zha/

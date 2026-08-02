@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,14 +28,9 @@ describe('v2 auth smoke', () => {
     const registerBody = await registerResponse.json();
     const token = registerBody.data.token;
 
-    const query = "SELECT COUNT(*) as c FROM expressions WHERE text = '你好' AND language_code = 'zh-Hans-CN';";
-    const beforeOutput = execFileSync('npx', ['wrangler', 'd1', 'execute', 'langmap-v2', '--local', '--command', query], {
-      cwd: process.cwd(),
-      encoding: 'utf-8',
-    });
-    const beforeCount = Number(beforeOutput.match(/"c":\s*(\d+)/)?.[1] || 0);
-
-    const response = await fetch(`${BASE_URL}/api/v2/contributions/batch`, {
+    const zhText = `測試詞句-${unique}`;
+    const enText = `Test expression ${unique}`;
+    const submit = () => fetch(`${BASE_URL}/api/v2/contributions/batch`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -44,20 +38,21 @@ describe('v2 auth smoke', () => {
       },
       body: JSON.stringify({
         expressions: [
-          { lang: 'zh-Hans-CN', text: '你好' },
-          { lang: 'en-US', text: 'Hello' },
+          { lang: 'zh-Hans', text: zhText },
+          { lang: 'en-US', text: enText },
         ],
       }),
     });
 
-    expect(response.status).toBe(200);
+    expect((await submit()).status).toBe(200);
+    expect((await submit()).status).toBe(200);
 
-    const afterOutput = execFileSync('npx', ['wrangler', 'd1', 'execute', 'langmap-v2', '--local', '--command', query], {
-      cwd: process.cwd(),
-      encoding: 'utf-8',
-    });
-    const afterCount = Number(afterOutput.match(/"c":\s*(\d+)/)?.[1] || 0);
-
-    expect(afterCount).toBe(beforeCount);
+    const searchResponse = await fetch(
+      `${BASE_URL}/api/v2/expressions/search?q=${encodeURIComponent(zhText)}&lang=zh-Hans`,
+    );
+    expect(searchResponse.status).toBe(200);
+    const searchBody = await searchResponse.json();
+    expect(searchBody.data).toHaveLength(1);
+    expect(searchBody.data[0].text).toBe(zhText);
   });
 });

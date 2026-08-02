@@ -22,7 +22,11 @@ export function resolveLocale(input: string | null | undefined, available: reado
   if (exact) return exact
   try {
     const canonical = Intl.getCanonicalLocales(value)[0]
-    return available.find(code => code.toLowerCase() === canonical.toLowerCase()) ?? canonical
+    for (const candidate of localeFallbackChain(canonical)) {
+      const availableCode = available.find(code => code.toLowerCase() === candidate.toLowerCase())
+      if (availableCode) return availableCode
+    }
+    return canonical
   } catch {
     return DEFAULT_LOCALE
   }

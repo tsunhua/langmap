@@ -7,7 +7,7 @@ describe('localization locale helpers', () => {
   })
 
   it('canonicalizes tags and prefers an available exact casing', () => {
-    expect(resolveLocale('zh-hant-tw', ['en-US', 'zh-Hant-TW'])).toBe('zh-Hant-TW')
+    expect(resolveLocale('zh-hant-tw', ['en-US', 'zh-Hant'])).toBe('zh-Hant')
     expect(resolveLocale('not a locale', ['en-US'])).toBe('en-US')
   })
 

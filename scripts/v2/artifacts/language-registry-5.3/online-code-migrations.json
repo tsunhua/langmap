@@ -1,1 +1,252 @@
-{}
+{
+  "mappings": {
+    "und": {
+      "action": "keep",
+      "canonical": "und"
+    },
+    "x-emoji": {
+      "action": "keep",
+      "canonical": "x-emoji"
+    },
+    "x-image": {
+      "action": "keep",
+      "canonical": "x-image"
+    },
+    "en-US": {
+      "action": "keep",
+      "canonical": "en-US"
+    },
+    "en-GB": {
+      "action": "keep",
+      "canonical": "en-GB"
+    },
+    "swh": {
+      "action": "keep",
+      "canonical": "swh"
+    },
+    "ral": {
+      "action": "keep",
+      "canonical": "ral"
+    },
+    "zyg-x-yang1286": {
+      "action": "keep",
+      "canonical": "zyg-x-yang1286"
+    },
+    "wuu-x-ouji1238": {
+      "action": "keep",
+      "canonical": "wuu-x-ouji1238"
+    },
+    "wuu-x-taiz1238": {
+      "action": "keep",
+      "canonical": "wuu-x-taiz1238"
+    },
+    "nan-x-chao1239": {
+      "action": "keep",
+      "canonical": "nan-x-chao1239"
+    },
+    "nan-Latn-TW-tailo": {
+      "action": "keep",
+      "canonical": "nan-Latn-TW-tailo"
+    },
+    "nan-Latn-TW-pehoeji": {
+      "action": "keep",
+      "canonical": "nan-Latn-TW-pehoeji"
+    },
+    "zh-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "zh-Hans"
+    },
+    "zh-Hant-TW": {
+      "action": "canonicalize",
+      "canonical": "zh-Hant"
+    },
+    "zh-Hant-HK": {
+      "action": "canonicalize",
+      "canonical": "zh-Hant"
+    },
+    "zh-Hant-MO": {
+      "action": "canonicalize",
+      "canonical": "zh-Hant"
+    },
+    "ar-SA": {
+      "action": "canonicalize",
+      "canonical": "ar"
+    },
+    "bn-BD": {
+      "action": "canonicalize",
+      "canonical": "bn"
+    },
+    "de-DE": {
+      "action": "canonicalize",
+      "canonical": "de"
+    },
+    "es-ES": {
+      "action": "canonicalize",
+      "canonical": "es"
+    },
+    "fa-IR": {
+      "action": "canonicalize",
+      "canonical": "fa"
+    },
+    "fr-FR": {
+      "action": "canonicalize",
+      "canonical": "fr"
+    },
+    "hi-IN": {
+      "action": "canonicalize",
+      "canonical": "hi"
+    },
+    "id-ID": {
+      "action": "canonicalize",
+      "canonical": "id"
+    },
+    "it-IT": {
+      "action": "canonicalize",
+      "canonical": "it"
+    },
+    "ja-JP": {
+      "action": "canonicalize",
+      "canonical": "ja"
+    },
+    "ko-KR": {
+      "action": "keep",
+      "canonical": "ko-KR"
+    },
+    "ko-KP": {
+      "action": "keep",
+      "canonical": "ko-KP"
+    },
+    "ko-CN": {
+      "action": "canonicalize",
+      "canonical": "ko"
+    },
+    "mr-IN": {
+      "action": "canonicalize",
+      "canonical": "mr"
+    },
+    "pa-PK": {
+      "action": "canonicalize",
+      "canonical": "pa-Guru"
+    },
+    "pt-BR": {
+      "action": "keep",
+      "canonical": "pt-BR"
+    },
+    "ru-RU": {
+      "action": "canonicalize",
+      "canonical": "ru"
+    },
+    "th-TH": {
+      "action": "canonicalize",
+      "canonical": "th"
+    },
+    "tr-TR": {
+      "action": "canonicalize",
+      "canonical": "tr"
+    },
+    "ur-PK": {
+      "action": "canonicalize",
+      "canonical": "ur"
+    },
+    "vi-VN": {
+      "action": "canonicalize",
+      "canonical": "vi"
+    },
+    "wuu-Hant-CN": {
+      "action": "canonicalize",
+      "canonical": "wuu-Hant"
+    },
+    "wuu-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "wuu-Hans"
+    },
+    "yue-Hant-HK": {
+      "action": "canonicalize",
+      "canonical": "yue-Hant"
+    },
+    "yue-Hant-MO": {
+      "action": "canonicalize",
+      "canonical": "yue-Hant"
+    },
+    "yue-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "yue-Hans"
+    },
+    "hsn-Hant-CN": {
+      "action": "canonicalize",
+      "canonical": "hsn-Hant"
+    },
+    "hsn-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "hsn-Hans"
+    },
+    "hak-Hant-TW": {
+      "action": "canonicalize",
+      "canonical": "hak-Hant"
+    },
+    "hak-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "hak-Hans"
+    },
+    "cdo-Hant-CN": {
+      "action": "canonicalize",
+      "canonical": "cdo-Hant"
+    },
+    "cdo-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "cdo-Hans"
+    },
+    "mnp-Hant-CN": {
+      "action": "canonicalize",
+      "canonical": "mnp-Hant"
+    },
+    "mnp-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "mnp-Hans"
+    },
+    "nan-Hans-CN": {
+      "action": "canonicalize",
+      "canonical": "nan-Hans"
+    },
+    "nan-Hant-TW": {
+      "action": "canonicalize",
+      "canonical": "nan-Hant"
+    },
+    "bo-Tibt-CN": {
+      "action": "canonicalize",
+      "canonical": "bo-Tibt"
+    },
+    "ug-Arab-CN": {
+      "action": "canonicalize",
+      "canonical": "ug-Arab"
+    },
+    "mn-Mong-CN": {
+      "action": "canonicalize",
+      "canonical": "mn-Mong"
+    },
+    "mn-Cyrl-MN": {
+      "action": "canonicalize",
+      "canonical": "mn-Cyrl"
+    },
+    "kk-Arab-CN": {
+      "action": "canonicalize",
+      "canonical": "kk-Arab"
+    },
+    "kk-Cyrl-KZ": {
+      "action": "canonicalize",
+      "canonical": "kk-Cyrl"
+    },
+    "ky-Arab-CN": {
+      "action": "canonicalize",
+      "canonical": "ky-Arab"
+    },
+    "ky-Cyrl-KG": {
+      "action": "canonicalize",
+      "canonical": "ky-Cyrl"
+    },
+    "za-Latn-CN": {
+      "action": "canonicalize",
+      "canonical": "za-Latn"
+    }
+  }
+}

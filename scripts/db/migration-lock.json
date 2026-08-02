@@ -61,6 +61,12 @@
       "filename": "0011_add_language_locations.sql",
       "size": 715,
       "sha256": "28174c053665f635b42d97cb04d448ad2407843ba4ef3c0e360de39e4341077e"
+    },
+    {
+      "sequence": 12,
+      "filename": "0012_canonicalize_language_content_profiles.sql",
+      "size": 6676,
+      "sha256": "0cd55a9b11e6eec0cf52dc11b7a1be0fab87ee75c3e2cd1fbfba6e7ce7b89243"
     }
   ]
 }

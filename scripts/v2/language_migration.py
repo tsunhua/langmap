@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-TAG = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*(?:-x-[a-z0-9]{8})?$")
+TAG = re.compile(r"^(?:x-(?:emoji|image)|[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*(?:-x-[a-z0-9]{8})?)$")
 
 
 def validate_manifest(manifest: dict, observed_codes: set[str] | None = None) -> list[str]:

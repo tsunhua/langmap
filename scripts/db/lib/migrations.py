@@ -33,6 +33,11 @@ def discover_migrations(migrations_dir: Path) -> list[MigrationFile]:
             raise ValueError(f"migration entry cannot be a symlink: {entry.name}")
         if not entry.is_file():
             raise ValueError(f"migration entry must be a regular file: {entry.name}")
+        if entry.name.endswith(".meta.json"):
+            migration_path = entry.with_name(entry.name.removesuffix(".meta.json") + ".sql")
+            if not migration_path.is_file():
+                raise ValueError(f"orphan migration metadata sidecar: {entry.name}")
+            continue
 
         match = MIGRATION_FILENAME_RE.match(entry.name)
         if match is None:

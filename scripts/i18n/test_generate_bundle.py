@@ -61,29 +61,29 @@ class GenerateBundleTests(unittest.TestCase):
         locale_dir = root / "scripts" / "i18n"
         locale_dir.mkdir(parents=True, exist_ok=True)
         locales = {
-            "zh-Hans-CN": {
+            "zh-Hans": {
                 "auth.noAccount": "还没有账号？",
                 "common.search": "搜索",
                 "search.hint": "L'été 即将到来",
             },
-            "zh-Hant-TW": {
+            "zh-Hant": {
                 "auth.noAccount": "還沒有帳號？",
                 "common.search": "搜尋",
                 "search.hint": "L'été 即將到來",
             },
-            "es-ES": {
+            "es": {
                 "auth.noAccount": "¿No tienes una cuenta?",
                 "common.search": "Buscar",
                 "search.hint": "L'été llega",
             },
-            "ja-JP": {
+            "ja": {
                 "auth.noAccount": "アカウントをお持ちではありませんか？",
                 "common.search": "検索",
                 "search.hint": "L'été が来ます",
             },
         }
         if es_extra:
-            locales["es-ES"].update(es_extra)
+            locales["es"].update(es_extra)
 
         paths: dict[str, Path] = {}
         for code, payload in locales.items():
@@ -104,7 +104,7 @@ class GenerateBundleTests(unittest.TestCase):
             "--output-dir",
             str(output_dir),
         ]
-        for code in ("zh-Hant-TW", "ja-JP", "es-ES", "zh-Hans-CN"):
+        for code in ("zh-Hant", "ja", "es", "zh-Hans"):
             args.extend(["--locale", f"{code}={locale_paths[code]}"])
         return subprocess.run(
             args,
@@ -178,10 +178,10 @@ class GenerateBundleTests(unittest.TestCase):
         db.executemany(
             "INSERT INTO languages (code, name, direction) VALUES (?, ?, ?)",
             [
-                ("zh-Hans-CN", "简体中文（中国）", "ltr"),
-                ("zh-Hant-TW", "繁體中文（台灣）", "ltr"),
-                ("es-ES", "Español (España)", "ltr"),
-                ("ja-JP", "日本語（日本）", "ltr"),
+                ("zh-Hans", "简体中文", "ltr"),
+                ("zh-Hant", "繁體中文", "ltr"),
+                ("es", "Español", "ltr"),
+                ("ja", "日本語", "ltr"),
             ],
         )
 
@@ -212,7 +212,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(manifest["ownership_scope"], "managed-system-ui")
             self.assertEqual(
                 manifest["locale_codes"],
-                ["es-ES", "ja-JP", "zh-Hans-CN", "zh-Hant-TW"],
+                ["es", "ja", "zh-Hans", "zh-Hant"],
             )
             self.assertEqual(
                 manifest["counts"],
@@ -237,7 +237,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
             self.assertNotIn("DELETE FROM", sql_text)
             self.assertIn("Don''t have an account?", sql_text)
-            self.assertLess(sql_text.index("-- Locale es-ES"), sql_text.index("-- Locale ja-JP"))
+            self.assertLess(sql_text.index("-- Locale es"), sql_text.index("-- Locale ja"))
             self.assertLess(sql_text.index("-- auth.noAccount"), sql_text.index("-- common.search"))
             self.assertLess(sql_text.index("-- common.search"), sql_text.index("-- search.hint"))
 
@@ -296,7 +296,7 @@ class GenerateBundleTests(unittest.TestCase):
             module = load_module("generate_bundle", GENERATE_BUNDLE)
 
             def collision_expression_id(language_code: str, text: str) -> int:
-                if language_code == "es-ES":
+                if language_code == "es":
                     return 999
                 return module.i18n_sql.expression_id(language_code, text)
 
@@ -362,13 +362,13 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
-                    f"ja-JP={locale_paths['ja-JP']}",
-                    f"es-ES={locale_paths['es-ES']}",
+                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"ja={locale_paths['ja']}",
+                    f"es={locale_paths['es']}",
                 ],
             )
             self.assertNotEqual(missing_result.returncode, 0)
-            self.assertIn("zh-Hans-CN", missing_result.stderr)
+            self.assertIn("zh-Hans", missing_result.stderr)
 
             extra_path = temp_root / "scripts" / "i18n" / "fr-FR.json"
             extra_path.write_text(json.dumps({"common.search": "Chercher"}, ensure_ascii=False), encoding="utf-8")
@@ -376,10 +376,10 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
-                    f"ja-JP={locale_paths['ja-JP']}",
-                    f"es-ES={locale_paths['es-ES']}",
-                    f"zh-Hans-CN={locale_paths['zh-Hans-CN']}",
+                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"ja={locale_paths['ja']}",
+                    f"es={locale_paths['es']}",
+                    f"zh-Hans={locale_paths['zh-Hans']}",
                     f"fr-FR={extra_path}",
                 ],
             )
@@ -398,16 +398,16 @@ class GenerateBundleTests(unittest.TestCase):
                 catalog_path=catalog_path,
                 output_dir=output_dir,
                 locale_args=[
-                    f"zh-Hant-TW={locale_paths['zh-Hant-TW']}",
-                    f"ja-JP={locale_paths['ja-JP']}",
-                    f"es-ES={locale_paths['es-ES']}",
-                    f"zh-Hans-CN={locale_paths['zh-Hans-CN']}",
-                    f"es-ES={locale_paths['es-ES']}",
+                    f"zh-Hant={locale_paths['zh-Hant']}",
+                    f"ja={locale_paths['ja']}",
+                    f"es={locale_paths['es']}",
+                    f"zh-Hans={locale_paths['zh-Hans']}",
+                    f"es={locale_paths['es']}",
                 ],
             )
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("duplicate locale override: es-ES", result.stderr)
+            self.assertIn("duplicate locale override: es", result.stderr)
 
     def test_replace_artifacts_rolls_back_if_replace_fails_midway(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
@@ -457,7 +457,7 @@ class GenerateBundleTests(unittest.TestCase):
         translations = {"common.search": "Buscar", "missing.key": "Desconocido"}
 
         with self.assertRaisesRegex(ValueError, "missing.key"):
-            module.generate_sql("es-ES", translations, source_map)
+            module.generate_sql("es", translations, source_map)
 
 
 if __name__ == "__main__":

@@ -131,6 +131,14 @@ Added: 2005-10-16
         finally:
             target.unlink(missing_ok=True)
 
+    def test_csv_artifacts_use_repository_lf_line_endings(self):
+        target = ROOT / "fixtures/languages-line-endings.tmp.csv"
+        try:
+            write_languages(target, [{"code": "en", "name": "English"}], 10)
+            self.assertNotIn(b"\r\n", target.read_bytes())
+        finally:
+            target.unlink(missing_ok=True)
+
     def test_seed_profiles_are_the_only_generated_languages(self):
         languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
         _, subtags = parse_iana_registry("""File-Date: 2026-06-15
@@ -319,6 +327,99 @@ Added: 2005-10-16
             "yue-Hans-SG": {"action": "canonicalize", "canonical": "yue-Hans"},
         }}
         self.assertEqual(validate_manifest(manifest), [])
+
+    def test_seed_profiles_do_not_use_regions_as_language_geography(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        codes = {profile["code"] for profile in profiles["languages"]}
+
+        self.assertTrue({
+            "ar", "bn", "de", "es", "fa", "fr", "hi", "id", "it", "ja",
+            "mr", "pa-Guru", "ru", "th", "tr", "ur", "vi",
+            "zh-Hans", "zh-Hant", "yue-Hans", "yue-Hant",
+            "wuu-Hans", "wuu-Hant", "hsn-Hans", "hsn-Hant",
+            "hak-Hans", "hak-Hant", "cdo-Hans", "cdo-Hant",
+            "mnp-Hans", "mnp-Hant", "nan-Hans", "nan-Hant",
+            "bo-Tibt", "ug-Arab", "mn-Mong", "mn-Cyrl",
+            "kk-Arab", "kk-Cyrl", "ky-Arab", "ky-Cyrl", "za-Latn",
+        }.issubset(codes))
+        self.assertTrue({
+            "ja-JP", "zh-Hans-CN", "zh-Hant-TW", "yue-Hans-CN",
+            "yue-Hant-HK", "yue-Hant-MO", "wuu-Hans-CN", "ug-Arab-CN",
+        }.isdisjoint(codes))
+
+    def test_seed_profiles_publish_reviewed_code_migration_matrix(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        migration_manifest = profiles.get("online_code_migrations")
+        self.assertIsNotNone(migration_manifest)
+        mappings = migration_manifest["mappings"]
+
+        self.assertEqual(mappings["ja-JP"], {
+            "action": "canonicalize", "canonical": "ja",
+        })
+        self.assertEqual(mappings["yue-Hans-CN"], {
+            "action": "canonicalize", "canonical": "yue-Hans",
+        })
+        self.assertEqual(mappings["yue-Hant-HK"], {
+            "action": "canonicalize", "canonical": "yue-Hant",
+        })
+        self.assertEqual(mappings["yue-Hant-MO"], {
+            "action": "canonicalize", "canonical": "yue-Hant",
+        })
+        self.assertEqual(mappings["en-US"], {
+            "action": "keep", "canonical": "en-US",
+        })
+        self.assertEqual(validate_manifest(profiles["online_code_migrations"]), [])
+
+    def test_content_profile_migration_preserves_references_and_merges_stats(self):
+        migration_path = ROOT.parent.parent / "backend/migrations/0012_canonicalize_language_content_profiles.sql"
+        self.assertTrue(migration_path.exists(), "content-profile migration must exist")
+
+        schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
+        db = sqlite3.connect(":memory:")
+        db.execute("PRAGMA foreign_keys=ON")
+        db.executescript(schema)
+        db.executemany(
+            "INSERT INTO languages (code, name, base_language, script_code, region_code, variety_key, origin) VALUES (?, ?, ?, ?, ?, ?, 'seed')",
+            [
+                ("en-US", "English", "en", "", "US", "glotto:stan1293"),
+                ("ja-JP", "日本語", "ja", "", "JP", "glotto:nucl1643"),
+                ("zh-Hant-TW", "繁體中文", "zh", "Hant", "TW", "glotto:mand1415"),
+                ("yue-Hant-HK", "粵語", "yue", "Hant", "HK", "glotto:yuec1235"),
+                ("yue-Hant-MO", "粵語", "yue", "Hant", "MO", "glotto:yuec1235"),
+            ],
+        )
+        db.executemany(
+            "INSERT INTO expressions (id, text, language_code) VALUES (?, ?, ?)",
+            [(1, "日本語", "ja-JP"), (2, "廣東話", "yue-Hant-HK"), (3, "粵語", "yue-Hant-MO")],
+        )
+        db.executemany(
+            "INSERT INTO language_stats (language_code, expression_count) VALUES (?, ?)",
+            [("yue-Hant-HK", 2), ("yue-Hant-MO", 3)],
+        )
+        db.executemany(
+            "INSERT INTO ui_locales (project_id, code, native_name, fallback_code) VALUES ('langmap-web', ?, ?, ?)",
+            [("en-US", "English", None), ("ja-JP", "日本語", "en-US"), ("zh-Hant-TW", "繁體中文", "en-US")],
+        )
+
+        db.executescript(migration_path.read_text())
+
+        self.assertEqual(
+            db.execute("SELECT language_code FROM expressions ORDER BY id").fetchall(),
+            [("ja",), ("yue-Hant",), ("yue-Hant",)],
+        )
+        self.assertEqual(
+            db.execute("SELECT expression_count FROM language_stats WHERE language_code='yue-Hant'").fetchone(),
+            (5,),
+        )
+        self.assertEqual(
+            db.execute("SELECT code FROM ui_locales ORDER BY code").fetchall(),
+            [("en-US",), ("ja",), ("zh-Hant",)],
+        )
+        self.assertEqual(
+            db.execute("SELECT code FROM languages WHERE code IN ('ja-JP','zh-Hant-TW','yue-Hant-HK','yue-Hant-MO')").fetchall(),
+            [],
+        )
+        self.assertEqual(db.execute("PRAGMA foreign_key_check").fetchall(), [])
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ export function useLanguages() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function list(params: { search?: string; sort?: string } = {}) {
+  async function list(params: { search?: string; sort?: string; limit?: number; offset?: number } = {}) {
     loading.value = true
     error.value = null
     try {
