@@ -433,6 +433,53 @@ Added: 2005-10-16
         for code in expected:
             self.assertEqual(by_code[code]["glottocode"], "chao1238")
 
+    def test_seed_profiles_register_all_chinese_varieties(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        self.assertEqual(profiles["version"], 4)
+        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+        expected = {
+            "cjy-Hans": ("晋语", "Jin Chinese (Simplified)", "jiny1235"),
+            "cjy-Hant": ("晉語", "Jin Chinese (Traditional)", "jiny1235"),
+            "gan-Hans": ("赣语", "Gan Chinese (Simplified)", "ganc1239"),
+            "gan-Hant": ("贛語", "Gan Chinese (Traditional)", "ganc1239"),
+            "czo-Hans": ("闽中语", "Min Zhong Chinese (Simplified)", "minz1235"),
+            "czo-Hant": ("閩中語", "Min Zhong Chinese (Traditional)", "minz1235"),
+            "cpx-Hans": ("莆仙话", "Pu-Xian Chinese (Simplified)", "puxi1243"),
+            "cpx-Hant": ("莆仙話", "Pu-Xian Chinese (Traditional)", "puxi1243"),
+            "cnp-Hans": ("桂北平话", "Northern Pinghua (Simplified)", "nort3268"),
+            "cnp-Hant": ("桂北平話", "Northern Pinghua (Traditional)", "nort3268"),
+            "csp-Hans": ("桂南平话", "Southern Pinghua (Simplified)", "sout3250"),
+            "csp-Hant": ("桂南平話", "Southern Pinghua (Traditional)", "sout3250"),
+        }
+        for code, (name, name_en, glottocode) in expected.items():
+            entry = by_code[code]
+            self.assertEqual(entry["name"], name)
+            self.assertEqual(entry["name_en"], name_en)
+            self.assertEqual(entry["glottocode"], glottocode)
+            self.assertEqual(entry["origin"], "seed")
+            self.assertEqual(entry["reason"], "major-east-asia-language")
+
+    def test_seed_profiles_carry_chinese_variety_representative_cities(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        locations = {
+            (loc["variety_key"], loc["city_name"]): loc
+            for loc in profiles["locations"]
+        }
+        expected = {
+            ("glotto:jiny1235", "Taiyuan"): ("CN", "Hans", 37.8706, 112.5489),
+            ("glotto:ganc1239", "Nanchang"): ("CN", "Hans", 28.6820, 115.8579),
+            ("glotto:minz1235", "Sanming"): ("CN", "Hans", 26.2634, 117.6394),
+            ("glotto:puxi1243", "Putian"): ("CN", "Hans", 25.4540, 119.0078),
+            ("glotto:nort3268", "Guilin"): ("CN", "Hans", 25.2742, 110.2900),
+            ("glotto:sout3250", "Nanning"): ("CN", "Hans", 22.8170, 108.3665),
+        }
+        for key, (territory, script, lat, lon) in expected.items():
+            loc = locations[key]
+            self.assertEqual(loc["territory_code"], territory)
+            self.assertEqual(loc["script_code"], script)
+            self.assertEqual(loc["latitude"], lat)
+            self.assertEqual(loc["longitude"], lon)
+
     def test_expression_schema_tracks_common_variant_classification(self):
         schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
         self.assertIn("variation_status TEXT NOT NULL DEFAULT 'unclassified'", schema)

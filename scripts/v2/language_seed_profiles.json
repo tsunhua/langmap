@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "languages": [
     {"code": "und", "name": "Undetermined", "name_en": "Undetermined", "glottocode": null, "origin": "system", "reason": "iana-und"},
     {"code": "x-emoji", "name": "Emoji 表情", "name_en": "Emoji", "glottocode": null, "origin": "system", "reason": "special-content"},
@@ -66,6 +66,18 @@
     ,{"code": "ky-Arab", "name": "قىرعىز تىلى", "name_en": "Kyrgyz (Arabic Script)", "glottocode": "kirg1245", "origin": "seed", "reason": "regional-east-asia-language"}
     ,{"code": "ky-Cyrl", "name": "Кыргызча", "name_en": "Kyrgyz (Cyrillic)", "glottocode": "kirg1245", "origin": "seed", "reason": "major-central-asia-language"}
     ,{"code": "za-Latn", "name": "Vaƅcuengh", "name_en": "Zhuang", "glottocode": null, "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cjy-Hans", "name": "晋语", "name_en": "Jin Chinese (Simplified)", "glottocode": "jiny1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cjy-Hant", "name": "晉語", "name_en": "Jin Chinese (Traditional)", "glottocode": "jiny1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "gan-Hans", "name": "赣语", "name_en": "Gan Chinese (Simplified)", "glottocode": "ganc1239", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "gan-Hant", "name": "贛語", "name_en": "Gan Chinese (Traditional)", "glottocode": "ganc1239", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "czo-Hans", "name": "闽中语", "name_en": "Min Zhong Chinese (Simplified)", "glottocode": "minz1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "czo-Hant", "name": "閩中語", "name_en": "Min Zhong Chinese (Traditional)", "glottocode": "minz1235", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cpx-Hans", "name": "莆仙话", "name_en": "Pu-Xian Chinese (Simplified)", "glottocode": "puxi1243", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cpx-Hant", "name": "莆仙話", "name_en": "Pu-Xian Chinese (Traditional)", "glottocode": "puxi1243", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cnp-Hans", "name": "桂北平话", "name_en": "Northern Pinghua (Simplified)", "glottocode": "nort3268", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "cnp-Hant", "name": "桂北平話", "name_en": "Northern Pinghua (Traditional)", "glottocode": "nort3268", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "csp-Hans", "name": "桂南平话", "name_en": "Southern Pinghua (Simplified)", "glottocode": "sout3250", "origin": "seed", "reason": "major-east-asia-language"}
+    ,{"code": "csp-Hant", "name": "桂南平話", "name_en": "Southern Pinghua (Traditional)", "glottocode": "sout3250", "origin": "seed", "reason": "major-east-asia-language"}
   ],
   "online_code_migrations": {
     "mappings": {
@@ -193,5 +205,11 @@
     {"variety_key":"glotto:kaza1248","city_name":"Urumqi","city_name_en":"Urumqi","territory_code":"CN","script_code":"Arab","latitude":43.8256,"longitude":87.6168,"reference":"https://glottolog.org/resource/languoid/id/kaza1248"},
     {"variety_key":"glotto:kirg1245","city_name":"Bishkek","city_name_en":"Bishkek","territory_code":"KG","script_code":"Cyrl","latitude":42.8746,"longitude":74.5698,"reference":"https://glottolog.org/resource/languoid/id/kirg1245"},
     {"variety_key":"system:za-Latn","city_name":"Nanning","city_name_en":"Nanning","territory_code":"CN","script_code":"Latn","latitude":22.8170,"longitude":108.3665,"reference":"https://www.ethnologue.com/language/zha/"}
+    ,{"variety_key":"glotto:jiny1235","city_name":"Taiyuan","city_name_en":"Taiyuan","territory_code":"CN","script_code":"Hans","latitude":37.8706,"longitude":112.5489,"reference":"https://glottolog.org/resource/languoid/id/jiny1235"}
+    ,{"variety_key":"glotto:ganc1239","city_name":"Nanchang","city_name_en":"Nanchang","territory_code":"CN","script_code":"Hans","latitude":28.6820,"longitude":115.8579,"reference":"https://glottolog.org/resource/languoid/id/ganc1239"}
+    ,{"variety_key":"glotto:minz1235","city_name":"Sanming","city_name_en":"Sanming","territory_code":"CN","script_code":"Hans","latitude":26.2634,"longitude":117.6394,"reference":"https://glottolog.org/resource/languoid/id/minz1235"}
+    ,{"variety_key":"glotto:puxi1243","city_name":"Putian","city_name_en":"Putian","territory_code":"CN","script_code":"Hans","latitude":25.4540,"longitude":119.0078,"reference":"https://glottolog.org/resource/languoid/id/puxi1243"}
+    ,{"variety_key":"glotto:nort3268","city_name":"Guilin","city_name_en":"Guilin","territory_code":"CN","script_code":"Hans","latitude":25.2742,"longitude":110.2900,"reference":"https://glottolog.org/resource/languoid/id/nort3268"}
+    ,{"variety_key":"glotto:sout3250","city_name":"Nanning","city_name_en":"Nanning","territory_code":"CN","script_code":"Hans","latitude":22.8170,"longitude":108.3665,"reference":"https://glottolog.org/resource/languoid/id/sout3250"}
   ]
 }
