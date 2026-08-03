@@ -17,7 +17,7 @@ function expr(id: number, text = `t${id}`, lang = 'en'): ExpressionRow {
   return {
     expression_id: id,
     text,
-    language_code: lang,
+    language_profile_code: lang,
     language_name: `Lang ${lang}`,
   };
 }
@@ -215,7 +215,7 @@ describe('buildMappingGraph', () => {
 
     const shuffled: Fixture = {
       expressions: base.nodes.reduce((m, n) => {
-        m.set(n.expression_id, expr(n.expression_id, n.text, n.language_code));
+        m.set(n.expression_id, expr(n.expression_id, n.text, n.language_profile_code));
         return m;
       }, new Map<number, ExpressionRow>()),
       edges: [...buildFixture().edges].reverse(),

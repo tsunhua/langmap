@@ -155,7 +155,7 @@ describe('requireRegisteredLanguage', () => {
 
   it('returns language row for registered code', async () => {
     const db = fakeD1([
-      { code: 'en', name: 'English', name_en: 'English', description: '', direction: 'ltr', base_language: 'en', script_code: null, region_code: null, variants: '[]', private_use: '[]', variety_key: 'en', glottocode: 'stan1293', origin: 'seed' },
+      { code: 'en', name: 'English', name_en: 'English', description: '', direction: 'ltr', base_language: 'en', script_code: null, region_code: null, variants_json: '[]', private_use_json: '[]', glottocode: 'stan1293', language_variety_id: 'v1', language_variety_code: 'en' },
     ]);
     const result = await requireRegisteredLanguage(db as any, 'en');
     expect(result).not.toBeNull();

@@ -62,7 +62,7 @@ describe('localization mutation-boundary guard', () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { success: boolean; error: string };
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 
   it('rejects mapping target with an unregistered locale code', async () => {
@@ -74,7 +74,7 @@ describe('localization mutation-boundary guard', () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { success: boolean; error: string };
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 });
 

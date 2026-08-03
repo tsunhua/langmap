@@ -135,12 +135,12 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         text: 'not allowed',
-        language_code: 'en-x-unlisted',
+        language_profile_code: 'en-x-unlisted',
       }),
     });
     expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 
   it('stores an explicit expression variation classification', async () => {
@@ -154,7 +154,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         text,
-        language_code: 'en',
+        language_profile_code: 'en',
         variation_status: 'shared',
       }),
     });
@@ -174,7 +174,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         text: `${text}-invalid`,
-        language_code: 'en',
+        language_profile_code: 'en',
         variation_status: 'unknown',
       }),
     });
@@ -199,7 +199,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
     });
     expect(res.status).toBe(400);
     const body = await json(res);
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 
   it('responds 404 for a missing root expression', async () => {

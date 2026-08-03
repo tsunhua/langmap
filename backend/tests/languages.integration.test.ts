@@ -42,7 +42,7 @@ describe('language creation API', () => {
         private_use: [`hegu${Date.now().toString(36).slice(-4)}`],
       },
       glottocode: null,
-      language: {
+      variety: {
         name: '河谷新村話',
         name_en: null,
         description: '由當地社群使用的粵語變種。',
@@ -50,29 +50,29 @@ describe('language creation API', () => {
         alternate_names: [],
         references: [],
         parent_languoid_id: null,
-        latitude: null,
-        longitude: null,
       },
+      profile: {},
     };
 
     const preview = await post('/api/v2/languages/preview', token, payload);
     expect(preview.status).toBe(200);
-    const previewBody = await preview.json() as { data: { existing_language: unknown; canonical_code: string } };
-    expect(previewBody.data.existing_language).toBeNull();
-    expect(previewBody.data.canonical_code).toMatch(/^yue-Hant-CN-x-/);
+    const previewBody = await preview.json() as { data: { existing_variety: unknown; canonical_profile_code: string } };
+    expect(previewBody.data.existing_variety).toBeNull();
+    expect(previewBody.data.canonical_profile_code).toMatch(/^yue-Hant-CN-x-/);
 
     const created = await post('/api/v2/languages', token, payload);
     expect(created.status).toBe(201);
-    const createdBody = await created.json() as { data: { language: { origin: string; glottocode: null } } };
-    expect(createdBody.data.language.origin).toBe('community');
-    expect(createdBody.data.language.glottocode).toBeNull();
+    const createdBody = await created.json() as { data: { variety: { origin: string; glottocode: null } } };
+    expect(createdBody.data.variety.origin).toBe('community');
+    expect(createdBody.data.variety.glottocode).toBeNull();
   });
 
   it('returns 401 for unauthenticated preview', async () => {
     const response = await post('/api/v2/languages/preview', null, {
       subtags: { language: 'en', script: null, region: null, variants: [], private_use: [] },
       glottocode: null,
-      language: { name: 'English', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: 'English', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     });
     expect(response.status).toBe(401);
     const body = await response.json() as { success: boolean };
@@ -83,7 +83,8 @@ describe('language creation API', () => {
     const response = await post('/api/v2/languages', null, {
       subtags: { language: 'en', script: null, region: null, variants: [], private_use: [] },
       glottocode: null,
-      language: { name: 'English', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: 'English', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     });
     expect(response.status).toBe(401);
   });
@@ -93,7 +94,8 @@ describe('language creation API', () => {
     const response = await post('/api/v2/languages/preview', token, {
       subtags: { language: 'zzz', script: null, region: null, variants: [], private_use: [] },
       glottocode: null,
-      language: { name: 'Invalid', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: 'Invalid', name_en: null, description: 'Test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     });
     expect(response.status).toBe(400);
     const body = await response.json() as { success: boolean; error: string };
@@ -105,18 +107,20 @@ describe('language creation API', () => {
     const response = await post('/api/v2/languages/preview', token, {
       subtags: { language: 'en', script: null, region: null, variants: [], private_use: [] },
       glottocode: null,
-      language: { name: '', name_en: null, description: '', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: '', name_en: null, description: '', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     });
     expect(response.status).toBe(400);
   });
 
-  it('returns 409 for duplicate language code', async () => {
+  it('returns 409 for duplicate variety code', async () => {
     const token = await register(`langdup-${Date.now()}`);
     const unique = Date.now().toString(36).slice(-5);
     const payload = {
       subtags: { language: 'en', script: null, region: null, variants: [], private_use: [`dup${unique}`] },
       glottocode: null,
-      language: { name: 'English Duplicate', name_en: null, description: 'Duplicate test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: 'English Duplicate', name_en: null, description: 'Duplicate test', reason: 'other', alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     };
 
     const first = await post('/api/v2/languages', token, payload);
@@ -125,7 +129,7 @@ describe('language creation API', () => {
     const second = await post('/api/v2/languages', token, payload);
     expect(second.status).toBe(409);
     const body = await second.json() as { success: boolean; error: string };
-    expect(body.error).toBe('LANGUAGE_CODE_EXISTS');
+    expect(body.error).toBe('VARIETY_CODE_EXISTS');
   });
 
   it('returns 429 when daily limit is reached', async () => {
@@ -134,7 +138,8 @@ describe('language creation API', () => {
     const basePayload = {
       subtags: { language: 'en', script: null, region: null, variants: [], private_use: [] as string[] },
       glottocode: null,
-      language: { name: 'Rate Limit Test', name_en: null, description: 'Rate limit test', reason: 'other' as const, alternate_names: [], references: [], parent_languoid_id: null, latitude: null, longitude: null },
+      variety: { name: 'Rate Limit Test', name_en: null, description: 'Rate limit test', reason: 'other' as const, alternate_names: [], references: [], parent_languoid_id: null },
+      profile: {},
     };
 
     for (let i = 0; i < 10; i++) {
@@ -144,8 +149,8 @@ describe('language creation API', () => {
           ...basePayload.subtags,
           private_use: [`r${batch}${i}`],
         },
-        language: {
-          ...basePayload.language,
+        variety: {
+          ...basePayload.variety,
           name: `Rate Limit Test ${i}`,
         },
       };
@@ -159,8 +164,8 @@ describe('language creation API', () => {
         ...basePayload.subtags,
         private_use: [`r${batch}x`],
       },
-      language: {
-        ...basePayload.language,
+      variety: {
+        ...basePayload.variety,
         name: 'Rate Limit Test 10',
       },
     };
@@ -182,18 +187,18 @@ describe('language-registry mutation boundary', () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { success: boolean; error: string };
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 
   it('rejects expression creation with an unregistered language code', async () => {
     const token = await register(`langexpr-${Date.now()}`);
     const res = await post('/api/v2/expressions', token, {
       text: 'not allowed',
-      language_code: 'en-x-unlisted',
+      language_profile_code: 'en-x-unlisted',
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { success: boolean; error: string };
-    expect(body.error).toBe('INVALID_LANGUAGE_CODE');
+    expect(body.error).toBe('INVALID_LANGUAGE_PROFILE_CODE');
   });
 });
 
