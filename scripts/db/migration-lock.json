@@ -85,6 +85,12 @@
       "filename": "0015_migrate_mandarin_content_tags.sql",
       "size": 5963,
       "sha256": "75b26eb1c31d04ba3e80ca8a2a7eb4eeea0e376bd7ecac012549e7ce8b6c36f7"
+    },
+    {
+      "sequence": 16,
+      "filename": "0016_variety_profile_split.sql",
+      "size": 15895,
+      "sha256": "ea93f8493bde7b787b565507add8c7accfc2770190f5eff18619d69fb228d0db"
     }
   ]
 }

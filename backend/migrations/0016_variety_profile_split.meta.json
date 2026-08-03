@@ -1,0 +1,6 @@
+{
+  "description": "Split single-table languages into language_varieties + language_profiles; rename expressions.language_code -> language_profile_code; language_locations FK by variety id; drop language_stats and languages.",
+  "spec": "docs/superpowers/specs/2026-08-03-language-variety-profile-model-design.md",
+  "forward_only": true,
+  "backout": "Restore the pre-migration local D1 backup; do not run a synthetic down migration."
+}
