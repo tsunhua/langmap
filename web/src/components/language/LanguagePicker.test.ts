@@ -3,30 +3,28 @@ import { mount } from '@vue/test-utils'
 import LanguagePicker from './LanguagePicker.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useLanguagesStore } from '@/stores/languages'
-import type { RegistryLanguage } from '@/api/languages'
+import type { Variety } from '@/api/languages'
 
 vi.mock('@/api/languages', () => ({
   listRegistryLanguages: vi.fn().mockResolvedValue([]),
   listLanguageSubtags: vi.fn().mockResolvedValue([]),
   searchLanguoids: vi.fn().mockResolvedValue([]),
-  previewLanguage: vi.fn().mockResolvedValue(null),
-  createLanguage: vi.fn().mockResolvedValue(null),
+  previewVariety: vi.fn().mockResolvedValue(null),
+  createVariety: vi.fn().mockResolvedValue(null),
 }))
 
-const mockLanguage: RegistryLanguage = {
+const mockLanguage: Variety = {
+  id: '01K1GWHD00NMQC20PMZV031H78',
   code: 'en',
   name: 'English',
   name_en: 'English',
   description: '',
-  direction: 'ltr',
-  base_language: 'en',
-  script_code: null,
-  region_code: null,
-  variants: [],
-  private_use: [],
-  variety_key: 'en',
   glottocode: 'engo1234',
   origin: 'seed',
+  community_reason: null,
+  alternate_names: [],
+  references: [],
+  parent_languoid_id: null,
   expression_count: 100,
 }
 

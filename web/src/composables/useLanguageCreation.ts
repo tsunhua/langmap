@@ -2,16 +2,16 @@ import { ref, reactive } from 'vue'
 import {
   listLanguageSubtags,
   searchLanguoids as apiSearchLanguoids,
-  previewLanguage as apiPreviewLanguage,
-  createLanguage as apiCreateLanguage,
+  previewVariety as apiPreviewVariety,
+  createVariety as apiCreateVariety,
 } from '@/api/languages'
 import type {
   LanguageSubtags,
   RegistrySubtag,
   LanguoidCandidate,
-  LanguagePreview,
-  CreateLanguagePayload,
-  CreatedLanguage,
+  VarietyPreview,
+  CreateVarietyPayload,
+  CreatedVarietyResult,
 } from '@/api/languages'
 
 export function useLanguageCreation() {
@@ -31,12 +31,10 @@ export function useLanguageCreation() {
     name: '',
     name_en: null as string | null,
     description: '',
-    reason: null as CreateLanguagePayload['language']['reason'],
+    reason: null as CreateVarietyPayload['variety']['reason'],
     alternate_names: [] as string[],
     references: [] as string[],
     parent_languoid_id: null as string | null,
-    latitude: null as number | null,
-    longitude: null as number | null,
   })
 
   const subtagOptions = ref<RegistrySubtag[]>([])
@@ -52,7 +50,7 @@ export function useLanguageCreation() {
   const errorPreview = ref<string | null>(null)
   const errorSubmit = ref<string | null>(null)
 
-  const preview = ref<LanguagePreview | null>(null)
+  const preview = ref<VarietyPreview | null>(null)
 
   let subtagRequestId = 0
   let subtagController: AbortController | null = null
@@ -139,7 +137,7 @@ export function useLanguageCreation() {
     preview.value = null
     try {
       const payload = buildPayload()
-      preview.value = await apiPreviewLanguage(payload)
+      preview.value = await apiPreviewVariety(payload)
     } catch (e: unknown) {
       errorPreview.value = (e as Error).message || 'Preview failed'
     } finally {
@@ -147,12 +145,12 @@ export function useLanguageCreation() {
     }
   }
 
-  async function submit(): Promise<CreatedLanguage | null> {
+  async function submit(): Promise<CreatedVarietyResult | null> {
     loadingSubmit.value = true
     errorSubmit.value = null
     try {
       const payload = buildPayload()
-      const result = await apiCreateLanguage(payload)
+      const result = await apiCreateVariety(payload)
       return result
     } catch (e: unknown) {
       errorSubmit.value = (e as Error).message || 'Submit failed'
@@ -162,11 +160,11 @@ export function useLanguageCreation() {
     }
   }
 
-  function buildPayload(): CreateLanguagePayload {
+  function buildPayload(): CreateVarietyPayload {
     return {
       subtags: { ...subtags.value },
       glottocode: glottocode.value,
-      language: {
+      variety: {
         name: metadata.name,
         name_en: metadata.name_en,
         description: metadata.description,
@@ -174,9 +172,8 @@ export function useLanguageCreation() {
         alternate_names: [...metadata.alternate_names],
         references: [...metadata.references],
         parent_languoid_id: metadata.parent_languoid_id,
-        latitude: metadata.latitude,
-        longitude: metadata.longitude,
       },
+      profile: {},
     }
   }
 
@@ -201,8 +198,6 @@ export function useLanguageCreation() {
     metadata.alternate_names = []
     metadata.references = []
     metadata.parent_languoid_id = null
-    metadata.latitude = null
-    metadata.longitude = null
     subtagOptions.value = []
     languoidOptions.value = []
     preview.value = null

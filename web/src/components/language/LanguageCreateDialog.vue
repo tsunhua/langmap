@@ -92,8 +92,8 @@ async function handleSubmit() {
   if (!validateMetadata()) return
   const result = await creation.submit()
   if (result) {
-    store.upsertLanguage(result)
-    emit('created', { code: result.code, name: result.name })
+    store.upsertLanguage(result.variety)
+    emit('created', { code: result.variety.code, name: result.variety.name })
     emit('close')
     creation.reset()
   }
@@ -225,11 +225,11 @@ onUnmounted(() => {
           </div>
 
           <div v-else-if="creation.step.value === 4" class="preview-step">
-            <div v-if="creation.preview.value?.existing_language" class="preview-existing">
+            <div v-if="creation.preview.value?.existing_variety" class="preview-existing">
               <p>{{ t('languageCreate.previewExisting') }}</p>
               <button
                 class="btn"
-                @click="emit('created', { code: creation.preview.value!.existing_language!.code, name: creation.preview.value!.existing_language!.name }); handleClose()"
+                @click="emit('created', { code: creation.preview.value!.existing_variety!.code, name: creation.preview.value!.existing_variety!.name }); handleClose()"
               >
                 {{ t('languageCreate.previewExistingAction') }}
               </button>
@@ -237,7 +237,7 @@ onUnmounted(() => {
             <div v-else class="preview-details">
               <div class="preview-row">
                 <span class="preview-label">{{ t('languageCreate.previewCanonicalCode') }}</span>
-                <code>{{ creation.preview.value?.canonical_code || '—' }}</code>
+                <code>{{ creation.preview.value?.canonical_profile_code || '—' }}</code>
               </div>
               <div v-if="creation.preview.value?.warnings?.length" class="preview-warnings">
                 <p class="preview-label">{{ t('languageCreate.previewWarnings') }}</p>

@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Send, Languages } from 'lucide-vue-next'
 import { listUiLocales, getUiMessages, getTranslationWorkbench, submitTranslationMappings, addUiLocale, type TranslationWorkbench, type WorkbenchMessage, type UiLocale, LOCALIZATION_PROJECT_ID } from '@/api/localization'
-import { listRegistryLanguages, type RegistryLanguage } from '@/api/languages'
+import { listRegistryLanguages, type Variety } from '@/api/languages'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
@@ -22,7 +22,7 @@ const query = ref('')
 const draft = ref<Record<string, string>>({})
 const initialTranslation = ref<Record<string, string>>({})
 const draftLocale = ref('')
-const registryLanguages = ref<RegistryLanguage[]>([])
+const registryLanguages = ref<Variety[]>([])
 const referenceLocale = ref('')
 const referenceMessages = ref<Record<string, string>>({})
 const loaded = ref(false)
@@ -30,7 +30,7 @@ const batchSubmitting = ref(false)
 
 const code = computed(() => String(route.params.code || ''))
 const targetLanguages = computed(() => {
-  const byCode = new Map<string, RegistryLanguage | UiLocale>()
+  const byCode = new Map<string, Variety | UiLocale>()
   for (const item of registryLanguages.value) byCode.set(item.code, item)
   for (const item of locales.value) byCode.set(item.code, { ...byCode.get(item.code), ...item })
   return [...byCode.values()].sort((a, b) =>

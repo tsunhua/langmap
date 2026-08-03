@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useLanguagesStore } from '@/stores/languages'
 import { listRegistryLanguages } from '@/api/languages'
-import type { RegistryLanguage } from '@/api/languages'
+import type { Variety } from '@/api/languages'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
@@ -17,7 +17,7 @@ const open = ref(false)
 const query = ref('')
 const inputRef = ref<HTMLInputElement>()
 const loadError = ref('')
-const searchResults = ref<RegistryLanguage[]>([])
+const searchResults = ref<Variety[]>([])
 const loading = ref(false)
 const activeIndex = ref(-1)
 const listId = `lang-select-list-${Math.random().toString(36).slice(2, 8)}`

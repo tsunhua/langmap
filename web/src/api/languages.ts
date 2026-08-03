@@ -28,22 +28,34 @@ interface RegistrySubtagResponse {
   deprecated: string | null
 }
 
-export interface RegistryLanguage {
+export interface Variety {
+  id: string
   code: string
   name: string
   name_en: string | null
   description: string
+  glottocode: string | null
+  origin: 'seed' | 'glottolog' | 'community' | 'system'
+  community_reason: string | null
+  alternate_names: string[]
+  references: string[]
+  parent_languoid_id: string | null
+  profile_count?: number
+  expression_count?: number
+}
+
+export interface LanguageProfile {
+  code: string
+  language_variety_id: string
+  language_variety_code: string
+  name: string
+  name_en: string | null
   direction: 'ltr' | 'rtl'
   base_language: string
   script_code: string | null
   region_code: string | null
   variants: string[]
   private_use: string[]
-  variety_key: string
-  glottocode: string | null
-  origin: 'seed' | 'glottolog' | 'community' | 'system'
-  expression_count?: number
-  representative_cities?: RepresentativeCity[]
 }
 
 export interface RepresentativeCity {
@@ -65,23 +77,24 @@ export interface LanguoidCandidate {
   parent_id: string | null
   parent_name: string | null
   source_version: string
-  profiles: RegistryLanguage[]
+  profiles: LanguageProfile[]
 }
 
-export interface LanguagePreview {
-  canonical_code: string
+export interface VarietyPreview {
+  canonical_profile_code: string
   direction: 'ltr' | 'rtl'
   warnings: string[]
-  existing_language: RegistryLanguage | null
-  profiles: RegistryLanguage[]
-  similar: RegistryLanguage[]
+  existing_variety: Variety | null
+  existing_profile: LanguageProfile | null
+  profiles_of_variety: LanguageProfile[]
+  similar_varieties: Variety[]
   required_metadata: string[]
 }
 
-export interface CreateLanguagePayload {
+export interface CreateVarietyPayload {
   subtags: LanguageSubtags
   glottocode: string | null
-  language: {
+  variety: {
     name: string
     name_en: string | null
     description: string
@@ -89,14 +102,19 @@ export interface CreateLanguagePayload {
     alternate_names: string[]
     references: string[]
     parent_languoid_id: string | null
-    latitude: number | null
-    longitude: number | null
+  }
+  profile: {
+    name?: string
+    name_en?: string | null
   }
 }
 
-export type CreatedLanguage = RegistryLanguage
+export interface CreatedVarietyResult {
+  variety: Variety
+  profile: LanguageProfile
+}
 
-export async function listRegistryLanguages(search = '', signal?: AbortSignal): Promise<RegistryLanguage[]> {
+export async function listRegistryLanguages(search = '', signal?: AbortSignal): Promise<Variety[]> {
   const { data } = await api.get('/languages', {
     params: { q: search, sort: 'alpha', limit: 100 },
     signal,
@@ -143,12 +161,12 @@ export async function searchLanguoids(query: string, signal?: AbortSignal): Prom
   return data.data?.items ?? []
 }
 
-export async function previewLanguage(payload: CreateLanguagePayload, signal?: AbortSignal): Promise<LanguagePreview> {
+export async function previewVariety(payload: CreateVarietyPayload, signal?: AbortSignal): Promise<VarietyPreview> {
   const { data } = await api.post('/languages/preview', payload, { signal })
   return data.data
 }
 
-export async function createLanguage(payload: CreateLanguagePayload, signal?: AbortSignal): Promise<CreatedLanguage> {
+export async function createVariety(payload: CreateVarietyPayload, signal?: AbortSignal): Promise<CreatedVarietyResult> {
   const { data } = await api.post('/languages', payload, { signal })
   return data.data
 }

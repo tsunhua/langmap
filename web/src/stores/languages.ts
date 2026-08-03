@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { listRegistryLanguages } from '@/api/languages'
-import type { RegistryLanguage } from '@/api/languages'
+import type { Variety } from '@/api/languages'
 
 export const useLanguagesStore = defineStore('languages', () => {
-  const languages = ref<RegistryLanguage[]>([])
+  const languages = ref<Variety[]>([])
   const loaded = ref(false)
 
   async function fetchLanguages() {
@@ -13,7 +13,7 @@ export const useLanguagesStore = defineStore('languages', () => {
     loaded.value = true
   }
 
-  function upsertLanguage(language: RegistryLanguage) {
+  function upsertLanguage(language: Variety) {
     const index = languages.value.findIndex(item => item.code === language.code)
     if (index >= 0) languages.value[index] = language
     else languages.value.push(language)

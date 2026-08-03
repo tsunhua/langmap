@@ -2,18 +2,18 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import {
   listLanguageSubtags,
   searchLanguoids,
-  previewLanguage,
-  createLanguage,
+  previewVariety,
+  createVariety,
 } from '@/api/languages'
-import type { RegistrySubtag, LanguoidCandidate, LanguagePreview, CreatedLanguage } from '@/api/languages'
+import type { RegistrySubtag, LanguoidCandidate, VarietyPreview, CreatedVarietyResult } from '@/api/languages'
 import { useLanguageCreation } from './useLanguageCreation'
 
 vi.mock('@/api/languages', () => ({
   listRegistryLanguages: vi.fn(),
   listLanguageSubtags: vi.fn(),
   searchLanguoids: vi.fn(),
-  previewLanguage: vi.fn(),
-  createLanguage: vi.fn(),
+  previewVariety: vi.fn(),
+  createVariety: vi.fn(),
 }))
 
 function deferred<T>() {
@@ -86,40 +86,54 @@ describe('useLanguageCreation', () => {
     expect(state.subtags.value.language).toBe('')
   })
 
-  it('runPreview calls previewLanguage and stores result', async () => {
-    const preview: LanguagePreview = {
-      canonical_code: 'en',
+  it('runPreview calls previewVariety and stores result', async () => {
+    const preview: VarietyPreview = {
+      canonical_profile_code: 'en',
       direction: 'ltr',
       warnings: [],
-      existing_language: null,
-      profiles: [],
-      similar: [],
+      existing_variety: null,
+      existing_profile: null,
+      profiles_of_variety: [],
+      similar_varieties: [],
       required_metadata: [],
     }
-    vi.mocked(previewLanguage).mockResolvedValue(preview)
+    vi.mocked(previewVariety).mockResolvedValue(preview)
 
     const state = useLanguageCreation()
     await state.runPreview()
     expect(state.preview.value).toEqual(preview)
   })
 
-  it('submit calls createLanguage and returns result', async () => {
-    const created: CreatedLanguage = {
-      code: 'test-lang',
-      name: 'Test',
-      name_en: null,
-      description: '',
-      direction: 'ltr',
-      base_language: 'test',
-      script_code: null,
-      region_code: null,
-      variants: [],
-      private_use: [],
-      variety_key: '',
-      glottocode: null,
-      origin: 'community',
+  it('submit calls createVariety and returns result', async () => {
+    const created: CreatedVarietyResult = {
+      variety: {
+        id: '01K1GWHD00NMQC20PMZV031H78',
+        code: 'test-lang',
+        name: 'Test',
+        name_en: null,
+        description: '',
+        glottocode: null,
+        origin: 'community',
+        community_reason: null,
+        alternate_names: [],
+        references: [],
+        parent_languoid_id: null,
+      },
+      profile: {
+        code: 'test-lang',
+        language_variety_id: '01K1GWHD00NMQC20PMZV031H78',
+        language_variety_code: 'test-lang',
+        name: 'Test',
+        name_en: null,
+        direction: 'ltr',
+        base_language: 'test',
+        script_code: null,
+        region_code: null,
+        variants: [],
+        private_use: [],
+      },
     }
-    vi.mocked(createLanguage).mockResolvedValue(created)
+    vi.mocked(createVariety).mockResolvedValue(created)
 
     const state = useLanguageCreation()
     const result = await state.submit()

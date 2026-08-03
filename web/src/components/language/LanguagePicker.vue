@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLanguagesStore } from '@/stores/languages'
 import { listRegistryLanguages } from '@/api/languages'
-import type { RegistryLanguage } from '@/api/languages'
+import type { Variety } from '@/api/languages'
 import LanguageCreateDialog from './LanguageCreateDialog.vue'
 import { Plus, X } from 'lucide-vue-next'
 
@@ -28,7 +28,7 @@ const input = ref<HTMLInputElement>()
 const triggerRef = ref<HTMLDivElement>()
 const open = ref(false)
 const query = ref('')
-const searchResults = ref<RegistryLanguage[]>([])
+const searchResults = ref<Variety[]>([])
 const loading = ref(false)
 const dialogOpen = ref(false)
 const activeIndex = ref(-1)
