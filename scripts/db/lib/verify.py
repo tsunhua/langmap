@@ -129,7 +129,7 @@ def verify_local_state(
     count_rows = executor.execute_query(
         state_dir,
         f"""
-SELECT COUNT(*) AS languages FROM languages;
+SELECT COUNT(*) AS language_varieties FROM language_varieties;
 SELECT COUNT(*) AS languoids FROM languoids;
 SELECT COUNT(*) AS language_subtags FROM language_subtags;
 SELECT COUNT(*) AS language_locations FROM language_locations;
@@ -143,15 +143,13 @@ FROM (
   ORDER BY code
 );
 SELECT COUNT(*) AS orphan_languages
-FROM languages
-WHERE variety_key NOT LIKE 'system:%'
-  AND (
-    TRIM(COALESCE(glottocode, '')) = ''
-    OR NOT EXISTS (SELECT 1 FROM languoids WHERE languoids.glottocode = languages.glottocode)
-  );
+FROM language_varieties
+WHERE origin != 'system'
+  AND glottocode IS NOT NULL AND TRIM(glottocode) != ''
+  AND NOT EXISTS (SELECT 1 FROM languoids WHERE languoids.glottocode = language_varieties.glottocode);
 SELECT COUNT(*) AS orphan_locales
 FROM ui_locales locale
-LEFT JOIN languages language ON language.code = locale.code
+LEFT JOIN language_profiles language ON language.code = locale.code
 LEFT JOIN ui_locales fallback
   ON fallback.project_id = locale.project_id
  AND fallback.code = locale.fallback_code
@@ -170,19 +168,7 @@ FROM expression_edges edge
 LEFT JOIN expressions a ON a.id = edge.expression_a_id
 LEFT JOIN expressions b ON b.id = edge.expression_b_id
 WHERE edge.source = 'ui_i18n'
-  AND (
-    a.id IS NULL
-    OR b.id IS NULL
-    OR NOT EXISTS (
-      SELECT 1
-      FROM ui_messages message
-      WHERE message.project_id = '{PROJECT_ID}'
-        AND (
-          message.source_expression_id = edge.expression_a_id
-          OR message.source_expression_id = edge.expression_b_id
-        )
-    )
-  );
+  AND (a.id IS NULL OR b.id IS NULL);
 """.strip(),
     )
     actual_counts = _rows_to_singletons(count_rows)
@@ -209,9 +195,9 @@ WHERE edge.source = 'ui_i18n'
             },
         },
         "counts": {
-            "languages": {
-                "expected": int(language_manifest["generation"]["language_tag_count"]),
-                "actual": int(actual_counts["languages"]),
+            "language_varieties": {
+                "expected": int(language_manifest["generation"]["variety_count"]),
+                "actual": int(actual_counts["language_varieties"]),
             },
             "languoids": {
                 "expected": int(language_manifest["glottolog"]["languoid_count"]),
@@ -406,7 +392,7 @@ def _load_actual_ui_translation_mappings(
     rows = executor.execute_query(
         persist_to,
         f"""
-SELECT m.key, m.source_expression_id, te.language_code, te.id AS target_expression_id
+SELECT m.key, m.source_expression_id, te.language_profile_code AS language_code, te.id AS target_expression_id
 FROM expression_edges edge
 JOIN expressions se
   ON se.id = edge.expression_a_id
@@ -416,9 +402,9 @@ JOIN ui_messages m
   ON m.project_id = '{_escape_sql_literal(project_id)}'
  AND m.source_expression_id = se.id
 WHERE edge.source = 'ui_i18n'
-  AND te.language_code IN ({locale_code_sql})
+  AND te.language_profile_code IN ({locale_code_sql})
 UNION
-SELECT m.key, m.source_expression_id, te.language_code, te.id AS target_expression_id
+SELECT m.key, m.source_expression_id, te.language_profile_code AS language_code, te.id AS target_expression_id
 FROM expression_edges edge
 JOIN expressions se
   ON se.id = edge.expression_b_id
@@ -428,8 +414,8 @@ JOIN ui_messages m
   ON m.project_id = '{_escape_sql_literal(project_id)}'
  AND m.source_expression_id = se.id
 WHERE edge.source = 'ui_i18n'
-  AND te.language_code IN ({locale_code_sql})
-ORDER BY m.key, te.language_code, te.id;
+  AND te.language_profile_code IN ({locale_code_sql})
+ORDER BY m.key, te.language_profile_code, te.id;
 """.strip(),
     )
     mappings: list[UiTranslationMapping] = []
@@ -513,16 +499,15 @@ def _parse_ui_translation_fallback(
         source_expression_id = int(match.group("source_expression_id"))
         messages_by_source_id.setdefault(source_expression_id, []).append(match.group("key"))
 
-    translated_expressions: dict[int, tuple[str, str]] = {}
+    translated_expressions: dict[int, list[tuple[str, str]]] = {}
     for match in expression_pattern.finditer(sql):
         if match.group("source_type") != "ui_i18n":
             continue
         language_code = match.group("language_code")
         if language_code not in locale_codes:
             continue
-        translated_expressions[int(match.group("id"))] = (
-            language_code,
-            match.group("source_ref"),
+        translated_expressions.setdefault(int(match.group("id")), []).append(
+            (language_code, match.group("source_ref"))
         )
 
     mappings: list[UiTranslationMapping] = []
@@ -541,18 +526,18 @@ def _parse_ui_translation_fallback(
             target_expression_id = expression_a_id
         if source_expression_id is None or target_expression_id is None:
             continue
-        language_code, source_ref = translated_expressions[target_expression_id]
-        for key in messages_by_source_id[source_expression_id]:
-            if source_ref != f"{project_id}:{key}":
-                continue
-            mappings.append(
-                UiTranslationMapping(
-                    key=key,
-                    language_code=language_code,
-                    source_expression_id=source_expression_id,
-                    target_expression_id=target_expression_id,
+        for language_code, source_ref in translated_expressions[target_expression_id]:
+            for key in messages_by_source_id[source_expression_id]:
+                if source_ref != f"{project_id}:{key}":
+                    continue
+                mappings.append(
+                    UiTranslationMapping(
+                        key=key,
+                        language_code=language_code,
+                        source_expression_id=source_expression_id,
+                        target_expression_id=target_expression_id,
+                    )
                 )
-            )
     return mappings
 
 

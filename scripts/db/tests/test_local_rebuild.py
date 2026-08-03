@@ -62,29 +62,34 @@ CREATE TABLE language_subtags (
   PRIMARY KEY (type, value)
 );
 
-CREATE TABLE languages (
+CREATE TABLE language_varieties (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  origin TEXT NOT NULL,
+  glottocode TEXT
+);
+CREATE INDEX idx_language_varieties_glottocode ON language_varieties(glottocode);
+
+CREATE TABLE language_profiles (
   code TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  direction TEXT NOT NULL DEFAULT 'ltr',
-  variety_key TEXT NOT NULL,
-  glottocode TEXT,
-  source_version TEXT
+  direction TEXT NOT NULL DEFAULT 'ltr'
 );
-CREATE INDEX idx_languages_glottocode ON languages(glottocode);
 
 CREATE TABLE language_locations (
-  variety_key TEXT NOT NULL,
+  language_variety_id TEXT NOT NULL,
   city_name TEXT NOT NULL,
   territory_code TEXT NOT NULL,
   script_code TEXT NOT NULL DEFAULT '',
-  PRIMARY KEY (variety_key, city_name, territory_code, script_code)
+  PRIMARY KEY (language_variety_id, city_name, territory_code, script_code)
 );
-CREATE INDEX idx_language_locations_variety ON language_locations(variety_key);
+CREATE INDEX idx_language_locations_variety ON language_locations(language_variety_id);
 
 CREATE TABLE expressions (
   id INTEGER PRIMARY KEY,
   text TEXT NOT NULL,
-  language_code TEXT NOT NULL,
+  language_profile_code TEXT NOT NULL,
   source_type TEXT,
   source_ref TEXT,
   review_status TEXT
@@ -149,9 +154,9 @@ CREATE TABLE ui_messages (
     (backend_dir / "schema.sql").write_text(schema_sql.strip() + "\n", encoding="utf-8")
 
     migration_0002 = migrations_dir / "0002_init.sql"
-    migration_0002.write_text("ALTER TABLE languages ADD COLUMN name_en TEXT;\n", encoding="utf-8")
+    migration_0002.write_text("ALTER TABLE language_varieties ADD COLUMN name_en TEXT;\n", encoding="utf-8")
     migration_0003 = migrations_dir / "0003_seed.sql"
-    migration_0003.write_text("UPDATE languages SET source_version = 'seeded';\n", encoding="utf-8")
+    migration_0003.write_text("UPDATE language_varieties SET origin = origin;\n", encoding="utf-8")
 
     lock_payload = {
         "baseline_created_at": "2026-08-01T00:00:00Z",
@@ -178,7 +183,7 @@ CREATE TABLE ui_messages (
     language_manifest = {
         "glottolog": {"version": "fixture", "languoid_count": 3},
         "iana": {"file_date": "2026-08-01", "subtag_count": 3},
-        "generation": {"language_tag_count": 4, "language_location_count": 2},
+        "generation": {"variety_count": 4, "language_location_count": 2},
     }
     (artifacts_dir / "manifest.json").write_text(
         json.dumps(language_manifest, indent=2) + "\n",
@@ -196,15 +201,20 @@ INSERT INTO language_subtags (type, value) VALUES
   ('language', 'es'),
   ('language', 'zh');
 
-INSERT INTO languages (code, name, direction, variety_key, glottocode, source_version) VALUES
-  ('en-US', 'English (United States)', 'ltr', 'glotto:eng', 'eng1234', 'fixture'),
-  ('es-ES', 'Español', 'ltr', 'glotto:spa', 'spa1234', 'fixture'),
-  ('zh-Hant-TW', '繁體中文', 'ltr', 'glotto:zho', 'zho1234', 'fixture'),
-  ('x-emoji', 'Emoji', 'ltr', 'system:x-emoji', '', 'fixture');
+INSERT INTO language_varieties (id, code, name, origin, glottocode) VALUES
+  ('var:en-US', 'en-US', 'English (United States)', 'seed', 'eng1234'),
+  ('var:es-ES', 'es-ES', 'Español', 'seed', 'spa1234'),
+  ('var:zh-Hant-TW', 'zh-Hant-TW', '繁體中文', 'seed', 'zho1234'),
+  ('var:x-emoji', 'x-emoji', 'Emoji', 'system', '');
 
-INSERT INTO language_locations (variety_key, city_name, territory_code, script_code) VALUES
-  ('glotto:spa', 'Madrid', 'ES', ''),
-  ('glotto:zho', 'Taipei', 'TW', 'Hant');
+INSERT INTO language_profiles (code, name, direction) VALUES
+  ('en-US', 'English (United States)', 'ltr'),
+  ('es-ES', 'Español', 'ltr'),
+  ('zh-Hant-TW', '繁體中文', 'ltr');
+
+INSERT INTO language_locations (language_variety_id, city_name, territory_code, script_code) VALUES
+  ('var:spa', 'Madrid', 'ES', ''),
+  ('var:zho', 'Taipei', 'TW', 'Hant');
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -223,7 +233,7 @@ VALUES ('langmap-web', 'es-ES', 'Español', 'ltr', 'active');
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
 VALUES ('langmap-web', 'zh-Hant-TW', '繁體中文', 'ltr', 'active');
 
-INSERT INTO expressions (id, text, language_code, source_type, source_ref, review_status) VALUES
+INSERT INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status) VALUES
   (1001, 'Hello', 'en-US', 'ui_i18n', 'langmap-web:greeting.hello', 'approved'),
   (1002, 'Bye', 'en-US', 'ui_i18n', 'langmap-web:greeting.bye', 'approved'),
   (2001, 'Hola', 'es-ES', 'ui_i18n', 'langmap-web:greeting.hello', 'pending'),

@@ -221,8 +221,8 @@ def render_locale_sql(locale_code: str, rows: list[TranslationRow]) -> str:
     lines.append('-- 1. Register locale')
     lines.append(f"""
 INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{PROJECT_ID}', '{locale_code}', l.name, l.direction, 'active'
-FROM languages l WHERE l.code = '{locale_code}';
+SELECT '{PROJECT_ID}', '{locale_code}', p.name, p.direction, 'active'
+FROM language_profiles p WHERE p.code = '{locale_code}';
 """.strip())
     lines.append('')
 
@@ -232,13 +232,13 @@ FROM languages l WHERE l.code = '{locale_code}';
     for row in rows:
         lines.append(f"""
 -- {row.key}
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES ({row.source_expression_id}, '{q(row.source_text)}', '{SOURCE_LANGUAGE_CODE}', 'ui_i18n', '{row.source_ref}', 'approved');
 
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
 VALUES ('{PROJECT_ID}', '{row.key}', {row.source_expression_id}, '[]', '{row.source_expression_id}', 'active');
 
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES ({row.target_expression_id}, '{q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)

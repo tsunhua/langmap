@@ -212,8 +212,8 @@ def render_bundle_sql(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.
         lines.append(
             f"""
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{i18n_sql.PROJECT_ID}', '{locale_code}', l.name, l.direction, 'active'
-FROM languages l WHERE l.code = '{locale_code}'
+SELECT '{i18n_sql.PROJECT_ID}', '{locale_code}', p.name, p.direction, 'active'
+FROM language_profiles p WHERE p.code = '{locale_code}'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -230,7 +230,7 @@ ON CONFLICT(project_id, code) DO UPDATE SET
         lines.append(
             f"""
 -- {key}
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES ({source_expression_id}, '{i18n_sql.q(source_text)}', '{i18n_sql.SOURCE_LANGUAGE_CODE}', 'ui_i18n', '{source_ref}', 'approved');
 
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
@@ -248,7 +248,7 @@ VALUES ('{i18n_sql.PROJECT_ID}', '{key}', {source_expression_id}, '[]', '{source
             lines.append(
                 f"""
 -- {row.key}
-INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status)
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES ({row.target_expression_id}, '{i18n_sql.q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
 """.strip()
             )

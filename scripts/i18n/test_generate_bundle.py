@@ -136,7 +136,7 @@ class GenerateBundleTests(unittest.TestCase):
     def _create_sqlite_schema(self, db: sqlite3.Connection) -> None:
         db.executescript(
             """
-            CREATE TABLE languages (
+            CREATE TABLE language_profiles (
               code TEXT PRIMARY KEY,
               name TEXT NOT NULL,
               direction TEXT NOT NULL
@@ -144,7 +144,7 @@ class GenerateBundleTests(unittest.TestCase):
             CREATE TABLE expressions (
               id INTEGER PRIMARY KEY,
               text TEXT NOT NULL,
-              language_code TEXT NOT NULL,
+              language_profile_code TEXT NOT NULL,
               source_type TEXT,
               source_ref TEXT,
               review_status TEXT
@@ -176,7 +176,7 @@ class GenerateBundleTests(unittest.TestCase):
             """
         )
         db.executemany(
-            "INSERT INTO languages (code, name, direction) VALUES (?, ?, ?)",
+            "INSERT INTO language_profiles (code, name, direction) VALUES (?, ?, ?)",
             [
                 ("en", "English", "ltr"),
                 ("cmn-Hans", "华语", "ltr"),
