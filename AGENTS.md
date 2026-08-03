@@ -63,9 +63,10 @@ cd backend && npm test
 
 ## Domain
 
-- `expression`：單一語言中的詞或句。
+- `expression`：單一語言中的詞或句，綁定到 `language_profile_code`。
 - `mapping` / `expression_edge`：兩個 expression 的語義關係。
-- `language`：語言或地區化語言代碼。
+- `language_variety`：語言或方言的使用者面向身份（code、名稱、描述、glottocode），每個 variety 可有多個 profile。
+- `language_profile`：精確的 BCP 47 content tag，expression 綁定的最小單位。
 - `contribution`：一批新增或關聯提交。
 - `handbook`：學習手冊。
 - `/mapping/:id` 以 expression ID 為中心展示關係，不要混淆詞句節點與映射邊。

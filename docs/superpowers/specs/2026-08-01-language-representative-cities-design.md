@@ -2,6 +2,8 @@
 
 > 狀態：已實作。純地理用途的 region 已從 seed content profiles 移除，並提供
 > 經審核的 code migration matrix 與 `0012` 安全遷移；尚未執行 production mutation。
+>
+> 更新：本文件中以 `languages.code` 作為語言身份的資料模型決策，已由 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md) 取代；代表性城市的地理資料結構仍有效。
 
 ## 1. 背景
 

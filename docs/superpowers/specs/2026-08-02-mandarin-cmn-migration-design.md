@@ -1,5 +1,7 @@
 # 華語內容標籤遷移設計：zh-* → cmn-*
 
+> 更新：本文件中 `expressions.language_code` 欄位已更名為 `language_profile_code`，`languages` 表已拆分為 `language_varieties` + `language_profiles`，詳見 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md)；遷移邏輯與合規檢查仍有效。
+
 日期：2026-08-02
 範圍：`scripts/v2/language_seed_profiles.json`、`backend/migrations/`、`scripts/i18n/`、`web/src/locales/`、相關測試。
 

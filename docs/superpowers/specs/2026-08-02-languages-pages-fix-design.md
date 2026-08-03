@@ -1,5 +1,7 @@
 # 語言列表與詳情頁修復設計
 
+> 更新：本文件中以 `languages` 單表作為語言模型的決策，已由 [2026-08-03-language-variety-profile-model-design.md](./2026-08-03-language-variety-profile-model-design.md) 取代；頁面佈局與無障礙相關決策仍有效。
+
 日期：2026-08-02
 範圍：`web/src/pages/LanguageList.vue`、`web/src/pages/LanguageDetail.vue` 及其子組件、`backend/src/routes/languages.ts`。
 
