@@ -11,7 +11,7 @@ export interface Variables {
 export interface MappingGraphNode {
   expression_id: number;
   text: string;
-  language_code: string;
+  language_profile_code: string;
   language_name: string | null;
   depth: number;
 }

@@ -41,7 +41,7 @@ mappings.post('/:id/vote', requireAuth, async (c) => {
   await c.env.DB.prepare(
     `UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
      WHERE (project_id, code) IN (
-       SELECT m.project_id, te.language_code
+       SELECT m.project_id, te.language_profile_code
        FROM ui_messages m
        JOIN expression_edges ed ON ed.id = ?
        JOIN expressions te ON te.id = CASE

@@ -35,7 +35,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     }
     const reg = await requireRegisteredLanguage(c.env.DB, lang);
     if (!reg) {
-      return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language', { codes: [lang] });
+      return badRequest(c, 'INVALID_LANGUAGE_PROFILE_CODE', 'language_profile_code must reference a registered profile', { codes: [lang] });
     }
   }
 
@@ -59,7 +59,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     }
 
     const existing = await c.env.DB.prepare(
-      `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
+      `SELECT id FROM expressions WHERE text = ? AND language_profile_code = ? LIMIT 1`
     ).bind(text, lang).first<{ id: number }>();
 
     const id = existing?.id ?? await computeExpressionId(lang, text);
@@ -69,7 +69,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     if (!existing) {
       statements.push(
         c.env.DB.prepare(
-          `INSERT OR IGNORE INTO expressions (id, text, language_code, tags, source_type, created_by, review_status)
+          `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, tags, source_type, created_by, review_status)
            VALUES (?, ?, ?, ?, 'user', ?, 'pending')`
         ).bind(id, text, lang, e.tags || null, user.username)
       );

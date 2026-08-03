@@ -127,7 +127,7 @@ async function createMapping(c: any, projectId: string, body: any) {
     const sourceText = body.source_text.trim();
     const sourceId = await expressionId(SOURCE_LOCALE, sourceText);
     await c.env.DB.prepare(
-      `INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status, created_by)
+      `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status, created_by)
        VALUES (?, ?, 'en', 'ui_i18n', ?, 'approved', ?)`
     ).bind(sourceId, sourceText, `${projectId}:${key}`, c.get('user')?.username ?? null).run();
     await c.env.DB.prepare(
@@ -140,12 +140,12 @@ async function createMapping(c: any, projectId: string, body: any) {
   const text = body.text.trim();
   if (!samePlaceholders(message.source_text, text, message.placeholders_json)) return badRequest(c, 'placeholder_mismatch');
   let target = await c.env.DB.prepare(
-    'SELECT id FROM expressions WHERE language_code = ? AND text = ? ORDER BY id LIMIT 1'
+    'SELECT id FROM expressions WHERE language_profile_code = ? AND text = ? ORDER BY id LIMIT 1'
   ).bind(localeCode, text).first<{ id: number }>();
   if (!target) {
     const id = await expressionId(localeCode, text);
     await c.env.DB.prepare(
-      `INSERT OR IGNORE INTO expressions (id, text, language_code, source_type, source_ref, review_status, created_by)
+      `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status, created_by)
        VALUES (?, ?, ?, 'ui_i18n', ?, 'pending', ?)`
     ).bind(id, text, localeCode, `${projectId}:${key}`, c.get('user')?.username ?? null).run();
     target = await c.env.DB.prepare('SELECT id FROM expressions WHERE id = ?').bind(id).first<{ id: number }>();
@@ -187,14 +187,14 @@ localization.get('/projects/:projectId/locales/:code/messages', async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT m.key, m.source_expression_id, m.message_format,
        e.text AS source_text,
-       te.id AS target_id, te.text AS text, te.language_code AS locale_code,
+       te.id AS target_id, te.text AS text, te.language_profile_code AS locale_code,
        ed.score, ed.created_at AS edge_created_at
      FROM ui_messages m
      JOIN expressions e ON e.id = m.source_expression_id
      LEFT JOIN expression_edges ed ON ed.expression_a_id = m.source_expression_id OR ed.expression_b_id = m.source_expression_id
      LEFT JOIN expressions te ON te.id = CASE WHEN ed.expression_a_id = m.source_expression_id THEN ed.expression_b_id ELSE ed.expression_a_id END
      WHERE m.project_id = ? AND m.status = 'active'
-       AND te.language_code IN (${chain.map(() => '?').join(',')})`
+       AND te.language_profile_code IN (${chain.map(() => '?').join(',')})`
   ).bind(projectId, ...chain).all<any>();
 
   const messages = selectLocalizedRows(rows.results ?? [], chain);
@@ -216,7 +216,7 @@ localization.get('/projects/:projectId/workbench/:code', async (c) => {
        ed.id AS edge_id, ed.score, ed.created_at
      FROM ui_messages m JOIN expressions e ON e.id = m.source_expression_id
      LEFT JOIN expression_edges ed ON (ed.expression_a_id = m.source_expression_id OR ed.expression_b_id = m.source_expression_id)
-       AND EXISTS (SELECT 1 FROM expressions candidate WHERE candidate.id = CASE WHEN ed.expression_a_id = m.source_expression_id THEN ed.expression_b_id ELSE ed.expression_a_id END AND candidate.language_code = ?)
+        AND EXISTS (SELECT 1 FROM expressions candidate WHERE candidate.id = CASE WHEN ed.expression_a_id = m.source_expression_id THEN ed.expression_b_id ELSE ed.expression_a_id END AND candidate.language_profile_code = ?)
      LEFT JOIN expressions te ON te.id = CASE WHEN ed.expression_a_id = m.source_expression_id THEN ed.expression_b_id ELSE ed.expression_a_id END
      WHERE m.project_id = ? AND m.status = 'active'
      ORDER BY m.key, ed.score DESC, ed.created_at ASC, te.id ASC`
@@ -248,7 +248,7 @@ localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
   const code = typeof body?.code === 'string' ? body.code.trim() : '';
   if (!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(code) || code === SOURCE_LOCALE) return badRequest(c, 'invalid_locale_code');
   const language = await requireRegisteredLanguage(c.env.DB, code);
-  if (!language) return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language');
+  if (!language) return badRequest(c, 'INVALID_LANGUAGE_PROFILE_CODE', 'language_profile_code must reference a registered profile');
   await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
   const locale = await projectLocale(c, projectId, code);
   return created(c, locale);

@@ -14,7 +14,7 @@ export interface NeighborRow {
 export interface ExpressionRow {
   expression_id: number;
   text: string;
-  language_code: string;
+  language_profile_code: string;
   language_name: string | null;
 }
 
@@ -50,7 +50,7 @@ export async function buildMappingGraph(
   const root: MappingGraphNode = {
     expression_id: rootId,
     text: rootRow?.text ?? '',
-    language_code: rootRow?.language_code ?? '',
+    language_profile_code: rootRow?.language_profile_code ?? '',
     language_name: rootRow?.language_name ?? null,
     depth: 0,
   };
@@ -92,7 +92,7 @@ export async function buildMappingGraph(
         nodes.set(id, {
           expression_id: id,
           text: row.text,
-          language_code: row.language_code,
+          language_profile_code: row.language_profile_code,
           language_name: row.language_name,
           depth,
         });

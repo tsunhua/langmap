@@ -72,10 +72,10 @@ handbooks.get('/:id', optionalAuth, async (c) => {
   if (sectionIds.length > 0) {
     const idsJson = JSON.stringify(sectionIds);
     const { results } = await c.env.DB.prepare(
-      `SELECT hsi.*, e.text, e.language_code, l.name as language_name
+      `SELECT hsi.*, e.text, e.language_profile_code, l.name as language_name
        FROM handbook_section_items hsi
        JOIN expressions e ON e.id = hsi.expression_id
-       LEFT JOIN languages l ON e.language_code = l.code
+       LEFT JOIN language_profiles l ON e.language_profile_code = l.code
        WHERE hsi.section_id IN (SELECT value FROM json_each(?))
        ORDER BY hsi.section_id, hsi.position`
     ).bind(idsJson).all();

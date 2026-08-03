@@ -26,7 +26,7 @@ search.get('/expressions', async (c) => {
   if (lang) {
     const langs = lang.split(',').map(l => l.trim()).filter(Boolean);
     if (langs.length) {
-      langFilter = `AND e.language_code IN (${langs.map(() => '?').join(',')})`;
+      langFilter = `AND e.language_profile_code IN (${langs.map(() => '?').join(',')})`;
       langParams.push(...langs);
     }
   }

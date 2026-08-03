@@ -15,7 +15,7 @@ expressions.get('/search', async (c) => {
   const lang = c.req.query('lang') || '';
   const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '10') || 10, 1), 50);
 
-  let query = `SELECT id, text, language_code FROM expressions WHERE 1=1`;
+  let query = `SELECT id, text, language_profile_code FROM expressions WHERE 1=1`;
   const params: (string | number)[] = [];
 
   if (q) {
@@ -23,7 +23,7 @@ expressions.get('/search', async (c) => {
     params.push(`%${q}%`);
   }
   if (lang) {
-    query += ` AND language_code = ?`;
+    query += ` AND language_profile_code = ?`;
     params.push(lang);
   }
   query += ` ORDER BY text LIMIT ?`;
@@ -38,42 +38,42 @@ expressions.post('/', requireAuth, async (c) => {
   const user = c.get('user')!;
   const body = await c.req.json<{
     text?: string;
-    language_code?: string;
+    language_profile_code?: string;
     variation_status?: 'unclassified' | 'shared' | 'variant';
     region_name?: string;
     related_to?: number;
   }>();
 
   const text = body.text?.trim() || '';
-  const languageCode = body.language_code?.trim() || '';
+  const languageProfileCode = body.language_profile_code?.trim() || '';
   const regionName = body.region_name?.trim() || '';
   const variationStatus = body.variation_status || 'unclassified';
 
-  if (!text || !languageCode) {
-    return badRequest(c, 'invalid_expression', 'text and language_code are required');
+  if (!text || !languageProfileCode) {
+    return badRequest(c, 'invalid_expression', 'text and language_profile_code are required');
   }
   if (!['unclassified', 'shared', 'variant'].includes(variationStatus)) {
     return badRequest(c, 'invalid_variation_status', 'variation_status must be unclassified, shared, or variant');
   }
 
-  const language = await requireRegisteredLanguage(c.env.DB, languageCode);
+  const language = await requireRegisteredLanguage(c.env.DB, languageProfileCode);
   if (!language) {
-    return badRequest(c, 'INVALID_LANGUAGE_CODE', 'language_code must reference a registered language');
+    return badRequest(c, 'INVALID_LANGUAGE_PROFILE_CODE', 'language_profile_code must reference a registered profile');
   }
 
   const existing = await c.env.DB.prepare(
-    `SELECT id FROM expressions WHERE text = ? AND language_code = ? LIMIT 1`
-  ).bind(text, languageCode).first<{ id: number }>();
+    `SELECT id FROM expressions WHERE text = ? AND language_profile_code = ? LIMIT 1`
+  ).bind(text, languageProfileCode).first<{ id: number }>();
 
-  const expressionId = existing?.id ?? await computeExpressionId(languageCode, text);
+  const expressionId = existing?.id ?? await computeExpressionId(languageProfileCode, text);
   const statements: D1Statement[] = [];
 
   if (!existing) {
     statements.push(
       c.env.DB.prepare(
-        `INSERT OR IGNORE INTO expressions (id, text, language_code, region_name, variation_status, source_type, created_by, review_status)
+        `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, region_name, variation_status, source_type, created_by, review_status)
          VALUES (?, ?, ?, ?, ?, 'user', ?, 'pending')`
-      ).bind(expressionId, text, languageCode, regionName || null, variationStatus, user.username)
+      ).bind(expressionId, text, languageProfileCode, regionName || null, variationStatus, user.username)
     );
   }
 
@@ -117,7 +117,7 @@ expressions.get('/:id', async (c) => {
   const id = parseInt(c.req.param('id'));
   const expr = await c.env.DB.prepare(
     `SELECT e.*, l.name as language_name
-     FROM expressions e LEFT JOIN languages l ON e.language_code = l.code
+     FROM expressions e LEFT JOIN language_profiles l ON e.language_profile_code = l.code
      WHERE e.id = ?`
   ).bind(id).first();
   if (!expr) return notFound(c, 'Expression');
@@ -164,8 +164,8 @@ expressions.get('/:id/mappings', async (c) => {
       const chunk = ids.slice(i, i + EXPR_CHUNK);
       const placeholders = chunk.map(() => '?').join(',');
       const { results } = await c.env.DB.prepare(
-        `SELECT e.id as expression_id, e.text, e.language_code, l.name as language_name
-         FROM expressions e LEFT JOIN languages l ON e.language_code = l.code
+        `SELECT e.id as expression_id, e.text, e.language_profile_code, l.name as language_name
+         FROM expressions e LEFT JOIN language_profiles l ON e.language_profile_code = l.code
          WHERE e.id IN (${placeholders})
          ORDER BY e.id ASC`
       ).bind(...chunk).all<ExpressionRow>();
