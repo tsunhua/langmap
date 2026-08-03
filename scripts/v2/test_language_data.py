@@ -242,10 +242,10 @@ Added: 2005-10-16
 
     def test_real_seed_carries_mandarin_alternate_names(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+        varieties = {v["code"]: v for v in profiles["varieties"]}
 
-        self.assertIn("普通话", by_code["cmn-Hans"]["alternate_names"])
-        self.assertIn("國語", by_code["cmn-Hant"]["alternate_names"])
+        self.assertIn("普通话", varieties["cmn"]["alternate_names"])
+        self.assertIn("國語", varieties["cmn"]["alternate_names"])
 
     def test_registry_sql_loads_into_canonical_schema(self):
         languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
@@ -334,14 +334,6 @@ Added: 2005-10-16
     def test_canonical_case(self):
         self.assertEqual(canonical_case(["nan", "hant", "tw"]), "nan-Hant-TW")
 
-    def test_language_schema_is_single_profile_table(self):
-        schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
-        self.assertIn("variety_key TEXT NOT NULL", schema)
-        self.assertIn("CREATE TABLE language_subtags", schema)
-        self.assertNotIn("language_varieties", schema)
-        self.assertNotIn("languoid_id TEXT\n", schema)
-        self.assertNotIn("is_active INTEGER", schema)
-
     def test_language_locations_schema_is_minimal_and_indexed(self):
         schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
         self.assertIn("CREATE TABLE language_locations", schema)
@@ -358,15 +350,15 @@ Added: 2005-10-16
             type("Subtag", (), {"type": "script", "value": "Hans", "deprecated": None})(),
         ]
         rows = list(seed_location_rows({"locations": [
-            {"variety_key": "glotto:yue", "city_name": "香港", "city_name_en": "Hong Kong",
+            {"variety_code": "yue", "city_name": "香港", "city_name_en": "Hong Kong",
              "territory_code": "HK", "script_code": "Hans", "latitude": 22.3193,
              "longitude": 114.1694, "reference": "ref"},
-        ]}, {"glotto:yue"}, subtags))
+        ]}, {"yue"}, subtags))
         self.assertEqual(rows[0]["city_name"], "香港")
         self.assertEqual(list(seed_location_rows({"locations": []}, set(), subtags)), [])
 
         with self.assertRaisesRegex(ValueError, "unknown variety_key"):
-            list(seed_location_rows({"locations": [{"variety_key": "missing"}]}, set(), subtags))
+            list(seed_location_rows({"locations": [{"variety_code": "missing"}]}, set(), subtags))
 
     def test_language_migration_preserves_canonical_codes(self):
         manifest = {
@@ -391,7 +383,7 @@ Added: 2005-10-16
 
     def test_seed_profiles_do_not_use_regions_as_language_geography(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        codes = {profile["code"] for profile in profiles["languages"]}
+        codes = {p["code"] for v in profiles["varieties"] for p in v["profiles"]}
 
         self.assertTrue({
             "ar", "bn", "de", "es", "fa", "fr", "hi", "id", "it", "ja",
@@ -410,7 +402,7 @@ Added: 2005-10-16
 
     def test_seed_profiles_include_common_and_reviewed_variant_layers(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        codes = {profile["code"] for profile in profiles["languages"]}
+        codes = {p["code"] for v in profiles["varieties"] for p in v["profiles"]}
 
         self.assertTrue({
             "en", "en-US", "en-GB",
@@ -419,59 +411,81 @@ Added: 2005-10-16
             "yue-Hant",
         }.issubset(codes))
 
+    def test_seed_varieties_are_two_layer_and_profile_codes_unique(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        varieties = profiles["varieties"]
+
+        codes = [v["code"] for v in varieties]
+        ids = [v["id"] for v in varieties]
+        self.assertEqual(len(codes), len(set(codes)), "variety code must be unique")
+        self.assertEqual(len(ids), len(set(ids)), "variety id must be unique")
+        for variety in varieties:
+            self.assertTrue(variety["profiles"], f"variety {variety['code']} has no profiles")
+            self.assertNotIn("Simplified", variety["name_en"])
+            self.assertNotIn("Traditional", variety["name_en"])
+
+        profile_codes: list[str] = []
+        for variety in varieties:
+            profile_codes.extend(p["code"] for p in variety["profiles"])
+        self.assertEqual(len(profile_codes), len(set(profile_codes)), "profile code must be globally unique")
+
+        by_code = {v["code"]: v for v in varieties}
+        self.assertEqual(
+            {p["code"] for p in by_code["cmn"]["profiles"]},
+            {"cmn-Hans", "cmn-Hant"},
+        )
+
     def test_chaozhou_profiles_use_exact_glottocode_for_each_script(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+        varieties = {v["code"]: v for v in profiles["varieties"]}
 
-        expected = {
+        self.assertIn("nan-x-chao1238", varieties)
+        chao = varieties["nan-x-chao1238"]
+        self.assertEqual(chao["glottocode"], "chao1238")
+        self.assertEqual({p["code"] for p in chao["profiles"]}, {
             "nan-Hans-x-chao1238",
             "nan-Hant-x-chao1238",
             "nan-Latn-x-chao1238",
-        }
-        self.assertTrue(expected.issubset(by_code))
-        self.assertNotIn("nan-x-chao1239", by_code)
-        for code in expected:
-            self.assertEqual(by_code[code]["glottocode"], "chao1238")
+        })
+        self.assertNotIn("nan-x-chao1239", varieties)
 
     def test_seed_profiles_register_all_chinese_varieties(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        self.assertEqual(profiles["version"], 4)
-        by_code = {profile["code"]: profile for profile in profiles["languages"]}
+        self.assertEqual(profiles["version"], 5)
+        varieties = {v["code"]: v for v in profiles["varieties"]}
         expected = {
-            "cjy-Hans": ("晋语", "Jin Chinese (Simplified)", "jiny1235"),
-            "cjy-Hant": ("晉語", "Jin Chinese (Traditional)", "jiny1235"),
-            "gan-Hans": ("赣语", "Gan Chinese (Simplified)", "ganc1239"),
-            "gan-Hant": ("贛語", "Gan Chinese (Traditional)", "ganc1239"),
-            "czo-Hans": ("闽中语", "Min Zhong Chinese (Simplified)", "minz1235"),
-            "czo-Hant": ("閩中語", "Min Zhong Chinese (Traditional)", "minz1235"),
-            "cpx-Hans": ("莆仙话", "Pu-Xian Chinese (Simplified)", "puxi1243"),
-            "cpx-Hant": ("莆仙話", "Pu-Xian Chinese (Traditional)", "puxi1243"),
-            "cnp-Hans": ("桂北平话", "Northern Pinghua (Simplified)", "nort3268"),
-            "cnp-Hant": ("桂北平話", "Northern Pinghua (Traditional)", "nort3268"),
-            "csp-Hans": ("桂南平话", "Southern Pinghua (Simplified)", "sout3250"),
-            "csp-Hant": ("桂南平話", "Southern Pinghua (Traditional)", "sout3250"),
+            "cjy": ("晉語", "Jin Chinese", "jiny1235"),
+            "gan": ("贛語", "Gan Chinese", "ganc1239"),
+            "czo": ("閩中語", "Min Zhong", "minz1235"),
+            "cpx": ("莆仙話", "Pu-Xian", "puxi1243"),
+            "cnp": ("桂北平話", "Northern Pinghua", "nort3268"),
+            "csp": ("桂南平話", "Southern Pinghua", "sout3250"),
         }
         for code, (name, name_en, glottocode) in expected.items():
-            entry = by_code[code]
+            entry = varieties[code]
             self.assertEqual(entry["name"], name)
             self.assertEqual(entry["name_en"], name_en)
             self.assertEqual(entry["glottocode"], glottocode)
             self.assertEqual(entry["origin"], "seed")
             self.assertEqual(entry["reason"], "major-east-asia-language")
+            self.assertEqual(
+                {p["code"] for p in entry["profiles"]},
+                {f"{code}-Hans", f"{code}-Hant"},
+            )
 
     def test_seed_profiles_carry_chinese_variety_representative_cities(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
         locations = {
-            (loc["variety_key"], loc["city_name"]): loc
+            (loc["variety_code"], loc["city_name"]): loc
             for loc in profiles["locations"]
         }
         expected = {
-            ("glotto:jiny1235", "Taiyuan"): ("CN", "Hans", 37.8706, 112.5489),
-            ("glotto:ganc1239", "Nanchang"): ("CN", "Hans", 28.6820, 115.8579),
-            ("glotto:minz1235", "Sanming"): ("CN", "Hans", 26.2634, 117.6394),
-            ("glotto:puxi1243", "Putian"): ("CN", "Hans", 25.4540, 119.0078),
-            ("glotto:nort3268", "Guilin"): ("CN", "Hans", 25.2742, 110.2900),
-            ("glotto:sout3250", "Nanning"): ("CN", "Hans", 22.8170, 108.3665),
+            ("cjy", "Taiyuan"): ("CN", "Hans", 37.8706, 112.5489),
+            ("gan", "Nanchang"): ("CN", "Hans", 28.6820, 115.8579),
+            ("czo", "Sanming"): ("CN", "Hans", 26.2634, 117.6394),
+            ("cpx", "Putian"): ("CN", "Hans", 25.4540, 119.0078),
+            ("cnp", "Guilin"): ("CN", "Hans", 25.2742, 110.2900),
+            ("csp", "Nanning"): ("CN", "Hans", 22.8170, 108.3665),
         }
         for key, (territory, script, lat, lon) in expected.items():
             loc = locations[key]

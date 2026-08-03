@@ -18,6 +18,10 @@ describe('ulid', () => {
     expect(isUlid(seedVarietyId('cmn'))).toBe(true);
   });
 
+  it('seedVarietyId matches the Python seed generator snapshot', () => {
+    expect(seedVarietyId('cmn')).toBe('01K1GWHD00NMQC20PMZV031H78');
+  });
+
   it('isUlid rejects malformed input', () => {
     expect(isUlid('not-a-ulid')).toBe(false);
     expect(isUlid('')).toBe(false);
