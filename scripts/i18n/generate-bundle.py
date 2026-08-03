@@ -212,8 +212,12 @@ def render_bundle_sql(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.
         lines.append(
             f"""
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{i18n_sql.PROJECT_ID}', '{locale_code}', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = '{locale_code}'
+SELECT '{i18n_sql.PROJECT_ID}', '{locale_code}',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = '{locale_code}'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,

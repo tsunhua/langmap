@@ -221,8 +221,12 @@ def render_locale_sql(locale_code: str, rows: list[TranslationRow]) -> str:
     lines.append('-- 1. Register locale')
     lines.append(f"""
 INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{PROJECT_ID}', '{locale_code}', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = '{locale_code}';
+SELECT '{PROJECT_ID}', '{locale_code}',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = '{locale_code}';
 """.strip())
     lines.append('')
 

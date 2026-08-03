@@ -136,10 +136,18 @@ class GenerateBundleTests(unittest.TestCase):
     def _create_sqlite_schema(self, db: sqlite3.Connection) -> None:
         db.executescript(
             """
+            CREATE TABLE language_varieties (
+              id TEXT PRIMARY KEY,
+              code TEXT NOT NULL,
+              name TEXT NOT NULL
+            );
             CREATE TABLE language_profiles (
               code TEXT PRIMARY KEY,
+              language_variety_id TEXT NOT NULL,
               name TEXT NOT NULL,
-              direction TEXT NOT NULL
+              script_code TEXT NOT NULL DEFAULT '',
+              direction TEXT NOT NULL,
+              FOREIGN KEY (language_variety_id) REFERENCES language_varieties(id)
             );
             CREATE TABLE expressions (
               id INTEGER PRIMARY KEY,
@@ -176,13 +184,22 @@ class GenerateBundleTests(unittest.TestCase):
             """
         )
         db.executemany(
-            "INSERT INTO language_profiles (code, name, direction) VALUES (?, ?, ?)",
+            "INSERT INTO language_varieties (id, code, name) VALUES (?, ?, ?)",
             [
-                ("en", "English", "ltr"),
-                ("cmn-Hans", "华语", "ltr"),
-                ("cmn-Hant", "華語", "ltr"),
-                ("es", "Español", "ltr"),
-                ("ja", "日本語", "ltr"),
+                ("ven", "en", "English"),
+                ("vcmn", "cmn", "華語"),
+                ("ves", "es", "Español"),
+                ("vja", "ja", "日本語"),
+            ],
+        )
+        db.executemany(
+            "INSERT INTO language_profiles (code, language_variety_id, name, script_code, direction) VALUES (?, ?, ?, ?, ?)",
+            [
+                ("en", "ven", "標準", "", "ltr"),
+                ("cmn-Hans", "vcmn", "簡體", "Hans", "ltr"),
+                ("cmn-Hant", "vcmn", "繁體", "Hant", "ltr"),
+                ("es", "ves", "標準", "", "ltr"),
+                ("ja", "vja", "標準", "", "ltr"),
             ],
         )
 
@@ -256,10 +273,26 @@ class GenerateBundleTests(unittest.TestCase):
                     table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
                     for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
                 }
+                native_names = dict(
+                    db.execute(
+                        "SELECT code, native_name FROM ui_locales ORDER BY code"
+                    ).fetchall()
+                )
             finally:
                 db.close()
 
             self.assertEqual(second_counts, first_counts)
+
+            self.assertEqual(
+                native_names,
+                {
+                    "cmn-Hans": "華語（簡體）",
+                    "cmn-Hant": "華語（繁體）",
+                    "en": "English",
+                    "es": "Español",
+                    "ja": "日本語",
+                },
+            )
 
     def test_pairwise_translation_edges_form_a_clique_per_key(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")

@@ -5,8 +5,12 @@
 -- 1. Upsert locale metadata
 -- Locale cmn-Hans
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'cmn-Hans', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = 'cmn-Hans'
+SELECT 'langmap-web', 'cmn-Hans',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = 'cmn-Hans'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -14,8 +18,12 @@ ON CONFLICT(project_id, code) DO UPDATE SET
 
 -- Locale cmn-Hant
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'cmn-Hant', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = 'cmn-Hant'
+SELECT 'langmap-web', 'cmn-Hant',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = 'cmn-Hant'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -23,8 +31,12 @@ ON CONFLICT(project_id, code) DO UPDATE SET
 
 -- Locale en
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'en', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = 'en'
+SELECT 'langmap-web', 'en',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = 'en'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -32,8 +44,12 @@ ON CONFLICT(project_id, code) DO UPDATE SET
 
 -- Locale es
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'es', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = 'es'
+SELECT 'langmap-web', 'es',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = 'es'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
@@ -41,8 +57,12 @@ ON CONFLICT(project_id, code) DO UPDATE SET
 
 -- Locale ja
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT 'langmap-web', 'ja', p.name, p.direction, 'active'
-FROM language_profiles p WHERE p.code = 'ja'
+SELECT 'langmap-web', 'ja',
+       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
+       p.direction, 'active'
+FROM language_profiles p
+JOIN language_varieties v ON v.id = p.language_variety_id
+WHERE p.code = 'ja'
 ON CONFLICT(project_id, code) DO UPDATE SET
   native_name = excluded.native_name,
   direction = excluded.direction,
