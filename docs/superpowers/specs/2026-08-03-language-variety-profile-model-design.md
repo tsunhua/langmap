@@ -10,7 +10,7 @@
 
 LangMap 採「底層精確、上層合併」的兩層語言模型：
 
-- **語言變體（language variety）**是使用者瀏覽、搜尋、統計與貢獻時認知的語言或方言，例如華語、粵語、潮州話。
+- **語言變體（language variety）**是使用者瀏覽、搜尋、統計與貢獻時認知的語言或方言，例如華語、粵語、潮州話；它另有可讀、穩定的公開 code。
 - **內容 profile（language profile）**是該語言變體下精確的 canonical BCP 47 content tag，例如 `cmn-Hant`、`cmn-Hans`、`nan-Latn-TW-tailo`。
 
 詞句繼續綁定精確 profile，以保存書寫系統、地區與 variant 資訊；語言列表、語言詳情與「語言數」則以 variety 為主要單位。新增 script profile 不再造成使用者看到的語言數增加，也不再把同一社群切成多個互不相干的入口。
@@ -57,7 +57,7 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 - 不改變 Glottolog 是優先對齊、而非社群語言准入條件的既有原則。
 - 不改變 mapping 仍是 expression 對 expression 的語義關係。
 - 不在本次重新設計 `variation_status`；它仍描述共通內容與地方變體，不描述字體轉換關係。
-- 不維持舊 `/language/:code` 路由或舊 `language_code` 欄位的長期公開相容性。
+- 不維持舊 `/language/:profileCode` 將 profile 當成語言頁的路由語義，也不維持舊 `language_code` 欄位的長期公開相容性。
 
 ## 5. 術語與不變量
 
@@ -67,10 +67,12 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 
 不變量：
 
-- 每個 variety 有一個不可變、與外部 registry 無關的內部 ID。
+- 每個 variety 有一個不可變、與外部 registry 無關的內部 ID，以及一個唯一、穩定、可讀的公開 code。
 - 一個 variety 有一至多個 profile。
 - Glottocode、ISO 639-3 與 BCP 47 base language 都是對齊或編碼資料，不是 variety 主鍵。
 - Glottolog 對齊可以後補或修正，不改變 variety ID。
+- 公開 code 優先使用能精確代表該 variety 的 IANA language subtag，例如華語 `cmn`、粵語 `yue`；沒有專用 subtag 的具體變體使用不含 script 的 private-use code，例如潮州話 `nan-x-chao1238`。
+- 公開 code 不從任一 profile 即時截取，也不包含純書寫差異；`cmn-Hans` 與 `cmn-Hant` 的 variety code 都是 `cmn`。
 - variety 名稱不帶「Simplified」「Traditional」等 profile 層資訊。
 
 ### 5.2 內容 profile（language profile）
@@ -112,6 +114,7 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 ```sql
 CREATE TABLE language_varieties (
     id TEXT PRIMARY KEY NOT NULL,
+    code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     name_en TEXT,
     description TEXT NOT NULL DEFAULT '',
@@ -138,7 +141,9 @@ CREATE INDEX idx_language_varieties_glottocode
 
 設計決策：
 
-- `id` 使用應用程式生成的 ULID 字串，與既有 community identity 方向一致；不得從名稱、code 或 Glottocode 推導。
+- `id` 使用應用程式生成的 ULID 字串，與既有 community identity 方向一致；只作內部主鍵與外鍵，不進入一般 URL 或公開 API。
+- `code` 是 variety 的公開識別碼及 URL key。它遵循 canonical BCP 47 排序與 casing，但表示 variety 身份而非一段內容的完整 profile。
+- `code` 建立後視為穩定。正式上線前的修正可經 migration 完成；正式上線後若需修改，必須另行設計 alias／redirect，不能直接破壞既有 URL。
 - `glottocode` 不設 UNIQUE。資料清理應避免重複對齊，但不以資料庫約束假設 Glottolog 節點永遠等同 LangMap 的社群邊界。
 - `origin` 表示 variety 最初如何進入 registry；日後補上 Glottolog 對齊不改寫 origin。
 - `direction`、script、region、variant 與 private-use 不屬於 variety，全部留在 profile。
@@ -207,7 +212,8 @@ language_locations.variety_key
 {
   "varieties": [
     {
-      "seed_key": "glotto:mand1415",
+      "id": "01K...",
+      "code": "cmn",
       "name": "華語",
       "name_en": "Mandarin Chinese",
       "glottocode": "mand1415",
@@ -220,10 +226,10 @@ language_locations.variety_key
 }
 ```
 
-- `seed_key` 只供 deterministic seed 對應與 migration manifest 使用，不進入公開 API。
-- seed variety ID 由版本控制內明確保存，不在每次產物生成時重新產生。
+- seed variety ID 由版本控制內明確保存，不在每次產物生成時重新產生；它只用於資料庫關聯。
+- seed variety code 也由版本控制明確保存，必須唯一並通過 canonicalization。一般 API、URL 與匯入參數使用 code，不使用內部 ID。
 - 社群建立 variety 時生成新 ULID；新增既有 variety 的 profile 時沿用其 ID。
-- registry 驗證需確認每個 profile 的 canonical code、profile 唯一歸屬、至少一個 profile，以及 location 引用存在。
+- registry 驗證需確認 variety code 唯一、每個 profile 的 canonical code、profile 唯一歸屬、至少一個 profile，以及 location 引用存在。
 
 ### 8.2 社群建立流程
 
@@ -248,8 +254,8 @@ language_locations.variety_key
 
 ```text
 GET  /api/v2/languages
-GET  /api/v2/languages/:id
-GET  /api/v2/languages/:id/expressions
+GET  /api/v2/languages/:code
+GET  /api/v2/languages/:code/expressions
 POST /api/v2/languages/preview
 POST /api/v2/languages
 ```
@@ -258,7 +264,7 @@ POST /api/v2/languages
 
 ```json
 {
-  "id": "01K...",
+  "code": "cmn",
   "name": "華語",
   "name_en": "Mandarin Chinese",
   "glottocode": "mand1415",
@@ -284,18 +290,19 @@ POST /api/v2/languages
 規則：
 
 - `expression_count` 是該 variety 所有 profiles 的 expression 總數。
+- variety 的內部 ULID 不屬於一般公開契約；consumer 以穩定的 `code` 建立連結及查詢。
 - `GET /languages` 的分頁、搜尋與排序都以 variety 為單位，在 SQL 聚合後套用，不能先對 profiles 分頁再於應用層合併。
 - 搜尋 variety name、英文名、別名、Glottocode、ISO 639-3 或任一 profile code，都回到同一 variety 結果。
-- `GET /languages/:id/expressions` 預設回傳全部 profiles，可用 `profile_code` 或 `script` 篩選。
+- `GET /languages/:code/expressions` 預設回傳全部 profiles，可用 `profile_code` 或 `script` 篩選。
 - expression 結果必須保留 `language_profile_code` 與 profile label。
 
 ### 9.2 Profile API
 
 ```text
-GET  /api/v2/language-profiles?q=&language_id=&script=&limit=&cursor=
+GET  /api/v2/language-profiles?q=&variety_code=&script=&limit=&cursor=
 GET  /api/v2/language-profiles/:code
-POST /api/v2/languages/:id/profiles/preview
-POST /api/v2/languages/:id/profiles
+POST /api/v2/languages/:code/profiles/preview
+POST /api/v2/languages/:code/profiles
 ```
 
 Profile API 服務 language picker 第二步、維護工具、匯入與精確內容查詢；它不是一般語言瀏覽的主要入口。
@@ -320,7 +327,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 
 ### 10.2 語言詳情
 
-- URL 使用 variety ID，例如 `/language/01K...`。
+- URL 使用 variety 的公開 code，例如華語 `/language/cmn`、潮州話 `/language/nan-x-chao1238`；不得暴露內部 ULID。
 - 標題、描述、代表城市與總統計屬於 variety。
 - 詞句預設顯示全部 profiles；提供「全部／繁體／簡體」等可鍵盤操作的篩選。
 - 每條詞句在混合列表中顯示 profile label；只顯示單一 profile 時可省略重複徽章。
@@ -361,7 +368,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 ### 12.1 對應產生
 
 1. 盤點所有 `languages` rows、distinct `variety_key` 及其引用。
-2. 對每個合法 `variety_key` 建立一個 variety ID；seed manifest 明確保存 ID。
+2. 對每個合法 `variety_key` 建立一個 variety ID 與公開 code；seed manifest 明確保存兩者。能由精確 IANA language subtag 表示者使用該 subtag，較細且無專用 subtag 者使用不含 script 的 canonical private-use code。
 3. 同一 `variety_key` 的 profile metadata 若衝突，產出 report 並由維護者決定 variety 層名稱與描述，不以任意一列覆蓋。
 4. 將現有 `languages.code` 原樣搬入 `language_profiles.code`，保留 canonical tag。
 5. 將 expression、UI locale、location、統計及所有其他外鍵引用改到新欄位。
@@ -387,6 +394,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 新增或沿用下列明確錯誤：
 
 - `LANGUAGE_NOT_FOUND`：variety 不存在。
+- `LANGUAGE_CODE_EXISTS`：variety 的公開 code 已存在。
 - `LANGUAGE_PROFILE_NOT_FOUND`：profile 不存在。
 - `LANGUAGE_PROFILE_CODE_EXISTS`：canonical profile code 已存在。
 - `LANGUAGE_PROFILE_MISMATCH`：profile 與選定 variety 的 registry 對齊明顯不一致。
@@ -400,6 +408,7 @@ API 不應把 profile 錯誤降級為通用 `INVALID_LANGUAGE_CODE`，以便前�
 ### 14.1 Registry 與 migration
 
 - 每個 variety 至少有一個 profile。
+- 每個 variety 的公開 code 唯一且 canonical，內部 ID 不出現在一般 API 與 URL。
 - 每個 profile 只屬於一個 variety，code 全站唯一且 canonical。
 - 所有 expression 與 UI locale profile references 均存在。
 - 所有 location variety references 均存在。
@@ -410,6 +419,8 @@ API 不應把 profile 錯誤降級為通用 `INVALID_LANGUAGE_CODE`，以便前�
 ### 14.2 後端
 
 - `/languages` 對 `cmn-Hans`／`cmn-Hant` 只回傳一個華語 variety。
+- `/languages/cmn` 回傳華語，且 `/language/cmn` 是其 Web 入口。
+- `/languages/nan-x-chao1238` 可定位潮州話，不會錯誤退化成上層閩南語 `nan`。
 - variety `expression_count` 等於所有 profiles 數量總和。
 - 分頁以 varieties 為單位，頁面之間不重複、不漏項。
 - 搜尋 variety 名稱、別名與任一 profile code 得到同一 variety。
@@ -438,14 +449,15 @@ API 不應把 profile 錯誤降級為通用 `INVALID_LANGUAGE_CODE`，以便前�
 ## 15. 驗收標準
 
 1. schema 中有獨立的 `language_varieties` 與 `language_profiles`，且責任不重疊。
-2. expression 與 UI locale 引用精確 profile；location 引用 variety。
-3. 公開 `/languages` 以 variety 為資源，不逐 profile 製造重複語言。
-4. 新增 profile 不增加語言數，刪除最後一個 profile 被拒絕。
-5. API、TypeScript 型別與使用者文案不再用 `language` 指稱 profile。
-6. 同一 variety 的 profiles 可被合併瀏覽與分別篩選，且原始 BCP 47 tag 不丟失。
-7. 不自動合併或轉換簡繁 expressions，不改變既有 mappings。
-8. registry artifacts、乾淨 schema、migration 後 schema 與測試夾具一致。
-9. 舊規格中被本規格取代的決策已標示 superseded，避免後續實作者採用衝突方案。
+2. variety 同時具有內部 ULID 與唯一公開 code；外鍵使用 ID，一般 API 與 URL 使用 code。
+3. expression 與 UI locale 引用精確 profile；location 引用 variety。
+4. 公開 `/languages` 以 variety 為資源，不逐 profile 製造重複語言。
+5. 新增 profile 不增加語言數，刪除最後一個 profile 被拒絕。
+6. API、TypeScript 型別與使用者文案不再用 `language` 指稱 profile。
+7. 同一 variety 的 profiles 可被合併瀏覽與分別篩選，且原始 BCP 47 tag 不丟失。
+8. 不自動合併或轉換簡繁 expressions，不改變既有 mappings。
+9. registry artifacts、乾淨 schema、migration 後 schema 與測試夾具一致。
+10. 舊規格中被本規格取代的決策已標示 superseded，避免後續實作者採用衝突方案。
 
 ## 16. 後續工作（不屬於本規格）
 
