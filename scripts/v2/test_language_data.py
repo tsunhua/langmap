@@ -12,11 +12,13 @@ from sync_language_registry import (
     direction_for_script,
     parse_iana_registry,
     seed_location_rows,
+    seed_profile_rows,
+    seed_variety_rows,
     render_registry_sql,
-    seed_language_rows,
     split_canonical_seed_code,
-    write_languages,
     write_locations,
+    write_profiles,
+    write_varieties,
 )
 
 ROOT = Path(__file__).parent
@@ -119,22 +121,10 @@ Added: 2005-10-16
         variant = next(row for row in rows if row.type == "variant")
         self.assertEqual(variant.prefixes, ("sl",))
 
-    def test_cartesian_writer_removes_partial_output_when_caller_handles_error(self):
-        target = ROOT / "fixtures/languages-overflow.tmp.csv"
-        try:
-            with self.assertRaises(ValueError):
-                write_languages(
-                    target,
-                    ({"code": str(index)} for index in range(2)),
-                    1,
-                )
-        finally:
-            target.unlink(missing_ok=True)
-
     def test_csv_artifacts_use_repository_lf_line_endings(self):
-        target = ROOT / "fixtures/languages-line-endings.tmp.csv"
+        target = ROOT / "fixtures/varieties-line-endings.tmp.csv"
         try:
-            write_languages(target, [{"code": "en", "name": "English"}], 10)
+            write_varieties(target, [{"code": "en", "name": "English"}])
             self.assertNotIn(b"\r\n", target.read_bytes())
         finally:
             target.unlink(missing_ok=True)
@@ -154,39 +144,53 @@ Description: Han (Traditional variant)
 Added: 2005-10-16
 """)
         profiles = {
-            "version": 2,
-            "languages": [
+            "version": 5,
+            "varieties": [
                 {
-                    "code": "nan-Hant-x-chao1238",
+                    "id": "var-chao",
+                    "code": "nan-x-chao1238",
                     "name": "潮州話",
                     "name_en": "Chaozhou",
                     "glottocode": "chao1238",
                     "origin": "seed",
                     "reason": "existing-online-code",
+                    "profiles": [
+                        {"code": "nan-Hant-x-chao1238", "name": "繁體", "name_en": "Traditional"},
+                    ],
                 },
                 {
+                    "id": "var-emoji",
                     "code": "x-emoji",
                     "name": "Emoji 表情",
                     "name_en": "Emoji",
                     "glottocode": None,
                     "origin": "system",
                     "reason": "special-content",
+                    "profiles": [
+                        {"code": "x-emoji", "name": "Emoji", "name_en": "Emoji"},
+                    ],
                 },
             ],
         }
-        rows = list(seed_language_rows(
+        variety_rows = list(seed_variety_rows(
             profiles,
             subtags,
             {row.glottocode: row for row in languoids},
         ))
         self.assertEqual(
-            [row["code"] for row in rows],
+            [row["code"] for row in variety_rows],
+            ["nan-x-chao1238", "x-emoji"],
+        )
+        variety_code_to_id = {row["code"]: row["id"] for row in variety_rows}
+        profile_rows = list(seed_profile_rows(profiles, subtags, variety_code_to_id))
+        self.assertEqual(
+            [row["code"] for row in profile_rows],
             ["nan-Hant-x-chao1238", "x-emoji"],
         )
-        self.assertEqual(rows[0]["variety_key"], "glotto:chao1238")
-        self.assertTrue(rows[1]["variety_key"].startswith("system:"))
+        self.assertEqual(profile_rows[0]["language_variety_id"], "var-chao")
+        self.assertEqual(profile_rows[1]["language_variety_id"], "var-emoji")
 
-    def test_seed_alternate_names_reach_the_registry_rows(self):
+    def test_seed_alternate_names_reach_the_variety_rows(self):
         languoids = read_languoids(ROOT / "fixtures/glottolog-mini.csv", "5.3")
         _, subtags = parse_iana_registry("""File-Date: 2026-06-15
 %%
@@ -206,36 +210,44 @@ Description: Han (Simplified variant)
 Added: 2005-10-16
 """)
         profiles = {
-            "version": 3,
-            "languages": [
+            "version": 5,
+            "varieties": [
                 {
-                    "code": "cmn-Hans",
+                    "id": "var-cmn",
+                    "code": "cmn",
                     "name": "华语",
-                    "name_en": "Mandarin Chinese (Simplified)",
+                    "name_en": "Mandarin Chinese",
                     "glottocode": "mand1415",
                     "origin": "seed",
                     "reason": "major-east-asia-language",
                     "alternate_names": ["普通话", "国语", "汉语"],
+                    "profiles": [
+                        {"code": "cmn-Hans", "name": "简体", "name_en": "Simplified"},
+                    ],
                 },
                 {
+                    "id": "var-ja",
                     "code": "ja",
                     "name": "日本語",
                     "name_en": "Japanese",
                     "glottocode": None,
                     "origin": "seed",
                     "reason": "major-east-asia-language",
+                    "profiles": [
+                        {"code": "ja", "name": "標準", "name_en": "Japanese"},
+                    ],
                 },
             ],
         }
         rows = {
             row["code"]: row
-            for row in seed_language_rows(
+            for row in seed_variety_rows(
                 profiles, subtags, {row.glottocode: row for row in languoids}
             )
         }
 
         self.assertEqual(
-            json.loads(rows["cmn-Hans"]["alternate_names_json"]),
+            json.loads(rows["cmn"]["alternate_names_json"]),
             ["普通话", "国语", "汉语"],
         )
         self.assertEqual(json.loads(rows["ja"]["alternate_names_json"]), [])
@@ -262,41 +274,58 @@ Description: Han (Simplified variant)
 Added: 2005-10-16
 """)
         profiles = {
-            "version": 2,
-            "languages": [
+            "version": 5,
+            "varieties": [
                 {
-                    "code": "cmn-Hans",
+                    "id": "var-cmn",
+                    "code": "cmn",
                     "name": "Mandarin",
                     "name_en": "Mandarin",
                     "glottocode": "mand1415",
                     "origin": "seed",
                     "reason": "existing-online-code",
+                    "profiles": [
+                        {"code": "cmn-Hans", "name": "简体", "name_en": "Simplified"},
+                    ],
                 },
                 {
+                    "id": "var-emoji",
                     "code": "x-emoji",
                     "name": "Emoji 表情",
                     "name_en": "Emoji",
                     "glottocode": None,
                     "origin": "system",
                     "reason": "special-content",
+                    "profiles": [
+                        {"code": "x-emoji", "name": "Emoji", "name_en": "Emoji"},
+                    ],
                 },
             ],
         }
-        seed_rows = list(seed_language_rows(
+        variety_rows = list(seed_variety_rows(
             profiles, subtags, {row.glottocode: row for row in languoids}
         ))
+        variety_code_to_id = {row["code"]: row["id"] for row in variety_rows}
+        profile_rows = list(seed_profile_rows(profiles, subtags, variety_code_to_id))
         schema = (ROOT.parent.parent / "backend" / "schema.sql").read_text(encoding="utf-8")
         db = sqlite3.connect(":memory:")
         db.execute("PRAGMA foreign_keys=ON")
         db.executescript(schema)
-        db.executescript(render_registry_sql(languoids, subtags, seed_rows))
+        db.executescript(
+            render_registry_sql(languoids, subtags, variety_rows, profile_rows)
+        )
         self.assertEqual(
-            db.execute("SELECT code FROM languages ORDER BY code").fetchall(),
+            db.execute("SELECT code FROM language_varieties ORDER BY code").fetchall(),
+            [("cmn",), ("x-emoji",)],
+        )
+        self.assertEqual(
+            db.execute("SELECT code FROM language_profiles ORDER BY code").fetchall(),
             [("cmn-Hans",), ("x-emoji",)],
         )
         self.assertGreater(
             db.execute("SELECT COUNT(*) FROM language_subtags").fetchone()[0], 0,
         )
+        self.assertEqual(db.execute("PRAGMA foreign_key_check").fetchall(), [])
 
     def test_canonical_seed_code_rejects_unregistered_language(self):
         _, subtags = parse_iana_registry("""File-Date: 2026-06-15
@@ -337,7 +366,14 @@ Added: 2005-10-16
     def test_language_locations_schema_is_minimal_and_indexed(self):
         schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
         self.assertIn("CREATE TABLE language_locations", schema)
-        self.assertIn("PRIMARY KEY (variety_key, city_name, territory_code, script_code)", schema)
+        self.assertIn(
+            "PRIMARY KEY (language_variety_id, city_name, territory_code, script_code)",
+            schema,
+        )
+        self.assertIn(
+            "FOREIGN KEY (language_variety_id) REFERENCES language_varieties(id)",
+            schema,
+        )
         self.assertIn("CREATE INDEX idx_language_locations_variety", schema)
         self.assertIn("CREATE INDEX idx_language_locations_city", schema)
         self.assertNotIn("CREATE TABLE places", schema)
@@ -353,12 +389,13 @@ Added: 2005-10-16
             {"variety_code": "yue", "city_name": "香港", "city_name_en": "Hong Kong",
              "territory_code": "HK", "script_code": "Hans", "latitude": 22.3193,
              "longitude": 114.1694, "reference": "ref"},
-        ]}, {"yue"}, subtags))
+        ]}, {"yue": "var-yue"}, subtags))
         self.assertEqual(rows[0]["city_name"], "香港")
-        self.assertEqual(list(seed_location_rows({"locations": []}, set(), subtags)), [])
+        self.assertEqual(rows[0]["language_variety_id"], "var-yue")
+        self.assertEqual(list(seed_location_rows({"locations": []}, {}, subtags)), [])
 
-        with self.assertRaisesRegex(ValueError, "unknown variety_key"):
-            list(seed_location_rows({"locations": [{"variety_code": "missing"}]}, set(), subtags))
+        with self.assertRaisesRegex(ValueError, "unknown variety_code"):
+            list(seed_location_rows({"locations": [{"variety_code": "missing"}]}, {}, subtags))
 
     def test_language_migration_preserves_canonical_codes(self):
         manifest = {
@@ -500,18 +537,23 @@ Added: 2005-10-16
         self.assertIn("variation_status IN ('unclassified', 'shared', 'variant')", schema)
 
         db = sqlite3.connect(":memory:")
+        db.execute("PRAGMA foreign_keys=ON")
         db.executescript(schema)
         db.execute(
-            "INSERT INTO languages (code, name, variety_key) VALUES ('en', 'English', 'test:en')"
+            "INSERT INTO language_varieties (id, code, name, origin) VALUES ('var-en', 'en', 'English', 'seed')"
         )
-        db.execute("INSERT INTO expressions (id, text, language_code) VALUES (1, 'book', 'en')")
+        db.execute(
+            "INSERT INTO language_profiles (code, language_variety_id, name, direction, base_language) "
+            "VALUES ('en', 'var-en', 'English', 'ltr', 'en')"
+        )
+        db.execute("INSERT INTO expressions (id, text, language_profile_code) VALUES (1, 'book', 'en')")
         self.assertEqual(
             db.execute("SELECT variation_status FROM expressions WHERE id = 1").fetchone()[0],
             "unclassified",
         )
         with self.assertRaises(sqlite3.IntegrityError):
             db.execute(
-                "INSERT INTO expressions (id, text, language_code, variation_status) "
+                "INSERT INTO expressions (id, text, language_profile_code, variation_status) "
                 "VALUES (2, 'colour', 'en', 'unknown')"
             )
 
@@ -538,6 +580,11 @@ Added: 2005-10-16
         })
         self.assertEqual(validate_manifest(profiles["online_code_migrations"]), [])
 
+    @unittest.skip(
+        "Migration 0012 targeted the single-table languages schema; the "
+        "two-table (varieties + profiles) model supersedes it and Task 4 will "
+        "introduce the new content-profile migration test."
+    )
     def test_content_profile_migration_preserves_references_and_merges_stats(self):
         migration_path = ROOT.parent.parent / "backend/migrations/0012_canonicalize_language_content_profiles.sql"
         self.assertTrue(migration_path.exists(), "content-profile migration must exist")

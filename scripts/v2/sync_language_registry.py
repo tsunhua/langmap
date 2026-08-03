@@ -2,10 +2,12 @@
 """同步 Glottolog 與 IANA，產生 LangMap 語言 registry 資料。
 
 `languoids.csv` 一列對應一個 Glottolog identity。BCP 47 的 script、region、
-variant 組合另寫入 `languages.csv`，因為它們不是新的 languoid。
+variant 組合另寫入 `language-profiles.csv`，因為它們不是新的 languoid；
+而每個 variety（語言本體）寫入 `language-varieties.csv`。
 
 使用明確的 seed profiles（language_seed_profiles.json）定義要產生的 BCP 47
-language tag，取代舊版的笛卡兒積展開。
+language tag，取代舊版的笛卡兒積展開。Seed JSON 採兩層結構：
+`varieties[*].profiles[*]`，每個 variety 自帶一組 profile。
 """
 from __future__ import annotations
 
@@ -271,64 +273,88 @@ def direction_for_script(script: str | None) -> str:
     return "ltr"
 
 
-def seed_language_rows(
+def seed_variety_rows(
     profiles: dict,
     subtags: list[Subtag],
     languoids_by_code: dict[str, Languoid],
 ) -> Iterator[dict[str, str]]:
-    """Yield language rows from explicit seed entries in the profiles JSON."""
+    """Yield language_variety rows from explicit seed entries in the profiles JSON."""
+    seen: set[str] = set()
+    for entry in sorted(profiles["varieties"], key=lambda row: row["code"]):
+        code = entry["code"]
+        if code in seen:
+            raise ValueError(f"duplicate variety code: {code}")
+        seen.add(code)
+        glottocode = entry.get("glottocode")
+        languoid = languoids_by_code.get(glottocode) if glottocode else None
+        if glottocode and languoid is None:
+            raise ValueError(f"unknown Glottocode: {glottocode}")
+        yield {
+            "id": entry["id"],
+            "code": code,
+            "name": entry["name"],
+            "name_en": entry.get("name_en") or "",
+            "description": entry.get("description") or "",
+            "glottocode": glottocode or "",
+            "origin": entry["origin"],
+            "community_reason": entry.get("reason") or "",
+            "alternate_names_json": json.dumps(
+                entry.get("alternate_names") or [], ensure_ascii=False, separators=(",", ":")
+            ),
+            "references_json": "[]",
+            "parent_languoid_id": languoid.parent_id if languoid else "",
+        }
+
+
+def seed_profile_rows(
+    profiles: dict,
+    subtags: list[Subtag],
+    variety_code_to_id: dict[str, str],
+) -> Iterator[dict[str, str]]:
+    """Yield language_profile rows for each (variety, profile) pair in the seed JSON.
+
+    `variety_code_to_id` maps the seed variety code to its variety id so each
+    profile row can carry the required `language_variety_id` foreign key.
+    """
     registered = {
         (row.type, row.value.lower()): row
         for row in subtags
         if not row.deprecated
     }
     seen: set[str] = set()
-    for entry in sorted(profiles["languages"], key=lambda row: row["code"]):
-        code = canonical_seed_code(entry["code"], registered)
-        if code in seen:
-            raise ValueError(f"duplicate seed code: {code}")
-        seen.add(code)
-        glottocode = entry.get("glottocode")
-        languoid = languoids_by_code.get(glottocode) if glottocode else None
-        if glottocode and languoid is None:
-            raise ValueError(f"unknown Glottocode: {glottocode}")
-        parts = split_canonical_seed_code(code)
-        yield {
-            "code": code,
-            "name": entry["name"],
-            "name_en": entry.get("name_en") or "",
-            "description": entry.get("description") or "",
-            "direction": direction_for_script(parts["script"]),
-            "base_language": parts["language"],
-            "script_code": parts["script"] or "",
-            "region_code": parts["region"] or "",
-            "variants_json": json.dumps(parts["variants"], separators=(",", ":")),
-            "private_use_json": json.dumps(parts["private_use"], separators=(",", ":")),
-            "variety_key": (
-                f"glotto:{glottocode}" if glottocode else f"system:{code}"
-            ),
-            "glottocode": glottocode or "",
-            "origin": entry["origin"],
-            "community_reason": "",
-            "alternate_names_json": json.dumps(
-                entry.get("alternate_names") or [], ensure_ascii=False, separators=(",", ":")
-            ),
-            "references_json": "[]",
-            "parent_languoid_id": languoid.parent_id if languoid else "",
-            "latitude": "" if not languoid or languoid.latitude is None else str(languoid.latitude),
-            "longitude": "" if not languoid or languoid.longitude is None else str(languoid.longitude),
-        }
+    for variety in sorted(profiles["varieties"], key=lambda row: row["code"]):
+        variety_id = variety_code_to_id.get(variety["code"])
+        if variety_id is None:
+            raise ValueError(f"unknown variety code: {variety['code']}")
+        for profile in sorted(variety["profiles"], key=lambda row: row["code"]):
+            code = canonical_seed_code(profile["code"], registered)
+            if code in seen:
+                raise ValueError(f"duplicate seed profile code: {code}")
+            seen.add(code)
+            parts = split_canonical_seed_code(code)
+            yield {
+                "code": code,
+                "language_variety_id": variety_id,
+                "name": profile["name"],
+                "name_en": profile.get("name_en") or "",
+                "direction": direction_for_script(parts["script"]),
+                "base_language": parts["language"],
+                "script_code": parts["script"] or "",
+                "region_code": parts["region"] or "",
+                "variants_json": json.dumps(parts["variants"], separators=(",", ":")),
+                "private_use_json": json.dumps(parts["private_use"], separators=(",", ":")),
+            }
 
 
 LOCATION_FIELDS = (
-    "variety_key", "city_name", "city_name_en", "territory_code", "script_code",
+    "language_variety_id", "city_name", "city_name_en", "territory_code", "script_code",
     "latitude", "longitude", "reference",
 )
 
 
 def seed_location_rows(
     profiles: dict,
-    variety_keys: set[str],
+    variety_code_to_id: dict[str, str],
     subtags: list[Subtag],
 ) -> Iterator[dict[str, str]]:
     """Validate and yield representative city rows from seed profiles."""
@@ -341,18 +367,19 @@ def seed_location_rows(
     if not isinstance(locations, list):
         raise ValueError("locations 必須是 JSON array")
     for entry in sorted(locations, key=lambda row: (
-        row.get("variety_key", ""), row.get("city_name", ""),
+        row.get("variety_code", ""), row.get("city_name", ""),
         row.get("territory_code", ""), row.get("script_code", ""),
     )):
         if not isinstance(entry, dict):
             raise ValueError("location 必須是 JSON object")
-        variety_key = entry.get("variety_key", "")
+        variety_code = entry.get("variety_code", "")
         city_name = str(entry.get("city_name", "")).strip()
         territory_code = str(entry.get("territory_code", "")).upper()
         script_code = str(entry.get("script_code", "")).title()
         reference = str(entry.get("reference", "")).strip()
-        if variety_key not in variety_keys:
-            raise ValueError(f"unknown variety_key: {variety_key}")
+        variety_id = variety_code_to_id.get(variety_code)
+        if variety_id is None:
+            raise ValueError(f"unknown variety_code: {variety_code}")
         if not city_name or not reference:
             raise ValueError("location city_name/reference 不可為空")
         if ("region", territory_code) not in registered:
@@ -366,12 +393,12 @@ def seed_location_rows(
             raise ValueError("location latitude/longitude 必須是數字") from exc
         if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
             raise ValueError("location latitude/longitude 超出範圍")
-        key = (variety_key, city_name, territory_code, script_code)
+        key = (variety_id, city_name, territory_code, script_code)
         if key in seen:
             raise ValueError(f"duplicate location: {key}")
         seen.add(key)
         yield {
-            "variety_key": variety_key,
+            "language_variety_id": variety_id,
             "city_name": city_name,
             "city_name_en": str(entry.get("city_name_en", "")).strip(),
             "territory_code": territory_code,
@@ -389,28 +416,37 @@ def read_profiles(path: Path) -> dict:
     return value
 
 
-LANGUAGE_FIELDS = (
-    "code", "name", "name_en", "description", "direction",
+VARIETY_FIELDS = (
+    "id", "code", "name", "name_en", "description", "glottocode",
+    "origin", "community_reason", "alternate_names_json", "references_json",
+    "parent_languoid_id",
+)
+
+PROFILE_FIELDS = (
+    "code", "language_variety_id", "name", "name_en", "direction",
     "base_language", "script_code", "region_code", "variants_json",
-    "private_use_json", "variety_key", "glottocode", "origin",
-    "community_reason", "alternate_names_json", "references_json",
-    "parent_languoid_id", "latitude", "longitude",
+    "private_use_json",
 )
 
 
-def write_languages(path: Path, rows: Iterable[dict[str, str]], max_tags: int) -> int:
+def write_varieties(path: Path, rows: Iterable[dict[str, str]]) -> int:
     values = sorted(rows, key=lambda row: row["code"].casefold())
-    count = len(values)
-    if count > max_tags:
-        raise ValueError(
-            f"候選 tag 超過 --max-tags={max_tags}；未寫入 languages.csv"
-        )
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=LANGUAGE_FIELDS, lineterminator="\n")
+        writer = csv.DictWriter(handle, fieldnames=VARIETY_FIELDS, lineterminator="\n")
         writer.writeheader()
         for row in values:
             writer.writerow(row)
-    return count
+    return len(values)
+
+
+def write_profiles(path: Path, rows: Iterable[dict[str, str]]) -> int:
+    values = sorted(rows, key=lambda row: row["code"].casefold())
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=PROFILE_FIELDS, lineterminator="\n")
+        writer.writeheader()
+        for row in values:
+            writer.writerow(row)
+    return len(values)
 
 
 def write_locations(path: Path, rows: Iterable[dict[str, str]]) -> int:
@@ -474,42 +510,49 @@ def render_subtag_insert(row: Subtag) -> str:
     )
 
 
-def render_language_insert(row: dict[str, str]) -> str:
-    """Return an idempotent INSERT statement for one language row."""
-    cols = (
-        "code", "name", "name_en", "description", "direction",
-        "base_language", "script_code", "region_code", "variants_json",
-        "private_use_json", "variety_key", "glottocode", "origin",
-        "community_reason", "alternate_names_json", "references_json",
-        "parent_languoid_id", "latitude", "longitude",
-    )
+def render_variety_insert(row: dict[str, str]) -> str:
+    """Return an idempotent INSERT statement for one language_varieties row."""
+    cols = VARIETY_FIELDS
     vals = (
-        sql_literal(row["code"]), sql_literal(row["name"]),
-        sql_literal(row["name_en"]), sql_literal(row["description"]),
-        sql_literal(row["direction"]), sql_literal(row["base_language"]),
-        sql_literal(row["script_code"]), sql_literal(row["region_code"]),
-        sql_literal(row["variants_json"]), sql_literal(row["private_use_json"]),
-        sql_literal(row["variety_key"]), sql_literal(row["glottocode"]),
+        sql_literal(row["id"]), sql_literal(row["code"]),
+        sql_literal(row["name"]), sql_literal(row["name_en"]),
+        sql_literal(row["description"]),
+        sql_literal(row["glottocode"]) if row["glottocode"] else "NULL",
         sql_literal(row["origin"]), sql_literal(row["community_reason"]),
         sql_literal(row["alternate_names_json"]), sql_literal(row["references_json"]),
-        sql_literal(row["parent_languoid_id"]),
-        sql_literal(row["latitude"]) if row["latitude"] else "NULL",
-        sql_literal(row["longitude"]) if row["longitude"] else "NULL",
+        sql_literal(row["parent_languoid_id"]) if row["parent_languoid_id"] else "NULL",
     )
     return (
-        f"INSERT INTO languages ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
+        f"INSERT INTO language_varieties ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
         "ON CONFLICT(code) DO UPDATE SET "
         "name=excluded.name, name_en=excluded.name_en, "
-        "description=excluded.description, direction=excluded.direction, "
-        "base_language=excluded.base_language, script_code=excluded.script_code, "
-        "region_code=excluded.region_code, variants_json=excluded.variants_json, "
-        "private_use_json=excluded.private_use_json, "
-        "variety_key=excluded.variety_key, glottocode=excluded.glottocode, "
+        "description=excluded.description, glottocode=excluded.glottocode, "
         "origin=excluded.origin, community_reason=excluded.community_reason, "
         "alternate_names_json=excluded.alternate_names_json, "
         "references_json=excluded.references_json, "
-        "parent_languoid_id=excluded.parent_languoid_id, "
-        "latitude=excluded.latitude, longitude=excluded.longitude;"
+        "parent_languoid_id=excluded.parent_languoid_id;"
+    )
+
+
+def render_profile_insert(row: dict[str, str]) -> str:
+    """Return an idempotent INSERT statement for one language_profiles row."""
+    cols = PROFILE_FIELDS
+    vals = (
+        sql_literal(row["code"]), sql_literal(row["language_variety_id"]),
+        sql_literal(row["name"]), sql_literal(row["name_en"]),
+        sql_literal(row["direction"]), sql_literal(row["base_language"]),
+        sql_literal(row["script_code"]), sql_literal(row["region_code"]),
+        sql_literal(row["variants_json"]), sql_literal(row["private_use_json"]),
+    )
+    return (
+        f"INSERT INTO language_profiles ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
+        "ON CONFLICT(code) DO UPDATE SET "
+        "language_variety_id=excluded.language_variety_id, "
+        "name=excluded.name, name_en=excluded.name_en, "
+        "direction=excluded.direction, base_language=excluded.base_language, "
+        "script_code=excluded.script_code, region_code=excluded.region_code, "
+        "variants_json=excluded.variants_json, "
+        "private_use_json=excluded.private_use_json;"
     )
 
 
@@ -518,7 +561,7 @@ def render_location_insert(row: dict[str, str]) -> str:
     vals = ", ".join(sql_literal(row[field]) for field in LOCATION_FIELDS)
     return (
         f"INSERT INTO language_locations ({cols}) VALUES ({vals}) "
-        "ON CONFLICT(variety_key, city_name, territory_code, script_code) DO UPDATE SET "
+        "ON CONFLICT(language_variety_id, city_name, territory_code, script_code) DO UPDATE SET "
         "city_name_en=excluded.city_name_en, latitude=excluded.latitude, "
         "longitude=excluded.longitude, reference=excluded.reference;"
     )
@@ -527,7 +570,8 @@ def render_location_insert(row: dict[str, str]) -> str:
 def render_registry_sql(
     languoids: list[Languoid],
     subtags: list[Subtag],
-    languages: list[dict[str, str]],
+    varieties: list[dict[str, str]],
+    profiles: list[dict[str, str]],
     locations: list[dict[str, str]] | None = None,
 ) -> str:
     """Generate a complete, idempotent SQL script for the language registry."""
@@ -538,8 +582,12 @@ def render_registry_sql(
         for row in sorted(subtags, key=lambda row: (row.type, row.value.lower()))
     )
     statements.extend(
-        render_language_insert(row)
-        for row in sorted(languages, key=lambda row: row["code"])
+        render_variety_insert(row)
+        for row in sorted(varieties, key=lambda row: row["code"])
+    )
+    statements.extend(
+        render_profile_insert(row)
+        for row in sorted(profiles, key=lambda row: row["code"])
     )
     statements.extend(
         render_location_insert(row)
@@ -580,24 +628,16 @@ def main(argv: list[str] | None = None) -> int:
         args.output.mkdir(parents=True, exist_ok=True)
         languoid_count = write_languoids(args.output / "languoids.csv", languoids)
         subtag_count = write_subtags(args.output / "iana-subtags.json", file_date, subtags)
-        languages_path = args.output / "languages.csv"
-        seed_rows = list(seed_language_rows(
-            profiles, subtags, {row.glottocode: row for row in languoids}
-        ))
-        location_rows = list(seed_location_rows(
-            profiles,
-            {row["variety_key"] for row in seed_rows},
-            subtags,
-        ))
-        try:
-            language_count = write_languages(
-                languages_path,
-                seed_rows,
-                args.max_tags,
-            )
-        except Exception:
-            languages_path.unlink(missing_ok=True)
-            raise
+        languoids_by_code = {row.glottocode: row for row in languoids}
+        variety_rows = list(seed_variety_rows(profiles, subtags, languoids_by_code))
+        variety_code_to_id = {row["code"]: row["id"] for row in variety_rows}
+        profile_rows = list(seed_profile_rows(profiles, subtags, variety_code_to_id))
+        location_rows = list(seed_location_rows(profiles, variety_code_to_id, subtags))
+        write_varieties(args.output / "language-varieties.csv", variety_rows)
+        write_profiles(args.output / "language-profiles.csv", profile_rows)
+        location_count = write_locations(
+            args.output / "language-locations.csv", location_rows
+        )
         migration_path = args.output / "online-code-migrations.json"
         migration_manifest = profiles.get("online_code_migrations")
         if migration_manifest is None and migration_path.exists():
@@ -624,11 +664,9 @@ def main(argv: list[str] | None = None) -> int:
             "generation": {
                 "profile_version": profiles.get("version"),
                 "profile_file": args.profiles.name,
-                "language_tag_count": language_count,
-                "language_location_count": write_locations(
-                    args.output / "language-locations.csv", location_rows
-                ),
-                "max_tags": args.max_tags,
+                "variety_count": len(variety_rows),
+                "profile_count": len(profile_rows),
+                "language_location_count": location_count,
             },
         }
         (args.output / "manifest.json").write_text(
@@ -637,7 +675,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         sql_path = args.output / "language-registry.sql"
         sql_path.write_text(
-            render_registry_sql(languoids, subtags, seed_rows, location_rows),
+            render_registry_sql(
+                languoids, subtags, variety_rows, profile_rows, location_rows
+            ),
             encoding="utf-8",
         )
         print(json.dumps(manifest, ensure_ascii=False, indent=2))

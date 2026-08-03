@@ -21,14 +21,15 @@ DROP TABLE IF EXISTS collections;
 DROP TABLE IF EXISTS expression_meaning;
 DROP TABLE IF EXISTS meanings;
 DROP TABLE IF EXISTS email_verification_tokens;
-DROP TABLE IF EXISTS language_stats;
 DROP TABLE IF EXISTS ui_locales;
 DROP TABLE IF EXISTS ui_messages;
 DROP TABLE IF EXISTS expression_versions;
 DROP TABLE IF EXISTS expressions;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS language_locations;
+DROP TABLE IF EXISTS language_profiles;
+DROP TABLE IF EXISTS language_varieties;
 DROP TABLE IF EXISTS language_subtags;
-DROP TABLE IF EXISTS languages;
 DROP TABLE IF EXISTS languoids;
 
 --------------------------------------------------------------------------------
@@ -66,39 +67,51 @@ CREATE TABLE language_subtags (
 CREATE INDEX idx_language_subtags_search
   ON language_subtags(type, value);
 
-CREATE TABLE languages (
+CREATE TABLE language_varieties (
+    id TEXT PRIMARY KEY NOT NULL,
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     name_en TEXT,
-    description TEXT,
-    direction TEXT DEFAULT 'ltr',
-    base_language TEXT,
+    description TEXT NOT NULL DEFAULT '',
+    glottocode TEXT,
+    origin TEXT NOT NULL
+      CHECK (origin IN ('seed', 'glottolog', 'community', 'system')),
+    community_reason TEXT,
+    alternate_names_json TEXT NOT NULL DEFAULT '[]',
+    references_json TEXT NOT NULL DEFAULT '[]',
+    parent_languoid_id TEXT,
+    created_by TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (glottocode) REFERENCES languoids(glottocode),
+    FOREIGN KEY (parent_languoid_id) REFERENCES languoids(id)
+);
+CREATE INDEX idx_language_varieties_name ON language_varieties(name);
+CREATE INDEX idx_language_varieties_glottocode ON language_varieties(glottocode);
+
+CREATE TABLE language_profiles (
+    code TEXT PRIMARY KEY NOT NULL,
+    language_variety_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    name_en TEXT,
+    direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl')),
+    base_language TEXT NOT NULL,
     script_code TEXT,
     region_code TEXT,
-    variants_json TEXT,
-    private_use_json TEXT,
-    variety_key TEXT NOT NULL,
-    glottocode TEXT,
-    origin TEXT NOT NULL DEFAULT 'seed',
-    community_reason TEXT,
-    alternate_names_json TEXT,
-    references_json TEXT,
-    parent_languoid_id TEXT,
-    latitude REAL,
-    longitude REAL,
-    created_by TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    variants_json TEXT NOT NULL DEFAULT '[]',
+    private_use_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (language_variety_id) REFERENCES language_varieties(id)
 );
-CREATE INDEX idx_languages_name ON languages(name);
-CREATE INDEX idx_languages_variety_key ON languages(variety_key);
-CREATE INDEX idx_languages_glottocode ON languages(glottocode);
-CREATE INDEX idx_languages_base_script_region
-  ON languages(base_language, script_code, region_code);
+CREATE INDEX idx_language_profiles_variety
+  ON language_profiles(language_variety_id);
+CREATE INDEX idx_language_profiles_base_script_region
+  ON language_profiles(base_language, script_code, region_code);
 
 CREATE TABLE language_locations (
-    variety_key TEXT NOT NULL,
+    language_variety_id TEXT NOT NULL,
     city_name TEXT NOT NULL,
     city_name_en TEXT,
     territory_code TEXT NOT NULL,
@@ -106,10 +119,11 @@ CREATE TABLE language_locations (
     latitude REAL NOT NULL,
     longitude REAL NOT NULL,
     reference TEXT NOT NULL,
-    PRIMARY KEY (variety_key, city_name, territory_code, script_code)
+    PRIMARY KEY (language_variety_id, city_name, territory_code, script_code),
+    FOREIGN KEY (language_variety_id) REFERENCES language_varieties(id)
 );
 CREATE INDEX idx_language_locations_variety
-  ON language_locations(variety_key);
+  ON language_locations(language_variety_id);
 CREATE INDEX idx_language_locations_city
   ON language_locations(city_name, territory_code);
 
@@ -117,7 +131,7 @@ CREATE TABLE expressions (
     id INTEGER PRIMARY KEY NOT NULL,
     text TEXT NOT NULL,
     audio_url TEXT,
-    language_code TEXT NOT NULL,
+    language_profile_code TEXT NOT NULL,
     region_code TEXT,
     region_name TEXT,
     region_latitude REAL,
@@ -134,13 +148,13 @@ CREATE TABLE expressions (
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     desc TEXT DEFAULT NULL,
-    FOREIGN KEY (language_code) REFERENCES languages(code)
+    FOREIGN KEY (language_profile_code) REFERENCES language_profiles(code)
 );
 CREATE INDEX idx_expressions_text ON expressions(text);
-CREATE INDEX idx_expressions_language_code ON expressions(language_code);
+CREATE INDEX idx_expressions_language_profile ON expressions(language_profile_code);
 CREATE INDEX idx_expressions_tags ON expressions(tags);
 CREATE INDEX idx_expressions_created_by ON expressions(created_by);
-CREATE INDEX idx_expressions_lang_text ON expressions(language_code, text);
+CREATE INDEX idx_expressions_lang_text ON expressions(language_profile_code, text);
 CREATE INDEX idx_expressions_meaning_id ON expressions(meaning_id);
 
 CREATE TABLE expression_versions (
@@ -181,11 +195,6 @@ CREATE TABLE email_verification_tokens (
 );
 CREATE INDEX idx_email_verification_tokens_user_id ON email_verification_tokens(user_id);
 CREATE INDEX idx_email_verification_tokens_expires_at ON email_verification_tokens(expires_at);
-
-CREATE TABLE language_stats (
-    language_code TEXT PRIMARY KEY,
-    expression_count INTEGER DEFAULT 0
-);
 
 --------------------------------------------------------------------------------
 -- 2. New: pairwise expression edges
@@ -282,7 +291,7 @@ CREATE TABLE ui_locales (
     updated_by TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     ,PRIMARY KEY (project_id, code)
-    ,FOREIGN KEY (code) REFERENCES languages(code)
+    ,FOREIGN KEY (code) REFERENCES language_profiles(code)
     ,FOREIGN KEY (project_id, fallback_code) REFERENCES ui_locales(project_id, code)
 );
 CREATE INDEX idx_ui_locales_code ON ui_locales(code);

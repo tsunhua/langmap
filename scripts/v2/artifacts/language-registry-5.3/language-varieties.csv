@@ -1,0 +1,50 @@
+id,code,name,name_en,description,glottocode,origin,community_reason,alternate_names_json,references_json,parent_languoid_id
+01K1GWHD005HX5VM8BRKQQCJD9,ar,العربية,Arabic,,stan1318,seed,major-world-language,[],[],glotto:arab1395
+01K1GWHD00QQYESMP4K7GFBNJZ,bn,বাংলা,Bengali,,beng1280,seed,major-world-language,[],[],glotto:gaud1238
+01K1GWHD00WDR06XJVBKS1DFR6,bo,བོད་སྐད་,Tibetan,,tibe1272,seed,major-east-asia-language,[],[],glotto:cent2346
+01K1GWHD00VVTZNFAZAB7SWPDY,cdo,閩東語,Min Dong,,mind1253,seed,major-east-asia-language,[],[],glotto:coas1318
+01K1GWHD00KWTC0V9NCJS1THRW,cjy,晉語,Jin Chinese,,jiny1235,seed,major-east-asia-language,[],[],glotto:nort3155
+01K1GWHD00NMQC20PMZV031H78,cmn,華語,Mandarin Chinese,,mand1415,seed,major-east-asia-language,"[""普通话"",""国语"",""汉语"",""國語"",""漢語""]",[],glotto:mand1471
+01K1GWHD00TEN6QB2KD3B1WPHZ,cnp,桂北平話,Northern Pinghua,,nort3268,seed,major-east-asia-language,[],[],glotto:ping1245
+01K1GWHD00J5RYZ74NPQ5N48XC,cpx,莆仙話,Pu-Xian,,puxi1243,seed,major-east-asia-language,[],[],glotto:sout3421
+01K1GWHD00YF6DTZ9RX5WQ3ZTN,csp,桂南平話,Southern Pinghua,,sout3250,seed,major-east-asia-language,[],[],glotto:ping1245
+01K1GWHD00JSHYJDH9H58PMH49,czo,閩中語,Min Zhong,,minz1235,seed,major-east-asia-language,[],[],glotto:inla1267
+01K1GWHD00NHYJTK7WVNVC9TZM,de,Deutsch,German,,stan1295,seed,major-world-language,[],[],glotto:glob1243
+01K1GWHD001Z1VXEKX6Q1PEMH6,en,English,English,,stan1293,seed,major-world-language,[],[],glotto:macr1271
+01K1GWHD00AXX4SZ3A9R25J6CQ,es,Español,Spanish,,stan1288,seed,major-world-language,[],[],glotto:cast1243
+01K1GWHD00X8BRJJA1WAS53Q51,fa,فارسی,Persian,,,seed,major-world-language,[],[],
+01K1GWHD00K4EH8FK4MPMY466J,fr,Français,French,,stan1290,seed,major-world-language,[],[],glotto:glob1239
+01K1GWHD005469S094YTAWG6M8,gan,贛語,Gan Chinese,,ganc1239,seed,major-east-asia-language,[],[],glotto:midd1354
+01K1GWHD00C6XD8MQE0CVQS028,hak,客家話,Hakka,,hakk1236,seed,major-east-asia-language,[],[],glotto:midd1354
+01K1GWHD00229V3ETFHZ4V7GZG,hi,हिन्दी,Hindi,,hind1269,seed,major-world-language,[],[],glotto:hind1270
+01K1GWHD00JGND3KPZC9JYAXD5,hsn,湘語,Xiang Chinese,,xian1251,seed,major-east-asia-language,[],[],glotto:midd1354
+01K1GWHD00WAHCW7XG1FKE0N3P,id,Bahasa Indonesia,Indonesian,,indo1316,seed,major-world-language,[],[],glotto:stan1327
+01K1GWHD00B485N7Y5MXA8Y00A,it,Italiano,Italian,,ital1282,seed,major-world-language,[],[],glotto:cent2427
+01K1GWHD000DXGMDG05PJ4T2E4,ja,日本語,Japanese,,nucl1643,seed,major-world-language,[],[],glotto:japa1258
+01K1GWHD00N8ZKG7NFZN8BNTZM,kk,قازاق تىلى,Kazakh,,kaza1248,seed,regional-east-asia-language,[],[],glotto:sout2701
+01K1GWHD00CWEB07YTCHE2FXGV,ko,한국어,Korean,,kore1280,seed,regional-east-asia-language,[],[],glotto:kore1284
+01K1GWHD002Z2VYS90STAZ4TY5,ky,قىرعىز تىلى,Kyrgyz,,kirg1245,seed,regional-east-asia-language,[],[],glotto:east2791
+01K1GWHD009CN2616Y0SCY67WF,mn,蒙古語,Mongolian,,,seed,major-east-asia-language,[],[],
+01K1GWHD00DFZEPRHD3AP7C028,mnp,閩北語,Min Bei,,minb1236,seed,major-east-asia-language,[],[],glotto:minb1244
+01K1GWHD00XBQFHB2F4R0T1DR4,mr,मराठी,Marathi,,mara1378,seed,major-world-language,[],[],glotto:mode1268
+01K1GWHD00SMQPS4JYFY690ASC,nan,閩南語,Min Nan,,minn1241,seed,major-east-asia-language,[],[],glotto:sout3424
+01K1GWHD00SK6PB7FMMTJYA62J,nan-x-chao1238,潮州話,Chaozhou (Teochew),,chao1238,seed,existing-online-code,[],[],glotto:chao1239
+01K1GWHD00VS94XSBN1BQKV7E3,pa,ਪੰਜਾਬੀ,Punjabi,,panj1256,seed,major-world-language,[],[],glotto:east2727
+01K1GWHD004R4BD1X7J8MGTBN9,pt,Português,Portuguese,,port1283,seed,major-world-language,[],[],glotto:braz1247
+01K1GWHD00X1HXGAFVSRKXTHF2,ral,Raltic,Raltic,,ralt1242,seed,existing-online-code,[],[],glotto:pait1250
+01K1GWHD00CS00JR0Y2S1J3KVK,ru,Русский,Russian,,russ1263,seed,major-world-language,[],[],glotto:east1426
+01K1GWHD00X9MVHHWSZYYM1B2Y,swh,Swahili,Swahili,,swah1253,seed,existing-online-code,[],[],glotto:momb1256
+01K1GWHD00NPTA1MPM1ZAPX3XD,th,ไทย,Thai,,thai1261,seed,major-world-language,[],[],glotto:laot1235
+01K1GWHD00AF6SA0DAKY6FPNCQ,tr,Türkçe,Turkish,,nucl1301,seed,major-world-language,[],[],glotto:west2406
+01K1GWHD00FTRQT82PTBE0A274,ug,ئۇيغۇرچە,Uyghur,,uigh1240,seed,major-east-asia-language,[],[],glotto:uigh1243
+01K1GWHD00GDH6PD5WC00HDQD7,und,Undetermined,Undetermined,,,system,iana-und,[],[],
+01K1GWHD00NSRB1JSTEYQRYVTS,ur,اردو,Urdu,,urdu1245,seed,major-world-language,[],[],glotto:hind1270
+01K1GWHD000C6NPBGV1F3RNTDM,vi,Tiếng Việt,Vietnamese,,viet1252,seed,major-world-language,[],[],glotto:viet1251
+01K1GWHD0025B1MXK1M98WQK3Z,wuu,吳語,Wu Chinese,,wuch1236,seed,major-east-asia-language,[],[],glotto:wuic1234
+01K1GWHD00ZNBSD4ETW6QYGHDK,wuu-x-ouji1238,溫州話,Wenzhou (Oujiang),,ouji1238,seed,existing-online-code,[],[],glotto:wuic1234
+01K1GWHD001EST811PWDB56762,wuu-x-taiz1238,台州話,Taizhou,,taiz1238,seed,existing-online-code,[],[],glotto:wuch1236
+01K1GWHD00XZAH2DGKAY11J2X7,x-emoji,Emoji 表情,Emoji,,,system,special-content,[],[],
+01K1GWHD00F7FBYAQV8WEKA135,x-image,圖片,Image,,,system,special-content,[],[],
+01K1GWHD0039ZDYQQ6DNA6F4TS,yue,粵語,Cantonese,,yuec1235,seed,major-east-asia-language,[],[],glotto:yuep1234
+01K1GWHD00BB9YR14G68HXS3H1,za,壯語,Zhuang,,,seed,major-east-asia-language,[],[],
+01K1GWHD00F5JPB0CDWHJRFQ6R,zyg,Yangzhuang,Yangzhuang,,yang1286,seed,existing-online-code,[],[],glotto:deba1238
