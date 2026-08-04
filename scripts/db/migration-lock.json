@@ -91,6 +91,12 @@
       "filename": "0016_variety_profile_split.sql",
       "size": 15895,
       "sha256": "ea93f8493bde7b787b565507add8c7accfc2770190f5eff18619d69fb228d0db"
+    },
+    {
+      "sequence": 17,
+      "filename": "0017_fix_hans_script_label.sql",
+      "size": 284,
+      "sha256": "04085b729dea10f1dc7a03296ee7a6cc2307b602162ac3f12026ffae664ead6d"
     }
   ]
 }

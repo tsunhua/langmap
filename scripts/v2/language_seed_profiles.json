@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "varieties": [
     {
       "id": "01K1GWHD005HX5VM8BRKQQCJD9",
@@ -68,7 +68,7 @@
       "profiles": [
         {
           "code": "cdo-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -91,7 +91,7 @@
       "profiles": [
         {
           "code": "cjy-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -120,7 +120,7 @@
       "profiles": [
         {
           "code": "cmn-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -143,7 +143,7 @@
       "profiles": [
         {
           "code": "cnp-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -166,7 +166,7 @@
       "profiles": [
         {
           "code": "cpx-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -189,7 +189,7 @@
       "profiles": [
         {
           "code": "csp-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -212,7 +212,7 @@
       "profiles": [
         {
           "code": "czo-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -335,7 +335,7 @@
       "profiles": [
         {
           "code": "gan-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -358,7 +358,7 @@
       "profiles": [
         {
           "code": "hak-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -399,7 +399,7 @@
       "profiles": [
         {
           "code": "hsn-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -573,7 +573,7 @@
       "profiles": [
         {
           "code": "mnp-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -614,7 +614,7 @@
       "profiles": [
         {
           "code": "nan-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -647,7 +647,7 @@
       "profiles": [
         {
           "code": "nan-Hans-x-chao1238",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -878,7 +878,7 @@
       "profiles": [
         {
           "code": "wuu-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -901,7 +901,7 @@
       "profiles": [
         {
           "code": "wuu-Hans-x-ouji1238",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -924,7 +924,7 @@
       "profiles": [
         {
           "code": "wuu-Hans-x-taiz1238",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {
@@ -983,7 +983,7 @@
       "profiles": [
         {
           "code": "yue-Hans",
-          "name": "簡體",
+          "name": "简体",
           "name_en": "Simplified"
         },
         {

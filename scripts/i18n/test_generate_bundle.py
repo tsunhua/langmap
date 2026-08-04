@@ -196,7 +196,7 @@ class GenerateBundleTests(unittest.TestCase):
             "INSERT INTO language_profiles (code, language_variety_id, name, script_code, direction) VALUES (?, ?, ?, ?, ?)",
             [
                 ("en", "ven", "標準", "", "ltr"),
-                ("cmn-Hans", "vcmn", "簡體", "Hans", "ltr"),
+                ("cmn-Hans", "vcmn", "简体", "Hans", "ltr"),
                 ("cmn-Hant", "vcmn", "繁體", "Hant", "ltr"),
                 ("es", "ves", "標準", "", "ltr"),
                 ("ja", "vja", "標準", "", "ltr"),
@@ -286,7 +286,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(
                 native_names,
                 {
-                    "cmn-Hans": "華語（簡體）",
+                    "cmn-Hans": "華語（简体）",
                     "cmn-Hant": "華語（繁體）",
                     "en": "English",
                     "es": "Español",
