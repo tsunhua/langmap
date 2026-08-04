@@ -72,7 +72,7 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     </div>
 
     <div class="gi-meta">
-      <span class="gi-lang">{{ node.language_code }}</span>
+      <span class="gi-lang">{{ node.language_profile_code }}</span>
       <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
       <span class="gi-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>

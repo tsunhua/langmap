@@ -27,7 +27,7 @@ vi.mock('@/composables/useExpressions', () => ({
     detail: vi.fn().mockResolvedValue({
       id: 1,
       text: 'hello',
-      language_code: 'en',
+      language_profile_code: 'en',
       language_name: 'English',
       region_name: null,
       region_latitude: null,
@@ -38,7 +38,7 @@ vi.mock('@/composables/useExpressions', () => ({
       root_id: 1,
       requested_hops: 1,
       resolved_hops: 1,
-      nodes: [{ expression_id: 1, text: 'hello', language_code: 'en', language_name: 'English', depth: 0 }],
+      nodes: [{ expression_id: 1, text: 'hello', language_profile_code: 'en', language_name: 'English', depth: 0 }],
       edges: [],
       layer_counts: { 0: 1 },
       truncated: false,
@@ -168,7 +168,7 @@ describe('MappingDetail language picker integration', () => {
 
     expect(api.post).toHaveBeenCalledWith('/expressions', {
       text: '你好世界',
-      language_code: 'yue-Hant-CN-x-hegusan',
+      language_profile_code: 'yue-Hant-CN-x-hegusan',
       region_name: undefined,
       related_to: 1,
     })

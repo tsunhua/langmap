@@ -21,7 +21,7 @@ const title = ref('')
 const visibility = ref('public')
 const sections = ref<Array<{
   title: string
-  expressions: Array<{ id: number; text: string; language_code: string; position: number }>
+  expressions: Array<{ id: number; text: string; language_profile_code: string; position: number }>
 }>>([])
 const saving = ref(false)
 const loading = ref(true)
@@ -42,7 +42,7 @@ onMounted(async () => {
       expressions: (s.items || []).map((e: any, i: number) => ({
         id: e.expression_id,
         text: e.text,
-        language_code: e.language_code,
+        language_profile_code: e.language_profile_code,
         position: i,
       })),
     }))

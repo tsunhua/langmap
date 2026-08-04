@@ -13,7 +13,7 @@ function graphFrom(
     nodes: nodes.map(([id, depth, text = `t${id}`]) => ({
       expression_id: id,
       text,
-      language_code: 'en',
+      language_profile_code: 'en',
       language_name: 'English',
       depth,
     })),

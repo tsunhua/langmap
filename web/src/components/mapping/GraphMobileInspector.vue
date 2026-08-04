@@ -104,7 +104,7 @@ function onKeydown(e: KeyboardEvent) {
     </div>
 
     <div class="gm-meta">
-      <span class="gm-lang">{{ node.language_code }}</span>
+      <span class="gm-lang">{{ node.language_profile_code }}</span>
       <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
       <span class="gm-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>

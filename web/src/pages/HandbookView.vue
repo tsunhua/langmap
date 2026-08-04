@@ -18,7 +18,7 @@ import type { MappingGraphResponse } from '@/components/mapping/mappingGraphType
 interface HandbookItem {
   expression_id: number
   text: string
-  language_code: string
+  language_profile_code: string
   language_name?: string | null
 }
 
@@ -71,7 +71,7 @@ async function selectExpression(item: HandbookItem) {
   await selectExpressionById(item.expression_id, {
     id: item.expression_id,
     text: item.text,
-    language_code: item.language_code,
+    language_profile_code: item.language_profile_code,
     language_name: item.language_name,
   })
 }
@@ -115,7 +115,7 @@ function selectRelatedExpression(expressionId: number) {
   return selectExpressionById(expressionId, node ? {
     id: node.expression_id,
     text: node.text,
-    language_code: node.language_code,
+    language_profile_code: node.language_profile_code,
     language_name: node.language_name,
   } : undefined)
 }
@@ -192,7 +192,7 @@ watch(id, () => {
             >
               <span class="hb-num">{{ String(j + 1).padStart(2, '0') }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
-              <span class="lang-badge">{{ expr.language_code }}</span>
+              <span class="lang-badge">{{ expr.language_profile_code }}</span>
               <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
             </button>
           </li>

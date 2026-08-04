@@ -8,7 +8,7 @@ import type { MappingGraphResponse } from '@/components/mapping/mappingGraphType
 export interface HandbookExpressionDetail {
   id: number
   text: string
-  language_code: string
+  language_profile_code: string
   language_name?: string | null
   region_name?: string | null
   source_type?: string | null
@@ -63,13 +63,13 @@ function sourceLabel(type?: string | null) {
     <div v-else-if="expression" class="hi-body">
       <div class="hi-title-row">
         <h2>{{ expression.text }}</h2>
-        <LangBadge :code="expression.language_code" />
+        <LangBadge :code="expression.language_profile_code" />
       </div>
 
       <dl class="hi-facts">
         <div>
           <dt>{{ t('handbook.locale') }}</dt>
-          <dd>{{ expression.language_name || expression.language_code }}</dd>
+          <dd>{{ expression.language_name || expression.language_profile_code }}</dd>
         </div>
         <div v-if="expression.region_name">
           <dt>{{ t('handbook.region') }}</dt>

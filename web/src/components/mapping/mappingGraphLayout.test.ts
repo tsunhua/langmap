@@ -53,8 +53,8 @@ describe('layoutMappingGraph', () => {
   it('places the root at (0, 0)', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
       ],
       [{ edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 }],
     )
@@ -72,9 +72,9 @@ describe('layoutMappingGraph', () => {
   it('depth-2 radius is larger than depth-1 radius', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 2 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 2 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
@@ -98,10 +98,10 @@ describe('layoutMappingGraph', () => {
   it('depth-3 radius is larger than depth-2', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 2 },
-        { expression_id: 4, text: 'c', language_code: 'en', language_name: 'English', depth: 3 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 2 },
+        { expression_id: 4, text: 'c', language_profile_code: 'en', language_name: 'English', depth: 3 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
@@ -127,10 +127,10 @@ describe('layoutMappingGraph', () => {
   it('child angle lies within parent sector', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 4, text: 'c', language_code: 'en', language_name: 'English', depth: 2 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 4, text: 'c', language_profile_code: 'en', language_name: 'English', depth: 2 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
@@ -158,9 +158,9 @@ describe('layoutMappingGraph', () => {
   it('bounds contain all nodes', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 2 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 2 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
@@ -185,9 +185,9 @@ describe('layoutMappingGraph', () => {
   it('produces identical coordinates for identical input', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 1 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
@@ -207,14 +207,14 @@ describe('layoutMappingGraph', () => {
 
   it('40 one-hop nodes have zero collisions', () => {
     const nodes: MappingGraphNode[] = [
-      { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
     ]
     const edges: MappingGraphEdge[] = []
     for (let i = 2; i <= 41; i++) {
       nodes.push({
         expression_id: i,
         text: `n${i}`,
-        language_code: 'en',
+        language_profile_code: 'en',
         language_name: 'English',
         depth: 1,
       })
@@ -240,7 +240,7 @@ describe('layoutMappingGraph', () => {
 
   it('uneven 2-hop subtree has zero collisions', () => {
     const nodes: MappingGraphNode[] = [
-      { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
     ]
     const edges: MappingGraphEdge[] = []
     let nextId = 2
@@ -252,7 +252,7 @@ describe('layoutMappingGraph', () => {
       nodes.push({
         expression_id: id,
         text: `h1-${id}`,
-        language_code: 'en',
+        language_profile_code: 'en',
         language_name: 'English',
         depth: 1,
       })
@@ -273,7 +273,7 @@ describe('layoutMappingGraph', () => {
         nodes.push({
           expression_id: id,
           text: `h2-${id}`,
-          language_code: 'en',
+          language_profile_code: 'en',
           language_name: 'English',
           depth: 2,
         })
@@ -301,9 +301,9 @@ describe('layoutMappingGraph', () => {
   it('handles long-text nodes without shrinking bounds', () => {
     const g = makeGraph(
       [
-        { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a-very-long-text-node-content-here', language_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+        { expression_id: 2, text: 'a-very-long-text-node-content-here', language_profile_code: 'en', language_name: 'English', depth: 1 },
+        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 1 },
       ],
       [
         { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },

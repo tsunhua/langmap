@@ -32,7 +32,7 @@ const activeId = ref<number | null>(null)
 interface Pin {
   expression_id: number
   text: string
-  language_code: string
+  language_profile_code: string
   score: number
   lat: number
   lng: number
@@ -47,14 +47,14 @@ const pins = computed<Pin[]>(() => {
   const out: Pin[] = []
   for (const n of g.nodes) {
     if (n.depth === 0) continue
-    const lang = lm[n.language_code]
+    const lang = lm[n.language_profile_code]
     if (!lang || !lang.region_latitude || !lang.region_longitude) continue
     const edge = getPrimaryIncomingEdge(n.expression_id, g)
     const score = edge?.score ?? 0
     out.push({
       expression_id: n.expression_id,
       text: n.text,
-      language_code: n.language_code,
+      language_profile_code: n.language_profile_code,
       score,
       lat: lang.region_latitude,
       lng: lang.region_longitude,
@@ -77,7 +77,7 @@ function pinTier(score: number): 's1' | 's2' | 's3' {
   return 's1'
 }
 
-const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.language_code] : null)
+const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.language_profile_code] : null)
 
 function sync(exprId: number | null) { activeId.value = exprId }
 
@@ -104,7 +104,7 @@ function addMarkers() {
       iconAnchor: [12, 12]
     })
     L.marker([lang.region_latitude, lang.region_longitude], { icon })
-      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_code} · ${t('mapLens.anchor')}`)
+      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_profile_code} · ${t('mapLens.anchor')}`)
       .addTo(m)
   }
 
@@ -118,7 +118,7 @@ function addMarkers() {
       iconAnchor: [10, 10]
     })
     L.marker([p.lat, p.lng], { icon })
-      .bindPopup(`<b>${p.text}</b><br/>${p.language_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`)
+      .bindPopup(`<b>${p.text}</b><br/>${p.language_profile_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`)
       .addTo(m)
   })
 }
@@ -207,7 +207,7 @@ onUnmounted(cleanup)
             @mouseenter="sync(anchor.id)"
             @mouseleave="sync(null)"
           >
-            <span class="lc">{{ anchor.language_code }}</span>
+            <span class="lc">{{ anchor.language_profile_code }}</span>
             <span class="tx">{{ anchor.text }}</span>
             <span class="meta">{{ t('mapLens.anchor') }}</span>
           </router-link>
@@ -221,7 +221,7 @@ onUnmounted(cleanup)
             @mouseenter="sync(p.expression_id)"
             @mouseleave="sync(null)"
           >
-            <span class="lc">{{ p.language_code }}</span>
+            <span class="lc">{{ p.language_profile_code }}</span>
             <span class="tx">{{ p.text }}</span>
             <span class="meta">{{ p.score >= 0 ? '+' : '' }}{{ p.score }}</span>
           </router-link>

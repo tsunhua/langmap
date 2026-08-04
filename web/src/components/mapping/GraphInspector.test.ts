@@ -10,9 +10,9 @@ function makeGraph(): MappingGraphResponse {
     requested_hops: 2,
     resolved_hops: 2,
     nodes: [
-      { expression_id: 1, text: 'root', language_code: 'en', language_name: 'English', depth: 0 },
-      { expression_id: 2, text: 'alpha', language_code: 'fr', language_name: 'French', depth: 1 },
-      { expression_id: 3, text: 'beta', language_code: 'de', language_name: 'German', depth: 2 },
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+      { expression_id: 2, text: 'alpha', language_profile_code: 'fr', language_name: 'French', depth: 1 },
+      { expression_id: 3, text: 'beta', language_profile_code: 'de', language_name: 'German', depth: 2 },
     ],
     edges: [
       { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },

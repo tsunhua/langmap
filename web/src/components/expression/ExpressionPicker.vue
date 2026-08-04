@@ -4,7 +4,7 @@ import { useExpressions } from '@/composables/useExpressions'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
-const emit = defineEmits<{ select: [expr: { id: number; text: string; language_code: string }] }>()
+const emit = defineEmits<{ select: [expr: { id: number; text: string; language_profile_code: string }] }>()
 
 const { search } = useExpressions()
 const query = ref('')
@@ -45,7 +45,7 @@ async function doSearch() {
         class="picker-item"
         @click="emit('select', r)"
       >
-        {{ r.text }} <span class="lang-badge">{{ r.language_code }}</span>
+        {{ r.text }} <span class="lang-badge">{{ r.language_profile_code }}</span>
       </button>
     </div>
   </div>

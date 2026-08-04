@@ -275,7 +275,7 @@ const layerStats = computed(() => {
           :key="n.id"
           :node-id="n.id"
           :text="graph.nodes.find(gn => gn.expression_id === n.id)?.text ?? ''"
-          :language-code="graph.nodes.find(gn => gn.expression_id === n.id)?.language_code ?? ''"
+          :language-code="graph.nodes.find(gn => gn.expression_id === n.id)?.language_profile_code ?? ''"
           :language-name="graph.nodes.find(gn => gn.expression_id === n.id)?.language_name ?? null"
           :depth="n.depth"
           :x="n.x"

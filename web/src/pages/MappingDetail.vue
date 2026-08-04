@@ -217,7 +217,7 @@ async function submitQuickAdd() {
   try {
     const { data } = await api.post('/expressions', {
       text,
-      language_code: languageCode,
+      language_profile_code: languageCode,
       region_name: regionName || undefined,
       related_to: id.value,
     })
@@ -288,7 +288,7 @@ const sourceLabel = computed(() => {
 
     <div class="anchor-title">
       <h1>{{ expr.text }}</h1>
-      <LangBadge :code="expr.language_code" />
+      <LangBadge :code="expr.language_profile_code" />
     </div>
 
     <div class="anchor-meta">
