@@ -190,6 +190,8 @@
   "languageDetail.popular": "熱門",
   "languageDetail.latest": "最新",
   "languageDetail.alphabetical": "依字母排序",
+  "languageDetail.allScripts": "全部",
+  "languageDetail.scriptLabel": "文字",
   "languageDetail.noResults": "找不到詞句",
   "languageDetail.loadFailed": "無法載入",
   "mapLens.back": "回到對應",

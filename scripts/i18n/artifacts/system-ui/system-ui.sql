@@ -68,7 +68,7 @@ ON CONFLICT(project_id, code) DO UPDATE SET
   direction = excluded.direction,
   status = excluded.status;
 
--- 2. Source messages (312 keys)
+-- 2. Source messages (314 keys)
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (8771988929111883, 'Email', 'en', 'ui_i18n', 'langmap-web:auth.email', 'approved');
@@ -1448,6 +1448,13 @@ VALUES (8771998528580369, '{count} variant(s) removed', 'en', 'ui_i18n', 'langma
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
 VALUES ('langmap-web', 'languageCreate.variantsRemoved', 8771998528580369, '[]', '8771998528580369', 'active');
 
+-- languageDetail.allScripts
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (8771912696777795, 'All', 'en', 'ui_i18n', 'langmap-web:languageDetail.allScripts', 'approved');
+
+INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
+VALUES ('langmap-web', 'languageDetail.allScripts', 8771912696777795, '[]', '8771912696777795', 'active');
+
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (8772039352640020, 'Alphabetical', 'en', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'approved');
@@ -1517,6 +1524,13 @@ VALUES (8771986740325537, 'Reference points for exploration; not the full langua
 
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
 VALUES ('langmap-web', 'languageDetail.representativeCitiesNote', 8771986740325537, '[]', '8771986740325537', 'active');
+
+-- languageDetail.scriptLabel
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (8771976361115614, 'Script', 'en', 'ui_i18n', 'langmap-web:languageDetail.scriptLabel', 'approved');
+
+INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
+VALUES ('langmap-web', 'languageDetail.scriptLabel', 8771976361115614, '[]', '8771976361115614', 'active');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -2253,7 +2267,7 @@ VALUES (8771951513286657, 'Translation', 'en', 'ui_i18n', 'langmap-web:translate
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
 VALUES ('langmap-web', 'translate.translation', 8771951513286657, '[]', '8771951513286657', 'active');
 
--- 3. Translation expressions and edges (1228 rows)
+-- 3. Translation expressions and edges (1236 rows)
 -- Locale cmn-Hans
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -3035,6 +3049,10 @@ VALUES (621541359767956, '已移除 1 个变体', 'cmn-Hans', 'ui_i18n', 'langma
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (621526864460743, '已移除 {count} 个变体', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
 
+-- languageDetail.allScripts
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (621607270890617, '全部', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.allScripts', 'pending');
+
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (621519610903643, '按字母排序', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
@@ -3066,6 +3084,10 @@ VALUES (621592521672516, '没有找到词句', 'cmn-Hans', 'ui_i18n', 'langmap-w
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.scriptLabel
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (621597452286074, '文字', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.scriptLabel', 'pending');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -4264,6 +4286,10 @@ VALUES (5007590313937733, '已移除 1 個變體', 'cmn-Hant', 'ui_i18n', 'langm
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5007588420544733, '已移除 {count} 個變體', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
 
+-- languageDetail.allScripts
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5007696593042553, '全部', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.allScripts', 'pending');
+
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5007699791662801, '依字母排序', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
@@ -4295,6 +4321,10 @@ VALUES (5007598177691071, '找不到詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.scriptLabel
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5007686774438010, '文字', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.scriptLabel', 'pending');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -5493,6 +5523,10 @@ VALUES (682915042677354, '1 variante eliminada', 'es', 'ui_i18n', 'langmap-web:l
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (682815962453613, '{count} variante(s) eliminada(s)', 'es', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
 
+-- languageDetail.allScripts
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (682830493762101, 'Todos', 'es', 'ui_i18n', 'langmap-web:languageDetail.allScripts', 'pending');
+
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (682858707408402, 'Alfabético', 'es', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
@@ -5524,6 +5558,10 @@ VALUES (682884245166836, 'No se encontraron expresiones', 'es', 'ui_i18n', 'lang
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (682850921034842, 'Popular', 'es', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.scriptLabel
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (682855713333931, 'Escritura', 'es', 'ui_i18n', 'langmap-web:languageDetail.scriptLabel', 'pending');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -6722,6 +6760,10 @@ VALUES (5667639521899342, '1 件の変種を削除', 'ja', 'ui_i18n', 'langmap-w
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5667629146176193, '{count} 件の変種を削除', 'ja', 'ui_i18n', 'langmap-web:languageCreate.variantsRemoved', 'pending');
 
+-- languageDetail.allScripts
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5667626689511354, 'すべて', 'ja', 'ui_i18n', 'langmap-web:languageDetail.allScripts', 'pending');
+
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5667635203282018, 'アルファベット順', 'ja', 'ui_i18n', 'langmap-web:languageDetail.alphabetical', 'pending');
@@ -6753,6 +6795,10 @@ VALUES (5667694062377766, '表現が見つかりません', 'ja', 'ui_i18n', 'la
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5667600188693356, '人気', 'ja', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.scriptLabel
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5667668629010554, '文字', 'ja', 'ui_i18n', 'langmap-web:languageDetail.scriptLabel', 'pending');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -13215,6 +13261,37 @@ VALUES ('5007588420544733-8771998528580369', 5007588420544733, 8771998528580369,
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('5667629146176193-8771998528580369', 5667629146176193, 8771998528580369, 0, 'ui_i18n');
 
+-- Pairwise clique: languageDetail.allScripts
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607270890617-682830493762101', 621607270890617, 682830493762101, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607270890617-5007696593042553', 621607270890617, 5007696593042553, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607270890617-5667626689511354', 621607270890617, 5667626689511354, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621607270890617-8771912696777795', 621607270890617, 8771912696777795, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682830493762101-5007696593042553', 682830493762101, 5007696593042553, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682830493762101-5667626689511354', 682830493762101, 5667626689511354, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682830493762101-8771912696777795', 682830493762101, 8771912696777795, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007696593042553-5667626689511354', 5007696593042553, 5667626689511354, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007696593042553-8771912696777795', 5007696593042553, 8771912696777795, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5667626689511354-8771912696777795', 5667626689511354, 8771912696777795, 0, 'ui_i18n');
+
 -- Pairwise clique: languageDetail.alphabetical
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('621519610903643-682858707408402', 621519610903643, 682858707408402, 0, 'ui_i18n');
@@ -13462,6 +13539,37 @@ VALUES ('5007723174663984-8771957966582874', 5007723174663984, 8771957966582874,
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('5667600188693356-8771957966582874', 5667600188693356, 8771957966582874, 0, 'ui_i18n');
+
+-- Pairwise clique: languageDetail.scriptLabel
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597452286074-682855713333931', 621597452286074, 682855713333931, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597452286074-5007686774438010', 621597452286074, 5007686774438010, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597452286074-5667668629010554', 621597452286074, 5667668629010554, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621597452286074-8771976361115614', 621597452286074, 8771976361115614, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682855713333931-5007686774438010', 682855713333931, 5007686774438010, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682855713333931-5667668629010554', 682855713333931, 5667668629010554, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('682855713333931-8771976361115614', 682855713333931, 8771976361115614, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686774438010-5667668629010554', 5007686774438010, 5667668629010554, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007686774438010-8771976361115614', 5007686774438010, 8771976361115614, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5667668629010554-8771976361115614', 5667668629010554, 8771976361115614, 0, 'ui_i18n');
 
 -- Pairwise clique: languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)

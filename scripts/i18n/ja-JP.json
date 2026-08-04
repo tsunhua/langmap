@@ -190,6 +190,8 @@
   "languageDetail.popular": "人気",
   "languageDetail.latest": "最新",
   "languageDetail.alphabetical": "アルファベット順",
+  "languageDetail.allScripts": "すべて",
+  "languageDetail.scriptLabel": "文字",
   "languageDetail.noResults": "表現が見つかりません",
   "languageDetail.loadFailed": "読み込めませんでした",
   "mapLens.back": "関係に戻る",

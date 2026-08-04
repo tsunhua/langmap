@@ -20,7 +20,19 @@ const lang = ref<any>(null)
 const exprs = ref<any[]>([])
 const searchQuery = ref('')
 const sortBy = ref('hot')
+const selectedScript = ref('')
 const loadError = ref('')
+
+const scripts = computed(() => {
+  const profiles: any[] = lang.value?.profiles ?? []
+  const seen = new Map<string, string>()
+  for (const p of profiles) {
+    if (p.script_code && !seen.has(p.script_code)) {
+      seen.set(p.script_code, p.name || p.script_code)
+    }
+  }
+  return [...seen.entries()].map(([code, name]) => ({ code, name }))
+})
 
 const filtered = computed(() => {
   if (!searchQuery.value) return exprs.value
@@ -31,6 +43,7 @@ const filtered = computed(() => {
 async function load() {
   lang.value = null
   loadError.value = ''
+  selectedScript.value = ''
   try {
     lang.value = await detail(code.value)
     const data = await expressions(code.value, { sort: sortBy.value, limit: 100 })
@@ -46,7 +59,6 @@ watch(code, load)
 const subtitle = computed(() => {
   const parts = []
   if (lang.value?.name_en) parts.push(lang.value.name_en)
-  if (lang.value?.script_code) parts.push(lang.value.script_code)
   if (lang.value?.glottocode) parts.push(lang.value.glottocode)
   return parts.join(' · ')
 })
@@ -54,7 +66,17 @@ const subtitle = computed(() => {
 async function changeSort(sort: string) {
   sortBy.value = sort
   try {
-    const data = await expressions(code.value, { sort, limit: 100 })
+    const data = await expressions(code.value, { sort, limit: 100, script: selectedScript.value || undefined })
+    exprs.value = data.items
+  } catch (e: any) {
+    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
+  }
+}
+
+async function changeScript(script: string) {
+  selectedScript.value = script
+  try {
+    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: script || undefined })
     exprs.value = data.items
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
@@ -94,6 +116,10 @@ async function changeSort(sort: string) {
 
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
+      <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
+        <button :class="{ on: selectedScript === '' }" @click="changeScript('')">{{ t('languageDetail.allScripts') }}</button>
+        <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">{{ s.name }}</button>
+      </div>
       <div class="ld-sort">
         <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
         <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
@@ -122,10 +148,11 @@ async function changeSort(sort: string) {
 .ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
-.ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
-.ld-sort button:hover { color: var(--fg); }
-.ld-sort button.on { background: var(--fg); color: var(--surface); }
+.ld-scripts, .ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ld-scripts button, .ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.ld-scripts button:hover, .ld-sort button:hover { color: var(--fg); }
+.ld-scripts button.on, .ld-sort button.on { background: var(--fg); color: var(--surface); }
+.ld-scripts button:focus-visible, .ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .ld-cities { border-bottom: 1px solid var(--border); margin-bottom: 18px; padding-bottom: 16px; }

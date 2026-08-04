@@ -177,6 +177,7 @@ languages.get('/:code', async (c) => {
 languages.get('/:code/expressions', async (c) => {
   const code = c.req.param('code');
   const sort = c.req.query('sort') || 'new';
+  const script = c.req.query('script') || '';
   const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '50') || 50, 1), 100);
   const offset = Math.max(parseInt(c.req.query('offset') || '0') || 0, 0);
 
@@ -192,22 +193,30 @@ languages.get('/:code/expressions', async (c) => {
   };
   const orderBy = EXPR_SORT_MAP[sort] || EXPR_SORT_MAP.new;
 
+  const filters = ['p.language_variety_id = ?'];
+  const params: (string | number)[] = [variety.id];
+  if (script) {
+    filters.push('p.script_code = ?');
+    params.push(script);
+  }
+  const whereSql = filters.join(' AND ');
+
   const { results } = await c.env.DB.prepare(
     `SELECT e.*,
       (SELECT COUNT(*) FROM expression_edges ed
        WHERE e.id = ed.expression_a_id OR e.id = ed.expression_b_id) as mapping_count
      FROM expressions e
      JOIN language_profiles p ON p.code = e.language_profile_code
-     WHERE p.language_variety_id = ?
+     WHERE ${whereSql}
      ORDER BY ${orderBy}
      LIMIT ? OFFSET ?`
-  ).bind(variety.id, limit, offset).all();
+  ).bind(...params, limit, offset).all();
 
   const { count: total } = await c.env.DB.prepare(
     `SELECT COUNT(*) as count FROM expressions e
      JOIN language_profiles p ON p.code = e.language_profile_code
-     WHERE p.language_variety_id = ?`
-  ).bind(variety.id).first<{ count: number }>();
+     WHERE ${whereSql}`
+  ).bind(...params).first<{ count: number }>();
 
   return paginated(c, results, total, offset, limit);
 });

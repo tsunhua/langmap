@@ -190,6 +190,8 @@
   "languageDetail.popular": "Popular",
   "languageDetail.latest": "Más reciente",
   "languageDetail.alphabetical": "Alfabético",
+  "languageDetail.allScripts": "Todos",
+  "languageDetail.scriptLabel": "Escritura",
   "languageDetail.noResults": "No se encontraron expresiones",
   "languageDetail.loadFailed": "No se pudo cargar",
   "mapLens.back": "Volver a la relación",

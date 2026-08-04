@@ -33,7 +33,7 @@ export function useLanguages() {
     }
   }
 
-  async function expressions(code: string, params: { sort?: string; limit?: number; offset?: number } = {}) {
+  async function expressions(code: string, params: { sort?: string; script?: string; limit?: number; offset?: number } = {}) {
     loading.value = true
     error.value = null
     try {
