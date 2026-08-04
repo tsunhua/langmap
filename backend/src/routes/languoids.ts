@@ -111,10 +111,14 @@ languoids.get('/', async (c) => {
     l.preferred_name ASC, l.id ASC`;
   }
 
+  const joinClause = `
+    LEFT JOIN language_varieties v ON v.glottocode = l.glottocode
+    LEFT JOIN language_profiles c ON c.language_variety_id = v.id
+  `;
   const langQuery = `
     SELECT l.*
     FROM languoids l
-    LEFT JOIN languages c ON c.glottocode = l.glottocode
+    ${joinClause}
     ${clause}
     ORDER BY ${orderBy}
     LIMIT ? OFFSET ?
@@ -123,7 +127,7 @@ languoids.get('/', async (c) => {
     .bind(...params, ...orderParams, limit, offset)
     .all<LanguoidRow>();
 
-  const countQuery = `SELECT COUNT(DISTINCT l.id) AS count FROM languoids l LEFT JOIN languages c ON c.glottocode = l.glottocode ${clause}`;
+  const countQuery = `SELECT COUNT(DISTINCT l.id) AS count FROM languoids l ${joinClause} ${clause}`;
   const total = await c.env.DB.prepare(countQuery).bind(...params).first<{ count: number }>();
 
   if (languoids.length === 0) {
@@ -133,9 +137,11 @@ languoids.get('/', async (c) => {
   const glottocodes = languoids.map(l => l.glottocode);
   const placeholders = glottocodes.map(() => '?').join(',');
   const profileResult = await c.env.DB.prepare(
-    `SELECT code, name, script_code, region_code, glottocode
-     FROM languages WHERE glottocode IN (${placeholders})
-     ORDER BY name ASC, code ASC`
+    `SELECT p.code, p.name, p.script_code, p.region_code, v.glottocode
+     FROM language_profiles p
+     JOIN language_varieties v ON v.id = p.language_variety_id
+     WHERE v.glottocode IN (${placeholders})
+     ORDER BY p.name ASC, p.code ASC`
   ).bind(...glottocodes).all<LanguageProfileRow>();
 
   const profilesByGc = new Map<string, LanguageProfileRow[]>();

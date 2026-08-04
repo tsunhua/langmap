@@ -55,7 +55,7 @@ export const CreateProfileSchema = z.object({
   profile: ProfileMetadataSchema,
 });
 
-const SCRIPT_NAME_RE = /^(hans|hant|latn|cyrl|arab|mong|tibt|guru|tradition|simplified|繁體|简体|简|繁)$/i;
+const SCRIPT_NAME_RE = /^(tradition|simplified|繁體|简体|简|繁)$/i;
 
 interface D1Statement {
   bind(...args: unknown[]): {
@@ -67,7 +67,7 @@ interface D1Statement {
 
 interface D1Database {
   prepare(sql: string): D1Statement;
-  batch(statements: D1Statement[]): Promise<{ results: unknown[] }>;
+  batch(statements: D1Statement[]): Promise<unknown[]>;
 }
 
 function escapeLike(value: string): string {
@@ -272,23 +272,25 @@ export async function createVariety(
     throw new LanguageCreationError('PROFILE_CODE_EXISTS', `Profile code ${profileCode} already exists`);
   }
 
+  const dailyCount = await db.prepare(
+    `SELECT COUNT(*) AS count FROM language_varieties
+     WHERE created_by = ? AND created_at >= datetime('now', '-1 day')`
+  ).bind(String(userId)).first<{ count: number }>();
+  if (dailyCount && dailyCount.count >= DAILY_LIMIT) {
+    throw new LanguageCreationError('RATE_LIMITED', `Daily limit of ${DAILY_LIMIT} varieties reached`);
+  }
+
   const insertVariety = db.prepare(
     `INSERT INTO language_varieties (
       id, code, name, name_en, description, glottocode, origin,
       community_reason, alternate_names_json, references_json,
       parent_languoid_id, created_by
-    )
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    WHERE (
-      SELECT COUNT(*) FROM language_varieties
-      WHERE created_by = ? AND created_at >= datetime('now', '-1 day')
-    ) < ?`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     varietyId, varietyCode, meta.name, meta.name_en, meta.description,
     glottocode, 'community', meta.reason,
     JSON.stringify(meta.alternate_names), JSON.stringify(meta.references),
     meta.parent_languoid_id, String(userId),
-    String(userId), DAILY_LIMIT,
   );
 
   const insertProfile = db.prepare(
@@ -303,9 +305,8 @@ export async function createVariety(
     JSON.stringify(tag.variants), JSON.stringify(tag.private_use),
   );
 
-  let results: unknown[];
   try {
-    results = (await db.batch([insertVariety, insertProfile])).results;
+    await db.batch([insertVariety, insertProfile]);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     if (/UNIQUE constraint failed.*language_varieties/i.test(msg)) {
@@ -315,11 +316,6 @@ export async function createVariety(
       throw new LanguageCreationError('PROFILE_CODE_EXISTS', `Profile code ${profileCode} already exists`);
     }
     throw e;
-  }
-
-  const varietyInsert = results[0] as { meta: { changes: number } };
-  if (varietyInsert.meta.changes === 0) {
-    throw new LanguageCreationError('RATE_LIMITED', `Daily limit of ${DAILY_LIMIT} varieties reached`);
   }
 
   const createdVariety = await db.prepare(
