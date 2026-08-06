@@ -44,7 +44,9 @@ const selectedProfile = computed(() =>
   scripts.value.find(s => s.code === selectedScript.value),
 )
 
-const title = computed(() => selectedProfile.value?.endonym || lang.value?.name || '')
+const title = computed(() =>
+  selectedProfile.value?.endonym || lang.value?.name_en || lang.value?.name || '',
+)
 
 function cityDisplayName(city: any): string {
   const profileCode = selectedProfile.value?.profileCode
@@ -98,7 +100,7 @@ watch(() => route.query.script, (script) => {
 
 const subtitle = computed(() => {
   const parts = []
-  if (lang.value?.name_en) parts.push(lang.value.name_en)
+  if (lang.value?.name_en && title.value !== lang.value.name_en) parts.push(lang.value.name_en)
   if (lang.value?.glottocode) parts.push(lang.value.glottocode)
   return parts.join(' · ')
 })
@@ -148,7 +150,7 @@ async function changeScript(script: string) {
       <ul>
         <li v-for="city in lang.representative_cities" :key="`${city.city_name}-${city.territory_code}-${city.script_code}`">
           <span>{{ cityDisplayName(city) }}</span>
-          <small>{{ city.city_name_en }} · {{ city.territory_code }}<template v-if="city.script_code"> · {{ city.script_code }}</template></small>
+          <small>{{ city.territory_code }}<template v-if="city.script_code"> · {{ city.script_code }}</template></small>
         </li>
       </ul>
     </section>
@@ -202,7 +204,7 @@ async function changeScript(script: string) {
 .ld-cities h2 { font-size: 16px; font-weight: 600; }
 .ld-cities-note { color: var(--muted); font-size: 12px; margin: 4px 0 10px; }
 .ld-cities ul { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.ld-cities li { min-width: 150px; border: 1px solid var(--border); background: var(--surface); padding: 8px 10px; }
+.ld-cities li { width: fit-content; min-width: 0; border: 1px solid var(--border); background: var(--surface); padding: 8px 10px; }
 .ld-cities li span, .ld-cities li small { display: block; }
 .ld-cities li small { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 3px; }
 </style>
