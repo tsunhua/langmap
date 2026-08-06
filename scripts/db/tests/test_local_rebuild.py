@@ -204,13 +204,13 @@ INSERT INTO language_subtags (type, value) VALUES
 INSERT INTO language_varieties (id, code, name, origin, glottocode) VALUES
   ('var:en-US', 'en-US', 'English (United States)', 'seed', 'eng1234'),
   ('var:es-ES', 'es-ES', 'Español', 'seed', 'spa1234'),
-  ('var:zh-Hant-TW', 'zh-Hant-TW', '繁體中文', 'seed', 'zho1234'),
+  ('var:zh-Hant-TW', 'zh-Hant-TW', '傳承體中文', 'seed', 'zho1234'),
   ('var:x-emoji', 'x-emoji', 'Emoji', 'system', '');
 
 INSERT INTO language_profiles (code, name, direction) VALUES
   ('en-US', 'English (United States)', 'ltr'),
   ('es-ES', 'Español', 'ltr'),
-  ('zh-Hant-TW', '繁體中文', 'ltr');
+  ('zh-Hant-TW', '傳承體中文', 'ltr');
 
 INSERT INTO language_locations (language_variety_id, city_name, territory_code, script_code) VALUES
   ('var:spa', 'Madrid', 'ES', ''),
@@ -231,7 +231,7 @@ INSERT INTO language_locations (language_variety_id, city_name, territory_code, 
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
 VALUES ('langmap-web', 'es-ES', 'Español', 'ltr', 'active');
 INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-VALUES ('langmap-web', 'zh-Hant-TW', '繁體中文', 'ltr', 'active');
+VALUES ('langmap-web', 'zh-Hant-TW', '傳承體中文', 'ltr', 'active');
 
 INSERT INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status) VALUES
   (1001, 'Hello', 'en-US', 'ui_i18n', 'langmap-web:greeting.hello', 'approved'),

@@ -312,7 +312,7 @@ sqlite3 "$DB" "SELECT language_code, COUNT(*) FROM expressions WHERE language_co
 sqlite3 "$DB" "SELECT code, native_name FROM ui_locales WHERE code LIKE 'zh%';"
 ```
 
-預期基準：`zh-Hans|262`、`zh-Hant|261`；`ui_locales` 有 `zh-Hans|简体中文`、`zh-Hant|繁體中文`。
+預期基準：`zh-Hans|262`、`zh-Hant|261`；`ui_locales` 有 `zh-Hans|简体中文`、`zh-Hant|傳承體中文`。
 
 - [ ] **Step 2: 撰寫 migration SQL**
 
@@ -330,7 +330,7 @@ sqlite3 "$DB" "SELECT code, native_name FROM ui_locales WHERE code LIKE 'zh%';"
 
 額外要求（`0012` 沒有、本任務需自行加入）：
 
-- `ui_locales.native_name` 需更新為 `cmn-Hans` → `华语`、`cmn-Hant` → `華語`（現值為「简体中文」「繁體中文」）。`languages` 的 `name` 由後續 registry SQL upsert 覆蓋，但 `ui_locales.native_name` 不在 registry 範圍內，必須在此處理。
+- `ui_locales.native_name` 需更新為 `cmn-Hans` → `华语`、`cmn-Hant` → `華語`（現值為「简体中文」「傳承體中文」）。`languages` 的 `name` 由後續 registry SQL upsert 覆蓋，但 `ui_locales.native_name` 不在 registry 範圍內，必須在此處理。
 - migration 必須可重複執行（rerunnable）。舊 code 已不存在時所有語句應為 no-op，不得報錯。
 
 - [ ] **Step 3: 撰寫 meta.json**
@@ -389,7 +389,7 @@ git commit -m "feat: migrate stored Mandarin content tags from zh to cmn
 
 Moves the 523 stored expressions, UI locale rows and statistics onto the
 precise cmn tags. UI locale native names move with them so the language
-picker stops showing 简体中文/繁體中文 for what is really Mandarin."
+picker stops showing 简体中文/傳承體中文 for what is really Mandarin."
 ```
 
 ---
@@ -848,7 +848,7 @@ grep -rn "zh-Hans\|zh-Hant" web/src backend/src backend/tests scripts/v2/languag
 
 用 Node 22 內建全域 `WebSocket`（**不要 import "ws"，未安裝**）連 CDP，`Runtime.evaluate` 讀取 `/languages` 與 `/language/cmn-Hant` 的 `document.body.innerText`，確認：
 
-- `/languages` 出現「華語」「华语」，不出現「简体中文」「繁體中文」
+- `/languages` 出現「華語」「华语」，不出現「简体中文」「傳承體中文」
 - `/language/cmn-Hant` 標題為「華語」，代表城市僅 Taipei
 - `/language/cmn-Hans` 代表城市為 Beijing 與 Singapore
 

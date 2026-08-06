@@ -12,7 +12,7 @@
 - variety id 由 `seed_variety_id(code)` 產生，與 backend `seedVarietyId` (Task 1)
   byte-for-byte 一致：固定 epoch + `sha256("langmap-seed-variety:"+code)[:10]`，
   再以 Crockford base32 編碼（時間 10 字、隨機 16 字）。
-- profile name 採 script label（如「繁體」），不是 variety 名；保留鋒面資訊。
+- profile name 採 script label（如「傳承體」），不是 variety 名；保留鋒面資訊。
 """
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ VARIETY_MAP: dict[str, tuple[str, str, str]] = {
 # script label 對應表：profile name 用 script 鋒面名稱，而非 variety 名。
 SCRIPT_LABELS: dict[str, tuple[str, str]] = {
     "Hans": ("簡體", "Simplified"),
-    "Hant": ("繁體", "Traditional"),
+    "Hant": ("傳承體", "Traditional"),
     "Latn": ("拉丁", "Latin"),
     "Cyrl": ("西里爾", "Cyrillic"),
     "Arab": ("阿拉伯文", "Arabic"),

@@ -24,8 +24,8 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 | 現行 code | 現行 variety_key | 使用者認知 |
 |---|---|---|
 | `cmn-Hans` | `glotto:mand1415` | 華語（簡體） |
-| `cmn-Hant` | `glotto:mand1415` | 華語（繁體） |
-| `nan-Hant-x-chao1238` | `glotto:chao1238` | 潮州話（繁體） |
+| `cmn-Hant` | `glotto:mand1415` | 華語（傳承體） |
+| `nan-Hant-x-chao1238` | `glotto:chao1238` | 潮州話（傳承體） |
 | `nan-Latn-x-chao1238` | `glotto:chao1238` | 潮州話（拉丁字） |
 
 這個底層精度本身有價值，但目前 API 與 UI 又把每個 profile 當成一種獨立「語言」，造成：
@@ -50,7 +50,7 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 
 ## 4. 非目標
 
-- 不自動判定簡體與繁體詞句等價。
+- 不自動判定簡體與傳承體詞句等價。
 - 不以 OpenCC 或其他字形轉換結果自動合併、建立 mapping 或覆寫原文。
 - 不在本次新增「同一詞句的多書寫形式」專用關係模型。
 - 不把 script、region 或 UI locale 視為語言變體。
@@ -177,7 +177,7 @@ CREATE INDEX idx_language_profiles_base_script_region
 設計決策：
 
 - `code` 是 canonical BCP 47 content tag，也是 profile 的公開識別碼。
-- `name`／`name_en` 是 profile label，例如「繁體」「Traditional」；API 可以結合 variety name 顯示「華語（繁體）」。seed 不再為每個 profile 重複維護一份完整語言名稱。
+- `name`／`name_en` 是 profile label，例如「傳承體」「Traditional」；API 可以結合 variety name 顯示「華語（傳承體）」。seed 不再為每個 profile 重複維護一份完整語言名稱。
 - 每個 variety 必須至少有一個 profile。建立 variety 與首個 profile 必須在同一 transaction 完成。
 - 同一 variety 不得出現完全相同的 canonical code；全站主鍵已保證此條件。
 - profile 不保存 `glottocode`、alternate names、references 或 community reason，避免與 variety 產生兩套可能衝突的身份資料。
@@ -218,7 +218,7 @@ language_locations.variety_key
       "name_en": "Mandarin Chinese",
       "glottocode": "mand1415",
       "profiles": [
-        { "code": "cmn-Hant", "name": "繁體", "name_en": "Traditional" },
+        { "code": "cmn-Hant", "name": "傳承體", "name_en": "Traditional" },
         { "code": "cmn-Hans", "name": "簡體", "name_en": "Simplified" }
       ]
     }
@@ -273,7 +273,7 @@ POST /api/v2/languages
   "profiles": [
     {
       "code": "cmn-Hant",
-      "name": "繁體",
+      "name": "傳承體",
       "script_code": "Hant",
       "expression_count": 261
     },
@@ -321,7 +321,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 
 - 每個 variety 一列或一卡，不逐 profile 重複顯示。
 - 「語言」統計使用 variety 數；另有需要時才顯示「內容 profiles」數。
-- 卡片顯示合計詞句數與可用 profile chips，例如「繁體」「簡體」。
+- 卡片顯示合計詞句數與可用 profile chips，例如「傳承體」「簡體」。
 - profile code 是次要技術資訊，不與語言名稱競爭視覺層級。
 - 搜尋 `華語`、`华语`、`Mandarin`、`cmn-Hant` 或 `mand1415` 都命中華語同一入口。
 
@@ -329,7 +329,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 
 - URL 使用 variety 的公開 code，例如華語 `/language/cmn`、潮州話 `/language/nan-x-chao1238`；不得暴露內部 ULID。
 - 標題、描述、代表城市與總統計屬於 variety。
-- 詞句預設顯示全部 profiles；提供「全部／繁體／簡體」等可鍵盤操作的篩選。
+- 詞句預設顯示全部 profiles；提供「全部／傳承體／簡體」等可鍵盤操作的篩選。
 - 每條詞句在混合列表中顯示 profile label；只顯示單一 profile 時可省略重複徽章。
 - 地圖與圖譜以 variety 聚合時仍可展開檢視精確 profile，不丟失原始內容標籤。
 
@@ -338,7 +338,7 @@ Profile API 服務 language picker 第二步、維護工具、匯入與精確內
 語言選擇採兩階段：
 
 1. 選擇 variety，例如華語。
-2. 選擇 profile，例如繁體或簡體。
+2. 選擇 profile，例如傳承體或簡體。
 
 - 只有一個 profile 時可自動選定，但仍顯示最終 content tag。
 - 多個 profile 時根據使用者上次選擇或 UI locale 建議預設，不得靜默提交未展示的 profile。

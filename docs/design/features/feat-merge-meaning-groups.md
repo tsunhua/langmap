@@ -453,7 +453,7 @@ function getMeaningIndex(meaningId: number) {
 }
 ```
 
-### 7.3 繁體中文（zh-TW.json）
+### 7.3 傳承體中文（zh-TW.json）
 
 ```json
 {

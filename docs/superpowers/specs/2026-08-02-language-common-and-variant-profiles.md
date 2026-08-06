@@ -34,7 +34,7 @@ UI locale 是另一個概念，但第一方英文介面沒有使用美國特有�
 
 - `en`、`pt`、`ko` 是共通／待分類內容入口；`en-US`、`en-GB`、`pt-BR`、
   `ko-KR`、`ko-KP` 繼續存在以記錄已確認差異。
-- `yue-Hant` 不代表廣州預設，而是未綁定地方變體的繁體粵語。
+- `yue-Hant` 不代表廣州預設，而是未綁定地方變體的傳承體粵語。
 - 城市只放在 `language_locations`，不因使用地而加入 language code。
 - Glottolog 能精確識別、BCP 47 無專用 subtag 的變體，以 private-use
   Glottocode 表示。

@@ -21,7 +21,7 @@
 - 每個 variety 至少一個 profile；建立 variety 與首個 profile 必須同一 transaction（spec §7.2、§8.2）。
 - 回應格式維持 `{ success, data?, error?, message? }`；mutation 欄位 `language_code` 一律改為 `language_profile_code`（spec §9.3）。
 - 不自動合併或轉換簡繁 expressions、不改變既有 mappings、不更動 `variation_status` 語義（spec §4、§11）。
-- 新增中文文件與介面文案用繁體中文；編輯既有內容沿用原語體（AGENTS.md）。
+- 新增中文文件與介面文案用傳承體中文；編輯既有內容沿用原語體（AGENTS.md）。
 - 註釋只解釋 WHY，不重述程式碼（AGENTS.md）。
 
 ## 前置事實（已驗證，勿再假設）
@@ -134,7 +134,7 @@ git commit -m "feat(backend): add ULID generator for variety IDs"
 - 產出 JSON shape（spec §8.1）：
   - `version: 5`
   - `varieties[]`：`{ id(ULID), code, name, name_en, glottocode|null, origin, reason, description, alternate_names[], profiles[] }`
-  - 每個 `profiles[]` 元素：`{ code, name, name_en }`（name 是 script label 如「繁體」，非 variety 名）
+  - 每個 `profiles[]` 元素：`{ code, name, name_en }`（name 是 script label 如「傳承體」，非 variety 名）
   - `locations[]`：`{ variety_code, city_name, city_name_en, territory_code, script_code, latitude, longitude, reference }`（`variety_key` 改 `variety_code`）
   - `online_code_migrations`：原樣保留（仍以 canonical profile code 為鍵）
 
@@ -202,7 +202,7 @@ generator 邏輯：
 2. 對 `VARIETY_MAP` 中每個 **distinct new variety code**（49 個）建一個 variety：把所有「`VARIETY_MAP[k][0] == vcode`」的舊分組的 profiles 聯集，依 `code` 排序。
 3. variety 欄位：`id = seed_variety_id(vcode)`（Python 版，演算法與 Task 1 `seedVarietyId` 完全相同：固定 epoch + `sha256("langmap-seed-variety:"+code)[:10]`，Crockford base32）；`name/name_en` 取自 map；`glottocode` 取該 variety 任意一個 profile 的；`origin/reason` 取第一個；`alternate_names` 取聯集；`description=""`。
 4. profile 欄位：`code` 原樣；`name/name_en` 用 `profile_label(code, fallback_name, fallback_name_en)`：
-   - script 在 `{Hans:("簡體","Simplified"), Hant:("繁體","Traditional"), Latn:("拉丁","Latin"), Cyrl:("西里爾","Cyrillic"), Arab:("阿拉伯文","Arabic"), Mong:("傳統蒙古文","Traditional Script"), Tibt:("藏文","Tibetan"), Guru:("古木奇文","Gurmukhi")}` 中 → 取對應；
+   - script 在 `{Hans:("簡體","Simplified"), Hant:("傳承體","Traditional"), Latn:("拉丁","Latin"), Cyrl:("西里爾","Cyrillic"), Arab:("阿拉伯文","Arabic"), Mong:("傳統蒙古文","Traditional Script"), Tibt:("藏文","Tibetan"), Guru:("古木奇文","Gurmukhi")}` 中 → 取對應；
    - 含 `Latn` 且不在上表（如 tailo/pehoeji）→ 用原 profile `name`／`name_en`；
    - 其他 → `("標準", name_en or "Default")`。
 5. `locations`：每筆加 `variety_code = VARIETY_MAP[loc["variety_key"]][0]`，移除 `variety_key`。
@@ -592,7 +592,7 @@ INSERT OR IGNORE INTO language_profiles
 SELECT l.code,
   COALESCE((SELECT m.variety_id FROM _variety_map m WHERE m.old_key=l.variety_key), 'comm-'||l.variety_key),
   CASE l.script_code
-    WHEN 'Hans' THEN '簡體' WHEN 'Hant' THEN '繁體' WHEN 'Latn' THEN '拉丁'
+    WHEN 'Hans' THEN '簡體' WHEN 'Hant' THEN '傳承體' WHEN 'Latn' THEN '拉丁'
     WHEN 'Cyrl' THEN '西里爾' WHEN 'Arab' THEN '阿拉伯文' WHEN 'Mong' THEN '傳統蒙古文'
     WHEN 'Tibt' THEN '藏文' WHEN 'Guru' THEN '古木奇文' ELSE '標準' END,
   l.name_en,
@@ -825,7 +825,7 @@ are dropped after dependents move."
 - `deriveVarietyKey` 移除；新增 `deriveVarietyCode(tag)`：`tag.private_use.length>0 ? `${tag.language}-x-${tag.private_use[0]}` : tag.language`（spec §5.1：無專用 subtag 的變體用不含 script 的 private-use code）。
 - `previewVariety(db, body)`：canonicalize tag → profile code；derive variety code；查 `existing_profile`（by profile code）與其 `existing_variety`；查該 variety 既有 profiles；查相似 varieties（variety name LIKE）；回 `VarietyPreview`。critical warning 時丟 `INVALID_LANGUAGE_SUBTAG`。
 - `createVariety(db, userId, body)`：驗證 → 拒絕 profile/variety code 重複（`LANGUAGE_PROFILE_CODE_EXISTS`／`LANGUAGE_CODE_EXISTS`）→ 查 24h 內建立數（`language_varieties` 而非舊 `languages`），超限丟 `RATE_LIMITED`→ `db.batch([insert variety, insert first profile])`（atomic，spec §7.2）→ 回 `{variety, profile}`。`community_reason` 存 `meta.reason`。
-- `createProfile(db, varietyCode, body)`：驗證 → 查 variety（不存在丟 `LANGUAGE_NOT_FOUND`）→ 拒絕 profile code 重複（`LANGUAGE_PROFILE_CODE_EXISTS`）→ 拒絕 script/region 名誤用（`/^(hans|hant|latn|cyrl|arab|mong|tibt|guru|tradition|simplified|繁體|简体|简|繁)$/i` 命中 → `LANGUAGE_PROFILE_MISMATCH`，spec §8.2）→ insert profile。
+- `createProfile(db, varietyCode, body)`：驗證 → 查 variety（不存在丟 `LANGUAGE_NOT_FOUND`）→ 拒絕 profile code 重複（`LANGUAGE_PROFILE_CODE_EXISTS`）→ 拒絕 script/region 名誤用（`/^(hans|hant|latn|cyrl|arab|mong|tibt|guru|tradition|simplified|傳承體|简体|简|繁)$/i` 命中 → `LANGUAGE_PROFILE_MISMATCH`，spec §8.2）→ insert profile。
 - `LanguageCreationError` 保留。
 - 常數 `MAX_*`、`DAILY_LIMIT=10` 不變。
 
@@ -1151,7 +1151,7 @@ Contribution batch body field renamed lang -> language_profile_code."
     glottocode: null,
     variety: { name: '河谷新村話', name_en: null, description: '由當地社群使用的粵語變種。',
       reason: 'missing_from_glottolog', alternate_names: [], references: [], parent_languoid_id: null },
-    profile: { name: '繁體', name_en: 'Traditional' },
+    profile: { name: '傳承體', name_en: 'Traditional' },
   };
   ```
   preview 斷言讀 `data.existing_variety`／`data.existing_profile`／`data.canonical_profile_code`；created 斷言讀 `data.variety.origin==='community'` 與 `data.variety.glottocode===null`。
@@ -1282,7 +1282,7 @@ git commit -m "refactor(web): api/store/composable for variety+profile model"
 `web/src/pages/LanguageDetail.vue`：
 - `route.params.code` 是 variety code；`detail(code)` 回 variety 詳情（含 `profiles` 陣列、`representative_cities`、合計 `expression_count`、`mapped_expression_count`）。
 - 標題 `lang.name` + variety code badge；副列 `name_en · glottocode`（移除單一 `script_code`）。
-- 新增 profile 篩選列：`全部` + 每個 profile 一個按鈕（顯示 `p.name`，如「繁體」「簡體」）。`v-model` 一個 `selectedProfile` ref（空字串 = 全部）。單 profile variety 可隱藏篩選列但仍顯示 content tag。
+- 新增 profile 篩選列：`全部` + 每個 profile 一個按鈕（顯示 `p.name`，如「傳承體」「簡體」）。`v-model` 一個 `selectedProfile` ref（空字串 = 全部）。單 profile variety 可隱藏篩選列但仍顯示 content tag。
 - `changeSort`／load 用 `expressions(code, { profile_code: selectedProfile, sort, limit })`；切換 profile 時重新 load。
 - ExpressionRow 在混合列表顯示 profile label（見 Task 13 改 ExpressionRow）。
 - URL reload：從 `?profile=` query 初始化 `selectedProfile`（`router.replace` 同步）；避免刷新丟失篩選。
@@ -1316,7 +1316,7 @@ git commit -m "feat(web): variety-aggregated language list + profile filter on d
 
 **Interfaces:**
 - `LanguagePicker` props 不變（`modelValue: string` 仍是 profile code）；emit `update:modelValue` 仍帶 profile code；新增 `emit('profile', profileCode)`。
-- 內部狀態：`selectedVariety: Variety | null`、`selectedProfileCode: string`。選定後顯示 `variety.name` + profile label（如「華語（繁體）」）+ profile code 次要資訊。
+- 內部狀態：`selectedVariety: Variety | null`、`selectedProfileCode: string`。選定後顯示 `variety.name` + profile label（如「華語（傳承體）」）+ profile code 次要資訊。
 
 - [ ] **Step 1: LanguagePicker.vue 兩階段**
 
@@ -1545,8 +1545,8 @@ Expected：後端測試 PASS、前端 build + 測試 PASS、`./build.sh`（web b
 
 - [ ] **Step 6: 貢獻流程提交 profile code（端到端）**
 
-以 `./dev.sh` 啟動的環境，登入後在 `/contribute` 提交一筆華語（繁體）+ 一筆英文 expression：
-- picker 第一步選「華語」、第二步選「繁體」；確認提交 body 為 `{ language_profile_code: 'cmn-Hant', text, ... }`（瀏覽器 devtools network 驗證）。
+以 `./dev.sh` 啟動的環境，登入後在 `/contribute` 提交一筆華語（傳承體）+ 一筆英文 expression：
+- picker 第一步選「華語」、第二步選「傳承體」；確認提交 body 為 `{ language_profile_code: 'cmn-Hant', text, ... }`（瀏覽器 devtools network 驗證）。
 - 單 profile variety（如 `und` 或單一 `ja`）picker 自動跳過第二步。
 
 Expected：貢獻成功、`/language/cmn` 詳情頁 profile 篩選可見該筆、profile 篩選切換正確。

@@ -155,7 +155,7 @@ Added: 2005-10-16
                     "origin": "seed",
                     "reason": "existing-online-code",
                     "profiles": [
-                        {"code": "nan-Hant-x-chao1238", "name": "繁體", "name_en": "Traditional"},
+                        {"code": "nan-Hant-x-chao1238", "name": "傳承體", "name_en": "Traditional"},
                     ],
                 },
                 {
@@ -617,7 +617,7 @@ Added: 2005-10-16
             [
                 ("en-US", "English", "en", "", "US", "glotto:stan1293"),
                 ("ja-JP", "日本語", "ja", "", "JP", "glotto:nucl1643"),
-                ("zh-Hant-TW", "繁體中文", "zh", "Hant", "TW", "glotto:mand1415"),
+                ("zh-Hant-TW", "傳承體中文", "zh", "Hant", "TW", "glotto:mand1415"),
                 ("yue-Hant-HK", "粵語", "yue", "Hant", "HK", "glotto:yuec1235"),
                 ("yue-Hant-MO", "粵語", "yue", "Hant", "MO", "glotto:yuec1235"),
             ],
@@ -632,7 +632,7 @@ Added: 2005-10-16
         )
         db.executemany(
             "INSERT INTO ui_locales (project_id, code, native_name, fallback_code) VALUES ('langmap-web', ?, ?, ?)",
-            [("en-US", "English", None), ("ja-JP", "日本語", "en-US"), ("zh-Hant-TW", "繁體中文", "en-US")],
+            [("en-US", "English", None), ("ja-JP", "日本語", "en-US"), ("zh-Hant-TW", "傳承體中文", "en-US")],
         )
 
         db.executescript(migration_path.read_text())

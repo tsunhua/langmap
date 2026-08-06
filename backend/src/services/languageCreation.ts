@@ -55,7 +55,7 @@ export const CreateProfileSchema = z.object({
   profile: ProfileMetadataSchema,
 });
 
-const SCRIPT_NAME_RE = /^(tradition|simplified|繁體|简体|简|繁)$/i;
+const SCRIPT_NAME_RE = /^(tradition|simplified|傳承體|简体|简|繁)$/i;
 
 interface D1Statement {
   bind(...args: unknown[]): {

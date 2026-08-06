@@ -42,7 +42,7 @@ UI locale 層額外需要入站別名映射，原因：瀏覽器 `Accept-Languag
 | 中國大陸 | 簡體 | 普通话 |
 | 新加坡 | 簡體 | 华语 |
 | 馬來西亞華人 | 簡體 | 华语 |
-| 臺灣 | 繁體 | 國語 / 華語 |
+| 臺灣 | 傳承體 | 國語 / 華語 |
 
 `cmn-Hans` 同時涵蓋大陸與新加坡（其代表城市正是 Beijing 與 Singapore），因此不能命名為「普通话」—— 那專指大陸標準語，會對新加坡使用者貼錯標籤。「华语」是跨政體的中性自稱，新加坡官方「講華語運動」即用此名，大陸亦通用。
 
@@ -57,7 +57,7 @@ UI locale 層額外需要入站別名映射，原因：瀏覽器 `Accept-Languag
 
 `sync_language_registry.py:313` 目前硬編碼 `"alternate_names_json": "[]"`，需改為讀取 seed 的 `alternate_names` 欄位並以 `json.dumps(..., ensure_ascii=False, separators=(",", ":"))` 序列化，缺欄位時維持 `[]`。此變更對其他語言條目無影響（皆未提供該欄位）。
 
-`ui_locales.native_name` 現為「简体中文」/「繁體中文」，同步改為「华语」/「華語」，與 `languages.name` 一致。
+`ui_locales.native_name` 現為「简体中文」/「傳承體中文」，同步改為「华语」/「華語」，與 `languages.name` 一致。
 
 ### B. 資料庫 migration
 

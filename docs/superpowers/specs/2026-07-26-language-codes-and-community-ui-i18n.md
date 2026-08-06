@@ -151,8 +151,8 @@ language[-Script][-REGION][-variant...][-x-private...]
 | 情況 | Canonical content tag | Languoid |
 |---|---|---|
 | 一般英文 | `en` | 對應的 English languoid |
-| 臺灣華語繁體字內容 | `cmn-Hant-TW` | `glotto:mand1415` |
-| 潮州話繁體字 | `nan-Hant-x-chao1238` | `glotto:chao1238` |
+| 臺灣華語傳承體字內容 | `cmn-Hant-TW` | `glotto:mand1415` |
+| 潮州話傳承體字 | `nan-Hant-x-chao1238` | `glotto:chao1238` |
 | 潮州話拉丁字 | `nan-Latn-x-chao1238` | `glotto:chao1238` |
 | 尚無合適 base 的 Glottolog 方言 | `und-x-abcd1234` | `glotto:abcd1234` |
 

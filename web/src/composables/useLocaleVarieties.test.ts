@@ -33,7 +33,7 @@ describe('splitVarietyAndScript', () => {
 
   it('splits trailing fullwidth parens into script label', () => {
     expect(splitVarietyAndScript('華語（簡體）')).toEqual({ variety: '華語', scriptLabel: '簡體' })
-    expect(splitVarietyAndScript('華語（繁體）')).toEqual({ variety: '華語', scriptLabel: '繁體' })
+    expect(splitVarietyAndScript('華語（傳承體）')).toEqual({ variety: '華語', scriptLabel: '傳承體' })
   })
 
   it('does not split non-trailing parens', () => {
@@ -47,7 +47,7 @@ describe('groupLocalesByVariety', () => {
     { code: 'es', name: 'Spanish', native_name: 'Español', status: 'active' },
     { code: 'ja', name: 'Japanese', native_name: '日本語', status: 'active' },
     { code: 'cmn-Hans', name: 'Simplified', native_name: '華語（簡體）', status: 'active' },
-    { code: 'cmn-Hant', name: 'Traditional', native_name: '華語（繁體）', status: 'active' },
+    { code: 'cmn-Hant', name: 'Traditional', native_name: '華語（傳承體）', status: 'active' },
   ]
 
   it('groups the 5 first-party locales into 4 variety groups', () => {
@@ -74,7 +74,7 @@ describe('groupLocalesByVariety', () => {
     const cmn = groups.find(g => g.base === 'cmn')!
     expect(cmn.varietyLabel).toBe('華語')
     expect(cmn.items.map(i => i.code)).toEqual(['cmn-Hans', 'cmn-Hant'])
-    expect(cmn.items.map(i => i.scriptLabel)).toEqual(['簡體', '繁體'])
+    expect(cmn.items.map(i => i.scriptLabel)).toEqual(['簡體', '傳承體'])
   })
 
   it('returns an empty array for no locales', () => {
