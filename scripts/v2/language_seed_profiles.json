@@ -607,7 +607,7 @@
       "id": "01K1GWHD00SMQPS4JYFY690ASC",
       "code": "nan",
       "name": "閩南語",
-      "name_en": "Min Nan",
+      "name_en": "Hokkien (Min Nan)",
       "glottocode": "minn1241",
       "origin": "seed",
       "reason": "major-east-asia-language",
@@ -617,22 +617,26 @@
         {
           "code": "nan-Hans",
           "name": "简体",
-          "name_en": "Simplified"
+          "name_en": "Simplified",
+          "endonym": "闽南语"
         },
         {
           "code": "nan-Hant",
           "name": "傳承體",
-          "name_en": "Traditional"
+          "name_en": "Traditional",
+          "endonym": "閩南語"
         },
         {
-          "code": "nan-Latn-TW-pehoeji",
+          "code": "nan-Latn-pehoeji",
           "name": "Tâi-oân Ōe",
-          "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)"
+          "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)",
+          "endonym": "Tâi-oân Ōe"
         },
         {
-          "code": "nan-Latn-TW-tailo",
+          "code": "nan-Latn-tailo",
           "name": "Tâi-uân Uē",
-          "name_en": "Taiwanese Hokkien (Tâi-lô)"
+          "name_en": "Taiwanese Hokkien (Tâi-lô)",
+          "endonym": "Tâi-uân Uē"
         }
       ]
     },
@@ -650,17 +654,20 @@
         {
           "code": "nan-Hans-x-chao1238",
           "name": "简体",
-          "name_en": "Simplified"
+          "name_en": "Simplified",
+          "endonym": "潮州话"
         },
         {
           "code": "nan-Hant-x-chao1238",
           "name": "傳承體",
-          "name_en": "Traditional"
+          "name_en": "Traditional",
+          "endonym": "潮州話"
         },
         {
           "code": "nan-Latn-x-chao1238",
           "name": "Tiê-chiu-uē",
-          "name_en": "Chaozhou (Latin)"
+          "name_en": "Chaozhou (Latin)",
+          "endonym": "Tiê-chiu-uē"
         }
       ]
     },
@@ -1566,17 +1573,115 @@
       }
     },
     {
-      "city_name": "Taipei",
-      "city_name_en": "Taipei",
+      "city_name": "Tainan",
+      "city_name_en": "Tainan",
       "territory_code": "TW",
       "script_code": "Hant",
-      "latitude": 25.033,
-      "longitude": 121.5654,
+      "latitude": 22.9997,
+      "longitude": 120.227,
       "reference": "https://glottolog.org/resource/languoid/id/minn1241",
       "variety_code": "nan",
       "city_name_localized": {
-        "nan-Hans": "台北",
-        "nan-Hant": "台北"
+        "nan-Hans": "台南",
+        "nan-Hant": "台南"
+      }
+    },
+    {
+      "city_name": "Kaohsiung",
+      "city_name_en": "Kaohsiung",
+      "territory_code": "TW",
+      "script_code": "Hant",
+      "latitude": 22.6273,
+      "longitude": 120.3014,
+      "reference": "https://glottolog.org/resource/languoid/id/minn1241",
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "高雄",
+        "nan-Hant": "高雄"
+      }
+    },
+    {
+      "city_name": "Zhangzhou",
+      "city_name_en": "Zhangzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 24.5133,
+      "longitude": 117.6471,
+      "reference": "https://glottolog.org/resource/languoid/id/minn1241",
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "漳州",
+        "nan-Hant": "漳州"
+      }
+    },
+    {
+      "city_name": "Quanzhou",
+      "city_name_en": "Quanzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 24.8741,
+      "longitude": 118.6757,
+      "reference": "https://glottolog.org/resource/languoid/id/minn1241",
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "泉州",
+        "nan-Hant": "泉州"
+      }
+    },
+    {
+      "city_name": "Chaozhou",
+      "city_name_en": "Chaozhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 23.6667,
+      "longitude": 116.6333,
+      "reference": "https://glottolog.org/resource/languoid/id/chao1238",
+      "variety_code": "nan-x-chao1238",
+      "city_name_localized": {
+        "nan-Hans-x-chao1238": "潮州",
+        "nan-Hant-x-chao1238": "潮州"
+      }
+    },
+    {
+      "city_name": "Shantou",
+      "city_name_en": "Shantou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 23.3541,
+      "longitude": 116.682,
+      "reference": "https://glottolog.org/resource/languoid/id/chao1238",
+      "variety_code": "nan-x-chao1238",
+      "city_name_localized": {
+        "nan-Hans-x-chao1238": "汕头",
+        "nan-Hant-x-chao1238": "汕頭"
+      }
+    },
+    {
+      "city_name": "Jieyang",
+      "city_name_en": "Jieyang",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 23.5498,
+      "longitude": 116.3726,
+      "reference": "https://glottolog.org/resource/languoid/id/chao1238",
+      "variety_code": "nan-x-chao1238",
+      "city_name_localized": {
+        "nan-Hans-x-chao1238": "揭阳",
+        "nan-Hant-x-chao1238": "揭陽"
+      }
+    },
+    {
+      "city_name": "Bangkok",
+      "city_name_en": "Bangkok",
+      "territory_code": "TH",
+      "script_code": "",
+      "latitude": 13.7563,
+      "longitude": 100.5018,
+      "reference": "https://glottolog.org/resource/languoid/id/chao1238",
+      "variety_code": "nan-x-chao1238",
+      "city_name_localized": {
+        "nan-Hans-x-chao1238": "曼谷",
+        "nan-Hant-x-chao1238": "曼谷"
       }
     },
     {
@@ -1742,6 +1847,20 @@
         "csp-Hans": "南宁",
         "csp-Hant": "南寧"
       }
+    },
+    {
+      "city_name": "Penang",
+      "city_name_en": "Penang",
+      "territory_code": "MY",
+      "script_code": "",
+      "latitude": 5.4141,
+      "longitude": 100.3288,
+      "reference": "https://glottolog.org/resource/languoid/id/minn1241",
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "槟城",
+        "nan-Hant": "檳城"
+      }
     }
   ],
   "online_code_migrations": {
@@ -1791,12 +1910,12 @@
         "canonical": "nan-Hant-x-chao1238"
       },
       "nan-Latn-TW-tailo": {
-        "action": "keep",
-        "canonical": "nan-Latn-TW-tailo"
+        "action": "canonicalize",
+        "canonical": "nan-Latn-tailo"
       },
       "nan-Latn-TW-pehoeji": {
-        "action": "keep",
-        "canonical": "nan-Latn-TW-pehoeji"
+        "action": "canonicalize",
+        "canonical": "nan-Latn-pehoeji"
       },
       "zh-Hans": {
         "action": "canonicalize",

@@ -45,12 +45,12 @@
       "canonical": "nan-Hant-x-chao1238"
     },
     "nan-Latn-TW-tailo": {
-      "action": "keep",
-      "canonical": "nan-Latn-TW-tailo"
+      "action": "canonicalize",
+      "canonical": "nan-Latn-tailo"
     },
     "nan-Latn-TW-pehoeji": {
-      "action": "keep",
-      "canonical": "nan-Latn-TW-pehoeji"
+      "action": "canonicalize",
+      "canonical": "nan-Latn-pehoeji"
     },
     "zh-Hans": {
       "action": "canonicalize",

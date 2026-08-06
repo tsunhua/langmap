@@ -536,7 +536,7 @@ Added: 2005-10-16
         han_profiles = {
             v["code"]: v["profiles"]
             for v in profiles["varieties"]
-            if any(p["code"].endswith("-Hans") for p in v["profiles"])
+            if any("-Hans" in p["code"] for p in v["profiles"])
         }
         for loc in profiles["locations"]:
             if loc["variety_code"] not in han_profiles:
@@ -546,7 +546,7 @@ Added: 2005-10-16
             localized = loc["city_name_localized"]
             self.assertEqual(
                 set(localized),
-                {c for c in codes if c.endswith(("-Hans", "-Hant"))},
+                {c for c in codes if "-Hans" in c or "-Hant" in c},
             )
             self.assertTrue(all(v for v in localized.values()), localized)
 

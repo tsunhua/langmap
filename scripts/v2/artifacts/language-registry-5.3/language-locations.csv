@@ -51,8 +51,16 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00NPTA1MPM1ZAPX3XD,Bangkok,Bangkok,{},TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/thai1261
 01K1GWHD00NSRB1JSTEYQRYVTS,Islamabad,Islamabad,{},PK,,33.6844,73.0479,https://glottolog.org/resource/languoid/id/urdu1245
 01K1GWHD00QQYESMP4K7GFBNJZ,Dhaka,Dhaka,{},BD,,23.8103,90.4125,https://glottolog.org/resource/languoid/id/beng1280
-01K1GWHD00SMQPS4JYFY690ASC,Taipei,Taipei,"{""nan-Hans"":""台北"",""nan-Hant"":""台北""}",TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/minn1241
+01K1GWHD00SK6PB7FMMTJYA62J,Bangkok,Bangkok,"{""nan-Hans-x-chao1238"":""曼谷"",""nan-Hant-x-chao1238"":""曼谷""}",TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Chaozhou,Chaozhou,"{""nan-Hans-x-chao1238"":""潮州"",""nan-Hant-x-chao1238"":""潮州""}",CN,Hans,23.6667,116.6333,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Jieyang,Jieyang,"{""nan-Hans-x-chao1238"":""揭阳"",""nan-Hant-x-chao1238"":""揭陽""}",CN,Hans,23.5498,116.3726,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Shantou,Shantou,"{""nan-Hans-x-chao1238"":""汕头"",""nan-Hant-x-chao1238"":""汕頭""}",CN,Hans,23.3541,116.682,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SMQPS4JYFY690ASC,Kaohsiung,Kaohsiung,"{""nan-Hans"":""高雄"",""nan-Hant"":""高雄""}",TW,Hant,22.6273,120.3014,https://glottolog.org/resource/languoid/id/minn1241
+01K1GWHD00SMQPS4JYFY690ASC,Penang,Penang,"{""nan-Hans"":""槟城"",""nan-Hant"":""檳城""}",MY,,5.4141,100.3288,https://glottolog.org/resource/languoid/id/minn1241
+01K1GWHD00SMQPS4JYFY690ASC,Quanzhou,Quanzhou,"{""nan-Hans"":""泉州"",""nan-Hant"":""泉州""}",CN,Hans,24.8741,118.6757,https://glottolog.org/resource/languoid/id/minn1241
+01K1GWHD00SMQPS4JYFY690ASC,Tainan,Tainan,"{""nan-Hans"":""台南"",""nan-Hant"":""台南""}",TW,Hant,22.9997,120.227,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00SMQPS4JYFY690ASC,Xiamen,Xiamen,"{""nan-Hans"":""厦门"",""nan-Hant"":""廈門""}",CN,Hans,24.4798,118.0894,https://glottolog.org/resource/languoid/id/minn1241
+01K1GWHD00SMQPS4JYFY690ASC,Zhangzhou,Zhangzhou,"{""nan-Hans"":""漳州"",""nan-Hant"":""漳州""}",CN,Hans,24.5133,117.6471,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00TEN6QB2KD3B1WPHZ,Guilin,Guilin,"{""cnp-Hans"":""桂林"",""cnp-Hant"":""桂林""}",CN,Hans,25.2742,110.29,https://glottolog.org/resource/languoid/id/nort3268
 01K1GWHD00VS94XSBN1BQKV7E3,ਚੰਡੀਗੜ੍ਹ,Chandigarh,{},IN,Guru,30.7333,76.7794,https://glottolog.org/resource/languoid/id/panj1256
 01K1GWHD00VVTZNFAZAB7SWPDY,Fuzhou,Fuzhou,"{""cdo-Hans"":""福州"",""cdo-Hant"":""福州""}",CN,Hans,26.0745,119.2965,https://glottolog.org/resource/languoid/id/mind1253
