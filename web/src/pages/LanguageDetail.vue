@@ -24,25 +24,30 @@ const sortBy = ref('hot')
 const selectedScript = ref('')
 const loadError = ref('')
 
+function scriptSuffix(profile: any): string {
+  const prefix = profile.base_language ? `${profile.base_language}-` : `${code.value}-`
+  const suffix = profile.code.startsWith(prefix) ? profile.code.slice(prefix.length) : profile.code
+  return suffix.replace(/-x-[^-]+$/, '')
+}
+
 const scripts = computed(() => {
   const profiles: any[] = lang.value?.profiles ?? []
-  const seen = new Map<string, any>()
-  for (const p of profiles) {
-    if (p.script_code && !seen.has(p.script_code)) {
-      seen.set(p.script_code, {
-        code: p.script_code,
-        profileCode: p.code,
-        name: p.name || p.script_code,
-        endonym: p.endonym || '',
-      })
-    }
-  }
-  return [...seen.values()]
+  return profiles.map((p) => ({
+    code: scriptSuffix(p),
+    profileCode: p.code,
+    script_code: p.script_code,
+    name: p.name || p.script_code || p.code,
+    endonym: p.endonym || '',
+  }))
 })
 
-const selectedProfile = computed(() =>
-  scripts.value.find(s => s.code === selectedScript.value),
-)
+const selectedProfile = computed(() => {
+  const bySuffix = scripts.value.find((s) => s.code === selectedScript.value)
+  if (bySuffix) return bySuffix
+  return scripts.value.find((s) => s.script_code === selectedScript.value)
+})
+
+const scriptParam = computed(() => selectedProfile.value?.profileCode)
 
 const title = computed(() =>
   selectedProfile.value?.endonym || lang.value?.name_en || lang.value?.name || '',
@@ -50,7 +55,13 @@ const title = computed(() =>
 
 function cityDisplayName(city: any): string {
   const profileCode = selectedProfile.value?.profileCode
-  if (!profileCode || !city?.city_name_localized) return city?.city_name
+  if (!profileCode) {
+    const en = city?.city_name_en
+    const pinyin = city?.city_name
+    if (en && pinyin && en !== pinyin) return `${en} (${pinyin})`
+    return en || pinyin
+  }
+  if (!city?.city_name_localized) return city?.city_name
   try {
     const localized = JSON.parse(city.city_name_localized)
     return localized[profileCode] || city.city_name
@@ -65,9 +76,9 @@ const filtered = computed(() => {
   return exprs.value.filter((e: any) => e.text.toLowerCase().includes(q))
 })
 
-async function loadScript(script: string) {
+async function loadScript() {
   try {
-    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: script || undefined })
+    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: scriptParam.value })
     exprs.value = data.items
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
@@ -81,8 +92,7 @@ async function load() {
   selectedScript.value = typeof q === 'string' ? q : ''
   try {
     lang.value = await detail(code.value)
-    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: selectedScript.value || undefined })
-    exprs.value = data.items
+    await loadScript()
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
   }
@@ -94,7 +104,7 @@ watch(() => route.query.script, (script) => {
   const next = typeof script === 'string' ? script : ''
   if (next !== selectedScript.value) {
     selectedScript.value = next
-    loadScript(next)
+    loadScript()
   }
 })
 
@@ -107,7 +117,7 @@ const subtitle = computed(() => {
 
 async function changeSort(sort: string) {
   sortBy.value = sort
-  await loadScript(selectedScript.value)
+  await loadScript()
 }
 
 async function changeScript(script: string) {
@@ -117,7 +127,7 @@ async function changeScript(script: string) {
   if (script) query.script = script
   else delete query.script
   router.replace({ query })
-  await loadScript(script)
+  await loadScript()
 }
 </script>
 

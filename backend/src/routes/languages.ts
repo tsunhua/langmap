@@ -197,7 +197,7 @@ languages.get('/:code/expressions', async (c) => {
   const filters = ['p.language_variety_id = ?'];
   const params: (string | number)[] = [variety.id];
   if (script) {
-    filters.push('p.script_code = ?');
+    filters.push('p.code = ?');
     params.push(script);
   }
   const whereSql = filters.join(' AND ');
