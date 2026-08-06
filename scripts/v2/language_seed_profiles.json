@@ -664,7 +664,7 @@
           "endonym": "潮州話（潮汕話）"
         },
         {
-          "code": "nan-Latn-x-chao1238",
+          "code": "nan-Latn-pehoeji-x-chao1238",
           "name": "Tiê-chiu-uē",
           "name_en": "Chaozhou (Latin)",
           "endonym": "Tiê-chiu-uē"
@@ -1916,6 +1916,10 @@
       "nan-Latn-TW-pehoeji": {
         "action": "canonicalize",
         "canonical": "nan-Latn-pehoeji"
+      },
+      "nan-Latn-x-chao1238": {
+        "action": "canonicalize",
+        "canonical": "nan-Latn-pehoeji-x-chao1238"
       },
       "zh-Hans": {
         "action": "canonicalize",

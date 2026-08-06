@@ -26,7 +26,7 @@ LangMap 採「底層精確、上層合併」的兩層語言模型：
 | `cmn-Hans` | `glotto:mand1415` | 華語（簡體） |
 | `cmn-Hant` | `glotto:mand1415` | 華語（傳承體） |
 | `nan-Hant-x-chao1238` | `glotto:chao1238` | 潮州話（傳承體） |
-| `nan-Latn-x-chao1238` | `glotto:chao1238` | 潮州話（拉丁字） |
+| `nan-Latn-pehoeji-x-chao1238` | `glotto:chao1238` | 潮州話（拉丁字） |
 
 這個底層精度本身有價值，但目前 API 與 UI 又把每個 profile 當成一種獨立「語言」，造成：
 

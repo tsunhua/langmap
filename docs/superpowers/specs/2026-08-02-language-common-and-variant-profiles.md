@@ -43,7 +43,7 @@ UI locale 是另一個概念，但第一方英文介面沒有使用美國特有�
 
 - `nan-Hant-x-chao1238`
 - `nan-Hans-x-chao1238`
-- `nan-Latn-x-chao1238`
+- `nan-Latn-pehoeji-x-chao1238`
 
 三者共用 `variety_key = glotto:chao1238` 與 `glottocode = chao1238`。較上層的
 `chao1239` 不作為具體潮州話內容 profile。

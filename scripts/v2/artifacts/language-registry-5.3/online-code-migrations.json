@@ -52,6 +52,10 @@
       "action": "canonicalize",
       "canonical": "nan-Latn-pehoeji"
     },
+    "nan-Latn-x-chao1238": {
+      "action": "canonicalize",
+      "canonical": "nan-Latn-pehoeji-x-chao1238"
+    },
     "zh-Hans": {
       "action": "canonicalize",
       "canonical": "cmn-Hans"

@@ -121,6 +121,12 @@
       "filename": "0021_canonicalize_nan_romanization_variants.sql",
       "size": 2116,
       "sha256": "365bda472cddeb432d1dd11d35dfdc2c68b449c047e3590269875c61d895ac7c"
+    },
+    {
+      "sequence": 22,
+      "filename": "0022_canonicalize_chao_latin_profile.sql",
+      "size": 1624,
+      "sha256": "5e96c48d110a3f9c8f296ac0951626fae1750a35d9282b2ef2ded22fa7a5e405"
     }
   ]
 }

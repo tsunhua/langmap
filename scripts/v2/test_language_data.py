@@ -482,7 +482,7 @@ Added: 2005-10-16
         self.assertEqual({p["code"] for p in chao["profiles"]}, {
             "nan-Hans-x-chao1238",
             "nan-Hant-x-chao1238",
-            "nan-Latn-x-chao1238",
+            "nan-Latn-pehoeji-x-chao1238",
         })
         self.assertNotIn("nan-x-chao1239", varieties)
 
