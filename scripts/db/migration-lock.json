@@ -115,6 +115,12 @@
       "filename": "0020_add_city_name_localized.sql",
       "size": 444,
       "sha256": "206bc89be0d700138c98d6f52c46e238ee1ed7cb4de12ab081b5938af6fde8f7"
+    },
+    {
+      "sequence": 21,
+      "filename": "0021_canonicalize_nan_romanization_variants.sql",
+      "size": 2116,
+      "sha256": "365bda472cddeb432d1dd11d35dfdc2c68b449c047e3590269875c61d895ac7c"
     }
   ]
 }

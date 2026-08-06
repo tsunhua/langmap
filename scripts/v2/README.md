@@ -208,7 +208,7 @@ python3 sync_language_registry.py \
 ### 既有 canonical code 不變
 
 migration 完成後，既有合法 `languages.code`（如 `en-US`、`zh-Hant-TW`、
-`nan-Latn-TW-tailo`）保持不變。`expressions.language_code`、
+`nan-Latn-tailo`）保持不變。`expressions.language_code`、
 `ui_locales.code` 等引用欄位同步更新至新表中的 canonical code。
 只有少數不合法或非 canonical 的舊 code 才在 migration 中被明確映射。
 
@@ -335,7 +335,7 @@ identity，因此不會複製進 `languoids`。展開規則保存在
 `en-US`、`en-GB` 與 `pt-BR`；代表性城市或主要使用地不構成 region 的理由。
 漢字及其他多書寫系統以 script profile 表達，例如 `zh-Hans`、`zh-Hant`、
 `yue-Hans`、`yue-Hant`。具正式正字法 variant 的
-`nan-Latn-TW-tailo`、`nan-Latn-TW-pehoeji` 則保留其完整 registered prefix。
+`nan-Latn-tailo`、`nan-Latn-pehoeji` 使用其完整 registered prefix。
 注音只限定生成 `zh-Bopo-TW`（純注音）與 `zh-Hanb-TW`（漢字搭配注音），
 不套用到其他 Sinitic language 或 dialect。
 registry 只輸出經策展的 content profiles，不從城市資料反向展開 region。
@@ -344,16 +344,18 @@ registry 只輸出經策展的 content profiles，不從城市資料反向展開
 IANA variant 的 `Prefix` 不保證包含書寫系統；`variant_scripts` 保存有來源
 依據的補充，例如 Unifon、Ladin 各書寫標準及 Latgalian 1929/2007 正字法
 均補為 `Latn`。這是 variant metadata，不以名稱猜測未知項目。
-已有更具體線上標籤的 `nan-Latn-TW-tailo`／`pehoeji` 會取代無地區的
-泛化 variant tag。
+舊線上標籤 `nan-Latn-TW-tailo`／`nan-Latn-TW-pehoeji`（region 位在
+variant 前，未於 IANA 註冊）會正規化為無地區的 `nan-Latn-tailo`／
+`nan-Latn-pehoeji`。
 Glottolog Sinitic 分支下的其他 language 一律生成 `Hans`、`Hant`、`Latn`
 三種 script；沒有獨立 ISO code 的 dialect 生成
 `base-Hans/Hant/Latn-x-<glottocode>`，但不繼承任何 region。
 
 `required_online_codes` 是硬性資料契約：現有線上詞句使用的 code 必須能解析
 到指定 Glottocode 並出現在輸出。舊資料中的 `nan-TW-Latn-tailo` 與
-`nan-TW-Latn-pehoeji` 因 script/region 次序不符合 BCP 47，分別遷移至
-`nan-Latn-TW-tailo` 與 `nan-Latn-TW-pehoeji`，不作 runtime alias。
+`nan-TW-Latn-pehoeji` 因 script/region 次序不符合 BCP 47，與後續的
+`nan-Latn-TW-tailo`／`nan-Latn-TW-pehoeji` 一併遷移至無地區的
+`nan-Latn-tailo`／`nan-Latn-pehoeji`（見 migration 0021），不作 runtime alias。
 
 `x-emoji` 與 `x-image` 是 private-use-only 的非語言內容類型，不建立
 Glottolog identity；輸出中的 `languoid_id` 為空，且預設不啟用。白名單只

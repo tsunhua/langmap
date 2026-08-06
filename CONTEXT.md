@@ -9,7 +9,7 @@ LangMap 是收集世界各地語言詞句、展示跨語言對照的社群平台
 _Avoid_: language profile、書寫系統、BCP 47 tag
 
 **內容 Profile (Language Profile)**:
-一個語言變體下，用 canonical BCP 47 tag 精確描述書寫系統、地區或其他內容差異的形式，例如 `cmn-Hant` 或 `nan-Latn-TW-tailo`。
+一個語言變體下，用 canonical BCP 47 tag 精確描述書寫系統、地區或其他內容差異的形式，例如 `cmn-Hant` 或 `nan-Latn-tailo`。
 _Avoid_: 語言、語言變體、UI locale
 
 **詞句 (Expression)**:

@@ -11,7 +11,7 @@
 LangMap 採「底層精確、上層合併」的兩層語言模型：
 
 - **語言變體（language variety）**是使用者瀏覽、搜尋、統計與貢獻時認知的語言或方言，例如華語、粵語、潮州話；它另有可讀、穩定的公開 code。
-- **內容 profile（language profile）**是該語言變體下精確的 canonical BCP 47 content tag，例如 `cmn-Hant`、`cmn-Hans`、`nan-Latn-TW-tailo`。
+- **內容 profile（language profile）**是該語言變體下精確的 canonical BCP 47 content tag，例如 `cmn-Hant`、`cmn-Hans`、`nan-Latn-tailo`。
 
 詞句繼續綁定精確 profile，以保存書寫系統、地區與 variant 資訊；語言列表、語言詳情與「語言數」則以 variety 為主要單位。新增 script profile 不再造成使用者看到的語言數增加，也不再把同一社群切成多個互不相干的入口。
 
