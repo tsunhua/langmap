@@ -163,6 +163,8 @@ class GenerateBundleTests(unittest.TestCase):
               native_name TEXT NOT NULL,
               direction TEXT NOT NULL,
               status TEXT NOT NULL,
+              mapping_revision INTEGER NOT NULL DEFAULT 0,
+              updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (project_id, code)
             );
             CREATE TABLE ui_messages (
@@ -197,7 +199,7 @@ class GenerateBundleTests(unittest.TestCase):
             [
                 ("en", "ven", "標準", "", "ltr"),
                 ("cmn-Hans", "vcmn", "简体", "Hans", "ltr"),
-                ("cmn-Hant", "vcmn", "繁體", "Hant", "ltr"),
+                ("cmn-Hant", "vcmn", "傳承體", "Hant", "ltr"),
                 ("es", "ves", "標準", "", "ltr"),
                 ("ja", "vja", "標準", "", "ltr"),
             ],
@@ -254,6 +256,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertIn("-- Locale en", sql_text)
             self.assertIn("INSERT OR IGNORE INTO ui_messages", sql_text)
             self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
+            self.assertIn("UPDATE ui_locales SET mapping_revision", sql_text)
             self.assertNotIn("DELETE FROM", sql_text)
             self.assertIn("Don''t have an account?", sql_text)
             self.assertLess(sql_text.index("-- Locale es"), sql_text.index("-- Locale ja"))
@@ -268,11 +271,21 @@ class GenerateBundleTests(unittest.TestCase):
                     table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
                     for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
                 }
+                first_revisions = dict(
+                    db.execute(
+                        "SELECT code, mapping_revision FROM ui_locales ORDER BY code"
+                    ).fetchall()
+                )
                 db.executescript(sql_text)
                 second_counts = {
                     table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
                     for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
                 }
+                second_revisions = dict(
+                    db.execute(
+                        "SELECT code, mapping_revision FROM ui_locales ORDER BY code"
+                    ).fetchall()
+                )
                 native_names = dict(
                     db.execute(
                         "SELECT code, native_name FROM ui_locales ORDER BY code"
@@ -283,11 +296,25 @@ class GenerateBundleTests(unittest.TestCase):
 
             self.assertEqual(second_counts, first_counts)
 
+            # Each bundle import must bump the revision so that the ETag derived
+            # from mapping_revision no longer matches stale client bundles.
+            self.assertEqual(
+                first_revisions,
+                {
+                    "cmn-Hans": 1,
+                    "cmn-Hant": 1,
+                    "en": 1,
+                    "es": 1,
+                    "ja": 1,
+                },
+            )
+            self.assertEqual(second_revisions, {code: rev + 1 for code, rev in first_revisions.items()})
+
             self.assertEqual(
                 native_names,
                 {
                     "cmn-Hans": "華語（简体）",
-                    "cmn-Hant": "華語（繁體）",
+                    "cmn-Hant": "華語（傳承體）",
                     "en": "English",
                     "es": "Español",
                     "ja": "日本語",

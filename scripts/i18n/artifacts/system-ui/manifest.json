@@ -41,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "11d696dbc10bc61dafe43d31d46c7c297281fffabc584364875be2b719bac049"
+      "sha256": "9cdc24c8821068079f916dfe63f2b15357dcf1997d71b5ee698658ef24eba71d"
     }
   }
 }

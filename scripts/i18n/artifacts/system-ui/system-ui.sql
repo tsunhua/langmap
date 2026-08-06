@@ -16831,4 +16831,20 @@ VALUES ('5007642036856395-8771951513286657', 5007642036856395, 8771951513286657,
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('5667601297578574-8771951513286657', 5667601297578574, 8771951513286657, 0, 'ui_i18n');
 
+-- 4. Bump mapping revision so clients revalidate stale bundles
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = 'langmap-web' AND code = 'cmn-Hans';
+
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = 'langmap-web' AND code = 'cmn-Hant';
+
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = 'langmap-web' AND code = 'en';
+
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = 'langmap-web' AND code = 'es';
+
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = 'langmap-web' AND code = 'ja';
+
 -- Done

@@ -269,6 +269,16 @@ VALUES ('{edge_id}', {a}, {b}, 0, 'ui_i18n');
             )
             lines.append('')
 
+    lines.append(f'-- 4. Bump mapping revision so clients revalidate stale bundles')
+    for locale_code in managed_locale_codes:
+        lines.append(
+            f"""
+UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
+WHERE project_id = '{i18n_sql.PROJECT_ID}' AND code = '{locale_code}';
+""".strip()
+        )
+        lines.append('')
+
     lines.append('-- Done')
     return '\n'.join(lines)
 
