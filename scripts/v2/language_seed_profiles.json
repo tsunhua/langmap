@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "varieties": [
     {
       "id": "01K1GWHD005HX5VM8BRKQQCJD9",
@@ -73,7 +73,7 @@
         },
         {
           "code": "cdo-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -96,7 +96,7 @@
         },
         {
           "code": "cjy-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -126,7 +126,7 @@
         },
         {
           "code": "cmn-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional",
           "endonym": "華語"
         }
@@ -150,7 +150,7 @@
         },
         {
           "code": "cnp-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -173,7 +173,7 @@
         },
         {
           "code": "cpx-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -196,7 +196,7 @@
         },
         {
           "code": "csp-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -219,7 +219,7 @@
         },
         {
           "code": "czo-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -342,7 +342,7 @@
         },
         {
           "code": "gan-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -365,7 +365,7 @@
         },
         {
           "code": "hak-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -406,7 +406,7 @@
         },
         {
           "code": "hsn-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -580,7 +580,7 @@
         },
         {
           "code": "mnp-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -621,7 +621,7 @@
         },
         {
           "code": "nan-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         },
         {
@@ -654,7 +654,7 @@
         },
         {
           "code": "nan-Hant-x-chao1238",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         },
         {
@@ -885,7 +885,7 @@
         },
         {
           "code": "wuu-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -908,7 +908,7 @@
         },
         {
           "code": "wuu-Hant-x-ouji1238",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -931,7 +931,7 @@
         },
         {
           "code": "wuu-Hant-x-taiz1238",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]
@@ -990,7 +990,7 @@
         },
         {
           "code": "yue-Hant",
-          "name": "繁體",
+          "name": "傳承體",
           "name_en": "Traditional"
         }
       ]

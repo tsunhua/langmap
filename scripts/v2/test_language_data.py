@@ -488,7 +488,7 @@ Added: 2005-10-16
 
     def test_seed_profiles_register_all_chinese_varieties(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        self.assertEqual(profiles["version"], 5)
+        self.assertEqual(profiles["version"], 8)
         varieties = {v["code"]: v for v in profiles["varieties"]}
         expected = {
             "cjy": ("晉語", "Jin Chinese", "jiny1235"),

@@ -103,6 +103,12 @@
       "filename": "0018_add_profile_endonym.sql",
       "size": 531,
       "sha256": "96787edf156672a27fcad255b0104618ec52e653080a792722349a393171022d"
+    },
+    {
+      "sequence": 19,
+      "filename": "0019_rename_hant_profile_label.sql",
+      "size": 344,
+      "sha256": "bc71146e222d9b8a9ab646c457315df520c85d6d45f40c371c63a0ac35d4db7b"
     }
   ]
 }
