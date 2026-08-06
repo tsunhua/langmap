@@ -131,11 +131,17 @@ async function changeScript(script: string) {
 
     <div class="ld-title">
       <h1>{{ title }}</h1>
-      <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
-        <button :class="{ on: selectedScript === '' }" @click="changeScript('')">{{ t('languageDetail.allScripts') }} ({{ lang.code }})</button>
-        <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">{{ s.name }} ({{ s.profileCode }})</button>
-      </div>
-      <span v-else class="lang-badge">{{ lang.code }}</span>
+      <span v-if="scripts.length <= 1" class="lang-badge">{{ lang.code }}</span>
+    </div>
+    <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
+      <button :class="{ on: selectedScript === '' }" @click="changeScript('')">
+        <span>{{ t('languageDetail.allScripts') }}</span>
+        <small>{{ lang.code }}</small>
+      </button>
+      <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">
+        <span>{{ s.name }}</span>
+        <small>{{ s.profileCode }}</small>
+      </button>
     </div>
     <p class="ld-sub" v-if="subtitle">{{ subtitle }}</p>
 
@@ -190,10 +196,13 @@ async function changeScript(script: string) {
 .ld-sort button:hover { color: var(--fg); }
 .ld-sort button.on { background: var(--fg); color: var(--surface); }
 .ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.ld-scripts { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; align-self: center; }
-.ld-scripts button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 26px; padding: 0 12px; transition: background 0.15s, color 0.15s; }
+.ld-scripts { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 6px 0; }
+.ld-scripts button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: none; background: var(--surface); color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.1; height: 40px; padding: 0 14px; transition: background 0.15s, color 0.15s; }
+.ld-scripts button small { font-size: 9px; letter-spacing: 0.08em; opacity: 0.7; }
 .ld-scripts button:hover { color: var(--fg); }
+.ld-scripts button:hover small { opacity: 0.9; }
 .ld-scripts button.on { background: var(--fg); color: var(--surface); }
+.ld-scripts button.on small { opacity: 0.75; }
 .ld-scripts button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 @media (max-width: 640px) {
   .ld-scripts button { height: 44px; padding: 0 16px; }
