@@ -348,7 +348,8 @@ def seed_profile_rows(
 
 
 LOCATION_FIELDS = (
-    "language_variety_id", "city_name", "city_name_en", "territory_code", "script_code",
+    "language_variety_id", "city_name", "city_name_en", "city_name_localized",
+    "territory_code", "script_code",
     "latitude", "longitude", "reference",
 )
 
@@ -398,10 +399,18 @@ def seed_location_rows(
         if key in seen:
             raise ValueError(f"duplicate location: {key}")
         seen.add(key)
+        localized = entry.get("city_name_localized", {})
+        if isinstance(localized, str):
+            localized_raw = localized.strip() or "{}"
+        elif isinstance(localized, dict):
+            localized_raw = json.dumps(localized, ensure_ascii=False, separators=(",", ":"))
+        else:
+            raise ValueError("location city_name_localized 必須是 JSON object 或字串")
         yield {
             "language_variety_id": variety_id,
             "city_name": city_name,
             "city_name_en": str(entry.get("city_name_en", "")).strip(),
+            "city_name_localized": localized_raw,
             "territory_code": territory_code,
             "script_code": script_code,
             "latitude": str(latitude),
@@ -564,7 +573,8 @@ def render_location_insert(row: dict[str, str]) -> str:
     return (
         f"INSERT INTO language_locations ({cols}) VALUES ({vals}) "
         "ON CONFLICT(language_variety_id, city_name, territory_code, script_code) DO UPDATE SET "
-        "city_name_en=excluded.city_name_en, latitude=excluded.latitude, "
+        "city_name_en=excluded.city_name_en, city_name_localized=excluded.city_name_localized, "
+        "latitude=excluded.latitude, "
         "longitude=excluded.longitude, reference=excluded.reference;"
     )
 

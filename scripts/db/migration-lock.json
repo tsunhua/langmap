@@ -109,6 +109,12 @@
       "filename": "0019_rename_hant_profile_label.sql",
       "size": 344,
       "sha256": "bc71146e222d9b8a9ab646c457315df520c85d6d45f40c371c63a0ac35d4db7b"
+    },
+    {
+      "sequence": 20,
+      "filename": "0020_add_city_name_localized.sql",
+      "size": 444,
+      "sha256": "206bc89be0d700138c98d6f52c46e238ee1ed7cb4de12ab081b5938af6fde8f7"
     }
   ]
 }

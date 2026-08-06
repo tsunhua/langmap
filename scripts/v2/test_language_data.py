@@ -531,6 +531,25 @@ Added: 2005-10-16
             self.assertEqual(loc["latitude"], lat)
             self.assertEqual(loc["longitude"], lon)
 
+    def test_sinitic_locations_carry_script_localized_names(self):
+        profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
+        han_profiles = {
+            v["code"]: v["profiles"]
+            for v in profiles["varieties"]
+            if any(p["code"].endswith("-Hans") for p in v["profiles"])
+        }
+        for loc in profiles["locations"]:
+            if loc["variety_code"] not in han_profiles:
+                self.assertNotIn("city_name_localized", loc)
+                continue
+            codes = {p["code"] for p in han_profiles[loc["variety_code"]]}
+            localized = loc["city_name_localized"]
+            self.assertEqual(
+                set(localized),
+                {c for c in codes if c.endswith(("-Hans", "-Hant"))},
+            )
+            self.assertTrue(all(v for v in localized.values()), localized)
+
     def test_expression_schema_tracks_common_variant_classification(self):
         schema = (ROOT.parent.parent / "backend/schema.sql").read_text()
         self.assertIn("variation_status TEXT NOT NULL DEFAULT 'unclassified'", schema)

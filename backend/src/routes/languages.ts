@@ -139,7 +139,7 @@ languages.get('/:code', async (c) => {
 
   // representative locations: pick first profile's locations (or all)
   const locations = await c.env.DB.prepare(
-    `SELECT lc.city_name, lc.city_name_en, lc.territory_code, lc.script_code,
+    `SELECT lc.city_name, lc.city_name_en, lc.city_name_localized, lc.territory_code, lc.script_code,
             lc.latitude, lc.longitude, lc.reference
      FROM language_locations lc
      WHERE lc.language_variety_id = ?

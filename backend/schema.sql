@@ -115,6 +115,7 @@ CREATE TABLE language_locations (
     language_variety_id TEXT NOT NULL,
     city_name TEXT NOT NULL,
     city_name_en TEXT,
+    city_name_localized TEXT NOT NULL DEFAULT '{}',
     territory_code TEXT NOT NULL,
     script_code TEXT NOT NULL DEFAULT '',
     latitude REAL NOT NULL,

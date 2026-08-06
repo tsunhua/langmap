@@ -46,6 +46,17 @@ const selectedProfile = computed(() =>
 
 const title = computed(() => selectedProfile.value?.endonym || lang.value?.name || '')
 
+function cityDisplayName(city: any): string {
+  const profileCode = selectedProfile.value?.profileCode
+  if (!profileCode || !city?.city_name_localized) return city?.city_name
+  try {
+    const localized = JSON.parse(city.city_name_localized)
+    return localized[profileCode] || city.city_name
+  } catch {
+    return city.city_name
+  }
+}
+
 const filtered = computed(() => {
   if (!searchQuery.value) return exprs.value
   const q = searchQuery.value.toLowerCase()
@@ -136,7 +147,7 @@ async function changeScript(script: string) {
       <p class="ld-cities-note">{{ t('languageDetail.representativeCitiesNote') }}</p>
       <ul>
         <li v-for="city in lang.representative_cities" :key="`${city.city_name}-${city.territory_code}-${city.script_code}`">
-          <span>{{ city.city_name }}</span>
+          <span>{{ cityDisplayName(city) }}</span>
           <small>{{ city.city_name_en }} · {{ city.territory_code }}<template v-if="city.script_code"> · {{ city.script_code }}</template></small>
         </li>
       </ul>

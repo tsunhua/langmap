@@ -1091,7 +1091,11 @@
       "latitude": 39.9042,
       "longitude": 116.4074,
       "reference": "https://glottolog.org/resource/languoid/id/mand1415",
-      "variety_code": "cmn"
+      "variety_code": "cmn",
+      "city_name_localized": {
+        "cmn-Hans": "北京",
+        "cmn-Hant": "北京"
+      }
     },
     {
       "city_name": "Singapore",
@@ -1101,7 +1105,11 @@
       "latitude": 1.3521,
       "longitude": 103.8198,
       "reference": "https://glottolog.org/resource/languoid/id/mand1415",
-      "variety_code": "cmn"
+      "variety_code": "cmn",
+      "city_name_localized": {
+        "cmn-Hans": "新加坡",
+        "cmn-Hant": "新加坡"
+      }
     },
     {
       "city_name": "Taipei",
@@ -1111,7 +1119,11 @@
       "latitude": 25.033,
       "longitude": 121.5654,
       "reference": "https://glottolog.org/resource/languoid/id/mand1415",
-      "variety_code": "cmn"
+      "variety_code": "cmn",
+      "city_name_localized": {
+        "cmn-Hans": "台北",
+        "cmn-Hant": "台北"
+      }
     },
     {
       "city_name": "Riyadh",
@@ -1421,7 +1433,11 @@
       "latitude": 31.2304,
       "longitude": 121.4737,
       "reference": "https://glottolog.org/resource/languoid/id/wuch1236",
-      "variety_code": "wuu"
+      "variety_code": "wuu",
+      "city_name_localized": {
+        "wuu-Hans": "上海",
+        "wuu-Hant": "上海"
+      }
     },
     {
       "city_name": "Guangzhou",
@@ -1431,7 +1447,11 @@
       "latitude": 23.1291,
       "longitude": 113.2644,
       "reference": "https://glottolog.org/resource/languoid/id/yuec1235",
-      "variety_code": "yue"
+      "variety_code": "yue",
+      "city_name_localized": {
+        "yue-Hans": "广州",
+        "yue-Hant": "廣州"
+      }
     },
     {
       "city_name": "Hong Kong",
@@ -1441,7 +1461,11 @@
       "latitude": 22.3193,
       "longitude": 114.1694,
       "reference": "https://glottolog.org/resource/languoid/id/yuec1235",
-      "variety_code": "yue"
+      "variety_code": "yue",
+      "city_name_localized": {
+        "yue-Hans": "香港",
+        "yue-Hant": "香港"
+      }
     },
     {
       "city_name": "Macau",
@@ -1451,7 +1475,11 @@
       "latitude": 22.1987,
       "longitude": 113.5439,
       "reference": "https://glottolog.org/resource/languoid/id/yuec1235",
-      "variety_code": "yue"
+      "variety_code": "yue",
+      "city_name_localized": {
+        "yue-Hans": "澳门",
+        "yue-Hant": "澳門"
+      }
     },
     {
       "city_name": "Changsha",
@@ -1461,7 +1489,11 @@
       "latitude": 28.2282,
       "longitude": 112.9388,
       "reference": "https://glottolog.org/resource/languoid/id/xian1251",
-      "variety_code": "hsn"
+      "variety_code": "hsn",
+      "city_name_localized": {
+        "hsn-Hans": "长沙",
+        "hsn-Hant": "長沙"
+      }
     },
     {
       "city_name": "Meizhou",
@@ -1471,7 +1503,11 @@
       "latitude": 24.2991,
       "longitude": 116.1225,
       "reference": "https://glottolog.org/resource/languoid/id/hakk1236",
-      "variety_code": "hak"
+      "variety_code": "hak",
+      "city_name_localized": {
+        "hak-Hans": "梅州",
+        "hak-Hant": "梅州"
+      }
     },
     {
       "city_name": "Taipei",
@@ -1481,7 +1517,11 @@
       "latitude": 25.033,
       "longitude": 121.5654,
       "reference": "https://glottolog.org/resource/languoid/id/hakk1236",
-      "variety_code": "hak"
+      "variety_code": "hak",
+      "city_name_localized": {
+        "hak-Hans": "台北",
+        "hak-Hant": "台北"
+      }
     },
     {
       "city_name": "Fuzhou",
@@ -1491,7 +1531,11 @@
       "latitude": 26.0745,
       "longitude": 119.2965,
       "reference": "https://glottolog.org/resource/languoid/id/mind1253",
-      "variety_code": "cdo"
+      "variety_code": "cdo",
+      "city_name_localized": {
+        "cdo-Hans": "福州",
+        "cdo-Hant": "福州"
+      }
     },
     {
       "city_name": "Jian'ou",
@@ -1501,7 +1545,11 @@
       "latitude": 27.039,
       "longitude": 118.321,
       "reference": "https://glottolog.org/resource/languoid/id/minb1236",
-      "variety_code": "mnp"
+      "variety_code": "mnp",
+      "city_name_localized": {
+        "mnp-Hans": "建瓯",
+        "mnp-Hant": "建甌"
+      }
     },
     {
       "city_name": "Xiamen",
@@ -1511,7 +1559,11 @@
       "latitude": 24.4798,
       "longitude": 118.0894,
       "reference": "https://glottolog.org/resource/languoid/id/minn1241",
-      "variety_code": "nan"
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "厦门",
+        "nan-Hant": "廈門"
+      }
     },
     {
       "city_name": "Taipei",
@@ -1521,7 +1573,11 @@
       "latitude": 25.033,
       "longitude": 121.5654,
       "reference": "https://glottolog.org/resource/languoid/id/minn1241",
-      "variety_code": "nan"
+      "variety_code": "nan",
+      "city_name_localized": {
+        "nan-Hans": "台北",
+        "nan-Hant": "台北"
+      }
     },
     {
       "city_name": "Lhasa",
@@ -1611,7 +1667,11 @@
       "latitude": 37.8706,
       "longitude": 112.5489,
       "reference": "https://glottolog.org/resource/languoid/id/jiny1235",
-      "variety_code": "cjy"
+      "variety_code": "cjy",
+      "city_name_localized": {
+        "cjy-Hans": "太原",
+        "cjy-Hant": "太原"
+      }
     },
     {
       "city_name": "Nanchang",
@@ -1621,7 +1681,11 @@
       "latitude": 28.682,
       "longitude": 115.8579,
       "reference": "https://glottolog.org/resource/languoid/id/ganc1239",
-      "variety_code": "gan"
+      "variety_code": "gan",
+      "city_name_localized": {
+        "gan-Hans": "南昌",
+        "gan-Hant": "南昌"
+      }
     },
     {
       "city_name": "Sanming",
@@ -1631,7 +1695,11 @@
       "latitude": 26.2634,
       "longitude": 117.6394,
       "reference": "https://glottolog.org/resource/languoid/id/minz1235",
-      "variety_code": "czo"
+      "variety_code": "czo",
+      "city_name_localized": {
+        "czo-Hans": "三明",
+        "czo-Hant": "三明"
+      }
     },
     {
       "city_name": "Putian",
@@ -1641,7 +1709,11 @@
       "latitude": 25.454,
       "longitude": 119.0078,
       "reference": "https://glottolog.org/resource/languoid/id/puxi1243",
-      "variety_code": "cpx"
+      "variety_code": "cpx",
+      "city_name_localized": {
+        "cpx-Hans": "莆田",
+        "cpx-Hant": "莆田"
+      }
     },
     {
       "city_name": "Guilin",
@@ -1651,7 +1723,11 @@
       "latitude": 25.2742,
       "longitude": 110.29,
       "reference": "https://glottolog.org/resource/languoid/id/nort3268",
-      "variety_code": "cnp"
+      "variety_code": "cnp",
+      "city_name_localized": {
+        "cnp-Hans": "桂林",
+        "cnp-Hant": "桂林"
+      }
     },
     {
       "city_name": "Nanning",
@@ -1661,7 +1737,11 @@
       "latitude": 22.817,
       "longitude": 108.3665,
       "reference": "https://glottolog.org/resource/languoid/id/sout3250",
-      "variety_code": "csp"
+      "variety_code": "csp",
+      "city_name_localized": {
+        "csp-Hans": "南宁",
+        "csp-Hant": "南寧"
+      }
     }
   ],
   "online_code_migrations": {

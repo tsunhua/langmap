@@ -62,6 +62,7 @@ export interface LanguageProfile {
 export interface RepresentativeCity {
   city_name: string
   city_name_en: string | null
+  city_name_localized: string
   territory_code: string
   script_code: string
   latitude: number
