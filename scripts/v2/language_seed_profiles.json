@@ -618,33 +618,33 @@
           "code": "nan-Hans",
           "name": "简体",
           "name_en": "Simplified",
-          "endonym": "闽南语"
+          "endonym": "闽南话（福建话、福佬话、台湾台语）"
         },
         {
           "code": "nan-Hant",
           "name": "傳承體",
           "name_en": "Traditional",
-          "endonym": "閩南語"
+          "endonym": "閩南話（福建話、福佬話、台灣台語）"
         },
         {
           "code": "nan-Latn-pehoeji",
-          "name": "Tâi-oân Ōe",
+          "name": "Pe̍h-ōe-jī",
           "name_en": "Taiwanese Hokkien (Pe̍h-ōe-jī)",
-          "endonym": "Tâi-oân Ōe"
+          "endonym": "Bân-lâm-oē"
         },
         {
           "code": "nan-Latn-tailo",
-          "name": "Tâi-uân Uē",
+          "name": "Tâi-lô",
           "name_en": "Taiwanese Hokkien (Tâi-lô)",
-          "endonym": "Tâi-uân Uē"
+          "endonym": "Bân-lâm-uē"
         }
       ]
     },
     {
       "id": "01K1GWHD00SK6PB7FMMTJYA62J",
       "code": "nan-x-chao1238",
-      "name": "潮州話",
-      "name_en": "Chaozhou (Teochew)",
+      "name": "潮州話（潮汕話）",
+      "name_en": "Teochew (Chaozhou)",
       "glottocode": "chao1238",
       "origin": "seed",
       "reason": "existing-online-code",
@@ -655,13 +655,13 @@
           "code": "nan-Hans-x-chao1238",
           "name": "简体",
           "name_en": "Simplified",
-          "endonym": "潮州话"
+          "endonym": "潮州话（潮汕话）"
         },
         {
           "code": "nan-Hant-x-chao1238",
           "name": "傳承體",
           "name_en": "Traditional",
-          "endonym": "潮州話"
+          "endonym": "潮州話（潮汕話）"
         },
         {
           "code": "nan-Latn-x-chao1238",
@@ -1630,7 +1630,7 @@
     },
     {
       "city_name": "Chaozhou",
-      "city_name_en": "Chaozhou",
+      "city_name_en": "Teochew",
       "territory_code": "CN",
       "script_code": "Hans",
       "latitude": 23.6667,
@@ -1644,7 +1644,7 @@
     },
     {
       "city_name": "Shantou",
-      "city_name_en": "Shantou",
+      "city_name_en": "Swatow",
       "territory_code": "CN",
       "script_code": "Hans",
       "latitude": 23.3541,
@@ -1658,7 +1658,7 @@
     },
     {
       "city_name": "Jieyang",
-      "city_name_en": "Jieyang",
+      "city_name_en": "Kityang",
       "territory_code": "CN",
       "script_code": "Hans",
       "latitude": 23.5498,

@@ -28,7 +28,7 @@ id,code,name,name_en,description,glottocode,origin,community_reason,alternate_na
 01K1GWHD00DFZEPRHD3AP7C028,mnp,閩北語,Min Bei,,minb1236,seed,major-east-asia-language,[],[],glotto:minb1244
 01K1GWHD00XBQFHB2F4R0T1DR4,mr,मराठी,Marathi,,mara1378,seed,major-world-language,[],[],glotto:mode1268
 01K1GWHD00SMQPS4JYFY690ASC,nan,閩南語,Hokkien (Min Nan),,minn1241,seed,major-east-asia-language,[],[],glotto:sout3424
-01K1GWHD00SK6PB7FMMTJYA62J,nan-x-chao1238,潮州話,Chaozhou (Teochew),,chao1238,seed,existing-online-code,[],[],glotto:chao1239
+01K1GWHD00SK6PB7FMMTJYA62J,nan-x-chao1238,潮州話（潮汕話）,Teochew (Chaozhou),,chao1238,seed,existing-online-code,[],[],glotto:chao1239
 01K1GWHD00VS94XSBN1BQKV7E3,pa,ਪੰਜਾਬੀ,Punjabi,,panj1256,seed,major-world-language,[],[],glotto:east2727
 01K1GWHD004R4BD1X7J8MGTBN9,pt,Português,Portuguese,,port1283,seed,major-world-language,[],[],glotto:braz1247
 01K1GWHD00X1HXGAFVSRKXTHF2,ral,Raltic,Raltic,,ralt1242,seed,existing-online-code,[],[],glotto:pait1250

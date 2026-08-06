@@ -45,12 +45,12 @@ mn-Mong,01K1GWHD009CN2616Y0SCY67WF,傳統蒙古文,Traditional Script,,ltr,mn,Mo
 mnp-Hans,01K1GWHD00DFZEPRHD3AP7C028,简体,Simplified,,ltr,mnp,Hans,,[],[]
 mnp-Hant,01K1GWHD00DFZEPRHD3AP7C028,傳承體,Traditional,,ltr,mnp,Hant,,[],[]
 mr,01K1GWHD00XBQFHB2F4R0T1DR4,標準,Marathi,,ltr,mr,,,[],[]
-nan-Hans,01K1GWHD00SMQPS4JYFY690ASC,简体,Simplified,闽南语,ltr,nan,Hans,,[],[]
-nan-Hans-x-chao1238,01K1GWHD00SK6PB7FMMTJYA62J,简体,Simplified,潮州话,ltr,nan,Hans,,[],"[""chao1238""]"
-nan-Hant,01K1GWHD00SMQPS4JYFY690ASC,傳承體,Traditional,閩南語,ltr,nan,Hant,,[],[]
-nan-Hant-x-chao1238,01K1GWHD00SK6PB7FMMTJYA62J,傳承體,Traditional,潮州話,ltr,nan,Hant,,[],"[""chao1238""]"
-nan-Latn-pehoeji,01K1GWHD00SMQPS4JYFY690ASC,Tâi-oân Ōe,Taiwanese Hokkien (Pe̍h-ōe-jī),Tâi-oân Ōe,ltr,nan,Latn,,"[""pehoeji""]",[]
-nan-Latn-tailo,01K1GWHD00SMQPS4JYFY690ASC,Tâi-uân Uē,Taiwanese Hokkien (Tâi-lô),Tâi-uân Uē,ltr,nan,Latn,,"[""tailo""]",[]
+nan-Hans,01K1GWHD00SMQPS4JYFY690ASC,简体,Simplified,闽南话（福建话、福佬话、台湾台语）,ltr,nan,Hans,,[],[]
+nan-Hans-x-chao1238,01K1GWHD00SK6PB7FMMTJYA62J,简体,Simplified,潮州话（潮汕话）,ltr,nan,Hans,,[],"[""chao1238""]"
+nan-Hant,01K1GWHD00SMQPS4JYFY690ASC,傳承體,Traditional,閩南話（福建話、福佬話、台灣台語）,ltr,nan,Hant,,[],[]
+nan-Hant-x-chao1238,01K1GWHD00SK6PB7FMMTJYA62J,傳承體,Traditional,潮州話（潮汕話）,ltr,nan,Hant,,[],"[""chao1238""]"
+nan-Latn-pehoeji,01K1GWHD00SMQPS4JYFY690ASC,Pe̍h-ōe-jī,Taiwanese Hokkien (Pe̍h-ōe-jī),Bân-lâm-oē,ltr,nan,Latn,,"[""pehoeji""]",[]
+nan-Latn-tailo,01K1GWHD00SMQPS4JYFY690ASC,Tâi-lô,Taiwanese Hokkien (Tâi-lô),Bân-lâm-uē,ltr,nan,Latn,,"[""tailo""]",[]
 nan-Latn-x-chao1238,01K1GWHD00SK6PB7FMMTJYA62J,Tiê-chiu-uē,Chaozhou (Latin),Tiê-chiu-uē,ltr,nan,Latn,,[],"[""chao1238""]"
 pa-Guru,01K1GWHD00VS94XSBN1BQKV7E3,古木奇文,Gurmukhi,,ltr,pa,Guru,,[],[]
 pt,01K1GWHD004R4BD1X7J8MGTBN9,標準,Portuguese,,ltr,pt,,,[],[]

@@ -52,9 +52,9 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00NSRB1JSTEYQRYVTS,Islamabad,Islamabad,{},PK,,33.6844,73.0479,https://glottolog.org/resource/languoid/id/urdu1245
 01K1GWHD00QQYESMP4K7GFBNJZ,Dhaka,Dhaka,{},BD,,23.8103,90.4125,https://glottolog.org/resource/languoid/id/beng1280
 01K1GWHD00SK6PB7FMMTJYA62J,Bangkok,Bangkok,"{""nan-Hans-x-chao1238"":""曼谷"",""nan-Hant-x-chao1238"":""曼谷""}",TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/chao1238
-01K1GWHD00SK6PB7FMMTJYA62J,Chaozhou,Chaozhou,"{""nan-Hans-x-chao1238"":""潮州"",""nan-Hant-x-chao1238"":""潮州""}",CN,Hans,23.6667,116.6333,https://glottolog.org/resource/languoid/id/chao1238
-01K1GWHD00SK6PB7FMMTJYA62J,Jieyang,Jieyang,"{""nan-Hans-x-chao1238"":""揭阳"",""nan-Hant-x-chao1238"":""揭陽""}",CN,Hans,23.5498,116.3726,https://glottolog.org/resource/languoid/id/chao1238
-01K1GWHD00SK6PB7FMMTJYA62J,Shantou,Shantou,"{""nan-Hans-x-chao1238"":""汕头"",""nan-Hant-x-chao1238"":""汕頭""}",CN,Hans,23.3541,116.682,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Chaozhou,Teochew,"{""nan-Hans-x-chao1238"":""潮州"",""nan-Hant-x-chao1238"":""潮州""}",CN,Hans,23.6667,116.6333,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Jieyang,Kityang,"{""nan-Hans-x-chao1238"":""揭阳"",""nan-Hant-x-chao1238"":""揭陽""}",CN,Hans,23.5498,116.3726,https://glottolog.org/resource/languoid/id/chao1238
+01K1GWHD00SK6PB7FMMTJYA62J,Shantou,Swatow,"{""nan-Hans-x-chao1238"":""汕头"",""nan-Hant-x-chao1238"":""汕頭""}",CN,Hans,23.3541,116.682,https://glottolog.org/resource/languoid/id/chao1238
 01K1GWHD00SMQPS4JYFY690ASC,Kaohsiung,Kaohsiung,"{""nan-Hans"":""高雄"",""nan-Hant"":""高雄""}",TW,Hant,22.6273,120.3014,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00SMQPS4JYFY690ASC,Penang,Penang,"{""nan-Hans"":""槟城"",""nan-Hant"":""檳城""}",MY,,5.4141,100.3288,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00SMQPS4JYFY690ASC,Quanzhou,Quanzhou,"{""nan-Hans"":""泉州"",""nan-Hant"":""泉州""}",CN,Hans,24.8741,118.6757,https://glottolog.org/resource/languoid/id/minn1241
