@@ -97,6 +97,12 @@
       "filename": "0017_fix_hans_script_label.sql",
       "size": 284,
       "sha256": "04085b729dea10f1dc7a03296ee7a6cc2307b602162ac3f12026ffae664ead6d"
+    },
+    {
+      "sequence": 18,
+      "filename": "0018_add_profile_endonym.sql",
+      "size": 531,
+      "sha256": "96787edf156672a27fcad255b0104618ec52e653080a792722349a393171022d"
     }
   ]
 }

@@ -162,6 +162,7 @@ languages.get('/:code', async (c) => {
       code: p.code,
       name: p.name,
       name_en: p.name_en,
+      endonym: p.endonym || '',
       direction: p.direction,
       base_language: p.base_language,
       script_code: p.script_code,

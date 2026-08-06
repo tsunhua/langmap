@@ -337,6 +337,7 @@ def seed_profile_rows(
                 "language_variety_id": variety_id,
                 "name": profile["name"],
                 "name_en": profile.get("name_en") or "",
+                "endonym": profile.get("endonym") or "",
                 "direction": direction_for_script(parts["script"]),
                 "base_language": parts["language"],
                 "script_code": parts["script"] or "",
@@ -423,7 +424,7 @@ VARIETY_FIELDS = (
 )
 
 PROFILE_FIELDS = (
-    "code", "language_variety_id", "name", "name_en", "direction",
+    "code", "language_variety_id", "name", "name_en", "endonym", "direction",
     "base_language", "script_code", "region_code", "variants_json",
     "private_use_json",
 )
@@ -540,6 +541,7 @@ def render_profile_insert(row: dict[str, str]) -> str:
     vals = (
         sql_literal(row["code"]), sql_literal(row["language_variety_id"]),
         sql_literal(row["name"]), sql_literal(row["name_en"]),
+        sql_literal(row["endonym"]),
         sql_literal(row["direction"]), sql_literal(row["base_language"]),
         sql_literal(row["script_code"]), sql_literal(row["region_code"]),
         sql_literal(row["variants_json"]), sql_literal(row["private_use_json"]),
@@ -548,7 +550,7 @@ def render_profile_insert(row: dict[str, str]) -> str:
         f"INSERT INTO language_profiles ({', '.join(cols)}) VALUES ({', '.join(vals)}) "
         "ON CONFLICT(code) DO UPDATE SET "
         "language_variety_id=excluded.language_variety_id, "
-        "name=excluded.name, name_en=excluded.name_en, "
+        "name=excluded.name, name_en=excluded.name_en, endonym=excluded.endonym, "
         "direction=excluded.direction, base_language=excluded.base_language, "
         "script_code=excluded.script_code, region_code=excluded.region_code, "
         "variants_json=excluded.variants_json, "

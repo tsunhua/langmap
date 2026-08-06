@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "varieties": [
     {
       "id": "01K1GWHD005HX5VM8BRKQQCJD9",
@@ -121,12 +121,14 @@
         {
           "code": "cmn-Hans",
           "name": "简体",
-          "name_en": "Simplified"
+          "name_en": "Simplified",
+          "endonym": "华语"
         },
         {
           "code": "cmn-Hant",
           "name": "繁體",
-          "name_en": "Traditional"
+          "name_en": "Traditional",
+          "endonym": "華語"
         }
       ]
     },

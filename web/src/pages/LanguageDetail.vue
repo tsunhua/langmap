@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useLanguages } from '@/composables/useLanguages'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
@@ -12,6 +12,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 const route = useRoute()
+const router = useRouter()
 const code = computed(() => route.params.code as string)
 
 const { loading, detail, expressions } = useLanguages()
@@ -25,14 +26,27 @@ const loadError = ref('')
 
 const scripts = computed(() => {
   const profiles: any[] = lang.value?.profiles ?? []
-  const seen = new Map<string, string>()
+  const seen = new Map<string, any>()
   for (const p of profiles) {
     if (p.script_code && !seen.has(p.script_code)) {
-      seen.set(p.script_code, p.name || p.script_code)
+      seen.set(p.script_code, {
+        code: p.script_code,
+        profileCode: p.code,
+        name: p.name || p.script_code,
+        endonym: p.endonym || '',
+      })
     }
   }
-  return [...seen.entries()].map(([code, name]) => ({ code, name }))
+  return [...seen.values()]
 })
+
+const selectedProfile = computed(() =>
+  scripts.value.find(s => s.code === selectedScript.value),
+)
+
+const title = computed(() => selectedProfile.value?.endonym || lang.value?.name || '')
+
+const badgeCode = computed(() => selectedProfile.value?.profileCode || lang.value?.code || '')
 
 const filtered = computed(() => {
   if (!searchQuery.value) return exprs.value
@@ -40,13 +54,23 @@ const filtered = computed(() => {
   return exprs.value.filter((e: any) => e.text.toLowerCase().includes(q))
 })
 
+async function loadScript(script: string) {
+  try {
+    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: script || undefined })
+    exprs.value = data.items
+  } catch (e: any) {
+    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
+  }
+}
+
 async function load() {
   lang.value = null
   loadError.value = ''
-  selectedScript.value = ''
+  const q = route.query.script
+  selectedScript.value = typeof q === 'string' ? q : ''
   try {
     lang.value = await detail(code.value)
-    const data = await expressions(code.value, { sort: sortBy.value, limit: 100 })
+    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: selectedScript.value || undefined })
     exprs.value = data.items
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
@@ -55,6 +79,13 @@ async function load() {
 
 onMounted(load)
 watch(code, load)
+watch(() => route.query.script, (script) => {
+  const next = typeof script === 'string' ? script : ''
+  if (next !== selectedScript.value) {
+    selectedScript.value = next
+    loadScript(next)
+  }
+})
 
 const subtitle = computed(() => {
   const parts = []
@@ -65,22 +96,17 @@ const subtitle = computed(() => {
 
 async function changeSort(sort: string) {
   sortBy.value = sort
-  try {
-    const data = await expressions(code.value, { sort, limit: 100, script: selectedScript.value || undefined })
-    exprs.value = data.items
-  } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
-  }
+  await loadScript(selectedScript.value)
 }
 
 async function changeScript(script: string) {
+  if (script === selectedScript.value) return
   selectedScript.value = script
-  try {
-    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: script || undefined })
-    exprs.value = data.items
-  } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
-  }
+  const query = { ...route.query }
+  if (script) query.script = script
+  else delete query.script
+  router.replace({ query })
+  await loadScript(script)
 }
 </script>
 
@@ -93,8 +119,12 @@ async function changeScript(script: string) {
     <router-link to="/languages" class="ld-back">← {{ t('languageDetail.back') }}</router-link>
 
     <div class="ld-title">
-      <h1>{{ lang.name }}</h1>
-      <span class="lang-badge">{{ lang.code }}</span>
+      <h1>{{ title }}</h1>
+      <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
+        <button :class="{ on: selectedScript === '' }" @click="changeScript('')">{{ badgeCode }}</button>
+        <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">{{ s.name }}</button>
+      </div>
+      <span v-else class="lang-badge">{{ lang.code }}</span>
     </div>
     <p class="ld-sub" v-if="subtitle">{{ subtitle }}</p>
 
@@ -116,10 +146,6 @@ async function changeScript(script: string) {
 
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
-      <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
-        <button :class="{ on: selectedScript === '' }" @click="changeScript('')">{{ t('languageDetail.allScripts') }}</button>
-        <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">{{ s.name }}</button>
-      </div>
       <div class="ld-sort">
         <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
         <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
@@ -148,11 +174,19 @@ async function changeScript(script: string) {
 .ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
-.ld-scripts, .ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.ld-scripts button, .ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
-.ld-scripts button:hover, .ld-sort button:hover { color: var(--fg); }
-.ld-scripts button.on, .ld-sort button.on { background: var(--fg); color: var(--surface); }
-.ld-scripts button:focus-visible, .ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.ld-sort button:hover { color: var(--fg); }
+.ld-sort button.on { background: var(--fg); color: var(--surface); }
+.ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ld-scripts { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; align-self: center; }
+.ld-scripts button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 26px; padding: 0 12px; transition: background 0.15s, color 0.15s; }
+.ld-scripts button:hover { color: var(--fg); }
+.ld-scripts button.on { background: var(--fg); color: var(--surface); }
+.ld-scripts button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (max-width: 640px) {
+  .ld-scripts button { height: 44px; padding: 0 16px; }
+}
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .ld-cities { border-bottom: 1px solid var(--border); margin-bottom: 18px; padding-bottom: 16px; }

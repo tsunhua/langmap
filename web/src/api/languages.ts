@@ -50,6 +50,7 @@ export interface LanguageProfile {
   language_variety_code: string
   name: string
   name_en: string | null
+  endonym: string
   direction: 'ltr' | 'rtl'
   base_language: string
   script_code: string | null

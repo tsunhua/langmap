@@ -95,6 +95,7 @@ CREATE TABLE language_profiles (
     language_variety_id TEXT NOT NULL,
     name TEXT NOT NULL,
     name_en TEXT,
+    endonym TEXT NOT NULL DEFAULT '',
     direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl')),
     base_language TEXT NOT NULL,
     script_code TEXT,

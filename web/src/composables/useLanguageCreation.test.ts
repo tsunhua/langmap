@@ -125,6 +125,7 @@ describe('useLanguageCreation', () => {
         language_variety_code: 'test-lang',
         name: 'Test',
         name_en: null,
+        endonym: '',
         direction: 'ltr',
         base_language: 'test',
         script_code: null,
