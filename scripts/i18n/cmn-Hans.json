@@ -186,6 +186,8 @@
   "languageDetail.back": "语言",
   "languageDetail.expressions": "词句",
   "languageDetail.mapped": "已映射",
+  "languageDetail.representativeCities": "代表城市",
+  "languageDetail.representativeCitiesNote": "探索参考点；并非完整语言分布。",
   "languageDetail.searchPlaceholder": "搜索词句…",
   "languageDetail.popular": "热门",
   "languageDetail.latest": "最新",

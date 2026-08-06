@@ -12,7 +12,7 @@
   "counts": {
     "locale_count": 5,
     "message_count": 314,
-    "translation_count": 1236
+    "translation_count": 1240
   },
   "inputs": {
     "source_catalog": {
@@ -22,11 +22,11 @@
     "locales": {
       "cmn-Hans": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans.json",
-        "sha256": "e706c06fa642e9be886edb50c6040d192f9ba31ca569d8850174ae25f099a894"
+        "sha256": "f198d9f7e8b9426509c9a64269261108ccf88fc9c68578bf7f607232901fc5b5"
       },
       "cmn-Hant": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant.json",
-        "sha256": "768bafe747be8b2a3354af64180556d6689f61afabbb2fb17fb643660db4be12"
+        "sha256": "3234e6c1cae86d8fe19a3f2051fcfd263ebe4e4a3b547d7db35f6984c775158f"
       },
       "es": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/es-ES.json",
@@ -41,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "20ca591703f62baae5cf2d4f8038f7b37a483c2bf395ca57baf502b72cf510a4"
+      "sha256": "11d696dbc10bc61dafe43d31d46c7c297281fffabc584364875be2b719bac049"
     }
   }
 }

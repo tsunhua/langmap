@@ -2267,7 +2267,7 @@ VALUES (8771951513286657, 'Translation', 'en', 'ui_i18n', 'langmap-web:translate
 INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
 VALUES ('langmap-web', 'translate.translation', 8771951513286657, '[]', '8771951513286657', 'active');
 
--- 3. Translation expressions and edges (1236 rows)
+-- 3. Translation expressions and edges (1240 rows)
 -- Locale cmn-Hans
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -3084,6 +3084,14 @@ VALUES (621592521672516, '没有找到词句', 'cmn-Hans', 'ui_i18n', 'langmap-w
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (621511407101153, '热门', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.representativeCities
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (621600804369263, '代表城市', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.representativeCities', 'pending');
+
+-- languageDetail.representativeCitiesNote
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (621570262734842, '探索参考点；并非完整语言分布。', 'cmn-Hans', 'ui_i18n', 'langmap-web:languageDetail.representativeCitiesNote', 'pending');
 
 -- languageDetail.scriptLabel
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -4321,6 +4329,14 @@ VALUES (5007598177691071, '找不到詞句', 'cmn-Hant', 'ui_i18n', 'langmap-web
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
 VALUES (5007723174663984, '熱門', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.popular', 'pending');
+
+-- languageDetail.representativeCities
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5007690126521199, '代表城市', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.representativeCities', 'pending');
+
+-- languageDetail.representativeCitiesNote
+INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
+VALUES (5007722609081883, '探索參考點；並非完整語言分佈。', 'cmn-Hant', 'ui_i18n', 'langmap-web:languageDetail.representativeCitiesNote', 'pending');
 
 -- languageDetail.scriptLabel
 INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
@@ -13539,6 +13555,26 @@ VALUES ('5007723174663984-8771957966582874', 5007723174663984, 8771957966582874,
 
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
 VALUES ('5667600188693356-8771957966582874', 5667600188693356, 8771957966582874, 0, 'ui_i18n');
+
+-- Pairwise clique: languageDetail.representativeCities
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621600804369263-5007690126521199', 621600804369263, 5007690126521199, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621600804369263-8771920285240829', 621600804369263, 8771920285240829, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007690126521199-8771920285240829', 5007690126521199, 8771920285240829, 0, 'ui_i18n');
+
+-- Pairwise clique: languageDetail.representativeCitiesNote
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621570262734842-5007722609081883', 621570262734842, 5007722609081883, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('621570262734842-8771986740325537', 621570262734842, 8771986740325537, 0, 'ui_i18n');
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
+VALUES ('5007722609081883-8771986740325537', 5007722609081883, 8771986740325537, 0, 'ui_i18n');
 
 -- Pairwise clique: languageDetail.scriptLabel
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
