@@ -1094,6 +1094,16 @@
       "variety_code": "swh"
     },
     {
+      "city_name": "Nairobi",
+      "city_name_en": "Nairobi",
+      "territory_code": "KE",
+      "script_code": "",
+      "latitude": -1.2864,
+      "longitude": 36.8172,
+      "reference": "https://glottolog.org/resource/languoid/id/swah1253",
+      "variety_code": "swh"
+    },
+    {
       "city_name": "Beijing",
       "city_name_en": "Beijing",
       "territory_code": "CN",
@@ -1174,6 +1184,19 @@
       "longitude": 90.4125,
       "reference": "https://glottolog.org/resource/languoid/id/beng1280",
       "variety_code": "bn"
+    },
+    {
+      "city_name": "Kolkata",
+      "city_name_en": "Kolkata",
+      "territory_code": "IN",
+      "script_code": "",
+      "latitude": 22.57,
+      "longitude": 88.37,
+      "reference": "https://glottolog.org/resource/languoid/id/beng1280",
+      "variety_code": "bn",
+      "city_name_localized": {
+        "bn": "কলকাতা"
+      }
     },
     {
       "city_name": "Berlin",
@@ -1419,6 +1442,16 @@
       "variety_code": "tr"
     },
     {
+      "city_name": "Istanbul",
+      "city_name_en": "Istanbul",
+      "territory_code": "TR",
+      "script_code": "",
+      "latitude": 41.0136,
+      "longitude": 28.955,
+      "reference": "https://glottolog.org/resource/languoid/id/nucl1301",
+      "variety_code": "tr"
+    },
+    {
       "city_name": "Islamabad",
       "city_name_en": "Islamabad",
       "territory_code": "PK",
@@ -1429,12 +1462,35 @@
       "variety_code": "ur"
     },
     {
+      "city_name": "Lahore",
+      "city_name_en": "Lahore",
+      "territory_code": "PK",
+      "script_code": "",
+      "latitude": 31.5497,
+      "longitude": 74.3436,
+      "reference": "https://glottolog.org/resource/languoid/id/urdu1245",
+      "variety_code": "ur",
+      "city_name_localized": {
+        "ur": "لاہور"
+      }
+    },
+    {
       "city_name": "Hanoi",
       "city_name_en": "Hanoi",
       "territory_code": "VN",
       "script_code": "",
       "latitude": 21.0278,
       "longitude": 105.8342,
+      "reference": "https://glottolog.org/resource/languoid/id/viet1252",
+      "variety_code": "vi"
+    },
+    {
+      "city_name": "Ho Chi Minh City",
+      "city_name_en": "Ho Chi Minh City",
+      "territory_code": "VN",
+      "script_code": "",
+      "latitude": 10.7756,
+      "longitude": 106.7019,
       "reference": "https://glottolog.org/resource/languoid/id/viet1252",
       "variety_code": "vi"
     },
@@ -1450,6 +1506,34 @@
       "city_name_localized": {
         "wuu-Hans": "上海",
         "wuu-Hant": "上海"
+      }
+    },
+    {
+      "city_name": "Suzhou",
+      "city_name_en": "Suzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 31.3041,
+      "longitude": 120.5954,
+      "reference": "https://glottolog.org/resource/languoid/id/wuch1236",
+      "variety_code": "wuu",
+      "city_name_localized": {
+        "wuu-Hans": "苏州",
+        "wuu-Hant": "蘇州"
+      }
+    },
+    {
+      "city_name": "Hangzhou",
+      "city_name_en": "Hangzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 30.267,
+      "longitude": 120.153,
+      "reference": "https://glottolog.org/resource/languoid/id/wuch1236",
+      "variety_code": "wuu",
+      "city_name_localized": {
+        "wuu-Hans": "杭州",
+        "wuu-Hant": "杭州"
       }
     },
     {
