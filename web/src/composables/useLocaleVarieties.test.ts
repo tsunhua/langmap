@@ -39,6 +39,13 @@ describe('splitVarietyAndScript', () => {
   it('does not split non-trailing parens', () => {
     expect(splitVarietyAndScript('English (United Kingdom)')).toEqual({ variety: 'English (United Kingdom)' })
   })
+
+  it('splits the last fullwidth paren group when the variety name itself contains parens', () => {
+    expect(splitVarietyAndScript('華語（普通話、國語）（傳承體）')).toEqual({
+      variety: '華語（普通話、國語）',
+      scriptLabel: '傳承體',
+    })
+  })
 })
 
 describe('groupLocalesByVariety', () => {
@@ -46,8 +53,8 @@ describe('groupLocalesByVariety', () => {
     { code: 'en', name: 'English', native_name: 'English', status: 'active' },
     { code: 'es', name: 'Spanish', native_name: 'Español', status: 'active' },
     { code: 'ja', name: 'Japanese', native_name: '日本語', status: 'active' },
-    { code: 'cmn-Hans', name: 'Simplified', native_name: '華語（簡體）', status: 'active' },
-    { code: 'cmn-Hant', name: 'Traditional', native_name: '華語（傳承體）', status: 'active' },
+    { code: 'cmn-Hans', name: 'Simplified', native_name: '華語（普通話、國語）（簡體）', status: 'active' },
+    { code: 'cmn-Hant', name: 'Traditional', native_name: '華語（普通話、國語）（傳承體）', status: 'active' },
   ]
 
   it('groups the 5 first-party locales into 4 variety groups', () => {
@@ -72,7 +79,7 @@ describe('groupLocalesByVariety', () => {
   it('merges cmn-Hans and cmn-Hant under one variety with script labels', () => {
     const groups = groupLocalesByVariety(locales)
     const cmn = groups.find(g => g.base === 'cmn')!
-    expect(cmn.varietyLabel).toBe('華語')
+    expect(cmn.varietyLabel).toBe('華語（普通話、國語）')
     expect(cmn.items.map(i => i.code)).toEqual(['cmn-Hans', 'cmn-Hant'])
     expect(cmn.items.map(i => i.scriptLabel)).toEqual(['簡體', '傳承體'])
   })

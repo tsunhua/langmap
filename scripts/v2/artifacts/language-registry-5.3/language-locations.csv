@@ -72,9 +72,9 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00NPTA1MPM1ZAPX3XD,Bangkok,Bangkok,{},TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/thai1261
 01K1GWHD00NPTA1MPM1ZAPX3XD,Chiang Mai,Chiang Mai,{},TH,,18.7883,98.9853,https://glottolog.org/resource/languoid/id/thai1261
 01K1GWHD00NSRB1JSTEYQRYVTS,Islamabad,Islamabad,{},PK,,33.6844,73.0479,https://glottolog.org/resource/languoid/id/urdu1245
-01K1GWHD00NSRB1JSTEYQRYVTS,Lahore,Lahore,"{""ur"":""لاہور""}",PK,,31.5497,74.3436,https://glottolog.org/resource/languoid/id/urdu1245
+01K1GWHD00NSRB1JSTEYQRYVTS,Lahore,Lahore,"{""ur-Arab"":""لاہور""}",PK,,31.5497,74.3436,https://glottolog.org/resource/languoid/id/urdu1245
 01K1GWHD00QQYESMP4K7GFBNJZ,Dhaka,Dhaka,{},BD,,23.8103,90.4125,https://glottolog.org/resource/languoid/id/beng1280
-01K1GWHD00QQYESMP4K7GFBNJZ,Kolkata,Kolkata,"{""bn"":""কলকাতা""}",IN,,22.57,88.37,https://glottolog.org/resource/languoid/id/beng1280
+01K1GWHD00QQYESMP4K7GFBNJZ,Kolkata,Kolkata,"{""bn-Beng"":""কলকাতা""}",IN,,22.57,88.37,https://glottolog.org/resource/languoid/id/beng1280
 01K1GWHD00SK6PB7FMMTJYA62J,Bangkok,Bangkok,"{""nan-Hans-x-chao1238"":""曼谷"",""nan-Hant-x-chao1238"":""曼谷""}",TH,,13.7563,100.5018,https://glottolog.org/resource/languoid/id/chao1238
 01K1GWHD00SK6PB7FMMTJYA62J,Chaozhou,Teochew,"{""nan-Hans-x-chao1238"":""潮州"",""nan-Hant-x-chao1238"":""潮州""}",CN,Hans,23.6667,116.6333,https://glottolog.org/resource/languoid/id/chao1238
 01K1GWHD00SK6PB7FMMTJYA62J,Jieyang,Kityang,"{""nan-Hans-x-chao1238"":""揭阳"",""nan-Hant-x-chao1238"":""揭陽""}",CN,Hans,23.5498,116.3726,https://glottolog.org/resource/languoid/id/chao1238

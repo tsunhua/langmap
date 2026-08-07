@@ -423,8 +423,11 @@ Added: 2005-10-16
         codes = {p["code"] for v in profiles["varieties"] for p in v["profiles"]}
 
         self.assertTrue({
-            "ar", "bn", "de", "es", "fa", "fr", "hi", "id", "it", "ja",
-            "mr", "pa-Guru", "ru", "th", "tr", "ur", "vi",
+            "ar-Arab", "bn-Beng", "de-Latn", "es-Latn", "fa-Arab", "fr-Latn",
+            "hi-Deva", "id-Latn", "it-Latn",
+            "ja-Jpan", "ja-Hani", "ja-Hrkt", "ja-Latn",
+            "mr-Deva", "pa-Guru", "ru-Cyrl", "th-Thai", "tr-Latn",
+            "ur-Arab", "vi-Latn", "swh-Latn", "ral-Latn",
             "cmn-Hans", "cmn-Hant", "yue-Hans", "yue-Hant",
             "wuu-Hans", "wuu-Hant", "hsn-Hans", "hsn-Hant",
             "hak-Hans", "hak-Hant", "cdo-Hans", "cdo-Hant",
@@ -433,8 +436,11 @@ Added: 2005-10-16
             "kk-Arab", "kk-Cyrl", "ky-Arab", "ky-Cyrl", "za-Latn",
         }.issubset(codes))
         self.assertTrue({
-            "ja-JP", "zh-Hans-CN", "zh-Hant-TW", "yue-Hans-CN",
+            "ja", "ja-JP", "zh-Hans-CN", "zh-Hant-TW", "yue-Hans-CN",
             "yue-Hant-HK", "yue-Hant-MO", "wuu-Hans-CN", "ug-Arab-CN",
+            "ar", "bn", "de", "en", "en-US", "en-GB", "es", "fa", "fr",
+            "hi", "id", "it", "mr", "pt", "pt-BR", "ral", "ru", "swh",
+            "th", "tr", "ur", "vi",
         }.isdisjoint(codes))
 
     def test_seed_profiles_include_common_and_reviewed_variant_layers(self):
@@ -442,12 +448,14 @@ Added: 2005-10-16
         codes = {p["code"] for v in profiles["varieties"] for p in v["profiles"]}
 
         self.assertTrue({
-            "en", "en-US", "en-GB",
-            "pt", "pt-BR",
+            "en-Latn", "en-Latn-US", "en-Latn-GB",
+            "pt-Latn", "pt-Latn-BR",
             "ko-Hang", "ko-Hani", "ko-Kore",
+            "ja-Jpan", "ja-Hani", "ja-Hrkt", "ja-Latn",
             "yue-Hant",
         }.issubset(codes))
         self.assertTrue({"ko", "ko-KR", "ko-KP"}.isdisjoint(codes))
+        self.assertTrue({"ja"}.isdisjoint(codes))
 
     def test_seed_varieties_are_two_layer_and_profile_codes_unique(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
@@ -581,8 +589,11 @@ Added: 2005-10-16
         self.assertIsNotNone(migration_manifest)
         mappings = migration_manifest["mappings"]
 
+        self.assertEqual(mappings["ja"], {
+            "action": "canonicalize", "canonical": "ja-Jpan",
+        })
         self.assertEqual(mappings["ja-JP"], {
-            "action": "canonicalize", "canonical": "ja",
+            "action": "canonicalize", "canonical": "ja-Jpan",
         })
         self.assertEqual(mappings["yue-Hans-CN"], {
             "action": "canonicalize", "canonical": "yue-Hans",
@@ -594,7 +605,19 @@ Added: 2005-10-16
             "action": "canonicalize", "canonical": "yue-Hant",
         })
         self.assertEqual(mappings["en-US"], {
-            "action": "keep", "canonical": "en-US",
+            "action": "canonicalize", "canonical": "en-Latn-US",
+        })
+        self.assertEqual(mappings["en-GB"], {
+            "action": "canonicalize", "canonical": "en-Latn-GB",
+        })
+        self.assertEqual(mappings["en"], {
+            "action": "canonicalize", "canonical": "en-Latn",
+        })
+        self.assertEqual(mappings["pt-BR"], {
+            "action": "canonicalize", "canonical": "pt-Latn-BR",
+        })
+        self.assertEqual(mappings["swh"], {
+            "action": "canonicalize", "canonical": "swh-Latn",
         })
         self.assertEqual(validate_manifest(profiles["online_code_migrations"]), [])
 

@@ -50,7 +50,7 @@ const selectedProfile = computed(() => {
 const scriptParam = computed(() => selectedProfile.value?.profileCode)
 
 const title = computed(() =>
-  selectedProfile.value?.endonym || lang.value?.name_en || lang.value?.name || '',
+  lang.value?.name || selectedProfile.value?.endonym || lang.value?.name_en || '',
 )
 
 function cityDisplayName(city: any): string {

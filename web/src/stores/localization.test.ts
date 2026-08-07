@@ -26,7 +26,7 @@ describe('localization store', () => {
       },
     })
     setActivePinia(createPinia())
-    globalI18n.locale.value = 'en'
+    globalI18n.locale.value = 'en-Latn'
   })
 
   it('restores the selected interface language after loading locales', async () => {

@@ -34,7 +34,7 @@ export function parseLocaleCode(code: string): LocaleCodeParts {
 }
 
 export function splitVarietyAndScript(nativeName: string): { variety: string; scriptLabel?: string } {
-  const m = nativeName.match(/^(.+?)（(.+?)）$/)
+  const m = nativeName.match(/^(.*)（([^（）]+)）$/)
   if (m) return { variety: m[1], scriptLabel: m[2] }
   return { variety: nativeName }
 }
@@ -60,7 +60,7 @@ export function groupLocalesByVariety(locales: UiLocale[]): LocaleVarietyGroup[]
     return a.varietyLabel.localeCompare(b.varietyLabel) || a.base.localeCompare(b.base)
   })
   for (const g of list) {
-    g.items.sort((a, b) => (a.scriptLabel || '').localeCompare(b.scriptLabel || '') || a.code.localeCompare(b.code))
+    g.items.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
   }
   return list
 }

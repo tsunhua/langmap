@@ -39,7 +39,7 @@ describe('v2 auth smoke', () => {
       body: JSON.stringify({
         expressions: [
           { lang: 'cmn-Hans', text: zhText },
-          { lang: 'en-US', text: enText },
+          { lang: 'en-Latn-US', text: enText },
         ],
       }),
     });

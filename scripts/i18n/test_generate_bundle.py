@@ -71,19 +71,19 @@ class GenerateBundleTests(unittest.TestCase):
                 "common.search": "搜尋",
                 "search.hint": "L'été 即將到來",
             },
-            "es": {
+            "es-Latn": {
                 "auth.noAccount": "¿No tienes una cuenta?",
                 "common.search": "Buscar",
                 "search.hint": "L'été llega",
             },
-            "ja": {
+            "ja-Jpan": {
                 "auth.noAccount": "アカウントをお持ちではありませんか？",
                 "common.search": "検索",
                 "search.hint": "L'été が来ます",
             },
         }
         if es_extra:
-            locales["es"].update(es_extra)
+            locales["es-Latn"].update(es_extra)
 
         paths: dict[str, Path] = {}
         for code, payload in locales.items():
@@ -104,7 +104,7 @@ class GenerateBundleTests(unittest.TestCase):
             "--output-dir",
             str(output_dir),
         ]
-        for code in ("cmn-Hant", "ja", "es", "cmn-Hans"):
+        for code in ("cmn-Hant", "ja-Jpan", "es-Latn", "cmn-Hans"):
             args.extend(["--locale", f"{code}={locale_paths[code]}"])
         return subprocess.run(
             args,
@@ -197,11 +197,11 @@ class GenerateBundleTests(unittest.TestCase):
         db.executemany(
             "INSERT INTO language_profiles (code, language_variety_id, name, script_code, direction) VALUES (?, ?, ?, ?, ?)",
             [
-                ("en", "ven", "標準", "", "ltr"),
+                ("en-Latn", "ven", "拉丁", "Latn", "ltr"),
                 ("cmn-Hans", "vcmn", "简体", "Hans", "ltr"),
                 ("cmn-Hant", "vcmn", "傳承體", "Hant", "ltr"),
-                ("es", "ves", "標準", "", "ltr"),
-                ("ja", "vja", "標準", "", "ltr"),
+                ("es-Latn", "ves", "拉丁", "Latn", "ltr"),
+                ("ja-Jpan", "vja", "標準", "Jpan", "ltr"),
             ],
         )
 
@@ -232,7 +232,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(manifest["ownership_scope"], "managed-system-ui")
             self.assertEqual(
                 manifest["locale_codes"],
-                ["cmn-Hans", "cmn-Hant", "en", "es", "ja"],
+                ["cmn-Hans", "cmn-Hant", "en-Latn", "es-Latn", "ja-Jpan"],
             )
             self.assertEqual(
                 manifest["counts"],
@@ -253,13 +253,13 @@ class GenerateBundleTests(unittest.TestCase):
             )
 
             self.assertIn("INSERT INTO ui_locales", sql_text)
-            self.assertIn("-- Locale en", sql_text)
+            self.assertIn("-- Locale en-Latn", sql_text)
             self.assertIn("INSERT OR IGNORE INTO ui_messages", sql_text)
             self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
             self.assertIn("UPDATE ui_locales SET mapping_revision", sql_text)
             self.assertNotIn("DELETE FROM", sql_text)
             self.assertIn("Don''t have an account?", sql_text)
-            self.assertLess(sql_text.index("-- Locale es"), sql_text.index("-- Locale ja"))
+            self.assertLess(sql_text.index("-- Locale es-Latn"), sql_text.index("-- Locale ja-Jpan"))
             self.assertLess(sql_text.index("-- auth.noAccount"), sql_text.index("-- common.search"))
             self.assertLess(sql_text.index("-- common.search"), sql_text.index("-- search.hint"))
 
@@ -303,9 +303,9 @@ class GenerateBundleTests(unittest.TestCase):
                 {
                     "cmn-Hans": 1,
                     "cmn-Hant": 1,
-                    "en": 1,
-                    "es": 1,
-                    "ja": 1,
+                    "en-Latn": 1,
+                    "es-Latn": 1,
+                    "ja-Jpan": 1,
                 },
             )
             self.assertEqual(second_revisions, {code: rev + 1 for code, rev in first_revisions.items()})
@@ -315,9 +315,9 @@ class GenerateBundleTests(unittest.TestCase):
                 {
                     "cmn-Hans": "華語（简体）",
                     "cmn-Hant": "華語（傳承體）",
-                    "en": "English",
-                    "es": "Español",
-                    "ja": "日本語",
+                    "en-Latn": "English（拉丁）",
+                    "es-Latn": "Español（拉丁）",
+                    "ja-Jpan": "日本語（標準）",
                 },
             )
 
@@ -356,7 +356,7 @@ class GenerateBundleTests(unittest.TestCase):
             }
             expected_nodes: dict[str, set[int]] = {}
             for key, source_text in source_map.items():
-                nodes = {module.i18n_sql.expression_id("en", source_text)}
+                nodes = {module.i18n_sql.expression_id(module.i18n_sql.SOURCE_LANGUAGE_CODE, source_text)}
                 for locale_code, translations in locales.items():
                     nodes.add(module.i18n_sql.expression_id(locale_code, translations[key]))
                 expected_nodes[key] = nodes
@@ -409,7 +409,7 @@ class GenerateBundleTests(unittest.TestCase):
             module = load_module("generate_bundle", GENERATE_BUNDLE)
 
             def collision_expression_id(language_code: str, text: str) -> int:
-                if language_code == "es":
+                if language_code == "es-Latn":
                     return 999
                 return module.i18n_sql.expression_id(language_code, text)
 
@@ -476,8 +476,8 @@ class GenerateBundleTests(unittest.TestCase):
                 output_dir=output_dir,
                 locale_args=[
                     f"cmn-Hant={locale_paths['cmn-Hant']}",
-                    f"ja={locale_paths['ja']}",
-                    f"es={locale_paths['es']}",
+                    f"ja-Jpan={locale_paths['ja-Jpan']}",
+                    f"es-Latn={locale_paths['es-Latn']}",
                 ],
             )
             self.assertNotEqual(missing_result.returncode, 0)
@@ -490,8 +490,8 @@ class GenerateBundleTests(unittest.TestCase):
                 output_dir=output_dir,
                 locale_args=[
                     f"cmn-Hant={locale_paths['cmn-Hant']}",
-                    f"ja={locale_paths['ja']}",
-                    f"es={locale_paths['es']}",
+                    f"ja-Jpan={locale_paths['ja-Jpan']}",
+                    f"es-Latn={locale_paths['es-Latn']}",
                     f"cmn-Hans={locale_paths['cmn-Hans']}",
                     f"fr-FR={extra_path}",
                 ],
@@ -512,15 +512,15 @@ class GenerateBundleTests(unittest.TestCase):
                 output_dir=output_dir,
                 locale_args=[
                     f"cmn-Hant={locale_paths['cmn-Hant']}",
-                    f"ja={locale_paths['ja']}",
-                    f"es={locale_paths['es']}",
+                    f"ja-Jpan={locale_paths['ja-Jpan']}",
+                    f"es-Latn={locale_paths['es-Latn']}",
                     f"cmn-Hans={locale_paths['cmn-Hans']}",
-                    f"es={locale_paths['es']}",
+                    f"es-Latn={locale_paths['es-Latn']}",
                 ],
             )
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("duplicate locale override: es", result.stderr)
+            self.assertIn("duplicate locale override: es-Latn", result.stderr)
 
     def test_replace_artifacts_rolls_back_if_replace_fails_midway(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
@@ -570,7 +570,7 @@ class GenerateBundleTests(unittest.TestCase):
         translations = {"common.search": "Buscar", "missing.key": "Desconocido"}
 
         with self.assertRaisesRegex(ValueError, "missing.key"):
-            module.generate_sql("es", translations, source_map)
+            module.generate_sql("es-Latn", translations, source_map)
 
 
 if __name__ == "__main__":

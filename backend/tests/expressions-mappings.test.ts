@@ -24,7 +24,7 @@ async function contribute(token: string, texts: string[]): Promise<number[]> {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify({
-      expressions: texts.map((t) => ({ lang: 'en-US', text: t })),
+      expressions: texts.map((t) => ({ lang: 'en-Latn-US', text: t })),
     }),
   });
   expect(res.status).toBe(200);
@@ -154,7 +154,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         text,
-        language_profile_code: 'en',
+        language_profile_code: 'en-Latn',
         variation_status: 'shared',
       }),
     });
@@ -174,7 +174,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         text: `${text}-invalid`,
-        language_profile_code: 'en',
+        language_profile_code: 'en-Latn',
         variation_status: 'unknown',
       }),
     });
@@ -192,7 +192,7 @@ describe('GET /api/v2/expressions/:id/mappings (graph)', () => {
       },
       body: JSON.stringify({
         expressions: [
-          { lang: 'en-US', text: 'known' },
+          { lang: 'en-Latn-US', text: 'known' },
           { lang: 'en-x-unlisted', text: 'unknown' },
         ],
       }),

@@ -7,7 +7,7 @@ import { requireRegisteredLanguage } from '../services/languageRegistry';
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 const PROJECT_ID = 'langmap-web';
-const SOURCE_LOCALE = 'en';
+const SOURCE_LOCALE = 'en-Latn';
 const MAX_BATCH = 100;
 const MAX_TEXT_CODEPOINTS = 4000;
 const FIRST_PARTY_LOCALES = [
@@ -22,7 +22,7 @@ async function projectLocale(c: any, projectId: string, code?: string) {
   const sql = code
     ? 'SELECT * FROM ui_locales WHERE project_id = ? AND code = ?'
     : `SELECT * FROM ui_locales WHERE project_id = ? AND status = 'active'
-        ORDER BY CASE WHEN code = 'en' THEN 0 ELSE 1 END, native_name, code`;
+        ORDER BY CASE WHEN code = 'en-Latn' THEN 0 ELSE 1 END, native_name, code`;
   if (code) {
     const row = await c.env.DB.prepare(sql).bind(projectId, code).first();
     return row || FIRST_PARTY_LOCALES.find(locale => locale.code === code) || null;
@@ -128,7 +128,7 @@ async function createMapping(c: any, projectId: string, body: any) {
     const sourceId = await expressionId(SOURCE_LOCALE, sourceText);
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status, created_by)
-       VALUES (?, ?, 'en', 'ui_i18n', ?, 'approved', ?)`
+       VALUES (?, ?, 'en-Latn', 'ui_i18n', ?, 'approved', ?)`
     ).bind(sourceId, sourceText, `${projectId}:${key}`, c.get('user')?.username ?? null).run();
     await c.env.DB.prepare(
       `INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
@@ -249,7 +249,7 @@ localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
   if (!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(code) || code === SOURCE_LOCALE) return badRequest(c, 'invalid_locale_code');
   const language = await requireRegisteredLanguage(c.env.DB, code);
   if (!language) return badRequest(c, 'INVALID_LANGUAGE_PROFILE_CODE', 'language_profile_code must reference a registered profile');
-  await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
+  await c.env.DB.prepare(`INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, fallback_code, status) VALUES (?, ?, ?, ?, 'en-Latn', 'draft')`).bind(projectId, code, language.name || language.name_en || code, language.direction || 'ltr').run();
   const locale = await projectLocale(c, projectId, code);
   return created(c, locale);
 });

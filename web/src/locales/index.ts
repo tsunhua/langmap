@@ -1,7 +1,7 @@
 import { createI18n } from 'vue-i18n'
 import { en, type MessageSchema } from './en'
 
-export const SOURCE_LOCALE = 'en'
+export const SOURCE_LOCALE = 'en-Latn'
 export const DEFAULT_LOCALE = SOURCE_LOCALE
 export const i18n = createI18n<[MessageSchema], typeof SOURCE_LOCALE>({
   legacy: false,

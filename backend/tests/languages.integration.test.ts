@@ -181,7 +181,7 @@ describe('language-registry mutation boundary', () => {
     const token = await register(`langbound-${Date.now()}`);
     const res = await post('/api/v2/contributions/batch', token, {
       expressions: [
-        { lang: 'en-US', text: 'known word' },
+        { lang: 'en-Latn-US', text: 'known word' },
         { lang: 'en-x-unlisted', text: 'unregistered word' },
       ],
     });

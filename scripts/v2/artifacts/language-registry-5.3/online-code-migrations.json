@@ -12,21 +12,93 @@
       "action": "keep",
       "canonical": "x-image"
     },
+    "ar": {
+      "action": "canonicalize",
+      "canonical": "ar-Arab"
+    },
+    "bn": {
+      "action": "canonicalize",
+      "canonical": "bn-Beng"
+    },
+    "de": {
+      "action": "canonicalize",
+      "canonical": "de-Latn"
+    },
+    "en": {
+      "action": "canonicalize",
+      "canonical": "en-Latn"
+    },
     "en-US": {
-      "action": "keep",
-      "canonical": "en-US"
+      "action": "canonicalize",
+      "canonical": "en-Latn-US"
     },
     "en-GB": {
-      "action": "keep",
-      "canonical": "en-GB"
+      "action": "canonicalize",
+      "canonical": "en-Latn-GB"
+    },
+    "es": {
+      "action": "canonicalize",
+      "canonical": "es-Latn"
+    },
+    "fa": {
+      "action": "canonicalize",
+      "canonical": "fa-Arab"
+    },
+    "fr": {
+      "action": "canonicalize",
+      "canonical": "fr-Latn"
+    },
+    "hi": {
+      "action": "canonicalize",
+      "canonical": "hi-Deva"
+    },
+    "id": {
+      "action": "canonicalize",
+      "canonical": "id-Latn"
+    },
+    "it": {
+      "action": "canonicalize",
+      "canonical": "it-Latn"
+    },
+    "mr": {
+      "action": "canonicalize",
+      "canonical": "mr-Deva"
+    },
+    "pt": {
+      "action": "canonicalize",
+      "canonical": "pt-Latn"
+    },
+    "pt-BR": {
+      "action": "canonicalize",
+      "canonical": "pt-Latn-BR"
+    },
+    "ru": {
+      "action": "canonicalize",
+      "canonical": "ru-Cyrl"
+    },
+    "th": {
+      "action": "canonicalize",
+      "canonical": "th-Thai"
+    },
+    "tr": {
+      "action": "canonicalize",
+      "canonical": "tr-Latn"
+    },
+    "ur": {
+      "action": "canonicalize",
+      "canonical": "ur-Arab"
+    },
+    "vi": {
+      "action": "canonicalize",
+      "canonical": "vi-Latn"
     },
     "swh": {
-      "action": "keep",
-      "canonical": "swh"
+      "action": "canonicalize",
+      "canonical": "swh-Latn"
     },
     "ral": {
-      "action": "keep",
-      "canonical": "ral"
+      "action": "canonicalize",
+      "canonical": "ral-Latn"
     },
     "zyg-x-yang1286": {
       "action": "canonicalize",
@@ -82,43 +154,47 @@
     },
     "ar-SA": {
       "action": "canonicalize",
-      "canonical": "ar"
+      "canonical": "ar-Arab"
     },
     "bn-BD": {
       "action": "canonicalize",
-      "canonical": "bn"
+      "canonical": "bn-Beng"
     },
     "de-DE": {
       "action": "canonicalize",
-      "canonical": "de"
+      "canonical": "de-Latn"
     },
     "es-ES": {
       "action": "canonicalize",
-      "canonical": "es"
+      "canonical": "es-Latn"
     },
     "fa-IR": {
       "action": "canonicalize",
-      "canonical": "fa"
+      "canonical": "fa-Arab"
     },
     "fr-FR": {
       "action": "canonicalize",
-      "canonical": "fr"
+      "canonical": "fr-Latn"
     },
     "hi-IN": {
       "action": "canonicalize",
-      "canonical": "hi"
+      "canonical": "hi-Deva"
     },
     "id-ID": {
       "action": "canonicalize",
-      "canonical": "id"
+      "canonical": "id-Latn"
     },
     "it-IT": {
       "action": "canonicalize",
-      "canonical": "it"
+      "canonical": "it-Latn"
+    },
+    "ja": {
+      "action": "canonicalize",
+      "canonical": "ja-Jpan"
     },
     "ja-JP": {
       "action": "canonicalize",
-      "canonical": "ja"
+      "canonical": "ja-Jpan"
     },
     "ko": {
       "action": "canonicalize",
@@ -138,35 +214,31 @@
     },
     "mr-IN": {
       "action": "canonicalize",
-      "canonical": "mr"
+      "canonical": "mr-Deva"
     },
     "pa-PK": {
       "action": "canonicalize",
       "canonical": "pa-Guru"
     },
-    "pt-BR": {
-      "action": "keep",
-      "canonical": "pt-BR"
-    },
     "ru-RU": {
       "action": "canonicalize",
-      "canonical": "ru"
+      "canonical": "ru-Cyrl"
     },
     "th-TH": {
       "action": "canonicalize",
-      "canonical": "th"
+      "canonical": "th-Thai"
     },
     "tr-TR": {
       "action": "canonicalize",
-      "canonical": "tr"
+      "canonical": "tr-Latn"
     },
     "ur-PK": {
       "action": "canonicalize",
-      "canonical": "ur"
+      "canonical": "ur-Arab"
     },
     "vi-VN": {
       "action": "canonicalize",
-      "canonical": "vi"
+      "canonical": "vi-Latn"
     },
     "wuu-Hant-CN": {
       "action": "canonicalize",

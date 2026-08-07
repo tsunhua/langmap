@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ID = 'langmap-web'
-SOURCE_LANGUAGE_CODE = 'en'
+SOURCE_LANGUAGE_CODE = 'en-Latn'
 LANGUAGE_ID_BITS = 16
 TEXT_ID_BITS = 37
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

@@ -20,10 +20,10 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / 'scripts/i18n/artifacts/system-ui'
 DEFAULT_LOCALE_PATHS = {
     'cmn-Hans': PROJECT_ROOT / 'scripts/i18n/cmn-Hans.json',
     'cmn-Hant': PROJECT_ROOT / 'scripts/i18n/cmn-Hant.json',
-    'es': PROJECT_ROOT / 'scripts/i18n/es-ES.json',
-    'ja': PROJECT_ROOT / 'scripts/i18n/ja-JP.json',
+    'es-Latn': PROJECT_ROOT / 'scripts/i18n/es-ES.json',
+    'ja-Jpan': PROJECT_ROOT / 'scripts/i18n/ja-JP.json',
 }
-REQUIRED_LOCALE_CODES = ('cmn-Hans', 'cmn-Hant', 'es', 'ja')
+REQUIRED_LOCALE_CODES = ('cmn-Hans', 'cmn-Hant', 'es-Latn', 'ja-Jpan')
 SCHEMA_VERSION = 1
 OWNERSHIP_SCOPE = 'managed-system-ui'
 

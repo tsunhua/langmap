@@ -13,8 +13,8 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ar",
-          "name": "標準",
+          "code": "ar-Arab",
+          "name": "阿拉伯文",
           "name_en": "Arabic"
         }
       ]
@@ -31,8 +31,8 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "bn",
-          "name": "標準",
+          "code": "bn-Beng",
+          "name": "孟加拉文",
           "name_en": "Bengali"
         }
       ]
@@ -104,7 +104,7 @@
     {
       "id": "01K1GWHD00NMQC20PMZV031H78",
       "code": "cmn",
-      "name": "華語",
+      "name": "華語（普通話、國語）",
       "name_en": "Mandarin Chinese",
       "glottocode": "mand1415",
       "origin": "seed",
@@ -236,9 +236,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "de",
-          "name": "標準",
-          "name_en": "German"
+          "code": "de-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -254,19 +254,19 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "en",
-          "name": "標準",
-          "name_en": "English"
+          "code": "en-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         },
         {
-          "code": "en-GB",
-          "name": "標準",
-          "name_en": "English (United Kingdom)"
+          "code": "en-Latn-GB",
+          "name": "拉丁",
+          "name_en": "Latin"
         },
         {
-          "code": "en-US",
-          "name": "標準",
-          "name_en": "English (United States)"
+          "code": "en-Latn-US",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -282,9 +282,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "es",
-          "name": "標準",
-          "name_en": "Spanish"
+          "code": "es-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -300,9 +300,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "fa",
-          "name": "標準",
-          "name_en": "Persian"
+          "code": "fa-Arab",
+          "name": "阿拉伯文",
+          "name_en": "Arabic"
         }
       ]
     },
@@ -318,9 +318,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "fr",
-          "name": "標準",
-          "name_en": "French"
+          "code": "fr-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -382,9 +382,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "hi",
-          "name": "標準",
-          "name_en": "Hindi"
+          "code": "hi-Deva",
+          "name": "天城文",
+          "name_en": "Devanagari"
         }
       ]
     },
@@ -423,9 +423,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "id",
-          "name": "標準",
-          "name_en": "Indonesian"
+          "code": "id-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -441,9 +441,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "it",
-          "name": "標準",
-          "name_en": "Italian"
+          "code": "it-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -459,9 +459,28 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ja",
-          "name": "標準",
-          "name_en": "Japanese"
+          "code": "ja-Jpan",
+          "name": "日本語",
+          "name_en": "Japanese",
+          "endonym": "日本語"
+        },
+        {
+          "code": "ja-Hani",
+          "name": "漢字",
+          "name_en": "Kanji",
+          "endonym": "漢字"
+        },
+        {
+          "code": "ja-Hrkt",
+          "name": "仮名",
+          "name_en": "Kana",
+          "endonym": "仮名"
+        },
+        {
+          "code": "ja-Latn",
+          "name": "ローマ字",
+          "name_en": "Romaji",
+          "endonym": "ローマ字"
         }
       ]
     },
@@ -600,9 +619,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "mr",
-          "name": "標準",
-          "name_en": "Marathi"
+          "code": "mr-Deva",
+          "name": "天城文",
+          "name_en": "Devanagari"
         }
       ]
     },
@@ -704,14 +723,14 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "pt",
-          "name": "標準",
-          "name_en": "Portuguese"
+          "code": "pt-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         },
         {
-          "code": "pt-BR",
-          "name": "標準",
-          "name_en": "Portuguese (Brazil)"
+          "code": "pt-Latn-BR",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -727,9 +746,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ral",
-          "name": "標準",
-          "name_en": "Raltic"
+          "code": "ral-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -745,9 +764,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ru",
-          "name": "標準",
-          "name_en": "Russian"
+          "code": "ru-Cyrl",
+          "name": "西里爾",
+          "name_en": "Cyrillic"
         }
       ]
     },
@@ -763,9 +782,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "swh",
-          "name": "標準",
-          "name_en": "Swahili"
+          "code": "swh-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -781,8 +800,8 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "th",
-          "name": "標準",
+          "code": "th-Thai",
+          "name": "泰文",
           "name_en": "Thai"
         }
       ]
@@ -799,9 +818,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "tr",
-          "name": "標準",
-          "name_en": "Turkish"
+          "code": "tr-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -853,9 +872,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ur",
-          "name": "標準",
-          "name_en": "Urdu"
+          "code": "ur-Arab",
+          "name": "阿拉伯文",
+          "name_en": "Arabic"
         }
       ]
     },
@@ -871,9 +890,9 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "vi",
-          "name": "標準",
-          "name_en": "Vietnamese"
+          "code": "vi-Latn",
+          "name": "拉丁",
+          "name_en": "Latin"
         }
       ]
     },
@@ -1195,7 +1214,7 @@
       "reference": "https://glottolog.org/resource/languoid/id/beng1280",
       "variety_code": "bn",
       "city_name_localized": {
-        "bn": "কলকাতা"
+        "bn-Beng": "কলকাতা"
       }
     },
     {
@@ -1471,7 +1490,7 @@
       "reference": "https://glottolog.org/resource/languoid/id/urdu1245",
       "variety_code": "ur",
       "city_name_localized": {
-        "ur": "لاہور"
+        "ur-Arab": "لاہور"
       }
     },
     {
@@ -2305,21 +2324,93 @@
         "action": "keep",
         "canonical": "x-image"
       },
+      "ar": {
+        "action": "canonicalize",
+        "canonical": "ar-Arab"
+      },
+      "bn": {
+        "action": "canonicalize",
+        "canonical": "bn-Beng"
+      },
+      "de": {
+        "action": "canonicalize",
+        "canonical": "de-Latn"
+      },
+      "en": {
+        "action": "canonicalize",
+        "canonical": "en-Latn"
+      },
       "en-US": {
-        "action": "keep",
-        "canonical": "en-US"
+        "action": "canonicalize",
+        "canonical": "en-Latn-US"
       },
       "en-GB": {
-        "action": "keep",
-        "canonical": "en-GB"
+        "action": "canonicalize",
+        "canonical": "en-Latn-GB"
+      },
+      "es": {
+        "action": "canonicalize",
+        "canonical": "es-Latn"
+      },
+      "fa": {
+        "action": "canonicalize",
+        "canonical": "fa-Arab"
+      },
+      "fr": {
+        "action": "canonicalize",
+        "canonical": "fr-Latn"
+      },
+      "hi": {
+        "action": "canonicalize",
+        "canonical": "hi-Deva"
+      },
+      "id": {
+        "action": "canonicalize",
+        "canonical": "id-Latn"
+      },
+      "it": {
+        "action": "canonicalize",
+        "canonical": "it-Latn"
+      },
+      "mr": {
+        "action": "canonicalize",
+        "canonical": "mr-Deva"
+      },
+      "pt": {
+        "action": "canonicalize",
+        "canonical": "pt-Latn"
+      },
+      "pt-BR": {
+        "action": "canonicalize",
+        "canonical": "pt-Latn-BR"
+      },
+      "ru": {
+        "action": "canonicalize",
+        "canonical": "ru-Cyrl"
+      },
+      "th": {
+        "action": "canonicalize",
+        "canonical": "th-Thai"
+      },
+      "tr": {
+        "action": "canonicalize",
+        "canonical": "tr-Latn"
+      },
+      "ur": {
+        "action": "canonicalize",
+        "canonical": "ur-Arab"
+      },
+      "vi": {
+        "action": "canonicalize",
+        "canonical": "vi-Latn"
       },
       "swh": {
-        "action": "keep",
-        "canonical": "swh"
+        "action": "canonicalize",
+        "canonical": "swh-Latn"
       },
       "ral": {
-        "action": "keep",
-        "canonical": "ral"
+        "action": "canonicalize",
+        "canonical": "ral-Latn"
       },
       "zyg-x-yang1286": {
         "action": "canonicalize",
@@ -2375,43 +2466,47 @@
       },
       "ar-SA": {
         "action": "canonicalize",
-        "canonical": "ar"
+        "canonical": "ar-Arab"
       },
       "bn-BD": {
         "action": "canonicalize",
-        "canonical": "bn"
+        "canonical": "bn-Beng"
       },
       "de-DE": {
         "action": "canonicalize",
-        "canonical": "de"
+        "canonical": "de-Latn"
       },
       "es-ES": {
         "action": "canonicalize",
-        "canonical": "es"
+        "canonical": "es-Latn"
       },
       "fa-IR": {
         "action": "canonicalize",
-        "canonical": "fa"
+        "canonical": "fa-Arab"
       },
       "fr-FR": {
         "action": "canonicalize",
-        "canonical": "fr"
+        "canonical": "fr-Latn"
       },
       "hi-IN": {
         "action": "canonicalize",
-        "canonical": "hi"
+        "canonical": "hi-Deva"
       },
       "id-ID": {
         "action": "canonicalize",
-        "canonical": "id"
+        "canonical": "id-Latn"
       },
       "it-IT": {
         "action": "canonicalize",
-        "canonical": "it"
+        "canonical": "it-Latn"
+      },
+      "ja": {
+        "action": "canonicalize",
+        "canonical": "ja-Jpan"
       },
       "ja-JP": {
         "action": "canonicalize",
-        "canonical": "ja"
+        "canonical": "ja-Jpan"
       },
       "ko": {
         "action": "canonicalize",
@@ -2431,35 +2526,31 @@
       },
       "mr-IN": {
         "action": "canonicalize",
-        "canonical": "mr"
+        "canonical": "mr-Deva"
       },
       "pa-PK": {
         "action": "canonicalize",
         "canonical": "pa-Guru"
       },
-      "pt-BR": {
-        "action": "keep",
-        "canonical": "pt-BR"
-      },
       "ru-RU": {
         "action": "canonicalize",
-        "canonical": "ru"
+        "canonical": "ru-Cyrl"
       },
       "th-TH": {
         "action": "canonicalize",
-        "canonical": "th"
+        "canonical": "th-Thai"
       },
       "tr-TR": {
         "action": "canonicalize",
-        "canonical": "tr"
+        "canonical": "tr-Latn"
       },
       "ur-PK": {
         "action": "canonicalize",
-        "canonical": "ur"
+        "canonical": "ur-Arab"
       },
       "vi-VN": {
         "action": "canonicalize",
-        "canonical": "vi"
+        "canonical": "vi-Latn"
       },
       "wuu-Hant-CN": {
         "action": "canonicalize",

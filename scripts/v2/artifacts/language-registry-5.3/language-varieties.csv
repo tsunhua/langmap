@@ -4,7 +4,7 @@ id,code,name,name_en,description,glottocode,origin,community_reason,alternate_na
 01K1GWHD00WDR06XJVBKS1DFR6,bo,བོད་སྐད་,Tibetan,,tibe1272,seed,major-east-asia-language,[],[],glotto:cent2346
 01K1GWHD00VVTZNFAZAB7SWPDY,cdo,閩東語,Min Dong,,mind1253,seed,major-east-asia-language,[],[],glotto:coas1318
 01K1GWHD00KWTC0V9NCJS1THRW,cjy,晉語,Jin Chinese,,jiny1235,seed,major-east-asia-language,[],[],glotto:nort3155
-01K1GWHD00NMQC20PMZV031H78,cmn,華語,Mandarin Chinese,,mand1415,seed,major-east-asia-language,"[""普通话"",""国语"",""汉语"",""國語"",""漢語""]",[],glotto:mand1471
+01K1GWHD00NMQC20PMZV031H78,cmn,華語（普通話、國語）,Mandarin Chinese,,mand1415,seed,major-east-asia-language,"[""普通话"",""国语"",""汉语"",""國語"",""漢語""]",[],glotto:mand1471
 01K1GWHD00TEN6QB2KD3B1WPHZ,cnp,桂北平話,Northern Pinghua,,nort3268,seed,major-east-asia-language,[],[],glotto:ping1245
 01K1GWHD00J5RYZ74NPQ5N48XC,cpx,莆仙話,Pu-Xian,,puxi1243,seed,major-east-asia-language,[],[],glotto:sout3421
 01K1GWHD00YF6DTZ9RX5WQ3ZTN,csp,桂南平話,Southern Pinghua,,sout3250,seed,major-east-asia-language,[],[],glotto:ping1245

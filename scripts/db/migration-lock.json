@@ -133,6 +133,18 @@
       "filename": "0023_canonicalize_korean_script_profiles.sql",
       "size": 1609,
       "sha256": "465350fdab3504b71300307ab92aec86429f40dfa2b9c6b63ca4d6106f2d9b18"
+    },
+    {
+      "sequence": 24,
+      "filename": "0024_canonicalize_japanese_script_profiles.sql",
+      "size": 1549,
+      "sha256": "f2e701d06f2a12f753b38162a5b112436da40aa620d0a9651af360a0cb5d8948"
+    },
+    {
+      "sequence": 25,
+      "filename": "0025_canonicalize_all_script_profiles.sql",
+      "size": 4776,
+      "sha256": "47bd09feba075a11ab9a18dae76b9364945d5ecfdded42da2a7a591f30b9959e"
     }
   ]
 }

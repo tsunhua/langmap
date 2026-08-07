@@ -214,7 +214,7 @@ language_locations.variety_key
     {
       "id": "01K...",
       "code": "cmn",
-      "name": "華語",
+      "name": "華語（普通話、國語）",
       "name_en": "Mandarin Chinese",
       "glottocode": "mand1415",
       "profiles": [
@@ -265,7 +265,7 @@ POST /api/v2/languages
 ```json
 {
   "code": "cmn",
-  "name": "華語",
+  "name": "華語（普通話、國語）",
   "name_en": "Mandarin Chinese",
   "glottocode": "mand1415",
   "expression_count": 523,

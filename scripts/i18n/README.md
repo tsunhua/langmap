@@ -1,12 +1,12 @@
 # UI 翻譯 bundle
 
 受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
-`web/src/locales/en.ts`，first-party locale JSON 目前包含：
+`web/src/locales/en.ts`（bundle code：`en-Latn`），first-party locale JSON 目前包含：
 
 - `cmn-Hans.json`（bundle code：`cmn-Hans`）
 - `cmn-Hant.json`（bundle code：`cmn-Hant`）
-- `es-ES.json`（bundle code：`es`）
-- `ja-JP.json`（bundle code：`ja`）
+- `es-ES.json`（bundle code：`es-Latn`）
+- `ja-JP.json`（bundle code：`ja-Jpan`）
 
 翻譯鍵需對應 `web/src/locales/en.ts` 的巢狀路徑。
 
@@ -28,8 +28,8 @@ python3 scripts/i18n/generate-bundle.py \
   --source-catalog /tmp/en.ts \
   --locale cmn-Hant=/tmp/cmn-Hant.json \
   --locale cmn-Hans=/tmp/cmn-Hans.json \
-  --locale es=/tmp/es-ES.json \
-  --locale ja=/tmp/ja-JP.json \
+  --locale es-Latn=/tmp/es-ES.json \
+  --locale ja-Jpan=/tmp/ja-JP.json \
   --output-dir /tmp/system-ui-bundle
 ```
 
