@@ -293,7 +293,7 @@
       "code": "fa",
       "name": "فارسی",
       "name_en": "Persian",
-      "glottocode": null,
+      "glottocode": "west2369",
       "origin": "seed",
       "reason": "major-world-language",
       "description": "",
@@ -547,7 +547,7 @@
       "code": "mn",
       "name": "蒙古語",
       "name_en": "Mongolian",
-      "glottocode": null,
+      "glottocode": "halh1238",
       "origin": "seed",
       "reason": "major-east-asia-language",
       "description": "",
@@ -561,7 +561,7 @@
         {
           "code": "mn-Mong",
           "name": "傳統蒙古文",
-          "name_en": "Traditional Script"
+          "name_en": "Mongolian"
         }
       ]
     },
@@ -1010,7 +1010,7 @@
       "code": "za",
       "name": "壯語",
       "name_en": "Zhuang",
-      "glottocode": null,
+      "glottocode": "nort3249",
       "origin": "seed",
       "reason": "major-east-asia-language",
       "description": "",
@@ -1027,7 +1027,7 @@
       "id": "01K1GWHD00F5JPB0CDWHJRFQ6R",
       "code": "zyg",
       "name": "Yangzhuang",
-      "name_en": "Yangzhuang",
+      "name_en": "Yang Zhuang",
       "glottocode": "yang1286",
       "origin": "seed",
       "reason": "existing-online-code",
@@ -1037,7 +1037,7 @@
         {
           "code": "zyg-Latn-x-yang1286",
           "name": "Yangzhuang",
-          "name_en": "Zhuang (Yangwang)"
+          "name_en": "Yang Zhuang"
         }
       ]
     }
@@ -1319,7 +1319,7 @@
       "city_name": "Seoul",
       "city_name_en": "Seoul",
       "territory_code": "KR",
-      "script_code": "",
+      "script_code": "Hang",
       "latitude": 37.5665,
       "longitude": 126.978,
       "reference": "https://glottolog.org/resource/languoid/id/kore1280",
@@ -1329,7 +1329,7 @@
       "city_name": "Pyongyang",
       "city_name_en": "Pyongyang",
       "territory_code": "KP",
-      "script_code": "",
+      "script_code": "Hang",
       "latitude": 39.0392,
       "longitude": 125.7625,
       "reference": "https://glottolog.org/resource/languoid/id/kore1280",
@@ -1339,7 +1339,7 @@
       "city_name": "Yanji",
       "city_name_en": "Yanji",
       "territory_code": "CN",
-      "script_code": "",
+      "script_code": "Hang",
       "latitude": 42.9068,
       "longitude": 129.5089,
       "reference": "https://glottolog.org/resource/languoid/id/kore1280",
@@ -1356,14 +1356,17 @@
       "variety_code": "mr"
     },
     {
-      "city_name": "ਚੰਡੀਗੜ੍ਹ",
+      "city_name": "Chandigarh",
       "city_name_en": "Chandigarh",
       "territory_code": "IN",
       "script_code": "Guru",
       "latitude": 30.7333,
       "longitude": 76.7794,
       "reference": "https://glottolog.org/resource/languoid/id/panj1256",
-      "variety_code": "pa"
+      "variety_code": "pa",
+      "city_name_localized": {
+        "pa-Guru": "ਚੰਡੀਗੜ੍ਹ"
+      }
     },
     {
       "city_name": "Lisbon",
@@ -1447,6 +1450,34 @@
       "city_name_localized": {
         "wuu-Hans": "上海",
         "wuu-Hant": "上海"
+      }
+    },
+    {
+      "city_name": "Wenzhou",
+      "city_name_en": "Wenzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 27.9943,
+      "longitude": 120.6994,
+      "reference": "https://glottolog.org/resource/languoid/id/ouji1238",
+      "variety_code": "wuu-x-ouji1238",
+      "city_name_localized": {
+        "wuu-Hans-x-ouji1238": "温州",
+        "wuu-Hant-x-ouji1238": "溫州"
+      }
+    },
+    {
+      "city_name": "Taizhou",
+      "city_name_en": "Taizhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 28.6627,
+      "longitude": 121.4331,
+      "reference": "https://glottolog.org/resource/languoid/id/taiz1238",
+      "variety_code": "wuu-x-taiz1238",
+      "city_name_localized": {
+        "wuu-Hans-x-taiz1238": "台州",
+        "wuu-Hant-x-taiz1238": "台州"
       }
     },
     {
@@ -1756,6 +1787,19 @@
       "longitude": 74.5698,
       "reference": "https://glottolog.org/resource/languoid/id/kirg1245",
       "variety_code": "ky"
+    },
+    {
+      "city_name": "Artux",
+      "city_name_en": "Artux",
+      "territory_code": "CN",
+      "script_code": "Arab",
+      "latitude": 39.7162,
+      "longitude": 76.1684,
+      "reference": "https://glottolog.org/resource/languoid/id/kirg1245",
+      "variety_code": "ky",
+      "city_name_localized": {
+        "ky-Arab": "ئارتىش"
+      }
     },
     {
       "city_name": "Nanning",

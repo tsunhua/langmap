@@ -534,22 +534,20 @@ Added: 2005-10-16
 
     def test_sinitic_locations_carry_script_localized_names(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())
-        han_profiles = {
-            v["code"]: v["profiles"]
-            for v in profiles["varieties"]
-            if any("-Hans" in p["code"] for p in v["profiles"])
-        }
+        variety_profiles = {v["code"]: v["profiles"] for v in profiles["varieties"]}
         for loc in profiles["locations"]:
-            if loc["variety_code"] not in han_profiles:
-                self.assertNotIn("city_name_localized", loc)
-                continue
-            codes = {p["code"] for p in han_profiles[loc["variety_code"]]}
-            localized = loc["city_name_localized"]
-            self.assertEqual(
-                set(localized),
-                {c for c in codes if "-Hans" in c or "-Hant" in c},
-            )
-            self.assertTrue(all(v for v in localized.values()), localized)
+            codes = {p["code"] for p in variety_profiles[loc["variety_code"]]}
+            localized = loc.get("city_name_localized")
+            han_codes = {c for c in codes if "-Hans" in c or "-Hant" in c}
+            if han_codes:
+                self.assertTrue(localized, loc["city_name"])
+                self.assertEqual(
+                    set(localized),
+                    {c for c in codes if "-Hans" in c or "-Hant" in c},
+                )
+            elif localized:
+                self.assertLessEqual(set(localized), codes)
+            self.assertTrue(all(v for v in (localized or {}).values()), localized)
 
     def test_expression_schema_tracks_common_variant_classification(self):
         schema = (ROOT.parent.parent / "backend/schema.sql").read_text()

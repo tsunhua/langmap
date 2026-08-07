@@ -12,7 +12,7 @@ id,code,name,name_en,description,glottocode,origin,community_reason,alternate_na
 01K1GWHD00NHYJTK7WVNVC9TZM,de,Deutsch,German,,stan1295,seed,major-world-language,[],[],glotto:glob1243
 01K1GWHD001Z1VXEKX6Q1PEMH6,en,English,English,,stan1293,seed,major-world-language,[],[],glotto:macr1271
 01K1GWHD00AXX4SZ3A9R25J6CQ,es,Español,Spanish,,stan1288,seed,major-world-language,[],[],glotto:cast1243
-01K1GWHD00X8BRJJA1WAS53Q51,fa,فارسی,Persian,,,seed,major-world-language,[],[],
+01K1GWHD00X8BRJJA1WAS53Q51,fa,فارسی,Persian,,west2369,seed,major-world-language,[],[],glotto:fars1255
 01K1GWHD00K4EH8FK4MPMY466J,fr,Français,French,,stan1290,seed,major-world-language,[],[],glotto:glob1239
 01K1GWHD005469S094YTAWG6M8,gan,贛語,Gan Chinese,,ganc1239,seed,major-east-asia-language,[],[],glotto:midd1354
 01K1GWHD00C6XD8MQE0CVQS028,hak,客家話,Hakka,,hakk1236,seed,major-east-asia-language,[],[],glotto:midd1354
@@ -24,7 +24,7 @@ id,code,name,name_en,description,glottocode,origin,community_reason,alternate_na
 01K1GWHD00N8ZKG7NFZN8BNTZM,kk,قازاق تىلى,Kazakh,,kaza1248,seed,regional-east-asia-language,[],[],glotto:sout2701
 01K1GWHD00CWEB07YTCHE2FXGV,ko,한국어,Korean,,kore1280,seed,regional-east-asia-language,[],[],glotto:kore1284
 01K1GWHD002Z2VYS90STAZ4TY5,ky,قىرعىز تىلى,Kyrgyz,,kirg1245,seed,regional-east-asia-language,[],[],glotto:east2791
-01K1GWHD009CN2616Y0SCY67WF,mn,蒙古語,Mongolian,,,seed,major-east-asia-language,[],[],
+01K1GWHD009CN2616Y0SCY67WF,mn,蒙古語,Mongolian,,halh1238,seed,major-east-asia-language,[],[],glotto:mong1331
 01K1GWHD00DFZEPRHD3AP7C028,mnp,閩北語,Min Bei,,minb1236,seed,major-east-asia-language,[],[],glotto:minb1244
 01K1GWHD00XBQFHB2F4R0T1DR4,mr,मराठी,Marathi,,mara1378,seed,major-world-language,[],[],glotto:mode1268
 01K1GWHD00SMQPS4JYFY690ASC,nan,閩南語,Hokkien (Min Nan),,minn1241,seed,major-east-asia-language,[],[],glotto:sout3424
@@ -46,5 +46,5 @@ id,code,name,name_en,description,glottocode,origin,community_reason,alternate_na
 01K1GWHD00XZAH2DGKAY11J2X7,x-emoji,Emoji 表情,Emoji,,,system,special-content,[],[],
 01K1GWHD00F7FBYAQV8WEKA135,x-image,圖片,Image,,,system,special-content,[],[],
 01K1GWHD0039ZDYQQ6DNA6F4TS,yue,粵語,Cantonese,,yuec1235,seed,major-east-asia-language,[],[],glotto:yuep1234
-01K1GWHD00BB9YR14G68HXS3H1,za,壯語,Zhuang,,,seed,major-east-asia-language,[],[],
-01K1GWHD00F5JPB0CDWHJRFQ6R,zyg,Yangzhuang,Yangzhuang,,yang1286,seed,existing-online-code,[],[],glotto:deba1238
+01K1GWHD00BB9YR14G68HXS3H1,za,壯語,Zhuang,,nort3249,seed,major-east-asia-language,[],[],glotto:book1242
+01K1GWHD00F5JPB0CDWHJRFQ6R,zyg,Yangzhuang,Yang Zhuang,,yang1286,seed,existing-online-code,[],[],glotto:deba1238

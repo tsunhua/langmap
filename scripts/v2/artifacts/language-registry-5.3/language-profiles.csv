@@ -41,7 +41,7 @@ ko-Kore,01K1GWHD00CWEB07YTCHE2FXGV,국한문,Korean mixed script,국한문,ltr,k
 ky-Arab,01K1GWHD002Z2VYS90STAZ4TY5,阿拉伯文,Arabic,,rtl,ky,Arab,,[],[]
 ky-Cyrl,01K1GWHD002Z2VYS90STAZ4TY5,西里爾,Cyrillic,,ltr,ky,Cyrl,,[],[]
 mn-Cyrl,01K1GWHD009CN2616Y0SCY67WF,西里爾,Cyrillic,,ltr,mn,Cyrl,,[],[]
-mn-Mong,01K1GWHD009CN2616Y0SCY67WF,傳統蒙古文,Traditional Script,,ltr,mn,Mong,,[],[]
+mn-Mong,01K1GWHD009CN2616Y0SCY67WF,傳統蒙古文,Mongolian,,ltr,mn,Mong,,[],[]
 mnp-Hans,01K1GWHD00DFZEPRHD3AP7C028,简体,Simplified,,ltr,mnp,Hans,,[],[]
 mnp-Hant,01K1GWHD00DFZEPRHD3AP7C028,傳承體,Traditional,,ltr,mnp,Hant,,[],[]
 mr,01K1GWHD00XBQFHB2F4R0T1DR4,標準,Marathi,,ltr,mr,,,[],[]
@@ -75,4 +75,4 @@ x-image,01K1GWHD00F7FBYAQV8WEKA135,標準,Image,,ltr,x,,,[],"[""x-image""]"
 yue-Hans,01K1GWHD0039ZDYQQ6DNA6F4TS,简体,Simplified,,ltr,yue,Hans,,[],[]
 yue-Hant,01K1GWHD0039ZDYQQ6DNA6F4TS,傳承體,Traditional,,ltr,yue,Hant,,[],[]
 za-Latn,01K1GWHD00BB9YR14G68HXS3H1,拉丁,Latin,,ltr,za,Latn,,[],[]
-zyg-Latn-x-yang1286,01K1GWHD00F5JPB0CDWHJRFQ6R,Yangzhuang,Zhuang (Yangwang),,ltr,zyg,Latn,,[],"[""yang1286""]"
+zyg-Latn-x-yang1286,01K1GWHD00F5JPB0CDWHJRFQ6R,Yangzhuang,Yang Zhuang,,ltr,zyg,Latn,,[],"[""yang1286""]"

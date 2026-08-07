@@ -1,12 +1,14 @@
 language_variety_id,city_name,city_name_en,city_name_localized,territory_code,script_code,latitude,longitude,reference
 01K1GWHD000C6NPBGV1F3RNTDM,Hanoi,Hanoi,{},VN,,21.0278,105.8342,https://glottolog.org/resource/languoid/id/viet1252
 01K1GWHD000DXGMDG05PJ4T2E4,Tokyo,Tokyo,{},JP,,35.6762,139.6503,https://glottolog.org/resource/languoid/id/nucl1643
+01K1GWHD001EST811PWDB56762,Taizhou,Taizhou,"{""wuu-Hans-x-taiz1238"":""台州"",""wuu-Hant-x-taiz1238"":""台州""}",CN,Hans,28.6627,121.4331,https://glottolog.org/resource/languoid/id/taiz1238
 01K1GWHD001Z1VXEKX6Q1PEMH6,London,London,{},GB,,51.5074,-0.1278,https://glottolog.org/resource/languoid/id/stan1293
 01K1GWHD001Z1VXEKX6Q1PEMH6,New York,New York,{},US,,40.7128,-74.006,https://glottolog.org/resource/languoid/id/stan1293
 01K1GWHD001Z1VXEKX6Q1PEMH6,Sydney,Sydney,{},AU,,-33.8688,151.2093,https://glottolog.org/resource/languoid/id/stan1293
 01K1GWHD001Z1VXEKX6Q1PEMH6,Toronto,Toronto,{},CA,,43.6532,-79.3832,https://glottolog.org/resource/languoid/id/stan1293
 01K1GWHD00229V3ETFHZ4V7GZG,Delhi,Delhi,{},IN,,28.6139,77.209,https://glottolog.org/resource/languoid/id/hind1269
 01K1GWHD0025B1MXK1M98WQK3Z,Shanghai,Shanghai,"{""wuu-Hans"":""上海"",""wuu-Hant"":""上海""}",CN,Hans,31.2304,121.4737,https://glottolog.org/resource/languoid/id/wuch1236
+01K1GWHD002Z2VYS90STAZ4TY5,Artux,Artux,"{""ky-Arab"":""ئارتىش""}",CN,Arab,39.7162,76.1684,https://glottolog.org/resource/languoid/id/kirg1245
 01K1GWHD002Z2VYS90STAZ4TY5,Bishkek,Bishkek,{},KG,Cyrl,42.8746,74.5698,https://glottolog.org/resource/languoid/id/kirg1245
 01K1GWHD0039ZDYQQ6DNA6F4TS,Guangzhou,Guangzhou,"{""yue-Hans"":""广州"",""yue-Hant"":""廣州""}",CN,Hans,23.1291,113.2644,https://glottolog.org/resource/languoid/id/yuec1235
 01K1GWHD0039ZDYQQ6DNA6F4TS,Hong Kong,Hong Kong,"{""yue-Hans"":""香港"",""yue-Hant"":""香港""}",HK,Hant,22.3193,114.1694,https://glottolog.org/resource/languoid/id/yuec1235
@@ -29,9 +31,9 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00C6XD8MQE0CVQS028,Meizhou,Meizhou,"{""hak-Hans"":""梅州"",""hak-Hant"":""梅州""}",CN,Hans,24.2991,116.1225,https://glottolog.org/resource/languoid/id/hakk1236
 01K1GWHD00C6XD8MQE0CVQS028,Taipei,Taipei,"{""hak-Hans"":""台北"",""hak-Hant"":""台北""}",TW,Hant,25.033,121.5654,https://glottolog.org/resource/languoid/id/hakk1236
 01K1GWHD00CS00JR0Y2S1J3KVK,Moscow,Moscow,{},RU,,55.7558,37.6173,https://glottolog.org/resource/languoid/id/russ1263
-01K1GWHD00CWEB07YTCHE2FXGV,Pyongyang,Pyongyang,{},KP,,39.0392,125.7625,https://glottolog.org/resource/languoid/id/kore1280
-01K1GWHD00CWEB07YTCHE2FXGV,Seoul,Seoul,{},KR,,37.5665,126.978,https://glottolog.org/resource/languoid/id/kore1280
-01K1GWHD00CWEB07YTCHE2FXGV,Yanji,Yanji,{},CN,,42.9068,129.5089,https://glottolog.org/resource/languoid/id/kore1280
+01K1GWHD00CWEB07YTCHE2FXGV,Pyongyang,Pyongyang,{},KP,Hang,39.0392,125.7625,https://glottolog.org/resource/languoid/id/kore1280
+01K1GWHD00CWEB07YTCHE2FXGV,Seoul,Seoul,{},KR,Hang,37.5665,126.978,https://glottolog.org/resource/languoid/id/kore1280
+01K1GWHD00CWEB07YTCHE2FXGV,Yanji,Yanji,{},CN,Hang,42.9068,129.5089,https://glottolog.org/resource/languoid/id/kore1280
 01K1GWHD00DFZEPRHD3AP7C028,Jian'ou,Jian'ou,"{""mnp-Hans"":""建瓯"",""mnp-Hant"":""建甌""}",CN,Hans,27.039,118.321,https://glottolog.org/resource/languoid/id/minb1236
 01K1GWHD00FTRQT82PTBE0A274,Kashgar,Kashgar,{},CN,Arab,39.4704,75.9898,https://glottolog.org/resource/languoid/id/uigh1240
 01K1GWHD00J5RYZ74NPQ5N48XC,Putian,Putian,"{""cpx-Hans"":""莆田"",""cpx-Hant"":""莆田""}",CN,Hans,25.454,119.0078,https://glottolog.org/resource/languoid/id/puxi1243
@@ -62,7 +64,7 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00SMQPS4JYFY690ASC,Xiamen,Xiamen,"{""nan-Hans"":""厦门"",""nan-Hant"":""廈門""}",CN,Hans,24.4798,118.0894,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00SMQPS4JYFY690ASC,Zhangzhou,Zhangzhou,"{""nan-Hans"":""漳州"",""nan-Hant"":""漳州""}",CN,Hans,24.5133,117.6471,https://glottolog.org/resource/languoid/id/minn1241
 01K1GWHD00TEN6QB2KD3B1WPHZ,Guilin,Guilin,"{""cnp-Hans"":""桂林"",""cnp-Hant"":""桂林""}",CN,Hans,25.2742,110.29,https://glottolog.org/resource/languoid/id/nort3268
-01K1GWHD00VS94XSBN1BQKV7E3,ਚੰਡੀਗੜ੍ਹ,Chandigarh,{},IN,Guru,30.7333,76.7794,https://glottolog.org/resource/languoid/id/panj1256
+01K1GWHD00VS94XSBN1BQKV7E3,Chandigarh,Chandigarh,"{""pa-Guru"":""ਚੰਡੀਗੜ੍ਹ""}",IN,Guru,30.7333,76.7794,https://glottolog.org/resource/languoid/id/panj1256
 01K1GWHD00VVTZNFAZAB7SWPDY,Fuzhou,Fuzhou,"{""cdo-Hans"":""福州"",""cdo-Hant"":""福州""}",CN,Hans,26.0745,119.2965,https://glottolog.org/resource/languoid/id/mind1253
 01K1GWHD00WAHCW7XG1FKE0N3P,Jakarta,Jakarta,{},ID,,-6.2088,106.8456,https://glottolog.org/resource/languoid/id/indo1316
 01K1GWHD00WDR06XJVBKS1DFR6,Lhasa,Lhasa,{},CN,Tibt,29.65,91.1,https://glottolog.org/resource/languoid/id/tibe1272
@@ -70,3 +72,4 @@ language_variety_id,city_name,city_name_en,city_name_localized,territory_code,sc
 01K1GWHD00X9MVHHWSZYYM1B2Y,Dar es Salaam,Dar es Salaam,{},TZ,,-6.7924,39.2083,https://glottolog.org/resource/languoid/id/swah1253
 01K1GWHD00XBQFHB2F4R0T1DR4,Mumbai,Mumbai,{},IN,,19.076,72.8777,https://glottolog.org/resource/languoid/id/mara1378
 01K1GWHD00YF6DTZ9RX5WQ3ZTN,Nanning,Nanning,"{""csp-Hans"":""南宁"",""csp-Hant"":""南寧""}",CN,Hans,22.817,108.3665,https://glottolog.org/resource/languoid/id/sout3250
+01K1GWHD00ZNBSD4ETW6QYGHDK,Wenzhou,Wenzhou,"{""wuu-Hans-x-ouji1238"":""温州"",""wuu-Hant-x-ouji1238"":""溫州""}",CN,Hans,27.9943,120.6994,https://glottolog.org/resource/languoid/id/ouji1238
