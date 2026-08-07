@@ -444,9 +444,10 @@ Added: 2005-10-16
         self.assertTrue({
             "en", "en-US", "en-GB",
             "pt", "pt-BR",
-            "ko", "ko-KR", "ko-KP",
+            "ko-Hang", "ko-Hani", "ko-Kore",
             "yue-Hant",
         }.issubset(codes))
+        self.assertTrue({"ko", "ko-KR", "ko-KP"}.isdisjoint(codes))
 
     def test_seed_varieties_are_two_layer_and_profile_codes_unique(self):
         profiles = json.loads((ROOT / "language_seed_profiles.json").read_text())

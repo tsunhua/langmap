@@ -120,17 +120,21 @@
       "action": "canonicalize",
       "canonical": "ja"
     },
+    "ko": {
+      "action": "canonicalize",
+      "canonical": "ko-Hang"
+    },
     "ko-KR": {
-      "action": "keep",
-      "canonical": "ko-KR"
+      "action": "canonicalize",
+      "canonical": "ko-Hang"
     },
     "ko-KP": {
-      "action": "keep",
-      "canonical": "ko-KP"
+      "action": "canonicalize",
+      "canonical": "ko-Hang"
     },
     "ko-CN": {
       "action": "canonicalize",
-      "canonical": "ko"
+      "canonical": "ko-Hang"
     },
     "mr-IN": {
       "action": "canonicalize",

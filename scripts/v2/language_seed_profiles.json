@@ -500,19 +500,22 @@
       "alternate_names": [],
       "profiles": [
         {
-          "code": "ko",
-          "name": "標準",
-          "name_en": "Korean"
+          "code": "ko-Hang",
+          "name": "Hangul",
+          "name_en": "Hangul",
+          "endonym": "한국어"
         },
         {
-          "code": "ko-KP",
-          "name": "標準",
-          "name_en": "Korean (North Korea)"
+          "code": "ko-Hani",
+          "name": "Hanja",
+          "name_en": "Hanja",
+          "endonym": "한자"
         },
         {
-          "code": "ko-KR",
-          "name": "標準",
-          "name_en": "Korean (South Korea)"
+          "code": "ko-Kore",
+          "name": "국한문",
+          "name_en": "Korean mixed script",
+          "endonym": "국한문"
         }
       ]
     },
@@ -1985,17 +1988,21 @@
         "action": "canonicalize",
         "canonical": "ja"
       },
+      "ko": {
+        "action": "canonicalize",
+        "canonical": "ko-Hang"
+      },
       "ko-KR": {
-        "action": "keep",
-        "canonical": "ko-KR"
+        "action": "canonicalize",
+        "canonical": "ko-Hang"
       },
       "ko-KP": {
-        "action": "keep",
-        "canonical": "ko-KP"
+        "action": "canonicalize",
+        "canonical": "ko-Hang"
       },
       "ko-CN": {
         "action": "canonicalize",
-        "canonical": "ko"
+        "canonical": "ko-Hang"
       },
       "mr-IN": {
         "action": "canonicalize",

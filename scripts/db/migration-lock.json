@@ -127,6 +127,12 @@
       "filename": "0022_canonicalize_chao_latin_profile.sql",
       "size": 1624,
       "sha256": "5e96c48d110a3f9c8f296ac0951626fae1750a35d9282b2ef2ded22fa7a5e405"
+    },
+    {
+      "sequence": 23,
+      "filename": "0023_canonicalize_korean_script_profiles.sql",
+      "size": 1609,
+      "sha256": "465350fdab3504b71300307ab92aec86429f40dfa2b9c6b63ca4d6106f2d9b18"
     }
   ]
 }

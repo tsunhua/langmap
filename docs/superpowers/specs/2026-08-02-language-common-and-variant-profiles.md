@@ -6,10 +6,11 @@
 
 ## 1. 決策
 
-內容語言採「共通層 → 變體層」。基礎 BCP 47 profile（例如 `en`、`ko`、
+內容語言採「共通層 → 變體層」。基礎 BCP 47 profile（例如 `en`、`ko-Hang`、
 `yue-Hant`）承載已確認共通或尚未分類的詞句；帶 region 或 private-use
-身份的 profile（例如 `en-US`、`ko-KP`、`nan-Hant-x-chao1238`）只承載已確認的
-變體內容。
+身份的 profile（例如 `en-US`、`nan-Hant-x-chao1238`）只承載已確認的
+變體內容。韓語以 script profile（`ko-Hang`、`ko-Hani`、`ko-Kore`）取代地區
+profile。
 
 UI locale 是另一個概念，但第一方英文介面沒有使用美國特有規則，因此來源 locale
 採 `en`。其他確有 script／locale 需求的 UI locale 可保留更完整的 tag。
@@ -32,8 +33,9 @@ UI locale 是另一個概念，但第一方英文介面沒有使用美國特有�
 
 ## 3. Profile 與地理分布
 
-- `en`、`pt`、`ko` 是共通／待分類內容入口；`en-US`、`en-GB`、`pt-BR`、
-  `ko-KR`、`ko-KP` 繼續存在以記錄已確認差異。
+- `en`、`pt`、`ko-Hang` 是共通／待分類內容入口；`en-US`、`en-GB`、`pt-BR`
+  繼續存在以記錄已確認差異。韓語以 `ko-Hang`／`ko-Hani`／`ko-Kore` 三個 script
+  profile 取代原有的 `ko`／`ko-KR`／`ko-KP`。
 - `yue-Hant` 不代表廣州預設，而是未綁定地方變體的傳承體粵語。
 - 城市只放在 `language_locations`，不因使用地而加入 language code。
 - Glottolog 能精確識別、BCP 47 無專用 subtag 的變體，以 private-use
@@ -68,7 +70,7 @@ UI locale 是另一個概念，但第一方英文介面沒有使用美國特有�
 ## 6. 驗收
 
 - registry 同時含 `en`／`en-US`／`en-GB`、`pt`／`pt-BR`、
-  `ko`／`ko-KR`／`ko-KP`。
+  `ko-Hang`／`ko-Hani`／`ko-Kore`。
 - registry 含三個 `chao1238` script profiles，不含 `nan-x-chao1239`。
 - 新建 expression 預設為 `unclassified`，可明確提交三種狀態。
 - schema 拒絕未知狀態。
