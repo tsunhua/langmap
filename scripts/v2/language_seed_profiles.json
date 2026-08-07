@@ -1992,6 +1992,303 @@
         "nan-Hans": "槟城",
         "nan-Hant": "檳城"
       }
+    },
+    {
+      "city_name": "Shigatse",
+      "city_name_en": "Shigatse",
+      "territory_code": "CN",
+      "script_code": "Tibt",
+      "latitude": 29.267,
+      "longitude": 88.881,
+      "reference": "https://glottolog.org/resource/languoid/id/tibe1272",
+      "variety_code": "bo"
+    },
+    {
+      "city_name": "Ningde",
+      "city_name_en": "Ningde",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 26.6662,
+      "longitude": 119.5477,
+      "reference": "https://glottolog.org/resource/languoid/id/mind1253",
+      "variety_code": "cdo",
+      "city_name_localized": {
+        "cdo-Hans": "宁德",
+        "cdo-Hant": "寧德"
+      }
+    },
+    {
+      "city_name": "Datong",
+      "city_name_en": "Datong",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 40.097,
+      "longitude": 113.367,
+      "reference": "https://glottolog.org/resource/languoid/id/jiny1235",
+      "variety_code": "cjy",
+      "city_name_localized": {
+        "cjy-Hans": "大同",
+        "cjy-Hant": "大同"
+      }
+    },
+    {
+      "city_name": "Lingui",
+      "city_name_en": "Lingui",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 25.2,
+      "longitude": 110.2,
+      "reference": "https://glottolog.org/resource/languoid/id/nort3268",
+      "variety_code": "cnp",
+      "city_name_localized": {
+        "cnp-Hans": "临桂",
+        "cnp-Hant": "臨桂"
+      }
+    },
+    {
+      "city_name": "Xianyou",
+      "city_name_en": "Xianyou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 25.362,
+      "longitude": 118.692,
+      "reference": "https://glottolog.org/resource/languoid/id/puxi1243",
+      "variety_code": "cpx",
+      "city_name_localized": {
+        "cpx-Hans": "仙游",
+        "cpx-Hant": "仙遊"
+      }
+    },
+    {
+      "city_name": "Hengzhou",
+      "city_name_en": "Hengzhou",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 22.6799,
+      "longitude": 109.2614,
+      "reference": "https://glottolog.org/resource/languoid/id/sout3250",
+      "variety_code": "csp",
+      "city_name_localized": {
+        "csp-Hans": "横州",
+        "csp-Hant": "橫州"
+      }
+    },
+    {
+      "city_name": "Yong'an",
+      "city_name_en": "Yongan",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 25.942,
+      "longitude": 117.365,
+      "reference": "https://glottolog.org/resource/languoid/id/minz1235",
+      "variety_code": "czo",
+      "city_name_localized": {
+        "czo-Hans": "永安",
+        "czo-Hant": "永安"
+      }
+    },
+    {
+      "city_name": "Munich",
+      "city_name_en": "Munich",
+      "territory_code": "DE",
+      "script_code": "",
+      "latitude": 48.1351,
+      "longitude": 11.582,
+      "reference": "https://glottolog.org/resource/languoid/id/stan1295",
+      "variety_code": "de"
+    },
+    {
+      "city_name": "Isfahan",
+      "city_name_en": "Isfahan",
+      "territory_code": "IR",
+      "script_code": "",
+      "latitude": 32.6539,
+      "longitude": 51.666,
+      "reference": "https://www.iranicaonline.org/articles/persian-language-i",
+      "variety_code": "fa"
+    },
+    {
+      "city_name": "Jiujiang",
+      "city_name_en": "Jiujiang",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 29.661,
+      "longitude": 115.954,
+      "reference": "https://glottolog.org/resource/languoid/id/ganc1239",
+      "variety_code": "gan",
+      "city_name_localized": {
+        "gan-Hans": "九江",
+        "gan-Hant": "九江"
+      }
+    },
+    {
+      "city_name": "Varanasi",
+      "city_name_en": "Varanasi",
+      "territory_code": "IN",
+      "script_code": "",
+      "latitude": 25.3176,
+      "longitude": 82.9739,
+      "reference": "https://glottolog.org/resource/languoid/id/hind1269",
+      "variety_code": "hi"
+    },
+    {
+      "city_name": "Xiangtan",
+      "city_name_en": "Xiangtan",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 27.83,
+      "longitude": 112.944,
+      "reference": "https://glottolog.org/resource/languoid/id/xian1251",
+      "variety_code": "hsn",
+      "city_name_localized": {
+        "hsn-Hans": "湘潭",
+        "hsn-Hant": "湘潭"
+      }
+    },
+    {
+      "city_name": "Surabaya",
+      "city_name_en": "Surabaya",
+      "territory_code": "ID",
+      "script_code": "",
+      "latitude": -7.2575,
+      "longitude": 112.7521,
+      "reference": "https://glottolog.org/resource/languoid/id/indo1316",
+      "variety_code": "id"
+    },
+    {
+      "city_name": "Milan",
+      "city_name_en": "Milan",
+      "territory_code": "IT",
+      "script_code": "",
+      "latitude": 45.4642,
+      "longitude": 9.19,
+      "reference": "https://glottolog.org/resource/languoid/id/ital1282",
+      "variety_code": "it"
+    },
+    {
+      "city_name": "Osaka",
+      "city_name_en": "Osaka",
+      "territory_code": "JP",
+      "script_code": "",
+      "latitude": 34.6937,
+      "longitude": 135.5023,
+      "reference": "https://glottolog.org/resource/languoid/id/nucl1643",
+      "variety_code": "ja"
+    },
+    {
+      "city_name": "Nanping",
+      "city_name_en": "Nanping",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 26.64,
+      "longitude": 118.1718,
+      "reference": "https://glottolog.org/resource/languoid/id/minb1236",
+      "variety_code": "mnp",
+      "city_name_localized": {
+        "mnp-Hans": "南平",
+        "mnp-Hant": "南平"
+      }
+    },
+    {
+      "city_name": "Pune",
+      "city_name_en": "Pune",
+      "territory_code": "IN",
+      "script_code": "",
+      "latitude": 18.5204,
+      "longitude": 73.8567,
+      "reference": "https://glottolog.org/resource/languoid/id/mara1378",
+      "variety_code": "mr"
+    },
+    {
+      "city_name": "Amritsar",
+      "city_name_en": "Amritsar",
+      "territory_code": "IN",
+      "script_code": "Guru",
+      "latitude": 31.634,
+      "longitude": 74.8723,
+      "reference": "https://glottolog.org/resource/languoid/id/panj1256",
+      "variety_code": "pa",
+      "city_name_localized": {
+        "pa-Guru": "ਅੰਮ੍ਰਿਤਸਰ"
+      }
+    },
+    {
+      "city_name": "Saint Petersburg",
+      "city_name_en": "Saint Petersburg",
+      "territory_code": "RU",
+      "script_code": "",
+      "latitude": 59.9311,
+      "longitude": 30.3609,
+      "reference": "https://glottolog.org/resource/languoid/id/russ1263",
+      "variety_code": "ru"
+    },
+    {
+      "city_name": "Chiang Mai",
+      "city_name_en": "Chiang Mai",
+      "territory_code": "TH",
+      "script_code": "",
+      "latitude": 18.7883,
+      "longitude": 98.9853,
+      "reference": "https://glottolog.org/resource/languoid/id/thai1261",
+      "variety_code": "th"
+    },
+    {
+      "city_name": "Hotan",
+      "city_name_en": "Hotan",
+      "territory_code": "CN",
+      "script_code": "Arab",
+      "latitude": 37.1092,
+      "longitude": 79.9333,
+      "reference": "https://glottolog.org/resource/languoid/id/uigh1240",
+      "variety_code": "ug"
+    },
+    {
+      "city_name": "Ruian",
+      "city_name_en": "Ruian",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 27.778,
+      "longitude": 120.6526,
+      "reference": "https://glottolog.org/resource/languoid/id/ouji1238",
+      "variety_code": "wuu-x-ouji1238",
+      "city_name_localized": {
+        "wuu-Hans-x-ouji1238": "瑞安",
+        "wuu-Hant-x-ouji1238": "瑞安"
+      }
+    },
+    {
+      "city_name": "Linhai",
+      "city_name_en": "Linhai",
+      "territory_code": "CN",
+      "script_code": "Hans",
+      "latitude": 28.84,
+      "longitude": 121.11,
+      "reference": "https://glottolog.org/resource/languoid/id/taiz1238",
+      "variety_code": "wuu-x-taiz1238",
+      "city_name_localized": {
+        "wuu-Hans-x-taiz1238": "临海",
+        "wuu-Hant-x-taiz1238": "臨海"
+      }
+    },
+    {
+      "city_name": "Wuming",
+      "city_name_en": "Wuming",
+      "territory_code": "CN",
+      "script_code": "Latn",
+      "latitude": 23.1592,
+      "longitude": 108.2734,
+      "reference": "https://www.ethnologue.com/language/zha/",
+      "variety_code": "za"
+    },
+    {
+      "city_name": "Debao",
+      "city_name_en": "Debao",
+      "territory_code": "CN",
+      "script_code": "Latn",
+      "latitude": 23.33,
+      "longitude": 106.62,
+      "reference": "https://glottolog.org/resource/languoid/id/yang1286",
+      "variety_code": "zyg"
     }
   ],
   "online_code_migrations": {
