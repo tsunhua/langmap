@@ -157,15 +157,17 @@ class LocalStatusTests(unittest.TestCase):
         (temp_root / "backend" / "migrations").mkdir(parents=True)
         (temp_root / "backend" / ".wrangler").mkdir(parents=True)
         (temp_root / "scripts" / "db" / "state").mkdir(parents=True)
-        (temp_root / "scripts" / "v2" / "fixtures").mkdir(parents=True)
+        (temp_root / "scripts" / "language-reference" / "artifacts").mkdir(parents=True)
         (temp_root / "scripts" / "i18n" / "artifacts" / "system-ui").mkdir(parents=True)
 
-        shutil.copy(REPO_ROOT / "backend" / "migrations" / "0002_add_name_en.sql", temp_root / "backend" / "migrations" / "0002_add_name_en.sql")
-        shutil.copy(REPO_ROOT / "backend" / "migrations" / "0003_add_lang_family_status.sql", temp_root / "backend" / "migrations" / "0003_add_lang_family_status.sql")
+        shutil.copy(
+            REPO_ROOT / "backend" / "migrations" / "0001_initial_schema.sql",
+            temp_root / "backend" / "migrations" / "0001_initial_schema.sql",
+        )
 
         (temp_root / "backend" / "schema.sql").write_text("CREATE TABLE demo (id INTEGER);\n", encoding="utf-8")
-        (temp_root / "scripts" / "v2" / "fixtures" / "language-migration.json").write_text(
-            json.dumps({"manifest_version": 1, "mappings": {"en_US": {"canonical": "en-US"}}}),
+        (temp_root / "scripts" / "language-reference" / "artifacts" / "manifest.json").write_text(
+            json.dumps({"manifest_version": 1, "counts": {"languages": 3, "scripts": 2, "regions": 2}}),
             encoding="utf-8",
         )
         (temp_root / "scripts" / "i18n" / "artifacts" / "system-ui" / "manifest.json").write_text(
