@@ -1,4 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
+import type { LanguageLocaleParts } from '../types/language';
 
 export type ReferenceTable = 'languages' | 'scripts' | 'regions';
 
@@ -74,4 +75,64 @@ export async function queryReferenceTable(
     .bind(...selectParams)
     .all();
   return { items: results as Record<string, unknown>[], total };
+}
+
+const LANG_CODE_RE = /^[a-z]{3}$/;
+const SCRIPT_CODE_RE = /^[A-Z][a-z]{3}$/;
+const REGION_CODE_RE = /^[A-Z]{2}$/;
+const PLACE_SEGMENT_RE = /^[A-Z][A-Za-z]*$/;
+
+export class LanguageLocaleError extends Error {
+  constructor(public code: string) {
+    super(code);
+    this.name = 'LanguageLocaleError';
+  }
+}
+
+export function buildLanguageLocaleCode(input: {
+  lang_code: string;
+  script_code: string;
+  region_code: string;
+  place_segments?: string[];
+}): string {
+  const lang = input.lang_code.toLowerCase();
+  const script = input.script_code;
+  const region = input.region_code;
+  const segments = input.place_segments ?? [];
+  if (!LANG_CODE_RE.test(lang)) throw new LanguageLocaleError('INVALID_LANG_CODE');
+  if (!SCRIPT_CODE_RE.test(script)) throw new LanguageLocaleError('INVALID_SCRIPT_CODE');
+  if (!REGION_CODE_RE.test(region)) throw new LanguageLocaleError('INVALID_REGION_CODE');
+  for (const segment of segments) {
+    if (!PLACE_SEGMENT_RE.test(segment)) throw new LanguageLocaleError('INVALID_PLACE_SEGMENT');
+  }
+  const placePath = segments.join('_');
+  return `${lang}-${script}-${region}${placePath ? `_${placePath}` : ''}`;
+}
+
+export function parseLanguageLocaleCode(code: string): LanguageLocaleParts | null {
+  if (!code) return null;
+  const [head, ...segments] = code.split('_');
+  const match = /^([a-z]{3})-([A-Z][a-z]{3})-([A-Z]{2})$/.exec(head ?? '');
+  if (!match) return null;
+  if (segments.some((segment) => segment === '' || !PLACE_SEGMENT_RE.test(segment))) return null;
+  return {
+    lang_code: match[1],
+    script_code: match[2],
+    region_code: match[3],
+    place_segments: segments,
+  };
+}
+
+export async function assertReferenceCodesExist(
+  db: D1Database,
+  langCode: string,
+  scriptCode: string,
+  regionCode: string,
+): Promise<void> {
+  const lang = await db.prepare('SELECT 1 FROM languages WHERE code = ?').bind(langCode).first();
+  if (!lang) throw new LanguageLocaleError('INVALID_LANG_CODE');
+  const script = await db.prepare('SELECT 1 FROM scripts WHERE code = ?').bind(scriptCode).first();
+  if (!script) throw new LanguageLocaleError('INVALID_SCRIPT_CODE');
+  const region = await db.prepare('SELECT 1 FROM regions WHERE code = ?').bind(regionCode).first();
+  if (!region) throw new LanguageLocaleError('INVALID_REGION_CODE');
 }
