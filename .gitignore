@@ -66,3 +66,12 @@ scripts/i18n/*-import.sql
 .opencode/
 /scripts/db/state/*
 !/scripts/db/state/README.md
+
+# agent-kit:start
+.agent-kit/
+agent-kit.yaml
+.opencode/
+.codex/
+.claude/
+.agents/skills/
+# agent-kit:end

@@ -1,5 +1,7 @@
 # 語言實體以 Glottolog 識別，詞句以 BCP 47 content tag 綁定
 
+> **狀態：已由 [ADR 0004](./0004-language-codes-redesigned-around-iso639-3.md) 取代。** 本文只保留為歷史決策記錄，不再作為實作依據。
+
 LangMap 不再接受任意自造的 `language_code`。全站把「語言／方言實體」與「一段內容使用的語言標籤」分開：
 
 1. 語言實體優先使用 namespaced Glottocode，例如 `glotto:chao1238`。
