@@ -1,0 +1,51 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-08-11T14:12:45Z",
+  "sources": {
+    "iso639-3": {
+      "name": "ISO 639-3 (individual scope)",
+      "path": "raw/iso639-3.tab",
+      "sha256": "789a79984b168af77608572fb0b232143f2c7f0c252a142305126419fc4e69aa",
+      "size": 151545,
+      "license": "FSFAP",
+      "source": "Debian iso-codes (mirrors SIL)"
+    },
+    "iso15924": {
+      "name": "ISO 15924",
+      "path": "raw/iso15924.txt",
+      "sha256": "98a9be293c706f7e6302e9a54ed959c36f15f53e4ca618356d80c10be2928426",
+      "size": 14444,
+      "license": "Unicode-DFS-2016",
+      "source": "unicode.org"
+    },
+    "iso3166-1": {
+      "name": "ISO 3166-1 alpha-2",
+      "path": "raw/iso3166-1.tsv",
+      "sha256": "4dcb958a89107ced98df85f4bf90bb541db2554833bc48408dd2b193fa0f332f",
+      "size": 3808,
+      "license": "FSFAP",
+      "source": "Debian iso-codes"
+    }
+  },
+  "overlays": {
+    "script_directions": {
+      "path": "overlays/script-directions.json",
+      "covered_scripts": 226
+    },
+    "region_coordinates": {
+      "path": "overlays/region-coordinates.tsv",
+      "covered_regions": 4
+    }
+  },
+  "counts": {
+    "languages": 7856,
+    "scripts": 226,
+    "regions": 249
+  },
+  "artifacts": {
+    "language_reference_sql": {
+      "path": "language-reference.sql",
+      "sha256": "0b942209e165b772969995122f6816399ecc0740b9df61759cb892632ff5551e"
+    }
+  }
+}

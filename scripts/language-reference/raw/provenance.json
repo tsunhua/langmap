@@ -1,0 +1,33 @@
+{
+  "downloaded_at": "2026-08-11T14:09:04Z",
+  "files": {
+    "iso639-3": {
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/main/data/iso_639-3.json",
+      "license": "FSFAP",
+      "source_sha256": "2c61a9bb90a8c50c46bfbab484838863a12335bfdd0a92b4809f3faf1756b22d",
+      "out": "iso639-3.tab",
+      "out_sha256": "789a79984b168af77608572fb0b232143f2c7f0c252a142305126419fc4e69aa",
+      "out_size": 151545,
+      "upstream": "https://iso639-3.sil.org/ (SIL canonical; Cloudflare-blocked)",
+      "converted_from": "JSON"
+    },
+    "iso15924": {
+      "url": "https://www.unicode.org/iso15924/iso15924.txt",
+      "license": "Unicode-DFS-2016",
+      "source_sha256": "98a9be293c706f7e6302e9a54ed959c36f15f53e4ca618356d80c10be2928426",
+      "out": "iso15924.txt",
+      "out_sha256": "98a9be293c706f7e6302e9a54ed959c36f15f53e4ca618356d80c10be2928426",
+      "out_size": 14444
+    },
+    "iso3166-1": {
+      "url": "https://salsa.debian.org/iso-codes-team/iso-codes/-/raw/main/data/iso_3166-1.json",
+      "license": "FSFAP",
+      "source_sha256": "f01b812b57fba9f31ff621bf33e7c7570a01964dbeb5be2167e94decf538c89f",
+      "out": "iso3166-1.tsv",
+      "out_sha256": "4dcb958a89107ced98df85f4bf90bb541db2554833bc48408dd2b193fa0f332f",
+      "out_size": 3808,
+      "upstream": "https://www.iso.org/iso-3166-country-codes.html (ISO canonical; not freely downloadable)",
+      "converted_from": "JSON"
+    }
+  }
+}
