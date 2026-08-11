@@ -63,7 +63,7 @@
 - Consumes: Plan 1 的 `backend/schema.sql`(users、languages、scripts、regions)、`backend/migrations/0001_initial_schema.sql`、`scripts/db/migration-lock.json`、`scripts/db/lib/migrations.sync_migration_lock`。
 - Produces: `sources` 表與 `language_locales` 表(schema 物件供 verify 比對);3 筆 seed locale(`eng-Latn-US`、`cmn-Hant-TW`、`cmn-Hans-CN`)與 1 筆 system source(`system-seed`);Task 4 的整合測試依賴這些 seed 存在。
 
-- [ ] **Step 1: 建立 migration 0002**
+- [x] **Step 1: 建立 migration 0002**
 
 Create `backend/migrations/0002_language_locales.sql`:
 
@@ -115,7 +115,7 @@ VALUES
   ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1');
 ```
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 在檔頭 DROP 區塊的最後(`DROP TABLE IF EXISTS users;` 之前)加入兩行(順序:先 `language_locales` 再 `sources`,因 FK 相依):
 
@@ -174,7 +174,7 @@ VALUES
   ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1');
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在既有 describe 內、`keeps the users table for auth` 之後新增三個 it:
 
@@ -200,7 +200,7 @@ VALUES
   });
 ```
 
-- [ ] **Step 4: 更新 migration-lock 並驗證同步**
+- [x] **Step 4: 更新 migration-lock 並驗證同步**
 
 從 repo root 執行(此為一次性維護操作,不留 repo 檔案):
 
@@ -226,7 +226,7 @@ Expected: 印出 0001 與 0002 兩筆;`migration-lock.json` 的 `migrations` 陣
 
 再跑一次同段程式(改 `update=False`)確認無 "unlocked migration" 錯誤。
 
-- [ ] **Step 5: 跑 schemaContract 測試**
+- [x] **Step 5: 跑 schemaContract 測試**
 
 ```bash
 cd backend && npx vitest run tests/schemaContract.test.ts
@@ -234,7 +234,7 @@ cd backend && npx vitest run tests/schemaContract.test.ts
 
 Expected: 4 tests PASS。
 
-- [ ] **Step 6: 重建本地 D1 並抽查 seed**
+- [x] **Step 6: 重建本地 D1 並抽查 seed**
 
 先確認 8788 沒有 worker 占用(若有,`kill $(pgrep -f "wrangler dev")`)。然後從 repo root:
 
@@ -251,7 +251,7 @@ EOF
 
 Expected: `manage.py local rebuild` 回 `{"status": "rebuilt", ...}`;locales 3 筆(`cmn-Hans-CN`/`cmn-Hant-TW`/`eng-Latn-US`)、sources 1 筆(`system-seed`)。
 
-- [ ] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
+- [x] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_verify
@@ -260,7 +260,7 @@ python3 scripts/db/tests/test_local_rebuild.py
 
 Expected: 兩者皆 OK(verify 的 schema 物件比對涵蓋新表,fixture 測試不受影響)。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/migrations/0002_language_locales.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json
@@ -290,7 +290,7 @@ Commit 後 `git status --short` 應為空或僅有預期之外的新檔(如有,�
   - `LanguageLocaleParts = { lang_code; script_code; region_code; place_segments: string[] }`(來自 `types/language.ts`)
   - Task 3 的 `sources.ts` 不依賴本 task;Task 4 的 route 依賴上述全部。
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/languageLocales.test.ts`(涵蓋本 task 的 grammar 函式與 Task 3 的 sources,先只放 grammar 部分,Step 3 會補 sources 段落):
 
@@ -423,7 +423,7 @@ describe('assertReferenceCodesExist', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/languageLocales.test.ts
@@ -431,7 +431,7 @@ cd backend && npx vitest run tests/languageLocales.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/languageIdentity'` 的 `buildLanguageLocaleCode`/`parseLanguageLocaleCode`/`assertReferenceCodesExist` 不存在)。
 
-- [ ] **Step 3: 建立型別與實作**
+- [x] **Step 3: 建立型別與實作**
 
 Create `backend/src/types/language.ts`:
 
@@ -532,7 +532,7 @@ export async function assertReferenceCodesExist(
 }
 ```
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/languageLocales.test.ts
@@ -540,7 +540,7 @@ cd backend && npx vitest run tests/languageLocales.test.ts
 
 Expected: 本 task 的 8 個 test PASS(parse 3、build 3、assertReferenceCodesExist 2;Task 3 段落尚未加入,Step 6 後總數會增加)。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/types/language.ts backend/src/services/languageIdentity.ts backend/tests/languageLocales.test.ts
@@ -564,7 +564,7 @@ git commit -m "feat(api): add language locale grammar and canonical builder"
   - `findOrCreateSource(db: D1Database, source: { type: string; name: string }): Promise<string>`(回傳 `sources.id`)
   - Task 4 的 POST route 依賴它。
 
-- [ ] **Step 1: 在測試檔追加 sources describe(先失敗)**
+- [x] **Step 1: 在測試檔追加 sources describe(先失敗)**
 
 在 `backend/tests/languageLocales.test.ts` 尾端追加(並在 import 區加 `import { SourceError, findOrCreateSource } from '../src/services/sources';`):
 
@@ -618,7 +618,7 @@ async function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
 }
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/languageLocales.test.ts
@@ -626,7 +626,7 @@ cd backend && npx vitest run tests/languageLocales.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/sources'`)。
 
-- [ ] **Step 3: 建立 `backend/src/services/sources.ts`**
+- [x] **Step 3: 建立 `backend/src/services/sources.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -663,7 +663,7 @@ export async function findOrCreateSource(
 }
 ```
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/languageLocales.test.ts
@@ -671,7 +671,7 @@ cd backend && npx vitest run tests/languageLocales.test.ts
 
 Expected: 11 tests PASS(8 + sources 3)。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/sources.ts backend/tests/languageLocales.test.ts
@@ -693,7 +693,7 @@ git commit -m "feat(api): add two-layer source registry service"
 - Consumes: Task 1 的 seed(`eng-Latn-US` 等)、Task 2 的 `buildLanguageLocaleCode`/`assertReferenceCodesExist`/`parseLanguageLocaleCode`/`LanguageLocaleError`、Task 3 的 `findOrCreateSource`/`SourceError`、Plan 1 的 `paginated`/`badRequest`/`conflict`/`created`/`notFound`/`success`/`internalError`、`requireAuth` middleware。
 - Produces: `GET /api/v2/language-locales`(分頁列表)、`GET /api/v2/language-locales/:code`(詳情,含 `coordinate_source`)、`POST /api/v2/language-locales`(201/409/400/401)。回應欄位含 `code`、`lang_code`、`script_code`、`region_code`、`place_path`、`name`、`name_en`、`latitude`、`longitude`、`source_id`、`source_ref`、`created_by`、`created_at`。
 
-- [ ] **Step 1: 寫整合測試(先失敗)**
+- [x] **Step 1: 寫整合測試(先失敗)**
 
 Create `backend/tests/languageLocalesIntegration.test.ts`:
 
@@ -840,7 +840,7 @@ describe('language locales API', () => {
 });
 ```
 
-- [ ] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
+- [x] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
 
 若 8788 沒有 worker,從 `backend/` 背景啟動(不要用 `./dev.sh`):
 
@@ -856,7 +856,7 @@ cd backend && npx vitest run tests/languageLocalesIntegration.test.ts
 
 Expected: 全 FAIL(404,route 尚未掛上)。確認失敗後才繼續。
 
-- [ ] **Step 3: 建立 `backend/src/routes/languageLocales.ts`**
+- [x] **Step 3: 建立 `backend/src/routes/languageLocales.ts`**
 
 ```ts
 import { Hono } from 'hono';
@@ -1046,7 +1046,7 @@ languageLocales.get('/:code', async (c) => {
 export default languageLocales;
 ```
 
-- [ ] **Step 4: 在 `backend/src/routes/index.ts` 註冊**
+- [x] **Step 4: 在 `backend/src/routes/index.ts` 註冊**
 
 完整新內容:
 
@@ -1064,7 +1064,7 @@ api.route('/language-locales', languageLocales);
 export default api;
 ```
 
-- [ ] **Step 5: 等 wrangler hot-reload,重跑整合測試**
+- [x] **Step 5: 等 wrangler hot-reload,重跑整合測試**
 
 wrangler dev 會自動 reload `backend/src` 的變更;等 2–3 秒再跑:
 
@@ -1074,7 +1074,7 @@ cd backend && npx vitest run tests/languageLocalesIntegration.test.ts
 
 Expected: 12 tests PASS。
 
-- [ ] **Step 6: 跑 type-check 確認無型別錯誤**
+- [x] **Step 6: 跑 type-check 確認無型別錯誤**
 
 ```bash
 web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
@@ -1108,7 +1108,7 @@ web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
 
 Expected: 只可能出現 `utils/response.ts`(status: number 的 overload)與 `types.ts`(`D1Database` global)兩處**既有**錯誤;`languageLocales.ts`/`languageIdentity.ts`/`sources.ts` 不得有新錯誤。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/routes/languageLocales.ts backend/src/routes/index.ts backend/tests/languageLocalesIntegration.test.ts
@@ -1125,7 +1125,7 @@ Commit 後 `git status --short` 應乾淨。
 
 **Files:** 無(若有修正在此提交)
 
-- [ ] **Step 1: 後端完整測試(已知既有失敗除外)**
+- [x] **Step 1: 後端完整測試(已知既有失敗除外)**
 
 worker 在 8788 的前提下:
 
@@ -1135,7 +1135,7 @@ cd backend && npm test
 
 Expected: 所有 test file 通過,**除了** `auth.test.ts` 中 `reuses an existing expression ...`(呼叫 `/contributions/batch`,Task 1 起既有的 stale 測試,在 HEAD 上即壞,與本 plan 無關)——該失敗為已知,不回修、不改動 `auth.test.ts`。
 
-- [ ] **Step 2: scripts 測試**
+- [x] **Step 2: scripts 測試**
 
 從 repo root:
 
@@ -1151,7 +1151,7 @@ python3 -m unittest scripts.db.tests.test_dev_sh
 
 Expected: 全部 OK。
 
-- [ ] **Step 3: 手動抽查新 API(rebuild 後)**
+- [x] **Step 3: 手動抽查新 API(rebuild 後)**
 
 ```bash
 curl -s 'http://127.0.0.1:8788/api/v2/language-locales?limit=3' | python3 -m json.tool
@@ -1160,7 +1160,7 @@ curl -s 'http://127.0.0.1:8788/api/v2/language-locales/eng-Latn-US' | python3 -m
 
 Expected: 列表回 3+ 筆、`total >= 3`、`hasMore` 依筆數正確;詳情回 `name_en: "English (US)"` 且 `coordinate_source: "region"`。
 
-- [ ] **Step 4: 文件與空白檢查**
+- [x] **Step 4: 文件與空白檢查**
 
 ```bash
 git diff --check
@@ -1169,7 +1169,7 @@ git status --short
 
 Expected: `git diff --check` 無輸出;`git status --short` 乾淨(無未提交變更)。
 
-- [ ] **Step 5: 若有修正則 Commit**
+- [x] **Step 5: 若有修正則 Commit**
 
 ```bash
 git add <修正的檔案>
