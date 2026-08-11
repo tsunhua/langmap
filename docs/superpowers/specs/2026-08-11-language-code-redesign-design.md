@@ -156,18 +156,21 @@ CREATE TABLE language_locales (
   script_code TEXT NOT NULL,
   region_code TEXT NOT NULL,
   place_path TEXT NOT NULL DEFAULT '',
-  endonym TEXT NOT NULL,
+  name TEXT NOT NULL,
+  name_en TEXT NOT NULL,
   latitude REAL,
   longitude REAL,
-  source_type TEXT NOT NULL,
-  source_ref TEXT NOT NULL,
+  source_id TEXT,
+  source_ref TEXT,
   created_by INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (lang_code, script_code, region_code, place_path),
   CHECK ((latitude IS NULL) = (longitude IS NULL)),
+  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
   FOREIGN KEY (lang_code) REFERENCES languages(code),
   FOREIGN KEY (script_code) REFERENCES scripts(code),
   FOREIGN KEY (region_code) REFERENCES regions(code),
+  FOREIGN KEY (source_id) REFERENCES sources(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 ```
@@ -176,15 +179,42 @@ CREATE TABLE language_locales (
 
 ### 7.3 來源慣例
 
-所有含 `source_type`／`source_ref` 的模型共用來源正規化規則。首版允許的 type 為 `user`、`publication`、`dataset`、`url`、`ui_i18n`、`system` 與 `split`。Caller 只能提交允許的結構化 source；service 產生並保存穩定的 `source_ref`：
+來源分兩層。共享的具名來源存於 `sources` 表，每筆 row 用 `source_id` 指向它，並以獨立的 `source_ref` 記錄該筆具體出處（帶參數的 URL、頁碼、條目 ID 等）。`language_locales`、`expressions`、`expression_locale_attestations`、`expression_readings` 共用此模型。
 
-- 使用者直接提交：`user:<user_id>`，忽略 caller 自行宣稱的 user ID。
-- Pinned import：使用 manifest 中的 dataset ID 與版本。
-- UI source copy：`ui_i18n:<project_id>:<message_key>:<revision>`。
-- 系統 seed：明確、版本化的 system ID。
-- Split 產生的新 Expression：`split:<expression_split_id>`。
+```sql
+CREATE TABLE sources (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL CHECK (type IN ('publication', 'url', 'system')),
+  name TEXT NOT NULL,
+  created_by INTEGER,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (type, name),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+```
 
-Publication、dataset 與 URL 必須通過各自的 Zod schema；空字串、任意自由格式或缺少 `source_ref` 都必須拒絕。這些規則由共用 source validator 實作，route 不自行組字串。
+`sources.type` 決定 `name` 的性質與 `source_ref` 的驗證規則：
+
+| type | `sources.name`（共享） | row 的 `source_ref`（具體出處） |
+|---|---|---|
+| `url` | 站台／資源名稱 | 完整 URL，含 query params（`https://…/entry?p=123`） |
+| `publication` | 出版品書目標籤 | 頁碼、條目、卷期等定位 |
+| `system` | 系統來源名稱 | 版本／實例 tag |
+
+四張表的 `source_id`／`source_ref` 皆 nullable，且 `source_ref` 不得脫離 `source_id` 單獨存在（CHECK）。使用者身分由 `created_by` 記錄：
+
+- `source_id` NULL → 使用者直接斷言，provenance 就是 `created_by`。
+- `source_id` 指向 `sources`、`source_ref` NULL → 引用整個來源。
+- `source_id` 指向 `sources`、`source_ref` 非 NULL → 引用來源內具體出處。
+
+系統產生的 row 一律指向預先建好的 `system` source，`source_ref` 區分實例：
+
+- Seed（如 `eng-Latn-US`）：對應 system source，`source_ref` 如 `seed:<system_id>:<version>`。
+- Pinned 匯入：system source，`source_ref` 如 `dataset:<manifest_dataset_id>:<version>`，上游 URL 與 checksum 另由匯入 manifest 記錄。
+- Split 產生的新 Expression：system source，`source_ref = 'split:<expression_split_id>'`，操作者記於 `expression_splits.created_by`（§10.2）。
+- UI source copy 的 English Expression：system source，`source_ref = 'ui:<project_id>:<message_key>:<revision>'`（§12.2）。
+
+引用提交時 service 以 `(type, name)` 查找或建立 `sources` row，再寫入 `source_id`；caller 不直接傳 `source_id`。`name` 為空或 `source_ref` 脫離 `source_id` 都必須拒絕。SQLite 的 UNIQUE 對 NULL 視為相異，因此 `source_id` 為 NULL 的重複 row 由 service 層去重（「重複資料回傳既有記錄」），不依賴 constraint。
 
 ## 8. Expression identity
 
@@ -235,8 +265,9 @@ CREATE TABLE expressions (
   homograph_index INTEGER NOT NULL DEFAULT 1 CHECK (homograph_index >= 1),
   description TEXT NOT NULL DEFAULT '',
   tags_json TEXT NOT NULL DEFAULT '[]',
-  source_type TEXT NOT NULL,
-  source_ref TEXT NOT NULL,
+  source_id TEXT,
+  source_ref TEXT,
+  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
   review_status TEXT NOT NULL DEFAULT 'pending'
     CHECK (review_status IN ('pending', 'approved', 'rejected')),
   created_by INTEGER,
@@ -245,6 +276,7 @@ CREATE TABLE expressions (
   UNIQUE (lang_code, text, homograph_index),
   UNIQUE (lang_code, text_hash, homograph_index),
   FOREIGN KEY (lang_code) REFERENCES languages(code),
+  FOREIGN KEY (source_id) REFERENCES sources(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 ```
@@ -260,18 +292,20 @@ CREATE TABLE expression_locale_attestations (
   id TEXT PRIMARY KEY,
   expression_id TEXT NOT NULL,
   language_locale_code TEXT NOT NULL,
-  source_type TEXT NOT NULL,
-  source_ref TEXT NOT NULL,
+  source_id TEXT,
+  source_ref TEXT,
+  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
   created_by INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (expression_id, language_locale_code, source_type, source_ref),
+  UNIQUE (expression_id, language_locale_code, source_id, source_ref),
   FOREIGN KEY (expression_id) REFERENCES expressions(id),
   FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
+  FOREIGN KEY (source_id) REFERENCES sources(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 ```
 
-對使用者直接斷言，`source_type = 'user'` 且 `source_ref = 'user:<user_id>'`。Publication、dataset、URL、UI i18n 與 system import 依 7.3 節保存穩定 `source_ref`。API 讀取 locale 列表時按 locale code 排序並聚合 `attestation_count`，但不能丟棄來源明細。
+使用者直接斷言時 `source_id`／`source_ref` 為 NULL，provenance 是 `created_by`；附帶引用時 `source_id` 指向 `sources`、`source_ref` 為具體出處（見 §7.3）。API 讀取 locale 列表時按 locale code 排序並聚合 `attestation_count`，但不能丟棄來源明細。
 
 ### 9.2 文字讀音
 
@@ -282,8 +316,9 @@ CREATE TABLE expression_readings (
   language_locale_code TEXT NOT NULL,
   scheme TEXT NOT NULL,
   value TEXT NOT NULL,
-  source_type TEXT NOT NULL,
-  source_ref TEXT NOT NULL,
+  source_id TEXT,
+  source_ref TEXT,
+  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
   created_by INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (
@@ -291,11 +326,12 @@ CREATE TABLE expression_readings (
     language_locale_code,
     scheme,
     value,
-    source_type,
+    source_id,
     source_ref
   ),
   FOREIGN KEY (expression_id) REFERENCES expressions(id),
   FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
+  FOREIGN KEY (source_id) REFERENCES sources(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 ```
@@ -306,7 +342,7 @@ Scheme grammar：
 ^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$
 ```
 
-有效例：`ipa`、`pinyin`、`wade-giles`、`phonics:synthetic`。建立 reading 與相同來源的 locale attestation 必須在同一原子操作完成；重複資料回傳既有記錄。
+有效例：`ipa`、`pinyin`、`wade-giles`、`phonics:synthetic`。建立 reading 時必須在同一原子操作建立 `source_id`／`source_ref` 完全相同的 locale attestation（皆為 NULL 時亦同）；重複資料回傳既有記錄。
 
 ## 10. Mapping 與手動拆分
 
@@ -362,7 +398,7 @@ Split 只允許 admin。Request 提供至少一個直接相鄰 edge ID。原子�
 
 1. 驗證來源 Expression 與所有 edge。
 2. 以 `MAX(homograph_index) + 1` 配置下一序號。
-3. 先建立 split audit，再以其 ID 作來源，建立同 lang、text、hash 的新 Expression。
+3. 先建立 split audit，再讓新 Expression 的 `source_id` 指向 split 專用的 system source、`source_ref = 'split:<split_id>'`、`created_by` 為操作 admin，建立同 lang、text、hash 的新 Expression。
 4. 將選定 edge 的來源端點替換為新 Expression，重新排序 pair。
 5. 保留 edge ID、score 與 votes。
 6. 寫入 split 與 move audit。
@@ -422,13 +458,13 @@ CREATE TABLE ui_locales (
 );
 ```
 
-不保存 `native_name`、`direction` 或 `fallback_code`。名稱由 Language Locale endonym 取得，direction 由 script registry 取得。
+不保存 `native_name`、`direction` 或 `fallback_code`。本地名稱由 Language Locale `name` 取得，英文名稱由 `name_en` 取得，direction 由 script registry 取得。
 
 系統 seed `eng-Latn-US` 作 `langmap-web` 的 source UI Locale，固定為 active，`activation_source = 'system'`；一般狀態操作不可將它封存或降級。
 
 ### 12.2 UI messages
 
-`ui_messages.source_expression_id` 改為 TEXT FK。Source copy 更新時建立新的 immutable English Expression 並替換該 key 的 source ID；舊 mapping 自然不再是新 source 的 candidate。
+`ui_messages.source_expression_id` 改為 TEXT FK。Source copy 更新時讓新 English Expression 的 `source_id` 指向 UI copy 專用的 system source、`source_ref = 'ui:<project_id>:<message_key>:<revision>'`，建立新的 immutable English Expression 並替換該 key 的 source ID；舊 mapping 自然不再是新 source 的 candidate。
 
 ### 12.3 Coverage
 
@@ -486,7 +522,7 @@ POST /language-locales
 GET  /language-locales/:code
 ```
 
-`POST /language-locales` 接受結構化欄位，不接受 caller 傳入 code：
+`POST /language-locales` 接受結構化欄位，不接受 caller 傳入 code。`source` 選填，含共享來源的 `type` 與 `name`（service 依 `(type, name)` 查找或建立 `sources` row）及具體出處 `ref`；省略時表示使用者直接建立，`created_by` 由認證自動帶入：
 
 ```json
 {
@@ -494,10 +530,11 @@ GET  /language-locales/:code
   "script_code": "Hant",
   "region_code": "CN",
   "place_segments": ["Quanzhou", "Nanan"],
-  "endonym": "閩南語",
+  "name": "閩南語",
+  "name_en": "Quanzhou Southern Min",
   "latitude": 24.96,
   "longitude": 118.68,
-  "source": { "type": "user" }
+  "source": { "type": "url", "name": "臺灣閩南語常用詞辭典", "ref": "https://sutian.moe.edu.tw/entry?p=123" }
 }
 ```
 
@@ -523,7 +560,7 @@ POST /expressions/:id/split
 }
 ```
 
-Locale 選填；提供時建立使用者來源的地域佐證。既有 base Expression 回傳 `200` 與 `created = false`；新建回傳 `201` 與 `created = true`。
+Locale 選填；提供時建立 `source_id`／`source_ref` 皆為 NULL、`created_by` 為當前使用者的地域佐證。既有 base Expression 回傳 `200` 與 `created = false`；新建回傳 `201` 與 `created = true`。
 
 Split body：
 
@@ -572,7 +609,7 @@ EXPRESSION_SPLIT_EMPTY
 EXPRESSION_SPLIT_EDGE_NOT_ADJACENT
 EXPRESSION_SPLIT_CONFLICT
 INVALID_READING_SCHEME
-INVALID_READING_SOURCE
+INVALID_SOURCE
 UNKNOWN_PREFERENCE_KEY
 INVALID_LANGUAGE_PREFERENCE
 UI_LOCALE_NOT_ACTIVE
@@ -606,7 +643,7 @@ LanguageLocaleCreateDialog
 LanguageLocaleCodePreview
 ```
 
-建立 dialog 依序選 language、script、region、選填 place segments、endonym、選填代表座標；code preview 使用與後端同 grammar 的純展示 helper，但後端生成值才是權威。
+建立 dialog 依序選 language、script、region、選填 place segments、`name`（本地名稱）、`name_en`（英文名稱）、選填代表座標；code preview 使用與後端同 grammar 的純展示 helper，但後端生成值才是權威。
 
 ### 15.2 Contribution
 
@@ -622,7 +659,7 @@ Admin split flow 使用直接 mapping 的可操作列表選 edge；確認畫面�
 
 Language List 只顯示已有 Expression、Language Locale 或 active UI Locale 的語言，不把完整 ISO registry 當內容列表。
 
-Language Detail 顯示 English exonym、Language Locales、endonym、Expression／reading 數及地圖點。Map Lens 優先使用 locale coordinate，缺少時可使用 region representative coordinate，並清楚標示；無任何座標的 locale 仍出現在文字列表。
+Language Detail 顯示 `name_en`（English exonym）、`name`（本地名稱）、Language Locales、Expression／reading 數及地圖點。Map Lens 優先使用 locale coordinate，缺少時可使用 region representative coordinate，並清楚標示；無任何座標的 locale 仍出現在文字列表。
 
 ### 15.5 Translation Workbench
 
@@ -660,7 +697,7 @@ Workbench 能從既有 Language Locale 建立 draft UI Locale，顯示自身 cov
 - ISO registry 與 locale grammar 的成功／失敗案例。
 - 代表座標成對約束及 coordinate source。
 - Expression 建立／重用及 optional locale。
-- 多來源地域佐證去重與來源明細。
+- 多來源地域佐證去重與來源明細；`sources` 查找或建立、`source_id`／`source_ref` 兩層驗證、`source_ref` 脫離 `source_id` 拒絕與 service 層去重。
 - Reading scheme、source、同 transaction attestation。
 - Split 權限、配置、edge move、pair ordering、vote 保留、audit、rollback。
 - Contribution clique 與 duplicate pair reuse。
