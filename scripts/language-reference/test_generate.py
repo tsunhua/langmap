@@ -51,6 +51,11 @@ class TestGenerator(unittest.TestCase):
             self.assertIn(key, manifest["sources"])
             self.assertTrue(manifest["sources"][key]["sha256"])
 
+    def test_script_names_use_english_name_column(self):
+        sql = (ARTIFACTS / "language-reference.sql").read_text(encoding="utf-8")
+        self.assertIn("('Arab', 'Arabic', 'rtl')", sql)
+        self.assertIn("('Latn', 'Latin', 'ltr')", sql)
+
 
 if __name__ == "__main__":
     unittest.main()

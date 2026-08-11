@@ -66,9 +66,9 @@ def read_scripts(directions: dict[str, str]) -> list[tuple[str, str, str]]:
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             parts = [p.strip() for p in line.split(";")]
-            if len(parts) < 2 or not parts[0] or not parts[1]:
+            if len(parts) < 3 or not parts[0] or not parts[2]:
                 continue
-            code, name = parts[0], parts[1]
+            code, name = parts[0], parts[2]
             direction = directions.get(code)
             if direction is None:
                 raise ValueError(f"script {code!r} missing curated direction overlay")
