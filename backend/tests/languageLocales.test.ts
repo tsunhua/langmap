@@ -5,6 +5,7 @@ import {
   buildLanguageLocaleCode,
   parseLanguageLocaleCode,
 } from '../src/services/languageIdentity';
+import { SourceError, findOrCreateSource } from '../src/services/sources';
 
 type Handler = () => unknown;
 
@@ -19,7 +20,7 @@ function fakeD1(handlers: Record<string, Handler>) {
             return (await run()) as T;
           },
           async run() {
-            return { success: true, meta: { changes: 1 } };
+            return handler ? await handler() : { success: true };
           },
           async all<T>() {
             const result = (await run()) as { results?: unknown };
@@ -41,11 +42,11 @@ function captureCode(fn: () => void): string {
   return '';
 }
 
-async function captureAsyncCode(fn: () => Promise<void>): Promise<string> {
+async function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
   try {
     await fn();
   } catch (error) {
-    return (error as LanguageLocaleError).code;
+    return String((error as { code?: string }).code ?? '');
   }
   return '';
 }
@@ -122,5 +123,40 @@ describe('assertReferenceCodesExist', () => {
       'SELECT 1 FROM regions WHERE code = ?': () => ({ ok: 1 }),
     });
     expect(await captureAsyncCode(() => assertReferenceCodesExist(db, 'zzz', 'Hant', 'TW'))).toBe('INVALID_LANG_CODE');
+  });
+});
+
+describe('findOrCreateSource', () => {
+  it('returns the existing source id without inserting', async () => {
+    let inserted = 0;
+    const db = fakeD1({
+      'SELECT id FROM sources WHERE type = ? AND name = ?': () => ({ id: 'existing-id' }),
+      'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => {
+        inserted += 1;
+        return { success: true };
+      },
+    });
+    await expect(findOrCreateSource(db, { type: 'url', name: '某辭典' })).resolves.toBe('existing-id');
+    expect(inserted).toBe(0);
+  });
+
+  it('creates a source when missing and returns a new id', async () => {
+    let inserted = 0;
+    const db = fakeD1({
+      'SELECT id FROM sources WHERE type = ? AND name = ?': () => null,
+      'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => {
+        inserted += 1;
+        return { success: true };
+      },
+    });
+    const id = await findOrCreateSource(db, { type: 'url', name: '某辭典' });
+    expect(id).toBeTruthy();
+    expect(inserted).toBe(1);
+  });
+
+  it('rejects unknown type and empty name with INVALID_SOURCE', async () => {
+    const db = fakeD1({});
+    expect(await captureAsyncCode(() => findOrCreateSource(db, { type: 'wiki', name: 'x' }))).toBe('INVALID_SOURCE');
+    expect(await captureAsyncCode(() => findOrCreateSource(db, { type: 'url', name: '   ' }))).toBe('INVALID_SOURCE');
   });
 });
