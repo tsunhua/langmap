@@ -1,28 +1,7 @@
 import { Hono } from 'hono';
 import auth from './auth';
-import languages from './languages';
-import expressions from './expressions';
-import mappings from './mappings';
-import contributions from './contributions';
-import handbooks from './handbooks';
-import feed from './feed';
-import search from './search';
-import localization from './localization';
-import languoids from './languoids';
-import languageProfiles from './languageProfiles';
-import languageRegistry from './languageRegistry';
 
 const api = new Hono();
 api.route('/auth', auth);
-api.route('/languages', languages);
-api.route('/languoids', languoids);
-api.route('/language-profiles', languageProfiles);
-api.route('/language-registry', languageRegistry);
-api.route('/expressions', expressions);
-api.route('/mappings', mappings);
-api.route('/contributions', contributions);
-api.route('/handbooks', handbooks);
-api.route('/feed', feed);
-api.route('/search', search);
-api.route('/localization', localization);
+
 export default api;
