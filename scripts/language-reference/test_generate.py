@@ -24,10 +24,17 @@ class TestGenerator(unittest.TestCase):
     def test_manifest_counts_match_sql_and_mins(self):
         manifest = json.loads((ARTIFACTS / "manifest.json").read_text(encoding="utf-8"))
         sql = (ARTIFACTS / "language-reference.sql").read_text(encoding="utf-8")
+
+        def count_rows(table: str) -> int:
+            # INSERTs are batched, so sum value rows across every statement.
+            return sum(
+                stmt.count("\n  (")
+                for stmt in sql.split(";")
+                if f"INSERT OR IGNORE INTO {table}" in stmt
+            )
+
         for table, key in [("languages", "languages"), ("scripts", "scripts"), ("regions", "regions")]:
-            block = sql.split(f"INSERT OR IGNORE INTO {table}")[1].split(";")[0]
-            row_count = block.count("\n  (")
-            self.assertEqual(row_count, manifest["counts"][key], f"{table} count mismatch")
+            self.assertEqual(count_rows(table), manifest["counts"][key], f"{table} count mismatch")
         self.assertGreaterEqual(manifest["counts"]["languages"], 7000)
         self.assertGreaterEqual(manifest["counts"]["scripts"], 100)
         self.assertGreaterEqual(manifest["counts"]["regions"], 200)

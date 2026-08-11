@@ -499,7 +499,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('azb', 'South Azerbaijani'),
   ('azd', 'Eastern Durango Nahuatl'),
   ('azg', 'San Pedro Amuzgos Amuzgo'),
-  ('azj', 'North Azerbaijani'),
+  ('azj', 'North Azerbaijani');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('azm', 'Ipalapa Amuzgo'),
   ('azn', 'Western Durango Nahuatl'),
   ('azo', 'Awing'),
@@ -999,7 +1000,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('buj', 'Basa-Gurmana'),
   ('buk', 'Bugawac'),
   ('bul', 'Bulgarian'),
-  ('bum', 'Bulu (Cameroon)'),
+  ('bum', 'Bulu (Cameroon)');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('bun', 'Sherbro'),
   ('buo', 'Terei'),
   ('bup', 'Busoa'),
@@ -1499,7 +1501,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('dbt', 'Ben Tey Dogon'),
   ('dbu', 'Bondum Dom Dogon'),
   ('dbv', 'Dungu'),
-  ('dbw', 'Bankan Tey Dogon'),
+  ('dbw', 'Bankan Tey Dogon');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('dby', 'Dibiyaso'),
   ('dcc', 'Deccan'),
   ('dcr', 'Negerhollands'),
@@ -1999,7 +2002,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('gbd', 'Karajarri'),
   ('gbe', 'Niksek'),
   ('gbf', 'Gaikundi'),
-  ('gbg', 'Gbanziri'),
+  ('gbg', 'Gbanziri');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('gbh', 'Defi Gbe'),
   ('gbi', 'Galela'),
   ('gbj', 'Bodo Gadaba'),
@@ -2499,7 +2503,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('hye', 'Armenian'),
   ('hyw', 'Western Armenian'),
   ('iai', 'Iaai'),
-  ('ian', 'Iatmul'),
+  ('ian', 'Iatmul');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('iar', 'Purari'),
   ('iba', 'Iban'),
   ('ibb', 'Ibibio'),
@@ -2999,7 +3004,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('kht', 'Khamti'),
   ('khu', 'Nkhumbi'),
   ('khv', 'Khvarshi'),
-  ('khw', 'Khowar'),
+  ('khw', 'Khowar');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('khx', 'Kanu'),
   ('khy', 'Kele (Democratic Republic of Congo)'),
   ('khz', 'Keapara'),
@@ -3499,7 +3505,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('lcq', 'Luhu'),
   ('lcs', 'Lisabata-Nuniali'),
   ('lda', 'Kla-Dan'),
-  ('ldb', 'Dũya'),
+  ('ldb', 'Dũya');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('ldd', 'Luri'),
   ('ldg', 'Lenyima'),
   ('ldh', 'Lamja-Dengsa-Tola'),
@@ -3999,7 +4006,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('mik', 'Mikasuki'),
   ('mil', 'Peñoles Mixtec'),
   ('mim', 'Alacatlatzala Mixtec'),
-  ('min', 'Minangkabau'),
+  ('min', 'Minangkabau');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('mio', 'Pinotepa Nacional Mixtec'),
   ('mip', 'Apasco-Apoala Mixtec'),
   ('miq', 'Mískito'),
@@ -4499,7 +4507,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('ndm', 'Ndam'),
   ('ndn', 'Ngundi'),
   ('ndo', 'Ndonga'),
-  ('ndp', 'Ndo'),
+  ('ndp', 'Ndo');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('ndq', 'Ndombe'),
   ('ndr', 'Ndoola'),
   ('nds', 'Low German'),
@@ -4999,7 +5008,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('ona', 'Ona'),
   ('onb', 'Lingao'),
   ('one', 'Oneida'),
-  ('ong', 'Olo'),
+  ('ong', 'Olo');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('oni', 'Onin'),
   ('onj', 'Onjob'),
   ('onk', 'Kabore One'),
@@ -5499,7 +5509,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('rav', 'Sampang'),
   ('raw', 'Rawang'),
   ('rax', 'Rang'),
-  ('ray', 'Rapa'),
+  ('ray', 'Rapa');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('raz', 'Rahambuu'),
   ('rbb', 'Rumai Palaung'),
   ('rbk', 'Northern Bontok'),
@@ -5999,7 +6010,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('srh', 'Sarikoli'),
   ('sri', 'Siriano'),
   ('srk', 'Serudung Murut'),
-  ('srl', 'Isirawa'),
+  ('srl', 'Isirawa');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('srm', 'Saramaccan'),
   ('srn', 'Sranan Tongo'),
   ('sro', 'Campidanese Sardinian'),
@@ -6499,7 +6511,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('trc', 'Copala Triqui'),
   ('trd', 'Turi'),
   ('tre', 'East Tarangan'),
-  ('trf', 'Trinidadian Creole English'),
+  ('trf', 'Trinidadian Creole English');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('trg', 'Lishán Didán'),
   ('trh', 'Turaka'),
   ('tri', 'Trió'),
@@ -6999,7 +7012,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('wkr', 'Keerray-Woorroong'),
   ('wku', 'Kunduvadi'),
   ('wkw', 'Wakawaka'),
-  ('wky', 'Wangkayutyuru'),
+  ('wky', 'Wangkayutyuru');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('wla', 'Walio'),
   ('wlc', 'Mwali Comorian'),
   ('wle', 'Wolane'),
@@ -7499,7 +7513,8 @@ INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('yet', 'Yetfa'),
   ('yeu', 'Yerukula'),
   ('yev', 'Yapunda'),
-  ('yey', 'Yeyi'),
+  ('yey', 'Yeyi');
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('yga', 'Malyangapa'),
   ('ygi', 'Yiningayi'),
   ('ygl', 'Yangum Gel'),
