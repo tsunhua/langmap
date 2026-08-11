@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { paginated } from '../utils/response';
 import { parseReferenceQuery, queryReferenceTable, type ReferenceTable } from '../services/languageIdentity';
 import type { Bindings } from '../types';
@@ -13,7 +13,7 @@ function parseQs(c: { req: { query: (k: string) => string | undefined } }) {
   };
 }
 
-async function respond(c: Parameters<Parameters<typeof languageRegistry.get>[1]>[0], table: ReferenceTable) {
+async function respond(c: Context<{ Bindings: Bindings }>, table: ReferenceTable) {
   const query = parseReferenceQuery(parseQs(c));
   const { items, total } = await queryReferenceTable(c.env.DB, table, query);
   return paginated(c, items, total, query.offset, query.limit);
