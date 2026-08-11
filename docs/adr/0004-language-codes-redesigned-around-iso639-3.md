@@ -26,16 +26,17 @@ LangMap 的第一性資料是詞句與 mapping 圖，不是全球方言分類。
 Language Locale 描述一個語言在特定書寫系統與地點出現的地域形式，其代碼 grammar 為：
 
 ```text
-language_locale_code = lang "-" script "-" country ("_" place_segment)*
+language_locale_code = lang "-" script "-" region ("_" place_segment)*
 ```
 
 - `lang`：ISO 639-3 個體語言代碼。
 - `script`：ISO 15924 四字母代碼，使用標準大小寫；不接受自訂 script。
-- `country`：ISO 3166-1 alpha-2 國家或地區代碼。
+- `region`：ISO 3166-1 alpha-2 地區代碼；領域與資料表一律稱為 region，不把所有標準項目稱為 country。
 - `place_segment`：可選、可變深度、由使用者自訂，且必須符合 `^[A-Z][A-Za-z]*$`；段內大寫可表示多字地名，例如 `NewYork`。
 - `-` 分隔語言、書寫系統與地點三種頂層欄位；`_` 分隔地點路徑內由大至小的層級。
-- 國家或地區必填，其他地點層級均可省略；不以 `NULL`、`Unknown` 或空白段補齊。
+- 地區代碼必填，其他地點層級均可省略；不以 `NULL`、`Unknown` 或空白段補齊。
 - 每個 Language Locale 保存一個當地自稱 endonym。
+- Language Locale 可選擇保存一組代表座標；座標只供地圖顯示，不宣稱完整語言分布。
 - 這套代碼不是 BCP 47，不得直接宣稱為 HTML、HTTP 或 i18n library 的標準 locale tag。
 
 例如：
@@ -51,10 +52,12 @@ Script 只描述書寫系統。Pinyin、Wade–Giles、POJ、Tâi-lô、Jyutping
 
 ### 3. Expression 身份與同形拆分
 
-- 預設一個 `(lang_code, text)` 對應一個 Expression，概念 ID 為 `{lang}:{text}`。
+- 預設一個 `(lang_code, canonical_text)` 對應一個 Expression。Canonical text 是輸入經 `trim()` 與 Unicode NFC 正規化後的結果。
+- ID 為 `{lang_code}:{text_hash}`；`text_hash` 是 canonical text 的 SHA-256 前 128 bits，以無 padding 的小寫 RFC 4648 Base32 編碼為 26 字元。
 - 意義由 mapping 圖承載，不新增 `sense_gloss` 或預先建立 sense 實體。
-- 當 mapping 鄰域已出現需要分離的不同語義時，維護者可手動建立 `{lang}:{text}.2`、`.3` 等 Expression，並把相關 mappings 搬到新節點。
+- 當 mapping 鄰域已出現需要分離的不同語義時，維護者可手動建立 `{lang_code}:{text_hash}.2`、`.3` 等 Expression，並把相關 mappings 搬到新節點。
 - 數字後綴是不透明識別標籤，不表達詞義或重要順序。
+- `lang_code`、canonical text、hash 與同形序號是不可直接修改的身份欄位；文字修正建立新 Expression，再搬移需要保留的引用。
 - 系統不自動偵測、提示或拆分同形詞；也不能永久取消手動拆分能力。
 
 這接受未拆分同形詞會暫時污染間接 mapping 的代價，換取預設身份簡單、按真實問題拆分的模型。
