@@ -12,7 +12,6 @@ from lib.paths import ProjectPaths
 from lib.runner import CommandError, run_command
 
 
-PROJECT_ID = "langmap-web"
 CREATE_MIGRATIONS_TABLE_SQL = """CREATE TABLE IF NOT EXISTS "d1_migrations"(
 \tid         INTEGER PRIMARY KEY AUTOINCREMENT,
 \tname       TEXT UNIQUE,
@@ -26,20 +25,14 @@ OBJECT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("trigger", re.compile(r"^\s*CREATE\s+TRIGGER\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<name>\"[^\"]+\"|`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)),
 )
 
+REGISTRY_TABLES: tuple[str, ...] = ("languages", "scripts", "regions")
+
 
 @dataclass(frozen=True)
 class SchemaObject:
     kind: str
     name: str
     normalized_sql: str
-
-
-@dataclass(frozen=True)
-class UiTranslationMapping:
-    key: str
-    language_code: str
-    source_expression_id: int
-    target_expression_id: int
 
 
 class LocalVerificationError(RuntimeError):
@@ -105,77 +98,17 @@ def verify_local_state(
     expected_names = [entry["filename"] for entry in locked["migrations"]]
 
     language_manifest = json.loads(paths.language_manifest_path.read_text(encoding="utf-8"))
-    ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
-    ui_counts = ui_manifest.get("counts", {})
-    locale_codes = [str(code) for code in ui_manifest.get("locale_codes", [])]
-    escaped_locale_codes = ["'" + code.replace("'", "''") + "'" for code in locale_codes]
-    locale_code_sql = ", ".join(escaped_locale_codes) or "''"
-    expected_translation_mappings = _load_expected_ui_translation_mappings(
-        paths.system_ui_sql_path,
-        project_id=PROJECT_ID,
-        locale_codes=locale_codes,
-    )
-    actual_translation_mappings = _load_actual_ui_translation_mappings(
-        executor,
-        state_dir,
-        project_id=PROJECT_ID,
-        locale_codes=locale_codes,
-    )
-    translation_mismatches = _compare_ui_translation_mappings(
-        expected_translation_mappings,
-        actual_translation_mappings,
-    )
+    expected_counts = language_manifest.get("counts", {})
 
     count_rows = executor.execute_query(
         state_dir,
-        f"""
-SELECT COUNT(*) AS language_varieties FROM language_varieties;
-SELECT COUNT(*) AS languoids FROM languoids;
-SELECT COUNT(*) AS language_subtags FROM language_subtags;
-SELECT COUNT(*) AS language_locations FROM language_locations;
-SELECT COUNT(*) AS ui_locales FROM ui_locales WHERE project_id = '{PROJECT_ID}';
-SELECT COUNT(*) AS ui_messages FROM ui_messages WHERE project_id = '{PROJECT_ID}';
-SELECT GROUP_CONCAT(code, ',') AS active_locale_codes
-FROM (
-  SELECT code
-  FROM ui_locales
-  WHERE project_id = '{PROJECT_ID}' AND status = 'active'
-  ORDER BY code
-);
-SELECT COUNT(*) AS orphan_languages
-FROM language_varieties
-WHERE origin != 'system'
-  AND glottocode IS NOT NULL AND TRIM(glottocode) != ''
-  AND NOT EXISTS (SELECT 1 FROM languoids WHERE languoids.glottocode = language_varieties.glottocode);
-SELECT COUNT(*) AS orphan_locales
-FROM ui_locales locale
-LEFT JOIN language_profiles language ON language.code = locale.code
-LEFT JOIN ui_locales fallback
-  ON fallback.project_id = locale.project_id
- AND fallback.code = locale.fallback_code
-WHERE locale.project_id = '{PROJECT_ID}'
-  AND (
-    language.code IS NULL
-    OR (locale.fallback_code IS NOT NULL AND fallback.code IS NULL)
-  );
-SELECT COUNT(*) AS orphan_messages
-FROM ui_messages message
-LEFT JOIN expressions expression
-  ON expression.id = message.source_expression_id
-WHERE message.project_id = '{PROJECT_ID}' AND expression.id IS NULL;
-SELECT COUNT(*) AS orphan_edges
-FROM expression_edges edge
-LEFT JOIN expressions a ON a.id = edge.expression_a_id
-LEFT JOIN expressions b ON b.id = edge.expression_b_id
-WHERE edge.source = 'ui_i18n'
-  AND (a.id IS NULL OR b.id IS NULL);
-""".strip(),
+        "SELECT COUNT(*) AS languages FROM languages;\n"
+        "SELECT COUNT(*) AS scripts FROM scripts;\n"
+        "SELECT COUNT(*) AS regions FROM regions;",
     )
     actual_counts = _rows_to_singletons(count_rows)
-    actual_active_codes = _split_codes(actual_counts["active_locale_codes"])
-    expected_active_codes = sorted(ui_manifest.get("locale_codes", []))
 
-    report = {
+    report: dict[str, Any] = {
         "status": "ok",
         "schema_objects": {
             "missing": [
@@ -195,62 +128,11 @@ WHERE edge.source = 'ui_i18n'
             },
         },
         "counts": {
-            "language_varieties": {
-                "expected": int(language_manifest["generation"]["variety_count"]),
-                "actual": int(actual_counts["language_varieties"]),
-            },
-            "languoids": {
-                "expected": int(language_manifest["glottolog"]["languoid_count"]),
-                "actual": int(actual_counts["languoids"]),
-            },
-            "language_subtags": {
-                "expected": int(language_manifest["iana"]["subtag_count"]),
-                "actual": int(actual_counts["language_subtags"]),
-            },
-            "language_locations": {
-                "expected": int(language_manifest["generation"]["language_location_count"]),
-                "actual": int(actual_counts["language_locations"]),
-            },
-            "ui_locales": {
-                "expected": int(ui_counts["locale_count"]),
-                "actual": int(actual_counts["ui_locales"]),
-            },
-            "ui_messages": {
-                "expected": int(ui_counts["message_count"]),
-                "actual": int(actual_counts["ui_messages"]),
-            },
-            "ui_translation_mappings": {
-                "expected": int(ui_counts["translation_count"]),
-                "actual": translation_mismatches["managed_count"],
-            },
-        },
-        "translation_mappings": {
-            "missing": [
-                {
-                    "key": item.key,
-                    "language_code": item.language_code,
-                    "target_expression_id": item.target_expression_id,
-                }
-                for item in translation_mismatches["missing"]
-            ],
-            "extra": [
-                {
-                    "key": item.key,
-                    "language_code": item.language_code,
-                    "target_expression_id": item.target_expression_id,
-                }
-                for item in translation_mismatches["extra"]
-            ],
-        },
-        "active_locale_codes": {
-            "expected": expected_active_codes,
-            "actual": actual_active_codes,
-        },
-        "orphans": {
-            "languages": int(actual_counts["orphan_languages"]),
-            "locales": int(actual_counts["orphan_locales"]),
-            "messages": int(actual_counts["orphan_messages"]),
-            "edges": int(actual_counts["orphan_edges"]) + len(translation_mismatches["extra"]),
+            table: {
+                "expected": int(expected_counts.get(table, 0)),
+                "actual": int(actual_counts.get(table, 0)),
+            }
+            for table in REGISTRY_TABLES
         },
     }
 
@@ -263,12 +145,6 @@ WHERE edge.source = 'ui_i18n'
         if payload["expected"] != payload["actual"]:
             mismatches.append("count mismatch")
             break
-    if translation_mismatches["missing"] or translation_mismatches["extra"]:
-        mismatches.append("translation ownership mismatch")
-    if expected_active_codes != actual_active_codes:
-        mismatches.append("active locale policy mismatch")
-    if any(report["orphans"].values()):
-        mismatches.append("orphan references detected")
 
     if mismatches:
         report["status"] = "error"
@@ -364,228 +240,6 @@ def _compare_expected_schema_objects(
     return {"missing": missing, "mismatched_sql": mismatched_sql}
 
 
-def _load_expected_ui_translation_mappings(
-    sql_path: Path,
-    *,
-    project_id: str,
-    locale_codes: list[str],
-) -> list[UiTranslationMapping]:
-    sql = sql_path.read_text(encoding="utf-8")
-    locale_set = set(locale_codes)
-    mappings = _parse_ui_translation_comment_blocks(sql, locale_set)
-    if mappings:
-        return _dedupe_ui_translation_mappings(mappings)
-    return _dedupe_ui_translation_mappings(
-        _parse_ui_translation_fallback(sql, project_id=project_id, locale_codes=locale_set)
-    )
-
-
-def _load_actual_ui_translation_mappings(
-    executor: LocalWranglerExecutor,
-    persist_to: Path,
-    *,
-    project_id: str,
-    locale_codes: list[str],
-) -> list[UiTranslationMapping]:
-    escaped_locale_codes = ["'" + code.replace("'", "''") + "'" for code in locale_codes]
-    locale_code_sql = ", ".join(escaped_locale_codes) or "''"
-    rows = executor.execute_query(
-        persist_to,
-        f"""
-SELECT m.key, m.source_expression_id, te.language_profile_code AS language_code, te.id AS target_expression_id
-FROM expression_edges edge
-JOIN expressions se
-  ON se.id = edge.expression_a_id
-JOIN expressions te
-  ON te.id = edge.expression_b_id
-JOIN ui_messages m
-  ON m.project_id = '{_escape_sql_literal(project_id)}'
- AND m.source_expression_id = se.id
-WHERE edge.source = 'ui_i18n'
-  AND te.language_profile_code IN ({locale_code_sql})
-UNION
-SELECT m.key, m.source_expression_id, te.language_profile_code AS language_code, te.id AS target_expression_id
-FROM expression_edges edge
-JOIN expressions se
-  ON se.id = edge.expression_b_id
-JOIN expressions te
-  ON te.id = edge.expression_a_id
-JOIN ui_messages m
-  ON m.project_id = '{_escape_sql_literal(project_id)}'
- AND m.source_expression_id = se.id
-WHERE edge.source = 'ui_i18n'
-  AND te.language_profile_code IN ({locale_code_sql})
-ORDER BY m.key, te.language_profile_code, te.id;
-""".strip(),
-    )
-    mappings: list[UiTranslationMapping] = []
-    for result in rows:
-        for row in result.get("results", []):
-            mappings.append(
-                UiTranslationMapping(
-                    key=str(row["key"]),
-                    language_code=str(row["language_code"]),
-                    source_expression_id=int(row["source_expression_id"]),
-                    target_expression_id=int(row["target_expression_id"]),
-                )
-            )
-    return _dedupe_ui_translation_mappings(mappings)
-
-
-def _parse_ui_translation_comment_blocks(
-    sql: str,
-    locale_codes: set[str],
-) -> list[UiTranslationMapping]:
-    mappings: list[UiTranslationMapping] = []
-    block_pattern = re.compile(r"^-- (?P<key>[^\n]+)\n(?P<body>.*?)(?=^-- |\Z)", re.MULTILINE | re.DOTALL)
-    expression_pattern = re.compile(
-        r"VALUES\s*\(\s*(?P<id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?P<language_code>[^']+)'\s*,\s*'ui_i18n'\s*,",
-        re.DOTALL,
-    )
-    for match in block_pattern.finditer(sql):
-        body = match.group("body")
-        if "INSERT OR IGNORE INTO expression_edges" not in body:
-            continue
-        expression_match = expression_pattern.search(body)
-        if expression_match is None:
-            continue
-        language_code = expression_match.group("language_code")
-        if language_code not in locale_codes:
-            continue
-        edge_match = re.search(
-            r"VALUES\s*\(\s*'[^']+'\s*,\s*(?P<a_id>\d+)\s*,\s*(?P<b_id>\d+)\s*,\s*-?\d+\s*,\s*'ui_i18n'\s*\)",
-            body,
-            re.DOTALL,
-        )
-        if edge_match is None:
-            continue
-        target_expression_id = int(expression_match.group("id"))
-        edge_ids = (int(edge_match.group("a_id")), int(edge_match.group("b_id")))
-        if target_expression_id not in edge_ids:
-            continue
-        mappings.append(
-            UiTranslationMapping(
-                key=match.group("key"),
-                language_code=language_code,
-                source_expression_id=(
-                    edge_ids[1] if edge_ids[0] == target_expression_id else edge_ids[0]
-                ),
-                target_expression_id=target_expression_id,
-            )
-        )
-    return mappings
-
-
-def _parse_ui_translation_fallback(
-    sql: str,
-    *,
-    project_id: str,
-    locale_codes: set[str],
-) -> list[UiTranslationMapping]:
-    ui_message_pattern = re.compile(
-        r"\(\s*'(?P<project_id>[^']+)'\s*,\s*'(?P<key>[^']+)'\s*,\s*(?P<source_expression_id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?:[^']|'')*'\s*,\s*'(?:[^']|'')*'\s*\)"
-    )
-    expression_pattern = re.compile(
-        r"\(\s*(?P<id>\d+)\s*,\s*'(?:[^']|'')*'\s*,\s*'(?P<language_code>[^']+)'\s*,\s*'(?P<source_type>[^']*)'\s*,\s*'(?P<source_ref>[^']*)'\s*,\s*'(?:[^']|'')*'\s*\)"
-    )
-    edge_pattern = re.compile(
-        r"\(\s*'[^']+'\s*,\s*(?P<expression_a_id>\d+)\s*,\s*(?P<expression_b_id>\d+)\s*,\s*-?\d+\s*,\s*'(?P<source>[^']+)'\s*\)"
-    )
-
-    messages_by_source_id: dict[int, list[str]] = {}
-    for match in ui_message_pattern.finditer(sql):
-        if match.group("project_id") != project_id:
-            continue
-        source_expression_id = int(match.group("source_expression_id"))
-        messages_by_source_id.setdefault(source_expression_id, []).append(match.group("key"))
-
-    translated_expressions: dict[int, list[tuple[str, str]]] = {}
-    for match in expression_pattern.finditer(sql):
-        if match.group("source_type") != "ui_i18n":
-            continue
-        language_code = match.group("language_code")
-        if language_code not in locale_codes:
-            continue
-        translated_expressions.setdefault(int(match.group("id")), []).append(
-            (language_code, match.group("source_ref"))
-        )
-
-    mappings: list[UiTranslationMapping] = []
-    for match in edge_pattern.finditer(sql):
-        if match.group("source") != "ui_i18n":
-            continue
-        expression_a_id = int(match.group("expression_a_id"))
-        expression_b_id = int(match.group("expression_b_id"))
-        source_expression_id: int | None = None
-        target_expression_id: int | None = None
-        if expression_a_id in messages_by_source_id and expression_b_id in translated_expressions:
-            source_expression_id = expression_a_id
-            target_expression_id = expression_b_id
-        elif expression_b_id in messages_by_source_id and expression_a_id in translated_expressions:
-            source_expression_id = expression_b_id
-            target_expression_id = expression_a_id
-        if source_expression_id is None or target_expression_id is None:
-            continue
-        for language_code, source_ref in translated_expressions[target_expression_id]:
-            for key in messages_by_source_id[source_expression_id]:
-                if source_ref != f"{project_id}:{key}":
-                    continue
-                mappings.append(
-                    UiTranslationMapping(
-                        key=key,
-                        language_code=language_code,
-                        source_expression_id=source_expression_id,
-                        target_expression_id=target_expression_id,
-                    )
-                )
-    return mappings
-
-
-def _compare_ui_translation_mappings(
-    expected: list[UiTranslationMapping],
-    actual: list[UiTranslationMapping],
-) -> dict[str, Any]:
-    expected_set = set(expected)
-    actual_set = set(actual)
-    expected_pairs = {
-        _normalize_translation_pair(item.source_expression_id, item.target_expression_id)
-        for item in expected_set
-    }
-    missing = sorted(expected_set - actual_set, key=_ui_translation_sort_key)
-    extra = sorted(
-        (
-            item
-            for item in actual_set
-            if _normalize_translation_pair(
-                item.source_expression_id,
-                item.target_expression_id,
-            )
-            not in expected_pairs
-        ),
-        key=_ui_translation_sort_key,
-    )
-    return {
-        "missing": missing,
-        "extra": extra,
-        "managed_count": len(expected_set) - len(missing),
-    }
-
-
-def _dedupe_ui_translation_mappings(
-    mappings: list[UiTranslationMapping],
-) -> list[UiTranslationMapping]:
-    unique = sorted(set(mappings), key=_ui_translation_sort_key)
-    return list(unique)
-
-
-def _ui_translation_sort_key(mapping: UiTranslationMapping) -> tuple[str, str, int]:
-    return (mapping.key, mapping.language_code, mapping.target_expression_id)
-
-
-def _normalize_translation_pair(source_expression_id: int, target_expression_id: int) -> tuple[int, int]:
-    return tuple(sorted((source_expression_id, target_expression_id)))
-
-
 def _rows_to_singletons(results: Iterable[dict[str, Any]]) -> dict[str, Any]:
     payload: dict[str, Any] = {}
     for result in results:
@@ -604,12 +258,6 @@ def _first_row_values(results: list[dict[str, Any]]) -> list[str]:
             if value is not None:
                 names.append(str(value))
     return names
-
-
-def _split_codes(value: Any) -> list[str]:
-    if not value:
-        return []
-    return [item for item in str(value).split(",") if item]
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

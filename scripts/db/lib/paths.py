@@ -32,7 +32,7 @@ class ProjectPaths:
         operations_dir = state_dir / "operations"
         local_d1_state_dir = backend_dir / ".wrangler" / "state"
         language_manifest_path = (
-            root / "scripts" / "v2" / "artifacts" / "language-registry-5.3" / "manifest.json"
+            root / "scripts" / "language-reference" / "artifacts" / "manifest.json"
         )
         ui_bundle_manifest_path = (
             root / "scripts" / "i18n" / "artifacts" / "system-ui" / "manifest.json"
@@ -110,10 +110,9 @@ class ProjectPaths:
         return (
             self.repo_root
             / "scripts"
-            / "v2"
+            / "language-reference"
             / "artifacts"
-            / "language-registry-5.3"
-            / "language-registry.sql"
+            / "language-reference.sql"
         )
 
     @property
