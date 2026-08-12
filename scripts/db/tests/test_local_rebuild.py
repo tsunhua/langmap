@@ -34,7 +34,7 @@ def sha256_path(path: Path) -> str:
 def build_fixture_repo(root: Path, *, broken_schema: bool = False) -> ProjectPaths:
     backend_dir = root / "backend"
     migrations_dir = backend_dir / "migrations"
-    artifacts_dir = root / "scripts" / "v2" / "artifacts" / "language-registry-5.3"
+    artifacts_dir = root / "scripts" / "language-reference" / "artifacts"
     ui_dir = root / "scripts" / "i18n" / "artifacts" / "system-ui"
     state_dir = root / "scripts" / "db" / "state"
     local_state_dir = state_dir / "local"
@@ -49,131 +49,70 @@ def build_fixture_repo(root: Path, *, broken_schema: bool = False) -> ProjectPat
     local_d1_state_dir.parent.mkdir(parents=True, exist_ok=True)
 
     schema_sql = """
-CREATE TABLE languoids (
-  id TEXT PRIMARY KEY,
-  glottocode TEXT UNIQUE NOT NULL,
-  preferred_name TEXT NOT NULL
-);
-CREATE INDEX idx_languoids_glottocode ON languoids(glottocode);
-
-CREATE TABLE language_subtags (
-  type TEXT NOT NULL,
-  value TEXT NOT NULL,
-  PRIMARY KEY (type, value)
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE language_varieties (
-  id TEXT PRIMARY KEY,
-  code TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  origin TEXT NOT NULL,
-  glottocode TEXT
-);
-CREATE INDEX idx_language_varieties_glottocode ON language_varieties(glottocode);
-
-CREATE TABLE language_profiles (
+CREATE TABLE languages (
   code TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  direction TEXT NOT NULL DEFAULT 'ltr'
+  name_en TEXT NOT NULL
 );
 
-CREATE TABLE language_locations (
-  language_variety_id TEXT NOT NULL,
-  city_name TEXT NOT NULL,
-  territory_code TEXT NOT NULL,
-  script_code TEXT NOT NULL DEFAULT '',
-  PRIMARY KEY (language_variety_id, city_name, territory_code, script_code)
-);
-CREATE INDEX idx_language_locations_variety ON language_locations(language_variety_id);
-
-CREATE TABLE expressions (
-  id INTEGER PRIMARY KEY,
-  text TEXT NOT NULL,
-  language_profile_code TEXT NOT NULL,
-  source_type TEXT,
-  source_ref TEXT,
-  review_status TEXT
+CREATE TABLE scripts (
+  code TEXT PRIMARY KEY,
+  name_en TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl'))
 );
 
-CREATE TABLE expression_edges (
-  id TEXT PRIMARY KEY,
-  expression_a_id INTEGER NOT NULL,
-  expression_b_id INTEGER NOT NULL,
-  score INTEGER NOT NULL DEFAULT 0,
-  source TEXT NOT NULL DEFAULT 'batch',
-  UNIQUE(expression_a_id, expression_b_id)
-);
-CREATE INDEX idx_expression_edges_a_id ON expression_edges(expression_a_id);
-
-CREATE TABLE ui_locales (
-  project_id TEXT NOT NULL,
-  code TEXT NOT NULL,
-  native_name TEXT NOT NULL,
-  direction TEXT NOT NULL DEFAULT 'ltr',
-  fallback_code TEXT,
-  status TEXT NOT NULL DEFAULT 'active',
-  mapping_revision INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (project_id, code)
+CREATE TABLE regions (
+  code TEXT PRIMARY KEY,
+  name_en TEXT NOT NULL,
+  latitude REAL,
+  longitude REAL,
+  CHECK ((latitude IS NULL) = (longitude IS NULL))
 );
 
-CREATE TABLE ui_messages (
-  project_id TEXT NOT NULL,
-  key TEXT NOT NULL,
-  source_expression_id INTEGER NOT NULL,
-  placeholders_json TEXT,
-  source_hash TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  PRIMARY KEY (project_id, key)
-);
-
-CREATE VIRTUAL TABLE expressions_fts USING fts5(
-  text,
-  content='expressions',
-  content_rowid='id'
-);
-
-CREATE TRIGGER expressions_ai AFTER INSERT ON expressions BEGIN
-  INSERT INTO expressions_fts(rowid, text) VALUES (new.id, new.text);
-END;
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_languages_code ON languages(code);
+CREATE INDEX idx_scripts_code ON scripts(code);
+CREATE INDEX idx_regions_code ON regions(code);
 """
     if broken_schema:
         schema_sql = schema_sql.replace(
             """
-CREATE TABLE ui_messages (
-  project_id TEXT NOT NULL,
-  key TEXT NOT NULL,
-  source_expression_id INTEGER NOT NULL,
-  placeholders_json TEXT,
-  source_hash TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  PRIMARY KEY (project_id, key)
+CREATE TABLE regions (
+  code TEXT PRIMARY KEY,
+  name_en TEXT NOT NULL,
+  latitude REAL,
+  longitude REAL,
+  CHECK ((latitude IS NULL) = (longitude IS NULL))
 );
 """.strip(),
             "",
         )
     (backend_dir / "schema.sql").write_text(schema_sql.strip() + "\n", encoding="utf-8")
 
-    migration_0002 = migrations_dir / "0002_init.sql"
-    migration_0002.write_text("ALTER TABLE language_varieties ADD COLUMN name_en TEXT;\n", encoding="utf-8")
-    migration_0003 = migrations_dir / "0003_seed.sql"
-    migration_0003.write_text("UPDATE language_varieties SET origin = origin;\n", encoding="utf-8")
+    migration_0001 = migrations_dir / "0001_initial_schema.sql"
+    migration_0001.write_text(schema_sql.strip() + "\n", encoding="utf-8")
 
     lock_payload = {
         "baseline_created_at": "2026-08-01T00:00:00Z",
         "baseline_git_commit": "fixture123",
         "migrations": [
             {
-                "sequence": 2,
-                "filename": migration_0002.name,
-                "size": migration_0002.stat().st_size,
-                "sha256": sha256_path(migration_0002),
-            },
-            {
-                "sequence": 3,
-                "filename": migration_0003.name,
-                "size": migration_0003.stat().st_size,
-                "sha256": sha256_path(migration_0003),
-            },
+                "sequence": 1,
+                "filename": migration_0001.name,
+                "size": migration_0001.stat().st_size,
+                "sha256": sha256_path(migration_0001),
+            }
         ],
     }
     migration_lock_path = root / "scripts" / "db" / "migration-lock.json"
@@ -181,79 +120,39 @@ CREATE TABLE ui_messages (
     migration_lock_path.write_text(json.dumps(lock_payload, indent=2) + "\n", encoding="utf-8")
 
     language_manifest = {
-        "glottolog": {"version": "fixture", "languoid_count": 3},
-        "iana": {"file_date": "2026-08-01", "subtag_count": 3},
-        "generation": {"variety_count": 4, "language_location_count": 2},
+        "manifest_version": 1,
+        "counts": {"languages": 3, "scripts": 2, "regions": 2},
     }
     (artifacts_dir / "manifest.json").write_text(
-        json.dumps(language_manifest, indent=2) + "\n",
-        encoding="utf-8",
+        json.dumps(language_manifest, indent=2) + "\n", encoding="utf-8"
     )
-    (artifacts_dir / "language-registry.sql").write_text(
+    (artifacts_dir / "language-reference.sql").write_text(
         """
-INSERT INTO languoids (id, glottocode, preferred_name) VALUES
-  ('glotto:eng', 'eng1234', 'English'),
-  ('glotto:spa', 'spa1234', 'Spanish'),
-  ('glotto:zho', 'zho1234', 'Chinese');
+INSERT INTO languages (code, name_en) VALUES
+  ('eng', 'English'),
+  ('spa', 'Spanish'),
+  ('cmn', 'Mandarin Chinese');
 
-INSERT INTO language_subtags (type, value) VALUES
-  ('language', 'en'),
-  ('language', 'es'),
-  ('language', 'zh');
+INSERT INTO scripts (code, name_en, direction) VALUES
+  ('Latn', 'Latin', 'ltr'),
+  ('Hant', 'Han (Traditional)', 'ltr');
 
-INSERT INTO language_varieties (id, code, name, origin, glottocode) VALUES
-  ('var:en-US', 'en-US', 'English (United States)', 'seed', 'eng1234'),
-  ('var:es-ES', 'es-ES', 'Español', 'seed', 'spa1234'),
-  ('var:zh-Hant-TW', 'zh-Hant-TW', '傳承體中文', 'seed', 'zho1234'),
-  ('var:x-emoji', 'x-emoji', 'Emoji', 'system', '');
-
-INSERT INTO language_profiles (code, name, direction) VALUES
-  ('en-US', 'English (United States)', 'ltr'),
-  ('es-ES', 'Español', 'ltr'),
-  ('zh-Hant-TW', '傳承體中文', 'ltr');
-
-INSERT INTO language_locations (language_variety_id, city_name, territory_code, script_code) VALUES
-  ('var:spa', 'Madrid', 'ES', ''),
-  ('var:zho', 'Taipei', 'TW', 'Hant');
+INSERT INTO regions (code, name_en, latitude, longitude) VALUES
+  ('US', 'United States', 39.8, -98.6),
+  ('TW', 'Taiwan', 23.7, 121.0);
 """.strip()
         + "\n",
         encoding="utf-8",
     )
 
+    # ui bundle manifest path must still exist (fingerprint input); its SQL is not loaded.
     ui_manifest = {
         "project_id": "langmap-web",
-        "locale_codes": ["es-ES", "zh-Hant-TW"],
-        "counts": {"locale_count": 2, "message_count": 2, "translation_count": 4},
+        "locale_codes": [],
+        "counts": {"locale_count": 0, "message_count": 0, "translation_count": 0},
     }
     (ui_dir / "manifest.json").write_text(json.dumps(ui_manifest, indent=2) + "\n", encoding="utf-8")
-    (ui_dir / "system-ui.sql").write_text(
-        """
-INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-VALUES ('langmap-web', 'es-ES', 'Español', 'ltr', 'active');
-INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-VALUES ('langmap-web', 'zh-Hant-TW', '傳承體中文', 'ltr', 'active');
-
-INSERT INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status) VALUES
-  (1001, 'Hello', 'en-US', 'ui_i18n', 'langmap-web:greeting.hello', 'approved'),
-  (1002, 'Bye', 'en-US', 'ui_i18n', 'langmap-web:greeting.bye', 'approved'),
-  (2001, 'Hola', 'es-ES', 'ui_i18n', 'langmap-web:greeting.hello', 'pending'),
-  (2002, 'Adiós', 'es-ES', 'ui_i18n', 'langmap-web:greeting.bye', 'pending'),
-  (3001, '你好', 'zh-Hant-TW', 'ui_i18n', 'langmap-web:greeting.hello', 'pending'),
-  (3002, '再見', 'zh-Hant-TW', 'ui_i18n', 'langmap-web:greeting.bye', 'pending');
-
-INSERT INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status) VALUES
-  ('langmap-web', 'greeting.hello', 1001, '[]', '1001', 'active'),
-  ('langmap-web', 'greeting.bye', 1002, '[]', '1002', 'active');
-
-INSERT INTO expression_edges (id, expression_a_id, expression_b_id, score, source) VALUES
-  ('1001-2001', 1001, 2001, 0, 'ui_i18n'),
-  ('1002-2002', 1002, 2002, 0, 'ui_i18n'),
-  ('1001-3001', 1001, 3001, 0, 'ui_i18n'),
-  ('1002-3002', 1002, 3002, 0, 'ui_i18n');
-""".strip()
-        + "\n",
-        encoding="utf-8",
-    )
+    (ui_dir / "system-ui.sql").write_text("-- greenfield: ui not loaded\n", encoding="utf-8")
 
     return ProjectPaths(
         repo_root=root,
@@ -324,12 +223,12 @@ class LocalRebuildTests(unittest.TestCase):
             self.assertTrue((paths.local_state_dir / "verification-report.json").exists())
 
             calls = read_fake_log(log_path)
-            self.assertEqual([Path(call["subject"]).name for call in calls[:3]], [
+            # Greenfield loads schema.sql + language-reference.sql, then the baseline command.
+            self.assertEqual([Path(call["subject"]).name for call in calls[:2]], [
                 "schema.sql",
-                "language-registry.sql",
-                "system-ui.sql",
+                "language-reference.sql",
             ])
-            self.assertEqual(calls[3]["mode"], "command")
+            self.assertEqual(calls[2]["mode"], "command")
 
             database_path = paths.local_d1_state_dir / "fake-d1.sqlite3"
             self.assertTrue(database_path.exists())
@@ -338,7 +237,7 @@ class LocalRebuildTests(unittest.TestCase):
                 applied = connection.execute("SELECT name FROM d1_migrations ORDER BY id").fetchall()
             finally:
                 connection.close()
-            self.assertEqual([row[0] for row in applied], ["0002_init.sql", "0003_seed.sql"])
+            self.assertEqual([row[0] for row in applied], ["0001_initial_schema.sql"])
             backups = list(paths.local_d1_state_dir.parent.glob("state-backup-*"))
             self.assertEqual(backups, [])
 
@@ -359,7 +258,7 @@ class LocalRebuildTests(unittest.TestCase):
                     wrangler_bin=FIXTURE_WRANGLER,
                     env={
                         "FAKE_WRANGLER_LOG_PATH": str(log_path),
-                        "FAKE_WRANGLER_FAIL_ON": "system-ui.sql",
+                        "FAKE_WRANGLER_FAIL_ON": "language-reference.sql",
                     },
                     owner="test-owner",
                     created_at="2026-08-01T00:00:00Z",
@@ -367,7 +266,7 @@ class LocalRebuildTests(unittest.TestCase):
 
             self.assertTrue(sentinel.exists())
             self.assertTrue(context.exception.temp_state_dir.exists())
-            self.assertIn("system-ui.sql", str(context.exception))
+            self.assertIn("language-reference.sql", str(context.exception))
             backups = list(paths.local_d1_state_dir.parent.glob("state-backup-*"))
             self.assertEqual(backups, [])
 

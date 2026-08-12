@@ -1,181 +1,109 @@
 import { Hono } from 'hono';
-import { success, notFound, badRequest, conflict } from '../utils/response';
 import { requireAuth } from '../middleware/auth';
-import { buildMappingGraph, parseMappingHops } from '../utils/mappingGraph';
-import type { Bindings } from '../types';
-import type { LoadEdges, LoadExpressions, NeighborRow, ExpressionRow } from '../utils/mappingGraph';
-import { expressionId as computeExpressionId, stableEdgeId } from '../utils/ids';
-import { requireRegisteredLanguage } from '../services/languageRegistry';
+import {
+  badRequest,
+  conflict,
+  created,
+  internalError,
+  paginated,
+  success,
+} from '../utils/response';
+import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
+import { parseReferenceQuery } from '../services/languageIdentity';
+import type { Bindings, Variables } from '../types';
 
-const expressions = new Hono<{ Bindings: Bindings }>();
+const languageLocales = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-// GET /search — search for expression picker
-expressions.get('/search', async (c) => {
-  const q = c.req.query('q') || '';
-  const lang = c.req.query('lang') || '';
-  const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '10') || 10, 1), 50);
-
-  let query = `SELECT id, text, language_profile_code FROM expressions WHERE 1=1`;
-  const params: (string | number)[] = [];
-
-  if (q) {
-    query += ` AND text LIKE ?`;
-    params.push(`%${q}%`);
+languageLocales.post('/', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const body = await c.req.json().catch(() => ({}));
+    const langCode = typeof body?.lang_code === 'string' ? body.lang_code.trim() : '';
+    const text = typeof body?.text === 'string' ? body.text : '';
+    const languageLocaleCode = typeof body?.language_locale_code === 'string' ? body.language_locale_code.trim() : '';
+    try {
+      const result = await createExpression(c.env.DB, {
+        lang_code: langCode,
+        text,
+        ...(languageLocaleCode ? { language_locale_code: languageLocaleCode } : {}),
+        created_by: user?.id ?? 0,
+      });
+      return result.created ? created(c, result, 'Expression created') : success(c, result, 'Expression already exists');
+    } catch (error) {
+      if (error instanceof ExpressionError) {
+        if (error.code === 'EXPRESSION_HASH_COLLISION') return conflict(c, error.code, error.code);
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Create expression error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to create expression');
   }
-  if (lang) {
-    query += ` AND language_profile_code = ?`;
-    params.push(lang);
-  }
-  query += ` ORDER BY text LIMIT ?`;
-  params.push(limit);
-
-  const { results } = await c.env.DB.prepare(query).bind(...params).all();
-  return success(c, results);
 });
 
-// POST / — create a single expression and optionally link it to another one
-expressions.post('/', requireAuth, async (c) => {
-  const user = c.get('user')!;
-  const body = await c.req.json<{
-    text?: string;
-    language_profile_code?: string;
-    variation_status?: 'unclassified' | 'shared' | 'variant';
-    region_name?: string;
-    related_to?: number;
-  }>();
-
-  const text = body.text?.trim() || '';
-  const languageProfileCode = body.language_profile_code?.trim() || '';
-  const regionName = body.region_name?.trim() || '';
-  const variationStatus = body.variation_status || 'unclassified';
-
-  if (!text || !languageProfileCode) {
-    return badRequest(c, 'invalid_expression', 'text and language_profile_code are required');
-  }
-  if (!['unclassified', 'shared', 'variant'].includes(variationStatus)) {
-    return badRequest(c, 'invalid_variation_status', 'variation_status must be unclassified, shared, or variant');
-  }
-
-  const language = await requireRegisteredLanguage(c.env.DB, languageProfileCode);
-  if (!language) {
-    return badRequest(c, 'INVALID_LANGUAGE_PROFILE_CODE', 'language_profile_code must reference a registered profile');
-  }
-
-  const existing = await c.env.DB.prepare(
-    `SELECT id FROM expressions WHERE text = ? AND language_profile_code = ? LIMIT 1`
-  ).bind(text, languageProfileCode).first<{ id: number }>();
-
-  const expressionId = existing?.id ?? await computeExpressionId(languageProfileCode, text);
-  const statements: D1Statement[] = [];
-
-  if (!existing) {
-    statements.push(
-      c.env.DB.prepare(
-        `INSERT OR IGNORE INTO expressions (id, text, language_profile_code, region_name, variation_status, source_type, created_by, review_status)
-         VALUES (?, ?, ?, ?, ?, 'user', ?, 'pending')`
-      ).bind(expressionId, text, languageProfileCode, regionName || null, variationStatus, user.username)
-    );
-  }
-
-  let mappingCreated = false;
-  if (body.related_to != null) {
-    const relatedId = Number(body.related_to);
-    if (!Number.isFinite(relatedId)) {
-      return badRequest(c, 'invalid_related_to', 'related_to must be a number');
-    }
-    if (relatedId === expressionId) {
-      return conflict(c, 'self_relation', 'Expression cannot map to itself');
-    }
-
-    const related = await c.env.DB.prepare(
-      `SELECT id FROM expressions WHERE id = ? LIMIT 1`
-    ).bind(relatedId).first<{ id: number }>();
-    if (!related) {
-      return badRequest(c, 'related_expression_not_found', 'related_to expression not found');
-    }
-
-    const edgeId = await stableEdgeId(expressionId, relatedId);
-    statements.push(
-      c.env.DB.prepare(
-        `INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
-         VALUES (?, ?, ?, 0, 'manual', ?)`
-      ).bind(edgeId, Math.min(expressionId, relatedId), Math.max(expressionId, relatedId), user.username)
-    );
-    mappingCreated = true;
-  }
-
-  await c.env.DB.batch(statements);
-
-  return success(c, {
-    expressionId,
-    mappingCreated,
-  }, undefined, existing ? 200 : 201);
+languageLocales.get('/search', async (c) => {
+  const query = parseReferenceQuery({
+    q: c.req.query('q') ?? '',
+    limit: c.req.query('limit'),
+    offset: c.req.query('skip') ?? c.req.query('offset'),
+  });
+  const langCode = (c.req.query('lang_code') ?? '').toLowerCase();
+  const result = await searchExpressions(c.env.DB, { ...query, lang_code: langCode || undefined });
+  return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
-// GET /:id — expression detail
-expressions.get('/:id', async (c) => {
-  const id = parseInt(c.req.param('id'));
-  const expr = await c.env.DB.prepare(
-    `SELECT e.*, l.name as language_name
-     FROM expressions e LEFT JOIN language_profiles l ON e.language_profile_code = l.code
-     WHERE e.id = ?`
-  ).bind(id).first();
-  if (!expr) return notFound(c, 'Expression');
-  return success(c, expr);
+languageLocales.get('/:id', async (c) => {
+  const id = c.req.param('id');
+  const result = await getExpression(c.env.DB, id);
+  if (!result) {
+    return c.json({ success: false, error: 'EXPRESSION_NOT_FOUND', message: 'Expression not found' }, 404);
+  }
+  return success(c, result);
 });
 
-// GET /:id/mappings — graph of mappings within 1-3 hops from the root expression
-expressions.get('/:id/mappings', async (c) => {
-  const id = parseInt(c.req.param('id'));
-
-  const root = await c.env.DB.prepare(
-    `SELECT id FROM expressions WHERE id = ?`
-  ).bind(id).first();
-  if (!root) return notFound(c, 'Expression');
-
-  const requestedHops = parseMappingHops(c.req.query('hops'));
-
-  // D1 limits bound parameters per query. Keep chunks well under that ceiling.
-  // loadEdges binds each id twice (two IN clauses), so its chunk is the smaller one.
-  const EDGE_CHUNK = 40;
-  const EXPR_CHUNK = 90;
-
-  const loadEdges: LoadEdges = async (frontierIds: number[]): Promise<NeighborRow[]> => {
-    if (frontierIds.length === 0) return [];
-    const out: NeighborRow[] = [];
-    for (let i = 0; i < frontierIds.length; i += EDGE_CHUNK) {
-      const chunk = frontierIds.slice(i, i + EDGE_CHUNK);
-      const placeholders = chunk.map(() => '?').join(',');
-      const { results } = await c.env.DB.prepare(
-        `SELECT id as edge_id, expression_a_id, expression_b_id, score
-         FROM expression_edges
-         WHERE expression_a_id IN (${placeholders}) OR expression_b_id IN (${placeholders})
-         ORDER BY score DESC, id ASC`
-      ).bind(...chunk, ...chunk).all<NeighborRow>();
-      out.push(...results);
+languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const id = c.req.param('id') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const languageLocaleCode = typeof body?.language_locale_code === 'string' ? body.language_locale_code.trim() : '';
+    if (!languageLocaleCode) {
+      return badRequest(c, 'VALIDATION_FAILED', 'language_locale_code is required');
     }
-    return out;
-  };
-
-  const loadExpressions: LoadExpressions = async (ids: number[]): Promise<ExpressionRow[]> => {
-    if (ids.length === 0) return [];
-    const out: ExpressionRow[] = [];
-    for (let i = 0; i < ids.length; i += EXPR_CHUNK) {
-      const chunk = ids.slice(i, i + EXPR_CHUNK);
-      const placeholders = chunk.map(() => '?').join(',');
-      const { results } = await c.env.DB.prepare(
-        `SELECT e.id as expression_id, e.text, e.language_profile_code, l.name as language_name
-         FROM expressions e LEFT JOIN language_profiles l ON e.language_profile_code = l.code
-         WHERE e.id IN (${placeholders})
-         ORDER BY e.id ASC`
-      ).bind(...chunk).all<ExpressionRow>();
-      out.push(...results);
+    let source: { type: string; name: string; ref?: string } | undefined;
+    if (body?.source != null) {
+      const s = body.source;
+      if (typeof s !== 'object' || s === null || typeof s.type !== 'string' || typeof s.name !== 'string') {
+        return badRequest(c, 'INVALID_SOURCE', 'source requires type and name');
+      }
+      if (s.ref != null && typeof s.ref !== 'string') {
+        return badRequest(c, 'INVALID_SOURCE', 'source ref must be a string');
+      }
+      source = { type: s.type, name: s.name };
+      if (typeof s.ref === 'string') source.ref = s.ref;
     }
-    return out;
-  };
-
-  const graph = await buildMappingGraph(id, requestedHops, loadEdges, loadExpressions);
-  return success(c, graph);
+    try {
+      const result = await createLocaleAttestation(c.env.DB, {
+        expression_id: id,
+        language_locale_code: languageLocaleCode,
+        ...(source ? { source } : {}),
+        created_by: user?.id ?? 0,
+      });
+      return result.created ? created(c, result, 'Attestation created') : success(c, result, 'Attestation already exists');
+    } catch (error) {
+      if (error instanceof ExpressionError) {
+        if (error.code === 'EXPRESSION_NOT_FOUND') {
+          return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+        }
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Create attestation error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to create attestation');
+  }
 });
 
-export default expressions;
+export default languageLocales;

@@ -1,62 +1,26 @@
-import { Hono } from 'hono';
-import { success, badRequest } from '../utils/response';
+import { Hono, type Context } from 'hono';
+import { paginated } from '../utils/response';
+import { parseReferenceQuery, queryReferenceTable, type ReferenceTable } from '../services/languageIdentity';
 import type { Bindings } from '../types';
 
 const languageRegistry = new Hono<{ Bindings: Bindings }>();
 
-const VALID_TYPES = ['language', 'script', 'region', 'variant'];
-const MAX_LIMIT = 50;
-const MAX_Q = 80;
-
-function escapeLike(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+function parseQs(c: { req: { query: (k: string) => string | undefined } }) {
+  return {
+    q: c.req.query('q'),
+    limit: c.req.query('limit'),
+    offset: c.req.query('skip') ?? c.req.query('offset'),
+  };
 }
 
-languageRegistry.get('/subtags', async (c) => {
-  const type = c.req.query('type');
-  const q = c.req.query('q') || '';
-  const prefix = c.req.query('prefix') || '';
-  const limitRaw = Number(c.req.query('limit') || 20);
-  const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? limitRaw : 20, 1), MAX_LIMIT);
+async function respond(c: Context<{ Bindings: Bindings }>, table: ReferenceTable) {
+  const query = parseReferenceQuery(parseQs(c));
+  const { items, total } = await queryReferenceTable(c.env.DB, table, query);
+  return paginated(c, items, total, query.offset, query.limit);
+}
 
-  if (!type || !VALID_TYPES.includes(type)) {
-    return badRequest(c, 'INVALID_TYPE', `type must be one of: ${VALID_TYPES.join(', ')}`);
-  }
-
-  const normalizedQ = q.slice(0, MAX_Q);
-  const escapedQ = escapeLike(normalizedQ);
-  const escapedPrefix = escapeLike(prefix.slice(0, MAX_Q));
-
-  let query = 'SELECT type, value, descriptions, prefixes, preferred_value, suppress_script, deprecated FROM language_subtags WHERE type = ?';
-  const params: string[] = [type];
-
-  if (escapedQ) {
-    query += ' AND (value LIKE ? ESCAPE \'\\\' OR descriptions LIKE ? ESCAPE \'\\\')';
-    params.push(`%${escapedQ}%`, `%${escapedQ}%`);
-  }
-
-  if (type === 'variant' && escapedPrefix) {
-    query += ' AND prefixes LIKE ? ESCAPE \'\\\'';
-    params.push(`%${escapedPrefix}%`);
-  }
-
-  if (escapedQ) {
-    query += ' ORDER BY CASE'
-      + ' WHEN value = ? COLLATE NOCASE THEN 0'
-      + ' WHEN value LIKE ? ESCAPE \'\\\' THEN 1'
-      + ' ELSE 2 END, value ASC LIMIT ?';
-    params.push(normalizedQ, `${escapedQ}%`);
-  } else {
-    query += ' ORDER BY value ASC LIMIT ?';
-  }
-  params.push(String(limit));
-
-  const { results } = await c.env.DB.prepare(query).bind(...params).all();
-
-  return success(c, {
-    items: results,
-    total: results.length,
-  });
-});
+languageRegistry.get('/languages', (c) => respond(c, 'languages'));
+languageRegistry.get('/scripts', (c) => respond(c, 'scripts'));
+languageRegistry.get('/regions', (c) => respond(c, 'regions'));
 
 export default languageRegistry;

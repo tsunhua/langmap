@@ -35,7 +35,7 @@ language_locale_code = lang "-" script "-" region ("_" place_segment)*
 - `place_segment`：可選、可變深度、由使用者自訂，且必須符合 `^[A-Z][A-Za-z]*$`；段內大寫可表示多字地名，例如 `NewYork`。
 - `-` 分隔語言、書寫系統與地點三種頂層欄位；`_` 分隔地點路徑內由大至小的層級。
 - 地區代碼必填，其他地點層級均可省略；不以 `NULL`、`Unknown` 或空白段補齊。
-- 每個 Language Locale 保存一個當地自稱 endonym。
+- 每個 Language Locale 保存當地自稱（`name`）與英文名稱（`name_en`）。
 - Language Locale 可選擇保存一組代表座標；座標只供地圖顯示，不宣稱完整語言分布。
 - 這套代碼不是 BCP 47，不得直接宣稱為 HTML、HTTP 或 i18n library 的標準 locale tag。
 

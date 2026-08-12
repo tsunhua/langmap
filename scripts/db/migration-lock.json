@@ -1,150 +1,24 @@
 {
-  "baseline_created_at": "2026-08-01T00:00:00Z",
-  "baseline_git_commit": "aa384e42",
+  "baseline_created_at": "2026-08-11T00:00:00Z",
+  "baseline_git_commit": "dc36eb69",
   "migrations": [
     {
+      "sequence": 1,
+      "filename": "0001_initial_schema.sql",
+      "size": 1331,
+      "sha256": "9a979020969e4b2511194e32036a7154d37397218bf53abef1e3ce7862ddd012"
+    },
+    {
       "sequence": 2,
-      "filename": "0002_add_name_en.sql",
-      "size": 60,
-      "sha256": "171eeb4db39e4970240b52f4c6f76a2c9c458e1068f3ab018a4b210be5e26bf8"
+      "filename": "0002_language_locales.sql",
+      "size": 1781,
+      "sha256": "f4585f01776320762456a18207e91dd978bf7a616eb96b9b467e2160b3903f86"
     },
     {
       "sequence": 3,
-      "filename": "0003_add_lang_family_status.sql",
-      "size": 123,
-      "sha256": "d9685e6df5e8bc6b4c25f4804d1ce64b993df87a55ef0be5443315ed82211b3e"
-    },
-    {
-      "sequence": 4,
-      "filename": "0004_add_handbook_status.sql",
-      "size": 75,
-      "sha256": "947a22eec829d2045493922183de455ea4765c4957253956888cb88fd936e86f"
-    },
-    {
-      "sequence": 5,
-      "filename": "0005_add_languoid_registry.sql",
-      "size": 944,
-      "sha256": "cb105081d8736fd81d9228fb50a714b354a38da149042a931634c661b38bcb99"
-    },
-    {
-      "sequence": 6,
-      "filename": "0006_project_scoped_localization.sql",
-      "size": 1698,
-      "sha256": "071b31d71a08fd1b2ef1ced135e43cebca32e2a79ffe859d4af89fa4c7fa80b8"
-    },
-    {
-      "sequence": 7,
-      "filename": "0007_seed_first_party_ui_locales.sql",
-      "size": 529,
-      "sha256": "80ddf0280d23636cc3f64151f85f86fb7fee47e1e2eb2d702b5b171fa77245e1"
-    },
-    {
-      "sequence": 8,
-      "filename": "0008_apply_ui_locale_activation_policy.sql",
-      "size": 486,
-      "sha256": "ed86efabe666521d7945115ae07a18d00aa3cdc91e08111ba657cd87be80936e"
-    },
-    {
-      "sequence": 9,
-      "filename": "0009_only_en_us_active_ui_locale.sql",
-      "size": 317,
-      "sha256": "5fdfc237bbe4887a36a9bc2cdee544031db886d91a7945ee26361f1be63cd9a4"
-    },
-    {
-      "sequence": 10,
-      "filename": "0010_rebuild_language_registry.sql",
-      "size": 5637,
-      "sha256": "949c7bc1c476b1918ca449c7813a80ebad1f4f40e5c4bb74f853049526339f0f"
-    },
-    {
-      "sequence": 11,
-      "filename": "0011_add_language_locations.sql",
-      "size": 715,
-      "sha256": "28174c053665f635b42d97cb04d448ad2407843ba4ef3c0e360de39e4341077e"
-    },
-    {
-      "sequence": 12,
-      "filename": "0012_canonicalize_language_content_profiles.sql",
-      "size": 6676,
-      "sha256": "0cd55a9b11e6eec0cf52dc11b7a1be0fab87ee75c3e2cd1fbfba6e7ce7b89243"
-    },
-    {
-      "sequence": 13,
-      "filename": "0013_add_expression_variation_status.sql",
-      "size": 158,
-      "sha256": "ddf88a26e47bac49c12ba82db9d221f1ba213a6b3ff65cf4cf752bd02d627a74"
-    },
-    {
-      "sequence": 14,
-      "filename": "0014_use_base_english_ui_locale.sql",
-      "size": 754,
-      "sha256": "73612eff095aaf5705bb7dc0629fcf575bd55bc7a34b22892138cb619e76b76f"
-    },
-    {
-      "sequence": 15,
-      "filename": "0015_migrate_mandarin_content_tags.sql",
-      "size": 5963,
-      "sha256": "75b26eb1c31d04ba3e80ca8a2a7eb4eeea0e376bd7ecac012549e7ce8b6c36f7"
-    },
-    {
-      "sequence": 16,
-      "filename": "0016_variety_profile_split.sql",
-      "size": 15895,
-      "sha256": "ea93f8493bde7b787b565507add8c7accfc2770190f5eff18619d69fb228d0db"
-    },
-    {
-      "sequence": 17,
-      "filename": "0017_fix_hans_script_label.sql",
-      "size": 284,
-      "sha256": "04085b729dea10f1dc7a03296ee7a6cc2307b602162ac3f12026ffae664ead6d"
-    },
-    {
-      "sequence": 18,
-      "filename": "0018_add_profile_endonym.sql",
-      "size": 531,
-      "sha256": "96787edf156672a27fcad255b0104618ec52e653080a792722349a393171022d"
-    },
-    {
-      "sequence": 19,
-      "filename": "0019_rename_hant_profile_label.sql",
-      "size": 344,
-      "sha256": "bc71146e222d9b8a9ab646c457315df520c85d6d45f40c371c63a0ac35d4db7b"
-    },
-    {
-      "sequence": 20,
-      "filename": "0020_add_city_name_localized.sql",
-      "size": 444,
-      "sha256": "206bc89be0d700138c98d6f52c46e238ee1ed7cb4de12ab081b5938af6fde8f7"
-    },
-    {
-      "sequence": 21,
-      "filename": "0021_canonicalize_nan_romanization_variants.sql",
-      "size": 2116,
-      "sha256": "365bda472cddeb432d1dd11d35dfdc2c68b449c047e3590269875c61d895ac7c"
-    },
-    {
-      "sequence": 22,
-      "filename": "0022_canonicalize_chao_latin_profile.sql",
-      "size": 1624,
-      "sha256": "5e96c48d110a3f9c8f296ac0951626fae1750a35d9282b2ef2ded22fa7a5e405"
-    },
-    {
-      "sequence": 23,
-      "filename": "0023_canonicalize_korean_script_profiles.sql",
-      "size": 1609,
-      "sha256": "465350fdab3504b71300307ab92aec86429f40dfa2b9c6b63ca4d6106f2d9b18"
-    },
-    {
-      "sequence": 24,
-      "filename": "0024_canonicalize_japanese_script_profiles.sql",
-      "size": 1549,
-      "sha256": "f2e701d06f2a12f753b38162a5b112436da40aa620d0a9651af360a0cb5d8948"
-    },
-    {
-      "sequence": 25,
-      "filename": "0025_canonicalize_all_script_profiles.sql",
-      "size": 4776,
-      "sha256": "47bd09feba075a11ab9a18dae76b9364945d5ecfdded42da2a7a591f30b9959e"
+      "filename": "0003_expressions.sql",
+      "size": 1571,
+      "sha256": "b48adbf2b7914fd0eb5628897f737b9a1ab41845994e3219f333a02d3e64d60c"
     }
   ]
 }

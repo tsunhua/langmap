@@ -1,4 +1,0 @@
-ID,Name,Glottocode,Level,ISO639P3code,Parent_ID,Latitude,Longitude
-glotto:abcd1234,Example family,abcd1234,family,,,0,0
-glotto:chao1238,Chaozhou,chao1238,dialect,nan,glotto:abcd1234,23.35,116.68
-glotto:mand1415,Mandarin,mand1415,language,cmn,glotto:abcd1234,39.90,116.40
