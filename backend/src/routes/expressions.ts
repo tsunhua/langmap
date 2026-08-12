@@ -4,11 +4,14 @@ import {
   badRequest,
   conflict,
   created,
+  forbidden,
   internalError,
   paginated,
   success,
 } from '../utils/response';
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
+import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
+import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
 import type { Bindings, Variables } from '../types';
 
@@ -103,6 +106,72 @@ languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
   } catch (error) {
     console.error('Create attestation error:', error);
     return internalError(c, error instanceof Error ? error.message : 'Failed to create attestation');
+  }
+});
+
+languageLocales.post('/:id/mappings', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const id = c.req.param('id') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const targetExpressionId = typeof body?.target_expression_id === 'string' ? body.target_expression_id.trim() : '';
+    const source = typeof body?.source === 'string' ? body.source.trim() : '';
+    if (!targetExpressionId || !source) {
+      return badRequest(c, 'VALIDATION_FAILED', 'target_expression_id and source are required');
+    }
+    try {
+      const result = await createEdge(c.env.DB, {
+        expression_a_id: id,
+        expression_b_id: targetExpressionId,
+        source,
+        created_by: user?.id ?? 0,
+      });
+      return result.created ? created(c, result, 'Edge created') : success(c, result, 'Edge already exists');
+    } catch (error) {
+      if (error instanceof MappingError) return badRequest(c, error.code, error.code);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Create edge error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to create edge');
+  }
+});
+
+languageLocales.get('/:id/mappings', async (c) => {
+  const id = c.req.param('id') ?? '';
+  const query = parseReferenceQuery({
+    q: '',
+    limit: c.req.query('limit'),
+    offset: c.req.query('skip') ?? c.req.query('offset'),
+  });
+  const result = await getExpressionMappings(c.env.DB, id, { limit: query.limit, offset: query.offset });
+  return paginated(c, result.items, result.total, query.offset, query.limit);
+});
+
+languageLocales.post('/:id/split', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    if (user?.role !== 'admin') return forbidden(c, 'FORBIDDEN', 'Split requires admin role');
+    const id = c.req.param('id') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const edgeIds = Array.isArray(body?.edge_ids) ? body.edge_ids.filter((e: unknown): e is string => typeof e === 'string') : [];
+    try {
+      const result = await splitExpression(c.env.DB, {
+        source_expression_id: id,
+        edge_ids: edgeIds,
+        created_by: user?.id ?? 0,
+      });
+      return success(c, result, 'Expression split completed');
+    } catch (error) {
+      if (error instanceof SplitError) {
+        if (error.code === 'EXPRESSION_NOT_FOUND') return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Split expression error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to split expression');
   }
 });
 

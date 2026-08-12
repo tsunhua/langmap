@@ -21,7 +21,7 @@ export async function splitExpression(
   const source = await db
     .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions WHERE id = ?`)
     .bind(input.source_expression_id)
-    .first<{ id: string; lang_code: string; text: string; text_hash: string; homograph_index: number }>();
+    .first<{ id: string; lang_code: string; text: string; text_hash: string; homograph_index: number; description: string; tags_json: string }>();
   if (!source) throw new SplitError('EXPRESSION_NOT_FOUND');
 
   const placeholders = input.edge_ids.map(() => '?').join(', ');
