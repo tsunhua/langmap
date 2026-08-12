@@ -64,7 +64,7 @@
 - Consumes: Plan 1/2 的 `backend/schema.sql`、`backend/migrations/0001_initial_schema.sql`、`backend/migrations/0002_language_locales.sql`、`scripts/db/migration-lock.json`、`scripts/db/lib/migrations.sync_migration_lock`。
 - Produces: `expressions` 表與 `expression_locale_attestations` 表(schema 物件供 verify 比對)。Task 4 的整合測試依賴 `expressions` 表存在(`lang_code` FK 指向 `languages`)。
 
-- [ ] **Step 1: 建立 migration 0003**
+- [x] **Step 1: 建立 migration 0003**
 
 Create `backend/migrations/0003_expressions.sql`:
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS expression_locale_attestations (
 );
 ```
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 在檔頭 DROP 區塊,於 `DROP TABLE IF EXISTS expressions;` 之前插入一行(FK 相依:attestations 先於 expressions):
 
@@ -164,7 +164,7 @@ CREATE TABLE expression_locale_attestations (
 );
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在既有 describe 內、`does not contain obsolete identity tables` 之前新增兩個 it:
 
@@ -187,7 +187,7 @@ CREATE TABLE expression_locale_attestations (
   });
 ```
 
-- [ ] **Step 4: 更新 migration-lock 並驗證同步**
+- [x] **Step 4: 更新 migration-lock 並驗證同步**
 
 從 repo root 執行(一次性維護操作,不留 repo 檔案):
 
@@ -213,7 +213,7 @@ Expected: 印出 0001、0002、0003 三筆;`migrations` 陣列變三筆、metada
 
 再跑一次同段程式(改 `update=False`)確認無 "unlocked migration" 錯誤。
 
-- [ ] **Step 5: 跑 schemaContract 測試**
+- [x] **Step 5: 跑 schemaContract 測試**
 
 ```bash
 cd backend && npx vitest run tests/schemaContract.test.ts
@@ -221,7 +221,7 @@ cd backend && npx vitest run tests/schemaContract.test.ts
 
 Expected: 全部 it PASS(6 個既有 + 2 新 = 8 個)。
 
-- [ ] **Step 6: 重建本地 D1**
+- [x] **Step 6: 重建本地 D1**
 
 先確認 8788 沒有 worker 占用(若有,`kill $(pgrep -f "wrangler dev")`,等 `lsof -iTCP:8788` 清空)。然後從 repo root:
 
@@ -231,7 +231,7 @@ python3 scripts/db/manage.py local rebuild
 
 Expected: 回 `{"status": "rebuilt", ...}`。rebuild 後不需重啟 worker(Task 4 會處理)。
 
-- [ ] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
+- [x] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_verify
@@ -240,7 +240,7 @@ python3 scripts/db/tests/test_local_rebuild.py
 
 Expected: 兩者皆 OK(verify 的 schema 物件比對涵蓋新表,fixture 測試不受影響)。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/migrations/0003_expressions.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json
@@ -267,7 +267,7 @@ Commit 後 `git status --short` 應為空或僅有預期之外的新檔(如有,�
   - `buildExpressionId(langCode: string, textHash: string, homographIndex?: number): string`
   - Task 3 的 `expressions.ts` 依賴以上三個。
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/expressionIdentity.test.ts`:
 
@@ -323,7 +323,7 @@ describe('buildExpressionId', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/expressionIdentity.test.ts
@@ -331,7 +331,7 @@ cd backend && npx vitest run tests/expressionIdentity.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/expressionIdentity'`)。
 
-- [ ] **Step 3: 建立實作**
+- [x] **Step 3: 建立實作**
 
 Create `backend/src/services/expressionIdentity.ts`:
 
@@ -359,7 +359,7 @@ export function buildExpressionId(langCode: string, textHash: string, homographI
 }
 ```
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/expressionIdentity.test.ts
@@ -367,7 +367,7 @@ cd backend && npx vitest run tests/expressionIdentity.test.ts
 
 Expected: 8 tests PASS(canonicalize 3、hash 3、id 2)。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/expressionIdentity.ts backend/tests/expressionIdentity.test.ts
@@ -395,7 +395,7 @@ DB service 層:find-or-create、hash collision guard、search、get、attestatio
   - `createLocaleAttestation(db, input: { expression_id: string; language_locale_code: string; source?: { type: string; name: string; ref?: string }; created_by: number }): Promise<{ attestation: LocaleAttestationRow; created: boolean }>`
   - Task 4 的 route 依賴以上全部與 `ExpressionRow`/`LocaleAttestationRow`。
 
-- [ ] **Step 1: 建立共用型別**
+- [x] **Step 1: 建立共用型別**
 
 Create `backend/src/types/expression.ts`:
 
@@ -427,7 +427,7 @@ export interface LocaleAttestationRow {
 }
 ```
 
-- [ ] **Step 2: 寫失敗的單元測試**
+- [x] **Step 2: 寫失敗的單元測試**
 
 Create `backend/tests/expressions.test.ts`:
 
@@ -709,7 +709,7 @@ describe('createLocaleAttestation', () => {
 });
 ```
 
-- [ ] **Step 3: 跑測試確認失敗**
+- [x] **Step 3: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/expressions.test.ts
@@ -717,7 +717,7 @@ cd backend && npx vitest run tests/expressions.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/expressions'`)。
 
-- [ ] **Step 4: 建立 `backend/src/services/expressions.ts`**
+- [x] **Step 4: 建立 `backend/src/services/expressions.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -889,7 +889,7 @@ export async function createLocaleAttestation(
 }
 ```
 
-- [ ] **Step 5: 跑測試確認通過**
+- [x] **Step 5: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/expressions.test.ts
@@ -897,7 +897,7 @@ cd backend && npx vitest run tests/expressions.test.ts
 
 Expected: 11 tests PASS(createExpression 6、searchExpressions 2、getExpression 2、createLocaleAttestation 4 = 14 若全數撰寫;以實際 it 數為準,全部 PASS 即可)。若某個 it 因 fake D1 SQL 字串與實作不一致而失敗,以實作(Step 4)的 SQL 為準調整測試裡的 handler key,再重跑。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/types/expression.ts backend/src/services/expressions.ts backend/tests/expressions.test.ts
@@ -919,7 +919,7 @@ git commit -m "feat(api): add expression service with hash collision and attesta
 - Consumes: Task 3 的 `ExpressionError`/`createExpression`/`searchExpressions`/`getExpression`/`createLocaleAttestation`;Task 2 的 `computeTextHash`;Plan 1 的 `parseReferenceQuery`;Plan 2 的 `paginated`/`badRequest`/`conflict`/`created`/`success`/`internalError` 與 `notFound` helper 之外的自訂 404;`requireAuth`/`optionalAuth` middleware;`Bindings`/`Variables`。
 - Produces: `GET /api/v2/expressions/search`(分頁)、`POST /api/v2/expressions`(201/200 + `created`)、`GET /api/v2/expressions/:id`(含 `attestations`)、`POST /api/v2/expressions/:id/locale-attestations`(201/200 + `created`)。
 
-- [ ] **Step 1: 寫整合測試(先失敗)**
+- [x] **Step 1: 寫整合測試(先失敗)**
 
 Create `backend/tests/expressionsIntegration.test.ts`:
 
@@ -1103,7 +1103,7 @@ describe('expressions API', () => {
 });
 ```
 
-- [ ] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
+- [x] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
 
 若 8788 沒有 worker,從 `backend/` 背景啟動(不要用 `./dev.sh`):
 
@@ -1119,7 +1119,7 @@ cd backend && npx vitest run tests/expressionsIntegration.test.ts
 
 Expected: 全 FAIL(404,route 尚未掛上)。確認失敗後才繼續。
 
-- [ ] **Step 3: 建立 `backend/src/routes/expressions.ts`**
+- [x] **Step 3: 建立 `backend/src/routes/expressions.ts`**
 
 ```ts
 import { Hono } from 'hono';
@@ -1233,7 +1233,7 @@ languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
 export default languageLocales;
 ```
 
-- [ ] **Step 4: 在 `backend/src/routes/index.ts` 註冊**
+- [x] **Step 4: 在 `backend/src/routes/index.ts` 註冊**
 
 完整新內容:
 
@@ -1253,7 +1253,7 @@ api.route('/expressions', expressions);
 export default api;
 ```
 
-- [ ] **Step 5: 等 wrangler hot-reload,重跑整合測試**
+- [x] **Step 5: 等 wrangler hot-reload,重跑整合測試**
 
 wrangler dev 會自動 reload `backend/src` 的變更;等 2–3 秒再跑:
 
@@ -1263,7 +1263,7 @@ cd backend && npx vitest run tests/expressionsIntegration.test.ts
 
 Expected: 全部 PASS(10 個 it)。
 
-- [ ] **Step 6: 跑 type-check 確認無型別錯誤**
+- [x] **Step 6: 跑 type-check 確認無型別錯誤**
 
 ```bash
 web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
@@ -1296,7 +1296,7 @@ web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
 
 Expected: 只可能出現 `utils/response.ts`(status: number 的 overload)與 `types.ts`(`D1Database` global)兩處**既有**錯誤;`expressions.ts`/`expressionIdentity.ts` 不得有新錯誤。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/routes/expressions.ts backend/src/routes/index.ts backend/tests/expressionsIntegration.test.ts
@@ -1313,7 +1313,7 @@ Commit 後 `git status --short` 應乾淨。
 
 **Files:** 無(若有修正在此提交)
 
-- [ ] **Step 1: 後端完整測試(已知既有失敗除外)**
+- [x] **Step 1: 後端完整測試(已知既有失敗除外)**
 
 worker 在 8788 的前提下:
 
@@ -1323,7 +1323,7 @@ cd backend && npm test
 
 Expected: 所有 test file 通過,**除了** `auth.test.ts` 中 `reuses an existing expression ...`(呼叫 `/contributions/batch`,Plan 1 Task 1 起既有的 stale 測試,在 HEAD 上即壞,與本 plan 無關)——該失敗為已知,不回修、不改動 `auth.test.ts`。
 
-- [ ] **Step 2: scripts 測試**
+- [x] **Step 2: scripts 測試**
 
 從 repo root:
 
@@ -1339,7 +1339,7 @@ python3 -m unittest scripts.db.tests.test_dev_sh
 
 Expected: 全部 OK(若 `test_generate.py` 改動 `manifest.json` 的 `generated_at`,恢復該 artifact 到 HEAD 使 tree 乾淨)。
 
-- [ ] **Step 3: 手動抽查新 API(rebuild 後)**
+- [x] **Step 3: 手動抽查新 API(rebuild 後)**
 
 ```bash
 curl -s 'http://127.0.0.1:8788/api/v2/expressions/search?q=食' | python3 -m json.tool
@@ -1347,7 +1347,7 @@ curl -s 'http://127.0.0.1:8788/api/v2/expressions/search?q=食' | python3 -m jso
 
 Expected: 回分頁結構 `{ items, total, skip, limit, hasMore }`,items 依 `text ASC` 排序。
 
-- [ ] **Step 4: 文件與空白檢查**
+- [x] **Step 4: 文件與空白檢查**
 
 ```bash
 git diff --check
@@ -1356,7 +1356,7 @@ git status --short
 
 Expected: `git diff --check` 無輸出;`git status --short` 乾淨(無未提交變更)。
 
-- [ ] **Step 5: 若有修正則 Commit**
+- [x] **Step 5: 若有修正則 Commit**
 
 ```bash
 git add <修正的檔案>
