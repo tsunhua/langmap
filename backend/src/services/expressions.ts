@@ -87,8 +87,8 @@ export async function searchExpressions(
   const { results } = await db
     .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions ${where} ORDER BY text ASC LIMIT ? OFFSET ?`)
     .bind(...params, query.limit, query.offset)
-    .all();
-  return { items: results as ExpressionRow[], total: countRow?.total ?? 0 };
+    .all<ExpressionRow>();
+  return { items: results, total: countRow?.total ?? 0 };
 }
 
 export async function getExpression(
@@ -106,8 +106,8 @@ export async function getExpression(
       `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC`,
     )
     .bind(id)
-    .all();
-  return { expression, attestations: results as LocaleAttestationRow[] };
+    .all<LocaleAttestationRow>();
+  return { expression, attestations: results };
 }
 
 export async function createLocaleAttestation(
@@ -155,7 +155,7 @@ export async function createLocaleAttestation(
       attestationId,
       input.expression_id,
       input.language_locale_code,
-      ...(sourceId ? [sourceId, sourceRef] : [input.created_by]),
+      ...(sourceId ? [sourceId, sourceRef, input.created_by] : [input.created_by]),
     )
     .run();
 
