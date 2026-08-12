@@ -446,7 +446,7 @@ Core domain logic:coverage 計算、activation、recalculate + revision bump、b
   - `archiveLocale(db, projectId, code, userId): Promise<void>`
   - `resolveBundle(db, projectId, primary?: string, secondary?: string): Promise<BundleEntry[]>`
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/localizationDomain.test.ts`:
 
@@ -525,7 +525,7 @@ describe('resolveBundle', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts
@@ -533,7 +533,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: FAIL(module not found)。
 
-- [ ] **Step 3: 建立 `backend/src/services/localizationDomain.ts`**
+- [x] **Step 3: 建立 `backend/src/services/localizationDomain.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -781,7 +781,7 @@ export async function resolveBundle(
 }
 ```
 
-- [ ] **Step 4: 跑單元測試確認通過**
+- [x] **Step 4: 跑單元測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts
@@ -789,7 +789,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: 全部 PASS。若 SQL key 不匹配,以實作為準調整測試。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/localizationDomain.ts backend/tests/localizationDomain.test.ts
