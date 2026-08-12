@@ -11,6 +11,7 @@ import {
 } from '../utils/response';
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
+import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
 import type { Bindings, Variables } from '../types';
@@ -106,6 +107,49 @@ languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
   } catch (error) {
     console.error('Create attestation error:', error);
     return internalError(c, error instanceof Error ? error.message : 'Failed to create attestation');
+  }
+});
+
+languageLocales.post('/:id/readings', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const id = c.req.param('id') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const languageLocaleCode = typeof body?.language_locale_code === 'string' ? body.language_locale_code.trim() : '';
+    const scheme = typeof body?.scheme === 'string' ? body.scheme.trim() : '';
+    const value = typeof body?.value === 'string' ? body.value : '';
+    if (!languageLocaleCode || !scheme || !value) {
+      return badRequest(c, 'VALIDATION_FAILED', 'language_locale_code, scheme and value are required');
+    }
+    let source: { type: string; name: string; ref?: string } | undefined;
+    if (body?.source != null) {
+      const s = body.source;
+      if (typeof s !== 'object' || s === null || typeof s.type !== 'string' || typeof s.name !== 'string') {
+        return badRequest(c, 'INVALID_SOURCE', 'source requires type and name');
+      }
+      source = { type: s.type, name: s.name };
+      if (typeof s.ref === 'string') source.ref = s.ref;
+    }
+    try {
+      const result = await createReading(c.env.DB, {
+        expression_id: id,
+        language_locale_code: languageLocaleCode,
+        scheme,
+        value,
+        ...(source ? { source } : {}),
+        created_by: user?.id ?? 0,
+      });
+      return result.created ? created(c, result, 'Reading created') : success(c, result, 'Reading already exists');
+    } catch (error) {
+      if (error instanceof ReadingError) {
+        if (error.code === 'EXPRESSION_NOT_FOUND') return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Create reading error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to create reading');
   }
 });
 

@@ -23,3 +23,15 @@ export interface LocaleAttestationRow {
   created_by: number | null;
   created_at: string;
 }
+
+export interface ReadingRow {
+  id: string;
+  expression_id: string;
+  language_locale_code: string;
+  scheme: string;
+  value: string;
+  source_id: string | null;
+  source_ref: string | null;
+  created_by: number | null;
+  created_at: string;
+}
