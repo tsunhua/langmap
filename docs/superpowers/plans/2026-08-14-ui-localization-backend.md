@@ -245,7 +245,7 @@ git commit -m "feat(db): add ui_locales and ui_messages tables with system-ui so
 - Create: `scripts/i18n/generate-ui-seed.py`
 - Overwrite: `scripts/i18n/artifacts/system-ui/system-ui.sql`
 
-- [ ] **Step 1: 建立 `scripts/i18n/generate-ui-seed.py`**
+- [x] **Step 1: 建立 `scripts/i18n/generate-ui-seed.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -359,7 +359,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Step 2: 驗證 hash 與 TS 實作一致**
+- [x] **Step 2: 驗證 hash 與 TS 實作一致**
 
 ```bash
 python3 -c "
@@ -373,7 +373,7 @@ print(h == 'ftze3os7wcrq4jxihmvmlopcty')
 
 Expected: `ftze3os7wcrq4jxihmvmlopcty` then `True`。
 
-- [ ] **Step 3: 跑生成器**
+- [x] **Step 3: 跑生成器**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/generate-ui-seed.py
@@ -381,7 +381,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/generate-ui
 
 Expected: `wrote .../system-ui.sql (N messages)` where N ≈ 200。
 
-- [ ] **Step 4: 驗證生成的 SQL 可被 SQLite 接受**
+- [x] **Step 4: 驗證生成的 SQL 可被 SQLite 接受**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 -c "
@@ -401,7 +401,7 @@ con.close()
 
 Expected: count ≈ 200;sample rows show key/expression_id/text。
 
-- [ ] **Step 5: Rebuild 本地 D1(含新 UI seed)**
+- [x] **Step 5: Rebuild 本地 D1(含新 UI seed)**
 
 確保 8788 沒有 worker:
 
@@ -412,14 +412,14 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/db/manage.py loc
 
 Expected: `"status": "rebuilt"`。
 
-- [ ] **Step 6: 跑 scripts 驗證**
+- [x] **Step 6: 跑 scripts 驗證**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_verify
 python3 scripts/db/tests/test_local_rebuild.py
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/i18n/generate-ui-seed.py scripts/i18n/artifacts/system-ui/system-ui.sql
