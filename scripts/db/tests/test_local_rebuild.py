@@ -152,7 +152,7 @@ INSERT INTO regions (code, name_en, latitude, longitude) VALUES
         "counts": {"locale_count": 0, "message_count": 0, "translation_count": 0},
     }
     (ui_dir / "manifest.json").write_text(json.dumps(ui_manifest, indent=2) + "\n", encoding="utf-8")
-    (ui_dir / "system-ui.sql").write_text("-- greenfield: ui not loaded\n", encoding="utf-8")
+    (ui_dir / "system-ui.sql").write_text("-- ui seed fixture\n", encoding="utf-8")
 
     return ProjectPaths(
         repo_root=root,
@@ -223,12 +223,14 @@ class LocalRebuildTests(unittest.TestCase):
             self.assertTrue((paths.local_state_dir / "verification-report.json").exists())
 
             calls = read_fake_log(log_path)
-            # Greenfield loads schema.sql + language-reference.sql, then the baseline command.
-            self.assertEqual([Path(call["subject"]).name for call in calls[:2]], [
+            # Greenfield loads schema.sql + language-reference.sql + system-ui.sql,
+            # then the baseline command.
+            self.assertEqual([Path(call["subject"]).name for call in calls[:3]], [
                 "schema.sql",
                 "language-reference.sql",
+                "system-ui.sql",
             ])
-            self.assertEqual(calls[2]["mode"], "command")
+            self.assertEqual(calls[3]["mode"], "command")
 
             database_path = paths.local_d1_state_dir / "fake-d1.sqlite3"
             self.assertTrue(database_path.exists())
