@@ -55,6 +55,9 @@ node_modules/
 # Git worktrees
 .worktrees/
 
+# CodeGraph index
+.codegraph/
+
 *.sqlite
 
 .opencode/backend/remote-old.sql
