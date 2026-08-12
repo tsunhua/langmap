@@ -83,6 +83,23 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/CREATE TABLE user_preferences[\s\S]*?FOREIGN KEY \(user_id\) REFERENCES users\(id\) ON DELETE CASCADE/s);
   });
 
+  it('defines ui_locales with status, revision and activation tracking', () => {
+    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?PRIMARY KEY \(project_id, language_locale_code\)/s);
+    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?CHECK \(status IN \('draft', 'active', 'archived'\)\)/s);
+    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?mapping_revision INTEGER NOT NULL DEFAULT 0/s);
+    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?CHECK \(activation_source IN \('system', 'auto', 'manual'\)\)/s);
+  });
+
+  it('defines ui_messages with source expression FK', () => {
+    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?source_expression_id TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?PRIMARY KEY \(project_id, message_key\)/s);
+    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?FOREIGN KEY \(source_expression_id\) REFERENCES expressions\(id\)/s);
+  });
+
+  it('seeds eng-Latn-US as the system source UI locale for langmap-web', () => {
+    expect(schema).toMatch(/langmap-web.*eng-Latn-US.*active.*system/s);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));

@@ -31,6 +31,12 @@
       "filename": "0005_readings_preferences.sql",
       "size": 1032,
       "sha256": "5926c5c2559693d6b067d63fc56d20763967351c2670382e5102e0c57add2224"
+    },
+    {
+      "sequence": 6,
+      "filename": "0006_ui_localization.sql",
+      "size": 1617,
+      "sha256": "d04a92777efdfd98c10cb28ed30b34b64f16a454e2c91ac87f8e64ef1402e217"
     }
   ]
 }
