@@ -34,6 +34,23 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/cmn-Hans-CN/);
   });
 
+  it('defines expressions with identity fields and hash constraints', () => {
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?id TEXT PRIMARY KEY/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?text_hash TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?homograph_index INTEGER NOT NULL DEFAULT 1 CHECK \(homograph_index >= 1\)/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?UNIQUE \(lang_code, text, homograph_index\)[\s\S]*?UNIQUE \(lang_code, text_hash, homograph_index\)/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?FOREIGN KEY \(lang_code\) REFERENCES languages\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
+  });
+
+  it('defines expression_locale_attestations with provenance and uniqueness', () => {
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?id TEXT PRIMARY KEY/s);
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?language_locale_code TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code, source_id, source_ref\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));

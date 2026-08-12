@@ -13,6 +13,12 @@
       "filename": "0002_language_locales.sql",
       "size": 1781,
       "sha256": "f4585f01776320762456a18207e91dd978bf7a616eb96b9b467e2160b3903f86"
+    },
+    {
+      "sequence": 3,
+      "filename": "0003_expressions.sql",
+      "size": 1571,
+      "sha256": "b48adbf2b7914fd0eb5628897f737b9a1ab41845994e3219f333a02d3e64d60c"
     }
   ]
 }
