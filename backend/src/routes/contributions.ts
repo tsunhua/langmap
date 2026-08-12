@@ -77,7 +77,7 @@ contributions.post('/batch', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Contribution batch error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create contribution batch');
+    return internalError(c);
   }
 });
 

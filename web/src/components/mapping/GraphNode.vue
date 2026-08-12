@@ -5,14 +5,14 @@ import { useI18n } from 'vue-i18n'
 type SemanticLevel = 'compact' | 'medium' | 'full'
 
 const props = defineProps<{
-  nodeId: number
+  nodeId: string
   text: string
   languageCode: string
   languageName: string | null
   depth: number
   x: number
   y: number
-  displayParentId: number | null
+  displayParentId: string | null
   childCount: number
   score: number | null
   isRoot: boolean
@@ -23,11 +23,11 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const emit = defineEmits<{
-  select: [id: number]
-  navigate: [id: number]
-  dragMove: [nodeId: number, worldX: number, worldY: number]
-  dragEnd: [nodeId: number, worldX: number, worldY: number]
-  toggleCollapse: [id: number]
+  select: [id: string]
+  navigate: [id: string]
+  dragMove: [nodeId: string, worldX: number, worldY: number]
+  dragEnd: [nodeId: string, worldX: number, worldY: number]
+  toggleCollapse: [id: string]
 }>()
 
 const DRAG_THRESHOLD = 4

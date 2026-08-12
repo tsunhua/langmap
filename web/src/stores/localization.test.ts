@@ -1,51 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { i18n } from '@/locales'
 import { useLocalizationStore } from './localization'
-
-const globalI18n = i18n.global as unknown as { locale: { value: string } }
-
-vi.mock('@/api/localization', () => ({
-  listUiLocales: vi.fn().mockResolvedValue([
-    { code: 'en', name: 'English', native_name: 'English', status: 'active' },
-    { code: 'cmn-Hans', name: 'Mandarin Chinese (Simplified)', native_name: '华语', status: 'active' },
-  ]),
-  getUiMessages: vi.fn().mockResolvedValue({ locale: 'cmn-Hans', messages: {} }),
-}))
-
-describe('localization store', () => {
-  beforeEach(() => {
-    const entries = new Map<string, string>()
-    Object.defineProperty(globalThis, 'localStorage', {
-      configurable: true,
-      value: {
-        getItem: (key: string) => entries.get(key) ?? null,
-        setItem: (key: string, value: string) => entries.set(key, value),
-        removeItem: (key: string) => entries.delete(key),
-        clear: () => entries.clear(),
-      },
-    })
-    setActivePinia(createPinia())
-    globalI18n.locale.value = 'en-Latn'
-  })
-
-  it('restores the selected interface language after loading locales', async () => {
-    localStorage.setItem('langmap.locale', 'cmn-Hans')
-
-    const store = useLocalizationStore()
-    await store.loadLocales()
-
-    expect(store.locale).toBe('cmn-Hans')
-    expect(globalI18n.locale.value).toBe('cmn-Hans')
-    expect(document.documentElement.lang).toBe('cmn-Hans')
-  })
-
-  it('persists the selected interface language for the next page load', async () => {
-    const store = useLocalizationStore()
-    await store.loadLocales()
-
-    await store.setLocale('cmn-Hans')
-
-    expect(localStorage.getItem('langmap.locale')).toBe('cmn-Hans')
-  })
-})
+const { putLanguageLocalePreference } = vi.hoisted(() => ({ putLanguageLocalePreference: vi.fn() }))
+vi.mock('@/api/localization', () => ({ listUiLocales: vi.fn().mockResolvedValue([{ language_locale_code: 'nan-Hant-TW', name: '臺語', name_en: 'Taiwanese', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: null }]), getUiMessages: vi.fn().mockResolvedValue([{ key: 'common.ok', text: '好' }]) }))
+vi.mock('@/api/preferences', () => ({ getPreferences: vi.fn().mockResolvedValue({}), putLanguageLocalePreference }))
+vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ isLoggedIn: false }) }))
+describe('localization store', () => { beforeEach(() => { setActivePinia(createPinia()); localStorage.clear(); vi.clearAllMocks() }); it('saves anonymous preference and loads the server-resolved bundle', async () => { const store = useLocalizationStore(); await store.loadLocales(); await store.setPreferences({ primary: 'nan-Hant-TW' }); expect(store.primary).toBe('nan-Hant-TW'); expect(localStorage.getItem('langmap.language-locales')).toContain('nan-Hant-TW'); expect(document.documentElement.lang).toBe('nan-Hant-TW') }); it('rejects equal primary and secondary values', async () => { await expect(useLocalizationStore().setPreferences({ primary: 'nan-Hant-TW', secondary: 'nan-Hant-TW' })).rejects.toThrow('INVALID_LANGUAGE_PREFERENCE') }) })

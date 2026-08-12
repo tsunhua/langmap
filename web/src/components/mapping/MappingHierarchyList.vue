@@ -7,18 +7,18 @@ import type { DisplayTree, MappingGraphResponse } from './mappingGraphTypes'
 const props = defineProps<{
   tree: DisplayTree
   graph: MappingGraphResponse
-  selectedNodeId: number | null
-  collapsedIds: Set<number>
+  selectedNodeId: string | null
+  collapsedIds: Set<string>
 }>()
 const { t } = useI18n()
 
 const emit = defineEmits<{
-  select: [id: number]
-  toggleCollapse: [id: number]
+  select: [id: string]
+  toggleCollapse: [id: string]
 }>()
 
 const nodeChildren = computed(() => {
-  const m = new Map<number | null, number[]>()
+  const m = new Map<string | null, string[]>()
   for (const n of props.tree.nodes) {
     const parent = n.displayParentId
     if (!m.has(parent)) m.set(parent, [])
@@ -28,7 +28,7 @@ const nodeChildren = computed(() => {
 })
 
 const childCountMap = computed(() => {
-  const m = new Map<number, number>()
+  const m = new Map<string, number>()
   for (const n of props.tree.nodes) {
     if (n.displayParentId !== null) {
       m.set(n.displayParentId, (m.get(n.displayParentId) ?? 0) + 1)
@@ -37,21 +37,21 @@ const childCountMap = computed(() => {
   return m
 })
 
-const hasChildren = (id: number) => (childCountMap.value.get(id) ?? 0) > 0
+const hasChildren = (id: string) => (childCountMap.value.get(id) ?? 0) > 0
 
-const nodeText = (id: number) => {
+const nodeText = (id: string) => {
   if (id === props.graph.root_id) return ''
   return props.graph.nodes.find(n => n.expression_id === id)?.text ?? `#${id}`
 }
 
-const nodeLang = (id: number) => {
+const nodeLang = (id: string) => {
   if (id === props.graph.root_id) return ''
-  return props.graph.nodes.find(n => n.expression_id === id)?.language_profile_code ?? ''
+  return props.graph.nodes.find(n => n.expression_id === id)?.lang_code ?? ''
 }
 
-function flattenTree(): Array<{ id: number; depth: number; parent: number | null }> {
-  const out: Array<{ id: number; depth: number; parent: number | null }> = []
-  const queue: Array<{ id: number; depth: number; parent: number | null }> = [{ id: props.graph.root_id, depth: 0, parent: null }]
+function flattenTree(): Array<{ id: string; depth: number; parent: string | null }> {
+  const out: Array<{ id: string; depth: number; parent: string | null }> = []
+  const queue: Array<{ id: string; depth: number; parent: string | null }> = [{ id: props.graph.root_id, depth: 0, parent: null }]
   while (queue.length > 0) {
     const item = queue.shift()!
     out.push(item)

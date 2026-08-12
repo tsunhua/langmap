@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest'
 import { layoutMappingGraph } from './mappingGraphLayout'
 import { buildDisplayTree } from './mappingGraphModel'

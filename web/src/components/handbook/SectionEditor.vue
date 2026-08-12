@@ -6,7 +6,7 @@ import { ChevronUp, ChevronDown, X, Plus } from 'lucide-vue-next'
 
 defineProps<{
   title: string
-  expressions: Array<{ id: number; text: string; language_profile_code: string; position: number }>
+  expressions: Array<{ id: string; text: string; lang_code: string; position: number }>
   index: number
 }>()
 
@@ -16,9 +16,9 @@ const emit = defineEmits<{
   'move-up': []
   'move-down': []
   'add-expression': [expr: any]
-  'remove-expression': [id: number]
-  'move-expr-up': [id: number]
-  'move-expr-down': [id: number]
+  'remove-expression': [id: string]
+  'move-expr-up': [id: string]
+  'move-expr-down': [id: string]
 }>()
 
 const showPicker = ref(false)
@@ -48,7 +48,7 @@ const { t } = useI18n()
         <span class="he-expr-drag" aria-hidden="true">⠿</span>
         <span class="he-expr-num">{{ String(j + 1).padStart(2, '0') }}</span>
         <span class="he-expr-tx">{{ expr.text }}</span>
-        <span class="lang-badge">{{ expr.language_profile_code }}</span>
+        <span class="lang-badge">{{ expr.lang_code }}</span>
         <button class="btn btn-icon btn-ghost btn-sm he-up" :title="t('handbook.moveUp')" @click="emit('move-expr-up', expr.id)"><ChevronUp :size="14" aria-hidden="true" /></button>
         <button class="btn btn-icon btn-ghost btn-sm he-down" :title="t('handbook.moveDown')" @click="emit('move-expr-down', expr.id)"><ChevronDown :size="14" aria-hidden="true" /></button>
         <button class="btn btn-icon btn-ghost btn-sm" :aria-label="t('handbook.removeExpression', { text: expr.text })" @click="emit('remove-expression', expr.id)"><X :size="14" aria-hidden="true" /></button>

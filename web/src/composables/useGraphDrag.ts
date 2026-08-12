@@ -1,22 +1,22 @@
 import { ref, readonly } from 'vue'
 
 export interface DragState {
-  nodeId: number
+  nodeId: string
   worldX: number
   worldY: number
 }
 
 export function useGraphDrag() {
-  const positionOverrides = ref<Map<number, { x: number; y: number }>>(new Map())
+  const positionOverrides = ref<Map<string, { x: number; y: number }>>(new Map())
   const activeDrag = ref<DragState | null>(null)
 
-  function applyOverride(nodeId: number, worldX: number, worldY: number) {
+  function applyOverride(nodeId: string, worldX: number, worldY: number) {
     const next = new Map(positionOverrides.value)
     next.set(nodeId, { x: worldX, y: worldY })
     positionOverrides.value = next
   }
 
-  function removeOverride(nodeId: number) {
+  function removeOverride(nodeId: string) {
     const next = new Map(positionOverrides.value)
     next.delete(nodeId)
     positionOverrides.value = next
@@ -27,12 +27,12 @@ export function useGraphDrag() {
     activeDrag.value = null
   }
 
-  function getEffectiveX(nodeId: number, layoutX: number): number {
+  function getEffectiveX(nodeId: string, layoutX: number): number {
     const o = positionOverrides.value.get(nodeId)
     return o ? o.x : layoutX
   }
 
-  function getEffectiveY(nodeId: number, layoutY: number): number {
+  function getEffectiveY(nodeId: string, layoutY: number): number {
     const o = positionOverrides.value.get(nodeId)
     return o ? o.y : layoutY
   }

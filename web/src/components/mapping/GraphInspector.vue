@@ -2,15 +2,19 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import VotePill from './VotePill.vue'
+import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
+import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
 
 const props = defineProps<{
-  selectedNodeId: number | null
+  selectedNodeId: string | null
   graph: MappingGraphResponse
   displayTree: DisplayTree
   anchorText: string
-  collapsedIds?: Set<number>
+  collapsedIds?: Set<string>
+  attestations?: LocaleAttestation[]
+  readings?: ExpressionReading[]
 }>()
 const { t } = useI18n()
 
@@ -21,8 +25,8 @@ const isCollapsed = computed(() => {
 
 const emit = defineEmits<{
   close: []
-  navigate: [id: number]
-  toggleCollapse: [id: number]
+  navigate: [id: string]
+  toggleCollapse: [id: string]
 }>()
 
 const node = computed(() => {
@@ -36,7 +40,7 @@ const primaryEdge = computed(() => {
 })
 
 const pathToRoot = computed(() => {
-  if (!props.selectedNodeId) return [] as number[]
+  if (!props.selectedNodeId) return [] as string[]
   return getPathToRoot(props.selectedNodeId, props.displayTree)
 })
 
@@ -72,7 +76,7 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     </div>
 
     <div class="gi-meta">
-      <span class="gi-lang">{{ node.language_profile_code }}</span>
+      <span class="gi-lang">{{ node.lang_code }}</span>
       <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
       <span class="gi-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
@@ -95,6 +99,8 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
       <span class="gi-label">{{ t('components.otherRelations') }}</span>
       <span class="gi-count">{{ t('components.relationCount', { count: crossEdgeCount }) }}</span>
     </div>
+
+    <ExpressionEvidenceList :attestations="attestations ?? []" :readings="readings ?? []" />
 
     <div v-if="node.expression_id !== graph.root_id" class="gi-acts">
       <button

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import api from '@/api/client'
+import { getLanguageDetail, listContentLanguages, listLanguageExpressions } from '@/api/languageIdentity'
 
 export function useLanguages() {
   const loading = ref(false)
@@ -9,8 +9,7 @@ export function useLanguages() {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/languages', { params })
-      return Array.isArray(data.data) ? data.data : (data.data?.items || [])
+      return (await listContentLanguages({ q: params.search, limit: params.limit, offset: params.offset })).items
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -23,8 +22,7 @@ export function useLanguages() {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get(`/languages/${code}`)
-      return data.data
+      return await getLanguageDetail(code)
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -33,12 +31,11 @@ export function useLanguages() {
     }
   }
 
-  async function expressions(code: string, params: { sort?: string; script?: string; limit?: number; offset?: number } = {}) {
+  async function expressions(code: string, params: { limit?: number; offset?: number } = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get(`/languages/${code}/expressions`, { params })
-      return data.data
+      return await listLanguageExpressions(code, params)
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e

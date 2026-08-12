@@ -18,6 +18,33 @@ export interface EdgeWithNeighborRow {
   created_at: string;
 }
 
+export interface MappingGraphNode {
+  expression_id: string;
+  text: string;
+  lang_code: string;
+  language_name: string;
+  depth: number;
+}
+
+export interface MappingGraphEdge {
+  edge_id: string;
+  source_id: string;
+  target_id: string;
+  score: number;
+  depth: number;
+}
+
+export interface MappingGraphResponse {
+  root_id: string;
+  requested_hops: 1 | 2 | 3;
+  resolved_hops: 0 | 1 | 2 | 3;
+  nodes: MappingGraphNode[];
+  edges: MappingGraphEdge[];
+  layer_counts: Record<number, number>;
+  truncated: boolean;
+  omitted_count: number;
+}
+
 export interface SplitRow {
   id: string;
   source_expression_id: string;

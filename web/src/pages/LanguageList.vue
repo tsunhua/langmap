@@ -6,9 +6,7 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import LanguageCreateDialog from '@/components/language/LanguageCreateDialog.vue'
 import { useI18n } from 'vue-i18n'
-import { Plus } from 'lucide-vue-next'
 
 const { loading, list } = useLanguages()
 const { t } = useI18n()
@@ -17,8 +15,6 @@ const languages = ref<any[]>([])
 const searchQuery = ref('')
 const sortBy = ref('count')
 const loadError = ref('')
-const createDialogOpen = ref(false)
-const createButton = ref<HTMLButtonElement>()
 
 const filtered = computed(() => {
   let result = languages.value
@@ -47,15 +43,6 @@ async function loadLanguages() {
   }
 }
 
-function closeCreateDialog() {
-  createDialogOpen.value = false
-  createButton.value?.focus()
-}
-
-async function handleLanguageCreated() {
-  await loadLanguages()
-}
-
 onMounted(loadLanguages)
 </script>
 
@@ -66,15 +53,6 @@ onMounted(loadLanguages)
         <h1>{{ t('languagesPage.title') }}</h1>
         <p class="lg-sub">{{ t('languagesPage.subtitle') }}</p>
       </div>
-      <button
-        ref="createButton"
-        class="btn btn-primary lg-create"
-        type="button"
-        @click="createDialogOpen = true"
-      >
-        <Plus :size="16" aria-hidden="true" />
-        {{ t('languagesPage.addLanguage') }}
-      </button>
     </div>
 
     <div class="lg-stats">
@@ -104,12 +82,6 @@ onMounted(loadLanguages)
       />
     </div>
 
-    <LanguageCreateDialog
-      :open="createDialogOpen"
-      :return-focus="createButton"
-      @created="handleLanguageCreated"
-      @close="closeCreateDialog"
-    />
   </div>
 </template>
 

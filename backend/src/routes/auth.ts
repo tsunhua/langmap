@@ -75,14 +75,14 @@ auth.post('/register', async (c) => {
     ).bind(userId).first<AuthUserRow>();
 
     if (!user) {
-      return internalError(c, 'Failed to load newly created user');
+      return internalError(c);
     }
 
     const token = await issueToken(c, user);
     return created(c, { user: { id: user.id, username: user.username, email: user.email, role: user.role, email_verified: user.email_verified }, token }, 'User registered successfully');
   } catch (error: any) {
     console.error('Register error:', error);
-    return internalError(c, error?.message || 'Failed to register user');
+    return internalError(c);
   }
 });
 
@@ -116,7 +116,7 @@ auth.post('/login', async (c) => {
     }, 'Logged in successfully');
   } catch (error: any) {
     console.error('Login error:', error);
-    return internalError(c, error?.message || 'Failed to login');
+    return internalError(c);
   }
 });
 
@@ -132,7 +132,7 @@ auth.get('/me', requireAuth, async (c) => {
     return success(c, user);
   } catch (error: any) {
     console.error('Me error:', error);
-    return internalError(c, error?.message || 'Failed to load user');
+    return internalError(c);
   }
 });
 

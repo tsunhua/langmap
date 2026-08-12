@@ -4,10 +4,10 @@ import type {
   MappingGraphResponse,
 } from './mappingGraphTypes'
 
-const NODE_DEPTH_KEY = (id: number) => `d:${id}`
+const NODE_DEPTH_KEY = (id: string) => `d:${id}`
 
 export function getPrimaryIncomingEdge(
-  nodeId: number,
+  nodeId: string,
   graph: MappingGraphResponse,
 ): MappingGraphEdge | null {
   if (nodeId === graph.root_id) return null
@@ -17,7 +17,7 @@ export function getPrimaryIncomingEdge(
   )
   if (incoming.length === 0) return null
 
-  const depthOf = (id: number): number => {
+  const depthOf = (id: string): number => {
     const n = graph.nodes.find((x) => x.expression_id === id)
     return n ? n.depth : Number.POSITIVE_INFINITY
   }
@@ -35,15 +35,15 @@ export function getPrimaryIncomingEdge(
   return incoming[0]
 }
 
-export function getDepthOf(nodeId: number, graph: MappingGraphResponse): number {
+export function getDepthOf(nodeId: string, graph: MappingGraphResponse): number {
   return graph.nodes.find((n) => n.expression_id === nodeId)?.depth ?? -1
 }
 
 export function getNeighborsOf(
-  nodeId: number,
+  nodeId: string,
   graph: MappingGraphResponse,
-): number[] {
-  const out: number[] = []
+): string[] {
+  const out: string[] = []
   for (const e of graph.edges) {
     if (e.source_id === nodeId) out.push(e.target_id)
     else if (e.target_id === nodeId) out.push(e.source_id)
@@ -53,12 +53,12 @@ export function getNeighborsOf(
 
 export function buildDisplayTree(
   graph: MappingGraphResponse,
-  collapsedIds: ReadonlySet<number> = new Set(),
+  collapsedIds: ReadonlySet<string> = new Set(),
 ): DisplayTree {
-  const depthOf = new Map<number, number>()
+  const depthOf = new Map<string, number>()
   for (const n of graph.nodes) depthOf.set(n.expression_id, n.depth)
 
-  const adj = new Map<number, number[]>()
+  const adj = new Map<string, string[]>()
   for (const n of graph.nodes) adj.set(n.expression_id, [])
   for (const e of graph.edges) {
     adj.get(e.source_id)?.push(e.target_id)
@@ -70,7 +70,7 @@ export function buildDisplayTree(
       const da = depthOf.get(a) ?? Number.POSITIVE_INFINITY
       const db = depthOf.get(b) ?? Number.POSITIVE_INFINITY
       if (da !== db) return da - db
-      return a - b
+      return String(a).localeCompare(String(b))
     })
   }
 
@@ -78,9 +78,9 @@ export function buildDisplayTree(
   const treeEdgesMap = new Map<string, MappingGraphEdge>()
   const crossEdges: MappingGraphEdge[] = []
 
-  const displayParent = new Map<number, number | null>()
-  const visited = new Set<number>()
-  const queue: number[] = []
+  const displayParent = new Map<string, string | null>()
+  const visited = new Set<string>()
+  const queue: string[] = []
 
   if (!adj.has(graph.root_id)) {
     return { nodes: [], treeEdges: [], crossEdges: [] }
@@ -118,7 +118,7 @@ export function buildDisplayTree(
     }
   }
 
-  const inTreeOrDescendant = (id: number): boolean => {
+  const inTreeOrDescendant = (id: string): boolean => {
     if (!visited.has(id)) return false
     return true
   }
@@ -132,15 +132,15 @@ export function buildDisplayTree(
 
   crossEdges.sort((a, b) => {
     if (a.depth !== b.depth) return a.depth - b.depth
-    if (a.source_id !== b.source_id) return a.source_id - b.source_id
-    if (a.target_id !== b.target_id) return a.target_id - b.target_id
+    if (a.source_id !== b.source_id) return String(a.source_id).localeCompare(String(b.source_id))
+    if (a.target_id !== b.target_id) return String(a.target_id).localeCompare(String(b.target_id))
     return a.edge_id.localeCompare(b.edge_id)
   })
 
   const treeEdges = [...treeEdgesMap.values()].sort((a, b) => {
     if (a.depth !== b.depth) return a.depth - b.depth
-    if (a.source_id !== b.source_id) return a.source_id - b.source_id
-    if (a.target_id !== b.target_id) return a.target_id - b.target_id
+    if (a.source_id !== b.source_id) return String(a.source_id).localeCompare(String(b.source_id))
+    if (a.target_id !== b.target_id) return String(a.target_id).localeCompare(String(b.target_id))
     return a.edge_id.localeCompare(b.edge_id)
   })
 
@@ -149,11 +149,11 @@ export function buildDisplayTree(
 }
 
 export function getPathToRoot(
-  nodeId: number,
+  nodeId: string,
   tree: DisplayTree,
-): number[] {
-  const path: number[] = []
-  let current: number | null = nodeId
+): string[] {
+  const path: string[] = []
+  let current: string | null = nodeId
   let guard = 0
   while (current !== null && guard < 100) {
     path.push(current)
@@ -165,7 +165,7 @@ export function getPathToRoot(
 }
 
 export function getRelatedCrossEdges(
-  nodeId: number,
+  nodeId: string,
   tree: DisplayTree,
 ): MappingGraphEdge[] {
   return tree.crossEdges.filter(
@@ -175,8 +175,8 @@ export function getRelatedCrossEdges(
 
 function findEdgeBetween(
   edgeById: Map<string, MappingGraphEdge>,
-  a: number,
-  b: number,
+  a: string,
+  b: string,
 ): MappingGraphEdge | undefined {
   for (const e of edgeById.values()) {
     if (

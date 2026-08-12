@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
-import { useLanguages } from '@/composables/useLanguages'
+import { listLanguageLocales, type LanguageLocale } from '@/api/languageIdentity'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
@@ -15,24 +15,23 @@ const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const id = computed(() => parseInt(route.params.id as string))
+const id = computed(() => route.params.id as string)
 
-const { detail, mappingGraph } = useExpressions()
-const { list } = useLanguages()
+const { detail: getExpressionDetail, mappingGraph } = useExpressions()
 
 const mapEl = ref<HTMLElement>()
 let map: L.Map | null = null
-const anchor = ref<any>(null)
+const anchor = ref<{ id: string; lang_code: string; text: string } | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
-const langMap = ref<Record<string, any>>({})
+const langMap = ref<Record<string, LanguageLocale>>({})
 const loading = ref(true)
 const loadError = ref('')
-const activeId = ref<number | null>(null)
+const activeId = ref<string | null>(null)
 
 interface Pin {
-  expression_id: number
+  expression_id: string
   text: string
-  language_profile_code: string
+  lang_code: string
   score: number
   lat: number
   lng: number
@@ -47,18 +46,18 @@ const pins = computed<Pin[]>(() => {
   const out: Pin[] = []
   for (const n of g.nodes) {
     if (n.depth === 0) continue
-    const lang = lm[n.language_profile_code]
-    if (!lang || !lang.region_latitude || !lang.region_longitude) continue
+    const lang = lm[n.lang_code]
+    if (!lang || lang.latitude == null || lang.longitude == null) continue
     const edge = getPrimaryIncomingEdge(n.expression_id, g)
     const score = edge?.score ?? 0
     out.push({
       expression_id: n.expression_id,
       text: n.text,
-      language_profile_code: n.language_profile_code,
+      lang_code: n.lang_code,
       score,
-      lat: lang.region_latitude,
-      lng: lang.region_longitude,
-      region: lang.region_name || lang.name,
+      lat: lang.latitude,
+      lng: lang.longitude,
+      region: lang.name,
       tier: pinTier(score),
     })
   }
@@ -67,7 +66,7 @@ const pins = computed<Pin[]>(() => {
 
 const regionCount = computed(() => {
   const regions = new Set(pins.value.map((p) => p.region))
-  if (anchor.value && anchorLang.value) regions.add(anchorLang.value.region_name || anchorLang.value.name)
+  if (anchor.value && anchorLang.value) regions.add(anchorLang.value.name)
   return regions.size
 })
 
@@ -77,11 +76,11 @@ function pinTier(score: number): 's1' | 's2' | 's3' {
   return 's1'
 }
 
-const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.language_profile_code] : null)
+const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.lang_code] : null)
 
-function sync(exprId: number | null) { activeId.value = exprId }
+function sync(exprId: string | null) { activeId.value = exprId }
 
-function openMapping(exprId: number) {
+function openMapping(exprId: string) {
   router.push(`/mapping/${exprId}`)
 }
 
@@ -103,8 +102,8 @@ function addMarkers() {
       iconSize: [24, 24],
       iconAnchor: [12, 12]
     })
-    L.marker([lang.region_latitude, lang.region_longitude], { icon })
-      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.language_profile_code} · ${t('mapLens.anchor')}`)
+    L.marker([lang.latitude!, lang.longitude!], { icon })
+      .bindPopup(`<b>${anchor.value.text}</b><br/>${anchor.value.lang_code} · ${t('mapLens.anchor')}`)
       .addTo(m)
   }
 
@@ -118,7 +117,7 @@ function addMarkers() {
       iconAnchor: [10, 10]
     })
     L.marker([p.lat, p.lng], { icon })
-      .bindPopup(`<b>${p.text}</b><br/>${p.language_profile_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`)
+      .bindPopup(`<b>${p.text}</b><br/>${p.lang_code} · ${p.region} · ${p.score >= 0 ? '+' : ''}${p.score}`)
       .addTo(m)
   })
 }
@@ -129,15 +128,17 @@ async function load() {
   anchor.value = null
   graph.value = null
   try {
-    const [langs, expr, g] = await Promise.all([
-      list(),
-      detail(id.value),
+    const [localePage, expressionDetail, g] = await Promise.all([
+      listLanguageLocales({ limit: 200 }),
+      getExpressionDetail(id.value),
       mappingGraph(id.value, 2),
     ])
-    const lm: Record<string, any> = {}
-    for (const l of langs) if (l.region_latitude && l.region_longitude) lm[l.code] = l
+    const lm: Record<string, LanguageLocale> = {}
+    for (const locale of localePage.items) {
+      if (locale.latitude != null && locale.longitude != null && !lm[locale.lang_code]) lm[locale.lang_code] = locale
+    }
     langMap.value = lm
-    anchor.value = expr
+    anchor.value = expressionDetail.expression
     graph.value = g
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('mapLens.loadFailed')
@@ -162,7 +163,7 @@ function initMap() {
 
   if (pins.value.length > 0) {
     const bounds = L.latLngBounds(pins.value.map(p => [p.lat, p.lng]))
-    if (anchorLang.value) bounds.extend([anchorLang.value.region_latitude, anchorLang.value.region_longitude])
+    if (anchorLang.value?.latitude != null && anchorLang.value.longitude != null) bounds.extend([anchorLang.value.latitude, anchorLang.value.longitude])
     map.fitBounds(bounds, { padding: [40, 40] })
   }
 }
@@ -207,7 +208,7 @@ onUnmounted(cleanup)
             @mouseenter="sync(anchor.id)"
             @mouseleave="sync(null)"
           >
-            <span class="lc">{{ anchor.language_profile_code }}</span>
+            <span class="lc">{{ anchor.lang_code }}</span>
             <span class="tx">{{ anchor.text }}</span>
             <span class="meta">{{ t('mapLens.anchor') }}</span>
           </router-link>
@@ -221,7 +222,7 @@ onUnmounted(cleanup)
             @mouseenter="sync(p.expression_id)"
             @mouseleave="sync(null)"
           >
-            <span class="lc">{{ p.language_profile_code }}</span>
+            <span class="lc">{{ p.lang_code }}</span>
             <span class="tx">{{ p.text }}</span>
             <span class="meta">{{ p.score >= 0 ? '+' : '' }}{{ p.score }}</span>
           </router-link>

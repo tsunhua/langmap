@@ -14,7 +14,7 @@ preferences.get('/', requireAuth, async (c) => {
     return success(c, result);
   } catch (error) {
     console.error('Get preferences error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to get preferences');
+    return internalError(c);
   }
 });
 
@@ -33,7 +33,7 @@ preferences.put('/:key', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Put preference error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to save preference');
+    return internalError(c);
   }
 });
 

@@ -59,8 +59,8 @@ describe('Contribute page with LanguagePicker', () => {
     await pickerInputs[0].setValue('yue-Hant-CN-x-hegusan')
     await pickerInputs[1].setValue('cmn-Hans')
 
-    expect((wrapper.vm as any).rows[0].lang).toBe('yue-Hant-CN-x-hegusan')
-    expect((wrapper.vm as any).rows[1].lang).toBe('cmn-Hans')
+    expect((wrapper.vm as any).rows[0].lang_code).toBe('yue-Hant-CN-x-hegusan')
+    expect((wrapper.vm as any).rows[1].lang_code).toBe('cmn-Hans')
   })
 
   it('submits canonical language codes from picker, not free-text', async () => {
@@ -79,8 +79,8 @@ describe('Contribute page with LanguagePicker', () => {
 
     expect(api.post).toHaveBeenCalledWith('/contributions/batch', {
       expressions: expect.arrayContaining([
-        expect.objectContaining({ lang: 'yue-Hant-CN-x-hegusan' }),
-        expect.objectContaining({ lang: 'cmn-Hans' }),
+        expect.objectContaining({ lang_code: 'yue-Hant-CN-x-hegusan' }),
+        expect.objectContaining({ lang_code: 'cmn-Hans' }),
       ]),
     })
   })

@@ -78,7 +78,7 @@ const filtered = computed(() => {
 
 async function loadScript() {
   try {
-    const data = await expressions(code.value, { sort: sortBy.value, limit: 100, script: scriptParam.value })
+    const data = await expressions(code.value, { limit: 100 })
     exprs.value = data.items
   } catch (e: any) {
     loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')

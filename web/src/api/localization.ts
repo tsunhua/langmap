@@ -1,59 +1,16 @@
 import api from './client'
 
 export const LOCALIZATION_PROJECT_ID = 'langmap-web'
-
-export interface UiLocale { code: string; name: string; native_name?: string; direction?: 'ltr' | 'rtl'; status: string; }
-export interface UiMessages { locale: string; messages: Record<string, unknown>; source_hash?: string; mapping_revision: number; }
-export interface TranslationCandidate {
-  edge_id: string | null
-  expression_id: number
-  text: string
-  score: number
-  created_at?: string
-}
-export interface WorkbenchMessage {
-  key: string
-  description?: string | null
-  scope?: string | null
-  message_format?: string | null
-  source_expression_id: number
-  source_text: string
-  placeholders_json?: string | null
-  candidates: TranslationCandidate[]
-}
-export interface TranslationWorkbench {
-  project_id: string
-  locale: string
-  coverage: number
-  total_keys: number
-  translated_keys: number
-  messages: WorkbenchMessage[]
-}
-
-export async function listUiLocales(projectId = LOCALIZATION_PROJECT_ID): Promise<UiLocale[]> {
-  const { data } = await api.get(`/localization/projects/${encodeURIComponent(projectId)}/locales`)
-  return data.data?.locales ?? data.data ?? []
-}
-
-export async function getUiMessages(code: string, projectId = LOCALIZATION_PROJECT_ID): Promise<UiMessages> {
-  const { data } = await api.get(`/localization/projects/${encodeURIComponent(projectId)}/locales/${encodeURIComponent(code)}/messages`)
-  return data.data
-}
-
-export async function getTranslationWorkbench(code: string, projectId = LOCALIZATION_PROJECT_ID): Promise<TranslationWorkbench> {
-  const { data } = await api.get(`/localization/projects/${encodeURIComponent(projectId)}/workbench/${encodeURIComponent(code)}`)
-  return data.data
-}
-
-export async function submitTranslationMapping(payload: { key: string; locale_code: string; text: string; source_text?: string }, projectId = LOCALIZATION_PROJECT_ID) {
-  const { data } = await api.post(`/localization/projects/${encodeURIComponent(projectId)}/mappings`, payload)
-  return data.data
-}
-export async function submitTranslationMappings(mappings: Array<{ key: string; locale_code: string; text: string; source_text?: string }>, projectId = LOCALIZATION_PROJECT_ID) {
-  const { data } = await api.post(`/localization/projects/${encodeURIComponent(projectId)}/mappings/batch`, { mappings })
-  return data.data
-}
-export async function addUiLocale(code: string, projectId = LOCALIZATION_PROJECT_ID) {
-  const { data } = await api.post(`/localization/projects/${encodeURIComponent(projectId)}/locales`, { code })
-  return data.data as UiLocale
-}
+export interface UiLocale { language_locale_code: string; name: string; name_en: string; direction: 'ltr' | 'rtl'; status: 'draft' | 'active' | 'archived'; mapping_revision: number; activation_source: 'system' | 'auto' | 'manual' | null }
+export interface ResolvedMessage { key: string; text: string; resolved_from: 'primary' | 'secondary' | 'source' }
+export interface TranslationCandidate { edge_id: string | null; expression_id: string; text: string; score: number }
+export interface WorkbenchMessage { key: string; source_text: string; candidates: TranslationCandidate[] }
+export interface TranslationWorkbench { locale: UiLocale; coverage: { coverage: number; translated: number; total: number }; messages: WorkbenchMessage[]; total: number; skip: number; limit: number }
+const path = (suffix: string) => `/localization/projects/${LOCALIZATION_PROJECT_ID}${suffix}`
+export async function listUiLocales(): Promise<UiLocale[]> { const { data } = await api.get(path('/locales')); return data.data ?? [] }
+export async function getUiMessages(preferences: { primary?: string; secondary?: string } = {}): Promise<ResolvedMessage[]> { const params = Object.fromEntries(Object.entries(preferences).filter(([, value]) => value)); const { data } = await api.get(path('/messages'), { params }); return data.data?.messages ?? [] }
+export async function getTranslationWorkbench(code: string): Promise<TranslationWorkbench> { const { data } = await api.get(path(`/workbench/${encodeURIComponent(code)}`)); return data.data }
+export async function addUiLocale(language_locale_code: string): Promise<UiLocale> { const { data } = await api.post(path('/locales'), { language_locale_code }); return data.data }
+export async function submitTranslationMapping(input: { message_key: string; target_expression_id: string }) { const { data } = await api.post(path('/mappings'), input); return data.data }
+export async function activateUiLocale(code: string) { const { data } = await api.post(path(`/locales/${encodeURIComponent(code)}/activate`)); return data.data }
+export async function archiveUiLocale(code: string) { const { data } = await api.post(path(`/locales/${encodeURIComponent(code)}/archive`)); return data.data }

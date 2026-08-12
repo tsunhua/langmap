@@ -309,7 +309,7 @@ describe('localization API', () => {
 });
 
 describe('mapping vote API', () => {
-  async function createEdge(token: string): Promise<string> {
+  async function createEdge(token: string): Promise<{ edgeId: string; sourceExpressionId: string }> {
     const unique = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
     const ids: string[] = [];
     for (const [lang, text] of [['eng', `vote-src-${unique}`], ['cmn', `投票-${unique}`]] as const) {
@@ -327,12 +327,12 @@ describe('mapping vote API', () => {
       body: JSON.stringify({ target_expression_id: ids[1], source: 'community' }),
     });
     const mappingBody = (await mappingRes.json()) as { data: { edge: { id: string } } };
-    return mappingBody.data.edge.id;
+    return { edgeId: mappingBody.data.edge.id, sourceExpressionId: ids[0] };
   }
 
   it('records a vote and flips it without double counting', async () => {
     const token = await registerToken();
-    const edgeId = await createEdge(token);
+    const { edgeId, sourceExpressionId } = await createEdge(token);
 
     const up = await fetch(`${API}/votes`, {
       method: 'POST',
@@ -343,6 +343,10 @@ describe('mapping vote API', () => {
     const upBody = (await up.json()) as { data: { score: number; user_vote: number } };
     expect(upBody.data.score).toBe(1);
     expect(upBody.data.user_vote).toBe(1);
+
+    const mappings = await fetch(`${BASE_URL}/api/v2/expressions/${encodeURIComponent(sourceExpressionId)}/mappings`);
+    const mappingsBody = (await mappings.json()) as { data: { items: Array<{ edge_id: string; score: number }> } };
+    expect(mappingsBody.data.items.find((item) => item.edge_id === edgeId)?.score).toBe(1);
 
     const down = await fetch(`${API}/votes`, {
       method: 'POST',
@@ -356,7 +360,7 @@ describe('mapping vote API', () => {
 
   it('rejects an out-of-range vote value', async () => {
     const token = await registerToken();
-    const edgeId = await createEdge(token);
+    const { edgeId } = await createEdge(token);
     const res = await fetch(`${API}/votes`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },

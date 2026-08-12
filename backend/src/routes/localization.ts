@@ -42,7 +42,7 @@ async function localesForLang(db: Bindings['DB'], projectId: string, langCode: s
 localization.get('/projects/:projectId/locales', async (c) => {
   const projectId = c.req.param('projectId') ?? '';
   const { results } = await c.env.DB
-    .prepare('SELECT project_id, language_locale_code, status, mapping_revision, activation_source, activated_at, activated_by, created_at FROM ui_locales WHERE project_id = ? ORDER BY language_locale_code ASC LIMIT ?')
+    .prepare('SELECT u.language_locale_code, l.name, l.name_en, s.direction, u.status, u.mapping_revision, u.activation_source FROM ui_locales u JOIN language_locales l ON l.code = u.language_locale_code JOIN scripts s ON s.code = l.script_code WHERE u.project_id = ? ORDER BY u.language_locale_code ASC LIMIT ?')
     .bind(projectId, LOCALE_LIST_LIMIT)
     .all();
   return success(c, results);
@@ -76,7 +76,7 @@ localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
     return created(c, row, 'UI locale created');
   } catch (error) {
     console.error('Create UI locale error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create UI locale');
+    return internalError(c);
   }
 });
 
@@ -98,7 +98,7 @@ localization.post('/projects/:projectId/locales/:code/activate', requireAuth, as
     }
   } catch (error) {
     console.error('Activate UI locale error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to activate UI locale');
+    return internalError(c);
   }
 });
 
@@ -120,7 +120,7 @@ localization.post('/projects/:projectId/locales/:code/archive', requireAuth, asy
     }
   } catch (error) {
     console.error('Archive UI locale error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to archive UI locale');
+    return internalError(c);
   }
 });
 
@@ -150,7 +150,7 @@ localization.get('/projects/:projectId/workbench/:code', requireAuth, async (c) 
     });
   } catch (error) {
     console.error('Workbench error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to load workbench');
+    return internalError(c);
   }
 });
 
@@ -193,7 +193,7 @@ localization.post('/projects/:projectId/mappings', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Create translation mapping error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create translation mapping');
+    return internalError(c);
   }
 });
 
@@ -237,7 +237,7 @@ localization.post('/projects/:projectId/mappings/batch', requireAuth, async (c) 
     return success(c, { results, count: results.length }, 'Batch translation mappings processed');
   } catch (error) {
     console.error('Batch translation mapping error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to process batch mappings');
+    return internalError(c);
   }
 });
 
@@ -266,7 +266,7 @@ localization.get('/projects/:projectId/messages', optionalAuth, async (c) => {
     return success(c, { messages: bundle });
   } catch (error) {
     console.error('Get messages error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to get messages');
+    return internalError(c);
   }
 });
 
@@ -308,7 +308,7 @@ localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Vote error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to record vote');
+    return internalError(c);
   }
 });
 

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import CliquePreview from '@/components/mapping/CliquePreview.vue'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
-import TagInput from '@/components/ui/TagInput.vue'
+import LanguageLocalePicker from '@/components/language/LanguageLocalePicker.vue'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -12,13 +12,13 @@ const { t } = useI18n()
 
 interface Row {
   key: number
-  lang: string
+  lang_code: string
+  language_locale_code: string
   text: string
-  tags: string
 }
 
 let keySeq = 0
-const newRow = (): Row => ({ key: keySeq++, lang: '', text: '', tags: '' })
+const newRow = (): Row => ({ key: keySeq++, lang_code: '', language_locale_code: '', text: '' })
 const rows = ref<Row[]>([newRow(), newRow()])
 
 const submitting = ref(false)
@@ -41,8 +41,8 @@ function removeRow(key: number) {
 
 async function submit() {
   const payload = validRows.value
-    .filter(r => r.lang.trim() !== '')
-    .map(r => ({ lang: r.lang.trim(), text: r.text.trim(), tags: r.tags.trim() || undefined }))
+    .filter(r => r.lang_code.trim() !== '')
+    .map(r => ({ lang_code: r.lang_code.trim(), text: r.text.trim(), ...(r.language_locale_code ? { language_locale_code: r.language_locale_code } : {}) }))
   if (payload.length < 2) {
     error.value = t('contribute.minRows')
     return
@@ -69,13 +69,13 @@ async function submit() {
       <div class="contrib-left">
         <div class="ex-table">
           <div class="ex-head">
-            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('contribute.tags') }}</span><span></span>
+            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('handbook.locale') }}</span><span></span>
           </div>
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
-              <LanguagePicker v-model="row.lang" :label="t('contribute.language')" :allow-create="true" />
+              <LanguagePicker v-model="row.lang_code" :label="t('contribute.language')" />
               <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
-              <TagInput v-model="row.tags" :placeholder="t('contribute.tags')" />
+              <LanguageLocalePicker v-model="row.language_locale_code" :lang-code="row.lang_code || undefined" :label="t('handbook.locale')" />
               <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)">✕</button>
             </div>
           </div>

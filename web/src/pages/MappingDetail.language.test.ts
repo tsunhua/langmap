@@ -6,7 +6,7 @@ import MappingDetail from './MappingDetail.vue'
 vi.mock('@/api/client', () => ({
   default: {
     get: vi.fn().mockResolvedValue({ data: { data: {} } }),
-    post: vi.fn().mockResolvedValue({ data: { data: { expressionId: 99 } } }),
+    post: vi.fn().mockResolvedValue({ data: { data: { expression: { id: 'eng:new:1' } } } }),
   },
 }))
 
@@ -24,21 +24,12 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({
-    detail: vi.fn().mockResolvedValue({
-      id: 1,
-      text: 'hello',
-      language_profile_code: 'en',
-      language_name: 'English',
-      region_name: null,
-      region_latitude: null,
-      region_longitude: null,
-      source_type: 'auth',
-    }),
+    detail: vi.fn().mockResolvedValue({ expression: { id: 'eng:hello:1', text: 'hello', lang_code: 'eng', source_type: 'auth', source_name: null }, attestations: [], readings: [] }),
     mappingGraph: vi.fn().mockResolvedValue({
-      root_id: 1,
+      root_id: 'eng:hello:1',
       requested_hops: 1,
       resolved_hops: 1,
-      nodes: [{ expression_id: 1, text: 'hello', language_profile_code: 'en', language_name: 'English', depth: 0 }],
+      nodes: [{ expression_id: 'eng:hello:1', text: 'hello', lang_code: 'eng', language_name: 'English', depth: 0 }],
       edges: [],
       layer_counts: { 0: 1 },
       truncated: false,
@@ -168,9 +159,7 @@ describe('MappingDetail language picker integration', () => {
 
     expect(api.post).toHaveBeenCalledWith('/expressions', {
       text: '你好世界',
-      language_profile_code: 'yue-Hant-CN-x-hegusan',
-      region_name: undefined,
-      related_to: 1,
-    })
+      lang_code: 'yue-Hant-CN-x-hegusan',
+    }, { signal: undefined })
   })
 })

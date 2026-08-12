@@ -6,11 +6,11 @@ import type {
 } from './mappingGraphTypes'
 
 export interface LayoutNode {
-  id: number
+  id: string
   x: number
   y: number
   depth: number
-  displayParentId: number | null
+  displayParentId: string | null
 }
 
 export interface LayoutOutput {
@@ -21,18 +21,18 @@ export interface LayoutOutput {
 }
 
 export interface LayoutInput {
-  rootId: number
+  rootId: string
   tree: DisplayTree
-  nodeSizes: ReadonlyMap<number, NodeSize>
+  nodeSizes: ReadonlyMap<string, NodeSize>
   gap?: number
 }
 
 const TWO_PI = Math.PI * 2
 
 interface TreeNode {
-  id: number
+  id: string
   depth: number
-  parentId: number | null
+  parentId: string | null
   children: TreeNode[]
   // assigned sector [angleStart, angleEnd] (radians, [-pi, pi))
   sector: { start: number; end: number }
@@ -56,15 +56,15 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
     }
   }
 
-  const sizeOf = (id: number): NodeSize => nodeSizes.get(id) ?? { width: 90, height: 36 }
-  const diagOf = (id: number): number => {
+  const sizeOf = (id: string): NodeSize => nodeSizes.get(id) ?? { width: 90, height: 36 }
+  const diagOf = (id: string): number => {
     const s = sizeOf(id)
     return Math.hypot(s.width, s.height)
   }
 
   // 1. Build parent->children map and a TreeNode skeleton.
-  const nodeById = new Map<number, TreeNode>()
-  const childrenOf = new Map<number, number[]>()
+  const nodeById = new Map<string, TreeNode>()
+  const childrenOf = new Map<string, string[]>()
   for (const n of tree.nodes) {
     nodeById.set(n.id, {
       id: n.id,
@@ -84,7 +84,7 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
     }
   }
   // Sort children stably by id for deterministic sector allocation.
-  for (const list of childrenOf.values()) list.sort((a, b) => a - b)
+  for (const list of childrenOf.values()) list.sort((a, b) => String(a).localeCompare(String(b)))
   for (const n of nodeById.values()) {
     const cs = childrenOf.get(n.id) ?? []
     n.children = cs.map((id) => nodeById.get(id)!).filter(Boolean)
@@ -304,7 +304,7 @@ export function layoutMappingGraph(input: LayoutInput): LayoutOutput {
   }
   outNodes.sort((a, b) => {
     if (a.depth !== b.depth) return a.depth - b.depth
-    return a.id - b.id
+    return String(a.id).localeCompare(String(b.id))
   })
 
   return {

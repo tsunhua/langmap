@@ -11,7 +11,7 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
-  select: [id: number]
+  select: [id: string]
 }>()
 
 const directNodes = computed(() =>
@@ -47,7 +47,7 @@ const directCount = computed(() => props.graph?.layer_counts[1] ?? 0)
         <li v-for="node in directNodes" :key="node.expression_id">
           <button type="button" @click="$emit('select', node.expression_id)">
             <span>{{ node.text }}</span>
-            <small>{{ node.language_profile_code }}</small>
+            <small>{{ node.lang_code }}</small>
           </button>
         </li>
       </ul>

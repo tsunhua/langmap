@@ -2,15 +2,19 @@
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import VotePill from './VotePill.vue'
+import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
+import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
 
 const props = defineProps<{
-  selectedNodeId: number | null
+  selectedNodeId: string | null
   graph: MappingGraphResponse
   displayTree: DisplayTree
   anchorText: string
-  collapsedIds?: Set<number>
+  collapsedIds?: Set<string>
+  attestations?: LocaleAttestation[]
+  readings?: ExpressionReading[]
 }>()
 const { t } = useI18n()
 
@@ -21,8 +25,8 @@ const isCollapsed = computed(() => {
 
 const emit = defineEmits<{
   close: []
-  navigate: [id: number]
-  toggleCollapse: [id: number]
+  navigate: [id: string]
+  toggleCollapse: [id: string]
 }>()
 
 const sheetRef = ref<HTMLElement>()
@@ -38,7 +42,7 @@ const primaryEdge = computed(() => {
 })
 
 const pathToRoot = computed(() => {
-  if (!props.selectedNodeId) return [] as number[]
+  if (!props.selectedNodeId) return [] as string[]
   return getPathToRoot(props.selectedNodeId, props.displayTree)
 })
 
@@ -104,7 +108,7 @@ function onKeydown(e: KeyboardEvent) {
     </div>
 
     <div class="gm-meta">
-      <span class="gm-lang">{{ node.language_profile_code }}</span>
+      <span class="gm-lang">{{ node.lang_code }}</span>
       <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
       <span class="gm-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
@@ -127,6 +131,8 @@ function onKeydown(e: KeyboardEvent) {
       <span class="gm-label">{{ t('components.otherRelations') }}</span>
       <span class="gm-count">{{ t('components.relationCount', { count: crossEdgeCount }) }}</span>
     </div>
+
+    <ExpressionEvidenceList :attestations="attestations ?? []" :readings="readings ?? []" />
 
     <div v-if="node.expression_id !== graph.root_id" class="gm-acts">
       <button

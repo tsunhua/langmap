@@ -15,13 +15,13 @@ const router = useRouter()
 const { detail, create, update } = useHandbooks()
 
 const isNew = computed(() => route.params.id === 'new')
-const id = computed(() => parseInt(route.params.id as string))
+const id = computed(() => route.params.id as string)
 
 const title = ref('')
 const visibility = ref('public')
 const sections = ref<Array<{
   title: string
-  expressions: Array<{ id: number; text: string; language_profile_code: string; position: number }>
+  expressions: Array<{ id: string; text: string; lang_code: string; position: number }>
 }>>([])
 const saving = ref(false)
 const loading = ref(true)
@@ -40,9 +40,9 @@ onMounted(async () => {
     sections.value = hb.sections.map((s: any) => ({
       title: s.title || '',
       expressions: (s.items || []).map((e: any, i: number) => ({
-        id: e.expression_id,
+        id: e.id,
         text: e.text,
-        language_profile_code: e.language_profile_code,
+        lang_code: e.lang_code,
         position: i,
       })),
     }))
@@ -75,11 +75,11 @@ function addExprToSection(i: number, expr: any) {
   }
 }
 
-function removeExprFromSection(i: number, exprId: number) {
+function removeExprFromSection(i: number, exprId: string) {
   sections.value[i].expressions = sections.value[i].expressions.filter(e => e.id !== exprId)
 }
 
-function moveExpression(sectionId: number, itemId: number, direction: 'up' | 'down') {
+function moveExpression(sectionId: number, itemId: string, direction: 'up' | 'down') {
   const section = sections.value[sectionId]
   if (!section) return
   const idx = section.expressions.findIndex(e => e.id === itemId)

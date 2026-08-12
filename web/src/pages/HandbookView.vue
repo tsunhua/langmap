@@ -16,20 +16,20 @@ import HandbookExpressionInspector, {
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 
 interface HandbookItem {
-  expression_id: number
+  id: string
   text: string
-  language_profile_code: string
+  lang_code: string
   language_name?: string | null
 }
 
 interface HandbookSection {
-  id: number
+  id: string
   title?: string | null
   items?: HandbookItem[]
 }
 
 interface HandbookDetail {
-  id: number
+  id: string
   title: string
   author_username?: string | null
   visibility?: string | null
@@ -38,7 +38,7 @@ interface HandbookDetail {
 }
 
 const route = useRoute()
-const id = computed(() => parseInt(route.params.id as string))
+const id = computed(() => route.params.id as string)
 
 const { detail } = useHandbooks()
 const { detail: expressionDetail, mappingGraph } = useExpressions()
@@ -68,16 +68,16 @@ async function load() {
 }
 
 async function selectExpression(item: HandbookItem) {
-  await selectExpressionById(item.expression_id, {
-    id: item.expression_id,
+  await selectExpressionById(item.id, {
+    id: item.id,
     text: item.text,
-    language_profile_code: item.language_profile_code,
+    lang_code: item.lang_code,
     language_name: item.language_name,
   })
 }
 
 async function selectExpressionById(
-  expressionId: number,
+  expressionId: string,
   optimisticExpression?: HandbookExpressionDetail,
 ) {
   const request = ++selectionRequest
@@ -89,13 +89,18 @@ async function selectExpressionById(
   relationError.value = ''
 
   const [detailResult, graphResult] = await Promise.allSettled([
-    expressionDetail(expressionId) as Promise<HandbookExpressionDetail>,
+    expressionDetail(expressionId),
     mappingGraph(expressionId, 1),
   ])
   if (request !== selectionRequest) return
 
   if (detailResult.status === 'fulfilled') {
-    selectedExpression.value = detailResult.value
+    selectedExpression.value = {
+      id: detailResult.value.expression.id,
+      text: detailResult.value.expression.text,
+      lang_code: detailResult.value.expression.lang_code,
+      source_type: detailResult.value.expression.source_type,
+    }
   } else {
     inspectorError.value = t('handbook.inspectorFailed')
   }
@@ -108,14 +113,12 @@ async function selectExpressionById(
   relationLoading.value = false
 }
 
-function selectRelatedExpression(expressionId: number) {
-  const node = relationGraph.value?.nodes.find(
-    candidate => candidate.expression_id === expressionId,
-  )
+function selectRelatedExpression(expressionId: string) {
+  const node = relationGraph.value?.nodes.find(candidate => candidate.expression_id === expressionId)
   return selectExpressionById(expressionId, node ? {
     id: node.expression_id,
     text: node.text,
-    language_profile_code: node.language_profile_code,
+    lang_code: node.lang_code,
     language_name: node.language_name,
   } : undefined)
 }
@@ -181,18 +184,18 @@ watch(id, () => {
           <h2>{{ sec.title || t('handbook.chapter', { number: i + 1 }) }}</h2>
         </div>
         <ol v-if="sec.items?.length" class="hb-expr-list">
-          <li v-for="(expr, j) in sec.items" :key="expr.expression_id">
+          <li v-for="(expr, j) in sec.items" :key="expr.id">
             <button
               type="button"
               class="hb-expr"
-              :class="{ selected: selectedExpression?.id === expr.expression_id }"
-              :aria-expanded="selectedExpression?.id === expr.expression_id"
+              :class="{ selected: String(selectedExpression?.id) === expr.id }"
+              :aria-expanded="String(selectedExpression?.id) === expr.id"
               aria-controls="handbook-expression-inspector"
               @click="selectExpression(expr)"
             >
               <span class="hb-num">{{ String(j + 1).padStart(2, '0') }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
-              <span class="lang-badge">{{ expr.language_profile_code }}</span>
+              <span class="lang-badge">{{ expr.lang_code }}</span>
               <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
             </button>
           </li>
@@ -213,7 +216,7 @@ watch(id, () => {
       :graph-loading="relationLoading"
       :graph-error="relationError"
       @close="closeInspector"
-      @select-expression="selectRelatedExpression"
+      @select-expression="(id) => selectRelatedExpression(String(id))"
     />
   </div>
 </template>

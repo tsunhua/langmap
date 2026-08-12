@@ -4,12 +4,14 @@ import { SplitError, splitExpression } from '../src/services/splits';
 type Handler = () => unknown;
 
 function fakeD1(handlers: Record<string, Handler>, batchResult?: unknown) {
+  const batchSql: string[][] = [];
   const prepare = (sql: string) => {
     const handler = handlers[sql];
     return {
       bind(..._args: unknown[]) {
         const run = async () => (handler ? handler() : { results: [] });
         return {
+          __sql: sql,
           async first<T>() { return (await run()) as T; },
           async run() { return handler ? await handler() : { success: true }; },
           async all<T>() {
@@ -22,8 +24,12 @@ function fakeD1(handlers: Record<string, Handler>, batchResult?: unknown) {
   };
   return {
     prepare,
-    batch: async () => batchResult ?? [{ success: true }],
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+    batch: async (statements: Array<{ __sql?: string }>) => {
+      batchSql.push(statements.map((statement) => statement.__sql ?? ''));
+      return batchResult ?? [{ success: true }];
+    },
+    batchSql,
+  } as unknown as import('@cloudflare/workers-types').D1Database & { batchSql: string[][] };
 }
 
 function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
@@ -78,5 +84,26 @@ describe('splitExpression', () => {
     const result = await splitExpression(db, { source_expression_id: 'nan:aaaa', edge_ids: ['01EDGE1'], created_by: 5 });
     expect(result.target_expression_id).toBe('nan:aaaa.2');
     expect(result.moved_edge_count).toBe(1);
+  });
+
+  it('bumps revisions for source and every moved opposite endpoint language', async () => {
+    const edges = [
+      { id: '01EDGE1', expression_a_id: 'eng:bbb', expression_b_id: 'nan:aaaa', score: 3, source: 'contribution', created_by: 1, created_at: '2026-08-13' },
+      { id: '01EDGE2', expression_a_id: 'jpn:ccc', expression_b_id: 'nan:aaaa', score: 0, source: 'contribution', created_by: 1, created_at: '2026-08-13' },
+    ];
+    const expressionLangSql = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
+    const localeSql = 'SELECT language_locale_code FROM ui_locales WHERE project_id = ? AND language_locale_code LIKE ? ORDER BY language_locale_code ASC LIMIT 200';
+    const db = fakeD1({
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?': () => sourceExpression,
+      'SELECT id, expression_a_id, expression_b_id, score, source, created_by, created_at FROM expression_edges WHERE id IN (?, ?)': () => ({ results: edges }),
+      'SELECT MAX(homograph_index) AS max_idx FROM expressions WHERE lang_code = ? AND text_hash = ?': () => ({ max_idx: 1 }),
+      [expressionLangSql]: () => ({ results: [{ lang_code: 'eng' }, { lang_code: 'jpn' }, { lang_code: 'nan' }] }),
+      [localeSql]: () => ({ results: [{ language_locale_code: 'eng-Latn-US' }, { language_locale_code: 'jpn-Jpan-JP' }, { language_locale_code: 'nan-Hant-TW' }] }),
+    });
+
+    await splitExpression(db, { source_expression_id: 'nan:aaaa', edge_ids: ['01EDGE1', '01EDGE2'], created_by: 5 });
+
+    const revisionSql = 'UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP WHERE project_id = ? AND language_locale_code = ?';
+    expect(db.batchSql[0].filter((sql) => sql === revisionSql)).toHaveLength(3);
   });
 });

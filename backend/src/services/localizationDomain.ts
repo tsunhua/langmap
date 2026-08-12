@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 
 export interface BundleEntry {
   key: string;
@@ -136,8 +136,18 @@ export async function recalculateForExpressions(
   projectId: string,
   expressionIds: string[],
 ): Promise<void> {
-  const unique = Array.from(new Set(expressionIds.filter((id) => id))).sort();
-  if (unique.length === 0) return;
+  for (const code of await listAffectedUiLocaleCodes(db, projectId, expressionIds)) {
+    await recalculateLocale(db, projectId, code);
+  }
+}
+
+export async function listAffectedUiLocaleCodes(
+  db: D1Database,
+  projectId: string,
+  expressionIds: readonly string[],
+): Promise<string[]> {
+  const unique = Array.from(new Set(expressionIds.filter(Boolean))).sort();
+  if (unique.length === 0) return [];
 
   const { results: langRows } = await db
     .prepare(EXPRESSION_LANGS_SQL)
@@ -152,10 +162,19 @@ export async function recalculateForExpressions(
       .all<{ language_locale_code: string }>();
     for (const locale of localeRows) localeCodes.add(locale.language_locale_code);
   }
+  return Array.from(localeCodes).sort();
+}
 
-  for (const code of Array.from(localeCodes).sort()) {
-    await recalculateLocale(db, projectId, code);
-  }
+export function prepareRevisionBumps(
+  db: D1Database,
+  projectId: string,
+  localeCodes: readonly string[],
+): D1PreparedStatement[] {
+  return Array.from(new Set(localeCodes.filter(Boolean)))
+    .sort()
+    .map((code) => db
+      .prepare('UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP WHERE project_id = ? AND language_locale_code = ?')
+      .bind(projectId, code));
 }
 
 export async function activateLocale(

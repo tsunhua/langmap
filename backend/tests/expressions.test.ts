@@ -12,7 +12,9 @@ type Handler = () => unknown;
 
 function fakeD1(handlers: Record<string, Handler>) {
   const prepare = (sql: string) => {
-    const handler = handlers[sql];
+    const handler = handlers[sql] ?? Object.entries(handlers).find(
+      ([registered]) => registered.replace(/\s+/g, ' ').trim() === sql.replace(/\s+/g, ' ').trim(),
+    )?.[1];
     return {
       bind(..._args: unknown[]) {
         const run = async () => (handler ? handler() : { results: [] });
@@ -31,7 +33,8 @@ function fakeD1(handlers: Record<string, Handler>) {
       },
     };
   };
-  return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+  const batch = async (statements: Array<{ run(): Promise<unknown> }>) => Promise.all(statements.map((statement) => statement.run()));
+  return { prepare, batch } as unknown as import('@cloudflare/workers-types').D1Database;
 }
 
 function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
@@ -91,6 +94,29 @@ describe('createExpression', () => {
     expect(result.expression.id).toBe(insertedExpression.id);
   });
 
+  it('adds the requested locale when reusing an expression', async () => {
+    const inserted: string[] = [];
+    const db = fakeD1({
+      'SELECT 1 FROM languages WHERE code = ?': () => ({ ok: 1 }),
+      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
+      'SELECT id, text FROM expressions WHERE lang_code = ? AND text_hash = ? AND homograph_index = 1':
+        () => ({ id: 'nan:existing', text: '食' }),
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
+        () => insertedExpression,
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+        () => null,
+      'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
+        () => { inserted.push('attestation'); return { success: true }; },
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE id = ?':
+        () => ({ id: 'att-new' }),
+    });
+    const result = await createExpression(db, {
+      lang_code: 'nan', text: '食', language_locale_code: 'nan-Hant-TW', created_by: 1,
+    });
+    expect(result.created).toBe(false);
+    expect(inserted).toEqual(['attestation']);
+  });
+
   it('throws EXPRESSION_HASH_COLLISION when a different text hits the same short hash', async () => {
     const existing = { id: 'nan:other', text: 'other text' };
     const db = fakeD1({
@@ -128,9 +154,9 @@ describe('createExpression', () => {
       'INSERT INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, review_status, created_by)\n       VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)':
         () => ({ success: true }),
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS NULL AND source_ref IS NULL':
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
         () => null,
-      'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, NULL, NULL, ?)':
+      'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => ({ success: true }),
       'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE id = ?':
         () => ({ id: 'att-1', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW', source_id: null, source_ref: null, created_by: 1, created_at: '2026-08-12 00:00:00' }),
@@ -154,7 +180,7 @@ describe('searchExpressions', () => {
     ];
     const db = fakeD1({
       'SELECT COUNT(*) AS total FROM expressions WHERE text LIKE ? ESCAPE \'\\\'': () => ({ total: 2 }),
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' ORDER BY text ASC LIMIT ? OFFSET ?':
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: rows }),
     });
     const result = await searchExpressions(db, { q: '食', limit: 20, offset: 0 });
@@ -165,7 +191,7 @@ describe('searchExpressions', () => {
   it('filters by lang_code when provided', async () => {
     const db = fakeD1({
       'SELECT COUNT(*) AS total FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ?': () => ({ total: 1 }),
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ? ORDER BY text ASC LIMIT ? OFFSET ?':
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ? ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: [] }),
     });
     const result = await searchExpressions(db, { q: '食', lang_code: 'nan', limit: 20, offset: 0 });
@@ -188,7 +214,7 @@ describe('getExpression', () => {
     const db = fakeD1({
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => expression,
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC':
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC, id ASC':
         () => ({ results: attestations }),
     });
     const result = await getExpression(db, 'nan:aaaa');
@@ -198,7 +224,7 @@ describe('getExpression', () => {
 
   it('returns null for a missing expression', async () => {
     const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?':
         () => null,
     });
     expect(await getExpression(db, 'nan:missing')).toBeNull();
@@ -217,7 +243,7 @@ describe('createLocaleAttestation', () => {
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
       'SELECT id FROM sources WHERE type = ? AND name = ?': () => null,
       'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id = ? AND source_ref = ?':
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
         () => null,
       'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => ({ success: true }),
@@ -240,7 +266,7 @@ describe('createLocaleAttestation', () => {
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS NULL AND source_ref IS NULL':
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
         () => existing,
     });
     const result = await createLocaleAttestation(db, {
@@ -250,6 +276,22 @@ describe('createLocaleAttestation', () => {
     });
     expect(result.created).toBe(false);
     expect(result.attestation.id).toBe('att-old');
+  });
+
+  it('reuses a named source attestation when its ref is omitted', async () => {
+    const db = fakeD1({
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
+        () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
+      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
+      'SELECT id FROM sources WHERE type = ? AND name = ?': () => ({ id: 'src-dict' }),
+      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+        () => ({ id: 'att-existing' }),
+    });
+    const result = await createLocaleAttestation(db, {
+      expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
+      source: { type: 'publication', name: 'Dictionary' }, created_by: 1,
+    });
+    expect(result).toMatchObject({ created: false, attestation: { id: 'att-existing' } });
   });
 
   it('throws INVALID_LANGUAGE_LOCALE_CODE for an unknown locale', async () => {

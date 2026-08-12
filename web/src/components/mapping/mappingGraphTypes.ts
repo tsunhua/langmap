@@ -1,21 +1,21 @@
 export interface MappingGraphNode {
-  expression_id: number
+  expression_id: string
   text: string
-  language_profile_code: string
+  lang_code: string
   language_name: string | null
   depth: number
 }
 
 export interface MappingGraphEdge {
   edge_id: string
-  source_id: number
-  target_id: number
+  source_id: string
+  target_id: string
   score: number
   depth: number
 }
 
 export interface MappingGraphResponse {
-  root_id: number
+  root_id: string
   requested_hops: 1 | 2 | 3
   resolved_hops: 0 | 1 | 2 | 3
   nodes: MappingGraphNode[]
@@ -38,9 +38,9 @@ export interface GraphBounds {
 }
 
 export interface DisplayGraphNode {
-  id: number
+  id: string
   depth: number
-  displayParentId: number | null
+  displayParentId: string | null
 }
 
 export interface DisplayGraphEdge extends MappingGraphEdge {

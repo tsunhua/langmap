@@ -50,29 +50,29 @@ describe('splitVarietyAndScript', () => {
 
 describe('groupLocalesByVariety', () => {
   const locales: UiLocale[] = [
-    { code: 'en', name: 'English', native_name: 'English', status: 'active' },
-    { code: 'es', name: 'Spanish', native_name: 'Español', status: 'active' },
-    { code: 'ja', name: 'Japanese', native_name: '日本語', status: 'active' },
-    { code: 'cmn-Hans', name: 'Simplified', native_name: '華語（普通話、國語）（簡體）', status: 'active' },
-    { code: 'cmn-Hant', name: 'Traditional', native_name: '華語（普通話、國語）（傳承體）', status: 'active' },
+    { language_locale_code: 'eng-Latn-US', name: 'English', name_en: 'English', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    { language_locale_code: 'spa-Latn-ES', name: 'Español', name_en: 'Spanish', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    { language_locale_code: 'jpn-Jpan-JP', name: '日本語', name_en: 'Japanese', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    { language_locale_code: 'cmn-Hans-CN', name: '華語（普通話、國語）（簡體）', name_en: 'Simplified', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    { language_locale_code: 'cmn-Hant-TW', name: '華語（普通話、國語）（傳承體）', name_en: 'Traditional', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
   ]
 
   it('groups the 5 first-party locales into 4 variety groups', () => {
     const groups = groupLocalesByVariety(locales)
-    expect(groups.map(g => g.base)).toEqual(['en', 'es', 'ja', 'cmn'])
+    expect(groups.map(g => g.base)).toEqual(['eng', 'spa', 'jpn', 'cmn'])
   })
 
   it('places en first then sorts by variety label', () => {
     const groups = groupLocalesByVariety(locales)
-    expect(groups[0].base).toBe('en')
+    expect(groups[0].base).toBe('eng')
     expect(groups[0].varietyLabel).toBe('English')
   })
 
   it('keeps single-script varieties as one-item groups', () => {
     const groups = groupLocalesByVariety(locales)
-    const ja = groups.find(g => g.base === 'ja')!
+    const ja = groups.find(g => g.base === 'jpn')!
     expect(ja.items).toHaveLength(1)
-    expect(ja.items[0].code).toBe('ja')
+    expect(ja.items[0].code).toBe('jpn-Jpan-JP')
     expect(ja.items[0].scriptLabel).toBeUndefined()
   })
 
@@ -80,7 +80,7 @@ describe('groupLocalesByVariety', () => {
     const groups = groupLocalesByVariety(locales)
     const cmn = groups.find(g => g.base === 'cmn')!
     expect(cmn.varietyLabel).toBe('華語（普通話、國語）')
-    expect(cmn.items.map(i => i.code)).toEqual(['cmn-Hans', 'cmn-Hant'])
+    expect(cmn.items.map(i => i.code)).toEqual(['cmn-Hans-CN', 'cmn-Hant-TW'])
     expect(cmn.items.map(i => i.scriptLabel)).toEqual(['簡體', '傳承體'])
   })
 

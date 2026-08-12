@@ -15,9 +15,9 @@ type SemanticLevel = 'compact' | 'medium' | 'full'
 
 const props = defineProps<{
   graph: MappingGraphResponse
-  selectedNodeId?: number | null
+  selectedNodeId?: string | null
   semanticLevel?: SemanticLevel
-  collapsedIds?: Set<number>
+  collapsedIds?: Set<string>
   currentHops?: number
   maxHops?: number
   isFullscreen?: boolean
@@ -25,10 +25,10 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const emit = defineEmits<{
-  select: [id: number]
-  navigate: [id: number]
+  select: [id: string]
+  navigate: [id: string]
   clearSelection: []
-  toggleCollapse: [id: number]
+  toggleCollapse: [id: string]
   changeHops: [hops: number]
   toggleFullscreen: []
 }>()
@@ -38,8 +38,8 @@ const containerRef = ref<HTMLElement>()
 const worldRef = ref<HTMLElement>()
 const DEFAULT_NODE_SIZE: NodeSize = { width: 110, height: 40 }
 
-const collapsedIds = computed<Set<number>>(() => props.collapsedIds ?? new Set())
-const nodeSizes = ref<Map<number, NodeSize>>(new Map())
+const collapsedIds = computed<Set<string>>(() => props.collapsedIds ?? new Set())
+const nodeSizes = ref<Map<string, NodeSize>>(new Map())
 
 const displayTree = computed(() =>
   buildDisplayTree(props.graph, collapsedIds.value),
@@ -67,8 +67,8 @@ const layout = computed(() => {
   })
 })
 
-function defaultSizes(): Map<number, NodeSize> {
-  const m = new Map<number, NodeSize>()
+function defaultSizes(): Map<string, NodeSize> {
+  const m = new Map<string, NodeSize>()
   for (const n of props.graph.nodes) {
     m.set(n.expression_id, { ...DEFAULT_NODE_SIZE })
   }
@@ -76,13 +76,13 @@ function defaultSizes(): Map<number, NodeSize> {
 }
 
 const layoutNodeById = computed(() => {
-  const m = new Map<number, LayoutNode>()
+  const m = new Map<string, LayoutNode>()
   for (const n of layout.value.nodes) m.set(n.id, n)
   return m
 })
 
 const childCountByParent = computed(() => {
-  const m = new Map<number, number>()
+  const m = new Map<string, number>()
   for (const n of displayTree.value.nodes) {
     if (n.displayParentId !== null) {
       m.set(n.displayParentId, (m.get(n.displayParentId) ?? 0) + 1)
@@ -92,7 +92,7 @@ const childCountByParent = computed(() => {
 })
 
 const scoreByNode = computed(() => {
-  const m = new Map<number, number>()
+  const m = new Map<string, number>()
   for (const n of props.graph.nodes) {
     if (n.depth === 0) continue
     const edge = props.graph.edges.find(
@@ -104,14 +104,14 @@ const scoreByNode = computed(() => {
 })
 
 const selectedSet = computed(() => {
-  const s = new Set<number>()
+  const s = new Set<string>()
   if (props.selectedNodeId) s.add(props.selectedNodeId)
   return s
 })
 
 const pathNodeIds = computed(() => {
-  if (!props.selectedNodeId) return new Set<number>()
-  const ids = new Set<number>()
+  if (!props.selectedNodeId) return new Set<string>()
+  const ids = new Set<string>()
   let current = props.selectedNodeId
   let guard = 0
   while (current && guard < 100) {
@@ -172,11 +172,11 @@ const effectiveLayoutNodes = computed<LayoutNode[]>(() => {
   })
 })
 
-function onDragMove(nodeId: number, worldX: number, worldY: number) {
+function onDragMove(nodeId: string, worldX: number, worldY: number) {
   setActiveDrag({ nodeId, worldX, worldY })
 }
 
-function onDragEnd(nodeId: number, worldX: number, worldY: number) {
+function onDragEnd(nodeId: string, worldX: number, worldY: number) {
   setActiveDrag(null)
   applyOverride(nodeId, worldX, worldY)
 }
@@ -186,7 +186,7 @@ function handleReset() {
   resetPositions()
 }
 
-function onToggleCollapse(nodeId: number) {
+function onToggleCollapse(nodeId: string) {
   emit('toggleCollapse', nodeId)
 }
 
@@ -197,10 +197,11 @@ async function measureNodes() {
   await nextTick()
   const els = containerRef.value.querySelectorAll<HTMLElement>('[data-node-id]')
   if (!els.length) return
-  const sizes = new Map<number, NodeSize>()
+  const sizes = new Map<string, NodeSize>()
   let changed = false
   for (const el of els) {
-    const id = Number(el.getAttribute('data-node-id'))
+    const id = el.getAttribute('data-node-id')
+    if (!id) continue
     const rect = el.getBoundingClientRect()
     const w = Math.ceil(rect.width) || DEFAULT_NODE_SIZE.width
     const h = Math.ceil(rect.height) || DEFAULT_NODE_SIZE.height
@@ -227,13 +228,13 @@ watch(
   },
 )
 
-function onSelectNode(id: number) {
+function onSelectNode(id: string) {
   emit('select', id)
 }
 function onEscape() {
   emit('clearSelection')
 }
-function onNavigateNode(id: number) {
+function onNavigateNode(id: string) {
   emit('navigate', id)
 }
 
@@ -241,7 +242,7 @@ function onToggleFullscreen() {
   emit('toggleFullscreen')
 }
 
-function centerOnNodeById(nodeId: number) {
+function centerOnNodeById(nodeId: string) {
   const node = layoutNodeById.value.get(nodeId)
   if (node) viewport.centerOnNode(node.x, node.y)
 }
@@ -275,7 +276,7 @@ const layerStats = computed(() => {
           :key="n.id"
           :node-id="n.id"
           :text="graph.nodes.find(gn => gn.expression_id === n.id)?.text ?? ''"
-          :language-code="graph.nodes.find(gn => gn.expression_id === n.id)?.language_profile_code ?? ''"
+          :language-code="graph.nodes.find(gn => gn.expression_id === n.id)?.lang_code ?? ''"
           :language-name="graph.nodes.find(gn => gn.expression_id === n.id)?.language_name ?? null"
           :depth="n.depth"
           :x="n.x"

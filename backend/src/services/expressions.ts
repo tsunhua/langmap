@@ -1,11 +1,18 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { ExpressionRow, LocaleAttestationRow } from '../types/expression';
+import type { ExpressionRow, LocaleAttestationRow, ReadingRow } from '../types/expression';
 import { buildExpressionId, canonicalizeExpressionText, computeTextHash } from './expressionIdentity';
-import { SourceError, findOrCreateSource } from './sources';
+import { SourceError } from './sources';
+import { NULL_SAFE_PROVENANCE_PREDICATE, resolveProvenance, type SourceInput } from './provenance';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 
 const ATTESTATION_COLUMNS = `id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at`;
+const READING_DETAIL_COLUMNS = `r.id, r.expression_id, r.language_locale_code, r.scheme, r.value, r.source_id, r.source_ref, r.created_by, r.created_at,
+  s.type AS source_type, s.name AS source_name`;
+const INSERT_EXPRESSION_SQL = `INSERT INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, review_status, created_by)
+  VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`;
+const INSERT_ATTESTATION_SQL = `INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+  VALUES (?, ?, ?, ?, ?, ?)`;
 
 export class ExpressionError extends Error {
   constructor(public code: string) {
@@ -23,6 +30,10 @@ export async function createExpression(
   const langCode = input.lang_code.toLowerCase();
   const lang = await db.prepare('SELECT 1 FROM languages WHERE code = ?').bind(langCode).first();
   if (!lang) throw new ExpressionError('INVALID_LANG_CODE');
+  if (input.language_locale_code) {
+    const locale = await db.prepare('SELECT 1 FROM language_locales WHERE code = ?').bind(input.language_locale_code).first();
+    if (!locale) throw new ExpressionError('INVALID_LANGUAGE_LOCALE_CODE');
+  }
 
   const textHash = await computeTextHash(text);
   const existing = await db
@@ -31,6 +42,13 @@ export async function createExpression(
     .first<{ id: string; text: string }>();
   if (existing) {
     if (existing.text !== text) throw new ExpressionError('EXPRESSION_HASH_COLLISION');
+    if (input.language_locale_code) {
+      await createLocaleAttestation(db, {
+        expression_id: existing.id,
+        language_locale_code: input.language_locale_code,
+        created_by: input.created_by,
+      });
+    }
     const expression = await db
       .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions WHERE id = ?`)
       .bind(existing.id)
@@ -39,20 +57,15 @@ export async function createExpression(
   }
 
   const id = buildExpressionId(langCode, textHash, 1);
-  await db
-    .prepare(
-      `INSERT INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, review_status, created_by)
-       VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
-    )
-    .bind(id, langCode, text, textHash, '', '[]', 'pending', input.created_by)
-    .run();
-
   if (input.language_locale_code) {
-    await createLocaleAttestation(db, {
-      expression_id: id,
-      language_locale_code: input.language_locale_code,
-      created_by: input.created_by,
-    });
+    await db.batch([
+      db.prepare(INSERT_EXPRESSION_SQL).bind(id, langCode, text, textHash, '', '[]', 'pending', input.created_by),
+      db.prepare(INSERT_ATTESTATION_SQL).bind(
+        crypto.randomUUID(), id, input.language_locale_code, null, null, input.created_by,
+      ),
+    ]);
+  } else {
+    await db.prepare(INSERT_EXPRESSION_SQL).bind(id, langCode, text, textHash, '', '[]', 'pending', input.created_by).run();
   }
 
   const expression = await db
@@ -85,7 +98,7 @@ export async function searchExpressions(
     .first<{ total: number }>();
 
   const { results } = await db
-    .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions ${where} ORDER BY text ASC LIMIT ? OFFSET ?`)
+    .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions ${where} ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?`)
     .bind(...params, query.limit, query.offset)
     .all<ExpressionRow>();
   return { items: results, total: countRow?.total ?? 0 };
@@ -94,25 +107,31 @@ export async function searchExpressions(
 export async function getExpression(
   db: D1Database,
   id: string,
-): Promise<{ expression: ExpressionRow; attestations: LocaleAttestationRow[] } | null> {
+): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }> } | null> {
   const expression = await db
-    .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions WHERE id = ?`)
+    .prepare(`SELECT ${EXPRESSION_COLUMNS}, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?`)
     .bind(id)
     .first<ExpressionRow>();
   if (!expression) return null;
 
   const { results } = await db
     .prepare(
-      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC`,
+      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC, id ASC`,
     )
     .bind(id)
     .all<LocaleAttestationRow>();
-  return { expression, attestations: results };
+  const { results: readings } = await db
+    .prepare(
+      `SELECT ${READING_DETAIL_COLUMNS} FROM expression_readings r LEFT JOIN sources s ON s.id = r.source_id WHERE r.expression_id = ? ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC`,
+    )
+    .bind(id)
+    .all<ReadingRow & { source_type: string | null; source_name: string | null }>();
+  return { expression, attestations: results, readings };
 }
 
 export async function createLocaleAttestation(
   db: D1Database,
-  input: { expression_id: string; language_locale_code: string; source?: { type: string; name: string; ref?: string }; created_by: number },
+  input: { expression_id: string; language_locale_code: string; source?: SourceInput; created_by: number },
 ): Promise<{ attestation: LocaleAttestationRow; created: boolean }> {
   const expression = await db
     .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions WHERE id = ?`)
@@ -123,40 +142,26 @@ export async function createLocaleAttestation(
   const locale = await db.prepare('SELECT 1 FROM language_locales WHERE code = ?').bind(input.language_locale_code).first();
   if (!locale) throw new ExpressionError('INVALID_LANGUAGE_LOCALE_CODE');
 
-  let sourceId: string | null = null;
-  let sourceRef: string | null = null;
+  let provenance: { source_id: string | null; source_ref: string | null } | undefined;
   if (input.source) {
     try {
-      sourceId = await findOrCreateSource(db, { type: input.source.type, name: input.source.name });
+      provenance = await resolveProvenance(db, input.source);
     } catch (error) {
       if (error instanceof SourceError) throw new ExpressionError(error.code);
       throw error;
     }
-    sourceRef = typeof input.source.ref === 'string' && input.source.ref.trim() ? input.source.ref.trim() : null;
   }
+  const resolved = provenance ?? { source_id: null, source_ref: null };
 
-  const lookup = sourceId
-    ? `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id = ? AND source_ref = ?`
-    : `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS NULL AND source_ref IS NULL`;
-  const bindArgs = sourceId
-    ? [input.expression_id, input.language_locale_code, sourceId, sourceRef]
-    : [input.expression_id, input.language_locale_code];
-  const existing = await db.prepare(lookup).bind(...bindArgs).first<LocaleAttestationRow>();
+  const existing = await db.prepare(
+    `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
+  ).bind(input.expression_id, input.language_locale_code, resolved.source_id, resolved.source_ref).first<LocaleAttestationRow>();
   if (existing) return { attestation: existing, created: false };
 
   const attestationId = crypto.randomUUID();
   await db
-    .prepare(
-      sourceId
-        ? `INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)`
-        : `INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, NULL, NULL, ?)`,
-    )
-    .bind(
-      attestationId,
-      input.expression_id,
-      input.language_locale_code,
-      ...(sourceId ? [sourceId, sourceRef, input.created_by] : [input.created_by]),
-    )
+    .prepare(INSERT_ATTESTATION_SQL)
+    .bind(attestationId, input.expression_id, input.language_locale_code, resolved.source_id, resolved.source_ref, input.created_by)
     .run();
 
   const attestation = await db

@@ -7,14 +7,14 @@ const props = defineProps<{
   layoutNodes: LayoutNode[]
   treeEdges: MappingGraphEdge[]
   crossEdges: MappingGraphEdge[]
-  selectedNodeIds: Set<number>
-  pathNodeIds: Set<number>
+  selectedNodeIds: Set<string>
+  pathNodeIds: Set<string>
   showCrossEdges: boolean
   bounds: { x: number; y: number; width: number; height: number }
 }>()
 
 const nodeById = computed(() => {
-  const m = new Map<number, LayoutNode>()
+  const m = new Map<string, LayoutNode>()
   for (const n of props.layoutNodes) m.set(n.id, n)
   return m
 })
@@ -38,7 +38,7 @@ interface RenderedEdge {
 
 const renderedEdges = computed<RenderedEdge[]>(() => {
   const out: RenderedEdge[] = []
-  const pos = (id: number) => nodeById.value.get(id)
+  const pos = (id: string) => nodeById.value.get(id)
   for (const e of props.treeEdges) {
     const a = pos(e.source_id)
     const b = pos(e.target_id)

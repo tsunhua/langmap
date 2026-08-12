@@ -1,64 +1,20 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { i18n, DEFAULT_LOCALE, resolveLocale } from '@/locales'
+import { i18n, DEFAULT_LOCALE } from '@/locales'
 import { getUiMessages, listUiLocales, type UiLocale } from '@/api/localization'
+import { getPreferences, putLanguageLocalePreference, type LanguageLocalePreference } from '@/api/preferences'
+import { useAuthStore } from '@/stores/auth'
 
-const RECENT_KEY = 'langmap.recent-locales'
-const SELECTED_LOCALE_KEY = 'langmap.locale'
-
+const KEY = 'langmap.language-locales'
+function nested(messages: Array<{ key: string; text: string }>) { const out: Record<string, unknown> = {}; for (const { key, text } of messages) { let target = out; const parts = key.split('.'); for (const part of parts.slice(0, -1)) target = (target[part] ??= {}) as Record<string, unknown>; target[parts[parts.length - 1]] = text } return out }
 export const useLocalizationStore = defineStore('localization', () => {
-  const globalI18n = i18n.global as unknown as {
-    locale: { value: string }
-    setLocaleMessage: (locale: string, messages: Record<string, unknown>) => void
-    getLocaleMessage: (locale: string) => Record<string, unknown>
-  }
-  const locale = ref(globalI18n.locale.value || DEFAULT_LOCALE)
-  const locales = ref<UiLocale[]>([
-    { code: DEFAULT_LOCALE, name: 'English', native_name: 'English', status: 'active' },
-  ])
-  const loading = ref(false)
-  const recent = ref<string[]>(readRecent())
-
-  const availableCodes = computed(() => locales.value.map(item => item.code))
-
-  function readRecent(): string[] {
-    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') } catch { return [] }
-  }
-  function readSelectedLocale(): string | null {
-    try { return localStorage.getItem(SELECTED_LOCALE_KEY) } catch { return null }
-  }
-  function remember(code: string) {
-    recent.value = [code, ...recent.value.filter(item => item !== code)].slice(0, 8)
-    localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
-  }
-  async function setLocale(input: string) {
-    const code = resolveLocale(input, availableCodes.value)
-    if (code === DEFAULT_LOCALE) {
-      globalI18n.setLocaleMessage(DEFAULT_LOCALE, globalI18n.getLocaleMessage(DEFAULT_LOCALE))
-    } else {
-      try {
-        const bundle = await getUiMessages(code)
-        globalI18n.setLocaleMessage(code, bundle.messages)
-      } catch {
-        // vue-i18n falls back to the built-in English source catalog.
-      }
-    }
-    globalI18n.locale.value = code
-    locale.value = code
-    remember(code)
-    localStorage.setItem(SELECTED_LOCALE_KEY, code)
-    document.documentElement.lang = code
-    document.documentElement.dir = locales.value.find(item => item.code === code)?.direction || 'ltr'
-  }
-  async function loadLocales() {
-    loading.value = true
-    try {
-      const remote = await listUiLocales()
-      const byCode = new Map([...locales.value, ...(remote || [])].map(item => [item.code, item]))
-      locales.value = [...byCode.values()]
-      const savedLocale = readSelectedLocale()
-      if (savedLocale && savedLocale !== locale.value) await setLocale(savedLocale)
-    } finally { loading.value = false }
-  }
-  return { locale, locales, recent, loading, availableCodes, setLocale, loadLocales }
+  const global = i18n.global as unknown as { locale: { value: string }; setLocaleMessage: (c: string, m: Record<string, unknown>) => void }
+  const primary = ref(DEFAULT_LOCALE); const secondary = ref<string | undefined>(); const locales = ref<UiLocale[]>([]); const loading = ref(false)
+  const locale = primary; const availableCodes = computed(() => locales.value.map((item) => item.language_locale_code))
+  async function loadBundle() { const messages = await getUiMessages({ primary: primary.value, secondary: secondary.value }); global.setLocaleMessage(primary.value, nested(messages)); global.locale.value = primary.value; document.documentElement.lang = primary.value.split('_')[0]; document.documentElement.dir = locales.value.find((item) => item.language_locale_code === primary.value)?.direction ?? 'ltr' }
+  async function setPreferences(value: LanguageLocalePreference) { if (!value.primary || value.primary === value.secondary) throw new Error('INVALID_LANGUAGE_PREFERENCE'); const auth = useAuthStore(); if (auth.isLoggedIn) await putLanguageLocalePreference(value); else localStorage.setItem(KEY, JSON.stringify(value)); primary.value = value.primary; secondary.value = value.secondary; await loadBundle() }
+  async function loadPreferences() { const auth = useAuthStore(); let value: LanguageLocalePreference | undefined; if (auth.isLoggedIn) value = (await getPreferences())['language.locales'] as LanguageLocalePreference | undefined; else { try { value = JSON.parse(localStorage.getItem(KEY) || '') } catch {} } if (value?.primary) { primary.value = value.primary; secondary.value = value.secondary } }
+  async function loadLocales() { loading.value = true; try { locales.value = await listUiLocales(); await loadPreferences(); await loadBundle() } finally { loading.value = false } }
+  async function setLocale(code: string) { await setPreferences({ primary: code, secondary: secondary.value }) }
+  return { locale, primary, secondary, locales, loading, availableCodes, setLocale, setPreferences, loadPreferences, loadBundle, loadLocales }
 })

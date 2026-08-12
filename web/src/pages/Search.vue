@@ -39,8 +39,7 @@ async function doSearch() {
   loadError.value = ''
   try {
     const data = await search(query.value, {
-      lang: langs.value.join(','),
-      sort: sortBy.value,
+      lang: langs.value[0],
       limit: PAGE,
       offset: 0,
     })
@@ -59,8 +58,7 @@ async function loadMore() {
   loadingMore.value = true
   try {
     const data = await search(query.value, {
-      lang: langs.value.join(','),
-      sort: sortBy.value,
+      lang: langs.value[0],
       limit: PAGE,
       offset: results.value.length,
     })

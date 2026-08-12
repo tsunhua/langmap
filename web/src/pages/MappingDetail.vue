@@ -1,39 +1,41 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api from '@/api/client'
 import { useExpressions } from '@/composables/useExpressions'
+import { createExpression, getExpressionEdges, splitExpression } from '@/api/expressions'
 import MappingGraph from '@/components/mapping/MappingGraph.vue'
 import MappingGraphSkeleton from '@/components/mapping/MappingGraphSkeleton.vue'
 import MappingHierarchyList from '@/components/mapping/MappingHierarchyList.vue'
 import GraphInspector from '@/components/mapping/GraphInspector.vue'
 import GraphMobileInspector from '@/components/mapping/GraphMobileInspector.vue'
+import ExpressionSplitDialog from '@/components/mapping/ExpressionSplitDialog.vue'
 import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { ArrowUpRight, Plus, ChevronRight, Share2, List, X } from 'lucide-vue-next'
+import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split } from 'lucide-vue-next'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const id = computed(() => parseInt(route.params.id as string))
+const id = computed(() => decodeURIComponent(route.params.id as string))
 
 const { detail, mappingGraph } = useExpressions()
 
-const expr = ref<any>(null)
+const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
 const loading = ref(true)
 const updatingHops = ref(false)
 const loadError = ref('')
-const selectedNodeId = ref<number | null>(null)
-const collapsedIds = ref<Set<number>>(new Set())
-const graphRef = ref<{ centerOnNodeById: (id: number) => void } | null>(null)
+const selectedNodeId = ref<string | null>(null)
+const collapsedIds = ref<Set<string>>(new Set())
+const graphRef = ref<{ centerOnNodeById: (id: string) => void } | null>(null)
 const mobileMode = ref<'graph' | 'list'>('list')
 const isMobile = ref(false)
 
@@ -45,6 +47,12 @@ const quickAddLang = ref('')
 const quickAddRegion = ref('')
 const quickAddSubmitting = ref(false)
 const quickAddError = ref('')
+const showSplitDialog = ref(false)
+const splitEdges = ref<Awaited<ReturnType<typeof getExpressionEdges>>['items']>([])
+const splitSubmitting = ref(false)
+const splitError = ref('')
+const auth = useAuthStore()
+const isAdmin = computed(() => auth.user?.role === 'admin')
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
@@ -71,17 +79,14 @@ function parseHops(value: unknown): 1 | 2 | 3 {
 function initFromUrl() {
   const h = route.query.hops
   if (h) hops.value = parseHops(h)
-  const n = route.query.node
-  if (n) {
-    const nodeId = parseInt(n as string)
-    if (!isNaN(nodeId)) selectedNodeId.value = nodeId
-  }
+  const nodeId = typeof route.query.node === 'string' ? route.query.node : null
+  if (nodeId) selectedNodeId.value = nodeId
 }
 
 function syncUrl() {
   const query: Record<string, string> = {}
   if (hops.value > 1) query.hops = String(hops.value)
-  if (selectedNodeId.value) query.node = String(selectedNodeId.value)
+  if (selectedNodeId.value) query.node = selectedNodeId.value
   router.replace({ query })
 }
 
@@ -105,8 +110,8 @@ async function load() {
 function trySelectNodeFromUrl() {
   const n = route.query.node
   if (!n || !graph.value) return
-  const nodeId = parseInt(n as string)
-  if (isNaN(nodeId)) return
+  const nodeId = typeof n === 'string' ? n : null
+  if (!nodeId) return
   const exists = graph.value.nodes.some((node) => node.expression_id === nodeId)
   if (exists) {
     selectedNodeId.value = nodeId
@@ -157,7 +162,7 @@ async function changeHops(h: 1 | 2 | 3) {
 watch(hops, () => syncUrl())
 watch(selectedNodeId, () => syncUrl())
 
-function selectNode(nodeId: number) {
+function selectNode(nodeId: string) {
   selectedNodeId.value = nodeId
 }
 
@@ -165,7 +170,7 @@ function clearSelection() {
   selectedNodeId.value = null
 }
 
-function toggleCollapse(nodeId: number) {
+function toggleCollapse(nodeId: string) {
   const next = new Set(collapsedIds.value)
   if (next.has(nodeId)) {
     next.delete(nodeId)
@@ -175,12 +180,12 @@ function toggleCollapse(nodeId: number) {
   collapsedIds.value = next
 }
 
-function navigateToNode(nodeId: number) {
+function navigateToNode(nodeId: string) {
   if (nodeId === id.value) return
   router.push(`/mapping/${nodeId}`)
 }
 
-function selectNodeFromList(nodeId: number) {
+function selectNodeFromList(nodeId: string) {
   selectedNodeId.value = nodeId
   graphRef.value?.centerOnNodeById(nodeId)
   if (isMobile.value) mobileMode.value = 'graph'
@@ -215,13 +220,11 @@ async function submitQuickAdd() {
   quickAddSubmitting.value = true
   quickAddError.value = ''
   try {
-    const { data } = await api.post('/expressions', {
+    const result = await createExpression({
       text,
-      language_profile_code: languageCode,
-      region_name: regionName || undefined,
-      related_to: id.value,
+      lang_code: languageCode,
     })
-    const newId = data.data?.expressionId
+    const newId = (result as { expression?: { id?: string } }).expression?.id
     closeQuickAdd()
     quickAddText.value = ''
     quickAddLang.value = ''
@@ -233,6 +236,31 @@ async function submitQuickAdd() {
     quickAddError.value = e.response?.data?.message || e.response?.data?.error || t('mappingDetail.addFailed')
   } finally {
     quickAddSubmitting.value = false
+  }
+}
+
+async function openSplitDialog() {
+  splitError.value = ''
+  try {
+    splitEdges.value = (await getExpressionEdges(id.value)).items
+    showSplitDialog.value = true
+  } catch (error: any) {
+    splitError.value = error.response?.data?.error || 'Unable to load mappings for split'
+    showSplitDialog.value = true
+  }
+}
+
+async function confirmSplit(edgeIds: string[]) {
+  splitSubmitting.value = true
+  splitError.value = ''
+  try {
+    const result = await splitExpression(id.value, edgeIds)
+    showSplitDialog.value = false
+    await router.push(`/mapping/${encodeURIComponent(result.target_expression_id)}`)
+  } catch (error: any) {
+    splitError.value = error.response?.data?.error || 'Unable to split expression'
+  } finally {
+    splitSubmitting.value = false
   }
 }
 
@@ -259,14 +287,11 @@ const displayTree = computed<DisplayTree>(() => {
 })
 
 const coords = computed(() => {
-  const lat = expr.value?.region_latitude
-  const lng = expr.value?.region_longitude
-  if (lat == null || lng == null) return null
-  return `${lat}°N · ${lng}°E`
+  return null
 })
 
 const sourceLabel = computed(() => {
-  const sourceType = expr.value?.source_type
+  const sourceType = expr.value?.expression.source_type
   if (sourceType === 'auth') return t('mappingDetail.authority')
   if (sourceType === 'ai') return 'AI'
   if (sourceType === 'user') return t('mappingDetail.user')
@@ -283,18 +308,17 @@ const sourceLabel = computed(() => {
     <nav class="crumbs" :aria-label="t('mappingDetail.breadcrumb')">
       <router-link to="/">{{ t('mappingDetail.home') }}</router-link>
       <span class="sep">/</span>
-      <span>{{ expr.text }}</span>
+      <span>{{ expr.expression.text }}</span>
     </nav>
 
     <div class="anchor-title">
-      <h1>{{ expr.text }}</h1>
-      <LangBadge :code="expr.language_profile_code" />
+      <h1>{{ expr.expression.text }}</h1>
+      <LangBadge :code="expr.expression.lang_code" />
     </div>
 
     <div class="anchor-meta">
-      <span>{{ expr.language_name }}</span>
-      <span v-if="expr.region_name">· {{ expr.region_name }}</span>
-      <span v-if="sourceLabel" :class="['src-tag', expr.source_type]">{{ sourceLabel }}</span>
+      <span>{{ expr.expression.lang_code }}</span>
+      <span v-if="sourceLabel" :class="['src-tag', expr.expression.source_type]">{{ sourceLabel }}</span>
       <span v-if="coords" class="mono coords">{{ coords }}</span>
     </div>
 
@@ -302,9 +326,12 @@ const sourceLabel = computed(() => {
       <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
         <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
       </button>
-      <router-link :to="`/map/${expr.id}`" class="btn btn-sm">
+      <router-link :to="`/map/${encodeURIComponent(expr.expression.id)}`" class="btn btn-sm">
         <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
+      <button v-if="isAdmin" class="btn btn-sm" type="button" @click="openSplitDialog">
+        <Split :size="14" aria-hidden="true" /> Split expression
+      </button>
     </div>
 
     <section v-if="showQuickAdd" class="quick-add" :aria-label="t('mappingDetail.quickAdd')">
@@ -389,8 +416,10 @@ const sourceLabel = computed(() => {
           :selected-node-id="selectedNodeId"
           :graph="graph!"
           :display-tree="displayTree"
-          :anchor-text="expr.text"
+          :anchor-text="expr.expression.text"
           :collapsed-ids="collapsedIds"
+          :attestations="expr.attestations"
+          :readings="expr.readings"
           @close="clearSelection"
           @navigate="navigateToNode"
           @toggle-collapse="toggleCollapse"
@@ -413,13 +442,24 @@ const sourceLabel = computed(() => {
         :selected-node-id="selectedNodeId"
         :graph="graph!"
         :display-tree="displayTree"
-        :anchor-text="expr.text"
+        :anchor-text="expr.expression.text"
         :collapsed-ids="collapsedIds"
+        :attestations="expr.attestations"
+        :readings="expr.readings"
         @close="clearSelection"
         @navigate="navigateToNode"
         @toggle-collapse="toggleCollapse"
       />
     </template>
+
+    <ExpressionSplitDialog
+      v-if="showSplitDialog"
+      :edges="splitEdges"
+      :submitting="splitSubmitting"
+      :error="splitError"
+      @close="showSplitDialog = false"
+      @confirm="confirmSplit"
+    />
 
     <div v-else class="md-empty">
       <EmptyState :message="t('mappingDetail.noMappings')" />

@@ -1,7 +1,7 @@
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 import type { EdgeRow } from '../types/mapping';
 import { buildExpressionId } from './expressionIdentity';
-import { recalculateForExpressions } from './localizationDomain';
+import { listAffectedUiLocaleCodes, prepareRevisionBumps } from './localizationDomain';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
@@ -80,6 +80,17 @@ export async function splitExpression(
     );
   }
 
+  const affectedExpressionIds = [
+    input.source_expression_id,
+    targetId,
+    ...edges.map((edge) => edge.expression_a_id === input.source_expression_id
+      ? edge.expression_b_id
+      : edge.expression_a_id),
+  ];
+  const projectId = input.project_id ?? 'langmap-web';
+  const localeCodes = await listAffectedUiLocaleCodes(db, projectId, affectedExpressionIds);
+  statements.push(...prepareRevisionBumps(db, projectId, localeCodes));
+
   try {
     await db.batch(statements);
   } catch (error) {
@@ -87,8 +98,5 @@ export async function splitExpression(
     if (msg.includes('UNIQUE constraint failed')) throw new SplitError('EXPRESSION_SPLIT_CONFLICT');
     throw error;
   }
-
-  await recalculateForExpressions(db, input.project_id ?? 'langmap-web', [input.source_expression_id, targetId]);
-
   return { split_id: splitId, target_expression_id: targetId, moved_edge_count: edges.length };
 }

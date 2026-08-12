@@ -42,8 +42,8 @@ export function splitVarietyAndScript(nativeName: string): { variety: string; sc
 export function groupLocalesByVariety(locales: UiLocale[]): LocaleVarietyGroup[] {
   const groups = new Map<string, LocaleVarietyGroup>()
   for (const loc of locales) {
-    const { base } = parseLocaleCode(loc.code)
-    const native = loc.native_name || loc.name || loc.code
+    const { base } = parseLocaleCode(loc.language_locale_code)
+    const native = loc.name || loc.name_en || loc.language_locale_code
     const { variety, scriptLabel } = splitVarietyAndScript(native)
     let group = groups.get(base)
     if (!group) {
@@ -51,12 +51,12 @@ export function groupLocalesByVariety(locales: UiLocale[]): LocaleVarietyGroup[]
       groups.set(base, group)
     }
     if (!group.varietyLabel && variety) group.varietyLabel = variety
-    group.items.push({ code: loc.code, varietyLabel: variety, scriptLabel, direction: loc.direction })
+    group.items.push({ code: loc.language_locale_code, varietyLabel: variety, scriptLabel, direction: loc.direction })
   }
   const list = [...groups.values()]
   list.sort((a, b) => {
-    if (a.base === 'en') return -1
-    if (b.base === 'en') return 1
+    if (a.base === 'eng') return -1
+    if (b.base === 'eng') return 1
     return a.varietyLabel.localeCompare(b.varietyLabel) || a.base.localeCompare(b.base)
   })
   for (const g of list) {

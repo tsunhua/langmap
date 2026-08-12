@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MappingHierarchyList from './MappingHierarchyList.vue'

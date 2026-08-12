@@ -6,9 +6,9 @@ import HandbookRelationPreview from '@/components/handbook/HandbookRelationPrevi
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 
 export interface HandbookExpressionDetail {
-  id: number
+  id: string
   text: string
-  language_profile_code: string
+  lang_code: string
   language_name?: string | null
   region_name?: string | null
   source_type?: string | null
@@ -25,7 +25,7 @@ defineProps<{
 
 defineEmits<{
   close: []
-  selectExpression: [id: number]
+  selectExpression: [id: string]
 }>()
 
 const { t } = useI18n()
@@ -63,13 +63,13 @@ function sourceLabel(type?: string | null) {
     <div v-else-if="expression" class="hi-body">
       <div class="hi-title-row">
         <h2>{{ expression.text }}</h2>
-        <LangBadge :code="expression.language_profile_code" />
+        <LangBadge :code="expression.lang_code" />
       </div>
 
       <dl class="hi-facts">
         <div>
           <dt>{{ t('handbook.locale') }}</dt>
-          <dd>{{ expression.language_name || expression.language_profile_code }}</dd>
+          <dd>{{ expression.language_name || expression.lang_code }}</dd>
         </div>
         <div v-if="expression.region_name">
           <dt>{{ t('handbook.region') }}</dt>

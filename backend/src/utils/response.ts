@@ -39,6 +39,10 @@ export const notFound = (c: Context, resource: string = 'Resource') => {
   return c.json<ErrorResponse>({ success: false, error: 'NOT_FOUND', message: `${resource} not found` }, 404)
 }
 
+export const notFoundCode = (c: Context, error: string, message: string) => {
+  return c.json<ErrorResponse>({ success: false, error, message }, 404)
+}
+
 export const conflict = (c: Context, error: string, message?: string, details?: any) => {
   return c.json<ErrorResponse>({ success: false, error, message, details }, 409)
 }
@@ -57,8 +61,8 @@ export const tooManyRequests = (
   return c.json<ErrorResponse>({ success: false, error, message }, 429)
 }
 
-export const internalError = (c: Context, error: string = 'Internal server error', message?: string) => {
-  return c.json<ErrorResponse>({ success: false, error: 'INTERNAL_SERVER_ERROR', message: message || error }, 500)
+export const internalError = (c: Context) => {
+  return c.json<ErrorResponse>({ success: false, error: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' }, 500)
 }
 
 export const paginated = <T = any>(c: Context, data: T[], total: number, skip: number, limit: number) => {

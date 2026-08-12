@@ -6,19 +6,21 @@ import {
   created,
   forbidden,
   internalError,
+  notFoundCode,
   paginated,
   success,
 } from '../utils/response';
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
+import { getMappingGraph } from '../services/mappingGraph';
 import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
 import type { Bindings, Variables } from '../types';
 
-const languageLocales = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const expressions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-languageLocales.post('/', requireAuth, async (c) => {
+expressions.post('/', requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const body = await c.req.json().catch(() => ({}));
@@ -42,11 +44,11 @@ languageLocales.post('/', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Create expression error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create expression');
+    return internalError(c);
   }
 });
 
-languageLocales.get('/search', async (c) => {
+expressions.get('/search', async (c) => {
   const query = parseReferenceQuery({
     q: c.req.query('q') ?? '',
     limit: c.req.query('limit'),
@@ -57,16 +59,16 @@ languageLocales.get('/search', async (c) => {
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
-languageLocales.get('/:id', async (c) => {
+expressions.get('/:id', async (c) => {
   const id = c.req.param('id');
   const result = await getExpression(c.env.DB, id);
   if (!result) {
-    return c.json({ success: false, error: 'EXPRESSION_NOT_FOUND', message: 'Expression not found' }, 404);
+    return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   }
   return success(c, result);
 });
 
-languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
+expressions.post('/:id/locale-attestations', requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const id = c.req.param('id') ?? '';
@@ -98,7 +100,7 @@ languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
     } catch (error) {
       if (error instanceof ExpressionError) {
         if (error.code === 'EXPRESSION_NOT_FOUND') {
-          return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+          return notFoundCode(c, error.code, 'Expression not found');
         }
         return badRequest(c, error.code, error.code);
       }
@@ -106,11 +108,11 @@ languageLocales.post('/:id/locale-attestations', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Create attestation error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create attestation');
+    return internalError(c);
   }
 });
 
-languageLocales.post('/:id/readings', requireAuth, async (c) => {
+expressions.post('/:id/readings', requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const id = c.req.param('id') ?? '';
@@ -142,18 +144,18 @@ languageLocales.post('/:id/readings', requireAuth, async (c) => {
       return result.created ? created(c, result, 'Reading created') : success(c, result, 'Reading already exists');
     } catch (error) {
       if (error instanceof ReadingError) {
-        if (error.code === 'EXPRESSION_NOT_FOUND') return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+        if (error.code === 'EXPRESSION_NOT_FOUND') return notFoundCode(c, error.code, 'Expression not found');
         return badRequest(c, error.code, error.code);
       }
       throw error;
     }
   } catch (error) {
     console.error('Create reading error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create reading');
+    return internalError(c);
   }
 });
 
-languageLocales.post('/:id/mappings', requireAuth, async (c) => {
+expressions.post('/:id/mappings', requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const id = c.req.param('id') ?? '';
@@ -177,11 +179,20 @@ languageLocales.post('/:id/mappings', requireAuth, async (c) => {
     }
   } catch (error) {
     console.error('Create edge error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create edge');
+    return internalError(c);
   }
 });
 
-languageLocales.get('/:id/mappings', async (c) => {
+expressions.get('/:id/mappings', async (c) => {
+  const id = c.req.param('id') ?? '';
+  const rawHops = Number.parseInt(c.req.query('hops') ?? '1', 10);
+  if (rawHops < 1 || rawHops > 3 || !Number.isInteger(rawHops)) return badRequest(c, 'INVALID_HOPS', 'hops must be 1, 2, or 3');
+  const graph = await getMappingGraph(c.env.DB, id, rawHops as 1 | 2 | 3);
+  if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
+  return success(c, graph);
+});
+
+expressions.get('/:id/edges', async (c) => {
   const id = c.req.param('id') ?? '';
   const query = parseReferenceQuery({
     q: '',
@@ -192,7 +203,7 @@ languageLocales.get('/:id/mappings', async (c) => {
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
-languageLocales.post('/:id/split', requireAuth, async (c) => {
+expressions.post('/:id/split', requireAuth, async (c) => {
   try {
     const user = c.get('user');
     if (user?.role !== 'admin') return forbidden(c, 'FORBIDDEN', 'Split requires admin role');
@@ -208,15 +219,15 @@ languageLocales.post('/:id/split', requireAuth, async (c) => {
       return success(c, result, 'Expression split completed');
     } catch (error) {
       if (error instanceof SplitError) {
-        if (error.code === 'EXPRESSION_NOT_FOUND') return c.json({ success: false, error: error.code, message: 'Expression not found' }, 404);
+        if (error.code === 'EXPRESSION_NOT_FOUND') return notFoundCode(c, error.code, 'Expression not found');
         return badRequest(c, error.code, error.code);
       }
       throw error;
     }
   } catch (error) {
     console.error('Split expression error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to split expression');
+    return internalError(c);
   }
 });
 
-export default languageLocales;
+export default expressions;

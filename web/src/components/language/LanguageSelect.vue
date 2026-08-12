@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useLanguagesStore } from '@/stores/languages'
-import { listRegistryLanguages } from '@/api/languages'
-import type { Variety } from '@/api/languages'
+import { listLanguages, type Language } from '@/api/languageIdentity'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
@@ -17,7 +16,7 @@ const open = ref(false)
 const query = ref('')
 const inputRef = ref<HTMLInputElement>()
 const loadError = ref('')
-const searchResults = ref<Variety[]>([])
+const searchResults = ref<Language[]>([])
 const loading = ref(false)
 const activeIndex = ref(-1)
 const listId = `lang-select-list-${Math.random().toString(36).slice(2, 8)}`
@@ -36,7 +35,7 @@ async function search(q: string) {
   searchController = new AbortController()
   loading.value = true
   try {
-    searchResults.value = await listRegistryLanguages(q, searchController.signal)
+    searchResults.value = (await listLanguages(q, 20, 0, searchController.signal)).items
   } catch (e: unknown) {
     if (!(e instanceof DOMException && e.name === 'AbortError')) {
       searchResults.value = []
@@ -170,7 +169,7 @@ onUnmounted(() => {
         :class="{ 'lang-opt-active': i === activeIndex }"
         @mousedown.prevent="add(l.code)"
       >
-        <span class="lang-opt-name">{{ l.name }}</span>
+        <span class="lang-opt-name">{{ l.name_en }}</span>
         <span class="lang-opt-code">{{ l.code }}</span>
       </button>
       <div v-if="!loading && filtered.length === 0 && query" class="lang-loading">

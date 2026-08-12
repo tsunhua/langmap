@@ -19,7 +19,7 @@ export function useHandbooks() {
     }
   }
 
-  async function detail(id: number) {
+  async function detail(id: string) {
     loading.value = true
     error.value = null
     try {
@@ -47,7 +47,7 @@ export function useHandbooks() {
     }
   }
 
-  async function update(id: number, payload: any) {
+  async function update(id: string, payload: any) {
     loading.value = true
     error.value = null
     try {
@@ -61,7 +61,7 @@ export function useHandbooks() {
     }
   }
 
-  async function remove(id: number) {
+  async function remove(id: string) {
     loading.value = true
     error.value = null
     try {

@@ -105,7 +105,7 @@ languageLocales.post('/', requireAuth, async (c) => {
     return created(c, row, 'Language locale created');
   } catch (error) {
     console.error('Create language locale error:', error);
-    return internalError(c, error instanceof Error ? error.message : 'Failed to create language locale');
+    return internalError(c);
   }
 });
 

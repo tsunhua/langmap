@@ -5,11 +5,13 @@ export function useSearch() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function search(q: string, params: { lang?: string; sort?: string; limit?: number; offset?: number } = {}) {
+  async function search(q: string, params: { lang?: string; limit?: number; offset?: number } = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/search/expressions', { params: { q, ...params } })
+      const { data } = await api.get('/expressions/search', {
+        params: { q, lang_code: params.lang, limit: params.limit, offset: params.offset },
+      })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'

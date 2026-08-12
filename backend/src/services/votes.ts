@@ -13,6 +13,10 @@ const SCORE_SQL = 'SELECT COALESCE(SUM(vote), 0) AS score FROM votes WHERE targe
 
 const UPSERT_SQL = 'INSERT INTO votes (id, user_id, target_type, target_id, vote) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, target_type, target_id) DO UPDATE SET vote = excluded.vote, updated_at = CURRENT_TIMESTAMP';
 
+const UPDATE_EDGE_SCORE_SQL = "UPDATE expression_edges SET score = (SELECT COALESCE(SUM(vote), 0) FROM votes WHERE target_type = 'edge' AND target_id = ?) WHERE id = ?";
+
+const EDGE_SCORE_SQL = 'SELECT score FROM expression_edges WHERE id = ?';
+
 export async function getVoteScore(
   db: D1Database,
   targetType: string,
@@ -34,11 +38,15 @@ export async function castVote(
   const target = await db.prepare(EDGE_EXISTS_SQL).bind(input.target_id).first();
   if (!target) throw new VoteError('VOTE_TARGET_NOT_FOUND');
 
-  await db
+  const upsertVote = db
     .prepare(UPSERT_SQL)
-    .bind(crypto.randomUUID(), input.user_id, input.target_type, input.target_id, input.vote)
-    .run();
-
-  const score = await getVoteScore(db, input.target_type, input.target_id);
+    .bind(crypto.randomUUID(), input.user_id, input.target_type, input.target_id, input.vote);
+  const updateScore = db
+    .prepare(UPDATE_EDGE_SCORE_SQL)
+    .bind(input.target_id, input.target_id);
+  const readScore = db.prepare(EDGE_SCORE_SQL).bind(input.target_id);
+  const results = await db.batch([upsertVote, updateScore, readScore]);
+  const scoreResult = results[2] as unknown as { results?: Array<{ score?: number }> } | undefined;
+  const score = Number(scoreResult?.results?.[0]?.score ?? 0);
   return { score, user_vote: input.vote };
 }
