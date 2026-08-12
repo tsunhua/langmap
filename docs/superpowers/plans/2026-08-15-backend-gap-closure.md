@@ -24,7 +24,7 @@
 - 單檔測試用 `cd backend && npx vitest run tests/<file>.test.ts`，**不用** `npm test`。
 - wrangler 用 `backend/node_modules/.bin/wrangler`，**不用** `npx wrangler`。
 - 整合測試依賴 `127.0.0.1:8788` worker + 已 rebuild 的本地 D1。
-- 已知既有失敗，**不要修**：`auth.test.ts` × 1（呼叫本 plan Task 2 才會建立的 `/contributions/batch`——Task 2 完成後這個會自動變綠）、`expressionsIntegration.test.ts` × 2（locale `nan-Hant-CN`／`nan-Hant-TW` 未 seed）。
+- 已知既有失敗：`auth.test.ts` × 1、`expressionsIntegration.test.ts` × 2（locale `nan-Hant-CN`／`nan-Hant-TW` 未 seed）。`auth.test.ts` 那筆由新增的 Task 2b 處理（它是舊 `language_profile_code` 時代的契約殘留，見該 task）；`expressionsIntegration.test.ts` 那兩筆**不要修**。
 
 ---
 
@@ -51,6 +51,7 @@
 | `backend/src/routes/languages.ts` | `GET /languages`、`GET /languages/:code`、`GET /languages/:code/expressions` | Create |
 | `backend/tests/contributionsIntegration.test.ts` | contribution batch 整合測試 | Create |
 | `backend/tests/languagesIntegration.test.ts` | languages 整合測試 | Create |
+| `backend/tests/auth.test.ts` | 舊契約遷移（Task 2b） | Modify |
 | `docs/superpowers/specs/2026-08-11-language-code-redesign-design.md` | §14 補錯誤碼 | Modify |
 
 ---
@@ -303,7 +304,7 @@ git commit -m "feat(db): add votes table and vote service"
 
 `createEdgesBatch` 已存在於 `backend/src/services/mappings.ts`（Plan 4），但沒有 route 暴露它。spec §5.2 明列 `backend/src/routes/contributions.ts`，§17.1 要求「Contribution clique 與 duplicate pair reuse」，§18 人工驗收第 3 項是「Batch contribution 建立 clique」。
 
-本 task 完成後，既有的 `backend/tests/auth.test.ts` 那 1 個已知失敗會自動變綠（它呼叫的正是 `/contributions/batch`）。
+既有的 `backend/tests/auth.test.ts` 那 1 個已知失敗呼叫的正是 `/contributions/batch`，但**不會**因本 task 自動變綠——它還用了舊時代的 `lang: 'cmn-Hans'` 欄位與陣列形 `data`。該測試的契約遷移獨立為 Task 2b。
 
 **Files:**
 - Create: `backend/src/routes/contributions.ts`
@@ -530,19 +531,104 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/con
 
 Expected: 4 PASS。連跑兩次都要 PASS（測試用隨機後綴，故天然冪等）。
 
-- [ ] **Step 5: 確認 `auth.test.ts` 的既有失敗已修復**
+- [ ] **Step 5: 記錄 `auth.test.ts` 的實際狀態**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/auth.test.ts
 ```
 
-Expected: 全 PASS。這個 route 就是它缺的東西。若仍失敗，READ `tests/auth.test.ts:40-60` 看它送的 payload 形狀，並在報告中說明差異——**不要**為了讓它變綠而改測試。
+Expected: 仍是 1 passed / 1 failed。本 task 只補上它缺的 route，**不**負責遷移它的舊契約（`lang`、BCP-47 tag、陣列形 `data`）。在報告中記錄失敗原因，然後進 Task 2b。**不要**在本 task 內改動該測試。
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add backend/src/routes/contributions.ts backend/src/routes/index.ts backend/tests/contributionsIntegration.test.ts
 git commit -m "feat(api): add contribution batch endpoint building expression cliques"
+```
+
+---
+
+## Task 2b: 遷移 `auth.test.ts` 的舊契約
+
+**這個 task 是 review 補上的。** 原 plan 斷言「Task 2 完成後 `auth.test.ts` 會自動變綠」，經核實**是錯的**。該測試寫於 `d517707`（2026-08-08），早於本次語言碼重建，與現行 API 有三處獨立衝突：
+
+| # | `auth.test.ts` 期望 | 現行 API | 衝突性質 |
+|---|---|---|---|
+| 1 | 欄位名 `lang` | `createExpression` 收 `lang_code` | 欄位改名 |
+| 2 | `lang: 'cmn-Hans'`／`'en-Latn-US'` | `languages.code` 是 3 字母 ISO 639-3（`cmn`、`eng`）；`'cmn-Hans'` → `INVALID_LANG_CODE`，`'en'` 不存在 | **語言身份模型已變**（spec §6） |
+| 3 | 建立回 200；`searchBody.data` 為陣列 | 建立回 201（`created`）；`/expressions/search` 回 `paginated`，`data` 是 `{items,total,skip,limit,hasMore}` | 回應契約已變 |
+
+第 2 點是關鍵：要讓它照原樣通過，得發明一層「BCP 47 tag → lang_code」解析器，那正是 spec §16.1 明令刪除的舊模型。所以正解是**遷移這個測試的契約**，而不是遷就它。
+
+但它的**意圖**必須保留——「重複提交同一 text/lang 應重用既有 expression 而非建立重複」正是 spec §17.1 要求的「Contribution clique 與 duplicate pair reuse」。這是唯一涵蓋該行為的 auth 層測試。
+
+**Files:**
+- Modify: `backend/tests/auth.test.ts`
+
+**Interfaces:** 無新增。純測試契約對齊。
+
+- [ ] **Step 1: 確認現行契約（不要靠猜）**
+
+worker 需在 `127.0.0.1:8788`。
+
+```bash
+cd /Users/share.lim/Documents/GitHub/langmap && curl -s "http://127.0.0.1:8788/api/v2/expressions/search?q=Cancel&limit=2" | python3 -c "import json,sys; d=json.load(sys.stdin); print('data type:', type(d['data']).__name__); print('keys:', list(d['data'].keys()) if isinstance(d['data'],dict) else 'array')"
+```
+
+Expected: `data type: dict`、`keys: ['items', 'total', 'skip', 'limit', 'hasMore']`。
+
+- [ ] **Step 2: 改寫該測試**
+
+READ `backend/tests/auth.test.ts`。把第二個 `it(...)`（`reuses an existing expression ...`）的 body 中三處對齊現行契約，**保留測試名稱與意圖不變**：
+
+1. payload 的 `lang` → `lang_code`，值改用 ISO 639-3：`'cmn'` 與 `'eng'`。
+2. 兩次 submit 的期望狀態碼 `200` → `201`（`created` helper 的語義；重複提交仍回 201，因為 batch 本身成功，只是 `created_edge_count` 為 0）。
+3. search 斷言改走 `data.items`，並把 `lang=cmn-Hans` 改成 `lang_code=cmn`。
+
+```ts
+    const submit = () => fetch(`${BASE_URL}/api/v2/contributions/batch`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        expressions: [
+          { lang_code: 'cmn', text: zhText },
+          { lang_code: 'eng', text: enText },
+        ],
+      }),
+    });
+
+    expect((await submit()).status).toBe(201);
+    expect((await submit()).status).toBe(201);
+
+    const searchResponse = await fetch(
+      `${BASE_URL}/api/v2/expressions/search?q=${encodeURIComponent(zhText)}&lang_code=cmn`,
+    );
+    expect(searchResponse.status).toBe(200);
+    const searchBody = await searchResponse.json();
+    expect(searchBody.data.items).toHaveLength(1);
+    expect(searchBody.data.items[0].text).toBe(zhText);
+```
+
+`toHaveLength(1)` 是**重點斷言**，不可放寬：`zhText` 帶隨機後綴，提交兩次後若 search 找到 2 筆，就代表 expression 重用失效（spec §17.1 的 duplicate reuse 破功）。
+
+- [ ] **Step 3: 跑測試**
+
+```bash
+cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/auth.test.ts
+```
+
+Expected: 2 PASS（health + reuse）。連跑兩次確認幂等。
+
+若 `toHaveLength(1)` 失敗而拿到 2 筆，**不要**改成 `toHaveLength(2)`——那是真的 bug，代表 `createExpression` 的重用邏輯或 `UNIQUE (lang_code, text, homograph_index)` 沒生效，回報。
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add backend/tests/auth.test.ts
+git commit -m "test: align auth contribution smoke test with iso 639-3 contract"
 ```
 
 ---
@@ -1871,7 +1957,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npm test
 
 Expected：全綠，或**僅**剩 `expressionsIntegration.test.ts` × 2（locale `nan-Hant-CN`／`nan-Hant-TW` 未 seed）。
 
-特別注意：`auth.test.ts` 原本那 1 個失敗（呼叫 `/contributions/batch`）在 Task 2 之後**必須變綠**。若仍紅，是 Task 2 的 route 沒接上或路徑不符，回頭修 Task 2，**不要**改測試。
+特別注意：`auth.test.ts` 應在 Task 2b 之後全綠。若仍紅，回頭看 Task 2b，**不要**放寬斷言。
 
 - [ ] **Step 3: scripts 測試**
 
