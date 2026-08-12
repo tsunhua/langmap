@@ -100,6 +100,12 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/langmap-web.*eng-Latn-US.*active.*system/s);
   });
 
+  it('defines votes with generic target and bounded vote value', () => {
+    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?target_id TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?CHECK \(vote IN \(-1, 1\)\)/s);
+    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?UNIQUE \(user_id, target_type, target_id\)/s);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));

@@ -37,6 +37,12 @@
       "filename": "0006_ui_localization.sql",
       "size": 1617,
       "sha256": "d04a92777efdfd98c10cb28ed30b34b64f16a454e2c91ac87f8e64ef1402e217"
+    },
+    {
+      "sequence": 7,
+      "filename": "0007_votes.sql",
+      "size": 571,
+      "sha256": "1d56801208a856f9e378f9d94a0de70d85c6388c7e23c2e375d4febddadaa603"
     }
   ]
 }
