@@ -1197,7 +1197,7 @@ git commit -m "feat(api): expose 8 localization endpoints with coverage, activat
 
 ## Task 5: 全量回歸與收尾驗證
 
-- [ ] **Step 1: 後端完整測試**
+- [x] **Step 1: 後端完整測試**
 
 確保 worker 在 8788:
 
@@ -1207,7 +1207,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npm test
 
 Expected: 除已知既有失敗(`auth.test.ts` × 1、`expressionsIntegration.test.ts` × 2),全部 PASS。
 
-- [ ] **Step 2: scripts 測試**
+- [x] **Step 2: scripts 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/language-reference/test_generate.py
@@ -1218,14 +1218,14 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/test_genera
 
 若有 `manifest.json` timestamp 改動,`git checkout --` 恢復。
 
-- [ ] **Step 3: Git checks**
+- [x] **Step 3: Git checks**
 
 ```bash
 git diff --check
 git status --short
 ```
 
-- [ ] **Step 4: 若有修正則 Commit**
+- [x] **Step 4: 若有修正則 Commit**
 
 ---
 
