@@ -83,7 +83,7 @@
 - Modify: `backend/tests/schemaContract.test.ts`
 - Modify: `scripts/db/migration-lock.json`
 
-- [ ] **Step 1: 建立 migration 0005**
+- [x] **Step 1: 建立 migration 0005**
 
 Create `backend/migrations/0005_readings_preferences.sql`:
 
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 );
 ```
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 在檔頭 DROP 區塊,於 `DROP TABLE IF EXISTS expression_locale_attestations;` 之前加入(FK 相依:readings → expressions/locales/sources;preferences → users):
 
@@ -161,7 +161,7 @@ CREATE TABLE user_preferences (
 );
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在既有 describe 內、`does not contain obsolete identity tables` 之前新增兩個 it:
 
@@ -179,7 +179,7 @@ CREATE TABLE user_preferences (
   });
 ```
 
-- [ ] **Step 4: 同步 migration-lock**
+- [x] **Step 4: 同步 migration-lock**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 - <<'EOF'
@@ -201,7 +201,7 @@ EOF
 
 Expected: 5 筆。再跑一次 `update=False` 確認無錯。
 
-- [ ] **Step 5: 跑 schemaContract 測試**
+- [x] **Step 5: 跑 schemaContract 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/schemaContract.test.ts
@@ -209,7 +209,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/sch
 
 Expected: 全部 PASS(既有 11 + 新增 2 = 13)。
 
-- [ ] **Step 6: 重建本地 D1**
+- [x] **Step 6: 重建本地 D1**
 
 確保 8788 沒有 worker(`kill $(pgrep -f "wrangler dev")` if needed)。
 
@@ -217,14 +217,14 @@ Expected: 全部 PASS(既有 11 + 新增 2 = 13)。
 cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/db/manage.py local rebuild
 ```
 
-- [ ] **Step 7: 跑 scripts 驗證**
+- [x] **Step 7: 跑 scripts 驗證**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_verify
 python3 scripts/db/tests/test_local_rebuild.py
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/migrations/0005_readings_preferences.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json
@@ -251,7 +251,7 @@ git commit -m "feat(db): add expression readings and user preferences tables"
   - `createReading(db, input: { expression_id: string; language_locale_code: string; scheme: string; value: string; source?: { type: string; name: string; ref?: string }; created_by: number }): Promise<{ reading: ReadingRow; created: boolean }>`
   - Task 4 的 route 依賴 `createReading`。
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/readings.test.ts`:
 
@@ -391,7 +391,7 @@ describe('createReading', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/readings.test.ts
@@ -399,7 +399,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/rea
 
 Expected: FAIL(`Cannot find module '../src/services/readings'`)。
 
-- [ ] **Step 3: 建立 `backend/src/services/readings.ts`**
+- [x] **Step 3: 建立 `backend/src/services/readings.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -511,7 +511,7 @@ export interface ReadingRow {
 }
 ```
 
-- [ ] **Step 4: 跑單元測試確認通過**
+- [x] **Step 4: 跑單元測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/readings.test.ts
@@ -519,7 +519,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/rea
 
 Expected: 全部 PASS(7)。若 fake D1 SQL key 不匹配,以實作為準調整測試。
 
-- [ ] **Step 5: 在 `backend/src/routes/expressions.ts` 新增 `POST /:id/readings`**
+- [x] **Step 5: 在 `backend/src/routes/expressions.ts` 新增 `POST /:id/readings`**
 
 READ the current file first. Add import:
 ```ts
@@ -573,7 +573,7 @@ languageLocales.post('/:id/readings', requireAuth, async (c) => {
 });
 ```
 
-- [ ] **Step 6: 寫整合測試並啟動 worker 測試**
+- [x] **Step 6: 寫整合測試並啟動 worker 測試**
 
 Create `backend/tests/readingsIntegration.test.ts`:
 
@@ -678,7 +678,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/rea
 
 Expected: 4 tests PASS。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/services/readings.ts backend/src/types/expression.ts backend/src/routes/expressions.ts backend/tests/readings.test.ts backend/tests/readingsIntegration.test.ts
@@ -706,7 +706,7 @@ Key registry + Zod schema 驗證、locale 存在性檢查、upsert。
   - `putPreference(db, userId: number, key: string, value: unknown): Promise<{ key: string; value: unknown }>`
   - `preferences.ts` route: `GET /`、`PUT /language.locales`
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/preferences.test.ts`:
 
@@ -797,7 +797,7 @@ describe('putPreference', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/preferences.test.ts
@@ -805,7 +805,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/pre
 
 Expected: FAIL。
 
-- [ ] **Step 3: 建立 `backend/src/services/preferences.ts`**
+- [x] **Step 3: 建立 `backend/src/services/preferences.ts`**
 
 ```ts
 import { z } from 'zod';
@@ -881,7 +881,7 @@ export async function putPreference(
 }
 ```
 
-- [ ] **Step 4: 跑單元測試確認通過**
+- [x] **Step 4: 跑單元測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/preferences.test.ts
@@ -889,7 +889,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/pre
 
 Expected: 全部 PASS(6)。若 fake D1 SQL key 不匹配,以實作為準調整測試。
 
-- [ ] **Step 5: 建立 route `backend/src/routes/preferences.ts`**
+- [x] **Step 5: 建立 route `backend/src/routes/preferences.ts`**
 
 ```ts
 import { Hono } from 'hono';
@@ -936,7 +936,7 @@ export default preferences;
 
 Note: Hono's `:key` path param captures the full segment including dots, so `PUT /preferences/language.locales` arrives as `key = 'language.locales'` directly — no conversion needed.
 
-- [ ] **Step 6: 在 `backend/src/routes/index.ts` 註冊**
+- [x] **Step 6: 在 `backend/src/routes/index.ts` 註冊**
 
 READ the current file. Add:
 
@@ -949,7 +949,7 @@ And register:
 api.route('/preferences', preferences);
 ```
 
-- [ ] **Step 7: 寫整合測試並跑**
+- [x] **Step 7: 寫整合測試並跑**
 
 Create `backend/tests/preferencesIntegration.test.ts`:
 
@@ -1023,7 +1023,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/pre
 
 Expected: 4 tests PASS。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/services/preferences.ts backend/src/routes/preferences.ts backend/src/routes/index.ts backend/tests/preferences.test.ts backend/tests/preferencesIntegration.test.ts
@@ -1044,7 +1044,7 @@ git commit -m "feat(api): add user preferences with language locale validation"
 - Rename: `scripts/i18n/ja-JP.json` → `scripts/i18n/jpn-Jpan-JP.json`
 - Modify: `scripts/i18n/test_generate_bundle.py`(if it references old codes)
 
-- [ ] **Step 1: 改名 JSON 檔案**
+- [x] **Step 1: 改名 JSON 檔案**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap
@@ -1054,7 +1054,7 @@ git mv scripts/i18n/es-ES.json scripts/i18n/spa-Latn-ES.json
 git mv scripts/i18n/ja-JP.json scripts/i18n/jpn-Jpan-JP.json
 ```
 
-- [ ] **Step 2: 更新 `scripts/i18n/generate-i18n-sql.py`**
+- [x] **Step 2: 更新 `scripts/i18n/generate-i18n-sql.py`**
 
 READ the file. Make these changes:
 
@@ -1075,11 +1075,11 @@ c. Docstring(行 5-8):更新範例:
 
 d. Usage string(line 274):`cmn-Hant` → `cmn-Hant-TW`
 
-- [ ] **Step 3: 更新 `scripts/i18n/test_generate_bundle.py`**
+- [x] **Step 3: 更新 `scripts/i18n/test_generate_bundle.py`**
 
 READ the file. Update any references to old locale codes (`en-Latn`、`cmn-Hant`、`cmn-Hans`) to new codes (`eng-Latn-US`、`cmn-Hant-TW`、`cmn-Hans-CN`). If tests reference JSON filenames, update those too.
 
-- [ ] **Step 4: 跑 i18n 測試**
+- [x] **Step 4: 跑 i18n 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/test_generate_bundle.py
@@ -1087,7 +1087,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/test_genera
 
 Expected: PASS。若測試因 stale artifact 引用舊 code 而失敗,更新測試中的 code 引用。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/i18n/
@@ -1100,7 +1100,7 @@ git commit -m "refactor(i18n): migrate catalog locale codes to full Language Loc
 
 **Files:** 無(若有修正在此提交)
 
-- [ ] **Step 1: 後端完整測試**
+- [x] **Step 1: 後端完整測試**
 
 確保 worker 在 8788:
 
@@ -1110,7 +1110,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npm test
 
 Expected: 除了已知既有失敗(`auth.test.ts` × 1、`expressionsIntegration.test.ts` × 2),全部 PASS。
 
-- [ ] **Step 2: scripts 測試**
+- [x] **Step 2: scripts 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/language-reference/test_generate.py
@@ -1121,7 +1121,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 scripts/i18n/test_genera
 
 Expected: 全部 OK。
 
-- [ ] **Step 3: 文件與空白檢查**
+- [x] **Step 3: 文件與空白檢查**
 
 ```bash
 git diff --check
@@ -1130,7 +1130,7 @@ git status --short
 
 若有 `manifest.json` 被 `test_generate.py` 改了 `generated_at`,`git checkout -- scripts/language-reference/artifacts/manifest.json` 恢復。
 
-- [ ] **Step 4: 若有修正則 Commit**
+- [x] **Step 4: 若有修正則 Commit**
 
 若 Step 1–3 全過且無修正,此 step 跳過。
 
