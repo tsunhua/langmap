@@ -1,12 +1,12 @@
 # UI 翻譯 bundle
 
 受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
-`web/src/locales/en.ts`（bundle code：`en-Latn`），first-party locale JSON 目前包含：
+`web/src/locales/en.ts`（bundle code：`eng-Latn-US`），first-party locale JSON 目前包含：
 
-- `cmn-Hans.json`（bundle code：`cmn-Hans`）
-- `cmn-Hant.json`（bundle code：`cmn-Hant`）
-- `es-ES.json`（bundle code：`es-Latn`）
-- `ja-JP.json`（bundle code：`ja-Jpan`）
+- `cmn-Hans-CN.json`（bundle code：`cmn-Hans-CN`）
+- `cmn-Hant-TW.json`（bundle code：`cmn-Hant-TW`）
+- `spa-Latn-ES.json`（bundle code：`spa-Latn-ES`）
+- `jpn-Jpan-JP.json`（bundle code：`jpn-Jpan-JP`）
 
 翻譯鍵需對應 `web/src/locales/en.ts` 的巢狀路徑。
 
@@ -26,10 +26,10 @@ python3 scripts/i18n/generate-bundle.py
 ```bash
 python3 scripts/i18n/generate-bundle.py \
   --source-catalog /tmp/en.ts \
-  --locale cmn-Hant=/tmp/cmn-Hant.json \
-  --locale cmn-Hans=/tmp/cmn-Hans.json \
-  --locale es-Latn=/tmp/es-ES.json \
-  --locale ja-Jpan=/tmp/ja-JP.json \
+  --locale cmn-Hant-TW=/tmp/cmn-Hant-TW.json \
+  --locale cmn-Hans-CN=/tmp/cmn-Hans-CN.json \
+  --locale spa-Latn-ES=/tmp/spa-Latn-ES.json \
+  --locale jpn-Jpan-JP=/tmp/jpn-Jpan-JP.json \
   --output-dir /tmp/system-ui-bundle
 ```
 
@@ -64,8 +64,8 @@ production 只可先執行 `./scripts/db/manage.sh production inventory|plan`，
 
 ```bash
 python3 scripts/i18n/generate-i18n-sql.py \
-  cmn-Hant scripts/i18n/cmn-Hant.json \
-  > /tmp/langmap-cmn-Hant-import.sql
+  cmn-Hant-TW scripts/i18n/cmn-Hant-TW.json \
+  > /tmp/langmap-cmn-Hant-TW-import.sql
 ```
 
 此 generator 會保留既有 deterministic `expression_id` / `stable_edge_id` 與

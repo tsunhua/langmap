@@ -4,7 +4,7 @@ Generate SQL to import UI translations for a locale.
 
 Usage:
   python3 scripts/i18n/generate-i18n-sql.py \\
-    cmn-Hant scripts/i18n/cmn-Hant.json
+    cmn-Hant-TW scripts/i18n/cmn-Hant-TW.json
 
 The JSON format is { "key": "translation", ... } — keys match en.ts dotted paths.
 """
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ID = 'langmap-web'
-SOURCE_LANGUAGE_CODE = 'en-Latn'
+SOURCE_LANGUAGE_CODE = 'eng-Latn-US'
 LANGUAGE_ID_BITS = 16
 TEXT_ID_BITS = 37
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -147,8 +147,8 @@ def sql_value(v: str | None) -> str:
 
 
 def validate_locale_code(locale_code: str) -> None:
-    if not re.match(r'^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$', locale_code):
-        raise ValueError(f'invalid locale code "{locale_code}"')
+    if not re.match(r'^[a-z]{3}-[A-Z][a-z]{3}-[A-Z]{2}(?:_[A-Z][A-Za-z]*)*$', locale_code):
+        raise ValueError(f'invalid language locale code "{locale_code}" (expected format: xxx-Xxxx-XX)')
 
 
 def load_translations(path: Path) -> dict[str, str]:
@@ -271,8 +271,8 @@ def main():
     if len(sys.argv) != 3:
         print(f'Usage: {sys.argv[0]} <locale_code> <translations.json>', file=sys.stderr)
         print(
-            f'  e.g. {sys.argv[0]} cmn-Hant '
-            'scripts/i18n/cmn-Hant.json',
+            f'  e.g. {sys.argv[0]} cmn-Hant-TW '
+            'scripts/i18n/cmn-Hant-TW.json',
             file=sys.stderr,
         )
         sys.exit(1)
