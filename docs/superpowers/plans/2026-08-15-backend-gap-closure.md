@@ -72,7 +72,7 @@
   - `castVote(db, input: { target_type: 'edge'; target_id: string; vote: number; user_id: number }): Promise<{ score: number; user_vote: number }>`
   - `getVoteScore(db, targetType: string, targetId: string): Promise<number>`
 
-- [ ] **Step 1: 建立 migration 0007**
+- [x] **Step 1: 建立 migration 0007**
 
 Create `backend/migrations/0007_votes.sql`:
 
@@ -98,7 +98,7 @@ CREATE INDEX IF NOT EXISTS idx_votes_target ON votes (target_type, target_id);
 
 注意：`CHECK (target_type IN ('edge'))` 目前只允許 edge，未來擴充再放寬。`vote` 只允許 ±1，撤回以刪除列表達。
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 READ 當前檔案。在 DROP 區塊確認是否已有 `DROP TABLE IF EXISTS votes;`（舊 schema 遺留）。若有，保持原位不重複加；若無，加在 `DROP TABLE IF EXISTS users;` 之前。
 
@@ -125,7 +125,7 @@ CREATE TABLE votes (
 CREATE INDEX idx_votes_target ON votes (target_type, target_id);
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在 `does not contain obsolete identity tables` 之前新增：
 
@@ -137,7 +137,7 @@ CREATE INDEX idx_votes_target ON votes (target_type, target_id);
   });
 ```
 
-- [ ] **Step 4: 同步 migration-lock**
+- [x] **Step 4: 同步 migration-lock**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 - <<'EOF'
@@ -159,7 +159,7 @@ EOF
 
 Expected: 7 entries，第 7 筆是 `0007_votes.sql`。
 
-- [ ] **Step 5: 寫失敗的 vote service 單元測試**
+- [x] **Step 5: 寫失敗的 vote service 單元測試**
 
 Create `backend/tests/votes.test.ts`:
 
@@ -226,7 +226,7 @@ describe('getVoteScore', () => {
 });
 ```
 
-- [ ] **Step 6: 跑測試確認失敗**
+- [x] **Step 6: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/votes.test.ts
@@ -234,7 +234,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/vot
 
 Expected: FAIL（module not found）。
 
-- [ ] **Step 7: 建立 `backend/src/services/votes.ts`**
+- [x] **Step 7: 建立 `backend/src/services/votes.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -283,7 +283,7 @@ export async function castVote(
 }
 ```
 
-- [ ] **Step 8: 跑測試確認通過**
+- [x] **Step 8: 跑測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/votes.test.ts tests/schemaContract.test.ts
@@ -291,7 +291,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/vot
 
 Expected: votes 4 PASS；schemaContract 17 PASS（既有 16 + 新增 1）。
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/migrations/0007_votes.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json backend/src/services/votes.ts backend/tests/votes.test.ts
@@ -315,7 +315,7 @@ git commit -m "feat(db): add votes table and vote service"
 - Consumes: `createExpression`／`ExpressionError` from `services/expressions`；`createEdgesBatch`／`MappingError` from `services/mappings`；`recalculateForExpressions` 尚未存在（Task 3 才建），故本 task **不呼叫它**。
 - Produces: `POST /api/v2/contributions/batch`。
 
-- [ ] **Step 1: 建立 `backend/src/routes/contributions.ts`**
+- [x] **Step 1: 建立 `backend/src/routes/contributions.ts`**
 
 一次 batch = 多個 expression（每個可帶 optional locale）+ 它們之間的完全圖 edge。
 
@@ -408,7 +408,7 @@ export default contributions;
 
 注意：`uniqueIds` 去重是必要的——兩個輸入可能 canonicalize 成同一個 Expression（重用），此時 `createEdgesBatch` 會因 `a === b` 拋 `VALIDATION_FAILED`。
 
-- [ ] **Step 2: 在 `backend/src/routes/index.ts` 註冊**
+- [x] **Step 2: 在 `backend/src/routes/index.ts` 註冊**
 
 READ current file。加入 import：
 
@@ -422,7 +422,7 @@ import contributions from './contributions';
 api.route('/contributions', contributions);
 ```
 
-- [ ] **Step 3: 寫整合測試**
+- [x] **Step 3: 寫整合測試**
 
 Create `backend/tests/contributionsIntegration.test.ts`:
 
@@ -511,7 +511,7 @@ describe('contributions API', () => {
 });
 ```
 
-- [ ] **Step 4: 確保 worker 在 8788 並跑整合測試**
+- [x] **Step 4: 確保 worker 在 8788 並跑整合測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8788/api/v2/auth/health
@@ -531,7 +531,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/con
 
 Expected: 4 PASS。連跑兩次都要 PASS（測試用隨機後綴，故天然冪等）。
 
-- [ ] **Step 5: 記錄 `auth.test.ts` 的實際狀態**
+- [x] **Step 5: 記錄 `auth.test.ts` 的實際狀態**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/auth.test.ts
@@ -539,7 +539,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/aut
 
 Expected: 仍是 1 passed / 1 failed。本 task 只補上它缺的 route，**不**負責遷移它的舊契約（`lang`、BCP-47 tag、陣列形 `data`）。在報告中記錄失敗原因，然後進 Task 2b。**不要**在本 task 內改動該測試。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/routes/contributions.ts backend/src/routes/index.ts backend/tests/contributionsIntegration.test.ts
@@ -567,7 +567,7 @@ git commit -m "feat(api): add contribution batch endpoint building expression cl
 
 **Interfaces:** 無新增。純測試契約對齊。
 
-- [ ] **Step 1: 確認現行契約（不要靠猜）**
+- [x] **Step 1: 確認現行契約（不要靠猜）**
 
 worker 需在 `127.0.0.1:8788`。
 
@@ -577,7 +577,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && curl -s "http://127.0.0.1:8788/a
 
 Expected: `data type: dict`、`keys: ['items', 'total', 'skip', 'limit', 'hasMore']`。
 
-- [ ] **Step 2: 改寫該測試**
+- [x] **Step 2: 改寫該測試**
 
 READ `backend/tests/auth.test.ts`。把第二個 `it(...)`（`reuses an existing expression ...`）的 body 中三處對齊現行契約，**保留測試名稱與意圖不變**：
 
@@ -614,7 +614,7 @@ READ `backend/tests/auth.test.ts`。把第二個 `it(...)`（`reuses an existing
 
 `toHaveLength(1)` 是**重點斷言**，不可放寬：`zhText` 帶隨機後綴，提交兩次後若 search 找到 2 筆，就代表 expression 重用失效（spec §17.1 的 duplicate reuse 破功）。
 
-- [ ] **Step 3: 跑測試**
+- [x] **Step 3: 跑測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/auth.test.ts
@@ -624,7 +624,7 @@ Expected: 2 PASS（health + reuse）。連跑兩次確認幂等。
 
 若 `toHaveLength(1)` 失敗而拿到 2 筆，**不要**改成 `toHaveLength(2)`——那是真的 bug，代表 `createExpression` 的重用邏輯或 `UNIQUE (lang_code, text, homograph_index)` 沒生效，回報。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/tests/auth.test.ts
@@ -649,7 +649,7 @@ spec §10.2 step 7 是「重新計算受影響 UI Locale coverage／revision」�
   - `recalculateForExpressions(db, projectId, expressionIds: string[]): Promise<void>` —— 由 expression ID 反查其 lang_code，找出該 project 下同 lang 的所有 UI locale，逐一 `recalculateLocale`。
   - `POST /api/v2/localization/projects/:projectId/votes`。
 
-- [ ] **Step 1: 在 `localizationDomain.test.ts` 新增失敗測試**
+- [x] **Step 1: 在 `localizationDomain.test.ts` 新增失敗測試**
 
 在檔案的 import 行把 `recalculateForExpressions` 加進來：
 
@@ -683,7 +683,7 @@ describe('recalculateForExpressions', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts
@@ -691,7 +691,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: FAIL（`recalculateForExpressions is not a function`）。
 
-- [ ] **Step 3: 在 `localizationDomain.ts` 實作 `recalculateForExpressions`**
+- [x] **Step 3: 在 `localizationDomain.ts` 實作 `recalculateForExpressions`**
 
 READ 當前檔案。在 module-level SQL const 區塊（`CANDIDATE_SQL` 之後）加入：
 
@@ -734,7 +734,7 @@ export async function recalculateForExpressions(
 
 注意：用 `json_each` 而非動態 `IN (?, ?, ?)`，避免 SQL 字串隨參數數量變動而破壞 fake-D1 的 key 比對。D1 支援 `json_each`。
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts
@@ -742,7 +742,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: 4 PASS（既有 3 + 新增 1）。
 
-- [ ] **Step 5: 在 `splits.ts` 接線 step 7**
+- [x] **Step 5: 在 `splits.ts` 接線 step 7**
 
 READ `backend/src/services/splits.ts`。在檔首 import 區加入：
 
@@ -767,7 +767,7 @@ export async function splitExpression(
 
 注意 import 方向：`splits` → `localizationDomain` 是單向的（`localizationDomain` 不 import `splits`），無循環。
 
-- [ ] **Step 6: 在 `localization.ts` 新增 vote 端點**
+- [x] **Step 6: 在 `localization.ts` 新增 vote 端點**
 
 READ `backend/src/routes/localization.ts`。在 import 區加入：
 
@@ -825,7 +825,7 @@ localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
 
 確認 `unauthorized` 已在該檔案的 response import 清單中；若無，加入。
 
-- [ ] **Step 6b: 為 vote 端點補整合測試**
+- [x] **Step 6b: 為 vote 端點補整合測試**
 
 **這一步是 review 補上的：** `votes` 表的 UPSERT（改票必須是更新而非累加）與 vote 端點在原 plan 中沒有任何自動化覆蓋——Task 1 的 fake-D1 沒有 `UPSERT_SQL` 的 handler key，Task 2 只測 batch。這是本 plan 唯一觸及真實 D1 寫入語義的地方，必須有整合測試。
 
@@ -924,7 +924,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && ./scripts/db/manage.sh local reb
 
 rebuild 會重建本地 D1 並讓 worker 重新載入；`./dev.sh` 若已停止則重新啟動。
 
-- [ ] **Step 7: 跑相關測試**
+- [x] **Step 7: 跑相關測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts tests/votes.test.ts tests/splits.test.ts tests/localizationIntegration.test.ts
@@ -932,7 +932,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: 全 PASS，其中 localizationIntegration 為 20 PASS（既有 16 + Task 4 新增 2 未做時為 16 + vote 4 = 20；若 Task 4 已完成則 22）。`splits.test.ts` 若使用 fake D1，新增的 `recalculateForExpressions` 呼叫會多打幾個 SQL；若該測試因此失敗，READ 它並在 fake handler 中補上 `EXPRESSION_LANGS_SQL` 回傳 `{ results: [] }` 即可（空結果讓重算變成 no-op）。**不要**移除 step 7 接線。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/services/localizationDomain.ts backend/src/services/splits.ts backend/tests/localizationDomain.test.ts backend/src/routes/localization.ts backend/tests/localizationIntegration.test.ts
@@ -982,7 +982,7 @@ export async function loadWorkbenchMessages(
 ): Promise<{ items: WorkbenchMessage[]; total: number }>
 ```
 
-- [ ] **Step 1: 寫 `backend/tests/workbench.test.ts`（失敗測試）**
+- [x] **Step 1: 寫 `backend/tests/workbench.test.ts`（失敗測試）**
 
 沿用 `backend/tests/localizationDomain.test.ts` 的 `fakeD1` helper（複製那 20 行，不要 export 跨檔共用——測試 helper 重複優於耦合）。
 
@@ -1078,7 +1078,7 @@ describe('loadWorkbenchMessages', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/workbench.test.ts
@@ -1086,7 +1086,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/wor
 
 Expected: FAIL（`Failed to resolve import "../src/services/workbench"`）。
 
-- [ ] **Step 3: 建立 `backend/src/services/workbench.ts`**
+- [x] **Step 3: 建立 `backend/src/services/workbench.ts`**
 
 所有 SQL 寫成**單行** module-level const，與 Step 1 測試的 key 逐字一致。`escapeLike` 沿用 `services/languageIdentity`（既有 export，見 `languageIdentity.ts:41`），LIKE 一律帶 `ESCAPE '\'`（repo 既有慣例，見 `expressions.ts:73`）。
 
@@ -1220,7 +1220,7 @@ export async function loadWorkbenchMessages(
 - `json_each` 使 SQL 字串不隨 key 數量變動，保住 fake-D1 的精確 key 比對（Global Constraints）。
 - 兩層上限：整頁 500 列 + 每 key 5 個，避免熱門 key 的 candidate 撐爆回應（spec §4.11）。
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/workbench.test.ts
@@ -1228,7 +1228,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/wor
 
 Expected: 3 PASS。若 SQL key 不匹配會表現為 `total` 為 0 或 `candidates` 為空——此時**逐字**比對測試常數與 service 常數，不要改寬測試。
 
-- [ ] **Step 5: 擴充 `GET /workbench/:code` 回應**
+- [x] **Step 5: 擴充 `GET /workbench/:code` 回應**
 
 READ `backend/src/routes/localization.ts`。在 import 區加入：
 
@@ -1290,7 +1290,7 @@ function parseWorkbenchQuery(c: { req: { query: (key: string) => string | undefi
 1. **不用** `paginated()`：這個端點回的是複合物件（locale + coverage + messages），不是純列表；`paginated` 會把 `locale`／`coverage` 擠掉。分頁欄位手動附在 data 內。
 2. 既有整合測試 `gets workbench coverage for a locale` 斷言 `body.data.locale.status` 與 `body.data.coverage.*`，這些鍵未變動，故該測試必須**繼續通過**——若它壞了，是你改壞了形狀。
 
-- [ ] **Step 6: 在 `localizationIntegration.test.ts` 新增整合測試**
+- [x] **Step 6: 在 `localizationIntegration.test.ts` 新增整合測試**
 
 在 `describe('localization API', ...)` 內、既有 workbench 測試之後新增：
 
@@ -1335,7 +1335,7 @@ function parseWorkbenchQuery(c: { req: { query: (key: string) => string | undefi
   });
 ```
 
-- [ ] **Step 7: 跑測試**
+- [x] **Step 7: 跑測試**
 
 worker 必須在 `127.0.0.1:8788` 執行。
 
@@ -1345,7 +1345,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/wor
 
 Expected: workbench 3 PASS、localizationDomain 4 PASS、localizationIntegration 18 PASS（既有 16 + 新增 2）。連跑兩次確認**幂等**——第二次仍須全綠（測試不得依賴首次建立的 locale 狀態）。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/services/workbench.ts backend/tests/workbench.test.ts backend/src/routes/localization.ts backend/tests/localizationIntegration.test.ts
@@ -1408,7 +1408,7 @@ export async function listLanguageExpressions(db, code: string, query: { q: stri
 
 `name` 的定義：該語言底下 `language_locales` 依 `code ASC` 排序的第一個 `name`（本地名稱）；無 locale 時退回 `name_en`。這是刻意的簡化——spec 未在 `languages` 表定義 endonym 欄位，而 `language_locales.name` 是唯一可得的本地名稱來源。
 
-- [ ] **Step 1: 寫 `backend/tests/languageContent.test.ts`（失敗測試）**
+- [x] **Step 1: 寫 `backend/tests/languageContent.test.ts`（失敗測試）**
 
 複製前述 `fakeD1` helper，並用單行 SQL 常數作為 key。
 
@@ -1506,7 +1506,7 @@ describe('listLanguageExpressions', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/languageContent.test.ts
@@ -1514,7 +1514,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/lan
 
 Expected: FAIL（無法解析 `../src/services/languageContent`）。
 
-- [ ] **Step 3: 建立 `backend/src/services/languageContent.ts`**
+- [x] **Step 3: 建立 `backend/src/services/languageContent.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -1695,7 +1695,7 @@ export async function listLanguageExpressions(
 - 排序 `expression_count DESC, code ASC`：`code` 是 PK，故排序**全序**穩定（spec §4.11）。
 - 三個 route 都用 `parseReferenceQuery`，其 `MAX_LIMIT = 50` 就是本 service 的實質上限，故 service 內**不**再自設 limit 常數（自設會是永遠碰不到的死碼）。若日後語言列表需要一次拉更多，改的是 route 層的解析器，而非在 service 內偷夾。
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/languageContent.test.ts
@@ -1703,7 +1703,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/lan
 
 Expected: 4 PASS。
 
-- [ ] **Step 5: 建立 `backend/src/routes/languages.ts`**
+- [x] **Step 5: 建立 `backend/src/routes/languages.ts`**
 
 ```ts
 import { Hono } from 'hono';
@@ -1748,7 +1748,7 @@ export default languages;
 
 `code` 一律 `toLowerCase()`：ISO 639-3 code 在 registry 中是小寫，大寫輸入不應誤判為 404。
 
-- [ ] **Step 6: 在 `routes/index.ts` 註冊**
+- [x] **Step 6: 在 `routes/index.ts` 註冊**
 
 READ `backend/src/routes/index.ts`。加入 import 與 route：
 
@@ -1764,7 +1764,7 @@ api.route('/languages', languages);
 
 若 Task 2 已完成，此檔應同時已有 `api.route('/contributions', contributions);`；兩者互不衝突。
 
-- [ ] **Step 7: 建立 `backend/tests/languagesIntegration.test.ts`**
+- [x] **Step 7: 建立 `backend/tests/languagesIntegration.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1863,7 +1863,7 @@ describe('languages API', () => {
 
 注意 `expect(body.data.total).toBeLessThan(1000)` 這條斷言的用意：它是**回歸哨兵**。ISO registry 有數千列語言，若日後有人把 `/languages` 誤接回完整 registry，這條會立刻紅燈。
 
-- [ ] **Step 8: 跑測試**
+- [x] **Step 8: 跑測試**
 
 worker 需在 `127.0.0.1:8788` 執行；`eng` 的 expression 由 UI message seed 建立，故 `/eng/expressions` 必有資料。
 
@@ -1875,7 +1875,7 @@ Expected: languageContent 4 PASS、languagesIntegration 7 PASS。
 
 若 `/languages/cmn` 回 404：確認 `schema.sql` 的 seed 有 `('cmn', 'Mandarin Chinese')`（見 `backend/schema.sql:111-113`），且本地 D1 已 rebuild。
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/src/services/languageContent.ts backend/tests/languageContent.test.ts backend/src/routes/languages.ts backend/tests/languagesIntegration.test.ts backend/src/routes/index.ts
@@ -1890,7 +1890,7 @@ git commit -m "feat(api): add language content list, detail and expression endpo
 **Files:**
 - Modify: `docs/superpowers/specs/2026-08-11-language-code-redesign-design.md`
 
-- [ ] **Step 1: 更新 §14 code block**
+- [x] **Step 1: 更新 §14 code block**
 
 READ spec 的 §14（約 line 595-620）。在 code block 內 `UI_LOCALE_ALREADY_ACTIVE` 之後補上五行：
 
@@ -1904,7 +1904,7 @@ CONTRIBUTION_TOO_FEW_EXPRESSIONS
 
 不要重排既有行的順序，只追加——降低 diff 噪音。
 
-- [ ] **Step 2: 驗證清單與實作一致**
+- [x] **Step 2: 驗證清單與實作一致**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && for code in $(sed -n '/^## 14/,/^```$/p' docs/superpowers/specs/2026-08-11-language-code-redesign-design.md | grep -E '^[A-Z_]+$'); do rg -q "$code" backend/src || echo "MISSING IN CODE: $code"; done
@@ -1912,7 +1912,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && for code in $(sed -n '/^## 14/,/
 
 Expected: 無輸出。若有輸出，代表 spec 列了實作沒有的 code——回報，**不要**為了讓檢查過關而亂加程式碼。
 
-- [ ] **Step 3: 檢查文件**
+- [x] **Step 3: 檢查文件**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && git diff --check
@@ -1920,7 +1920,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && git diff --check
 
 Expected: 無輸出。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-08-11-language-code-redesign-design.md
@@ -1933,7 +1933,7 @@ git commit -m "docs(spec): register vote, contribution and ui locale error codes
 
 **Files:** 無（僅執行驗證）
 
-- [ ] **Step 1: Rebuild 本地 D1 並重啟 worker**
+- [x] **Step 1: Rebuild 本地 D1 並重啟 worker**
 
 migration 0007 需套用。停掉既有 worker 後：
 
@@ -1949,7 +1949,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && ./scripts/db/manage.sh local reb
 cd /Users/share.lim/Documents/GitHub/langmap && ./dev.sh
 ```
 
-- [ ] **Step 2: 後端全量測試**
+- [x] **Step 2: 後端全量測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npm test
@@ -1959,7 +1959,7 @@ Expected：全綠，或**僅**剩 `expressionsIntegration.test.ts` × 2（locale
 
 特別注意：`auth.test.ts` 應在 Task 2b 之後全綠。若仍紅，回頭看 Task 2b，**不要**放寬斷言。
 
-- [ ] **Step 3: scripts 測試**
+- [x] **Step 3: scripts 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 -m pytest scripts -q
@@ -1967,7 +1967,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && python3 -m pytest scripts -q
 
 Expected: 全綠（`test_generate` 6、`test_local_rebuild` 5、`test_verify` 7、`test_generate_bundle` 9）。`test_local_rebuild` 對 `local.py` 載入的 SQL 檔**數量與順序**敏感——若 Task 1 動了 `scripts/db/lib/local.py`，這裡會紅，此時 READ 該測試並修正斷言的索引，而非改回 `lib/local.py`。
 
-- [ ] **Step 4: 前端 build 未受影響**
+- [x] **Step 4: 前端 build 未受影響**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/web && npm run build
@@ -1975,7 +1975,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/web && npm run build
 
 Expected: 成功。本 plan 未改 `web/`，故這只是確認沒有意外污染。**提醒**：這個綠燈是假的——前端仍用 `language_profile_code` 與 `expression_id: number`，TypeScript 不知後端契約已變。真正的契約對齊是後續 Plan 8 的工作，不在本 plan 範圍。
 
-- [ ] **Step 5: 確認工作區乾淨**
+- [x] **Step 5: 確認工作區乾淨**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && git status --short && git log --oneline -8
@@ -1983,7 +1983,7 @@ cd /Users/share.lim/Documents/GitHub/langmap && git status --short && git log --
 
 Expected: 無未追蹤／未提交的預期外檔案；7 個 task 各自的 commit 都在。
 
-- [ ] **Step 6: 標記完成**
+- [x] **Step 6: 標記完成**
 
 在本 plan 各 task 的 checkbox 打勾後：
 

@@ -121,6 +121,7 @@ CREATE TABLE regions (
 
     language_manifest = {
         "manifest_version": 1,
+        "generation": {"language_tag_count": 3, "language_location_count": 0},
         "counts": {"languages": 3, "scripts": 2, "regions": 2},
     }
     (artifacts_dir / "manifest.json").write_text(
