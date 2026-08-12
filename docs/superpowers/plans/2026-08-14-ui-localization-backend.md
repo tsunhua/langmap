@@ -55,7 +55,7 @@
 - Modify: `scripts/db/migration-lock.json`
 - Modify: `scripts/db/lib/local.py`
 
-- [ ] **Step 1: 建立 migration 0006**
+- [x] **Step 1: 建立 migration 0006**
 
 Create `backend/migrations/0006_ui_localization.sql`:
 
@@ -102,7 +102,7 @@ INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapp
 VALUES ('langmap-web', 'eng-Latn-US', 'active', 0, 'system', CURRENT_TIMESTAMP);
 ```
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 READ 當前檔案。在 DROP 區塊,`DROP TABLE IF EXISTS ui_messages;` 之前加入:
 
@@ -159,7 +159,7 @@ INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapp
 VALUES ('langmap-web', 'eng-Latn-US', 'active', 0, 'system', CURRENT_TIMESTAMP);
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在 `does not contain obsolete identity tables` 之前新增:
 
@@ -182,7 +182,7 @@ VALUES ('langmap-web', 'eng-Latn-US', 'active', 0, 'system', CURRENT_TIMESTAMP);
   });
 ```
 
-- [ ] **Step 4: 同步 migration-lock**
+- [x] **Step 4: 同步 migration-lock**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 - <<'EOF'
@@ -204,7 +204,7 @@ EOF
 
 Expected: 6 entries.
 
-- [ ] **Step 5: 更新 `scripts/db/lib/local.py` 重新載入 UI seed SQL**
+- [x] **Step 5: 更新 `scripts/db/lib/local.py` 重新載入 UI seed SQL**
 
 READ `scripts/db/lib/local.py`。找到執行 schema + language-registry SQL 的區塊(Plan 1 Task 4 移除了 `system_ui_sql_path` 載入)。在 `language_registry_sql_path` 載入之後加回:
 
@@ -214,7 +214,7 @@ READ `scripts/db/lib/local.py`。找到執行 schema + language-registry SQL 的
 
 注意:Task 2 會生成新的 `system-ui.sql`。如果 Task 2 尚未執行,先暫時加一行 pass-through 或在 rebuild 時容忍檔案不存在。最安全的做法:先跑 Task 2 再啟用此行。本 Step 先修改程式碼,Step 8 rebuild 時 Task 2 的 SQL 已就緒。
 
-- [ ] **Step 6: 跑 schemaContract 測試**
+- [x] **Step 6: 跑 schemaContract 測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/schemaContract.test.ts
@@ -222,13 +222,13 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/sch
 
 Expected: 全 PASS(既有 13 + 新增 3 = 16)。
 
-- [ ] **Step 7: 跑 scripts 驗證(不 rebuild,僅 verify schema)**
+- [x] **Step 7: 跑 scripts 驗證(不 rebuild,僅 verify schema)**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap && python3 -m unittest scripts.db.tests.test_verify
 ```
 
-- [ ] **Step 8: Commit(不含 rebuild——Task 2 生成 SQL 後統一 rebuild)**
+- [x] **Step 8: Commit(不含 rebuild——Task 2 生成 SQL 後統一 rebuild)**
 
 ```bash
 git add backend/migrations/0006_ui_localization.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json scripts/db/lib/local.py
