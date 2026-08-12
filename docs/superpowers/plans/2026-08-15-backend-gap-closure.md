@@ -45,10 +45,11 @@
 | `backend/src/services/workbench.ts` | 逐 key candidates 組裝 | Create |
 | `backend/tests/workbench.test.ts` | workbench service 單元測試 | Create |
 | `backend/src/routes/localization.ts` | workbench 回應擴充、vote 端點 | Modify |
+| `backend/tests/localizationIntegration.test.ts` | workbench messages + vote 整合測試 | Modify |
 | `backend/src/services/languageContent.ts` | 有內容的語言列表、語言的 expressions | Create |
 | `backend/tests/languageContent.test.ts` | 單元測試 | Create |
 | `backend/src/routes/languages.ts` | `GET /languages`、`GET /languages/:code`、`GET /languages/:code/expressions` | Create |
-| `backend/tests/contributionsIntegration.test.ts` | batch + vote 整合測試 | Create |
+| `backend/tests/contributionsIntegration.test.ts` | contribution batch 整合測試 | Create |
 | `backend/tests/languagesIntegration.test.ts` | languages 整合測試 | Create |
 | `docs/superpowers/specs/2026-08-11-language-code-redesign-design.md` | §14 補錯誤碼 | Modify |
 
@@ -738,18 +739,117 @@ localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
 
 確認 `unauthorized` 已在該檔案的 response import 清單中；若無，加入。
 
+- [ ] **Step 6b: 為 vote 端點補整合測試**
+
+**這一步是 review 補上的：** `votes` 表的 UPSERT（改票必須是更新而非累加）與 vote 端點在原 plan 中沒有任何自動化覆蓋——Task 1 的 fake-D1 沒有 `UPSERT_SQL` 的 handler key，Task 2 只測 batch。這是本 plan 唯一觸及真實 D1 寫入語義的地方，必須有整合測試。
+
+在 `backend/tests/localizationIntegration.test.ts` 檔尾新增（沿用該檔既有的 `register`／`registerToken` helper）：
+
+```ts
+describe('mapping vote API', () => {
+  async function createEdge(token: string): Promise<string> {
+    const unique = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const ids: string[] = [];
+    for (const [lang, text] of [['eng', `vote-src-${unique}`], ['cmn', `投票-${unique}`]] as const) {
+      const res = await fetch(`${BASE_URL}/api/v2/expressions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lang_code: lang, text }),
+      });
+      const body = (await res.json()) as { data: { expression: { id: string } } };
+      ids.push(body.data.expression.id);
+    }
+    const mappingRes = await fetch(`${BASE_URL}/api/v2/expressions/${encodeURIComponent(ids[0])}/mappings`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ expression_b_id: ids[1], source: 'community' }),
+    });
+    const mappingBody = (await mappingRes.json()) as { data: { edge: { id: string } } };
+    return mappingBody.data.edge.id;
+  }
+
+  it('records a vote and flips it without double counting', async () => {
+    const token = await registerToken();
+    const edgeId = await createEdge(token);
+
+    const up = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: 1 }),
+    });
+    expect(up.status).toBe(200);
+    const upBody = (await up.json()) as { data: { score: number; user_vote: number } };
+    expect(upBody.data.score).toBe(1);
+    expect(upBody.data.user_vote).toBe(1);
+
+    const down = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: -1 }),
+    });
+    expect(down.status).toBe(200);
+    const downBody = (await down.json()) as { data: { score: number } };
+    expect(downBody.data.score).toBe(-1);
+  });
+
+  it('rejects an out-of-range vote value', async () => {
+    const token = await registerToken();
+    const edgeId = await createEdge(token);
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: 5 }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('VOTE_INVALID_VALUE');
+  });
+
+  it('returns 404 when voting on an unknown edge', async () => {
+    const token = await registerToken();
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: 'no-such-edge', vote: 1 }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('requires authentication', async () => {
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ edge_id: 'whatever', vote: 1 }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
+```
+
+第一個測試的 `score` 從 1 翻成 **-1（而非 0 或 2）** 是本 task 的核心斷言：它同時證明 UPSERT 命中 `UNIQUE(user_id, target_type, target_id)` 且用 `excluded.vote` 覆寫。
+
+先確認 `POST /expressions/:id/mappings` 的實際 request／response 形狀（READ `backend/src/routes/expressions.ts` 中的 mappings handler）；上面的 `expression_b_id`／`data.edge.id` 若與實作不符，**改測試去對齊實作**，不要改動 route。
+
+**本地 D1 必須先有 `votes` 表**（migration 0007 於 Task 1 建立但尚未套用）。跑這些測試前執行：
+
+```bash
+cd /Users/share.lim/Documents/GitHub/langmap && ./scripts/db/manage.sh local rebuild && ./scripts/db/manage.sh local verify
+```
+
+rebuild 會重建本地 D1 並讓 worker 重新載入；`./dev.sh` 若已停止則重新啟動。
+
 - [ ] **Step 7: 跑相關測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/localizationDomain.test.ts tests/votes.test.ts tests/splits.test.ts tests/localizationIntegration.test.ts
 ```
 
-Expected: 全 PASS。`splits.test.ts` 若使用 fake D1，新增的 `recalculateForExpressions` 呼叫會多打幾個 SQL；若該測試因此失敗，READ 它並在 fake handler 中補上 `EXPRESSION_LANGS_SQL` 回傳 `{ results: [] }` 即可（空結果讓重算變成 no-op）。**不要**移除 step 7 接線。
+Expected: 全 PASS，其中 localizationIntegration 為 20 PASS（既有 16 + Task 4 新增 2 未做時為 16 + vote 4 = 20；若 Task 4 已完成則 22）。`splits.test.ts` 若使用 fake D1，新增的 `recalculateForExpressions` 呼叫會多打幾個 SQL；若該測試因此失敗，READ 它並在 fake handler 中補上 `EXPRESSION_LANGS_SQL` 回傳 `{ results: [] }` 即可（空結果讓重算變成 no-op）。**不要**移除 step 7 接線。
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add backend/src/services/localizationDomain.ts backend/src/services/splits.ts backend/tests/localizationDomain.test.ts backend/src/routes/localization.ts
+git add backend/src/services/localizationDomain.ts backend/src/services/splits.ts backend/tests/localizationDomain.test.ts backend/src/routes/localization.ts backend/tests/localizationIntegration.test.ts
 git commit -m "feat(api): recalculate ui locale coverage after split and vote"
 ```
 
