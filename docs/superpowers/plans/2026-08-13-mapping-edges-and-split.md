@@ -74,7 +74,7 @@
 - Consumes: Plan 1-3 的 `backend/schema.sql`、`backend/migrations/0001-0003_*.sql`、`scripts/db/migration-lock.json`、`scripts/db/lib/migrations.sync_migration_lock`。
 - Produces: `expression_edges`、`expression_splits`、`expression_split_moves` 三張表;`system-split` system source row。Task 2-4 的 service／route／整合測試依賴這些表存在。
 
-- [ ] **Step 1: 建立 migration 0004**
+- [x] **Step 1: 建立 migration 0004**
 
 Create `backend/migrations/0004_mapping_edges.sql`:
 
@@ -123,7 +123,7 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
   ('system-split', 'system', 'LangMap split expressions');
 ```
 
-- [ ] **Step 2: 更新 `backend/schema.sql`**
+- [x] **Step 2: 更新 `backend/schema.sql`**
 
 在檔頭 DROP 區塊,於 `DROP TABLE IF EXISTS expression_edges;` 之前插入兩行(split 相依於 edges,move 相依於 split;順序:move → split → edges):
 
@@ -181,7 +181,7 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
   ('system-split', 'system', 'LangMap split expressions');
 ```
 
-- [ ] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
+- [x] **Step 3: 更新 `backend/tests/schemaContract.test.ts`**
 
 在既有 describe 內、`does not contain obsolete identity tables` 之前新增三個 it:
 
@@ -207,7 +207,7 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
   });
 ```
 
-- [ ] **Step 4: 更新 migration-lock 並驗證同步**
+- [x] **Step 4: 更新 migration-lock 並驗證同步**
 
 從 repo root 執行(一次性維護操作,不留 repo 檔案):
 
@@ -233,7 +233,7 @@ Expected: 印出 0001、0002、0003、0004 四筆;`migrations` 陣列變四筆�
 
 再跑一次同段程式(改 `update=False`)確認無 "unlocked migration" 錯誤。
 
-- [ ] **Step 5: 跑 schemaContract 測試**
+- [x] **Step 5: 跑 schemaContract 測試**
 
 ```bash
 cd backend && npx vitest run tests/schemaContract.test.ts
@@ -241,7 +241,7 @@ cd backend && npx vitest run tests/schemaContract.test.ts
 
 Expected: 全部 it PASS(既有 8 + 新增 3 = 11 個)。
 
-- [ ] **Step 6: 重建本地 D1**
+- [x] **Step 6: 重建本地 D1**
 
 先確認 8788 沒有 worker 占用(若有,`kill $(pgrep -f "wrangler dev")`,等 `lsof -iTCP:8788` 清空)。然後從 repo root:
 
@@ -251,7 +251,7 @@ python3 scripts/db/manage.py local rebuild
 
 Expected: 回 `{"status": "rebuilt", ...}`。
 
-- [ ] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
+- [x] **Step 7: 跑 scripts 驗證確認 schema invariant 未破壞**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_verify
@@ -260,7 +260,7 @@ python3 scripts/db/tests/test_local_rebuild.py
 
 Expected: 兩者皆 OK。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/migrations/0004_mapping_edges.sql backend/schema.sql backend/tests/schemaContract.test.ts scripts/db/migration-lock.json
@@ -290,7 +290,7 @@ Edge pair canonicalization、find-or-reuse(單條 + batch clique)、1-hop graph 
   - `class MappingError extends Error { constructor(public code: string) }`
   - Task 3 的 `splitExpression` 依賴 `getExpressionMappings` 的查詢能力(實際 split 直接查 edges 表以取得完整 edge row);Task 4 的 route 依賴以上全部。
 
-- [ ] **Step 1: 建立共用型別**
+- [x] **Step 1: 建立共用型別**
 
 Create `backend/src/types/mapping.ts`:
 
@@ -333,7 +333,7 @@ export interface SplitMoveRow {
 }
 ```
 
-- [ ] **Step 2: 寫失敗的單元測試**
+- [x] **Step 2: 寫失敗的單元測試**
 
 Create `backend/tests/mappings.test.ts`:
 
@@ -496,7 +496,7 @@ describe('getExpressionMappings', () => {
 });
 ```
 
-- [ ] **Step 3: 跑測試確認失敗**
+- [x] **Step 3: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/mappings.test.ts
@@ -504,7 +504,7 @@ cd backend && npx vitest run tests/mappings.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/mappings'`)。
 
-- [ ] **Step 4: 建立 `backend/src/services/mappings.ts`**
+- [x] **Step 4: 建立 `backend/src/services/mappings.ts`**
 
 ```ts
 import type { D1Database } from '@cloudflare/workers-types';
@@ -594,7 +594,7 @@ export async function getExpressionMappings(
 }
 ```
 
-- [ ] **Step 5: 跑測試確認通過**
+- [x] **Step 5: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/mappings.test.ts
@@ -602,7 +602,7 @@ cd backend && npx vitest run tests/mappings.test.ts
 
 Expected: 全部 PASS(canonicalizeEdgePair 2、createEdge 3、createEdgesBatch 2、getExpressionMappings 2 = 9)。若某個 it 因 fake D1 SQL 字串與實作不一致而失敗,以實作(Step 4)的 SQL 為準調整測試裡的 handler key,再重跑。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/types/mapping.ts backend/src/services/mappings.ts backend/tests/mappings.test.ts
@@ -626,7 +626,7 @@ Admin-only atomic split:驗證 → 分配 homograph_index → 建立 split audit
   - `splitExpression(db, input: { source_expression_id: string; edge_ids: string[]; created_by: number }): Promise<{ split_id: string; target_expression_id: string; moved_edge_count: number }>`
   - Task 4 的 split route 依賴此函式。
 
-- [ ] **Step 1: 寫失敗的單元測試**
+- [x] **Step 1: 寫失敗的單元測試**
 
 Create `backend/tests/splits.test.ts`:
 
@@ -715,7 +715,7 @@ describe('splitExpression', () => {
 });
 ```
 
-- [ ] **Step 2: 跑測試確認失敗**
+- [x] **Step 2: 跑測試確認失敗**
 
 ```bash
 cd backend && npx vitest run tests/splits.test.ts
@@ -723,7 +723,7 @@ cd backend && npx vitest run tests/splits.test.ts
 
 Expected: FAIL(`Cannot find module '../src/services/splits'`)。
 
-- [ ] **Step 3: 建立 `backend/src/services/splits.ts`**
+- [x] **Step 3: 建立 `backend/src/services/splits.ts`**
 
 ```ts
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
@@ -819,7 +819,7 @@ export async function splitExpression(
 }
 ```
 
-- [ ] **Step 4: 跑測試確認通過**
+- [x] **Step 4: 跑測試確認通過**
 
 ```bash
 cd backend && npx vitest run tests/splits.test.ts
@@ -827,7 +827,7 @@ cd backend && npx vitest run tests/splits.test.ts
 
 Expected: 4 tests PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/splits.ts backend/tests/splits.test.ts
@@ -851,7 +851,7 @@ git commit -m "feat(api): add expression split service with atomic edge moves an
   - `GET /api/v2/expressions/:id/mappings`(分頁)
   - `POST /api/v2/expressions/:id/split`(200;400/401/403/404)
 
-- [ ] **Step 1: 寫整合測試(先失敗)**
+- [x] **Step 1: 寫整合測試(先失敗)**
 
 Create `backend/tests/mappingsIntegration.test.ts`:
 
@@ -1008,7 +1008,7 @@ async function getAdminToken(): Promise<string> {
 }
 ```
 
-- [ ] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
+- [x] **Step 2: 確保 worker 在 8788 且資料已 rebuild,跑測試確認失敗**
 
 若 8788 沒有 worker,從 `backend/` 背景啟動(不要用 `./dev.sh`):
 
@@ -1024,7 +1024,7 @@ cd backend && npx vitest run tests/mappingsIntegration.test.ts
 
 Expected: 全 FAIL(404,route 尚未掛上)。確認失敗後才繼續。
 
-- [ ] **Step 3: 在 `backend/src/routes/expressions.ts` 新增三條 handler**
+- [x] **Step 3: 在 `backend/src/routes/expressions.ts` 新增三條 handler**
 
 在現有檔案的 import 區塊加入:
 
@@ -1105,7 +1105,7 @@ languageLocales.post('/:id/split', requireAuth, async (c) => {
 });
 ```
 
-- [ ] **Step 4: 等 wrangler hot-reload,重跑整合測試**
+- [x] **Step 4: 等 wrangler hot-reload,重跑整合測試**
 
 wrangler dev 會自動 reload `backend/src` 的變更;等 2–3 秒再跑:
 
@@ -1115,7 +1115,7 @@ cd backend && npx vitest run tests/mappingsIntegration.test.ts
 
 Expected: 全部 PASS(7 個 it:mappings 5 + split 2)。
 
-- [ ] **Step 5: 跑 type-check 確認無型別錯誤**
+- [x] **Step 5: 跑 type-check 確認無型別錯誤**
 
 ```bash
 web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
@@ -1148,7 +1148,7 @@ web/node_modules/.bin/tsc -p /tmp/tsconfig.langmap-backend-check.json
 
 Expected: 只可能出現 `utils/response.ts`(status: number 的 overload)與 `types.ts`(`D1Database` global)兩處**既有**錯誤;`mappings.ts`／`splits.ts`／新增的 route handler 不得有新錯誤。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/routes/expressions.ts backend/tests/mappingsIntegration.test.ts
@@ -1165,7 +1165,7 @@ Commit 後 `git status --short` 應乾淨。
 
 **Files:** 無(若有修正在此提交)
 
-- [ ] **Step 1: 後端完整測試(已知既有失敗除外)**
+- [x] **Step 1: 後端完整測試(已知既有失敗除外)**
 
 worker 在 8788 的前提下:
 
@@ -1175,7 +1175,7 @@ cd backend && npm test
 
 Expected: 所有 test file 通過,**除了** `auth.test.ts` 中 `reuses an existing expression ...`(Plan 1 起既有的 stale 測試)——該失敗為已知,不回修、不改動 `auth.test.ts`。
 
-- [ ] **Step 2: scripts 測試**
+- [x] **Step 2: scripts 測試**
 
 從 repo root:
 
@@ -1191,7 +1191,7 @@ python3 -m unittest scripts.db.tests.test_dev_sh
 
 Expected: 全部 OK。
 
-- [ ] **Step 3: 手動抽查新 API(rebuild 後)**
+- [x] **Step 3: 手動抽查新 API(rebuild 後)**
 
 先確保一個 admin token(直接在 sqlite 升級某 user):
 
@@ -1218,7 +1218,7 @@ curl -s "http://127.0.0.1:8788/api/v2/expressions/<ID_A>/mappings" | python3 -m 
 
 Expected: edge 建立(201)、列表含 neighbor info、分頁結構正確。
 
-- [ ] **Step 4: 文件與空白檢查**
+- [x] **Step 4: 文件與空白檢查**
 
 ```bash
 git diff --check
@@ -1227,7 +1227,7 @@ git status --short
 
 Expected: `git diff --check` 無輸出;`git status --short` 乾淨。
 
-- [ ] **Step 5: 若有修正則 Commit**
+- [x] **Step 5: 若有修正則 Commit**
 
 ```bash
 git add <修正的檔案>
