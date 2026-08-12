@@ -14,9 +14,20 @@ import { MappingError, createEdge } from '../services/mappings';
 import { VoteError, castVote } from '../services/votes';
 import { getPreferences } from '../services/preferences';
 import { parseLanguageLocaleCode } from '../services/languageIdentity';
+import { loadWorkbenchMessages } from '../services/workbench';
 import type { Bindings, Variables } from '../types';
 
 const LOCALE_LIST_LIMIT = 200;
+const WORKBENCH_PAGE_LIMIT = 100;
+const WORKBENCH_MAX_LIMIT = 200;
+const WORKBENCH_MAX_Q = 80;
+
+function parseWorkbenchQuery(c: { req: { query: (key: string) => string | undefined } }): { q: string; limit: number; offset: number } {
+  const limitRaw = Number(c.req.query('limit') ?? String(WORKBENCH_PAGE_LIMIT));
+  const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? Math.trunc(limitRaw) : WORKBENCH_PAGE_LIMIT, 1), WORKBENCH_MAX_LIMIT);
+  const offset = Math.max(parseInt(c.req.query('skip') ?? c.req.query('offset') ?? '0') || 0, 0);
+  return { q: (c.req.query('q') ?? '').slice(0, WORKBENCH_MAX_Q), limit, offset };
+}
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -123,7 +134,20 @@ localization.get('/projects/:projectId/workbench/:code', requireAuth, async (c) 
       .first<{ status: string; mapping_revision: number; activation_source: string | null }>();
     if (!locale) return notFound(c, 'UI locale');
     const coverage = await computeCoverage(c.env.DB, projectId, code);
-    return success(c, { locale, coverage });
+    const query = parseWorkbenchQuery(c);
+    const messages = await loadWorkbenchMessages(c.env.DB, projectId, code, {
+      limit: query.limit,
+      offset: query.offset,
+      q: query.q,
+    });
+    return success(c, {
+      locale,
+      coverage,
+      messages: messages.items,
+      total: messages.total,
+      skip: query.offset,
+      limit: query.limit,
+    });
   } catch (error) {
     console.error('Workbench error:', error);
     return internalError(c, error instanceof Error ? error.message : 'Failed to load workbench');

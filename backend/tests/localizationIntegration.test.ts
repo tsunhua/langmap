@@ -112,6 +112,45 @@ describe('localization API', () => {
     expect(body.data.coverage.coverage).toBe(0);
   });
 
+  it('returns paged workbench messages with candidate slots', async () => {
+    const token = await registerToken();
+    const createStatus = await ensureLocale(token, 'cmn-Hans-CN');
+    expect([201, 400]).toContain(createStatus);
+    const res = await fetch(`${API}/workbench/cmn-Hans-CN?limit=5`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      data: {
+        total: number;
+        limit: number;
+        skip: number;
+        messages: Array<{ key: string; source_text: string; placeholders: string[]; candidates: unknown[] }>;
+      };
+    };
+    expect(body.data.limit).toBe(5);
+    expect(body.data.skip).toBe(0);
+    expect(body.data.total).toBeGreaterThan(5);
+    expect(body.data.messages).toHaveLength(5);
+    const keys = body.data.messages.map((m) => m.key);
+    expect([...keys].sort()).toEqual(keys);
+    expect(Array.isArray(body.data.messages[0].candidates)).toBe(true);
+  });
+
+  it('filters workbench messages by query', async () => {
+    const token = await registerToken();
+    await ensureLocale(token, 'cmn-Hans-CN');
+    const res = await fetch(`${API}/workbench/cmn-Hans-CN?q=cancel&limit=50`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: { messages: Array<{ key: string; source_text: string }> } };
+    expect(body.data.messages.length).toBeGreaterThan(0);
+    for (const message of body.data.messages) {
+      expect(`${message.key} ${message.source_text}`.toLowerCase()).toContain('cancel');
+    }
+  });
+
   it('creates a translation mapping', async () => {
     const token = await registerToken();
     const sourceMsg = await fetch(`${API}/messages`).then((r) => r.json()) as { data: { messages: Array<{ key: string; text: string }> } };
