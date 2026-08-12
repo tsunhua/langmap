@@ -19,6 +19,12 @@
       "filename": "0003_expressions.sql",
       "size": 1571,
       "sha256": "b48adbf2b7914fd0eb5628897f737b9a1ab41845994e3219f333a02d3e64d60c"
+    },
+    {
+      "sequence": 4,
+      "filename": "0004_mapping_edges.sql",
+      "size": 1492,
+      "sha256": "93ccfd708ecb6d244b7dcc3eb3fb721e841ecee0186898dd6496a664bcfe09b0"
     }
   ]
 }

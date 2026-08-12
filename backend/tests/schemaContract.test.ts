@@ -51,6 +51,26 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
   });
 
+  it('defines expression_edges with pair ordering check and uniqueness', () => {
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?id TEXT PRIMARY KEY/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?score INTEGER NOT NULL DEFAULT 0/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?source TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?CHECK \(expression_a_id < expression_b_id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?UNIQUE \(expression_a_id, expression_b_id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?FOREIGN KEY \(expression_a_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(expression_b_id\) REFERENCES expressions\(id\)/s);
+  });
+
+  it('defines expression_splits and expression_split_moves audit tables', () => {
+    expect(schema).toMatch(/CREATE TABLE expression_splits[\s\S]*?source_expression_id TEXT NOT NULL[\s\S]*?target_expression_id TEXT NOT NULL[\s\S]*?created_by INTEGER NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expression_splits[\s\S]*?FOREIGN KEY \(source_expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(target_expression_id\) REFERENCES expressions\(id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?split_id TEXT NOT NULL[\s\S]*?edge_id TEXT NOT NULL[\s\S]*?PRIMARY KEY \(split_id, edge_id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?previous_a_id[\s\S]*?new_a_id/s);
+  });
+
+  it('seeds the system-split source for split provenance', () => {
+    expect(schema).toMatch(/system-split/);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));
