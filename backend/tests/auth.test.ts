@@ -38,21 +38,21 @@ describe('v2 auth smoke', () => {
       },
       body: JSON.stringify({
         expressions: [
-          { lang: 'cmn-Hans', text: zhText },
-          { lang: 'en-Latn-US', text: enText },
+          { lang_code: 'cmn', text: zhText },
+          { lang_code: 'eng', text: enText },
         ],
       }),
     });
 
-    expect((await submit()).status).toBe(200);
-    expect((await submit()).status).toBe(200);
+    expect((await submit()).status).toBe(201);
+    expect((await submit()).status).toBe(201);
 
     const searchResponse = await fetch(
-      `${BASE_URL}/api/v2/expressions/search?q=${encodeURIComponent(zhText)}&lang=cmn-Hans`,
+      `${BASE_URL}/api/v2/expressions/search?q=${encodeURIComponent(zhText)}&lang_code=cmn`,
     );
     expect(searchResponse.status).toBe(200);
     const searchBody = await searchResponse.json();
-    expect(searchBody.data).toHaveLength(1);
-    expect(searchBody.data[0].text).toBe(zhText);
+    expect(searchBody.data.items).toHaveLength(1);
+    expect(searchBody.data.items[0].text).toBe(zhText);
   });
 });
