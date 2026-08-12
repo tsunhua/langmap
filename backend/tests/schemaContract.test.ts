@@ -71,6 +71,18 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/system-split/);
   });
 
+  it('defines expression_readings with scheme, value and provenance uniqueness', () => {
+    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?scheme TEXT NOT NULL[\s\S]*?value TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?UNIQUE \(expression_id, language_locale_code, scheme, value, source_id, source_ref\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)/s);
+  });
+
+  it('defines user_preferences with composite key and cascade delete', () => {
+    expect(schema).toMatch(/CREATE TABLE user_preferences[\s\S]*?PRIMARY KEY \(user_id, preference_key\)/s);
+    expect(schema).toMatch(/CREATE TABLE user_preferences[\s\S]*?FOREIGN KEY \(user_id\) REFERENCES users\(id\) ON DELETE CASCADE/s);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));

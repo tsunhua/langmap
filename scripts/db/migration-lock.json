@@ -25,6 +25,12 @@
       "filename": "0004_mapping_edges.sql",
       "size": 1492,
       "sha256": "93ccfd708ecb6d244b7dcc3eb3fb721e841ecee0186898dd6496a664bcfe09b0"
+    },
+    {
+      "sequence": 5,
+      "filename": "0005_readings_preferences.sql",
+      "size": 1032,
+      "sha256": "5926c5c2559693d6b067d63fc56d20763967351c2670382e5102e0c57add2224"
     }
   ]
 }
