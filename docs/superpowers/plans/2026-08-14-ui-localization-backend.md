@@ -809,7 +809,7 @@ git commit -m "feat(api): add localization domain service with coverage and bund
 - Consumes: Task 3 的 `LocalizationError`／`computeCoverage`／`activateLocale`／`archiveLocale`／`recalculateLocale`／`resolveBundle`;Plan 4 的 `createEdge`／`MappingError`;Plan 5 的 `getPreferences`;`parseLanguageLocaleCode`／`parseReferenceQuery`;`requireAuth`／`optionalAuth`;response helpers。
 - Produces: 8 條 localization API endpoint。
 
-- [ ] **Step 1: 建立 `backend/src/routes/localization.ts`**
+- [x] **Step 1: 建立 `backend/src/routes/localization.ts`**
 
 ```ts
 import { Hono } from 'hono';
@@ -1056,7 +1056,7 @@ localization.get('/projects/:projectId/messages', optionalAuth, async (c) => {
 export default localization;
 ```
 
-- [ ] **Step 2: 在 `backend/src/routes/index.ts` 註冊**
+- [x] **Step 2: 在 `backend/src/routes/index.ts` 註冊**
 
 READ current file. Add:
 ```ts
@@ -1067,7 +1067,7 @@ And register:
 api.route('/localization', localization);
 ```
 
-- [ ] **Step 3: 寫整合測試**
+- [x] **Step 3: 寫整合測試**
 
 Create `backend/tests/localizationIntegration.test.ts`:
 
@@ -1172,7 +1172,7 @@ describe('localization API', () => {
 });
 ```
 
-- [ ] **Step 4: 啟動 worker 並跑整合測試**
+- [x] **Step 4: 啟動 worker 並跑整合測試**
 
 ```bash
 cd /Users/share.lim/Documents/GitHub/langmap/backend && nohup node_modules/.bin/wrangler dev --config wrangler.jsonc --persist-to .wrangler/state --port 8788 > /tmp/langmap-worker-8788.log 2>&1 & disown
@@ -1186,7 +1186,7 @@ cd /Users/share.lim/Documents/GitHub/langmap/backend && npx vitest run tests/loc
 
 Expected: 6 PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/routes/localization.ts backend/src/routes/index.ts backend/tests/localizationIntegration.test.ts
