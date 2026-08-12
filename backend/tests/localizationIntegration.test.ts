@@ -268,3 +268,82 @@ describe('localization API', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('mapping vote API', () => {
+  async function createEdge(token: string): Promise<string> {
+    const unique = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const ids: string[] = [];
+    for (const [lang, text] of [['eng', `vote-src-${unique}`], ['cmn', `投票-${unique}`]] as const) {
+      const res = await fetch(`${BASE_URL}/api/v2/expressions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lang_code: lang, text }),
+      });
+      const body = (await res.json()) as { data: { expression: { id: string } } };
+      ids.push(body.data.expression.id);
+    }
+    const mappingRes = await fetch(`${BASE_URL}/api/v2/expressions/${encodeURIComponent(ids[0])}/mappings`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ target_expression_id: ids[1], source: 'community' }),
+    });
+    const mappingBody = (await mappingRes.json()) as { data: { edge: { id: string } } };
+    return mappingBody.data.edge.id;
+  }
+
+  it('records a vote and flips it without double counting', async () => {
+    const token = await registerToken();
+    const edgeId = await createEdge(token);
+
+    const up = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: 1 }),
+    });
+    expect(up.status).toBe(200);
+    const upBody = (await up.json()) as { data: { score: number; user_vote: number } };
+    expect(upBody.data.score).toBe(1);
+    expect(upBody.data.user_vote).toBe(1);
+
+    const down = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: -1 }),
+    });
+    expect(down.status).toBe(200);
+    const downBody = (await down.json()) as { data: { score: number } };
+    expect(downBody.data.score).toBe(-1);
+  });
+
+  it('rejects an out-of-range vote value', async () => {
+    const token = await registerToken();
+    const edgeId = await createEdge(token);
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: edgeId, vote: 5 }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('VOTE_INVALID_VALUE');
+  });
+
+  it('returns 404 when voting on an unknown edge', async () => {
+    const token = await registerToken();
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ edge_id: 'no-such-edge', vote: 1 }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('requires authentication', async () => {
+    const res = await fetch(`${API}/votes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ edge_id: 'whatever', vote: 1 }),
+    });
+    expect(res.status).toBe(401);
+  });
+});

@@ -1,6 +1,7 @@
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 import type { EdgeRow } from '../types/mapping';
 import { buildExpressionId } from './expressionIdentity';
+import { recalculateForExpressions } from './localizationDomain';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
@@ -14,7 +15,7 @@ export class SplitError extends Error {
 
 export async function splitExpression(
   db: D1Database,
-  input: { source_expression_id: string; edge_ids: string[]; created_by: number },
+  input: { source_expression_id: string; edge_ids: string[]; created_by: number; project_id?: string },
 ): Promise<{ split_id: string; target_expression_id: string; moved_edge_count: number }> {
   if (!input.edge_ids.length) throw new SplitError('EXPRESSION_SPLIT_EMPTY');
 
@@ -86,6 +87,8 @@ export async function splitExpression(
     if (msg.includes('UNIQUE constraint failed')) throw new SplitError('EXPRESSION_SPLIT_CONFLICT');
     throw error;
   }
+
+  await recalculateForExpressions(db, input.project_id ?? 'langmap-web', [input.source_expression_id, targetId]);
 
   return { split_id: splitId, target_expression_id: targetId, moved_edge_count: edges.length };
 }

@@ -38,6 +38,10 @@ const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json 
 
 const CANDIDATE_SQL = 'SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at FROM ui_messages m JOIN expression_edges e ON e.expression_a_id = m.source_expression_id OR e.expression_b_id = m.source_expression_id JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = m.source_expression_id THEN e.expression_b_id ELSE e.expression_a_id END WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ? AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?) ORDER BY m.message_key ASC, e.score DESC, e.created_at ASC, t.id ASC';
 
+const EXPRESSION_LANGS_SQL = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
+
+const PROJECT_LOCALES_FOR_LANG_SQL = 'SELECT language_locale_code FROM ui_locales WHERE project_id = ? AND language_locale_code LIKE ? ORDER BY language_locale_code ASC LIMIT 200';
+
 function extractPlaceholders(text: string): string[] {
   return Array.from(text.matchAll(/\{(\w+)\}/g)).map((m) => m[1]).sort();
 }
@@ -125,6 +129,33 @@ export async function recalculateLocale(
     )
     .bind(projectId, languageLocaleCode)
     .run();
+}
+
+export async function recalculateForExpressions(
+  db: D1Database,
+  projectId: string,
+  expressionIds: string[],
+): Promise<void> {
+  const unique = Array.from(new Set(expressionIds.filter((id) => id))).sort();
+  if (unique.length === 0) return;
+
+  const { results: langRows } = await db
+    .prepare(EXPRESSION_LANGS_SQL)
+    .bind(JSON.stringify(unique))
+    .all<{ lang_code: string }>();
+
+  const localeCodes = new Set<string>();
+  for (const row of langRows) {
+    const { results: localeRows } = await db
+      .prepare(PROJECT_LOCALES_FOR_LANG_SQL)
+      .bind(projectId, `${row.lang_code}-%`)
+      .all<{ language_locale_code: string }>();
+    for (const locale of localeRows) localeCodes.add(locale.language_locale_code);
+  }
+
+  for (const code of Array.from(localeCodes).sort()) {
+    await recalculateLocale(db, projectId, code);
+  }
 }
 
 export async function activateLocale(

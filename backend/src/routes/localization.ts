@@ -1,15 +1,17 @@
 import { Hono } from 'hono';
 import { requireAuth, optionalAuth } from '../middleware/auth';
-import { badRequest, created, forbidden, internalError, notFound, success } from '../utils/response';
+import { badRequest, created, forbidden, internalError, notFound, success, unauthorized } from '../utils/response';
 import {
   LocalizationError,
   activateLocale,
   archiveLocale,
   computeCoverage,
+  recalculateForExpressions,
   recalculateLocale,
   resolveBundle,
 } from '../services/localizationDomain';
 import { MappingError, createEdge } from '../services/mappings';
+import { VoteError, castVote } from '../services/votes';
 import { getPreferences } from '../services/preferences';
 import { parseLanguageLocaleCode } from '../services/languageIdentity';
 import type { Bindings, Variables } from '../types';
@@ -241,6 +243,48 @@ localization.get('/projects/:projectId/messages', optionalAuth, async (c) => {
   } catch (error) {
     console.error('Get messages error:', error);
     return internalError(c, error instanceof Error ? error.message : 'Failed to get messages');
+  }
+});
+
+localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user) return unauthorized(c);
+    const projectId = c.req.param('projectId') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const edgeId = typeof (body as { edge_id?: unknown })?.edge_id === 'string' ? (body as { edge_id: string }).edge_id.trim() : '';
+    const voteRaw = (body as { vote?: unknown })?.vote;
+    const vote = typeof voteRaw === 'number' ? voteRaw : Number(voteRaw);
+
+    if (!edgeId) return badRequest(c, 'VALIDATION_FAILED', 'edge_id is required');
+
+    try {
+      const result = await castVote(c.env.DB, {
+        target_type: 'edge',
+        target_id: edgeId,
+        vote,
+        user_id: user.id,
+      });
+
+      const edge = await c.env.DB
+        .prepare('SELECT expression_a_id, expression_b_id FROM expression_edges WHERE id = ?')
+        .bind(edgeId)
+        .first<{ expression_a_id: string; expression_b_id: string }>();
+      if (edge) {
+        await recalculateForExpressions(c.env.DB, projectId, [edge.expression_a_id, edge.expression_b_id]);
+      }
+
+      return success(c, result, 'Vote recorded');
+    } catch (error) {
+      if (error instanceof VoteError) {
+        if (error.code === 'VOTE_TARGET_NOT_FOUND') return notFound(c, 'Edge');
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Vote error:', error);
+    return internalError(c, error instanceof Error ? error.message : 'Failed to record vote');
   }
 });
 

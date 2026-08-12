@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocalizationError, computeCoverage, resolveBundle } from '../src/services/localizationDomain';
+import { LocalizationError, computeCoverage, recalculateForExpressions, resolveBundle } from '../src/services/localizationDomain';
 
 type Handler = () => unknown;
 
@@ -68,5 +68,27 @@ describe('resolveBundle', () => {
     expect(bundle[0].key).toBe('greeting');
     expect(bundle[0].text).toBe('Hello');
     expect(bundle[0].resolved_from).toBe('source');
+  });
+});
+
+describe('recalculateForExpressions', () => {
+  it('does nothing when the expression list is empty', async () => {
+    let prepared = 0;
+    const db = {
+      prepare(_sql: string) {
+        prepared++;
+        return {
+          bind() {
+            return {
+              async first() { return null; },
+              async run() { return { success: true }; },
+              async all() { return { results: [] }; },
+            };
+          },
+        };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+    await recalculateForExpressions(db, 'langmap-web', []);
+    expect(prepared).toBe(0);
   });
 });
