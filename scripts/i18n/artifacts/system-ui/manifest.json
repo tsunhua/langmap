@@ -3,37 +3,37 @@
   "project_id": "langmap-web",
   "ownership_scope": "managed-system-ui",
   "locale_codes": [
-    "cmn-Hans",
-    "cmn-Hant",
-    "en-Latn",
-    "es-Latn",
-    "ja-Jpan"
+    "cmn-Hans-CN",
+    "cmn-Hant-TW",
+    "eng-Latn-US",
+    "jpn-Jpan-JP",
+    "spa-Latn-ES"
   ],
   "counts": {
     "locale_count": 5,
-    "message_count": 314,
+    "message_count": 317,
     "translation_count": 1240
   },
   "inputs": {
     "source_catalog": {
-      "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
-      "sha256": "8e51b0f3029fa7cff386465a2445a1794b04aecd1f07fa560710bdb7ac32454a"
+      "path": "/Users/share.lim/Documents/GitHub/langmap/web/src/locales/en.ts",
+      "sha256": "9bb063436234331fdc9cb72ad4cb57fc199ab2e3af4c0952359bccffa652cc5e"
     },
     "locales": {
-      "cmn-Hans": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans.json",
+      "cmn-Hans-CN": {
+        "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hans-CN.json",
         "sha256": "f198d9f7e8b9426509c9a64269261108ccf88fc9c68578bf7f607232901fc5b5"
       },
-      "cmn-Hant": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant.json",
+      "cmn-Hant-TW": {
+        "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hant-TW.json",
         "sha256": "3234e6c1cae86d8fe19a3f2051fcfd263ebe4e4a3b547d7db35f6984c775158f"
       },
-      "es-Latn": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/es-ES.json",
+      "spa-Latn-ES": {
+        "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/spa-Latn-ES.json",
         "sha256": "60d8ae1a9f44f80e4b2e17790728ec1668fb81a7c34068c143722e5499aa3676"
       },
-      "ja-Jpan": {
-        "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/ja-JP.json",
+      "jpn-Jpan-JP": {
+        "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/jpn-Jpan-JP.json",
         "sha256": "ff8857d68d2410b1c6e6c7fc19b7f8451e55f74b878589e0aea56744e5042fae"
       }
     }
@@ -41,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "5c04a704112e313701a6768a1c1fe70ffb6b249379a94ccb7587f525dbf1491a"
+      "sha256": "95ccee5f4148c5873418e7dd7e1222fc02315ebfe84ff3b02d5838626517b09d"
     }
   }
 }

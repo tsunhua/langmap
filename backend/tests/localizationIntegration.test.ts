@@ -99,9 +99,9 @@ describe('localization API', () => {
 
   it('gets workbench coverage for a locale', async () => {
     const token = await registerToken();
-    const createStatus = await ensureLocale(token, 'cmn-Hans-CN');
+    const createStatus = await ensureLocale(token, 'nan-Hant-TW');
     expect([201, 400]).toContain(createStatus);
-    const res = await fetch(`${API}/workbench/cmn-Hans-CN`, {
+    const res = await fetch(`${API}/workbench/nan-Hant-TW`, {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
@@ -114,9 +114,9 @@ describe('localization API', () => {
 
   it('returns paged workbench messages with candidate slots', async () => {
     const token = await registerToken();
-    const createStatus = await ensureLocale(token, 'cmn-Hans-CN');
+    const createStatus = await ensureLocale(token, 'nan-Hant-TW');
     expect([201, 400]).toContain(createStatus);
-    const res = await fetch(`${API}/workbench/cmn-Hans-CN?limit=5`, {
+    const res = await fetch(`${API}/workbench/nan-Hant-TW?limit=5`, {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
@@ -139,8 +139,8 @@ describe('localization API', () => {
 
   it('filters workbench messages by query', async () => {
     const token = await registerToken();
-    await ensureLocale(token, 'cmn-Hans-CN');
-    const res = await fetch(`${API}/workbench/cmn-Hans-CN?q=cancel&limit=50`, {
+    await ensureLocale(token, 'nan-Hant-TW');
+    const res = await fetch(`${API}/workbench/nan-Hant-TW?q=cancel&limit=50`, {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(200);
@@ -214,8 +214,8 @@ describe('localization API', () => {
 
   it('forbids non-admin users from activating a locale', async () => {
     const token = await registerToken();
-    await ensureLocale(token, 'cmn-Hant-TW');
-    const res = await fetch(`${API}/locales/cmn-Hant-TW/activate`, {
+    await ensureLocale(token, 'nan-Hant-TW');
+    const res = await fetch(`${API}/locales/nan-Hant-TW/activate`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}` },
     });
@@ -226,7 +226,7 @@ describe('localization API', () => {
 
   it('lets an admin manually activate a draft locale below threshold', async () => {
     const adminToken = await getAdminToken();
-    const code = 'cmn-Hant-TW';
+    const code = 'nan-Hant-CN';
     await ensureLocale(adminToken, code);
     const res = await fetch(`${API}/locales/${code}/activate`, {
       method: 'POST',
