@@ -5,6 +5,9 @@ import { SourceError } from './sources';
 import { NULL_SAFE_PROVENANCE_PREDICATE, resolveProvenance, type SourceInput } from './provenance';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
+// Expression columns qualified with the `e.` alias so they stay unambiguous
+// when the detail query LEFT JOINs sources (which also has id/created_at).
+const EXPRESSION_DETAIL_COLUMNS = `e.id, e.lang_code, e.text, e.text_hash, e.homograph_index, e.description, e.tags_json, e.source_id, e.source_ref, e.review_status, e.created_by, e.created_at, e.updated_at`;
 
 const ATTESTATION_COLUMNS = `id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at`;
 const READING_DETAIL_COLUMNS = `r.id, r.expression_id, r.language_locale_code, r.scheme, r.value, r.source_id, r.source_ref, r.created_by, r.created_at,
@@ -114,7 +117,7 @@ export async function getExpression(
   id: string,
 ): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }> } | null> {
   const expression = await db
-    .prepare(`SELECT ${EXPRESSION_COLUMNS}, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?`)
+    .prepare(`SELECT ${EXPRESSION_DETAIL_COLUMNS}, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?`)
     .bind(id)
     .first<ExpressionRow>();
   if (!expression) return null;

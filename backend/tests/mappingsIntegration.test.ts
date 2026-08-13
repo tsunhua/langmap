@@ -99,7 +99,7 @@ describe('mappings API', () => {
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({ target_expression_id: idB, source: 'contribution' }),
     });
-    const res = await fetch(`${BASE_URL}/api/v2/expressions/${idA}/mappings`);
+    const res = await fetch(`${BASE_URL}/api/v2/expressions/${idA}/edges`);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       data: { items: Array<{ edge_id: string; neighbor_id: string; neighbor_text: string; score: number }>; total: number; hasMore: boolean };

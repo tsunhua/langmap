@@ -244,7 +244,7 @@ describe('getExpression', () => {
 
   it('returns null for a missing expression', async () => {
     const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?':
+      'SELECT e.id, e.lang_code, e.text, e.text_hash, e.homograph_index, e.description, e.tags_json, e.source_id, e.source_ref, e.review_status, e.created_by, e.created_at, e.updated_at, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?':
         () => null,
     });
     expect(await getExpression(db, 'nan:missing')).toBeNull();

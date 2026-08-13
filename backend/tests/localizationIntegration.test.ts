@@ -344,7 +344,7 @@ describe('mapping vote API', () => {
     expect(upBody.data.score).toBe(1);
     expect(upBody.data.user_vote).toBe(1);
 
-    const mappings = await fetch(`${BASE_URL}/api/v2/expressions/${encodeURIComponent(sourceExpressionId)}/mappings`);
+    const mappings = await fetch(`${BASE_URL}/api/v2/expressions/${encodeURIComponent(sourceExpressionId)}/edges`);
     const mappingsBody = (await mappings.json()) as { data: { items: Array<{ edge_id: string; score: number }> } };
     expect(mappingsBody.data.items.find((item) => item.edge_id === edgeId)?.score).toBe(1);
 
