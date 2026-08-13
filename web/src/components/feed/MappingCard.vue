@@ -1,8 +1,10 @@
 <script setup lang="ts">
 defineProps<{
   id: string
+  a_id: string
   a_text: string
   a_lang: string
+  b_id: string
   b_text: string
   b_lang: string
   score: number
@@ -18,7 +20,8 @@ function scoreClass(score: number) {
 </script>
 
 <template>
-  <router-link :to="`/mapping/${id}`" class="map-card">
+  <!-- /mapping/:id takes an expression id, not an edge id; anchor on one endpoint. -->
+  <router-link :to="`/mapping/${a_id}`" class="map-card">
     <span class="mc-node">
       <span class="mc-tx">{{ a_text }}</span>
       <span class="mc-lc">{{ a_lang }}</span>

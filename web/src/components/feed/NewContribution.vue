@@ -5,6 +5,8 @@ const { t } = useI18n()
 
 defineProps<{
   id: string | number
+  a_id?: string
+  b_id?: string
   type?: string
   left_text: string
   left_lang: string
@@ -27,7 +29,9 @@ function timeAgo(dateStr?: string): string {
 </script>
 
 <template>
-  <router-link :to="`/mapping/${id}`" class="new-row">
+  <!-- /mapping/:id takes an expression id. Mapping rows carry an edge id, so
+       anchor on endpoint a_id; expression rows already use an expression id. -->
+  <router-link :to="`/mapping/${a_id || id}`" class="new-row">
     <span :class="['new-kind', { expr: type === 'expression' }]">
       {{ type === 'expression' ? t('components.expression') : t('components.mapping') }}
     </span>

@@ -29,6 +29,7 @@ feed.get('/new', async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT * FROM (
        SELECT 'mapping' AS type, ed.id AS id, ed.created_at, u.username AS author,
+              a.id AS a_id, b.id AS b_id,
               a.text AS left_text, a.lang_code AS left_lang,
               b.text AS right_text, b.lang_code AS right_lang
        FROM expression_edges ed
@@ -37,6 +38,7 @@ feed.get('/new', async (c) => {
        LEFT JOIN users u ON u.id = ed.created_by
        UNION ALL
        SELECT 'expression' AS type, e.id, e.created_at, u.username AS author,
+              NULL AS a_id, NULL AS b_id,
               e.text AS left_text, e.lang_code AS left_lang, NULL AS right_text, NULL AS right_lang
        FROM expressions e
        LEFT JOIN users u ON u.id = e.created_by
