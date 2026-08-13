@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSearch } from '@/composables/useSearch'
+import { apiErrorMessage } from '@/utils/apiError'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import LanguageSelect from '@/components/language/LanguageSelect.vue'
@@ -15,10 +16,19 @@ const { search } = useSearch()
 const { t } = useI18n()
 
 const PAGE = 20
+interface SearchResult {
+  id: string
+  text: string
+  lang_code: string
+  language_profile_code?: string
+  mapping_count?: number
+  source_type?: string
+  region_name?: string
+}
 const query = ref((route.query.q as string) || '')
 const langs = ref<string[]>([])
 const sortBy = ref('hot')
-const results = ref<any[]>([])
+const results = ref<SearchResult[]>([])
 const total = ref(0)
 const loading = ref(false)
 const loadingMore = ref(false)
@@ -56,9 +66,9 @@ async function doSearch() {
     results.value = data.items
     total.value = data.total
     searched.value = true
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (request !== searchRequest) return
-    loadError.value = e.response?.data?.message || e.response?.data?.error || t('search.loadFailed')
+    loadError.value = apiErrorMessage(e, t('search.loadFailed'))
   } finally {
     if (request === searchRequest) loading.value = false
   }
@@ -80,9 +90,9 @@ async function loadMore() {
     })
     if (request !== searchRequest) return
     results.value = results.value.concat(data.items)
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (request !== searchRequest) return
-    loadMoreError.value = e.response?.data?.message || e.response?.data?.error || t('search.loadMoreFailed')
+    loadMoreError.value = apiErrorMessage(e, t('search.loadMoreFailed'))
   } finally {
     if (request === searchRequest) loadingMore.value = false
   }

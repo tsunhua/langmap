@@ -30,8 +30,8 @@ describe('getLanguageDetail', () => {
     const db = fakeD1({
       [LANGUAGE_ROW_SQL]: () => ({ code: 'cmn', name_en: 'Mandarin Chinese' }),
       [LANGUAGE_LOCALES_SQL]: () => ({ results: [
-        { code: 'cmn-Hans-CN', name: '简体中文', name_en: 'Simplified Chinese', script_code: 'Hans', region_code: 'CN', place_path: '', locale_latitude: null, locale_longitude: null, region_latitude: null, region_longitude: null },
-        { code: 'cmn-Hant-TW', name: '臺灣華語', name_en: 'Taiwan Mandarin', script_code: 'Hant', region_code: 'TW', place_path: '', locale_latitude: null, locale_longitude: null, region_latitude: 23.7, region_longitude: 121 },
+        { code: 'cmn-Hans-CN', name: '普通话(CN)', name_en: 'Simplified Chinese', script_code: 'Hans', region_code: 'CN', place_path: '', locale_latitude: null, locale_longitude: null, region_latitude: null, region_longitude: null },
+        { code: 'cmn-Hant-TW', name: '華語(TW)', name_en: 'Taiwan Mandarin', script_code: 'Hant', region_code: 'TW', place_path: '', locale_latitude: null, locale_longitude: null, region_latitude: 23.7, region_longitude: 121 },
         { code: 'cmn-Hant-TW_Tainan', name: '臺南話', name_en: 'Tainan Mandarin', script_code: 'Hant', region_code: 'TW', place_path: 'Tainan', locale_latitude: 22.99, locale_longitude: 120.2, region_latitude: 23.7, region_longitude: 121 },
       ] }),
       [EXPRESSION_COUNT_SQL]: () => ({ total: 7 }),
@@ -39,7 +39,7 @@ describe('getLanguageDetail', () => {
       [MAPPED_EXPRESSION_COUNT_SQL]: () => ({ total: 4 }),
     });
     const detail = await getLanguageDetail(db, 'cmn');
-    expect(detail?.name).toBe('简体中文');
+    expect(detail?.name).toBe('Mandarin Chinese');
     expect(detail?.expression_count).toBe(7);
     expect(detail?.reading_count).toBe(2);
     expect(detail?.mapped_expression_count).toBe(4);
@@ -64,7 +64,7 @@ describe('listLanguagesWithContent', () => {
 
 describe('listLanguageExpressions', () => {
   it('returns null when the language does not exist', async () => {
-    expect(await listLanguageExpressions(fakeD1({ [LANGUAGE_ROW_SQL]: () => null }), 'zzz', { q: '', sort: 'hot', limit: 20, offset: 0 })).toBeNull();
+    expect(await listLanguageExpressions(fakeD1({ [LANGUAGE_ROW_SQL]: () => null }), 'zzz', { q: '', locale: '', sort: 'hot', limit: 20, offset: 0 })).toBeNull();
   });
 
   it('supports stable hot, new and alphabetical ordering', async () => {
@@ -80,7 +80,7 @@ describe('listLanguageExpressions', () => {
     } as unknown as import('@cloudflare/workers-types').D1Database;
 
     for (const sort of ['hot', 'new', 'alpha'] as const) {
-      await listLanguageExpressions(db, 'nan', { q: '', sort, limit: 20, offset: 0 });
+      await listLanguageExpressions(db, 'nan', { q: '', locale: '', sort, limit: 20, offset: 0 });
     }
 
     const pageQueries = observedSql.filter((sql) => sql.includes('SELECT e.id'));

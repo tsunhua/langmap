@@ -132,9 +132,9 @@ INSERT OR IGNORE INTO language_locales
   (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref)
 VALUES
   ('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English (US)', 'English (US)', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '臺灣華語', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語（中國）', 'Min Nan Chinese (China)', 'system-seed', 'seed:system-seed:1'),
+  ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '華語(TW)', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
+  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '普通话(CN)', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語(CN)', 'Min Nan Chinese (China)', 'system-seed', 'seed:system-seed:1'),
   ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '閩南語（臺灣）', 'Min Nan Chinese (Taiwan)', 'system-seed', 'seed:system-seed:1'),
   ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español (España)', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
   ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語（日本）', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');

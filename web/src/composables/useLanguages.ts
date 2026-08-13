@@ -1,44 +1,51 @@
 import { ref } from 'vue'
-import { getLanguageDetail, listContentLanguages, listLanguageExpressions } from '@/api/languageIdentity'
+import {
+  getLanguageDetail,
+  listContentLanguages,
+  listLanguageExpressions,
+  type ContentLanguagePageQuery,
+  type LanguageExpressionPageQuery,
+} from '@/api/languageIdentity'
+import { apiErrorMessage } from '@/utils/apiError'
 
 export function useLanguages() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function list(params: { search?: string; sort?: string; limit?: number; offset?: number } = {}) {
+  async function list(params: ContentLanguagePageQuery = {}, signal?: AbortSignal) {
     loading.value = true
     error.value = null
     try {
-      return (await listContentLanguages({ q: params.search, limit: params.limit, offset: params.offset })).items
-    } catch (e: any) {
-      error.value = e.response?.data?.error || 'Request failed'
-      throw e
+      return await listContentLanguages(params, signal)
+    } catch (cause: unknown) {
+      error.value = apiErrorMessage(cause, 'Request failed')
+      throw cause
     } finally {
       loading.value = false
     }
   }
 
-  async function detail(code: string) {
+  async function detail(code: string, signal?: AbortSignal) {
     loading.value = true
     error.value = null
     try {
-      return await getLanguageDetail(code)
-    } catch (e: any) {
-      error.value = e.response?.data?.error || 'Request failed'
-      throw e
+      return await getLanguageDetail(code, signal)
+    } catch (cause: unknown) {
+      error.value = apiErrorMessage(cause, 'Request failed')
+      throw cause
     } finally {
       loading.value = false
     }
   }
 
-  async function expressions(code: string, params: { limit?: number; offset?: number } = {}) {
+  async function expressions(code: string, params: LanguageExpressionPageQuery = {}, signal?: AbortSignal) {
     loading.value = true
     error.value = null
     try {
-      return await listLanguageExpressions(code, params)
-    } catch (e: any) {
-      error.value = e.response?.data?.error || 'Request failed'
-      throw e
+      return await listLanguageExpressions(code, params, signal)
+    } catch (cause: unknown) {
+      error.value = apiErrorMessage(cause, 'Request failed')
+      throw cause
     } finally {
       loading.value = false
     }

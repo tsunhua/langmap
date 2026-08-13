@@ -65,8 +65,9 @@ const LANGUAGE_LOCALES_SQL = `SELECT l.code, l.name, l.name_en, l.script_code, l
 const EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions WHERE lang_code = ?';
 const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expression_readings WHERE expression_id IN (SELECT id FROM expressions WHERE lang_code = ?)';
 const MAPPED_EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)';
-const LANGUAGE_EXPRESSIONS_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions WHERE lang_code = ? AND (? = '' OR text LIKE ? ESCAPE '\\')";
-const LANGUAGE_EXPRESSIONS_SELECT_SQL = "SELECT e.id, e.lang_code, e.text, e.description, e.homograph_index, e.review_status, e.created_at, (SELECT COUNT(*) FROM expression_readings r WHERE r.expression_id = e.id) AS reading_count, (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id) AS mapping_count FROM expressions e WHERE e.lang_code = ? AND (? = '' OR e.text LIKE ? ESCAPE '\\')";
+const LANGUAGE_EXPRESSIONS_FILTER_SQL = "e.lang_code = ? AND (? = '' OR e.text LIKE ? ESCAPE '\\') AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
+const LANGUAGE_EXPRESSIONS_COUNT_SQL = `SELECT COUNT(*) AS total FROM expressions e WHERE ${LANGUAGE_EXPRESSIONS_FILTER_SQL}`;
+const LANGUAGE_EXPRESSIONS_SELECT_SQL = `SELECT e.id, e.lang_code, e.text, e.description, e.homograph_index, e.review_status, e.created_at, (SELECT COUNT(*) FROM expression_readings r WHERE r.expression_id = e.id) AS reading_count, (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id) AS mapping_count FROM expressions e WHERE ${LANGUAGE_EXPRESSIONS_FILTER_SQL}`;
 
 function resolveCoordinate(row: LocaleRow): Pick<LanguageLocaleSummary, 'latitude' | 'longitude' | 'coordinate_source'> {
   if (row.locale_latitude !== null && row.locale_longitude !== null) return { latitude: row.locale_latitude, longitude: row.locale_longitude, coordinate_source: 'locale' };
@@ -91,20 +92,22 @@ export async function getLanguageDetail(db: D1Database, code: string): Promise<L
   const readingCount = await db.prepare(READING_COUNT_SQL).bind(code).first<{ total: number }>();
   const mappedExpressionCount = await db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code).first<{ total: number }>();
   const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));
-  return { code: language.code, name_en: language.name_en, name: locales[0]?.name ?? language.name_en, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
+  return { code: language.code, name_en: language.name_en, name: language.name_en, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
 }
 
-export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
+export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
   const language = await db.prepare(LANGUAGE_ROW_SQL).bind(code).first<{ code: string }>();
   if (!language) return null;
   const q = query.q.trim();
   const like = q ? `%${escapeLike(q)}%` : '';
-  const totalRow = await db.prepare(LANGUAGE_EXPRESSIONS_COUNT_SQL).bind(code, q, like).first<{ total: number }>();
+  const locale = query.locale.trim();
+  const filters = [code, q, like, locale, locale];
+  const totalRow = await db.prepare(LANGUAGE_EXPRESSIONS_COUNT_SQL).bind(...filters).first<{ total: number }>();
   const orderBy = query.sort === 'hot'
     ? 'mapping_count DESC, e.text ASC, e.homograph_index ASC, e.id ASC'
     : query.sort === 'new'
       ? 'e.created_at DESC, e.id ASC'
       : 'e.text ASC, e.homograph_index ASC, e.id ASC';
-  const { results } = await db.prepare(`${LANGUAGE_EXPRESSIONS_SELECT_SQL} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(code, q, like, query.limit, query.offset).all<LanguageExpressionRow>();
+  const { results } = await db.prepare(`${LANGUAGE_EXPRESSIONS_SELECT_SQL} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(...filters, query.limit, query.offset).all<LanguageExpressionRow>();
   return { items: results, total: totalRow?.total ?? 0 };
 }

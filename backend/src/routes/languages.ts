@@ -26,6 +26,7 @@ languages.get('/:code/expressions', async (c) => {
   const query = parseQuery(c);
   const result = await listLanguageExpressions(c.env.DB, code, {
     ...query,
+    locale: c.req.query('locale') ?? '',
     sort: parseExpressionSort(c.req.query('sort')),
   });
   if (!result) return notFound(c, 'Language');

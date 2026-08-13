@@ -69,4 +69,3 @@
 | 匿名訪問 `/translate` 觸發 401 並 hard-redirect 至 `/auth` | 路由無 auth guard；client 401 攔截器 hard-redirect；頁面 `onMounted` 無條件呼叫需鑑權的 workbench API | `load()` 改以 `auth.isLoggedIn` 把關；登入提示上提至 workbench 區塊外（原本位於永不載入的 workbench 區塊內，匿名看到空白無回饋狀態） |
 | HomeFeed 首次載入 `/favicon.ico` 404（僅桌面首次頁出現，瀏覽器快取） | 無 favicon link，瀏覽器自動請求 | `index.html` 加 `<link rel="icon" href="data:,">` 抑制請求 |
 | （回歸覆蓋） | 缺匿名路徑測試 | 新增「匿名不呼叫 workbench API 且顯示登入提示」測試 |
-

@@ -1,49 +1,79 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useLanguages } from '@/composables/useLanguages'
+import { useLatestRequest } from '@/composables/useLatestRequest'
+import { apiErrorMessage } from '@/utils/apiError'
+import type { ContentLanguage } from '@/api/languageIdentity'
 import LanguageCard from '@/components/language/LanguageCard.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 
-const { loading, list } = useLanguages()
+const PAGE = 20
+const { list } = useLanguages()
 const { t } = useI18n()
 
-const languages = ref<any[]>([])
+const languages = ref<ContentLanguage[]>([])
 const searchQuery = ref('')
-const sortBy = ref('count')
+const sortBy = ref<'count' | 'alpha'>('count')
+const total = ref(0)
+const loading = ref(false)
+const loadingMore = ref(false)
 const loadError = ref('')
+const loadMoreError = ref('')
+const languagesRequest = useLatestRequest()
+let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
-const filtered = computed(() => {
-  let result = languages.value
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase()
-    result = result.filter((l: any) =>
-      l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q)
-    )
-  }
-  if (sortBy.value === 'alpha') {
-    result = [...result].sort((a: any, b: any) => a.name.localeCompare(b.name))
+const totalExpressions = computed(() => languages.value.reduce((sum, language) => sum + language.expression_count, 0))
+
+async function loadLanguages(append = false) {
+  if (append && (loadingMore.value || languages.value.length >= total.value)) return
+  const request = append ? languagesRequest.current() : languagesRequest.begin()
+  if (append) {
+    loadingMore.value = true
+    loadMoreError.value = ''
   } else {
-    result = [...result].sort((a: any, b: any) => b.expression_count - a.expression_count)
+    loading.value = true
+    loadError.value = ''
+    loadMoreError.value = ''
   }
-  return result
-})
 
-const totalExpressions = computed(() => languages.value.reduce((s: number, l: any) => s + l.expression_count, 0))
-
-async function loadLanguages() {
-  loadError.value = ''
   try {
-    languages.value = await list({ limit: 100 })
-  } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('languagesPage.loadFailed')
+    const page = await list({
+      q: searchQuery.value.trim(),
+      sort: sortBy.value,
+      limit: PAGE,
+      offset: append ? languages.value.length : 0,
+    })
+    if (!languagesRequest.isCurrent(request)) return
+    languages.value = append ? [...languages.value, ...page.items] : page.items
+    total.value = page.total
+  } catch (cause: unknown) {
+    if (!languagesRequest.isCurrent(request)) return
+    if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
+    else loadError.value = apiErrorMessage(cause, t('languagesPage.loadFailed'))
+  } finally {
+    if (languagesRequest.isCurrent(request)) {
+      if (append) loadingMore.value = false
+      else loading.value = false
+    }
   }
 }
 
-onMounted(loadLanguages)
+watch(searchQuery, () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => { void loadLanguages() }, 300)
+})
+
+watch(sortBy, () => { void loadLanguages() })
+
+onMounted(() => { void loadLanguages() })
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 </script>
 
 <template>
@@ -56,32 +86,29 @@ onMounted(loadLanguages)
     </div>
 
     <div class="lg-stats">
-      <StatBox :label="t('languagesPage.languageCount')" :value="languages.length" />
+      <StatBox :label="t('languagesPage.languageCount')" :value="total" />
       <StatBox :label="t('languagesPage.expressionCount')" :value="totalExpressions.toLocaleString()" />
     </div>
 
     <div class="lg-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languagesPage.searchPlaceholder')" style="flex: 1;" />
-      <div class="lg-sort">
+      <div class="lg-sort" role="group" :aria-label="t('languagesPage.title')">
         <button :class="{ on: sortBy === 'count' }" @click="sortBy = 'count'">{{ t('languagesPage.sortCount') }}</button>
         <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">{{ t('languagesPage.sortAlphabetical') }}</button>
       </div>
     </div>
 
     <LoadingSpinner v-if="loading" />
-
     <EmptyState v-else-if="loadError" :message="loadError" />
-
-    <EmptyState v-else-if="filtered.length === 0" :message="t('languagesPage.noResults')" />
-
-    <div v-else class="lg-list">
-      <LanguageCard
-        v-for="lang in filtered"
-        :key="lang.code"
-        v-bind="lang"
-      />
-    </div>
-
+    <EmptyState v-else-if="languages.length === 0" :message="t('languagesPage.noResults')" />
+    <template v-else>
+      <div class="lg-list">
+        <LanguageCard v-for="lang in languages" :key="lang.code" v-bind="lang" />
+      </div>
+      <Pagination :has-more="languages.length < total" @load-more="loadLanguages(true)" />
+      <p v-if="loadingMore" class="lg-more" role="status">{{ t('common.loading') }}</p>
+      <p v-else-if="loadMoreError" class="lg-more lg-more-error" role="alert">{{ loadMoreError }}</p>
+    </template>
   </div>
 </template>
 
@@ -91,27 +118,18 @@ onMounted(loadLanguages)
 .lg-heading { min-width: 0; }
 .lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .lg-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
-.lg-create { flex: none; }
 .lg-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .lg-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .lg-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.lg-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.lg-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
 .lg-sort button:hover { color: var(--fg); }
 .lg-sort button.on { background: var(--fg); color: var(--surface); }
-.lg-list {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  column-gap: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
+.lg-list { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.lg-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.lg-more-error { color: var(--down); }
 @media (max-width: 640px) {
   .lg-page { padding-right: 16px; padding-left: 16px; }
   .lg-head { align-items: stretch; flex-direction: column; gap: 16px; }
-  .lg-create { justify-content: center; width: 100%; }
   .lg-list { grid-template-columns: minmax(0, 1fr) auto; }
 }
 </style>

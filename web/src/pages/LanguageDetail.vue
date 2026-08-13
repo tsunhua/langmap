@@ -1,195 +1,194 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLanguages } from '@/composables/useLanguages'
+import { useLatestRequest } from '@/composables/useLatestRequest'
+import { apiErrorMessage } from '@/utils/apiError'
+import type { LanguageDetail as LanguageDetailData, LanguageExpressionSummary } from '@/api/languageIdentity'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 
+const PAGE = 20
 const { t } = useI18n()
-
 const route = useRoute()
 const router = useRouter()
-const code = computed(() => route.params.code as string)
+const { detail, expressions } = useLanguages()
+const code = computed(() => String(route.params.code ?? ''))
 
-const { loading, detail, expressions } = useLanguages()
-
-const lang = ref<any>(null)
-const exprs = ref<any[]>([])
+const lang = ref<LanguageDetailData | null>(null)
+const exprs = ref<LanguageExpressionSummary[]>([])
 const searchQuery = ref('')
-const sortBy = ref('hot')
-const selectedScript = ref('')
+const sortBy = ref<'hot' | 'new' | 'alpha'>('hot')
+const selectedLocaleCode = ref('')
+const detailLoading = ref(false)
+const expressionsLoading = ref(false)
+const loadingMore = ref(false)
+const total = ref(0)
 const loadError = ref('')
+const loadMoreError = ref('')
+const detailRequest = useLatestRequest()
+const expressionsRequest = useLatestRequest()
+let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
-function scriptSuffix(profile: any): string {
-  const prefix = profile.base_language ? `${profile.base_language}-` : `${code.value}-`
-  const suffix = profile.code.startsWith(prefix) ? profile.code.slice(prefix.length) : profile.code
-  return suffix.replace(/-x-[^-]+$/, '')
+const selectedLocale = computed(() => lang.value?.locales.find((locale) => locale.code === selectedLocaleCode.value) ?? null)
+const title = computed(() => selectedLocale.value?.name ?? lang.value?.name_en ?? '')
+const subtitle = computed(() => selectedLocale.value
+  ? `${selectedLocale.value.code} · ${selectedLocale.value.name_en}`
+  : lang.value?.code ?? '')
+
+function routeLocale() {
+  return typeof route.query.locale === 'string' ? route.query.locale : ''
 }
 
-const scripts = computed(() => {
-  const profiles: any[] = lang.value?.profiles ?? []
-  return profiles.map((p) => ({
-    code: scriptSuffix(p),
-    profileCode: p.code,
-    script_code: p.script_code,
-    name: p.name || p.script_code || p.code,
-    endonym: p.endonym || '',
-  }))
-})
-
-const selectedProfile = computed(() => {
-  const bySuffix = scripts.value.find((s) => s.code === selectedScript.value)
-  if (bySuffix) return bySuffix
-  return scripts.value.find((s) => s.script_code === selectedScript.value)
-})
-
-const scriptParam = computed(() => selectedProfile.value?.profileCode)
-
-const title = computed(() =>
-  lang.value?.name || selectedProfile.value?.endonym || lang.value?.name_en || '',
-)
-
-function cityDisplayName(city: any): string {
-  const profileCode = selectedProfile.value?.profileCode
-  if (!profileCode) {
-    const en = city?.city_name_en
-    const pinyin = city?.city_name
-    if (en && pinyin && en !== pinyin) return `${en} (${pinyin})`
-    return en || pinyin
-  }
-  if (!city?.city_name_localized) return city?.city_name
-  try {
-    const localized = JSON.parse(city.city_name_localized)
-    return localized[profileCode] || city.city_name
-  } catch {
-    return city.city_name
-  }
+function normalizeLocale(locale: string) {
+  return lang.value?.locales.some((item) => item.code === locale) ? locale : ''
 }
 
-const filtered = computed(() => {
-  if (!searchQuery.value) return exprs.value
-  const q = searchQuery.value.toLowerCase()
-  return exprs.value.filter((e: any) => e.text.toLowerCase().includes(q))
-})
-
-async function loadScript() {
-  try {
-    const data = await expressions(code.value, { limit: 100 })
-    exprs.value = data.items
-  } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
-  }
-}
-
-async function load() {
-  lang.value = null
-  loadError.value = ''
-  const q = route.query.script
-  selectedScript.value = typeof q === 'string' ? q : ''
-  try {
-    lang.value = await detail(code.value)
-    await loadScript()
-  } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('languageDetail.loadFailed')
-  }
-}
-
-onMounted(load)
-watch(code, load)
-watch(() => route.query.script, (script) => {
-  const next = typeof script === 'string' ? script : ''
-  if (next !== selectedScript.value) {
-    selectedScript.value = next
-    loadScript()
-  }
-})
-
-const subtitle = computed(() => {
-  const parts = []
-  if (lang.value?.name_en && title.value !== lang.value.name_en) parts.push(lang.value.name_en)
-  if (lang.value?.glottocode) parts.push(lang.value.glottocode)
-  return parts.join(' · ')
-})
-
-async function changeSort(sort: string) {
-  sortBy.value = sort
-  await loadScript()
-}
-
-async function changeScript(script: string) {
-  if (script === selectedScript.value) return
-  selectedScript.value = script
+function clearUnknownLocale(locale: string) {
+  if (!locale || normalizeLocale(locale)) return
   const query = { ...route.query }
-  if (script) query.script = script
-  else delete query.script
-  router.replace({ query })
-  await loadScript()
+  delete query.locale
+  void router.replace({ query })
 }
+
+async function loadExpressions(append = false) {
+  if (!code.value || (append && (loadingMore.value || exprs.value.length >= total.value))) return
+  const request = append ? expressionsRequest.current() : expressionsRequest.begin()
+  if (append) {
+    loadingMore.value = true
+    loadMoreError.value = ''
+  } else {
+    expressionsLoading.value = true
+    loadError.value = ''
+    loadMoreError.value = ''
+  }
+  try {
+    const page = await expressions(code.value, {
+      q: searchQuery.value.trim(),
+      locale: selectedLocaleCode.value,
+      sort: sortBy.value,
+      limit: PAGE,
+      offset: append ? exprs.value.length : 0,
+    })
+    if (!expressionsRequest.isCurrent(request)) return
+    exprs.value = append ? [...exprs.value, ...page.items] : page.items
+    total.value = page.total
+  } catch (cause: unknown) {
+    if (!expressionsRequest.isCurrent(request)) return
+    if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
+    else loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
+  } finally {
+    if (expressionsRequest.isCurrent(request)) {
+      if (append) loadingMore.value = false
+      else expressionsLoading.value = false
+    }
+  }
+}
+
+async function loadDetail() {
+  const request = detailRequest.begin()
+  expressionsRequest.begin()
+  lang.value = null
+  exprs.value = []
+  total.value = 0
+  detailLoading.value = true
+  loadError.value = ''
+  try {
+    const value = await detail(code.value)
+    if (!detailRequest.isCurrent(request)) return
+    lang.value = value
+    const requestedLocale = routeLocale()
+    selectedLocaleCode.value = normalizeLocale(requestedLocale)
+    clearUnknownLocale(requestedLocale)
+    await loadExpressions()
+  } catch (cause: unknown) {
+    if (!detailRequest.isCurrent(request)) return
+    loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
+  } finally {
+    if (detailRequest.isCurrent(request)) detailLoading.value = false
+  }
+}
+
+function changeSort(sort: 'hot' | 'new' | 'alpha') {
+  if (sort === sortBy.value) return
+  sortBy.value = sort
+  void loadExpressions()
+}
+
+function changeLocale(locale: string) {
+  if (locale === selectedLocaleCode.value) return
+  const query = { ...route.query }
+  if (locale) query.locale = locale
+  else delete query.locale
+  delete query.script
+  void router.replace({ query })
+}
+
+watch(code, () => { void loadDetail() }, { immediate: true })
+watch(() => route.query.locale, () => {
+  if (!lang.value) return
+  const requestedLocale = routeLocale()
+  const next = normalizeLocale(requestedLocale)
+  clearUnknownLocale(requestedLocale)
+  if (next === selectedLocaleCode.value) return
+  selectedLocaleCode.value = next
+  void loadExpressions()
+})
+watch(searchQuery, () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => { void loadExpressions() }, 300)
+})
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 </script>
 
 <template>
-  <LoadingSpinner v-if="loading && !lang" />
-
-  <EmptyState v-else-if="loadError" :message="loadError" />
-
+  <LoadingSpinner v-if="detailLoading && !lang" />
+  <EmptyState v-else-if="loadError && !lang" :message="loadError" />
   <div v-else-if="lang" class="ld-page">
     <router-link to="/languages" class="ld-back">← {{ t('languageDetail.back') }}</router-link>
-
     <div class="ld-title">
       <h1>{{ title }}</h1>
-      <span v-if="scripts.length <= 1" class="lang-badge">{{ lang.code }}</span>
+      <span class="lang-badge">{{ lang.code }}</span>
     </div>
-    <div v-if="scripts.length > 1" class="ld-scripts" role="group" :aria-label="t('languageDetail.scriptLabel')">
-      <button :class="{ on: selectedScript === '' }" @click="changeScript('')">
-        <span>{{ t('languageDetail.allScripts') }}</span>
-        <small>{{ lang.code }}</small>
+    <div v-if="lang.locales.length" class="ld-locales" role="group" :aria-label="t('languageDetail.regionalForms')">
+      <button :class="{ on: selectedLocaleCode === '' }" @click="changeLocale('')">
+        <span>{{ t('languageDetail.allScripts') }}</span><small>{{ lang.code }}</small>
       </button>
-      <button v-for="s in scripts" :key="s.code" :class="{ on: selectedScript === s.code }" @click="changeScript(s.code)">
-        <span>{{ s.name }}</span>
-        <small>{{ s.profileCode }}</small>
+      <button v-for="locale in lang.locales" :key="locale.code" :class="{ on: selectedLocaleCode === locale.code }" @click="changeLocale(locale.code)">
+        <span>{{ locale.name }}</span><small>{{ locale.code }}</small>
       </button>
     </div>
-    <p class="ld-sub" v-if="subtitle">{{ subtitle }}</p>
-
+    <p v-if="subtitle" class="ld-sub">{{ subtitle }}</p>
     <div class="ld-stats">
       <StatBox :label="t('languageDetail.expressions')" :value="lang.expression_count" />
       <StatBox :label="t('languageDetail.mapped')" :value="lang.mapped_expression_count" />
     </div>
-
-    <section v-if="lang.representative_cities?.length" class="ld-cities" aria-labelledby="representative-cities-title">
-      <h2 id="representative-cities-title">{{ t('languageDetail.representativeCities') }}</h2>
-      <p class="ld-cities-note">{{ t('languageDetail.representativeCitiesNote') }}</p>
-      <ul>
-        <li v-for="city in lang.representative_cities" :key="`${city.city_name}-${city.territory_code}-${city.script_code}`">
-          <span>{{ cityDisplayName(city) }}</span>
-          <small>{{ city.territory_code }}<template v-if="city.script_code"> · {{ city.script_code }}</template></small>
-        </li>
-      </ul>
-    </section>
-
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
-      <div class="ld-sort">
+      <div class="ld-sort" role="group" :aria-label="t('languageDetail.expressions')">
         <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
         <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
         <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">{{ t('languageDetail.alphabetical') }}</button>
       </div>
     </div>
-
-    <EmptyState v-if="filtered.length === 0" :message="t('languageDetail.noResults')" />
-
-    <div v-else class="ld-list">
-      <ExpressionRow
-        v-for="expr in filtered"
-        :key="expr.id"
-        v-bind="expr"
-        :show-language="false"
-      />
-    </div>
+    <LoadingSpinner v-if="expressionsLoading" />
+    <p v-else-if="loadError" class="ld-error" role="alert">{{ loadError }}</p>
+    <EmptyState v-else-if="exprs.length === 0" :message="t('languageDetail.noResults')" />
+    <template v-else>
+      <div class="ld-list">
+        <ExpressionRow v-for="expr in exprs" :key="expr.id" v-bind="expr" :show-language="false" />
+      </div>
+      <Pagination :has-more="exprs.length < total" @load-more="loadExpressions(true)" />
+      <p v-if="loadingMore" class="ld-more" role="status">{{ t('common.loading') }}</p>
+      <p v-else-if="loadMoreError" class="ld-more ld-error" role="alert">{{ loadMoreError }}</p>
+    </template>
   </div>
 </template>
 
@@ -199,31 +198,20 @@ async function changeScript(script: string) {
 .ld-back:hover { color: var(--fg); }
 .ld-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
 .ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.ld-sub { font-size: 13px; color: var(--muted); margin: 6px 0; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
 .ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; height: 30px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
-.ld-sort button:hover { color: var(--fg); }
-.ld-sort button.on { background: var(--fg); color: var(--surface); }
-.ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.ld-scripts { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 6px 0; }
-.ld-scripts button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: none; background: var(--surface); color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.1; height: 40px; padding: 0 14px; transition: background 0.15s, color 0.15s; }
-.ld-scripts button small { font-size: 9px; letter-spacing: 0.08em; opacity: 0.7; }
-.ld-scripts button:hover { color: var(--fg); }
-.ld-scripts button:hover small { opacity: 0.9; }
-.ld-scripts button.on { background: var(--fg); color: var(--surface); }
-.ld-scripts button.on small { opacity: 0.75; }
-.ld-scripts button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-@media (max-width: 640px) {
-  .ld-scripts button { height: 44px; padding: 0 16px; }
-}
+.ld-locales { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ld-sort button, .ld-locales button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 16px; }
+.ld-locales button { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-width: 0; text-align: left; }
+.ld-locales button small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; opacity: .7; }
+.ld-sort button { border: none; border-radius: 0; }
+.ld-sort button:hover, .ld-locales button:hover { color: var(--fg); }
+.ld-sort button.on, .ld-locales button.on { background: var(--fg); color: var(--surface); }
+.ld-sort button:focus-visible, .ld-locales button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.ld-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.ld-cities { border-bottom: 1px solid var(--border); margin-bottom: 18px; padding-bottom: 16px; }
-.ld-cities h2 { font-size: 16px; font-weight: 600; }
-.ld-cities-note { color: var(--muted); font-size: 12px; margin: 4px 0 10px; }
-.ld-cities ul { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.ld-cities li { width: fit-content; min-width: 0; border: 1px solid var(--border); background: var(--surface); padding: 8px 10px; }
-.ld-cities li span, .ld-cities li small { display: block; }
-.ld-cities li small { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 3px; }
+.ld-more, .ld-error { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.ld-error { color: var(--down); }
+@media (max-width: 640px) { .ld-page { padding-right: 16px; padding-left: 16px; } }
 </style>

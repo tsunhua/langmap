@@ -3,6 +3,31 @@ import { describe, expect, it } from 'vitest';
 const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
 const API = `${BASE_URL}/api/v2/languages`;
 
+async function registerToken(): Promise<string> {
+  const unique = Math.random().toString(36).slice(2, 10);
+  const response = await fetch(`${BASE_URL}/api/v2/auth/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      username: `language-tester-${unique}`,
+      email: `language-${unique}@example.com`,
+      password: 'pass1234',
+    }),
+  });
+  expect(response.status).toBe(201);
+  return ((await response.json()) as { data: { token: string } }).data.token;
+}
+
+async function createExpression(token: string, text: string, languageLocaleCode: string): Promise<string> {
+  const response = await fetch(`${BASE_URL}/api/v2/expressions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lang_code: 'cmn', text, language_locale_code: languageLocaleCode }),
+  });
+  expect(response.status).toBe(201);
+  return ((await response.json()) as { data: { expression: { id: string } } }).data.expression.id;
+}
+
 describe('languages API', () => {
   it('lists only languages that have content', async () => {
     const res = await fetch(`${API}?limit=50`);
@@ -76,6 +101,30 @@ describe('languages API', () => {
       const [dateB, idB] = b.split('\u0000');
       return dateA === dateB ? idA.localeCompare(idB) : dateB.localeCompare(dateA);
     }));
+  });
+
+  it('filters expressions by the requested locale without duplicates', async () => {
+    const token = await registerToken();
+    const unique = Math.random().toString(36).slice(2, 10);
+    const hansText = `漢字篩選${unique}`;
+    const hantText = `傳承篩選${unique}`;
+    await createExpression(token, hansText, 'cmn-Hans-CN');
+    await createExpression(token, hantText, 'cmn-Hant-TW');
+
+    const [hansResponse, hantResponse] = await Promise.all([
+      fetch(`${API}/cmn/expressions?q=${encodeURIComponent(unique)}&locale=cmn-Hans-CN&limit=20`),
+      fetch(`${API}/cmn/expressions?q=${encodeURIComponent(unique)}&locale=cmn-Hant-TW&limit=20`),
+    ]);
+    expect(hansResponse.status).toBe(200);
+    expect(hantResponse.status).toBe(200);
+
+    const hans = await hansResponse.json() as { data: { total: number; items: Array<{ id: string; text: string }> } };
+    const hant = await hantResponse.json() as { data: { total: number; items: Array<{ id: string; text: string }> } };
+    expect(hans.data.items.map((item) => item.text)).toEqual([hansText]);
+    expect(hant.data.items.map((item) => item.text)).toEqual([hantText]);
+    expect(hans.data.total).toBe(1);
+    expect(hant.data.total).toBe(1);
+    expect(new Set([...hans.data.items, ...hant.data.items].map((item) => item.id)).size).toBe(2);
   });
 
   it('returns 404 when listing expressions for an unknown language', async () => {

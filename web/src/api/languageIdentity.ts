@@ -37,7 +37,47 @@ export interface CreateLanguageLocaleInput {
 }
 
 export interface LocaleFilters { lang_code?: string; script_code?: string; region_code?: string; q?: string; limit?: number; offset?: number }
-export interface ContentLanguage { code: string; name: string; name_en: string; expression_count: number; locale_count: number }
+export interface ContentLanguage {
+  code: string
+  name: string
+  name_en: string
+  expression_count: number
+  locale_count: number
+  active_ui_locale_count: number
+}
+
+export interface ContentLanguagePageQuery {
+  q?: string
+  sort?: 'count' | 'alpha'
+  limit?: number
+  offset?: number
+}
+
+export interface LanguageExpressionPageQuery {
+  q?: string
+  sort?: 'hot' | 'new' | 'alpha'
+  locale?: string
+  limit?: number
+  offset?: number
+}
+
+export interface LanguageDetail extends ContentLanguage {
+  reading_count: number
+  mapped_expression_count: number
+  locales: LanguageLocale[]
+}
+
+export interface LanguageExpressionSummary {
+  id: string
+  lang_code: string
+  text: string
+  description: string
+  homograph_index: number
+  review_status: string
+  created_at: string
+  reading_count: number
+  mapping_count: number
+}
 
 function page<T>(data: unknown): Page<T> {
   const result = data as { data?: Partial<Page<T>> }
@@ -71,13 +111,29 @@ export async function createLanguageLocale(input: CreateLanguageLocaleInput, sig
   return (data as { data: LanguageLocale }).data
 }
 
-export const listContentLanguages = (filters: { q?: string; limit?: number; offset?: number } = {}, signal?: AbortSignal) =>
-  listReference<ContentLanguage>('/languages', filters.q ?? '', filters.limit ?? 20, filters.offset ?? 0, signal)
-
-export async function getLanguageDetail(code: string, signal?: AbortSignal): Promise<ContentLanguage & { locales: LanguageLocale[] }> {
-  const { data } = await api.get(`/languages/${encodeURIComponent(code)}`, { signal })
-  return (data as { data: ContentLanguage & { locales: LanguageLocale[] } }).data
+export async function listContentLanguages(filters: ContentLanguagePageQuery = {}, signal?: AbortSignal): Promise<Page<ContentLanguage>> {
+  const { data } = await api.get('/languages', {
+    params: { q: filters.q ?? '', sort: filters.sort ?? 'count', limit: filters.limit ?? 20, offset: filters.offset ?? 0 },
+    signal,
+  })
+  return page<ContentLanguage>(data)
 }
 
-export const listLanguageExpressions = (code: string, filters: { limit?: number; offset?: number } = {}, signal?: AbortSignal) =>
-  listReference<{ id: string; lang_code: string; text: string }>(`/languages/${encodeURIComponent(code)}/expressions`, '', filters.limit ?? 20, filters.offset ?? 0, signal)
+export async function getLanguageDetail(code: string, signal?: AbortSignal): Promise<LanguageDetail> {
+  const { data } = await api.get(`/languages/${encodeURIComponent(code)}`, { signal })
+  return (data as { data: LanguageDetail }).data
+}
+
+export async function listLanguageExpressions(code: string, filters: LanguageExpressionPageQuery = {}, signal?: AbortSignal): Promise<Page<LanguageExpressionSummary>> {
+  const { data } = await api.get(`/languages/${encodeURIComponent(code)}/expressions`, {
+    params: {
+      q: filters.q ?? '',
+      sort: filters.sort ?? 'hot',
+      locale: filters.locale ?? '',
+      limit: filters.limit ?? 20,
+      offset: filters.offset ?? 0,
+    },
+    signal,
+  })
+  return page<LanguageExpressionSummary>(data)
+}
