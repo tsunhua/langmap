@@ -379,7 +379,7 @@ class GenerateBundleTests(unittest.TestCase):
             self.assertEqual(second_revisions, first_revisions)
             self.assertEqual(locale_statuses, {code: "active" for code in first_revisions})
 
-    def test_translation_edges_are_source_to_target_only(self) -> None:
+    def test_translation_edges_form_a_clique_per_key(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -405,10 +405,10 @@ class GenerateBundleTests(unittest.TestCase):
             finally:
                 db.close()
 
-            # The resolver only joins edges on ui_messages.source_expression_id,
-            # so each edge must connect a key's English source expression to that
-            # key's per-locale target expression — exactly one per (locale, key),
-            # never cross-locale clique edges.
+            # Each key's node set: the English source plus every locale target.
+            # Mapping edges form the full clique (all unordered pairs), matching
+            # runtime createEdgesBatch — so translations connect to each other,
+            # not only to the English source.
             module = load_module("generate_bundle_edges", GENERATE_BUNDLE)
             source_map = module.i18n_sql.parse_en_ts_text(catalog_path.read_text(encoding="utf-8"))
             locales = {
@@ -416,15 +416,19 @@ class GenerateBundleTests(unittest.TestCase):
                 for code, path in locale_paths.items()
             }
             expected_pairs: set[tuple[str, str]] = set()
-            for key in source_map:
-                source_id = module.i18n_sql.expression_id(module.i18n_sql.SOURCE_LANG_CODE, source_map[key])
+            for key, source_text in source_map.items():
+                nodes = {module.i18n_sql.expression_id(module.i18n_sql.SOURCE_LANG_CODE, source_text)}
                 for locale_code, translations in locales.items():
                     lang_code = module.i18n_sql.locale_to_lang_code(locale_code)
-                    target_id = module.i18n_sql.expression_id(lang_code, translations[key])
-                    expected_pairs.add(tuple(sorted((source_id, target_id))))
+                    nodes.add(module.i18n_sql.expression_id(lang_code, translations[key]))
+                ordered = sorted(nodes)
+                for i, a in enumerate(ordered):
+                    for b in ordered[i + 1:]:
+                        expected_pairs.add((a, b))
 
             edges = {tuple(sorted((a, b))) for a, b in edge_rows}
             self.assertEqual(edges, expected_pairs)
+            self.assertEqual(len(edge_rows), len(expected_pairs))
             self.assertEqual(len(edge_rows), len(expected_pairs))
 
     def test_cli_fails_on_unknown_source_key_and_keeps_existing_artifacts(self) -> None:

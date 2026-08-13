@@ -131,6 +131,34 @@ def build_rows_by_locale(
     }
 
 
+def build_clique_edges(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> dict[str, list[tuple[str, str, str]]]:
+    """Per-key clique edges, matching runtime createEdgesBatch semantics.
+
+    For each key, collect the source expression plus every locale target
+    expression, then emit one edge for each unordered pair (the full clique),
+    so translations connect to each other — not only to the English source.
+    Returns {key: [(edge_id, lo, hi), ...]} with lo < hi (string order).
+    """
+    key_ids: dict[str, set[str]] = {}
+    for key, source_text in source_map.items():
+        key_ids.setdefault(key, set()).add(
+            i18n_sql.expression_id(i18n_sql.SOURCE_LANG_CODE, source_text)
+        )
+    for rows in rows_by_locale.values():
+        for row in rows:
+            key_ids.setdefault(row.key, set()).add(row.target_expression_id)
+
+    cliques: dict[str, list[tuple[str, str, str]]] = {}
+    for key in sorted(key_ids):
+        ordered = sorted(key_ids[key])
+        cliques[key] = [
+            (stable_edge_id_fn(a, b), a, b)
+            for i, a in enumerate(ordered)
+            for b in ordered[i + 1:]
+        ]
+    return cliques
+
+
 def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> None:
     # expression_id (string) -> (lang_code, canonical_text). The same id mapping
     # to the same payload (shared translation text) is NOT a collision; only
@@ -161,16 +189,16 @@ def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=
                     )
                 expression_registry[expr_id] = payload
 
-            lo, hi = (row.source_expression_id, row.target_expression_id) \
-                if row.source_expression_id < row.target_expression_id \
-                else (row.target_expression_id, row.source_expression_id)
-            edge_payload = (lo, hi)
-            existing_edge = edge_registry.get(row.edge_id)
-            if existing_edge is not None and existing_edge != edge_payload:
+    # Clique edges (including the source↔target edges the rows reference): an
+    # edge_id must map to a unique canonical (lo, hi) pair.
+    for key, edges in build_clique_edges(source_map, rows_by_locale, stable_edge_id_fn=stable_edge_id_fn).items():
+        for edge_id, lo, hi in edges:
+            existing_edge = edge_registry.get(edge_id)
+            if existing_edge is not None and existing_edge != (lo, hi):
                 raise ValueError(
-                    f'edge_id collision for {locale_code}:{row.key}: {row.edge_id} maps to {existing_edge!r} and {edge_payload!r}'
+                    f'edge_id collision for {key}: {edge_id} maps to {existing_edge!r} and {(lo, hi)!r}'
                 )
-            edge_registry[row.edge_id] = edge_payload
+            edge_registry[edge_id] = (lo, hi)
 
 
 def render_bundle_sql(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> str:
@@ -213,17 +241,13 @@ VALUES ('{i18n_sql.PROJECT_ID}', '{key}', '{source_expression_id}', '{i18n_sql.q
         )
         lines.append('')
 
-    # 3. Per locale: target expressions → attestations → mapping edges. Only
-    #    source↔target edges (the resolver joins on ui_messages.source_expression_id);
-    #    no cross-locale clique. FK-safe: expressions before attestations/edges.
+    # 3. Per locale: target expressions → attestations. FK-safe: expressions
+    #    before attestations. (Edges follow in section 4.)
     translation_count = sum(len(rows) for rows in rows_by_locale.values())
-    lines.append(f'-- 3. Translation expressions, attestations, and edges ({translation_count} rows)')
+    lines.append(f'-- 3. Translation expressions and attestations ({translation_count} rows)')
     for locale_code in sorted(rows_by_locale.keys()):
         lines.append(f'-- Locale {locale_code}')
         for row in rows_by_locale[locale_code]:
-            lo, hi = (row.source_expression_id, row.target_expression_id) \
-                if row.source_expression_id < row.target_expression_id \
-                else (row.target_expression_id, row.source_expression_id)
             target_hash = i18n_sql.compute_text_hash(row.translation_text)
             lines.append(
                 f"""
@@ -233,12 +257,24 @@ VALUES ('{row.target_expression_id}', '{row.lang_code}', '{i18n_sql.q(row.transl
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('{row.attestation_id}', '{row.target_expression_id}', '{locale_code}', NULL, NULL, NULL);
-
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
-VALUES ('{row.edge_id}', '{lo}', '{hi}', 0, 'translation', NULL);
 """.strip()
             )
             lines.append('')
+
+    # 4. Mapping edges as a per-key clique (source + every locale target, all
+    #    unordered pairs), matching runtime createEdgesBatch so translations
+    #    connect to each other — not only to the English source.
+    clique_edges = build_clique_edges(source_map, rows_by_locale, stable_edge_id_fn=stable_edge_id_fn)
+    edge_total = sum(len(edges) for edges in clique_edges.values())
+    lines.append(f'-- 4. Translation mapping edges ({edge_total} clique edges)')
+    for key in sorted(clique_edges.keys()):
+        lines.append(f'-- Clique: {key}')
+        for edge_id, lo, hi in clique_edges[key]:
+            lines.append(
+                f"INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) "
+                f"VALUES ('{edge_id}', '{lo}', '{hi}', 0, 'translation', NULL);"
+            )
+        lines.append('')
 
     lines.append('-- Done')
     return '\n'.join(lines)
