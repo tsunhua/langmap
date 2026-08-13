@@ -4,6 +4,7 @@ import TranslateWorkbench from './TranslateWorkbench.vue'
 
 const {
   addUiLocale,
+  authState,
   createExpression,
   getLanguageLocale,
   getTranslationWorkbench,
@@ -13,6 +14,7 @@ const {
   submitTranslationMapping,
 } = vi.hoisted(() => ({
   addUiLocale: vi.fn(),
+  authState: { isLoggedIn: true, user: { role: 'user' } },
   createExpression: vi.fn(),
   getLanguageLocale: vi.fn(),
   getTranslationWorkbench: vi.fn(),
@@ -31,7 +33,7 @@ vi.mock('@/api/localization', () => ({
 
 vi.mock('@/api/expressions', () => ({ createExpression }))
 vi.mock('@/api/languageIdentity', () => ({ getLanguageLocale }))
-vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ isLoggedIn: true, user: { role: 'user' } }) }))
+vi.mock('@/stores/auth', () => ({ useAuthStore: () => authState }))
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: { code: 'nan-Hant-TW' } }),
   useRouter: () => ({ push, replace }),
@@ -74,6 +76,7 @@ function workbench() {
 describe('TranslateWorkbench', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authState.isLoggedIn = true
     listUiLocales.mockResolvedValue([
       { language_locale_code: 'nan-Hant-TW', status: 'active', direction: 'ltr' },
     ])
@@ -126,5 +129,14 @@ describe('TranslateWorkbench', () => {
       target_expression_id: 'nan:new',
     })
     expect(getTranslationWorkbench).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not call the authenticated workbench endpoint while anonymous', async () => {
+    authState.isLoggedIn = false
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(getTranslationWorkbench).not.toHaveBeenCalled()
+    expect(wrapper.find('.login-note').exists()).toBe(true)
   })
 })

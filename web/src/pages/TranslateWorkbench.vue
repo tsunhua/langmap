@@ -136,10 +136,14 @@ onMounted(async () => {
     if (first) await router.replace(`/translate/${encodeURIComponent(first.language_locale_code)}`)
     return
   }
-  await load(code.value)
+  if (auth.isLoggedIn) {
+    await load(code.value)
+  } else {
+    loading.value = false
+  }
 })
 
-watch(code, (next) => { void load(next) })
+watch(code, (next) => { if (auth.isLoggedIn) void load(next) })
 
 function best(item: WorkbenchMessage) {
   return item.candidates[0]
@@ -162,6 +166,8 @@ function best(item: WorkbenchMessage) {
       <EmptyState :message="loadError" />
     </div>
 
+    <p v-else-if="!auth.isLoggedIn" class="login-note">{{ t('translate.loginNote') }}</p>
+
     <template v-else-if="workbench">
       <section class="coverage-card" :aria-label="t('translate.coverage')">
         <strong>{{ percent }}%</strong>
@@ -177,7 +183,6 @@ function best(item: WorkbenchMessage) {
           <Send :size="16" aria-hidden="true" />{{ t('translate.batchSubmit', { count: dirty.length }) }}
         </button>
       </div>
-      <p v-if="!auth.isLoggedIn" class="login-note">{{ t('translate.loginNote') }}</p>
       <p v-if="actionError" role="alert">{{ actionError }}</p>
       <EmptyState v-if="messages.length === 0" :message="t('translate.noResults')" />
       <table v-else>
