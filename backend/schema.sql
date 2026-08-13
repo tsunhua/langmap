@@ -110,7 +110,8 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
 
 INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('eng', 'English'),
-  ('cmn', 'Mandarin Chinese');
+  ('cmn', 'Mandarin Chinese'),
+  ('nan', 'Min Nan Chinese');
 
 INSERT OR IGNORE INTO scripts (code, name_en, direction) VALUES
   ('Latn', 'Latin', 'ltr'),
@@ -127,7 +128,9 @@ INSERT OR IGNORE INTO language_locales
 VALUES
   ('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English (US)', 'English (US)', 'system-seed', 'seed:system-seed:1'),
   ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '臺灣華語', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1');
+  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語（中國）', 'Min Nan Chinese (China)', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '閩南語（臺灣）', 'Min Nan Chinese (Taiwan)', 'system-seed', 'seed:system-seed:1');
 
 -- Expression identity + locale attestations (spec §8.4, §9.1).
 
