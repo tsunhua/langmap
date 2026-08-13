@@ -113,6 +113,20 @@ class MigrationLockTests(unittest.TestCase):
         shutil.copy(FIXTURES_DIR / "0003_seed.sql", temp_root / "0003_seed.sql")
         return temp_dir
 
+    def test_repository_migrations_match_committed_lock(self) -> None:
+        lock_data = migrations_lib.sync_migration_lock(
+            REPO_ROOT / "backend" / "migrations",
+            REPO_ROOT / "scripts" / "db" / "migration-lock.json",
+            update=False,
+            baseline_created_at="unused-for-existing-lock",
+            git_commit="unused-for-existing-lock",
+        )
+
+        self.assertEqual(
+            [entry["filename"] for entry in lock_data["migrations"]],
+            [path.name for path in sorted((REPO_ROOT / "backend" / "migrations").glob("*.sql"))],
+        )
+
     def test_sync_lock_requires_existing_file_unless_update_mode(self) -> None:
         with self._make_migrations_dir() as temp_dir:
             temp_root = Path(temp_dir)

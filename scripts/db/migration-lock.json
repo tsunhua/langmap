@@ -43,6 +43,12 @@
       "filename": "0007_votes.sql",
       "size": 571,
       "sha256": "1d56801208a856f9e378f9d94a0de70d85c6388c7e23c2e375d4febddadaa603"
+    },
+    {
+      "sequence": 8,
+      "filename": "0008_restore_handbooks.sql",
+      "size": 1455,
+      "sha256": "76904de40c90bcd155ea4d25764543d057c211337dbc39b2daadb23d8203533a"
     }
   ]
 }
