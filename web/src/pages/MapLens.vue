@@ -27,6 +27,7 @@ const langMap = ref<Record<string, LanguageLocale>>({})
 const loading = ref(true)
 const loadError = ref('')
 const activeId = ref<string | null>(null)
+let loadRequest = 0
 
 interface Pin {
   expression_id: string
@@ -108,7 +109,7 @@ function addMarkers() {
   }
 
   pins.value.forEach(p => {
-    if (!p.lat || !p.lng) return
+    if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return
     const color = tierColor(p.tier)
     const icon = L.divIcon({
       className: 'pin-marker',
@@ -123,6 +124,8 @@ function addMarkers() {
 }
 
 async function load() {
+  const request = ++loadRequest
+  const requestedId = id.value
   loading.value = true
   loadError.value = ''
   anchor.value = null
@@ -130,9 +133,10 @@ async function load() {
   try {
     const [localePage, expressionDetail, g] = await Promise.all([
       listLanguageLocales({ limit: 200 }),
-      getExpressionDetail(id.value),
-      mappingGraph(id.value, 2),
+      getExpressionDetail(requestedId),
+      mappingGraph(requestedId, 2),
     ])
+    if (request !== loadRequest) return
     const lm: Record<string, LanguageLocale> = {}
     for (const locale of localePage.items) {
       if (locale.latitude != null && locale.longitude != null && !lm[locale.lang_code]) lm[locale.lang_code] = locale
@@ -141,12 +145,15 @@ async function load() {
     anchor.value = expressionDetail.expression
     graph.value = g
   } catch (e: any) {
+    if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('mapLens.loadFailed')
   } finally {
-    loading.value = false
+    if (request === loadRequest) loading.value = false
   }
+  if (request !== loadRequest) return
   if (loadError.value || !anchor.value) return
   await nextTick()
+  if (request !== loadRequest) return
   initMap()
 }
 
@@ -174,7 +181,10 @@ watch(id, () => {
   load()
 })
 
-function cleanup() { if (map) { map.remove(); map = null } }
+function cleanup() {
+  loadRequest++
+  if (map) { map.remove(); map = null }
+}
 onUnmounted(cleanup)
 </script>
 

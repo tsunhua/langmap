@@ -53,6 +53,8 @@ const splitSubmitting = ref(false)
 const splitError = ref('')
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
+let loadRequest = 0
+let graphRequest = 0
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
@@ -91,19 +93,29 @@ function syncUrl() {
 }
 
 async function load() {
+  const request = ++loadRequest
+  const requestedId = id.value
+  const requestedHops = hops.value
+  ++graphRequest
   expr.value = null
   graph.value = null
   loading.value = true
   updatingHops.value = false
   loadError.value = ''
   try {
-    expr.value = await detail(id.value)
-    graph.value = await mappingGraph(id.value, hops.value)
+    const [nextExpression, nextGraph] = await Promise.all([
+      detail(requestedId),
+      mappingGraph(requestedId, requestedHops),
+    ])
+    if (request !== loadRequest) return
+    expr.value = nextExpression
+    graph.value = nextGraph
     trySelectNodeFromUrl()
   } catch (e: any) {
+    if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
   } finally {
-    loading.value = false
+    if (request === loadRequest) loading.value = false
   }
 }
 
@@ -147,15 +159,20 @@ watch(id, () => {
 })
 
 async function changeHops(h: 1 | 2 | 3) {
+  const request = ++graphRequest
+  const requestedId = id.value
   hops.value = h
   updatingHops.value = true
   try {
-    graph.value = await mappingGraph(id.value, h)
+    const nextGraph = await mappingGraph(requestedId, h)
+    if (request !== graphRequest || requestedId !== id.value) return
+    graph.value = nextGraph
     trySelectNodeFromUrl()
   } catch (e: any) {
+    if (request !== graphRequest || requestedId !== id.value) return
     loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
   } finally {
-    updatingHops.value = false
+    if (request === graphRequest) updatingHops.value = false
   }
 }
 
@@ -452,6 +469,13 @@ const sourceLabel = computed(() => {
       />
     </template>
 
+    <div v-else class="md-empty">
+      <EmptyState :message="t('mappingDetail.noMappings')" />
+      <router-link to="/contribute" class="btn btn-primary btn-sm">
+        <ChevronRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.contribute') }}
+      </router-link>
+    </div>
+
     <ExpressionSplitDialog
       v-if="showSplitDialog"
       :edges="splitEdges"
@@ -460,13 +484,6 @@ const sourceLabel = computed(() => {
       @close="showSplitDialog = false"
       @confirm="confirmSplit"
     />
-
-    <div v-else class="md-empty">
-      <EmptyState :message="t('mappingDetail.noMappings')" />
-      <router-link to="/contribute" class="btn btn-primary btn-sm">
-        <ChevronRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.contribute') }}
-      </router-link>
-    </div>
   </div>
 </template>
 

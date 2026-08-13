@@ -16,6 +16,7 @@ const errorMsg = ref('')
 const submitting = ref(false)
 
 async function submit() {
+  if (submitting.value) return
   errorMsg.value = ''
   submitting.value = true
   try {
@@ -48,7 +49,7 @@ async function submit() {
       </div>
       <div class="field">
         <label for="auth-password">{{ t('auth.password') }}</label>
-        <input id="auth-password" v-model="password" type="password" :placeholder="t('auth.password')" required autocomplete="current-password" />
+        <input id="auth-password" v-model="password" type="password" :placeholder="t('auth.password')" required :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" />
       </div>
 
       <p v-if="errorMsg" class="error" role="alert">{{ errorMsg }}</p>
@@ -60,9 +61,9 @@ async function submit() {
 
     <p class="toggle">
       {{ mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount') }}
-      <a href="#" @click.prevent="mode = mode === 'login' ? 'register' : 'login'">
+      <button type="button" @click="mode = mode === 'login' ? 'register' : 'login'">
         {{ mode === 'login' ? t('auth.register') : t('auth.login') }}
-      </a>
+      </button>
     </p>
   </div>
 </template>
@@ -75,6 +76,8 @@ async function submit() {
 .auth-form input { width: 100%; }
 .error { color: var(--down); font-size: 13px; }
 .toggle { text-align: center; margin-top: var(--space-sm); font-size: 14px; color: var(--muted); }
+.toggle button { min-height: 44px; border: 0; background: transparent; color: var(--accent); font: inherit; cursor: pointer; }
+.toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 640px) {
   .auth-page { margin: var(--space-md) auto 0; }
 }

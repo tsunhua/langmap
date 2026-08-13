@@ -16,6 +16,7 @@ const searchQuery = ref('')
 const sortBy = ref('new')
 const loading = ref(true)
 const loadError = ref('')
+let loadRequest = 0
 
 const filtered = computed(() => {
   if (!searchQuery.value) return handbooks.value
@@ -24,15 +25,19 @@ const filtered = computed(() => {
 })
 
 async function load() {
+  const request = ++loadRequest
+  const requestedSort = sortBy.value
   loading.value = true
   loadError.value = ''
   try {
-    const data = await list({ sort: sortBy.value, limit: 50 })
+    const data = await list({ sort: requestedSort, limit: 50 })
+    if (request !== loadRequest) return
     handbooks.value = data.items
   } catch (e: any) {
+    if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('handbooks.loadFailed')
   } finally {
-    loading.value = false
+    if (request === loadRequest) loading.value = false
   }
 }
 

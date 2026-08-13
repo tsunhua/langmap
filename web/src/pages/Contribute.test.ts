@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Contribute from './Contribute.vue'
 
@@ -43,7 +43,7 @@ function mountPage() {
 
 describe('Contribute page with LanguagePicker', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
+    vi.clearAllMocks()
     mockPush.mockReset()
   })
 
@@ -83,5 +83,36 @@ describe('Contribute page with LanguagePicker', () => {
         expect.objectContaining({ lang_code: 'cmn-Hans' }),
       ]),
     })
+  })
+
+  it('rejects a batch with fewer than two complete expressions', async () => {
+    const api = (await import('@/api/client')).default
+    const wrapper = mountPage()
+    await wrapper.findAll('.stub-picker input.picker-input')[0].setValue('eng')
+    await wrapper.findAll('input.ex-text')[0].setValue('hello')
+
+    const submitButton = wrapper.get('[data-action="submit-contribution"]')
+    expect(submitButton.attributes('disabled')).toBeDefined()
+    await submitButton.trigger('click')
+
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('keeps the page in place and shows the server error when submission fails', async () => {
+    const api = (await import('@/api/client')).default
+    vi.mocked(api.post).mockRejectedValueOnce({ response: { data: { error: 'DUPLICATE_PAIR' } } })
+    const wrapper = mountPage()
+    const pickers = wrapper.findAll('.stub-picker input.picker-input')
+    const texts = wrapper.findAll('input.ex-text')
+    await pickers[0].setValue('eng')
+    await pickers[1].setValue('nan')
+    await texts[0].setValue('hello')
+    await texts[1].setValue('食飽未')
+
+    await wrapper.get('[data-action="submit-contribution"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[role="alert"]').text()).toContain('DUPLICATE_PAIR')
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

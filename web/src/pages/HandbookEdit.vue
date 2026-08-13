@@ -122,7 +122,7 @@ async function save(status: string) {
 <template>
   <LoadingSpinner v-if="loading" />
 
-  <EmptyState v-else-if="loadError && isNew" :message="loadError" />
+  <EmptyState v-else-if="loadError && !isNew" :message="loadError" />
 
   <div v-else class="he-page">
     <router-link to="/handbooks" class="he-back">← {{ t('handbook.back') }}</router-link>

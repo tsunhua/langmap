@@ -11,6 +11,7 @@ export const en = {
   },
   nav: {
     home: 'Home',
+    skipToContent: 'Skip to main content',
     languages: 'Languages',
     handbooks: 'Handbooks',
     searchExpressions: 'Search expressions',
@@ -32,6 +33,7 @@ export const en = {
     newest: 'Latest',
     alphabetical: 'Alphabetical',
     noResults: 'No results found',
+    loadMoreFailed: 'Unable to load more results',
     hint: 'Tip: search currently matches expression text. Translation (semantic) search is coming later.',
     loadFailed: 'Search failed',
   },
@@ -95,6 +97,7 @@ export const en = {
     ratedThisWeek: 'By score · this week',
     newContributions: 'New contributions',
     mappingsAndExpressions: 'Mappings + new expressions',
+    noActivity: 'No activity yet',
     missing: 'Can’t find what you need?',
     contributeMapping: 'Contribute a mapping →',
   },

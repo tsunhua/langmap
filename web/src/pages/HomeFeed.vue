@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useFeed } from '@/composables/useFeed'
 import MappingCard from '@/components/feed/MappingCard.vue'
 import NewContribution from '@/components/feed/NewContribution.vue'
@@ -17,6 +17,12 @@ const segment = ref('all')
 const loading = ref(true)
 const loadError = ref('')
 
+const visibleEmpty = computed(() => {
+  if (segment.value === 'hot') return hotMappings.value.length === 0
+  if (segment.value === 'new') return newContribs.value.length === 0
+  return hotMappings.value.length === 0 && newContribs.value.length === 0
+})
+
 
 onMounted(async () => {
   loading.value = true
@@ -25,7 +31,7 @@ onMounted(async () => {
     hotMappings.value = h
     newContribs.value = n
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('errors.loadFailed')
+    loadError.value = e.response?.data?.message || e.response?.data?.error || t('errors.loadFailed')
   } finally {
     loading.value = false
   }
@@ -49,7 +55,11 @@ onMounted(async () => {
 
     <LoadingSpinner v-if="loading" />
 
-    <EmptyState v-else-if="loadError" :message="loadError" />
+    <div v-else-if="loadError" role="alert">
+      <EmptyState :message="loadError" />
+    </div>
+
+    <EmptyState v-else-if="visibleEmpty" :message="t('feed.noActivity')" />
 
     <template v-else>
       <section v-if="segment !== 'new'" class="feed-sec">

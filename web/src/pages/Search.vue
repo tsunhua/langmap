@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSearch } from '@/composables/useSearch'
 import ExpressionRow from '@/components/expression/ExpressionRow.vue'
@@ -24,49 +24,67 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const searched = ref(false)
 const loadError = ref('')
+const loadMoreError = ref('')
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let searchRequest = 0
 
 async function doSearch() {
   if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null }
   if (!query.value.trim()) {
+    searchRequest += 1
     results.value = []
     total.value = 0
     searched.value = false
+    loadError.value = ''
+    loadMoreError.value = ''
     return
   }
+  const request = ++searchRequest
+  const requestedQuery = query.value.trim()
   loading.value = true
   loadError.value = ''
+  loadMoreError.value = ''
   try {
-    const data = await search(query.value, {
+    const data = await search(requestedQuery, {
       lang: langs.value[0],
+      sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
       offset: 0,
     })
+    if (request !== searchRequest) return
     results.value = data.items
     total.value = data.total
     searched.value = true
   } catch (e: any) {
-    loadError.value = e.response?.data?.error || t('search.loadFailed')
+    if (request !== searchRequest) return
+    loadError.value = e.response?.data?.message || e.response?.data?.error || t('search.loadFailed')
   } finally {
-    loading.value = false
+    if (request === searchRequest) loading.value = false
   }
 }
 
 async function loadMore() {
   if (loadingMore.value || results.value.length >= total.value) return
+  const request = searchRequest
+  const requestedQuery = query.value.trim()
+  const offset = results.value.length
   loadingMore.value = true
+  loadMoreError.value = ''
   try {
-    const data = await search(query.value, {
+    const data = await search(requestedQuery, {
       lang: langs.value[0],
+      sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
-      offset: results.value.length,
+      offset,
     })
+    if (request !== searchRequest) return
     results.value = results.value.concat(data.items)
-  } catch {
-    // keep existing results on load-more failure
+  } catch (e: any) {
+    if (request !== searchRequest) return
+    loadMoreError.value = e.response?.data?.message || e.response?.data?.error || t('search.loadMoreFailed')
   } finally {
-    loadingMore.value = false
+    if (request === searchRequest) loadingMore.value = false
   }
 }
 
@@ -81,6 +99,10 @@ watch([sortBy, langs], () => { if (searched.value) doSearch() })
 
 onMounted(() => {
   if (query.value) doSearch()
+})
+onUnmounted(() => {
+  searchRequest += 1
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
 
@@ -115,10 +137,12 @@ onMounted(() => {
           v-for="r in results"
           :key="r.id"
           v-bind="r"
+          :language_profile_code="r.language_profile_code || r.lang_code"
         />
       </div>
       <Pagination :has-more="results.length < total" @load-more="loadMore" />
       <p v-if="loadingMore" class="se-more" role="status">{{ t('common.loading') }}</p>
+      <p v-else-if="loadMoreError" class="se-more se-more-error" role="alert">{{ loadMoreError }}</p>
     </template>
 
     <p v-else class="se-hint">{{ t('search.hint') }}</p>
@@ -140,5 +164,6 @@ onMounted(() => {
 .se-sort button.on { background: var(--fg); color: var(--surface); }
 .se-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .se-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.se-more-error { color: var(--down); }
 .se-hint { font-family: var(--mono); font-size: 10px; text-align: center; padding: var(--space-xl); color: var(--faint); }
 </style>

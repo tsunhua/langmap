@@ -53,17 +53,23 @@ const relationGraph = ref<MappingGraphResponse | null>(null)
 const relationLoading = ref(false)
 const relationError = ref('')
 let selectionRequest = 0
+let loadRequest = 0
 
 async function load() {
+  const request = ++loadRequest
+  const requestedId = id.value
   hb.value = null
   loading.value = true
   loadError.value = ''
   try {
-    hb.value = await detail(id.value)
+    const value = await detail(requestedId)
+    if (request !== loadRequest) return
+    hb.value = value
   } catch (e: any) {
+    if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('handbook.loadFailed')
   } finally {
-    loading.value = false
+    if (request === loadRequest) loading.value = false
   }
 }
 
@@ -141,7 +147,11 @@ onMounted(() => {
   load()
   window.addEventListener('keydown', onKeydown)
 })
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onUnmounted(() => {
+  loadRequest++
+  selectionRequest++
+  window.removeEventListener('keydown', onKeydown)
+})
 watch(id, () => {
   closeInspector()
   load()
