@@ -55,7 +55,9 @@ expressions.get('/search', async (c) => {
     offset: c.req.query('skip') ?? c.req.query('offset'),
   });
   const langCode = (c.req.query('lang_code') ?? '').toLowerCase();
-  const result = await searchExpressions(c.env.DB, { ...query, lang_code: langCode || undefined });
+  const requestedSort = c.req.query('sort');
+  const sort = requestedSort === 'new' || requestedSort === 'alpha' ? requestedSort : 'hot';
+  const result = await searchExpressions(c.env.DB, { ...query, lang_code: langCode || undefined, sort });
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 

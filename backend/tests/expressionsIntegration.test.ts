@@ -104,6 +104,14 @@ describe('expressions API', () => {
     expect(body.data.items.some((item) => item.text === text)).toBe(true);
   });
 
+  it('honors stable alphabetical search ordering', async () => {
+    const res = await fetch(`${BASE_URL}/api/v2/expressions/search?q=&sort=alpha&limit=50`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { items: Array<{ id: string; text: string; homograph_index: number }> } };
+    const keys = body.data.items.map((item) => `${item.text}\u0000${String(item.homograph_index).padStart(8, '0')}\u0000${item.id}`);
+    expect(keys).toEqual([...keys].sort());
+  });
+
   it('returns 404 for a missing expression', async () => {
     const res = await fetch(`${BASE_URL}/api/v2/expressions/nan:missing000000000000000`);
     expect(res.status).toBe(404);

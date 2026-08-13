@@ -77,7 +77,7 @@ export async function createExpression(
 
 export async function searchExpressions(
   db: D1Database,
-  query: { q: string; lang_code?: string; limit: number; offset: number },
+  query: { q: string; lang_code?: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number },
 ): Promise<{ items: ExpressionRow[]; total: number }> {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
@@ -91,6 +91,11 @@ export async function searchExpressions(
     params.push(query.lang_code);
   }
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const orderBy = query.sort === 'hot'
+    ? '(SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id) DESC, text ASC, homograph_index ASC, id ASC'
+    : query.sort === 'new'
+      ? 'created_at DESC, id ASC'
+      : 'text ASC, homograph_index ASC, id ASC';
 
   const countRow = await db
     .prepare(`SELECT COUNT(*) AS total FROM expressions ${where}`)
@@ -98,7 +103,7 @@ export async function searchExpressions(
     .first<{ total: number }>();
 
   const { results } = await db
-    .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions ${where} ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?`)
+    .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`)
     .bind(...params, query.limit, query.offset)
     .all<ExpressionRow>();
   return { items: results, total: countRow?.total ?? 0 };

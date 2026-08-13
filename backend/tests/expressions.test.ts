@@ -183,7 +183,7 @@ describe('searchExpressions', () => {
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: rows }),
     });
-    const result = await searchExpressions(db, { q: '食', limit: 20, offset: 0 });
+    const result = await searchExpressions(db, { q: '食', sort: 'alpha', limit: 20, offset: 0 });
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.text)).toEqual(['食', '食飯']);
   });
@@ -194,9 +194,29 @@ describe('searchExpressions', () => {
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ? ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: [] }),
     });
-    const result = await searchExpressions(db, { q: '食', lang_code: 'nan', limit: 20, offset: 0 });
+    const result = await searchExpressions(db, { q: '食', lang_code: 'nan', sort: 'alpha', limit: 20, offset: 0 });
     expect(result.total).toBe(1);
     expect(result.items).toHaveLength(0);
+  });
+
+  it('supports stable hot and newest ordering', async () => {
+    const observedSql: string[] = [];
+    const db = {
+      prepare(sql: string) {
+        observedSql.push(sql);
+        return { bind() { return {
+          async first() { return { total: 0 }; },
+          async all() { return { results: [] }; },
+        }; } };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+
+    await searchExpressions(db, { q: '', sort: 'hot', limit: 20, offset: 0 });
+    await searchExpressions(db, { q: '', sort: 'new', limit: 20, offset: 0 });
+
+    const pageQueries = observedSql.filter((sql) => sql.includes(' LIMIT ? OFFSET ?'));
+    expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id) DESC, text ASC, homograph_index ASC, id ASC');
+    expect(pageQueries[1]).toContain('ORDER BY created_at DESC, id ASC');
   });
 });
 

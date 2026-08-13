@@ -10,17 +10,25 @@ function parseQuery(c: { req: { query: (key: string) => string | undefined } }) 
   return parseReferenceQuery({ q: c.req.query('q') ?? '', limit: c.req.query('limit'), offset: c.req.query('skip') ?? c.req.query('offset') });
 }
 
+function parseExpressionSort(value: string | undefined): 'hot' | 'new' | 'alpha' {
+  return value === 'new' || value === 'alpha' ? value : 'hot';
+}
+
 languages.get('/', async (c) => {
   const query = parseQuery(c);
-  const result = await listLanguagesWithContent(c.env.DB, query);
+  const sort = c.req.query('sort') === 'alpha' ? 'alpha' : 'count';
+  const result = await listLanguagesWithContent(c.env.DB, { ...query, sort });
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
 languages.get('/:code/expressions', async (c) => {
   const code = (c.req.param('code') ?? '').toLowerCase();
-  const result = await listLanguageExpressions(c.env.DB, code, parseQuery(c));
-  if (!result) return notFound(c, 'Language');
   const query = parseQuery(c);
+  const result = await listLanguageExpressions(c.env.DB, code, {
+    ...query,
+    sort: parseExpressionSort(c.req.query('sort')),
+  });
+  if (!result) return notFound(c, 'Language');
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 

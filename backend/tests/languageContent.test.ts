@@ -19,6 +19,7 @@ const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
 const LANGUAGE_LOCALES_SQL = 'SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT 500';
 const EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions WHERE lang_code = ?';
 const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expression_readings WHERE expression_id IN (SELECT id FROM expressions WHERE lang_code = ?)';
+const MAPPED_EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)';
 
 describe('getLanguageDetail', () => {
   it('returns null for an unknown language code', async () => {
@@ -35,11 +36,13 @@ describe('getLanguageDetail', () => {
       ] }),
       [EXPRESSION_COUNT_SQL]: () => ({ total: 7 }),
       [READING_COUNT_SQL]: () => ({ total: 2 }),
+      [MAPPED_EXPRESSION_COUNT_SQL]: () => ({ total: 4 }),
     });
     const detail = await getLanguageDetail(db, 'cmn');
     expect(detail?.name).toBe('简体中文');
     expect(detail?.expression_count).toBe(7);
     expect(detail?.reading_count).toBe(2);
+    expect(detail?.mapped_expression_count).toBe(4);
     expect(detail?.locales.map((locale) => locale.coordinate_source)).toEqual([null, 'region', 'locale']);
   });
 });
@@ -53,7 +56,7 @@ describe('listLanguagesWithContent', () => {
         { code: 'eng', name_en: 'English', name: 'English', expression_count: 300, locale_count: 1, active_ui_locale_count: 1 },
       ] }; },
     }; } }; } } as unknown as import('@cloudflare/workers-types').D1Database;
-    const result = await listLanguagesWithContent(db, { q: '', limit: 20, offset: 0 });
+    const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0 });
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.code)).toEqual(['cmn', 'eng']);
   });
@@ -61,6 +64,28 @@ describe('listLanguagesWithContent', () => {
 
 describe('listLanguageExpressions', () => {
   it('returns null when the language does not exist', async () => {
-    expect(await listLanguageExpressions(fakeD1({ [LANGUAGE_ROW_SQL]: () => null }), 'zzz', { q: '', limit: 20, offset: 0 })).toBeNull();
+    expect(await listLanguageExpressions(fakeD1({ [LANGUAGE_ROW_SQL]: () => null }), 'zzz', { q: '', sort: 'hot', limit: 20, offset: 0 })).toBeNull();
+  });
+
+  it('supports stable hot, new and alphabetical ordering', async () => {
+    const observedSql: string[] = [];
+    const db = {
+      prepare(sql: string) {
+        observedSql.push(sql);
+        return { bind() { return {
+          async first() { return sql === LANGUAGE_ROW_SQL ? { code: 'nan' } : { total: 0 }; },
+          async all() { return { results: [] }; },
+        }; } };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+
+    for (const sort of ['hot', 'new', 'alpha'] as const) {
+      await listLanguageExpressions(db, 'nan', { q: '', sort, limit: 20, offset: 0 });
+    }
+
+    const pageQueries = observedSql.filter((sql) => sql.includes('SELECT e.id'));
+    expect(pageQueries[0]).toContain('ORDER BY mapping_count DESC, e.text ASC, e.homograph_index ASC, e.id ASC');
+    expect(pageQueries[1]).toContain('ORDER BY e.created_at DESC, e.id ASC');
+    expect(pageQueries[2]).toContain('ORDER BY e.text ASC, e.homograph_index ASC, e.id ASC');
   });
 });
