@@ -111,17 +111,22 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
 INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('eng', 'English'),
   ('cmn', 'Mandarin Chinese'),
-  ('nan', 'Min Nan Chinese');
+  ('nan', 'Min Nan Chinese'),
+  ('spa', 'Spanish'),
+  ('jpn', 'Japanese');
 
 INSERT OR IGNORE INTO scripts (code, name_en, direction) VALUES
   ('Latn', 'Latin', 'ltr'),
   ('Hant', 'Han (Traditional variant)', 'ltr'),
-  ('Hans', 'Han (Simplified variant)', 'ltr');
+  ('Hans', 'Han (Simplified variant)', 'ltr'),
+  ('Jpan', 'Japanese (alias for Han + Hiragana + Katakana)', 'ltr');
 
 INSERT OR IGNORE INTO regions (code, name_en, latitude, longitude) VALUES
   ('US', 'United States', 39.8, -98.6),
   ('TW', 'Taiwan, Province of China', 23.7, 121.0),
-  ('CN', 'China', NULL, NULL);
+  ('CN', 'China', NULL, NULL),
+  ('ES', 'Spain', NULL, NULL),
+  ('JP', 'Japan', 36.2, 138.3);
 
 INSERT OR IGNORE INTO language_locales
   (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref)
@@ -130,7 +135,9 @@ VALUES
   ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '臺灣華語', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
   ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '简体中文', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
   ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語（中國）', 'Min Nan Chinese (China)', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '閩南語（臺灣）', 'Min Nan Chinese (Taiwan)', 'system-seed', 'seed:system-seed:1');
+  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '閩南語（臺灣）', 'Min Nan Chinese (Taiwan)', 'system-seed', 'seed:system-seed:1'),
+  ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español (España)', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
+  ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語（日本）', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');
 
 -- Expression identity + locale attestations (spec §8.4, §9.1).
 

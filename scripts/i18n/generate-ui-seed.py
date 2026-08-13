@@ -8,11 +8,8 @@ Each Expression gets source_id='system-ui', source_ref='ui:langmap-web:{key}:1'.
 """
 from __future__ import annotations
 
-import base64
-import hashlib
 import importlib.util
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -37,17 +34,16 @@ def _load_i18n_sql_module():
 i18n_sql = _load_i18n_sql_module()
 
 
-def compute_text_hash(text: str) -> str:
-    digest = hashlib.sha256(text.encode("utf-8")).digest()[:16]
-    return base64.b32encode(digest).decode("ascii").lower().rstrip("=")
+# Identity helpers are shared with generate-i18n-sql.py so seeded source ids match
+# runtime createExpression ids exactly (canonicalize + compute_text_hash + build).
+compute_text_hash = i18n_sql.compute_text_hash
+canonicalize_expression_text = i18n_sql.canonicalize_expression_text
+build_expression_id = i18n_sql.build_expression_id
+extract_placeholders = i18n_sql.extract_placeholders
 
 
 def parse_en_ts(content: str) -> dict[str, str]:
     return i18n_sql.parse_en_ts_text(content)
-
-
-def extract_placeholders(text: str) -> list[str]:
-    return sorted(set(re.findall(r"\{(\w+)\}", text)))
 
 
 def sql_str(s: str) -> str:
@@ -68,9 +64,9 @@ def main() -> int:
     ]
 
     for key in sorted(messages):
-        text = messages[key]
+        text = canonicalize_expression_text(messages[key])
         text_hash = compute_text_hash(text)
-        expr_id = f"{LANG_CODE}:{text_hash}"
+        expr_id = build_expression_id(LANG_CODE, text_hash)
         placeholders = json.dumps(extract_placeholders(text))
 
         lines.append(f"-- {key}")

@@ -55,6 +55,12 @@
       "filename": "0009_nan_bare_locales.sql",
       "size": 777,
       "sha256": "5a582cfd376349491da8f1c2084950c0b7ede2ca74621ff83c13c936715a0613"
+    },
+    {
+      "sequence": 10,
+      "filename": "0010_spa_jpn_locales.sql",
+      "size": 1306,
+      "sha256": "c03535b6e78e1ede45babf9f8822888ae7965fddaa3798d07b25fa65ace23aae"
     }
   ]
 }
