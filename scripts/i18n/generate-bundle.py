@@ -116,6 +116,7 @@ def build_rows_by_locale(
     *,
     expression_id_fn=i18n_sql.expression_id,
     stable_edge_id_fn=i18n_sql.stable_edge_id,
+    stable_attestation_id_fn=i18n_sql.stable_attestation_id,
 ):
     return {
         locale_code: i18n_sql.build_translation_rows(
@@ -124,43 +125,22 @@ def build_rows_by_locale(
             snapshot.source_map,
             expression_id_fn=expression_id_fn,
             stable_edge_id_fn=stable_edge_id_fn,
+            stable_attestation_id_fn=stable_attestation_id_fn,
         )
         for locale_code, locale_snapshot in snapshot.locales.items()
     }
 
 
-def build_clique_edges(rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> dict[str, list[tuple[str, int, int]]]:
-    """Per-key pairwise clique edges.
-
-    For each key, collect the source expression plus every locale target
-    expression, then emit one edge for each unordered pair. Returns a mapping
-    from key to a sorted list of (edge_id, expression_a_id, expression_b_id)
-    with expression_a_id < expression_b_id.
-    """
-    key_ids: dict[str, set[int]] = {}
-    for locale_code, rows in rows_by_locale.items():
-        for row in rows:
-            ids = key_ids.setdefault(row.key, set())
-            ids.add(row.source_expression_id)
-            ids.add(row.target_expression_id)
-    cliques: dict[str, list[tuple[str, int, int]]] = {}
-    for key in sorted(key_ids):
-        sorted_ids = sorted(key_ids[key])
-        cliques[key] = [
-            (stable_edge_id_fn(a, b), a, b)
-            for i, a in enumerate(sorted_ids)
-            for b in sorted_ids[i + 1:]
-        ]
-    return cliques
-
-
 def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> None:
-    expression_registry: dict[int, tuple[str, str]] = {}
-    edge_registry: dict[str, tuple[int, int]] = {}
+    # expression_id (string) -> (lang_code, canonical_text). The same id mapping
+    # to the same payload (shared translation text) is NOT a collision; only
+    # same id → different payload is.
+    expression_registry: dict[str, tuple[str, str]] = {}
+    edge_registry: dict[str, tuple[str, str]] = {}
 
     for key in sorted(source_map.keys()):
-        expr_id = i18n_sql.expression_id(i18n_sql.SOURCE_LANGUAGE_CODE, source_map[key])
-        payload = (i18n_sql.SOURCE_LANGUAGE_CODE, source_map[key])
+        expr_id = i18n_sql.expression_id(i18n_sql.SOURCE_LANG_CODE, source_map[key])
+        payload = (i18n_sql.SOURCE_LANG_CODE, i18n_sql.canonicalize_expression_text(source_map[key]))
         existing = expression_registry.get(expr_id)
         if existing is not None and existing != payload:
             raise ValueError(
@@ -171,8 +151,8 @@ def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=
     for locale_code in sorted(rows_by_locale.keys()):
         for row in rows_by_locale[locale_code]:
             for expr_id, payload, label in (
-                (row.source_expression_id, (i18n_sql.SOURCE_LANGUAGE_CODE, row.source_text), f'source {row.key}'),
-                (row.target_expression_id, (locale_code, row.translation_text), f'target {locale_code}:{row.key}'),
+                (row.source_expression_id, (i18n_sql.SOURCE_LANG_CODE, row.source_text), f'source {row.key}'),
+                (row.target_expression_id, (row.lang_code, row.translation_text), f'target {locale_code}:{row.key}'),
             ):
                 existing = expression_registry.get(expr_id)
                 if existing is not None and existing != payload:
@@ -181,7 +161,10 @@ def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=
                     )
                 expression_registry[expr_id] = payload
 
-            edge_payload = (min(row.source_expression_id, row.target_expression_id), max(row.source_expression_id, row.target_expression_id))
+            lo, hi = (row.source_expression_id, row.target_expression_id) \
+                if row.source_expression_id < row.target_expression_id \
+                else (row.target_expression_id, row.source_expression_id)
+            edge_payload = (lo, hi)
             existing_edge = edge_registry.get(row.edge_id)
             if existing_edge is not None and existing_edge != edge_payload:
                 raise ValueError(
@@ -189,95 +172,73 @@ def validate_deterministic_ids(source_map, rows_by_locale, *, stable_edge_id_fn=
                 )
             edge_registry[row.edge_id] = edge_payload
 
-    for key, edges in build_clique_edges(rows_by_locale, stable_edge_id_fn=stable_edge_id_fn).items():
-        for edge_id, a, b in edges:
-            existing_edge = edge_registry.get(edge_id)
-            if existing_edge is not None and existing_edge != (a, b):
-                raise ValueError(
-                    f'edge_id collision for {key}: {edge_id} maps to {existing_edge!r} and {(a, b)!r}'
-                )
-            edge_registry[edge_id] = (a, b)
-
 
 def render_bundle_sql(source_map, rows_by_locale, *, stable_edge_id_fn=i18n_sql.stable_edge_id) -> str:
     lines: list[str] = []
-    lines.append('-- Generated managed system UI translation bundle')
+    lines.append('-- AUTO-GENERATED by scripts/i18n/generate-bundle.py. Do not edit.')
     lines.append(f'-- Project: {i18n_sql.PROJECT_ID}')
     lines.append(f'-- Ownership scope: {OWNERSHIP_SCOPE}')
     lines.append('')
-    lines.append('-- 1. Upsert locale metadata')
-    managed_locale_codes = sorted({i18n_sql.SOURCE_LANGUAGE_CODE, *rows_by_locale.keys()})
-    for locale_code in managed_locale_codes:
-        lines.append(f'-- Locale {locale_code}')
-        lines.append(
-            f"""
-INSERT INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{i18n_sql.PROJECT_ID}', '{locale_code}',
-       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
-       p.direction, 'active'
-FROM language_profiles p
-JOIN language_varieties v ON v.id = p.language_variety_id
-WHERE p.code = '{locale_code}'
-ON CONFLICT(project_id, code) DO UPDATE SET
-  native_name = excluded.native_name,
-  direction = excluded.direction,
-  status = excluded.status;
-""".strip()
-        )
-        lines.append('')
 
+    # 1. Activate the managed UI locales (FK → language_locales; must already
+    #    be seeded in schema.sql). INSERT OR IGNORE is idempotent on re-import.
+    managed_locale_codes = sorted({i18n_sql.SOURCE_LANGUAGE_CODE, *rows_by_locale.keys()})
+    lines.append(f'-- 1. Activate UI locales ({len(managed_locale_codes)} locales)')
+    for locale_code in managed_locale_codes:
+        lines.append(
+            "INSERT OR IGNORE INTO ui_locales "
+            "(project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) "
+            f"VALUES ('{i18n_sql.PROJECT_ID}', '{locale_code}', 'active', 0, 'system', CURRENT_TIMESTAMP);"
+        )
+    lines.append('')
+
+    # 2. Source (English) expressions + ui_messages. Columns/values mirror
+    #    generate-ui-seed.py so source ids are stable and match runtime.
     lines.append(f'-- 2. Source messages ({len(source_map)} keys)')
     for key in sorted(source_map.keys()):
-        source_text = source_map[key]
-        source_expression_id = i18n_sql.expression_id(i18n_sql.SOURCE_LANGUAGE_CODE, source_text)
-        source_ref = f'{i18n_sql.PROJECT_ID}:{key}'
+        source_text = i18n_sql.canonicalize_expression_text(source_map[key])
+        source_hash = i18n_sql.compute_text_hash(source_text)
+        source_expression_id = i18n_sql.build_expression_id(i18n_sql.SOURCE_LANG_CODE, source_hash)
+        placeholders = json.dumps(i18n_sql.extract_placeholders(source_text))
+        source_ref = f'ui:{i18n_sql.PROJECT_ID}:{key}:1'
         lines.append(
             f"""
 -- {key}
-INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
-VALUES ({source_expression_id}, '{i18n_sql.q(source_text)}', '{i18n_sql.SOURCE_LANGUAGE_CODE}', 'ui_i18n', '{source_ref}', 'approved');
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('{source_expression_id}', '{i18n_sql.SOURCE_LANG_CODE}', '{i18n_sql.q(source_text)}', '{source_hash}', 1, '', '[]', '{i18n_sql.SOURCE_ID}', '{source_ref}', 'approved', NULL);
 
-INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
-VALUES ('{i18n_sql.PROJECT_ID}', '{key}', {source_expression_id}, '[]', '{source_expression_id}', 'active');
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('{i18n_sql.PROJECT_ID}', '{key}', '{source_expression_id}', '{i18n_sql.q(source_text)}', '{i18n_sql.q(placeholders)}', 'active');
 """.strip()
         )
         lines.append('')
 
+    # 3. Per locale: target expressions → attestations → mapping edges. Only
+    #    source↔target edges (the resolver joins on ui_messages.source_expression_id);
+    #    no cross-locale clique. FK-safe: expressions before attestations/edges.
     translation_count = sum(len(rows) for rows in rows_by_locale.values())
-    lines.append(f'-- 3. Translation expressions and edges ({translation_count} rows)')
-    clique_edges = build_clique_edges(rows_by_locale, stable_edge_id_fn=stable_edge_id_fn)
+    lines.append(f'-- 3. Translation expressions, attestations, and edges ({translation_count} rows)')
     for locale_code in sorted(rows_by_locale.keys()):
         lines.append(f'-- Locale {locale_code}')
         for row in rows_by_locale[locale_code]:
+            lo, hi = (row.source_expression_id, row.target_expression_id) \
+                if row.source_expression_id < row.target_expression_id \
+                else (row.target_expression_id, row.source_expression_id)
+            target_hash = i18n_sql.compute_text_hash(row.translation_text)
             lines.append(
                 f"""
 -- {row.key}
-INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
-VALUES ({row.target_expression_id}, '{i18n_sql.q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('{row.target_expression_id}', '{row.lang_code}', '{i18n_sql.q(row.translation_text)}', '{target_hash}', 1, '', '[]', '{i18n_sql.SOURCE_ID}', '{i18n_sql.q(row.source_ref)}', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('{row.attestation_id}', '{row.target_expression_id}', '{locale_code}', NULL, NULL, NULL);
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
+VALUES ('{row.edge_id}', '{lo}', '{hi}', 0, 'translation', NULL);
 """.strip()
             )
             lines.append('')
-
-    for key in sorted(clique_edges.keys()):
-        lines.append(f'-- Pairwise clique: {key}')
-        for edge_id, a, b in clique_edges[key]:
-            lines.append(
-                f"""
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('{edge_id}', {a}, {b}, 0, 'ui_i18n');
-""".strip()
-            )
-            lines.append('')
-
-    lines.append(f'-- 4. Bump mapping revision so clients revalidate stale bundles')
-    for locale_code in managed_locale_codes:
-        lines.append(
-            f"""
-UPDATE ui_locales SET mapping_revision = mapping_revision + 1, updated_at = CURRENT_TIMESTAMP
-WHERE project_id = '{i18n_sql.PROJECT_ID}' AND code = '{locale_code}';
-""".strip()
-        )
-        lines.append('')
 
     lines.append('-- Done')
     return '\n'.join(lines)

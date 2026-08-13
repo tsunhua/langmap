@@ -134,74 +134,129 @@ class GenerateBundleTests(unittest.TestCase):
         )
 
     def _create_sqlite_schema(self, db: sqlite3.Connection) -> None:
+        # Mirror the real schema (backend/schema.sql) closely enough that the
+        # generated SQL executes cleanly in-memory with FK/UNIQUE/CHECK enforced.
         db.executescript(
             """
-            CREATE TABLE language_varieties (
-              id TEXT PRIMARY KEY,
-              code TEXT NOT NULL,
-              name TEXT NOT NULL
-            );
-            CREATE TABLE language_profiles (
+            CREATE TABLE languages (code TEXT PRIMARY KEY, name_en TEXT NOT NULL);
+            CREATE TABLE scripts (code TEXT PRIMARY KEY, name_en TEXT NOT NULL, direction TEXT NOT NULL);
+            CREATE TABLE regions (code TEXT PRIMARY KEY, name_en TEXT NOT NULL, latitude REAL, longitude REAL);
+            CREATE TABLE sources (id TEXT PRIMARY KEY, type TEXT NOT NULL, name TEXT NOT NULL);
+            CREATE TABLE language_locales (
               code TEXT PRIMARY KEY,
-              language_variety_id TEXT NOT NULL,
+              lang_code TEXT NOT NULL,
+              script_code TEXT NOT NULL,
+              region_code TEXT NOT NULL,
+              place_path TEXT NOT NULL DEFAULT '',
               name TEXT NOT NULL,
-              script_code TEXT NOT NULL DEFAULT '',
-              direction TEXT NOT NULL,
-              FOREIGN KEY (language_variety_id) REFERENCES language_varieties(id)
+              name_en TEXT NOT NULL,
+              source_id TEXT,
+              source_ref TEXT,
+              UNIQUE(lang_code, script_code, region_code, place_path)
             );
             CREATE TABLE expressions (
-              id INTEGER PRIMARY KEY,
+              id TEXT PRIMARY KEY,
+              lang_code TEXT NOT NULL,
               text TEXT NOT NULL,
-              language_profile_code TEXT NOT NULL,
-              source_type TEXT,
+              text_hash TEXT NOT NULL,
+              homograph_index INTEGER NOT NULL DEFAULT 1,
+              description TEXT NOT NULL DEFAULT '',
+              tags_json TEXT NOT NULL DEFAULT '[]',
+              source_id TEXT,
               source_ref TEXT,
-              review_status TEXT
-            );
-            CREATE TABLE ui_locales (
-              project_id TEXT NOT NULL,
-              code TEXT NOT NULL,
-              native_name TEXT NOT NULL,
-              direction TEXT NOT NULL,
-              status TEXT NOT NULL,
-              mapping_revision INTEGER NOT NULL DEFAULT 0,
+              review_status TEXT NOT NULL DEFAULT 'pending',
+              created_by INTEGER,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
               updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              PRIMARY KEY (project_id, code)
+              CHECK(homograph_index >= 1),
+              CHECK(source_ref IS NULL OR source_id IS NOT NULL),
+              UNIQUE(lang_code, text, homograph_index),
+              UNIQUE(lang_code, text_hash, homograph_index)
             );
-            CREATE TABLE ui_messages (
-              project_id TEXT NOT NULL,
-              key TEXT NOT NULL,
-              source_expression_id INTEGER NOT NULL,
-              placeholders_json TEXT,
-              source_hash TEXT NOT NULL,
-              status TEXT NOT NULL,
-              PRIMARY KEY (project_id, key)
+            CREATE TABLE expression_locale_attestations (
+              id TEXT PRIMARY KEY,
+              expression_id TEXT NOT NULL,
+              language_locale_code TEXT NOT NULL,
+              source_id TEXT,
+              source_ref TEXT,
+              created_by INTEGER,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              UNIQUE(expression_id, language_locale_code, source_id, source_ref)
             );
             CREATE TABLE expression_edges (
               id TEXT PRIMARY KEY,
-              expression_a_id INTEGER NOT NULL,
-              expression_b_id INTEGER NOT NULL,
-              score INTEGER NOT NULL,
-              source TEXT NOT NULL
+              expression_a_id TEXT NOT NULL,
+              expression_b_id TEXT NOT NULL,
+              score INTEGER NOT NULL DEFAULT 0,
+              source TEXT NOT NULL,
+              created_by INTEGER,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CHECK(expression_a_id < expression_b_id),
+              UNIQUE(expression_a_id, expression_b_id)
+            );
+            CREATE TABLE ui_locales (
+              project_id TEXT NOT NULL,
+              language_locale_code TEXT NOT NULL,
+              status TEXT NOT NULL,
+              mapping_revision INTEGER NOT NULL DEFAULT 0,
+              activation_source TEXT,
+              activated_at TEXT,
+              PRIMARY KEY(project_id, language_locale_code)
+            );
+            CREATE TABLE ui_messages (
+              project_id TEXT NOT NULL,
+              message_key TEXT NOT NULL,
+              source_expression_id TEXT NOT NULL,
+              source_text TEXT NOT NULL,
+              placeholders_json TEXT NOT NULL DEFAULT '[]',
+              status TEXT NOT NULL,
+              PRIMARY KEY(project_id, message_key)
             );
             """
         )
         db.executemany(
-            "INSERT INTO language_varieties (id, code, name) VALUES (?, ?, ?)",
+            "INSERT INTO languages (code, name_en) VALUES (?, ?)",
             [
-                ("ven", "en", "English"),
-                ("vcmn", "cmn", "華語"),
-                ("ves", "es", "Español"),
-                ("vja", "ja", "日本語"),
+                ("eng", "English"),
+                ("cmn", "Mandarin Chinese"),
+                ("spa", "Spanish"),
+                ("jpn", "Japanese"),
             ],
         )
         db.executemany(
-            "INSERT INTO language_profiles (code, language_variety_id, name, script_code, direction) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO scripts (code, name_en, direction) VALUES (?, ?, ?)",
             [
-                ("eng-Latn-US", "ven", "拉丁", "Latn", "ltr"),
-                ("cmn-Hans-CN", "vcmn", "简体", "Hans", "ltr"),
-                ("cmn-Hant-TW", "vcmn", "傳承體", "Hant", "ltr"),
-                ("spa-Latn-ES", "ves", "拉丁", "Latn", "ltr"),
-                ("jpn-Jpan-JP", "vja", "標準", "Jpan", "ltr"),
+                ("Latn", "Latin", "ltr"),
+                ("Hant", "Han (Traditional)", "ltr"),
+                ("Hans", "Han (Simplified)", "ltr"),
+                ("Jpan", "Japanese", "ltr"),
+            ],
+        )
+        db.executemany(
+            "INSERT INTO regions (code, name_en, latitude, longitude) VALUES (?, ?, ?, ?)",
+            [
+                ("US", "United States", 39.8, -98.6),
+                ("TW", "Taiwan", 23.7, 121.0),
+                ("CN", "China", None, None),
+                ("ES", "Spain", None, None),
+                ("JP", "Japan", 36.2, 138.3),
+            ],
+        )
+        db.executemany(
+            "INSERT INTO sources (id, type, name) VALUES (?, ?, ?)",
+            [
+                ("system-seed", "system", "seed"),
+                ("system-ui", "system", "UI"),
+            ],
+        )
+        db.executemany(
+            "INSERT INTO language_locales (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                ("eng-Latn-US", "eng", "Latn", "US", "", "English (US)", "English (US)", "system-seed", "seed:system-seed:1"),
+                ("cmn-Hant-TW", "cmn", "Hant", "TW", "", "Taiwan Mandarin", "Taiwan Mandarin", "system-seed", "seed:system-seed:1"),
+                ("cmn-Hans-CN", "cmn", "Hans", "CN", "", "Simplified Chinese", "Simplified Chinese", "system-seed", "seed:system-seed:1"),
+                ("spa-Latn-ES", "spa", "Latn", "ES", "", "Spanish (Spain)", "Spanish (Spain)", "system-seed", "seed:system-seed:1"),
+                ("jpn-Jpan-JP", "jpn", "Jpan", "JP", "", "Japanese (Japan)", "Japanese (Japan)", "system-seed", "seed:system-seed:1"),
             ],
         )
 
@@ -252,11 +307,12 @@ class GenerateBundleTests(unittest.TestCase):
                 sha256_text(sql_text),
             )
 
-            self.assertIn("INSERT INTO ui_locales", sql_text)
-            self.assertIn("-- Locale eng-Latn-US", sql_text)
+            self.assertIn("INSERT OR IGNORE INTO ui_locales", sql_text)
+            self.assertIn("-- 1. Activate UI locales", sql_text)
             self.assertIn("INSERT OR IGNORE INTO ui_messages", sql_text)
             self.assertIn("INSERT OR IGNORE INTO expression_edges", sql_text)
-            self.assertIn("UPDATE ui_locales SET mapping_revision", sql_text)
+            self.assertIn("INSERT OR IGNORE INTO expression_locale_attestations", sql_text)
+            self.assertNotIn("UPDATE ui_locales SET mapping_revision", sql_text)
             self.assertNotIn("DELETE FROM", sql_text)
             self.assertIn("Don''t have an account?", sql_text)
             self.assertLess(sql_text.index("-- Locale jpn-Jpan-JP"), sql_text.index("-- Locale spa-Latn-ES"))
@@ -269,26 +325,38 @@ class GenerateBundleTests(unittest.TestCase):
                 db.executescript(sql_text)
                 first_counts = {
                     table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-                    for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
+                    for table in (
+                        "ui_locales",
+                        "ui_messages",
+                        "expressions",
+                        "expression_edges",
+                        "expression_locale_attestations",
+                    )
                 }
                 first_revisions = dict(
                     db.execute(
-                        "SELECT code, mapping_revision FROM ui_locales ORDER BY code"
+                        "SELECT language_locale_code, mapping_revision FROM ui_locales ORDER BY language_locale_code"
                     ).fetchall()
                 )
                 db.executescript(sql_text)
                 second_counts = {
                     table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-                    for table in ("ui_locales", "ui_messages", "expressions", "expression_edges")
+                    for table in (
+                        "ui_locales",
+                        "ui_messages",
+                        "expressions",
+                        "expression_edges",
+                        "expression_locale_attestations",
+                    )
                 }
                 second_revisions = dict(
                     db.execute(
-                        "SELECT code, mapping_revision FROM ui_locales ORDER BY code"
+                        "SELECT language_locale_code, mapping_revision FROM ui_locales ORDER BY language_locale_code"
                     ).fetchall()
                 )
-                native_names = dict(
+                locale_statuses = dict(
                     db.execute(
-                        "SELECT code, native_name FROM ui_locales ORDER BY code"
+                        "SELECT language_locale_code, status FROM ui_locales ORDER BY language_locale_code"
                     ).fetchall()
                 )
             finally:
@@ -296,32 +364,22 @@ class GenerateBundleTests(unittest.TestCase):
 
             self.assertEqual(second_counts, first_counts)
 
-            # Each bundle import must bump the revision so that the ETag derived
-            # from mapping_revision no longer matches stale client bundles.
+            # Re-import is idempotent: INSERT OR IGNORE leaves mapping_revision at 0
+            # on every run (no revision bump on seed import).
             self.assertEqual(
                 first_revisions,
                 {
-                    "cmn-Hans-CN": 1,
-                    "cmn-Hant-TW": 1,
-                    "eng-Latn-US": 1,
-                    "spa-Latn-ES": 1,
-                    "jpn-Jpan-JP": 1,
+                    "cmn-Hans-CN": 0,
+                    "cmn-Hant-TW": 0,
+                    "eng-Latn-US": 0,
+                    "spa-Latn-ES": 0,
+                    "jpn-Jpan-JP": 0,
                 },
             )
-            self.assertEqual(second_revisions, {code: rev + 1 for code, rev in first_revisions.items()})
+            self.assertEqual(second_revisions, first_revisions)
+            self.assertEqual(locale_statuses, {code: "active" for code in first_revisions})
 
-            self.assertEqual(
-                native_names,
-                {
-                    "cmn-Hans-CN": "華語（简体）",
-                    "cmn-Hant-TW": "華語（傳承體）",
-                    "eng-Latn-US": "English（拉丁）",
-                    "spa-Latn-ES": "Español（拉丁）",
-                    "jpn-Jpan-JP": "日本語（標準）",
-                },
-            )
-
-    def test_pairwise_translation_edges_form_a_clique_per_key(self) -> None:
+    def test_translation_edges_are_source_to_target_only(self) -> None:
         self.assertTrue(GENERATE_BUNDLE.exists(), "generate-bundle.py should exist")
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -347,28 +405,25 @@ class GenerateBundleTests(unittest.TestCase):
             finally:
                 db.close()
 
-            # Each key's node set: the en source plus every locale target.
-            module = load_module("generate_bundle_clique", GENERATE_BUNDLE)
+            # The resolver only joins edges on ui_messages.source_expression_id,
+            # so each edge must connect a key's English source expression to that
+            # key's per-locale target expression — exactly one per (locale, key),
+            # never cross-locale clique edges.
+            module = load_module("generate_bundle_edges", GENERATE_BUNDLE)
             source_map = module.i18n_sql.parse_en_ts_text(catalog_path.read_text(encoding="utf-8"))
             locales = {
                 code: module.i18n_sql.load_translations_text(path.read_text(encoding="utf-8"))
                 for code, path in locale_paths.items()
             }
-            expected_nodes: dict[str, set[int]] = {}
-            for key, source_text in source_map.items():
-                nodes = {module.i18n_sql.expression_id(module.i18n_sql.SOURCE_LANGUAGE_CODE, source_text)}
+            expected_pairs: set[tuple[str, str]] = set()
+            for key in source_map:
+                source_id = module.i18n_sql.expression_id(module.i18n_sql.SOURCE_LANG_CODE, source_map[key])
                 for locale_code, translations in locales.items():
-                    nodes.add(module.i18n_sql.expression_id(locale_code, translations[key]))
-                expected_nodes[key] = nodes
+                    lang_code = module.i18n_sql.locale_to_lang_code(locale_code)
+                    target_id = module.i18n_sql.expression_id(lang_code, translations[key])
+                    expected_pairs.add(tuple(sorted((source_id, target_id))))
 
-            # Every unordered pair within a key's node set must have an edge.
             edges = {tuple(sorted((a, b))) for a, b in edge_rows}
-            expected_pairs: set[tuple[int, int]] = set()
-            for key, nodes in expected_nodes.items():
-                ordered = sorted(nodes)
-                for i in range(len(ordered)):
-                    for j in range(i + 1, len(ordered)):
-                        expected_pairs.add((ordered[i], ordered[j]))
             self.assertEqual(edges, expected_pairs)
             self.assertEqual(len(edge_rows), len(expected_pairs))
 
@@ -408,10 +463,11 @@ class GenerateBundleTests(unittest.TestCase):
             output_dir = temp_root / "artifacts" / "system-ui"
             module = load_module("generate_bundle", GENERATE_BUNDLE)
 
-            def collision_expression_id(language_code: str, text: str) -> int:
-                if language_code == "spa-Latn-ES":
-                    return 999
-                return module.i18n_sql.expression_id(language_code, text)
+            def collision_expression_id(lang_code: str, text: str) -> str:
+                # Force a string id collision: spa target expressions reuse a cmn id.
+                if lang_code == "spa":
+                    return "cmn:colliding"
+                return module.i18n_sql.expression_id(lang_code, text)
 
             with self.assertRaisesRegex(ValueError, "expression_id collision"):
                 module.generate_bundle(
