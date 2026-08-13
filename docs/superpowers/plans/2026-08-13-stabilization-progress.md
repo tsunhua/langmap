@@ -53,5 +53,20 @@
 
 - 本地 workerd 最新支援 `2026-07-29`；`wrangler.jsonc` compatibility date 據此校準。待更新 wrangler 版本附帶支援更新日期的 workerd 後再行調整（已記錄於 `wranglerConfig.test.ts` 註釋）。
 - `SECRET_KEY` 改由 `.dev.vars` 提供；已 gitignore，未提交。
-- 本輪未執行真實瀏覽器驗收（Task 8）與完整 21 領域逐項瀏覽器矩陣；自動化層已全綠，UI 瀏覽器驗收待續。
+- 瀏覽器驗收使用本機系統 Chrome（`channel:'chrome'`）以無頭模式執行；第三方地圖圖磚（MapLens/Leaflet）屬受限驗證，未納入 same-origin 失敗判定。
 - 未連接、遷移或部署任何遠端／production 資源；Wrangler 僅 local 操作與 dry-run。
+
+## Task 8：瀏覽器驗收（已完成）
+
+以 Playwright + 系統 Chrome 無頭驗收，涵蓋桌面 1440×900 與行動 390×844、鍵盤流程與 `prefers-reduced-motion`，每輪檢查 console error、未處理例外、same-origin request 失敗與頁面級水平溢出。
+
+**結果：22/22 OK。** 匿名路由（`/`、`/search`、`/languages`、`/language/nan`、`/mapping/:id`、`/handbooks`、`/translate`、`/map`→`/`、`/auth`、404）在兩 viewport 均無 console error、無 same-origin 失敗、無水平溢出；鍵盤可完成搜尋；reduced-motion 下詞句圖譜無錯誤。
+
+驗收發現並修復 3 項缺陷（commit `890193e`）：
+
+| 缺陷 | 根因 | 修復 |
+|---|---|---|
+| 匿名訪問 `/translate` 觸發 401 並 hard-redirect 至 `/auth` | 路由無 auth guard；client 401 攔截器 hard-redirect；頁面 `onMounted` 無條件呼叫需鑑權的 workbench API | `load()` 改以 `auth.isLoggedIn` 把關；登入提示上提至 workbench 區塊外（原本位於永不載入的 workbench 區塊內，匿名看到空白無回饋狀態） |
+| HomeFeed 首次載入 `/favicon.ico` 404（僅桌面首次頁出現，瀏覽器快取） | 無 favicon link，瀏覽器自動請求 | `index.html` 加 `<link rel="icon" href="data:,">` 抑制請求 |
+| （回歸覆蓋） | 缺匿名路徑測試 | 新增「匿名不呼叫 workbench API 且顯示登入提示」測試 |
+
