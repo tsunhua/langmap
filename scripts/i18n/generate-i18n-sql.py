@@ -16,43 +16,103 @@ import hashlib
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 PROJECT_ID = 'langmap-web'
+# Full BCP-47-ish locale code of the UI source copy (matches language_locales seed).
 SOURCE_LANGUAGE_CODE = 'eng-Latn-US'
-LANGUAGE_ID_BITS = 16
-TEXT_ID_BITS = 37
+# 3-letter lang_code of the source expressions (expressions.lang_code FK).
+SOURCE_LANG_CODE = 'eng'
+# Provenance stamped onto seeded UI expressions (matches the 'system-ui' source
+# seeded in schema.sql and used by generate-ui-seed.py).
+SOURCE_ID = 'system-ui'
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EN_TS_PATH = PROJECT_ROOT / 'web/src/locales/en.ts'
+
+# Base32 alphabet used by the runtime computeTextHash
+# (backend/src/services/expressionIdentity.ts). Lowercase Crockford-like, no 0/1.
+_BASE32_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567'
 
 
 @dataclass(frozen=True)
 class TranslationRow:
-    locale_code: str
-    key: str
-    source_text: str
-    translation_text: str
-    source_expression_id: int
-    target_expression_id: int
-    edge_id: str
-    source_ref: str
+    locale_code: str            # full locale, e.g. 'cmn-Hant-TW'
+    lang_code: str              # 3-letter expression lang_code, e.g. 'cmn'
+    key: str                    # dotted en.ts path / ui_messages.message_key
+    source_text: str            # canonicalized English source text
+    translation_text: str       # canonicalized translation text
+    source_expression_id: str   # 'eng:<hash>'
+    target_expression_id: str   # '<lang>:<hash>'
+    edge_id: str                # 'ui-edge:<lo>:<hi>'
+    attestation_id: str         # 'ui-att:<locale>:<target_id>'
+    source_ref: str             # 'ui:langmap-web:<key>:1'
 
 
-def hash_segment(content: str, bits: int) -> int:
-    h = hashlib.sha256(content.encode()).digest()
-    head = int.from_bytes(h[:8], 'big')
-    modulus = (1 << bits) - 1
-    return (head % modulus) + 1
+# ---------------------------------------------------------------------------
+# Identity functions — exact ports of backend/src/services/expressionIdentity.ts.
+# Seed ids MUST match runtime createExpression ids so the UNIQUE-reuse path and
+# translation edges line up.
+# ---------------------------------------------------------------------------
+
+def canonicalize_expression_text(text: str) -> str:
+    """Port of canonicalizeExpressionText: trim + NFC."""
+    return unicodedata.normalize('NFC', text.strip())
 
 
-def expression_id(language_code: str, text: str) -> int:
-    lang_prefix = hash_segment(language_code, LANGUAGE_ID_BITS)
-    text_segment = hash_segment(text, TEXT_ID_BITS)
-    return lang_prefix * (2 ** TEXT_ID_BITS) + text_segment
+def compute_text_hash(canonical_text: str) -> str:
+    """Port of computeTextHash: SHA-256[:16] → 5-bit groups (MSB-first, final
+    group right-padded with zero bits) → lowercase base32 alphabet. 26 chars."""
+    digest = hashlib.sha256(canonical_text.encode('utf-8')).digest()[:16]
+    bits = ''.join(f'{byte:08b}' for byte in digest)
+    out = []
+    for i in range(0, len(bits), 5):
+        group = bits[i:i + 5].ljust(5, '0')
+        out.append(_BASE32_ALPHABET[int(group, 2)])
+    return ''.join(out)
 
 
-def stable_edge_id(a: int, b: int) -> str:
-    return f'{min(a, b)}-{max(a, b)}'
+def build_expression_id(lang_code: str, text_hash: str, homograph_index: int = 1) -> str:
+    """Port of buildExpressionId. omits the '.N' suffix when N == 1."""
+    lang = lang_code.lower()
+    if homograph_index > 1:
+        return f'{lang}:{text_hash}.{homograph_index}'
+    return f'{lang}:{text_hash}'
+
+
+def expression_id(lang_code: str, text: str) -> str:
+    """Convenience: canonicalize → hash → build id, matching runtime createExpression.
+
+    Lang_code here is the 3-letter expressions.lang_code (NOT the full locale);
+    callers pass locale_to_lang_code(...) for target locales and SOURCE_LANG_CODE
+    for the source.
+    """
+    return build_expression_id(lang_code, compute_text_hash(canonicalize_expression_text(text)))
+
+
+def locale_to_lang_code(locale_code: str) -> str:
+    """Derive the 3-letter expressions.lang_code from a full locale code."""
+    return locale_code.split('-', 1)[0].lower()
+
+
+def extract_placeholders(text: str) -> list[str]:
+    """Sorted unique {placeholder} names, matching the runtime placeholder check."""
+    return sorted(set(re.findall(r'\{(\w+)\}', text)))
+
+
+def stable_edge_id(a: str, b: str) -> str:
+    """Deterministic expression_edges.id; canonicalized so a < b (string order),
+    matching runtime canonicalizeEdgePair + the schema CHECK constraint."""
+    lo, hi = (a, b) if a < b else (b, a)
+    return f'ui-edge:{lo}:{hi}'
+
+
+def stable_attestation_id(locale_code: str, target_expression_id: str) -> str:
+    """Deterministic expression_locale_attestations.id. The UNIQUE on
+    (expression_id, language_locale_code, source_id, source_ref) cannot dedupe
+    NULL provenance (SQLite treats NULLs as distinct), so idempotent re-import
+    relies on this deterministic PRIMARY KEY."""
+    return f'ui-att:{locale_code}:{target_expression_id}'
 
 
 # ---------------------------------------------------------------------------
@@ -180,9 +240,11 @@ def build_translation_rows(
     translations: dict[str, str],
     source_map: dict[str, str],
     *,
+    source_lang_code: str = SOURCE_LANG_CODE,
     source_language_code: str = SOURCE_LANGUAGE_CODE,
     expression_id_fn=expression_id,
     stable_edge_id_fn=stable_edge_id,
+    stable_attestation_id_fn=stable_attestation_id,
 ) -> list[TranslationRow]:
     validate_locale_code(locale_code)
     unknown = find_unknown_keys(translations, source_map)
@@ -190,22 +252,25 @@ def build_translation_rows(
         joined = ', '.join(unknown)
         raise ValueError(f'unknown source key(s) for {locale_code}: {joined}')
 
+    lang_code = locale_to_lang_code(locale_code)
     rows: list[TranslationRow] = []
     for key in sorted(translations.keys()):
-        translation_text = translations[key]
-        source_text = source_map[key]
-        source_expression_id = expression_id_fn(source_language_code, source_text)
-        target_expression_id = expression_id_fn(locale_code, translation_text)
+        source_text = canonicalize_expression_text(source_map[key])
+        translation_text = canonicalize_expression_text(translations[key])
+        source_expression_id = expression_id_fn(source_lang_code, source_map[key])
+        target_expression_id = expression_id_fn(lang_code, translations[key])
         rows.append(
             TranslationRow(
                 locale_code=locale_code,
+                lang_code=lang_code,
                 key=key,
                 source_text=source_text,
                 translation_text=translation_text,
                 source_expression_id=source_expression_id,
                 target_expression_id=target_expression_id,
                 edge_id=stable_edge_id_fn(source_expression_id, target_expression_id),
-                source_ref=f'{PROJECT_ID}:{key}',
+                attestation_id=stable_attestation_id_fn(locale_code, target_expression_id),
+                source_ref=f'ui:{PROJECT_ID}:{key}:1',
             )
         )
     return rows
@@ -217,36 +282,48 @@ def render_locale_sql(locale_code: str, rows: list[TranslationRow]) -> str:
     lines.append(f'-- Project: {PROJECT_ID}')
     lines.append('')
 
-    # 1. Register locale
-    lines.append('-- 1. Register locale')
-    lines.append(f"""
-INSERT OR IGNORE INTO ui_locales (project_id, code, native_name, direction, status)
-SELECT '{PROJECT_ID}', '{locale_code}',
-       v.name || IIF(COALESCE(p.script_code, '') != '', '（' || p.name || '）', ''),
-       p.direction, 'active'
-FROM language_profiles p
-JOIN language_varieties v ON v.id = p.language_variety_id
-WHERE p.code = '{locale_code}';
-""".strip())
+    # 1. Activate the UI locale (FK → language_locales; must already be seeded).
+    lines.append('-- 1. Activate UI locale')
+    lines.append(
+        "INSERT OR IGNORE INTO ui_locales "
+        "(project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) "
+        f"VALUES ('{PROJECT_ID}', '{locale_code}', 'active', 0, 'system', CURRENT_TIMESTAMP);"
+    )
     lines.append('')
 
-    # 2. Process each translation
-    lines.append(f'-- 2. Translations ({len(rows)} keys)')
-
+    # 2. Source expressions + ui_messages (self-contained single-locale import).
+    lines.append(f'-- 2. Source messages ({len(rows)} keys)')
     for row in rows:
+        source_hash = compute_text_hash(row.source_text)
+        placeholders = json.dumps(extract_placeholders(row.source_text))
         lines.append(f"""
 -- {row.key}
-INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
-VALUES ({row.source_expression_id}, '{q(row.source_text)}', '{SOURCE_LANGUAGE_CODE}', 'ui_i18n', '{row.source_ref}', 'approved');
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('{q(row.source_expression_id)}', '{SOURCE_LANG_CODE}', '{q(row.source_text)}', '{q(source_hash)}', 1, '', '[]', '{SOURCE_ID}', '{q(row.source_ref)}', 'approved', NULL);
 
-INSERT OR IGNORE INTO ui_messages (project_id, key, source_expression_id, placeholders_json, source_hash, status)
-VALUES ('{PROJECT_ID}', '{row.key}', {row.source_expression_id}, '[]', '{row.source_expression_id}', 'active');
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('{PROJECT_ID}', '{row.key}', '{q(row.source_expression_id)}', '{q(row.source_text)}', '{q(placeholders)}', 'active');
+""".strip())
+        lines.append('')
 
-INSERT OR IGNORE INTO expressions (id, text, language_profile_code, source_type, source_ref, review_status)
-VALUES ({row.target_expression_id}, '{q(row.translation_text)}', '{locale_code}', 'ui_i18n', '{row.source_ref}', 'pending');
+    # 3. Translation expressions, attestations, and mapping edges.
+    lines.append(f'-- 3. Translations ({len(rows)} keys)')
 
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source)
-VALUES ('{row.edge_id}', {row.source_expression_id}, {row.target_expression_id}, 0, 'ui_i18n');
+    for row in rows:
+        lo, hi = (row.source_expression_id, row.target_expression_id) \
+            if row.source_expression_id < row.target_expression_id \
+            else (row.target_expression_id, row.source_expression_id)
+        target_hash = compute_text_hash(row.translation_text)
+        lines.append(f"""
+-- {row.key}
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('{q(row.target_expression_id)}', '{row.lang_code}', '{q(row.translation_text)}', '{q(target_hash)}', 1, '', '[]', '{SOURCE_ID}', '{q(row.source_ref)}', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('{q(row.attestation_id)}', '{q(row.target_expression_id)}', '{locale_code}', NULL, NULL, NULL);
+
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by)
+VALUES ('{q(row.edge_id)}', '{q(lo)}', '{q(hi)}', 0, 'translation', NULL);
 """.strip())
         lines.append('')
 
