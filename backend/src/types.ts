@@ -1,8 +1,4 @@
-export interface Bindings {
-  DB: D1Database;
-  ASSETS: { fetch: typeof fetch };
-  SECRET_KEY: string;
-}
+export type Bindings = Env;
 
 export interface Variables {
   user?: { id: number; username: string; role: string };

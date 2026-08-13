@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "langmap-backend-v2",
-  "compatibility_date": "2025-08-03",
+  "compatibility_date": "2026-07-29",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/index.tsx",
   "assets": {
@@ -10,9 +10,11 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
-  "vars": { "SECRET_KEY": "dev-secret-change-me-before-deploy" },
   "d1_databases": [
     { "binding": "DB", "database_name": "langmap-v2", "database_id": "69a50b71-8cff-4e50-9e73-1e9020d34bd3" }
   ],
-  "observability": { "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true } }
+  "observability": {
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01, "persist": true }
+  }
 }
