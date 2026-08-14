@@ -22,9 +22,9 @@ describe('language identity API', () => {
   it('forwards language content search, sort, paging and locale filters', async () => {
     const signal = new AbortController().signal
 
-    await listContentLanguages({ q: 'min', sort: 'alpha', limit: 10, offset: 20 }, signal)
+    await listContentLanguages({ q: 'min', sort: 'alpha', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal)
     expect(api.get).toHaveBeenLastCalledWith('/languages', {
-      params: { q: 'min', sort: 'alpha', limit: 10, offset: 20 }, signal,
+      params: { q: 'min', sort: 'alpha', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal,
     })
 
     await listLanguageExpressions('nan', { q: '食', sort: 'new', locale: 'nan-Hant-CN_Quanzhou_Nanan', limit: 10, offset: 20 }, signal)

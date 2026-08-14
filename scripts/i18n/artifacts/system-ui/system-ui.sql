@@ -9,7 +9,7 @@ INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapp
 INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) VALUES ('langmap-web', 'jpn-Jpan-JP', 'active', 0, 'system', CURRENT_TIMESTAMP);
 INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) VALUES ('langmap-web', 'spa-Latn-ES', 'active', 0, 'system', CURRENT_TIMESTAMP);
 
--- 2. Source messages (317 keys)
+-- 2. Source messages (324 keys)
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('eng:s2omxu6pmmaozvoiqbcz3anosa', 'eng', 'Email', 's2omxu6pmmaozvoiqbcz3anosa', 1, '', '[]', 'system-ui', 'ui:langmap-web:auth.email:1', 'approved', NULL);
@@ -1396,12 +1396,19 @@ VALUES ('eng:zbm2ofqkafo5qdovoksi4kywry', 'eng', '{count} variant(s) removed', '
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'languageCreate.variantsRemoved', 'eng:zbm2ofqkafo5qdovoksi4kywry', '{count} variant(s) removed', '["count"]', 'active');
 
--- languageDetail.allScripts
+-- languageDetail.allOthers
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('eng:uuvm4qqpef25bcyvo6q35jkely', 'eng', 'All', 'uuvm4qqpef25bcyvo6q35jkely', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allScripts:1', 'approved', NULL);
+VALUES ('eng:uuvm4qqpef25bcyvo6q35jkely', 'eng', 'All', 'uuvm4qqpef25bcyvo6q35jkely', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allOthers:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
-VALUES ('langmap-web', 'languageDetail.allScripts', 'eng:uuvm4qqpef25bcyvo6q35jkely', 'All', '[]', 'active');
+VALUES ('langmap-web', 'languageDetail.allOthers', 'eng:uuvm4qqpef25bcyvo6q35jkely', 'All', '[]', 'active');
+
+-- languageDetail.allVariants
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:w7ah72muvlhct2v3lfyyllntqi', 'eng', 'All scripts', 'w7ah72muvlhct2v3lfyyllntqi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allVariants:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.allVariants', 'eng:w7ah72muvlhct2v3lfyyllntqi', 'All scripts', '[]', 'active');
 
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -1452,12 +1459,26 @@ VALUES ('eng:cakodkxv7wgphlxdsu3wzmxfna', 'eng', 'No expressions found', 'cakodk
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'languageDetail.noResults', 'eng:cakodkxv7wgphlxdsu3wzmxfna', 'No expressions found', '[]', 'active');
 
+-- languageDetail.otherLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:7f7j3ihdxb47bko7s6noeyff64', 'eng', 'Other', '7f7j3ihdxb47bko7s6noeyff64', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.otherLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.otherLabel', 'eng:7f7j3ihdxb47bko7s6noeyff64', 'Other', '[]', 'active');
+
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('eng:oyzh33e24oqgvdb4fa7gvaotoe', 'eng', 'Popular', 'oyzh33e24oqgvdb4fa7gvaotoe', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.popular:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'languageDetail.popular', 'eng:oyzh33e24oqgvdb4fa7gvaotoe', 'Popular', '[]', 'active');
+
+-- languageDetail.regionalForms
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:jytccm7vom4ww5jefobl67vaje', 'eng', 'Regional forms', 'jytccm7vom4ww5jefobl67vaje', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.regionalForms:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.regionalForms', 'eng:jytccm7vom4ww5jefobl67vaje', 'Regional forms', '[]', 'active');
 
 -- languageDetail.representativeCities
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -1473,12 +1494,33 @@ VALUES ('eng:pi37qm2nz7wn7tn6kknop6w54e', 'eng', 'Reference points for explorati
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'languageDetail.representativeCitiesNote', 'eng:pi37qm2nz7wn7tn6kknop6w54e', 'Reference points for exploration; not the full language distribution.', '[]', 'active');
 
--- languageDetail.scriptLabel
+-- languageDetail.scripts.Hans
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('eng:cavmyehgpiux26pxubca3h5zny', 'eng', 'Script', 'cavmyehgpiux26pxubca3h5zny', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scriptLabel:1', 'approved', NULL);
+VALUES ('eng:vkdebhvh4fd6uuze4sud2sppyu', 'eng', 'Simplified', 'vkdebhvh4fd6uuze4sud2sppyu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hans:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
-VALUES ('langmap-web', 'languageDetail.scriptLabel', 'eng:cavmyehgpiux26pxubca3h5zny', 'Script', '[]', 'active');
+VALUES ('langmap-web', 'languageDetail.scripts.Hans', 'eng:vkdebhvh4fd6uuze4sud2sppyu', 'Simplified', '[]', 'active');
+
+-- languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:jr6gkcqonl7z2t5ygfygiiosyq', 'eng', 'Traditional', 'jr6gkcqonl7z2t5ygfygiiosyq', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hant:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.scripts.Hant', 'eng:jr6gkcqonl7z2t5ygfygiiosyq', 'Traditional', '[]', 'active');
+
+-- languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:xzhosbwt57wpynfjjjwng6ddhi', 'eng', 'Japanese', 'xzhosbwt57wpynfjjjwng6ddhi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Jpan:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.scripts.Jpan', 'eng:xzhosbwt57wpynfjjjwng6ddhi', 'Japanese', '[]', 'active');
+
+-- languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:fu4mivvc5rak6g5wvqdtcwzq4e', 'eng', 'Latin', 'fu4mivvc5rak6g5wvqdtcwzq4e', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Latn:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.scripts.Latn', 'eng:fu4mivvc5rak6g5wvqdtcwzq4e', 'Latin', '[]', 'active');
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -1486,6 +1528,13 @@ VALUES ('eng:hv43tbysndcmbbn465v2jmuugq', 'eng', 'Search expressions…', 'hv43t
 
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'languageDetail.searchPlaceholder', 'eng:hv43tbysndcmbbn465v2jmuugq', 'Search expressions…', '[]', 'active');
+
+-- languageDetail.variantLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('eng:cavmyehgpiux26pxubca3h5zny', 'eng', 'Script', 'cavmyehgpiux26pxubca3h5zny', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.variantLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
+VALUES ('langmap-web', 'languageDetail.variantLabel', 'eng:cavmyehgpiux26pxubca3h5zny', 'Script', '[]', 'active');
 
 -- languagePicker.clear
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -2229,7 +2278,7 @@ VALUES ('eng:n66xm2y2ohge2klnsl4es5vb7u', 'eng', 'Translation', 'n66xm2y2ohge2kl
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'translate.translation', 'eng:n66xm2y2ohge2klnsl4es5vb7u', 'Translation', '[]', 'active');
 
--- 3. Translation expressions and attestations (1240 rows)
+-- 3. Translation expressions and attestations (1264 rows)
 -- Locale cmn-Hans-CN
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -3596,12 +3645,19 @@ VALUES ('cmn:brbhqrt7s5uaip7jonusucjkci', 'cmn', '已移除 {count} 个变体', 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:brbhqrt7s5uaip7jonusucjkci', 'cmn:brbhqrt7s5uaip7jonusucjkci', 'cmn-Hans-CN', NULL, NULL, NULL);
 
--- languageDetail.allScripts
+-- languageDetail.allOthers
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn', '全部', 'lrk2m6jvv6hukcf2axlnqhe6wi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allScripts:1', 'approved', NULL);
+VALUES ('cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn', '全部', 'lrk2m6jvv6hukcf2axlnqhe6wi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allOthers:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn-Hans-CN', NULL, NULL, NULL);
+
+-- languageDetail.allVariants
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:e7zugkjfu4p2jyq3llggh7qglq', 'cmn', '全部变体', 'e7zugkjfu4p2jyq3llggh7qglq', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allVariants:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:e7zugkjfu4p2jyq3llggh7qglq', 'cmn:e7zugkjfu4p2jyq3llggh7qglq', 'cmn-Hans-CN', NULL, NULL, NULL);
 
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -3652,6 +3708,13 @@ VALUES ('cmn:cwaywfoiy35ow3suloyvshxbp4', 'cmn', '没有找到词句', 'cwaywfoi
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:cwaywfoiy35ow3suloyvshxbp4', 'cmn:cwaywfoiy35ow3suloyvshxbp4', 'cmn-Hans-CN', NULL, NULL, NULL);
 
+-- languageDetail.otherLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn', '其他', '2kij6fsh47ejdkbie5m3f2vjme', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.otherLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn-Hans-CN', NULL, NULL, NULL);
+
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('cmn:zxbzjyxag3edtu2lnqqqxcfeyu', 'cmn', '热门', 'zxbzjyxag3edtu2lnqqqxcfeyu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.popular:1', 'approved', NULL);
@@ -3673,12 +3736,33 @@ VALUES ('cmn:edzrk4ezv37u4dtye2uduyoone', 'cmn', '探索参考点；并非完整
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:edzrk4ezv37u4dtye2uduyoone', 'cmn:edzrk4ezv37u4dtye2uduyoone', 'cmn-Hans-CN', NULL, NULL, NULL);
 
--- languageDetail.scriptLabel
+-- languageDetail.scripts.Hans
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scriptLabel:1', 'approved', NULL);
+VALUES ('cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn', '简体', 'p6ymnvwsukw5nn3ojxbrjnt2cu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hans:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hans-CN:cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn-Hans-CN', NULL, NULL, NULL);
+VALUES ('ui-att:cmn-Hans-CN:cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn-Hans-CN', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn', '傳承體', 'ypconwut3lzscud6da2bzw3tbu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hant:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn-Hans-CN', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn', '日文', '7627i43d2txn3vlfgutz7go5qa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Jpan:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn-Hans-CN', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn', '拉丁', 'fbmf35cumvi4flvtoaf5yjz7py', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Latn:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn-Hans-CN', NULL, NULL, NULL);
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -3686,6 +3770,13 @@ VALUES ('cmn:bh7o4z3rdx4ygw2m2szzmu2fim', 'cmn', '搜索词句…', 'bh7o4z3rdx4
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:bh7o4z3rdx4ygw2m2szzmu2fim', 'cmn:bh7o4z3rdx4ygw2m2szzmu2fim', 'cmn-Hans-CN', NULL, NULL, NULL);
+
+-- languageDetail.variantLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.variantLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hans-CN:cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn-Hans-CN', NULL, NULL, NULL);
 
 -- languagePicker.clear
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -5774,12 +5865,19 @@ VALUES ('cmn:byhosqairryzfgeb2erdn5vqia', 'cmn', '已移除 {count} 個變體', 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:byhosqairryzfgeb2erdn5vqia', 'cmn:byhosqairryzfgeb2erdn5vqia', 'cmn-Hant-TW', NULL, NULL, NULL);
 
--- languageDetail.allScripts
+-- languageDetail.allOthers
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn', '全部', 'lrk2m6jvv6hukcf2axlnqhe6wi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allScripts:1', 'approved', NULL);
+VALUES ('cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn', '全部', 'lrk2m6jvv6hukcf2axlnqhe6wi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allOthers:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'cmn-Hant-TW', NULL, NULL, NULL);
+
+-- languageDetail.allVariants
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'cmn', '全部變體', '4ktacvvn46nwq2n5tzvrvr2jk4', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allVariants:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'cmn-Hant-TW', NULL, NULL, NULL);
 
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -5830,6 +5928,13 @@ VALUES ('cmn:3z63sishtm37ljspobzbzrdife', 'cmn', '找不到詞句', '3z63sishtm3
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:3z63sishtm37ljspobzbzrdife', 'cmn:3z63sishtm37ljspobzbzrdife', 'cmn-Hant-TW', NULL, NULL, NULL);
 
+-- languageDetail.otherLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn', '其他', '2kij6fsh47ejdkbie5m3f2vjme', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.otherLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn:2kij6fsh47ejdkbie5m3f2vjme', 'cmn-Hant-TW', NULL, NULL, NULL);
+
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('cmn:fycuk73hqvwqjqthovuqh2eq4q', 'cmn', '熱門', 'fycuk73hqvwqjqthovuqh2eq4q', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.popular:1', 'approved', NULL);
@@ -5851,12 +5956,33 @@ VALUES ('cmn:ihijhh2fgd4x5cubvku6rzos64', 'cmn', '探索參考點；並非完整
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:ihijhh2fgd4x5cubvku6rzos64', 'cmn:ihijhh2fgd4x5cubvku6rzos64', 'cmn-Hant-TW', NULL, NULL, NULL);
 
--- languageDetail.scriptLabel
+-- languageDetail.scripts.Hans
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scriptLabel:1', 'approved', NULL);
+VALUES ('cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn', '简体', 'p6ymnvwsukw5nn3ojxbrjnt2cu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hans:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hant-TW:cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn-Hant-TW', NULL, NULL, NULL);
+VALUES ('ui-att:cmn-Hant-TW:cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'cmn-Hant-TW', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn', '傳承體', 'ypconwut3lzscud6da2bzw3tbu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hant:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn:ypconwut3lzscud6da2bzw3tbu', 'cmn-Hant-TW', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn', '日文', '7627i43d2txn3vlfgutz7go5qa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Jpan:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn:7627i43d2txn3vlfgutz7go5qa', 'cmn-Hant-TW', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn', '拉丁', 'fbmf35cumvi4flvtoaf5yjz7py', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Latn:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn:fbmf35cumvi4flvtoaf5yjz7py', 'cmn-Hant-TW', NULL, NULL, NULL);
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -5864,6 +5990,13 @@ VALUES ('cmn:bofpxxt6nx6ta3nse4pl57xcou', 'cmn', '搜尋詞句…', 'bofpxxt6nx6
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:bofpxxt6nx6ta3nse4pl57xcou', 'cmn:bofpxxt6nx6ta3nse4pl57xcou', 'cmn-Hant-TW', NULL, NULL, NULL);
+
+-- languageDetail.variantLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.variantLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:cmn-Hant-TW:cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'cmn-Hant-TW', NULL, NULL, NULL);
 
 -- languagePicker.clear
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -7952,12 +8085,19 @@ VALUES ('jpn:46e2hlnwxww2hqqgyp3ivs6bum', 'jpn', '{count} 件の変種を削除'
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:46e2hlnwxww2hqqgyp3ivs6bum', 'jpn:46e2hlnwxww2hqqgyp3ivs6bum', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
--- languageDetail.allScripts
+-- languageDetail.allOthers
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'jpn', 'すべて', 'wvpla3jf4ffdnqlzwwvspvpvoa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allScripts:1', 'approved', NULL);
+VALUES ('jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'jpn', 'すべて', 'wvpla3jf4ffdnqlzwwvspvpvoa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allOthers:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
+-- languageDetail.allVariants
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'jpn', 'すべての変種', 'dpquqqzc3k6k7ekoywqsmbezyi', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allVariants:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -8008,6 +8148,13 @@ VALUES ('jpn:ruezbxgw4bhj745cop7euwbtgu', 'jpn', '表現が見つかりません
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:ruezbxgw4bhj745cop7euwbtgu', 'jpn:ruezbxgw4bhj745cop7euwbtgu', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
+-- languageDetail.otherLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'jpn', 'その他', '6eyvmziouqpcqfk2tl2aa73dg4', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.otherLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('jpn:3c6zgzxzgpxnaiak7dwfdiszoy', 'jpn', '人気', '3c6zgzxzgpxnaiak7dwfdiszoy', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.popular:1', 'approved', NULL);
@@ -8015,12 +8162,33 @@ VALUES ('jpn:3c6zgzxzgpxnaiak7dwfdiszoy', 'jpn', '人気', '3c6zgzxzgpxnaiak7dwf
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:3c6zgzxzgpxnaiak7dwfdiszoy', 'jpn:3c6zgzxzgpxnaiak7dwfdiszoy', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
--- languageDetail.scriptLabel
+-- languageDetail.scripts.Hans
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scriptLabel:1', 'approved', NULL);
+VALUES ('jpn:6ftife4drldiagwath4bpcfe6q', 'jpn', '簡体字', '6ftife4drldiagwath4bpcfe6q', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hans:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:jpn-Jpan-JP:jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn-Jpan-JP', NULL, NULL, NULL);
+VALUES ('ui-att:jpn-Jpan-JP:jpn:6ftife4drldiagwath4bpcfe6q', 'jpn:6ftife4drldiagwath4bpcfe6q', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:b7llpwls2alldjopbtfrxvajhe', 'jpn', '繁体字', 'b7llpwls2alldjopbtfrxvajhe', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hant:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:b7llpwls2alldjopbtfrxvajhe', 'jpn:b7llpwls2alldjopbtfrxvajhe', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'jpn', '日本語', 'o5yqv3ohj3h2gnuf4m5gy7pvzq', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Jpan:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'jpn', 'ラテン文字', 'dmrr4gnrhhb6nwlyzq3tymtc2m', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Latn:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -8028,6 +8196,13 @@ VALUES ('jpn:75fbpj3eawwtkv3rnzlxpitlji', 'jpn', '表現を検索…', '75fbpj3e
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:75fbpj3eawwtkv3rnzlxpitlji', 'jpn:75fbpj3eawwtkv3rnzlxpitlji', 'jpn-Jpan-JP', NULL, NULL, NULL);
+
+-- languageDetail.variantLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn', '文字', 'cs3jxvxowcbzwqprspubsbytxa', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.variantLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:jpn-Jpan-JP:jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
 -- languagePicker.clear
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -10116,12 +10291,19 @@ VALUES ('spa:rbhpcrdwuepofkkgef2xtbmyma', 'spa', '{count} variante(s) eliminada(
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:rbhpcrdwuepofkkgef2xtbmyma', 'spa:rbhpcrdwuepofkkgef2xtbmyma', 'spa-Latn-ES', NULL, NULL, NULL);
 
--- languageDetail.allScripts
+-- languageDetail.allOthers
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('spa:xubltj6xdwwgpiq3e5mpcglvxq', 'spa', 'Todos', 'xubltj6xdwwgpiq3e5mpcglvxq', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allScripts:1', 'approved', NULL);
+VALUES ('spa:xubltj6xdwwgpiq3e5mpcglvxq', 'spa', 'Todos', 'xubltj6xdwwgpiq3e5mpcglvxq', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allOthers:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:xubltj6xdwwgpiq3e5mpcglvxq', 'spa:xubltj6xdwwgpiq3e5mpcglvxq', 'spa-Latn-ES', NULL, NULL, NULL);
+
+-- languageDetail.allVariants
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:ootwywlffow6z2sggbl537uwea', 'spa', 'Todas las variantes', 'ootwywlffow6z2sggbl537uwea', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.allVariants:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:ootwywlffow6z2sggbl537uwea', 'spa:ootwywlffow6z2sggbl537uwea', 'spa-Latn-ES', NULL, NULL, NULL);
 
 -- languageDetail.alphabetical
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -10172,6 +10354,13 @@ VALUES ('spa:jpkqwnc6przjvve44hsfk6lxsu', 'spa', 'No se encontraron expresiones'
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:jpkqwnc6przjvve44hsfk6lxsu', 'spa:jpkqwnc6przjvve44hsfk6lxsu', 'spa-Latn-ES', NULL, NULL, NULL);
 
+-- languageDetail.otherLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:bvnffkjmxh2jt5jfiqamc5ebji', 'spa', 'Otro', 'bvnffkjmxh2jt5jfiqamc5ebji', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.otherLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:bvnffkjmxh2jt5jfiqamc5ebji', 'spa:bvnffkjmxh2jt5jfiqamc5ebji', 'spa-Latn-ES', NULL, NULL, NULL);
+
 -- languageDetail.popular
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('spa:oyzh33e24oqgvdb4fa7gvaotoe', 'spa', 'Popular', 'oyzh33e24oqgvdb4fa7gvaotoe', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.popular:1', 'approved', NULL);
@@ -10179,12 +10368,33 @@ VALUES ('spa:oyzh33e24oqgvdb4fa7gvaotoe', 'spa', 'Popular', 'oyzh33e24oqgvdb4fa7
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:oyzh33e24oqgvdb4fa7gvaotoe', 'spa:oyzh33e24oqgvdb4fa7gvaotoe', 'spa-Latn-ES', NULL, NULL, NULL);
 
--- languageDetail.scriptLabel
+-- languageDetail.scripts.Hans
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa', 'Escritura', 'kp6zt3nzth25w4uygmc6vw2cwu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scriptLabel:1', 'approved', NULL);
+VALUES ('spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'spa', 'Chino simplificado', 'cek5nmmv2b4oh4c7wwbbrkdtre', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hans:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:spa-Latn-ES:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa-Latn-ES', NULL, NULL, NULL);
+VALUES ('ui-att:spa-Latn-ES:spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'spa-Latn-ES', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'spa', 'Chino tradicional', 'vkk22xe2mdfcrz5pdjjml7ikgu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Hant:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'spa-Latn-ES', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:7aagxhxzumsgl2yyzt3wkeueo4', 'spa', 'Japonés', '7aagxhxzumsgl2yyzt3wkeueo4', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Jpan:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:7aagxhxzumsgl2yyzt3wkeueo4', 'spa:7aagxhxzumsgl2yyzt3wkeueo4', 'spa-Latn-ES', NULL, NULL, NULL);
+
+-- languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:a2znolldzh3jbsjcmlnpfdyqci', 'spa', 'Latino', 'a2znolldzh3jbsjcmlnpfdyqci', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.scripts.Latn:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:a2znolldzh3jbsjcmlnpfdyqci', 'spa:a2znolldzh3jbsjcmlnpfdyqci', 'spa-Latn-ES', NULL, NULL, NULL);
 
 -- languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -10192,6 +10402,13 @@ VALUES ('spa:k4yqjzlvwfxvqhjupa3qeg734i', 'spa', 'Buscar expresiones…', 'k4yqj
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:k4yqjzlvwfxvqhjupa3qeg734i', 'spa:k4yqjzlvwfxvqhjupa3qeg734i', 'spa-Latn-ES', NULL, NULL, NULL);
+
+-- languageDetail.variantLabel
+INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
+VALUES ('spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa', 'Escritura', 'kp6zt3nzth25w4uygmc6vw2cwu', 1, '', '[]', 'system-ui', 'ui:langmap-web:languageDetail.variantLabel:1', 'approved', NULL);
+
+INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
+VALUES ('ui-att:spa-Latn-ES:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 'spa-Latn-ES', NULL, NULL, NULL);
 
 -- languagePicker.clear
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -10914,7 +11131,7 @@ VALUES ('spa:6nxfwjm3zekylyplhph3fg5qre', 'spa', 'Traducción', '6nxfwjm3zekylyp
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:6nxfwjm3zekylyplhph3fg5qre', 'spa:6nxfwjm3zekylyplhph3fg5qre', 'spa-Latn-ES', NULL, NULL, NULL);
 
--- 4. Translation mapping edges (2938 clique edges)
+-- 4. Translation mapping edges (2978 clique edges)
 -- Clique: auth.email
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:3jwvarqljv7jdxu4ihanw2cw5q:cmn:omdven75b4c7ajg74jozwuuj24', 'cmn:3jwvarqljv7jdxu4ihanw2cw5q', 'cmn:omdven75b4c7ajg74jozwuuj24', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:3jwvarqljv7jdxu4ihanw2cw5q:eng:s2omxu6pmmaozvoiqbcz3anosa', 'cmn:3jwvarqljv7jdxu4ihanw2cw5q', 'eng:s2omxu6pmmaozvoiqbcz3anosa', 0, 'translation', NULL);
@@ -13149,13 +13366,25 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:zbm2ofqkafo5qdovoksi4kywry:spa:rbhpcrdwuepofkkgef2xtbmyma', 'eng:zbm2ofqkafo5qdovoksi4kywry', 'spa:rbhpcrdwuepofkkgef2xtbmyma', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:46e2hlnwxww2hqqgyp3ivs6bum:spa:rbhpcrdwuepofkkgef2xtbmyma', 'jpn:46e2hlnwxww2hqqgyp3ivs6bum', 'spa:rbhpcrdwuepofkkgef2xtbmyma', 0, 'translation', NULL);
 
--- Clique: languageDetail.allScripts
+-- Clique: languageDetail.allOthers
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:lrk2m6jvv6hukcf2axlnqhe6wi:eng:uuvm4qqpef25bcyvo6q35jkely', 'cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'eng:uuvm4qqpef25bcyvo6q35jkely', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:lrk2m6jvv6hukcf2axlnqhe6wi:jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:lrk2m6jvv6hukcf2axlnqhe6wi:spa:xubltj6xdwwgpiq3e5mpcglvxq', 'cmn:lrk2m6jvv6hukcf2axlnqhe6wi', 'spa:xubltj6xdwwgpiq3e5mpcglvxq', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:uuvm4qqpef25bcyvo6q35jkely:jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'eng:uuvm4qqpef25bcyvo6q35jkely', 'jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:uuvm4qqpef25bcyvo6q35jkely:spa:xubltj6xdwwgpiq3e5mpcglvxq', 'eng:uuvm4qqpef25bcyvo6q35jkely', 'spa:xubltj6xdwwgpiq3e5mpcglvxq', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:wvpla3jf4ffdnqlzwwvspvpvoa:spa:xubltj6xdwwgpiq3e5mpcglvxq', 'jpn:wvpla3jf4ffdnqlzwwvspvpvoa', 'spa:xubltj6xdwwgpiq3e5mpcglvxq', 0, 'translation', NULL);
+
+-- Clique: languageDetail.allVariants
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:4ktacvvn46nwq2n5tzvrvr2jk4:cmn:e7zugkjfu4p2jyq3llggh7qglq', 'cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'cmn:e7zugkjfu4p2jyq3llggh7qglq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:4ktacvvn46nwq2n5tzvrvr2jk4:eng:w7ah72muvlhct2v3lfyyllntqi', 'cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'eng:w7ah72muvlhct2v3lfyyllntqi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:4ktacvvn46nwq2n5tzvrvr2jk4:jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'jpn:dpquqqzc3k6k7ekoywqsmbezyi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:4ktacvvn46nwq2n5tzvrvr2jk4:spa:ootwywlffow6z2sggbl537uwea', 'cmn:4ktacvvn46nwq2n5tzvrvr2jk4', 'spa:ootwywlffow6z2sggbl537uwea', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:e7zugkjfu4p2jyq3llggh7qglq:eng:w7ah72muvlhct2v3lfyyllntqi', 'cmn:e7zugkjfu4p2jyq3llggh7qglq', 'eng:w7ah72muvlhct2v3lfyyllntqi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:e7zugkjfu4p2jyq3llggh7qglq:jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'cmn:e7zugkjfu4p2jyq3llggh7qglq', 'jpn:dpquqqzc3k6k7ekoywqsmbezyi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:e7zugkjfu4p2jyq3llggh7qglq:spa:ootwywlffow6z2sggbl537uwea', 'cmn:e7zugkjfu4p2jyq3llggh7qglq', 'spa:ootwywlffow6z2sggbl537uwea', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:w7ah72muvlhct2v3lfyyllntqi:jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'eng:w7ah72muvlhct2v3lfyyllntqi', 'jpn:dpquqqzc3k6k7ekoywqsmbezyi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:w7ah72muvlhct2v3lfyyllntqi:spa:ootwywlffow6z2sggbl537uwea', 'eng:w7ah72muvlhct2v3lfyyllntqi', 'spa:ootwywlffow6z2sggbl537uwea', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:dpquqqzc3k6k7ekoywqsmbezyi:spa:ootwywlffow6z2sggbl537uwea', 'jpn:dpquqqzc3k6k7ekoywqsmbezyi', 'spa:ootwywlffow6z2sggbl537uwea', 0, 'translation', NULL);
 
 -- Clique: languageDetail.alphabetical
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:q4pbg6ptabpdl7ru4ghicbrxxe:cmn:wljm5rgkbjs6ic4dmyvcmmr564', 'cmn:q4pbg6ptabpdl7ru4ghicbrxxe', 'cmn:wljm5rgkbjs6ic4dmyvcmmr564', 0, 'translation', NULL);
@@ -13237,6 +13466,14 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:cakodkxv7wgphlxdsu3wzmxfna:spa:jpkqwnc6przjvve44hsfk6lxsu', 'eng:cakodkxv7wgphlxdsu3wzmxfna', 'spa:jpkqwnc6przjvve44hsfk6lxsu', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:ruezbxgw4bhj745cop7euwbtgu:spa:jpkqwnc6przjvve44hsfk6lxsu', 'jpn:ruezbxgw4bhj745cop7euwbtgu', 'spa:jpkqwnc6przjvve44hsfk6lxsu', 0, 'translation', NULL);
 
+-- Clique: languageDetail.otherLabel
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:2kij6fsh47ejdkbie5m3f2vjme:eng:7f7j3ihdxb47bko7s6noeyff64', 'cmn:2kij6fsh47ejdkbie5m3f2vjme', 'eng:7f7j3ihdxb47bko7s6noeyff64', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:2kij6fsh47ejdkbie5m3f2vjme:jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'cmn:2kij6fsh47ejdkbie5m3f2vjme', 'jpn:6eyvmziouqpcqfk2tl2aa73dg4', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:2kij6fsh47ejdkbie5m3f2vjme:spa:bvnffkjmxh2jt5jfiqamc5ebji', 'cmn:2kij6fsh47ejdkbie5m3f2vjme', 'spa:bvnffkjmxh2jt5jfiqamc5ebji', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:7f7j3ihdxb47bko7s6noeyff64:jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'eng:7f7j3ihdxb47bko7s6noeyff64', 'jpn:6eyvmziouqpcqfk2tl2aa73dg4', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:7f7j3ihdxb47bko7s6noeyff64:spa:bvnffkjmxh2jt5jfiqamc5ebji', 'eng:7f7j3ihdxb47bko7s6noeyff64', 'spa:bvnffkjmxh2jt5jfiqamc5ebji', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:6eyvmziouqpcqfk2tl2aa73dg4:spa:bvnffkjmxh2jt5jfiqamc5ebji', 'jpn:6eyvmziouqpcqfk2tl2aa73dg4', 'spa:bvnffkjmxh2jt5jfiqamc5ebji', 0, 'translation', NULL);
+
 -- Clique: languageDetail.popular
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:fycuk73hqvwqjqthovuqh2eq4q:cmn:zxbzjyxag3edtu2lnqqqxcfeyu', 'cmn:fycuk73hqvwqjqthovuqh2eq4q', 'cmn:zxbzjyxag3edtu2lnqqqxcfeyu', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:fycuk73hqvwqjqthovuqh2eq4q:eng:oyzh33e24oqgvdb4fa7gvaotoe', 'cmn:fycuk73hqvwqjqthovuqh2eq4q', 'eng:oyzh33e24oqgvdb4fa7gvaotoe', 0, 'translation', NULL);
@@ -13249,6 +13486,8 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:oyzh33e24oqgvdb4fa7gvaotoe:spa:oyzh33e24oqgvdb4fa7gvaotoe', 'eng:oyzh33e24oqgvdb4fa7gvaotoe', 'spa:oyzh33e24oqgvdb4fa7gvaotoe', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:3c6zgzxzgpxnaiak7dwfdiszoy:spa:oyzh33e24oqgvdb4fa7gvaotoe', 'jpn:3c6zgzxzgpxnaiak7dwfdiszoy', 'spa:oyzh33e24oqgvdb4fa7gvaotoe', 0, 'translation', NULL);
 
+-- Clique: languageDetail.regionalForms
+
 -- Clique: languageDetail.representativeCities
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:j65xlv5uuul4abyue27jnw72ty:eng:7diosq6q2mdlekapd7vv3qz2ru', 'cmn:j65xlv5uuul4abyue27jnw72ty', 'eng:7diosq6q2mdlekapd7vv3qz2ru', 0, 'translation', NULL);
 
@@ -13257,13 +13496,37 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:edzrk4ezv37u4dtye2uduyoone:eng:pi37qm2nz7wn7tn6kknop6w54e', 'cmn:edzrk4ezv37u4dtye2uduyoone', 'eng:pi37qm2nz7wn7tn6kknop6w54e', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ihijhh2fgd4x5cubvku6rzos64:eng:pi37qm2nz7wn7tn6kknop6w54e', 'cmn:ihijhh2fgd4x5cubvku6rzos64', 'eng:pi37qm2nz7wn7tn6kknop6w54e', 0, 'translation', NULL);
 
--- Clique: languageDetail.scriptLabel
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:eng:cavmyehgpiux26pxubca3h5zny', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'eng:cavmyehgpiux26pxubca3h5zny', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:jpn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:cavmyehgpiux26pxubca3h5zny:jpn:cs3jxvxowcbzwqprspubsbytxa', 'eng:cavmyehgpiux26pxubca3h5zny', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:cavmyehgpiux26pxubca3h5zny:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'eng:cavmyehgpiux26pxubca3h5zny', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:cs3jxvxowcbzwqprspubsbytxa:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
+-- Clique: languageDetail.scripts.Hans
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p6ymnvwsukw5nn3ojxbrjnt2cu:eng:vkdebhvh4fd6uuze4sud2sppyu', 'cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'eng:vkdebhvh4fd6uuze4sud2sppyu', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p6ymnvwsukw5nn3ojxbrjnt2cu:jpn:6ftife4drldiagwath4bpcfe6q', 'cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'jpn:6ftife4drldiagwath4bpcfe6q', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p6ymnvwsukw5nn3ojxbrjnt2cu:spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'cmn:p6ymnvwsukw5nn3ojxbrjnt2cu', 'spa:cek5nmmv2b4oh4c7wwbbrkdtre', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:vkdebhvh4fd6uuze4sud2sppyu:jpn:6ftife4drldiagwath4bpcfe6q', 'eng:vkdebhvh4fd6uuze4sud2sppyu', 'jpn:6ftife4drldiagwath4bpcfe6q', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:vkdebhvh4fd6uuze4sud2sppyu:spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'eng:vkdebhvh4fd6uuze4sud2sppyu', 'spa:cek5nmmv2b4oh4c7wwbbrkdtre', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:6ftife4drldiagwath4bpcfe6q:spa:cek5nmmv2b4oh4c7wwbbrkdtre', 'jpn:6ftife4drldiagwath4bpcfe6q', 'spa:cek5nmmv2b4oh4c7wwbbrkdtre', 0, 'translation', NULL);
+
+-- Clique: languageDetail.scripts.Hant
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ypconwut3lzscud6da2bzw3tbu:eng:jr6gkcqonl7z2t5ygfygiiosyq', 'cmn:ypconwut3lzscud6da2bzw3tbu', 'eng:jr6gkcqonl7z2t5ygfygiiosyq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ypconwut3lzscud6da2bzw3tbu:jpn:b7llpwls2alldjopbtfrxvajhe', 'cmn:ypconwut3lzscud6da2bzw3tbu', 'jpn:b7llpwls2alldjopbtfrxvajhe', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ypconwut3lzscud6da2bzw3tbu:spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'cmn:ypconwut3lzscud6da2bzw3tbu', 'spa:vkk22xe2mdfcrz5pdjjml7ikgu', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:jr6gkcqonl7z2t5ygfygiiosyq:jpn:b7llpwls2alldjopbtfrxvajhe', 'eng:jr6gkcqonl7z2t5ygfygiiosyq', 'jpn:b7llpwls2alldjopbtfrxvajhe', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:jr6gkcqonl7z2t5ygfygiiosyq:spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'eng:jr6gkcqonl7z2t5ygfygiiosyq', 'spa:vkk22xe2mdfcrz5pdjjml7ikgu', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:b7llpwls2alldjopbtfrxvajhe:spa:vkk22xe2mdfcrz5pdjjml7ikgu', 'jpn:b7llpwls2alldjopbtfrxvajhe', 'spa:vkk22xe2mdfcrz5pdjjml7ikgu', 0, 'translation', NULL);
+
+-- Clique: languageDetail.scripts.Jpan
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:7627i43d2txn3vlfgutz7go5qa:eng:xzhosbwt57wpynfjjjwng6ddhi', 'cmn:7627i43d2txn3vlfgutz7go5qa', 'eng:xzhosbwt57wpynfjjjwng6ddhi', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:7627i43d2txn3vlfgutz7go5qa:jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'cmn:7627i43d2txn3vlfgutz7go5qa', 'jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:7627i43d2txn3vlfgutz7go5qa:spa:7aagxhxzumsgl2yyzt3wkeueo4', 'cmn:7627i43d2txn3vlfgutz7go5qa', 'spa:7aagxhxzumsgl2yyzt3wkeueo4', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:xzhosbwt57wpynfjjjwng6ddhi:jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'eng:xzhosbwt57wpynfjjjwng6ddhi', 'jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:xzhosbwt57wpynfjjjwng6ddhi:spa:7aagxhxzumsgl2yyzt3wkeueo4', 'eng:xzhosbwt57wpynfjjjwng6ddhi', 'spa:7aagxhxzumsgl2yyzt3wkeueo4', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq:spa:7aagxhxzumsgl2yyzt3wkeueo4', 'jpn:o5yqv3ohj3h2gnuf4m5gy7pvzq', 'spa:7aagxhxzumsgl2yyzt3wkeueo4', 0, 'translation', NULL);
+
+-- Clique: languageDetail.scripts.Latn
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:fbmf35cumvi4flvtoaf5yjz7py:eng:fu4mivvc5rak6g5wvqdtcwzq4e', 'cmn:fbmf35cumvi4flvtoaf5yjz7py', 'eng:fu4mivvc5rak6g5wvqdtcwzq4e', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:fbmf35cumvi4flvtoaf5yjz7py:jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'cmn:fbmf35cumvi4flvtoaf5yjz7py', 'jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:fbmf35cumvi4flvtoaf5yjz7py:spa:a2znolldzh3jbsjcmlnpfdyqci', 'cmn:fbmf35cumvi4flvtoaf5yjz7py', 'spa:a2znolldzh3jbsjcmlnpfdyqci', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:fu4mivvc5rak6g5wvqdtcwzq4e:jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'eng:fu4mivvc5rak6g5wvqdtcwzq4e', 'jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:fu4mivvc5rak6g5wvqdtcwzq4e:spa:a2znolldzh3jbsjcmlnpfdyqci', 'eng:fu4mivvc5rak6g5wvqdtcwzq4e', 'spa:a2znolldzh3jbsjcmlnpfdyqci', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:dmrr4gnrhhb6nwlyzq3tymtc2m:spa:a2znolldzh3jbsjcmlnpfdyqci', 'jpn:dmrr4gnrhhb6nwlyzq3tymtc2m', 'spa:a2znolldzh3jbsjcmlnpfdyqci', 0, 'translation', NULL);
 
 -- Clique: languageDetail.searchPlaceholder
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:bh7o4z3rdx4ygw2m2szzmu2fim:cmn:bofpxxt6nx6ta3nse4pl57xcou', 'cmn:bh7o4z3rdx4ygw2m2szzmu2fim', 'cmn:bofpxxt6nx6ta3nse4pl57xcou', 0, 'translation', NULL);
@@ -13276,6 +13539,14 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:hv43tbysndcmbbn465v2jmuugq:jpn:75fbpj3eawwtkv3rnzlxpitlji', 'eng:hv43tbysndcmbbn465v2jmuugq', 'jpn:75fbpj3eawwtkv3rnzlxpitlji', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:hv43tbysndcmbbn465v2jmuugq:spa:k4yqjzlvwfxvqhjupa3qeg734i', 'eng:hv43tbysndcmbbn465v2jmuugq', 'spa:k4yqjzlvwfxvqhjupa3qeg734i', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:75fbpj3eawwtkv3rnzlxpitlji:spa:k4yqjzlvwfxvqhjupa3qeg734i', 'jpn:75fbpj3eawwtkv3rnzlxpitlji', 'spa:k4yqjzlvwfxvqhjupa3qeg734i', 0, 'translation', NULL);
+
+-- Clique: languageDetail.variantLabel
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:eng:cavmyehgpiux26pxubca3h5zny', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'eng:cavmyehgpiux26pxubca3h5zny', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:jpn:cs3jxvxowcbzwqprspubsbytxa', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:cs3jxvxowcbzwqprspubsbytxa:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'cmn:cs3jxvxowcbzwqprspubsbytxa', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:cavmyehgpiux26pxubca3h5zny:jpn:cs3jxvxowcbzwqprspubsbytxa', 'eng:cavmyehgpiux26pxubca3h5zny', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:cavmyehgpiux26pxubca3h5zny:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'eng:cavmyehgpiux26pxubca3h5zny', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:cs3jxvxowcbzwqprspubsbytxa:spa:kp6zt3nzth25w4uygmc6vw2cwu', 'jpn:cs3jxvxowcbzwqprspubsbytxa', 'spa:kp6zt3nzth25w4uygmc6vw2cwu', 0, 'translation', NULL);
 
 -- Clique: languagePicker.clear
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:kkefdhmfnx7xhdbbg2ciffyosq:cmn:m45mk2ze2kveuf4lzlx5jxqfjy', 'cmn:kkefdhmfnx7xhdbbg2ciffyosq', 'cmn:m45mk2ze2kveuf4lzlx5jxqfjy', 0, 'translation', NULL);

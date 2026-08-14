@@ -17,7 +17,7 @@ function parseExpressionSort(value: string | undefined): 'hot' | 'new' | 'alpha'
 languages.get('/', async (c) => {
   const query = parseQuery(c);
   const sort = c.req.query('sort') === 'alpha' ? 'alpha' : 'count';
-  const result = await listLanguagesWithContent(c.env.DB, { ...query, sort });
+  const result = await listLanguagesWithContent(c.env.DB, { ...query, sort, uiLocale: c.req.query('ui_locale') ?? '' });
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 

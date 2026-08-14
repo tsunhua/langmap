@@ -11,10 +11,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocalizationStore } from '@/stores/localization'
 
 const PAGE = 20
 const { list } = useLanguages()
 const { t } = useI18n()
+const localization = useLocalizationStore()
 
 const languages = ref<ContentLanguage[]>([])
 const searchQuery = ref('')
@@ -47,6 +49,7 @@ async function loadLanguages(append = false) {
       sort: sortBy.value,
       limit: PAGE,
       offset: append ? languages.value.length : 0,
+      ui_locale: localization.locale,
     })
     if (!languagesRequest.isCurrent(request)) return
     languages.value = append ? [...languages.value, ...page.items] : page.items
@@ -69,6 +72,8 @@ watch(searchQuery, () => {
 })
 
 watch(sortBy, () => { void loadLanguages() })
+
+watch(() => localization.locale, () => { void loadLanguages() })
 
 onMounted(() => { void loadLanguages() })
 onUnmounted(() => {

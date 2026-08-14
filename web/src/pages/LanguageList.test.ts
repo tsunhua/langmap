@@ -1,5 +1,6 @@
 import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia } from 'pinia'
 import { i18n } from '@/locales'
 import LanguageList from './LanguageList.vue'
 
@@ -15,13 +16,13 @@ describe('LanguageList', () => {
     list.mockResolvedValue({ items: [], total: 0, skip: 0, limit: 20, hasMore: false })
   })
 
-  it('loads the first server-side page with the active query and count sort', async () => {
+  it('loads the first server-side page with the active query, count sort and UI locale', async () => {
     shallowMount(LanguageList, {
-      global: { plugins: [i18n] },
+      global: { plugins: [createPinia(), i18n] },
     })
     await flushPromises()
 
-    expect(list).toHaveBeenCalledWith({ q: '', sort: 'count', limit: 20, offset: 0 })
+    expect(list).toHaveBeenCalledWith({ q: '', sort: 'count', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' })
   })
 
   it('keeps loaded languages visible when loading more fails', async () => {
@@ -32,7 +33,7 @@ describe('LanguageList', () => {
       })
       .mockRejectedValueOnce(new Error('Network unavailable'))
     const wrapper = mount(LanguageList, {
-      global: { plugins: [i18n] },
+      global: { plugins: [createPinia(), i18n] },
     })
     await flushPromises()
     await wrapper.get('.pag button').trigger('click')

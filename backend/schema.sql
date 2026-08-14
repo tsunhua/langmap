@@ -111,7 +111,7 @@ INSERT OR IGNORE INTO sources (id, type, name) VALUES
 INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('eng', 'English'),
   ('cmn', 'Mandarin Chinese'),
-  ('nan', 'Min Nan Chinese'),
+  ('nan', 'Min Nan Chinese (Hokkien)'),
   ('spa', 'Spanish'),
   ('jpn', 'Japanese');
 
@@ -126,18 +126,21 @@ INSERT OR IGNORE INTO regions (code, name_en, latitude, longitude) VALUES
   ('TW', 'Taiwan, Province of China', 23.7, 121.0),
   ('CN', 'China', NULL, NULL),
   ('ES', 'Spain', NULL, NULL),
-  ('JP', 'Japan', 36.2, 138.3);
+  ('JP', 'Japan', 36.2, 138.3),
+  ('MY', 'Malaysia', NULL, NULL);
 
 INSERT OR IGNORE INTO language_locales
   (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref)
 VALUES
-  ('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English (US)', 'English (US)', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '華語(TW)', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '普通话(CN)', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語(CN)', 'Min Nan Chinese (China)', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '閩南語（臺灣）', 'Min Nan Chinese (Taiwan)', 'system-seed', 'seed:system-seed:1'),
-  ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español (España)', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
-  ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語（日本）', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');
+  ('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English', 'English (US)', 'system-seed', 'seed:system-seed:1'),
+  ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '華語', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
+  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '普通话', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語', 'Min Nan Chinese (Hokkien)', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hans-CN', 'nan', 'Hans', 'CN', '', '闽南语', 'Min Nan Chinese (Hokkien)', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '台語', 'Taiwanese Hokkien', 'system-seed', 'seed:system-seed:1'),
+  ('nan-Hant-MY_Penang', 'nan', 'Hant', 'MY', 'Penang', '福建話', 'Penang Hokkien', 'system-seed', 'seed:system-seed:1'),
+  ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
+  ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');
 
 -- Expression identity + locale attestations (spec §8.4, §9.1).
 

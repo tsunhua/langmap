@@ -51,6 +51,8 @@ export interface ContentLanguagePageQuery {
   sort?: 'count' | 'alpha'
   limit?: number
   offset?: number
+  /** UI locale the caller renders in; the API resolves `name` against it. */
+  ui_locale?: string
 }
 
 export interface LanguageExpressionPageQuery {
@@ -113,7 +115,7 @@ export async function createLanguageLocale(input: CreateLanguageLocaleInput, sig
 
 export async function listContentLanguages(filters: ContentLanguagePageQuery = {}, signal?: AbortSignal): Promise<Page<ContentLanguage>> {
   const { data } = await api.get('/languages', {
-    params: { q: filters.q ?? '', sort: filters.sort ?? 'count', limit: filters.limit ?? 20, offset: filters.offset ?? 0 },
+    params: { q: filters.q ?? '', sort: filters.sort ?? 'count', limit: filters.limit ?? 20, offset: filters.offset ?? 0, ui_locale: filters.ui_locale ?? '' },
     signal,
   })
   return page<ContentLanguage>(data)

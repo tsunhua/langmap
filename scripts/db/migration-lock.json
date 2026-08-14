@@ -73,6 +73,42 @@
       "filename": "0012_nan_cn_locale_name.sql",
       "size": 164,
       "sha256": "c3e08e390208d4e1e79a332f19ff00209fa3ceb01cecb512364537dbe1de273d"
+    },
+    {
+      "sequence": 13,
+      "filename": "0013_pure_locale_names.sql",
+      "size": 760,
+      "sha256": "cbb2799bc01e9aece4b7b4ad9d91420163cf95abf687a8443fdb9688ca4f7dbc"
+    },
+    {
+      "sequence": 14,
+      "filename": "0014_nan_locale_variants.sql",
+      "size": 757,
+      "sha256": "63a523dc9e314e832e7b32f4fcbaadc0fb5a7babe1c113a1b6ff04e9eb83f713"
+    },
+    {
+      "sequence": 15,
+      "filename": "0015_nan_hokkien_name.sql",
+      "size": 322,
+      "sha256": "e80d23c20947534cfa0e07146eb924be09b98145def7ea405fa07b305bde8395"
+    },
+    {
+      "sequence": 16,
+      "filename": "0016_nan_penang_hokkien.sql",
+      "size": 399,
+      "sha256": "ae50af3b214f37a31a601456c8e5124faf5e5e41368858a4d2adb8a3541f886c"
+    },
+    {
+      "sequence": 17,
+      "filename": "0017_nan_language_hokkien.sql",
+      "size": 218,
+      "sha256": "128969d6eb4ea8966126f6f58bbdc5f51806b09c3b07229eb6bbea2f2b2066dd"
+    },
+    {
+      "sequence": 18,
+      "filename": "0018_nan_language_hokkien_full.sql",
+      "size": 214,
+      "sha256": "13de35bf39607666dfa972df4adfeffe1b97d78b858797d355aab7eafa933c6c"
     }
   ]
 }

@@ -48,17 +48,30 @@ describe('getLanguageDetail', () => {
 });
 
 describe('listLanguagesWithContent', () => {
-  it('returns paged summaries', async () => {
-    const db = { prepare(sql: string) { return { bind() { return {
-      async first() { return { total: 2 }; },
-      async all() { return { results: sql.includes('COUNT(*) AS total FROM (') ? [] : [
-        { code: 'cmn', name_en: 'Mandarin Chinese', name: '臺灣華語', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
-        { code: 'eng', name_en: 'English', name: 'English', expression_count: 300, locale_count: 1, active_ui_locale_count: 1 },
-      ] }; },
-    }; } }; } } as unknown as import('@cloudflare/workers-types').D1Database;
-    const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0 });
+  it('returns paged summaries and resolves display names by the UI locale', async () => {
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind(uiLocale: string) {
+            return {
+              async first() { return { total: 2 }; },
+              async all() {
+                if (sql.includes('COUNT(*) AS total FROM (')) return { results: [] };
+                const cmnName = uiLocale === 'cmn-Hans-CN' ? '普通话' : uiLocale === 'cmn-Hant-TW' ? '華語' : 'Mandarin Chinese';
+                return { results: [
+                  { code: 'cmn', name_en: 'Mandarin Chinese', name: cmnName, expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
+                  { code: 'eng', name_en: 'English', name: 'English', expression_count: 300, locale_count: 1, active_ui_locale_count: 1 },
+                ] };
+              },
+            };
+          },
+        };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+    const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0, uiLocale: 'cmn-Hant-TW' });
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.code)).toEqual(['cmn', 'eng']);
+    expect(result.items[0].name).toBe('華語');
   });
 });
 

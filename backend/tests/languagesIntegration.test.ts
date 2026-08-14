@@ -53,6 +53,24 @@ describe('languages API', () => {
     for (const item of body.data.items) expect(`${item.code} ${item.name_en}`.toLowerCase()).toContain('eng');
   });
 
+  it('resolves display names by the UI locale', async () => {
+    const namesFor = async (uiLocale: string) => {
+      const res = await fetch(`${API}?limit=300&ui_locale=${uiLocale}`);
+      expect(res.status).toBe(200);
+      const body = await res.json() as { data: { items: Array<{ code: string; name: string }> } };
+      return new Map(body.data.items.map((item) => [item.code, item.name]));
+    };
+    const hans = await namesFor('cmn-Hans-CN');
+    expect(hans.get('cmn')).toBe('普通话');
+    const hant = await namesFor('cmn-Hant-TW');
+    expect(hant.get('cmn')).toBe('華語');
+    const neutral = await namesFor('eng-Latn-US');
+    expect(neutral.get('cmn')).toBe('Mandarin Chinese');
+    const none = await fetch(`${API}?limit=300`);
+    const body = await none.json() as { data: { items: Array<{ code: string; name: string }> } };
+    expect(new Map(body.data.items.map((item) => [item.code, item.name])).get('cmn')).toBe('Mandarin Chinese');
+  });
+
   it('returns language detail with locales and coordinate provenance', async () => {
     const res = await fetch(`${API}/cmn`);
     expect(res.status).toBe(200);

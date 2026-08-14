@@ -11,37 +11,37 @@
   ],
   "counts": {
     "locale_count": 5,
-    "message_count": 317,
-    "translation_count": 1240
+    "message_count": 324,
+    "translation_count": 1264
   },
   "inputs": {
     "source_catalog": {
       "path": "/Users/share.lim/Documents/GitHub/langmap/web/src/locales/en.ts",
-      "sha256": "9bb063436234331fdc9cb72ad4cb57fc199ab2e3af4c0952359bccffa652cc5e"
+      "sha256": "eb74bb21dd45ab19486f59f97dafe1ac9a508289950c44411f7b33f5dde2b878"
     },
     "locales": {
       "cmn-Hans-CN": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hans-CN.json",
-        "sha256": "f198d9f7e8b9426509c9a64269261108ccf88fc9c68578bf7f607232901fc5b5"
+        "sha256": "bb7e55d3872691b9bff8aa0dc6885ededb738e21620c8603aefdef1af75d027f"
       },
       "cmn-Hant-TW": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hant-TW.json",
-        "sha256": "3234e6c1cae86d8fe19a3f2051fcfd263ebe4e4a3b547d7db35f6984c775158f"
+        "sha256": "27d3d7e0dfb06b8a83c7f412e1993d2a908ba1dfbc35686a9183f73cef186011"
       },
       "spa-Latn-ES": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/spa-Latn-ES.json",
-        "sha256": "60d8ae1a9f44f80e4b2e17790728ec1668fb81a7c34068c143722e5499aa3676"
+        "sha256": "bbf2548eddcfc2005a83ddaa3faa3ed064bbacebd6fdf4b9b5ba238d279d161c"
       },
       "jpn-Jpan-JP": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/jpn-Jpan-JP.json",
-        "sha256": "ff8857d68d2410b1c6e6c7fc19b7f8451e55f74b878589e0aea56744e5042fae"
+        "sha256": "5dcfa6bc8c835f7fadc9974c7015e1e3895d8422eacbe73391448e345e7043a6"
       }
     }
   },
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "308ed7d2347458261dfbe3cd824ab17ee7fcc87caf455ecb00550d52d90ca527"
+      "sha256": "a48bf65ca67d59495b3f76d13946a31104c46b29ca4e334c918e14b71b74c998"
     }
   }
 }

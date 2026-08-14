@@ -58,7 +58,7 @@ interface LocaleRow {
 }
 
 const LOCALE_LIST_LIMIT = 500;
-const CONTENT_LANGUAGES_SELECT = "SELECT g.code AS code, g.name_en AS name_en, COALESCE((SELECT l2.name FROM language_locales l2 WHERE l2.lang_code = g.code ORDER BY l2.code ASC LIMIT 1), g.name_en) AS name, (SELECT COUNT(*) FROM expressions e WHERE e.lang_code = g.code) AS expression_count, (SELECT COUNT(*) FROM language_locales l3 WHERE l3.lang_code = g.code) AS locale_count, (SELECT COUNT(*) FROM ui_locales u JOIN language_locales l4 ON l4.code = u.language_locale_code WHERE l4.lang_code = g.code AND u.status = 'active') AS active_ui_locale_count FROM languages g WHERE (EXISTS (SELECT 1 FROM expressions e2 WHERE e2.lang_code = g.code) OR EXISTS (SELECT 1 FROM language_locales l5 WHERE l5.lang_code = g.code)) AND (? = '' OR g.code LIKE ? ESCAPE '\\' OR g.name_en LIKE ? ESCAPE '\\')";
+const CONTENT_LANGUAGES_SELECT = "SELECT g.code AS code, g.name_en AS name_en, COALESCE((SELECT l2.name FROM language_locales l2 WHERE l2.code = ? AND l2.lang_code = g.code LIMIT 1), g.name_en) AS name, (SELECT COUNT(*) FROM expressions e WHERE e.lang_code = g.code) AS expression_count, (SELECT COUNT(*) FROM language_locales l3 WHERE l3.lang_code = g.code) AS locale_count, (SELECT COUNT(*) FROM ui_locales u JOIN language_locales l4 ON l4.code = u.language_locale_code WHERE l4.lang_code = g.code AND u.status = 'active') AS active_ui_locale_count FROM languages g WHERE (EXISTS (SELECT 1 FROM expressions e2 WHERE e2.lang_code = g.code) OR EXISTS (SELECT 1 FROM language_locales l5 WHERE l5.lang_code = g.code)) AND (? = '' OR g.code LIKE ? ESCAPE '\\' OR g.name_en LIKE ? ESCAPE '\\')";
 const CONTENT_LANGUAGES_COUNT_SQL = `SELECT COUNT(*) AS total FROM (${CONTENT_LANGUAGES_SELECT})`;
 const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
 const LANGUAGE_LOCALES_SQL = `SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT ${LOCALE_LIST_LIMIT}`;
@@ -75,12 +75,13 @@ function resolveCoordinate(row: LocaleRow): Pick<LanguageLocaleSummary, 'latitud
   return { latitude: null, longitude: null, coordinate_source: null };
 }
 
-export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number }): Promise<{ items: LanguageContentSummary[]; total: number }> {
+export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
   const q = query.q.trim();
+  const uiLocale = query.uiLocale.trim();
   const like = q ? `%${escapeLike(q)}%` : '';
-  const totalRow = await db.prepare(CONTENT_LANGUAGES_COUNT_SQL).bind(q, like, like).first<{ total: number }>();
+  const totalRow = await db.prepare(CONTENT_LANGUAGES_COUNT_SQL).bind(uiLocale, q, like, like).first<{ total: number }>();
   const orderBy = query.sort === 'alpha' ? 'name ASC, code ASC' : 'expression_count DESC, code ASC';
-  const { results } = await db.prepare(`${CONTENT_LANGUAGES_SELECT} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(q, like, like, query.limit, query.offset).all<LanguageContentSummary>();
+  const { results } = await db.prepare(`${CONTENT_LANGUAGES_SELECT} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(uiLocale, q, like, like, query.limit, query.offset).all<LanguageContentSummary>();
   return { items: results, total: totalRow?.total ?? 0 };
 }
 

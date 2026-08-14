@@ -16,7 +16,7 @@ defineProps<{
         <span class="nm">{{ name }}</span>
         <span class="lang-badge lg-code">{{ code }}</span>
       </div>
-      <span class="en" v-if="name_en">{{ name_en }}</span>
+      <span class="en" v-if="name_en && name_en !== name">{{ name_en }}</span>
     </div>
     <span class="lg-geo">
       <span v-if="script_code" class="lg-script">{{ script_code }}</span>
