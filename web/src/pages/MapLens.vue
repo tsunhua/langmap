@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpressions } from '@/composables/useExpressions'
-import { listLanguageLocales, type LanguageLocale } from '@/api/languageIdentity'
+import { getLanguageDetail, type LanguageLocale } from '@/api/languageIdentity'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
@@ -131,15 +131,18 @@ async function load() {
   anchor.value = null
   graph.value = null
   try {
-    const [localePage, expressionDetail, g] = await Promise.all([
-      listLanguageLocales({ limit: 200 }),
+    const [expressionDetail, g] = await Promise.all([
       getExpressionDetail(requestedId),
       mappingGraph(requestedId, 2),
     ])
     if (request !== loadRequest) return
+    const languageCodes = [...new Set([expressionDetail.expression.lang_code, ...g.nodes.map((node) => node.lang_code)])].sort()
+    const languageDetails = await Promise.all(languageCodes.map((code) => getLanguageDetail(code)))
+    if (request !== loadRequest) return
     const lm: Record<string, LanguageLocale> = {}
-    for (const locale of localePage.items) {
-      if (locale.latitude != null && locale.longitude != null && !lm[locale.lang_code]) lm[locale.lang_code] = locale
+    for (const language of languageDetails) {
+      const locale = language.locales.find((item) => item.latitude != null && item.longitude != null)
+      if (locale) lm[language.code] = locale
     }
     langMap.value = lm
     anchor.value = expressionDetail.expression
@@ -171,7 +174,11 @@ function initMap() {
   if (pins.value.length > 0) {
     const bounds = L.latLngBounds(pins.value.map(p => [p.lat, p.lng]))
     if (anchorLang.value?.latitude != null && anchorLang.value.longitude != null) bounds.extend([anchorLang.value.latitude, anchorLang.value.longitude])
-    map.fitBounds(bounds, { padding: [40, 40] })
+    map.fitBounds(bounds, {
+      paddingTopLeft: [40, 40],
+      paddingBottomRight: [40, 124],
+      maxZoom: 5,
+    })
   }
 }
 
@@ -258,6 +265,7 @@ onUnmounted(cleanup)
 }
 .leaflet-map {
   width: 100%; height: 500px;
+  background: color-mix(in srgb, var(--edge) 22%, var(--surface));
 }
 
 .lens-list {

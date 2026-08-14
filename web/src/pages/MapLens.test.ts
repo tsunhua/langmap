@@ -3,19 +3,20 @@ import { reactive } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MapLens from './MapLens.vue'
 
-const { detail, mappingGraph, listLanguageLocales, marker, remove } = vi.hoisted(() => ({
+const { detail, mappingGraph, getLanguageDetail, marker, remove, fitBounds } = vi.hoisted(() => ({
   detail: vi.fn(),
   mappingGraph: vi.fn(),
-  listLanguageLocales: vi.fn(),
+  getLanguageDetail: vi.fn(),
   marker: vi.fn(),
   remove: vi.fn(),
+  fitBounds: vi.fn(),
 }))
 
 vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({ detail, mappingGraph }),
 }))
 
-vi.mock('@/api/languageIdentity', () => ({ listLanguageLocales }))
+vi.mock('@/api/languageIdentity', () => ({ getLanguageDetail }))
 
 const route = reactive({ params: { id: 'eng:anchor' } })
 vi.mock('vue-router', () => ({
@@ -26,7 +27,7 @@ vi.mock('vue-router', () => ({
 vi.mock('leaflet', () => {
   const mapInstance = {
     setView: vi.fn().mockReturnThis(),
-    fitBounds: vi.fn(),
+    fitBounds,
     remove,
   }
   const layer = { addTo: vi.fn().mockReturnThis() }
@@ -60,16 +61,12 @@ describe('MapLens', () => {
       truncated: false,
       omitted_count: 0,
     })
-    listLanguageLocales.mockResolvedValue({
-      items: [
-        { code: 'eng-Latn-GB', lang_code: 'eng', name: 'England', latitude: 52, longitude: -1 },
-        { code: 'twi-Latn-GH', lang_code: 'twi', name: 'Ghana', latitude: 0, longitude: 0 },
-      ],
-      total: 2,
-      skip: 0,
-      limit: 200,
-      hasMore: false,
-    })
+    getLanguageDetail.mockImplementation((code: string) => Promise.resolve({
+      code,
+      locales: code === 'eng'
+        ? [{ code: 'eng-Latn-GB', lang_code: 'eng', name: 'England', latitude: 52, longitude: -1 }]
+        : [{ code: 'twi-Latn-GH', lang_code: 'twi', name: 'Ghana', latitude: 0, longitude: 0 }],
+    }))
   })
 
   it('renders markers for valid coordinates on the equator and prime meridian', async () => {
@@ -84,6 +81,32 @@ describe('MapLens', () => {
 
     expect(wrapper.text()).toContain('zero')
     expect(marker).toHaveBeenCalledTimes(2)
+    expect(marker).toHaveBeenCalledWith([0, 0], expect.any(Object))
+  })
+
+  it('caps automatic zoom when map locations overlap', async () => {
+    mount(MapLens, {
+      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    expect(fitBounds).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ maxZoom: 5 }))
+  })
+
+  it('renders region fallback coordinates returned by language details', async () => {
+    getLanguageDetail.mockImplementation((code: string) => Promise.resolve({
+      code,
+      locales: code === 'eng'
+        ? [{ code: 'eng-Latn-US', lang_code: 'eng', name: 'United States', latitude: 39.8, longitude: -98.6, coordinate_source: 'region' }]
+        : [{ code: 'twi-Latn-GH', lang_code: 'twi', name: 'Ghana', latitude: 0, longitude: 0, coordinate_source: 'region' }],
+    }))
+
+    const wrapper = mount(MapLens, {
+      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.leaflet-map').exists()).toBe(true)
     expect(marker).toHaveBeenCalledWith([0, 0], expect.any(Object))
   })
 
