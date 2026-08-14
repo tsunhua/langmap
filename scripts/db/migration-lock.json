@@ -61,6 +61,18 @@
       "filename": "0010_spa_jpn_locales.sql",
       "size": 1306,
       "sha256": "c03535b6e78e1ede45babf9f8822888ae7965fddaa3798d07b25fa65ace23aae"
+    },
+    {
+      "sequence": 11,
+      "filename": "0011_cmn_locale_names.sql",
+      "size": 237,
+      "sha256": "3785def707ace21430365dc6af6d79e2c03f2b0fcaac17d6cd176de28a83e53e"
+    },
+    {
+      "sequence": 12,
+      "filename": "0012_nan_cn_locale_name.sql",
+      "size": 164,
+      "sha256": "c3e08e390208d4e1e79a332f19ff00209fa3ceb01cecb512364537dbe1de273d"
     }
   ]
 }
