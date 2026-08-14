@@ -17,31 +17,31 @@
   "inputs": {
     "source_catalog": {
       "path": "/Users/share.lim/Documents/GitHub/langmap/web/src/locales/en.ts",
-      "sha256": "eb74bb21dd45ab19486f59f97dafe1ac9a508289950c44411f7b33f5dde2b878"
+      "sha256": "15c2043f579d51119e667f40754f37a26fefda9763956cbb06f649f8848d90f4"
     },
     "locales": {
       "cmn-Hans-CN": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hans-CN.json",
-        "sha256": "bb7e55d3872691b9bff8aa0dc6885ededb738e21620c8603aefdef1af75d027f"
+        "sha256": "36deb3a93035e52fbc017e73a34ab2e17875ad710cf43b3d2c05670f58f07b0c"
       },
       "cmn-Hant-TW": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/cmn-Hant-TW.json",
-        "sha256": "27d3d7e0dfb06b8a83c7f412e1993d2a908ba1dfbc35686a9183f73cef186011"
+        "sha256": "f333c0f152b78267c94d7290d6af5d1aa6703ef67240d9400d94e8cd7f872d95"
       },
       "spa-Latn-ES": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/spa-Latn-ES.json",
-        "sha256": "bbf2548eddcfc2005a83ddaa3faa3ed064bbacebd6fdf4b9b5ba238d279d161c"
+        "sha256": "c48a6eccc257f60898d47631be002a2c1112d0388af4073b9f9b293037f0da44"
       },
       "jpn-Jpan-JP": {
         "path": "/Users/share.lim/Documents/GitHub/langmap/scripts/i18n/jpn-Jpan-JP.json",
-        "sha256": "5dcfa6bc8c835f7fadc9974c7015e1e3895d8422eacbe73391448e345e7043a6"
+        "sha256": "803625804290f8deb4c7335865057830ab03f07f4603a33c6e5efe8249e56680"
       }
     }
   },
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "a48bf65ca67d59495b3f76d13946a31104c46b29ca4e334c918e14b71b74c998"
+      "sha256": "d544fca526010e08204769b887a9baca6309c568b15a3f4c1ac5b75840ac46e1"
     }
   }
 }
