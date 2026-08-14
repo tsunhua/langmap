@@ -45,17 +45,17 @@ defineProps<{
 .lg-row:hover { background: var(--bg); }
 .lg-name { min-width: 0; }
 .lg-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
-.lg-title .nm { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.lg-title .nm { font-size: 18px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .lg-code { flex: none; white-space: nowrap; }
-.lg-name .en { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lg-geo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.lg-name .en { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-geo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
 .lg-script { overflow: hidden; text-overflow: ellipsis; }
 .lg-rtl { color: var(--accent); }
 .lg-dir { text-transform: uppercase; letter-spacing: 0.04em; }
 .lg-count {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--accent);
   text-align: right;
 }

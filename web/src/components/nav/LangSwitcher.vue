@@ -108,7 +108,7 @@ onUnmounted(() => {
         </div>
       </template>
       <span v-if="!groupedWithOptions.length" class="lang-empty">{{ t('languageSwitcher.noResults') }}</span>
-      <button class="translate-link" type="button" @click="openWorkbench"><Languages :size="14" aria-hidden="true" />{{ t('translate.title') }}</button>
+      <button class="translate-link" type="button" @click="openWorkbench"><Languages :size="12" aria-hidden="true" />{{ t('translate.title') }}</button>
     </div>
   </div>
 </template>
@@ -131,7 +131,7 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: reduce) { .lang-menu { animation: none; } .lang-option, .lang-script, .lang-switch { transition: none; } }
 .lang-search { width: 100%; min-height: 36px; border: 1px solid var(--border); padding: 6px 8px; }
 .lang-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.lang-option { display: flex; justify-content: space-between; width: 100%; min-height: 32px; align-items: center; border: 0; border-radius: var(--r); background: transparent; text-align: left; padding: 4px 8px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.lang-option { display: flex; justify-content: space-between; width: 100%; min-height: 32px; align-items: center; border: 0; border-radius: var(--r); background: transparent; text-align: left; padding: 4px 8px; cursor: pointer; font-size: 14px; transition: background 0.15s, color 0.15s; }
 .lang-option:hover { background: var(--bg); }
 .lang-option[aria-selected="true"] { color: var(--accent); font-weight: 600; }
 .lang-option.is-active { background: var(--surface-2); }
@@ -149,11 +149,12 @@ onUnmounted(() => {
 .lang-script.is-active:not([aria-selected="true"]) { background: var(--surface-2); color: var(--fg); }
 .lang-script:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .lang-empty { display: block; padding: 12px 8px; color: var(--muted); }
-.translate-link { display:flex; align-items:center; gap:7px; width:100%; margin-top:6px; padding:10px 8px; border:0; border-top:1px solid var(--border); background:transparent; color:var(--accent); cursor:pointer; text-align:left; }
+.translate-link { display:flex; align-items:center; gap:6px; width:100%; min-height:36px; margin-top:6px; padding:6px 8px; border:0; border-top:1px solid var(--border); background:transparent; color:var(--accent); cursor:pointer; font-size:13px; text-align:left; }
 .translate-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 @media (max-width: 768px) {
   .lang-switch { height: 44px; padding: 0 12px; }
   .lang-option, .lang-variety-head { min-height: 44px; }
   .lang-script { min-height: 44px; padding: 6px 16px; }
+  .translate-link { min-height: 44px; }
 }
 </style>

@@ -162,14 +162,14 @@ watch(() => route.path, () => { menuOpen.value = false })
   gap: 3px;
   padding: 0;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
   letter-spacing: -0.03em;
   color: var(--fg);
   text-decoration: none;
 }
 .brand .em {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   padding: 2px 4px;
@@ -184,7 +184,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 .appnav { display: flex; gap: 2px; margin-left: 8px; }
 .appnav a {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -205,7 +205,7 @@ watch(() => route.path, () => { menuOpen.value = false })
   width: 220px;
   height: 30px;
   padding: 0 30px 0 28px;
-  font-size: 13px;
+  font-size: 16px;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);
@@ -218,7 +218,7 @@ watch(() => route.path, () => { menuOpen.value = false })
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-family: var(--mono); font-size: 10px;
+  font-family: var(--mono); font-size: 12px;
   border: 1px solid var(--border); border-radius: 2px;
   padding: 1px 5px; color: var(--muted); background: var(--surface);
   pointer-events: none;
@@ -232,7 +232,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 }
 
 .user-badge {
-  font-family: var(--mono); font-size: 11px;
+  font-family: var(--mono); font-size: 13px;
   color: var(--muted);
 }
 

@@ -22,6 +22,6 @@ defineEmits<{ action: [] }>()
   text-align: center;
   padding: var(--space-xxl) var(--space-md);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 </style>

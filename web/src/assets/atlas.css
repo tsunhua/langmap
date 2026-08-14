@@ -2,7 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 /* ═══════════════ Atlas v2 design tokens (ported from docs/prototype/v2/atlas2.css) ═══════════════
    Shared DNA: warm paper surface + terracotta accent + blue graph edges + mono.
@@ -23,8 +26,12 @@ html { -webkit-text-size-adjust: 100%; }
   --fold:        oklch(0.78 0.012 88);   /* folded / strike */
   --font:        "Inter", system-ui, sans-serif;
   --mono:        "IBM Plex Mono", ui-monospace, monospace;
+  /* Keep the interface readable at normal desktop viewing distance. */
+  --text-body:    18px;
+  --text-ui:      16px;
+  --text-meta:    13px;
   --r:           4px;
-  --bar-h:       44px;
+  --bar-h:       52px;
   /* spacing scale */
   --space-xxl: 48px;
   --space-xl: 40px;
@@ -44,13 +51,13 @@ body {
   background: var(--bg);
   background-image: radial-gradient(circle, oklch(0.90 0.010 88) 1px, transparent 1px);
   background-size: 22px 22px;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: var(--text-body);
+  line-height: 1.5;
   overflow-x: clip; /* clips stray horizontal overflow without breaking position: sticky */
 }
 a { color: inherit; text-decoration: none; }
 ::selection { background: var(--accent-soft); }
-.mono { font-family: var(--mono); font-size: 11px; }
+.mono { font-family: var(--mono); font-size: var(--text-meta); }
 
 /* Appbar */
 .appbar {
@@ -65,9 +72,9 @@ a { color: inherit; text-decoration: none; }
 /* ── Buttons ── */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  height: 30px; padding: 0 12px; border-radius: var(--r);
+  min-height: 40px; padding: 0 14px; border-radius: var(--r);
   border: 1px solid var(--border); background: var(--surface);
-  font-weight: 500; font-size: 13px; color: var(--fg);
+  font-weight: 500; font-size: var(--text-ui); color: var(--fg);
   cursor: pointer; transition: background 0.15s, border-color 0.15s, filter 0.15s;
 }
 .btn:hover { background: var(--bg); border-color: oklch(0.78 0.06 35); }
@@ -75,8 +82,8 @@ a { color: inherit; text-decoration: none; }
 .btn-primary:hover { filter: brightness(1.06); background: var(--accent); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
 .btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--fg); }
-.btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
-.btn-icon { width: 30px; padding: 0; display: grid; place-items: center; color: var(--muted); }
+.btn-sm { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.btn-icon { width: 40px; padding: 0; display: grid; place-items: center; color: var(--muted); }
 
 /* Page shell */
 .page { max-width: 920px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
@@ -90,7 +97,7 @@ a { color: inherit; text-decoration: none; }
 /* ── Vote pill (lucide thumbs icons; joined-pill shape) ── */
 .vote { display: inline-flex; align-items: center; gap: 2px; }
 .vote button {
-  width: 26px; height: 26px; border: 1px solid var(--border); background: var(--surface);
+  width: 36px; height: 36px; border: 1px solid var(--border); background: var(--surface);
   cursor: pointer; color: var(--muted); display: grid; place-items: center; padding: 0;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -100,20 +107,20 @@ a { color: inherit; text-decoration: none; }
 .vote button.up.on { background: var(--up); color: #fff; border-color: var(--up); }
 .vote button.down.on { background: var(--down); color: #fff; border-color: var(--down); }
 .vote .score {
-  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px;
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px;
   min-width: 32px; text-align: center; padding: 0 6px;
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-  height: 26px; display: grid; place-items: center;
+  height: 36px; display: grid; place-items: center;
 }
 .vote .score.neg { color: var(--down); }
 .vote-error {
-  font-family: var(--mono); font-size: 11px; color: var(--down); margin-left: 4px;
+  font-family: var(--mono); font-size: var(--text-meta); color: var(--down); margin-left: 4px;
 }
 
 /* Language badge */
 .lang-badge {
   display: inline-block;
-  font-family: var(--mono); font-size: 11px;
+  font-family: var(--mono); font-size: var(--text-meta);
   border: 1px solid var(--border); border-radius: 2px;
   padding: 1px 6px; color: var(--fg); background: var(--surface);
 }
@@ -121,7 +128,7 @@ a { color: inherit; text-decoration: none; }
 /* Source tag */
 .src-tag {
   display: inline-block;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
   border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px;
   color: var(--muted); background: transparent;
 }
@@ -133,14 +140,14 @@ a { color: inherit; text-decoration: none; }
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   margin: var(--space-lg) 0 var(--space-sm); padding-bottom: 10px; border-bottom: 1px solid var(--border);
 }
-.nb-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
-.nb-head .nb-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.nb-head h2 { font-size: var(--text-ui); font-weight: 600; letter-spacing: -0.01em; }
+.nb-head .nb-meta { font-family: var(--mono); font-size: var(--text-meta); color: var(--muted); }
 .nb-head .nb-meta b { color: var(--fg); font-weight: 500; }
 
 /* Input */
 input, select {
-  padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r);
-  font-family: var(--font); font-size: 14px; background: var(--surface); color: var(--fg);
+  min-height: 40px; padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--r);
+  font-family: var(--font); font-size: var(--text-ui); background: var(--surface); color: var(--fg);
 }
 input:focus, select:focus {
   outline: none; border-color: var(--accent);
@@ -174,7 +181,7 @@ a:focus-visible,
 @media (max-width: 768px) {
   .page { padding: 24px 20px 80px; }
   /* ≥44pt touch targets + 16px inputs to stop iOS focus zoom */
-  .btn { min-height: 44px; padding: 8px 14px; }
+  .btn { min-height: 44px; padding: 8px 16px; }
   .btn-icon { width: 44px; height: 44px; }
   .vote button { width: 44px; height: 44px; }
   .seg-btn { min-height: 44px; padding: 10px 12px; }

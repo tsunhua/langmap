@@ -107,7 +107,7 @@ async function submit() {
 
 <style scoped>
 .contrib-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
-.contrib-page h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+.contrib-page h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
 .lead { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: var(--space-xl); max-width: 60ch; }
 .lead b { color: var(--fg); font-weight: 500; }
 
@@ -124,17 +124,28 @@ async function submit() {
 }
 .ex-rows .ex-row { border-bottom: 1px solid var(--border); }
 .ex-rows .ex-row:last-child { border-bottom: none; }
-.ex-row .lang-picker { position: relative; }
-.ex-row .lang-picker :deep(.picker-label) { display: none; }
-.ex-row .lang-picker :deep(.picker-selected),
-.ex-row .lang-picker :deep(.picker-input) {
-  min-height: 32px; padding: 4px 10px;
+.ex-row :deep(.identity-picker),
+.ex-row :deep(.locale-picker) { gap: 0; min-width: 0; }
+.ex-row :deep(.picker-label),
+.ex-row :deep(.locale-picker > label),
+.ex-row :deep(.locale-picker .create) { display: none; }
+.ex-row :deep(.identity-picker input),
+.ex-row :deep(.identity-picker .picker-selected),
+.ex-row :deep(.locale-picker input),
+.ex-row :deep(.locale-picker .selected) {
+  min-height: 32px;
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 13px;
 }
-.ex-row .lang-picker :deep(.picker-clear) {
-  width: 28px; height: 28px;
+.ex-row :deep(.identity-picker .picker-clear),
+.ex-row :deep(.locale-picker .selected button) {
+  min-width: 28px;
+  min-height: 28px;
+  width: 28px;
+  height: 28px;
 }
-.ex-row .lang-picker :deep(.picker-create) { display: none; }
-.ex-row input {
+.ex-row > input {
   height: 32px; border: 1px solid var(--border); border-radius: var(--r);
   background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;
 }

@@ -254,7 +254,7 @@ onUnmounted(cleanup)
 .lens-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .lens-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
 .lens-back:hover { color: var(--fg); }
-.lens-head h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+.lens-head h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
 .lens-head h1 .anc { color: var(--accent); }
 .lens-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 

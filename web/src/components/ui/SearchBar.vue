@@ -27,11 +27,12 @@ const emit = defineEmits<{
 <style scoped>
 .search-input {
   width: 100%;
-  padding: 6px 10px;
+  min-height: 40px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: var(--r);
   font-family: var(--font);
-  font-size: 14px;
+  font-size: 16px;
   background: var(--surface);
   color: var(--fg);
 }
@@ -41,7 +42,7 @@ const emit = defineEmits<{
   box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
 }
 .search-input.large {
-  height: 44px;
+  height: 48px;
   font-size: 16px;
 }
 </style>

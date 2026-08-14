@@ -121,16 +121,16 @@ onUnmounted(() => {
 .lg-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
 .lg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .lg-heading { min-width: 0; }
-.lg-head h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
-.lg-sub { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.lg-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.lg-sub { font-size: 16px; color: var(--muted); margin: 6px 0 0; }
 .lg-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .lg-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .lg-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
-.lg-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 16px; transition: background 0.15s, color 0.15s; }
+.lg-sort button { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; border: none; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 18px; transition: background 0.15s, color 0.15s; }
 .lg-sort button:hover { color: var(--fg); }
 .lg-sort button.on { background: var(--fg); color: var(--surface); }
 .lg-list { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.lg-more { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.lg-more { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .lg-more-error { color: var(--down); }
 @media (max-width: 640px) {
   .lg-page { padding-right: 16px; padding-left: 16px; }

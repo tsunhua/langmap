@@ -57,7 +57,7 @@ function scoreClass(score: number) {
 .mc-node { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .mc-node.r { align-items: flex-end; text-align: right; }
 .mc-tx {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.01em;
   overflow: hidden;
@@ -66,7 +66,7 @@ function scoreClass(score: number) {
 }
 .mc-lc {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
 }
 .mc-edge { display: flex; align-items: center; gap: 5px; padding: 0; }
@@ -74,7 +74,7 @@ function scoreClass(score: number) {
 .mc-score {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--accent);
   white-space: nowrap;

@@ -28,9 +28,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
   overflow: hidden;
 }
 .seg-btn {
-  padding: 4px 12px;
+  min-height: 40px;
+  padding: 8px 16px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   border: none;
   background: transparent;
   color: var(--muted);
@@ -43,6 +44,6 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
   color: var(--surface);
 }
 @media (max-width: 768px) {
-  .seg-btn { min-height: 44px; padding: 10px 14px; }
+  .seg-btn { min-height: 44px; padding: 10px 16px; }
 }
 </style>

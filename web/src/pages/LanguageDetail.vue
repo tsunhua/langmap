@@ -259,11 +259,11 @@ onUnmounted(() => {
 
 <style scoped>
 .ld-page { max-width: 900px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
-.ld-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
+.ld-back { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .ld-back:hover { color: var(--fg); }
 .ld-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
 .ld-title h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
-.ld-sub { font-size: 13px; color: var(--muted); margin: 6px 0; }
+.ld-sub { font-size: 16px; color: var(--muted); margin: 6px 0; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
 .ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
@@ -274,7 +274,7 @@ onUnmounted(() => {
   width: 100%; min-height: 44px; padding: 0 36px 0 14px;
   border: 1px solid var(--border); border-radius: var(--r);
   background: var(--surface); color: var(--fg);
-  font-family: var(--font); font-size: 13px; cursor: pointer;
+  font-family: var(--font); font-size: 16px; cursor: pointer;
 }
 .ld-select:hover { border-color: color-mix(in oklch, var(--muted) 40%, var(--border)); }
 .ld-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -284,12 +284,12 @@ onUnmounted(() => {
   transform: translateY(-70%) rotate(45deg); pointer-events: none;
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ld-sort button { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; border: none; border-radius: 0; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 16px; }
+.ld-sort button { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; border: none; border-radius: 0; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 18px; }
 .ld-sort button:hover { color: var(--fg); }
 .ld-sort button.on { background: var(--fg); color: var(--surface); }
 .ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.ld-more, .ld-error { text-align: center; padding: 8px; font-size: 13px; color: var(--muted); }
+.ld-more, .ld-error { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .ld-error { color: var(--down); }
 @media (max-width: 640px) {
   .ld-page { padding-right: 16px; padding-left: 16px; }

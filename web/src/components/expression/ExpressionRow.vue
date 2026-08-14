@@ -39,9 +39,9 @@ withDefaults(defineProps<{
 .ex-row:last-child { border-bottom: none; }
 .ex-row:hover { background: var(--bg); }
 .ex-row:hover .ex-tx { color: var(--accent); }
-.ex-tx { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-tx { font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ex-region { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ex-maps { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--accent); font-size: 13px; text-align: right; white-space: nowrap; }
+.ex-maps { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--accent); font-size: 15px; text-align: right; white-space: nowrap; }
 @media (max-width: 640px) {
   .ex-row { grid-template-columns: 1fr auto auto; gap: 6px; padding: 8px 10px; }
   .ex-row--no-lang { grid-template-columns: 1fr auto; }

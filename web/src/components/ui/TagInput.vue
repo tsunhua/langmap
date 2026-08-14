@@ -95,8 +95,8 @@ function onPaste(e: ClipboardEvent) {
   flex-wrap: wrap;
   gap: 3px;
   align-items: center;
-  min-height: 32px;
-  padding: 3px 6px;
+  min-height: 48px;
+  padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--bg);
@@ -109,12 +109,12 @@ function onPaste(e: ClipboardEvent) {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  height: 22px;
-  padding: 0 4px 0 6px;
+  min-height: 32px;
+  padding: 0 6px 0 10px;
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
 }
@@ -127,8 +127,8 @@ function onPaste(e: ClipboardEvent) {
 .tag-remove {
   display: grid;
   place-items: center;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: none;
   color: var(--accent);
@@ -145,10 +145,10 @@ function onPaste(e: ClipboardEvent) {
   border: none;
   background: none;
   outline: none;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--fg);
   padding: 0;
-  height: 22px;
+  min-height: 32px;
 }
 .tag-field::placeholder {
   color: var(--muted);

@@ -184,8 +184,8 @@ onUnmounted(() => {
 .lang-select { position: relative; }
 .lang-select-tagwrap {
   display: flex; flex-wrap: wrap; gap: 4px;
-  padding: 6px 8px; border: 1px solid var(--border);
-  border-radius: var(--r); background: var(--surface); min-height: 44px; cursor: text;
+  padding: 6px 10px; border: 1px solid var(--border);
+  border-radius: var(--r); background: var(--surface); min-height: 48px; cursor: text;
   align-items: center;
 }
 .lang-select-tagwrap:focus-within {
@@ -194,20 +194,20 @@ onUnmounted(() => {
 }
 .lang-tag {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 8px; border-radius: 999px;
+  padding: 4px 10px; border-radius: 999px;
   background: var(--accent-soft); color: var(--accent);
-  font-family: var(--mono); font-size: 11px;
-  min-height: 28px;
+  font-family: var(--mono); font-size: 12px;
+  min-height: 32px;
 }
 .lang-tag-remove {
   border: none; background: none; cursor: pointer;
   color: var(--accent); display: grid; place-items: center;
-  width: 20px; height: 20px; border-radius: 999px;
+  width: 28px; height: 28px; border-radius: 999px;
 }
 .lang-tag-remove:hover { background: color-mix(in oklch, var(--accent) 15%, transparent); }
 .lang-select-input {
-  border: none; outline: none; font-size: 13px; flex: 1; min-width: 80px;
-  background: transparent; min-height: 32px;
+  border: none; outline: none; font-size: 14px; flex: 1; min-width: 80px;
+  background: transparent; min-height: 36px;
 }
 .lang-select-dropdown {
   position: absolute; top: 100%; left: 0; right: 0;
@@ -220,12 +220,12 @@ onUnmounted(() => {
   display: flex; align-items: center; gap: 8px;
   width: 100%; text-align: left;
   padding: 8px 12px; min-height: 44px; border: none; background: none;
-  font-size: 13px; cursor: pointer; color: var(--fg);
+  font-size: 14px; cursor: pointer; color: var(--fg);
 }
 .lang-opt:hover { background: var(--accent-soft); }
 .lang-opt-active { background: var(--accent-soft); }
 .lang-opt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lang-opt-code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.lang-opt-code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .lang-loading { padding: 10px 12px; font-size: 13px; color: var(--muted); text-align: center; }
-.lang-err { font-size: 11px; color: var(--down); margin-top: 4px; }
+.lang-err { font-size: 13px; color: var(--down); margin-top: 4px; }
 </style>

@@ -99,17 +99,17 @@ onMounted(async () => {
 <style scoped>
   .feed-page { max-width: 760px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
   .feed-hero { margin-bottom: var(--space-md); }
-.feed-hero h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
-.feed-hero p { font-size: 13px; color: var(--muted); margin-bottom: var(--space-lg); }
+.feed-hero h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+.feed-hero p { font-size: 16px; color: var(--muted); margin-bottom: var(--space-lg); }
   .feed-sec { margin-bottom: var(--space-lg); }
   .feed-sec-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
 }
-.feed-sec-head h2 { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.feed-sec-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
 .feed-sec-head .hint {
-  font-family: var(--mono); font-size: 10px;
+  font-family: var(--mono); font-size: 13px;
   color: var(--faint); letter-spacing: 0.04em; text-transform: uppercase;
 }
   .map-list { display: flex; flex-direction: column; gap: 8px; }
@@ -117,7 +117,7 @@ onMounted(async () => {
 .feed-cta {
   margin-top: var(--space-xs); padding: var(--space-base);
   border: 1px dashed var(--border); border-radius: 8px;
-  text-align: center; color: var(--muted); font-size: 13px;
+  text-align: center; color: var(--muted); font-size: 16px;
 }
 .feed-cta a { color: var(--accent); font-weight: 500; }
 .feed-cta a:hover { filter: brightness(1.08); }
