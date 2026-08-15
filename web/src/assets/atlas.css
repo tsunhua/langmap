@@ -26,10 +26,10 @@ html {
   --fold:        oklch(0.78 0.012 88);   /* folded / strike */
   --font:        "Inter", system-ui, sans-serif;
   --mono:        "IBM Plex Mono", ui-monospace, monospace;
-  /* Keep the interface readable at normal desktop viewing distance. */
-  --text-body:    18px;
-  --text-ui:      16px;
-  --text-meta:    13px;
+  /* Compact, content-first type scale; mobile form controls stay 16px to prevent iOS zoom. */
+  --text-body:    16px;
+  --text-ui:      15px;
+  --text-meta:    12px;
   --r:           4px;
   --bar-h:       52px;
   /* spacing scale */
