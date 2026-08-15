@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getMappingGraph } from '../src/services/mappingGraph';
+import { parseLocaleHints } from '../src/services/localizedName';
 
 type Edge = {
   id: string;
@@ -47,5 +48,16 @@ describe('getMappingGraph', () => {
     ]), 'nan:root', 3, 2);
 
     expect(graph).toMatchObject({ truncated: true, omitted_count: 1 });
+  });
+
+  it('resolves node language names via the shared resolver', async () => {
+    const graph = await getMappingGraph(
+      fakeD1([
+        { id: 'e1', expression_a_id: 'eng:a', expression_b_id: 'nan:root', score: 2, created_at: '2026-08-01', expression_a_text: 'rice', expression_a_lang_code: 'eng', expression_b_text: '食', expression_b_lang_code: 'nan' },
+      ]),
+      'nan:root', 1, 200, parseLocaleHints('cmn-Hans-CN', undefined),
+    );
+    // fakeD1 對未知查詢回空 → 每個 lang_code 回退為自身 code
+    expect(graph?.nodes.map((node) => node.language_name)).toEqual(['nan', 'eng']);
   });
 });

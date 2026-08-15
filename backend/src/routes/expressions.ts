@@ -13,6 +13,7 @@ import {
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
 import { getMappingGraph } from '../services/mappingGraph';
+import { parseLocaleHints } from '../services/localizedName';
 import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
@@ -189,7 +190,13 @@ expressions.get('/:id/mappings', async (c) => {
   const id = c.req.param('id') ?? '';
   const rawHops = Number.parseInt(c.req.query('hops') ?? '1', 10);
   if (rawHops < 1 || rawHops > 3 || !Number.isInteger(rawHops)) return badRequest(c, 'INVALID_HOPS', 'hops must be 1, 2, or 3');
-  const graph = await getMappingGraph(c.env.DB, id, rawHops as 1 | 2 | 3);
+  const graph = await getMappingGraph(
+    c.env.DB,
+    id,
+    rawHops as 1 | 2 | 3,
+    undefined,
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
   if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   return success(c, graph);
 });

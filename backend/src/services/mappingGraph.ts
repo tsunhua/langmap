@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
+import { resolveLanguageNames, type LocaleHints } from './localizedName';
 
 const DEFAULT_NODE_LIMIT = 200;
 
@@ -11,20 +12,18 @@ interface GraphEdgeRow {
   created_at: string;
   expression_a_text: string;
   expression_a_lang_code: string;
-  expression_a_language_name: string | null;
   expression_b_text: string;
   expression_b_lang_code: string;
-  expression_b_language_name: string | null;
 }
 
-function toNode(row: GraphEdgeRow, expressionId: string, depth: number): MappingGraphNode {
+function toNode(row: GraphEdgeRow, expressionId: string, depth: number, nameMap: ReadonlyMap<string, string>): MappingGraphNode {
   const isA = row.expression_a_id === expressionId;
   const langCode = isA ? row.expression_a_lang_code : row.expression_b_lang_code;
   return {
     expression_id: expressionId,
     text: isA ? row.expression_a_text : row.expression_b_text,
     lang_code: langCode,
-    language_name: (isA ? row.expression_a_language_name : row.expression_b_language_name) ?? langCode,
+    language_name: nameMap.get(langCode) ?? langCode,
     depth,
   };
 }
@@ -33,13 +32,11 @@ async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[])
   const placeholders = frontier.map(() => '?').join(', ');
   const { results } = await db.prepare(
     `SELECT e.id, e.expression_a_id, e.expression_b_id, e.score, e.created_at,
-      a.text AS expression_a_text, a.lang_code AS expression_a_lang_code, la.name_en AS expression_a_language_name,
-      b.text AS expression_b_text, b.lang_code AS expression_b_lang_code, lb.name_en AS expression_b_language_name
+      a.text AS expression_a_text, a.lang_code AS expression_a_lang_code,
+      b.text AS expression_b_text, b.lang_code AS expression_b_lang_code
      FROM expression_edges e
      JOIN expressions a ON a.id = e.expression_a_id
      JOIN expressions b ON b.id = e.expression_b_id
-     LEFT JOIN languages la ON la.code = a.lang_code
-     LEFT JOIN languages lb ON lb.code = b.lang_code
      WHERE e.expression_a_id IN (${placeholders}) OR e.expression_b_id IN (${placeholders})
      ORDER BY e.score DESC, e.created_at ASC, e.id ASC`,
   ).bind(...frontier, ...frontier).all<GraphEdgeRow>();
@@ -51,19 +48,21 @@ export async function getMappingGraph(
   rootId: string,
   hops: 1 | 2 | 3,
   nodeLimit = DEFAULT_NODE_LIMIT,
+  locales: LocaleHints = {},
 ): Promise<MappingGraphResponse | null> {
   const root = await db.prepare(
-    'SELECT e.id, e.text, e.lang_code, l.name_en AS language_name FROM expressions e LEFT JOIN languages l ON l.code = e.lang_code WHERE e.id = ?',
-  ).bind(rootId).first<{ id: string; text: string; lang_code: string; language_name: string | null }>();
+    'SELECT id, text, lang_code FROM expressions WHERE id = ?',
+  ).bind(rootId).first<{ id: string; text: string; lang_code: string }>();
   if (!root) return null;
 
   const limit = Math.max(1, Math.min(nodeLimit, DEFAULT_NODE_LIMIT));
   const visited = new Set<string>([rootId]);
+  const rootNames = await resolveLanguageNames(db, [root.lang_code], locales);
   const nodes: MappingGraphNode[] = [{
     expression_id: root.id,
     text: root.text,
     lang_code: root.lang_code,
-    language_name: root.language_name ?? root.lang_code,
+    language_name: rootNames.get(root.lang_code) ?? root.lang_code,
     depth: 0,
   }];
   const edges: MappingGraphEdge[] = [];
@@ -75,6 +74,8 @@ export async function getMappingGraph(
 
   for (let depth = 1; depth <= hops && frontier.length > 0; depth++) {
     const rows = await loadEdgesForFrontier(db, frontier);
+    const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_lang_code, row.expression_b_lang_code]))];
+    const nameMap = await resolveLanguageNames(db, langCodes, locales);
     const next = new Set<string>();
     const frontierIds = new Set(frontier);
     for (const row of rows) {
@@ -102,7 +103,7 @@ export async function getMappingGraph(
         }
         visited.add(endpoint);
         next.add(endpoint);
-        nodes.push(toNode(row, endpoint, depth));
+        nodes.push(toNode(row, endpoint, depth, nameMap));
       }
     }
     if (rows.length > 0) resolvedHops = depth as 1 | 2 | 3;
