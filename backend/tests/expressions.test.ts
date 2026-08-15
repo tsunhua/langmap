@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { Hono } from 'hono';
+import expressions from '../src/routes/expressions';
 import {
   ExpressionError,
   createExpression,
@@ -218,6 +220,21 @@ describe('searchExpressions', () => {
     expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id) DESC, text ASC, homograph_index ASC, id ASC');
     expect(pageQueries[1]).toContain('ORDER BY created_at DESC, id ASC');
   });
+
+  it('attaches a resolved language_name to items with name_en fallback', async () => {
+    const rows = [
+      { id: 'cmn:aaaa', lang_code: 'cmn', text: '你好', text_hash: 'aaaa', homograph_index: 1, description: '', tags_json: '[]', source_id: null, source_ref: null, review_status: 'pending', created_by: 1, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00' },
+    ];
+    const db = fakeD1({
+      'SELECT COUNT(*) AS total FROM expressions': () => ({ total: 1 }),
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
+        () => ({ results: rows }),
+      'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))':
+        () => ({ results: [{ code: 'cmn', name_expression_id: null, name_en: 'Mandarin Chinese', name: null }] }),
+    });
+    const result = await searchExpressions(db, { q: '', sort: 'alpha', limit: 20, offset: 0, hints: { primary: 'cmn-Hans-CN' } });
+    expect(result.items[0].language_name).toBe('Mandarin Chinese');
+  });
 });
 
 describe('getExpression', () => {
@@ -333,5 +350,53 @@ describe('createLocaleAttestation', () => {
     expect(
       await captureAsyncCode(() => createLocaleAttestation(db, { expression_id: 'nan:missing', language_locale_code: 'nan-Hant-TW', created_by: 1 })),
     ).toBe('EXPRESSION_NOT_FOUND');
+  });
+});
+
+describe('expressions route GET /:id', () => {
+  it('adds locale_display_name to attestations and readings', async () => {
+    function fakeDb() {
+      return {
+        prepare(sql: string) {
+          return {
+            bind(..._args: unknown[]) {
+              return {
+                async first() {
+                  if (sql.includes('FROM expressions e LEFT JOIN sources')) {
+                    return { id: 'nan:aaaa', lang_code: 'nan', text: '食', source_type: null, source_name: null };
+                  }
+                  return null;
+                },
+                async all() {
+                  if (sql.includes('expression_locale_attestations')) {
+                    return { results: [{ id: 'a1', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW', source_id: null, source_ref: null, created_by: 1, created_at: '2026-08-12 00:00:00' }] };
+                  }
+                  if (sql.includes('expression_readings')) {
+                    return { results: [{ id: 'r1', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW', scheme: 'poj', value: 'chia̍h', source_type: null, source_name: null, created_by: 1, created_at: '2026-08-12 00:00:00' }] };
+                  }
+                  if (sql.includes('SELECT code, name_expression_id, name_en, name FROM language_locales')) {
+                    return { results: [{ code: 'nan-Hant-TW', name_expression_id: null, name_en: 'Taiwan Hokkien', name: '臺語' }] };
+                  }
+                  return { results: [] };
+                },
+              };
+            },
+          };
+        },
+      } as unknown as import('@cloudflare/workers-types').D1Database;
+    }
+
+    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    app.route('/expressions', expressions);
+    const response = await app.request('http://example.test/expressions/nan:aaaa?ui_locale=cmn-Hans-CN', undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
+    expect(response.status).toBe(200);
+    const body = await response.json() as {
+      data: {
+        attestations: Array<{ language_locale_code: string; locale_display_name: string }>;
+        readings: Array<{ language_locale_code: string; locale_display_name: string }>;
+      };
+    };
+    expect(body.data.attestations[0].locale_display_name).toBe('臺語');
+    expect(body.data.readings[0].locale_display_name).toBe('臺語');
   });
 });

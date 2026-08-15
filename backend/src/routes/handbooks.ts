@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { optionalAuth, requireAuth } from '../middleware/auth';
 import { badRequest, created, forbidden, internalError, notFound, success } from '../utils/response';
+import { parseLocaleHints, resolveLanguageNames } from '../services/localizedName';
 import { ulid } from '../utils/ulid';
 import type { Bindings, Variables } from '../types';
 
@@ -63,14 +64,19 @@ handbooks.get('/:id', optionalAuth, async (c) => {
   const sectionIds = sections.map((section) => section.id);
   const { results: items } = sectionIds.length
     ? await c.env.DB.prepare(
-      `SELECT hi.section_id, hi.expression_id, hi.position, e.id, e.text, e.lang_code, l.name_en AS language_name
+      `SELECT hi.section_id, hi.expression_id, hi.position, e.id, e.text, e.lang_code
        FROM handbook_section_items hi JOIN expressions e ON e.id = hi.expression_id
-       LEFT JOIN languages l ON l.code = e.lang_code
        WHERE hi.section_id IN (SELECT value FROM json_each(?))
        ORDER BY hi.section_id ASC, hi.position ASC, hi.expression_id ASC`,
     ).bind(JSON.stringify(sectionIds)).all()
     : { results: [] };
-  return success(c, { ...handbook, sections: sections.map((section) => ({ ...section, items: items.filter((item: { section_id: string }) => item.section_id === section.id) })) });
+  const languageNames = await resolveLanguageNames(
+    c.env.DB,
+    items.map((item: { lang_code: string }) => item.lang_code),
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
+  const withNames = (items as Array<{ section_id: string; lang_code: string }>).map((item) => ({ ...item, language_name: languageNames.get(item.lang_code) ?? '' }));
+  return success(c, { ...handbook, sections: sections.map((section) => ({ ...section, items: withNames.filter((item) => item.section_id === section.id) })) });
 });
 
 handbooks.post('/', requireAuth, async (c) => {

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { success } from '../utils/response';
+import { parseLocaleHints, resolveLanguageNames } from '../services/localizedName';
 import type { Bindings } from '../types';
 
 const feed = new Hono<{ Bindings: Bindings }>();
@@ -21,8 +22,10 @@ feed.get('/hot', async (c) => {
      JOIN expressions b ON b.id = ed.expression_b_id
      ORDER BY ed.score DESC, ed.created_at DESC, ed.id ASC
      LIMIT ?`,
-  ).bind(parseLimit(c.req.query('limit'))).all();
-  return success(c, results);
+  ).bind(parseLimit(c.req.query('limit'))).all<{ a_lang: string; b_lang: string }>();
+  const hints = parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale'));
+  const names = await resolveLanguageNames(c.env.DB, [...new Set(results.flatMap((row) => [row.a_lang, row.b_lang]))], hints);
+  return success(c, results.map((row) => ({ ...row, a_language_name: names.get(row.a_lang) ?? row.a_lang, b_language_name: names.get(row.b_lang) ?? row.b_lang })));
 });
 
 feed.get('/new', async (c) => {
@@ -44,8 +47,14 @@ feed.get('/new', async (c) => {
        LEFT JOIN users u ON u.id = e.created_by
      ) ORDER BY created_at DESC, id ASC
      LIMIT ?`,
-  ).bind(parseLimit(c.req.query('limit'))).all();
-  return success(c, results);
+  ).bind(parseLimit(c.req.query('limit'))).all<{ left_lang: string | null; right_lang: string | null }>();
+  const hints = parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale'));
+  const names = await resolveLanguageNames(c.env.DB, [...new Set(results.flatMap((row) => [row.left_lang, row.right_lang]).filter((code): code is string => Boolean(code)))], hints);
+  return success(c, results.map((row) => ({
+    ...row,
+    left_language_name: row.left_lang ? names.get(row.left_lang) ?? row.left_lang : null,
+    right_language_name: row.right_lang ? names.get(row.right_lang) ?? row.right_lang : null,
+  })));
 });
 
 export default feed;

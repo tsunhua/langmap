@@ -13,7 +13,7 @@ import {
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
 import { getMappingGraph } from '../services/mappingGraph';
-import { parseLocaleHints } from '../services/localizedName';
+import { parseLocaleHints, resolveLocaleNames } from '../services/localizedName';
 import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
@@ -58,7 +58,12 @@ expressions.get('/search', async (c) => {
   const langCode = (c.req.query('lang_code') ?? '').toLowerCase();
   const requestedSort = c.req.query('sort');
   const sort = requestedSort === 'new' || requestedSort === 'alpha' ? requestedSort : 'hot';
-  const result = await searchExpressions(c.env.DB, { ...query, lang_code: langCode || undefined, sort });
+  const result = await searchExpressions(c.env.DB, {
+    ...query,
+    lang_code: langCode || undefined,
+    sort,
+    hints: parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  });
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
@@ -68,7 +73,17 @@ expressions.get('/:id', async (c) => {
   if (!result) {
     return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   }
-  return success(c, result);
+  const localeCodes = [...new Set([...result.attestations, ...result.readings].map((row) => row.language_locale_code))];
+  const names = await resolveLocaleNames(
+    c.env.DB,
+    localeCodes,
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
+  return success(c, {
+    ...result,
+    attestations: result.attestations.map((row) => ({ ...row, locale_display_name: names.get(row.language_locale_code) ?? row.language_locale_code })),
+    readings: result.readings.map((row) => ({ ...row, locale_display_name: names.get(row.language_locale_code) ?? row.language_locale_code })),
+  });
 });
 
 expressions.post('/:id/locale-attestations', requireAuth, async (c) => {

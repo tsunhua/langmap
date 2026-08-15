@@ -15,6 +15,7 @@ function fakeDb() {
             },
             async all() {
               if (sql.includes('FROM handbook_sections')) return { results: [{ id: '01SECTION', handbook_id: '01HANDBOOK', title: 'One', position: 0 }] };
+              if (sql.includes('name_expression_id')) return { results: [{ code: 'nan', name_expression_id: null, name_en: 'Southern Min', name: null }] };
               if (sql.includes('FROM handbook_section_items')) return { results: [{ section_id: '01SECTION', expression_id: 'nan:hash', id: 'nan:hash', text: '食', lang_code: 'nan', language_name: 'Southern Min', position: 0 }] };
               return { results: [{ id: '01HANDBOOK', title: 'Starter', section_count: 1, expression_count: 1 }] };
             },
@@ -31,7 +32,7 @@ describe('handbooks API', () => {
     app.route('/handbooks', handbooks);
     const response = await app.request('http://example.test/handbooks/01HANDBOOK', undefined, { DB: fakeDb(), SECRET_KEY: 'test-secret' });
     expect(response.status).toBe(200);
-    const body = await response.json() as { data: { sections: Array<{ items: Array<{ id: string; lang_code: string }> }> } };
-    expect(body.data.sections[0].items[0]).toMatchObject({ id: 'nan:hash', lang_code: 'nan' });
+    const body = await response.json() as { data: { sections: Array<{ items: Array<{ id: string; lang_code: string; language_name: string }> }> } };
+    expect(body.data.sections[0].items[0]).toMatchObject({ id: 'nan:hash', lang_code: 'nan', language_name: 'Southern Min' });
   });
 });
