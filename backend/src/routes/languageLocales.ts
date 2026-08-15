@@ -18,6 +18,7 @@ import {
   parseReferenceQuery,
 } from '../services/languageIdentity';
 import { SourceError, findOrCreateSource } from '../services/sources';
+import { parseLocaleHints, resolveLocaleNames } from '../services/localizedName';
 import type { LanguageLocaleRow } from '../types/language';
 import type { Bindings, Variables } from '../types';
 
@@ -149,7 +150,14 @@ languageLocales.get('/', async (c) => {
     .prepare(`SELECT ${LOCALE_COLUMNS} FROM language_locales ${where} ORDER BY code ASC LIMIT ? OFFSET ?`)
     .bind(...params, query.limit, query.offset)
     .all();
-  return paginated(c, results as LanguageLocaleRow[], countRow?.total ?? 0, query.offset, query.limit);
+  const rows = results as LanguageLocaleRow[];
+  const displayNames = await resolveLocaleNames(
+    c.env.DB,
+    rows.map((row) => row.code),
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
+  const items = rows.map((row) => ({ ...row, display_name: displayNames.get(row.code) ?? row.name }));
+  return paginated(c, items, countRow?.total ?? 0, query.offset, query.limit);
 });
 
 languageLocales.get('/:code', async (c) => {
@@ -162,6 +170,12 @@ languageLocales.get('/:code', async (c) => {
     .bind(code)
     .first<LanguageLocaleRow>();
   if (!row) return notFound(c, 'Language locale');
+
+  const displayName = await resolveLocaleNames(
+    c.env.DB,
+    [row.code],
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
 
   let coordinate_source: 'locale' | 'region' | null = null;
   let latitude = row.latitude;
@@ -179,7 +193,7 @@ languageLocales.get('/:code', async (c) => {
   } else {
     coordinate_source = 'locale';
   }
-  return success(c, { ...row, latitude, longitude, coordinate_source });
+  return success(c, { ...row, latitude, longitude, coordinate_source, display_name: displayName.get(row.code) ?? row.name });
 });
 
 export default languageLocales;
