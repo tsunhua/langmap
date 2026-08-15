@@ -6,6 +6,7 @@ const schema = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
 describe('greenfield schema contract', () => {
   it('defines the reference registry tables with the spec columns', () => {
     expect(schema).toMatch(/CREATE TABLE languages[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?name_en TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE languages[\s\S]*?name_expression_id TEXT REFERENCES expressions\(id\)/s);
     expect(schema).toMatch(/CREATE TABLE scripts[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?direction TEXT NOT NULL CHECK \(direction IN \('ltr', 'rtl'\)\)/s);
     expect(schema).toMatch(/CREATE TABLE regions[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?CHECK \(\(latitude IS NULL\) = \(longitude IS NULL\)\)/s);
   });
@@ -22,6 +23,7 @@ describe('greenfield schema contract', () => {
   it('defines language_locales with the spec columns and checks', () => {
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?code TEXT PRIMARY KEY/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name TEXT NOT NULL[\s\S]*?name_en TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name_expression_id TEXT REFERENCES expressions\(id\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?UNIQUE \(lang_code, script_code, region_code, place_path\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(\(latitude IS NULL\) = \(longitude IS NULL\)\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);

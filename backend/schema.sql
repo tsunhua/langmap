@@ -44,7 +44,8 @@ CREATE INDEX idx_users_email ON users(email);
 
 CREATE TABLE languages (
     code TEXT PRIMARY KEY,
-    name_en TEXT NOT NULL
+    name_en TEXT NOT NULL,
+    name_expression_id TEXT REFERENCES expressions(id)
 );
 
 CREATE TABLE scripts (
@@ -85,6 +86,7 @@ CREATE TABLE language_locales (
   place_path TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL,
   name_en TEXT NOT NULL,
+  name_expression_id TEXT REFERENCES expressions(id),
   latitude REAL,
   longitude REAL,
   source_id TEXT,
@@ -101,12 +103,40 @@ CREATE TABLE language_locales (
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
-INSERT OR IGNORE INTO sources (id, type, name) VALUES
-  ('system-seed', 'system', 'LangMap system seeds');
+-- Expression identity + locale attestations (spec §8.4, §9.1).
 
+CREATE TABLE expressions (
+  id TEXT PRIMARY KEY,
+  lang_code TEXT NOT NULL,
+  text TEXT NOT NULL,
+  text_hash TEXT NOT NULL,
+  homograph_index INTEGER NOT NULL DEFAULT 1 CHECK (homograph_index >= 1),
+  description TEXT NOT NULL DEFAULT '',
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  source_id TEXT,
+  source_ref TEXT,
+  review_status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (review_status IN ('pending', 'approved', 'rejected')),
+  created_by INTEGER,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
+  UNIQUE (lang_code, text, homograph_index),
+  UNIQUE (lang_code, text_hash, homograph_index),
+  FOREIGN KEY (lang_code) REFERENCES languages(code),
+  FOREIGN KEY (source_id) REFERENCES sources(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Registry seeds must follow the expressions table: languages and
+-- language_locales reference expressions(id) for name_expression_id, and with
+-- foreign_keys enabled a DML on a child table fails while the parent is absent.
 -- schema.sql runs before scripts/language-reference/artifacts/language-reference.sql,
 -- so the locale seeds below need these registry rows present to satisfy their FKs.
 -- Values must match the generated artifact so INSERT OR IGNORE keeps final counts intact.
+
+INSERT OR IGNORE INTO sources (id, type, name) VALUES
+  ('system-seed', 'system', 'LangMap system seeds');
 
 INSERT OR IGNORE INTO languages (code, name_en) VALUES
   ('eng', 'English'),
@@ -141,31 +171,6 @@ VALUES
   ('nan-Hant-MY_Penang', 'nan', 'Hant', 'MY', 'Penang', '福建話', 'Penang Hokkien', 'system-seed', 'seed:system-seed:1'),
   ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
   ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');
-
--- Expression identity + locale attestations (spec §8.4, §9.1).
-
-CREATE TABLE expressions (
-  id TEXT PRIMARY KEY,
-  lang_code TEXT NOT NULL,
-  text TEXT NOT NULL,
-  text_hash TEXT NOT NULL,
-  homograph_index INTEGER NOT NULL DEFAULT 1 CHECK (homograph_index >= 1),
-  description TEXT NOT NULL DEFAULT '',
-  tags_json TEXT NOT NULL DEFAULT '[]',
-  source_id TEXT,
-  source_ref TEXT,
-  review_status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (review_status IN ('pending', 'approved', 'rejected')),
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  UNIQUE (lang_code, text, homograph_index),
-  UNIQUE (lang_code, text_hash, homograph_index),
-  FOREIGN KEY (lang_code) REFERENCES languages(code),
-  FOREIGN KEY (source_id) REFERENCES sources(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
 
 CREATE TABLE expression_locale_attestations (
   id TEXT PRIMARY KEY,

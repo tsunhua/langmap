@@ -109,6 +109,12 @@
       "filename": "0018_nan_language_hokkien_full.sql",
       "size": 214,
       "sha256": "13de35bf39607666dfa972df4adfeffe1b97d78b858797d355aab7eafa933c6c"
+    },
+    {
+      "sequence": 19,
+      "filename": "0019_language_name_expression_id.sql",
+      "size": 592,
+      "sha256": "cfa3c5ca240d8de7acd7f95691d7400403d60cceeb2a148aa918b663bc0bd688"
     }
   ]
 }
