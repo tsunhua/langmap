@@ -18,16 +18,29 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-const LanguagePickerStub = {
-  name: 'LanguagePickerStub',
+const localeByCode = {
+  'yue-Hant-CN-x-hegusan': { code: 'yue-Hant-CN-x-hegusan', lang_code: 'yue' },
+  'cmn-Hans': { code: 'cmn-Hans', lang_code: 'cmn' },
+  'eng-US': { code: 'eng-US', lang_code: 'eng' },
+  'nan-Hant-TW': { code: 'nan-Hant-TW', lang_code: 'nan' },
+}
+
+const LanguageLocalePickerStub = {
+  name: 'LanguageLocalePickerStub',
   props: ['modelValue', 'label', 'allowCreate'],
-  emits: ['update:modelValue', 'created'],
+  emits: ['update:modelValue', 'selected', 'created'],
   template: `
     <div class="stub-picker">
       <label>{{ label }}</label>
-      <input class="picker-input" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" />
+      <input class="picker-input" :value="modelValue" @input="select($event.target.value)" />
     </div>
   `,
+  methods: {
+    select(this: { $emit: (event: string, value: unknown) => void }, code: keyof typeof localeByCode) {
+      this.$emit('update:modelValue', code)
+      this.$emit('selected', localeByCode[code])
+    },
+  },
 }
 
 function mountPage() {
@@ -35,19 +48,19 @@ function mountPage() {
     global: {
       plugins: [setActivePinia(createPinia())],
       stubs: {
-        LanguagePicker: LanguagePickerStub,
+        LanguageLocalePicker: LanguageLocalePickerStub,
       },
     },
   })
 }
 
-describe('Contribute page with LanguagePicker', () => {
+describe('Contribute page with LanguageLocalePicker', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPush.mockReset()
   })
 
-  it('renders one LanguagePicker per row', () => {
+  it('renders one locale picker per row', () => {
     const wrapper = mountPage()
     const pickers = wrapper.findAll('.stub-picker')
     expect(pickers.length).toBeGreaterThanOrEqual(2)
@@ -59,8 +72,8 @@ describe('Contribute page with LanguagePicker', () => {
     await pickerInputs[0].setValue('yue-Hant-CN-x-hegusan')
     await pickerInputs[1].setValue('cmn-Hans')
 
-    expect((wrapper.vm as any).rows[0].lang_code).toBe('yue-Hant-CN-x-hegusan')
-    expect((wrapper.vm as any).rows[1].lang_code).toBe('cmn-Hans')
+    expect((wrapper.vm as any).rows[0]).toMatchObject({ lang_code: 'yue', language_locale_code: 'yue-Hant-CN-x-hegusan' })
+    expect((wrapper.vm as any).rows[1]).toMatchObject({ lang_code: 'cmn', language_locale_code: 'cmn-Hans' })
   })
 
   it('submits canonical language codes from picker, not free-text', async () => {
@@ -79,8 +92,8 @@ describe('Contribute page with LanguagePicker', () => {
 
     expect(api.post).toHaveBeenCalledWith('/contributions/batch', {
       expressions: expect.arrayContaining([
-        expect.objectContaining({ lang_code: 'yue-Hant-CN-x-hegusan' }),
-        expect.objectContaining({ lang_code: 'cmn-Hans' }),
+        expect.objectContaining({ lang_code: 'yue', language_locale_code: 'yue-Hant-CN-x-hegusan' }),
+        expect.objectContaining({ lang_code: 'cmn', language_locale_code: 'cmn-Hans' }),
       ]),
     })
   })
@@ -88,7 +101,7 @@ describe('Contribute page with LanguagePicker', () => {
   it('rejects a batch with fewer than two complete expressions', async () => {
     const api = (await import('@/api/client')).default
     const wrapper = mountPage()
-    await wrapper.findAll('.stub-picker input.picker-input')[0].setValue('eng')
+    await wrapper.findAll('.stub-picker input.picker-input')[0].setValue('eng-US')
     await wrapper.findAll('input.ex-text')[0].setValue('hello')
 
     const submitButton = wrapper.get('[data-action="submit-contribution"]')
@@ -104,8 +117,8 @@ describe('Contribute page with LanguagePicker', () => {
     const wrapper = mountPage()
     const pickers = wrapper.findAll('.stub-picker input.picker-input')
     const texts = wrapper.findAll('input.ex-text')
-    await pickers[0].setValue('eng')
-    await pickers[1].setValue('nan')
+    await pickers[0].setValue('eng-US')
+    await pickers[1].setValue('nan-Hant-TW')
     await texts[0].setValue('hello')
     await texts[1].setValue('食飽未')
 

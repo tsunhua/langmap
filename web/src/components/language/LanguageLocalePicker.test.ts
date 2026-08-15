@@ -14,5 +14,6 @@ describe('LanguageLocalePicker', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     await wrapper.get('[role="option"]').trigger('mousedown')
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['nan-Hant-TW'])
+    expect(wrapper.emitted('selected')?.[0]?.[0]).toMatchObject({ code: 'nan-Hant-TW', lang_code: 'nan' })
   })
 })

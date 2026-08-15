@@ -205,7 +205,7 @@ watch(() => route.path, () => { menuOpen.value = false })
   width: 220px;
   height: 30px;
   padding: 0 30px 0 28px;
-  font-size: 16px;
+  font-size: 14px;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);

@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
 import CliquePreview from '@/components/mapping/CliquePreview.vue'
-import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import LanguageLocalePicker from '@/components/language/LanguageLocalePicker.vue'
+import type { LanguageLocale } from '@/api/languageIdentity'
+import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -39,6 +40,10 @@ function removeRow(key: number) {
   rows.value = rows.value.filter(r => r.key !== key)
 }
 
+function selectLocale(row: Row, locale: LanguageLocale | null) {
+  row.lang_code = locale?.lang_code ?? ''
+}
+
 async function submit() {
   const payload = validRows.value
     .filter(r => r.lang_code.trim() !== '')
@@ -69,14 +74,13 @@ async function submit() {
       <div class="contrib-left">
         <div class="ex-table">
           <div class="ex-head">
-            <span>{{ t('contribute.language') }}</span><span>{{ t('contribute.expression') }}</span><span>{{ t('handbook.locale') }}</span><span></span>
+            <span>{{ t('contribute.locale') }}</span><span>{{ t('contribute.expression') }}</span><span></span>
           </div>
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
-              <LanguagePicker v-model="row.lang_code" :label="t('contribute.language')" />
+              <LanguageLocalePicker v-model="row.language_locale_code" :allow-create="false" :label="t('contribute.locale')" @selected="selectLocale(row, $event)" />
               <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
-              <LanguageLocalePicker v-model="row.language_locale_code" :lang-code="row.lang_code || undefined" :label="t('handbook.locale')" />
-              <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)">✕</button>
+              <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)"><X :size="16" aria-hidden="true" /></button>
             </div>
           </div>
           <button class="ex-add" type="button" @click="addRow">{{ t('contribute.addExpression') }}</button>
@@ -113,50 +117,47 @@ async function submit() {
 
 .contrib-grid { display: grid; grid-template-columns: 1fr 260px; gap: var(--space-xl); align-items: start; }
 
-.ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: visible; }
 .ex-head, .ex-row {
-  display: grid; grid-template-columns: 140px 1fr 80px 32px; gap: var(--space-xs); align-items: start;
+  display: grid; grid-template-columns: minmax(190px, 0.9fr) minmax(180px, 1.1fr) 44px; gap: var(--space-xs); align-items: start;
   padding: var(--space-xs) var(--space-sm);
 }
 .ex-head {
   border-bottom: 1px solid var(--border); background: var(--surface-2);
+  border-radius: var(--r) var(--r) 0 0;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
 }
 .ex-rows .ex-row { border-bottom: 1px solid var(--border); }
 .ex-rows .ex-row:last-child { border-bottom: none; }
-.ex-row :deep(.identity-picker),
 .ex-row :deep(.locale-picker) { gap: 0; min-width: 0; }
-.ex-row :deep(.picker-label),
 .ex-row :deep(.locale-picker > label),
 .ex-row :deep(.locale-picker .create) { display: none; }
-.ex-row :deep(.identity-picker input),
-.ex-row :deep(.identity-picker .picker-selected),
 .ex-row :deep(.locale-picker input),
 .ex-row :deep(.locale-picker .selected) {
-  min-height: 32px;
-  height: 32px;
-  padding: 4px 8px;
+  min-height: 44px;
+  height: 44px;
+  padding: 6px 10px;
   font-size: 13px;
 }
-.ex-row :deep(.identity-picker .picker-clear),
 .ex-row :deep(.locale-picker .selected button) {
-  min-width: 28px;
-  min-height: 28px;
-  width: 28px;
-  height: 28px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
 }
 .ex-row > input {
-  height: 32px; border: 1px solid var(--border); border-radius: var(--r);
+  height: 44px; border: 1px solid var(--border); border-radius: var(--r);
   background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;
 }
 .ex-row input:focus { border-color: var(--accent); }
 .ex-del {
-  width: 28px; height: 28px; border: none; background: transparent; color: var(--muted);
+  width: 44px; height: 44px; border: none; background: transparent; color: var(--muted);
   cursor: pointer; border-radius: var(--r); font-size: 13px; display: grid; place-items: center;
 }
 .ex-del:hover { color: var(--down); background: color-mix(in oklch, var(--down) 8%, var(--surface)); }
 .ex-add {
   width: 100%; border: none; border-top: 1px dashed var(--border); background: transparent;
+  border-radius: 0 0 var(--r) var(--r);
   color: var(--muted); cursor: pointer; padding: var(--space-xs); font-size: 12px;
   font-family: var(--mono); letter-spacing: 0.04em;
 }
@@ -181,7 +182,10 @@ async function submit() {
 @media (max-width: 760px) {
   .contrib-grid { grid-template-columns: 1fr; }
   .contrib-right { position: static; }
-  .ex-head, .ex-row { grid-template-columns: 1fr; gap: 8px; }
-  .ex-head span:first-child { display: none; }
+  .ex-head { display: none; }
+  .ex-row { grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; }
+  .ex-row :deep(.locale-picker), .ex-row > input { grid-column: 1; }
+  .ex-row :deep(.locale-picker > label) { display: block; margin-bottom: 4px; }
+  .ex-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 }
 </style>

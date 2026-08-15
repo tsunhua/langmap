@@ -74,6 +74,7 @@ export const en = {
     title: 'Batch contribution',
     lead: 'Submit a group of expressions that mean the same thing. The system creates direct mappings between every pair. Existing expressions are linked automatically without duplicates.',
     language: 'Language',
+    locale: 'Locale',
     expression: 'Expression',
     tags: 'Tags',
     delete: 'Delete',
