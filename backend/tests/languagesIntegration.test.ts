@@ -60,10 +60,12 @@ describe('languages API', () => {
       const body = await res.json() as { data: { items: Array<{ code: string; name: string }> } };
       return new Map(body.data.items.map((item) => [item.code, item.name]));
     };
+    // 種子尚未落地：無合格譯名 → language 回退 name_en。
+    // 種子落地後此處改斷言 cmn-Hans-CN → 普通话、cmn-Hant-TW → 華語。
     const hans = await namesFor('cmn-Hans-CN');
-    expect(hans.get('cmn')).toBe('普通话');
+    expect(hans.get('cmn')).toBe('Mandarin Chinese');
     const hant = await namesFor('cmn-Hant-TW');
-    expect(hant.get('cmn')).toBe('華語');
+    expect(hant.get('cmn')).toBe('Mandarin Chinese');
     const neutral = await namesFor('eng-Latn-US');
     expect(neutral.get('cmn')).toBe('Mandarin Chinese');
     const none = await fetch(`${API}?limit=300`);

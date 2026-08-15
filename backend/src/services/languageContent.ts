@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { escapeLike } from './languageIdentity';
+import { parseLocaleHints, resolveLanguageNames, resolveLocaleNames, type LocaleHints } from './localizedName';
 
 export interface LanguageContentSummary {
   code: string;
@@ -14,6 +15,7 @@ export interface LanguageLocaleSummary {
   code: string;
   name: string;
   name_en: string;
+  display_name: string;
   script_code: string;
   region_code: string;
   place_path: string;
@@ -42,6 +44,7 @@ export interface LanguageExpressionRow {
   created_at: string;
   reading_count: number;
   mapping_count: number;
+  language_name: string;
 }
 
 interface LocaleRow {
@@ -75,28 +78,35 @@ function resolveCoordinate(row: LocaleRow): Pick<LanguageLocaleSummary, 'latitud
   return { latitude: null, longitude: null, coordinate_source: null };
 }
 
-export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
+export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
   const q = query.q.trim();
   const uiLocale = query.uiLocale.trim();
   const like = q ? `%${escapeLike(q)}%` : '';
   const totalRow = await db.prepare(CONTENT_LANGUAGES_COUNT_SQL).bind(uiLocale, q, like, like).first<{ total: number }>();
   const orderBy = query.sort === 'alpha' ? 'name ASC, code ASC' : 'expression_count DESC, code ASC';
   const { results } = await db.prepare(`${CONTENT_LANGUAGES_SELECT} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(uiLocale, q, like, like, query.limit, query.offset).all<LanguageContentSummary>();
-  return { items: results, total: totalRow?.total ?? 0 };
+  const names = await resolveLanguageNames(
+    db,
+    results.map((item) => item.code),
+    parseLocaleHints(uiLocale || undefined, query.secondaryUiLocale.trim() || undefined),
+  );
+  return { items: results.map((item) => ({ ...item, name: names.get(item.code) ?? item.name_en })), total: totalRow?.total ?? 0 };
 }
 
-export async function getLanguageDetail(db: D1Database, code: string): Promise<LanguageDetail | null> {
+export async function getLanguageDetail(db: D1Database, code: string, hints: LocaleHints = {}): Promise<LanguageDetail | null> {
   const language = await db.prepare(LANGUAGE_ROW_SQL).bind(code).first<{ code: string; name_en: string }>();
   if (!language) return null;
   const { results: localeRows } = await db.prepare(LANGUAGE_LOCALES_SQL).bind(code).all<LocaleRow>();
   const expressionCount = await db.prepare(EXPRESSION_COUNT_SQL).bind(code).first<{ total: number }>();
   const readingCount = await db.prepare(READING_COUNT_SQL).bind(code).first<{ total: number }>();
   const mappedExpressionCount = await db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code).first<{ total: number }>();
-  const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));
-  return { code: language.code, name_en: language.name_en, name: language.name_en, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
+  const localeNames = await resolveLocaleNames(db, localeRows.map((row) => row.code), hints);
+  const languageNames = await resolveLanguageNames(db, [language.code], hints);
+  const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, display_name: localeNames.get(row.code) ?? row.name, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));
+  return { code: language.code, name_en: language.name_en, name: languageNames.get(language.code) ?? language.name_en, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
 }
 
-export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
+export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
   const language = await db.prepare(LANGUAGE_ROW_SQL).bind(code).first<{ code: string }>();
   if (!language) return null;
   const q = query.q.trim();
@@ -110,5 +120,11 @@ export async function listLanguageExpressions(db: D1Database, code: string, quer
       ? 'e.created_at DESC, e.id ASC'
       : 'e.text ASC, e.homograph_index ASC, e.id ASC';
   const { results } = await db.prepare(`${LANGUAGE_EXPRESSIONS_SELECT_SQL} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(...filters, query.limit, query.offset).all<LanguageExpressionRow>();
-  return { items: results, total: totalRow?.total ?? 0 };
+  const names = await resolveLanguageNames(
+    db,
+    [code],
+    parseLocaleHints(query.uiLocale.trim() || undefined, query.secondaryUiLocale.trim() || undefined),
+  );
+  const language_name = names.get(code) ?? '';
+  return { items: results.map((item) => ({ ...item, language_name })), total: totalRow?.total ?? 0 };
 }

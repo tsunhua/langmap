@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { getLanguageDetail, listLanguageExpressions, listLanguagesWithContent } from '../services/languageContent';
 import { parseReferenceQuery } from '../services/languageIdentity';
+import { parseLocaleHints } from '../services/localizedName';
 import type { Bindings, Variables } from '../types';
 import { notFound, paginated, success } from '../utils/response';
 
@@ -17,7 +18,12 @@ function parseExpressionSort(value: string | undefined): 'hot' | 'new' | 'alpha'
 languages.get('/', async (c) => {
   const query = parseQuery(c);
   const sort = c.req.query('sort') === 'alpha' ? 'alpha' : 'count';
-  const result = await listLanguagesWithContent(c.env.DB, { ...query, sort, uiLocale: c.req.query('ui_locale') ?? '' });
+  const result = await listLanguagesWithContent(c.env.DB, {
+    ...query,
+    sort,
+    uiLocale: c.req.query('ui_locale') ?? '',
+    secondaryUiLocale: c.req.query('secondary_ui_locale') ?? '',
+  });
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
@@ -28,13 +34,19 @@ languages.get('/:code/expressions', async (c) => {
     ...query,
     locale: c.req.query('locale') ?? '',
     sort: parseExpressionSort(c.req.query('sort')),
+    uiLocale: c.req.query('ui_locale') ?? '',
+    secondaryUiLocale: c.req.query('secondary_ui_locale') ?? '',
   });
   if (!result) return notFound(c, 'Language');
   return paginated(c, result.items, result.total, query.offset, query.limit);
 });
 
 languages.get('/:code', async (c) => {
-  const detail = await getLanguageDetail(c.env.DB, (c.req.param('code') ?? '').toLowerCase());
+  const detail = await getLanguageDetail(
+    c.env.DB,
+    (c.req.param('code') ?? '').toLowerCase(),
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
   if (!detail) return notFound(c, 'Language');
   return success(c, detail);
 });
