@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import { SignJWT } from 'jose';
 import { describe, expect, it } from 'vitest';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
@@ -11,6 +13,17 @@ async function registerToken(): Promise<string> {
   });
   const body = (await response.json()) as { data: { token: string } };
   return body.data.token;
+}
+
+async function tokenForMissingUser(): Promise<string> {
+  const secretKey = process.env.SECRET_KEY
+    ?? fs.readFileSync('.dev.vars', 'utf8').match(/SECRET_KEY="([^"]+)"/)?.[1]
+    ?? '';
+  return new SignJWT({ id: 2_147_483_647, username: 'missing-user', role: 'user' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(new TextEncoder().encode(secretKey));
 }
 
 describe('preferences API', () => {
@@ -54,6 +67,16 @@ describe('preferences API', () => {
 
   it('requires auth', async () => {
     const res = await fetch(`${BASE_URL}/api/v2/preferences`);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a valid token whose user no longer exists', async () => {
+    const token = await tokenForMissingUser();
+    const res = await fetch(`${BASE_URL}/api/v2/preferences/language.locales`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ primary: 'cmn-Hant-TW', secondary: 'eng-Latn-US' }),
+    });
     expect(res.status).toBe(401);
   });
 });
