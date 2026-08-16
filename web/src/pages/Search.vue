@@ -10,10 +10,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const route = useRoute()
 const { search } = useSearch()
 const { t } = useI18n()
+const localeParams = useLocaleParams()
 
 const PAGE = 20
 interface SearchResult {
@@ -61,6 +63,7 @@ async function doSearch() {
       sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
       offset: 0,
+      ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = data.items
@@ -87,6 +90,7 @@ async function loadMore() {
       sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
       offset,
+      ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = results.value.concat(data.items)

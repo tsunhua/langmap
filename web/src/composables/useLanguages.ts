@@ -5,6 +5,7 @@ import {
   listLanguageExpressions,
   type ContentLanguagePageQuery,
   type LanguageExpressionPageQuery,
+  type LocaleHints,
 } from '@/api/languageIdentity'
 import { apiErrorMessage } from '@/utils/apiError'
 
@@ -25,11 +26,11 @@ export function useLanguages() {
     }
   }
 
-  async function detail(code: string, signal?: AbortSignal) {
+  async function detail(code: string, hints: LocaleHints = {}, signal?: AbortSignal) {
     loading.value = true
     error.value = null
     try {
-      return await getLanguageDetail(code, signal)
+      return await getLanguageDetail(code, hints, signal)
     } catch (cause: unknown) {
       error.value = apiErrorMessage(cause, 'Request failed')
       throw cause

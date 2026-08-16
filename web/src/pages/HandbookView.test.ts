@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import HandbookView from './HandbookView.vue'
 
@@ -43,7 +44,7 @@ describe('HandbookView', () => {
       : Promise.resolve(handbook('new-handbook', 'Newest handbook')))
 
     const wrapper = mount(HandbookView, {
-      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+      global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
     })
     route.params.id = 'new-handbook'
     await flushPromises()

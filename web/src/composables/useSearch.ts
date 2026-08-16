@@ -5,7 +5,7 @@ export function useSearch() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function search(q: string, params: { lang?: string; sort?: 'hot' | 'new' | 'alpha'; limit?: number; offset?: number } = {}) {
+  async function search(q: string, params: { lang?: string; sort?: 'hot' | 'new' | 'alpha'; limit?: number; offset?: number; ui_locale?: string; secondary_ui_locale?: string } = {}) {
     loading.value = true
     error.value = null
     try {

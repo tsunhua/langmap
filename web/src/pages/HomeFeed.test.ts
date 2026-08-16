@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { createPinia } from 'pinia'
 import api from '@/api/client'
 import HomeFeed from './HomeFeed.vue'
 
@@ -22,7 +23,7 @@ async function mountPage() {
   })
   await router.push('/')
   await router.isReady()
-  return mount(HomeFeed, { global: { plugins: [router] } })
+  return mount(HomeFeed, { global: { plugins: [router, createPinia()] } })
 }
 
 describe('HomeFeed', () => {

@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MapLens from './MapLens.vue'
 
@@ -72,6 +73,7 @@ describe('MapLens', () => {
   it('renders markers for valid coordinates on the equator and prime meridian', async () => {
     const wrapper = mount(MapLens, {
       global: {
+        plugins: [createPinia()],
         stubs: {
           RouterLink: { props: ['to'], template: '<a><slot /></a>' },
         },
@@ -86,7 +88,7 @@ describe('MapLens', () => {
 
   it('caps automatic zoom when map locations overlap', async () => {
     mount(MapLens, {
-      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+      global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
     })
     await flushPromises()
 
@@ -102,7 +104,7 @@ describe('MapLens', () => {
     }))
 
     const wrapper = mount(MapLens, {
-      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+      global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
     })
     await flushPromises()
 
@@ -130,7 +132,7 @@ describe('MapLens', () => {
     }))
 
     const wrapper = mount(MapLens, {
-      global: { stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+      global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
     })
     route.params.id = 'eng:new'
     await flushPromises()

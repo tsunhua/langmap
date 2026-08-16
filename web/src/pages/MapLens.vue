@@ -10,6 +10,7 @@ import type { MappingGraphResponse } from '@/components/mapping/mappingGraphType
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const { t } = useI18n()
 
@@ -18,6 +19,7 @@ const router = useRouter()
 const id = computed(() => route.params.id as string)
 
 const { detail: getExpressionDetail, mappingGraph } = useExpressions()
+const localeParams = useLocaleParams()
 
 const mapEl = ref<HTMLElement>()
 let map: L.Map | null = null
@@ -132,12 +134,12 @@ async function load() {
   graph.value = null
   try {
     const [expressionDetail, g] = await Promise.all([
-      getExpressionDetail(requestedId),
-      mappingGraph(requestedId, 2),
+      getExpressionDetail(requestedId, localeParams.value),
+      mappingGraph(requestedId, 2, localeParams.value),
     ])
     if (request !== loadRequest) return
     const languageCodes = [...new Set([expressionDetail.expression.lang_code, ...g.nodes.map((node) => node.lang_code)])].sort()
-    const languageDetails = await Promise.all(languageCodes.map((code) => getLanguageDetail(code)))
+    const languageDetails = await Promise.all(languageCodes.map((code) => getLanguageDetail(code, localeParams.value)))
     if (request !== loadRequest) return
     const lm: Record<string, LanguageLocale> = {}
     for (const language of languageDetails) {

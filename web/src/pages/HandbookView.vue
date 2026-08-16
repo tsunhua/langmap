@@ -8,6 +8,7 @@ import { PanelRightOpen } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const { t } = useI18n()
 import HandbookExpressionInspector, {
@@ -42,6 +43,7 @@ const id = computed(() => route.params.id as string)
 
 const { detail } = useHandbooks()
 const { detail: expressionDetail, mappingGraph } = useExpressions()
+const localeParams = useLocaleParams()
 
 const hb = ref<HandbookDetail | null>(null)
 const loading = ref(true)
@@ -62,7 +64,7 @@ async function load() {
   loading.value = true
   loadError.value = ''
   try {
-    const value = await detail(requestedId)
+    const value = await detail(requestedId, localeParams.value)
     if (request !== loadRequest) return
     hb.value = value
   } catch (e: any) {
@@ -95,8 +97,8 @@ async function selectExpressionById(
   relationError.value = ''
 
   const [detailResult, graphResult] = await Promise.allSettled([
-    expressionDetail(expressionId),
-    mappingGraph(expressionId, 1),
+    expressionDetail(expressionId, localeParams.value),
+    mappingGraph(expressionId, 1, localeParams.value),
   ])
   if (request !== selectionRequest) return
 

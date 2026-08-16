@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { reactive } from 'vue'
+import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { i18n } from '@/locales'
 import type { LanguageExpressionSummary, Page } from '@/api/languageIdentity'
@@ -28,7 +29,7 @@ function deferred<T>() {
 
 function mountDetail() {
   return mount(LanguageDetail, {
-    global: { plugins: [i18n], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+    global: { plugins: [createPinia(), i18n], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
   })
 }
 
@@ -54,7 +55,7 @@ describe('LanguageDetail', () => {
     await flushPromises()
 
     expect(expressions).toHaveBeenCalledWith('cmn', {
-      q: '', locale: 'cmn-Hant-TW', sort: 'hot', limit: 20, offset: 0,
+      q: '', locale: 'cmn-Hant-TW', sort: 'hot', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
     })
     const selects = wrapper.findAll('.ld-select')
     expect(selects).toHaveLength(2)
@@ -147,7 +148,7 @@ describe('LanguageDetail', () => {
 
     expect(replace).toHaveBeenCalledWith({ query: {} })
     expect(expressions).toHaveBeenCalledWith('cmn', {
-      q: '', locale: '', sort: 'hot', limit: 20, offset: 0,
+      q: '', locale: '', sort: 'hot', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
     })
     const selects = wrapper.findAll('.ld-select')
     expect((selects[0].element as HTMLSelectElement).value).toBe('')

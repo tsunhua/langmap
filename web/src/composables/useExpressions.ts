@@ -1,17 +1,18 @@
 import { ref } from 'vue'
 import api from '@/api/client'
 import { getExpression, getMappingGraph } from '@/api/expressions'
+import type { LocaleHints } from '@/api/languageIdentity'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 
 export function useExpressions() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function detail(id: string) {
+  async function detail(id: string, hints: LocaleHints = {}) {
     loading.value = true
     error.value = null
     try {
-      return await getExpression(id)
+      return await getExpression(id, hints)
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -20,11 +21,11 @@ export function useExpressions() {
     }
   }
 
-  async function mappingGraph(id: string, hops: 1 | 2 | 3 = 1): Promise<MappingGraphResponse> {
+  async function mappingGraph(id: string, hops: 1 | 2 | 3 = 1, hints: LocaleHints = {}): Promise<MappingGraphResponse> {
     loading.value = true
     error.value = null
     try {
-      return await getMappingGraph(id, hops)
+      return await getMappingGraph(id, hops, hints)
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -33,11 +34,11 @@ export function useExpressions() {
     }
   }
 
-  async function search(q: string, lang?: string, limit = 10) {
+  async function search(q: string, lang?: string, limit = 10, hints: LocaleHints = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/expressions/search', { params: { q, lang_code: lang, limit } })
+      const { data } = await api.get('/expressions/search', { params: { q, lang_code: lang, limit, ...hints } })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'

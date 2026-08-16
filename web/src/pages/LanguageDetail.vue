@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const PAGE = 20
 const { t } = useI18n()
@@ -19,6 +20,7 @@ const route = useRoute()
 const router = useRouter()
 const { detail, expressions } = useLanguages()
 const code = computed(() => String(route.params.code ?? ''))
+const localeParams = useLocaleParams()
 
 const lang = ref<LanguageDetailData | null>(null)
 const exprs = ref<LanguageExpressionSummary[]>([])
@@ -129,6 +131,7 @@ async function loadExpressions(append = false) {
       sort: sortBy.value,
       limit: PAGE,
       offset: append ? exprs.value.length : 0,
+      ...localeParams.value,
     })
     if (!expressionsRequest.isCurrent(request)) return
     exprs.value = append ? [...exprs.value, ...page.items] : page.items
@@ -154,7 +157,7 @@ async function loadDetail() {
   detailLoading.value = true
   loadError.value = ''
   try {
-    const value = await detail(code.value)
+    const value = await detail(code.value, localeParams.value)
     if (!detailRequest.isCurrent(request)) return
     lang.value = value
     const requestedLocale = routeLocale()

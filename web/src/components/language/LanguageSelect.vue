@@ -4,7 +4,9 @@ import { useLanguagesStore } from '@/stores/languages'
 import { listLanguages, type Language } from '@/api/languageIdentity'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 const { t } = useI18n()
+const localeParams = useLocaleParams()
 
 const props = defineProps<{
   modelValue: string[]
@@ -35,7 +37,7 @@ async function search(q: string) {
   searchController = new AbortController()
   loading.value = true
   try {
-    searchResults.value = (await listLanguages(q, 20, 0, searchController.signal)).items
+    searchResults.value = (await listLanguages(q, 20, 0, localeParams.value, searchController.signal)).items
   } catch (e: unknown) {
     if (!(e instanceof DOMException && e.name === 'AbortError')) {
       searchResults.value = []

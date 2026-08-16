@@ -18,6 +18,7 @@ import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split } from 'lucide
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const { t } = useI18n()
 
@@ -26,6 +27,7 @@ const router = useRouter()
 const id = computed(() => decodeURIComponent(route.params.id as string))
 
 const { detail, mappingGraph } = useExpressions()
+const localeParams = useLocaleParams()
 
 const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
@@ -104,8 +106,8 @@ async function load() {
   loadError.value = ''
   try {
     const [nextExpression, nextGraph] = await Promise.all([
-      detail(requestedId),
-      mappingGraph(requestedId, requestedHops),
+      detail(requestedId, localeParams.value),
+      mappingGraph(requestedId, requestedHops, localeParams.value),
     ])
     if (request !== loadRequest) return
     expr.value = nextExpression
@@ -164,7 +166,7 @@ async function changeHops(h: 1 | 2 | 3) {
   hops.value = h
   updatingHops.value = true
   try {
-    const nextGraph = await mappingGraph(requestedId, h)
+    const nextGraph = await mappingGraph(requestedId, h, localeParams.value)
     if (request !== graphRequest || requestedId !== id.value) return
     graph.value = nextGraph
     trySelectNodeFromUrl()

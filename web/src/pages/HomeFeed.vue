@@ -7,9 +7,11 @@ import SegControl from '@/components/ui/SegControl.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleParams } from '@/composables/useLocaleParams'
 
 const { hot, newest } = useFeed()
 const { t } = useI18n()
+const localeParams = useLocaleParams()
 
 const hotMappings = ref<any[]>([])
 const newContribs = ref<any[]>([])
@@ -27,7 +29,7 @@ const visibleEmpty = computed(() => {
 onMounted(async () => {
   loading.value = true
   try {
-    const [h, n] = await Promise.all([hot(20), newest(20)])
+    const [h, n] = await Promise.all([hot(20, localeParams.value), newest(20, localeParams.value)])
     hotMappings.value = h
     newContribs.value = n
   } catch (e: any) {
