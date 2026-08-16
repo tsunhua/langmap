@@ -4,6 +4,7 @@ withDefaults(defineProps<{
   text: string
   lang_code?: string
   language_profile_code?: string
+  language_name?: string
   region_name?: string
   mapping_count?: number
   source_type?: string
@@ -14,7 +15,7 @@ withDefaults(defineProps<{
 <template>
   <router-link :to="`/mapping/${id}`" :class="['ex-row', { 'ex-row--no-lang': !showLanguage }]">
     <span class="ex-tx">{{ text }}</span>
-    <span v-if="showLanguage" class="ex-lc"><span class="lang-badge">{{ language_profile_code || lang_code }}</span></span>
+    <span v-if="showLanguage" class="ex-lc"><span class="lang-badge" :title="language_profile_code || lang_code">{{ language_name || language_profile_code || lang_code }}</span></span>
     <span class="ex-region">{{ region_name || '-' }}</span>
     <span v-if="source_type" class="ex-src">
       <span :class="['src-tag', source_type]">{{ source_type }}</span>

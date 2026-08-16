@@ -207,7 +207,7 @@ watch(id, () => {
             >
               <span class="hb-num">{{ String(j + 1).padStart(2, '0') }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
-              <span class="lang-badge">{{ expr.lang_code }}</span>
+              <span class="lang-badge" :title="expr.lang_code">{{ expr.language_name || expr.lang_code }}</span>
               <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
             </button>
           </li>

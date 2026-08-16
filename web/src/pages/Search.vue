@@ -23,6 +23,7 @@ interface SearchResult {
   text: string
   lang_code: string
   language_profile_code?: string
+  language_name?: string
   mapping_count?: number
   source_type?: string
   region_name?: string

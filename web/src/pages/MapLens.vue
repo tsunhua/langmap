@@ -60,7 +60,7 @@ const pins = computed<Pin[]>(() => {
       score,
       lat: lang.latitude,
       lng: lang.longitude,
-      region: lang.name,
+      region: lang.display_name ?? lang.name,
       tier: pinTier(score),
     })
   }
