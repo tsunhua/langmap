@@ -1,7 +1,7 @@
 # Plan: Localized Language Names — Seed / Sync Data
 
 - **Date**: 2026-08-15
-- **Status**: Draft
+- **Status**: T1–T5 已實作並驗證（commit `6452a29`）；T6 production 落地延後——需要 `CLOUDFLARE_API_TOKEN`（環境無已存憑證），且 `scripts/db/production-baseline.json` 從未建立（此工具首次 production 操作，需先 bootstrap baseline）
 - **Spec**: `docs/superpowers/specs/2026-08-15-localized-language-names-design.md`
 - **Plan family**: 此為三份計畫的第二份，依賴第一份（後端）的 migration 0019 欄位。依序：後端 → seed → 前端，全部完成後才整體驗收。
 

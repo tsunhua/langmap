@@ -58,7 +58,8 @@ class ProductionInventoryTests(unittest.TestCase):
             self.assertNotIn("SECRET", report_text)
             calls = log_path.read_text(encoding="utf-8").splitlines()
             self.assertEqual(len(calls), 3)
-            self.assertTrue(all("--remote" in call for call in calls))
+            self.assertNotIn("--remote", calls[0])
+            self.assertTrue(all("--remote" in call for call in calls[1:]))
             self.assertTrue(all("--command" not in call or "SELECT" in call for call in calls[1:]))
 
     def test_identity_mismatch_fails_before_query(self) -> None:

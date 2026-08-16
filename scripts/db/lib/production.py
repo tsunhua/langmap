@@ -26,7 +26,7 @@ class ProductionExecutor:
     timeout_seconds: float = 120.0
 
     def info(self, database_name: str) -> Any:
-        return self._run([str(self.wrangler_bin), "d1", "info", database_name, "--remote", "--json"])
+        return self._run([str(self.wrangler_bin), "d1", "info", database_name, "--json"])
 
     def select(self, database_name: str, sql: str) -> list[dict[str, Any]]:
         return self._run(
@@ -44,7 +44,7 @@ class ProductionExecutor:
 
     def bookmark(self, database_name: str) -> dict[str, Any]:
         return self._run(
-            [str(self.wrangler_bin), "d1", "time-travel", "info", database_name, "--remote", "--json"]
+            [str(self.wrangler_bin), "d1", "time-travel", "info", database_name, "--json"]
         )
 
     def mutate(self, args: list[str]) -> str:
