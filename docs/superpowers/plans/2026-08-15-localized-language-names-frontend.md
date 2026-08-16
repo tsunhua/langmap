@@ -1,7 +1,7 @@
 # Plan: Localized Language Names — Frontend
 
 - **Date**: 2026-08-15
-- **Status**: Draft
+- **Status**: T1–T6 已實作並分 commit（分支 `feat/20260725/langmap_v2`）；Final Integration 待 seed（第二份計畫）落地後執行
 - **Spec**: `docs/superpowers/specs/2026-08-15-localized-language-names-design.md`
 - **Plan family**: 此為三份計畫的第三份。依序執行第一份（後端）→ 第二份（seed）→ 本計畫；本計畫的型別與欄位契約以後端計畫落地為前提。
 
@@ -58,6 +58,8 @@
 
 ### T1: API 型別與 locale 參數層
 
+> ✅ 完成（commit `94a7b5d`）
+
 成功標準：所有公開 API 呼叫都帶 `ui_locale`＋`secondary_ui_locale`；型別含新欄位（選填、向後相容）；build 通過。
 
 1. `web/src/api/languageIdentity.ts`：
@@ -90,6 +92,8 @@ export function useLocaleParams() {
 
 ### T2: 語言列表與詳情
 
+> ✅ 完成（commit `25b3db0`）
+
 成功標準：LanguageList／LanguageDetail 以解析後名稱顯示、隨 locale 切換重發、無 seed 時回退不破版。
 
 - `web/src/pages/LanguageList.vue`：`list()` 補 `secondary_ui_locale`（`ui_locale` 已有，line 52）。`LanguageCard` 已收 `name`／`name_en` props（後端 T4 後 `name` 即解析後名稱），無需改顯示；若 `name` 缺省，卡片顯示端補 `name || name_en || code`。
@@ -103,6 +107,8 @@ export function useLocaleParams() {
 執行：`cd web && npm run build`
 
 ### T3: Feed + Mapping 圖譜
+
+> ✅ 完成（commit `a6a6fd2`）。HomeFeed 以 `v-bind="m"` 傳遞 feed item 全部欄位，`a_language_name`／`b_language_name` 隨之透傳 `MappingCard`。
 
 成功標準：HomeFeed 卡片顯示語言名稱；MappingDetail 圖譜節點名稱隨 locale 切換；anchor badge 有解析名；證據清單顯示 display_name＋code。
 
@@ -119,6 +125,8 @@ export function useLocaleParams() {
 
 ### T4: Handbook / Search / MapLens
 
+> ✅ 完成（commit `8fe7704`）
+
 成功標準：三頁面名稱隨 locale 切換、缺省回退 code。
 
 - `web/src/pages/HandbookView.vue`：list／detail 傳 locale params；items 已 map `language_name`（line 80-81）與 detail 的 `language_name`（line 127-128）→ 傳入 `ExpressionRow`。
@@ -129,6 +137,8 @@ export function useLocaleParams() {
 執行：`cd web && npm run build`
 
 ### T5: 語言選擇 picker 元件
+
+> ✅ 完成（commit `f0a030a`）
 
 成功標準：選取語言／locale 的輸入元件顯示解析後名稱；切換器維持自稱。
 
@@ -141,6 +151,8 @@ export function useLocaleParams() {
 執行：`cd web && npm run build`
 
 ### T6: 競態防護與全站驗證
+
+> ✅ 完成（commit `a2679f5`）。HomeFeed 另抽出 `load()` 並加 request token；`npm run build`、`npm test`（36 files / 164 tests）、`./build.sh`、`git diff --check` 全通過。
 
 成功標準：切換 primary／secondary 後各頁面重發且無舊回應覆蓋；`npm run build` 與 `./build.sh` 通過。
 
