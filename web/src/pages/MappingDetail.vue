@@ -300,6 +300,8 @@ const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (grap
 
 const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
 
+const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === id.value)?.language_name ?? '')
+
 const displayTree = computed<DisplayTree>(() => {
   if (!graph.value) return { nodes: [], treeEdges: [], crossEdges: [] }
   return buildDisplayTree(graph.value)
@@ -332,7 +334,7 @@ const sourceLabel = computed(() => {
 
     <div class="anchor-title">
       <h1>{{ expr.expression.text }}</h1>
-      <LangBadge :code="expr.expression.lang_code" />
+      <LangBadge :code="expr.expression.lang_code" :name="anchorLangName" />
     </div>
 
     <div class="anchor-meta">

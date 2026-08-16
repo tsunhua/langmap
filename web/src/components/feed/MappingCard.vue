@@ -4,9 +4,11 @@ defineProps<{
   a_id: string
   a_text: string
   a_lang: string
+  a_language_name?: string
   b_id: string
   b_text: string
   b_lang: string
+  b_language_name?: string
   score: number
   source?: string
 }>()
@@ -24,7 +26,7 @@ function scoreClass(score: number) {
   <router-link :to="`/mapping/${a_id}`" class="map-card">
     <span class="mc-node">
       <span class="mc-tx">{{ a_text }}</span>
-      <span class="mc-lc">{{ a_lang }}</span>
+      <span class="mc-lc" :title="a_lang">{{ a_language_name || a_lang }}</span>
     </span>
     <span :class="['mc-edge', scoreClass(score)]">
       <span class="mc-line"></span>
@@ -33,7 +35,7 @@ function scoreClass(score: number) {
     </span>
     <span class="mc-node r">
       <span class="mc-tx">{{ b_text }}</span>
-      <span class="mc-lc">{{ b_lang }}</span>
+      <span class="mc-lc" :title="b_lang">{{ b_language_name || b_lang }}</span>
     </span>
   </router-link>
 </template>
