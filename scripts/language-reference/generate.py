@@ -10,6 +10,7 @@ import csv
 import hashlib
 import json
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,6 +34,25 @@ def sha256_file(path: Path) -> str:
 
 def sql_str(s: str) -> str:
     return "'" + s.replace("'", "''") + "'"
+
+
+BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567"
+
+
+def expression_text_hash(text: str) -> str:
+    # Mirrors backend/src/services/expressionIdentity.ts:computeTextHash.
+    normalized = unicodedata.normalize("NFC", text.strip())
+    digest = hashlib.sha256(normalized.encode("utf-8")).digest()[:16]
+    bits = "".join(f"{b:08b}" for b in digest)
+    out: list[str] = []
+    for i in range(0, len(bits), 5):
+        out.append(BASE32_ALPHABET[int(bits[i : i + 5].ljust(5, "0"), 2)])
+    return "".join(out)
+
+
+def build_expression_id(lang_code: str, text_hash: str, homograph_index: int = 1) -> str:
+    # Mirrors backend/src/services/expressionIdentity.ts:buildExpressionId.
+    return f"{lang_code}:{text_hash}" if homograph_index == 1 else f"{lang_code}:{text_hash}.{homograph_index}"
 
 
 def read_languages() -> list[tuple[str, str]]:
@@ -109,6 +129,37 @@ def read_regions(coords: dict[str, tuple[float | None, float | None]]) -> list[t
     return rows
 
 
+def read_name_canonical_texts() -> tuple[dict[str, str], dict[str, str]]:
+    data = json.loads((OVERLAYS / "name-canonical-texts.json").read_text(encoding="utf-8"))
+    overrides = {k.strip(): v.strip() for k, v in data.get("language_canonical_overrides", {}).items() if v}
+    locales = {k.strip(): v.strip() for k, v in data.get("locale_canonical_texts", {}).items() if v}
+    for code, text in locales.items():
+        lang = code.split("-", 1)[0]
+        if len(lang) != 3:
+            raise ValueError(f"locale {code!r} has invalid lang prefix {lang!r}")
+        if not text:
+            raise ValueError(f"locale {code!r} missing canonical text")
+    return overrides, locales
+
+
+def read_name_translations() -> list[dict[str, str]]:
+    data = json.loads((OVERLAYS / "name-translations.json").read_text(encoding="utf-8"))
+    rows: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for t in data.get("translations", []):
+        canonical = (t.get("canonical_text") or "").strip()
+        locale = (t.get("target_locale") or "").strip()
+        text = (t.get("text") or "").strip()
+        if not canonical or not locale or not text:
+            raise ValueError(f"incomplete translation row {t!r}")
+        if (canonical, locale) in seen:
+            raise ValueError(f"duplicate translation for {canonical!r} in {locale!r}")
+        seen.add((canonical, locale))
+        rows.append({"canonical_text": canonical, "target_locale": locale, "text": text})
+    rows.sort(key=lambda r: (r["canonical_text"], r["target_locale"]))
+    return rows
+
+
 INSERT_BATCH = 500
 
 
@@ -124,11 +175,88 @@ def _insert_blocks(table: str, columns: list[str], value_rows: list[str]) -> lis
     return out
 
 
+def collect_canonical_name_texts(
+    languages: list[tuple[str, str]],
+    overrides: dict[str, str],
+    locale_texts: dict[str, str],
+) -> list[str]:
+    texts = {override for override in overrides.values()}
+    for code, name_en in languages:
+        texts.add(overrides.get(code, name_en))
+    texts.update(locale_texts.values())
+    return sorted(texts)
+
+
+def emit_name_seed_sql(
+    canonical_texts: list[str],
+    locale_texts: dict[str, str],
+    translations: list[dict[str, str]],
+) -> tuple[list[str], dict[str, int]]:
+    lines = ["-- NAME LOCALIZATION SEED (spec 2026-08-15-localized-language-names-design.md)"]
+    lines.append("INSERT OR IGNORE INTO sources (id, type, name) VALUES ('system-names', 'system', 'LangMap canonical names seed');")
+
+    expr_rows: list[str] = []
+    expr_id_by_text: dict[str, str] = {}
+    for text in canonical_texts:
+        h = expression_text_hash(text)
+        eid = build_expression_id("eng", h)
+        expr_id_by_text[text] = eid
+        expr_rows.append(f"  ({sql_str(eid)}, 'eng', {sql_str(text)}, {sql_str(h)}, 'system-names')")
+    lines += _insert_blocks("expressions", ["id", "lang_code", "text", "text_hash", "source_id"], expr_rows)
+
+    edge_rows: list[str] = []
+    att_rows: list[str] = []
+    target_rows: list[str] = []
+    for t in translations:
+        src = expr_id_by_text.get(t["canonical_text"])
+        if src is None:
+            raise ValueError(f"translation references unknown canonical text {t['canonical_text']!r}")
+        lang = t["target_locale"].split("-", 1)[0]
+        h = expression_text_hash(t["text"])
+        tgt = build_expression_id(lang, h)
+        target_rows.append(f"  ({sql_str(tgt)}, {sql_str(lang)}, {sql_str(t['text'])}, {sql_str(h)}, 'system-names')")
+        a, b = sorted((src, tgt))
+        edge_rows.append(f"  ({sql_str(f'name-edge:{a}:{b}')}, {sql_str(a)}, {sql_str(b)}, 0, 'translation')")
+        att_rows.append(f"  ({sql_str(f'name-att:{tgt}:{t['target_locale']}')}, {sql_str(tgt)}, {sql_str(t['target_locale'])}, 'system-names')")
+
+    if target_rows:
+        lines += _insert_blocks("expressions", ["id", "lang_code", "text", "text_hash", "source_id"], target_rows)
+    if edge_rows:
+        lines += _insert_blocks("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], edge_rows)
+    if att_rows:
+        lines += _insert_blocks("expression_locale_attestations", ["id", "expression_id", "language_locale_code", "source_id"], att_rows)
+
+    bindings = [
+        "-- Bind each language / locale to its canonical (eng) name expression by current name_en text.",
+        "-- Unmatched rows stay NULL (safe fallback to name_en / self-name / code).",
+        "UPDATE languages AS l",
+        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
+        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en);",
+        "",
+        "UPDATE language_locales AS l",
+        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
+        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en);",
+    ]
+    lines.append("\n".join(bindings))
+
+    counts = {
+        "name_canonical_expressions": len(expr_rows),
+        "name_target_expressions": len(target_rows),
+        "name_edges": len(edge_rows),
+        "name_attestations": len(att_rows),
+        "name_locales_bound_target": len(locale_texts),
+    }
+    return lines, counts
+
+
 def emit_sql(
     languages: list[tuple[str, str]],
     scripts: list[tuple[str, str, str]],
     regions: list[tuple[str, str, float | None, float | None]],
-) -> str:
+    overrides: dict[str, str],
+    locale_texts: dict[str, str],
+    translations: list[dict[str, str]],
+) -> tuple[str, dict[str, int]]:
     lines: list[str] = ["-- AUTO-GENERATED by scripts/language-reference/generate.py. Do not edit."]
 
     lang_vals = [f"  ({sql_str(c)}, {sql_str(n)})" for c, n in languages]
@@ -144,10 +272,14 @@ def emit_sql(
         region_vals.append(f"  ({sql_str(c)}, {sql_str(n)}, {lat_s}, {lon_s})")
     lines += _insert_blocks("regions", ["code", "name_en", "latitude", "longitude"], region_vals)
 
-    return "\n".join(lines) + "\n"
+    canonical_texts = collect_canonical_name_texts(languages, overrides, locale_texts)
+    name_lines, name_counts = emit_name_seed_sql(canonical_texts, locale_texts, translations)
+    lines += name_lines
+
+    return "\n".join(lines) + "\n", name_counts
 
 
-def build_manifest(languages, scripts, regions, directions, region_coords, sql_text) -> dict:
+def build_manifest(languages, scripts, regions, directions, region_coords, sql_text, locale_texts, translations, name_counts) -> dict:
     def src(name: str, path: Path, **extra) -> dict:
         payload = {
             "name": name,
@@ -169,11 +301,14 @@ def build_manifest(languages, scripts, regions, directions, region_coords, sql_t
         "overlays": {
             "script_directions": {"path": "overlays/script-directions.json", "covered_scripts": len(directions)},
             "region_coordinates": {"path": "overlays/region-coordinates.tsv", "covered_regions": len(region_coords)},
+            "name_canonical_texts": {"path": "overlays/name-canonical-texts.json", "locale_count": len(locale_texts)},
+            "name_translations": {"path": "overlays/name-translations.json", "translation_count": len(translations)},
         },
         "counts": {
             "languages": len(languages),
             "scripts": len(scripts),
             "regions": len(regions),
+            **name_counts,
         },
         "artifacts": {
             "language_reference_sql": {
@@ -190,6 +325,8 @@ def main() -> int:
     languages = read_languages()
     scripts = read_scripts(directions)
     regions = read_regions(region_coords)
+    overrides, locale_texts = read_name_canonical_texts()
+    translations = read_name_translations()
 
     if len(languages) < MIN_LANGUAGES:
         raise SystemExit(f"languages count {len(languages)} < {MIN_LANGUAGES}")
@@ -198,13 +335,14 @@ def main() -> int:
     if len(regions) < MIN_REGIONS:
         raise SystemExit(f"regions count {len(regions)} < {MIN_REGIONS}")
 
-    sql_text = emit_sql(languages, scripts, regions)
-    manifest = build_manifest(languages, scripts, regions, directions, region_coords, sql_text)
+    sql_text, name_counts = emit_sql(languages, scripts, regions, overrides, locale_texts, translations)
+    manifest = build_manifest(languages, scripts, regions, directions, region_coords, sql_text, locale_texts, translations, name_counts)
 
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     (ARTIFACTS / "language-reference.sql").write_text(sql_text, encoding="utf-8")
     (ARTIFACTS / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {ARTIFACTS / 'language-reference.sql'} ({len(languages)} languages, {len(scripts)} scripts, {len(regions)} regions)")
+    print(f"wrote {ARTIFACTS / 'language-reference.sql'} ({len(languages)} languages, {len(scripts)} scripts, {len(regions)} regions, "
+          f"{name_counts['name_canonical_expressions']} canonical names, {name_counts['name_edges']} name edges)")
     return 0
 
 

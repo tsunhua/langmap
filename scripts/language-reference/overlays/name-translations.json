@@ -1,0 +1,16 @@
+{
+  "translations": [
+    { "canonical_text": "Japanese", "target_locale": "cmn-Hans-CN", "text": "日语" },
+    { "canonical_text": "Japanese", "target_locale": "cmn-Hant-TW", "text": "日語" },
+    { "canonical_text": "English", "target_locale": "cmn-Hans-CN", "text": "英语" },
+    { "canonical_text": "English", "target_locale": "cmn-Hant-TW", "text": "英語" },
+    { "canonical_text": "Spanish", "target_locale": "cmn-Hans-CN", "text": "西班牙语" },
+    { "canonical_text": "Spanish", "target_locale": "cmn-Hant-TW", "text": "西班牙語" },
+    { "canonical_text": "Mandarin Chinese", "target_locale": "cmn-Hans-CN", "text": "普通话" },
+    { "canonical_text": "Mandarin Chinese", "target_locale": "cmn-Hant-TW", "text": "華語" },
+    { "canonical_text": "Min Nan Chinese (Hokkien)", "target_locale": "cmn-Hans-CN", "text": "闽南语" },
+    { "canonical_text": "Min Nan Chinese (Hokkien)", "target_locale": "cmn-Hant-TW", "text": "閩南語" },
+    { "canonical_text": "Japanese (Japan)", "target_locale": "cmn-Hans-CN", "text": "日语（日本）" },
+    { "canonical_text": "Japanese (Japan)", "target_locale": "cmn-Hant-TW", "text": "日語（日本）" }
+  ]
+}

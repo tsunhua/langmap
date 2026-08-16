@@ -1,0 +1,16 @@
+{
+  "language_canonical_overrides": {
+    "nan": "Min Nan Chinese (Hokkien)"
+  },
+  "locale_canonical_texts": {
+    "eng-Latn-US": "English (US)",
+    "cmn-Hant-TW": "Taiwan Mandarin",
+    "cmn-Hans-CN": "Simplified Chinese",
+    "nan-Hant-CN": "Min Nan Chinese (Hokkien)",
+    "nan-Hans-CN": "Min Nan Chinese (Hokkien)",
+    "nan-Hant-TW": "Taiwanese Hokkien",
+    "nan-Hant-MY_Penang": "Penang Hokkien",
+    "spa-Latn-ES": "Spanish (Spain)",
+    "jpn-Jpan-JP": "Japanese (Japan)"
+  }
+}

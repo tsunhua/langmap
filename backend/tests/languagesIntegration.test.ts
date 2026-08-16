@@ -53,24 +53,42 @@ describe('languages API', () => {
     for (const item of body.data.items) expect(`${item.code} ${item.name_en}`.toLowerCase()).toContain('eng');
   });
 
-  it('resolves display names by the UI locale', async () => {
+  it('resolves localized language names from seed via name', async () => {
     const namesFor = async (uiLocale: string) => {
       const res = await fetch(`${API}?limit=300&ui_locale=${uiLocale}`);
       expect(res.status).toBe(200);
       const body = await res.json() as { data: { items: Array<{ code: string; name: string }> } };
       return new Map(body.data.items.map((item) => [item.code, item.name]));
     };
-    // 種子尚未落地：無合格譯名 → language 回退 name_en。
-    // 種子落地後此處改斷言 cmn-Hans-CN → 普通话、cmn-Hant-TW → 華語。
     const hans = await namesFor('cmn-Hans-CN');
-    expect(hans.get('cmn')).toBe('Mandarin Chinese');
+    expect(hans.get('jpn')).toBe('日语');
+    expect(hans.get('spa')).toBe('西班牙语');
+    expect(hans.get('nan')).toBe('闽南语');
+    expect(hans.get('cmn')).toBe('普通话');
     const hant = await namesFor('cmn-Hant-TW');
-    expect(hant.get('cmn')).toBe('Mandarin Chinese');
+    expect(hant.get('jpn')).toBe('日語');
+    expect(hant.get('cmn')).toBe('華語');
     const neutral = await namesFor('eng-Latn-US');
-    expect(neutral.get('cmn')).toBe('Mandarin Chinese');
+    expect(neutral.get('jpn')).toBe('Japanese');
     const none = await fetch(`${API}?limit=300`);
     const body = await none.json() as { data: { items: Array<{ code: string; name: string }> } };
     expect(new Map(body.data.items.map((item) => [item.code, item.name])).get('cmn')).toBe('Mandarin Chinese');
+  });
+
+  it('uses secondary locale when primary is invalid', async () => {
+    const res = await fetch(`${API}?limit=300&ui_locale=zzz-Zzzz-ZZ&secondary_ui_locale=cmn-Hans-CN`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { items: Array<{ code: string; name: string }> } };
+    const map = new Map(body.data.items.map((item) => [item.code, item.name]));
+    expect(map.get('jpn')).toBe('日语');
+  });
+
+  it('resolves locale display_name from seed while keeping self-name', async () => {
+    const res = await fetch(`${BASE_URL}/api/v2/language-locales/jpn-Jpan-JP?ui_locale=cmn-Hans-CN`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { code: string; display_name: string; name: string } };
+    expect(body.data.display_name).toBe('日语（日本）');
+    expect(body.data.name).toBe('日本語');
   });
 
   it('returns language detail with locales and coordinate provenance', async () => {

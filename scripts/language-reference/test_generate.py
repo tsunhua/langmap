@@ -5,8 +5,41 @@ import sys
 import unittest
 from pathlib import Path
 
+from generate import build_expression_id, expression_text_hash
+
 ROOT = Path(__file__).resolve().parent
 ARTIFACTS = ROOT / "artifacts"
+
+KNOWN = {
+    "English": "xiiyx574tqno3qpnwkfavkdobm",
+    "Japanese": "xzhosbwt57wpynfjjjwng6ddhi",
+    "Mandarin Chinese": "wahosxiiyppkc7vkgn2foa4zda",
+    "Min Nan Chinese (Hokkien)": "cvv4hpw64s3dtefqqwzcbxhr2y",
+    "Spanish": "gqiqlhfy4bta4ko5pi3tpzs2fa",
+    "Japanese (Japan)": "gu52ixjn6apik3jjkpzi5bj4oq",
+    "普通话": "6q2zdme4dnc4v7u2tg6jzfu4rq",
+    "華語": "ourhuuu2u4tghx6o6m7won2u6m",
+    "日语": "hkke3wzynd2lehwvcuqfvvvh4a",
+    "日語": "yigtj7ofv3bw4svpyfze3x4adq",
+    "日语（日本）": "auelzis6d2oav6qw4gfizxoipq",
+    "日語（日本）": "fey3ky7n7du23uvlvnc6yqv3xi",
+    "英语": "2fsixlf4cyykmdv4aci7u6smw4",
+    "英語": "k64pyj2pcbv4msv2jspahel7ue",
+    "西班牙语": "nsds2j7ygwo4pjnluarq3hn3xy",
+    "西班牙語": "5vowucfjacuokpyxngunzsmowq",
+    "闽南语": "dtd7wb44qk6zm2g2h667asgcbq",
+    "閩南語": "gslrtrbgubtqpzrokd3o47oymu",
+}
+
+
+def test_expression_text_hash_known_answers():
+    for text, expected in KNOWN.items():
+        assert expression_text_hash(text) == expected, text
+
+
+def test_build_expression_id():
+    assert build_expression_id("cmn", KNOWN["普通话"]) == "cmn:6q2zdme4dnc4v7u2tg6jzfu4rq"
+    assert build_expression_id("cmn", "hash", 2) == "cmn:hash.2"
 
 
 class TestGenerator(unittest.TestCase):
@@ -55,6 +88,26 @@ class TestGenerator(unittest.TestCase):
         sql = (ARTIFACTS / "language-reference.sql").read_text(encoding="utf-8")
         self.assertIn("('Arab', 'Arabic', 'rtl')", sql)
         self.assertIn("('Latn', 'Latin', 'ltr')", sql)
+
+    def test_name_seed_ids_match_known_answers(self):
+        sql = (ARTIFACTS / "language-reference.sql").read_text(encoding="utf-8")
+        self.assertIn("eng:xiiyx574tqno3qpnwkfavkdobm", sql)  # English
+        self.assertIn("eng:wahosxiiyppkc7vkgn2foa4zda", sql)  # Mandarin Chinese
+        self.assertIn("eng:gqiqlhfy4bta4ko5pi3tpzs2fa", sql)  # Spanish
+        self.assertIn("eng:cvv4hpw64s3dtefqqwzcbxhr2y", sql)  # Min Nan Chinese (Hokkien)
+        self.assertIn("cmn:6q2zdme4dnc4v7u2tg6jzfu4rq", sql)  # 普通话
+        self.assertIn("cmn:hkke3wzynd2lehwvcuqfvvvh4a", sql)  # 日语
+        self.assertIn("cmn:auelzis6d2oav6qw4gfizxoipq", sql)  # 日语（日本）
+        self.assertIn("name-edge:cmn:6q2zdme4dnc4v7u2tg6jzfu4rq:eng:wahosxiiyppkc7vkgn2foa4zda", sql)
+        self.assertIn("name-edge:cmn:auelzis6d2oav6qw4gfizxoipq:eng:gu52ixjn6apik3jjkpzi5bj4oq", sql)
+        self.assertIn("name-att:cmn:hkke3wzynd2lehwvcuqfvvvh4a:cmn-Hans-CN", sql)
+        self.assertIn("name-att:cmn:yigtj7ofv3bw4svpyfze3x4adq:cmn-Hant-TW", sql)
+
+    def test_name_seed_bindings_present(self):
+        sql = (ARTIFACTS / "language-reference.sql").read_text(encoding="utf-8")
+        self.assertIn("UPDATE languages AS l", sql)
+        self.assertIn("UPDATE language_locales AS l", sql)
+        self.assertIn("'system-names'", sql)
 
 
 if __name__ == "__main__":
