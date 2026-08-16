@@ -38,14 +38,14 @@ function onKeydown(event: KeyboardEvent) {
   <div class="identity-picker">
     <label class="picker-label">{{ label }}</label>
     <div v-if="modelValue && !open" class="picker-selected">
-      <span>{{ selected?.name_en ?? modelValue }}</span><code>{{ modelValue }}</code>
+      <span>{{ selected?.name ?? selected?.name_en ?? modelValue }}</span><code>{{ modelValue }}</code>
       <button type="button" class="picker-clear" aria-label="Clear language" data-action="clear" @click="clear"><X :size="16" /></button>
     </div>
     <div v-else class="picker-input-wrap">
       <input ref="input" v-model="query" role="combobox" :aria-label="label" :aria-expanded="open" :aria-controls="listId" :aria-activedescendant="activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined" placeholder="Search ISO 639-3 languages" @focus="open = true" @keydown="onKeydown">
       <div v-if="open && (loading || options.length || query)" :id="listId" role="listbox" class="picker-dropdown">
         <span v-if="loading" class="picker-state">Loading…</span>
-        <button v-for="(item, index) in options" :id="`${listId}-${index}`" :key="item.code" type="button" role="option" :aria-selected="index === activeIndex" class="picker-option" @mousedown.prevent="select(item.code)">{{ item.name_en }} <code>{{ item.code }}</code></button>
+        <button v-for="(item, index) in options" :id="`${listId}-${index}`" :key="item.code" type="button" role="option" :aria-selected="index === activeIndex" class="picker-option" @mousedown.prevent="select(item.code)">{{ item.name ?? item.name_en }} <code>{{ item.code }}</code></button>
         <span v-if="!loading && query && !options.length" class="picker-state">No ISO language found</span>
       </div>
     </div>

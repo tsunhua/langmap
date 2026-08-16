@@ -171,7 +171,7 @@ onUnmounted(() => {
         :class="{ 'lang-opt-active': i === activeIndex }"
         @mousedown.prevent="add(l.code)"
       >
-        <span class="lang-opt-name">{{ l.name_en }}</span>
+        <span class="lang-opt-name">{{ l.name || l.name_en }}</span>
         <span class="lang-opt-code">{{ l.code }}</span>
       </button>
       <div v-if="!loading && filtered.length === 0 && query" class="lang-loading">
