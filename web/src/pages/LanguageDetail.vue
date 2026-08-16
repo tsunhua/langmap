@@ -13,12 +13,14 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const PAGE = 20
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { detail, expressions } = useLanguages()
+const localization = useLocalizationStore()
 const code = computed(() => String(route.params.code ?? ''))
 const localeParams = useLocaleParams()
 
@@ -38,8 +40,8 @@ const expressionsRequest = useLatestRequest()
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
 const selectedLocale = computed(() => lang.value?.locales.find((locale) => locale.code === selectedLocaleCode.value) ?? null)
-const title = computed(() => selectedLocale.value?.name ?? lang.value?.name_en ?? '')
-const subtitle = computed(() => selectedLocale.value?.name_en ?? '')
+const title = computed(() => selectedLocale.value?.display_name ?? lang.value?.name ?? lang.value?.name_en ?? '')
+const subtitle = computed(() => selectedLocale.value?.name ?? lang.value?.name_en ?? '')
 
 // —— 變體選擇：連動雙下拉（變體 × 其他），選項由 locales 動態切分 ——
 const variantSelect = ref('')
@@ -190,6 +192,7 @@ watch([variantSelect, otherSelect], () => {
 watch(selectedLocaleCode, (code) => { syncSelects(code) })
 
 watch(code, () => { void loadDetail() }, { immediate: true })
+watch([() => localization.locale, () => localization.secondary], () => { void loadDetail() })
 watch(() => route.query.locale, () => {
   if (!lang.value) return
   const requestedLocale = routeLocale()

@@ -75,7 +75,7 @@ watch(searchQuery, () => {
 
 watch(sortBy, () => { void loadLanguages() })
 
-watch(() => localization.locale, () => { void loadLanguages() })
+watch([() => localization.locale, () => localization.secondary], () => { void loadLanguages() })
 
 onMounted(() => { void loadLanguages() })
 onUnmounted(() => {

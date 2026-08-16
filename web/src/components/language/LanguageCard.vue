@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   code: string
-  name: string
+  name?: string
   name_en?: string
   expression_count: number
   script_code?: string
@@ -13,10 +13,10 @@ defineProps<{
   <router-link :to="`/language/${code}`" class="lg-row">
     <div class="lg-name">
       <div class="lg-title">
-        <span class="nm">{{ name }}</span>
+        <span class="nm">{{ name || name_en || code }}</span>
         <span class="lang-badge lg-code">{{ code }}</span>
       </div>
-      <span class="en" v-if="name_en && name_en !== name">{{ name_en }}</span>
+      <span class="en" v-if="name_en && name_en !== (name || code)">{{ name_en }}</span>
     </div>
     <span class="lg-geo">
       <span v-if="script_code" class="lg-script">{{ script_code }}</span>

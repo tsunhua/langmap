@@ -117,7 +117,7 @@ function onKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  store.fetchLanguages().catch(() => { loadError.value = t('components.languageLoadFailed') })
+  store.fetchLanguages(localeParams.value).catch(() => { loadError.value = t('components.languageLoadFailed') })
 })
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)

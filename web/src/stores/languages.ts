@@ -1,15 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { listLanguages, type Language } from '@/api/languageIdentity'
+import { listLanguages, type Language, type LocaleHints } from '@/api/languageIdentity'
 
 export const useLanguagesStore = defineStore('languages', () => {
   const languages = ref<Language[]>([])
   const loaded = ref(false)
+  const loadedFor = ref<string>()
 
-  async function fetchLanguages() {
-    if (loaded.value) return
-    languages.value = (await listLanguages('', 50)).items
+  async function fetchLanguages(hints: LocaleHints = {}) {
+    const key = hints.ui_locale ?? ''
+    if (loaded.value && loadedFor.value === key) return
+    languages.value = (await listLanguages('', 50, 0, hints)).items
     loaded.value = true
+    loadedFor.value = key
   }
 
   function upsertLanguage(language: Language) {
@@ -20,7 +23,8 @@ export const useLanguagesStore = defineStore('languages', () => {
   }
 
   function getName(code: string): string {
-    return languages.value.find(l => l.code === code)?.name_en || code
+    const language = languages.value.find(l => l.code === code)
+    return language?.name || language?.name_en || code
   }
 
   return { languages, loaded, fetchLanguages, upsertLanguage, getName }

@@ -43,8 +43,8 @@ describe('LanguageDetail', () => {
       code: 'cmn', name: 'Mandarin Chinese', name_en: 'Mandarin Chinese', expression_count: 2,
       locale_count: 2, active_ui_locale_count: 0, reading_count: 0, mapped_expression_count: 0,
       locales: [
-        { code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', script_code: 'Hans', region_code: 'CN', place_path: '', latitude: null, longitude: null },
-        { code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', script_code: 'Hant', region_code: 'TW', place_path: '', latitude: null, longitude: null },
+        { code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', display_name: '简体中文', script_code: 'Hans', region_code: 'CN', place_path: '', latitude: null, longitude: null },
+        { code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', display_name: '台灣華語', script_code: 'Hant', region_code: 'TW', place_path: '', latitude: null, longitude: null },
       ],
     })
     expressions.mockResolvedValue(page)
@@ -61,8 +61,8 @@ describe('LanguageDetail', () => {
     expect(selects).toHaveLength(2)
     expect((selects[0].element as HTMLSelectElement).value).toBe('Hant')
     expect((selects[1].element as HTMLSelectElement).value).toBe('TW')
-    expect(wrapper.find('h1').text()).toBe('華語')
-    expect(wrapper.find('.ld-sub').text()).toBe('Taiwan Mandarin')
+    expect(wrapper.find('h1').text()).toBe('台灣華語')
+    expect(wrapper.find('.ld-sub').text()).toBe('華語')
     expect(wrapper.find('.lang-badge').text()).toBe('cmn-Hant-TW')
   })
 
@@ -79,8 +79,8 @@ describe('LanguageDetail', () => {
 
     route.query.locale = 'cmn-Hans-CN'
     await flushPromises()
-    expect(wrapper.find('h1').text()).toBe('普通话')
-    expect(wrapper.find('.ld-sub').text()).toBe('Simplified Chinese')
+    expect(wrapper.find('h1').text()).toBe('简体中文')
+    expect(wrapper.find('.ld-sub').text()).toBe('普通话')
   })
 
   it('falls back to the bare language when no locale is selected', async () => {
@@ -89,7 +89,7 @@ describe('LanguageDetail', () => {
     await flushPromises()
 
     expect(wrapper.find('h1').text()).toBe('Mandarin Chinese')
-    expect(wrapper.find('.ld-sub').exists()).toBe(false)
+    expect(wrapper.find('.ld-sub').text()).toBe('Mandarin Chinese')
     expect(wrapper.find('.lang-badge').text()).toBe('cmn')
     const selects = wrapper.findAll('.ld-select')
     expect((selects[0].element as HTMLSelectElement).value).toBe('')
