@@ -19,6 +19,7 @@ import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const { t } = useI18n()
 
@@ -28,6 +29,7 @@ const id = computed(() => decodeURIComponent(route.params.id as string))
 
 const { detail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
+const localization = useLocalizationStore()
 
 const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
@@ -159,6 +161,8 @@ watch(id, () => {
   initFromUrl()
   load()
 })
+
+watch([() => localization.locale, () => localization.secondary], () => { load() })
 
 async function changeHops(h: 1 | 2 | 3) {
   const request = ++graphRequest

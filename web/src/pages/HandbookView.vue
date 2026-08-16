@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const { t } = useI18n()
 import HandbookExpressionInspector, {
@@ -44,6 +45,7 @@ const id = computed(() => route.params.id as string)
 const { detail } = useHandbooks()
 const { detail: expressionDetail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
+const localization = useLocalizationStore()
 
 const hb = ref<HandbookDetail | null>(null)
 const loading = ref(true)
@@ -155,6 +157,11 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
 })
 watch(id, () => {
+  closeInspector()
+  load()
+})
+
+watch([() => localization.locale, () => localization.secondary], () => {
   closeInspector()
   load()
 })

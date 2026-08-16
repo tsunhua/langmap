@@ -11,11 +11,13 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const route = useRoute()
 const { search } = useSearch()
 const { t } = useI18n()
 const localeParams = useLocaleParams()
+const localization = useLocalizationStore()
 
 const PAGE = 20
 interface SearchResult {
@@ -111,6 +113,9 @@ watch(query, () => {
 
 // Re-search immediately when sort or language filter changes (only after a search has started).
 watch([sortBy, langs], () => { if (searched.value) doSearch() })
+
+// Re-search when UI locale changes.
+watch([() => localization.locale, () => localization.secondary], () => { if (searched.value) doSearch() })
 
 onMounted(() => {
   if (query.value) doSearch()

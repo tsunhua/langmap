@@ -11,6 +11,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const { t } = useI18n()
 
@@ -20,6 +21,7 @@ const id = computed(() => route.params.id as string)
 
 const { detail: getExpressionDetail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
+const localization = useLocalizationStore()
 
 const mapEl = ref<HTMLElement>()
 let map: L.Map | null = null
@@ -186,6 +188,11 @@ function initMap() {
 
 onMounted(load)
 watch(id, () => {
+  if (map) { map.remove(); map = null }
+  load()
+})
+
+watch([() => localization.locale, () => localization.secondary], () => {
   if (map) { map.remove(); map = null }
   load()
 })

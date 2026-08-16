@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useFeed } from '@/composables/useFeed'
 import MappingCard from '@/components/feed/MappingCard.vue'
 import NewContribution from '@/components/feed/NewContribution.vue'
@@ -8,10 +8,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useLocalizationStore } from '@/stores/localization'
 
 const { hot, newest } = useFeed()
 const { t } = useI18n()
 const localeParams = useLocaleParams()
+const localization = useLocalizationStore()
 
 const hotMappings = ref<any[]>([])
 const newContribs = ref<any[]>([])
@@ -26,18 +28,28 @@ const visibleEmpty = computed(() => {
 })
 
 
-onMounted(async () => {
+let feedRequest = 0
+
+async function load() {
+  const request = ++feedRequest
   loading.value = true
+  loadError.value = ''
   try {
     const [h, n] = await Promise.all([hot(20, localeParams.value), newest(20, localeParams.value)])
+    if (request !== feedRequest) return
     hotMappings.value = h
     newContribs.value = n
   } catch (e: any) {
+    if (request !== feedRequest) return
     loadError.value = e.response?.data?.message || e.response?.data?.error || t('errors.loadFailed')
   } finally {
-    loading.value = false
+    if (request === feedRequest) loading.value = false
   }
-})
+}
+
+watch([() => localization.locale, () => localization.secondary], () => { void load() })
+onMounted(() => { void load() })
+onUnmounted(() => { feedRequest++ })
 </script>
 
 <template>
