@@ -255,6 +255,24 @@ export const en = {
     clear: 'Clear selection',
   },
   translate: { eyebrow: 'COMMUNITY LOCALIZATION', title: 'Translation workbench', subtitle: 'Help make LangMap interface text natural and useful.', locale: 'Target language', reference: 'Reference language', addLocale: 'Add a language to translate', chooseRegistryLanguage: 'Choose a registered language', start: 'Start', selectLocale: 'Choose translation language', coverage: 'Translation coverage', translated: 'translated', searchPlaceholder: 'Search key or source text…', displayed: '{count} shown', source: 'EN source', candidate: 'Current translation', translation: 'Translation', batchSubmit: 'Submit {count} translations', inputPlaceholder: 'Enter translation…', translateKey: 'Translate {key}', submitted: 'Submitted', submitMapping: 'Submit mapping', preview: 'Preview', noResults: 'No matching copy found.', loginNote: 'Sign in to submit translations; candidates are selected by mapping score and fallback is used when no positive candidate exists.', loadFailed: 'Unable to load translation workbench', submitFailed: 'Submission failed', localesFailed: 'Unable to load locale list', loading: 'Loading…' },
+  profile: {
+    title: 'Profile',
+    email: 'Email',
+    role: 'Role',
+    memberSince: 'Member since',
+    signOut: 'Sign out',
+    recentActivity: 'Recent activity',
+    noActivity: 'No activity yet',
+    loadFailed: 'Unable to load profile',
+    mustLogin: 'Please sign in to view your profile',
+  },
+  activity: {
+    expression: 'Added expression',
+    mapping: 'Mapped',
+    handbook: 'Created handbook',
+    voteUp: 'Upvoted a mapping',
+    voteDown: 'Downvoted a mapping',
+  },
 } as const
 
 export type MessageSchema = typeof en

@@ -104,10 +104,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 
       <span class="lang-inline"><LangSwitcher /></span>
 
-      <template v-if="auth.user">
-        <span class="user-badge auth-inline">{{ auth.user.username }}</span>
-        <button class="btn btn-ghost btn-sm auth-inline" @click="auth.logout()">{{ t('nav.signOut') }}</button>
-      </template>
+      <router-link v-if="auth.user" to="/profile" class="user-badge auth-inline">{{ auth.user.username }}</router-link>
       <router-link v-else to="/auth" class="btn btn-ghost btn-sm auth-inline">{{ t('nav.signIn') }}</router-link>
     </div>
 
@@ -144,10 +141,7 @@ watch(() => route.path, () => { menuOpen.value = false })
             <Plus :size="14" aria-hidden="true" /> {{ t('nav.contribute') }}
           </router-link>
           <LangSwitcher />
-          <template v-if="auth.user">
-            <span class="user-badge">{{ auth.user.username }}</span>
-            <button class="btn btn-ghost" @click="auth.logout()">{{ t('nav.signOut') }}</button>
-          </template>
+          <router-link v-if="auth.user" to="/profile" class="user-badge">{{ auth.user.username }}</router-link>
           <router-link v-else to="/auth" class="btn btn-ghost">{{ t('nav.signIn') }}</router-link>
         </div>
       </div>
@@ -234,6 +228,12 @@ watch(() => route.path, () => { menuOpen.value = false })
 .user-badge {
   font-family: var(--mono); font-size: 13px;
   color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+a.user-badge:hover {
+  color: var(--fg);
 }
 
 /* Visually-hidden but a11y-reachable submit */
