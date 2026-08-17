@@ -9,6 +9,7 @@ import languages from './languages';
 import languageRegistry from './languageRegistry';
 import localization from './localization';
 import preferences from './preferences';
+import users from './users';
 
 const api = new Hono();
 api.route('/auth', auth);
@@ -21,5 +22,6 @@ api.route('/handbooks', handbooks);
 api.route('/preferences', preferences);
 api.route('/contributions', contributions);
 api.route('/localization', localization);
+api.route('/users', users);
 
 export default api;
