@@ -111,6 +111,17 @@ describe('Contribute page with LanguageLocalePicker', () => {
     expect(api.post).not.toHaveBeenCalled()
   })
 
+  it('explains the two-row requirement instead of failing silently when only one expression is entered', async () => {
+    const wrapper = mountPage()
+    const pickers = wrapper.findAll('.stub-picker input.picker-input')
+    const texts = wrapper.findAll('input.ex-text')
+    await pickers[0].setValue('eng-US')
+    await texts[0].setValue('hello')
+
+    expect(wrapper.get('[data-action="submit-contribution"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('At least 2 rows')
+  })
+
   it('keeps the page in place and shows the server error when submission fails', async () => {
     const api = (await import('@/api/client')).default
     vi.mocked(api.post).mockRejectedValueOnce({ response: { data: { error: 'DUPLICATE_PAIR' } } })

@@ -93,6 +93,8 @@ async function submit() {
           <span class="tag">{{ t('contribute.completeGraph') }}</span>
         </div>
 
+        <p v-if="nodeCount < 2" class="hint" role="status">{{ t('contribute.minRows') }}</p>
+
         <p v-if="error" class="error" role="alert">{{ error }}</p>
 
         <div class="ex-actions">
@@ -175,6 +177,7 @@ async function submit() {
 .ex-counter.warn b { color: var(--down); }
 
 .ex-actions { display: flex; gap: 8px; }
+.hint { color: var(--muted); font-size: 13px; }
 .error { color: var(--down); font-size: 13px; }
 
 .contrib-right { position: sticky; top: 60px; }
