@@ -139,8 +139,10 @@ export async function listContentLanguages(filters: ContentLanguagePageQuery = {
   return page<ContentLanguage>(data)
 }
 
-export async function getLanguageDetail(code: string, hints: LocaleHints = {}, signal?: AbortSignal): Promise<LanguageDetail> {
-  const { data } = await api.get(`/languages/${encodeURIComponent(code)}`, { params: hintParams(hints), signal })
+export async function getLanguageDetail(code: string, hints: LocaleHints = {}, locale = '', signal?: AbortSignal): Promise<LanguageDetail> {
+  const params: Record<string, string> = { ...hintParams(hints) }
+  if (locale) params.locale = locale
+  const { data } = await api.get(`/languages/${encodeURIComponent(code)}`, { params, signal })
   return (data as { data: LanguageDetail }).data
 }
 

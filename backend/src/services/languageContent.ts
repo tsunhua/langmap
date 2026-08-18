@@ -65,9 +65,9 @@ const CONTENT_LANGUAGES_SELECT = "SELECT g.code AS code, g.name_en AS name_en, C
 const CONTENT_LANGUAGES_COUNT_SQL = `SELECT COUNT(*) AS total FROM (${CONTENT_LANGUAGES_SELECT})`;
 const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
 const LANGUAGE_LOCALES_SQL = `SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT ${LOCALE_LIST_LIMIT}`;
-const EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions WHERE lang_code = ?';
+const EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
 const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expression_readings WHERE expression_id IN (SELECT id FROM expressions WHERE lang_code = ?)';
-const MAPPED_EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)';
+const MAPPED_EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?)) AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)";
 const LANGUAGE_EXPRESSIONS_FILTER_SQL = "e.lang_code = ? AND (? = '' OR e.text LIKE ? ESCAPE '\\') AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
 const LANGUAGE_EXPRESSIONS_COUNT_SQL = `SELECT COUNT(*) AS total FROM expressions e WHERE ${LANGUAGE_EXPRESSIONS_FILTER_SQL}`;
 const LANGUAGE_EXPRESSIONS_SELECT_SQL = `SELECT e.id, e.lang_code, e.text, e.description, e.homograph_index, e.review_status, e.created_at, (SELECT COUNT(*) FROM expression_readings r WHERE r.expression_id = e.id) AS reading_count, (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id) AS mapping_count FROM expressions e WHERE ${LANGUAGE_EXPRESSIONS_FILTER_SQL}`;
@@ -93,13 +93,14 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
   return { items: results.map((item) => ({ ...item, name: names.get(item.code) ?? item.name_en })), total: totalRow?.total ?? 0 };
 }
 
-export async function getLanguageDetail(db: D1Database, code: string, hints: LocaleHints = {}): Promise<LanguageDetail | null> {
+export async function getLanguageDetail(db: D1Database, code: string, hints: LocaleHints = {}, locale = ''): Promise<LanguageDetail | null> {
   const language = await db.prepare(LANGUAGE_ROW_SQL).bind(code).first<{ code: string; name_en: string }>();
   if (!language) return null;
+  const localeFilter = locale.trim();
   const { results: localeRows } = await db.prepare(LANGUAGE_LOCALES_SQL).bind(code).all<LocaleRow>();
-  const expressionCount = await db.prepare(EXPRESSION_COUNT_SQL).bind(code).first<{ total: number }>();
+  const expressionCount = await db.prepare(EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>();
   const readingCount = await db.prepare(READING_COUNT_SQL).bind(code).first<{ total: number }>();
-  const mappedExpressionCount = await db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code).first<{ total: number }>();
+  const mappedExpressionCount = await db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>();
   const localeNames = await resolveLocaleNames(db, localeRows.map((row) => row.code), hints);
   const languageNames = await resolveLanguageNames(db, [language.code], hints);
   const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, display_name: localeNames.get(row.code) ?? row.name, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));

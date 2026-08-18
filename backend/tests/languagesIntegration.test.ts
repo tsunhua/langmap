@@ -141,6 +141,20 @@ describe('languages API', () => {
     }));
   });
 
+  it('keeps detail expression counts consistent with the locale-filtered list', async () => {
+    for (const locale of ['', 'cmn-Hans-CN', 'cmn-Hant-TW']) {
+      const detailSuffix = locale ? `?locale=${locale}` : '';
+      const listSuffix = locale ? `?locale=${locale}&limit=1` : '?limit=1';
+      const detailRes = await fetch(`${API}/cmn${detailSuffix}`);
+      const listRes = await fetch(`${API}/cmn/expressions${listSuffix}`);
+      expect(detailRes.status).toBe(200);
+      expect(listRes.status).toBe(200);
+      const detail = await detailRes.json() as { data: { expression_count: number } };
+      const list = await listRes.json() as { data: { total: number } };
+      expect(detail.data.expression_count).toBe(list.data.total);
+    }
+  });
+
   it('filters expressions by the requested locale without duplicates', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 10);

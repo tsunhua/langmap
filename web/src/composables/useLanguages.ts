@@ -26,11 +26,11 @@ export function useLanguages() {
     }
   }
 
-  async function detail(code: string, hints: LocaleHints = {}, signal?: AbortSignal) {
+  async function detail(code: string, hints: LocaleHints = {}, locale = '', signal?: AbortSignal) {
     loading.value = true
     error.value = null
     try {
-      return await getLanguageDetail(code, hints, signal)
+      return await getLanguageDetail(code, hints, locale, signal)
     } catch (cause: unknown) {
       error.value = apiErrorMessage(cause, 'Request failed')
       throw cause

@@ -45,6 +45,7 @@ describe('LanguageDetail', () => {
       locales: [
         { code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', display_name: '简体中文', script_code: 'Hans', region_code: 'CN', place_path: '', latitude: null, longitude: null },
         { code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', display_name: '台灣華語', script_code: 'Hant', region_code: 'TW', place_path: '', latitude: null, longitude: null },
+        { code: 'cmn-Hant-HK', name: '廣東話', name_en: 'Hong Kong Mandarin', display_name: '香港華語', script_code: 'Hant', region_code: 'HK', place_path: '', latitude: null, longitude: null },
       ],
     })
     expressions.mockResolvedValue(page)
@@ -57,6 +58,7 @@ describe('LanguageDetail', () => {
     expect(expressions).toHaveBeenCalledWith('cmn', {
       q: '', locale: 'cmn-Hant-TW', sort: 'hot', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
     })
+    expect(detail).toHaveBeenCalledWith('cmn', { ui_locale: 'eng-Latn-US' }, 'cmn-Hant-TW')
     const selects = wrapper.findAll('.ld-select')
     expect(selects).toHaveLength(2)
     expect((selects[0].element as HTMLSelectElement).value).toBe('Hant')
@@ -66,7 +68,7 @@ describe('LanguageDetail', () => {
     expect(wrapper.find('.lang-badge').text()).toBe('cmn-Hant-TW')
   })
 
-  it('links the variant and other selects: picking Hans narrows others and auto-selects CN', async () => {
+  it('picking a single-region variant hides the region select and auto-selects it', async () => {
     const wrapper = mountDetail()
     await flushPromises()
 
@@ -75,7 +77,8 @@ describe('LanguageDetail', () => {
     await flushPromises()
 
     expect(replace).toHaveBeenCalledWith({ query: { locale: 'cmn-Hans-CN' } })
-    expect((wrapper.findAll('.ld-select')[1].element as HTMLSelectElement).value).toBe('CN')
+    // Hans has a single region, so the region select is hidden after narrowing
+    expect(wrapper.findAll('.ld-select')).toHaveLength(1)
 
     route.query.locale = 'cmn-Hans-CN'
     await flushPromises()
@@ -83,13 +86,36 @@ describe('LanguageDetail', () => {
     expect(wrapper.find('.ld-sub').text()).toBe('普通话')
   })
 
+  it('refetches locale-aware detail and shows filtered counts when locale changes', async () => {
+    route.query.locale = undefined
+    detail.mockImplementation((_code: string, _hints: unknown, locale?: string) => Promise.resolve({
+      code: 'cmn', name: 'Mandarin Chinese', name_en: 'Mandarin Chinese',
+      expression_count: locale === 'cmn-Hans-CN' ? 2 : 19,
+      locale_count: 2, active_ui_locale_count: 0, reading_count: 0,
+      mapped_expression_count: locale === 'cmn-Hans-CN' ? 1 : 7,
+      locales: [
+        { code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', display_name: '简体中文', script_code: 'Hans', region_code: 'CN', place_path: '', latitude: null, longitude: null },
+        { code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', display_name: '台灣華語', script_code: 'Hant', region_code: 'TW', place_path: '', latitude: null, longitude: null },
+      ],
+    }))
+    const wrapper = mountDetail()
+    await flushPromises()
+    expect(wrapper.find('.ld-stats').text()).toContain('19')
+
+    route.query.locale = 'cmn-Hans-CN'
+    await flushPromises()
+    expect(wrapper.find('.ld-stats').text()).toContain('2')
+    expect(wrapper.find('.ld-stats').text()).not.toContain('19')
+  })
+
   it('falls back to the bare language when no locale is selected', async () => {
     route.query.locale = undefined
     const wrapper = mountDetail()
     await flushPromises()
 
+    expect(detail).toHaveBeenCalledWith('cmn', { ui_locale: 'eng-Latn-US' }, '')
     expect(wrapper.find('h1').text()).toBe('Mandarin Chinese')
-    expect(wrapper.find('.ld-sub').text()).toBe('Mandarin Chinese')
+    expect(wrapper.find('.ld-sub').exists()).toBe(false)
     expect(wrapper.find('.lang-badge').text()).toBe('cmn')
     const selects = wrapper.findAll('.ld-select')
     expect((selects[0].element as HTMLSelectElement).value).toBe('')
@@ -113,6 +139,23 @@ describe('LanguageDetail', () => {
     expect(selects).toHaveLength(1)
     const options = wrapper.findAll('#locale-other option').map((option) => option.text())
     expect(options).toEqual(['All', '閩南語 (CN)', '閩南語 (TW)'])
+  })
+
+  it('hides all locale selects when the language has a single script and region', async () => {
+    route.params.code = 'eng'
+    route.query.locale = undefined
+    detail.mockResolvedValue({
+      code: 'eng', name: 'English', name_en: 'English', expression_count: 1,
+      locale_count: 1, active_ui_locale_count: 0, reading_count: 0, mapped_expression_count: 0,
+      locales: [
+        { code: 'eng-Latn-US', name: 'English', name_en: 'English (US)', display_name: 'English (US)', script_code: 'Latn', region_code: 'US', place_path: '', latitude: null, longitude: null },
+      ],
+    })
+    const wrapper = mountDetail()
+    await flushPromises()
+
+    expect(wrapper.findAll('.ld-select')).toHaveLength(0)
+    expect(wrapper.find('.ld-locales').exists()).toBe(false)
   })
 
   it('keeps the newest locale page when an older request completes later', async () => {

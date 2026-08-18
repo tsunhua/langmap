@@ -64,6 +64,8 @@ Web 必須把目前的搜尋與排序送至 API。新查詢或排序從 `offset=
 
 URL query `locale` 使用完整 locale code，例如 `cmn-Hant-TW`、`nan-Hant-CN_Quanzhou_Nanan`。空值表示全部地域形式。未知或不屬於該語言的 locale 不得造成 500；頁面需回到全部地域形式，並以測試固定所選行為。
 
+`GET /api/v2/languages/:code` 另接受 `locale` query：有值時 `expression_count` 與 `mapped_expression_count` 只計算具有該 locale attestation 的 expression（與 4.3 節語言詞句列表同一篩選條件），空值維持全語言總數。語言詳情頁的統計必須與顯示中的詞句列表一致。
+
 ### 4.3 語言詞句列表
 
 `GET /api/v2/languages/:code/expressions` 維持分頁 envelope，支援：

@@ -41,7 +41,10 @@ let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
 const selectedLocale = computed(() => lang.value?.locales.find((locale) => locale.code === selectedLocaleCode.value) ?? null)
 const title = computed(() => selectedLocale.value?.display_name ?? lang.value?.name ?? lang.value?.name_en ?? '')
-const subtitle = computed(() => selectedLocale.value?.name ?? lang.value?.name_en ?? '')
+const subtitle = computed(() => {
+  const sub = selectedLocale.value?.name ?? lang.value?.name_en ?? ''
+  return sub && sub !== title.value ? sub : ''
+})
 
 // —— 變體選擇：連動雙下拉（變體 × 其他），選項由 locales 動態切分 ——
 const variantSelect = ref('')
@@ -49,6 +52,8 @@ const otherSelect = ref('')
 
 const variants = computed(() => [...new Set((lang.value?.locales ?? []).map((locale) => locale.script_code).filter(Boolean))])
 const hasVariants = computed(() => variants.value.length > 1)
+const showOtherSelect = computed(() => otherOptions.value.length > 1)
+const showLocaleSelects = computed(() => hasVariants.value || showOtherSelect.value)
 
 function otherOf(locale: LanguageLocale) {
   return locale.place_path ? `${locale.region_code}/${locale.place_path}` : locale.region_code
@@ -150,16 +155,18 @@ async function loadExpressions(append = false) {
   }
 }
 
-async function loadDetail() {
+async function loadDetail(keepContent = false) {
   const request = detailRequest.begin()
   expressionsRequest.begin()
-  lang.value = null
-  exprs.value = []
-  total.value = 0
+  if (!keepContent) {
+    lang.value = null
+    exprs.value = []
+    total.value = 0
+  }
   detailLoading.value = true
   loadError.value = ''
   try {
-    const value = await detail(code.value, localeParams.value)
+    const value = await detail(code.value, localeParams.value, routeLocale())
     if (!detailRequest.isCurrent(request)) return
     lang.value = value
     const requestedLocale = routeLocale()
@@ -200,7 +207,7 @@ watch(() => route.query.locale, () => {
   clearUnknownLocale(requestedLocale)
   if (next === selectedLocaleCode.value) return
   selectedLocaleCode.value = next
-  void loadExpressions()
+  void loadDetail(true)
 })
 watch(searchQuery, () => {
   if (debounceTimer) clearTimeout(debounceTimer)
@@ -220,7 +227,7 @@ onUnmounted(() => {
       <h1>{{ title }}</h1>
       <span class="lang-badge">{{ selectedLocale?.code ?? lang.code }}</span>
     </div>
-    <div v-if="lang.locales.length" class="ld-locales" role="group" :aria-label="t('languageDetail.regionalForms')">
+    <div v-if="showLocaleSelects" class="ld-locales" role="group" :aria-label="t('languageDetail.regionalForms')">
       <div v-if="hasVariants" class="ld-sel">
         <label class="visually-hidden" for="locale-variant">{{ t('languageDetail.variantLabel') }}</label>
         <select id="locale-variant" v-model="variantSelect" class="ld-select">
@@ -228,7 +235,7 @@ onUnmounted(() => {
           <option v-for="variant in variants" :key="variant" :value="variant">{{ scriptLabel(variant) }} ({{ variant }})</option>
         </select>
       </div>
-      <div class="ld-sel">
+      <div v-if="showOtherSelect" class="ld-sel">
         <label class="visually-hidden" for="locale-other">{{ t('languageDetail.otherLabel') }}</label>
         <select id="locale-other" v-model="otherSelect" class="ld-select">
           <option value="">{{ t('languageDetail.allOthers') }}</option>
@@ -274,13 +281,13 @@ onUnmounted(() => {
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
 .ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .ld-locales { display: flex; gap: 8px; margin: 8px 0; }
-.ld-sel { position: relative; flex: 0 0 auto; min-width: 140px; max-width: 320px; }
+.ld-sel { position: relative; flex: 0 0 auto; max-width: 320px; }
 .ld-select {
   appearance: none; -webkit-appearance: none;
-  width: 100%; min-height: 44px; padding: 0 36px 0 14px;
+  width: 100%; min-height: 36px; padding: 0 36px 0 14px;
   border: 1px solid var(--border); border-radius: var(--r);
   background: var(--surface); color: var(--fg);
-  font-family: var(--font); font-size: 16px; cursor: pointer;
+  font-family: var(--font); font-size: 14px; cursor: pointer;
 }
 .ld-select:hover { border-color: color-mix(in oklch, var(--muted) 40%, var(--border)); }
 .ld-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -301,5 +308,6 @@ onUnmounted(() => {
   .ld-page { padding-right: 16px; padding-left: 16px; }
   .ld-locales { flex-direction: column; }
   .ld-sel { flex: 1 1 0; min-width: 0; max-width: none; }
+  .ld-select { min-height: 44px; font-size: 16px; }
 }
 </style>

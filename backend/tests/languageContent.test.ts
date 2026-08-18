@@ -20,9 +20,9 @@ const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
 const IDENTITY_LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
 const IDENTITY_LOCALE_SQL = 'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
 const LANGUAGE_LOCALES_SQL = 'SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT 500';
-const EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions WHERE lang_code = ?';
+const EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
 const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expression_readings WHERE expression_id IN (SELECT id FROM expressions WHERE lang_code = ?)';
-const MAPPED_EXPRESSION_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)';
+const MAPPED_EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?)) AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)";
 
 describe('getLanguageDetail', () => {
   it('returns null for an unknown language code', async () => {
@@ -66,6 +66,42 @@ describe('getLanguageDetail', () => {
     expect(detail?.name).toBe('Mandarin Chinese');
     expect(detail?.locales[0].display_name).toBe('普通话(CN)');
     expect(detail?.locales[0].name).toBe('普通话(CN)');
+  });
+
+  it('filters expression counts by the requested locale attestation', async () => {
+    let boundLocale = '';
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind(...args: unknown[]) {
+            boundLocale = typeof args[2] === 'string' ? args[2] : '';
+            return {
+              async first() {
+                if (sql === LANGUAGE_ROW_SQL) return { code: 'cmn', name_en: 'Mandarin Chinese' };
+                if (sql === EXPRESSION_COUNT_SQL) return { total: boundLocale === 'cmn-Hans-CN' ? 3 : 7 };
+                if (sql === READING_COUNT_SQL) return { total: 2 };
+                if (sql === MAPPED_EXPRESSION_COUNT_SQL) return { total: boundLocale === 'cmn-Hans-CN' ? 1 : 4 };
+                return null;
+              },
+              async all() {
+                return {
+                  results: sql === LANGUAGE_LOCALES_SQL ? [
+                    { code: 'cmn-Hans-CN', name: '普通话(CN)', name_en: 'Simplified Chinese', script_code: 'Hans', region_code: 'CN', place_path: '', locale_latitude: null, locale_longitude: null, region_latitude: null, region_longitude: null },
+                  ] : [],
+                };
+              },
+            };
+          },
+        };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+
+    const filtered = await getLanguageDetail(db, 'cmn', undefined, 'cmn-Hans-CN');
+    expect(filtered?.expression_count).toBe(3);
+    expect(filtered?.mapped_expression_count).toBe(1);
+    const all = await getLanguageDetail(db, 'cmn');
+    expect(all?.expression_count).toBe(7);
+    expect(all?.mapped_expression_count).toBe(4);
   });
 });
 

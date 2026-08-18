@@ -46,6 +46,7 @@ languages.get('/:code', async (c) => {
     c.env.DB,
     (c.req.param('code') ?? '').toLowerCase(),
     parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+    c.req.query('locale') ?? '',
   );
   if (!detail) return notFound(c, 'Language');
   return success(c, detail);
