@@ -264,7 +264,6 @@
   "morphology.submitFailed": "語形リンクを保存できませんでした",
   "morphology.formOfAria": "{lemma} の変化形：{features}",
   "morphology.viewMapping": "対照を見る",
-  "morphology.signInToAdd": "ログインすると語形リンクを追加できます",
   "languagePicker.placeholder": "言語を検索…",
   "languagePicker.noResults": "一致する言語がありません",
   "languagePicker.createLanguage": "新しい言語または変種を作成",

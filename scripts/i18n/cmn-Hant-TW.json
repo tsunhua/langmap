@@ -266,7 +266,6 @@
   "morphology.submitFailed": "無法儲存詞形關聯",
   "morphology.formOfAria": "{lemma} 的變化形：{features}",
   "morphology.viewMapping": "查看對照",
-  "morphology.signInToAdd": "登入後即可新增詞形關聯",
   "languagePicker.placeholder": "搜尋語言…",
   "languagePicker.noResults": "無符合語言",
   "languagePicker.createLanguage": "建立新語言或變體",

@@ -21,6 +21,11 @@ vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({ search: vi.fn().mockResolvedValue({ items: [] }) }),
 }))
 
+const push = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push }),
+}))
+
 const RouterLinkStub = {
   props: ['to'],
   template: '<a :href="typeof to === \'string\' ? to : to.path"><slot /></a>',
@@ -38,11 +43,11 @@ function formEdges(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function mountPanel() {
+function mountPanel(text = 'gatas') {
   const pinia = createPinia()
   setActivePinia(pinia)
   return mount(MorphologyPanel, {
-    props: { expressionId: 'spa:gatas', langCode: 'spa' },
+    props: { expressionId: 'spa:gatas', langCode: 'spa', text },
     global: {
       plugins: [pinia],
       stubs: { RouterLink: RouterLinkStub },
@@ -53,6 +58,7 @@ function mountPanel() {
 describe('MorphologyPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    push.mockReset()
     setActivePinia(createPinia())
     vi.mocked(listMorphologicalFeatures).mockResolvedValue({ dimensions: [] })
     vi.mocked(getMappingGraph).mockResolvedValue({
@@ -112,16 +118,33 @@ describe('MorphologyPanel', () => {
     vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
     const wrapper = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Sign in to add a word-form link')
-    expect(wrapper.text()).not.toContain('Add a word-form link')
+    expect(wrapper.text()).toContain('Add a word-form link')
+    expect(wrapper.text()).not.toContain('Save form link')
     const auth = useAuthStore()
     auth.token = 'session'
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('Add a word-form link')
-    expect(wrapper.text()).not.toContain('Save form link')
     await wrapper.get('[aria-controls="morph-form"]').trigger('click')
     expect(wrapper.text()).toContain('Save form link')
     expect(wrapper.text()).toContain('Features')
+  })
+
+  it('sends signed-out users to /auth when the add button is clicked', async () => {
+    vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
+    const wrapper = mountPanel()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Add a word-form link')
+    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
+    expect(push).toHaveBeenCalledWith('/auth')
+    expect(wrapper.text()).not.toContain('Save form link')
+  })
+
+  it('hides the whole panel for expressions that are not single words', async () => {
+    vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
+    const wrapper = mountPanel('+ 添加词句')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Word forms')
+    expect(wrapper.text()).not.toContain('Add a word-form link')
+    expect(getExpressionFormEdges).not.toHaveBeenCalled()
   })
 
   it('shows noun features only after a word class is chosen', async () => {

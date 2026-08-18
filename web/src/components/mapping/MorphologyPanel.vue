@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
@@ -27,13 +28,17 @@ import {
 const props = defineProps<{
   expressionId: string
   langCode: string
+  text: string
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
 const auth = useAuthStore()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
 const { search } = useExpressions()
+
+const isSingleWord = computed(() => !/\s/.test(props.text.trim()))
 
 const loading = ref(false)
 const loadError = ref('')
@@ -242,6 +247,10 @@ function selectLemma(item: { id: string; text: string; lang_code: string }) {
 }
 
 function toggleForm() {
+  if (!auth.isLoggedIn) {
+    router.push('/auth')
+    return
+  }
   formOpen.value = !formOpen.value
   submitError.value = ''
   saveNotice.value = ''
@@ -294,7 +303,7 @@ async function submitFormEdge() {
 
 watch(
   () => [props.expressionId, localization.locale, localization.secondary] as const,
-  () => { void loadEdges() },
+  () => { if (isSingleWord.value) void loadEdges() },
   { immediate: true },
 )
 
@@ -313,11 +322,10 @@ watch(
 </script>
 
 <template>
-  <section class="morph" :aria-label="t('morphology.title')">
+  <section v-if="isSingleWord" class="morph" :aria-label="t('morphology.title')">
     <div class="nb-head">
       <h2>{{ t('morphology.title') }}</h2>
       <button
-        v-if="auth.isLoggedIn"
         class="btn btn-sm"
         type="button"
         :aria-expanded="formOpen"
@@ -328,9 +336,6 @@ watch(
       </button>
     </div>
     <p v-if="saveNotice" class="morph-note" role="status">{{ saveNotice }}</p>
-    <p v-else-if="!auth.isLoggedIn" class="morph-note">
-      <router-link to="/auth" class="morph-signin">{{ t('morphology.signInToAdd') }}</router-link>
-    </p>
 
     <p v-if="loading && !edges" class="morph-note">{{ t('common.loading') }}</p>
     <p v-else-if="loadError" class="morph-error" role="alert">{{ loadError }}</p>
@@ -354,21 +359,21 @@ watch(
         <div
           v-for="[code, forms] in inflectionGroups.ordered"
           :key="code"
-          class="morph-group"
+          class="morph-group morph-group-inline"
         >
           <h4>{{ dimensionNames.get(code) || code }}</h4>
           <ul class="morph-list">
             <li v-for="item in forms" :key="item.edge_id">
-              <router-link :to="`/mapping/${item.form.id}`" class="morph-link">
+              <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
                 <span>{{ item.form.text }}</span>
                 <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}</span>
               </router-link>
             </li>
           </ul>
         </div>
-        <ul v-if="inflectionGroups.ungrouped.length" class="morph-list">
+        <ul v-if="inflectionGroups.ungrouped.length" class="morph-list morph-list-inline">
           <li v-for="item in inflectionGroups.ungrouped" :key="item.edge_id">
-            <router-link :to="`/mapping/${item.form.id}`" class="morph-link">
+            <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
               {{ item.form.text }}
             </router-link>
           </li>
@@ -408,7 +413,7 @@ watch(
     </template>
 
     <section
-      v-if="auth.isLoggedIn && formOpen"
+      v-if="formOpen"
       id="morph-form"
       class="morph-block morph-form"
       :aria-label="t('morphology.markAsForm')"
@@ -519,8 +524,6 @@ watch(
 .morph { min-width: 0; }
 .morph :deep(.nb-head) { align-items: center; }
 .morph :deep(.nb-head .btn) { flex-shrink: 0; }
-.morph-signin { color: var(--accent); text-underline-offset: 2px; }
-.morph-signin:hover { text-decoration: underline; }
 .morph-block {
   display: grid;
   gap: var(--space-sm);
@@ -544,6 +547,33 @@ watch(
   font-weight: 600;
   color: var(--muted);
 }
+.morph-group-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.morph-group-inline h4 { flex: none; }
+.morph-group-inline .morph-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.morph-list.morph-list-inline { display: flex; flex-wrap: wrap; gap: 8px; }
+.morph-form-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--fg);
+  transition: border-color 0.15s, color 0.15s;
+}
+.morph-form-chip:hover { border-color: var(--accent); color: var(--accent); }
+.morph-form-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.morph-form-chip .morph-feats { font-size: 12px; }
 .morph-list {
   list-style: none;
   margin: 0;
@@ -661,6 +691,6 @@ watch(
   border: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .morph-link, .morph-pick-btn { transition: none; }
+  .morph-link, .morph-pick-btn, .morph-form-chip { transition: none; }
 }
 </style>

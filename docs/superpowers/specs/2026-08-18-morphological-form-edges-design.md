@@ -373,13 +373,14 @@ Seed 由受控腳本或 migration 以 find-or-create 寫入，不手寫 hash id�
 `/mapping/:id` 維持語義圖譜不變。另加兩塊，放在圖譜／層級列表之外，不進入環狀圖：
 
 1. **詞形變化**  
+   - 只有單詞（expression `text` 無空白）才顯示本模組；句子、短語與介面字串不顯示。
    - `as_form`：列出原形與已解析特徵。  
    - `as_lemma`：按維度 `sort_order` 排成表或分組列表；空格不畫假格子。  
    - 同一節點兩種角色都有則兩塊都顯示（`found`）。
 2. **原形的對照**  
    對最多 3 個原形，前端各打既有 `GET /expressions/:lemmaId/mappings?hops=1`。結果分組掛在各原形下，標題明確寫「原形的對照」，不得併入當前詞的圖譜節點。超過 3 個原形只展示前 3 個（與搜尋同一排序），其餘可連到該原形的 mapping 頁。
 
-登入後，詳情提供「標為變化形」表單：搜尋同語言既有 expression 作為 lemma，核取登錄表特徵（依維度分組），提交 `POST /expressions/:id/form-edges`。不得一次提交多個 lemma。
+單詞頁固定顯示「新增詞形關聯」按鈕，不預先擋登入；未登入時點擊即導向 `/auth`（與 contribute 按鈕一致）。登入後展開「標為變化形」表單：搜尋同語言既有 expression 作為 lemma，核取登錄表特徵（依維度分組），提交 `POST /expressions/:id/form-edges`。不得一次提交多個 lemma。
 
 複雜視覺（範式表）必須同時有列表替代。
 

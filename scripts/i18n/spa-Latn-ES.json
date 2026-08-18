@@ -264,7 +264,6 @@
   "morphology.submitFailed": "No se pudo guardar el enlace de forma",
   "morphology.formOfAria": "Forma de {lemma}: {features}",
   "morphology.viewMapping": "Ver correspondencia",
-  "morphology.signInToAdd": "Inicia sesión para añadir un enlace de forma",
   "languagePicker.placeholder": "Buscar idiomas…",
   "languagePicker.noResults": "No hay idiomas coincidentes",
   "languagePicker.createLanguage": "Crear nuevo idioma o variedad",

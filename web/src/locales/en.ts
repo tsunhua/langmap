@@ -229,7 +229,6 @@ export const en = {
     submitFailed: 'Unable to save form link',
     formOfAria: 'Form of {lemma}: {features}',
     viewMapping: 'View mapping',
-    signInToAdd: 'Sign in to add a word-form link',
   },
   languageCreate: {
     stepTag: 'Language tag',

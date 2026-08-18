@@ -9,7 +9,7 @@ INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapp
 INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) VALUES ('langmap-web', 'jpn-Jpan-JP', 'active', 0, 'system', CURRENT_TIMESTAMP);
 INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapping_revision, activation_source, activated_at) VALUES ('langmap-web', 'spa-Latn-ES', 'active', 0, 'system', CURRENT_TIMESTAMP);
 
--- 2. Source messages (369 keys)
+-- 2. Source messages (367 keys)
 -- activity.expression
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('eng:4a5zk74fv66arc4na4bd3ie6me', 'eng', 'Added expression', '4a5zk74fv66arc4na4bd3ie6me', 1, '', '[]', 'system-ui', 'ui:langmap-web:activity.expression:1', 'approved', NULL);
@@ -2089,13 +2089,6 @@ VALUES ('eng:eprzfeowcnmbj3l4snxcpclukq', 'eng', 'Saving…', 'eprzfeowcnmbj3l4s
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'morphology.saving', 'eng:eprzfeowcnmbj3l4snxcpclukq', 'Saving…', '[]', 'active');
 
--- morphology.scrollHint
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('eng:3hzs7efdzfxurti3pgdls523j4', 'eng', 'Scroll for more', '3hzs7efdzfxurti3pgdls523j4', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.scrollHint:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
-VALUES ('langmap-web', 'morphology.scrollHint', 'eng:3hzs7efdzfxurti3pgdls523j4', 'Scroll for more', '[]', 'active');
-
 -- morphology.searchLemma
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('eng:lzrt3ev4g52tlvq6l56jpmju3e', 'eng', 'Search a same-language dictionary form', 'lzrt3ev4g52tlvq6l56jpmju3e', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.searchLemma:1', 'approved', NULL);
@@ -2116,13 +2109,6 @@ VALUES ('eng:dtcsxpzi5s3w44san2x6d57rtu', 'eng', 'Show all features', 'dtcsxpzi5
 
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'morphology.showAllFeatures', 'eng:dtcsxpzi5s3w44san2x6d57rtu', 'Show all features', '[]', 'active');
-
--- morphology.signInToAdd
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('eng:jsya6kbherpdqpaghx5ogtatpy', 'eng', 'Sign in to add a word-form link', 'jsya6kbherpdqpaghx5ogtatpy', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.signInToAdd:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
-VALUES ('langmap-web', 'morphology.signInToAdd', 'eng:jsya6kbherpdqpaghx5ogtatpy', 'Sign in to add a word-form link', '[]', 'active');
 
 -- morphology.submit
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -2593,7 +2579,7 @@ VALUES ('eng:n66xm2y2ohge2klnsl4es5vb7u', 'eng', 'Translation', 'n66xm2y2ohge2kl
 INSERT OR IGNORE INTO ui_messages (project_id, message_key, source_expression_id, source_text, placeholders_json, status)
 VALUES ('langmap-web', 'translate.translation', 'eng:n66xm2y2ohge2klnsl4es5vb7u', 'Translation', '[]', 'active');
 
--- 3. Translation expressions and attestations (1384 rows)
+-- 3. Translation expressions and attestations (1376 rows)
 -- Locale cmn-Hans-CN
 -- auth.email
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -4597,13 +4583,6 @@ VALUES ('cmn:75ijzg5akkrbyaemrczw55prhi', 'cmn', '保存中…', '75ijzg5akkrbya
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:75ijzg5akkrbyaemrczw55prhi', 'cmn:75ijzg5akkrbyaemrczw55prhi', 'cmn-Hans-CN', NULL, NULL, NULL);
 
--- morphology.scrollHint
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:p7muf2me6cs6vziliiyepd6joi', 'cmn', '向下滚动查看更多', 'p7muf2me6cs6vziliiyepd6joi', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.scrollHint:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hans-CN:cmn:p7muf2me6cs6vziliiyepd6joi', 'cmn:p7muf2me6cs6vziliiyepd6joi', 'cmn-Hans-CN', NULL, NULL, NULL);
-
 -- morphology.searchLemma
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('cmn:dwgiv65opf2pj4etmywrdhux5q', 'cmn', '搜索同一语言的辞典形', 'dwgiv65opf2pj4etmywrdhux5q', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.searchLemma:1', 'approved', NULL);
@@ -4624,13 +4603,6 @@ VALUES ('cmn:yviy7ut6ncmopmnuxphbeco4dy', 'cmn', '显示全部特征', 'yviy7ut6
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hans-CN:cmn:yviy7ut6ncmopmnuxphbeco4dy', 'cmn:yviy7ut6ncmopmnuxphbeco4dy', 'cmn-Hans-CN', NULL, NULL, NULL);
-
--- morphology.signInToAdd
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'cmn', '登录后即可新增词形关联', 'ijykgnr76hm5tjrwb7qmnutk3y', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.signInToAdd:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hans-CN:cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'cmn-Hans-CN', NULL, NULL, NULL);
 
 -- morphology.submit
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -7027,13 +6999,6 @@ VALUES ('cmn:aamqvu4tupxh2pwn55exhfrjjy', 'cmn', '儲存中…', 'aamqvu4tupxh2p
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:aamqvu4tupxh2pwn55exhfrjjy', 'cmn:aamqvu4tupxh2pwn55exhfrjjy', 'cmn-Hant-TW', NULL, NULL, NULL);
 
--- morphology.scrollHint
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'cmn', '向下滾動查看更多', 'vdl2jqk2hqrakhzqss6zqqqmc4', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.scrollHint:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hant-TW:cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'cmn-Hant-TW', NULL, NULL, NULL);
-
 -- morphology.searchLemma
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('cmn:dsqxsnyskijg5lhwossuoe7keq', 'cmn', '搜尋同一語言的辭書形', 'dsqxsnyskijg5lhwossuoe7keq', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.searchLemma:1', 'approved', NULL);
@@ -7054,13 +7019,6 @@ VALUES ('cmn:xoy2hfuwcwbick6kgy6pbaxtfu', 'cmn', '顯示全部特徵', 'xoy2hfuw
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:cmn-Hant-TW:cmn:xoy2hfuwcwbick6kgy6pbaxtfu', 'cmn:xoy2hfuwcwbick6kgy6pbaxtfu', 'cmn-Hant-TW', NULL, NULL, NULL);
-
--- morphology.signInToAdd
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:eyffyloslsup6427jjqz3jab6m', 'cmn', '登入後即可新增詞形關聯', 'eyffyloslsup6427jjqz3jab6m', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.signInToAdd:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hant-TW:cmn:eyffyloslsup6427jjqz3jab6m', 'cmn:eyffyloslsup6427jjqz3jab6m', 'cmn-Hant-TW', NULL, NULL, NULL);
 
 -- morphology.submit
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -9443,13 +9401,6 @@ VALUES ('jpn:75ijzg5akkrbyaemrczw55prhi', 'jpn', '保存中…', '75ijzg5akkrbya
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:75ijzg5akkrbyaemrczw55prhi', 'jpn:75ijzg5akkrbyaemrczw55prhi', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
--- morphology.scrollHint
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('jpn:4oduja6sjskdtnsla7o4xmq66y', 'jpn', 'スクロールして続きを表示', '4oduja6sjskdtnsla7o4xmq66y', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.scrollHint:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:jpn-Jpan-JP:jpn:4oduja6sjskdtnsla7o4xmq66y', 'jpn:4oduja6sjskdtnsla7o4xmq66y', 'jpn-Jpan-JP', NULL, NULL, NULL);
-
 -- morphology.searchLemma
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('jpn:2guq54ysjrhcibvvvbd3lu5beq', 'jpn', '同じ言語の辞書形を検索', '2guq54ysjrhcibvvvbd3lu5beq', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.searchLemma:1', 'approved', NULL);
@@ -9470,13 +9421,6 @@ VALUES ('jpn:ultvczxcreqoinueb5l7xvlysm', 'jpn', 'すべての特徴を表示', 
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:jpn-Jpan-JP:jpn:ultvczxcreqoinueb5l7xvlysm', 'jpn:ultvczxcreqoinueb5l7xvlysm', 'jpn-Jpan-JP', NULL, NULL, NULL);
-
--- morphology.signInToAdd
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('jpn:fktp4lhf4sx6liqgi36s76h3sa', 'jpn', 'ログインすると語形リンクを追加できます', 'fktp4lhf4sx6liqgi36s76h3sa', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.signInToAdd:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:jpn-Jpan-JP:jpn:fktp4lhf4sx6liqgi36s76h3sa', 'jpn:fktp4lhf4sx6liqgi36s76h3sa', 'jpn-Jpan-JP', NULL, NULL, NULL);
 
 -- morphology.submit
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -11859,13 +11803,6 @@ VALUES ('spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 'spa', 'Guardando…', 'hsg4jxd2qpos3k
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 'spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 'spa-Latn-ES', NULL, NULL, NULL);
 
--- morphology.scrollHint
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('spa:32aet3rqrasrgb7aht3qcvpeo4', 'spa', 'Desplázate para ver más', '32aet3rqrasrgb7aht3qcvpeo4', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.scrollHint:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:spa-Latn-ES:spa:32aet3rqrasrgb7aht3qcvpeo4', 'spa:32aet3rqrasrgb7aht3qcvpeo4', 'spa-Latn-ES', NULL, NULL, NULL);
-
 -- morphology.searchLemma
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
 VALUES ('spa:gzh46rv2i3se5zinpmoezi7ufy', 'spa', 'Buscar una forma de diccionario en el mismo idioma', 'gzh46rv2i3se5zinpmoezi7ufy', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.searchLemma:1', 'approved', NULL);
@@ -11886,13 +11823,6 @@ VALUES ('spa:46dxhhmy4ktopqnpggvtrbw2hq', 'spa', 'Mostrar todos los rasgos', '46
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:46dxhhmy4ktopqnpggvtrbw2hq', 'spa:46dxhhmy4ktopqnpggvtrbw2hq', 'spa-Latn-ES', NULL, NULL, NULL);
-
--- morphology.signInToAdd
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('spa:ibjfhf6djg3jeykqj5oif4gmjm', 'spa', 'Inicia sesión para añadir un enlace de forma', 'ibjfhf6djg3jeykqj5oif4gmjm', 1, '', '[]', 'system-ui', 'ui:langmap-web:morphology.signInToAdd:1', 'approved', NULL);
-
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:spa-Latn-ES:spa:ibjfhf6djg3jeykqj5oif4gmjm', 'spa:ibjfhf6djg3jeykqj5oif4gmjm', 'spa-Latn-ES', NULL, NULL, NULL);
 
 -- morphology.submit
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -12286,7 +12216,7 @@ VALUES ('spa:6nxfwjm3zekylyplhph3fg5qre', 'spa', 'Traducción', '6nxfwjm3zekylyp
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
 VALUES ('ui-att:spa-Latn-ES:spa:6nxfwjm3zekylyplhph3fg5qre', 'spa:6nxfwjm3zekylyplhph3fg5qre', 'spa-Latn-ES', NULL, NULL, NULL);
 
--- 4. Translation mapping edges (3278 clique edges)
+-- 4. Translation mapping edges (3258 clique edges)
 -- Clique: activity.expression
 
 -- Clique: activity.handbook
@@ -15565,18 +15495,6 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:eprzfeowcnmbj3l4snxcpclukq:spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 'eng:eprzfeowcnmbj3l4snxcpclukq', 'spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:75ijzg5akkrbyaemrczw55prhi:spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 'jpn:75ijzg5akkrbyaemrczw55prhi', 'spa:hsg4jxd2qpos3kdqxbc7nzgwoe', 0, 'translation', NULL);
 
--- Clique: morphology.scrollHint
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p7muf2me6cs6vziliiyepd6joi:cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'cmn:p7muf2me6cs6vziliiyepd6joi', 'cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p7muf2me6cs6vziliiyepd6joi:eng:3hzs7efdzfxurti3pgdls523j4', 'cmn:p7muf2me6cs6vziliiyepd6joi', 'eng:3hzs7efdzfxurti3pgdls523j4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p7muf2me6cs6vziliiyepd6joi:jpn:4oduja6sjskdtnsla7o4xmq66y', 'cmn:p7muf2me6cs6vziliiyepd6joi', 'jpn:4oduja6sjskdtnsla7o4xmq66y', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:p7muf2me6cs6vziliiyepd6joi:spa:32aet3rqrasrgb7aht3qcvpeo4', 'cmn:p7muf2me6cs6vziliiyepd6joi', 'spa:32aet3rqrasrgb7aht3qcvpeo4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:vdl2jqk2hqrakhzqss6zqqqmc4:eng:3hzs7efdzfxurti3pgdls523j4', 'cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'eng:3hzs7efdzfxurti3pgdls523j4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:vdl2jqk2hqrakhzqss6zqqqmc4:jpn:4oduja6sjskdtnsla7o4xmq66y', 'cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'jpn:4oduja6sjskdtnsla7o4xmq66y', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:vdl2jqk2hqrakhzqss6zqqqmc4:spa:32aet3rqrasrgb7aht3qcvpeo4', 'cmn:vdl2jqk2hqrakhzqss6zqqqmc4', 'spa:32aet3rqrasrgb7aht3qcvpeo4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:3hzs7efdzfxurti3pgdls523j4:jpn:4oduja6sjskdtnsla7o4xmq66y', 'eng:3hzs7efdzfxurti3pgdls523j4', 'jpn:4oduja6sjskdtnsla7o4xmq66y', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:3hzs7efdzfxurti3pgdls523j4:spa:32aet3rqrasrgb7aht3qcvpeo4', 'eng:3hzs7efdzfxurti3pgdls523j4', 'spa:32aet3rqrasrgb7aht3qcvpeo4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:4oduja6sjskdtnsla7o4xmq66y:spa:32aet3rqrasrgb7aht3qcvpeo4', 'jpn:4oduja6sjskdtnsla7o4xmq66y', 'spa:32aet3rqrasrgb7aht3qcvpeo4', 0, 'translation', NULL);
-
 -- Clique: morphology.searchLemma
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:dsqxsnyskijg5lhwossuoe7keq:cmn:dwgiv65opf2pj4etmywrdhux5q', 'cmn:dsqxsnyskijg5lhwossuoe7keq', 'cmn:dwgiv65opf2pj4etmywrdhux5q', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:dsqxsnyskijg5lhwossuoe7keq:eng:lzrt3ev4g52tlvq6l56jpmju3e', 'cmn:dsqxsnyskijg5lhwossuoe7keq', 'eng:lzrt3ev4g52tlvq6l56jpmju3e', 0, 'translation', NULL);
@@ -15612,18 +15530,6 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:dtcsxpzi5s3w44san2x6d57rtu:jpn:ultvczxcreqoinueb5l7xvlysm', 'eng:dtcsxpzi5s3w44san2x6d57rtu', 'jpn:ultvczxcreqoinueb5l7xvlysm', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:dtcsxpzi5s3w44san2x6d57rtu:spa:46dxhhmy4ktopqnpggvtrbw2hq', 'eng:dtcsxpzi5s3w44san2x6d57rtu', 'spa:46dxhhmy4ktopqnpggvtrbw2hq', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:ultvczxcreqoinueb5l7xvlysm:spa:46dxhhmy4ktopqnpggvtrbw2hq', 'jpn:ultvczxcreqoinueb5l7xvlysm', 'spa:46dxhhmy4ktopqnpggvtrbw2hq', 0, 'translation', NULL);
-
--- Clique: morphology.signInToAdd
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:eyffyloslsup6427jjqz3jab6m:cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'cmn:eyffyloslsup6427jjqz3jab6m', 'cmn:ijykgnr76hm5tjrwb7qmnutk3y', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:eyffyloslsup6427jjqz3jab6m:eng:jsya6kbherpdqpaghx5ogtatpy', 'cmn:eyffyloslsup6427jjqz3jab6m', 'eng:jsya6kbherpdqpaghx5ogtatpy', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:eyffyloslsup6427jjqz3jab6m:jpn:fktp4lhf4sx6liqgi36s76h3sa', 'cmn:eyffyloslsup6427jjqz3jab6m', 'jpn:fktp4lhf4sx6liqgi36s76h3sa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:eyffyloslsup6427jjqz3jab6m:spa:ibjfhf6djg3jeykqj5oif4gmjm', 'cmn:eyffyloslsup6427jjqz3jab6m', 'spa:ibjfhf6djg3jeykqj5oif4gmjm', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ijykgnr76hm5tjrwb7qmnutk3y:eng:jsya6kbherpdqpaghx5ogtatpy', 'cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'eng:jsya6kbherpdqpaghx5ogtatpy', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ijykgnr76hm5tjrwb7qmnutk3y:jpn:fktp4lhf4sx6liqgi36s76h3sa', 'cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'jpn:fktp4lhf4sx6liqgi36s76h3sa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:ijykgnr76hm5tjrwb7qmnutk3y:spa:ibjfhf6djg3jeykqj5oif4gmjm', 'cmn:ijykgnr76hm5tjrwb7qmnutk3y', 'spa:ibjfhf6djg3jeykqj5oif4gmjm', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:jsya6kbherpdqpaghx5ogtatpy:jpn:fktp4lhf4sx6liqgi36s76h3sa', 'eng:jsya6kbherpdqpaghx5ogtatpy', 'jpn:fktp4lhf4sx6liqgi36s76h3sa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:jsya6kbherpdqpaghx5ogtatpy:spa:ibjfhf6djg3jeykqj5oif4gmjm', 'eng:jsya6kbherpdqpaghx5ogtatpy', 'spa:ibjfhf6djg3jeykqj5oif4gmjm', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:fktp4lhf4sx6liqgi36s76h3sa:spa:ibjfhf6djg3jeykqj5oif4gmjm', 'jpn:fktp4lhf4sx6liqgi36s76h3sa', 'spa:ibjfhf6djg3jeykqj5oif4gmjm', 0, 'translation', NULL);
 
 -- Clique: morphology.submit
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:a5xi7xqd2gudcgp6qheyxpgaeq:cmn:mpye6izx2brbicc6c2b42btqyq', 'cmn:a5xi7xqd2gudcgp6qheyxpgaeq', 'cmn:mpye6izx2brbicc6c2b42btqyq', 0, 'translation', NULL);

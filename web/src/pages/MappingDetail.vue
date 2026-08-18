@@ -387,7 +387,7 @@ const sourceLabel = computed(() => {
       </div>
     </section>
 
-    <MorphologyPanel :expression-id="id" :lang-code="expr.expression.lang_code" />
+    <MorphologyPanel :expression-id="id" :lang-code="expr.expression.lang_code" :text="expr.expression.text" />
 
     <div class="nb-head">
       <h2>{{ t('mappingDetail.mappingSet') }}</h2>
