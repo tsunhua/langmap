@@ -3143,10 +3143,10 @@ VALUES ('ui-att:cmn-Hans-CN:cmn:4hqfpgavwfiw4zwh63pxvul3ba', 'cmn:4hqfpgavwfiw4z
 
 -- contribute.locale
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'cmn', '语言', 't5x64gv2c6swlbv7c2txwb5ru4', 1, '', '[]', 'system-ui', 'ui:langmap-web:contribute.locale:1', 'approved', NULL);
+VALUES ('cmn:kszclf7n6cwq242zm7leqkazi4', 'cmn', '语言环境', 'kszclf7n6cwq242zm7leqkazi4', 1, '', '[]', 'system-ui', 'ui:langmap-web:contribute.locale:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hans-CN:cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'cmn-Hans-CN', NULL, NULL, NULL);
+VALUES ('ui-att:cmn-Hans-CN:cmn:kszclf7n6cwq242zm7leqkazi4', 'cmn:kszclf7n6cwq242zm7leqkazi4', 'cmn-Hans-CN', NULL, NULL, NULL);
 
 -- contribute.minRows
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -5531,10 +5531,10 @@ VALUES ('ui-att:cmn-Hant-TW:cmn:nqh5hdwi2d4putfq5iulm3qfiq', 'cmn:nqh5hdwi2d4put
 
 -- contribute.locale
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
-VALUES ('cmn:34bi7vv5gu3d53blxn45ywcefi', 'cmn', '語言', '34bi7vv5gu3d53blxn45ywcefi', 1, '', '[]', 'system-ui', 'ui:langmap-web:contribute.locale:1', 'approved', NULL);
+VALUES ('cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'cmn', '語言環境', '5z3nbfnbbyezrqf4xvjmdeagke', 1, '', '[]', 'system-ui', 'ui:langmap-web:contribute.locale:1', 'approved', NULL);
 
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by)
-VALUES ('ui-att:cmn-Hant-TW:cmn:34bi7vv5gu3d53blxn45ywcefi', 'cmn:34bi7vv5gu3d53blxn45ywcefi', 'cmn-Hant-TW', NULL, NULL, NULL);
+VALUES ('ui-att:cmn-Hant-TW:cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'cmn-Hant-TW', NULL, NULL, NULL);
 
 -- contribute.minRows
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by)
@@ -13065,13 +13065,13 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:cwhfh253keror4pve5n4sot354:spa:izhvgf3ny6236mbdas6qpqm4du', 'jpn:cwhfh253keror4pve5n4sot354', 'spa:izhvgf3ny6236mbdas6qpqm4du', 0, 'translation', NULL);
 
 -- Clique: contribute.locale
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:34bi7vv5gu3d53blxn45ywcefi:cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'cmn:34bi7vv5gu3d53blxn45ywcefi', 'cmn:t5x64gv2c6swlbv7c2txwb5ru4', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:34bi7vv5gu3d53blxn45ywcefi:eng:zi64mexupy4rhn47ndvmmvovsa', 'cmn:34bi7vv5gu3d53blxn45ywcefi', 'eng:zi64mexupy4rhn47ndvmmvovsa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:34bi7vv5gu3d53blxn45ywcefi:jpn:s2bluo4s66uwciradsxui6gw2q', 'cmn:34bi7vv5gu3d53blxn45ywcefi', 'jpn:s2bluo4s66uwciradsxui6gw2q', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:34bi7vv5gu3d53blxn45ywcefi:spa:plu5igbvhm4z7iozibgfdb4uhq', 'cmn:34bi7vv5gu3d53blxn45ywcefi', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:t5x64gv2c6swlbv7c2txwb5ru4:eng:zi64mexupy4rhn47ndvmmvovsa', 'cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'eng:zi64mexupy4rhn47ndvmmvovsa', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:t5x64gv2c6swlbv7c2txwb5ru4:jpn:s2bluo4s66uwciradsxui6gw2q', 'cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'jpn:s2bluo4s66uwciradsxui6gw2q', 0, 'translation', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:t5x64gv2c6swlbv7c2txwb5ru4:spa:plu5igbvhm4z7iozibgfdb4uhq', 'cmn:t5x64gv2c6swlbv7c2txwb5ru4', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:5z3nbfnbbyezrqf4xvjmdeagke:cmn:kszclf7n6cwq242zm7leqkazi4', 'cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'cmn:kszclf7n6cwq242zm7leqkazi4', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:5z3nbfnbbyezrqf4xvjmdeagke:eng:zi64mexupy4rhn47ndvmmvovsa', 'cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'eng:zi64mexupy4rhn47ndvmmvovsa', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:5z3nbfnbbyezrqf4xvjmdeagke:jpn:s2bluo4s66uwciradsxui6gw2q', 'cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'jpn:s2bluo4s66uwciradsxui6gw2q', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:5z3nbfnbbyezrqf4xvjmdeagke:spa:plu5igbvhm4z7iozibgfdb4uhq', 'cmn:5z3nbfnbbyezrqf4xvjmdeagke', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:kszclf7n6cwq242zm7leqkazi4:eng:zi64mexupy4rhn47ndvmmvovsa', 'cmn:kszclf7n6cwq242zm7leqkazi4', 'eng:zi64mexupy4rhn47ndvmmvovsa', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:kszclf7n6cwq242zm7leqkazi4:jpn:s2bluo4s66uwciradsxui6gw2q', 'cmn:kszclf7n6cwq242zm7leqkazi4', 'jpn:s2bluo4s66uwciradsxui6gw2q', 0, 'translation', NULL);
+INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:cmn:kszclf7n6cwq242zm7leqkazi4:spa:plu5igbvhm4z7iozibgfdb4uhq', 'cmn:kszclf7n6cwq242zm7leqkazi4', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:zi64mexupy4rhn47ndvmmvovsa:jpn:s2bluo4s66uwciradsxui6gw2q', 'eng:zi64mexupy4rhn47ndvmmvovsa', 'jpn:s2bluo4s66uwciradsxui6gw2q', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:eng:zi64mexupy4rhn47ndvmmvovsa:spa:plu5igbvhm4z7iozibgfdb4uhq', 'eng:zi64mexupy4rhn47ndvmmvovsa', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('ui-edge:jpn:s2bluo4s66uwciradsxui6gw2q:spa:plu5igbvhm4z7iozibgfdb4uhq', 'jpn:s2bluo4s66uwciradsxui6gw2q', 'spa:plu5igbvhm4z7iozibgfdb4uhq', 0, 'translation', NULL);

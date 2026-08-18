@@ -57,7 +57,7 @@
   "contribute.title": "批量提交",
   "contribute.lead": "提交含义相同的词句。系统会在每对之间创建直接映射。复数、过去式、敬体等词形变化请到词句映射页，不要在这里提交。",
   "contribute.language": "语言",
-  "contribute.locale": "语言",
+  "contribute.locale": "语言环境",
   "contribute.expression": "词句",
   "contribute.tags": "标签",
   "contribute.delete": "删除",

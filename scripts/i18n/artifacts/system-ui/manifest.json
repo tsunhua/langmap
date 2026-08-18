@@ -22,11 +22,11 @@
     "locales": {
       "cmn-Hans-CN": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans-CN.json",
-        "sha256": "1d741b91e8646f548c64655bc250d11030b4e756c7c099a788dbedf69d1933d6"
+        "sha256": "9c27dcdaa4ac9f95c115b4914fe81dca71fb38fffad8c212f55241afafcde3d1"
       },
       "cmn-Hant-TW": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant-TW.json",
-        "sha256": "3959f7e29946486bc1ebf211f10d22e03d4b994252f752a35d41f620230a43f8"
+        "sha256": "c8ca407f7a7c82e40f26deaed0cfdb7262005855a8186feb532bda63b492888f"
       },
       "spa-Latn-ES": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/spa-Latn-ES.json",
@@ -41,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "dfdb948b9690c4dd0ff05bf1994a34aee9280a69d0f7f1b4254c77c23b465832"
+      "sha256": "7ed3e59cdd25ec07aed9d57ececf7164b5a9cfa67ed9454f9b72e5ac88726e34"
     }
   }
 }
