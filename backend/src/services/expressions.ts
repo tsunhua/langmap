@@ -1,7 +1,9 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { ExpressionRow, LocaleAttestationRow, ReadingRow } from '../types/expression';
+import type { SearchFormOfDto } from '../types/morphology';
 import { buildExpressionId, canonicalizeExpressionText, computeTextHash } from './expressionIdentity';
 import { resolveLanguageNames, type LocaleHints } from './localizedName';
+import { attachFormOf } from './morphology';
 import { SourceError } from './sources';
 import { NULL_SAFE_PROVENANCE_PREDICATE, resolveProvenance, type SourceInput } from './provenance';
 
@@ -82,7 +84,7 @@ export async function createExpression(
 export async function searchExpressions(
   db: D1Database,
   query: { q: string; lang_code?: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; hints?: LocaleHints },
-): Promise<{ items: Array<ExpressionRow & { language_name: string }>; total: number }> {
+): Promise<{ items: Array<ExpressionRow & { language_name: string; form_of: SearchFormOfDto[] }>; total: number }> {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
   if (query.q) {
@@ -111,7 +113,15 @@ export async function searchExpressions(
     .bind(...params, query.limit, query.offset)
     .all<ExpressionRow>();
   const names = await resolveLanguageNames(db, results.map((item) => item.lang_code), query.hints ?? {});
-  return { items: results.map((item) => ({ ...item, language_name: names.get(item.lang_code) ?? '' })), total: countRow?.total ?? 0 };
+  const formOf = await attachFormOf(db, results.map((item) => item.id), query.hints ?? {});
+  return {
+    items: results.map((item) => ({
+      ...item,
+      language_name: names.get(item.lang_code) ?? '',
+      form_of: formOf.get(item.id) ?? [],
+    })),
+    total: countRow?.total ?? 0,
+  };
 }
 
 export async function getExpression(

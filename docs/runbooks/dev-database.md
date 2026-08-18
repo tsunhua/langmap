@@ -14,8 +14,9 @@
 ```
 
 `dev.sh` 預設依 fingerprint 判斷是否重建；`--no-rebuild` 可在 CI 或診斷時禁止
-自動重建。重建會使用 schema、locked migrations、language registry 與 system UI
-bundle 建立 repo 專屬本地 D1，成功驗證後才替換 active state。
+自動重建。重建會使用 schema、locked migrations、language registry、system UI
+bundle 與本機開發帳號（`dev@example.com` / `dev`）建立 repo 專屬本地 D1，成功
+驗證後才替換 active state。此帳號不進入 production migration。
 
 ## 失敗處理
 

@@ -12,6 +12,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
+import type { SearchFormOf } from '@/api/expressions'
 
 const route = useRoute()
 const { search } = useSearch()
@@ -29,6 +30,7 @@ interface SearchResult {
   mapping_count?: number
   source_type?: string
   region_name?: string
+  form_of?: SearchFormOf[]
 }
 const query = ref((route.query.q as string) || '')
 const langs = ref<string[]>([])

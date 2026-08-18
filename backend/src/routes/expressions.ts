@@ -17,6 +17,7 @@ import { parseLocaleHints, resolveLocaleNames } from '../services/localizedName'
 import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
+import { MorphologyError, createFormEdge, getExpressionFormEdges } from '../services/morphology';
 import type { Bindings, Variables } from '../types';
 
 const expressions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -214,6 +215,67 @@ expressions.get('/:id/mappings', async (c) => {
   );
   if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   return success(c, graph);
+});
+
+expressions.post('/:id/form-edges', requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const id = c.req.param('id') ?? '';
+    const body = await c.req.json().catch(() => ({}));
+    const lemmaExpressionId = typeof body?.lemma_expression_id === 'string' ? body.lemma_expression_id.trim() : '';
+    if (!lemmaExpressionId) {
+      return badRequest(c, 'VALIDATION_FAILED', 'lemma_expression_id is required');
+    }
+    let features: string[] | undefined;
+    if (body?.features !== undefined) {
+      if (!Array.isArray(body.features) || body.features.some((item: unknown) => typeof item !== 'string')) {
+        return badRequest(c, 'VALIDATION_FAILED', 'features must be an array of strings');
+      }
+      features = body.features;
+    }
+    try {
+      const result = await createFormEdge(c.env.DB, {
+        formId: id,
+        lemmaId: lemmaExpressionId,
+        ...(features !== undefined ? { features } : {}),
+        source: 'contribution',
+        createdBy: user?.id ?? 0,
+        hints: parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+      });
+      return result.created ? created(c, result, 'Form edge created') : success(c, result, 'Form edge already exists');
+    } catch (error) {
+      if (error instanceof MorphologyError) {
+        if (error.code === 'EXPRESSION_NOT_FOUND') return notFoundCode(c, error.code, 'Expression not found');
+        return badRequest(c, error.code, error.code);
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Create form edge error:', error);
+    return internalError(c);
+  }
+});
+
+expressions.get('/:id/form-edges', async (c) => {
+  try {
+    const id = c.req.param('id') ?? '';
+    const query = parseReferenceQuery({
+      q: '',
+      limit: c.req.query('limit'),
+      offset: c.req.query('offset'),
+    });
+    const data = await getExpressionFormEdges(c.env.DB, id, {
+      limit: query.limit,
+      hints: parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+    });
+    return success(c, data);
+  } catch (error) {
+    if (error instanceof MorphologyError) {
+      if (error.code === 'EXPRESSION_NOT_FOUND') return notFoundCode(c, error.code, 'Expression not found');
+      return badRequest(c, error.code, error.code);
+    }
+    throw error;
+  }
 });
 
 expressions.get('/:id/edges', async (c) => {

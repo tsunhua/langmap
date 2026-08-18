@@ -69,6 +69,30 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?previous_a_id[\s\S]*?new_a_id/s);
   });
 
+  it('defines morphological form-edge tables with registry, checks and indexes', () => {
+    expect(schema).toMatch(/CREATE TABLE morphological_dimensions/);
+    expect(schema).toMatch(/CREATE TABLE morphological_features/);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges/);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edge_features/);
+
+    expect(schema).toMatch(/CREATE TABLE morphological_dimensions[\s\S]*?name_expression_id TEXT NOT NULL[\s\S]*?UNIQUE \(sort_order\)/s);
+    expect(schema).toMatch(/CREATE TABLE morphological_features[\s\S]*?name_expression_id TEXT NOT NULL[\s\S]*?UNIQUE \(dimension_code, sort_order\)/s);
+
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?CHECK \(form_id <> lemma_id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?CHECK \(pair_low < pair_high\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?UNIQUE \(form_id, lemma_id\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?UNIQUE \(pair_low, pair_high\)/s);
+
+    expect(schema).toMatch(/CREATE TABLE expression_form_edge_features[\s\S]*?PRIMARY KEY \(edge_id, feature_code\)/s);
+
+    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edges\(form_id\)/);
+    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edges\(lemma_id\)/);
+    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edge_features\(feature_code\)/);
+
+    expect(schema).toMatch(/INSERT OR IGNORE INTO morphological_dimensions/);
+    expect(schema).toMatch(/INSERT OR IGNORE INTO morphological_features/);
+  });
+
   it('seeds the system-split source for split provenance', () => {
     expect(schema).toMatch(/system-split/);
   });

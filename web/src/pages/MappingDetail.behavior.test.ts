@@ -81,6 +81,7 @@ function mountPage() {
         GraphInspector: passiveComponent,
         GraphMobileInspector: passiveComponent,
         ExpressionSplitDialog: passiveComponent,
+        MorphologyPanel: passiveComponent,
         LangBadge: passiveComponent,
       },
     },

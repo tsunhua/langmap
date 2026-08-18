@@ -8,6 +8,7 @@ import languageLocales from './languageLocales';
 import languages from './languages';
 import languageRegistry from './languageRegistry';
 import localization from './localization';
+import morphology from './morphology';
 import preferences from './preferences';
 import users from './users';
 
@@ -22,6 +23,7 @@ api.route('/handbooks', handbooks);
 api.route('/preferences', preferences);
 api.route('/contributions', contributions);
 api.route('/localization', localization);
+api.route('/morphological-features', morphology);
 api.route('/users', users);
 
 export default api;

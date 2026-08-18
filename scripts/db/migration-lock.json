@@ -115,6 +115,18 @@
       "filename": "0019_language_name_expression_id.sql",
       "size": 592,
       "sha256": "cfa3c5ca240d8de7acd7f95691d7400403d60cceeb2a148aa918b663bc0bd688"
+    },
+    {
+      "sequence": 20,
+      "filename": "0020_morphological_form_edges.sql",
+      "size": 175435,
+      "sha256": "6053855b52afd2b7d4c0c2e3051680ef132a07b4324ae91a7a7e4c1937805fa1"
+    },
+    {
+      "sequence": 21,
+      "filename": "0021_add_positive_polarity.sql",
+      "size": 3691,
+      "sha256": "1cded23dc7abf351725c9eb633b423ad3f4ebb295067c6c52b047e3ea1863a43"
     }
   ]
 }

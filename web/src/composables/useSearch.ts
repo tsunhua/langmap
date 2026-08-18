@@ -10,7 +10,15 @@ export function useSearch() {
     error.value = null
     try {
       const { data } = await api.get('/expressions/search', {
-        params: { q, lang_code: params.lang, sort: params.sort, limit: params.limit, offset: params.offset },
+        params: {
+          q,
+          lang_code: params.lang,
+          sort: params.sort,
+          limit: params.limit,
+          offset: params.offset,
+          ...(params.ui_locale ? { ui_locale: params.ui_locale } : {}),
+          ...(params.secondary_ui_locale ? { secondary_ui_locale: params.secondary_ui_locale } : {}),
+        },
       })
       return data.data
     } catch (e: any) {

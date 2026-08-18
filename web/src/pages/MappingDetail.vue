@@ -9,6 +9,7 @@ import MappingHierarchyList from '@/components/mapping/MappingHierarchyList.vue'
 import GraphInspector from '@/components/mapping/GraphInspector.vue'
 import GraphMobileInspector from '@/components/mapping/GraphMobileInspector.vue'
 import ExpressionSplitDialog from '@/components/mapping/ExpressionSplitDialog.vue'
+import MorphologyPanel from '@/components/mapping/MorphologyPanel.vue'
 import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
 import LangBadge from '@/components/expression/LangBadge.vue'
@@ -385,6 +386,8 @@ const sourceLabel = computed(() => {
         </button>
       </div>
     </section>
+
+    <MorphologyPanel :expression-id="id" :lang-code="expr.expression.lang_code" />
 
     <div class="nb-head">
       <h2>{{ t('mappingDetail.mappingSet') }}</h2>

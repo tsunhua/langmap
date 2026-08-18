@@ -45,7 +45,7 @@ describe('Search page', () => {
     await flushPromises()
 
     expect(api.get).toHaveBeenLastCalledWith('/expressions/search', {
-      params: { q: 'first', lang_code: undefined, sort: 'new', limit: 20, offset: 0 },
+      params: { q: 'first', lang_code: undefined, sort: 'new', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
     })
   })
 
@@ -85,5 +85,25 @@ describe('Search page', () => {
 
     expect(wrapper.text()).toContain('First')
     expect(wrapper.get('[role="alert"]').text()).toBe('More results unavailable')
+  })
+
+  it('forwards form_of onto the result row', async () => {
+    vi.mocked(api.get).mockImplementation((path: string) => {
+      if (path === '/language-registry/languages') return Promise.resolve(page([]))
+      if (path === '/expressions/search') {
+        return Promise.resolve(page([{
+          ...expression('spa:gatas', 'gatas'),
+          lang_code: 'spa',
+          form_of: [{
+            lemma: { id: 'spa:gato', text: 'gato', lang_code: 'spa' },
+            features: [{ code: 'plural', name: 'plural' }],
+          }],
+        }]))
+      }
+      throw new Error(`unexpected ${path}`)
+    })
+    const wrapper = await mountPage('gatas')
+    await flushPromises()
+    expect(wrapper.get('.ex-form').text()).toBe('plural ← gato')
   })
 })

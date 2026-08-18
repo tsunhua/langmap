@@ -188,6 +188,7 @@ describe('searchExpressions', () => {
     const result = await searchExpressions(db, { q: '食', sort: 'alpha', limit: 20, offset: 0 });
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.text)).toEqual(['食', '食飯']);
+    expect(result.items.map((item) => item.form_of)).toEqual([[], []]);
   });
 
   it('filters by lang_code when provided', async () => {
@@ -234,6 +235,41 @@ describe('searchExpressions', () => {
     });
     const result = await searchExpressions(db, { q: '', sort: 'alpha', limit: 20, offset: 0, hints: { primary: 'cmn-Hans-CN' } });
     expect(result.items[0].language_name).toBe('Mandarin Chinese');
+    expect(result.items[0].form_of).toEqual([]);
+  });
+
+  it('attaches form_of with one batch IN query, not per hit', async () => {
+    const rows = [
+      { id: 'spa:aaaa', lang_code: 'spa', text: 'gatas', text_hash: 'aaaa', homograph_index: 1, description: '', tags_json: '[]', source_id: null, source_ref: null, review_status: 'pending', created_by: 1, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00' },
+      { id: 'spa:bbbb', lang_code: 'spa', text: 'gatos', text_hash: 'bbbb', homograph_index: 1, description: '', tags_json: '[]', source_id: null, source_ref: null, review_status: 'pending', created_by: 1, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00' },
+    ];
+    const observedSql: string[] = [];
+    const db = {
+      prepare(sql: string) {
+        observedSql.push(sql);
+        return {
+          bind() {
+            return {
+              async first() {
+                return { total: 2 };
+              },
+              async all() {
+                if (sql.includes('LIMIT ? OFFSET ?')) return { results: rows };
+                return { results: [] };
+              },
+            };
+          },
+        };
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
+
+    const result = await searchExpressions(db, { q: 'gat', sort: 'alpha', limit: 20, offset: 0 });
+    const formQueries = observedSql.filter((sql) => sql.includes('expression_form_edges'));
+    expect(formQueries).toHaveLength(1);
+    expect(formQueries[0]).toContain('form_id IN');
+    expect(formQueries[0]).toContain('json_each');
+    expect(formQueries[0]).not.toContain('form_id = ?');
+    expect(result.items.every((item) => Array.isArray(item.form_of))).toBe(true);
   });
 });
 

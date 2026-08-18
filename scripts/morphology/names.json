@@ -1,0 +1,324 @@
+{
+  "gender": {
+    "eng-Latn-US": "gender",
+    "cmn-Hans-CN": "性",
+    "cmn-Hant-TW": "性",
+    "jpn-Jpan-JP": "性",
+    "spa-Latn-ES": "género"
+  },
+  "number": {
+    "eng-Latn-US": "number",
+    "cmn-Hans-CN": "数",
+    "cmn-Hant-TW": "數",
+    "jpn-Jpan-JP": "数",
+    "spa-Latn-ES": "número"
+  },
+  "person": {
+    "eng-Latn-US": "person",
+    "cmn-Hans-CN": "人称",
+    "cmn-Hant-TW": "人稱",
+    "jpn-Jpan-JP": "人称",
+    "spa-Latn-ES": "persona"
+  },
+  "tense": {
+    "eng-Latn-US": "tense",
+    "cmn-Hans-CN": "时态",
+    "cmn-Hant-TW": "時態",
+    "jpn-Jpan-JP": "時制",
+    "spa-Latn-ES": "tiempo"
+  },
+  "mood": {
+    "eng-Latn-US": "mood",
+    "cmn-Hans-CN": "语气",
+    "cmn-Hant-TW": "語氣",
+    "jpn-Jpan-JP": "法",
+    "spa-Latn-ES": "modo"
+  },
+  "nonfinite": {
+    "eng-Latn-US": "non-finite",
+    "cmn-Hans-CN": "非限定",
+    "cmn-Hant-TW": "非限定",
+    "jpn-Jpan-JP": "非定形",
+    "spa-Latn-ES": "no finito"
+  },
+  "degree": {
+    "eng-Latn-US": "degree",
+    "cmn-Hans-CN": "程度",
+    "cmn-Hant-TW": "程度",
+    "jpn-Jpan-JP": "程度",
+    "spa-Latn-ES": "grado"
+  },
+  "polarity": {
+    "eng-Latn-US": "polarity",
+    "cmn-Hans-CN": "极性",
+    "cmn-Hant-TW": "極性",
+    "jpn-Jpan-JP": "極性",
+    "spa-Latn-ES": "polaridad"
+  },
+  "politeness": {
+    "eng-Latn-US": "politeness",
+    "cmn-Hans-CN": "敬体",
+    "cmn-Hant-TW": "敬體",
+    "jpn-Jpan-JP": "丁寧",
+    "spa-Latn-ES": "cortesía"
+  },
+  "voice": {
+    "eng-Latn-US": "voice",
+    "cmn-Hans-CN": "语态",
+    "cmn-Hant-TW": "語態",
+    "jpn-Jpan-JP": "態",
+    "spa-Latn-ES": "voz"
+  },
+  "construction": {
+    "eng-Latn-US": "construction",
+    "cmn-Hans-CN": "构式",
+    "cmn-Hant-TW": "構式",
+    "jpn-Jpan-JP": "活用形",
+    "spa-Latn-ES": "construcción"
+  },
+  "aspect": {
+    "eng-Latn-US": "aspect",
+    "cmn-Hans-CN": "体",
+    "cmn-Hant-TW": "體",
+    "jpn-Jpan-JP": "相",
+    "spa-Latn-ES": "aspecto"
+  },
+  "person-variant": {
+    "eng-Latn-US": "person variant",
+    "cmn-Hans-CN": "人称变体",
+    "cmn-Hant-TW": "人稱變體",
+    "jpn-Jpan-JP": "人称の変異",
+    "spa-Latn-ES": "variante de persona"
+  },
+  "masculine": {
+    "eng-Latn-US": "masculine",
+    "cmn-Hans-CN": "阳性",
+    "cmn-Hant-TW": "陽性",
+    "jpn-Jpan-JP": "男性",
+    "spa-Latn-ES": "masculino"
+  },
+  "feminine": {
+    "eng-Latn-US": "feminine",
+    "cmn-Hans-CN": "阴性",
+    "cmn-Hant-TW": "陰性",
+    "jpn-Jpan-JP": "女性",
+    "spa-Latn-ES": "femenino"
+  },
+  "neuter": {
+    "eng-Latn-US": "neuter",
+    "cmn-Hans-CN": "中性",
+    "cmn-Hant-TW": "中性",
+    "jpn-Jpan-JP": "中性",
+    "spa-Latn-ES": "neutro"
+  },
+  "singular": {
+    "eng-Latn-US": "singular",
+    "cmn-Hans-CN": "单数",
+    "cmn-Hant-TW": "單數",
+    "jpn-Jpan-JP": "単数",
+    "spa-Latn-ES": "singular"
+  },
+  "plural": {
+    "eng-Latn-US": "plural",
+    "cmn-Hans-CN": "复数",
+    "cmn-Hant-TW": "複數",
+    "jpn-Jpan-JP": "複数",
+    "spa-Latn-ES": "plural"
+  },
+  "person-1": {
+    "eng-Latn-US": "first person",
+    "cmn-Hans-CN": "第一人称",
+    "cmn-Hant-TW": "第一人稱",
+    "jpn-Jpan-JP": "一人称",
+    "spa-Latn-ES": "primera persona"
+  },
+  "person-2": {
+    "eng-Latn-US": "second person",
+    "cmn-Hans-CN": "第二人称",
+    "cmn-Hant-TW": "第二人稱",
+    "jpn-Jpan-JP": "二人称",
+    "spa-Latn-ES": "segunda persona"
+  },
+  "person-3": {
+    "eng-Latn-US": "third person",
+    "cmn-Hans-CN": "第三人称",
+    "cmn-Hant-TW": "第三人稱",
+    "jpn-Jpan-JP": "三人称",
+    "spa-Latn-ES": "tercera persona"
+  },
+  "present": {
+    "eng-Latn-US": "present",
+    "cmn-Hans-CN": "现在时",
+    "cmn-Hant-TW": "現在時",
+    "jpn-Jpan-JP": "現在",
+    "spa-Latn-ES": "presente"
+  },
+  "past": {
+    "eng-Latn-US": "past",
+    "cmn-Hans-CN": "过去时",
+    "cmn-Hant-TW": "過去時",
+    "jpn-Jpan-JP": "過去",
+    "spa-Latn-ES": "pretérito"
+  },
+  "imperfect": {
+    "eng-Latn-US": "imperfect",
+    "cmn-Hans-CN": "未完成过去时",
+    "cmn-Hant-TW": "未完成過去時",
+    "jpn-Jpan-JP": "未完了過去",
+    "spa-Latn-ES": "imperfecto"
+  },
+  "future": {
+    "eng-Latn-US": "future",
+    "cmn-Hans-CN": "将来时",
+    "cmn-Hant-TW": "將來時",
+    "jpn-Jpan-JP": "未来",
+    "spa-Latn-ES": "futuro"
+  },
+  "indicative": {
+    "eng-Latn-US": "indicative",
+    "cmn-Hans-CN": "直陈式",
+    "cmn-Hant-TW": "直陳式",
+    "jpn-Jpan-JP": "直説法",
+    "spa-Latn-ES": "indicativo"
+  },
+  "subjunctive": {
+    "eng-Latn-US": "subjunctive",
+    "cmn-Hans-CN": "虚拟式",
+    "cmn-Hant-TW": "虛擬式",
+    "jpn-Jpan-JP": "接続法",
+    "spa-Latn-ES": "subjuntivo"
+  },
+  "imperative": {
+    "eng-Latn-US": "imperative",
+    "cmn-Hans-CN": "命令式",
+    "cmn-Hant-TW": "命令式",
+    "jpn-Jpan-JP": "命令法",
+    "spa-Latn-ES": "imperativo"
+  },
+  "conditional": {
+    "eng-Latn-US": "conditional",
+    "cmn-Hans-CN": "条件式",
+    "cmn-Hant-TW": "條件式",
+    "jpn-Jpan-JP": "条件法",
+    "spa-Latn-ES": "condicional"
+  },
+  "infinitive": {
+    "eng-Latn-US": "infinitive",
+    "cmn-Hans-CN": "不定式",
+    "cmn-Hant-TW": "不定式",
+    "jpn-Jpan-JP": "不定詞",
+    "spa-Latn-ES": "infinitivo"
+  },
+  "gerund": {
+    "eng-Latn-US": "gerund",
+    "cmn-Hans-CN": "动名词",
+    "cmn-Hant-TW": "動名詞",
+    "jpn-Jpan-JP": "動名詞",
+    "spa-Latn-ES": "gerundio"
+  },
+  "past-participle": {
+    "eng-Latn-US": "past participle",
+    "cmn-Hans-CN": "过去分词",
+    "cmn-Hant-TW": "過去分詞",
+    "jpn-Jpan-JP": "過去分詞",
+    "spa-Latn-ES": "participio"
+  },
+  "comparative": {
+    "eng-Latn-US": "comparative",
+    "cmn-Hans-CN": "比较级",
+    "cmn-Hant-TW": "比較級",
+    "jpn-Jpan-JP": "比較級",
+    "spa-Latn-ES": "comparativo"
+  },
+  "superlative": {
+    "eng-Latn-US": "superlative",
+    "cmn-Hans-CN": "最高级",
+    "cmn-Hant-TW": "最高級",
+    "jpn-Jpan-JP": "最上級",
+    "spa-Latn-ES": "superlativo"
+  },
+  "negative": {
+    "eng-Latn-US": "negative",
+    "cmn-Hans-CN": "否定",
+    "cmn-Hant-TW": "否定",
+    "jpn-Jpan-JP": "否定",
+    "spa-Latn-ES": "negativo"
+  },
+  "positive": {
+    "eng-Latn-US": "positive",
+    "cmn-Hans-CN": "肯定",
+    "cmn-Hant-TW": "肯定",
+    "jpn-Jpan-JP": "肯定",
+    "spa-Latn-ES": "positivo"
+  },
+  "polite": {
+    "eng-Latn-US": "polite",
+    "cmn-Hans-CN": "敬体",
+    "cmn-Hant-TW": "敬體",
+    "jpn-Jpan-JP": "丁寧",
+    "spa-Latn-ES": "cortés"
+  },
+  "passive": {
+    "eng-Latn-US": "passive",
+    "cmn-Hans-CN": "被动",
+    "cmn-Hant-TW": "被動",
+    "jpn-Jpan-JP": "受身",
+    "spa-Latn-ES": "pasivo"
+  },
+  "causative": {
+    "eng-Latn-US": "causative",
+    "cmn-Hans-CN": "使役",
+    "cmn-Hant-TW": "使役",
+    "jpn-Jpan-JP": "使役",
+    "spa-Latn-ES": "causativo"
+  },
+  "te-form": {
+    "eng-Latn-US": "te-form",
+    "cmn-Hans-CN": "て形",
+    "cmn-Hant-TW": "て形",
+    "jpn-Jpan-JP": "て形",
+    "spa-Latn-ES": "forma te"
+  },
+  "potential": {
+    "eng-Latn-US": "potential",
+    "cmn-Hans-CN": "可能形",
+    "cmn-Hant-TW": "可能形",
+    "jpn-Jpan-JP": "可能形",
+    "spa-Latn-ES": "potencial"
+  },
+  "volitional": {
+    "eng-Latn-US": "volitional",
+    "cmn-Hans-CN": "意志形",
+    "cmn-Hant-TW": "意志形",
+    "jpn-Jpan-JP": "意向形",
+    "spa-Latn-ES": "volitivo"
+  },
+  "desiderative": {
+    "eng-Latn-US": "desiderative",
+    "cmn-Hans-CN": "希望形",
+    "cmn-Hant-TW": "希望形",
+    "jpn-Jpan-JP": "希望形",
+    "spa-Latn-ES": "desiderativo"
+  },
+  "progressive": {
+    "eng-Latn-US": "progressive",
+    "cmn-Hans-CN": "进行体",
+    "cmn-Hant-TW": "進行體",
+    "jpn-Jpan-JP": "進行形",
+    "spa-Latn-ES": "progresivo"
+  },
+  "perfect": {
+    "eng-Latn-US": "perfect",
+    "cmn-Hans-CN": "完成体",
+    "cmn-Hant-TW": "完成體",
+    "jpn-Jpan-JP": "完了",
+    "spa-Latn-ES": "perfecto"
+  },
+  "voseo": {
+    "eng-Latn-US": "voseo",
+    "cmn-Hans-CN": "沃塞奥",
+    "cmn-Hant-TW": "沃塞奧",
+    "jpn-Jpan-JP": "ボセオ",
+    "spa-Latn-ES": "voseo"
+  }
+}

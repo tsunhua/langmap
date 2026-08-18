@@ -116,6 +116,65 @@ async function loadCandidateMap(
   return selected;
 }
 
+const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT value FROM json_each(?))';
+
+interface ExpressionNameResolution {
+  name: string;
+  name_en: string;
+  resolved_from: 'primary' | 'secondary' | 'fallback';
+}
+
+async function resolveExpressionDisplayNames(
+  db: D1Database,
+  ids: readonly string[],
+  hints: LocaleHints,
+): Promise<Map<string, ExpressionNameResolution>> {
+  const results = new Map<string, ExpressionNameResolution>();
+  const distinct = [...new Set(ids.filter(Boolean))];
+  if (distinct.length === 0) return results;
+
+  const { results: expressionRows } = await db
+    .prepare(EXPRESSIONS_SQL)
+    .bind(JSON.stringify(distinct))
+    .all<{ id: string; text: string }>();
+  const expressions = new Map(expressionRows.map((row) => [row.id, row.text]));
+
+  const localeCodes = parseLocaleCodes(hints);
+  const localeLangCodes = localeCodes.length > 0 ? await loadLocaleLangCodes(db, localeCodes) : new Map<string, string>();
+  const primaryMap = localeCodes.length > 0
+    ? await loadCandidateMap(db, distinct, localeLangCodes.get(localeCodes[0]) ?? '', localeCodes[0])
+    : new Map<string, string>();
+  const secondaryMap = localeCodes.length > 1
+    ? await loadCandidateMap(db, distinct, localeLangCodes.get(localeCodes[1]) ?? '', localeCodes[1])
+    : new Map<string, string>();
+
+  for (const id of distinct) {
+    const text = expressions.get(id);
+    const primary = primaryMap.get(id);
+    const secondary = secondaryMap.get(id);
+    if (primary !== undefined) {
+      results.set(id, { name: primary, name_en: text ?? '', resolved_from: 'primary' });
+      continue;
+    }
+    if (secondary !== undefined) {
+      results.set(id, { name: secondary, name_en: text ?? '', resolved_from: 'secondary' });
+      continue;
+    }
+    if (text === undefined) continue;
+    results.set(id, { name: text, name_en: text, resolved_from: 'fallback' });
+  }
+  return results;
+}
+
+export async function resolveNamesByExpressionIds(
+  db: D1Database,
+  ids: readonly string[],
+  hints: LocaleHints,
+): Promise<Map<string, { name: string; name_en: string }>> {
+  const resolved = await resolveExpressionDisplayNames(db, ids, hints);
+  return new Map([...resolved].map(([id, { name, name_en }]) => [id, { name, name_en }]));
+}
+
 function fallbackName(kind: IdentityKind, row: IdentityRow | undefined, identityCode: string): string {
   if (!row) return identityCode;
   if (kind === 'language') return row.name_en || identityCode;
@@ -131,33 +190,21 @@ export async function resolveLocalizedNames(
   if (requests.length === 0) return results;
 
   const identities = await loadIdentities(db, requests);
-  const localeCodes = parseLocaleCodes(hints);
   const sourceIds = [
     ...new Set(requests.map((r) => identities.get(r.identityCode)?.name_expression_id).filter((id): id is string => Boolean(id))),
   ];
-
-  const localeLangCodes = localeCodes.length > 0 ? await loadLocaleLangCodes(db, localeCodes) : new Map<string, string>();
-  const primaryMap = localeCodes.length > 0
-    ? await loadCandidateMap(db, sourceIds, localeLangCodes.get(localeCodes[0]) ?? '', localeCodes[0])
-    : new Map<string, string>();
-  const secondaryMap = localeCodes.length > 1
-    ? await loadCandidateMap(db, sourceIds, localeLangCodes.get(localeCodes[1]) ?? '', localeCodes[1])
-    : new Map<string, string>();
+  const resolvedNames = await resolveExpressionDisplayNames(db, sourceIds, hints);
 
   for (const request of requests) {
     const row = identities.get(request.identityCode);
     const expressionId = row?.name_expression_id;
-    const resolved = expressionId ? (primaryMap.get(expressionId) ?? secondaryMap.get(expressionId)) : undefined;
+    const resolved = expressionId ? resolvedNames.get(expressionId) : undefined;
+    const translated = resolved && resolved.resolved_from !== 'fallback' ? resolved.name : undefined;
     results.set(request.identityCode, {
       lang_code: request.langCode,
-      name: resolved ?? fallbackName(request.kind, row, request.identityCode),
+      name: translated ?? fallbackName(request.kind, row, request.identityCode),
       name_en: row?.name_en ?? request.identityCode,
-      resolved_from:
-        expressionId && primaryMap.has(expressionId)
-          ? 'primary'
-          : expressionId && secondaryMap.has(expressionId)
-            ? 'secondary'
-            : 'fallback',
+      resolved_from: resolved && resolved.resolved_from !== 'fallback' ? resolved.resolved_from : 'fallback',
     });
   }
   return results;

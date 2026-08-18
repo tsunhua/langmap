@@ -127,6 +127,10 @@ class ProjectPaths:
         )
 
     @property
+    def local_dev_user_sql_path(self) -> Path:
+        return self.repo_root / "scripts" / "db" / "local-dev-user.sql"
+
+    @property
     def local_verification_report_path(self) -> Path:
         return self.local_state_dir / "verification-report.json"
 

@@ -189,6 +189,7 @@ printf '%s\n' "$FRONTEND_PID" > "$FRONTEND_PIDFILE"
 
 echo ""
 echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${BACKEND_PORT}）"
+echo "▶ 本機帳號：dev@example.com / dev（僅 local D1）"
 echo "按 Ctrl+C 停止"
 
 wait "$BACKEND_PID" "$FRONTEND_PID"

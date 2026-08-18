@@ -1,240 +1,6 @@
--- ⚠ Local dev only: managed by scripts/db (manage.py local rebuild).
--- Must stay equivalent to backend/migrations/ applied in order (AGENTS.md).
-
-DROP TABLE IF EXISTS expressions_fts;
-DROP TABLE IF EXISTS handbook_section_items;
-DROP TABLE IF EXISTS handbook_sections;
-DROP TABLE IF EXISTS handbooks;
-DROP TABLE IF EXISTS votes;
-DROP TABLE IF EXISTS expression_versions;
-DROP TABLE IF EXISTS expression_split_moves;
-DROP TABLE IF EXISTS expression_splits;
-DROP TABLE IF EXISTS expression_edges;
-DROP TABLE IF EXISTS expression_readings;
-DROP TABLE IF EXISTS user_preferences;
-DROP TABLE IF EXISTS expression_locale_attestations;
-DROP TABLE IF EXISTS expression_form_edge_features;
-DROP TABLE IF EXISTS expression_form_edges;
-DROP TABLE IF EXISTS morphological_features;
-DROP TABLE IF EXISTS morphological_dimensions;
-DROP TABLE IF EXISTS expressions;
-DROP TABLE IF EXISTS ui_messages;
-DROP TABLE IF EXISTS ui_locales;
-DROP TABLE IF EXISTS language_locations;
-DROP TABLE IF EXISTS language_profiles;
-DROP TABLE IF EXISTS language_varieties;
-DROP TABLE IF EXISTS language_subtags;
-DROP TABLE IF EXISTS languoids;
-DROP TABLE IF EXISTS email_verification_tokens;
-DROP TABLE IF EXISTS regions;
-DROP TABLE IF EXISTS scripts;
-DROP TABLE IF EXISTS languages;
-DROP TABLE IF EXISTS language_locales;
-DROP TABLE IF EXISTS sources;
-DROP TABLE IF EXISTS users;
-
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user',
-    email_verified INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-
-CREATE TABLE languages (
-    code TEXT PRIMARY KEY,
-    name_en TEXT NOT NULL,
-    name_expression_id TEXT REFERENCES expressions(id)
-);
-
-CREATE TABLE scripts (
-    code TEXT PRIMARY KEY,
-    name_en TEXT NOT NULL,
-    direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl'))
-);
-
-CREATE TABLE regions (
-    code TEXT PRIMARY KEY,
-    name_en TEXT NOT NULL,
-    latitude REAL,
-    longitude REAL,
-    CHECK ((latitude IS NULL) = (longitude IS NULL))
-);
-
-CREATE INDEX idx_languages_code ON languages(code);
-CREATE INDEX idx_scripts_code ON scripts(code);
-CREATE INDEX idx_regions_code ON regions(code);
-
--- Language locale + sources tables (spec §7.2, §7.3).
-
-CREATE TABLE sources (
-  id TEXT PRIMARY KEY,
-  type TEXT NOT NULL CHECK (type IN ('publication', 'url', 'system')),
-  name TEXT NOT NULL,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (type, name),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE language_locales (
-  code TEXT PRIMARY KEY,
-  lang_code TEXT NOT NULL,
-  script_code TEXT NOT NULL,
-  region_code TEXT NOT NULL,
-  place_path TEXT NOT NULL DEFAULT '',
-  name TEXT NOT NULL,
-  name_en TEXT NOT NULL,
-  name_expression_id TEXT REFERENCES expressions(id),
-  latitude REAL,
-  longitude REAL,
-  source_id TEXT,
-  source_ref TEXT,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (lang_code, script_code, region_code, place_path),
-  CHECK ((latitude IS NULL) = (longitude IS NULL)),
-  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  FOREIGN KEY (lang_code) REFERENCES languages(code),
-  FOREIGN KEY (script_code) REFERENCES scripts(code),
-  FOREIGN KEY (region_code) REFERENCES regions(code),
-  FOREIGN KEY (source_id) REFERENCES sources(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
--- Expression identity + locale attestations (spec §8.4, §9.1).
-
-CREATE TABLE expressions (
-  id TEXT PRIMARY KEY,
-  lang_code TEXT NOT NULL,
-  text TEXT NOT NULL,
-  text_hash TEXT NOT NULL,
-  homograph_index INTEGER NOT NULL DEFAULT 1 CHECK (homograph_index >= 1),
-  description TEXT NOT NULL DEFAULT '',
-  tags_json TEXT NOT NULL DEFAULT '[]',
-  source_id TEXT,
-  source_ref TEXT,
-  review_status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (review_status IN ('pending', 'approved', 'rejected')),
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  UNIQUE (lang_code, text, homograph_index),
-  UNIQUE (lang_code, text_hash, homograph_index),
-  FOREIGN KEY (lang_code) REFERENCES languages(code),
-  FOREIGN KEY (source_id) REFERENCES sources(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
--- Registry seeds must follow the expressions table: languages and
--- language_locales reference expressions(id) for name_expression_id, and with
--- foreign_keys enabled a DML on a child table fails while the parent is absent.
--- schema.sql runs before scripts/language-reference/artifacts/language-reference.sql,
--- so the locale seeds below need these registry rows present to satisfy their FKs.
--- Values must match the generated artifact so INSERT OR IGNORE keeps final counts intact.
-
-INSERT OR IGNORE INTO sources (id, type, name) VALUES
-  ('system-seed', 'system', 'LangMap system seeds');
-
-INSERT OR IGNORE INTO languages (code, name_en) VALUES
-  ('eng', 'English'),
-  ('cmn', 'Mandarin Chinese'),
-  ('nan', 'Min Nan Chinese (Hokkien)'),
-  ('spa', 'Spanish'),
-  ('jpn', 'Japanese');
-
-INSERT OR IGNORE INTO scripts (code, name_en, direction) VALUES
-  ('Latn', 'Latin', 'ltr'),
-  ('Hant', 'Han (Traditional variant)', 'ltr'),
-  ('Hans', 'Han (Simplified variant)', 'ltr'),
-  ('Jpan', 'Japanese (alias for Han + Hiragana + Katakana)', 'ltr');
-
-INSERT OR IGNORE INTO regions (code, name_en, latitude, longitude) VALUES
-  ('US', 'United States', 39.8, -98.6),
-  ('TW', 'Taiwan, Province of China', 23.7, 121.0),
-  ('CN', 'China', NULL, NULL),
-  ('ES', 'Spain', NULL, NULL),
-  ('JP', 'Japan', 36.2, 138.3),
-  ('MY', 'Malaysia', NULL, NULL);
-
-INSERT OR IGNORE INTO language_locales
-  (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref)
-VALUES
-  ('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English', 'English (US)', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '華語', 'Taiwan Mandarin', 'system-seed', 'seed:system-seed:1'),
-  ('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '普通话', 'Simplified Chinese', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-CN', 'nan', 'Hant', 'CN', '', '閩南語', 'Min Nan Chinese (Hokkien)', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hans-CN', 'nan', 'Hans', 'CN', '', '闽南语', 'Min Nan Chinese (Hokkien)', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '台語', 'Taiwanese Hokkien', 'system-seed', 'seed:system-seed:1'),
-  ('nan-Hant-MY_Penang', 'nan', 'Hant', 'MY', 'Penang', '福建話', 'Penang Hokkien', 'system-seed', 'seed:system-seed:1'),
-  ('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
-  ('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1');
-
-CREATE TABLE expression_locale_attestations (
-  id TEXT PRIMARY KEY,
-  expression_id TEXT NOT NULL,
-  language_locale_code TEXT NOT NULL,
-  source_id TEXT,
-  source_ref TEXT,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  UNIQUE (expression_id, language_locale_code, source_id, source_ref),
-  FOREIGN KEY (expression_id) REFERENCES expressions(id),
-  FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
-  FOREIGN KEY (source_id) REFERENCES sources(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
--- Mapping edges + split audit tables (spec §10.1, §10.2).
-
-CREATE TABLE expression_edges (
-  id TEXT PRIMARY KEY,
-  expression_a_id TEXT NOT NULL,
-  expression_b_id TEXT NOT NULL,
-  score INTEGER NOT NULL DEFAULT 0,
-  source TEXT NOT NULL,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (expression_a_id < expression_b_id),
-  UNIQUE (expression_a_id, expression_b_id),
-  FOREIGN KEY (expression_a_id) REFERENCES expressions(id),
-  FOREIGN KEY (expression_b_id) REFERENCES expressions(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE expression_splits (
-  id TEXT PRIMARY KEY,
-  source_expression_id TEXT NOT NULL,
-  target_expression_id TEXT NOT NULL,
-  created_by INTEGER NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (source_expression_id) REFERENCES expressions(id),
-  FOREIGN KEY (target_expression_id) REFERENCES expressions(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE expression_split_moves (
-  split_id TEXT NOT NULL,
-  edge_id TEXT NOT NULL,
-  previous_a_id TEXT NOT NULL,
-  previous_b_id TEXT NOT NULL,
-  new_a_id TEXT NOT NULL,
-  new_b_id TEXT NOT NULL,
-  PRIMARY KEY (split_id, edge_id),
-  FOREIGN KEY (split_id) REFERENCES expression_splits(id),
-  FOREIGN KEY (edge_id) REFERENCES expression_edges(id)
-);
-
 -- Morphological form-edge tables (spec §5.1, §5.2).
 
-CREATE TABLE morphological_dimensions (
+CREATE TABLE IF NOT EXISTS morphological_dimensions (
   code TEXT PRIMARY KEY,
   name_expression_id TEXT NOT NULL,
   sort_order INTEGER NOT NULL,
@@ -242,7 +8,7 @@ CREATE TABLE morphological_dimensions (
   FOREIGN KEY (name_expression_id) REFERENCES expressions(id)
 );
 
-CREATE TABLE morphological_features (
+CREATE TABLE IF NOT EXISTS morphological_features (
   code TEXT PRIMARY KEY,
   dimension_code TEXT NOT NULL,
   name_expression_id TEXT NOT NULL,
@@ -252,7 +18,7 @@ CREATE TABLE morphological_features (
   FOREIGN KEY (name_expression_id) REFERENCES expressions(id)
 );
 
-CREATE TABLE expression_form_edges (
+CREATE TABLE IF NOT EXISTS expression_form_edges (
   id TEXT PRIMARY KEY,
   form_id TEXT NOT NULL,
   lemma_id TEXT NOT NULL,
@@ -270,7 +36,7 @@ CREATE TABLE expression_form_edges (
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
-CREATE TABLE expression_form_edge_features (
+CREATE TABLE IF NOT EXISTS expression_form_edge_features (
   edge_id TEXT NOT NULL,
   feature_code TEXT NOT NULL,
   PRIMARY KEY (edge_id, feature_code),
@@ -278,9 +44,9 @@ CREATE TABLE expression_form_edge_features (
   FOREIGN KEY (feature_code) REFERENCES morphological_features(code)
 );
 
-CREATE INDEX idx_expression_form_edges_form_id ON expression_form_edges(form_id);
-CREATE INDEX idx_expression_form_edges_lemma_id ON expression_form_edges(lemma_id);
-CREATE INDEX idx_expression_form_edge_features_feature_code ON expression_form_edge_features(feature_code);
+CREATE INDEX IF NOT EXISTS idx_expression_form_edges_form_id ON expression_form_edges(form_id);
+CREATE INDEX IF NOT EXISTS idx_expression_form_edges_lemma_id ON expression_form_edges(lemma_id);
+CREATE INDEX IF NOT EXISTS idx_expression_form_edge_features_feature_code ON expression_form_edge_features(feature_code);
 
 -- Morphological form-feature seed.
 -- Generated by scripts/morphology/generate-form-feature-seed.py. Do not hand-edit hashes.
@@ -497,10 +263,6 @@ INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_ind
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('spa:iev7egb2lutc6laegry6pmacym', 'spa', 'volitivo', 'iev7egb2lutc6laegry6pmacym', 1, '', '[]', NULL, NULL, 'approved', NULL);
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('spa:mv6gf7grgchiywwhez2ihsqjhi', 'spa', 'voseo', 'mv6gf7grgchiywwhez2ihsqjhi', 1, '', '[]', NULL, NULL, 'approved', NULL);
 INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('spa:gfy7272slvdygdd2n6qmi4gbui', 'spa', 'voz', 'gfy7272slvdygdd2n6qmi4gbui', 1, '', '[]', NULL, NULL, 'approved', NULL);
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('cmn:p4egshpg447re5bxiwwnnwxy6a', 'cmn', '肯定', 'p4egshpg447re5bxiwwnnwxy6a', 1, '', '[]', NULL, NULL, 'approved', NULL);
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'eng', 'positive', 'v6totkz2yzlu2uhgwvtu2xtwzq', 1, '', '[]', NULL, NULL, 'approved', NULL);
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('jpn:p4egshpg447re5bxiwwnnwxy6a', 'jpn', '肯定', 'p4egshpg447re5bxiwwnnwxy6a', 1, '', '[]', NULL, NULL, 'approved', NULL);
-INSERT OR IGNORE INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by) VALUES ('spa:hx77yb5rwmqekcrr3tkqrm7skq', 'spa', 'positivo', 'hx77yb5rwmqekcrr3tkqrm7skq', 1, '', '[]', NULL, NULL, 'approved', NULL);
 
 -- 2. Locale attestations
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:cmn-Hans-CN:cmn:24x7bnmkhgofzo6yjc7ovakyae', 'cmn:24x7bnmkhgofzo6yjc7ovakyae', 'cmn-Hans-CN', NULL, NULL, NULL);
@@ -725,11 +487,6 @@ INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, languag
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:spa-Latn-ES:spa:wcndbpyz46bgqpiz3bb2rknzwa', 'spa:wcndbpyz46bgqpiz3bb2rknzwa', 'spa-Latn-ES', NULL, NULL, NULL);
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:spa-Latn-ES:spa:xl6q3ogtiop72cjypoblwhj2r4', 'spa:xl6q3ogtiop72cjypoblwhj2r4', 'spa-Latn-ES', NULL, NULL, NULL);
 INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:spa-Latn-ES:spa:yvvtytayq7vwdvjnam4thf4f6u', 'spa:yvvtytayq7vwdvjnam4thf4f6u', 'spa-Latn-ES', NULL, NULL, NULL);
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:cmn-Hans-CN:cmn:p4egshpg447re5bxiwwnnwxy6a', 'cmn:p4egshpg447re5bxiwwnnwxy6a', 'cmn-Hans-CN', NULL, NULL, NULL);
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:cmn-Hant-TW:cmn:p4egshpg447re5bxiwwnnwxy6a', 'cmn:p4egshpg447re5bxiwwnnwxy6a', 'cmn-Hant-TW', NULL, NULL, NULL);
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:eng-Latn-US:eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'eng-Latn-US', NULL, NULL, NULL);
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:jpn-Jpan-JP:jpn:p4egshpg447re5bxiwwnnwxy6a', 'jpn:p4egshpg447re5bxiwwnnwxy6a', 'jpn-Jpan-JP', NULL, NULL, NULL);
-INSERT OR IGNORE INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES ('morph-att:spa-Latn-ES:spa:hx77yb5rwmqekcrr3tkqrm7skq', 'spa:hx77yb5rwmqekcrr3tkqrm7skq', 'spa-Latn-ES', NULL, NULL, NULL);
 
 -- 3. Translation edges (source=seed)
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:cmn:24fojs3zea4utwkw5bjlpp7zcu:eng:hcub5b7hsyy6mav7l66ta7hc7q', 'cmn:24fojs3zea4utwkw5bjlpp7zcu', 'eng:hcub5b7hsyy6mav7l66ta7hc7q', 0, 'seed', NULL);
@@ -900,9 +657,6 @@ INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, sc
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:eng:zeg6ovhnorp3rbf6ox7ay3ivme:spa:r5nmq3bzvth6ahexdwsrjmg2my', 'eng:zeg6ovhnorp3rbf6ox7ay3ivme', 'spa:r5nmq3bzvth6ahexdwsrjmg2my', 0, 'seed', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:eng:zljkqdpujy5l6j5xzrgcux4tfa:jpn:7e4nwrdtovrtbydeujqw6tj7py', 'eng:zljkqdpujy5l6j5xzrgcux4tfa', 'jpn:7e4nwrdtovrtbydeujqw6tj7py', 0, 'seed', NULL);
 INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:eng:zljkqdpujy5l6j5xzrgcux4tfa:spa:mzsgezbbynmk3w5h5ys7swjjie', 'eng:zljkqdpujy5l6j5xzrgcux4tfa', 'spa:mzsgezbbynmk3w5h5ys7swjjie', 0, 'seed', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:cmn:p4egshpg447re5bxiwwnnwxy6a:eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'cmn:p4egshpg447re5bxiwwnnwxy6a', 'eng:v6totkz2yzlu2uhgwvtu2xtwzq', 0, 'seed', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:eng:v6totkz2yzlu2uhgwvtu2xtwzq:jpn:p4egshpg447re5bxiwwnnwxy6a', 'eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'jpn:p4egshpg447re5bxiwwnnwxy6a', 0, 'seed', NULL);
-INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, score, source, created_by) VALUES ('morph-edge:eng:v6totkz2yzlu2uhgwvtu2xtwzq:spa:hx77yb5rwmqekcrr3tkqrm7skq', 'eng:v6totkz2yzlu2uhgwvtu2xtwzq', 'spa:hx77yb5rwmqekcrr3tkqrm7skq', 0, 'seed', NULL);
 
 -- 4. Morphological dimensions
 INSERT OR IGNORE INTO morphological_dimensions (code, name_expression_id, sort_order) VALUES ('gender', 'eng:32p6v2ulm333u5eel3s7yflm3u', 10);
@@ -942,7 +696,6 @@ INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_express
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('comparative', 'degree', 'eng:hasdtzxrxkwwsypa6uyw7m3gqi', 1);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('superlative', 'degree', 'eng:wntaq5qkvelmsg7mzsg5nuhywy', 2);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('negative', 'polarity', 'eng:bhyesunpjtkqhb3ycx6tb6mohi', 1);
-INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('positive', 'polarity', 'eng:v6totkz2yzlu2uhgwvtu2xtwzq', 2);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('polite', 'politeness', 'eng:zljkqdpujy5l6j5xzrgcux4tfa', 1);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('passive', 'voice', 'eng:u7y5ppbbetpmydv7kr3i67v2bu', 1);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('causative', 'voice', 'eng:753uwfpsgddx2ve6jdkfclgv5q', 2);
@@ -953,134 +706,3 @@ INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_express
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('progressive', 'construction', 'eng:w7ad4nfyt2cbvrd4tbdcfvvrdm', 5);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('perfect', 'aspect', 'eng:7l7jp5666mulxvhra543sys2ri', 1);
 INSERT OR IGNORE INTO morphological_features (code, dimension_code, name_expression_id, sort_order) VALUES ('voseo', 'person-variant', 'eng:mv6gf7grgchiywwhez2ihsqjhi', 1);
-
-INSERT OR IGNORE INTO sources (id, type, name) VALUES
-  ('system-split', 'system', 'LangMap split expressions');
-
--- Expression readings + user preferences (spec §9.2, §11).
-
-CREATE TABLE expression_readings (
-  id TEXT PRIMARY KEY,
-  expression_id TEXT NOT NULL,
-  language_locale_code TEXT NOT NULL,
-  scheme TEXT NOT NULL,
-  value TEXT NOT NULL,
-  source_id TEXT,
-  source_ref TEXT,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  UNIQUE (expression_id, language_locale_code, scheme, value, source_id, source_ref),
-  FOREIGN KEY (expression_id) REFERENCES expressions(id),
-  FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
-  FOREIGN KEY (source_id) REFERENCES sources(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE user_preferences (
-  user_id INTEGER NOT NULL,
-  preference_key TEXT NOT NULL,
-  value_json TEXT NOT NULL,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, preference_key),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- UI localization tables (spec §12.1, §12.2).
-
-CREATE TABLE ui_locales (
-  project_id TEXT NOT NULL,
-  language_locale_code TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'draft'
-    CHECK (status IN ('draft', 'active', 'archived')),
-  mapping_revision INTEGER NOT NULL DEFAULT 0,
-  activation_source TEXT
-    CHECK (activation_source IN ('system', 'auto', 'manual')),
-  activated_at TEXT,
-  activated_by INTEGER,
-  created_by INTEGER,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (project_id, language_locale_code),
-  FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
-  FOREIGN KEY (activated_by) REFERENCES users(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE ui_messages (
-  project_id TEXT NOT NULL,
-  message_key TEXT NOT NULL,
-  source_expression_id TEXT NOT NULL,
-  source_text TEXT NOT NULL,
-  placeholders_json TEXT NOT NULL DEFAULT '[]',
-  status TEXT NOT NULL DEFAULT 'active'
-    CHECK (status IN ('active', 'inactive')),
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (project_id, message_key),
-  FOREIGN KEY (source_expression_id) REFERENCES expressions(id)
-);
-
-INSERT OR IGNORE INTO sources (id, type, name) VALUES
-  ('system-ui', 'system', 'LangMap UI source copy');
-
-INSERT OR IGNORE INTO ui_locales (project_id, language_locale_code, status, mapping_revision, activation_source, activated_at)
-VALUES ('langmap-web', 'eng-Latn-US', 'active', 0, 'system', CURRENT_TIMESTAMP);
-
--- Vote records referencing mapping edges by ID (spec 10.1).
-
-CREATE TABLE votes (
-  id TEXT PRIMARY KEY,
-  user_id INTEGER NOT NULL,
-  target_type TEXT NOT NULL,
-  target_id TEXT NOT NULL,
-  vote INTEGER NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (target_type IN ('edge')),
-  CHECK (vote IN (-1, 1)),
-  UNIQUE (user_id, target_type, target_id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE INDEX idx_votes_target ON votes (target_type, target_id);
-
--- Handbooks preserve curated expression collections using application-generated TEXT IDs.
-
-CREATE TABLE handbooks (
-  id TEXT PRIMARY KEY,
-  user_id INTEGER NOT NULL,
-  title TEXT NOT NULL,
-  visibility TEXT NOT NULL DEFAULT 'public'
-    CHECK (visibility IN ('public', 'private')),
-  status TEXT NOT NULL DEFAULT 'published'
-    CHECK (status IN ('draft', 'published')),
-  score INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE handbook_sections (
-  id TEXT PRIMARY KEY,
-  handbook_id TEXT NOT NULL,
-  title TEXT,
-  position INTEGER NOT NULL,
-  FOREIGN KEY (handbook_id) REFERENCES handbooks(id) ON DELETE CASCADE,
-  UNIQUE (handbook_id, position)
-);
-
-CREATE TABLE handbook_section_items (
-  section_id TEXT NOT NULL,
-  expression_id TEXT NOT NULL,
-  position INTEGER NOT NULL,
-  PRIMARY KEY (section_id, expression_id),
-  UNIQUE (section_id, position),
-  FOREIGN KEY (section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE,
-  FOREIGN KEY (expression_id) REFERENCES expressions(id)
-);
-
-CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC);
-CREATE INDEX idx_handbooks_score ON handbooks(score DESC, created_at DESC, id ASC);
-CREATE INDEX idx_handbook_sections_handbook ON handbook_sections(handbook_id, position ASC, id ASC);
-CREATE INDEX idx_handbook_section_items_section ON handbook_section_items(section_id, position ASC, expression_id ASC);

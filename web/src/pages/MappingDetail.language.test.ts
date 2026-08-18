@@ -62,6 +62,9 @@ vi.mock('@/components/ui/LoadingSpinner.vue', () => ({
 vi.mock('@/components/ui/EmptyState.vue', () => ({
   default: { name: 'EmptyState', template: '<div />' },
 }))
+vi.mock('@/components/mapping/MorphologyPanel.vue', () => ({
+  default: { name: 'MorphologyPanel', template: '<div />' },
+}))
 
 const LanguagePickerStub = {
   name: 'LanguagePickerStub',

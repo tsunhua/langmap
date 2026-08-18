@@ -11,6 +11,21 @@ export interface ExpressionDetail {
   readings: ExpressionReading[]
 }
 export interface ExpressionEdge { edge_id: string; neighbor_id: string; neighbor_lang_code: string; neighbor_text: string; score: number; source: string; created_at: string }
+export interface SearchFormOf {
+  lemma: { id: string; text: string; lang_code: string }
+  features: Array<{ code: string; name: string }>
+}
+export interface SearchHit {
+  id: string
+  text: string
+  lang_code: string
+  language_profile_code?: string
+  language_name?: string
+  mapping_count?: number
+  source_type?: string
+  region_name?: string
+  form_of?: SearchFormOf[]
+}
 export interface Page<T> { items: T[]; total: number; skip: number; limit: number; hasMore: boolean }
 
 const path = (id: string) => `/expressions/${encodeURIComponent(id)}`
