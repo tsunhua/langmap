@@ -6,18 +6,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useExpressions } from '@/composables/useExpressions'
-import { getMappingGraph } from '@/api/expressions'
 import {
   createFormEdge,
   getExpressionFormEdges,
   listMorphologicalFeatures,
   type ExpressionFormEdges,
-  type FormEdgeAsForm,
-  type FormEdgeAsLemma,
   type FormEdgeFeature,
   type MorphologicalDimension,
 } from '@/api/morphology'
-import type { MappingGraphNode } from '@/components/mapping/mappingGraphTypes'
 import { apiErrorMessage } from '@/utils/apiError'
 import {
   WORD_CLASSES,
@@ -45,13 +41,6 @@ const loadError = ref('')
 const edges = ref<ExpressionFormEdges | null>(null)
 const dimensions = ref<MorphologicalDimension[]>([])
 
-const lemmaMappings = ref<Array<{
-  lemma: FormEdgeAsForm['lemma']
-  neighbors: MappingGraphNode[]
-}>>([])
-const extraLemmas = ref<FormEdgeAsForm[]>([])
-const mappingError = ref('')
-
 const lemmaQuery = ref('')
 const lemmaResults = ref<Array<{ id: string; text: string; lang_code: string }>>([])
 const lemmaSearchLoading = ref(false)
@@ -66,10 +55,8 @@ const showAllFeatures = ref(false)
 const wordClass = ref<MorphologyWordClass | null>(null)
 
 let edgesRequest = 0
-let mappingsRequest = 0
 let lemmaSearchRequest = 0
 let edgesAbort: AbortController | null = null
-let mappingsAbort: AbortController | null = null
 
 function featureLabel(features: FormEdgeFeature[]) {
   return features.map((feature) => feature.name).filter(Boolean).join(' ')
@@ -81,32 +68,19 @@ const dimensionOrder = computed(() => {
   return order
 })
 
-const dimensionNames = computed(() => {
-  const names = new Map<string, string>()
-  for (const dimension of dimensions.value) names.set(dimension.code, dimension.name)
-  return names
-})
-
-const inflectionGroups = computed(() => {
-  const groups = new Map<string, FormEdgeAsLemma[]>()
-  const ungrouped: FormEdgeAsLemma[] = []
-  for (const item of edges.value?.as_lemma ?? []) {
-    const code = item.features[0]?.dimension_code
-    if (!code) {
-      ungrouped.push(item)
-      continue
-    }
-    const list = groups.get(code) ?? []
-    list.push(item)
-    groups.set(code, list)
-  }
-  const ordered = [...groups.entries()].sort((a, b) => {
-    const left = dimensionOrder.value.get(a[0]) ?? Number.MAX_SAFE_INTEGER
-    const right = dimensionOrder.value.get(b[0]) ?? Number.MAX_SAFE_INTEGER
-    if (left !== right) return left - right
-    return a[0].localeCompare(b[0])
+const orderedInflections = computed(() => {
+  const items = edges.value?.as_lemma ?? []
+  return [...items].sort((a, b) => {
+    const aDim = a.features[0]?.dimension_code
+    const bDim = b.features[0]?.dimension_code
+    const aOrder = aDim ? (dimensionOrder.value.get(aDim) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER
+    const bOrder = bDim ? (dimensionOrder.value.get(bDim) ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER
+    if (aOrder !== bOrder) return aOrder - bOrder
+    const aLabel = featureLabel(a.features)
+    const bLabel = featureLabel(b.features)
+    if (aLabel !== bLabel) return aLabel.localeCompare(bLabel)
+    return a.form.text.localeCompare(b.form.text)
   })
-  return { ordered, ungrouped }
 })
 
 const hasEdges = computed(() =>
@@ -142,14 +116,10 @@ function abortIfStale(error: unknown) {
 async function loadEdges() {
   const request = ++edgesRequest
   edgesAbort?.abort()
-  mappingsAbort?.abort()
   const controller = new AbortController()
   edgesAbort = controller
   loading.value = true
   loadError.value = ''
-  mappingError.value = ''
-  lemmaMappings.value = []
-  extraLemmas.value = []
   try {
     const hints = localeParams.value
     const [nextEdges, nextFeatures] = await Promise.all([
@@ -161,55 +131,12 @@ async function loadEdges() {
     const asLemma = nextEdges.as_lemma ?? []
     edges.value = { ...nextEdges, as_form: asForm, as_lemma: asLemma }
     dimensions.value = nextFeatures.dimensions ?? []
-    await loadLemmaMappings(asForm, hints)
   } catch (error: unknown) {
     if (request !== edgesRequest || abortIfStale(error)) return
     loadError.value = apiErrorMessage(error, t('morphology.loadFailed'))
     edges.value = null
   } finally {
     if (request === edgesRequest) loading.value = false
-  }
-}
-
-async function loadLemmaMappings(asForm: FormEdgeAsForm[], hints: { ui_locale?: string; secondary_ui_locale?: string }) {
-  const request = ++mappingsRequest
-  mappingsAbort?.abort()
-  const controller = new AbortController()
-  mappingsAbort = controller
-  extraLemmas.value = asForm.slice(3)
-  const first = asForm.slice(0, 3)
-  if (first.length === 0) {
-    lemmaMappings.value = []
-    return
-  }
-  mappingError.value = ''
-  try {
-    let failed = false
-    const results = await Promise.all(
-      first.map(async (item) => {
-        try {
-          const graph = await getMappingGraph(item.lemma.id, 1, hints, controller.signal)
-          return {
-            lemma: item.lemma,
-            neighbors: graph.nodes
-              .filter((node) => node.depth >= 1)
-              .slice()
-              .sort((a, b) => a.expression_id.localeCompare(b.expression_id)),
-          }
-        } catch (error: unknown) {
-          if (abortIfStale(error)) throw error
-          failed = true
-          return { lemma: item.lemma, neighbors: [] }
-        }
-      }),
-    )
-    if (request !== mappingsRequest) return
-    lemmaMappings.value = results
-    if (failed) mappingError.value = t('morphology.mappingLoadFailed')
-  } catch (error: unknown) {
-    if (request !== mappingsRequest || abortIfStale(error)) return
-    mappingError.value = apiErrorMessage(error, t('morphology.mappingLoadFailed'))
-    lemmaMappings.value = first.map((item) => ({ lemma: item.lemma, neighbors: [] }))
   }
 }
 
@@ -342,74 +269,24 @@ watch(
     <p v-else-if="!hasEdges && !formOpen" class="morph-note">{{ t('morphology.empty') }}</p>
 
     <template v-else>
-      <section v-if="edges && edges.as_form.length" class="morph-block">
-        <h3>{{ t('morphology.lemmas') }}</h3>
-        <ul class="morph-list">
-          <li v-for="item in edges.as_form" :key="item.edge_id">
-            <router-link :to="`/mapping/${item.lemma.id}`" class="morph-link">
-              <span v-if="featureLabel(item.features)">{{ featureLabel(item.features) }} ← </span>
-              <span>{{ item.lemma.text }}</span>
-            </router-link>
-          </li>
-        </ul>
-      </section>
+      <ul v-if="edges && edges.as_form.length" class="morph-chips">
+        <li v-for="item in edges.as_form" :key="item.edge_id">
+          <router-link :to="`/mapping/${item.lemma.id}`" class="morph-form-chip">
+            <span class="morph-role">{{ t('morphology.dictionaryForm') }}：</span>
+            <span>{{ item.lemma.text }}</span>
+            <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}</span>
+          </router-link>
+        </li>
+      </ul>
 
-      <section v-if="edges && edges.as_lemma.length" class="morph-block">
-        <h3>{{ t('morphology.inflections') }}</h3>
-        <div
-          v-for="[code, forms] in inflectionGroups.ordered"
-          :key="code"
-          class="morph-group morph-group-inline"
-        >
-          <h4>{{ dimensionNames.get(code) || code }}</h4>
-          <ul class="morph-list">
-            <li v-for="item in forms" :key="item.edge_id">
-              <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
-                <span>{{ item.form.text }}</span>
-                <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-        <ul v-if="inflectionGroups.ungrouped.length" class="morph-list morph-list-inline">
-          <li v-for="item in inflectionGroups.ungrouped" :key="item.edge_id">
-            <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
-              {{ item.form.text }}
-            </router-link>
-          </li>
-        </ul>
-      </section>
-
-      <section v-if="lemmaMappings.length || extraLemmas.length" class="morph-block">
-        <h3>{{ t('morphology.lemmaMappings') }}</h3>
-        <p v-if="mappingError" class="morph-error" role="alert">{{ mappingError }}</p>
-        <div v-for="group in lemmaMappings" :key="group.lemma.id" class="morph-group">
-          <h4>
-            <router-link :to="`/mapping/${group.lemma.id}`" class="morph-link">
-              {{ group.lemma.text }}
-            </router-link>
-          </h4>
-          <ul v-if="group.neighbors.length" class="morph-list">
-            <li v-for="node in group.neighbors" :key="node.expression_id">
-              <router-link :to="`/mapping/${node.expression_id}`" class="morph-link">
-                {{ node.text }}
-                <span v-if="node.language_name || node.lang_code" class="morph-feats">{{ node.language_name || node.lang_code }}</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-        <div v-if="extraLemmas.length" class="morph-group">
-          <h4>{{ t('morphology.moreLemmas') }}</h4>
-          <ul class="morph-list">
-            <li v-for="item in extraLemmas" :key="item.edge_id">
-              <router-link :to="`/mapping/${item.lemma.id}`" class="morph-link">
-                {{ item.lemma.text }}
-                <span class="morph-feats">{{ t('morphology.viewMapping') }}</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <ul v-if="edges && orderedInflections.length" class="morph-chips">
+        <li v-for="item in orderedInflections" :key="item.edge_id">
+          <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
+            <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}：</span>
+            <span>{{ item.form.text }}</span>
+          </router-link>
+        </li>
+      </ul>
     </template>
 
     <section
@@ -539,23 +416,17 @@ watch(
   font-size: var(--text-ui);
   font-weight: 600;
 }
-.morph-group { display: grid; gap: var(--space-xs); min-width: 0; }
-.morph-group + .morph-group { margin-top: var(--space-sm); }
-.morph-group h4 {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-}
-.morph-group-inline {
+.morph-chips {
+  list-style: none;
+  margin: var(--space-sm) 0 0;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
+  gap: 8px;
+  min-width: 0;
 }
-.morph-group-inline h4 { flex: none; }
-.morph-group-inline .morph-list { display: flex; flex-wrap: wrap; gap: 8px; }
-.morph-list.morph-list-inline { display: flex; flex-wrap: wrap; gap: 8px; }
+.morph-chips + .morph-chips { margin-top: 8px; }
+.morph-role { color: var(--muted); font-size: 12px; }
 .morph-form-chip {
   display: inline-flex;
   align-items: center;
@@ -574,28 +445,6 @@ watch(
   outline-offset: 2px;
 }
 .morph-form-chip .morph-feats { font-size: 12px; }
-.morph-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0;
-}
-.morph-link {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 10px;
-  min-height: 40px;
-  min-width: 0;
-  padding: 8px 0;
-  color: var(--fg);
-}
-.morph-link:hover { color: var(--accent); }
-.morph-link:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
 .morph-feats { color: var(--muted); font-size: 13px; }
 .morph-note, .morph-error { margin: 0; font-size: 13px; line-height: 1.5; }
 .morph > .morph-note,
@@ -691,6 +540,6 @@ watch(
   border: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .morph-link, .morph-pick-btn, .morph-form-chip { transition: none; }
+  .morph-pick-btn, .morph-form-chip { transition: none; }
 }
 </style>

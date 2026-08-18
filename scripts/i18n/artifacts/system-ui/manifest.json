@@ -11,37 +11,37 @@
   ],
   "counts": {
     "locale_count": 5,
-    "message_count": 367,
-    "translation_count": 1376
+    "message_count": 362,
+    "translation_count": 1360
   },
   "inputs": {
     "source_catalog": {
       "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
-      "sha256": "7268f2ba00cd470f512b8b61071736f4f6a597bf7a39b006c3e1833d9bbef9bc"
+      "sha256": "58b6290d7adbd3a6c085efa23eefefa543b2b3a80456809b7a7097e62588f0d6"
     },
     "locales": {
       "cmn-Hans-CN": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans-CN.json",
-        "sha256": "330f80e1f1f5e9711bb470148ee11ceafa1c90b4c4e61bd42ded964b772688a1"
+        "sha256": "1d741b91e8646f548c64655bc250d11030b4e756c7c099a788dbedf69d1933d6"
       },
       "cmn-Hant-TW": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant-TW.json",
-        "sha256": "93383f35551a356fe51647c8c11b12ad0acd5879b0ff5ccd61d29d0ad7c7a9ab"
+        "sha256": "3959f7e29946486bc1ebf211f10d22e03d4b994252f752a35d41f620230a43f8"
       },
       "spa-Latn-ES": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/spa-Latn-ES.json",
-        "sha256": "ab311fe0c8dff02ffa037885b5ce8032dcdf505b3648c5650e2f199e5b6f0d54"
+        "sha256": "8ef100db109662a21202009920c2cf8c2affedd239756e0ac48aa36314c746a2"
       },
       "jpn-Jpan-JP": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/jpn-Jpan-JP.json",
-        "sha256": "33030da5f0232a5a9b8aa78f0c05351ab99da87b6747d5c71e0f6f1430ee3035"
+        "sha256": "6d2e5810e9245084d850c149705081f0ee6da89c81abb6541c562cb7bdc695a7"
       }
     }
   },
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "8354d5ccb2960880efd5279a8cd9a48502e0027aa3dd7583d65066eb99ff1ea1"
+      "sha256": "dfdb948b9690c4dd0ff05bf1994a34aee9280a69d0f7f1b4254c77c23b465832"
     }
   }
 }

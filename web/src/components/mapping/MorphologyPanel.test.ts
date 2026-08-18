@@ -7,15 +7,11 @@ import {
   getExpressionFormEdges,
   listMorphologicalFeatures,
 } from '@/api/morphology'
-import { getMappingGraph } from '@/api/expressions'
 
 vi.mock('@/api/morphology', () => ({
   getExpressionFormEdges: vi.fn(),
   listMorphologicalFeatures: vi.fn(),
   createFormEdge: vi.fn(),
-}))
-vi.mock('@/api/expressions', () => ({
-  getMappingGraph: vi.fn(),
 }))
 vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({ search: vi.fn().mockResolvedValue({ items: [] }) }),
@@ -61,22 +57,9 @@ describe('MorphologyPanel', () => {
     push.mockReset()
     setActivePinia(createPinia())
     vi.mocked(listMorphologicalFeatures).mockResolvedValue({ dimensions: [] })
-    vi.mocked(getMappingGraph).mockResolvedValue({
-      root_id: 'spa:gato',
-      requested_hops: 1,
-      resolved_hops: 1,
-      nodes: [
-        { expression_id: 'spa:gato', text: 'gato', lang_code: 'spa', language_name: 'Spanish', depth: 0 },
-        { expression_id: 'eng:cat', text: 'cat', lang_code: 'eng', language_name: 'English', depth: 1 },
-      ],
-      edges: [],
-      layer_counts: { 0: 1, 1: 1 },
-      truncated: false,
-      omitted_count: 0,
-    })
   })
 
-  it('lists dictionary forms from as_form and keeps lemma mappings in the panel', async () => {
+  it('shows dictionary forms as chips labelled with their role and keeps the features', async () => {
     vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges({
       as_form: [{
         edge_id: 'e1',
@@ -91,15 +74,56 @@ describe('MorphologyPanel', () => {
     const wrapper = mountPanel()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('feminine plural ←')
-    expect(wrapper.text()).toContain('gato')
-    expect(wrapper.text()).toContain('cat')
-    expect(wrapper.text()).toContain('Mappings of the dictionary form')
+    const chip = wrapper.get('a.morph-form-chip')
+    expect(chip.attributes('href')).toBe('/mapping/spa:gato')
+    expect(chip.text()).toContain('Dictionary form：gato')
+    expect(chip.text()).toContain('feminine plural')
+    expect(wrapper.text()).not.toContain('Mappings of the dictionary form')
+    expect(wrapper.text()).not.toContain('cat')
     expect(getExpressionFormEdges).toHaveBeenCalledWith(
       'spa:gatas',
       expect.objectContaining({ limit: 50 }),
       expect.any(AbortSignal),
     )
+  })
+
+  it('shows inflected forms as flat chips labelled with their features', async () => {
+    vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges({
+      as_lemma: [
+        {
+          edge_id: 'e1',
+          form: { id: 'spa:gatas', text: 'gatas', lang_code: 'spa', language_name: 'Spanish' },
+          features: [{ code: 'plural', name: 'plural', dimension_code: 'number' }],
+        },
+        {
+          edge_id: 'e2',
+          form: { id: 'spa:gata', text: 'gata', lang_code: 'spa', language_name: 'Spanish' },
+          features: [{ code: 'feminine', name: 'feminine', dimension_code: 'gender' }],
+        },
+        {
+          edge_id: 'e3',
+          form: { id: 'spa:gatito', text: 'gatito', lang_code: 'spa', language_name: 'Spanish' },
+          features: [],
+        },
+      ],
+    }))
+    vi.mocked(listMorphologicalFeatures).mockResolvedValue({
+      dimensions: [
+        { code: 'number', name: 'number', name_en: 'number', sort_order: 10, features: [] },
+        { code: 'gender', name: 'gender', name_en: 'gender', sort_order: 20, features: [] },
+      ],
+    })
+
+    const wrapper = mountPanel()
+    await flushPromises()
+
+    const chips = wrapper.findAll('a.morph-form-chip')
+    expect(chips).toHaveLength(3)
+    expect(chips[0].text()).toContain('plural：gatas')
+    expect(chips[0].attributes('href')).toBe('/mapping/spa:gatas')
+    expect(chips[1].text()).toContain('feminine：gata')
+    expect(chips[2].text()).toBe('gatito')
+    expect(wrapper.text()).not.toContain('Mappings of the dictionary form')
   })
 
   it('keeps a load failure inside the panel', async () => {

@@ -121,7 +121,7 @@ async function submit() {
 
 .ex-table { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: visible; }
 .ex-head, .ex-row {
-  display: grid; grid-template-columns: minmax(190px, 0.9fr) minmax(180px, 1.1fr) 44px; gap: var(--space-xs); align-items: start;
+  display: grid; grid-template-columns: minmax(190px, 0.9fr) minmax(180px, 1.1fr) 40px; gap: var(--space-xs); align-items: start;
   padding: var(--space-xs) var(--space-sm);
 }
 .ex-head {
@@ -153,8 +153,9 @@ async function submit() {
 }
 .ex-row input:focus { border-color: var(--accent); }
 .ex-del {
-  width: 44px; height: 44px; border: none; background: transparent; color: var(--muted);
+  width: 40px; height: 40px; border: none; background: transparent; color: var(--muted);
   cursor: pointer; border-radius: var(--r); font-size: 13px; display: grid; place-items: center;
+  align-self: center;
 }
 .ex-del:hover { color: var(--down); background: color-mix(in oklch, var(--down) 8%, var(--surface)); }
 .ex-add {
@@ -177,8 +178,8 @@ async function submit() {
 .ex-counter.warn b { color: var(--down); }
 
 .ex-actions { display: flex; gap: 8px; }
-.hint { color: var(--muted); font-size: 13px; }
-.error { color: var(--down); font-size: 13px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 var(--space-sm); }
+.error { color: var(--down); font-size: 13px; margin: 0 0 var(--space-sm); }
 
 .contrib-right { position: sticky; top: 60px; }
 
@@ -189,6 +190,6 @@ async function submit() {
   .ex-row { grid-template-columns: minmax(0, 1fr) 44px; gap: 8px; }
   .ex-row :deep(.locale-picker), .ex-row > input { grid-column: 1; }
   .ex-row :deep(.locale-picker > label) { display: block; margin-bottom: 4px; }
-  .ex-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .ex-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; width: 44px; height: 44px; }
 }
 </style>

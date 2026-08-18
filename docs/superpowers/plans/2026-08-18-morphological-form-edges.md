@@ -213,3 +213,16 @@ getExpressionFormEdges(db, expressionId, { limit, hints })
 ## 刻意不在本計劃
 
 匯入管線、刪邊、特徵覆寫、形態讚踩、Contribute 批次、圖譜第二種邊、POS、派生。
+
+---
+
+## 變更紀錄（2026-08-18）
+
+實作後依產品調整簡化形態面板，spec 的「原形對照條」已刪除：
+
+- 移除「辭書形的對照」整塊（`loadLemmaMappings` 與 `getMappingGraph(lemmaId, 1)` 連打）。
+- h2 下不再有區塊標題（`morphology.lemmas`／`morphology.inflections` 鍵已刪）；chips 自帶角色標籤：
+  - 辭書形 chip：`{dictionaryForm}：{lemma} {特徵}`（如「辞典形：menu 复数」）。
+  - 變化形 chip：`{特徵}：{form}`（如「复数：menus」），不依維度分組，依維度 order → 特徵名 → 文字穩定排序。
+- 「從變化形走到原形對照」改由 chip 連到該詞 mapping 頁達成，不再內嵌圖譜預覽。
+- i18n 鍵異動：刪 `lemmas`、`inflections`、`lemmaMappings`、`moreLemmas`、`mappingLoadFailed`、`viewMapping`；新增 `dictionaryForm`。`formOfAria` 保留（`ExpressionRow` 使用）。
