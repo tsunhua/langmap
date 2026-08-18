@@ -87,4 +87,22 @@ describe('groupLocalesByVariety', () => {
   it('returns an empty array for no locales', () => {
     expect(groupLocalesByVariety([])).toEqual([])
   })
+
+  it('prefers the active locale\'s self-name as the variety label', () => {
+    const groups = groupLocalesByVariety([
+      { language_locale_code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+      { language_locale_code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    ], 'cmn-Hant-TW')
+    const cmn = groups.find(g => g.base === 'cmn')!
+    expect(cmn.varietyLabel).toBe('華語')
+  })
+
+  it('falls back to the first locale\'s self-name without an active locale', () => {
+    const groups = groupLocalesByVariety([
+      { language_locale_code: 'cmn-Hans-CN', name: '普通话', name_en: 'Simplified Chinese', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+      { language_locale_code: 'cmn-Hant-TW', name: '華語', name_en: 'Taiwan Mandarin', direction: 'ltr', status: 'active', mapping_revision: 0, activation_source: 'system' },
+    ])
+    const cmn = groups.find(g => g.base === 'cmn')!
+    expect(cmn.varietyLabel).toBe('普通话')
+  })
 })

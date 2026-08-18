@@ -17,7 +17,7 @@ const searchEl = ref<HTMLInputElement>()
 const activeIndex = ref(-1)
 
 const groupedWithOptions = computed(() => {
-  const groups = groupLocalesByVariety(store.locales)
+  const groups = groupLocalesByVariety(store.locales, store.locale)
   const q = query.value.toLowerCase().trim()
   const filtered = q
     ? groups.filter(g =>

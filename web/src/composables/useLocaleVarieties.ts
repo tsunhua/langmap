@@ -39,7 +39,7 @@ export function splitVarietyAndScript(nativeName: string): { variety: string; sc
   return { variety: nativeName }
 }
 
-export function groupLocalesByVariety(locales: UiLocale[]): LocaleVarietyGroup[] {
+export function groupLocalesByVariety(locales: UiLocale[], activeLocale?: string): LocaleVarietyGroup[] {
   const groups = new Map<string, LocaleVarietyGroup>()
   for (const loc of locales) {
     const { base } = parseLocaleCode(loc.language_locale_code)
@@ -54,13 +54,17 @@ export function groupLocalesByVariety(locales: UiLocale[]): LocaleVarietyGroup[]
     group.items.push({ code: loc.language_locale_code, varietyLabel: variety, scriptLabel, direction: loc.direction })
   }
   const list = [...groups.values()]
+  for (const g of list) {
+    if (activeLocale) {
+      const active = g.items.find((it) => it.code === activeLocale)
+      if (active?.varietyLabel) g.varietyLabel = active.varietyLabel
+    }
+    g.items.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+  }
   list.sort((a, b) => {
     if (a.base === 'eng') return -1
     if (b.base === 'eng') return 1
     return a.varietyLabel.localeCompare(b.varietyLabel) || a.base.localeCompare(b.base)
   })
-  for (const g of list) {
-    g.items.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
-  }
   return list
 }
