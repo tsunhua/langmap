@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createPinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import LanguageLocaleCreateDialog from './LanguageLocaleCreateDialog.vue'
 
@@ -12,7 +13,7 @@ vi.mock('@/api/languageIdentity', () => ({
 describe('LanguageLocaleCreateDialog', () => {
   it('submits structured fields and adopts the code returned by the server', async () => {
     createLanguageLocale.mockResolvedValueOnce({ code: 'nan-Hant-CN_Quanzhou', lang_code: 'nan' })
-    const wrapper = mount(LanguageLocaleCreateDialog, { props: { open: true, langCode: 'nan' }, global: { stubs: { teleport: true } } })
+    const wrapper = mount(LanguageLocaleCreateDialog, { props: { open: true, langCode: 'nan' }, global: { stubs: { teleport: true }, plugins: [createPinia()] } })
     await wrapper.get('[name="script_code"]').setValue('Hant')
     await wrapper.get('[name="region_code"]').setValue('CN')
     await wrapper.get('[name="name"]').setValue('泉州話')
