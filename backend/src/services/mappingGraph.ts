@@ -1,6 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
-import { resolveLanguageNames, type LocaleHints } from './localizedName';
+import { resolveLocaleNames, type LocaleHints } from './localizedName';
 
 const DEFAULT_NODE_LIMIT = 200;
 
@@ -65,7 +65,9 @@ export async function getMappingGraph(
 
   const limit = Math.max(1, Math.min(nodeLimit, DEFAULT_NODE_LIMIT));
   const visited = new Set<string>([rootId]);
-  const rootNames = await resolveLanguageNames(db, [root.language_profile_code ?? root.lang_code], locales);
+  const rootNames = root.language_profile_code
+    ? await resolveLocaleNames(db, [root.language_profile_code], locales)
+    : new Map([[root.lang_code, root.lang_code]]);
   const nodes: MappingGraphNode[] = [{
     expression_id: root.id,
     text: root.text,
@@ -84,7 +86,7 @@ export async function getMappingGraph(
   for (let depth = 1; depth <= hops && frontier.length > 0; depth++) {
     const rows = await loadEdgesForFrontier(db, frontier);
     const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_language_profile_code ?? row.expression_a_lang_code, row.expression_b_language_profile_code ?? row.expression_b_lang_code]))];
-    const nameMap = await resolveLanguageNames(db, langCodes, locales);
+    const nameMap = await resolveLocaleNames(db, langCodes.filter((code) => code.includes('-')), locales);
     const next = new Set<string>();
     const frontierIds = new Set(frontier);
     for (const row of rows) {
