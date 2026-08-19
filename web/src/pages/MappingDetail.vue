@@ -337,6 +337,7 @@ const coords = computed(() => {
 })
 
 const sourceLabel = computed(() => {
+  if (expr.value?.expression.created_by_username) return expr.value.expression.created_by_username
   const sourceType = expr.value?.expression.source_type
   if (sourceType === 'auth') return t('mappingDetail.authority')
   if (sourceType === 'ai') return 'AI'

@@ -127,11 +127,11 @@ export async function searchExpressions(
 export async function getExpression(
   db: D1Database,
   id: string,
-): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }> } | null> {
+): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null; created_by_username: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }> } | null> {
   const expression = await db
-    .prepare(`SELECT ${EXPRESSION_DETAIL_COLUMNS}, s.type AS source_type, s.name AS source_name FROM expressions e LEFT JOIN sources s ON s.id = e.source_id WHERE e.id = ?`)
+    .prepare(`SELECT ${EXPRESSION_DETAIL_COLUMNS}, s.type AS source_type, s.name AS source_name, u.username AS created_by_username FROM expressions e LEFT JOIN sources s ON s.id = e.source_id LEFT JOIN users u ON u.id = e.created_by WHERE e.id = ?`)
     .bind(id)
-    .first<ExpressionRow>();
+    .first<ExpressionRow & { created_by_username: string | null }>();
   if (!expression) return null;
 
   const { results } = await db
