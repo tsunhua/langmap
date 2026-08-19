@@ -694,7 +694,7 @@ git commit -m "feat(db): migrate v1 user expressions to v2 with hash ids"
 - Consumes: `remote-handbooks.sql`、`remote-handbook_pages.sql`、migrated expressions ID 對照（v1 expression_id → v2 expression_id）。
 - Produces: `migrate_handbooks(handbook_rows, page_rows, expr_map) -> {handbooks, sections, items, report}`。
 
-- [ ] **Step 1: 實作 markdown content 解析器**
+- [x] **Step 1: 實作 markdown content 解析器**
 
 ```python
 import re
@@ -722,11 +722,11 @@ def parse_sections(content: str):
     return sections
 ```
 
-- [ ] **Step 2: 解析 `{{text:X|mid:N}}` 與 bare id 標記到 v1 expression id**
+- [x] **Step 2: 解析 `{{text:X|mid:N}}` 與 bare id 標記到 v1 expression id**
 
 從 `remote-expressions.sql` 建立 `v1_text_to_id`（text+language_code → v1 expression id）與 `v1_id` 集合；對 bare id 直接查 v1 expression 是否存在。`mid` 欄位僅供參考，實際以 expression id 對應。
 
-- [ ] **Step 3: 實作 handbook 轉換**
+- [x] **Step 3: 實作 handbook 轉換**
 
 ```python
 def migrate_handbooks(handbook_rows, page_rows, expr_map, users_by_id):
@@ -761,7 +761,7 @@ def migrate_handbooks(handbook_rows, page_rows, expr_map, users_by_id):
     return {"handbooks": handbooks, "sections": sections, "items": items, "report": report}
 ```
 
-- [ ] **Step 4: 測試** — 用 `remote-handbooks.sql` 範例（含 `{{text:翁|mid:...}}`、bare id 標記、多 page handbook）驗證 sections/items 數量、unmapped 計數。
+- [x] **Step 4: 測試** — 用 `remote-handbooks.sql` 範例（含 `{{text:翁|mid:...}}`、bare id 標記、多 page handbook）驗證 sections/items 數量、unmapped 計數。
 
 - [ ] **Step 5: Commit**
 

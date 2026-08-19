@@ -3,6 +3,7 @@ import unittest
 
 from scripts.db.migrate_v1.identity import build_expression_id, compute_text_hash
 from scripts.db.migrate_v1.expressions import migrate_expressions
+from scripts.db.migrate_v1.handbooks import migrate_handbooks, parse_sections
 from scripts.db.migrate_v1.mapping import map_expression_locale, map_language_code
 from scripts.db.migrate_v1.parse_sql import load_table
 from scripts.db.migrate_v1.users import migrate_users
@@ -53,6 +54,19 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(len(result['attestations']), 3)
         self.assertEqual(result['readings'][0]['scheme'], 'poj')
         self.assertEqual(result['report'], {'skipped': 0, 'dropped_owner': 1, 'dropped_unmapped': 1})
+
+    def test_migrates_handbook_sections_and_items(self) -> None:
+        self.assertEqual(parse_sections('## One\n{{text:翁|mid:1}}\n\n### Two\n{{2}}'), [('One', ['text:翁']), ('Two', ['2'])])
+        result = migrate_handbooks(
+            [{'id': 10, 'user_id': 7, 'title': 'Guide', 'is_public': 1, 'content': '## One\n{{text:翁}}\n{{999}}'}],
+            [],
+            {'text:翁': 'nan:one', '2': 'nan:two'},
+            {7: 7},
+        )
+        self.assertEqual(len(result['handbooks']), 1)
+        self.assertEqual(len(result['sections']), 1)
+        self.assertEqual(len(result['items']), 1)
+        self.assertEqual(result['report']['skipped_unmapped_items'], 1)
 
 
 if __name__ == '__main__':
