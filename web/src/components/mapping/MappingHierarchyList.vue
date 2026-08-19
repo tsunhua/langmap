@@ -46,7 +46,8 @@ const nodeText = (id: string) => {
 
 const nodeLang = (id: string) => {
   if (id === props.graph.root_id) return ''
-  return props.graph.nodes.find(n => n.expression_id === id)?.lang_code ?? ''
+  const node = props.graph.nodes.find(n => n.expression_id === id)
+  return node?.language_profile_code || node?.lang_code || ''
 }
 
 function flattenTree(): Array<{ id: string; depth: number; parent: string | null }> {
