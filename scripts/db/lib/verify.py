@@ -26,6 +26,7 @@ OBJECT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 REGISTRY_TABLES: tuple[str, ...] = ("languages", "scripts", "regions")
+SCHEMA_LANGUAGE_CODE_RE = re.compile(r"\(\s*'(?P<code>[a-z0-9-]+)'\s*,")
 
 
 @dataclass(frozen=True)
@@ -98,7 +99,11 @@ def verify_local_state(
     expected_names = [entry["filename"] for entry in locked["migrations"]]
 
     language_manifest = json.loads(paths.language_manifest_path.read_text(encoding="utf-8"))
-    expected_counts = language_manifest.get("counts", {})
+    expected_counts = dict(language_manifest.get("counts", {}))
+    expected_counts["languages"] = int(expected_counts.get("languages", 0)) + _count_schema_language_extras(
+        paths.schema_path,
+        paths.language_manifest_path.parent / "language-reference.sql",
+    )
 
     count_rows = executor.execute_query(
         state_dir,
@@ -153,6 +158,20 @@ def verify_local_state(
     if mismatches:
         raise LocalVerificationError(", ".join(mismatches), report=report)
     return report
+
+
+def _count_schema_language_extras(schema_path: Path, reference_sql_path: Path) -> int:
+    """Include v2-only language rows seeded by schema.sql in the bootstrap count."""
+    schema_sql = _language_seed_codes(schema_path.read_text(encoding="utf-8"))
+    reference_sql = _language_seed_codes(reference_sql_path.read_text(encoding="utf-8"))
+    schema_codes = set(schema_sql)
+    reference_codes = set(reference_sql)
+    return len(schema_codes - reference_codes)
+
+
+def _language_seed_codes(sql: str) -> list[str]:
+    statements = re.findall(r"INSERT\s+OR\s+IGNORE\s+INTO\s+languages[\s\S]*?;", sql, re.IGNORECASE)
+    return [code for statement in statements for code in SCHEMA_LANGUAGE_CODE_RE.findall(statement)]
 
 
 def write_migration_baseline(
