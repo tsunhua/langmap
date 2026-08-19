@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-08-16T09:59:38Z",
+  "generated_at": "2026-08-18T15:39:20Z",
   "sources": {
     "iso639-3": {
       "name": "ISO 639-3 (individual scope)",
@@ -42,23 +42,30 @@
     },
     "name_translations": {
       "path": "overlays/name-translations.json",
-      "translation_count": 12
+      "translation_count": 908
+    },
+    "script_region_zh_names": {
+      "path": "overlays/script-region-zh-names.json",
+      "source": "Unicode CLDR cldr-localenames-full zh / zh-Hant",
+      "translation_count": 848
     }
   },
   "counts": {
     "languages": 7856,
     "scripts": 226,
     "regions": 249,
-    "name_canonical_expressions": 7863,
-    "name_target_expressions": 12,
-    "name_edges": 12,
-    "name_attestations": 12,
-    "name_locales_bound_target": 9
+    "name_canonical_expressions": 8289,
+    "name_target_expressions": 908,
+    "name_edges": 908,
+    "name_attestations": 908,
+    "name_locales_bound_target": 9,
+    "name_scripts_bound_target": 226,
+    "name_regions_bound_target": 249
   },
   "artifacts": {
     "language_reference_sql": {
       "path": "language-reference.sql",
-      "sha256": "b040d28fb4573c390cc5aefa24ceabe576c5393d2833629f97aab675d4a92c02"
+      "sha256": "b327647de3f6cff1e6bc66d8e1ce5fa1245583ca8bdc5c055008c888ac0927ac"
     }
   }
 }

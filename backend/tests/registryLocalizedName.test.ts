@@ -80,22 +80,34 @@ describe('language registry localized names', () => {
     expect(new Map(neutralBody.data.items.map((item) => [item.code, item.name])).get('cmn')).toBe('Mandarin Chinese');
   });
 
-  it('does not attach name to scripts or regions', async () => {
+  it('attaches resolved names to scripts and regions, falling back to name_en without a binding', async () => {
     const db = fakeD1([
-      ['SELECT COUNT(*) as total FROM scripts', () => ({ total: 1 })],
-      ['SELECT code, name_en, direction FROM scripts', () => ({ results: [{ code: 'Latn', name_en: 'Latin', direction: 'ltr' }] })],
+      ['SELECT COUNT(*) as total FROM scripts', () => ({ total: 2 })],
+      ['SELECT code, name_en, name_expression_id, direction FROM scripts', () => ({ results: [
+        { code: 'Latn', name_en: 'Latin', name_expression_id: 'expr-latn', direction: 'ltr' },
+        { code: 'Hang', name_en: 'Hangul (Hangŭl, Hangeul)', name_expression_id: null, direction: 'ltr' },
+      ] })],
       ['SELECT COUNT(*) as total FROM regions', () => ({ total: 1 })],
-      ['SELECT code, name_en, latitude, longitude FROM regions', () => ({ results: [{ code: 'TW', name_en: 'Taiwan', latitude: 23.7, longitude: 121 }] })],
+      ['SELECT code, name_en, name_expression_id, latitude, longitude FROM regions', () => ({ results: [
+        { code: 'TW', name_en: 'Taiwan', name_expression_id: null, latitude: 23.7, longitude: 121 },
+      ] })],
+      ['SELECT id, text FROM expressions', () => ({ results: [{ id: 'expr-latn', text: 'Latin' }] })],
+      [LOCALE_LANG_SQL, () => ({ lang_code: 'cmn' })],
+      [CANDIDATE_SQL, () => ({ results: [{ source_id: 'expr-latn', target_id: 't', target_text: '拉丁', score: 1, created_at: 'x' }] })],
     ]);
     const request = makeApp(db);
 
-    const scripts = await request('/language-registry/scripts?limit=5');
-    const scriptsBody = await scripts.json() as { data: { items: Array<Record<string, unknown>> } };
-    expect(scriptsBody.data.items[0]).not.toHaveProperty('name');
+    const scripts = await request('/language-registry/scripts?limit=5&ui_locale=cmn-Hans-CN');
+    expect(scripts.status).toBe(200);
+    const scriptsBody = await scripts.json() as { data: { items: Array<{ code: string; name: string }> } };
+    const byCode = new Map(scriptsBody.data.items.map((item) => [item.code, item.name]));
+    expect(byCode.get('Latn')).toBe('拉丁');
+    expect(byCode.get('Hang')).toBe('Hangul (Hangŭl, Hangeul)');
 
-    const regions = await request('/language-registry/regions?limit=5');
-    const regionsBody = await regions.json() as { data: { items: Array<Record<string, unknown>> } };
-    expect(regionsBody.data.items[0]).not.toHaveProperty('name');
+    const regions = await request('/language-registry/regions?limit=5&ui_locale=cmn-Hans-CN');
+    expect(regions.status).toBe(200);
+    const regionsBody = await regions.json() as { data: { items: Array<{ code: string; name: string }> } };
+    expect(regionsBody.data.items[0].name).toBe('Taiwan');
   });
 
   it('ignores malformed ui_locale without erroring', async () => {

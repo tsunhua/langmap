@@ -55,12 +55,14 @@ CREATE TABLE languages (
 CREATE TABLE scripts (
     code TEXT PRIMARY KEY,
     name_en TEXT NOT NULL,
+    name_expression_id TEXT REFERENCES expressions(id),
     direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl'))
 );
 
 CREATE TABLE regions (
     code TEXT PRIMARY KEY,
     name_en TEXT NOT NULL,
+    name_expression_id TEXT REFERENCES expressions(id),
     latitude REAL,
     longitude REAL,
     CHECK ((latitude IS NULL) = (longitude IS NULL))

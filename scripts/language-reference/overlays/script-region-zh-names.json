@@ -1,0 +1,1702 @@
+{
+  "scripts": {
+    "Adlm": {
+      "cmn-Hans-CN": "阿德拉姆文",
+      "cmn-Hant-TW": "富拉文"
+    },
+    "Afak": {
+      "cmn-Hans-CN": "阿法卡文",
+      "cmn-Hant-TW": "阿法卡文字"
+    },
+    "Aghb": {
+      "cmn-Hans-CN": "高加索阿尔巴尼亚文",
+      "cmn-Hant-TW": "高加索阿爾巴尼亞文"
+    },
+    "Ahom": {
+      "cmn-Hans-CN": "阿豪姆文",
+      "cmn-Hant-TW": "阿洪姆文"
+    },
+    "Aran": {
+      "cmn-Hans-CN": "波斯体",
+      "cmn-Hant-TW": "波斯體"
+    },
+    "Armi": {
+      "cmn-Hans-CN": "皇室亚拉姆文",
+      "cmn-Hant-TW": "皇室亞美尼亞文"
+    },
+    "Armn": {
+      "cmn-Hans-CN": "亚美尼亚文",
+      "cmn-Hant-TW": "亞美尼亞文"
+    },
+    "Avst": {
+      "cmn-Hans-CN": "阿维斯陀文",
+      "cmn-Hant-TW": "阿維斯陀文"
+    },
+    "Bali": {
+      "cmn-Hans-CN": "巴厘文",
+      "cmn-Hant-TW": "峇里文"
+    },
+    "Bamu": {
+      "cmn-Hans-CN": "巴姆穆文",
+      "cmn-Hant-TW": "巴姆穆文"
+    },
+    "Bass": {
+      "cmn-Hans-CN": "巴萨文",
+      "cmn-Hant-TW": "巴薩文"
+    },
+    "Batk": {
+      "cmn-Hans-CN": "巴塔克文",
+      "cmn-Hant-TW": "巴塔克文"
+    },
+    "Beng": {
+      "cmn-Hans-CN": "孟加拉文",
+      "cmn-Hant-TW": "孟加拉文"
+    },
+    "Bhks": {
+      "cmn-Hans-CN": "拜克舒克文",
+      "cmn-Hant-TW": "梵文"
+    },
+    "Blis": {
+      "cmn-Hans-CN": "布列斯符号",
+      "cmn-Hant-TW": "布列斯文"
+    },
+    "Bopo": {
+      "cmn-Hans-CN": "注音符号",
+      "cmn-Hant-TW": "注音符號"
+    },
+    "Brah": {
+      "cmn-Hans-CN": "婆罗米文字",
+      "cmn-Hant-TW": "婆羅米文"
+    },
+    "Brai": {
+      "cmn-Hans-CN": "布莱叶盲文",
+      "cmn-Hant-TW": "盲人用點字"
+    },
+    "Bugi": {
+      "cmn-Hans-CN": "布吉文",
+      "cmn-Hant-TW": "布吉斯文"
+    },
+    "Buhd": {
+      "cmn-Hans-CN": "布希德文",
+      "cmn-Hant-TW": "布希德文"
+    },
+    "Cakm": {
+      "cmn-Hans-CN": "查克马文",
+      "cmn-Hant-TW": "查克馬文"
+    },
+    "Cans": {
+      "cmn-Hans-CN": "加拿大土著统一音节",
+      "cmn-Hant-TW": "加拿大原住民通用字符"
+    },
+    "Cari": {
+      "cmn-Hans-CN": "卡里亚文",
+      "cmn-Hant-TW": "卡里亞文"
+    },
+    "Cham": {
+      "cmn-Hans-CN": "占文",
+      "cmn-Hant-TW": "占文"
+    },
+    "Cher": {
+      "cmn-Hans-CN": "切罗基文",
+      "cmn-Hant-TW": "柴羅基文"
+    },
+    "Chrs": {
+      "cmn-Hans-CN": "花拉子模文",
+      "cmn-Hant-TW": "花拉子模文"
+    },
+    "Cirt": {
+      "cmn-Hans-CN": "色斯文",
+      "cmn-Hant-TW": "色斯文"
+    },
+    "Copt": {
+      "cmn-Hans-CN": "克普特文",
+      "cmn-Hant-TW": "科普特文"
+    },
+    "Cpmn": {
+      "cmn-Hans-CN": "塞浦路斯米诺斯文",
+      "cmn-Hant-TW": "塞浦路斯米诺斯文"
+    },
+    "Cprt": {
+      "cmn-Hans-CN": "塞浦路斯文",
+      "cmn-Hant-TW": "塞浦路斯文"
+    },
+    "Cyrs": {
+      "cmn-Hans-CN": "西里尔文字（古教会斯拉夫文的变体）",
+      "cmn-Hant-TW": "西里爾文（古教會斯拉夫文變體）"
+    },
+    "Diak": {
+      "cmn-Hans-CN": "迪维西阿库鲁文",
+      "cmn-Hant-TW": "迪维西阿库鲁文"
+    },
+    "Dogr": {
+      "cmn-Hans-CN": "多格拉文",
+      "cmn-Hant-TW": "多格拉文"
+    },
+    "Dsrt": {
+      "cmn-Hans-CN": "德塞莱特文",
+      "cmn-Hant-TW": "德瑟雷特文"
+    },
+    "Dupl": {
+      "cmn-Hans-CN": "杜普洛伊速记",
+      "cmn-Hant-TW": "杜普洛伊速記"
+    },
+    "Egyd": {
+      "cmn-Hans-CN": "后期埃及文",
+      "cmn-Hant-TW": "古埃及世俗體"
+    },
+    "Egyh": {
+      "cmn-Hans-CN": "古埃及僧侣书写体",
+      "cmn-Hant-TW": "古埃及僧侶體"
+    },
+    "Egyp": {
+      "cmn-Hans-CN": "古埃及象形文",
+      "cmn-Hant-TW": "古埃及聖書體"
+    },
+    "Elba": {
+      "cmn-Hans-CN": "爱尔巴桑文",
+      "cmn-Hant-TW": "愛爾巴桑文"
+    },
+    "Elym": {
+      "cmn-Hans-CN": "埃利迈文",
+      "cmn-Hant-TW": "埃利迈文"
+    },
+    "Ethi": {
+      "cmn-Hans-CN": "埃塞俄比亚文",
+      "cmn-Hant-TW": "衣索比亞文"
+    },
+    "Geok": {
+      "cmn-Hans-CN": "格鲁吉亚文（教堂体）",
+      "cmn-Hant-TW": "喬治亞語系（阿索他路里和努斯克胡里文）"
+    },
+    "Geor": {
+      "cmn-Hans-CN": "格鲁吉亚文",
+      "cmn-Hant-TW": "喬治亞文"
+    },
+    "Glag": {
+      "cmn-Hans-CN": "格拉哥里文",
+      "cmn-Hant-TW": "格拉哥里文"
+    },
+    "Gong": {
+      "cmn-Hans-CN": "贡贾拉贡德文",
+      "cmn-Hant-TW": "贡贾拉贡德文"
+    },
+    "Gonm": {
+      "cmn-Hans-CN": "马萨拉姆冈德文",
+      "cmn-Hant-TW": "岡德文"
+    },
+    "Goth": {
+      "cmn-Hans-CN": "哥特文",
+      "cmn-Hant-TW": "歌德文"
+    },
+    "Gran": {
+      "cmn-Hans-CN": "格兰塔文",
+      "cmn-Hant-TW": "格蘭他文字"
+    },
+    "Gujr": {
+      "cmn-Hans-CN": "古吉拉特文",
+      "cmn-Hant-TW": "古吉拉特文"
+    },
+    "Guru": {
+      "cmn-Hans-CN": "果鲁穆奇文",
+      "cmn-Hant-TW": "古魯穆奇文"
+    },
+    "Hanb": {
+      "cmn-Hans-CN": "注音汉字",
+      "cmn-Hant-TW": "標上注音符號的漢字"
+    },
+    "Hani": {
+      "cmn-Hans-CN": "汉字",
+      "cmn-Hant-TW": "漢字"
+    },
+    "Hano": {
+      "cmn-Hans-CN": "汉奴罗文",
+      "cmn-Hant-TW": "哈努諾文"
+    },
+    "Hatr": {
+      "cmn-Hans-CN": "哈特兰文",
+      "cmn-Hant-TW": "哈特拉文"
+    },
+    "Hluw": {
+      "cmn-Hans-CN": "安那托利亚象形文字",
+      "cmn-Hant-TW": "安那托利亞象形文字"
+    },
+    "Hmng": {
+      "cmn-Hans-CN": "杨松录苗文",
+      "cmn-Hant-TW": "楊松錄苗文"
+    },
+    "Hmnp": {
+      "cmn-Hans-CN": "尼亚肯蒲丘苗文",
+      "cmn-Hant-TW": "尼亚肯蒲丘苗文"
+    },
+    "Hrkt": {
+      "cmn-Hans-CN": "假名",
+      "cmn-Hant-TW": "片假名或平假名"
+    },
+    "Hung": {
+      "cmn-Hans-CN": "古匈牙利文",
+      "cmn-Hant-TW": "古匈牙利文"
+    },
+    "Inds": {
+      "cmn-Hans-CN": "印度河文字",
+      "cmn-Hant-TW": "印度河流域（哈拉帕文）"
+    },
+    "Ital": {
+      "cmn-Hans-CN": "古意大利文",
+      "cmn-Hant-TW": "古意大利文"
+    },
+    "Jamo": {
+      "cmn-Hans-CN": "韩文字母",
+      "cmn-Hant-TW": "韓文字母"
+    },
+    "Java": {
+      "cmn-Hans-CN": "爪哇文",
+      "cmn-Hant-TW": "爪哇文"
+    },
+    "Jurc": {
+      "cmn-Hans-CN": "女真文",
+      "cmn-Hant-TW": "女真文字"
+    },
+    "Kali": {
+      "cmn-Hans-CN": "克耶李文字",
+      "cmn-Hant-TW": "克耶李文"
+    },
+    "Kawi": {
+      "cmn-Hans-CN": "卡维文",
+      "cmn-Hant-TW": "卡维文"
+    },
+    "Khar": {
+      "cmn-Hans-CN": "卡罗须提文",
+      "cmn-Hant-TW": "卡羅須提文"
+    },
+    "Khmr": {
+      "cmn-Hans-CN": "高棉文",
+      "cmn-Hant-TW": "高棉文"
+    },
+    "Khoj": {
+      "cmn-Hans-CN": "克吉奇文字",
+      "cmn-Hant-TW": "克吉奇文字"
+    },
+    "Kits": {
+      "cmn-Hans-CN": "契丹小字",
+      "cmn-Hant-TW": "契丹小字"
+    },
+    "Knda": {
+      "cmn-Hans-CN": "卡纳达文",
+      "cmn-Hant-TW": "坎那達文"
+    },
+    "Kore": {
+      "cmn-Hans-CN": "韩文",
+      "cmn-Hant-TW": "韓文"
+    },
+    "Kpel": {
+      "cmn-Hans-CN": "克佩列文",
+      "cmn-Hant-TW": "克培列文"
+    },
+    "Kthi": {
+      "cmn-Hans-CN": "凯提文",
+      "cmn-Hant-TW": "凱提文"
+    },
+    "Lana": {
+      "cmn-Hans-CN": "兰拿文",
+      "cmn-Hant-TW": "藍拿文"
+    },
+    "Laoo": {
+      "cmn-Hans-CN": "老挝文",
+      "cmn-Hant-TW": "寮文"
+    },
+    "Latf": {
+      "cmn-Hans-CN": "拉丁文（哥特式字体变体）",
+      "cmn-Hant-TW": "拉丁文（尖角體活字變體）"
+    },
+    "Latg": {
+      "cmn-Hans-CN": "拉丁文（盖尔文变体）",
+      "cmn-Hant-TW": "拉丁文（蓋爾語變體）"
+    },
+    "Lepc": {
+      "cmn-Hans-CN": "雷布查文",
+      "cmn-Hant-TW": "雷布查文"
+    },
+    "Limb": {
+      "cmn-Hans-CN": "林布文",
+      "cmn-Hant-TW": "林佈文"
+    },
+    "Lina": {
+      "cmn-Hans-CN": "线形文字（A）",
+      "cmn-Hant-TW": "線性文字（A）"
+    },
+    "Linb": {
+      "cmn-Hans-CN": "线形文字（B）",
+      "cmn-Hant-TW": "線性文字（B）"
+    },
+    "Lisu": {
+      "cmn-Hans-CN": "傈僳文",
+      "cmn-Hant-TW": "栗僳文"
+    },
+    "Loma": {
+      "cmn-Hans-CN": "洛马文",
+      "cmn-Hant-TW": "洛馬文"
+    },
+    "Lyci": {
+      "cmn-Hans-CN": "利西亚文",
+      "cmn-Hant-TW": "呂西亞語"
+    },
+    "Lydi": {
+      "cmn-Hans-CN": "吕底亚文",
+      "cmn-Hant-TW": "里底亞語"
+    },
+    "Mahj": {
+      "cmn-Hans-CN": "默哈金文",
+      "cmn-Hant-TW": "印地文"
+    },
+    "Maka": {
+      "cmn-Hans-CN": "望加锡文",
+      "cmn-Hant-TW": "望加锡文"
+    },
+    "Mand": {
+      "cmn-Hans-CN": "阿拉米文",
+      "cmn-Hant-TW": "曼底安文"
+    },
+    "Mani": {
+      "cmn-Hans-CN": "摩尼教文",
+      "cmn-Hant-TW": "摩尼教文"
+    },
+    "Marc": {
+      "cmn-Hans-CN": "大玛尔文",
+      "cmn-Hant-TW": "瑪欽文"
+    },
+    "Maya": {
+      "cmn-Hans-CN": "玛雅圣符文",
+      "cmn-Hant-TW": "瑪雅象形文字"
+    },
+    "Medf": {
+      "cmn-Hans-CN": "梅德法伊德林文",
+      "cmn-Hant-TW": "梅德法伊德林文"
+    },
+    "Mend": {
+      "cmn-Hans-CN": "门迪文",
+      "cmn-Hant-TW": "門德文"
+    },
+    "Merc": {
+      "cmn-Hans-CN": "麦罗埃草书",
+      "cmn-Hant-TW": "麥羅埃文（曲線字體）"
+    },
+    "Mero": {
+      "cmn-Hans-CN": "麦若提克文",
+      "cmn-Hant-TW": "麥羅埃文"
+    },
+    "Mlym": {
+      "cmn-Hans-CN": "马拉雅拉姆文",
+      "cmn-Hant-TW": "馬來亞拉姆文"
+    },
+    "Modi": {
+      "cmn-Hans-CN": "莫迪文",
+      "cmn-Hant-TW": "馬拉地文"
+    },
+    "Mong": {
+      "cmn-Hans-CN": "蒙古文",
+      "cmn-Hant-TW": "蒙古文"
+    },
+    "Moon": {
+      "cmn-Hans-CN": "穆恩字母",
+      "cmn-Hant-TW": "蒙氏點字"
+    },
+    "Mroo": {
+      "cmn-Hans-CN": "谬文",
+      "cmn-Hant-TW": "謬文"
+    },
+    "Mtei": {
+      "cmn-Hans-CN": "曼尼普尔文",
+      "cmn-Hant-TW": "曼尼普爾文"
+    },
+    "Mult": {
+      "cmn-Hans-CN": "穆尔坦文",
+      "cmn-Hant-TW": "木爾坦文"
+    },
+    "Mymr": {
+      "cmn-Hans-CN": "缅甸文",
+      "cmn-Hant-TW": "緬甸文"
+    },
+    "Nand": {
+      "cmn-Hans-CN": "楠迪梵文",
+      "cmn-Hant-TW": "楠迪梵文"
+    },
+    "Narb": {
+      "cmn-Hans-CN": "古北方阿拉伯文",
+      "cmn-Hant-TW": "古北阿拉伯文"
+    },
+    "Nbat": {
+      "cmn-Hans-CN": "纳巴泰文",
+      "cmn-Hant-TW": "納巴泰文字"
+    },
+    "Newa": {
+      "cmn-Hans-CN": "尼瓦文",
+      "cmn-Hant-TW": "Vote 尼瓦爾文"
+    },
+    "Nkgb": {
+      "cmn-Hans-CN": "纳西格巴文",
+      "cmn-Hant-TW": "納西格巴文"
+    },
+    "Nkoo": {
+      "cmn-Hans-CN": "西非书面文字（N’Ko）",
+      "cmn-Hant-TW": "西非書面語言 (N’Ko)"
+    },
+    "Nshu": {
+      "cmn-Hans-CN": "女书",
+      "cmn-Hant-TW": "女書"
+    },
+    "Ogam": {
+      "cmn-Hans-CN": "欧甘文",
+      "cmn-Hant-TW": "歐甘文"
+    },
+    "Olck": {
+      "cmn-Hans-CN": "桑塔利文",
+      "cmn-Hant-TW": "桑塔利文"
+    },
+    "Orkh": {
+      "cmn-Hans-CN": "鄂尔浑文",
+      "cmn-Hant-TW": "鄂爾渾文"
+    },
+    "Orya": {
+      "cmn-Hans-CN": "奥里亚文",
+      "cmn-Hant-TW": "歐迪亞文"
+    },
+    "Osge": {
+      "cmn-Hans-CN": "欧塞奇文",
+      "cmn-Hant-TW": "歐塞奇文"
+    },
+    "Osma": {
+      "cmn-Hans-CN": "奥斯曼亚文",
+      "cmn-Hant-TW": "歐斯曼亞文"
+    },
+    "Ougr": {
+      "cmn-Hans-CN": "回鹘文",
+      "cmn-Hant-TW": "回鹘文"
+    },
+    "Palm": {
+      "cmn-Hans-CN": "帕尔迈拉文",
+      "cmn-Hant-TW": "帕米瑞拉文字"
+    },
+    "Pauc": {
+      "cmn-Hans-CN": "包金豪文",
+      "cmn-Hant-TW": "鮑欽豪文"
+    },
+    "Perm": {
+      "cmn-Hans-CN": "古彼尔姆文",
+      "cmn-Hant-TW": "古彼爾姆諸文"
+    },
+    "Phag": {
+      "cmn-Hans-CN": "八思巴文",
+      "cmn-Hant-TW": "八思巴文"
+    },
+    "Phli": {
+      "cmn-Hans-CN": "巴列维文碑铭体",
+      "cmn-Hant-TW": "巴列維文（碑銘體）"
+    },
+    "Phlp": {
+      "cmn-Hans-CN": "巴列维文（圣诗体）",
+      "cmn-Hant-TW": "巴列維文（聖詩體）"
+    },
+    "Phlv": {
+      "cmn-Hans-CN": "巴列维文（书体）",
+      "cmn-Hant-TW": "巴列維文（書體）"
+    },
+    "Phnx": {
+      "cmn-Hans-CN": "腓尼基文",
+      "cmn-Hant-TW": "腓尼基文"
+    },
+    "Plrd": {
+      "cmn-Hans-CN": "波拉德音标文字",
+      "cmn-Hant-TW": "柏格理拼音符"
+    },
+    "Prti": {
+      "cmn-Hans-CN": "帕提亚文碑铭体",
+      "cmn-Hant-TW": "帕提亞文（碑銘體）"
+    },
+    "Rjng": {
+      "cmn-Hans-CN": "拉让文",
+      "cmn-Hant-TW": "拉讓文"
+    },
+    "Rohg": {
+      "cmn-Hans-CN": "哈乃斐文",
+      "cmn-Hant-TW": "哈乃斐羅興亞文"
+    },
+    "Roro": {
+      "cmn-Hans-CN": "朗格朗格文",
+      "cmn-Hant-TW": "朗格朗格象形文"
+    },
+    "Runr": {
+      "cmn-Hans-CN": "古代北欧文",
+      "cmn-Hant-TW": "古北歐文字"
+    },
+    "Samr": {
+      "cmn-Hans-CN": "撒马利亚文",
+      "cmn-Hant-TW": "撒馬利亞文"
+    },
+    "Sara": {
+      "cmn-Hans-CN": "沙拉堤文",
+      "cmn-Hant-TW": "沙拉堤文"
+    },
+    "Sarb": {
+      "cmn-Hans-CN": "古南阿拉伯文",
+      "cmn-Hant-TW": "古南阿拉伯文"
+    },
+    "Saur": {
+      "cmn-Hans-CN": "索拉什特拉文",
+      "cmn-Hant-TW": "索拉什特拉文"
+    },
+    "Sgnw": {
+      "cmn-Hans-CN": "书写符号",
+      "cmn-Hant-TW": "手語書寫符號"
+    },
+    "Shaw": {
+      "cmn-Hans-CN": "萧伯纳式文",
+      "cmn-Hant-TW": "簫柏納字符"
+    },
+    "Shrd": {
+      "cmn-Hans-CN": "夏拉达文",
+      "cmn-Hant-TW": "夏拉達文"
+    },
+    "Sidd": {
+      "cmn-Hans-CN": "悉昙文",
+      "cmn-Hant-TW": "悉曇文字"
+    },
+    "Sind": {
+      "cmn-Hans-CN": "信德文",
+      "cmn-Hant-TW": "信德文"
+    },
+    "Sinh": {
+      "cmn-Hans-CN": "僧伽罗文",
+      "cmn-Hant-TW": "錫蘭文"
+    },
+    "Sogd": {
+      "cmn-Hans-CN": "粟特文",
+      "cmn-Hant-TW": "粟特文"
+    },
+    "Sogo": {
+      "cmn-Hans-CN": "古粟特文",
+      "cmn-Hant-TW": "古粟特文"
+    },
+    "Sora": {
+      "cmn-Hans-CN": "索朗桑朋文",
+      "cmn-Hant-TW": "索朗桑朋文字"
+    },
+    "Soyo": {
+      "cmn-Hans-CN": "索永布文",
+      "cmn-Hant-TW": "索永布文字"
+    },
+    "Sund": {
+      "cmn-Hans-CN": "巽他文",
+      "cmn-Hant-TW": "巽他文"
+    },
+    "Sylo": {
+      "cmn-Hans-CN": "锡尔赫特文",
+      "cmn-Hant-TW": "希洛弟納格里文"
+    },
+    "Syrc": {
+      "cmn-Hans-CN": "叙利亚文",
+      "cmn-Hant-TW": "敘利亞文"
+    },
+    "Syre": {
+      "cmn-Hans-CN": "福音体叙利亚文",
+      "cmn-Hant-TW": "敘利亞文（福音體文字變體）"
+    },
+    "Syrj": {
+      "cmn-Hans-CN": "西叙利亚文",
+      "cmn-Hant-TW": "敘利亞文（西方文字變體）"
+    },
+    "Syrn": {
+      "cmn-Hans-CN": "东叙利亚文",
+      "cmn-Hant-TW": "敘利亞文（東方文字變體）"
+    },
+    "Tagb": {
+      "cmn-Hans-CN": "塔格班瓦文",
+      "cmn-Hant-TW": "南島文"
+    },
+    "Takr": {
+      "cmn-Hans-CN": "泰克里文",
+      "cmn-Hant-TW": "塔卡里文字"
+    },
+    "Tale": {
+      "cmn-Hans-CN": "泰乐文",
+      "cmn-Hant-TW": "傣哪文"
+    },
+    "Talu": {
+      "cmn-Hans-CN": "新傣文",
+      "cmn-Hant-TW": "西雙版納新傣文"
+    },
+    "Taml": {
+      "cmn-Hans-CN": "泰米尔文",
+      "cmn-Hant-TW": "坦米爾文"
+    },
+    "Tang": {
+      "cmn-Hans-CN": "唐古特文",
+      "cmn-Hant-TW": "西夏文"
+    },
+    "Tavt": {
+      "cmn-Hans-CN": "越南傣文",
+      "cmn-Hant-TW": "傣擔文"
+    },
+    "Telu": {
+      "cmn-Hans-CN": "泰卢固文",
+      "cmn-Hant-TW": "泰盧固文"
+    },
+    "Teng": {
+      "cmn-Hans-CN": "腾格瓦文字",
+      "cmn-Hant-TW": "談格瓦文"
+    },
+    "Tfng": {
+      "cmn-Hans-CN": "提非纳文",
+      "cmn-Hant-TW": "提非納文"
+    },
+    "Tglg": {
+      "cmn-Hans-CN": "塔加路文",
+      "cmn-Hant-TW": "塔加拉文"
+    },
+    "Thaa": {
+      "cmn-Hans-CN": "塔安那文",
+      "cmn-Hant-TW": "塔安那文"
+    },
+    "Tibt": {
+      "cmn-Hans-CN": "藏文",
+      "cmn-Hant-TW": "藏文"
+    },
+    "Tirh": {
+      "cmn-Hans-CN": "迈蒂利文",
+      "cmn-Hant-TW": "邁蒂利文"
+    },
+    "Tnsa": {
+      "cmn-Hans-CN": "坦萨文",
+      "cmn-Hant-TW": "坦萨文"
+    },
+    "Toto": {
+      "cmn-Hans-CN": "投投文",
+      "cmn-Hant-TW": "投投文"
+    },
+    "Ugar": {
+      "cmn-Hans-CN": "乌加里特文",
+      "cmn-Hant-TW": "烏加列文"
+    },
+    "Vaii": {
+      "cmn-Hans-CN": "瓦依文",
+      "cmn-Hant-TW": "瓦依文"
+    },
+    "Visp": {
+      "cmn-Hans-CN": "可见语言",
+      "cmn-Hant-TW": "視覺語音文字"
+    },
+    "Wara": {
+      "cmn-Hans-CN": "瓦郎奇蒂文字",
+      "cmn-Hant-TW": "瓦郎奇蒂文字"
+    },
+    "Wcho": {
+      "cmn-Hans-CN": "万秋文",
+      "cmn-Hant-TW": "万秋文"
+    },
+    "Wole": {
+      "cmn-Hans-CN": "沃莱艾文",
+      "cmn-Hant-TW": "沃雷艾文"
+    },
+    "Xpeo": {
+      "cmn-Hans-CN": "古波斯文",
+      "cmn-Hant-TW": "古波斯文"
+    },
+    "Xsux": {
+      "cmn-Hans-CN": "苏美尔-阿卡德楔形文字",
+      "cmn-Hant-TW": "蘇米魯亞甲文楔形文字"
+    },
+    "Yezi": {
+      "cmn-Hans-CN": "雅兹迪文",
+      "cmn-Hant-TW": "雅兹迪文"
+    },
+    "Yiii": {
+      "cmn-Hans-CN": "彝文",
+      "cmn-Hant-TW": "彞文"
+    },
+    "Zanb": {
+      "cmn-Hans-CN": "札那巴札尔方块文字",
+      "cmn-Hant-TW": "札那巴札爾文字"
+    },
+    "Zinh": {
+      "cmn-Hans-CN": "遗传学术语",
+      "cmn-Hant-TW": "繼承文字（Unicode）"
+    },
+    "Zmth": {
+      "cmn-Hans-CN": "数学符号",
+      "cmn-Hant-TW": "數學符號"
+    },
+    "Zsye": {
+      "cmn-Hans-CN": "表情符号",
+      "cmn-Hant-TW": "表情符號"
+    },
+    "Zsym": {
+      "cmn-Hans-CN": "符号",
+      "cmn-Hant-TW": "符號"
+    },
+    "Zxxx": {
+      "cmn-Hans-CN": "非书面文字",
+      "cmn-Hant-TW": "非書寫語言"
+    },
+    "Zyyy": {
+      "cmn-Hans-CN": "通用",
+      "cmn-Hant-TW": "一般文字"
+    },
+    "Zzzz": {
+      "cmn-Hans-CN": "未知文字",
+      "cmn-Hant-TW": "未知文字"
+    }
+  },
+  "regions": {
+    "AD": {
+      "cmn-Hans-CN": "安道尔",
+      "cmn-Hant-TW": "安道爾"
+    },
+    "AE": {
+      "cmn-Hans-CN": "阿拉伯联合酋长国",
+      "cmn-Hant-TW": "阿拉伯聯合大公國"
+    },
+    "AF": {
+      "cmn-Hans-CN": "阿富汗",
+      "cmn-Hant-TW": "阿富汗"
+    },
+    "AG": {
+      "cmn-Hans-CN": "安提瓜和巴布达",
+      "cmn-Hant-TW": "安地卡及巴布達"
+    },
+    "AI": {
+      "cmn-Hans-CN": "安圭拉",
+      "cmn-Hant-TW": "安奎拉"
+    },
+    "AL": {
+      "cmn-Hans-CN": "阿尔巴尼亚",
+      "cmn-Hant-TW": "阿爾巴尼亞"
+    },
+    "AM": {
+      "cmn-Hans-CN": "亚美尼亚",
+      "cmn-Hant-TW": "亞美尼亞"
+    },
+    "AO": {
+      "cmn-Hans-CN": "安哥拉",
+      "cmn-Hant-TW": "安哥拉"
+    },
+    "AQ": {
+      "cmn-Hans-CN": "南极洲",
+      "cmn-Hant-TW": "南極洲"
+    },
+    "AR": {
+      "cmn-Hans-CN": "阿根廷",
+      "cmn-Hant-TW": "阿根廷"
+    },
+    "AS": {
+      "cmn-Hans-CN": "美属萨摩亚",
+      "cmn-Hant-TW": "美屬薩摩亞"
+    },
+    "AT": {
+      "cmn-Hans-CN": "奥地利",
+      "cmn-Hant-TW": "奧地利"
+    },
+    "AU": {
+      "cmn-Hans-CN": "澳大利亚",
+      "cmn-Hant-TW": "澳洲"
+    },
+    "AW": {
+      "cmn-Hans-CN": "阿鲁巴",
+      "cmn-Hant-TW": "荷屬阿魯巴"
+    },
+    "AX": {
+      "cmn-Hans-CN": "奥兰群岛",
+      "cmn-Hant-TW": "奧蘭群島"
+    },
+    "AZ": {
+      "cmn-Hans-CN": "阿塞拜疆",
+      "cmn-Hant-TW": "亞塞拜然"
+    },
+    "BA": {
+      "cmn-Hans-CN": "波斯尼亚和黑塞哥维那",
+      "cmn-Hant-TW": "波士尼亞與赫塞哥維納"
+    },
+    "BB": {
+      "cmn-Hans-CN": "巴巴多斯",
+      "cmn-Hant-TW": "巴貝多"
+    },
+    "BD": {
+      "cmn-Hans-CN": "孟加拉国",
+      "cmn-Hant-TW": "孟加拉"
+    },
+    "BE": {
+      "cmn-Hans-CN": "比利时",
+      "cmn-Hant-TW": "比利時"
+    },
+    "BF": {
+      "cmn-Hans-CN": "布基纳法索",
+      "cmn-Hant-TW": "布吉納法索"
+    },
+    "BG": {
+      "cmn-Hans-CN": "保加利亚",
+      "cmn-Hant-TW": "保加利亞"
+    },
+    "BH": {
+      "cmn-Hans-CN": "巴林",
+      "cmn-Hant-TW": "巴林"
+    },
+    "BI": {
+      "cmn-Hans-CN": "布隆迪",
+      "cmn-Hant-TW": "蒲隆地"
+    },
+    "BJ": {
+      "cmn-Hans-CN": "贝宁",
+      "cmn-Hant-TW": "貝南"
+    },
+    "BL": {
+      "cmn-Hans-CN": "圣巴泰勒米",
+      "cmn-Hant-TW": "聖巴瑟米"
+    },
+    "BM": {
+      "cmn-Hans-CN": "百慕大",
+      "cmn-Hant-TW": "百慕達"
+    },
+    "BN": {
+      "cmn-Hans-CN": "文莱",
+      "cmn-Hant-TW": "汶萊"
+    },
+    "BO": {
+      "cmn-Hans-CN": "玻利维亚",
+      "cmn-Hant-TW": "玻利維亞"
+    },
+    "BQ": {
+      "cmn-Hans-CN": "荷属加勒比区",
+      "cmn-Hant-TW": "荷蘭加勒比區"
+    },
+    "BR": {
+      "cmn-Hans-CN": "巴西",
+      "cmn-Hant-TW": "巴西"
+    },
+    "BS": {
+      "cmn-Hans-CN": "巴哈马",
+      "cmn-Hant-TW": "巴哈馬"
+    },
+    "BT": {
+      "cmn-Hans-CN": "不丹",
+      "cmn-Hant-TW": "不丹"
+    },
+    "BV": {
+      "cmn-Hans-CN": "布韦岛",
+      "cmn-Hant-TW": "布威島"
+    },
+    "BW": {
+      "cmn-Hans-CN": "博茨瓦纳",
+      "cmn-Hant-TW": "波札那"
+    },
+    "BY": {
+      "cmn-Hans-CN": "白俄罗斯",
+      "cmn-Hant-TW": "白俄羅斯"
+    },
+    "BZ": {
+      "cmn-Hans-CN": "伯利兹",
+      "cmn-Hant-TW": "貝里斯"
+    },
+    "CA": {
+      "cmn-Hans-CN": "加拿大",
+      "cmn-Hant-TW": "加拿大"
+    },
+    "CC": {
+      "cmn-Hans-CN": "科科斯（基林）群岛",
+      "cmn-Hant-TW": "科克斯（基靈）群島"
+    },
+    "CD": {
+      "cmn-Hans-CN": "刚果（金）",
+      "cmn-Hant-TW": "剛果（金夏沙）"
+    },
+    "CF": {
+      "cmn-Hans-CN": "中非共和国",
+      "cmn-Hant-TW": "中非共和國"
+    },
+    "CG": {
+      "cmn-Hans-CN": "刚果（布）",
+      "cmn-Hant-TW": "剛果（布拉薩）"
+    },
+    "CH": {
+      "cmn-Hans-CN": "瑞士",
+      "cmn-Hant-TW": "瑞士"
+    },
+    "CI": {
+      "cmn-Hans-CN": "科特迪瓦",
+      "cmn-Hant-TW": "象牙海岸"
+    },
+    "CK": {
+      "cmn-Hans-CN": "库克群岛",
+      "cmn-Hant-TW": "庫克群島"
+    },
+    "CL": {
+      "cmn-Hans-CN": "智利",
+      "cmn-Hant-TW": "智利"
+    },
+    "CM": {
+      "cmn-Hans-CN": "喀麦隆",
+      "cmn-Hant-TW": "喀麥隆"
+    },
+    "CO": {
+      "cmn-Hans-CN": "哥伦比亚",
+      "cmn-Hant-TW": "哥倫比亞"
+    },
+    "CR": {
+      "cmn-Hans-CN": "哥斯达黎加",
+      "cmn-Hant-TW": "哥斯大黎加"
+    },
+    "CU": {
+      "cmn-Hans-CN": "古巴",
+      "cmn-Hant-TW": "古巴"
+    },
+    "CV": {
+      "cmn-Hans-CN": "佛得角",
+      "cmn-Hant-TW": "維德角"
+    },
+    "CW": {
+      "cmn-Hans-CN": "库拉索",
+      "cmn-Hant-TW": "庫拉索"
+    },
+    "CX": {
+      "cmn-Hans-CN": "圣诞岛",
+      "cmn-Hant-TW": "聖誕島"
+    },
+    "CY": {
+      "cmn-Hans-CN": "塞浦路斯",
+      "cmn-Hant-TW": "賽普勒斯"
+    },
+    "CZ": {
+      "cmn-Hans-CN": "捷克",
+      "cmn-Hant-TW": "捷克"
+    },
+    "DJ": {
+      "cmn-Hans-CN": "吉布提",
+      "cmn-Hant-TW": "吉布地"
+    },
+    "DK": {
+      "cmn-Hans-CN": "丹麦",
+      "cmn-Hant-TW": "丹麥"
+    },
+    "DM": {
+      "cmn-Hans-CN": "多米尼克",
+      "cmn-Hant-TW": "多米尼克"
+    },
+    "DO": {
+      "cmn-Hans-CN": "多米尼加共和国",
+      "cmn-Hant-TW": "多明尼加共和國"
+    },
+    "DZ": {
+      "cmn-Hans-CN": "阿尔及利亚",
+      "cmn-Hant-TW": "阿爾及利亞"
+    },
+    "EC": {
+      "cmn-Hans-CN": "厄瓜多尔",
+      "cmn-Hant-TW": "厄瓜多"
+    },
+    "EE": {
+      "cmn-Hans-CN": "爱沙尼亚",
+      "cmn-Hant-TW": "愛沙尼亞"
+    },
+    "EG": {
+      "cmn-Hans-CN": "埃及",
+      "cmn-Hant-TW": "埃及"
+    },
+    "EH": {
+      "cmn-Hans-CN": "西撒哈拉",
+      "cmn-Hant-TW": "西撒哈拉"
+    },
+    "ER": {
+      "cmn-Hans-CN": "厄立特里亚",
+      "cmn-Hant-TW": "厄利垂亞"
+    },
+    "ET": {
+      "cmn-Hans-CN": "埃塞俄比亚",
+      "cmn-Hant-TW": "衣索比亞"
+    },
+    "FI": {
+      "cmn-Hans-CN": "芬兰",
+      "cmn-Hant-TW": "芬蘭"
+    },
+    "FJ": {
+      "cmn-Hans-CN": "斐济",
+      "cmn-Hant-TW": "斐濟"
+    },
+    "FK": {
+      "cmn-Hans-CN": "福克兰群岛",
+      "cmn-Hant-TW": "福克蘭群島"
+    },
+    "FM": {
+      "cmn-Hans-CN": "密克罗尼西亚",
+      "cmn-Hant-TW": "密克羅尼西亞"
+    },
+    "FO": {
+      "cmn-Hans-CN": "法罗群岛",
+      "cmn-Hant-TW": "法羅群島"
+    },
+    "GA": {
+      "cmn-Hans-CN": "加蓬",
+      "cmn-Hant-TW": "加彭"
+    },
+    "GD": {
+      "cmn-Hans-CN": "格林纳达",
+      "cmn-Hant-TW": "格瑞那達"
+    },
+    "GE": {
+      "cmn-Hans-CN": "格鲁吉亚",
+      "cmn-Hant-TW": "喬治亞"
+    },
+    "GF": {
+      "cmn-Hans-CN": "法属圭亚那",
+      "cmn-Hant-TW": "法屬圭亞那"
+    },
+    "GG": {
+      "cmn-Hans-CN": "根西岛",
+      "cmn-Hant-TW": "根息"
+    },
+    "GH": {
+      "cmn-Hans-CN": "加纳",
+      "cmn-Hant-TW": "迦納"
+    },
+    "GI": {
+      "cmn-Hans-CN": "直布罗陀",
+      "cmn-Hant-TW": "直布羅陀"
+    },
+    "GL": {
+      "cmn-Hans-CN": "格陵兰",
+      "cmn-Hant-TW": "格陵蘭"
+    },
+    "GM": {
+      "cmn-Hans-CN": "冈比亚",
+      "cmn-Hant-TW": "甘比亞"
+    },
+    "GN": {
+      "cmn-Hans-CN": "几内亚",
+      "cmn-Hant-TW": "幾內亞"
+    },
+    "GP": {
+      "cmn-Hans-CN": "瓜德罗普",
+      "cmn-Hant-TW": "瓜地洛普"
+    },
+    "GQ": {
+      "cmn-Hans-CN": "赤道几内亚",
+      "cmn-Hant-TW": "赤道幾內亞"
+    },
+    "GR": {
+      "cmn-Hans-CN": "希腊",
+      "cmn-Hant-TW": "希臘"
+    },
+    "GS": {
+      "cmn-Hans-CN": "南乔治亚和南桑威奇群岛",
+      "cmn-Hant-TW": "南喬治亞與南三明治群島"
+    },
+    "GT": {
+      "cmn-Hans-CN": "危地马拉",
+      "cmn-Hant-TW": "瓜地馬拉"
+    },
+    "GU": {
+      "cmn-Hans-CN": "关岛",
+      "cmn-Hant-TW": "關島"
+    },
+    "GW": {
+      "cmn-Hans-CN": "几内亚比绍",
+      "cmn-Hant-TW": "幾內亞比索"
+    },
+    "GY": {
+      "cmn-Hans-CN": "圭亚那",
+      "cmn-Hant-TW": "蓋亞那"
+    },
+    "HM": {
+      "cmn-Hans-CN": "赫德岛和麦克唐纳群岛",
+      "cmn-Hant-TW": "赫德島及麥唐納群島"
+    },
+    "HN": {
+      "cmn-Hans-CN": "洪都拉斯",
+      "cmn-Hant-TW": "宏都拉斯"
+    },
+    "HR": {
+      "cmn-Hans-CN": "克罗地亚",
+      "cmn-Hant-TW": "克羅埃西亞"
+    },
+    "HT": {
+      "cmn-Hans-CN": "海地",
+      "cmn-Hant-TW": "海地"
+    },
+    "HU": {
+      "cmn-Hans-CN": "匈牙利",
+      "cmn-Hant-TW": "匈牙利"
+    },
+    "ID": {
+      "cmn-Hans-CN": "印度尼西亚",
+      "cmn-Hant-TW": "印尼"
+    },
+    "IE": {
+      "cmn-Hans-CN": "爱尔兰",
+      "cmn-Hant-TW": "愛爾蘭"
+    },
+    "IL": {
+      "cmn-Hans-CN": "以色列",
+      "cmn-Hant-TW": "以色列"
+    },
+    "IM": {
+      "cmn-Hans-CN": "马恩岛",
+      "cmn-Hant-TW": "曼島"
+    },
+    "IN": {
+      "cmn-Hans-CN": "印度",
+      "cmn-Hant-TW": "印度"
+    },
+    "IO": {
+      "cmn-Hans-CN": "英属印度洋领地",
+      "cmn-Hant-TW": "英屬印度洋領地"
+    },
+    "IQ": {
+      "cmn-Hans-CN": "伊拉克",
+      "cmn-Hant-TW": "伊拉克"
+    },
+    "IR": {
+      "cmn-Hans-CN": "伊朗",
+      "cmn-Hant-TW": "伊朗"
+    },
+    "IS": {
+      "cmn-Hans-CN": "冰岛",
+      "cmn-Hant-TW": "冰島"
+    },
+    "IT": {
+      "cmn-Hans-CN": "意大利",
+      "cmn-Hant-TW": "義大利"
+    },
+    "JE": {
+      "cmn-Hans-CN": "泽西岛",
+      "cmn-Hant-TW": "澤西島"
+    },
+    "JM": {
+      "cmn-Hans-CN": "牙买加",
+      "cmn-Hant-TW": "牙買加"
+    },
+    "JO": {
+      "cmn-Hans-CN": "约旦",
+      "cmn-Hant-TW": "約旦"
+    },
+    "KE": {
+      "cmn-Hans-CN": "肯尼亚",
+      "cmn-Hant-TW": "肯亞"
+    },
+    "KG": {
+      "cmn-Hans-CN": "吉尔吉斯斯坦",
+      "cmn-Hant-TW": "吉爾吉斯"
+    },
+    "KH": {
+      "cmn-Hans-CN": "柬埔寨",
+      "cmn-Hant-TW": "柬埔寨"
+    },
+    "KI": {
+      "cmn-Hans-CN": "基里巴斯",
+      "cmn-Hant-TW": "吉里巴斯"
+    },
+    "KM": {
+      "cmn-Hans-CN": "科摩罗",
+      "cmn-Hant-TW": "葛摩"
+    },
+    "KN": {
+      "cmn-Hans-CN": "圣基茨和尼维斯",
+      "cmn-Hant-TW": "聖克里斯多福及尼維斯"
+    },
+    "KP": {
+      "cmn-Hans-CN": "朝鲜",
+      "cmn-Hant-TW": "北韓"
+    },
+    "KR": {
+      "cmn-Hans-CN": "韩国",
+      "cmn-Hant-TW": "南韓"
+    },
+    "KW": {
+      "cmn-Hans-CN": "科威特",
+      "cmn-Hant-TW": "科威特"
+    },
+    "KY": {
+      "cmn-Hans-CN": "开曼群岛",
+      "cmn-Hant-TW": "開曼群島"
+    },
+    "KZ": {
+      "cmn-Hans-CN": "哈萨克斯坦",
+      "cmn-Hant-TW": "哈薩克"
+    },
+    "LA": {
+      "cmn-Hans-CN": "老挝",
+      "cmn-Hant-TW": "寮國"
+    },
+    "LB": {
+      "cmn-Hans-CN": "黎巴嫩",
+      "cmn-Hant-TW": "黎巴嫩"
+    },
+    "LC": {
+      "cmn-Hans-CN": "圣卢西亚",
+      "cmn-Hant-TW": "聖露西亞"
+    },
+    "LI": {
+      "cmn-Hans-CN": "列支敦士登",
+      "cmn-Hant-TW": "列支敦斯登"
+    },
+    "LK": {
+      "cmn-Hans-CN": "斯里兰卡",
+      "cmn-Hant-TW": "斯里蘭卡"
+    },
+    "LR": {
+      "cmn-Hans-CN": "利比里亚",
+      "cmn-Hant-TW": "賴比瑞亞"
+    },
+    "LS": {
+      "cmn-Hans-CN": "莱索托",
+      "cmn-Hant-TW": "賴索托"
+    },
+    "LT": {
+      "cmn-Hans-CN": "立陶宛",
+      "cmn-Hant-TW": "立陶宛"
+    },
+    "LU": {
+      "cmn-Hans-CN": "卢森堡",
+      "cmn-Hant-TW": "盧森堡"
+    },
+    "LV": {
+      "cmn-Hans-CN": "拉脱维亚",
+      "cmn-Hant-TW": "拉脫維亞"
+    },
+    "LY": {
+      "cmn-Hans-CN": "利比亚",
+      "cmn-Hant-TW": "利比亞"
+    },
+    "MA": {
+      "cmn-Hans-CN": "摩洛哥",
+      "cmn-Hant-TW": "摩洛哥"
+    },
+    "MC": {
+      "cmn-Hans-CN": "摩纳哥",
+      "cmn-Hant-TW": "摩納哥"
+    },
+    "MD": {
+      "cmn-Hans-CN": "摩尔多瓦",
+      "cmn-Hant-TW": "摩爾多瓦"
+    },
+    "ME": {
+      "cmn-Hans-CN": "黑山",
+      "cmn-Hant-TW": "蒙特內哥羅"
+    },
+    "MF": {
+      "cmn-Hans-CN": "法属圣马丁",
+      "cmn-Hant-TW": "法屬聖馬丁"
+    },
+    "MG": {
+      "cmn-Hans-CN": "马达加斯加",
+      "cmn-Hant-TW": "馬達加斯加"
+    },
+    "MH": {
+      "cmn-Hans-CN": "马绍尔群岛",
+      "cmn-Hant-TW": "馬紹爾群島"
+    },
+    "MK": {
+      "cmn-Hans-CN": "北马其顿",
+      "cmn-Hant-TW": "北馬其頓"
+    },
+    "ML": {
+      "cmn-Hans-CN": "马里",
+      "cmn-Hant-TW": "馬利"
+    },
+    "MM": {
+      "cmn-Hans-CN": "缅甸",
+      "cmn-Hant-TW": "緬甸"
+    },
+    "MN": {
+      "cmn-Hans-CN": "蒙古",
+      "cmn-Hant-TW": "蒙古"
+    },
+    "MO": {
+      "cmn-Hans-CN": "中国澳门特别行政区",
+      "cmn-Hant-TW": "中國澳門特別行政區"
+    },
+    "MP": {
+      "cmn-Hans-CN": "北马里亚纳群岛",
+      "cmn-Hant-TW": "北馬利安納群島"
+    },
+    "MQ": {
+      "cmn-Hans-CN": "马提尼克",
+      "cmn-Hant-TW": "馬丁尼克"
+    },
+    "MR": {
+      "cmn-Hans-CN": "毛里塔尼亚",
+      "cmn-Hant-TW": "茅利塔尼亞"
+    },
+    "MS": {
+      "cmn-Hans-CN": "蒙特塞拉特",
+      "cmn-Hant-TW": "蒙哲臘"
+    },
+    "MT": {
+      "cmn-Hans-CN": "马耳他",
+      "cmn-Hant-TW": "馬爾他"
+    },
+    "MU": {
+      "cmn-Hans-CN": "毛里求斯",
+      "cmn-Hant-TW": "模里西斯"
+    },
+    "MV": {
+      "cmn-Hans-CN": "马尔代夫",
+      "cmn-Hant-TW": "馬爾地夫"
+    },
+    "MW": {
+      "cmn-Hans-CN": "马拉维",
+      "cmn-Hant-TW": "馬拉威"
+    },
+    "MX": {
+      "cmn-Hans-CN": "墨西哥",
+      "cmn-Hant-TW": "墨西哥"
+    },
+    "MZ": {
+      "cmn-Hans-CN": "莫桑比克",
+      "cmn-Hant-TW": "莫三比克"
+    },
+    "NA": {
+      "cmn-Hans-CN": "纳米比亚",
+      "cmn-Hant-TW": "納米比亞"
+    },
+    "NC": {
+      "cmn-Hans-CN": "新喀里多尼亚",
+      "cmn-Hant-TW": "新喀里多尼亞"
+    },
+    "NE": {
+      "cmn-Hans-CN": "尼日尔",
+      "cmn-Hant-TW": "尼日"
+    },
+    "NF": {
+      "cmn-Hans-CN": "诺福克岛",
+      "cmn-Hant-TW": "諾福克島"
+    },
+    "NG": {
+      "cmn-Hans-CN": "尼日利亚",
+      "cmn-Hant-TW": "奈及利亞"
+    },
+    "NI": {
+      "cmn-Hans-CN": "尼加拉瓜",
+      "cmn-Hant-TW": "尼加拉瓜"
+    },
+    "NL": {
+      "cmn-Hans-CN": "荷兰",
+      "cmn-Hant-TW": "荷蘭"
+    },
+    "NO": {
+      "cmn-Hans-CN": "挪威",
+      "cmn-Hant-TW": "挪威"
+    },
+    "NP": {
+      "cmn-Hans-CN": "尼泊尔",
+      "cmn-Hant-TW": "尼泊爾"
+    },
+    "NR": {
+      "cmn-Hans-CN": "瑙鲁",
+      "cmn-Hant-TW": "諾魯"
+    },
+    "NU": {
+      "cmn-Hans-CN": "纽埃",
+      "cmn-Hant-TW": "紐埃島"
+    },
+    "NZ": {
+      "cmn-Hans-CN": "新西兰",
+      "cmn-Hant-TW": "紐西蘭"
+    },
+    "OM": {
+      "cmn-Hans-CN": "阿曼",
+      "cmn-Hant-TW": "阿曼"
+    },
+    "PA": {
+      "cmn-Hans-CN": "巴拿马",
+      "cmn-Hant-TW": "巴拿馬"
+    },
+    "PE": {
+      "cmn-Hans-CN": "秘鲁",
+      "cmn-Hant-TW": "秘魯"
+    },
+    "PF": {
+      "cmn-Hans-CN": "法属波利尼西亚",
+      "cmn-Hant-TW": "法屬玻里尼西亞"
+    },
+    "PG": {
+      "cmn-Hans-CN": "巴布亚新几内亚",
+      "cmn-Hant-TW": "巴布亞紐幾內亞"
+    },
+    "PH": {
+      "cmn-Hans-CN": "菲律宾",
+      "cmn-Hant-TW": "菲律賓"
+    },
+    "PK": {
+      "cmn-Hans-CN": "巴基斯坦",
+      "cmn-Hant-TW": "巴基斯坦"
+    },
+    "PL": {
+      "cmn-Hans-CN": "波兰",
+      "cmn-Hant-TW": "波蘭"
+    },
+    "PM": {
+      "cmn-Hans-CN": "圣皮埃尔和密克隆群岛",
+      "cmn-Hant-TW": "聖皮埃與密克隆群島"
+    },
+    "PN": {
+      "cmn-Hans-CN": "皮特凯恩群岛",
+      "cmn-Hant-TW": "皮特肯群島"
+    },
+    "PR": {
+      "cmn-Hans-CN": "波多黎各",
+      "cmn-Hant-TW": "波多黎各"
+    },
+    "PS": {
+      "cmn-Hans-CN": "巴勒斯坦领土",
+      "cmn-Hant-TW": "巴勒斯坦自治區"
+    },
+    "PT": {
+      "cmn-Hans-CN": "葡萄牙",
+      "cmn-Hant-TW": "葡萄牙"
+    },
+    "PW": {
+      "cmn-Hans-CN": "帕劳",
+      "cmn-Hant-TW": "帛琉"
+    },
+    "PY": {
+      "cmn-Hans-CN": "巴拉圭",
+      "cmn-Hant-TW": "巴拉圭"
+    },
+    "QA": {
+      "cmn-Hans-CN": "卡塔尔",
+      "cmn-Hant-TW": "卡達"
+    },
+    "RE": {
+      "cmn-Hans-CN": "留尼汪",
+      "cmn-Hant-TW": "留尼旺"
+    },
+    "RO": {
+      "cmn-Hans-CN": "罗马尼亚",
+      "cmn-Hant-TW": "羅馬尼亞"
+    },
+    "RS": {
+      "cmn-Hans-CN": "塞尔维亚",
+      "cmn-Hant-TW": "塞爾維亞"
+    },
+    "RU": {
+      "cmn-Hans-CN": "俄罗斯",
+      "cmn-Hant-TW": "俄羅斯"
+    },
+    "RW": {
+      "cmn-Hans-CN": "卢旺达",
+      "cmn-Hant-TW": "盧安達"
+    },
+    "SA": {
+      "cmn-Hans-CN": "沙特阿拉伯",
+      "cmn-Hant-TW": "沙烏地阿拉伯"
+    },
+    "SB": {
+      "cmn-Hans-CN": "所罗门群岛",
+      "cmn-Hant-TW": "索羅門群島"
+    },
+    "SC": {
+      "cmn-Hans-CN": "塞舌尔",
+      "cmn-Hant-TW": "塞席爾"
+    },
+    "SD": {
+      "cmn-Hans-CN": "苏丹",
+      "cmn-Hant-TW": "蘇丹"
+    },
+    "SE": {
+      "cmn-Hans-CN": "瑞典",
+      "cmn-Hant-TW": "瑞典"
+    },
+    "SH": {
+      "cmn-Hans-CN": "圣赫勒拿",
+      "cmn-Hant-TW": "聖赫勒拿島"
+    },
+    "SI": {
+      "cmn-Hans-CN": "斯洛文尼亚",
+      "cmn-Hant-TW": "斯洛維尼亞"
+    },
+    "SJ": {
+      "cmn-Hans-CN": "斯瓦尔巴和扬马延",
+      "cmn-Hant-TW": "挪威屬斯瓦巴及尖棉"
+    },
+    "SK": {
+      "cmn-Hans-CN": "斯洛伐克",
+      "cmn-Hant-TW": "斯洛伐克"
+    },
+    "SL": {
+      "cmn-Hans-CN": "塞拉利昂",
+      "cmn-Hant-TW": "獅子山"
+    },
+    "SM": {
+      "cmn-Hans-CN": "圣马力诺",
+      "cmn-Hant-TW": "聖馬利諾"
+    },
+    "SN": {
+      "cmn-Hans-CN": "塞内加尔",
+      "cmn-Hant-TW": "塞內加爾"
+    },
+    "SO": {
+      "cmn-Hans-CN": "索马里",
+      "cmn-Hant-TW": "索馬利亞"
+    },
+    "SR": {
+      "cmn-Hans-CN": "苏里南",
+      "cmn-Hant-TW": "蘇利南"
+    },
+    "SS": {
+      "cmn-Hans-CN": "南苏丹",
+      "cmn-Hant-TW": "南蘇丹"
+    },
+    "ST": {
+      "cmn-Hans-CN": "圣多美和普林西比",
+      "cmn-Hant-TW": "聖多美普林西比"
+    },
+    "SV": {
+      "cmn-Hans-CN": "萨尔瓦多",
+      "cmn-Hant-TW": "薩爾瓦多"
+    },
+    "SX": {
+      "cmn-Hans-CN": "荷属圣马丁",
+      "cmn-Hant-TW": "荷屬聖馬丁"
+    },
+    "SY": {
+      "cmn-Hans-CN": "叙利亚",
+      "cmn-Hant-TW": "敘利亞"
+    },
+    "SZ": {
+      "cmn-Hans-CN": "斯威士兰",
+      "cmn-Hant-TW": "史瓦帝尼"
+    },
+    "TC": {
+      "cmn-Hans-CN": "特克斯和凯科斯群岛",
+      "cmn-Hant-TW": "土克斯及開科斯群島"
+    },
+    "TD": {
+      "cmn-Hans-CN": "乍得",
+      "cmn-Hant-TW": "查德"
+    },
+    "TF": {
+      "cmn-Hans-CN": "法属南部领地",
+      "cmn-Hant-TW": "法屬南部屬地"
+    },
+    "TG": {
+      "cmn-Hans-CN": "多哥",
+      "cmn-Hant-TW": "多哥"
+    },
+    "TH": {
+      "cmn-Hans-CN": "泰国",
+      "cmn-Hant-TW": "泰國"
+    },
+    "TJ": {
+      "cmn-Hans-CN": "塔吉克斯坦",
+      "cmn-Hant-TW": "塔吉克"
+    },
+    "TK": {
+      "cmn-Hans-CN": "托克劳",
+      "cmn-Hant-TW": "托克勞群島"
+    },
+    "TL": {
+      "cmn-Hans-CN": "东帝汶",
+      "cmn-Hant-TW": "東帝汶"
+    },
+    "TM": {
+      "cmn-Hans-CN": "土库曼斯坦",
+      "cmn-Hant-TW": "土庫曼"
+    },
+    "TN": {
+      "cmn-Hans-CN": "突尼斯",
+      "cmn-Hant-TW": "突尼西亞"
+    },
+    "TO": {
+      "cmn-Hans-CN": "汤加",
+      "cmn-Hant-TW": "東加"
+    },
+    "TR": {
+      "cmn-Hans-CN": "土耳其",
+      "cmn-Hant-TW": "土耳其"
+    },
+    "TT": {
+      "cmn-Hans-CN": "特立尼达和多巴哥",
+      "cmn-Hant-TW": "千里達及托巴哥"
+    },
+    "TV": {
+      "cmn-Hans-CN": "图瓦卢",
+      "cmn-Hant-TW": "吐瓦魯"
+    },
+    "TZ": {
+      "cmn-Hans-CN": "坦桑尼亚",
+      "cmn-Hant-TW": "坦尚尼亞"
+    },
+    "UA": {
+      "cmn-Hans-CN": "乌克兰",
+      "cmn-Hant-TW": "烏克蘭"
+    },
+    "UG": {
+      "cmn-Hans-CN": "乌干达",
+      "cmn-Hant-TW": "烏干達"
+    },
+    "UM": {
+      "cmn-Hans-CN": "美国本土外小岛屿",
+      "cmn-Hant-TW": "美國本土外小島嶼"
+    },
+    "UY": {
+      "cmn-Hans-CN": "乌拉圭",
+      "cmn-Hant-TW": "烏拉圭"
+    },
+    "UZ": {
+      "cmn-Hans-CN": "乌兹别克斯坦",
+      "cmn-Hant-TW": "烏茲別克"
+    },
+    "VA": {
+      "cmn-Hans-CN": "梵蒂冈",
+      "cmn-Hant-TW": "梵蒂岡"
+    },
+    "VC": {
+      "cmn-Hans-CN": "圣文森特和格林纳丁斯",
+      "cmn-Hant-TW": "聖文森及格瑞那丁"
+    },
+    "VE": {
+      "cmn-Hans-CN": "委内瑞拉",
+      "cmn-Hant-TW": "委內瑞拉"
+    },
+    "VG": {
+      "cmn-Hans-CN": "英属维尔京群岛",
+      "cmn-Hant-TW": "英屬維京群島"
+    },
+    "VI": {
+      "cmn-Hans-CN": "美属维尔京群岛",
+      "cmn-Hant-TW": "美屬維京群島"
+    },
+    "VN": {
+      "cmn-Hans-CN": "越南",
+      "cmn-Hant-TW": "越南"
+    },
+    "VU": {
+      "cmn-Hans-CN": "瓦努阿图",
+      "cmn-Hant-TW": "萬那杜"
+    },
+    "WF": {
+      "cmn-Hans-CN": "瓦利斯和富图纳",
+      "cmn-Hant-TW": "瓦利斯群島和富圖那群島"
+    },
+    "WS": {
+      "cmn-Hans-CN": "萨摩亚",
+      "cmn-Hant-TW": "薩摩亞"
+    },
+    "YE": {
+      "cmn-Hans-CN": "也门",
+      "cmn-Hant-TW": "葉門"
+    },
+    "YT": {
+      "cmn-Hans-CN": "马约特",
+      "cmn-Hant-TW": "馬約特島"
+    },
+    "ZA": {
+      "cmn-Hans-CN": "南非",
+      "cmn-Hant-TW": "南非"
+    },
+    "ZM": {
+      "cmn-Hans-CN": "赞比亚",
+      "cmn-Hant-TW": "尚比亞"
+    },
+    "ZW": {
+      "cmn-Hans-CN": "津巴布韦",
+      "cmn-Hant-TW": "辛巴威"
+    }
+  }
+}

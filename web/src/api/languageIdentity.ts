@@ -11,8 +11,8 @@ export interface Page<T> {
 export interface LocaleHints { ui_locale?: string; secondary_ui_locale?: string }
 
 export interface Language { code: string; name_en: string; name?: string }
-export interface Script { code: string; name_en: string; direction: 'ltr' | 'rtl' }
-export interface Region { code: string; name_en: string; latitude: number | null; longitude: number | null }
+export interface Script { code: string; name_en: string; name?: string; direction: 'ltr' | 'rtl' }
+export interface Region { code: string; name_en: string; name?: string; latitude: number | null; longitude: number | null }
 export interface LanguageLocale {
   code: string
   lang_code: string
@@ -108,8 +108,8 @@ async function listReference<T>(path: string, q = '', limit = 20, offset = 0, hi
 }
 
 export const listLanguages = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Language>('/language-registry/languages', q, limit, offset, hints, signal)
-export const listScripts = (q = '', limit = 20, offset = 0, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, offset, undefined, signal)
-export const listRegions = (q = '', limit = 20, offset = 0, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, offset, undefined, signal)
+export const listScripts = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, offset, hints, signal)
+export const listRegions = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, offset, hints, signal)
 
 export async function listLanguageLocales(filters: LocaleFilters = {}, signal?: AbortSignal): Promise<Page<LanguageLocale>> {
   const { data } = await api.get('/language-locales', { params: { q: '', limit: 20, offset: 0, ...filters }, signal })

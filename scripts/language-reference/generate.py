@@ -160,6 +160,51 @@ def read_name_translations() -> list[dict[str, str]]:
     return rows
 
 
+def read_script_region_zh_names() -> dict[str, dict[str, dict[str, str]]]:
+    """Code-keyed zh script/region names from the CLDR-derived overlay.
+
+    Curated entries in name-translations.json take precedence; this overlay
+    only fills codes not already translated there.
+    """
+    data = json.loads((OVERLAYS / "script-region-zh-names.json").read_text(encoding="utf-8"))
+    cleaned: dict[str, dict[str, dict[str, str]]] = {"scripts": {}, "regions": {}}
+    for kind in ("scripts", "regions"):
+        for code, texts in (data.get(kind) or {}).items():
+            entries: dict[str, str] = {}
+            for locale, text in (texts or {}).items():
+                if locale not in ("cmn-Hans-CN", "cmn-Hant-TW") or not (text or "").strip():
+                    raise ValueError(f"invalid zh name entry {code!r} in {kind}: {locale!r}={text!r}")
+                entries[locale] = text.strip()
+            if entries:
+                cleaned[kind][code.strip()] = entries
+    return cleaned
+
+
+def merge_zh_overlay(
+    translations: list[dict[str, str]],
+    scripts: list[tuple[str, str, str]],
+    regions: list[tuple[str, str, float | None, float | None]],
+    overlay: dict[str, dict[str, dict[str, str]]],
+) -> list[dict[str, str]]:
+    covered = {(t["canonical_text"], t["target_locale"]) for t in translations}
+    by_code: dict[str, dict[str, str]] = {
+        "scripts": {c: n for c, n, _d in scripts},
+        "regions": {c: n for c, n, _lat, _lon in regions},
+    }
+    merged = list(translations)
+    for kind, code_entries in overlay.items():
+        for code, texts in code_entries.items():
+            canonical = by_code.get(kind, {}).get(code)
+            if not canonical:
+                raise ValueError(f"zh overlay references unknown {kind[:-1]} code {code!r}")
+            for locale, text in texts.items():
+                if (canonical, locale) in covered:
+                    continue
+                merged.append({"canonical_text": canonical, "target_locale": locale, "text": text})
+    merged.sort(key=lambda r: (r["canonical_text"], r["target_locale"]))
+    return merged
+
+
 INSERT_BATCH = 500
 
 
@@ -179,11 +224,17 @@ def collect_canonical_name_texts(
     languages: list[tuple[str, str]],
     overrides: dict[str, str],
     locale_texts: dict[str, str],
+    scripts: list[tuple[str, str, str]],
+    regions: list[tuple[str, str, float | None, float | None]],
 ) -> list[str]:
     texts = {override for override in overrides.values()}
     for code, name_en in languages:
         texts.add(overrides.get(code, name_en))
     texts.update(locale_texts.values())
+    for _, name_en, _direction in scripts:
+        texts.add(name_en)
+    for _, name_en, _lat, _lon in regions:
+        texts.add(name_en)
     return sorted(texts)
 
 
@@ -227,7 +278,7 @@ def emit_name_seed_sql(
         lines += _insert_blocks("expression_locale_attestations", ["id", "expression_id", "language_locale_code", "source_id"], att_rows)
 
     bindings = [
-        "-- Bind each language / locale to its canonical (eng) name expression by current name_en text.",
+        "-- Bind each language / locale / script / region to its canonical (eng) name expression by current name_en text.",
         "-- Unmatched rows stay NULL (safe fallback to name_en / self-name / code).",
         "UPDATE languages AS l",
         "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
@@ -236,6 +287,14 @@ def emit_name_seed_sql(
         "UPDATE language_locales AS l",
         "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
         "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en);",
+        "",
+        "UPDATE scripts AS s",
+        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = s.name_en LIMIT 1)",
+        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = s.name_en);",
+        "",
+        "UPDATE regions AS r",
+        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = r.name_en LIMIT 1)",
+        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = r.name_en);",
     ]
     lines.append("\n".join(bindings))
 
@@ -272,8 +331,10 @@ def emit_sql(
         region_vals.append(f"  ({sql_str(c)}, {sql_str(n)}, {lat_s}, {lon_s})")
     lines += _insert_blocks("regions", ["code", "name_en", "latitude", "longitude"], region_vals)
 
-    canonical_texts = collect_canonical_name_texts(languages, overrides, locale_texts)
+    canonical_texts = collect_canonical_name_texts(languages, overrides, locale_texts, scripts, regions)
     name_lines, name_counts = emit_name_seed_sql(canonical_texts, locale_texts, translations)
+    name_counts["name_scripts_bound_target"] = len(scripts)
+    name_counts["name_regions_bound_target"] = len(regions)
     lines += name_lines
 
     return "\n".join(lines) + "\n", name_counts
@@ -303,6 +364,7 @@ def build_manifest(languages, scripts, regions, directions, region_coords, sql_t
             "region_coordinates": {"path": "overlays/region-coordinates.tsv", "covered_regions": len(region_coords)},
             "name_canonical_texts": {"path": "overlays/name-canonical-texts.json", "locale_count": len(locale_texts)},
             "name_translations": {"path": "overlays/name-translations.json", "translation_count": len(translations)},
+            "script_region_zh_names": {"path": "overlays/script-region-zh-names.json", "source": "Unicode CLDR cldr-localenames-full zh / zh-Hant", "translation_count": sum(len(v) for v in read_script_region_zh_names().values() for v in v.values())},
         },
         "counts": {
             "languages": len(languages),
@@ -326,7 +388,7 @@ def main() -> int:
     scripts = read_scripts(directions)
     regions = read_regions(region_coords)
     overrides, locale_texts = read_name_canonical_texts()
-    translations = read_name_translations()
+    translations = merge_zh_overlay(read_name_translations(), scripts, regions, read_script_region_zh_names())
 
     if len(languages) < MIN_LANGUAGES:
         raise SystemExit(f"languages count {len(languages)} < {MIN_LANGUAGES}")
