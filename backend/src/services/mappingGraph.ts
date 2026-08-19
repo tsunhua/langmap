@@ -1,6 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
-import { resolveLocaleNames, type LocaleHints } from './localizedName';
+import { resolveLanguageNames, type LocaleHints } from './localizedName';
 
 const DEFAULT_NODE_LIMIT = 200;
 
@@ -27,7 +27,7 @@ function toNode(row: GraphEdgeRow, expressionId: string, depth: number, nameMap:
     text: isA ? row.expression_a_text : row.expression_b_text,
     lang_code: langCode,
     language_profile_code: languageProfileCode,
-    language_name: nameMap.get(languageProfileCode ?? langCode) ?? langCode,
+    language_name: nameMap.get(langCode) ?? langCode,
     depth,
   };
 }
@@ -65,15 +65,13 @@ export async function getMappingGraph(
 
   const limit = Math.max(1, Math.min(nodeLimit, DEFAULT_NODE_LIMIT));
   const visited = new Set<string>([rootId]);
-  const rootNames = root.language_profile_code
-    ? await resolveLocaleNames(db, [root.language_profile_code], locales)
-    : new Map([[root.lang_code, root.lang_code]]);
+  const rootNames = await resolveLanguageNames(db, [root.lang_code], locales);
   const nodes: MappingGraphNode[] = [{
     expression_id: root.id,
     text: root.text,
     lang_code: root.lang_code,
     language_profile_code: root.language_profile_code,
-    language_name: rootNames.get(root.language_profile_code ?? root.lang_code) ?? root.lang_code,
+    language_name: rootNames.get(root.lang_code) ?? root.lang_code,
     depth: 0,
   }];
   const edges: MappingGraphEdge[] = [];
@@ -85,8 +83,8 @@ export async function getMappingGraph(
 
   for (let depth = 1; depth <= hops && frontier.length > 0; depth++) {
     const rows = await loadEdgesForFrontier(db, frontier);
-    const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_language_profile_code ?? row.expression_a_lang_code, row.expression_b_language_profile_code ?? row.expression_b_lang_code]))];
-    const nameMap = await resolveLocaleNames(db, langCodes.filter((code) => code.includes('-')), locales);
+    const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_lang_code, row.expression_b_lang_code]))];
+    const nameMap = await resolveLanguageNames(db, langCodes, locales);
     const next = new Set<string>();
     const frontierIds = new Set(frontier);
     for (const row of rows) {
