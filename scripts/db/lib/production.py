@@ -621,8 +621,7 @@ SELECT 'migration' AS kind, name FROM d1_migrations ORDER BY id;
 
 INVENTORY_COUNTS_SQL = """
 SELECT 'languages' AS metric, COUNT(*) AS count FROM languages;
-SELECT 'languoids' AS metric, COUNT(*) AS count FROM languoids;
-SELECT 'language_locations' AS metric, COUNT(*) AS count FROM language_locations;
+SELECT 'language_locales' AS metric, COUNT(*) AS count FROM language_locales;
 SELECT 'expressions' AS metric, COUNT(*) AS count FROM expressions;
 SELECT 'expression_edges' AS metric, COUNT(*) AS count FROM expression_edges;
 SELECT 'users' AS metric, COUNT(*) AS count FROM users;
@@ -636,7 +635,7 @@ SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';
 SELECT 'managed_ui_edges' AS metric, COUNT(*) FROM expression_edges WHERE source = 'ui_i18n';
 SELECT 'ui_key' AS kind, key, source_hash FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY key;
-SELECT 'orphan_languages' AS metric, COUNT(*) FROM languages WHERE variety_key NOT LIKE 'system:%' AND (TRIM(COALESCE(glottocode, '')) = '' OR NOT EXISTS (SELECT 1 FROM languoids WHERE languoids.glottocode = languages.glottocode));
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;
 SELECT 'orphan_expression_edges' AS metric, COUNT(*) FROM expression_edges x LEFT JOIN expressions a ON a.id = x.expression_a_id LEFT JOIN expressions b ON b.id = x.expression_b_id WHERE a.id IS NULL OR b.id IS NULL;
+SELECT 'orphan_handbook_items' AS metric, COUNT(*) FROM handbook_section_items i LEFT JOIN expressions e ON e.id = i.expression_id WHERE e.id IS NULL;
 """.strip()
