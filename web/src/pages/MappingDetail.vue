@@ -39,6 +39,7 @@ const loading = ref(true)
 const updatingHops = ref(false)
 const loadError = ref('')
 const selectedNodeId = ref<string | null>(null)
+const selectedExpr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const collapsedIds = ref<Set<string>>(new Set())
 const graphRef = ref<{ centerOnNodeById: (id: string) => void } | null>(null)
 const mobileMode = ref<'graph' | 'list'>('list')
@@ -186,6 +187,23 @@ async function changeHops(h: 1 | 2 | 3) {
 watch(hops, () => syncUrl())
 watch(selectedNodeId, () => syncUrl())
 
+watch(selectedNodeId, async (nodeId) => {
+  if (!nodeId || nodeId === id.value) {
+    selectedExpr.value = null
+    return
+  }
+  const request = nodeId
+  try {
+    const next = await detail(nodeId, localeParams.value)
+    if (selectedNodeId.value === request) selectedExpr.value = next
+  } catch {
+    if (selectedNodeId.value === request) selectedExpr.value = null
+  }
+})
+
+const inspectorAttestations = computed(() => selectedExpr.value?.attestations ?? expr.value?.attestations ?? [])
+const inspectorReadings = computed(() => selectedExpr.value?.readings ?? expr.value?.readings ?? [])
+
 function selectNode(nodeId: string) {
   selectedNodeId.value = nodeId
 }
@@ -307,6 +325,8 @@ const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
 
 const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === id.value)?.language_name ?? '')
 
+const canViewMap = computed(() => !expr.value?.expression.lang_code.toLowerCase().startsWith('x-'))
+
 const displayTree = computed<DisplayTree>(() => {
   if (!graph.value) return { nodes: [], treeEdges: [], crossEdges: [] }
   return buildDisplayTree(graph.value)
@@ -352,7 +372,7 @@ const sourceLabel = computed(() => {
       <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
         <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
       </button>
-      <router-link :to="`/map/${encodeURIComponent(expr.expression.id)}`" class="btn btn-sm">
+      <router-link v-if="canViewMap" :to="`/map/${encodeURIComponent(expr.expression.id)}`" class="btn btn-sm">
         <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
       <button v-if="isAdmin" class="btn btn-sm" type="button" @click="openSplitDialog">
@@ -446,8 +466,8 @@ const sourceLabel = computed(() => {
           :display-tree="displayTree"
           :anchor-text="expr.expression.text"
           :collapsed-ids="collapsedIds"
-          :attestations="expr.attestations"
-          :readings="expr.readings"
+          :attestations="inspectorAttestations"
+          :readings="inspectorReadings"
           @close="clearSelection"
           @navigate="navigateToNode"
           @toggle-collapse="toggleCollapse"
@@ -472,8 +492,8 @@ const sourceLabel = computed(() => {
         :display-tree="displayTree"
         :anchor-text="expr.expression.text"
         :collapsed-ids="collapsedIds"
-        :attestations="expr.attestations"
-        :readings="expr.readings"
+        :attestations="inspectorAttestations"
+        :readings="inspectorReadings"
         @close="clearSelection"
         @navigate="navigateToNode"
         @toggle-collapse="toggleCollapse"
