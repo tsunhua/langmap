@@ -470,7 +470,7 @@ cd backend && npx vitest run src/routes/auth.test.ts
 cd backend && npm test
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/routes/auth.ts backend/src/routes/auth.test.ts backend/package.json backend/package-lock.json
@@ -579,7 +579,7 @@ def migrate_users(rows: list[dict]) -> list[dict]:
 python3 -m unittest scripts.db.tests.test_migrate_v1 -v
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/db/migrate_v1 scripts/db/tests/test_migrate_v1.py
