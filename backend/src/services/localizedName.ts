@@ -197,6 +197,17 @@ export async function resolveLocalizedNames(
 
   for (const request of requests) {
     const row = identities.get(request.identityCode);
+    const isSelfLocale = request.kind === 'locale'
+      && (request.identityCode === hints.primary || request.identityCode === hints.secondary);
+    if (isSelfLocale && row?.name) {
+      results.set(request.identityCode, {
+        lang_code: request.langCode,
+        name: row.name,
+        name_en: row.name_en,
+        resolved_from: 'primary',
+      });
+      continue;
+    }
     const expressionId = row?.name_expression_id;
     const resolved = expressionId ? resolvedNames.get(expressionId) : undefined;
     const translated = resolved && resolved.resolved_from !== 'fallback' ? resolved.name : undefined;

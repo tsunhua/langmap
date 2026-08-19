@@ -17,10 +17,10 @@ const readings = computed(() => [...props.readings].sort((a, b) =>
     <h4>Evidence</h4>
     <ul>
       <li v-for="attestation in attestations" :key="attestation.id" :data-evidence-code="attestation.language_locale_code">
-        <span class="evidence-kind">Locale</span> <span :title="attestation.language_locale_code">{{ attestation.locale_display_name || attestation.language_locale_code }}</span>
+        <span class="evidence-kind">Locale</span> <span :title="attestation.locale_display_name || attestation.language_locale_code">{{ attestation.language_locale_code }}<template v-if="attestation.locale_display_name"> · {{ attestation.locale_display_name }}</template></span>
       </li>
       <li v-for="reading in readings" :key="reading.id" :data-evidence-code="`${reading.language_locale_code} / ${reading.scheme}`">
-        <span class="evidence-kind">Reading</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.locale_display_name || reading.language_locale_code }}</span> / {{ reading.scheme }}: {{ reading.value }}
+        <span class="evidence-kind">Reading</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.language_locale_code }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template></span> / {{ reading.scheme }}: {{ reading.value }}
       </li>
     </ul>
   </section>
