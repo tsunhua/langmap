@@ -139,6 +139,12 @@
       "filename": "0023_add_orthography.sql",
       "size": 1709,
       "sha256": "a3590cf0f6d87cacca6657bbf1b5a47f41d9e8d84dd574394eaf7a486972c17d"
+    },
+    {
+      "sequence": 24,
+      "filename": "0024_v2_migration_seeds.sql",
+      "size": 2543,
+      "sha256": "e418ca7252659804848cc90ff1c6944ebe9cfa5ac2dc49a6e59d26512f94f708"
     }
   ]
 }
