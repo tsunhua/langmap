@@ -356,7 +356,6 @@ const coords = computed(() => {
     </div>
 
     <div class="anchor-meta">
-      <span>{{ expr.expression.lang_code }}</span>
       <span v-if="coords" class="mono coords">{{ coords }}</span>
     </div>
 
