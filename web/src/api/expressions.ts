@@ -3,7 +3,7 @@ import type { MappingGraphResponse } from '@/components/mapping/mappingGraphType
 import type { LocaleHints } from './languageIdentity'
 
 export interface ExpressionSource { type: string; name: string; ref?: string }
-export interface LocaleAttestation { id: string; expression_id: string; language_locale_code: string; locale_display_name?: string; source_id: string | null; source_ref: string | null; created_at: string }
+export interface LocaleAttestation { id: string; expression_id: string; language_locale_code: string; locale_display_name?: string; created_by_username?: string | null; source_id: string | null; source_ref: string | null; created_at: string }
 export interface ExpressionReading extends LocaleAttestation { scheme: string; value: string }
 export interface ExpressionDetail {
   expression: { id: string; lang_code: string; text: string; source_type: string | null; source_name: string | null; created_by_username?: string | null }

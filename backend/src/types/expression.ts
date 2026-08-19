@@ -22,6 +22,7 @@ export interface LocaleAttestationRow {
   source_ref: string | null;
   created_by: number | null;
   created_at: string;
+  created_by_username?: string | null;
 }
 
 export interface ReadingRow {

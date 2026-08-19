@@ -12,7 +12,7 @@ const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, des
 // when the detail query LEFT JOINs sources (which also has id/created_at).
 const EXPRESSION_DETAIL_COLUMNS = `e.id, e.lang_code, e.text, e.text_hash, e.homograph_index, e.description, e.tags_json, e.source_id, e.source_ref, e.review_status, e.created_by, e.created_at, e.updated_at`;
 
-const ATTESTATION_COLUMNS = `id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at`;
+const ATTESTATION_COLUMNS = `a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username`;
 const READING_DETAIL_COLUMNS = `r.id, r.expression_id, r.language_locale_code, r.scheme, r.value, r.source_id, r.source_ref, r.created_by, r.created_at,
   s.type AS source_type, s.name AS source_name`;
 const INSERT_EXPRESSION_SQL = `INSERT INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, review_status, created_by)
@@ -136,10 +136,10 @@ export async function getExpression(
 
   const { results } = await db
     .prepare(
-      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC, id ASC`,
+      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? ORDER BY a.language_locale_code ASC, a.created_at ASC, a.id ASC`,
     )
     .bind(id)
-    .all<LocaleAttestationRow>();
+    .all<LocaleAttestationRow & { created_by_username: string | null }>();
   const { results: readings } = await db
     .prepare(
       `SELECT ${READING_DETAIL_COLUMNS} FROM expression_readings r LEFT JOIN sources s ON s.id = r.source_id WHERE r.expression_id = ? ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC`,

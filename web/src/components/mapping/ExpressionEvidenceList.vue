@@ -19,10 +19,10 @@ const readings = computed(() => [...props.readings].sort((a, b) =>
     <h4>{{ t('components.evidence') }}</h4>
     <ul>
       <li v-for="attestation in attestations" :key="attestation.id" :data-evidence-code="attestation.language_locale_code">
-        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="attestation.locale_display_name || attestation.language_locale_code">{{ attestation.language_locale_code }}<template v-if="attestation.locale_display_name"> · {{ attestation.locale_display_name }}</template></span>
+        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="attestation.locale_display_name || attestation.language_locale_code">{{ attestation.language_locale_code }}<template v-if="attestation.locale_display_name"> · {{ attestation.locale_display_name }}</template><template v-if="attestation.created_by_username"> · @{{ attestation.created_by_username.toLowerCase() }}</template></span>
       </li>
       <li v-for="reading in readings" :key="reading.id" :data-evidence-code="`${reading.language_locale_code} / ${reading.scheme}`">
-        <span class="evidence-kind">{{ t('components.reading') }}</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.language_locale_code }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template></span> / {{ reading.scheme }}: {{ reading.value }}
+        <span class="evidence-kind">{{ t('components.reading') }}</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.language_locale_code }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template><template v-if="reading.created_by_username"> · @{{ reading.created_by_username.toLowerCase() }}</template></span> / {{ reading.scheme }}: {{ reading.value }}
       </li>
     </ul>
   </section>
