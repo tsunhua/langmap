@@ -597,7 +597,7 @@ git commit -m "feat(db): add v1 migration skeleton, sql parser, identity helpers
 - Consumes: `parse_sql.load_table`、`mapping.map_language_code`、`identity.compute_text_hash`。
 - Produces: `migrate_expressions(rows, user_ids) -> {expressions: [...], locales_seed: [...], report: {...}}`。
 
-- [ ] **Step 1: 定義遷移過濾規則**
+- [x] **Step 1: 定義遷移過濾規則**
 
 ```python
 RUNTIME_OWNERS = {"system", "langmap", "ai", "opus"}
@@ -614,7 +614,7 @@ def is_user_expression(row: dict, users_by_name: dict[str, int]) -> bool:
 
 `users_by_name` 由 Task 4 的 migrated users 建立（username→id 映射），確保只有真實 user 建立的 expressions 進入遷移。
 
-- [ ] **Step 2: 實作轉換**
+- [x] **Step 2: 實作轉換**
 
 ```python
 def migrate_expressions(rows, user_ids):
@@ -659,7 +659,7 @@ def migrate_expressions(rows, user_ids):
     return {"expressions": expressions, "skipped": skipped, "dropped_owner": dropped_owner, "dropped_unmapped": dropped_unmapped}
 ```
 
-- [ ] **Step 3: 產生 expression locale attestations 與 readings（針對 POJ/Tailo 等）**
+- [x] **Step 3: 產生 expression locale attestations 與 readings（針對 POJ/Tailo 等）**
 
 對 `nan-TW-POJ` / `nan-TW-TL` 來源的 expressions，額外建立 `expression_readings`：
 
@@ -674,7 +674,7 @@ def reading_for(v1_code: str, expression_id: str) -> dict | None:
 
 > `value` 無法由 v1 自動推得（v1 text 本身即是羅馬字，可選用 `text` 為 reading value；此為決策點 D2，預設使用 text 作為 value）。
 
-- [ ] **Step 4: 測試** — 用 `remote-expressions.sql` 抽出 user 建立的樣本驗證 ID 生成、homograph 遞增、locale 映射、系統詞句被排除。
+- [x] **Step 4: 測試** — 用 `remote-expressions.sql` 抽出 user 建立的樣本驗證 ID 生成、homograph 遞增、locale 映射、系統詞句被排除。
 
 - [ ] **Step 5: Commit**
 
