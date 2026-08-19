@@ -790,7 +790,7 @@ python3 scripts/db/migrate_v1/run.py --source fixtures --output-dir /tmp/langmap
 
 流程：載入 users → migrate；建 `sources` row（`('system', 'LangMap V1 migration')`）→ 載入 expressions → 建 locales seed SQL（Task 2 語句合一）→ 建 readings → 建 handbooks/sections/items → 輸出 SQL。
 
-- [ ] **Step 2: 本地 D1 演練**
+- [x] **Step 2: 本地 D1 演練**
 
 先用 `python3 scripts/db/manage.py local rebuild` 建立空 v2 local D1 → 套用產生的 SQL（`wrangler d1 execute langmap-v2 --local --file ...` 依序 users → expressions → handbooks）→ 啟動 Worker 並以 API smoke test 驗證：
 
@@ -804,7 +804,7 @@ curl 'http://127.0.0.1:8788/api/v2/expressions/search?q=食'
 
 > 登入測試需要知道 v1 用戶密碼。若無已知密碼，改測 auth 登入流程對 bcrypt hash 的驗證（直接以遷移後的 password_hash 呼叫 `verifyPassword` 單元層級），並在 production 驗證時由 owner 操作。
 
-- [ ] **Step 3: 驗證 invariants** — 檢查 users 數、expressions 數、handbooks/sections/items 數、無 orphan、homograph 無衝突、report 中 dropped/skipped 計數合理。
+- [x] **Step 3: 驗證 invariants** — 檢查 users 數、expressions 數、handbooks/sections/items 數、無 orphan、homograph 無衝突、report 中 dropped/skipped 計數合理。
 
 - [ ] **Step 4: Commit**
 

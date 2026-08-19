@@ -59,14 +59,12 @@ def apply_sql(output_dir: Path, *, remote: bool, database_name: str | None = Non
     wrangler = Path(__file__).resolve().parents[3] / 'backend' / 'node_modules' / '.bin' / 'wrangler'
     if not wrangler.exists():
         raise SystemExit(f'wrangler not found: {wrangler}')
-    for filename in files:
-        command = [str(wrangler), 'd1', 'execute', database_name or 'DB']
-        if not remote:
-            command.append('--local')
-        else:
-            command.append('--remote')
-        command.extend(['--file', str(output_dir / filename)])
-        subprocess.run(command, cwd=wrangler.parents[3], check=True)
+    for filename in (['languages_seed.sql'] + files):
+        for chunk_file in sorted(output_dir.glob(f'{filename[:-4]}*.sql')):
+            command = [str(wrangler), 'd1', 'execute', database_name or 'DB']
+            command.append('--remote' if remote else '--local')
+            command.extend(['--file', str(chunk_file)])
+            subprocess.run(command, cwd=wrangler.parents[2], check=True)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -39,10 +39,32 @@ def generate_sql_files(result: dict[str, object], output_dir: Path) -> dict[str,
         'items.sql': ('handbook_section_items', ['section_id', 'expression_id', 'position'], result['items']),
     }
     paths: dict[str, Path] = {}
+    seed_path = output_dir / 'languages_seed.sql'
+    seed_path.write_text(
+        "INSERT OR IGNORE INTO languages (code, name_en) VALUES "
+        "('yue', 'Yue Chinese'), ('wuu', 'Wu Chinese'), ('zha', 'Zhuang (individual)'), "
+        "('ral', 'Ralte'), ('swh', 'Swahili (individual language)'), "
+        "('x-image', 'Image'), ('x-emoji', 'Emoji');\n"
+        "INSERT OR IGNORE INTO language_locales "
+        "(code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref) VALUES "
+        "('yue-Hant-HK', 'yue', 'Hant', 'HK', '', '廣東話', 'Yue (Hong Kong)', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('wuu-Hant-CN_Taizhou', 'wuu', 'Hant', 'CN', 'Taizhou', '台州話', 'Taizhou Wu', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('wuu-Hans-CN_Wenzhou', 'wuu', 'Hans', 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('zha-Latn-CN_Jingxi', 'zha', 'Latn', 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('ral-Latn-IN', 'ral', 'Latn', 'IN', '', 'Ralte', 'Ralte', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('swh-Latn-TZ', 'swh', 'Latn', 'TZ', '', 'Kiswahili', 'Swahili', 'system-seed', 'seed:v1-migration:2026-08-19');\n",
+        encoding='utf-8',
+    )
+    paths['languages_seed.sql'] = seed_path
     for filename, (table, columns, rows) in files.items():
-        path = output_dir / filename
-        path.write_text(insert_sql(table, columns, rows), encoding='utf-8')
-        paths[filename] = path
+        statements = insert_sql(table, columns, rows).splitlines(keepends=True)
+        chunks = [statements[index:index + 5000] for index in range(0, len(statements), 5000)] or [[]]
+        for index, chunk in enumerate(chunks, start=1):
+            suffix = '' if index == 1 else f'-{index:03d}'
+            path = output_dir / f'{filename[:-4]}{suffix}.sql'
+            path.write_text(''.join(chunk), encoding='utf-8')
+            if index == 1:
+                paths[filename] = path
     (output_dir / 'report.json').write_text(json.dumps(result['report'], ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     paths['report.json'] = output_dir / 'report.json'
     return paths
