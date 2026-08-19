@@ -52,7 +52,18 @@ def generate_sql_files(result: dict[str, object], output_dir: Path) -> dict[str,
         "('wuu-Hans-CN_Wenzhou', 'wuu', 'Hans', 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu', 'system-seed', 'seed:v1-migration:2026-08-19'), "
         "('zha-Latn-CN_Jingxi', 'zha', 'Latn', 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang', 'system-seed', 'seed:v1-migration:2026-08-19'), "
         "('ral-Latn-IN', 'ral', 'Latn', 'IN', '', 'Ralte', 'Ralte', 'system-seed', 'seed:v1-migration:2026-08-19'), "
-        "('swh-Latn-TZ', 'swh', 'Latn', 'TZ', '', 'Kiswahili', 'Swahili', 'system-seed', 'seed:v1-migration:2026-08-19');\n",
+        "('swh-Latn-TZ', 'swh', 'Latn', 'TZ', '', 'Kiswahili', 'Swahili', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('cmn-Hant-TW', 'cmn', 'Hant', 'TW', '', '繁體中文', 'Traditional Chinese', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('cmn-Hans-CN', 'cmn', 'Hans', 'CN', '', '普通話', 'Simplified Chinese', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('eng-Latn-US', 'eng', 'Latn', 'US', '', 'English', 'English (US)', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('eng-Latn-GB', 'eng', 'Latn', 'GB', '', 'English (GB)', 'English (GB)', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('jpn-Jpan-JP', 'jpn', 'Jpan', 'JP', '', '日本語', 'Japanese', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('spa-Latn-ES', 'spa', 'Latn', 'ES', '', 'Español', 'Spanish', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('nan-Hant-TW', 'nan', 'Hant', 'TW', '', '台語', 'Taiwanese Hokkien', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('nan-Hant-CN_Chaozhou', 'nan', 'Hant', 'CN', 'Chaozhou', '潮州話', 'Chaozhou Min Nan', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('nan-Hant-CN_LufengJiazi', 'nan', 'Hant', 'CN', 'LufengJiazi', '甲子話', 'Jiazi (Lufeng) Hokkien', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('nan-Latn_Pehoeji-TW', 'nan', 'Latn', 'TW', '', 'Pe̍h-ōe-jī', 'POJ romanization', 'system-seed', 'seed:v1-migration:2026-08-19'), "
+        "('nan-Latn_Tailo-TW', 'nan', 'Latn', 'TW', '', 'Tâi-lô', 'Tâi-lô romanization', 'system-seed', 'seed:v1-migration:2026-08-19');\n",
         encoding='utf-8',
     )
     paths['languages_seed.sql'] = seed_path
