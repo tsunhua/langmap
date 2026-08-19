@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { SignJWT } from 'jose';
+import bcrypt from 'bcryptjs';
 import { requireAuth } from '../middleware/auth';
 import { success, created, badRequest, conflict, internalError, unauthorized } from '../utils/response';
 import type { Bindings, Variables } from '../types';
@@ -14,7 +15,7 @@ interface AuthUserRow {
 
 const auth = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = crypto.randomUUID().replace(/-/g, '');
   const input = new TextEncoder().encode(`${salt}:${password}`);
   const digest = await crypto.subtle.digest('SHA-256', input);
@@ -24,8 +25,16 @@ async function hashPassword(password: string) {
   return `${salt}:${hex}`;
 }
 
-async function verifyPassword(password: string, storedHash: string) {
-  if (!storedHash || !storedHash.includes(':')) return false;
+function isBcryptHash(storedHash: string): boolean {
+  return /^\$2[aby]\$\d{2}\$/.test(storedHash);
+}
+
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  if (!storedHash) return false;
+  if (isBcryptHash(storedHash)) {
+    return bcrypt.compare(password, storedHash);
+  }
+  if (!storedHash.includes(':')) return false;
   const [salt, expectedHash] = storedHash.split(':');
   const input = new TextEncoder().encode(`${salt}:${password}`);
   const digest = await crypto.subtle.digest('SHA-256', input);

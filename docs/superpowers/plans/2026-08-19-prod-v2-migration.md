@@ -386,7 +386,7 @@ git commit -m "feat(db): seed v2 languages/locales for v1 migration"
 - Consumes: 現有 `auth.ts` login/register flow。
 - Produces: `verifyPassword(password, storedHash)` 可驗證三種格式：bcrypt `$2b$10$...`、新登入產生的 `salt:hex`、以及舊 v2 自訂格式（已存在之 dev 帳號）。
 
-- [ ] **Step 1: 寫 failing test（bcrypt 驗證）**
+- [x] **Step 1: 寫 failing test（bcrypt 驗證）**
 
 ```typescript
 // backend/src/routes/auth.test.ts
@@ -412,7 +412,7 @@ describe('password compatibility', () => {
 });
 ```
 
-- [ ] **Step 2: 確認測試失敗**
+- [x] **Step 2: 確認測試失敗**
 
 ```bash
 cd backend && npx vitest run src/routes/auth.test.ts
@@ -420,7 +420,7 @@ cd backend && npx vitest run src/routes/auth.test.ts
 
 預期 `verifyPassword` 因簽名不符或 bcrypt 分支缺失而 FAIL。
 
-- [ ] **Step 3: 實作 bcrypt 相容層**
+- [x] **Step 3: 實作 bcrypt 相容層**
 
 選項 A（推薦）：引進輕量 bcrypt 依賴 `bcryptjs`：
 
@@ -458,7 +458,7 @@ async function verifyPassword(password: string, storedHash: string): Promise<boo
 
 注意：test 中為了不打真實 bcrypt，可注入 fake；實作中用 `bcrypt.compare`。若 test 的注入介面與 `verifyPassword` 簽名不一致，調整 test 使其直接測真實 bcryptjs（單元層級可接受，幾毫秒）。
 
-- [ ] **Step 4: 確認測試通過**
+- [x] **Step 4: 確認測試通過**
 
 ```bash
 cd backend && npx vitest run src/routes/auth.test.ts
@@ -491,7 +491,7 @@ git commit -m "feat(auth): verify legacy bcrypt password hashes from v1 migratio
 - Consumes: `scripts/v2/remote-*.sql` 快照、`ProjectPaths`。
 - Produces: `load_table(paths, 'users') -> list[dict]`、`migrate_users(rows) -> list[sql_insert_payload]`、`compute_text_hash(text) -> str`、`build_expression_id(lang, hash, idx) -> str`、`map_language_code(v1_code) -> v2_locale`。
 
-- [ ] **Step 1: 實作 SQL 快照 parser**
+- [x] **Step 1: 實作 SQL 快照 parser**
 
 `remote-*.sql` 是 `INSERT INTO "table" (cols) VALUES(...);` 語句（部分含 `replace(...)`/`char(10)`，需對 `.sql` 檔案以簡易 SQL 求值器處理，或直接對 clamp 的 INSERT VALUES 做字串剖析）。設計成將每個表格的 rows 讀為 list[dict]：
 
@@ -520,7 +520,7 @@ def load_table(contents: str, table: str) -> list[dict]:
 
 `parse_row_tuples` 需處理字串中的逗號與括號、`replace('x','y')`、`char(10)`。**若快照格式過於多變（例如 `replace` 巢狀），就以 SQLite 匯入中間庫再 `SELECT` 取代手寫 parser**：`sqlite3 :memory: < remote-*.sql` 後直接讀表。
 
-- [ ] **Step 2: 實作 identity.py（與 backend 一致）**
+- [x] **Step 2: 實作 identity.py（與 backend 一致）**
 
 ```python
 import hashlib
@@ -546,11 +546,11 @@ def build_expression_id(lang_code: str, text_hash: str, homograph_index: int = 1
 
 加上對照測試：用 spec 的 `hello` 向量 `ftze3os7wcrq4jxihmvmlopcty` 驗證與 backend 一致（可執行 backend `computeTextHash` 交叉驗證）。
 
-- [ ] **Step 3: 實作 mapping.py**
+- [x] **Step 3: 實作 mapping.py**
 
 寫出 Global Constraints 中之 v1→v2 映射表為 dict；提供 `map_language_code(code) -> str (v2 lang_code)`、`map_expression_locale(code) -> str (v2 locale_code) | None`。對映射不到的 code 回傳 `None`（該 row 不遷移並記錄）。
 
-- [ ] **Step 4: users 遷移**
+- [x] **Step 4: users 遷移**
 
 ```python
 def migrate_users(rows: list[dict]) -> list[dict]:
@@ -569,11 +569,11 @@ def migrate_users(rows: list[dict]) -> list[dict]:
     return out
 ```
 
-- [ ] **Step 5: 寫測試**
+- [x] **Step 5: 寫測試**
 
 以 `scripts/v2/remote-users.sql` 內容建 fixture 解析，驗證 12 位使用者轉換後 password_hash 不變、role 映射、email_verified 數值化。
 
-- [ ] **Step 6: 執行測試**
+- [x] **Step 6: 執行測試**
 
 ```bash
 python3 -m unittest scripts.db.tests.test_migrate_v1 -v

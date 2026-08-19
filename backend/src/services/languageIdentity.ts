@@ -120,61 +120,19 @@ export function buildLanguageLocaleCode(input: {
 }
 
 export function parseLanguageLocaleCode(code: string): LanguageLocaleParts | null {
-  if (!code) return null;
-  
-  // 按 - 分割，得到 lang, script[_orthography], region[_place_segments]
-  const dashParts = code.split('-');
-  
-  // 必須有至少 3 個部分：lang, script, region
-  if (dashParts.length < 3) return null;
-  
-  const lang = dashParts[0];
-  const scriptWithOrth = dashParts[1];
-  const regionWithPlaces = dashParts[2];
-  
-  // 驗證 lang
-  if (!LANG_CODE_RE.test(lang)) return null;
-  
-  // 解析 script 和可選的 orthography
-  let script: string;
-  let orthography: string | undefined;
-  
-  if (scriptWithOrth.includes('_')) {
-    const scriptParts = scriptWithOrth.split('_');
-    if (scriptParts.length !== 2) return null;
-    script = scriptParts[0];
-    orthography = scriptParts[1];
-  } else {
-    script = scriptWithOrth;
-  }
-  
-  // 驗證 script
-  if (!SCRIPT_CODE_RE.test(script)) return null;
-  
-  // 驗證 orthography（如果有）
-  if (orthography && !ORTHOGRAPHY_RE.test(orthography)) return null;
-  
-  // 解析 region 和 place segments
-  const regionParts = regionWithPlaces.split('_');
-  const region = regionParts[0];
-  const placeSegments = regionParts.slice(1);
-  
-  // 驗證 region
-  if (!REGION_CODE_RE.test(region)) return null;
-  
-  // 驗證 place segments
-  if (placeSegments.some(s => !PLACE_SEGMENT_RE.test(s))) return null;
-  
-  // 處理 dashParts 中剩餘的部分（如果有更多 place segments）
-  const additionalPlaces = dashParts.slice(3);
-  if (additionalPlaces.some(s => !PLACE_SEGMENT_RE.test(s))) return null;
-  
+  const match = /^([a-z]{3})-([A-Z][a-z]{3})(?:_([A-Z][A-Za-z]*))?-([A-Z]{2})(?:_([A-Z][A-Za-z]*(?:_[A-Z][A-Za-z]*)*))?$/.exec(code);
+  if (!match) return null;
+
+  const [, lang, script, orthography, region, placePath] = match;
+  const placeSegments = placePath ? placePath.split('_') : [];
+  if (placeSegments.some((segment) => !PLACE_SEGMENT_RE.test(segment))) return null;
+
   return {
     lang_code: lang,
     script_code: script,
-    orthography,
+    ...(orthography ? { orthography } : {}),
     region_code: region,
-    place_segments: [...placeSegments, ...additionalPlaces],
+    place_segments: placeSegments,
   };
 }
 
