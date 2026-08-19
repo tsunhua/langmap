@@ -7,6 +7,30 @@ EXPR_TAG_RE = re.compile(r'\{\{(?P<body>[^{}]+)\}\}')
 HEADING_RE = re.compile(r'^#{2,6}\s+(.+?)\s*$')
 
 
+def clean_section_title(title: str) -> str:
+    """Keep heading text readable when v1 embedded an expression tag in it."""
+    def replace(match: re.Match[str]) -> str:
+        body = match.group('body').strip()
+        if body.startswith('text:'):
+            return body[5:].split('|', 1)[0].strip()
+        return body
+
+    return EXPR_TAG_RE.sub(replace, title).strip()
+
+
+def expression_refs(line: str) -> list[str]:
+    refs: list[str] = []
+    for match in EXPR_TAG_RE.finditer(line):
+        body = match.group('body').strip()
+        if body.startswith('text:'):
+            refs.append(f"text:{body[5:].split('|', 1)[0].strip()}")
+        elif body.isdigit():
+            refs.append(body)
+        else:
+            refs.append(f'text:{body}')
+    return refs
+
+
 def parse_sections(content: str) -> list[tuple[str | None, list[str]]]:
     sections: list[tuple[str | None, list[str]]] = []
     title: str | None = None
@@ -22,17 +46,10 @@ def parse_sections(content: str) -> list[tuple[str | None, list[str]]]:
         heading = HEADING_RE.match(line)
         if heading:
             flush()
-            title = heading.group(1).strip()
+            title = clean_section_title(heading.group(1))
+            refs.extend(expression_refs(heading.group(1)))
             continue
-        for match in EXPR_TAG_RE.finditer(line):
-            body = match.group('body').strip()
-            if body.startswith('text:'):
-                text = body[5:].split('|', 1)[0].strip()
-                refs.append(f'text:{text}')
-            elif body.isdigit():
-                refs.append(body)
-            else:
-                refs.append(f'text:{body}')
+        refs.extend(expression_refs(line))
     flush()
     return sections
 
