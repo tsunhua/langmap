@@ -781,7 +781,7 @@ git commit -m "feat(db): migrate v1 handbooks to v2 sections and items"
 - Consumes: Task 4–6 的所有函式。
 - Produces: 可執行 CLI + 一組可套用的 SQL（或直接以 D1 execute 寫入 local/remote DB）。
 
-- [ ] **Step 1: 實作 CLI 流程**
+- [x] **Step 1: 實作 CLI 流程**
 
 ```bash
 python3 scripts/db/migrate_v1/run.py --source fixtures --output-dir /tmp/langmap-migrate

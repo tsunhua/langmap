@@ -50,6 +50,7 @@ def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, 
     expressions: list[dict[str, object]] = []
     attestations: list[dict[str, object]] = []
     readings: list[dict[str, object]] = []
+    expression_map: dict[str, str] = {}
     report = {'skipped': 0, 'dropped_owner': 0, 'dropped_unmapped': 0}
 
     for row in rows:
@@ -93,6 +94,8 @@ def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, 
             'updated_at': row.get('updated_at') or row.get('created_at') or 'CURRENT_TIMESTAMP',
         }
         expressions.append(expression)
+        expression_map[str(row.get('id'))] = expression_id
+        expression_map.setdefault(f'text:{text}', expression_id)
 
         locale = map_expression_locale(v1_code)
         if locale is not None:
@@ -112,5 +115,6 @@ def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, 
         'expressions': expressions,
         'attestations': attestations,
         'readings': readings,
+        'expression_map': expression_map,
         'report': report,
     }

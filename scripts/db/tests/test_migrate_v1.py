@@ -1,9 +1,11 @@
 from pathlib import Path
 import unittest
+from tempfile import TemporaryDirectory
 
 from scripts.db.migrate_v1.identity import build_expression_id, compute_text_hash
 from scripts.db.migrate_v1.expressions import migrate_expressions
 from scripts.db.migrate_v1.handbooks import migrate_handbooks, parse_sections
+from scripts.db.migrate_v1.generate_sql import generate_sql_files
 from scripts.db.migrate_v1.mapping import map_expression_locale, map_language_code
 from scripts.db.migrate_v1.parse_sql import load_table
 from scripts.db.migrate_v1.users import migrate_users
@@ -67,6 +69,17 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(len(result['sections']), 1)
         self.assertEqual(len(result['items']), 1)
         self.assertEqual(result['report']['skipped_unmapped_items'], 1)
+
+    def test_generates_ordered_sql_files(self) -> None:
+        with TemporaryDirectory() as directory:
+            paths = generate_sql_files({
+                'users': [{'id': 1, 'username': 'u'}],
+                'expressions': [], 'attestations': [], 'readings': [],
+                'handbooks': [], 'sections': [], 'items': [], 'report': {'ok': True},
+            }, Path(directory))
+            self.assertIn("INSERT OR IGNORE INTO users (id, username, email", paths['users.sql'].read_text())
+            self.assertIn("VALUES (1, 'u', NULL", paths['users.sql'].read_text())
+            self.assertIn('LangMap V1 migration', paths['sources.sql'].read_text())
 
 
 if __name__ == '__main__':
