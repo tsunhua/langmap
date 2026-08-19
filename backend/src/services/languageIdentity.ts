@@ -81,6 +81,7 @@ const LANG_CODE_RE = /^[a-z]{3}$/;
 const SCRIPT_CODE_RE = /^[A-Z][a-z]{3}$/;
 const REGION_CODE_RE = /^[A-Z]{2}$/;
 const PLACE_SEGMENT_RE = /^[A-Z][A-Za-z]*$/;
+const ORTHOGRAPHY_RE = /^[A-Z][A-Za-z]*$/;
 
 export class LanguageLocaleError extends Error {
   constructor(public code: string) {
@@ -92,34 +93,88 @@ export class LanguageLocaleError extends Error {
 export function buildLanguageLocaleCode(input: {
   lang_code: string;
   script_code: string;
+  orthography?: string;
   region_code: string;
   place_segments?: string[];
 }): string {
   const lang = input.lang_code.toLowerCase();
   const script = input.script_code;
+  const orthography = input.orthography;
   const region = input.region_code;
   const segments = input.place_segments ?? [];
+  
+  // 验证
   if (!LANG_CODE_RE.test(lang)) throw new LanguageLocaleError('INVALID_LANG_CODE');
   if (!SCRIPT_CODE_RE.test(script)) throw new LanguageLocaleError('INVALID_SCRIPT_CODE');
+  if (orthography && !ORTHOGRAPHY_RE.test(orthography)) throw new LanguageLocaleError('INVALID_ORTHOGRAPHY');
   if (!REGION_CODE_RE.test(region)) throw new LanguageLocaleError('INVALID_REGION_CODE');
   for (const segment of segments) {
     if (!PLACE_SEGMENT_RE.test(segment)) throw new LanguageLocaleError('INVALID_PLACE_SEGMENT');
   }
-  const placePath = segments.join('_');
-  return `${lang}-${script}-${region}${placePath ? `_${placePath}` : ''}`;
+  
+  // 构建 code
+  const scriptPart = orthography ? `${script}_${orthography}` : script;
+  const placePart = segments.length > 0 ? `_${segments.join('_')}` : '';
+  
+  return `${lang}-${scriptPart}-${region}${placePart}`;
 }
 
 export function parseLanguageLocaleCode(code: string): LanguageLocaleParts | null {
   if (!code) return null;
-  const [head, ...segments] = code.split('_');
-  const match = /^([a-z]{3})-([A-Z][a-z]{3})-([A-Z]{2})$/.exec(head ?? '');
-  if (!match) return null;
-  if (segments.some((segment) => segment === '' || !PLACE_SEGMENT_RE.test(segment))) return null;
+  
+  // 按 - 分割，得到 lang, script[_orthography], region[_place_segments]
+  const dashParts = code.split('-');
+  
+  // 必須有至少 3 個部分：lang, script, region
+  if (dashParts.length < 3) return null;
+  
+  const lang = dashParts[0];
+  const scriptWithOrth = dashParts[1];
+  const regionWithPlaces = dashParts[2];
+  
+  // 驗證 lang
+  if (!LANG_CODE_RE.test(lang)) return null;
+  
+  // 解析 script 和可選的 orthography
+  let script: string;
+  let orthography: string | undefined;
+  
+  if (scriptWithOrth.includes('_')) {
+    const scriptParts = scriptWithOrth.split('_');
+    if (scriptParts.length !== 2) return null;
+    script = scriptParts[0];
+    orthography = scriptParts[1];
+  } else {
+    script = scriptWithOrth;
+  }
+  
+  // 驗證 script
+  if (!SCRIPT_CODE_RE.test(script)) return null;
+  
+  // 驗證 orthography（如果有）
+  if (orthography && !ORTHOGRAPHY_RE.test(orthography)) return null;
+  
+  // 解析 region 和 place segments
+  const regionParts = regionWithPlaces.split('_');
+  const region = regionParts[0];
+  const placeSegments = regionParts.slice(1);
+  
+  // 驗證 region
+  if (!REGION_CODE_RE.test(region)) return null;
+  
+  // 驗證 place segments
+  if (placeSegments.some(s => !PLACE_SEGMENT_RE.test(s))) return null;
+  
+  // 處理 dashParts 中剩餘的部分（如果有更多 place segments）
+  const additionalPlaces = dashParts.slice(3);
+  if (additionalPlaces.some(s => !PLACE_SEGMENT_RE.test(s))) return null;
+  
   return {
-    lang_code: match[1],
-    script_code: match[2],
-    region_code: match[3],
-    place_segments: segments,
+    lang_code: lang,
+    script_code: script,
+    orthography,
+    region_code: region,
+    place_segments: [...placeSegments, ...additionalPlaces],
   };
 }
 

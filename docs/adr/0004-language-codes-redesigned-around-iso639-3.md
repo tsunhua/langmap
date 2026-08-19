@@ -26,14 +26,15 @@ LangMap 的第一性資料是詞句與 mapping 圖，不是全球方言分類。
 Language Locale 描述一個語言在特定書寫系統與地點出現的地域形式，其代碼 grammar 為：
 
 ```text
-language_locale_code = lang "-" script "-" region ("_" place_segment)*
+language_locale_code = lang "-" script ("_" orthography)? "-" region ("_" place_segment)*
 ```
 
 - `lang`：ISO 639-3 個體語言代碼。
 - `script`：ISO 15924 四字母代碼，使用標準大小寫；不接受自訂 script。
+- `orthography`：可選，格式同 `place_segment`（`^[A-Z][A-Za-z]*$`），語義為書寫方案/正字法（如 `Pehoeji`、`Tailo`）。位於 script 之後、region 之前。
 - `region`：ISO 3166-1 alpha-2 地區代碼；領域與資料表一律稱為 region，不把所有標準項目稱為 country。
 - `place_segment`：可選、可變深度、由使用者自訂，且必須符合 `^[A-Z][A-Za-z]*$`；段內大寫可表示多字地名，例如 `NewYork`。
-- `-` 分隔語言、書寫系統與地點三種頂層欄位；`_` 分隔地點路徑內由大至小的層級。
+- `-` 分隔語言、書寫系統與地點三種頂層欄位；`_` 分隔地點路徑內由大至小的層級，以及書寫系統與正字法。
 - 地區代碼必填，其他地點層級均可省略；不以 `NULL`、`Unknown` 或空白段補齊。
 - 每個 Language Locale 保存當地自稱（`name`）與英文名稱（`name_en`）。
 - Language Locale 可選擇保存一組代表座標；座標只供地圖顯示，不宣稱完整語言分布。
@@ -45,10 +46,12 @@ language_locale_code = lang "-" script "-" region ("_" place_segment)*
 nan-Hant-CN
 nan-Hant-CN_Quanzhou_Nanan
 nan-Latn-TW_Tainan
+nan-Latn_Pehoeji-TW
+nan-Latn_Tailo-TW
 eng-Latn-US_NewYork
 ```
 
-Script 只描述書寫系統。Pinyin、Wade–Giles、POJ、Tâi-lô、Jyutping、IPA 或 phonics 等讀音記法不進入 Language Locale code。
+Script 只描述書寫系統。IPA、phonics 等純讀音記法不進入 Language Locale code，而是使用 `expression_readings.scheme`。POJ、Tâi-lô 等正字法/書寫方案使用 `orthography` 段。
 
 ### 3. Expression 身份與同形拆分
 

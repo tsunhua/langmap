@@ -127,6 +127,18 @@
       "filename": "0021_add_positive_polarity.sql",
       "size": 3691,
       "sha256": "1cded23dc7abf351725c9eb633b423ad3f4ebb295067c6c52b047e3ea1863a43"
+    },
+    {
+      "sequence": 22,
+      "filename": "0022_script_region_name_expression_id.sql",
+      "size": 467,
+      "sha256": "e9bdd90f5d190a4cd308424628290b8a40a0b0b4f04868a5d3055cb2fb73b78f"
+    },
+    {
+      "sequence": 23,
+      "filename": "0023_add_orthography.sql",
+      "size": 1051,
+      "sha256": "a3590cf0f6d87cacca6657bbf1b5a47f41d9e8d84dd574394eaf7a486972c17d"
     }
   ]
 }

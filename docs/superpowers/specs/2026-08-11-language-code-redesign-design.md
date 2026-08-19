@@ -129,9 +129,10 @@ Runtime 不提供建立或修改 registry row 的 API。
 ### 7.1 Grammar
 
 ```text
-language_locale_code = lang "-" script "-" region ("_" place_segment)*
+language_locale_code = lang "-" script ("_" orthography)? "-" region ("_" place_segment)*
 lang                 = [a-z]{3}
 script               = [A-Z][a-z]{3}
+orthography          = [A-Z][A-Za-z]*
 region               = [A-Z]{2}
 place_segment        = [A-Z][A-Za-z]*
 ```
@@ -142,10 +143,14 @@ place_segment        = [A-Z][A-Za-z]*
 nan-Hant-CN
 nan-Hant-CN_Quanzhou_Nanan
 nan-Latn-TW_Tainan
+nan-Latn_Pehoeji-TW
+nan-Latn_Tailo-TW
 eng-Latn-US_NewYork
 ```
 
 Place segment 由使用者自訂；不正規化拼寫、不對齊外部地點資料，也不以 `_` 分隔同一地名的單字。`NewYork` 是一段，`New_York` 是兩層，因此後者不應用來表達 New York。
+
+Orthography 段位於 script 之後、region 之前，語義為書寫方案/正字法（如 `Pehoeji`、`Tailo`）。格式同 `place_segment`（`^[A-Z][A-Za-z]*$`）。
 
 ### 7.2 資料表
 
