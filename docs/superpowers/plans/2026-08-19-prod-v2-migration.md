@@ -676,7 +676,7 @@ def reading_for(v1_code: str, expression_id: str) -> dict | None:
 
 - [x] **Step 4: 測試** — 用 `remote-expressions.sql` 抽出 user 建立的樣本驗證 ID 生成、homograph 遞增、locale 映射、系統詞句被排除。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/db/migrate_v1/expressions.py scripts/db/tests/test_migrate_v1.py
