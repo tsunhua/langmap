@@ -21,6 +21,7 @@ interface HandbookItem {
   id: string
   text: string
   lang_code: string
+  language_profile_code?: string | null
   language_name?: string | null
 }
 
@@ -82,6 +83,7 @@ async function selectExpression(item: HandbookItem) {
     id: item.id,
     text: item.text,
     lang_code: item.lang_code,
+    language_profile_code: item.language_profile_code,
     language_name: item.language_name,
   })
 }
@@ -109,6 +111,7 @@ async function selectExpressionById(
       id: detailResult.value.expression.id,
       text: detailResult.value.expression.text,
       lang_code: detailResult.value.expression.lang_code,
+      language_profile_code: detailResult.value.attestations[0]?.language_locale_code ?? null,
       source_type: detailResult.value.expression.source_type,
     }
   } else {
@@ -188,8 +191,8 @@ watch([() => localization.locale, () => localization.secondary], () => {
       <router-link to="/handbooks" class="hv-back">← {{ t('handbook.back') }}</router-link>
       <h1>{{ hb.title }}</h1>
       <div class="hv-meta">
-        <span v-if="hb.author_username">{{ hb.author_username }}</span>
-        <span v-if="hb.visibility">{{ hb.visibility }}</span>
+        <span v-if="hb.author_username" class="hv-author">@{{ hb.author_username.toLowerCase() }}</span>
+        <span v-if="hb.visibility" class="hv-visibility">{{ hb.visibility }}</span>
       </div>
 
       <div class="hv-vote-row">
@@ -260,7 +263,9 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hv-back:hover { color: var(--fg); }
 .hb-edit-btn { margin-top: var(--space-md); }
 .hv-content h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
-.hv-meta { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.hv-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.hv-author { color: var(--fg); font-family: var(--mono); }
+.hv-visibility { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--r); color: var(--muted); font-family: var(--mono); font-size: 11px; text-transform: lowercase; }
 .hv-toc ol { list-style: none; padding: 0; margin: 0; }
 .hv-vote-row { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md); font-size: 13px; }
 .hv-section { scroll-margin-top: calc(var(--bar-h) + 20px); margin-bottom: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
