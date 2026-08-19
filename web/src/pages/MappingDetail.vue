@@ -336,14 +336,6 @@ const coords = computed(() => {
   return null
 })
 
-const sourceLabel = computed(() => {
-  if (expr.value?.expression.created_by_username) return `@${expr.value.expression.created_by_username.toLowerCase()}`
-  const sourceType = expr.value?.expression.source_type
-  if (sourceType === 'auth') return t('mappingDetail.authority')
-  if (sourceType === 'ai') return 'AI'
-  if (sourceType === 'user') return t('mappingDetail.user')
-  return sourceType || ''
-})
 </script>
 
 <template>
@@ -365,7 +357,6 @@ const sourceLabel = computed(() => {
 
     <div class="anchor-meta">
       <span>{{ expr.expression.lang_code }}</span>
-      <span v-if="sourceLabel" :class="['src-tag', expr.expression.source_type]">{{ sourceLabel }}</span>
       <span v-if="coords" class="mono coords">{{ coords }}</span>
     </div>
 
