@@ -12,6 +12,7 @@ if __package__ in (None, ''):
 from scripts.db.migrate_v1.expressions import migrate_expressions
 from scripts.db.migrate_v1.generate_sql import generate_sql_files
 from scripts.db.migrate_v1.handbooks import migrate_handbooks
+from scripts.db.migrate_v1.mappings import migrate_mappings
 from scripts.db.migrate_v1.parse_sql import load_table
 from scripts.db.migrate_v1.users import migrate_users
 
@@ -31,11 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
 def run(source_dir: Path, output_dir: Path) -> dict[str, object]:
     users = load_table((source_dir / 'remote-users.sql').read_text(encoding='utf-8'), 'users')
     expressions = load_table((source_dir / 'remote-expressions.sql').read_text(encoding='utf-8'), 'expressions')
+    expression_meanings = load_table((source_dir / 'remote-expression_meaning.sql').read_text(encoding='utf-8'), 'expression_meaning')
     handbooks = load_table((source_dir / 'remote-handbooks.sql').read_text(encoding='utf-8'), 'handbooks')
     pages = load_table((source_dir / 'remote-handbook_pages.sql').read_text(encoding='utf-8'), 'handbook_pages')
     migrated_users = migrate_users(users)
     users_by_name = {str(row['username']): int(row['id']) for row in migrated_users}
     expression_result = migrate_expressions(expressions, users_by_name)
+    mappings = migrate_mappings(expression_meanings, expression_result['expression_map'])
     handbook_result = migrate_handbooks(handbooks, pages, expression_result['expression_map'], {int(value): int(value) for value in users_by_name.values()})
     for row in expression_result['expressions'] + expression_result['attestations'] + expression_result['readings']:
         row['source_id'] = 'v1-migration'
@@ -43,9 +46,9 @@ def run(source_dir: Path, output_dir: Path) -> dict[str, object]:
         **expression_result['report'],
         **handbook_result['report'],
         'source_counts': {'users': len(users), 'expressions': len(expressions), 'handbooks': len(handbooks), 'handbook_pages': len(pages)},
-        'output_counts': {'users': len(migrated_users), 'expressions': len(expression_result['expressions']), 'attestations': len(expression_result['attestations']), 'readings': len(expression_result['readings']), 'handbooks': len(handbook_result['handbooks']), 'sections': len(handbook_result['sections']), 'items': len(handbook_result['items'])},
+        'output_counts': {'users': len(migrated_users), 'expressions': len(expression_result['expressions']), 'attestations': len(expression_result['attestations']), 'readings': len(expression_result['readings']), 'mappings': len(mappings), 'handbooks': len(handbook_result['handbooks']), 'sections': len(handbook_result['sections']), 'items': len(handbook_result['items'])},
     }
-    generate_sql_files({**expression_result, **handbook_result, 'users': migrated_users, 'report': report}, output_dir)
+    generate_sql_files({**expression_result, **handbook_result, 'mappings': mappings, 'users': migrated_users, 'report': report}, output_dir)
     return report
 
 
@@ -53,9 +56,9 @@ def apply_sql(output_dir: Path, *, remote: bool, database_name: str | None = Non
     if remote and not database_name:
         raise SystemExit('--apply-remote requires --database-name')
     if remote:
-        files = ['users.sql', 'sources.sql', 'expressions.sql', 'attestations.sql', 'readings.sql', 'handbooks.sql', 'sections.sql', 'items.sql']
+        files = ['users.sql', 'sources.sql', 'expressions.sql', 'attestations.sql', 'readings.sql', 'mappings.sql', 'handbooks.sql', 'sections.sql', 'items.sql']
     else:
-        files = ['users.sql', 'sources.sql', 'expressions.sql', 'attestations.sql', 'readings.sql', 'handbooks.sql', 'sections.sql', 'items.sql']
+        files = ['users.sql', 'sources.sql', 'expressions.sql', 'attestations.sql', 'readings.sql', 'mappings.sql', 'handbooks.sql', 'sections.sql', 'items.sql']
     wrangler = Path(__file__).resolve().parents[3] / 'backend' / 'node_modules' / '.bin' / 'wrangler'
     if not wrangler.exists():
         raise SystemExit(f'wrangler not found: {wrangler}')

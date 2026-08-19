@@ -145,6 +145,12 @@
       "filename": "0024_v2_migration_seeds.sql",
       "size": 2543,
       "sha256": "e418ca7252659804848cc90ff1c6944ebe9cfa5ac2dc49a6e59d26512f94f708"
+    },
+    {
+      "sequence": 25,
+      "filename": "0025_remove_yue_translation_expressions.sql",
+      "size": 1085,
+      "sha256": "b61aa164c6cb97e7acf3886b9b6cfbb4cab65b027ca4f2bf3fbe72ccf380aa25"
     }
   ]
 }

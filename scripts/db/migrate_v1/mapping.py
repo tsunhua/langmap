@@ -8,7 +8,7 @@ LANGUAGE_MAPPING: dict[str, tuple[str, str | None]] = {
     'en-GB': ('eng', 'eng-Latn-GB'),
     'ja-JP': ('jpn', 'jpn-Jpan-JP'),
     'es-ES': ('spa', 'spa-Latn-ES'),
-    'yue-HK': ('yue', 'yue-Hant-HK'),
+    # yue-HK currently only contains UI translation rows; defer it until Cantonese UI localization is ready.
     'nan-TW': ('nan', 'nan-Hant-TW'),
     'nan-x-cha': ('nan', 'nan-Hant-CN_Chaozhou'),
     'nan-x-cha-jiazi': ('nan', 'nan-Hant-CN_LufengJiazi'),

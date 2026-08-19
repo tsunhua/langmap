@@ -16,7 +16,7 @@
   - 遷移 users（保持 v1 整數 id、password_hash 原樣）。
   - 遷移 handbooks + handbook_pages（解析 content → v2 sections/items）。
   - 遷移 user-created expressions（`created_by` 為真實用戶 ID 者；不遷移 `system` / `langmap` / `ai` / `opus` 等系統、UI 翻譯、匯入詞句）。
-  - 不遷移：mappings、meanings、votes、collections、contributions、expression_versions、expression_meaning、language_stats、ui_locales、remote-meanings。
+  - 不建立 v2 `meanings`／`expression_meaning` 舊表；但遷移 `remote-expression_meaning.sql` 的關聯為 v2 `expression_edges`，保留既有 mapping。votes、collections、contributions、expression_versions、language_stats、ui_locales、remote-meanings 仍不遷移。
   - `email_verification_tokens`：**不遷移**（已確認）。遷移後用戶重新走驗證流程。
   - `image` / `emoji` 非語言 expressions：**遷移（已確認）**，`lang_code` 使用 `x-image` / `x-emoji`（非 ISO 自訂 code，明示違反 pinned ISO registry 不變量、以 migration report 記錄）；**不建立 language_locales**、不建立 locale attestations（v2 spec §8.4 允許 Expression 不帶 locale），`language_locales` 表不新增 `x-image-*` / `x-emoji-*` 條目。
   - `image` / `emoji` 的多語言名稱：v1 `languages` 表有 `name`（📸 (Image)、😀 (Emoji)）與各語 name，v2 `languages` 只有 `name_en` → 以 `('x-image', 'Image')`、`('x-emoji', 'Emoji')` 寫入 `languages`；其他語名不遷移（v2 模型不支援，寫入 migration report）。
@@ -788,7 +788,7 @@ python3 scripts/db/migrate_v1/run.py --source fixtures --output-dir /tmp/langmap
 # 產生 users.sql, languages_seed.sql, expressions.sql, readings.sql, handbooks.sql, sections.sql, items.sql, report.json
 ```
 
-流程：載入 users → migrate；建 `sources` row（`('system', 'LangMap V1 migration')`）→ 載入 expressions → 建 locales seed SQL（Task 2 語句合一）→ 建 readings → 建 handbooks/sections/items → 輸出 SQL。
+流程：載入 users → migrate；建 `sources` row（`('system', 'LangMap V1 migration')`）→ 載入 expressions／expression_meaning → 建 locales seed SQL（Task 2 語句合一）→ 建 readings／pairwise mapping edges → 建 handbooks/sections/items → 輸出 SQL。
 
 - [x] **Step 2: 本地 D1 演練**
 

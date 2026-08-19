@@ -7,6 +7,7 @@ from scripts.db.migrate_v1.expressions import migrate_expressions
 from scripts.db.migrate_v1.handbooks import migrate_handbooks, parse_sections
 from scripts.db.migrate_v1.generate_sql import generate_sql_files
 from scripts.db.migrate_v1.mapping import map_expression_locale, map_language_code
+from scripts.db.migrate_v1.mappings import migrate_mappings
 from scripts.db.migrate_v1.parse_sql import load_table
 from scripts.db.migrate_v1.users import migrate_users
 
@@ -39,6 +40,20 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(map_language_code('nan-TW-POJ'), 'nan')
         self.assertEqual(map_expression_locale('nan-TW-POJ'), 'nan-Latn_Pehoeji-TW')
         self.assertIsNone(map_language_code('unknown'))
+
+    def test_migrates_meaning_membership_to_pairwise_edges(self) -> None:
+        edges = migrate_mappings(
+            [
+                {'expression_id': 1, 'meaning_id': 9},
+                {'expression_id': 2, 'meaning_id': 9},
+                {'expression_id': 3, 'meaning_id': 10},
+            ],
+            {'1': 'eng:one', '2': 'cmn:two', '3': 'spa:three'},
+        )
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0]['expression_a_id'], 'cmn:two')
+        self.assertEqual(edges[0]['expression_b_id'], 'eng:one')
+        self.assertEqual(edges[0]['source'], 'v1-meaning-migration')
 
     def test_migrates_user_expressions_and_readings(self) -> None:
         rows = [

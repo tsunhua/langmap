@@ -15,9 +15,14 @@ const rootEl = ref<HTMLElement>()
 const triggerEl = ref<HTMLButtonElement>()
 const searchEl = ref<HTMLInputElement>()
 const activeIndex = ref(-1)
+// 暫時隱藏尚未完成 UI 翻譯的語言；資料與其他語言選擇入口不受影響。
+const HIDDEN_LANGUAGE_VARIETIES = new Set(['nan', 'yue'])
 
 const groupedWithOptions = computed(() => {
-  const groups = groupLocalesByVariety(store.locales, store.locale)
+  const groups = groupLocalesByVariety(
+    store.locales.filter(locale => !HIDDEN_LANGUAGE_VARIETIES.has(locale.language_locale_code.split('-')[0])),
+    store.locale,
+  )
   const q = query.value.toLowerCase().trim()
   const filtered = q
     ? groups.filter(g =>
