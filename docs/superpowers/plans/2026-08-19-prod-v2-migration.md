@@ -763,7 +763,7 @@ def migrate_handbooks(handbook_rows, page_rows, expr_map, users_by_id):
 
 - [x] **Step 4: 測試** — 用 `remote-handbooks.sql` 範例（含 `{{text:翁|mid:...}}`、bare id 標記、多 page handbook）驗證 sections/items 數量、unmapped 計數。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/db/migrate_v1/handbooks.py scripts/db/tests/test_migrate_v1.py
