@@ -806,7 +806,7 @@ curl 'http://127.0.0.1:8788/api/v2/expressions/search?q=食'
 
 - [x] **Step 3: 驗證 invariants** — 檢查 users 數、expressions 數、handbooks/sections/items 數、無 orphan、homograph 無衝突、report 中 dropped/skipped 計數合理。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/db/migrate_v1
