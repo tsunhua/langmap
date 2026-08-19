@@ -12,18 +12,22 @@ interface GraphEdgeRow {
   created_at: string;
   expression_a_text: string;
   expression_a_lang_code: string;
+  expression_a_language_profile_code: string | null;
   expression_b_text: string;
   expression_b_lang_code: string;
+  expression_b_language_profile_code: string | null;
 }
 
 function toNode(row: GraphEdgeRow, expressionId: string, depth: number, nameMap: ReadonlyMap<string, string>): MappingGraphNode {
   const isA = row.expression_a_id === expressionId;
   const langCode = isA ? row.expression_a_lang_code : row.expression_b_lang_code;
+  const languageProfileCode = isA ? row.expression_a_language_profile_code : row.expression_b_language_profile_code;
   return {
     expression_id: expressionId,
     text: isA ? row.expression_a_text : row.expression_b_text,
     lang_code: langCode,
-    language_name: nameMap.get(langCode) ?? langCode,
+    language_profile_code: languageProfileCode,
+    language_name: nameMap.get(languageProfileCode ?? langCode) ?? langCode,
     depth,
   };
 }
@@ -33,7 +37,9 @@ async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[])
   const { results } = await db.prepare(
     `SELECT e.id, e.expression_a_id, e.expression_b_id, e.score, e.created_at,
       a.text AS expression_a_text, a.lang_code AS expression_a_lang_code,
-      b.text AS expression_b_text, b.lang_code AS expression_b_lang_code
+      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = a.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS expression_a_language_profile_code,
+      b.text AS expression_b_text, b.lang_code AS expression_b_lang_code,
+      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = b.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS expression_b_language_profile_code
      FROM expression_edges e
      JOIN expressions a ON a.id = e.expression_a_id
      JOIN expressions b ON b.id = e.expression_b_id
@@ -51,18 +57,21 @@ export async function getMappingGraph(
   locales: LocaleHints = {},
 ): Promise<MappingGraphResponse | null> {
   const root = await db.prepare(
-    'SELECT id, text, lang_code FROM expressions WHERE id = ?',
-  ).bind(rootId).first<{ id: string; text: string; lang_code: string }>();
+    `SELECT id, text, lang_code,
+      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = expressions.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS language_profile_code
+     FROM expressions WHERE id = ?`,
+  ).bind(rootId).first<{ id: string; text: string; lang_code: string; language_profile_code: string | null }>();
   if (!root) return null;
 
   const limit = Math.max(1, Math.min(nodeLimit, DEFAULT_NODE_LIMIT));
   const visited = new Set<string>([rootId]);
-  const rootNames = await resolveLanguageNames(db, [root.lang_code], locales);
+  const rootNames = await resolveLanguageNames(db, [root.language_profile_code ?? root.lang_code], locales);
   const nodes: MappingGraphNode[] = [{
     expression_id: root.id,
     text: root.text,
     lang_code: root.lang_code,
-    language_name: rootNames.get(root.lang_code) ?? root.lang_code,
+    language_profile_code: root.language_profile_code,
+    language_name: rootNames.get(root.language_profile_code ?? root.lang_code) ?? root.lang_code,
     depth: 0,
   }];
   const edges: MappingGraphEdge[] = [];
@@ -74,7 +83,7 @@ export async function getMappingGraph(
 
   for (let depth = 1; depth <= hops && frontier.length > 0; depth++) {
     const rows = await loadEdgesForFrontier(db, frontier);
-    const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_lang_code, row.expression_b_lang_code]))];
+    const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_language_profile_code ?? row.expression_a_lang_code, row.expression_b_language_profile_code ?? row.expression_b_lang_code]))];
     const nameMap = await resolveLanguageNames(db, langCodes, locales);
     const next = new Set<string>();
     const frontierIds = new Set(frontier);

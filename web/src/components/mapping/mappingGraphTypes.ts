@@ -2,6 +2,7 @@ export interface MappingGraphNode {
   expression_id: string
   text: string
   lang_code: string
+  language_profile_code?: string | null
   language_name: string | null
   depth: number
 }
