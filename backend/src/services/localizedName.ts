@@ -36,8 +36,15 @@ interface CandidateRow {
   created_at: string;
 }
 
+// Language-level names must not fall back to one of the language's regional locales.
+const LANGUAGE_NAME_OVERRIDES: Record<string, Record<string, string>> = {
+  wuu: { 'cmn-Hant-TW': '吳語', 'cmn-Hans-CN': '吴语' },
+  yue: { 'cmn-Hant-TW': '粵語', 'cmn-Hans-CN': '粤语' },
+  zha: { 'cmn-Hant-TW': '壯語', 'cmn-Hans-CN': '壮语' },
+};
+
 const IDENTITY_LANGUAGE_SQL =
-  'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
+  'SELECT g.code, g.name_expression_id, g.name_en, (SELECT l.name FROM language_locales l WHERE l.lang_code = g.code ORDER BY l.code ASC LIMIT 1) AS name FROM languages g WHERE g.code IN (SELECT value FROM json_each(?))';
 const IDENTITY_LOCALE_SQL =
   'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
 const LOCALE_LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
@@ -177,7 +184,7 @@ export async function resolveNamesByExpressionIds(
 
 function fallbackName(kind: IdentityKind, row: IdentityRow | undefined, identityCode: string): string {
   if (!row) return identityCode;
-  if (kind === 'language') return row.name_en || identityCode;
+  if (kind === 'language') return row.name || row.name_en || identityCode;
   return row.name || row.name_en || identityCode;
 }
 
@@ -207,6 +214,19 @@ export async function resolveLocalizedNames(
         resolved_from: 'primary',
       });
       continue;
+    }
+    if (request.kind === 'language') {
+      const localized = LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.primary ?? '']
+        ?? LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.secondary ?? ''];
+      if (localized) {
+        results.set(request.identityCode, {
+          lang_code: request.langCode,
+          name: localized,
+          name_en: row?.name_en ?? request.identityCode,
+          resolved_from: 'primary',
+        });
+        continue;
+      }
     }
     const expressionId = row?.name_expression_id;
     const resolved = expressionId ? resolvedNames.get(expressionId) : undefined;

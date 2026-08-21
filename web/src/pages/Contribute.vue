@@ -16,6 +16,8 @@ interface Row {
   lang_code: string
   language_locale_code: string
   text: string
+  imagePreview?: string
+  imageUploading?: boolean
 }
 
 let keySeq = 0
@@ -42,6 +44,32 @@ function removeRow(key: number) {
 
 function selectLocale(row: Row, locale: LanguageLocale | null) {
   row.lang_code = locale?.lang_code ?? ''
+}
+
+async function chooseImage(row: Row, event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  row.imageUploading = true
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, 480 / Math.max(bitmap.width, bitmap.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('IMAGE_COMPRESS_FAILED')), 'image/webp', 0.72))
+    if (blob.size > 100 * 1024) throw new Error('IMAGE_TOO_LARGE')
+    const form = new File([blob], 'expression.webp', { type: 'image/webp' })
+    const response = await api.post('/images', form, { headers: { 'Content-Type': 'image/webp' } })
+    row.text = response.data.data.url
+    row.imagePreview = URL.createObjectURL(blob)
+  } catch (caught) {
+    error.value = caught instanceof Error && caught.message === 'IMAGE_TOO_LARGE'
+      ? t('contribute.imageTooLarge')
+      : t('contribute.imageUploadFailed')
+  } finally {
+    row.imageUploading = false
+  }
 }
 
 async function submit() {
@@ -79,7 +107,14 @@ async function submit() {
           <div class="ex-rows">
             <div v-for="row in rows" :key="row.key" class="ex-row">
               <LanguageLocalePicker v-model="row.language_locale_code" :allow-create="false" :label="t('contribute.locale')" @selected="selectLocale(row, $event)" />
-              <input class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
+              <template v-if="row.lang_code === 'x-image'">
+                <label class="image-input">
+                  <img v-if="row.imagePreview" :src="row.imagePreview" alt="" />
+                  <span v-else>{{ row.imageUploading ? t('contribute.imageUploading') : t('contribute.chooseImage') }}</span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" :disabled="row.imageUploading" @change="chooseImage(row, $event)" />
+                </label>
+              </template>
+              <input v-else class="ex-text" v-model="row.text" :placeholder="t('contribute.expressionPlaceholder')" :aria-label="t('contribute.expression')" />
               <button class="ex-del" :title="t('contribute.delete')" :aria-label="t('contribute.delete')" @click="removeRow(row.key)"><X :size="16" aria-hidden="true" /></button>
             </div>
           </div>
@@ -151,6 +186,9 @@ async function submit() {
   height: 44px; border: 1px solid var(--border); border-radius: var(--r);
   background: var(--bg); padding: 0 var(--space-xs); font-size: 13px; outline: none; min-width: 0;
 }
+.image-input { height: 44px; border: 1px dashed var(--border); border-radius: var(--r); display: flex; align-items: center; gap: 8px; padding: 0 10px; color: var(--muted); font-size: 13px; cursor: pointer; overflow: hidden; }
+.image-input img { width: 40px; height: 40px; object-fit: cover; }
+.image-input input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .ex-row input:focus { border-color: var(--accent); }
 .ex-del {
   width: 40px; height: 40px; border: none; background: transparent; color: var(--muted);

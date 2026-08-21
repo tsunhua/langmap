@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -35,9 +36,14 @@ def run(source_dir: Path, output_dir: Path) -> dict[str, object]:
     expression_meanings = load_table((source_dir / 'remote-expression_meaning.sql').read_text(encoding='utf-8'), 'expression_meaning')
     handbooks = load_table((source_dir / 'remote-handbooks.sql').read_text(encoding='utf-8'), 'handbooks')
     pages = load_table((source_dir / 'remote-handbook_pages.sql').read_text(encoding='utf-8'), 'handbook_pages')
+    rendered_expression_ids = {
+        expression_id
+        for handbook in handbooks
+        for expression_id in re.findall(r'data-expression-id[^0-9]*(\d+)', str(handbook.get('renders') or ''))
+    }
     migrated_users = migrate_users(users)
     users_by_name = {str(row['username']): int(row['id']) for row in migrated_users}
-    expression_result = migrate_expressions(expressions, users_by_name)
+    expression_result = migrate_expressions(expressions, users_by_name, rendered_expression_ids)
     mappings = migrate_mappings(expression_meanings, expression_result['expression_map'])
     handbook_result = migrate_handbooks(handbooks, pages, expression_result['expression_map'], {int(value): int(value) for value in users_by_name.values()})
     for row in expression_result['expressions'] + expression_result['attestations'] + expression_result['readings']:
@@ -64,6 +70,8 @@ def apply_sql(output_dir: Path, *, remote: bool, database_name: str | None = Non
         raise SystemExit(f'wrangler not found: {wrangler}')
     for filename in (['languages_seed.sql'] + files):
         for chunk_file in sorted(output_dir.glob(f'{filename[:-4]}*.sql')):
+            if chunk_file.stat().st_size == 0:
+                continue
             command = [str(wrangler), 'd1', 'execute', database_name or 'DB']
             command.append('--remote' if remote else '--local')
             command.extend(['--file', str(chunk_file)])

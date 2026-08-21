@@ -38,6 +38,8 @@ class MigrateV1Test(unittest.TestCase):
 
     def test_mapping(self) -> None:
         self.assertEqual(map_language_code('nan-TW-POJ'), 'nan')
+        self.assertEqual(map_language_code('zh-HK'), 'yue')
+        self.assertEqual(map_expression_locale('zh-HK'), 'yue-Hant-HK')
         self.assertEqual(map_expression_locale('nan-TW-POJ'), 'nan-Latn_Pehoeji-TW')
         self.assertIsNone(map_language_code('unknown'))
 
@@ -54,6 +56,14 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(edges[0]['expression_a_id'], 'cmn:two')
         self.assertEqual(edges[0]['expression_b_id'], 'eng:one')
         self.assertEqual(edges[0]['source'], 'v1-meaning-migration')
+
+    def test_does_not_include_ui_translation_when_referenced_by_handbook(self) -> None:
+        result = migrate_expressions(
+            [{'id': 1, 'language_code': 'nan-TW', 'text': 'Start Export', 'created_by': 'system', 'tags': '["langmap.start_export"]'}],
+            {},
+            {'1'},
+        )
+        self.assertEqual(result['expressions'], [])
 
     def test_migrates_user_expressions_and_readings(self) -> None:
         rows = [
@@ -72,8 +82,17 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(result['readings'][0]['scheme'], 'poj')
         self.assertEqual(result['report'], {'skipped': 0, 'dropped_owner': 1, 'dropped_unmapped': 1})
 
+    def test_migrates_handbook_render_expressions(self) -> None:
+        result = migrate_expressions(
+            [{'id': 10, 'text': '地铁', 'language_code': 'zh-CN', 'created_by': 'system'}],
+            {},
+            {'10'},
+        )
+        self.assertEqual(result['expressions'][0]['lang_code'], 'cmn')
+        self.assertIsNone(result['expressions'][0]['created_by'])
+
     def test_migrates_handbook_sections_and_items(self) -> None:
-        self.assertEqual(parse_sections('## §2 {{相借問}}\n{{text:翁|mid:1}}\n\n### Two\n{{2}}'), [('§2 相借問', ['text:相借問', 'text:翁']), ('Two', ['2'])])
+        self.assertEqual(parse_sections('## §2 {{相借問}}\n{{text:翁|mid:1}}\n\n### Two\n{{2}}'), [('§2 相借問', ['text:相借問', 'text:翁', '2'])])
         result = migrate_handbooks(
             [{'id': 10, 'user_id': 7, 'title': 'Guide', 'is_public': 1, 'content': '## One\n{{text:翁}}\n{{999}}'}],
             [],

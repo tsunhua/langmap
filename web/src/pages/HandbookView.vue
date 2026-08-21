@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useHandbooks } from '@/composables/useHandbooks'
 import { useExpressions } from '@/composables/useExpressions'
 import VotePill from '@/components/mapping/VotePill.vue'
-import { PanelRightOpen } from 'lucide-vue-next'
+import { PanelRightOpen, Pencil } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { useI18n } from 'vue-i18n'
@@ -28,12 +28,15 @@ interface HandbookItem {
 interface HandbookSection {
   id: string
   title?: string | null
+  position?: number
+  parent_section_id?: string | null
   items?: HandbookItem[]
 }
 
 interface HandbookDetail {
   id: string
   title: string
+  language_profile_code?: string | null
   author_username?: string | null
   visibility?: string | null
   score: number
@@ -47,6 +50,33 @@ const { detail } = useHandbooks()
 const { detail: expressionDetail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
+
+function sectionDepth(section: { parent_section_id?: string | null }, sections: Array<{ id: string; parent_section_id?: string | null }>): number {
+  let depth = 0
+  let parentId = section.parent_section_id ?? null
+  const seen = new Set<string>()
+  while (parentId && !seen.has(parentId)) {
+    seen.add(parentId)
+    depth += 1
+    parentId = sections.find((candidate) => candidate.id === parentId)?.parent_section_id ?? null
+  }
+  return depth
+}
+
+function sectionNumber(section: HandbookSection, sections: HandbookSection[]): string {
+  const numberParts: number[] = []
+  let current: HandbookSection | undefined = section
+  const seen = new Set<string>()
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id)
+    const siblings = sections
+      .filter((candidate) => (candidate.parent_section_id ?? null) === (current?.parent_section_id ?? null))
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id))
+    numberParts.unshift(siblings.findIndex((candidate) => candidate.id === current?.id) + 1)
+    current = current.parent_section_id ? sections.find((candidate) => candidate.id === current?.parent_section_id) : undefined
+  }
+  return numberParts.join('.')
+}
 
 const hb = ref<HandbookDetail | null>(null)
 const loading = ref(true)
@@ -107,12 +137,23 @@ async function selectExpressionById(
   if (request !== selectionRequest) return
 
   if (detailResult.status === 'fulfilled') {
+    const selectedProfile = selectedExpression.value?.language_profile_code
+      ?? detailResult.value.attestations.find(attestation => attestation.language_locale_code === 'cmn-Hant-TW')?.language_locale_code
+      ?? detailResult.value.attestations[0]?.language_locale_code
+      ?? null
+    const selectedAttestation = detailResult.value.attestations.find(attestation => attestation.language_locale_code === selectedProfile)
     selectedExpression.value = {
       id: detailResult.value.expression.id,
       text: detailResult.value.expression.text,
       lang_code: detailResult.value.expression.lang_code,
-      language_profile_code: detailResult.value.attestations[0]?.language_locale_code ?? null,
+      language_profile_code: selectedProfile,
+      language_name: selectedAttestation?.locale_display_name
+        ?? selectedExpression.value?.language_name
+        ?? detailResult.value.expression.language_name
+        ?? null,
       source_type: detailResult.value.expression.source_type,
+      attestations: detailResult.value.attestations,
+      readings: detailResult.value.readings,
     }
   } else {
     inspectorError.value = t('handbook.inspectorFailed')
@@ -133,6 +174,7 @@ function selectRelatedExpression(expressionId: string) {
     text: node.text,
     lang_code: node.lang_code,
     language_name: node.language_name,
+    language_profile_code: node.language_profile_code,
   } : undefined)
 }
 
@@ -180,8 +222,8 @@ watch([() => localization.locale, () => localization.secondary], () => {
       <div class="hv-toc-label">{{ t('handbook.toc') }}</div>
       <ol>
         <li v-for="(sec, i) in hb.sections" :key="sec.id">
-          <a :href="`#sec-${i}`">
-            {{ i + 1 }} · {{ sec.title }}
+          <a :href="`#sec-${i}`" :style="{ paddingLeft: `${9 + sectionDepth(sec, hb.sections) * 14}px` }">
+            {{ sectionNumber(sec, hb.sections) }} · {{ sec.title }}
           </a>
         </li>
       </ol>
@@ -189,7 +231,13 @@ watch([() => localization.locale, () => localization.secondary], () => {
 
     <main class="hv-content">
       <router-link to="/handbooks" class="hv-back">← {{ t('handbook.back') }}</router-link>
-      <h1>{{ hb.title }}</h1>
+      <div class="hv-title-row">
+        <h1>{{ hb.title }}</h1>
+        <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost hb-edit-btn">
+          <Pencil :size="15" aria-hidden="true" />
+          <span>{{ t('handbook.edit') }}</span>
+        </router-link>
+      </div>
       <div class="hv-meta">
         <span v-if="hb.author_username" class="hv-author">@{{ hb.author_username.toLowerCase() }}</span>
         <span v-if="hb.visibility" class="hv-visibility">{{ hb.visibility }}</span>
@@ -200,10 +248,10 @@ watch([() => localization.locale, () => localization.secondary], () => {
         <VotePill :target-id="String(hb.id)" target-type="handbook" :score="hb.score" />
       </div>
 
-      <section v-for="(sec, i) in hb.sections" :key="sec.id" :id="`sec-${i}`" class="hv-section">
+      <section v-for="(sec, i) in hb.sections" :key="sec.id" :id="`sec-${i}`" class="hv-section" :class="{ 'hv-subsection': sectionDepth(sec, hb.sections) > 0 }">
         <div class="hv-sec-head">
-          <span class="hv-sec-num">§{{ i + 1 }}</span>
-          <h2>{{ sec.title || t('handbook.chapter', { number: i + 1 }) }}</h2>
+          <span class="hv-sec-num">§{{ sectionNumber(sec, hb.sections) }}</span>
+          <component :is="sectionDepth(sec, hb.sections) > 0 ? 'h3' : 'h2'">{{ sec.title || t('handbook.chapter', { number: sectionNumber(sec, hb.sections) }) }}</component>
         </div>
         <ol v-if="sec.items?.length" class="hb-expr-list">
           <li v-for="(expr, j) in sec.items" :key="expr.id">
@@ -217,16 +265,13 @@ watch([() => localization.locale, () => localization.secondary], () => {
             >
               <span class="hb-num">{{ String(j + 1).padStart(2, '0') }}</span>
               <span class="hb-tx">{{ expr.text }}</span>
-              <span class="lang-badge" :title="expr.lang_code">{{ expr.language_name || expr.lang_code }}</span>
+              <span class="lang-badge" :title="expr.language_profile_code || expr.lang_code">{{ expr.language_name || expr.language_profile_code || expr.lang_code }}</span>
               <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
             </button>
           </li>
         </ol>
       </section>
 
-      <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost hb-edit-btn">
-        {{ t('handbook.edit') }}
-      </router-link>
     </main>
 
     <HandbookExpressionInspector
@@ -261,7 +306,9 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hv-content { min-width: 0; }
 .hv-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: inline-block; margin-bottom: 12px; }
 .hv-back:hover { color: var(--fg); }
-.hb-edit-btn { margin-top: var(--space-md); }
+.hv-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.hv-title-row h1 { min-width: 0; }
+.hb-edit-btn { flex: 0 0 auto; min-height: 38px; margin-top: 1px; gap: 7px; white-space: nowrap; }
 .hv-content h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
 .hv-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .hv-author { color: var(--fg); font-family: var(--mono); }
@@ -272,7 +319,9 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hv-section:first-of-type { border-top: none; padding-top: 0; }
 .hv-sec-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
 .hv-sec-head h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.hv-sec-head h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--muted); }
 .hv-sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.hv-subsection { margin-left: 18px; padding-top: 10px; margin-bottom: 14px; }
 .hb-expr-list { list-style: none; padding: 0; }
 .hb-expr {
   display: grid;
@@ -331,6 +380,8 @@ watch([() => localization.locale, () => localization.secondary], () => {
 }
 @media (max-width: 480px) {
   .hv-layout { padding-inline: 16px; }
+  .hv-title-row { flex-direction: column; gap: 12px; }
+  .hb-edit-btn { min-height: 44px; align-self: flex-start; }
   .hb-expr { gap: 8px; }
   .hv-vote-row { align-items: flex-start; flex-direction: column; }
 }

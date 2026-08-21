@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { ArrowUpRight, MapPin, X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import LangBadge from '@/components/expression/LangBadge.vue'
 import HandbookRelationPreview from '@/components/handbook/HandbookRelationPreview.vue'
+import ExpressionEvidenceList from '@/components/mapping/ExpressionEvidenceList.vue'
+import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 
 export interface HandbookExpressionDetail {
   id: string
   text: string
   lang_code: string
+  language_profile_code?: string | null
   language_name?: string | null
   region_name?: string | null
   source_type?: string | null
+  attestations?: LocaleAttestation[]
+  readings?: ExpressionReading[]
 }
 
 defineProps<{
@@ -30,12 +34,6 @@ defineEmits<{
 
 const { t } = useI18n()
 
-function sourceLabel(type?: string | null) {
-  if (type === 'auth') return t('handbook.sourceAuthority')
-  if (type === 'ai') return t('handbook.sourceAi')
-  if (type === 'user') return t('handbook.sourceUser')
-  return type || ''
-}
 </script>
 
 <template>
@@ -63,27 +61,25 @@ function sourceLabel(type?: string | null) {
     <div v-else-if="expression" class="hi-body">
       <div class="hi-title-row">
         <h2>{{ expression.text }}</h2>
-        <LangBadge :code="expression.lang_code" />
       </div>
 
       <dl class="hi-facts">
         <div>
           <dt>{{ t('handbook.locale') }}</dt>
-          <dd>{{ expression.language_name || expression.lang_code }}</dd>
+          <dd>
+            <span>{{ expression.language_name || expression.lang_code }}</span>
+            <code v-if="expression.lang_code" class="hi-locale-code">
+              {{ expression.lang_code }}
+            </code>
+          </dd>
         </div>
         <div v-if="expression.region_name">
           <dt>{{ t('handbook.region') }}</dt>
           <dd><MapPin :size="13" aria-hidden="true" />{{ expression.region_name }}</dd>
         </div>
-        <div v-if="sourceLabel(expression.source_type)">
-          <dt>{{ t('handbook.source') }}</dt>
-          <dd>
-            <span :class="['src-tag', expression.source_type]">
-              {{ sourceLabel(expression.source_type) }}
-            </span>
-          </dd>
-        </div>
       </dl>
+
+      <ExpressionEvidenceList :attestations="expression.attestations ?? []" :readings="expression.readings ?? []" />
 
       <HandbookRelationPreview
         :graph="graph"
@@ -151,16 +147,19 @@ function sourceLabel(type?: string | null) {
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
-.hi-facts { margin: 24px 0; }
+.hi-facts { display: grid; gap: 12px; margin: 20px 0 18px; }
 .hi-facts > div {
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr);
   gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 0;
 }
 .hi-facts dt { font-family: var(--mono); font-size: 10px; color: var(--faint); }
 .hi-facts dd { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 13px; }
+.hi-facts dd { flex-wrap: wrap; }
+.hi-locale-code { flex-basis: 100%; color: var(--muted); font-family: var(--mono); font-size: 10px; line-height: 1.4; }
+:deep(.evidence) { margin-top: 18px; padding-top: 0; border-top: 0; }
+:deep(.hr-preview) { margin-top: 20px; padding-top: 0; border-top: 0; }
 .hi-detail-link {
   display: inline-flex;
   align-items: center;

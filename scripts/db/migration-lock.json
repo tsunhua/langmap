@@ -11,8 +11,8 @@
     {
       "sequence": 2,
       "filename": "0002_language_locales.sql",
-      "size": 1781,
-      "sha256": "f4585f01776320762456a18207e91dd978bf7a616eb96b9b467e2160b3903f86"
+      "size": 2158,
+      "sha256": "f2c1c3ac5a74e5ef717a14e7145efc6e585e52bd877d120f9544e55b376eb610"
     },
     {
       "sequence": 3,
@@ -53,8 +53,8 @@
     {
       "sequence": 9,
       "filename": "0009_nan_bare_locales.sql",
-      "size": 777,
-      "sha256": "5a582cfd376349491da8f1c2084950c0b7ede2ca74621ff83c13c936715a0613"
+      "size": 861,
+      "sha256": "1a6e52f13d1cc6c67d2ee3507a1d724200636d68510ce817baf71a34fcc4d2ef"
     },
     {
       "sequence": 10,
@@ -95,8 +95,8 @@
     {
       "sequence": 16,
       "filename": "0016_nan_penang_hokkien.sql",
-      "size": 399,
-      "sha256": "ae50af3b214f37a31a601456c8e5124faf5e5e41368858a4d2adb8a3541f886c"
+      "size": 506,
+      "sha256": "e36520374f5e69146c98f2ebe0075bb7bf8c237d24253f3eb3c865dfd3669579"
     },
     {
       "sequence": 17,
@@ -137,8 +137,8 @@
     {
       "sequence": 23,
       "filename": "0023_add_orthography.sql",
-      "size": 1709,
-      "sha256": "a3590cf0f6d87cacca6657bbf1b5a47f41d9e8d84dd574394eaf7a486972c17d"
+      "size": 333,
+      "sha256": "d08b1599e38b3a3f20da135f0a64f2eb936d19ad10a4074c1a07c76474c213df"
     },
     {
       "sequence": 24,
@@ -151,6 +151,30 @@
       "filename": "0025_remove_yue_translation_expressions.sql",
       "size": 1085,
       "sha256": "b61aa164c6cb97e7acf3886b9b6cfbb4cab65b027ca4f2bf3fbe72ccf380aa25"
+    },
+    {
+      "sequence": 26,
+      "filename": "0026_localize_yue_name.sql",
+      "size": 147,
+      "sha256": "0d3d3c6a9a3dc6e62890bfc9a3cab2ec81fae6877df3b39b21acc7175cc9f66e"
+    },
+    {
+      "sequence": 27,
+      "filename": "0027_nan_latin_jiazi_locale.sql",
+      "size": 620,
+      "sha256": "4865714cc9745c979654afa16c8c1c25fd6f22fc52b8930df5613e74c055a984"
+    },
+    {
+      "sequence": 28,
+      "filename": "0028_handbook_language_profile.sql",
+      "size": 521,
+      "sha256": "e18ffa38e4d90d2232e42269de7d55e4f434d7651a9ed357cc685fceaf61ba16"
+    },
+    {
+      "sequence": 29,
+      "filename": "0029_handbook_section_hierarchy.sql",
+      "size": 327,
+      "sha256": "8d50f92661d26182dd17df84f4577d20dab32c4f1d15a52922773d6fc3599d98"
     }
   ]
 }

@@ -90,7 +90,13 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
     results.map((item) => item.code),
     parseLocaleHints(uiLocale || undefined, query.secondaryUiLocale.trim() || undefined),
   );
-  return { items: results.map((item) => ({ ...item, name: names.get(item.code) ?? item.name_en })), total: totalRow?.total ?? 0 };
+  const localizedItems = await Promise.all(results.map(async (item) => {
+    const resolved = names.get(item.code);
+    if (resolved) return { ...item, name: resolved };
+    const locale = await db.prepare('SELECT name FROM language_locales WHERE lang_code = ? ORDER BY code ASC LIMIT 1').bind(item.code).first<{ name: string | null }>();
+    return { ...item, name: locale?.name || item.name_en };
+  }));
+  return { items: localizedItems, total: totalRow?.total ?? 0 };
 }
 
 export async function getLanguageDetail(db: D1Database, code: string, hints: LocaleHints = {}, locale = ''): Promise<LanguageDetail | null> {
@@ -104,7 +110,12 @@ export async function getLanguageDetail(db: D1Database, code: string, hints: Loc
   const localeNames = await resolveLocaleNames(db, localeRows.map((row) => row.code), hints);
   const languageNames = await resolveLanguageNames(db, [language.code], hints);
   const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, display_name: localeNames.get(row.code) ?? row.name, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));
-  return { code: language.code, name_en: language.name_en, name: languageNames.get(language.code) ?? language.name_en, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
+  // Yue currently has no dedicated language-name expression; use its canonical
+  // locale name so the language page does not fall back to the English registry label.
+  const localizedName = languageNames.get(language.code)
+    ?? localeRows.find((row) => row.name)?.name
+    ?? language.name_en;
+  return { code: language.code, name_en: language.name_en, name: localizedName, expression_count: expressionCount?.total ?? 0, reading_count: readingCount?.total ?? 0, mapped_expression_count: mappedExpressionCount?.total ?? 0, locales };
 }
 
 export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {

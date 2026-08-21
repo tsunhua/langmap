@@ -1,5 +1,12 @@
 -- Language locale + sources tables (spec §7.2, §7.3).
 
+INSERT OR IGNORE INTO languages (code, name_en) VALUES
+  ('eng', 'English'), ('cmn', 'Mandarin Chinese');
+INSERT OR IGNORE INTO scripts (code, name_en, direction) VALUES
+  ('Latn', 'Latin', 'ltr'), ('Hans', 'Simplified', 'ltr'), ('Hant', 'Traditional', 'ltr');
+INSERT OR IGNORE INTO regions (code, name_en) VALUES
+  ('US', 'United States'), ('CN', 'China'), ('TW', 'Taiwan');
+
 CREATE TABLE IF NOT EXISTS sources (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL CHECK (type IN ('publication', 'url', 'system')),

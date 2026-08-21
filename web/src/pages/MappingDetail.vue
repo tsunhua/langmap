@@ -127,7 +127,12 @@ async function load() {
 
 function trySelectNodeFromUrl() {
   const n = route.query.node
-  if (!n || !graph.value) return
+  if (!graph.value) return
+  if (!n) {
+    // Opening a mapping should inspect the expression represented by the URL.
+    selectedNodeId.value = id.value
+    return
+  }
   const nodeId = typeof n === 'string' ? n : null
   if (!nodeId) return
   const exists = graph.value.nodes.some((node) => node.expression_id === nodeId)
@@ -325,6 +330,14 @@ const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
 
 const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === id.value)?.language_name ?? '')
 
+const anchorImageUrl = computed(() => {
+  if (expr.value?.expression.lang_code !== 'x-image') return null
+  try {
+    const url = new URL(expr.value.expression.text, window.location.origin)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch { return null }
+})
+
 const canViewMap = computed(() => !expr.value?.expression.lang_code.toLowerCase().startsWith('x-'))
 
 const displayTree = computed<DisplayTree>(() => {
@@ -347,11 +360,15 @@ const coords = computed(() => {
     <nav class="crumbs" :aria-label="t('mappingDetail.breadcrumb')">
       <router-link to="/">{{ t('mappingDetail.home') }}</router-link>
       <span class="sep">/</span>
-      <span>{{ expr.expression.text }}</span>
+      <span v-if="anchorImageUrl" class="crumb-image-id">{{ expr.expression.id }}</span>
+      <span v-else>{{ expr.expression.text }}</span>
     </nav>
 
     <div class="anchor-title">
-      <h1>{{ expr.expression.text }}</h1>
+      <h1 v-if="!anchorImageUrl">{{ expr.expression.text }}</h1>
+      <a v-else :href="anchorImageUrl" target="_blank" rel="noopener noreferrer">
+        <img class="anchor-image anchor-image--large" :src="anchorImageUrl" :alt="t('expression.imageAlt')" />
+      </a>
       <LangBadge :code="expr.expression.lang_code" :name="anchorLangName" />
     </div>
 
@@ -398,7 +415,12 @@ const coords = computed(() => {
       </div>
     </section>
 
-    <MorphologyPanel :expression-id="id" :lang-code="expr.expression.lang_code" :text="expr.expression.text" />
+    <MorphologyPanel
+      v-if="expr.expression.lang_code !== 'x-image' && expr.expression.lang_code !== 'x-emoji'"
+      :expression-id="id"
+      :lang-code="expr.expression.lang_code"
+      :text="expr.expression.text"
+    />
 
     <div class="nb-head">
       <h2>{{ t('mappingDetail.mappingSet') }}</h2>
@@ -646,6 +668,9 @@ const coords = computed(() => {
   border-color: var(--accent);
 }
 .qa-text { grid-column: 1 / -1; }
+.anchor-image { display: block; width: 96px; height: 64px; object-fit: cover; border: 1px solid var(--border); }
+.anchor-image--large { width: min(480px, 100%); height: auto; max-height: 360px; }
+.crumb-image-id { font-family: var(--mono); font-size: 12px; }
 .qa-error { margin: 10px 0 0; color: var(--down); font-size: 13px; }
 .qa-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
 

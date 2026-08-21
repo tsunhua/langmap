@@ -11,6 +11,7 @@ import localization from './localization';
 import morphology from './morphology';
 import preferences from './preferences';
 import users from './users';
+import images from './images';
 
 const api = new Hono();
 api.route('/auth', auth);
@@ -25,5 +26,6 @@ api.route('/contributions', contributions);
 api.route('/localization', localization);
 api.route('/morphological-features', morphology);
 api.route('/users', users);
+api.route('/images', images);
 
 export default api;

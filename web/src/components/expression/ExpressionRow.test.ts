@@ -44,4 +44,34 @@ describe('ExpressionRow', () => {
     expect(mountRow().find('.ex-forms').exists()).toBe(false)
     expect(mountRow({ form_of: [] }).find('.ex-forms').exists()).toBe(false)
   })
+
+  it('shows an x-image expression as a thumbnail', () => {
+    const wrapper = mountRow({
+      text: 'https://example.com/image.jpg',
+      lang_code: 'x-image',
+      source_type: 'x-image',
+    })
+
+    expect(wrapper.find('.ex-image').attributes('src')).toBe('https://example.com/image.jpg')
+    expect(wrapper.find('.ex-tx').exists()).toBe(false)
+  })
+
+  it('keeps invalid image values as text', () => {
+    const wrapper = mountRow({ text: 'not-a-url', lang_code: 'x-image', source_type: 'x-image' })
+
+    expect(wrapper.find('.ex-image').exists()).toBe(false)
+    expect(wrapper.find('.ex-tx').text()).toBe('not-a-url')
+  })
+
+  it.each(['x-image', 'x-emoji'])('hides form-of summaries for %s expressions', (lang_code) => {
+    const wrapper = mountRow({
+      lang_code,
+      form_of: [{
+        lemma: { id: 'eng:base', text: 'base', lang_code: 'eng' },
+        features: [{ code: 'plural', name: 'plural' }],
+      }],
+    })
+
+    expect(wrapper.find('.ex-forms').exists()).toBe(false)
+  })
 })

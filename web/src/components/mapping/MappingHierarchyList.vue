@@ -40,8 +40,10 @@ const childCountMap = computed(() => {
 const hasChildren = (id: string) => (childCountMap.value.get(id) ?? 0) > 0
 
 const nodeText = (id: string) => {
+  const node = props.graph.nodes.find(n => n.expression_id === id)
+  if (node?.lang_code === 'x-image' || node?.language_profile_code === 'x-image') return id
   if (id === props.graph.root_id) return ''
-  return props.graph.nodes.find(n => n.expression_id === id)?.text ?? `#${id}`
+  return node?.text ?? `#${id}`
 }
 
 const nodeLang = (id: string) => {
@@ -112,7 +114,7 @@ const flatList = computed(() => flattenTree())
       <span v-else class="hl-spacer" />
 
       <span v-if="item.id === graph.root_id" class="hl-text hl-root-text">
-        {{ graph.nodes.find(n => n.expression_id === graph.root_id)?.text ?? t('components.rootNode') }}
+        {{ nodeText(item.id) || t('components.rootNode') }}
       </span>
       <template v-else>
         <span class="hl-text">{{ nodeText(item.id) }}</span>

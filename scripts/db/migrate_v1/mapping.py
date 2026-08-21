@@ -3,6 +3,7 @@ from __future__ import annotations
 
 LANGUAGE_MAPPING: dict[str, tuple[str, str | None]] = {
     'zh-TW': ('cmn', 'cmn-Hant-TW'),
+    'zh-HK': ('yue', 'yue-Hant-HK'),
     'zh-CN': ('cmn', 'cmn-Hans-CN'),
     'en-US': ('eng', 'eng-Latn-US'),
     'en-GB': ('eng', 'eng-Latn-GB'),

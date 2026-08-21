@@ -55,6 +55,19 @@ const displayText = computed(() => {
   return props.text.length > max ? props.text.slice(0, max) + '…' : props.text
 })
 
+const imageUrl = computed(() => {
+  if (props.languageCode !== 'x-image') return null
+  try {
+    const url = new URL(props.text, window.location.origin)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch { return null }
+})
+
+function openImage(e: MouseEvent) {
+  e.stopPropagation()
+  if (imageUrl.value) window.open(imageUrl.value, '_blank', 'noopener,noreferrer')
+}
+
 function onPointerDown(e: PointerEvent) {
   if (e.button !== 0 || props.isRoot) return
   nodeEl = e.currentTarget as HTMLElement
@@ -158,7 +171,8 @@ function onKeydown(e: KeyboardEvent) {
     @dblclick.stop="onDblclick"
     @keydown="onKeydown"
   >
-    <span class="gn-text">{{ displayText }}</span>
+    <img v-if="imageUrl" class="gn-image" :src="imageUrl" :alt="t('expression.imageAlt')" loading="lazy" role="button" tabindex="0" @click="openImage" />
+    <span v-else class="gn-text">{{ displayText }}</span>
     <span v-if="semanticLevel !== 'compact'" class="gn-meta">
       <span class="gn-lang">{{ languageCode }}</span>
       <span
@@ -211,6 +225,7 @@ function onKeydown(e: KeyboardEvent) {
   z-index: 20;
   box-shadow: 0 6px 20px oklch(0 0 0 / 0.12);
 }
+.gn-image { display: block; width: 96px; height: 64px; object-fit: cover; border: 1px solid var(--border); }
 .gn-text {
   display: block;
   overflow: hidden;

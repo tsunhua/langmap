@@ -189,7 +189,7 @@ VALUES
   ('nan-Hant-MY_Penang', 'nan', 'Hant', NULL, 'MY', 'Penang', '福建話', 'Penang Hokkien', 'system-seed', 'seed:system-seed:1'),
   ('spa-Latn-ES', 'spa', 'Latn', NULL, 'ES', '', 'Español', 'Spanish (Spain)', 'system-seed', 'seed:system-seed:1'),
   ('jpn-Jpan-JP', 'jpn', 'Jpan', NULL, 'JP', '', '日本語', 'Japanese (Japan)', 'system-seed', 'seed:system-seed:1'),
-  ('yue-Hant-HK', 'yue', 'Hant', NULL, 'HK', '', '廣東話', 'Cantonese', 'system-seed', 'seed:v1-migration:2026-08-19'),
+  ('yue-Hant-HK', 'yue', 'Hant', NULL, 'HK', '', '粵語', 'Cantonese', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('wuu-Hant-CN_Taizhou', 'wuu', 'Hant', NULL, 'CN', 'Taizhou', '台州話', 'Taizhou Wu', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('wuu-Hans-CN_Wenzhou', 'wuu', 'Hans', NULL, 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('zha-Latn-CN_Jingxi', 'zha', 'Latn', NULL, 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang', 'system-seed', 'seed:v1-migration:2026-08-19'),
@@ -200,6 +200,7 @@ VALUES
   ('nan-Latn_Tailo-TW', 'nan', 'Latn', 'Tailo', 'TW', '', '臺羅', 'Tailo', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('nan-Hant-CN_Chaozhou', 'nan', 'Hant', NULL, 'CN', 'Chaozhou', '潮州話', 'Chaozhou Hokkien', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('nan-Hant-CN_LufengJiazi', 'nan', 'Hant', NULL, 'CN', 'LufengJiazi', '陸豐甲子話', 'Lufeng Jiazi Hokkien', 'system-seed', 'seed:v1-migration:2026-08-19'),
+  ('nan-Latn-CN_LufengJiazi', 'nan', 'Latn', NULL, 'CN', 'LufengJiazi', '陸豐甲子話（拉丁字）', 'Lufeng Jiazi Hokkien (Latin)', 'system-seed', 'seed:v1-migration:2026-08-20'),
   ('x-image-Latn-US', 'x-image', 'Latn', NULL, 'US', '', 'Image', 'Image', 'system-seed', 'seed:v1-migration:2026-08-19'),
   ('x-emoji-Latn-US', 'x-emoji', 'Latn', NULL, 'US', '', 'Emoji', 'Emoji', 'system-seed', 'seed:v1-migration:2026-08-19');
 
@@ -1078,6 +1079,7 @@ CREATE TABLE handbooks (
   id TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL,
   title TEXT NOT NULL,
+  language_profile_code TEXT,
   visibility TEXT NOT NULL DEFAULT 'public'
     CHECK (visibility IN ('public', 'private')),
   status TEXT NOT NULL DEFAULT 'published'
@@ -1086,6 +1088,7 @@ CREATE TABLE handbooks (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
+  ,FOREIGN KEY (language_profile_code) REFERENCES language_locales(code)
 );
 
 CREATE TABLE handbook_sections (
@@ -1093,7 +1096,9 @@ CREATE TABLE handbook_sections (
   handbook_id TEXT NOT NULL,
   title TEXT,
   position INTEGER NOT NULL,
+  parent_section_id TEXT,
   FOREIGN KEY (handbook_id) REFERENCES handbooks(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE,
   UNIQUE (handbook_id, position)
 );
 
@@ -1110,4 +1115,5 @@ CREATE TABLE handbook_section_items (
 CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC);
 CREATE INDEX idx_handbooks_score ON handbooks(score DESC, created_at DESC, id ASC);
 CREATE INDEX idx_handbook_sections_handbook ON handbook_sections(handbook_id, position ASC, id ASC);
+CREATE INDEX idx_handbook_sections_parent ON handbook_sections(handbook_id, parent_section_id, position ASC, id ASC);
 CREATE INDEX idx_handbook_section_items_section ON handbook_section_items(section_id, position ASC, expression_id ASC);

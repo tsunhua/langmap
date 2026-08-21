@@ -34,7 +34,7 @@ const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
 const { search } = useExpressions()
 
-const isSingleWord = computed(() => !/\s/.test(props.text.trim()))
+const isSingleWord = computed(() => !/\s/.test(props.text.trim()) && props.langCode !== 'x-image' && props.langCode !== 'x-emoji')
 
 const loading = ref(false)
 const loadError = ref('')

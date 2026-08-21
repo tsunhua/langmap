@@ -18,8 +18,22 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 
+const imageUrl = computed(() => {
+  if (props.lang_code !== 'x-image' && props.language_profile_code !== 'x-image') return null
+  try {
+    const url = new URL(props.text)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch {
+    return null
+  }
+})
+
+function openImage() {
+  if (imageUrl.value) window.open(imageUrl.value, '_blank', 'noopener,noreferrer')
+}
+
 const formSummaries = computed(() =>
-  (props.form_of ?? []).map((item) => {
+  (props.lang_code === 'x-image' || props.lang_code === 'x-emoji' ? [] : props.form_of ?? []).map((item) => {
     const features = item.features.map((feature) => feature.name).filter(Boolean).join(' ')
     return {
       lemmaId: item.lemma.id,
@@ -36,7 +50,10 @@ const formSummaries = computed(() =>
 <template>
   <router-link :to="`/mapping/${id}`" :class="['ex-row', { 'ex-row--no-lang': !showLanguage }]">
     <span class="ex-main">
-      <span class="ex-tx">{{ text }}</span>
+      <span v-if="imageUrl" class="ex-image-wrap">
+        <img class="ex-image" :src="imageUrl" :alt="t('expression.imageAlt')" loading="lazy" tabindex="0" role="button" @click.stop.prevent="openImage" @keydown.enter.stop.prevent="openImage" @keydown.space.stop.prevent="openImage" />
+      </span>
+      <span v-else class="ex-tx">{{ text }}</span>
       <span v-if="formSummaries.length" class="ex-forms">
         <span
           v-for="item in formSummaries"
@@ -73,6 +90,8 @@ const formSummaries = computed(() =>
 .ex-row:hover .ex-tx { color: var(--accent); }
 .ex-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ex-tx { font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-image-wrap { display: block; width: 96px; height: 64px; overflow: hidden; border: 1px solid var(--border); background: var(--bg); }
+.ex-image { display: block; width: 100%; height: 100%; object-fit: cover; }
 .ex-forms { min-width: 0; display: flex; flex-wrap: wrap; gap: 2px 10px; }
 .ex-form { font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
 .ex-region { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

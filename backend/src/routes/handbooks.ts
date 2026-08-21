@@ -59,12 +59,14 @@ handbooks.get('/:id', optionalAuth, async (c) => {
   const user = c.get('user');
   if (handbook.visibility === 'private' && user?.id !== handbook.user_id && user?.role !== 'admin') return notFound(c, 'Handbook');
   const { results: sections } = await c.env.DB.prepare(
-    'SELECT id, handbook_id, title, position FROM handbook_sections WHERE handbook_id = ? ORDER BY position ASC, id ASC',
+    'SELECT id, handbook_id, title, position, parent_section_id FROM handbook_sections WHERE handbook_id = ? ORDER BY position ASC, id ASC',
   ).bind(id).all<{ id: string }>();
   const sectionIds = sections.map((section) => section.id);
   const { results: items } = sectionIds.length
     ? await c.env.DB.prepare(
-      `SELECT hi.section_id, hi.expression_id, hi.position, e.id, e.text, e.lang_code
+      `SELECT hi.section_id, hi.expression_id, hi.position, e.id, e.text, e.lang_code,
+        (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = e.id ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1) AS language_profile_code,
+        (SELECT ll.name FROM language_locales ll WHERE ll.code = (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = e.id ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1)) AS language_profile_name
        FROM handbook_section_items hi JOIN expressions e ON e.id = hi.expression_id
        WHERE hi.section_id IN (SELECT value FROM json_each(?))
        ORDER BY hi.section_id ASC, hi.position ASC, hi.expression_id ASC`,
@@ -75,7 +77,10 @@ handbooks.get('/:id', optionalAuth, async (c) => {
     items.map((item: { lang_code: string }) => item.lang_code),
     parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
   );
-  const withNames = (items as Array<{ section_id: string; lang_code: string }>).map((item) => ({ ...item, language_name: languageNames.get(item.lang_code) ?? '' }));
+  const withNames = (items as Array<{ section_id: string; lang_code: string; language_profile_name?: string | null }>).map((item) => ({
+    ...item,
+    language_name: item.language_profile_name || languageNames.get(item.lang_code) || '',
+  }));
   return success(c, { ...handbook, sections: sections.map((section) => ({ ...section, items: withNames.filter((item) => item.section_id === section.id) })) });
 });
 

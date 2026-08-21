@@ -4,6 +4,9 @@
 -- attestations against nan-Hant-CN / nan-Hant-TW fails with
 -- INVALID_LANGUAGE_LOCALE_CODE because only place-qualified nan locales exist.
 
+INSERT OR IGNORE INTO languages (code, name_en)
+VALUES ('nan', 'Min Nan Chinese');
+
 INSERT OR IGNORE INTO language_locales
   (code, lang_code, script_code, region_code, place_path, name, name_en, source_id, source_ref)
 VALUES

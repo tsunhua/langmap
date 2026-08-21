@@ -13,7 +13,7 @@ import {
 import { ExpressionError, createExpression, createLocaleAttestation, getExpression, searchExpressions } from '../services/expressions';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
 import { getMappingGraph } from '../services/mappingGraph';
-import { parseLocaleHints, resolveLocaleNames } from '../services/localizedName';
+import { parseLocaleHints, resolveLanguageNames, resolveLocaleNames } from '../services/localizedName';
 import { ReadingError, createReading } from '../services/readings';
 import { SplitError, splitExpression } from '../services/splits';
 import { parseReferenceQuery } from '../services/languageIdentity';
@@ -80,8 +80,17 @@ expressions.get('/:id', async (c) => {
     localeCodes,
     parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
   );
+  const languageNames = await resolveLanguageNames(
+    c.env.DB,
+    [result.expression.lang_code],
+    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+  );
   return success(c, {
     ...result,
+    expression: {
+      ...result.expression,
+      language_name: languageNames.get(result.expression.lang_code) ?? result.expression.lang_code,
+    },
     attestations: result.attestations.map((row) => ({ ...row, locale_display_name: names.get(row.language_locale_code) ?? row.language_locale_code })),
     readings: result.readings.map((row) => ({ ...row, locale_display_name: names.get(row.language_locale_code) ?? row.language_locale_code })),
   });

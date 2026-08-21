@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import re
 
+from .mapping import map_expression_locale
+
 
 EXPR_TAG_RE = re.compile(r'\{\{(?P<body>[^{}]+)\}\}')
-HEADING_RE = re.compile(r'^#{2,6}\s+(.+?)\s*$')
+HEADING_RE = re.compile(r'^(?P<marks>#{2,6})\s+(?P<title>.+?)\s*$')
 
 
 def clean_section_title(title: str) -> str:
@@ -31,23 +33,31 @@ def expression_refs(line: str) -> list[str]:
     return refs
 
 
-def parse_sections(content: str) -> list[tuple[str | None, list[str]]]:
-    sections: list[tuple[str | None, list[str]]] = []
+def parse_sections(content: str) -> list[tuple[str | None, list[str], int]]:
+    sections: list[tuple[str | None, list[str], int]] = []
     title: str | None = None
+    level = 0
     refs: list[str] = []
 
     def flush() -> None:
         nonlocal title, refs
         if title is not None or refs:
-            sections.append((title, refs))
+            sections.append((title, refs, level))
         refs = []
 
     for line in content.splitlines():
         heading = HEADING_RE.match(line)
         if heading:
-            flush()
-            title = clean_section_title(heading.group(1))
-            refs.extend(expression_refs(heading.group(1)))
+            heading_level = len(heading.group('marks'))
+            # V1 uses level-2 headings as the handbook's real sections and
+            # deeper headings as subheadings inside that section. Preserve
+            # those subheading expressions instead of creating empty-looking
+            # top-level sections for them.
+            if heading_level >= 2:
+                flush()
+                title = clean_section_title(heading.group('title'))
+                level = heading_level
+            refs.extend(expression_refs(heading.group('title')))
             continue
         refs.extend(expression_refs(line))
     flush()
@@ -76,10 +86,12 @@ def migrate_handbooks(
             report['skipped_users'] += 1
             continue
         handbook_id = f"v1-handbook:{handbook.get('id')}"
+        handbook_language_profile = map_expression_locale(str(handbook.get('source_lang') or ''))
         handbooks.append({
             'id': handbook_id,
             'user_id': users_by_id.get(user_id, user_id),
             'title': str(handbook.get('title') or ''),
+            'language_profile_code': handbook_language_profile,
             'visibility': 'public' if handbook.get('is_public') in (1, '1', True) else 'private',
             'status': handbook.get('status') or 'published',
             'score': int(handbook.get('score') or 0),
@@ -90,11 +102,20 @@ def migrate_handbooks(
         contents = [str(page.get('content') or '') for page in pages] or [str(handbook.get('content') or '')]
         position = 0
         for content in contents:
-            for title, refs in parse_sections(content):
+            section_rows = parse_sections(content)
+            section_ids: list[tuple[int, str]] = []
+            for title, refs, level in section_rows:
                 section_id = f'{handbook_id}:section:{position}'
-                sections.append({'id': section_id, 'handbook_id': handbook_id, 'title': title, 'position': position})
+                parent_id = next((sid for prior_level, sid in reversed(section_ids) if prior_level < level), None)
+                sections.append({'id': section_id, 'handbook_id': handbook_id, 'title': title, 'position': position, 'parent_section_id': parent_id})
+                section_ids.append((level, section_id))
+                section_ids = [(prior_level, sid) for prior_level, sid in section_ids if prior_level <= level]
                 for item_position, ref in enumerate(refs):
-                    expression_id = expr_map.get(ref)
+                    expression_id = expr_map.get(
+                        f'text:{handbook_language_profile}:{ref[5:]}'
+                        if handbook_language_profile and ref.startswith('text:')
+                        else ref,
+                    )
                     if expression_id is None:
                         report['skipped_unmapped_items'] += 1
                         continue

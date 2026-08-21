@@ -10,8 +10,14 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  "routes": [
+    { "pattern": "langmap.io", "custom_domain": true }
+  ],
   "d1_databases": [
-    { "binding": "DB", "database_name": "langmap-v2", "database_id": "69a50b71-8cff-4e50-9e73-1e9020d34bd3" }
+    { "binding": "DB", "database_name": "langmap-v2", "database_id": "75c7dea7-f453-4ada-8527-d5ff481b54f3" }
+  ],
+  "r2_buckets": [
+    { "binding": "IMAGE_BUCKET", "bucket_name": "langmap-images" }
   ],
   "observability": {
     "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },

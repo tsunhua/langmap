@@ -37,6 +37,9 @@ export const en = {
     hint: 'Tip: search currently matches expression text. Translation (semantic) search is coming later.',
     loadFailed: 'Search failed',
   },
+  expression: {
+    imageAlt: 'Expression image',
+  },
   auth: {
     login: 'Sign in',
     register: 'Create account',
@@ -87,6 +90,10 @@ export const en = {
     minRows: 'At least 2 rows with a language and expression are required',
     submitFailed: 'Submission failed',
     expressionPlaceholder: 'Enter an expression…',
+    chooseImage: 'Choose image (max 480px / 100KB)',
+    imageUploading: 'Uploading…',
+    imageTooLarge: 'Compressed image must be no larger than 100KB',
+    imageUploadFailed: 'Unable to upload image',
   },
   feed: {
     title: 'Activity',

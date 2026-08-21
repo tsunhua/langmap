@@ -34,6 +34,14 @@ const node = computed(() => {
   return props.graph.nodes.find((n) => n.expression_id === props.selectedNodeId) ?? null
 })
 
+const nodeImageUrl = computed(() => {
+  if (node.value?.lang_code !== 'x-image') return null
+  try {
+    const url = new URL(node.value.text, window.location.origin)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch { return null }
+})
+
 const primaryEdge = computed(() => {
   if (!props.selectedNodeId) return null
   return getPrimaryIncomingEdge(props.selectedNodeId, props.graph)
@@ -71,7 +79,8 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     :aria-label="t('components.nodeInfo')"
   >
     <div class="gi-head">
-      <h3 class="gi-title">{{ node.text }}</h3>
+      <img v-if="nodeImageUrl" class="gi-image" :src="nodeImageUrl" :alt="t('expression.imageAlt')" />
+      <h3 v-else class="gi-title">{{ node.text }}</h3>
       <button class="gi-close" :aria-label="t('components.closeInfoPanel')" @click="emit('close')">&times;</button>
     </div>
 
@@ -141,6 +150,7 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
   align-items: flex-start;
   gap: 8px;
 }
+.gi-image { display: block; width: 96px; height: 64px; object-fit: cover; border: 1px solid var(--border); }
 .gi-title {
   font-size: 15px;
   font-weight: 600;

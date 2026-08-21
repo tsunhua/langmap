@@ -35,8 +35,8 @@ def generate_sql_files(result: dict[str, object], output_dir: Path) -> dict[str,
         'attestations.sql': ('expression_locale_attestations', ['id', 'expression_id', 'language_locale_code', 'source_id', 'source_ref', 'created_by'], result['attestations']),
         'readings.sql': ('expression_readings', ['id', 'expression_id', 'language_locale_code', 'scheme', 'value', 'source_id', 'source_ref', 'created_by'], result['readings']),
         'mappings.sql': ('expression_edges', ['id', 'expression_a_id', 'expression_b_id', 'score', 'source', 'created_by'], result.get('mappings', [])),
-        'handbooks.sql': ('handbooks', ['id', 'user_id', 'title', 'visibility', 'status', 'score', 'created_at', 'updated_at'], result['handbooks']),
-        'sections.sql': ('handbook_sections', ['id', 'handbook_id', 'title', 'position'], result['sections']),
+        'handbooks.sql': ('handbooks', ['id', 'user_id', 'title', 'language_profile_code', 'visibility', 'status', 'score', 'created_at', 'updated_at'], result['handbooks']),
+        'sections.sql': ('handbook_sections', ['id', 'handbook_id', 'title', 'position', 'parent_section_id'], result['sections']),
         'items.sql': ('handbook_section_items', ['section_id', 'expression_id', 'position'], result['items']),
     }
     paths: dict[str, Path] = {}

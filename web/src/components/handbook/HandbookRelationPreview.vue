@@ -47,7 +47,9 @@ const directCount = computed(() => props.graph?.layer_counts[1] ?? 0)
         <li v-for="node in directNodes" :key="node.expression_id">
           <button type="button" @click="$emit('select', node.expression_id)">
             <span>{{ node.text }}</span>
-            <small>{{ node.lang_code }}</small>
+            <small :title="node.language_profile_code || node.lang_code">
+              {{ node.language_name || node.lang_code }}
+            </small>
           </button>
         </li>
       </ul>

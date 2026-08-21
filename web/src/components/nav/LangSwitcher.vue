@@ -15,6 +15,10 @@ const rootEl = ref<HTMLElement>()
 const triggerEl = ref<HTMLButtonElement>()
 const searchEl = ref<HTMLInputElement>()
 const activeIndex = ref(-1)
+const currentLocaleName = computed(() => {
+  const locale = store.locales.find(item => item.language_locale_code === store.locale)
+  return locale?.name || locale?.name_en || store.locale
+})
 // 暫時隱藏尚未完成 UI 翻譯的語言；資料與其他語言選擇入口不受影響。
 const HIDDEN_LANGUAGE_VARIETIES = new Set(['nan', 'yue'])
 
@@ -93,7 +97,7 @@ onUnmounted(() => {
   <div ref="rootEl" class="lang-switcher">
     <button ref="triggerEl" class="lang-switch" type="button" :aria-label="t('nav.switchLanguage')" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
       <Globe :size="14" aria-hidden="true" />
-      <span class="ls-code">{{ store.locale }}</span>
+      <span class="ls-code" :title="store.locale">{{ currentLocaleName }}</span>
       <ChevronDown :size="12" aria-hidden="true" />
     </button>
     <div v-if="open" class="lang-menu" role="listbox" :aria-label="t('nav.switchLanguage')">

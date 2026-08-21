@@ -1,15 +1,24 @@
 from __future__ import annotations
 
 import json
+import re
 
 from .identity import build_expression_id, canonicalize_text, compute_text_hash
 from .mapping import map_expression_locale, map_language_code
 
 
 RUNTIME_OWNERS = {'system', 'langmap', 'ai', 'opus'}
+LATIN_TEXT_RE = re.compile(r'^[\W_\d]*[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ\W_\d]*$', re.UNICODE)
 
 
-def is_user_expression(row: dict[str, object], users_by_name: dict[str, int]) -> bool:
+def is_user_expression(row: dict[str, object], users_by_name: dict[str, int], included_ids: set[str] | None = None) -> bool:
+    # Handbook renders can reference system/dictionary expressions, but UI
+    # translation rows (langmap.* tags) must never become content expressions.
+    tags = row.get('tags')
+    if isinstance(tags, str) and 'langmap.' in tags:
+        return False
+    if included_ids and str(row.get('id')) in included_ids:
+        return True
     owner = row.get('created_by')
     if owner in RUNTIME_OWNERS:
         return False
@@ -45,16 +54,17 @@ def reading_for(v1_code: str, expression_id: str, value: str, created_by: int | 
     }
 
 
-def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, int]) -> dict[str, object]:
+def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, int], included_ids: set[str] | None = None) -> dict[str, object]:
     used_ids: set[str] = set()
     expressions: list[dict[str, object]] = []
     attestations: list[dict[str, object]] = []
     readings: list[dict[str, object]] = []
     expression_map: dict[str, str] = {}
+    text_map_rank: dict[str, int] = {}
     report = {'skipped': 0, 'dropped_owner': 0, 'dropped_unmapped': 0}
 
     for row in rows:
-        if not is_user_expression(row, users_by_name):
+        if not is_user_expression(row, users_by_name, included_ids):
             report['dropped_owner'] += 1
             continue
         v1_code = str(row.get('language_code') or '')
@@ -68,6 +78,9 @@ def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, 
             continue
 
         text_hash = compute_text_hash(text)
+        locale = map_expression_locale(v1_code)
+        if locale == 'nan-Hant-CN_LufengJiazi' and LATIN_TEXT_RE.fullmatch(text):
+            locale = 'nan-Latn-CN_LufengJiazi'
         index = 1
         expression_id = build_expression_id(v2_lang, text_hash, index)
         while expression_id in used_ids:
@@ -95,9 +108,16 @@ def migrate_expressions(rows: list[dict[str, object]], users_by_name: dict[str, 
         }
         expressions.append(expression)
         expression_map[str(row.get('id'))] = expression_id
-        expression_map.setdefault(f'text:{text}', expression_id)
+        text_key = f'text:{text}'
+        # Handbook prose references text, so prefer the Traditional Chinese
+        # source expression when identical text exists in several locales.
+        rank = {'cmn-Hant-TW': 0, 'cmn-Hans-CN': 1, 'yue-Hant-HK': 2}.get(locale or '', 10)
+        if text_key not in text_map_rank or rank < text_map_rank[text_key]:
+            expression_map[text_key] = expression_id
+            text_map_rank[text_key] = rank
+        if locale is not None:
+            expression_map[f'text:{locale}:{text}'] = expression_id
 
-        locale = map_expression_locale(v1_code)
         if locale is not None:
             attestations.append({
                 'id': f'v1-attestation:{expression_id}:{locale}',
