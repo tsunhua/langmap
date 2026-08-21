@@ -174,7 +174,7 @@ export async function createLocaleAttestation(
   const resolved = provenance ?? { source_id: null, source_ref: null };
 
   const existing = await db.prepare(
-    `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
+    `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
   ).bind(input.expression_id, input.language_locale_code, resolved.source_id, resolved.source_ref).first<LocaleAttestationRow>();
   if (existing) return { attestation: existing, created: false };
 

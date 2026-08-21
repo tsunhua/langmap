@@ -8,7 +8,7 @@ const feed = new Hono<{ Bindings: Bindings }>();
 // Canonical collection endpoint; retain /hot and /new as compatibility aliases.
 feed.get('/', async (c) => {
   const url = new URL(c.req.url);
-  url.pathname = `${url.pathname.replace(/\/$/, '')}/${c.req.query('sort') === 'new' ? 'new' : 'hot'}`;
+  url.pathname = `/${c.req.query('sort') === 'new' ? 'new' : 'hot'}`;
   return feed.fetch(new Request(url, c.req.raw), c.env, c.executionCtx);
 });
 
