@@ -106,10 +106,10 @@ async function save(status: string) {
     }
     if (isNew.value) {
       const result = await create(payload)
-      router.push(`/handbook/${result.id}`)
+      router.push(`/handbooks/${result.id}`)
     } else {
       await update(id.value, payload)
-      router.push(`/handbook/${id.value}`)
+    router.push(`/handbooks/${id.value}`)
     }
   } catch (e: any) {
     saveError.value = e.response?.data?.error || t('handbook.loadFailed')

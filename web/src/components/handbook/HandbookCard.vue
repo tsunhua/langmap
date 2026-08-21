@@ -14,7 +14,7 @@ defineProps<{
 </script>
 
 <template>
-  <router-link :to="`/handbook/${id}`" class="hb-card">
+  <router-link :to="`/handbooks/${id}`" class="hb-card">
     <h3>{{ title }}</h3>
     <div class="hb-card-meta"><b>{{ section_count }}</b> {{ t('handbooks.sections') }} · <b>{{ expression_count }}</b> {{ t('components.expression') }}</div>
     <div class="hb-card-foot">

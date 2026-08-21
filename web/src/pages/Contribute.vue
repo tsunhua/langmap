@@ -83,7 +83,7 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    await api.post('/contributions/batch', { expressions: payload })
+    await api.post('/contributions', { expressions: payload })
     router.push('/')
   } catch (e: any) {
     error.value = e.response?.data?.error || t('contribute.submitFailed')

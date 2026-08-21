@@ -5,6 +5,13 @@ import type { Bindings } from '../types';
 
 const feed = new Hono<{ Bindings: Bindings }>();
 
+// Canonical collection endpoint; retain /hot and /new as compatibility aliases.
+feed.get('/', async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/${c.req.query('sort') === 'new' ? 'new' : 'hot'}`;
+  return feed.fetch(new Request(url, c.req.raw), c.env, c.executionCtx);
+});
+
 function parseLimit(value: string | undefined): number {
   const parsed = Number.parseInt(value ?? '20', 10);
   return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 100) : 20;

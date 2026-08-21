@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <router-link :to="`/language/${code}`" class="lg-row">
+  <router-link :to="`/languages/${code}`" class="lg-row">
     <div class="lg-name">
       <div class="lg-title">
         <span class="nm">{{ name || name_en || code }}</span>

@@ -233,7 +233,7 @@ watch([() => localization.locale, () => localization.secondary], () => {
       <router-link to="/handbooks" class="hv-back">← {{ t('handbook.back') }}</router-link>
       <div class="hv-title-row">
         <h1>{{ hb.title }}</h1>
-        <router-link :to="`/handbook/${id}/edit`" class="btn btn-ghost hb-edit-btn">
+        <router-link :to="`/handbooks/${id}/edit`" class="btn btn-ghost hb-edit-btn">
           <Pencil :size="15" aria-hidden="true" />
           <span>{{ t('handbook.edit') }}</span>
         </router-link>

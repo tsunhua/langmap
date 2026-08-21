@@ -90,7 +90,7 @@ describe('Contribute page with LanguageLocalePicker', () => {
 
     await wrapper.get('[data-action="submit-contribution"]').trigger('click')
 
-    expect(api.post).toHaveBeenCalledWith('/contributions/batch', {
+    expect(api.post).toHaveBeenCalledWith('/contributions', {
       expressions: expect.arrayContaining([
         expect.objectContaining({ lang_code: 'yue', language_locale_code: 'yue-Hant-CN-x-hegusan' }),
         expect.objectContaining({ lang_code: 'cmn', language_locale_code: 'cmn-Hans' }),

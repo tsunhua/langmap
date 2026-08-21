@@ -27,6 +27,13 @@ function parseExpressionInputs(raw: unknown): ExpressionInput[] {
   return out;
 }
 
+// Keep the former /batch endpoint working while the collection endpoint becomes canonical.
+contributions.post('/', requireAuth, async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/batch`;
+  return contributions.fetch(new Request(url, c.req.raw), c.env, c.executionCtx);
+});
+
 contributions.post('/batch', requireAuth, async (c) => {
   try {
     const user = c.get('user');

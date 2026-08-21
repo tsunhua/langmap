@@ -10,7 +10,7 @@ export function useFeed() {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/feed/hot', { params: { limit, ...hints } })
+      const { data } = await api.get('/feed', { params: { sort: 'hot', limit, ...hints } })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
@@ -24,7 +24,7 @@ export function useFeed() {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/feed/new', { params: { limit, ...hints } })
+      const { data } = await api.get('/feed', { params: { sort: 'new', limit, ...hints } })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'

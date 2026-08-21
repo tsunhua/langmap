@@ -52,7 +52,7 @@ async function changeSort() {
   <div class="hb-page">
     <div class="hb-head">
       <h1>{{ t('handbooks.title') }}</h1>
-      <router-link to="/handbook/new/edit" class="btn btn-primary btn-sm">{{ t('handbooks.create') }}</router-link>
+      <router-link to="/handbooks/new/edit" class="btn btn-primary btn-sm">{{ t('handbooks.create') }}</router-link>
     </div>
 
     <div class="hb-toolbar">
