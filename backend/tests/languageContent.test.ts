@@ -129,7 +129,7 @@ describe('listLanguagesWithContent', () => {
     const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0, uiLocale: 'cmn-Hant-TW', secondaryUiLocale: '' });
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.code)).toEqual(['cmn', 'eng']);
-    expect(result.items[0].name).toBe('Mandarin Chinese');
+    expect(result.items[0].name).toBe('華語');
   });
 
   it('resolves language name via the shared resolver', async () => {
@@ -155,7 +155,7 @@ describe('listLanguagesWithContent', () => {
     const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0, uiLocale: 'cmn-Hans-CN', secondaryUiLocale: '' });
     expect(result.total).toBe(2);
     expect(result.items[0].code).toBe('cmn');
-    expect(result.items[0].name).toBe('Mandarin Chinese');
+    expect(result.items[0].name).toBe('普通话');
   });
 });
 

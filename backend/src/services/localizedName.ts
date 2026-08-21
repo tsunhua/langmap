@@ -38,6 +38,8 @@ interface CandidateRow {
 
 // Language-level names must not fall back to one of the language's regional locales.
 const LANGUAGE_NAME_OVERRIDES: Record<string, Record<string, string>> = {
+  cmn: { 'cmn-Hant-TW': '華語', 'cmn-Hans-CN': '普通话' },
+  nan: { 'cmn-Hant-TW': '閩南語', 'cmn-Hans-CN': '闽南语' },
   wuu: { 'cmn-Hant-TW': '吳語', 'cmn-Hans-CN': '吴语' },
   yue: { 'cmn-Hant-TW': '粵語', 'cmn-Hans-CN': '粤语' },
   zha: { 'cmn-Hant-TW': '壯語', 'cmn-Hans-CN': '壮语' },
@@ -215,27 +217,18 @@ export async function resolveLocalizedNames(
       });
       continue;
     }
-    if (request.kind === 'language') {
-      const localized = LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.primary ?? '']
-        ?? LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.secondary ?? ''];
-      if (localized) {
-        results.set(request.identityCode, {
-          lang_code: request.langCode,
-          name: localized,
-          name_en: row?.name_en ?? request.identityCode,
-          resolved_from: 'primary',
-        });
-        continue;
-      }
-    }
     const expressionId = row?.name_expression_id;
     const resolved = expressionId ? resolvedNames.get(expressionId) : undefined;
     const translated = resolved && resolved.resolved_from !== 'fallback' ? resolved.name : undefined;
+    const override = request.kind === 'language'
+      ? LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.primary ?? '']
+        ?? LANGUAGE_NAME_OVERRIDES[request.identityCode]?.[hints.secondary ?? '']
+      : undefined;
     results.set(request.identityCode, {
       lang_code: request.langCode,
-      name: translated ?? fallbackName(request.kind, row, request.identityCode),
+      name: translated ?? override ?? fallbackName(request.kind, row, request.identityCode),
       name_en: row?.name_en ?? request.identityCode,
-      resolved_from: resolved && resolved.resolved_from !== 'fallback' ? resolved.resolved_from : 'fallback',
+      resolved_from: resolved && resolved.resolved_from !== 'fallback' ? resolved.resolved_from : override ? 'primary' : 'fallback',
     });
   }
   return results;
