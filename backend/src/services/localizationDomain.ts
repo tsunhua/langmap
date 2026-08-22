@@ -30,8 +30,6 @@ const TOTAL_MESSAGES_SQL = 'SELECT COUNT(*) AS total FROM ui_messages WHERE proj
 
 const LOCALE_LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
 
-const LOCALE_STATUS_SQL = 'SELECT status FROM ui_locales WHERE project_id = ? AND language_locale_code = ?';
-
 const LOCALE_ROW_SQL = 'SELECT status, activation_source FROM ui_locales WHERE project_id = ? AND language_locale_code = ?';
 
 const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC';
@@ -68,9 +66,19 @@ async function loadCandidates(
     .first<{ lang_code: string }>();
   if (!langRow) return new Map();
 
+  return loadCandidatesForLanguage(db, projectId, localeCode, langRow.lang_code);
+}
+
+async function loadCandidatesForLanguage(
+  db: D1Database,
+  projectId: string,
+  localeCode: string,
+  langCode: string,
+): Promise<Map<string, string>> {
+
   const { results } = await db
     .prepare(CANDIDATE_SQL)
-    .bind(projectId, 'active', langRow.lang_code, localeCode)
+    .bind(projectId, 'active', langCode, localeCode)
     .all<CandidateRow>();
 
   const candidates = new Map<string, string>();
@@ -229,11 +237,11 @@ async function findCandidate(
   localeCode: string,
 ): Promise<Map<string, string>> {
   const locale = await db
-    .prepare(LOCALE_STATUS_SQL)
+    .prepare('SELECT u.status, l.lang_code FROM ui_locales u JOIN language_locales l ON l.code = u.language_locale_code WHERE u.project_id = ? AND u.language_locale_code = ?')
     .bind(projectId, localeCode)
-    .first<{ status: string }>();
+    .first<{ status: string; lang_code: string }>();
   if (locale?.status !== 'active') return new Map();
-  return loadCandidates(db, projectId, localeCode);
+  return loadCandidatesForLanguage(db, projectId, localeCode, locale.lang_code);
 }
 
 export async function resolveBundle(
@@ -242,13 +250,15 @@ export async function resolveBundle(
   primary?: string,
   secondary?: string,
 ): Promise<BundleEntry[]> {
-  const { results: messages } = await db
-    .prepare(ACTIVE_MESSAGES_SQL)
-    .bind(projectId, 'active')
-    .all<{ message_key: string; source_text: string; placeholders_json: string }>();
-
-  const primaryCandidates = primary ? await findCandidate(db, projectId, primary) : new Map<string, string>();
-  const secondaryCandidates = secondary ? await findCandidate(db, projectId, secondary) : new Map<string, string>();
+  const [messageResult, primaryCandidates, secondaryCandidates] = await Promise.all([
+    db
+      .prepare(ACTIVE_MESSAGES_SQL)
+      .bind(projectId, 'active')
+      .all<{ message_key: string; source_text: string; placeholders_json: string }>(),
+    primary ? findCandidate(db, projectId, primary) : Promise.resolve(new Map<string, string>()),
+    secondary ? findCandidate(db, projectId, secondary) : Promise.resolve(new Map<string, string>()),
+  ]);
+  const { results: messages } = messageResult;
 
   return messages.map((m) => {
     const primaryText = primaryCandidates.get(m.message_key);

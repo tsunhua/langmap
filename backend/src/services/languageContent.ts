@@ -82,9 +82,12 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
   const q = query.q.trim();
   const uiLocale = query.uiLocale.trim();
   const like = q ? `%${escapeLike(q)}%` : '';
-  const totalRow = await db.prepare(CONTENT_LANGUAGES_COUNT_SQL).bind(uiLocale, q, like, like).first<{ total: number }>();
   const orderBy = query.sort === 'alpha' ? 'name ASC, code ASC' : 'expression_count DESC, code ASC';
-  const { results } = await db.prepare(`${CONTENT_LANGUAGES_SELECT} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(uiLocale, q, like, like, query.limit, query.offset).all<LanguageContentSummary>();
+  const [totalRow, pageResult] = await Promise.all([
+    db.prepare(CONTENT_LANGUAGES_COUNT_SQL).bind(uiLocale, q, like, like).first<{ total: number }>(),
+    db.prepare(`${CONTENT_LANGUAGES_SELECT} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(uiLocale, q, like, like, query.limit, query.offset).all<LanguageContentSummary>(),
+  ]);
+  const { results } = pageResult;
   const names = await resolveLanguageNames(
     db,
     results.map((item) => item.code),

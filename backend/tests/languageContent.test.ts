@@ -17,7 +17,7 @@ function fakeD1(handlers: Record<string, Handler>) {
 }
 
 const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
-const IDENTITY_LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
+const IDENTITY_LANGUAGE_SQL = 'SELECT g.code, g.name_expression_id, g.name_en, (SELECT l.name FROM language_locales l WHERE l.lang_code = g.code ORDER BY l.code ASC LIMIT 1) AS name FROM languages g WHERE g.code IN (SELECT value FROM json_each(?))';
 const IDENTITY_LOCALE_SQL = 'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
 const LANGUAGE_LOCALES_SQL = 'SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT 500';
 const EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
@@ -63,7 +63,7 @@ describe('getLanguageDetail', () => {
       [MAPPED_EXPRESSION_COUNT_SQL]: () => ({ total: 4 }),
     });
     const detail = await getLanguageDetail(db, 'cmn', parseLocaleHints('cmn-Hans-CN'));
-    expect(detail?.name).toBe('Mandarin Chinese');
+    expect(detail?.name).toBe('普通话');
     expect(detail?.locales[0].display_name).toBe('普通话(CN)');
     expect(detail?.locales[0].name).toBe('普通话(CN)');
   });

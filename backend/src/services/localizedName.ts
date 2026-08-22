@@ -101,11 +101,12 @@ async function loadIdentities(db: D1Database, requests: readonly LocalizedNameRe
 }
 
 async function loadLocaleLangCodes(db: D1Database, localeCodes: readonly string[]): Promise<Map<string, string>> {
+  const rows = await Promise.all(localeCodes.map(async (localeCode) => ({
+    localeCode,
+    row: await db.prepare(LOCALE_LANG_SQL).bind(localeCode).first<{ lang_code: string }>(),
+  })));
   const langCodes = new Map<string, string>();
-  for (const localeCode of localeCodes) {
-    const row = await db.prepare(LOCALE_LANG_SQL).bind(localeCode).first<{ lang_code: string }>();
-    if (row) langCodes.set(localeCode, row.lang_code);
-  }
+  for (const { localeCode, row } of rows) if (row) langCodes.set(localeCode, row.lang_code);
   return langCodes;
 }
 
@@ -141,15 +142,18 @@ async function resolveExpressionDisplayNames(
   const results = new Map<string, ExpressionNameResolution>();
   const distinct = [...new Set(ids.filter(Boolean))];
   if (distinct.length === 0) return results;
+  const localeCodes = parseLocaleCodes(hints);
 
-  const { results: expressionRows } = await db
-    .prepare(EXPRESSIONS_SQL)
-    .bind(JSON.stringify(distinct))
-    .all<{ id: string; text: string }>();
+  const [expressionResult, localeLangCodes] = await Promise.all([
+    db
+      .prepare(EXPRESSIONS_SQL)
+      .bind(JSON.stringify(distinct))
+      .all<{ id: string; text: string }>(),
+    localeCodes.length > 0 ? loadLocaleLangCodes(db, localeCodes) : Promise.resolve(new Map<string, string>()),
+  ]);
+  const { results: expressionRows } = expressionResult;
   const expressions = new Map(expressionRows.map((row) => [row.id, row.text]));
 
-  const localeCodes = parseLocaleCodes(hints);
-  const localeLangCodes = localeCodes.length > 0 ? await loadLocaleLangCodes(db, localeCodes) : new Map<string, string>();
   const primaryMap = localeCodes.length > 0
     ? await loadCandidateMap(db, distinct, localeLangCodes.get(localeCodes[0]) ?? '', localeCodes[0])
     : new Map<string, string>();
