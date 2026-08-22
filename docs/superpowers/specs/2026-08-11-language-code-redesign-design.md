@@ -302,7 +302,7 @@ CREATE TABLE expression_locale_attestations (
   CHECK (source_ref IS NULL OR source_id IS NOT NULL),
   created_by INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (expression_id, language_locale_code, source_id, source_ref),
+  UNIQUE (expression_id, language_locale_code),
   FOREIGN KEY (expression_id) REFERENCES expressions(id),
   FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
   FOREIGN KEY (source_id) REFERENCES sources(id),
@@ -347,7 +347,7 @@ Scheme grammar：
 ^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$
 ```
 
-有效例：`ipa`、`pinyin`、`wade-giles`、`phonics:synthetic`。建立 reading 時必須在同一原子操作建立 `source_id`／`source_ref` 完全相同的 locale attestation（皆為 NULL 時亦同）；重複資料回傳既有記錄。
+有效例：`ipa`、`pinyin`、`wade-giles`、`phonics:synthetic`。建立 reading 時必須在同一原子操作建立同一 expression／locale 的 locale attestation；重複資料回傳既有記錄。
 
 ## 10. Mapping 與手動拆分
 
@@ -707,7 +707,7 @@ Workbench 能從既有 Language Locale 建立 draft UI Locale，顯示自身 cov
 - ISO registry 與 locale grammar 的成功／失敗案例。
 - 代表座標成對約束及 coordinate source。
 - Expression 建立／重用及 optional locale。
-- 多來源地域佐證去重與來源明細；`sources` 查找或建立、`source_id`／`source_ref` 兩層驗證、`source_ref` 脫離 `source_id` 拒絕與 service 層去重。
+- 地域佐證去重與來源明細；`sources` 查找或建立、`source_id`／`source_ref` 兩層驗證、`source_ref` 脫離 `source_id` 拒絕與 service 層去重。
 - Reading scheme、source、同 transaction attestation。
 - Split 權限、配置、edge move、pair ordering、vote 保留、audit、rollback。
 - Contribution clique 與 duplicate pair reuse。

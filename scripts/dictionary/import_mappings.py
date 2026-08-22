@@ -171,6 +171,7 @@ def write_sql(path: Path, rows: list[dict[str, list[dict[str, str]]]], email: st
         "PRAGMA foreign_keys = ON;",
     ]
     ids_by_key: dict[tuple[str, str], str] = {}
+    attestation_keys: set[tuple[str, str]] = set()
     total = len(rows)
     print(f"sql: generating 0/{total} rows", file=sys.stderr)
     for row_index, row in enumerate(rows, start=1):
@@ -184,12 +185,14 @@ def write_sql(path: Path, rows: list[dict[str, list[dict[str, str]]]], email: st
                 f"({sql_quote(expression_id_value)}, {sql_quote(key[0])}, {sql_quote(key[1])}, "
                 f"{sql_quote(expression_id_value.split(':', 1)[1].split('.', 1)[0])}, {key[2]}, '', '[]', 'pending', {creator});"
             )
-            if locale:
+            attestation_key = (expression_id_value, locale) if locale else None
+            if attestation_key and attestation_key not in attestation_keys:
                 statements.append(
                     "INSERT OR IGNORE INTO expression_locale_attestations "
                     "(id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES "
                     f"({sql_quote(str(uuid.uuid4()))}, {sql_quote(expression_id_value)}, {sql_quote(locale)}, NULL, NULL, {creator});"
                 )
+                attestation_keys.add(attestation_key)
         ids = [ids_by_key[(item["lang_code"].lower(), item["text"].strip(), int(item.get("homograph_index", "1")))] for item in row["expressions"]]
         for left_index, left_id in enumerate(ids):
             for right_id in ids[left_index + 1:]:

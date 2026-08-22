@@ -57,7 +57,7 @@ describe('createReading', () => {
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?':
         () => null,
       'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => ({ success: true }),
@@ -86,7 +86,7 @@ describe('createReading', () => {
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?':
         () => ({ id: 'att-old' }),
       'SELECT id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by, created_at FROM expression_readings WHERE expression_id = ? AND language_locale_code = ? AND scheme = ? AND value = ? AND source_id IS ? AND source_ref IS ?':
         () => existing,

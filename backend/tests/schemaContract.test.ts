@@ -24,7 +24,7 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?code TEXT PRIMARY KEY/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name TEXT NOT NULL[\s\S]*?name_en TEXT NOT NULL/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name_expression_id TEXT REFERENCES expressions\(id\)/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?UNIQUE \(lang_code, script_code, region_code, place_path\)/s);
+    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?UNIQUE \(lang_code, script_code, orthography, region_code, place_path\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(\(latitude IS NULL\) = \(longitude IS NULL\)\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
     expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?FOREIGN KEY \(lang_code\) REFERENCES languages\(code\)[\s\S]*?FOREIGN KEY \(script_code\) REFERENCES scripts\(code\)[\s\S]*?FOREIGN KEY \(region_code\) REFERENCES regions\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
@@ -48,7 +48,8 @@ describe('greenfield schema contract', () => {
   it('defines expression_locale_attestations with provenance and uniqueness', () => {
     expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?id TEXT PRIMARY KEY/s);
     expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?language_locale_code TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code, source_id, source_ref\)/s);
+    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code\)/s);
+    expect(schema).not.toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code, source_id, source_ref\)/s);
     expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
     expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
   });

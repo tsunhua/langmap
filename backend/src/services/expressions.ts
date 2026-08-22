@@ -5,7 +5,7 @@ import { buildExpressionId, canonicalizeExpressionText, computeTextHash } from '
 import { resolveLanguageNames, type LocaleHints } from './localizedName';
 import { attachFormOf } from './morphology';
 import { SourceError } from './sources';
-import { NULL_SAFE_PROVENANCE_PREDICATE, resolveProvenance, type SourceInput } from './provenance';
+import { resolveProvenance, type SourceInput } from './provenance';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 // Expression columns qualified with the `e.` alias so they stay unambiguous
@@ -174,8 +174,8 @@ export async function createLocaleAttestation(
   const resolved = provenance ?? { source_id: null, source_ref: null };
 
   const existing = await db.prepare(
-    `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
-  ).bind(input.expression_id, input.language_locale_code, resolved.source_id, resolved.source_ref).first<LocaleAttestationRow>();
+    `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ?`,
+  ).bind(input.expression_id, input.language_locale_code).first<LocaleAttestationRow>();
   if (existing) return { attestation: existing, created: false };
 
   const attestationId = crypto.randomUUID();

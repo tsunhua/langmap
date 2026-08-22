@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from import_mappings import parse_column, read_rows
+from import_mappings import parse_column, read_rows, write_sql
 
 
 def test_parse_dictionary_headers():
@@ -21,9 +21,9 @@ def test_read_rows_ignores_definitions_and_empty_values(tmp_path: Path):
     columns, rows = read_rows(path, {}, "utf-8", "cmn-Hant-TW")
     assert [column.lang_code for column in columns] == ["cmn", "eng"]
     assert list(rows) == [{
-        "expressions": [
-            {"lang_code": "cmn", "text": "你好"},
-            {"lang_code": "eng", "text": "hello"},
+            "expressions": [
+                {"lang_code": "cmn", "text": "你好", "homograph_index": "1"},
+                {"lang_code": "eng", "text": "hello", "homograph_index": "1"},
         ],
         "readings": [],
     }]
@@ -34,9 +34,9 @@ def test_dictionary_profiles_can_attach_exact_locales(tmp_path: Path):
     path.write_text("cmn-Hant,eng\n你好,hello\n", encoding="utf-8")
     _, rows = read_rows(path, {"cmn-Hant": "cmn-Hant-TW", "eng": "eng-Latn-US"}, "utf-8", "cmn-Hant-TW")
     assert list(rows) == [{
-        "expressions": [
-            {"lang_code": "cmn", "text": "你好", "language_locale_code": "cmn-Hant-TW"},
-            {"lang_code": "eng", "text": "hello", "language_locale_code": "eng-Latn-US"},
+            "expressions": [
+                {"lang_code": "cmn", "text": "你好", "homograph_index": "1", "language_locale_code": "cmn-Hant-TW"},
+                {"lang_code": "eng", "text": "hello", "homograph_index": "1", "language_locale_code": "eng-Latn-US"},
         ],
         "readings": [],
     }]
@@ -47,7 +47,7 @@ def test_readings_are_separate_from_expressions(tmp_path: Path):
     path.write_text("cmn-Hant,cmn-Bopo-zhuyin,cmn-Latn-pinyin,eng\n你好,ㄋㄧˇ ㄏㄠˇ,ni3 hao3,hello\n", encoding="utf-8")
     _, rows = read_rows(path, {}, "utf-8", "cmn-Hant-TW")
     assert list(rows) == [{
-        "expressions": [{"lang_code": "cmn", "text": "你好"}, {"lang_code": "eng", "text": "hello"}],
+        "expressions": [{"lang_code": "cmn", "text": "你好", "homograph_index": "1"}, {"lang_code": "eng", "text": "hello", "homograph_index": "1"}],
         "readings": [
             {"scheme": "zhuyin", "value": "ㄋㄧˇ ㄏㄠˇ", "language_locale_code": "cmn-Hant-TW"},
             {"scheme": "pinyin", "value": "ni3 hao3", "language_locale_code": "cmn-Hant-TW"},
@@ -62,3 +62,27 @@ def test_pipe_separates_multiple_expressions_and_readings(tmp_path: Path):
     row = list(rows)[0]
     assert [item["text"] for item in row["expressions"]] == ["時髦的", "流行的", "fashionable", "trendy"]
     assert [item["value"] for item in row["readings"]] == ["ㄕˊ ㄇㄠˊ", "ㄌㄧㄡˊ ㄒㄧㄥˊ"]
+
+
+def test_write_sql_emits_one_locale_attestation_per_expression(tmp_path: Path):
+    rows = [
+        {
+            "expressions": [
+                {"lang_code": "cmn", "text": "照顧", "language_locale_code": "cmn-Hant-TW"},
+                {"lang_code": "eng", "text": "care"},
+            ],
+            "readings": [],
+        },
+        {
+            "expressions": [
+                {"lang_code": "cmn", "text": "照顧", "language_locale_code": "cmn-Hant-TW"},
+                {"lang_code": "eng", "text": "look after"},
+            ],
+            "readings": [],
+        },
+    ]
+
+    output = write_sql(tmp_path / "import.sql", rows, "dev@example.com", chunk_size=1000)
+
+    sql = output[0].read_text(encoding="utf-8")
+    assert sql.count("INSERT OR IGNORE INTO expression_locale_attestations") == 1

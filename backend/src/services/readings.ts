@@ -63,8 +63,8 @@ export async function createReading(
   if (existing) return { reading: existing, created: false };
 
   const existingAttestation = await db.prepare(
-    `SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
-  ).bind(input.expression_id, input.language_locale_code, resolved.source_id, resolved.source_ref).first<{ id: string }>();
+    'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?',
+  ).bind(input.expression_id, input.language_locale_code).first<{ id: string }>();
 
   const id = crypto.randomUUID();
   const statements = [];

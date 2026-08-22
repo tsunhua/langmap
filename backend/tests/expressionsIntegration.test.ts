@@ -162,6 +162,19 @@ describe('expressions API', () => {
     expect(second.status).toBe(200);
     const secondBody = (await second.json()) as { data: { attestation: { id: string }; created: boolean } };
     expect(secondBody.data.created).toBe(false);
+
+    const third = await fetch(`${BASE_URL}/api/v2/expressions/${id}/locale-attestations`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ language_locale_code: 'nan-Hant-TW' }),
+    });
+    expect(third.status).toBe(200);
+    const thirdBody = (await third.json()) as { data: { attestation: { id: string }; created: boolean } };
+    expect(thirdBody.data).toMatchObject({ created: false, attestation: { id: secondBody.data.attestation.id } });
+
+    const detailRes = await fetch(`${BASE_URL}/api/v2/expressions/${id}`);
+    const detail = (await detailRes.json()) as { data: { attestations: Array<{ language_locale_code: string }> } };
+    expect(detail.data.attestations).toHaveLength(1);
   });
 
   it('rejects an attestation for an unknown locale', async () => {

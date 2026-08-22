@@ -175,6 +175,18 @@
       "filename": "0029_handbook_section_hierarchy.sql",
       "size": 327,
       "sha256": "8d50f92661d26182dd17df84f4577d20dab32c4f1d15a52922773d6fc3599d98"
+    },
+    {
+      "sequence": 30,
+      "filename": "0030_unique_expression_locale_attestations.sql",
+      "size": 1535,
+      "sha256": "e0269fd21089bb6ee92a4a834acaa91112b7aaded255d2c94ee6313211560a90"
+    },
+    {
+      "sequence": 31,
+      "filename": "0031_mapping_query_indexes.sql",
+      "size": 435,
+      "sha256": "04398560950cbfa9542ce84018a988d73b6975ca5cd08046de0bb6e1c64abf94"
     }
   ]
 }

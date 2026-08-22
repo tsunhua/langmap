@@ -56,6 +56,14 @@ def main(argv: list[str]) -> int:
         ]
         print(json.dumps([{"results": rows}]))
         return 0
+    if "pragma table_info" in lowered:
+        print(json.dumps([
+            {"results": [
+                {"name": "code", "type": "TEXT", "cid": 0},
+                {"name": "name", "type": "TEXT", "cid": 1},
+            ]}
+        ]))
+        return 0
     metrics = [
         ("languages", 62),
         ("languoids", 27177),

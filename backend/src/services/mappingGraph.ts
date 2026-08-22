@@ -3,6 +3,9 @@ import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '.
 import { resolveLanguageNames, type LocaleHints } from './localizedName';
 
 const DEFAULT_NODE_LIMIT = 200;
+// D1 binds the frontier twice in the edge query, so keep each batch below
+// SQLite's 100-variable limit.
+const FRONTIER_BATCH_SIZE = 50;
 
 interface GraphEdgeRow {
   id: string;
@@ -32,7 +35,7 @@ function toNode(row: GraphEdgeRow, expressionId: string, depth: number, nameMap:
   };
 }
 
-async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[]): Promise<GraphEdgeRow[]> {
+async function loadEdgesForFrontierBatch(db: D1Database, frontier: readonly string[]): Promise<GraphEdgeRow[]> {
   const placeholders = frontier.map(() => '?').join(', ');
   const { results } = await db.prepare(
     `SELECT e.id, e.expression_a_id, e.expression_b_id, e.score, e.created_at,
@@ -47,6 +50,27 @@ async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[])
      ORDER BY e.score DESC, e.created_at ASC, e.id ASC`,
   ).bind(...frontier, ...frontier).all<GraphEdgeRow>();
   return results;
+}
+
+async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[]): Promise<GraphEdgeRow[]> {
+  const batches: string[][] = [];
+  for (let start = 0; start < frontier.length; start += FRONTIER_BATCH_SIZE) {
+    batches.push(frontier.slice(start, start + FRONTIER_BATCH_SIZE));
+  }
+
+  const rowsById = new Map<string, GraphEdgeRow>();
+  const batchRows = await Promise.all(batches.map((batch) => loadEdgesForFrontierBatch(db, batch)));
+  for (const rows of batchRows) {
+    for (const row of rows) {
+      rowsById.set(row.id, row);
+    }
+  }
+
+  return [...rowsById.values()].sort((left, right) =>
+    right.score - left.score
+    || left.created_at.localeCompare(right.created_at)
+    || left.id.localeCompare(right.id),
+  );
 }
 
 export async function getMappingGraph(

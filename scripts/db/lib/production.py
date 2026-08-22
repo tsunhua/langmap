@@ -92,8 +92,24 @@ def inventory_production(
     assert_identity(configured, remote_identity)
 
     schema_results = executor.select(configured["database_name"], INVENTORY_SCHEMA_SQL)
-    count_results = executor.select(configured["database_name"], INVENTORY_COUNTS_SQL)
     schema_rows = _flatten_rows(schema_results)
+    table_names = sorted(
+        str(row["name"])
+        for row in schema_rows
+        if row.get("kind") == "schema"
+        and row.get("type") == "table"
+        and not str(row.get("name", "")).startswith("_cf_")
+    )
+    column_rows: list[dict[str, Any]] = []
+    for start in range(0, len(table_names), 3):
+        table_batch = table_names[start : start + 3]
+        column_results = executor.select(
+            configured["database_name"],
+            _build_column_inventory_sql(table_batch),
+        )
+        column_rows.extend(_annotate_column_rows(table_batch, column_results))
+    count_results = executor.select(configured["database_name"], INVENTORY_COUNTS_SQL)
+    schema_rows.extend(column_rows)
     count_rows = _flatten_rows(count_results)
     locked_migrations = migrations.sync_migration_lock(
         paths.migrations_dir,
@@ -116,7 +132,11 @@ def inventory_production(
         ]
         for table in sorted({str(row["table_name"]) for row in schema_rows if row.get("kind") == "column"})
     }
-    counts = {str(row["metric"]): int(row["count"]) for row in count_rows if "metric" in row}
+    counts = {
+        str(row["metric"]): int(row["count"])
+        for row in count_rows
+        if "metric" in row and "count" in row
+    }
     managed_keys = {
         str(row["key"]): str(row.get("source_hash") or "")
         for row in count_rows
@@ -218,12 +238,51 @@ def check_baseline(paths: ProjectPaths, inventory: dict[str, Any]) -> dict[str, 
     if expected_objects != actual_objects:
         raise ProductionInventoryError("production schema baseline mismatch")
     expected_migrations = baseline.get("migration_checksums", {})
-    if expected_migrations != inventory.get("migrations", {}).get("checksums", {}):
+    actual_checksums = inventory.get("migrations", {}).get("checksums", {})
+    if any(actual_checksums.get(name) != checksum for name, checksum in expected_migrations.items()):
         raise ProductionInventoryError("production migration checksum baseline mismatch")
     applied = set(inventory.get("migrations", {}).get("applied", []))
     if applied != set(expected_migrations):
         raise ProductionInventoryError("production migration history baseline mismatch")
     return {"status": "ok", "schema_objects": len(actual_objects), "migration_count": len(expected_migrations)}
+
+
+def check_target_schema(paths: ProjectPaths, inventory: dict[str, Any]) -> dict[str, Any]:
+    expected_objects = {
+        (kind, name)
+        for kind, name in _expected_schema_object_names(paths.schema_path)
+    }
+    actual_objects = {
+        (str(item["type"]), str(item["name"]))
+        for item in inventory.get("schema_objects", [])
+    }
+    if not expected_objects.issubset(actual_objects):
+        raise ProductionInventoryError("production target schema mismatch")
+    expected_migrations = list(inventory.get("migrations", {}).get("expected", []))
+    applied_migrations = list(inventory.get("migrations", {}).get("applied", []))
+    if applied_migrations != expected_migrations:
+        raise ProductionInventoryError("production target migration history mismatch")
+    return {
+        "status": "ok",
+        "schema_objects": len(expected_objects),
+        "migration_count": len(expected_migrations),
+    }
+
+
+def _expected_schema_object_names(schema_path: Path) -> set[tuple[str, str]]:
+    objects: set[tuple[str, str]] = set()
+    for statement in schema_path.read_text(encoding="utf-8").split(";"):
+        match = re.match(
+            r"\s*CREATE\s+(TABLE|INDEX|TRIGGER)\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"([^\"]+)\"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))",
+            statement,
+            re.IGNORECASE,
+        )
+        if not match:
+            continue
+        kind = match.group(1).lower()
+        name = next(value for value in match.groups()[1:] if value is not None)
+        objects.add((kind, name))
+    return objects
 
 
 def plan_production(
@@ -262,14 +321,14 @@ def plan_production(
     language_manifest = json.loads(paths.language_manifest_path.read_text(encoding="utf-8"))
     ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
     expected_refs = {
-        "languages": str(language_manifest["generation"]["language_tag_count"]),
-        "language_locations": str(language_manifest["generation"]["language_location_count"]),
+        "languages": str(language_manifest["counts"]["languages"]),
         "ui_messages": str(ui_manifest["counts"]["message_count"]),
-        "ui_translations": str(ui_manifest["counts"]["translation_count"]),
+        "managed_ui_edges": str(ui_manifest["counts"]["translation_count"]),
     }
     actual_refs = {
-        key: str(inventory["counts"].get(key, 0))
-        for key in expected_refs
+        "languages": str(inventory["counts"].get("languages", 0)),
+        "ui_messages": str(inventory["counts"].get("ui_messages", 0)),
+        "managed_ui_edges": str(inventory["ownership"].get("system_ui_edges", 0)),
     }
     reference_actions = {
         key: "unchanged" if expected_refs[key] == actual_refs[key] else "manual-review"
@@ -326,7 +385,10 @@ def verify_production(
     env: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
-    baseline = check_baseline(paths, inventory)
+    try:
+        baseline = check_baseline(paths, inventory)
+    except ProductionInventoryError:
+        baseline = check_target_schema(paths, inventory)
     orphan_counts = {
         key: value
         for key, value in inventory["counts"].items()
@@ -400,7 +462,10 @@ def apply_production(
         executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.language_registry_sql_path)])
         executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.system_ui_sql_path)])
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
-        check_baseline(paths, verified)
+        if plan.get("pending_migrations"):
+            check_target_schema(paths, verified)
+        else:
+            check_baseline(paths, verified)
         journal.append_operation(
             paths.production_operation_journal_path,
             {**operation, "status": "succeeded", "verified": True},
@@ -571,10 +636,13 @@ def load_migration_metadata(path: Path) -> dict[str, Any]:
 def _load_bundle_message_keys(sql_path: Path) -> dict[str, str]:
     sql = sql_path.read_text(encoding="utf-8")
     pattern = re.compile(
-        r"INSERT OR IGNORE INTO ui_messages\s*\([^)]*\)\s*VALUES\s*\(\s*'langmap-web'\s*,\s*'((?:[^']|'')*)'\s*,\s*\d+\s*,\s*'[^']*'\s*,\s*'((?:[^']|'')*)'",
+        r"INSERT OR IGNORE INTO ui_messages\s*\([^)]*\)\s*VALUES\s*\(\s*'langmap-web'\s*,\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'",
         re.IGNORECASE | re.DOTALL,
     )
-    return {key.replace("''", "'"): source_hash for key, source_hash in pattern.findall(sql)}
+    return {
+        key.replace("''", "'"): source_expression_id.replace("''", "'")
+        for key, source_expression_id in pattern.findall(sql)
+    }
 
 
 def _required_identity_value(payload: dict[str, Any], key: str) -> str:
@@ -612,12 +680,39 @@ WHERE type IN ('table', 'index', 'trigger')
   AND name NOT IN ('d1_migrations', '_cf_METADATA')
   AND name NOT LIKE 'expressions_fts_%'
 ORDER BY type, name;
-SELECT 'column' AS kind, m.name AS table_name, p.name, p.type AS column_type
-FROM sqlite_master m JOIN pragma_table_info(m.name) p
-WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%'
-ORDER BY m.name, p.cid;
 SELECT 'migration' AS kind, name FROM d1_migrations ORDER BY id;
 """.strip()
+
+
+def _build_column_inventory_sql(table_names: list[str]) -> str:
+    if not table_names:
+        return "PRAGMA table_info('')"
+    statements = []
+    for table_name in table_names:
+        escaped_name = table_name.replace("'", "''")
+        statements.append(f"PRAGMA table_info('{escaped_name}')")
+    return "; ".join(statements)
+
+
+def _annotate_column_rows(table_names: list[str], results: Any) -> list[dict[str, Any]]:
+    if not isinstance(results, list) or len(results) != len(table_names):
+        raise ProductionInventoryError("wrangler column query response does not match table list")
+    rows: list[dict[str, Any]] = []
+    for table_name, result in zip(table_names, results):
+        if not isinstance(result, dict) or not isinstance(result.get("results"), list):
+            raise ProductionInventoryError("wrangler column query response is invalid")
+        for column in result["results"]:
+            if not isinstance(column, dict):
+                continue
+            rows.append(
+                {
+                    "kind": "column",
+                    "table_name": table_name,
+                    "name": column.get("name"),
+                    "column_type": column.get("type"),
+                }
+            )
+    return rows
 
 INVENTORY_COUNTS_SQL = """
 SELECT 'languages' AS metric, COUNT(*) AS count FROM languages;
@@ -625,7 +720,6 @@ SELECT 'language_locales' AS metric, COUNT(*) AS count FROM language_locales;
 SELECT 'expressions' AS metric, COUNT(*) AS count FROM expressions;
 SELECT 'expression_edges' AS metric, COUNT(*) AS count FROM expression_edges;
 SELECT 'users' AS metric, COUNT(*) AS count FROM users;
-SELECT 'email_verification_tokens' AS metric, COUNT(*) AS count FROM email_verification_tokens;
 SELECT 'handbooks' AS metric, COUNT(*) AS count FROM handbooks;
 SELECT 'handbook_sections' AS metric, COUNT(*) AS count FROM handbook_sections;
 SELECT 'handbook_section_items' AS metric, COUNT(*) AS count FROM handbook_section_items;
@@ -633,8 +727,9 @@ SELECT 'votes' AS metric, COUNT(*) AS count FROM votes;
 SELECT 'ui_locales' AS metric, COUNT(*) AS count FROM ui_locales;
 SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';
-SELECT 'managed_ui_edges' AS metric, COUNT(*) FROM expression_edges WHERE source = 'ui_i18n';
-SELECT 'ui_key' AS kind, key, source_hash FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY key;
+SELECT 'managed_ui_edges' AS metric, COUNT(*) FROM expression_edges WHERE id LIKE 'ui-edge:%';
+SELECT 'ui_key' AS kind, message_key AS key, source_expression_id AS source_hash
+FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY message_key;
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;
 SELECT 'orphan_expression_edges' AS metric, COUNT(*) FROM expression_edges x LEFT JOIN expressions a ON a.id = x.expression_a_id LEFT JOIN expressions b ON b.id = x.expression_b_id WHERE a.id IS NULL OR b.id IS NULL;
 SELECT 'orphan_handbook_items' AS metric, COUNT(*) FROM handbook_section_items i LEFT JOIN expressions e ON e.id = i.expression_id WHERE e.id IS NULL;

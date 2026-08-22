@@ -213,7 +213,7 @@ CREATE TABLE expression_locale_attestations (
   created_by INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (source_ref IS NULL OR source_id IS NOT NULL),
-  UNIQUE (expression_id, language_locale_code, source_id, source_ref),
+  UNIQUE (expression_id, language_locale_code),
   FOREIGN KEY (expression_id) REFERENCES expressions(id),
   FOREIGN KEY (language_locale_code) REFERENCES language_locales(code),
   FOREIGN KEY (source_id) REFERENCES sources(id),
@@ -236,6 +236,9 @@ CREATE TABLE expression_edges (
   FOREIGN KEY (expression_b_id) REFERENCES expressions(id),
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
+
+CREATE INDEX idx_expression_edges_a_id ON expression_edges(expression_a_id);
+CREATE INDEX idx_expression_edges_b_id ON expression_edges(expression_b_id);
 
 CREATE TABLE expression_splits (
   id TEXT PRIMARY KEY,
@@ -1048,6 +1051,9 @@ CREATE TABLE ui_messages (
   PRIMARY KEY (project_id, message_key),
   FOREIGN KEY (source_expression_id) REFERENCES expressions(id)
 );
+
+CREATE INDEX idx_ui_messages_source_expression
+  ON ui_messages(project_id, status, source_expression_id);
 
 INSERT OR IGNORE INTO sources (id, type, name) VALUES
   ('system-ui', 'system', 'LangMap UI source copy');

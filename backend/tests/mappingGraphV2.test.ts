@@ -14,14 +14,21 @@ type Edge = {
   expression_b_lang_code: string;
 };
 
-function fakeD1(edges: Edge[]) {
+function fakeD1(edges: Edge[], maxBindVariables = Number.POSITIVE_INFINITY, filterByArgs = false) {
   return {
     prepare(sql: string) {
       return {
         bind(...args: unknown[]) {
+          if (sql.includes('FROM expression_edges') && args.length > maxBindVariables) {
+            throw new Error('too many SQL variables');
+          }
           return {
             first: async <T>() => (sql.includes('FROM expressions') ? { id: args[0], text: '食', lang_code: 'nan', language_name: 'Minnan' } : null) as T,
-            all: async <T>() => ({ results: (sql.includes('FROM expression_edges') ? edges : []) as T[] }),
+            all: async <T>() => ({
+              results: (sql.includes('FROM expression_edges')
+                ? (filterByArgs ? edges.filter((edge) => args.includes(edge.expression_a_id) || args.includes(edge.expression_b_id)) : edges)
+                : []) as T[],
+            }),
           };
         },
       };
@@ -63,5 +70,26 @@ describe('getMappingGraph', () => {
     );
     // fakeD1 對未知查詢回空 → 每個 lang_code 回退為自身 code
     expect(graph?.nodes.map((node) => node.language_name)).toEqual(['nan', 'eng']);
+  });
+
+  it('batches large frontiers before querying a three-hop graph', async () => {
+    const edges: Edge[] = [];
+    for (let index = 0; index < 60; index += 1) {
+      const suffix = String(index).padStart(2, '0');
+      edges.push(
+        { id: `root-${suffix}`, expression_a_id: `eng:hop-${suffix}`, expression_b_id: 'nan:root', score: 2, created_at: `2026-08-01T00:00:${suffix}`, expression_a_text: `hop ${suffix}`, expression_a_lang_code: 'eng', expression_b_text: '食', expression_b_lang_code: 'nan' },
+        { id: `middle-${suffix}`, expression_a_id: `eng:hop-${suffix}`, expression_b_id: `jpn:next-${suffix}`, score: 1, created_at: `2026-08-02T00:00:${suffix}`, expression_a_text: `hop ${suffix}`, expression_a_lang_code: 'eng', expression_b_text: `next ${suffix}`, expression_b_lang_code: 'jpn' },
+        { id: `final-${suffix}`, expression_a_id: `jpn:next-${suffix}`, expression_b_id: `yue:final-${suffix}`, score: 0, created_at: `2026-08-03T00:00:${suffix}`, expression_a_text: `next ${suffix}`, expression_a_lang_code: 'jpn', expression_b_text: `final ${suffix}`, expression_b_lang_code: 'yue' },
+      );
+    }
+
+    const graph = await getMappingGraph(fakeD1(edges, 100, true), 'nan:root', 3, 200);
+
+    expect(graph).toMatchObject({
+      resolved_hops: 3,
+      layer_counts: { 0: 1, 1: 60, 2: 60, 3: 60 },
+      truncated: false,
+    });
+    expect(graph?.nodes).toHaveLength(181);
   });
 });

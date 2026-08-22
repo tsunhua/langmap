@@ -1,0 +1,13 @@
+{
+  "preflight": [
+    "expression_locale_attestations exists",
+    "count duplicate (expression_id, language_locale_code) groups",
+    "record total expression_locale_attestations rows"
+  ],
+  "postflight": [
+    "expression_locale_attestations exists with UNIQUE (expression_id, language_locale_code)",
+    "count duplicate (expression_id, language_locale_code) groups equals zero",
+    "reconcile retained expression_locale_attestations row count"
+  ],
+  "reversible": true
+}
