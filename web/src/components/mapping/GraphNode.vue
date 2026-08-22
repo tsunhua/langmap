@@ -205,6 +205,7 @@ function onKeydown(e: KeyboardEvent) {
   font-weight: 500;
   cursor: pointer;
   text-align: center;
+  width: max-content;
   min-width: 80px;
   max-width: 200px;
   box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
@@ -231,8 +232,8 @@ function onKeydown(e: KeyboardEvent) {
 .gn-text {
   display: block;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .gn-meta {
   display: flex;
