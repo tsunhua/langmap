@@ -132,16 +132,21 @@ npm run dev
 如需手動部署：
 
 ```bash
-cd backend
-npm run deploy
+./deploy.sh
 ```
 
-此命令使用 Wrangler 將前端靜態資源（通過 Cloudflare Assets）和後端 API（通過 Cloudflare Workers）一併部署到 Cloudflare 邊緣網絡。
+此命令會先構建前端，再使用 Wrangler 將前端靜態資源（通過 Cloudflare Assets）和後端 API（通過 Cloudflare Workers）一併部署到 Cloudflare 邊緣網絡。
 
-預覽部署（不實際上線）：
+只驗證部署內容、不實際上線：
 
 ```bash
-npx wrangler deploy --dry-run
+./deploy.sh --dry-run
+```
+
+後端未變更時可略過前端構建：
+
+```bash
+./deploy.sh --skip-build
 ```
 
 ## 文檔
