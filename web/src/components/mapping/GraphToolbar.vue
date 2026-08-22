@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ZoomIn, ZoomOut, Maximize2, Minimize2, Minus, RotateCcw, MoreHorizontal, List, Share2 } from 'lucide-vue-next'
+import { ZoomIn, ZoomOut, Maximize2, Minimize2, Minus, RotateCcw, MoreHorizontal, List, Share2, Sparkles, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
@@ -18,6 +18,7 @@ const emit = defineEmits<{
   fit: []
   actualSize: []
   reset: []
+  reflow: []
   changeHops: [hops: number]
   toggleMode: []
   expandAll: []
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const showMore = ref(false)
+const collapsed = ref(false)
 
 const hopsOptions = computed(() => {
   const arr: number[] = []
@@ -40,6 +42,7 @@ function toggleMore() {
 
 <template>
   <div class="graph-toolbar" role="toolbar" :aria-label="t('components.graphToolbar')">
+    <template v-if="!collapsed">
     <template v-if="mobileMode !== undefined">
       <div class="tb-group tb-mode">
         <button
@@ -78,6 +81,14 @@ function toggleMore() {
         <ZoomOut :size="16" aria-hidden="true" />
       </button>
       <span class="tb-pct">{{ zoomPercent }}%</span>
+      <button
+        class="tb-btn tb-collapse-btn"
+        :aria-label="t('components.collapseToolbar')"
+        :title="t('components.collapseToolbar')"
+        @click="collapsed = true"
+      >
+        <ChevronUp :size="16" aria-hidden="true" />
+      </button>
     </div>
     <div class="tb-group">
       <button
@@ -88,6 +99,14 @@ function toggleMore() {
       >
         <Maximize2 v-if="!isFullscreen" :size="16" aria-hidden="true" />
         <Minimize2 v-else :size="16" aria-hidden="true" />
+      </button>
+      <button
+        class="tb-btn tb-btn-hide-mobile"
+        :aria-label="t('components.avoidOverlap')"
+        :title="t('components.avoidOverlap')"
+        @click="emit('reflow')"
+      >
+        <Sparkles :size="16" aria-hidden="true" />
       </button>
       <button
         class="tb-btn tb-btn-hide-mobile"
@@ -122,6 +141,13 @@ function toggleMore() {
           @click="emit('actualSize'); showMore = false"
         >
           {{ t('components.actualSize') }}
+        </button>
+        <button
+          class="tb-more-item"
+          role="menuitem"
+          @click="emit('reflow'); showMore = false"
+        >
+          {{ t('components.avoidOverlap') }}
         </button>
         <button
           class="tb-more-item"
@@ -161,6 +187,16 @@ function toggleMore() {
         {{ h }}
       </button>
     </div>
+    </template>
+    <button
+      v-if="collapsed"
+      class="tb-btn tb-collapse-btn"
+      :aria-label="t('components.expandToolbar')"
+      :title="t('components.expandToolbar')"
+      @click="collapsed = false"
+    >
+      <ChevronDown :size="16" aria-hidden="true" />
+    </button>
   </div>
 </template>
 
@@ -201,6 +237,7 @@ function toggleMore() {
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
+.tb-collapse-btn { align-self: flex-end; }
 .tb-btn:hover {
   background: var(--accent);
   color: #fff;

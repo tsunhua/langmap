@@ -105,11 +105,11 @@ describe('createExpression', () => {
         () => ({ id: 'nan:existing', text: '食' }),
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => insertedExpression,
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
         () => null,
       'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => { inserted.push('attestation'); return { success: true }; },
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE id = ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.id = ?':
         () => ({ id: 'att-new' }),
     });
     const result = await createExpression(db, {
@@ -156,11 +156,11 @@ describe('createExpression', () => {
       'INSERT INTO expressions (id, lang_code, text, text_hash, homograph_index, description, tags_json, review_status, created_by)\n       VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)':
         () => ({ success: true }),
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
         () => null,
       'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE id = ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.id = ?':
         () => ({ id: 'att-1', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW', source_id: null, source_ref: null, created_by: 1, created_at: '2026-08-12 00:00:00' }),
     });
     const result = await createExpression(db, {
@@ -287,7 +287,7 @@ describe('getExpression', () => {
     const db = fakeD1({
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
         () => expression,
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? ORDER BY language_locale_code ASC, created_at ASC, id ASC':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? ORDER BY a.language_locale_code ASC, a.created_at ASC, a.id ASC':
         () => ({ results: attestations }),
     });
     const result = await getExpression(db, 'nan:aaaa');
@@ -316,11 +316,11 @@ describe('createLocaleAttestation', () => {
       'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
       'SELECT id FROM sources WHERE type = ? AND name = ?': () => null,
       'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ? AND source_id IS ? AND source_ref IS ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ? AND a.source_id IS ? AND a.source_ref IS ?':
         () => null,
       'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
         () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, source_id, source_ref, created_by, created_at FROM expression_locale_attestations WHERE id = ?':
+      'SELECT a.id, a.expression_id, a.language_locale_code, a.source_id, a.source_ref, a.created_by, a.created_at, u.username AS created_by_username FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.id = ?':
         () => inserted,
     });
     const result = await createLocaleAttestation(db, {

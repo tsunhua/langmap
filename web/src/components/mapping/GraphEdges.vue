@@ -82,6 +82,7 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
   }
   return out
 })
+
 </script>
 
 <template>

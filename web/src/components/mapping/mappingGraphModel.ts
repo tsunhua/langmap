@@ -70,6 +70,14 @@ export function buildDisplayTree(
       const da = depthOf.get(a) ?? Number.POSITIVE_INFINITY
       const db = depthOf.get(b) ?? Number.POSITIVE_INFINITY
       if (da !== db) return da - db
+      const nodeA = graph.nodes.find((n) => n.expression_id === a)
+      const nodeB = graph.nodes.find((n) => n.expression_id === b)
+      const languageA = nodeA?.language_name || nodeA?.lang_code || ''
+      const languageB = nodeB?.language_name || nodeB?.lang_code || ''
+      const languageOrder = languageA.localeCompare(languageB)
+      if (languageOrder !== 0) return languageOrder
+      const textOrder = (nodeA?.text || '').localeCompare(nodeB?.text || '')
+      if (textOrder !== 0) return textOrder
       return String(a).localeCompare(String(b))
     })
   }

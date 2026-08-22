@@ -125,37 +125,6 @@ describe('layoutMappingGraph', () => {
     expect(r4).toBeGreaterThan(r3)
   })
 
-  it('child angle lies within parent sector', () => {
-    const g = makeGraph(
-      [
-        { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
-        { expression_id: 2, text: 'a', language_profile_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 3, text: 'b', language_profile_code: 'en', language_name: 'English', depth: 1 },
-        { expression_id: 4, text: 'c', language_profile_code: 'en', language_name: 'English', depth: 2 },
-      ],
-      [
-        { edge_id: 'e1-2', source_id: 1, target_id: 2, score: 5, depth: 1 },
-        { edge_id: 'e1-3', source_id: 1, target_id: 3, score: 3, depth: 1 },
-        { edge_id: 'e2-4', source_id: 2, target_id: 4, score: 1, depth: 2 },
-      ],
-    )
-    const tree = buildDisplayTree(g)
-    const sizes = new Map([
-      [1, defaultNodeSize()],
-      [2, defaultNodeSize()],
-      [3, defaultNodeSize()],
-      [4, defaultNodeSize()],
-    ])
-    const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
-    const parent = out.nodes.find((n) => n.id === 2)!
-    const child = out.nodes.find((n) => n.id === 4)!
-    const pAngle = Math.atan2(parent.y, parent.x)
-    const cAngle = Math.atan2(child.y, child.x)
-    // child should be within +/- pi/2 (90 degrees) of parent angle
-    const diff = Math.abs(angleDelta(pAngle, cAngle))
-    expect(diff).toBeLessThan(Math.PI / 2 + 0.001)
-  })
-
   it('bounds contain all nodes', () => {
     const g = makeGraph(
       [
@@ -237,6 +206,13 @@ describe('layoutMappingGraph', () => {
       12,
     )
     expect(collisions).toBe(0)
+
+    const children = out.nodes.filter((n) => n.id !== 1)
+    const xSpan = Math.max(...children.map((n) => n.x)) - Math.min(...children.map((n) => n.x))
+    const ySpan = Math.max(...children.map((n) => n.y)) - Math.min(...children.map((n) => n.y))
+    expect(xSpan).toBeGreaterThan(200)
+    expect(ySpan).toBeGreaterThan(200)
+    expect(Math.max(...children.map((n) => Math.hypot(n.x, n.y)))).toBeLessThan(700)
   })
 
   it('uneven 2-hop subtree has zero collisions', () => {
@@ -299,6 +275,124 @@ describe('layoutMappingGraph', () => {
     expect(collisions).toBe(0)
   })
 
+  it('distributes second-hop nodes around the full ring', () => {
+    const nodes: MappingGraphNode[] = [
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+    ]
+    const edges: MappingGraphEdge[] = []
+    for (let i = 0; i < 4; i++) {
+      const parentId = 2 + i
+      nodes.push({
+        expression_id: parentId,
+        text: `h1-${parentId}`,
+        language_profile_code: 'en',
+        language_name: 'English',
+        depth: 1,
+      })
+      edges.push({
+        edge_id: `e1-${parentId}`,
+        source_id: 1,
+        target_id: parentId,
+        score: 5,
+        depth: 1,
+      })
+    }
+
+    // Put every second-hop node below one parent. A parent-sector layout
+    // would confine them to roughly one quarter of the circumference.
+    for (let i = 0; i < 12; i++) {
+      const childId = 10 + i
+      nodes.push({
+        expression_id: childId,
+        text: `h2-${childId}`,
+        language_profile_code: 'en',
+        language_name: 'English',
+        depth: 2,
+      })
+      edges.push({
+        edge_id: `e2-${childId}`,
+        source_id: 2,
+        target_id: childId,
+        score: 1,
+        depth: 2,
+      })
+    }
+
+    const tree = buildDisplayTree(makeGraph(nodes, edges))
+    const sizes = new Map(nodes.map((n) => [n.expression_id, defaultNodeSize()]))
+    const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
+    const secondHopAngles = out.nodes
+      .filter((n) => n.depth === 2)
+      .map((n) => (Math.atan2(n.y, n.x) + 2 * Math.PI) % (2 * Math.PI))
+      .sort((a, b) => a - b)
+    const gaps = secondHopAngles.map((angle, index) => {
+      const next = secondHopAngles[(index + 1) % secondHopAngles.length]
+      return (next - angle + 2 * Math.PI) % (2 * Math.PI)
+    })
+
+    expect(Math.max(...gaps)).toBeLessThan(Math.PI)
+  })
+
+  it('keeps different hops on separate radial bands', () => {
+    const nodes: MappingGraphNode[] = [
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+    ]
+    const edges: MappingGraphEdge[] = []
+    for (let i = 0; i < 10; i++) {
+      const id = 2 + i
+      nodes.push({ expression_id: id, text: `h1-${id}`, language_profile_code: 'en', language_name: 'English', depth: 1 })
+      edges.push({ edge_id: `e1-${id}`, source_id: 1, target_id: id, score: 5, depth: 1 })
+    }
+    for (let i = 0; i < 8; i++) {
+      const id = 20 + i
+      nodes.push({ expression_id: id, text: `h2-${id}`, language_profile_code: 'en', language_name: 'English', depth: 2 })
+      edges.push({ edge_id: `e2-${id}`, source_id: 2, target_id: id, score: 1, depth: 2 })
+    }
+    for (let i = 0; i < 4; i++) {
+      const id = 30 + i
+      nodes.push({ expression_id: id, text: `h3-${id}`, language_profile_code: 'en', language_name: 'English', depth: 3 })
+      edges.push({ edge_id: `e3-${id}`, source_id: 20, target_id: id, score: 1, depth: 3 })
+    }
+
+    const tree = buildDisplayTree(makeGraph(nodes, edges))
+    const sizes = new Map(nodes.map((n) => [n.expression_id, defaultNodeSize()]))
+    const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
+    const band = (depth: number) => out.nodes
+      .filter((n) => n.depth === depth)
+      .map((n) => Math.hypot(n.x, n.y))
+
+    expect(Math.min(...band(2))).toBeGreaterThan(Math.max(...band(1)))
+    expect(Math.min(...band(3))).toBeGreaterThan(Math.max(...band(2)))
+  })
+
+  it('keeps adjacent spiral centers at a stable distance', () => {
+    const nodes: MappingGraphNode[] = [
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+    ]
+    const edges: MappingGraphEdge[] = []
+    for (let i = 0; i < 24; i++) {
+      const id = 2 + i
+      nodes.push({ expression_id: id, text: `h1-${id}`, language_profile_code: 'en', language_name: 'English', depth: 1 })
+      edges.push({ edge_id: `e1-${id}`, source_id: 1, target_id: id, score: 5, depth: 1 })
+    }
+
+    const tree = buildDisplayTree(makeGraph(nodes, edges))
+    const sizes = new Map(nodes.map((n) => [n.expression_id, defaultNodeSize()]))
+    const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
+    const byId = new Map(out.nodes.map((node) => [node.id, node]))
+    const ordered = tree.nodes
+      .filter((node) => node.displayParentId === 1)
+      .map((node) => byId.get(node.id)!)
+    const distances = ordered.slice(1).map((node, index) => {
+      const previous = ordered[index]
+      return Math.hypot(node.x - previous.x, node.y - previous.y)
+    })
+    const innerAverage = distances.slice(0, 8).reduce((sum, value) => sum + value, 0) / 8
+    const outerAverage = distances.slice(-8).reduce((sum, value) => sum + value, 0) / 8
+
+    expect(outerAverage).toBeLessThan(innerAverage * 1.35)
+  })
+
   it('handles long-text nodes without shrinking bounds', () => {
     const g = makeGraph(
       [
@@ -326,10 +420,3 @@ describe('layoutMappingGraph', () => {
     expect(collisions).toBe(0)
   })
 })
-
-function angleDelta(a: number, b: number): number {
-  let d = a - b
-  while (d > Math.PI) d -= 2 * Math.PI
-  while (d < -Math.PI) d += 2 * Math.PI
-  return d
-}

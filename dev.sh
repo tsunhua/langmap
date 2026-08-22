@@ -79,6 +79,40 @@ stop_pidfile_process() {
   rm -f "$pidfile"
 }
 
+stop_port_process() {
+  local port="$1"
+  local role="$2"
+  local pid
+  local pgid
+  local group_command
+  local process_cwd
+  local listener_pids
+
+  listener_pids="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  for pid in $listener_pids; do
+    pgid="$(ps -p "$pid" -o pgid= 2>/dev/null | tr -d '[:space:]')"
+    [ -n "$pgid" ] || continue
+    group_command="$(ps -p "$pgid" -o command= 2>/dev/null || true)"
+    process_cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+    [[ "$process_cwd" == "$ROOT" || "$process_cwd" == "$ROOT"/* ]] || continue
+
+    case "$role" in
+      backend)
+        [[ "$group_command" == *"wrangler dev"* ]] || continue
+        ;;
+      frontend)
+        [[ "$group_command" == *"vite"* ]] || continue
+        ;;
+      *)
+        continue
+        ;;
+    esac
+
+    step "停止本 repo 佔用 ${port} 的 ${role} process group (pgid=$pgid)"
+    kill -TERM -- "-$pgid" 2>/dev/null || true
+  done
+}
+
 cleanup() {
   if [ "$CLEANUP_DONE" -eq 1 ]; then
     return
@@ -126,6 +160,8 @@ mkdir -p "$DEV_RUNTIME_DIR"
 step "停止本 repo 殘留服務"
 stop_pidfile_process "$BACKEND_PIDFILE" backend
 stop_pidfile_process "$FRONTEND_PIDFILE" frontend
+stop_port_process "$BACKEND_PORT" backend
+stop_port_process 5173 frontend
 
 step "確保 v2 本地 secret（.dev.vars）存在"
 if [ ! -f "$ROOT/backend/.dev.vars" ]; then

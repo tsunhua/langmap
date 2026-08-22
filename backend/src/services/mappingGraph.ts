@@ -125,7 +125,9 @@ export async function getMappingGraph(
     requested_hops: hops,
     resolved_hops: resolvedHops,
     nodes,
-    edges,
+    // Edges to omitted nodes are not renderable and would let clients create
+    // phantom layout nodes. Keep the graph response internally consistent.
+    edges: edges.filter((edge) => visited.has(edge.source_id) && visited.has(edge.target_id)),
     layer_counts: layerCounts,
     truncated: omitted.size > 0,
     omitted_count: omitted.size,

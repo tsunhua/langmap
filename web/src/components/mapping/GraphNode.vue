@@ -69,7 +69,7 @@ function openImage(e: MouseEvent) {
 }
 
 function onPointerDown(e: PointerEvent) {
-  if (e.button !== 0 || props.isRoot) return
+  if (e.button !== 0) return
   nodeEl = e.currentTarget as HTMLElement
   nodeEl.setPointerCapture(e.pointerId)
   pointerId = e.pointerId
@@ -259,9 +259,10 @@ function onKeydown(e: KeyboardEvent) {
   min-width: 100px;
   padding: 8px 14px;
   box-shadow: 0 0 0 5px color-mix(in oklch, var(--accent) 15%, transparent);
-  cursor: default;
+  cursor: grab;
   z-index: 3;
 }
+.graph-node.anchor.dragging { cursor: grabbing; }
 .graph-node.anchor .gn-lang {
   color: oklch(0.92 0.04 35);
 }

@@ -9,7 +9,7 @@ import { layoutMappingGraph } from './mappingGraphLayout'
 import { useGraphViewport } from '@/composables/useGraphViewport'
 import { useGraphDrag } from '@/composables/useGraphDrag'
 import type { LayoutNode } from './mappingGraphLayout'
-import type { MappingGraphResponse, NodeSize, GraphBounds } from './mappingGraphTypes'
+import type { MappingGraphResponse, NodeSize } from './mappingGraphTypes'
 
 type SemanticLevel = 'compact' | 'medium' | 'full'
 
@@ -45,17 +45,6 @@ const displayTree = computed(() =>
   buildDisplayTree(props.graph, collapsedIds.value),
 )
 
-const layoutBounds = computed<GraphBounds>(() => {
-  if (!displayTree.value.nodes.length) {
-    return { x: 0, y: 0, width: 0, height: 0 }
-  }
-  return layoutMappingGraph({
-    rootId: props.graph.root_id,
-    tree: displayTree.value,
-    nodeSizes: nodeSizes.value.size > 0 ? nodeSizes.value : defaultSizes(),
-  }).bounds
-})
-
 const layout = computed(() => {
   if (!displayTree.value.nodes.length) {
     return { nodes: [] as LayoutNode[], treeEdges: [], crossEdges: [], bounds: { x: 0, y: 0, width: 0, height: 0 } }
@@ -64,8 +53,11 @@ const layout = computed(() => {
     rootId: props.graph.root_id,
     tree: displayTree.value,
     nodeSizes: nodeSizes.value.size > 0 ? nodeSizes.value : defaultSizes(),
+    nodeMeta: graphNodeMeta.value,
   })
 })
+
+const layoutBounds = computed(() => layout.value.bounds)
 
 function defaultSizes(): Map<string, NodeSize> {
   const m = new Map<string, NodeSize>()
@@ -78,6 +70,23 @@ function defaultSizes(): Map<string, NodeSize> {
 const layoutNodeById = computed(() => {
   const m = new Map<string, LayoutNode>()
   for (const n of layout.value.nodes) m.set(n.id, n)
+  return m
+})
+
+const graphNodeById = computed(() => {
+  const m = new Map<string, MappingGraphResponse['nodes'][number]>()
+  for (const node of props.graph.nodes) m.set(String(node.expression_id), node)
+  return m
+})
+
+const graphNodeMeta = computed(() => {
+  const m = new Map<string, { language: string; text: string }>()
+  for (const node of props.graph.nodes) {
+    m.set(String(node.expression_id), {
+      language: node.language_name || node.lang_code,
+      text: node.text,
+    })
+  }
   return m
 })
 
@@ -186,12 +195,18 @@ function handleReset() {
   resetPositions()
 }
 
+function handleReflow() {
+  resetPositions()
+  nextTick(() => viewport.fit())
+}
+
 function onToggleCollapse(nodeId: string) {
   emit('toggleCollapse', nodeId)
 }
 
 // --- node measurement (post-mount) ---
 let measured = false
+let measureQueued = false
 async function measureNodes() {
   if (!containerRef.value) return
   await nextTick()
@@ -202,9 +217,12 @@ async function measureNodes() {
   for (const el of els) {
     const id = el.getAttribute('data-node-id')
     if (!id) continue
+    // getBoundingClientRect() includes the graph zoom transform. Layout needs
+    // the card's dimensions in world coordinates, otherwise a 25% zoom makes
+    // a 56px card look like a 14px card and breaks collision spacing.
     const rect = el.getBoundingClientRect()
-    const w = Math.ceil(rect.width) || DEFAULT_NODE_SIZE.width
-    const h = Math.ceil(rect.height) || DEFAULT_NODE_SIZE.height
+    const w = el.offsetWidth || Math.ceil(rect.width / worldScale.value) || DEFAULT_NODE_SIZE.width
+    const h = el.offsetHeight || Math.ceil(rect.height / worldScale.value) || DEFAULT_NODE_SIZE.height
     const prev = nodeSizes.value.get(id)
     if (!prev || prev.width !== w || prev.height !== h) changed = true
     sizes.set(id, { width: w, height: h })
@@ -215,8 +233,17 @@ async function measureNodes() {
   }
 }
 
+function scheduleMeasure() {
+  if (measureQueued) return
+  measureQueued = true
+  nextTick(async () => {
+    measureQueued = false
+    await measureNodes()
+  })
+}
+
 onMounted(() => {
-  measureNodes()
+  scheduleMeasure()
 })
 onUnmounted(() => {})
 
@@ -224,9 +251,13 @@ watch(
   () => [props.graph.nodes.length, collapsedIds.value.size],
   () => {
     measured = false
-    nextTick(() => measureNodes())
+    scheduleMeasure()
   },
 )
+
+watch(currentSemanticLevel, () => {
+  scheduleMeasure()
+})
 
 function onSelectNode(id: string) {
   emit('select', id)
@@ -275,9 +306,9 @@ const layerStats = computed(() => {
           v-for="n in effectiveLayoutNodes"
           :key="n.id"
           :node-id="n.id"
-          :text="graph.nodes.find(gn => gn.expression_id === n.id)?.text ?? ''"
-          :language-code="graph.nodes.find(gn => gn.expression_id === n.id)?.lang_code ?? ''"
-          :language-name="graph.nodes.find(gn => gn.expression_id === n.id)?.language_name ?? null"
+          :text="graphNodeById.get(String(n.id))?.text ?? ''"
+          :language-code="graphNodeById.get(String(n.id))?.lang_code ?? ''"
+          :language-name="graphNodeById.get(String(n.id))?.language_name ?? null"
           :depth="n.depth"
           :x="n.x"
           :y="n.y"
@@ -306,6 +337,7 @@ const layerStats = computed(() => {
       @fit="viewport.fit"
       @actual-size="viewport.actualSize"
       @reset="handleReset"
+      @reflow="handleReflow"
       @change-hops="(h: number) => emit('changeHops', h as 1 | 2 | 3)"
       @toggle-fullscreen="onToggleFullscreen"
     />

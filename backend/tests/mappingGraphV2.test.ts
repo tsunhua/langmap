@@ -48,6 +48,10 @@ describe('getMappingGraph', () => {
     ]), 'nan:root', 3, 2);
 
     expect(graph).toMatchObject({ truncated: true, omitted_count: 1 });
+    expect(graph?.edges.every((edge) =>
+      graph.nodes.some((node) => node.expression_id === edge.source_id)
+      && graph.nodes.some((node) => node.expression_id === edge.target_id),
+    )).toBe(true);
   });
 
   it('resolves node language names via the shared resolver', async () => {

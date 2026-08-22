@@ -185,7 +185,7 @@ export async function createLocaleAttestation(
     .run();
 
   const attestation = await db
-    .prepare(`SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations WHERE id = ?`)
+    .prepare(`SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.id = ?`)
     .bind(attestationId)
     .first<LocaleAttestationRow>();
   return { attestation: attestation as LocaleAttestationRow, created: true };

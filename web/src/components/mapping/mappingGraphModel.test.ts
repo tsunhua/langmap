@@ -38,6 +38,20 @@ function graphFrom(
 }
 
 describe('buildDisplayTree', () => {
+  it('orders children by language and then expression text', () => {
+    const g = graphFrom([[1, 0], [2, 1, 'zebra'], [3, 1, 'apple'], [4, 1, 'banana']], [
+      ['e1-2', 1, 2, 1],
+      ['e1-3', 1, 3, 1],
+      ['e1-4', 1, 4, 1],
+    ])
+    g.nodes.find((n) => n.expression_id === 2)!.language_name = 'English'
+    g.nodes.find((n) => n.expression_id === 3)!.language_name = 'Chinese'
+    g.nodes.find((n) => n.expression_id === 4)!.language_name = 'English'
+
+    const tree = buildDisplayTree(g)
+    expect(tree.nodes.map((n) => n.id)).toEqual([1, 3, 4, 2])
+  })
+
   it('root has no parent', () => {
     const g = graphFrom([[1, 0]], [])
     const tree = buildDisplayTree(g)
