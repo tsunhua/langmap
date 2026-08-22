@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">LangMap</title>
+  <rect width="1024" height="1024" rx="96" fill="#F5F0E8"/>
+
+  <!-- One source expression branches to three mapped language locations. -->
+  <path
+    d="M310 512C450 424 570 266 760 180M310 512C500 500 650 500 840 500M310 512C450 610 560 760 720 820"
+    fill="none"
+    stroke="#4A6FA5"
+    stroke-width="40"
+    stroke-linecap="round"
+  />
+
+  <g transform="rotate(-12 330 512)">
+    <rect x="205" y="387" width="250" height="250" rx="64" fill="#C86645"/>
+    <path d="M330 462L380 512L330 562L280 512Z" fill="#F5F0E8"/>
+  </g>
+
+  <g>
+    <circle cx="760" cy="180" r="82" fill="#C86645"/>
+    <circle cx="760" cy="180" r="34" fill="#F5F0E8"/>
+    <text x="760" y="180" text-anchor="middle" dominant-baseline="central" fill="#C86645" font-family="Inter, sans-serif" font-size="58" font-weight="700">A</text>
+  </g>
+  <g>
+    <circle cx="840" cy="500" r="66" fill="#C86645"/>
+    <circle cx="840" cy="500" r="27" fill="#F5F0E8"/>
+    <text x="840" y="500" text-anchor="middle" dominant-baseline="central" fill="#C86645" font-family="'Noto Serif TC', 'PingFang TC', serif" font-size="52" font-weight="700">文</text>
+  </g>
+  <g>
+    <circle cx="720" cy="820" r="76" fill="#C86645"/>
+    <circle cx="720" cy="820" r="31" fill="#F5F0E8"/>
+    <text x="720" y="820" text-anchor="middle" dominant-baseline="central" fill="#C86645" font-family="'Noto Sans CJK JP', 'Hiragino Kaku Gothic ProN', sans-serif" font-size="52" font-weight="700">あ</text>
+  </g>
+</svg>

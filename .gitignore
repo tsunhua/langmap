@@ -23,6 +23,8 @@ venv/
 build/
 dist/
 public/
+!/web/public/
+!/web/public/**
 *.egg-info/
 
 # Tests
