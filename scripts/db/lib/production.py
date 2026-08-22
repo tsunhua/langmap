@@ -447,12 +447,12 @@ def apply_production(
         operation["bookmark"] = bookmark
         journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
         if plan.get("pending_migrations"):
-            executor.mutate(["d1", "migrations", "apply", database_name, "--remote", "--yes"])
+            executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
         approved_data_migration = plan.get("approved_data_migration")
         if approved_data_migration:
             data_path = _resolve_managed_artifact(paths, str(approved_data_migration))
             executor.mutate(
-                ["d1", "execute", database_name, "--remote", "--file", str(data_path), "--yes"]
+                ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
             )
         else:
             journal.append_operation(
@@ -467,7 +467,6 @@ def apply_production(
                 "--remote",
                 "--file",
                 str(paths.language_registry_sql_path),
-                "--yes",
             ]
         )
         executor.mutate(
@@ -478,7 +477,6 @@ def apply_production(
                 "--remote",
                 "--file",
                 str(paths.system_ui_sql_path),
-                "--yes",
             ]
         )
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
