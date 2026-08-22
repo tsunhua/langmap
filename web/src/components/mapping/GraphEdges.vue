@@ -34,6 +34,7 @@ interface RenderedEdge {
   kind: 'tree' | 'cross'
   dimmed: boolean
   highlighted: boolean
+  path: boolean
 }
 
 const renderedEdges = computed<RenderedEdge[]>(() => {
@@ -43,9 +44,12 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
     const a = pos(e.source_id)
     const b = pos(e.target_id)
     if (!a || !b) continue
-    const highlighted =
-      props.selectedNodeIds.has(e.source_id) || props.selectedNodeIds.has(e.target_id) ||
-      props.pathNodeIds.has(e.source_id) || props.pathNodeIds.has(e.target_id)
+    const path = props.pathNodeIds.size > 0
+      && props.pathNodeIds.has(e.source_id)
+      && props.pathNodeIds.has(e.target_id)
+    const highlighted = path
+      || props.selectedNodeIds.has(e.source_id)
+      || props.selectedNodeIds.has(e.target_id)
     out.push({
       key: `t-${e.edge_id}`,
       x1: a.x,
@@ -57,6 +61,7 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
       kind: 'tree',
       dimmed: props.pathNodeIds.size > 0 && !highlighted,
       highlighted,
+      path,
     })
   }
   if (props.showCrossEdges) {
@@ -77,6 +82,7 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
         kind: 'cross',
         dimmed: !highlighted,
         highlighted,
+        path: false,
       })
     }
   }
@@ -97,7 +103,7 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
       :x2="e.x2"
       :y2="e.y2"
       :stroke-width="e.width"
-      :class="['edge', e.kind, `depth-${e.depth}`, { dimmed: e.dimmed, highlighted: e.highlighted }]"
+      :class="['edge', e.kind, `depth-${e.depth}`, { dimmed: e.dimmed, highlighted: e.highlighted, path: e.path }]"
     />
   </svg>
 </template>
@@ -126,6 +132,12 @@ const renderedEdges = computed<RenderedEdge[]>(() => {
 .edge.highlighted {
   stroke: var(--accent);
   opacity: 1;
+}
+.edge.depth-2.highlighted {
+  stroke: var(--edge);
+}
+.edge.depth-3.highlighted {
+  stroke: color-mix(in oklch, var(--edge) 70%, var(--muted));
 }
 .edge.cross.highlighted {
   opacity: 0.8;

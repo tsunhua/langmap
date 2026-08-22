@@ -118,6 +118,17 @@ const selectedSet = computed(() => {
   return s
 })
 
+const directlyConnectedNodeIds = computed(() => {
+  const ids = new Set<string>()
+  const selectedId = props.selectedNodeId
+  if (!selectedId) return ids
+  for (const edge of props.graph.edges) {
+    if (edge.source_id === selectedId) ids.add(edge.target_id)
+    if (edge.target_id === selectedId) ids.add(edge.source_id)
+  }
+  return ids
+})
+
 const pathNodeIds = computed(() => {
   if (!props.selectedNodeId) return new Set<string>()
   const ids = new Set<string>()
@@ -317,6 +328,7 @@ const layerStats = computed(() => {
           :score="scoreByNode.get(n.id) ?? null"
           :is-root="n.id === graph.root_id"
           :is-selected="selectedNodeId === n.id"
+          :is-adjacent="directlyConnectedNodeIds.has(n.id)"
           :semantic-level="currentSemanticLevel"
           :world-scale="worldScale"
           @select="onSelectNode"

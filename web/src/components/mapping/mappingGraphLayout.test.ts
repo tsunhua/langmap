@@ -275,7 +275,7 @@ describe('layoutMappingGraph', () => {
     expect(collisions).toBe(0)
   })
 
-  it('distributes second-hop nodes around the full ring', () => {
+  it('continues second-hop nodes along the same compact spiral', () => {
     const nodes: MappingGraphNode[] = [
       { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
     ]
@@ -298,8 +298,8 @@ describe('layoutMappingGraph', () => {
       })
     }
 
-    // Put every second-hop node below one parent. A parent-sector layout
-    // would confine them to roughly one quarter of the circumference.
+    // Put every second-hop node below one parent to exercise a dense branch
+    // without letting the branch size dictate a separate giant ring.
     for (let i = 0; i < 12; i++) {
       const childId = 10 + i
       nodes.push({
@@ -321,16 +321,48 @@ describe('layoutMappingGraph', () => {
     const tree = buildDisplayTree(makeGraph(nodes, edges))
     const sizes = new Map(nodes.map((n) => [n.expression_id, defaultNodeSize()]))
     const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
-    const secondHopAngles = out.nodes
-      .filter((n) => n.depth === 2)
-      .map((n) => (Math.atan2(n.y, n.x) + 2 * Math.PI) % (2 * Math.PI))
-      .sort((a, b) => a - b)
-    const gaps = secondHopAngles.map((angle, index) => {
-      const next = secondHopAngles[(index + 1) % secondHopAngles.length]
-      return (next - angle + 2 * Math.PI) % (2 * Math.PI)
-    })
+    const byId = new Map(out.nodes.map((node) => [node.id, node]))
+    const secondHopRadii = tree.nodes
+      .filter((node) => node.depth === 2)
+      .map((node) => byId.get(node.id)!)
+      .map((node) => Math.hypot(node.x, node.y))
 
-    expect(Math.max(...gaps)).toBeLessThan(Math.PI)
+    // A fixed second-hop ring would give every card the same radius. The
+    // desired layout keeps adding cards to the same outward-growing path.
+    expect(secondHopRadii.at(-1)).toBeGreaterThan(secondHopRadii[0])
+    expect(secondHopRadii.at(-1)! - secondHopRadii[0]).toBeGreaterThan(40)
+  })
+
+  it('keeps a dense second hop compact instead of expanding one large ring', () => {
+    const nodes: MappingGraphNode[] = [
+      { expression_id: 1, text: 'root', language_profile_code: 'en', language_name: 'English', depth: 0 },
+    ]
+    const edges: MappingGraphEdge[] = []
+    const firstHopIds: number[] = []
+
+    for (let i = 0; i < 40; i++) {
+      const id = 2 + i
+      firstHopIds.push(id)
+      nodes.push({ expression_id: id, text: `h1-${id}`, language_profile_code: 'en', language_name: 'English', depth: 1 })
+      edges.push({ edge_id: `e1-${id}`, source_id: 1, target_id: id, score: 5, depth: 1 })
+    }
+
+    for (let i = 0; i < 62; i++) {
+      const id = 100 + i
+      const parentId = firstHopIds[i % firstHopIds.length]
+      nodes.push({ expression_id: id, text: `h2-${id}`, language_profile_code: 'en', language_name: 'English', depth: 2 })
+      edges.push({ edge_id: `e${parentId}-${id}`, source_id: parentId, target_id: id, score: 1, depth: 2 })
+    }
+
+    const tree = buildDisplayTree(makeGraph(nodes, edges))
+    const sizes = new Map(nodes.map((n) => [n.expression_id, defaultNodeSize()]))
+    const out = layoutMappingGraph({ rootId: 1, tree, nodeSizes: sizes })
+    const secondHop = out.nodes.filter((node) => node.depth === 2)
+    const secondHopRadii = secondHop.map((node) => Math.hypot(node.x, node.y))
+
+    expect(Math.max(...secondHopRadii)).toBeLessThan(800)
+    expect(Math.max(...secondHopRadii) - Math.min(...secondHopRadii)).toBeGreaterThan(100)
+    expect(countCollisions(out.nodes.map((node) => ({ ...node })), sizes, 12)).toBe(0)
   })
 
   it('keeps different hops on separate radial bands', () => {

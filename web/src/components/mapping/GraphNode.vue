@@ -17,6 +17,7 @@ const props = defineProps<{
   score: number | null
   isRoot: boolean
   isSelected: boolean
+  isAdjacent: boolean
   semanticLevel: SemanticLevel
   worldScale: number
 }>()
@@ -156,6 +157,7 @@ function onKeydown(e: KeyboardEvent) {
     :class="{
       anchor: isRoot,
       selected: isSelected,
+      adjacent: isAdjacent && !isRoot && !isSelected,
       dragging,
       [`depth-${depth}`]: true,
       [`level-${semanticLevel}`]: true,
@@ -272,6 +274,13 @@ function onKeydown(e: KeyboardEvent) {
   border-width: 2px;
   box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 18%, transparent);
   z-index: 5;
+}
+
+.graph-node.adjacent {
+  border-color: color-mix(in oklch, var(--accent) 42%, var(--border));
+  background: color-mix(in oklch, var(--accent) 7%, var(--surface));
+  box-shadow: inset 3px 0 0 color-mix(in oklch, var(--accent) 58%, transparent);
+  z-index: 4;
 }
 
 .graph-node.level-compact {

@@ -89,6 +89,17 @@ describe('MappingGraph', () => {
     expect(wrapper.emitted('select')?.[0]).toEqual(["2"])
   })
 
+  it('marks only direct connected cards when a node is selected', () => {
+    const wrapper = mount(MappingGraph, {
+      props: { graph: makeGraph(), selectedNodeId: '4' },
+      global: { stubs: { teleport: true } },
+    })
+    expect(wrapper.find('[data-node-id="4"]').classes()).toContain('selected')
+    expect(wrapper.find('[data-node-id="2"]').classes()).toContain('adjacent')
+    expect(wrapper.find('[data-node-id="3"]').classes()).toContain('adjacent')
+    expect(wrapper.find('[data-node-id="1"]').classes()).not.toContain('adjacent')
+  })
+
   it('does not render when graph is empty', () => {
     const wrapper = mount(MappingGraph, {
       props: {
