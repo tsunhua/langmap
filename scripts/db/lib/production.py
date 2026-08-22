@@ -447,20 +447,40 @@ def apply_production(
         operation["bookmark"] = bookmark
         journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
         if plan.get("pending_migrations"):
-            executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
+            executor.mutate(["d1", "migrations", "apply", database_name, "--remote", "--yes"])
         approved_data_migration = plan.get("approved_data_migration")
         if approved_data_migration:
             data_path = _resolve_managed_artifact(paths, str(approved_data_migration))
             executor.mutate(
-                ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
+                ["d1", "execute", database_name, "--remote", "--file", str(data_path), "--yes"]
             )
         else:
             journal.append_operation(
                 paths.production_operation_journal_path,
                 {**operation, "status": "data-migration-skipped"},
             )
-        executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.language_registry_sql_path)])
-        executor.mutate(["d1", "execute", database_name, "--remote", "--file", str(paths.system_ui_sql_path)])
+        executor.mutate(
+            [
+                "d1",
+                "execute",
+                database_name,
+                "--remote",
+                "--file",
+                str(paths.language_registry_sql_path),
+                "--yes",
+            ]
+        )
+        executor.mutate(
+            [
+                "d1",
+                "execute",
+                database_name,
+                "--remote",
+                "--file",
+                str(paths.system_ui_sql_path),
+                "--yes",
+            ]
+        )
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
         if plan.get("pending_migrations"):
             check_target_schema(paths, verified)
