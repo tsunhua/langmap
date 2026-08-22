@@ -64,6 +64,11 @@ fi
 
 echo "▶ 部署 langmap-backend-v2"
 cd "$ROOT/backend"
-exec npx --no-install wrangler deploy \
-  --config "$ROOT/backend/wrangler.jsonc" \
-  "${DEPLOY_ARGS[@]}"
+if [ "${#DEPLOY_ARGS[@]}" -gt 0 ]; then
+  exec npx --no-install wrangler deploy \
+    --config "$ROOT/backend/wrangler.jsonc" \
+    "${DEPLOY_ARGS[@]}"
+else
+  exec npx --no-install wrangler deploy \
+    --config "$ROOT/backend/wrangler.jsonc"
+fi
