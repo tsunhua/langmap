@@ -7,18 +7,39 @@ export interface CachePolicy {
   authIndependent: boolean;
 }
 
-const SHORT_PUBLIC_CACHE: CachePolicy = {
+const AUTH_HEALTH_CACHE: CachePolicy = {
   browserSeconds: 15,
   edgeSeconds: 30,
   staleSeconds: 60,
   authIndependent: true,
 };
 
+const FEED_CACHE: CachePolicy = {
+  browserSeconds: 30,
+  edgeSeconds: 120,
+  staleSeconds: 300,
+  authIndependent: true,
+};
+
+const EXPRESSION_CACHE: CachePolicy = {
+  browserSeconds: 120,
+  edgeSeconds: 600,
+  staleSeconds: 1200,
+  authIndependent: true,
+};
+
 const CONTENT_CACHE: CachePolicy = {
+  browserSeconds: 300,
+  edgeSeconds: 1800,
+  staleSeconds: 3600,
+  authIndependent: true,
+};
+
+const HANDBOOK_CACHE: CachePolicy = {
   browserSeconds: 30,
   edgeSeconds: 60,
   staleSeconds: 120,
-  authIndependent: true,
+  authIndependent: false,
 };
 
 const REFERENCE_CACHE: CachePolicy = {
@@ -43,9 +64,9 @@ export function getCachePolicy(url: string): CachePolicy | null {
   const requestUrl = new URL(url);
   const { pathname, searchParams } = requestUrl;
 
-  if (pathname === '/api/v2/auth/health') return SHORT_PUBLIC_CACHE;
-  if (pathname === '/api/v2/feed' || pathname === '/api/v2/feed/hot' || pathname === '/api/v2/feed/new') return SHORT_PUBLIC_CACHE;
-  if (matchesExpressionRead(pathname)) return SHORT_PUBLIC_CACHE;
+  if (pathname === '/api/v2/auth/health') return AUTH_HEALTH_CACHE;
+  if (pathname === '/api/v2/feed' || pathname === '/api/v2/feed/hot' || pathname === '/api/v2/feed/new') return FEED_CACHE;
+  if (matchesExpressionRead(pathname)) return EXPRESSION_CACHE;
   if (pathname === '/api/v2/languages' || pathname.startsWith('/api/v2/languages/')) return CONTENT_CACHE;
   if (pathname === '/api/v2/language-locales' || pathname.startsWith('/api/v2/language-locales/')) return CONTENT_CACHE;
   if (pathname === '/api/v2/morphological-features') return REFERENCE_CACHE;
@@ -56,7 +77,7 @@ export function getCachePolicy(url: string): CachePolicy | null {
     return searchParams.has('primary') || searchParams.has('secondary') ? CONTENT_CACHE : null;
   }
   if (pathname === '/api/v2/handbooks' || /^\/api\/v2\/handbooks\/[^/]+$/.test(pathname)) {
-    return { ...CONTENT_CACHE, authIndependent: false };
+    return HANDBOOK_CACHE;
   }
   return null;
 }
