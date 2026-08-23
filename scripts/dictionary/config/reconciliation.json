@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "auto_merge_threshold": 0.995,
+  "max_candidate_group_size": 50,
+  "provider_timeout_seconds": 1800,
+  "minimum_holdout_auto_candidates": 1000,
+  "minimum_adapter_auto_candidates": 50,
+  "minimum_precision": 0.995,
+  "minimum_wilson_lower": 0.99,
+  "required_passes": 2
+}
