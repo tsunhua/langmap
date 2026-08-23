@@ -107,6 +107,24 @@ class TraditionalChineseEnglishAdapter:
                     _claim("claim", entry.entry_key, sense.sense_key, "equivalent", str(ordinal)),
                     entry.entry_key, sense.sense_key, {"bullet_removed": had_bullet}, (error,) if error else (),
                 ))
+            for ordinal, raw_item in enumerate(sense.relations, 1):
+                item = raw_item if isinstance(raw_item, dict) else {}
+                if item.get("kind") != "synonym":
+                    # Antonyms remain fully available in input_relations.raw_json,
+                    # but the first online model has no opposition edge kind.
+                    continue
+                raw_value = item.get("related_text") or item.get("text")
+                if not isinstance(raw_value, str) or not raw_value.strip():
+                    continue
+                cleaned = canonicalize_text(raw_value)
+                hint = item.get("language") or item.get("language_hint") or _side_hint(entry.direction_hint, False)
+                lang, locale, error = _language(cleaned, hint)
+                occurrences.append(NormalizedOccurrence(
+                    _claim("entry", entry.entry_key, "sense", sense.sense_key, "synonym", str(ordinal)),
+                    "synonym", raw_value, cleaned, lang, locale,
+                    _claim("claim", entry.entry_key, sense.sense_key, "synonym", str(ordinal)),
+                    entry.entry_key, sense.sense_key, {}, (error,) if error else (),
+                ))
             for ordinal, raw_item in enumerate(sense.examples, 1):
                 item = raw_item if isinstance(raw_item, dict) else {"text": raw_item}
                 text = item.get("text")
