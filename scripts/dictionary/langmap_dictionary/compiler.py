@@ -157,6 +157,10 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
     for row in expression_rows:
         statements.append(insert_or_ignore("expressions", ["id", "lang_code", "text", "text_hash", "homograph_index", "description", "tags_json", "review_status"], [row["id"], row["lang_code"], row["text"], row["text_hash"], row["homograph_index"], "", "[]", "approved"]))
         statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "expression", row["id"], row["id"], row["object_action"]]))
+    # Membership is recorded for reused identities as well as newly allocated
+    # ones, so release cleanup and visibility audits see the complete object set.
+    for expression_id in sorted(set(cluster_ids.values())):
+        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "expression", expression_id, expression_id, "created" if expression_id in allocated else "reused"]))
     for row in binding_rows:
         statements.append(insert_or_ignore("dictionary_expression_bindings", ["release_id", "claim_key", "cluster_key", "role", "expression_id", "binding_kind"], [release_id, row["claim_key"], row["cluster_key"], row["role"], row["expression_id"], "allocated" if row["expression_id"] in allocated else "reused"]))
     # Headword/equivalent and explicit synonym pairs are online edges.
