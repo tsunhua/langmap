@@ -28,3 +28,14 @@ def test_adapter_removes_bullet_only_from_normalized_equivalent():
     occurrence = adapter.normalize_entry(entry).senses[0].occurrences[0]
     assert occurrence.raw_value == "• head"
     assert occurrence.canonical_text == "head"
+
+
+def test_adapter_uses_non_english_direction_profiles():
+    adapter = TraditionalChineseEnglishAdapter()
+    from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedSense
+    entry = StagedEntry("r", "d", "e", "mot", "mot", None, "fra-to-eng", "a" * 64, senses=(StagedSense("s", 1, equivalents=("word",), examples=({"text": "mot exemple", "translation": "example word"},)),))
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.lang_code == "fra"
+    assert normalized.senses[0].occurrences[0].lang_code == "eng"
+    assert normalized.senses[0].occurrences[1].lang_code == "fra"
+    assert normalized.senses[0].occurrences[2].lang_code == "eng"

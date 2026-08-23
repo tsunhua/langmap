@@ -25,7 +25,30 @@ _POS = {
     "adv": "adverb", "adverb": "adverb", "副詞": "adverb",
     "prep": "preposition", "preposition": "preposition", "介詞": "preposition",
     "pron": "pronoun", "pronoun": "pronoun", "代詞": "pronoun",
-    "idiom": "idiom", "片語": "idiom", "成語": "idiom",
+    "idiom": "idiom", "phrase": "phrase", "片語": "idiom", "成語": "idiom",
+}
+_PROFILE_LOCALES = {
+    "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
+    "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
+    "yue": ("yue", "yue-Hant-HK"), "jpn": ("jpn", "jpn-Jpan-JP"),
+    "ara": ("ara", "ara-Arab"), "ben": ("ben", "ben-Beng"),
+    "ces": ("ces", "ces-Latn"), "dan": ("dan", "dan-Latn"),
+    "deu": ("deu", "deu-Latn"), "ell": ("ell", "ell-Grek"),
+    "fin": ("fin", "fin-Latn"), "fra": ("fra", "fra-Latn"),
+    "guj": ("guj", "guj-Gujr"), "hin": ("hin", "hin-Deva"),
+    "hrv": ("hrv", "hrv-Latn"), "hun": ("hun", "hun-Latn"),
+    "ind": ("ind", "ind-Latn"), "ita": ("ita", "ita-Latn"),
+    "kan": ("kan", "kan-Knda"), "kaz": ("kaz", "kaz-Cyrl"),
+    "kor": ("kor", "kor-Hang"), "mal": ("mal", "mal-Mlym"),
+    "msa": ("msa", "msa-Latn"), "nld": ("nld", "nld-Latn"),
+    "nor": ("nor", "nor-Latn"), "pan": ("pan", "pan-Guru"),
+    "pol": ("pol", "pol-Latn"), "por": ("por", "por-Latn"),
+    "rus": ("rus", "rus-Cyrl"), "slk": ("slk", "slk-Latn"),
+    "spa": ("spa", "spa-Latn-ES"), "swe": ("swe", "swe-Latn"),
+    "tam": ("tam", "tam-Taml"), "tel": ("tel", "tel-Telu"),
+    "tha": ("tha", "tha-Thai"), "tur": ("tur", "tur-Latn"),
+    "ukr": ("ukr", "ukr-Cyrl"), "urd": ("urd", "urd-Arab"),
+    "vie": ("vie", "vie-Latn"),
 }
 
 
@@ -45,6 +68,11 @@ def _is_han(value: str) -> bool:
 
 def _language(value: str, hint: str | None = None) -> tuple[str | None, str | None, str | None]:
     token = (hint or "").lower()
+    profile = token.split("-to-", 1)[0] if "-to-" in token else token
+    profile = next((key for key in _PROFILE_LOCALES if key.lower() == profile), profile)
+    if profile in _PROFILE_LOCALES:
+        language, locale = _PROFILE_LOCALES[profile]
+        return language, locale, None
     if "eng" in token or token in {"en", "en-us", "en-gb"}:
         return "eng", "eng-Latn-US", None
     if "cmn" in token or "hant" in token or token in {"zh", "zh-tw", "zh-hant"}:
@@ -57,18 +85,11 @@ def _language(value: str, hint: str | None = None) -> tuple[str | None, str | No
 
 
 def _side_hint(direction: str | None, headword: bool) -> str | None:
-    token = (direction or "").lower().replace("→", "-").replace(">", "-")
-    if not token:
+    token = (direction or "").strip().replace("→", "-to-").replace(">", "-to-")
+    if "-to-" not in token:
         return None
-    if headword and token.startswith("eng-"):
-        return "eng"
-    if headword and (token.startswith("cmn-") or token.startswith("zh-")):
-        return "cmn"
-    if not headword and token.startswith("eng-"):
-        return "cmn"
-    if not headword and (token.startswith("cmn-") or token.startswith("zh-")):
-        return "eng"
-    return None
+    source, target = token.split("-to-", 1)
+    return source if headword else target
 
 
 def _claim(*parts: str) -> str:
@@ -129,7 +150,7 @@ class TraditionalChineseEnglishAdapter:
                 item = raw_item if isinstance(raw_item, dict) else {"text": raw_item}
                 text = item.get("text")
                 if isinstance(text, str) and text.strip():
-                    lang, locale, error = _language(text, item.get("language"))
+                    lang, locale, error = _language(text, item.get("language") or _side_hint(entry.direction_hint, True))
                     occurrences.append(NormalizedOccurrence(
                         _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "text"),
                         "example", text, canonicalize_text(text), lang, locale,
@@ -138,7 +159,7 @@ class TraditionalChineseEnglishAdapter:
                     ))
                 translation = item.get("translation")
                 if isinstance(translation, str) and translation.strip():
-                    lang, locale, error = _language(translation, item.get("translation_language"))
+                    lang, locale, error = _language(translation, item.get("translation_language") or _side_hint(entry.direction_hint, False))
                     occurrences.append(NormalizedOccurrence(
                         _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "translation"),
                         "example", translation, canonicalize_text(translation), lang, locale,
