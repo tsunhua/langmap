@@ -17,6 +17,7 @@ import { parseLanguageLocaleCode } from '../services/languageIdentity';
 import { loadWorkbenchMessages } from '../services/workbench';
 import { MAX_LOCALIZATION_MAPPINGS, exceedsLimit } from '../utils/limits';
 import type { Bindings, Variables } from '../types';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from '../services/dictionaryReleaseEligibility';
 
 const LOCALE_LIST_LIMIT = 200;
 const WORKBENCH_PAGE_LIMIT = 100;
@@ -318,8 +319,12 @@ localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
         user_id: user.id,
       });
 
+      const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
+      const edgeQuery = releaseTablesReady
+        ? `SELECT expression_a_id, expression_b_id FROM expression_edges e WHERE e.id = ? AND ${edgeEligibilityPredicate('e')}`
+        : 'SELECT expression_a_id, expression_b_id FROM expression_edges WHERE id = ?';
       const edge = await c.env.DB
-        .prepare('SELECT expression_a_id, expression_b_id FROM expression_edges WHERE id = ?')
+        .prepare(edgeQuery)
         .bind(edgeId)
         .first<{ expression_a_id: string; expression_b_id: string }>();
       if (edge) {

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth';
 import { success, internalError } from '../utils/response';
 import type { Bindings, Variables } from '../types';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from '../services/dictionaryReleaseEligibility';
 
 interface UserProfileRow {
   id: number;
@@ -54,6 +55,13 @@ ORDER BY created_at DESC
 LIMIT 20
 `;
 
+function managedActivityQuery(releaseTablesReady: boolean): string {
+  if (!releaseTablesReady) return ACTIVITY_QUERY;
+  return ACTIVITY_QUERY
+    .replace('WHERE ee.created_by = ?', `WHERE ee.created_by = ? AND ${edgeEligibilityPredicate('ee')}`)
+    .replace('WHERE v.user_id = ?', `WHERE v.user_id = ? AND EXISTS (SELECT 1 FROM expression_edges vote_edge WHERE vote_edge.id = v.target_id AND ${edgeEligibilityPredicate('vote_edge')})`);
+}
+
 users.get('/me', requireAuth, async (c) => {
   try {
     const currentUser = c.get('user');
@@ -67,7 +75,8 @@ users.get('/me', requireAuth, async (c) => {
       return internalError(c);
     }
 
-    const { results: activity } = await c.env.DB.prepare(ACTIVITY_QUERY)
+    const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
+    const { results: activity } = await c.env.DB.prepare(managedActivityQuery(releaseTablesReady))
       .bind(userId, userId, userId, userId)
       .all<ActivityRow>();
 

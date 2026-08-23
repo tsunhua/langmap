@@ -5,6 +5,7 @@ import { parseLocaleHints, resolveLanguageNames } from '../services/localizedNam
 import { ulid } from '../utils/ulid';
 import { MAX_HANDBOOK_ITEMS, MAX_HANDBOOK_SECTIONS, exceedsLimit } from '../utils/limits';
 import type { Bindings, Variables } from '../types';
+import { dictionaryReleaseSchemaAvailable, releaseObjectEligibilityPredicate } from '../services/dictionaryReleaseEligibility';
 
 interface SectionInput { title?: unknown; expressionIds?: unknown }
 
@@ -70,11 +71,15 @@ handbooks.get('/:id', optionalAuth, async (c) => {
     'SELECT id, handbook_id, title, position, parent_section_id FROM handbook_sections WHERE handbook_id = ? ORDER BY position ASC, id ASC',
   ).bind(id).all<{ id: string }>();
   const sectionIds = sections.map((section) => section.id);
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
+  const profilePredicate = releaseTablesReady
+    ? ` AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a.id')}`
+    : '';
   const { results: items } = sectionIds.length
     ? await c.env.DB.prepare(
       `SELECT hi.section_id, hi.expression_id, hi.position, e.id, e.text, e.lang_code,
-        (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = e.id ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1) AS language_profile_code,
-        (SELECT ll.name FROM language_locales ll WHERE ll.code = (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = e.id ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1)) AS language_profile_name
+        (SELECT language_locale_code FROM expression_locale_attestations a WHERE a.expression_id = e.id${profilePredicate} ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1) AS language_profile_code,
+        (SELECT ll.name FROM language_locales ll WHERE ll.code = (SELECT language_locale_code FROM expression_locale_attestations a WHERE a.expression_id = e.id${profilePredicate} ORDER BY CASE language_locale_code WHEN 'cmn-Hant-TW' THEN 0 ELSE 1 END, language_locale_code ASC, id ASC LIMIT 1)) AS language_profile_name
        FROM handbook_section_items hi JOIN expressions e ON e.id = hi.expression_id
        WHERE hi.section_id IN (SELECT value FROM json_each(?))
        ORDER BY hi.section_id ASC, hi.position ASC, hi.expression_id ASC`,

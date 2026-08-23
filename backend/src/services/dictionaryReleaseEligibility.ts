@@ -9,6 +9,17 @@ export type ReleaseIdSql = 'b.release_id' | 'ev.release_id' | 'pa.release_id' | 
 
 export const MANAGED_DICTIONARY_DATASET_KEY = 'managed-dictionaries';
 
+export async function dictionaryReleaseSchemaAvailable(db: D1Database): Promise<boolean> {
+  try {
+    const row = await db.prepare(
+      "SELECT 1 AS available FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_dataset_state'",
+    ).bind().first<{ available: number }>();
+    return Boolean(row?.available);
+  } catch {
+    return false;
+  }
+}
+
 export type PromotionActor =
   | { kind: 'user'; userId: number }
   | { kind: 'system' };

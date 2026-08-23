@@ -3,6 +3,7 @@ import type { EdgeRow } from '../types/mapping';
 import { buildExpressionId } from './expressionIdentity';
 import { listAffectedUiLocaleCodes, prepareRevisionBumps } from './localizationDomain';
 import { MAX_SPLIT_EDGE_IDS } from '../utils/limits';
+import { dictionaryManagedObjectPredicate, dictionaryReleaseSchemaAvailable } from './dictionaryReleaseEligibility';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
@@ -28,8 +29,12 @@ export async function splitExpression(
   if (!source) throw new SplitError('EXPRESSION_NOT_FOUND');
 
   const placeholders = input.edge_ids.map(() => '?').join(', ');
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
+  const edgeQuery = releaseTablesReady
+    ? `SELECT ${EDGE_COLUMNS} FROM expression_edges e WHERE e.id IN (${placeholders}) AND NOT ${dictionaryManagedObjectPredicate('edge', 'e.id')}`
+    : `SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE id IN (${placeholders})`;
   const { results: edges } = await db
-    .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE id IN (${placeholders})`)
+    .prepare(edgeQuery)
     .bind(...input.edge_ids)
     .all<EdgeRow>();
 

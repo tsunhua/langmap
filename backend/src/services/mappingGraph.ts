@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
 import { resolveLanguageNames, type LocaleHints } from './localizedName';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 const DEFAULT_NODE_LIMIT = 200;
 // D1 binds the frontier twice in the edge query, so keep each batch below
@@ -35,31 +36,38 @@ function toNode(row: GraphEdgeRow, expressionId: string, depth: number, nameMap:
   };
 }
 
-async function loadEdgesForFrontierBatch(db: D1Database, frontier: readonly string[]): Promise<GraphEdgeRow[]> {
+async function loadEdgesForFrontierBatch(db: D1Database, frontier: readonly string[], releaseTablesReady: boolean): Promise<GraphEdgeRow[]> {
   const placeholders = frontier.map(() => '?').join(', ');
+  const edgeEligibility = releaseTablesReady ? ` AND ${edgeEligibilityPredicate('e')}` : '';
+  const aProfile = releaseTablesReady
+    ? `(SELECT language_locale_code FROM expression_locale_attestations a_att WHERE a_att.expression_id = a.id AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a_att.id')} ORDER BY language_locale_code ASC, id ASC LIMIT 1)`
+    : '(SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = a.id ORDER BY language_locale_code ASC, id ASC LIMIT 1)';
+  const bProfile = releaseTablesReady
+    ? `(SELECT language_locale_code FROM expression_locale_attestations b_att WHERE b_att.expression_id = b.id AND ${releaseObjectEligibilityPredicate('locale_attestation', 'b_att.id')} ORDER BY language_locale_code ASC, id ASC LIMIT 1)`
+    : '(SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = b.id ORDER BY language_locale_code ASC, id ASC LIMIT 1)';
   const { results } = await db.prepare(
     `SELECT e.id, e.expression_a_id, e.expression_b_id, e.score, e.created_at,
       a.text AS expression_a_text, a.lang_code AS expression_a_lang_code,
-      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = a.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS expression_a_language_profile_code,
+      ${aProfile} AS expression_a_language_profile_code,
       b.text AS expression_b_text, b.lang_code AS expression_b_lang_code,
-      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = b.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS expression_b_language_profile_code
+      ${bProfile} AS expression_b_language_profile_code
      FROM expression_edges e
      JOIN expressions a ON a.id = e.expression_a_id
      JOIN expressions b ON b.id = e.expression_b_id
-     WHERE e.expression_a_id IN (${placeholders}) OR e.expression_b_id IN (${placeholders})
+     WHERE (e.expression_a_id IN (${placeholders}) OR e.expression_b_id IN (${placeholders}))${edgeEligibility}
      ORDER BY e.score DESC, e.created_at ASC, e.id ASC`,
   ).bind(...frontier, ...frontier).all<GraphEdgeRow>();
   return results;
 }
 
-async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[]): Promise<GraphEdgeRow[]> {
+async function loadEdgesForFrontier(db: D1Database, frontier: readonly string[], releaseTablesReady: boolean): Promise<GraphEdgeRow[]> {
   const batches: string[][] = [];
   for (let start = 0; start < frontier.length; start += FRONTIER_BATCH_SIZE) {
     batches.push(frontier.slice(start, start + FRONTIER_BATCH_SIZE));
   }
 
   const rowsById = new Map<string, GraphEdgeRow>();
-  const batchRows = await Promise.all(batches.map((batch) => loadEdgesForFrontierBatch(db, batch)));
+  const batchRows = await Promise.all(batches.map((batch) => loadEdgesForFrontierBatch(db, batch, releaseTablesReady)));
   for (const rows of batchRows) {
     for (const row of rows) {
       rowsById.set(row.id, row);
@@ -80,9 +88,13 @@ export async function getMappingGraph(
   nodeLimit = DEFAULT_NODE_LIMIT,
   locales: LocaleHints = {},
 ): Promise<MappingGraphResponse | null> {
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
+  const rootProfile = releaseTablesReady
+    ? `(SELECT language_locale_code FROM expression_locale_attestations a WHERE a.expression_id = expressions.id AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a.id')} ORDER BY language_locale_code ASC, id ASC LIMIT 1)`
+    : '(SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = expressions.id ORDER BY language_locale_code ASC, id ASC LIMIT 1)';
   const root = await db.prepare(
     `SELECT id, text, lang_code,
-      (SELECT language_locale_code FROM expression_locale_attestations WHERE expression_id = expressions.id ORDER BY language_locale_code ASC, id ASC LIMIT 1) AS language_profile_code
+      ${rootProfile} AS language_profile_code
      FROM expressions WHERE id = ?`,
   ).bind(rootId).first<{ id: string; text: string; lang_code: string; language_profile_code: string | null }>();
   if (!root) return null;
@@ -106,7 +118,7 @@ export async function getMappingGraph(
   let resolvedHops: 0 | 1 | 2 | 3 = 0;
 
   for (let depth = 1; depth <= hops && frontier.length > 0; depth++) {
-    const rows = await loadEdgesForFrontier(db, frontier);
+    const rows = await loadEdgesForFrontier(db, frontier, releaseTablesReady);
     const langCodes = [...new Set(rows.flatMap((row) => [row.expression_a_lang_code, row.expression_b_lang_code]))];
     const nameMap = await resolveLanguageNames(db, langCodes, locales);
     const next = new Set<string>();

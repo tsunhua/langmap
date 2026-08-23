@@ -1,4 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 export class VoteError extends Error {
   constructor(public code: string) {
@@ -35,7 +36,11 @@ export async function castVote(
 ): Promise<{ score: number; user_vote: number }> {
   if (input.vote !== 1 && input.vote !== -1) throw new VoteError('VOTE_INVALID_VALUE');
 
-  const target = await db.prepare(EDGE_EXISTS_SQL).bind(input.target_id).first();
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
+  const targetQuery = releaseTablesReady
+    ? `SELECT 1 FROM expression_edges e WHERE e.id = ? AND ${edgeEligibilityPredicate('e')}`
+    : EDGE_EXISTS_SQL;
+  const target = await db.prepare(targetQuery).bind(input.target_id).first();
   if (!target) throw new VoteError('VOTE_TARGET_NOT_FOUND');
 
   const upsertVote = db

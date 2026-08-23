@@ -2,6 +2,7 @@ import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types'
 import type { EdgeRow, EdgeWithNeighborRow } from '../types/mapping';
 import { ulid } from '../utils/ulid';
 import { D1_WRITE_CHUNK_SIZE } from '../utils/limits';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
 
@@ -132,15 +133,21 @@ export async function getExpressionMappings(
   expressionId: string,
   query: { limit: number; offset: number },
 ): Promise<{ items: EdgeWithNeighborRow[]; total: number }> {
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
+  const eligibility = releaseTablesReady ? ` AND ${edgeEligibilityPredicate('e')}` : '';
+  const countQuery = releaseTablesReady
+    ? `SELECT COUNT(*) AS total FROM expression_edges e WHERE (e.expression_a_id = ? OR e.expression_b_id = ?)${edgeEligibilityPredicate('e') ? ` AND ${edgeEligibilityPredicate('e')}` : ''}`
+    : 'SELECT COUNT(*) AS total FROM expression_edges WHERE expression_a_id = ? OR expression_b_id = ?';
+  const pageQuery = releaseTablesReady
+    ? `SELECT e.id AS edge_id, n.id AS neighbor_id, n.lang_code AS neighbor_lang_code, n.text AS neighbor_text, e.score, e.source, e.created_at FROM expression_edges e JOIN expressions n ON n.id = CASE WHEN e.expression_a_id = ? THEN e.expression_b_id ELSE e.expression_a_id END WHERE (e.expression_a_id = ? OR e.expression_b_id = ?)${eligibility} ORDER BY e.score DESC, e.created_at ASC, e.id ASC LIMIT ? OFFSET ?`
+    : 'SELECT e.id AS edge_id, n.id AS neighbor_id, n.lang_code AS neighbor_lang_code, n.text AS neighbor_text, e.score, e.source, e.created_at FROM expression_edges e JOIN expressions n ON n.id = CASE WHEN e.expression_a_id = ? THEN e.expression_b_id ELSE e.expression_a_id END WHERE e.expression_a_id = ? OR e.expression_b_id = ? ORDER BY e.score DESC, e.created_at ASC, e.id ASC LIMIT ? OFFSET ?';
   const [countRow, page] = await Promise.all([
     db
-    .prepare('SELECT COUNT(*) AS total FROM expression_edges WHERE expression_a_id = ? OR expression_b_id = ?')
+    .prepare(countQuery)
     .bind(expressionId, expressionId)
     .first<{ total: number }>(),
     db
-    .prepare(
-      `SELECT e.id AS edge_id, n.id AS neighbor_id, n.lang_code AS neighbor_lang_code, n.text AS neighbor_text, e.score, e.source, e.created_at FROM expression_edges e JOIN expressions n ON n.id = CASE WHEN e.expression_a_id = ? THEN e.expression_b_id ELSE e.expression_a_id END WHERE e.expression_a_id = ? OR e.expression_b_id = ? ORDER BY e.score DESC, e.created_at ASC, e.id ASC LIMIT ? OFFSET ?`,
-    )
+    .prepare(pageQuery)
     .bind(expressionId, expressionId, expressionId, query.limit, query.offset)
     .all<EdgeWithNeighborRow>(),
   ]);

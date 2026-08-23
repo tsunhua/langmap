@@ -7,7 +7,7 @@ import { attachFormOf } from './morphology';
 import { SourceError } from './sources';
 import { resolveProvenance, type SourceInput } from './provenance';
 import { listExpressionPartsOfSpeech } from './dictionaryReleases';
-import { releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
+import { dictionaryReleaseSchemaAvailable, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 // Expression columns qualified with the `e.` alias so they stay unambiguous
@@ -138,10 +138,7 @@ export async function getExpression(
 
   // Older local databases may be queried while the release migration is still
   // pending. Keep their detail response compatible until the new tables exist.
-  const dictionarySchema = await db.prepare(
-    "SELECT 1 AS available FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_dataset_state'",
-  ).bind().first<{ available: number }>();
-  const releaseTablesReady = Boolean(dictionarySchema?.available);
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
   const attestationPredicate = releaseTablesReady ? ` AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a.id')}` : '';
   const readingPredicate = releaseTablesReady ? ` AND ${releaseObjectEligibilityPredicate('reading', 'r.id')}` : '';
   const [attestationResult, readingResult, partsOfSpeech] = await Promise.all([

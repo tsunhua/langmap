@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { success } from '../utils/response';
 import { parseLocaleHints, resolveLanguageNames } from '../services/localizedName';
 import type { Bindings } from '../types';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from '../services/dictionaryReleaseEligibility';
 
 const feed = new Hono<{ Bindings: Bindings }>();
 
@@ -22,11 +23,14 @@ const EDGE_COLUMNS = `ed.id, ed.score, ed.source, ed.created_at,
   b.id AS b_id, b.text AS b_text, b.lang_code AS b_lang`;
 
 feed.get('/hot', async (c) => {
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
+  const edgePredicate = releaseTablesReady ? ` WHERE ${edgeEligibilityPredicate('ed')}` : '';
   const { results } = await c.env.DB.prepare(
     `SELECT ${EDGE_COLUMNS}
      FROM expression_edges ed
      JOIN expressions a ON a.id = ed.expression_a_id
      JOIN expressions b ON b.id = ed.expression_b_id
+     ${edgePredicate}
      ORDER BY ed.score DESC, ed.created_at DESC, ed.id ASC
      LIMIT ?`,
   ).bind(parseLimit(c.req.query('limit'))).all<{ a_lang: string; b_lang: string }>();
@@ -37,6 +41,8 @@ feed.get('/hot', async (c) => {
 
 feed.get('/new', async (c) => {
   const limit = parseLimit(c.req.query('limit'));
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
+  const mappingPredicate = releaseTablesReady ? ` WHERE ${edgeEligibilityPredicate('ed')}` : '';
   const { results } = await c.env.DB.prepare(
     `WITH latest_mappings AS (
        SELECT 'mapping' AS type, ed.id AS id, ed.created_at, u.username AS author,
@@ -47,6 +53,7 @@ feed.get('/new', async (c) => {
        JOIN expressions a ON a.id = ed.expression_a_id
        JOIN expressions b ON b.id = ed.expression_b_id
        LEFT JOIN users u ON u.id = ed.created_by
+       ${mappingPredicate}
        ORDER BY ed.created_at DESC, ed.id ASC
        LIMIT ?
      ), latest_expressions AS (
