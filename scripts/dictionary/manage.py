@@ -11,8 +11,11 @@ from pathlib import Path
 
 from langmap_dictionary.adapters.traditional_chinese_english import normalize_release
 from langmap_dictionary.clusters import build_explicit_clusters
+from langmap_dictionary.corpus import freeze_corpus, scan_corpus
 from langmap_dictionary.loader import load_jsonl_release
 from langmap_dictionary.preview import build_preview
+from langmap_dictionary.quality import evaluate_quality
+from langmap_dictionary.report import write_quality_report
 from langmap_dictionary.schema import create_staging_database
 from langmap_dictionary.publisher import publish_command
 from langmap_dictionary.reconciliation import reconcile_release
@@ -46,6 +49,13 @@ def _parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--config", required=True, type=Path)
     reconcile.add_argument("--provider-command", required=True, nargs="+", type=str)
     reconcile.add_argument("--output", type=Path)
+    corpus = commands.add_parser("corpus", help="freeze and validate a complete v2 corpus")
+    corpus.add_argument("action", choices=("freeze", "validate", "report"))
+    corpus.add_argument("--input", required=True, type=Path)
+    corpus.add_argument("--output", required=True, type=Path)
+    corpus.add_argument("--database", type=Path)
+    corpus.add_argument("--release")
+    corpus.add_argument("--profiles", type=Path, default=Path(__file__).parent / "config" / "dictionaries.json")
     return parser
 
 
@@ -58,8 +68,8 @@ def main(argv: list[str] | None = None) -> int:
             summary = load_jsonl_release(connection, args.jsonl)
             print(json.dumps({"release_id": summary.release_id, "manifest_hash": summary.manifest_hash, "input_records": summary.input_records, "staged_entries": summary.staged_entries, "staged_senses": summary.staged_senses, "quarantined": summary.quarantined}, ensure_ascii=False, sort_keys=True))
             return 0
-        connection = create_staging_database(args.database)
         if args.command == "preview":
+            connection = create_staging_database(args.database)
             normalize_release(connection, args.release)
             summary = build_explicit_clusters(connection, args.release)
             manifest = build_preview(connection, args.release, args.output)
@@ -91,6 +101,28 @@ def main(argv: list[str] | None = None) -> int:
             connection.commit()
             print(json.dumps({"release_id": args.release, "candidates": len(summary.candidates), "decisions": len(summary.decisions), "accepted_merges": len(summary.accepted_pairs), "clusters": len(summary.clusters), "config_hash": summary.config_hash, "provider_error": summary.provider_error}, ensure_ascii=False, sort_keys=True))
             return 0
+        if args.command == "corpus":
+            if args.action == "freeze":
+                first = scan_corpus(args.input)
+                second = scan_corpus(args.input)
+                payload = freeze_corpus(first, second)
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+                print(json.dumps({"files": len(payload["files"]), "corpus_hash": payload["corpus_hash"], "output": str(args.output)}, ensure_ascii=False, sort_keys=True))
+                return 0
+            if args.database is None or not args.release:
+                raise ValueError("corpus validate/report require --database and --release")
+            profiles_payload = json.loads(args.profiles.read_text(encoding="utf-8"))
+            profiles = profiles_payload.get("profiles", {}) if isinstance(profiles_payload, dict) else {}
+            connection = create_staging_database(args.database)
+            gate = evaluate_quality(connection, args.release, profiles)
+            if args.action == "report":
+                write_quality_report(args.output, gate, release_id=args.release)
+            print(json.dumps(gate.to_dict() | {"release_id": args.release, "output": str(args.output) if args.action == "report" else None}, ensure_ascii=False, sort_keys=True))
+            return 0 if gate.passed else 1
+        if args.command != "inspect":
+            raise ValueError(f"unknown command: {args.command}")
+        connection = create_staging_database(args.database)
         row = connection.execute("SELECT * FROM staging_releases WHERE id=?", (args.release,)).fetchone()
         if row is None:
             raise ValueError(f"unknown release: {args.release}")

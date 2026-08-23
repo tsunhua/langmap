@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "profiles": {
+    "com.apple.dictionary.zh_TW-en.DrEye": {
+      "adapter": "traditional-chinese-english",
+      "source_profile": "eng",
+      "target_profile": "cmn-Hant-TW",
+      "reading_schemes": ["ipa", "zhuyin"],
+      "pos": ["noun", "verb", "adjective", "adverb", "phrase"]
+    }
+  }
+}
