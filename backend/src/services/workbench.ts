@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { escapeLike } from './languageIdentity';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 export interface WorkbenchCandidate {
   edge_id: string;
@@ -69,6 +70,14 @@ FROM ranked
 WHERE candidate_rank <= 5
 ORDER BY message_key ASC, score DESC, created_at ASC, target_id ASC`;
 
+function eligibleCandidatesSql(): string {
+  const edge = edgeEligibilityPredicate('e');
+  const attestation = `EXISTS (SELECT 1 FROM expression_locale_attestations a_att WHERE a_att.expression_id = t.id AND a_att.language_locale_code = ? AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a_att.id')})`;
+  return CANDIDATES_SQL
+    .replaceAll('    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)', `    AND ${attestation}`)
+    .replaceAll('  WHERE m.project_id = ? AND m.status = ?', `  WHERE ${edge} AND m.project_id = ? AND m.status = ?`);
+}
+
 function parsePlaceholders(placeholdersJson: string): string[] {
   try {
     const parsed: unknown = JSON.parse(placeholdersJson);
@@ -115,8 +124,9 @@ export async function loadWorkbenchMessages(
   if (!langRow) return { items, total };
 
   const keys = items.map((item) => item.key);
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
   const { results: candidateRows } = await db
-    .prepare(CANDIDATES_SQL)
+    .prepare(releaseTablesReady ? eligibleCandidatesSql() : CANDIDATES_SQL)
     .bind(projectId, 'active', JSON.stringify(keys), langRow.lang_code, languageLocaleCode, projectId, 'active', JSON.stringify(keys), langRow.lang_code, languageLocaleCode)
     .all<CandidateRow>();
 

@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { parseLanguageLocaleCode } from './languageIdentity';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 export type IdentityKind = 'language' | 'locale';
 
@@ -138,7 +139,13 @@ async function loadCandidateMap(
 ): Promise<Map<string, string>> {
   if (sourceIds.length === 0 || !langCode) return new Map();
   const bindings = [JSON.stringify(sourceIds), langCode, localeCode, JSON.stringify(sourceIds), langCode, localeCode];
-  const { results } = await db.prepare(CANDIDATE_SQL).bind(...bindings).all<CandidateRow>();
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
+  const candidateSql = releaseTablesReady
+    ? CANDIDATE_SQL
+      .replaceAll('    AND e.score >= 0', `    AND ${edgeEligibilityPredicate('e')}\n    AND e.score >= 0`)
+      .replaceAll('AND a.language_locale_code = ?)', `AND a.language_locale_code = ? AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a.id')})`)
+    : CANDIDATE_SQL;
+  const { results } = await db.prepare(candidateSql).bind(...bindings).all<CandidateRow>();
   const selected = new Map<string, string>();
   for (const row of results) {
     if (selected.has(row.source_id)) continue;

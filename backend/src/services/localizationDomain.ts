@@ -1,4 +1,5 @@
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 export interface BundleEntry {
   key: string;
@@ -60,6 +61,14 @@ FROM ranked
 WHERE candidate_rank <= 5
 ORDER BY message_key ASC, score DESC, created_at ASC, target_id ASC`;
 
+function eligibleCandidateSql(): string {
+  const edge = edgeEligibilityPredicate('e');
+  const attestation = `EXISTS (SELECT 1 FROM expression_locale_attestations a_att WHERE a_att.expression_id = t.id AND a_att.language_locale_code = ? AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a_att.id')})`;
+  return CANDIDATE_SQL
+    .replaceAll('    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)', `    AND ${attestation}`)
+    .replaceAll('  WHERE m.project_id = ? AND m.status = ?', `  WHERE ${edge} AND m.project_id = ? AND m.status = ?`);
+}
+
 const EXPRESSION_LANGS_SQL = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
 
 const PROJECT_LOCALES_FOR_LANG_SQL = 'SELECT language_locale_code FROM ui_locales WHERE project_id = ? AND language_locale_code LIKE ? ORDER BY language_locale_code ASC LIMIT 200';
@@ -100,8 +109,9 @@ async function loadCandidatesForLanguage(
   langCode: string,
 ): Promise<Map<string, string>> {
 
+  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
   const { results } = await db
-    .prepare(CANDIDATE_SQL)
+    .prepare(releaseTablesReady ? eligibleCandidateSql() : CANDIDATE_SQL)
     .bind(projectId, 'active', langCode, localeCode, projectId, 'active', langCode, localeCode)
     .all<CandidateRow>();
 
