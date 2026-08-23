@@ -34,6 +34,15 @@ def build_local_status(paths: ProjectPaths) -> dict[str, Any]:
     desired = compute_bootstrap_fingerprint(default_fingerprint_inputs(paths))
     stored = load_stored_fingerprint(paths.local_fingerprint_path)
     state_exists = paths.local_d1_state_dir.exists()
+    active_release = None
+    sidecar = paths.dictionary_state_dir / "active-release.json"
+    if sidecar.exists():
+        try:
+            payload = json.loads(sidecar.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and payload.get("release_id"):
+                active_release = str(payload["release_id"])
+        except (OSError, json.JSONDecodeError):
+            active_release = None
     return {
         "environment": "local",
         "command": "status",
@@ -42,6 +51,7 @@ def build_local_status(paths: ProjectPaths) -> dict[str, Any]:
         "stored_fingerprint": stored,
         "state_exists": state_exists,
         "rebuild_required": (stored != desired) or (not state_exists),
+        "active_dictionary_release_id": active_release,
     }
 
 

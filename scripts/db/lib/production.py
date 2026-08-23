@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import uuid
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from lib import migrations
 from lib.reference import diff_owned_references
 from lib.paths import ProjectPaths
 from lib.runner import CommandError, run_command
+from lib.dictionary_release import ReleasePaths, apply_release as apply_dictionary_release, verify_release as verify_dictionary_release, activate_release as activate_dictionary_release
 
 
 class ProductionInventoryError(RuntimeError):
@@ -290,6 +292,7 @@ def plan_production(
     *,
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
+    dictionary_artifact_manifest: Path | None = None,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
     operation_id = uuid.uuid4().hex
@@ -341,6 +344,9 @@ def plan_production(
         remote_keys,
         owned_keys=set(remote_keys),
     )
+    dictionary_artifact: dict[str, Any] | None = None
+    if dictionary_artifact_manifest is not None:
+        dictionary_artifact = _validate_dictionary_artifact(paths, dictionary_artifact_manifest)
     plan = {
         "status": "blocked" if baseline_error else "ready",
         "environment": "production",
@@ -373,6 +379,7 @@ def plan_production(
             "system_ui": str(paths.system_ui_sql_path.relative_to(paths.repo_root)),
         },
         "approved_data_migration": None,
+        "dictionary_artifact": dictionary_artifact,
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
     return plan
@@ -416,6 +423,7 @@ def apply_production(
     confirmation: str,
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
+    confirm_release_id: str | None = None,
 ) -> dict[str, Any]:
     plan = _load_plan(plan_path)
     configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
@@ -448,8 +456,33 @@ def apply_production(
         journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
         if plan.get("pending_migrations"):
             executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
+        dictionary_artifact = plan.get("dictionary_artifact")
+        if dictionary_artifact:
+            release_id = str(dictionary_artifact.get("release_id", ""))
+            if not confirm_release_id or confirm_release_id != release_id:
+                raise ProductionInventoryError("dictionary release confirmation mismatch")
+            manifest_path = _resolve_dictionary_artifact(paths, str(dictionary_artifact["manifest_path"]))
+            result = apply_dictionary_release(
+                ReleasePaths(paths.repo_root, paths.state_dir),
+                manifest_path,
+                environment="production",
+                database_name=database_name,
+                wrangler_bin=executor.wrangler_bin,
+                env=env,
+            )
+            if result.status != "validated":
+                raise ProductionInventoryError("dictionary release did not validate")
+            activate_dictionary_release(
+                ReleasePaths(paths.repo_root, paths.state_dir),
+                release_id,
+                environment="production",
+                database_name=database_name,
+                wrangler_bin=executor.wrangler_bin,
+                env=env,
+            )
+            journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "dictionary-release-activated", "release_id": release_id})
         approved_data_migration = plan.get("approved_data_migration")
-        if approved_data_migration:
+        if approved_data_migration and not dictionary_artifact:
             data_path = _resolve_managed_artifact(paths, str(approved_data_migration))
             executor.mutate(
                 ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
@@ -587,6 +620,49 @@ def _resolve_managed_artifact(paths: ProjectPaths, relative_path: str) -> Path:
     return candidate
 
 
+def _resolve_dictionary_artifact(paths: ProjectPaths, relative_path: str) -> Path:
+    candidate = (paths.repo_root / relative_path).resolve()
+    try:
+        candidate.relative_to(paths.dictionary_artifacts_dir.resolve())
+    except ValueError as exc:
+        raise ProductionInventoryError("dictionary artifact escapes managed artifact directory") from exc
+    if not candidate.is_file():
+        raise ProductionInventoryError("dictionary artifact manifest is missing")
+    return candidate
+
+
+def _validate_dictionary_artifact(paths: ProjectPaths, manifest_path: Path) -> dict[str, Any]:
+    candidate = Path(manifest_path)
+    if candidate.is_absolute():
+        try:
+            candidate.relative_to(paths.repo_root)
+        except ValueError as exc:
+            raise ProductionInventoryError("dictionary artifact must be inside repository") from exc
+    resolved = _resolve_dictionary_artifact(paths, str(candidate))
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProductionInventoryError("dictionary artifact manifest is invalid") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("release_id"), str):
+        raise ProductionInventoryError("dictionary artifact manifest requires release_id")
+    chunks = payload.get("chunks")
+    if not isinstance(chunks, list) or not chunks:
+        raise ProductionInventoryError("dictionary artifact manifest requires chunks")
+    for chunk in chunks:
+        if not isinstance(chunk, dict) or not isinstance(chunk.get("path"), str):
+            raise ProductionInventoryError("dictionary artifact chunk descriptor is invalid")
+        chunk_path = (resolved.parent / chunk["path"]).resolve()
+        try:
+            chunk_path.relative_to(paths.dictionary_artifacts_dir.resolve())
+        except ValueError as exc:
+            raise ProductionInventoryError("dictionary chunk escapes managed artifact directory") from exc
+        if not chunk_path.is_file():
+            raise ProductionInventoryError("dictionary artifact chunk is missing")
+        if chunk.get("sha256") != _sha256_path(chunk_path):
+            raise ProductionInventoryError("dictionary artifact chunk checksum mismatch")
+    return {"manifest_path": str(resolved.relative_to(paths.repo_root)), "manifest_sha256": _sha256_path(resolved), "release_id": payload["release_id"], "manifest_hash": payload.get("manifest_hash"), "chunks": chunks, "expected_counts": payload.get("expected_counts", {})}
+
+
 def _extract_bookmark(payload: Any) -> str:
     if isinstance(payload, dict):
         for key in ("bookmark", "current_bookmark", "previous_bookmark"):
@@ -620,6 +696,14 @@ def _current_git_commit(paths: ProjectPaths) -> str:
     except CommandError as exc:
         raise ProductionInventoryError("unable to determine current Git commit") from exc
     return result.stdout.strip()
+
+
+def _sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def classify_migration_risk(path: Path) -> str:

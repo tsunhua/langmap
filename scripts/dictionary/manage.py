@@ -14,6 +14,7 @@ from langmap_dictionary.clusters import build_explicit_clusters
 from langmap_dictionary.loader import load_jsonl_release
 from langmap_dictionary.preview import build_preview
 from langmap_dictionary.schema import create_staging_database
+from langmap_dictionary.publisher import publish_command
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -29,6 +30,14 @@ def _parser() -> argparse.ArgumentParser:
     inspect = commands.add_parser("inspect", help="show staging counts")
     inspect.add_argument("--database", required=True, type=Path)
     inspect.add_argument("--release", required=True)
+    for name in ("plan", "apply", "verify", "activate", "rollback"):
+        command = commands.add_parser(name, help=f"{name} a compiled D1 release artifact")
+        command.add_argument("--manifest", required=True, type=Path)
+        command.add_argument("--root", type=Path, default=Path.cwd())
+        command.add_argument("--environment", choices=("local", "production"), default="local")
+        command.add_argument("--database-name", default="DB")
+        command.add_argument("--release-id")
+        command.add_argument("--parent-release-id")
     return parser
 
 
@@ -47,6 +56,10 @@ def main(argv: list[str] | None = None) -> int:
             summary = build_explicit_clusters(connection, args.release)
             manifest = build_preview(connection, args.release, args.output)
             print(json.dumps({"release_id": manifest.release_id, "manifest_hash": manifest.manifest_hash, "clusters": summary.clusters, "output": str(args.output)}, ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.command in {"plan", "apply", "verify", "activate", "rollback"}:
+            result = publish_command(args.root, args.command, args.manifest, environment=args.environment, database_name=args.database_name, release_id=args.release_id, parent_release_id=args.parent_release_id)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0
         row = connection.execute("SELECT * FROM staging_releases WHERE id=?", (args.release,)).fetchone()
         if row is None:
