@@ -152,8 +152,9 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "expression", row["id"], row["id"], row["object_action"]]))
     for row in binding_rows:
         statements.append(insert_or_ignore("dictionary_expression_bindings", ["release_id", "claim_key", "cluster_key", "role", "expression_id", "binding_kind"], [release_id, row["claim_key"], row["cluster_key"], row["role"], row["expression_id"], "allocated" if row["expression_id"] in allocated else "reused"]))
-    # Headword/equivalent and example text/translation pairs are the only
-    # online edges.  Definitions and labels remain in offline staging.
+    # Headword/equivalent and explicit synonym pairs are online edges.
+    # Example text/translation pairs are separate mappings; definitions and
+    # labels remain in offline staging.
     by_claim = {str(row["claim_key"]): row for row in binding_rows}
     head_by_sense: dict[str, dict[str, Any]] = {}
     for row in binding_rows:
@@ -161,7 +162,7 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
             head_by_sense[str(row["entry_key"])] = row
     evidence_count = edge_count = 0
     for row in binding_rows:
-        if row["role"] not in {"equivalent", "synonym", "example_translation"}:
+        if row["role"] not in {"equivalent", "synonym"}:
             continue
         head = head_by_sense.get(str(row["entry_key"]))
         if head is None or head["expression_id"] == row["expression_id"]:
@@ -171,8 +172,32 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
         statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
         statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "edge", edge_id, row["claim_key"], "reused" if edge_id in inventory.edges_by_pair.values() else "created"]))
-        evidence_kind = "example" if row["role"] == "example_translation" else "synonym" if row["role"] == "synonym" else "equivalent"
+        evidence_kind = "synonym" if row["role"] == "synonym" else "equivalent"
         statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, row["claim_key"], evidence_kind]))
+        edge_count += 1
+        evidence_count += 1
+    example_pairs: dict[tuple[str, str, str], dict[str, dict[str, Any]]] = {}
+    for row in binding_rows:
+        if row["role"] not in {"example_text", "example_translation"}:
+            continue
+        claim = str(row["claim_key"])
+        try:
+            prefix, suffix = claim.rsplit(":example:", 1)
+            ordinal, side = suffix.split(":", 1)
+        except ValueError:
+            continue
+        example_pairs.setdefault((str(row["entry_key"]), prefix, ordinal), {})[side] = row
+    for pair_rows in example_pairs.values():
+        text_row = pair_rows.get("text")
+        translation_row = pair_rows.get("translation")
+        if text_row is None or translation_row is None or text_row["expression_id"] == translation_row["expression_id"]:
+            continue
+        left, right = sorted((text_row["expression_id"], translation_row["expression_id"]))
+        pair = _pair_key(left, right)
+        edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
+        statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
+        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "edge", edge_id, translation_row["claim_key"], "reused" if edge_id in inventory.edges_by_pair.values() else "created"]))
+        statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, translation_row["claim_key"], "example"]))
         edge_count += 1
         evidence_count += 1
     for row in connection.execute("SELECT * FROM normalized_pos WHERE release_id=? AND code IS NOT NULL AND errors_json='[]' ORDER BY sense_key, claim_key", (release_id,)):
