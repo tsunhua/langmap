@@ -2,25 +2,35 @@
 
 將 dictionary CSV 的詞句提交到本地 LangMap API。一般語言欄位會建立 expression 並參與 mapping；`cmn-Bopo-zhuyin` 與 `cmn-Latn-pinyin` 會寫成 `cmn` expression 的 readings，不會建立獨立節點。
 
-## Structured JSONL
+## Structured JSONL staging
 
-將結構化 dictionary JSONL 轉成可重跑的 SQL，適用於目前的本地 D1：
+Structured JSONL v2 先寫入離線 staging SQLite，再產生可審查的 preview artifact；此流程不直接產生或執行 SQL：
 
 ```bash
-python3 scripts/dictionary/import_structured_jsonl.py \
+python3 scripts/dictionary/manage.py stage \
   '/Users/lim/Documents/Code/tsunhua/dictionary/export/structured-jsonl/Traditional Chinese - English Idioms.jsonl' \
-  --sql-output /tmp/langmap-idioms/import.sql
+  --database /tmp/langmap-dictionary/staging.sqlite
 ```
 
-產生的 SQL 會把中文詞頭與英文義項寫成 expressions，建立跨語言 mapping 與中文讀音；英文義項開頭的 `• ` 會在寫入前移除。再依輸出摘要中的 `sql_files` 順序執行：
+使用 stage 指令輸出的 `release_id` 產生 preview：
 
 ```bash
-for file in /tmp/langmap-idioms/import-*.sql; do
-  (cd backend && npx wrangler d1 execute langmap-v2 --local --file="$file")
-done
+python3 scripts/dictionary/manage.py preview \
+  --database /tmp/langmap-dictionary/staging.sqlite \
+  --release release-... \
+  --output /tmp/langmap-dictionary/preview
+python3 scripts/dictionary/manage.py inspect \
+  --database /tmp/langmap-dictionary/staging.sqlite \
+  --release release-...
 ```
 
-同一個 `source_id` 重跑會使用既有唯一鍵去重；SQL 檔案可在導入完成後刪除。
+Preview 包含排序穩定的 `manifest.json`、`bindings.jsonl`、`quarantine.jsonl` 與 `quality-report.json`。釋義、標籤、關係、例句與詞性均保留在 staging；preview 只輸出可供後續發布的詞句綁定。舊的 flat importer 只保留遷移提示，請使用上述 `manage.py`。
+
+驗證 `cod` 三個同形詞保持分離：
+
+```bash
+python3 -m pytest scripts/dictionary/tests/test_cod_clusters.py -v
+```
 
 先查看 payload，不寫入資料庫：
 
