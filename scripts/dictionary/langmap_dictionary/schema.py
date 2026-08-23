@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS quarantine_items (
   FOREIGN KEY (release_id) REFERENCES staging_releases(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_input_entries_release_dict ON input_entries(release_id, dictionary_key);
+CREATE INDEX IF NOT EXISTS idx_input_senses_release_entry ON input_senses(release_id, entry_key, ordinal, sense_key);
 CREATE INDEX IF NOT EXISTS idx_quarantine_release_error ON quarantine_items(release_id, error_code);
 CREATE INDEX IF NOT EXISTS idx_occurrence_text ON lexical_occurrences(release_id, lang_code, canonical_text);
 CREATE INDEX IF NOT EXISTS idx_clusters_text ON lexical_clusters(release_id, lang_code, canonical_text);
