@@ -5,20 +5,30 @@
     "database_name": "langmap-v2"
   },
   "schema_objects": [
+    { "type": "index", "name": "idx_expression_edges_a_id" },
+    { "type": "index", "name": "idx_expression_edges_b_id" },
+    { "type": "index", "name": "idx_expression_edges_created_at" },
+    { "type": "index", "name": "idx_expression_edges_created_by_at" },
+    { "type": "index", "name": "idx_expression_edges_score_feed" },
     { "type": "index", "name": "idx_expression_form_edge_features_feature_code" },
     { "type": "index", "name": "idx_expression_form_edges_form_id" },
     { "type": "index", "name": "idx_expression_form_edges_lemma_id" },
+    { "type": "index", "name": "idx_expressions_created_at" },
+    { "type": "index", "name": "idx_expressions_created_by_at" },
     { "type": "index", "name": "idx_handbook_section_items_section" },
     { "type": "index", "name": "idx_handbook_sections_handbook" },
     { "type": "index", "name": "idx_handbook_sections_parent" },
     { "type": "index", "name": "idx_handbooks_score" },
+    { "type": "index", "name": "idx_handbooks_user_created_at" },
     { "type": "index", "name": "idx_handbooks_visibility_created" },
     { "type": "index", "name": "idx_languages_code" },
     { "type": "index", "name": "idx_regions_code" },
     { "type": "index", "name": "idx_scripts_code" },
+    { "type": "index", "name": "idx_ui_messages_source_expression" },
     { "type": "index", "name": "idx_users_email" },
     { "type": "index", "name": "idx_users_username" },
     { "type": "index", "name": "idx_votes_target" },
+    { "type": "index", "name": "idx_votes_user_created_at" },
     { "type": "table", "name": "_cf_KV" },
     { "type": "table", "name": "expression_edges" },
     { "type": "table", "name": "expression_form_edge_features" },
@@ -73,6 +83,10 @@
     "0026_localize_yue_name.sql": "0d3d3c6a9a3dc6e62890bfc9a3cab2ec81fae6877df3b39b21acc7175cc9f66e",
     "0027_nan_latin_jiazi_locale.sql": "4865714cc9745c979654afa16c8c1c25fd6f22fc52b8930df5613e74c055a984",
     "0028_handbook_language_profile.sql": "e18ffa38e4d90d2232e42269de7d55e4f434d7651a9ed357cc685fceaf61ba16",
-    "0029_handbook_section_hierarchy.sql": "8d50f92661d26182dd17df84f4577d20dab32c4f1d15a52922773d6fc3599d98"
+    "0029_handbook_section_hierarchy.sql": "8d50f92661d26182dd17df84f4577d20dab32c4f1d15a52922773d6fc3599d98",
+    "0030_unique_expression_locale_attestations.sql": "e0269fd21089bb6ee92a4a834acaa91112b7aaded255d2c94ee6313211560a90",
+    "0031_mapping_query_indexes.sql": "04398560950cbfa9542ce84018a988d73b6975ca5cd08046de0bb6e1c64abf94",
+    "0032_feed_created_at_indexes.sql": "7fc3d5f278e7f019dfe453eaa7011e51b7a796ea357cf70edd4bcff6da8ebc68",
+    "0033_api_performance_indexes.sql": "aaccac438fdeb0557a4ddb3d4085657af5f1ae3062bace7249c5bf9739b2f7ed"
   }
 }

@@ -52,6 +52,7 @@ class ProductionInventoryTests(unittest.TestCase):
             self.assertEqual(report["status"], "ok")
             self.assertEqual(report["identity"]["database_name"], "langmap-v2")
             self.assertEqual(report["counts"]["languages"], 62)
+            self.assertEqual(report["counts"]["managed_ui_edges"], 1058)
             self.assertEqual(report["counts"]["orphan_expression_edges"], 0)
             self.assertTrue(paths.production_inventory_report_path.exists())
             report_text = paths.production_inventory_report_path.read_text(encoding="utf-8")

@@ -745,7 +745,7 @@ SELECT 'votes' AS metric, COUNT(*) AS count FROM votes;
 SELECT 'ui_locales' AS metric, COUNT(*) AS count FROM ui_locales;
 SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';
-SELECT 'managed_ui_edges' AS metric, COUNT(*) FROM expression_edges WHERE id LIKE 'ui-edge:%';
+SELECT 'managed_ui_edges' AS metric, COUNT(*) AS count FROM expression_edges WHERE id LIKE 'ui-edge:%';
 SELECT 'ui_key' AS kind, message_key AS key, source_expression_id AS source_hash
 FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY message_key;
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;
