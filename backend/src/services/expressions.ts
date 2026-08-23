@@ -1,11 +1,13 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { ExpressionRow, LocaleAttestationRow, ReadingRow } from '../types/expression';
+import type { ExpressionRow, ExpressionPartOfSpeech, LocaleAttestationRow, ReadingRow } from '../types/expression';
 import type { SearchFormOfDto } from '../types/morphology';
 import { buildExpressionId, canonicalizeExpressionText, computeTextHash } from './expressionIdentity';
 import { resolveLanguageNames, type LocaleHints } from './localizedName';
 import { attachFormOf } from './morphology';
 import { SourceError } from './sources';
 import { resolveProvenance, type SourceInput } from './provenance';
+import { listExpressionPartsOfSpeech } from './dictionaryReleases';
+import { releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 // Expression columns qualified with the `e.` alias so they stay unambiguous
@@ -127,24 +129,33 @@ export async function searchExpressions(
 export async function getExpression(
   db: D1Database,
   id: string,
-): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null; created_by_username: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }> } | null> {
+): Promise<{ expression: ExpressionRow & { source_type: string | null; source_name: string | null; created_by_username: string | null }; attestations: LocaleAttestationRow[]; readings: Array<ReadingRow & { source_type: string | null; source_name: string | null }>; parts_of_speech: ExpressionPartOfSpeech[] } | null> {
   const expression = await db
     .prepare(`SELECT ${EXPRESSION_DETAIL_COLUMNS}, s.type AS source_type, s.name AS source_name, u.username AS created_by_username FROM expressions e LEFT JOIN sources s ON s.id = e.source_id LEFT JOIN users u ON u.id = e.created_by WHERE e.id = ?`)
     .bind(id)
     .first<ExpressionRow & { created_by_username: string | null }>();
   if (!expression) return null;
 
-  const [attestationResult, readingResult] = await Promise.all([
+  // Older local databases may be queried while the release migration is still
+  // pending. Keep their detail response compatible until the new tables exist.
+  const dictionarySchema = await db.prepare(
+    "SELECT 1 AS available FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_dataset_state'",
+  ).bind().first<{ available: number }>();
+  const releaseTablesReady = Boolean(dictionarySchema?.available);
+  const attestationPredicate = releaseTablesReady ? ` AND ${releaseObjectEligibilityPredicate('locale_attestation', 'a.id')}` : '';
+  const readingPredicate = releaseTablesReady ? ` AND ${releaseObjectEligibilityPredicate('reading', 'r.id')}` : '';
+  const [attestationResult, readingResult, partsOfSpeech] = await Promise.all([
     db.prepare(
-      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? ORDER BY a.language_locale_code ASC, a.created_at ASC, a.id ASC`,
+      `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ?${attestationPredicate} ORDER BY a.language_locale_code ASC, a.created_at ASC, a.id ASC`,
     ).bind(id).all<LocaleAttestationRow & { created_by_username: string | null }>(),
     db.prepare(
-      `SELECT ${READING_DETAIL_COLUMNS} FROM expression_readings r LEFT JOIN sources s ON s.id = r.source_id WHERE r.expression_id = ? ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC`,
+      `SELECT ${READING_DETAIL_COLUMNS} FROM expression_readings r LEFT JOIN sources s ON s.id = r.source_id WHERE r.expression_id = ?${readingPredicate} ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC`,
     ).bind(id).all<ReadingRow & { source_type: string | null; source_name: string | null }>(),
+    releaseTablesReady ? listExpressionPartsOfSpeech(db, id) : Promise.resolve([]),
   ]);
   const { results } = attestationResult;
   const { results: readings } = readingResult;
-  return { expression, attestations: results, readings };
+  return { expression, attestations: results, readings, parts_of_speech: partsOfSpeech };
 }
 
 export async function createLocaleAttestation(

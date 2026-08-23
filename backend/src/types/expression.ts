@@ -36,3 +36,8 @@ export interface ReadingRow {
   created_by: number | null;
   created_at: string;
 }
+
+export interface ExpressionPartOfSpeech {
+  code: string;
+  name_en: string;
+}
