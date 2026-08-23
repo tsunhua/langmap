@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Sequence
@@ -108,20 +109,41 @@ def _child_text(item: Any, key: str, label: str) -> str:
 
 
 def _insert_entry(connection: sqlite3.Connection, release_id: str, record: dict[str, Any]) -> tuple[int, int]:
+    rows, sense_count = _entry_rows(release_id, record)
+    for table in ("input_entries", "input_forms", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
+        values = rows[table]
+        if values:
+            connection.executemany(_INSERT_SQL[table], values)
+    return 1, sense_count
+
+
+_INSERT_SQL = {
+    "input_entries": "INSERT INTO input_entries VALUES (?,?,?,?,?,?,?,?,?)",
+    "input_forms": "INSERT INTO input_forms VALUES (?,?,?,?,?)",
+    "input_pronunciations": "INSERT INTO input_pronunciations VALUES (?,?,?,?,?,?)",
+    "input_senses": "INSERT INTO input_senses VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+    "input_equivalents": "INSERT INTO input_equivalents VALUES (?,?,?,?,?,?)",
+    "input_relations": "INSERT INTO input_relations VALUES (?,?,?,?,?,?,?,?)",
+    "input_examples": "INSERT INTO input_examples VALUES (?,?,?,?,?,?)",
+    "input_pos": "INSERT INTO input_pos VALUES (?,?,?,?,?)",
+}
+
+
+def _entry_rows(release_id: str, record: dict[str, Any]) -> tuple[dict[str, list[tuple[Any, ...]]], int]:
+    rows: dict[str, list[tuple[Any, ...]]] = defaultdict(list)
     entry_key = record["entry_key"]
-    connection.execute(
-        "INSERT INTO input_entries VALUES (?,?,?,?,?,?,?,?,?)",
-        (release_id, entry_key, record["dictionary_key"], record["raw_headword"], record["canonical_headword"], record.get("homograph_marker"), record.get("direction_hint"), record["record_fingerprint"], _json(record)),
+    rows["input_entries"].append(
+        (release_id, entry_key, record["dictionary_key"], record["raw_headword"], record["canonical_headword"], record.get("homograph_marker"), record.get("direction_hint"), record["record_fingerprint"], _json(record))
     )
     for ordinal, item in enumerate(record["forms"], 1):
         value = _child_text(item, "value", f"form {ordinal}")
-        connection.execute("INSERT INTO input_forms VALUES (?,?,?,?,?)", (release_id, entry_key, ordinal, value, _json(item)))
+        rows["input_forms"].append((release_id, entry_key, ordinal, value, _json(item)))
     for ordinal, item in enumerate(record["pronunciations"], 1):
         if not isinstance(item, dict):
             raise ValueError(f"pronunciation {ordinal} must be an object")
         value = _text(item.get("value"), f"pronunciation {ordinal}.value")
         scheme = _text(item.get("scheme"), f"pronunciation {ordinal}.scheme")
-        connection.execute("INSERT INTO input_pronunciations VALUES (?,?,?,?,?,?)", (release_id, entry_key, ordinal, value, scheme, _json(item)))
+        rows["input_pronunciations"].append((release_id, entry_key, ordinal, value, scheme, _json(item)))
     sense_count = 0
     for fallback_ordinal, sense in enumerate(record["senses"], 1):
         if not isinstance(sense, dict):
@@ -131,29 +153,28 @@ def _insert_entry(connection: sqlite3.Connection, release_id: str, record: dict[
         if not isinstance(ordinal, int) or ordinal < 1:
             raise ValueError(f"sense {sense_key}.ordinal must be positive")
         arrays = {key: _array(sense.get(key, []), f"sense {sense_key}.{key}") for key in ("definitions", "pos", "equivalents", "relations", "examples", "labels")}
-        connection.execute(
-            "INSERT INTO input_senses VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (release_id, sense_key, entry_key, ordinal, *(_json(arrays[key]) for key in ("definitions", "pos", "equivalents", "relations", "examples", "labels")), _json(sense)),
+        rows["input_senses"].append(
+            (release_id, sense_key, entry_key, ordinal, *(_json(arrays[key]) for key in ("definitions", "pos", "equivalents", "relations", "examples", "labels")), _json(sense))
         )
         for child_ordinal, item in enumerate(arrays["equivalents"], 1):
             value = _child_text(item, "value", f"equivalent {sense_key}:{child_ordinal}")
             language_hint = item.get("language") or item.get("language_hint") if isinstance(item, dict) else None
-            connection.execute("INSERT INTO input_equivalents VALUES (?,?,?,?,?,?)", (release_id, sense_key, child_ordinal, value, language_hint, _json(item)))
+            rows["input_equivalents"].append((release_id, sense_key, child_ordinal, value, language_hint, _json(item)))
         for child_ordinal, item in enumerate(arrays["relations"], 1):
             if not isinstance(item, dict):
                 raise ValueError(f"relation {sense_key}:{child_ordinal} must be an object")
             kind = _text(item.get("kind"), "relation.kind")
             related_text = _child_text(item, "related_text", "relation.related_text")
-            connection.execute("INSERT INTO input_relations VALUES (?,?,?,?,?,?,?,?)", (release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language"), _json(item)))
+            rows["input_relations"].append((release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language"), _json(item)))
         for child_ordinal, item in enumerate(arrays["examples"], 1):
             text = _child_text(item, "text", f"example {sense_key}:{child_ordinal}")
             translation = item.get("translation") if isinstance(item, dict) else None
-            connection.execute("INSERT INTO input_examples VALUES (?,?,?,?,?,?)", (release_id, sense_key, child_ordinal, text, translation, _json(item)))
+            rows["input_examples"].append((release_id, sense_key, child_ordinal, text, translation, _json(item)))
         for child_ordinal, item in enumerate(arrays["pos"], 1):
             value = _child_text(item, "value", f"pos {sense_key}:{child_ordinal}")
-            connection.execute("INSERT INTO input_pos VALUES (?,?,?,?,?)", (release_id, sense_key, child_ordinal, value, _json(item)))
+            rows["input_pos"].append((release_id, sense_key, child_ordinal, value, _json(item)))
         sense_count += 1
-    return 1, sense_count
+    return rows, sense_count
 
 
 def _quarantine(connection: sqlite3.Connection, release_id: str, record: Any, error_code: str, detail: str) -> None:
@@ -162,7 +183,7 @@ def _quarantine(connection: sqlite3.Connection, release_id: str, record: Any, er
     connection.execute("INSERT OR IGNORE INTO quarantine_items (release_id,dictionary_key,entry_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?)", (release_id, dictionary_key, entry_key, error_code, detail, _json(record)))
 
 
-def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path]) -> StageSummary:
+def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *, batch_size: int = 500) -> StageSummary:
     """Load one or more v2 JSONL files atomically and idempotently."""
 
     if not paths:
@@ -173,7 +194,45 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path]) ->
     if existing is not None:
         return StageSummary(existing["input_records"], existing["staged_entries"], existing["staged_senses"], existing["quarantined"], manifest_hash, release_id)
 
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
     input_records = staged_entries = staged_senses = quarantined = 0
+    pending_rows: dict[str, list[tuple[Any, ...]]] = defaultdict(list)
+    pending_records: list[tuple[dict[str, Any], int]] = []
+
+    def flush_pending() -> tuple[int, int, int]:
+        nonlocal pending_rows, pending_records
+        if not pending_records:
+            return 0, 0, 0
+        inserted = senses = failed = 0
+        connection.execute("SAVEPOINT entry_batch")
+        try:
+            for table in ("input_entries", "input_forms", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
+                values = pending_rows[table]
+                if values:
+                    connection.executemany(_INSERT_SQL[table], values)
+            connection.execute("RELEASE SAVEPOINT entry_batch")
+            inserted = len(pending_records)
+            senses = sum(item[1] for item in pending_records)
+        except Exception:
+            connection.execute("ROLLBACK TO SAVEPOINT entry_batch")
+            connection.execute("RELEASE SAVEPOINT entry_batch")
+            for record, sense_count in pending_records:
+                connection.execute("SAVEPOINT entry_row")
+                try:
+                    _insert_entry(connection, release_id, record)
+                    connection.execute("RELEASE SAVEPOINT entry_row")
+                    inserted += 1
+                    senses += sense_count
+                except Exception as error:
+                    connection.execute("ROLLBACK TO SAVEPOINT entry_row")
+                    connection.execute("RELEASE SAVEPOINT entry_row")
+                    _quarantine(connection, release_id, record, "invalid_entry", str(error))
+                    failed += 1
+        pending_rows = defaultdict(list)
+        pending_records = []
+        return inserted, senses, failed
+
     connection.execute("BEGIN")
     try:
         connection.execute("INSERT INTO staging_releases (id,manifest_hash,schema_version,status) VALUES (?,?,1,'loading')", (release_id, manifest_hash))
@@ -201,16 +260,15 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path]) ->
                         input_records += 1
                         file_count += 1
                         validated = _entry(record, path, line_number, release_id)
-                        connection.execute("SAVEPOINT entry_row")
-                        try:
-                            inserted, senses = _insert_entry(connection, release_id, validated)
-                            connection.execute("RELEASE SAVEPOINT entry_row")
-                        except Exception:
-                            connection.execute("ROLLBACK TO SAVEPOINT entry_row")
-                            connection.execute("RELEASE SAVEPOINT entry_row")
-                            raise
-                        staged_entries += inserted
-                        staged_senses += senses
+                        rows, senses = _entry_rows(release_id, validated)
+                        for table, values in rows.items():
+                            pending_rows[table].extend(values)
+                        pending_records.append((validated, senses))
+                        if len(pending_records) >= batch_size:
+                            inserted, inserted_senses, failed = flush_pending()
+                            staged_entries += inserted
+                            staged_senses += inserted_senses
+                            quarantined += failed
                     except StageLoadError:
                         raise
                     except (ValueError, sqlite3.IntegrityError) as error:
@@ -218,6 +276,10 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path]) ->
                         _quarantine(connection, release_id, record if "record" in locals() else None, "invalid_entry", str(error))
                 if file_count != expected_count:
                     raise StageLoadError(f"{path}: entry_count {expected_count} does not match {file_count}")
+                inserted, inserted_senses, failed = flush_pending()
+                staged_entries += inserted
+                staged_senses += inserted_senses
+                quarantined += failed
         connection.execute("UPDATE staging_releases SET status='staged', input_records=?, staged_entries=?, staged_senses=?, quarantined=? WHERE id=?", (input_records, staged_entries, staged_senses, quarantined, release_id))
         connection.commit()
     except Exception as error:

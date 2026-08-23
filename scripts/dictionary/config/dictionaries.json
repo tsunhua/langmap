@@ -1,12 +1,170 @@
 {
-  "version": 1,
   "profiles": {
+    "com.apple.dictionary.NOAD": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OAWT": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ODE": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OTE": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OxfordFrench": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OxfordGerman": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OxfordItalian": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OxfordRussian": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.OxfordSpanish": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ar-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.bn-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.cs-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.da-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.de.DDDSI": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.el-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.es.DGLEV": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.fi-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.gu-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.hi-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.hr-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.hu-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.id-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ja-en.WISDOM": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ja.Daijirin": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.kk-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.kn-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ko-en.NewAce": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ko.NewAce": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ml-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ms-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.nl-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.no-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.pa-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.pl-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.pt-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.sk-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.sv-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ta-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.te-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.th-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.tr-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.uk-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.ur-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.vi-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.yue-en.cp": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.yue-en.oup": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_CN-en.OCD": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_CN.SDCC": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_CN.idioms": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_CN.thes": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_HK-en.idioms.cp": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_HK.common": {
+      "adapter": "traditional-chinese-english"
+    },
     "com.apple.dictionary.zh_TW-en.DrEye": {
-      "adapter": "traditional-chinese-english",
-      "source_profile": "eng",
-      "target_profile": "cmn-Hant-TW",
-      "reading_schemes": ["ipa", "zhuyin"],
-      "pos": ["noun", "verb", "adjective", "adverb", "phrase"]
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zh_TW.wn": {
+      "adapter": "traditional-chinese-english"
+    },
+    "com.apple.dictionary.zhs-ja.Crown": {
+      "adapter": "traditional-chinese-english"
     }
-  }
+  },
+  "version": 1
 }
