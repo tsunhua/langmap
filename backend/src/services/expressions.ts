@@ -7,7 +7,7 @@ import { attachFormOf } from './morphology';
 import { SourceError } from './sources';
 import { resolveProvenance, type SourceInput } from './provenance';
 import { listExpressionPartsOfSpeech } from './dictionaryReleases';
-import { dictionaryReleaseSchemaAvailable, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
+import { dictionaryReleaseSchemaAvailable, promoteManagedObject, releaseObjectEligibilityPredicate } from './dictionaryReleaseEligibility';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 // Expression columns qualified with the `e.` alias so they stay unambiguous
@@ -50,6 +50,9 @@ export async function createExpression(
     .first<{ id: string; text: string }>();
   if (existing) {
     if (existing.text !== text) throw new ExpressionError('EXPRESSION_HASH_COLLISION');
+    if (await dictionaryReleaseSchemaAvailable(db)) {
+      await promoteManagedObject(db, 'expression', existing.id, { kind: 'user', userId: input.created_by });
+    }
     if (input.language_locale_code) {
       await createLocaleAttestation(db, {
         expression_id: existing.id,
@@ -182,7 +185,12 @@ export async function createLocaleAttestation(
   const existing = await db.prepare(
     `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? AND a.language_locale_code = ?`,
   ).bind(input.expression_id, input.language_locale_code).first<LocaleAttestationRow>();
-  if (existing) return { attestation: existing, created: false };
+  if (existing) {
+    if (await dictionaryReleaseSchemaAvailable(db)) {
+      await promoteManagedObject(db, 'locale_attestation', existing.id, { kind: 'user', userId: input.created_by });
+    }
+    return { attestation: existing, created: false };
+  }
 
   const attestationId = crypto.randomUUID();
   await db

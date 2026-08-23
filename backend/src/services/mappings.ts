@@ -2,7 +2,7 @@ import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types'
 import type { EdgeRow, EdgeWithNeighborRow } from '../types/mapping';
 import { ulid } from '../utils/ulid';
 import { D1_WRITE_CHUNK_SIZE } from '../utils/limits';
-import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate } from './dictionaryReleaseEligibility';
+import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, promoteManagedObject } from './dictionaryReleaseEligibility';
 
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
 
@@ -28,7 +28,12 @@ export async function createEdge(
     .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE expression_a_id = ? AND expression_b_id = ?`)
     .bind(lowId, highId)
     .first<EdgeRow>();
-  if (existing) return { edge: existing, created: false };
+  if (existing) {
+    if (await dictionaryReleaseSchemaAvailable(db)) {
+      await promoteManagedObject(db, 'edge', existing.id, { kind: 'user', userId: input.created_by });
+    }
+    return { edge: existing, created: false };
+  }
 
   const id = ulid();
   await db
@@ -91,8 +96,15 @@ export async function createEdgesForPairs(
   }
 
   const statements: D1PreparedStatement[] = [];
+  const releaseTablesReady = existingByPair.size > 0 && await dictionaryReleaseSchemaAvailable(db);
   for (const pair of pairs) {
-    if (existingByPair.has(pairKey(pair.lowId, pair.highId))) continue;
+    const existing = existingByPair.get(pairKey(pair.lowId, pair.highId));
+    if (existing) {
+      if (releaseTablesReady) {
+        await promoteManagedObject(db, 'edge', existing.id, { kind: 'user', userId: input.created_by });
+      }
+      continue;
+    }
     pair.generatedId = ulid();
     statements.push(db.prepare(
       'INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, source, created_by) VALUES (?, ?, ?, ?, ?)',

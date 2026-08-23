@@ -2,6 +2,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { ReadingRow } from '../types/expression';
 import { SourceError } from './sources';
 import { NULL_SAFE_PROVENANCE_PREDICATE, resolveProvenance, type SourceInput } from './provenance';
+import { dictionaryReleaseSchemaAvailable, promoteManagedObject } from './dictionaryReleaseEligibility';
 
 const READING_COLUMNS = `id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by, created_at`;
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
@@ -60,7 +61,12 @@ export async function createReading(
   const existing = await db.prepare(
     `SELECT ${READING_COLUMNS} FROM expression_readings WHERE expression_id = ? AND language_locale_code = ? AND scheme = ? AND value = ? AND ${NULL_SAFE_PROVENANCE_PREDICATE}`,
   ).bind(input.expression_id, input.language_locale_code, input.scheme, trimmedValue, resolved.source_id, resolved.source_ref).first<ReadingRow>();
-  if (existing) return { reading: existing, created: false };
+  if (existing) {
+    if (await dictionaryReleaseSchemaAvailable(db)) {
+      await promoteManagedObject(db, 'reading', existing.id, { kind: 'user', userId: input.created_by });
+    }
+    return { reading: existing, created: false };
+  }
 
   const existingAttestation = await db.prepare(
     'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?',
