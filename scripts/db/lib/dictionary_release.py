@@ -166,7 +166,8 @@ def verify_release(paths: ReleasePaths, manifest_path: Path, *, environment: str
 
 
 def activate_release(paths: ReleasePaths, release_id: str, *, environment: str = "local", database_name: str = "DB", wrangler_bin: Path | None = None, env: Mapping[str, str] | None = None) -> dict[str, Any]:
-    sql = "BEGIN; UPDATE dictionary_dataset_state SET active_release_id='{}', updated_at=CURRENT_TIMESTAMP WHERE dataset_key='managed-dictionaries'; UPDATE dictionary_dataset_releases SET activated_at=COALESCE(activated_at,CURRENT_TIMESTAMP) WHERE id='{}'; COMMIT;".format(release_id.replace("'", "''"), release_id.replace("'", "''"))
+    escaped = release_id.replace("'", "''")
+    sql = "BEGIN; INSERT OR IGNORE INTO dictionary_dataset_state(dataset_key, active_release_id) VALUES ('managed-dictionaries', NULL); UPDATE dictionary_dataset_state SET active_release_id='{}', updated_at=CURRENT_TIMESTAMP WHERE dataset_key='managed-dictionaries'; UPDATE dictionary_dataset_releases SET activated_at=COALESCE(activated_at,CURRENT_TIMESTAMP) WHERE id='{}' AND status='validated'; COMMIT;".format(escaped, escaped)
     binary = wrangler_bin or (paths.repo_root / "backend" / "node_modules" / ".bin" / "wrangler")
     _run_command(wrangler_bin=binary, database_name=database_name, sql=sql, remote=environment == "production", cwd=paths.repo_root / "backend", env=env)
     return {"status": "activated", "release_id": release_id}
