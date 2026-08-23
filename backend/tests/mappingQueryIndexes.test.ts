@@ -39,4 +39,17 @@ describe('mapping query indexes', () => {
     expect(schema).toMatch(/idx_handbooks_user_created_at[\s\S]*?ON handbooks\(user_id, created_at DESC, id ASC\)/);
     expect(schema).toMatch(/idx_votes_user_created_at[\s\S]*?ON votes\(user_id, created_at DESC, target_id\)/);
   });
+
+  it('defines covering indexes for managed release visibility joins', () => {
+    for (const index of [
+      'idx_dictionary_bindings_expression',
+      'idx_dictionary_bindings_release_claim',
+      'idx_dictionary_edge_evidence_edge',
+      'idx_dictionary_edge_evidence_release',
+      'idx_dictionary_release_objects_object',
+      'idx_dictionary_release_objects_release',
+      'idx_dictionary_pos_expression',
+      'idx_dictionary_pos_release',
+    ]) expect(schema).toContain(index);
+  });
 });

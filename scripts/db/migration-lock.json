@@ -199,6 +199,12 @@
       "filename": "0033_api_performance_indexes.sql",
       "size": 631,
       "sha256": "aaccac438fdeb0557a4ddb3d4085657af5f1ae3062bace7249c5bf9739b2f7ed"
+    },
+    {
+      "sequence": 34,
+      "filename": "0034_dictionary_dataset_releases.sql",
+      "size": 5253,
+      "sha256": "0d23cd45922ee74ae525fca4eeb591d0838fc2f27a270b107262c8d5b64e50cd"
     }
   ]
 }

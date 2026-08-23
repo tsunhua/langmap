@@ -133,6 +133,28 @@ describe('greenfield schema contract', () => {
     expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?UNIQUE \(user_id, target_type, target_id\)/s);
   });
 
+  it('defines managed dictionary releases with one active pointer', () => {
+    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_releases[\s\S]*?artifact_hash TEXT NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_releases[\s\S]*?UNIQUE \(dataset_key, input_manifest_hash, adapter_bundle_hash, reconciliation_config_hash\)/s);
+    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_state[\s\S]*?active_release_id TEXT/s);
+    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_state[\s\S]*?dataset_key TEXT PRIMARY KEY/s);
+  });
+
+  it('defines release claims, evidence, ownership promotion and POS', () => {
+    for (const table of [
+      'dictionary_expression_bindings',
+      'expression_edge_evidence',
+      'dictionary_release_objects',
+      'parts_of_speech',
+      'expression_pos_attestations',
+    ]) expect(schema).toMatch(new RegExp(`CREATE TABLE ${table}`));
+    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?promoted_at TEXT/s);
+    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?promotion_actor_kind TEXT/s);
+    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?FOREIGN KEY \(promoted_by\) REFERENCES users\(id\)/s);
+    expect(schema).toMatch(/INSERT OR IGNORE INTO parts_of_speech[\s\S]*?\('noun', 'Noun', 1\)/s);
+    expect(schema).toMatch(/INSERT OR IGNORE INTO parts_of_speech[\s\S]*?\('phrase', 'Phrase', 15\)/s);
+  });
+
   it('does not contain obsolete identity tables', () => {
     for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
       expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));
