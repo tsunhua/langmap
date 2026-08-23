@@ -35,6 +35,18 @@ describe('contributions API', () => {
     expect(body.error).toBe('CONTRIBUTION_TOO_FEW_EXPRESSIONS');
   });
 
+  it('rejects an oversized contribution before creating expressions', async () => {
+    const token = await registerToken();
+    const res = await fetch(`${BASE_URL}/api/v2/contributions/batch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ expressions: Array.from({ length: 51 }, (_, index) => ({ lang_code: 'eng', text: `too-large-${index}` })) }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('CONTRIBUTION_BATCH_TOO_LARGE');
+  });
+
   it('creates a clique from three expressions', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 8);

@@ -97,21 +97,43 @@ describe('createEdge', () => {
 
 describe('createEdgesBatch', () => {
   it('creates a clique from 3 expressions and dedups pairs', async () => {
-    let insertCount = 0;
-    const db = fakeD1({
-      'SELECT id, expression_a_id, expression_b_id, score, source, created_by, created_at FROM expression_edges WHERE expression_a_id = ? AND expression_b_id = ?':
-        () => null,
-      'INSERT INTO expression_edges (id, expression_a_id, expression_b_id, source, created_by) VALUES (?, ?, ?, ?, ?)':
-        () => { insertCount += 1; return { success: true }; },
-      'SELECT id, expression_a_id, expression_b_id, score, source, created_by, created_at FROM expression_edges WHERE id = ?':
-        () => ({
-          id: `edge-${insertCount}`, expression_a_id: 'a', expression_b_id: 'b',
-          score: 0, source: 'contribution', created_by: 1, created_at: '2026-08-13',
-        }),
-    });
+    const rows = new Map<string, EdgeRow>();
+    const db = {
+      prepare(sql: string) {
+        return {
+          bind(...args: unknown[]) {
+            return {
+              async all<T>() {
+                if (!sql.includes('WHERE (expression_a_id = ? AND expression_b_id = ?)')) return { results: [] as T[] };
+                const results: EdgeRow[] = [];
+                for (let index = 0; index < args.length; index += 2) {
+                  const key = `${String(args[index])}\u0000${String(args[index + 1])}`;
+                  const row = rows.get(key);
+                  if (row) results.push(row);
+                }
+                return { results: results as T[] };
+              },
+              async run() {
+                const id = String(args[0]);
+                const lowId = String(args[1]);
+                const highId = String(args[2]);
+                rows.set(`${lowId}\u0000${highId}`, {
+                  id, expression_a_id: lowId, expression_b_id: highId, score: 0,
+                  source: 'contribution', created_by: 1, created_at: '2026-08-13',
+                });
+                return { success: true };
+              },
+            };
+          },
+        };
+      },
+      async batch(statements: Array<{ run(): Promise<unknown> }>) {
+        return Promise.all(statements.map((statement) => statement.run()));
+      },
+    } as unknown as import('@cloudflare/workers-types').D1Database;
     const result = await createEdgesBatch(db, { expression_ids: ['nan:a', 'nan:b', 'nan:c'], source: 'contribution', created_by: 1 });
     expect(result.edges).toHaveLength(3);
-    expect(insertCount).toBe(3);
+    expect(result.created_count).toBe(3);
   });
 
   it('rejects fewer than 2 expression ids', async () => {

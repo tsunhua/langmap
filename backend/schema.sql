@@ -135,6 +135,11 @@ CREATE TABLE expressions (
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
+CREATE INDEX idx_expressions_created_at
+  ON expressions(created_at DESC, id ASC);
+CREATE INDEX idx_expressions_created_by_at
+  ON expressions(created_by, created_at DESC, id ASC);
+
 -- Registry seeds must follow the expressions table: languages and
 -- language_locales reference expressions(id) for name_expression_id, and with
 -- foreign_keys enabled a DML on a child table fails while the parent is absent.
@@ -239,6 +244,12 @@ CREATE TABLE expression_edges (
 
 CREATE INDEX idx_expression_edges_a_id ON expression_edges(expression_a_id);
 CREATE INDEX idx_expression_edges_b_id ON expression_edges(expression_b_id);
+CREATE INDEX idx_expression_edges_created_at
+  ON expression_edges(created_at DESC, id ASC);
+CREATE INDEX idx_expression_edges_score_feed
+  ON expression_edges(score DESC, created_at DESC, id ASC);
+CREATE INDEX idx_expression_edges_created_by_at
+  ON expression_edges(created_by, created_at DESC, id ASC);
 
 CREATE TABLE expression_splits (
   id TEXT PRIMARY KEY,
@@ -1078,6 +1089,8 @@ CREATE TABLE votes (
 );
 
 CREATE INDEX idx_votes_target ON votes (target_type, target_id);
+CREATE INDEX idx_votes_user_created_at
+  ON votes(user_id, created_at DESC, target_id);
 
 -- Handbooks preserve curated expression collections using application-generated TEXT IDs.
 
@@ -1120,6 +1133,8 @@ CREATE TABLE handbook_section_items (
 
 CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC);
 CREATE INDEX idx_handbooks_score ON handbooks(score DESC, created_at DESC, id ASC);
+CREATE INDEX idx_handbooks_user_created_at
+  ON handbooks(user_id, created_at DESC, id ASC);
 CREATE INDEX idx_handbook_sections_handbook ON handbook_sections(handbook_id, position ASC, id ASC);
 CREATE INDEX idx_handbook_sections_parent ON handbook_sections(handbook_id, parent_section_id, position ASC, id ASC);
 CREATE INDEX idx_handbook_section_items_section ON handbook_section_items(section_id, position ASC, expression_id ASC);

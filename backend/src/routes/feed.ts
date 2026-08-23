@@ -36,8 +36,9 @@ feed.get('/hot', async (c) => {
 });
 
 feed.get('/new', async (c) => {
+  const limit = parseLimit(c.req.query('limit'));
   const { results } = await c.env.DB.prepare(
-    `SELECT * FROM (
+    `WITH latest_mappings AS (
        SELECT 'mapping' AS type, ed.id AS id, ed.created_at, u.username AS author,
               a.id AS a_id, b.id AS b_id,
               a.text AS left_text, a.lang_code AS left_lang,
@@ -46,15 +47,25 @@ feed.get('/new', async (c) => {
        JOIN expressions a ON a.id = ed.expression_a_id
        JOIN expressions b ON b.id = ed.expression_b_id
        LEFT JOIN users u ON u.id = ed.created_by
-       UNION ALL
+       ORDER BY ed.created_at DESC, ed.id ASC
+       LIMIT ?
+     ), latest_expressions AS (
        SELECT 'expression' AS type, e.id, e.created_at, u.username AS author,
               NULL AS a_id, NULL AS b_id,
               e.text AS left_text, e.lang_code AS left_lang, NULL AS right_text, NULL AS right_lang
        FROM expressions e
        LEFT JOIN users u ON u.id = e.created_by
-     ) ORDER BY created_at DESC, id ASC
+       ORDER BY e.created_at DESC, e.id ASC
+       LIMIT ?
+     )
+     SELECT * FROM (
+       SELECT * FROM latest_mappings
+       UNION ALL
+       SELECT * FROM latest_expressions
+     )
+     ORDER BY created_at DESC, id ASC
      LIMIT ?`,
-  ).bind(parseLimit(c.req.query('limit'))).all<{ left_lang: string | null; right_lang: string | null }>();
+  ).bind(limit, limit, limit).all<{ left_lang: string | null; right_lang: string | null }>();
   const hints = parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale'));
   const names = await resolveLanguageNames(c.env.DB, [...new Set(results.flatMap((row) => [row.left_lang, row.right_lang]).filter((code): code is string => Boolean(code)))], hints);
   return success(c, results.map((row) => ({

@@ -3,6 +3,7 @@ import { optionalAuth, requireAuth } from '../middleware/auth';
 import { badRequest, created, forbidden, internalError, notFound, success } from '../utils/response';
 import { parseLocaleHints, resolveLanguageNames } from '../services/localizedName';
 import { ulid } from '../utils/ulid';
+import { MAX_HANDBOOK_ITEMS, MAX_HANDBOOK_SECTIONS, exceedsLimit } from '../utils/limits';
 import type { Bindings, Variables } from '../types';
 
 interface SectionInput { title?: unknown; expressionIds?: unknown }
@@ -26,6 +27,13 @@ function normalizeSections(raw: unknown): Array<{ title: string | null; expressi
       : [];
     return { title: typeof input?.title === 'string' && input.title.trim() ? input.title.trim() : null, expressionIds: [...new Set(expressionIds)] };
   });
+}
+
+function handbookSizeError(sections: Array<{ expressionIds: string[] }>): string | null {
+  if (exceedsLimit(sections.length, MAX_HANDBOOK_SECTIONS)) return 'HANDBOOK_BATCH_TOO_LARGE';
+  const itemCount = sections.reduce((total, section) => total + section.expressionIds.length, 0);
+  if (exceedsLimit(itemCount, MAX_HANDBOOK_ITEMS)) return 'HANDBOOK_BATCH_TOO_LARGE';
+  return null;
 }
 
 const handbooks = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -91,6 +99,8 @@ handbooks.post('/', requireAuth, async (c) => {
     const sections = normalizeSections(body.sections);
     if (!title) return badRequest(c, 'VALIDATION_FAILED', 'title is required');
     if (!sections) return badRequest(c, 'VALIDATION_FAILED', 'sections must be an array');
+    const sizeError = handbookSizeError(sections);
+    if (sizeError) return badRequest(c, sizeError, `At most ${MAX_HANDBOOK_SECTIONS} sections and ${MAX_HANDBOOK_ITEMS} items are allowed`);
     const id = ulid();
     const statements = [c.env.DB.prepare('INSERT INTO handbooks (id, user_id, title, visibility, status) VALUES (?, ?, ?, ?, ?)')
       .bind(id, c.get('user')!.id, title, body.visibility === 'private' ? 'private' : 'public', body.status === 'draft' ? 'draft' : 'published')];
@@ -119,6 +129,10 @@ handbooks.put('/:id', requireAuth, async (c) => {
     const body = await c.req.json().catch(() => ({})) as { title?: unknown; visibility?: unknown; status?: unknown; sections?: unknown };
     const sections = body.sections === undefined ? undefined : normalizeSections(body.sections);
     if (sections === null) return badRequest(c, 'VALIDATION_FAILED', 'sections must be an array');
+    if (sections) {
+      const sizeError = handbookSizeError(sections);
+      if (sizeError) return badRequest(c, sizeError, `At most ${MAX_HANDBOOK_SECTIONS} sections and ${MAX_HANDBOOK_ITEMS} items are allowed`);
+    }
     const title = typeof body.title === 'string' ? body.title.trim() : undefined;
     if (title === '') return badRequest(c, 'VALIDATION_FAILED', 'title is required');
     const statements = [c.env.DB.prepare(

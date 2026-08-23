@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { badRequest, created, internalError, unauthorized } from '../utils/response';
 import { ExpressionError, createExpression } from '../services/expressions';
 import { MappingError, createEdgesBatch } from '../services/mappings';
+import { MAX_CONTRIBUTION_EXPRESSIONS, exceedsLimit } from '../utils/limits';
 import type { Bindings, Variables } from '../types';
 
 const contributions = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -39,7 +40,11 @@ contributions.post('/batch', requireAuth, async (c) => {
     const user = c.get('user');
     if (!user) return unauthorized(c);
     const body = await c.req.json().catch(() => ({}));
-    const inputs = parseExpressionInputs((body as { expressions?: unknown })?.expressions);
+    const rawExpressions = (body as { expressions?: unknown })?.expressions;
+    if (Array.isArray(rawExpressions) && exceedsLimit(rawExpressions.length, MAX_CONTRIBUTION_EXPRESSIONS)) {
+      return badRequest(c, 'CONTRIBUTION_BATCH_TOO_LARGE', `At most ${MAX_CONTRIBUTION_EXPRESSIONS} expressions are allowed`);
+    }
+    const inputs = parseExpressionInputs(rawExpressions);
 
     if (inputs.length < 2) {
       return badRequest(c, 'CONTRIBUTION_TOO_FEW_EXPRESSIONS', 'At least two valid expressions are required');

@@ -52,6 +52,19 @@ describe('splitExpression', () => {
     expect(await captureAsyncCode(() => splitExpression(db, { source_expression_id: 'nan:aaaa', edge_ids: [], created_by: 1 }))).toBe('EXPRESSION_SPLIT_EMPTY');
   });
 
+  it('rejects an oversized edge_ids array before reading the database', async () => {
+    let prepared = false;
+    const db = fakeD1({});
+    const originalPrepare = db.prepare;
+    db.prepare = ((sql: string) => { prepared = true; return originalPrepare.call(db, sql); }) as typeof db.prepare;
+    expect(await captureAsyncCode(() => splitExpression(db, {
+      source_expression_id: 'nan:aaaa',
+      edge_ids: Array.from({ length: 101 }, (_, index) => `edge-${index}`),
+      created_by: 1,
+    }))).toBe('EXPRESSION_SPLIT_TOO_LARGE');
+    expect(prepared).toBe(false);
+  });
+
   it('rejects when source expression is missing with EXPRESSION_NOT_FOUND', async () => {
     const db = fakeD1({
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':

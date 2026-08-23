@@ -40,7 +40,7 @@ describe('resolveLocalizedNames', () => {
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [{ code: 'jpn', name_expression_id: CANONICAL_JPN, name_en: 'Japanese', name: null }] }) },
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CANONICAL_JPN, text: 'Japanese' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [{ source_id: CANONICAL_JPN, target_id: RIKYU, target_text: '日语', score: 0, created_at: '2026-08-01' }] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: CANONICAL_JPN, target_id: RIKYU, target_text: '日语', score: 0, created_at: '2026-08-01' }] }) },
     ]);
     const map = await resolveLocalizedNames(db, [{ kind: 'language', langCode: 'jpn', identityCode: 'jpn' }], parseLocaleHints('cmn-Hans-CN', 'cmn-Hant-TW'));
     expect(map.get('jpn')).toEqual({ lang_code: 'jpn', name: '日语', name_en: 'Japanese', resolved_from: 'primary' });
@@ -51,7 +51,7 @@ describe('resolveLocalizedNames', () => {
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [{ code: 'jpn', name_expression_id: CANONICAL_JPN, name_en: 'Japanese', name: null }] }) },
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CANONICAL_JPN, text: 'Japanese' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: (params: unknown[]) => (params[2] === 'cmn-Hans-CN' ? { results: [] } : { results: [{ source_id: CANONICAL_JPN, target_id: KYUGO, target_text: '日語', score: 0, created_at: '2026-08-01' }] }) },
+      { sql: 'WITH candidate_rows AS', handler: (params: unknown[]) => (params[2] === 'cmn-Hans-CN' ? { results: [] } : { results: [{ source_id: CANONICAL_JPN, target_id: KYUGO, target_text: '日語', score: 0, created_at: '2026-08-01' }] }) },
     ]);
     const map = await resolveLocalizedNames(db, [{ kind: 'language', langCode: 'jpn', identityCode: 'jpn' }], parseLocaleHints('cmn-Hans-CN', 'cmn-Hant-TW'));
     expect(map.get('jpn')?.name).toBe('日語');
@@ -62,7 +62,7 @@ describe('resolveLocalizedNames', () => {
     expect(CANDIDATE_SQL).toContain('e.score >= 0');
     expect(CANDIDATE_SQL).toContain('t.lang_code = ?');
     expect(CANDIDATE_SQL).toContain('EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = t.id AND a.language_locale_code = ?)');
-    expect(CANDIDATE_SQL).toContain('ORDER BY src.id ASC, e.score DESC, e.created_at ASC, t.id ASC');
+    expect(CANDIDATE_SQL).toContain('ORDER BY source_id ASC, score DESC, created_at ASC, target_id ASC');
   });
 
   it('picks the stable winner (score DESC, created_at ASC, target id ASC) from a tie', async () => {
@@ -70,7 +70,7 @@ describe('resolveLocalizedNames', () => {
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [{ code: 'cmn', name_expression_id: ZHONGWEN, name_en: 'Mandarin Chinese', name: null }] }) },
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: ZHONGWEN, text: 'Mandarin Chinese' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: ZHONGWEN, target_id: 'cmn:x', target_text: '普通话A', score: 1, created_at: '2026-08-01' },
         { source_id: ZHONGWEN, target_id: 'cmn:y', target_text: '普通话B', score: 1, created_at: '2026-08-02' },
       ] }) },
@@ -90,7 +90,7 @@ describe('resolveLocalizedNames', () => {
         { id: ZHONGWEN, text: 'Mandarin Chinese' },
       ] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: CANONICAL_JPN, target_id: RIKYU, target_text: '日语', score: 0, created_at: '2026-08-01' },
         { source_id: ZHONGWEN, target_id: 'cmn:z', target_text: '普通话', score: 0, created_at: '2026-08-01' },
       ] }) },
@@ -125,7 +125,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CANONICAL_JPN, text: 'Japanese' }] }) },
       { sql: 'FROM language_locales WHERE code IN', handler: () => ({ results: [{ code: 'jpn-Jpan-JP', name_expression_id: null, name_en: 'Japanese (Japan)', name: '日本語' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [{ source_id: CANONICAL_JPN, target_id: RIKYU, target_text: '日语', score: 0, created_at: '2026-08-01' }] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: CANONICAL_JPN, target_id: RIKYU, target_text: '日语', score: 0, created_at: '2026-08-01' }] }) },
     ]);
     const langs = await resolveLanguageNames(db, ['jpn', 'eng'], parseLocaleHints('cmn-Hans-CN', undefined));
     expect(langs.get('jpn')).toBe('日语');
@@ -140,7 +140,7 @@ describe('resolveNamesByExpressionIds', () => {
     const db = fakeD1([
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: PLURAL_EN, text: 'plural' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [{ source_id: PLURAL_EN, target_id: 'cmn:plural', target_text: '复数', score: 0, created_at: '2026-08-01' }] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: PLURAL_EN, target_id: 'cmn:plural', target_text: '复数', score: 0, created_at: '2026-08-01' }] }) },
     ]);
     const map = await resolveNamesByExpressionIds(db, [PLURAL_EN], parseLocaleHints('cmn-Hans-CN', undefined));
     expect(map.get(PLURAL_EN)).toEqual({ name: '复数', name_en: 'plural' });
@@ -150,7 +150,7 @@ describe('resolveNamesByExpressionIds', () => {
     const db = fakeD1([
       { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [{ id: PLURAL_EN, text: 'plural' }] }) },
       { sql: 'lang_code FROM language_locales WHERE code = ?', handler: () => ({ lang_code: 'cmn' }) },
-      { sql: 'src.id AS source_id', handler: () => ({ results: [] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => ({ results: [] }) },
     ]);
     const map = await resolveNamesByExpressionIds(db, [PLURAL_EN], parseLocaleHints('cmn-Hans-CN', undefined));
     expect(map.get(PLURAL_EN)).toEqual({ name: 'plural', name_en: 'plural' });

@@ -187,6 +187,18 @@
       "filename": "0031_mapping_query_indexes.sql",
       "size": 435,
       "sha256": "04398560950cbfa9542ce84018a988d73b6975ca5cd08046de0bb6e1c64abf94"
+    },
+    {
+      "sequence": 32,
+      "filename": "0032_feed_created_at_indexes.sql",
+      "size": 281,
+      "sha256": "7fc3d5f278e7f019dfe453eaa7011e51b7a796ea357cf70edd4bcff6da8ebc68"
+    },
+    {
+      "sequence": 33,
+      "filename": "0033_api_performance_indexes.sql",
+      "size": 631,
+      "sha256": "aaccac438fdeb0557a4ddb3d4085657af5f1ae3062bace7249c5bf9739b2f7ed"
     }
   ]
 }

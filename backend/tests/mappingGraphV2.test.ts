@@ -68,8 +68,8 @@ describe('getMappingGraph', () => {
       ]),
       'nan:root', 1, 200, parseLocaleHints('cmn-Hans-CN', undefined),
     );
-    // fakeD1 對未知查詢回空 → 每個 lang_code 回退為自身 code
-    expect(graph?.nodes.map((node) => node.language_name)).toEqual(['nan', 'eng']);
+    // nan has an explicit UI-locale override; unknown eng falls back to its code.
+    expect(graph?.nodes.map((node) => node.language_name)).toEqual(['闽南语', 'eng']);
   });
 
   it('batches large frontiers before querying a three-hop graph', async () => {

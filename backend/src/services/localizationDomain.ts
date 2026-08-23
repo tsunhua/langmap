@@ -34,7 +34,31 @@ const LOCALE_ROW_SQL = 'SELECT status, activation_source FROM ui_locales WHERE p
 
 const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC';
 
-const CANDIDATE_SQL = 'SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at FROM ui_messages m JOIN expression_edges e ON e.expression_a_id = m.source_expression_id OR e.expression_b_id = m.source_expression_id JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = m.source_expression_id THEN e.expression_b_id ELSE e.expression_a_id END WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ? AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?) ORDER BY m.message_key ASC, e.score DESC, e.created_at ASC, t.id ASC';
+export const CANDIDATE_SQL = `WITH candidate_rows AS (
+  SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
+  FROM ui_messages m
+  JOIN expression_edges e ON e.expression_a_id = m.source_expression_id
+  JOIN expressions t ON t.id = e.expression_b_id
+  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
+  UNION ALL
+  SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
+  FROM ui_messages m
+  JOIN expression_edges e ON e.expression_b_id = m.source_expression_id
+  JOIN expressions t ON t.id = e.expression_a_id
+  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
+), ranked AS (
+  SELECT candidate_rows.*, ROW_NUMBER() OVER (
+    PARTITION BY message_key
+    ORDER BY score DESC, created_at ASC, target_id ASC
+  ) AS candidate_rank
+  FROM candidate_rows
+)
+SELECT message_key, placeholders_json, source_text, target_id, target_text, edge_id, score, created_at
+FROM ranked
+WHERE candidate_rank <= 5
+ORDER BY message_key ASC, score DESC, created_at ASC, target_id ASC`;
 
 const EXPRESSION_LANGS_SQL = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
 
@@ -78,7 +102,7 @@ async function loadCandidatesForLanguage(
 
   const { results } = await db
     .prepare(CANDIDATE_SQL)
-    .bind(projectId, 'active', langCode, localeCode)
+    .bind(projectId, 'active', langCode, localeCode, projectId, 'active', langCode, localeCode)
     .all<CandidateRow>();
 
   const candidates = new Map<string, string>();

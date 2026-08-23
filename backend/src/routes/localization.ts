@@ -10,11 +10,12 @@ import {
   recalculateLocale,
   resolveBundle,
 } from '../services/localizationDomain';
-import { MappingError, createEdge } from '../services/mappings';
+import { MappingError, createEdge, createEdgesForPairs } from '../services/mappings';
 import { VoteError, castVote } from '../services/votes';
 import { getPreferences } from '../services/preferences';
 import { parseLanguageLocaleCode } from '../services/languageIdentity';
 import { loadWorkbenchMessages } from '../services/workbench';
+import { MAX_LOCALIZATION_MAPPINGS, exceedsLimit } from '../utils/limits';
 import type { Bindings, Variables } from '../types';
 
 const LOCALE_LIST_LIMIT = 200;
@@ -204,30 +205,57 @@ localization.post('/projects/:projectId/mappings/batch', requireAuth, async (c) 
     const body = await c.req.json().catch(() => ({}));
     const mappings: unknown[] = Array.isArray(body?.mappings) ? body.mappings : [];
     if (mappings.length === 0) return badRequest(c, 'VALIDATION_FAILED', 'mappings array is required');
-    const results: Array<{ message_key: string; created: boolean }> = [];
-    const affectedLangs = new Set<string>();
+    if (exceedsLimit(mappings.length, MAX_LOCALIZATION_MAPPINGS)) {
+      return badRequest(c, 'LOCALIZATION_BATCH_TOO_LARGE', `At most ${MAX_LOCALIZATION_MAPPINGS} mappings are allowed`);
+    }
+    const normalizedMappings: Array<{ message_key: string; target_expression_id: string }> = [];
+    const seenMappings = new Set<string>();
     for (const entry of mappings) {
       const m = entry as { message_key?: unknown; target_expression_id?: unknown };
       const messageKey = typeof m?.message_key === 'string' ? m.message_key.trim() : '';
       const targetExpressionId = typeof m?.target_expression_id === 'string' ? m.target_expression_id.trim() : '';
       if (!messageKey || !targetExpressionId) continue;
-      const msg = await c.env.DB
-        .prepare('SELECT source_expression_id FROM ui_messages WHERE project_id = ? AND message_key = ?')
-        .bind(projectId, messageKey)
-        .first<{ source_expression_id: string }>();
-      if (!msg) continue;
-      const result = await createEdge(c.env.DB, {
-        expression_a_id: msg.source_expression_id,
-        expression_b_id: targetExpressionId,
-        source: 'translation',
-        created_by: user?.id ?? 0,
-      });
-      results.push({ message_key: messageKey, created: result.created });
-      const targetExpr = await c.env.DB
-        .prepare('SELECT lang_code FROM expressions WHERE id = ?')
-        .bind(targetExpressionId)
-        .first<{ lang_code: string }>();
-      if (targetExpr) affectedLangs.add(targetExpr.lang_code);
+      const key = `${messageKey}\u0000${targetExpressionId}`;
+      if (seenMappings.has(key)) continue;
+      seenMappings.add(key);
+      normalizedMappings.push({ message_key: messageKey, target_expression_id: targetExpressionId });
+    }
+    const messageKeys = [...new Set(normalizedMappings.map((mapping) => mapping.message_key))];
+    const targetIds = [...new Set(normalizedMappings.map((mapping) => mapping.target_expression_id))];
+    const [messageRows, targetRows] = await Promise.all([
+      messageKeys.length
+        ? c.env.DB.prepare(
+          'SELECT message_key, source_expression_id FROM ui_messages WHERE project_id = ? AND message_key IN (SELECT value FROM json_each(?))',
+        ).bind(projectId, JSON.stringify(messageKeys)).all<{ message_key: string; source_expression_id: string }>()
+        : Promise.resolve({ results: [] as Array<{ message_key: string; source_expression_id: string }> }),
+      targetIds.length
+        ? c.env.DB.prepare(
+          'SELECT id, lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?))',
+        ).bind(JSON.stringify(targetIds)).all<{ id: string; lang_code: string }>()
+        : Promise.resolve({ results: [] as Array<{ id: string; lang_code: string }> }),
+    ]);
+    const sourceByMessage = new Map(messageRows.results.map((row) => [row.message_key, row.source_expression_id]));
+    const targetById = new Map(targetRows.results.map((row) => [row.id, row]));
+    const resolvableMappings = normalizedMappings.filter((mapping) => sourceByMessage.has(mapping.message_key) && targetById.has(mapping.target_expression_id));
+    const edgeResults = await createEdgesForPairs(c.env.DB, {
+      pairs: resolvableMappings.map((mapping) => [sourceByMessage.get(mapping.message_key)!, mapping.target_expression_id]),
+      source: 'translation',
+      created_by: user?.id ?? 0,
+    });
+    const edgeByPair = new Map(edgeResults.map((result) => {
+      const [lowId, highId] = result.edge.expression_a_id < result.edge.expression_b_id
+        ? [result.edge.expression_a_id, result.edge.expression_b_id]
+        : [result.edge.expression_b_id, result.edge.expression_a_id];
+      return [`${lowId}\u0000${highId}`, result];
+    }));
+    const results: Array<{ message_key: string; created: boolean }> = [];
+    const affectedLangs = new Set<string>();
+    for (const mapping of resolvableMappings) {
+      const sourceId = sourceByMessage.get(mapping.message_key)!;
+      const result = edgeByPair.get(`${sourceId < mapping.target_expression_id ? sourceId : mapping.target_expression_id}\u0000${sourceId < mapping.target_expression_id ? mapping.target_expression_id : sourceId}`);
+      if (!result) continue;
+      results.push({ message_key: mapping.message_key, created: result.created });
+      affectedLangs.add(targetById.get(mapping.target_expression_id)!.lang_code);
     }
     for (const langCode of Array.from(affectedLangs).sort()) {
       for (const localeCode of await localesForLang(c.env.DB, projectId, langCode)) {

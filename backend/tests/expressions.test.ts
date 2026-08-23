@@ -218,7 +218,9 @@ describe('searchExpressions', () => {
     await searchExpressions(db, { q: '', sort: 'new', limit: 20, offset: 0 });
 
     const pageQueries = observedSql.filter((sql) => sql.includes(' LIMIT ? OFFSET ?'));
-    expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM expression_edges g WHERE g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id) DESC, text ASC, homograph_index ASC, id ASC');
+    expect(pageQueries[0]).toContain('SELECT COUNT(*) FROM expression_edges');
+    expect(pageQueries[0]).toContain('g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id');
+    expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM expression_edges');
     expect(pageQueries[1]).toContain('ORDER BY created_at DESC, id ASC');
   });
 

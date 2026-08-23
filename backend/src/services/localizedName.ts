@@ -46,19 +46,39 @@ const LANGUAGE_NAME_OVERRIDES: Record<string, Record<string, string>> = {
 };
 
 const IDENTITY_LANGUAGE_SQL =
-  'SELECT g.code, g.name_expression_id, g.name_en, (SELECT l.name FROM language_locales l WHERE l.lang_code = g.code ORDER BY l.code ASC LIMIT 1) AS name FROM languages g WHERE g.code IN (SELECT value FROM json_each(?))';
+  'SELECT code, name_expression_id, name_en, (SELECT l.name FROM language_locales l WHERE l.lang_code = languages.code ORDER BY l.code ASC LIMIT 1) AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
 const IDENTITY_LOCALE_SQL =
   'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
 const LOCALE_LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
-export const CANDIDATE_SQL = `SELECT src.id AS source_id, t.id AS target_id, t.text AS target_text, e.score, e.created_at
-FROM expression_edges e
-JOIN expressions src ON src.id = e.expression_a_id OR src.id = e.expression_b_id
-JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = src.id THEN e.expression_b_id ELSE e.expression_a_id END
-WHERE src.id IN (SELECT value FROM json_each(?))
-  AND e.score >= 0
-  AND t.lang_code = ?
-  AND EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = t.id AND a.language_locale_code = ?)
-ORDER BY src.id ASC, e.score DESC, e.created_at ASC, t.id ASC`;
+export const CANDIDATE_SQL = `WITH candidate_rows AS (
+  SELECT src.id AS source_id, t.id AS target_id, t.text AS target_text, e.score, e.created_at
+  FROM expression_edges e
+  JOIN expressions src ON src.id = e.expression_a_id
+  JOIN expressions t ON t.id = e.expression_b_id
+  WHERE e.expression_a_id IN (SELECT value FROM json_each(?))
+    AND e.score >= 0
+    AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = t.id AND a.language_locale_code = ?)
+  UNION ALL
+  SELECT src.id AS source_id, t.id AS target_id, t.text AS target_text, e.score, e.created_at
+  FROM expression_edges e
+  JOIN expressions src ON src.id = e.expression_b_id
+  JOIN expressions t ON t.id = e.expression_a_id
+  WHERE e.expression_b_id IN (SELECT value FROM json_each(?))
+    AND e.score >= 0
+    AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = t.id AND a.language_locale_code = ?)
+), ranked AS (
+  SELECT candidate_rows.*, ROW_NUMBER() OVER (
+    PARTITION BY source_id
+    ORDER BY score DESC, created_at ASC, target_id ASC
+  ) AS candidate_rank
+  FROM candidate_rows
+)
+SELECT source_id, target_id, target_text, score, created_at
+FROM ranked
+WHERE candidate_rank = 1
+ORDER BY source_id ASC, score DESC, created_at ASC, target_id ASC`;
 
 export function parseLocaleHints(primary: string | undefined, secondary: string | undefined): LocaleHints {
   const cleaned = (value: string | undefined): string | undefined => {
@@ -117,7 +137,8 @@ async function loadCandidateMap(
   localeCode: string,
 ): Promise<Map<string, string>> {
   if (sourceIds.length === 0 || !langCode) return new Map();
-  const { results } = await db.prepare(CANDIDATE_SQL).bind(JSON.stringify(sourceIds), langCode, localeCode).all<CandidateRow>();
+  const bindings = [JSON.stringify(sourceIds), langCode, localeCode, JSON.stringify(sourceIds), langCode, localeCode];
+  const { results } = await db.prepare(CANDIDATE_SQL).bind(...bindings).all<CandidateRow>();
   const selected = new Map<string, string>();
   for (const row of results) {
     if (selected.has(row.source_id)) continue;
@@ -190,7 +211,7 @@ export async function resolveNamesByExpressionIds(
 
 function fallbackName(kind: IdentityKind, row: IdentityRow | undefined, identityCode: string): string {
   if (!row) return identityCode;
-  if (kind === 'language') return row.name || row.name_en || identityCode;
+  if (kind === 'language') return row.name_en || row.name || identityCode;
   return row.name || row.name_en || identityCode;
 }
 

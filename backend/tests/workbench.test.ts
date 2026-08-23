@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadWorkbenchMessages } from '../src/services/workbench';
+import { CANDIDATES_SQL, loadWorkbenchMessages } from '../src/services/workbench';
 
 type Handler = () => unknown;
 
@@ -26,7 +26,6 @@ function fakeD1(handlers: Record<string, Handler>) {
 const COUNT_SQL = 'SELECT COUNT(*) AS total FROM ui_messages WHERE project_id = ? AND status = ? AND (? = \'\' OR message_key LIKE ? ESCAPE \'\\\' OR source_text LIKE ? ESCAPE \'\\\')';
 const PAGE_SQL = 'SELECT message_key, source_expression_id, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? AND (? = \'\' OR message_key LIKE ? ESCAPE \'\\\' OR source_text LIKE ? ESCAPE \'\\\') ORDER BY message_key ASC LIMIT ? OFFSET ?';
 const LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
-const CANDIDATES_SQL = 'SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at FROM ui_messages m JOIN expression_edges e ON e.expression_a_id = m.source_expression_id OR e.expression_b_id = m.source_expression_id JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = m.source_expression_id THEN e.expression_b_id ELSE e.expression_a_id END WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ? AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?) ORDER BY m.message_key ASC, e.score DESC, e.created_at ASC, t.id ASC LIMIT 500';
 
 describe('loadWorkbenchMessages', () => {
   it('returns messages with empty candidates when the locale has no language row', async () => {

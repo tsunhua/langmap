@@ -134,18 +134,16 @@ export async function getExpression(
     .first<ExpressionRow & { created_by_username: string | null }>();
   if (!expression) return null;
 
-  const { results } = await db
-    .prepare(
+  const [attestationResult, readingResult] = await Promise.all([
+    db.prepare(
       `SELECT ${ATTESTATION_COLUMNS} FROM expression_locale_attestations a LEFT JOIN users u ON u.id = a.created_by WHERE a.expression_id = ? ORDER BY a.language_locale_code ASC, a.created_at ASC, a.id ASC`,
-    )
-    .bind(id)
-    .all<LocaleAttestationRow & { created_by_username: string | null }>();
-  const { results: readings } = await db
-    .prepare(
+    ).bind(id).all<LocaleAttestationRow & { created_by_username: string | null }>(),
+    db.prepare(
       `SELECT ${READING_DETAIL_COLUMNS} FROM expression_readings r LEFT JOIN sources s ON s.id = r.source_id WHERE r.expression_id = ? ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC`,
-    )
-    .bind(id)
-    .all<ReadingRow & { source_type: string | null; source_name: string | null }>();
+    ).bind(id).all<ReadingRow & { source_type: string | null; source_name: string | null }>(),
+  ]);
+  const { results } = attestationResult;
+  const { results: readings } = readingResult;
   return { expression, attestations: results, readings };
 }
 

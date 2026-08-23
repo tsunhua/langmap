@@ -93,11 +93,9 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
     results.map((item) => item.code),
     parseLocaleHints(uiLocale || undefined, query.secondaryUiLocale.trim() || undefined),
   );
-  const localizedItems = await Promise.all(results.map(async (item) => {
-    const resolved = names.get(item.code);
-    if (resolved) return { ...item, name: resolved };
-    const locale = await db.prepare('SELECT name FROM language_locales WHERE lang_code = ? ORDER BY code ASC LIMIT 1').bind(item.code).first<{ name: string | null }>();
-    return { ...item, name: locale?.name || item.name_en };
+  const localizedItems = results.map((item) => ({
+    ...item,
+    name: names.get(item.code) ?? item.name,
   }));
   return { items: localizedItems, total: totalRow?.total ?? 0 };
 }
@@ -106,12 +104,17 @@ export async function getLanguageDetail(db: D1Database, code: string, hints: Loc
   const language = await db.prepare(LANGUAGE_ROW_SQL).bind(code).first<{ code: string; name_en: string }>();
   if (!language) return null;
   const localeFilter = locale.trim();
-  const { results: localeRows } = await db.prepare(LANGUAGE_LOCALES_SQL).bind(code).all<LocaleRow>();
-  const expressionCount = await db.prepare(EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>();
-  const readingCount = await db.prepare(READING_COUNT_SQL).bind(code).first<{ total: number }>();
-  const mappedExpressionCount = await db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>();
-  const localeNames = await resolveLocaleNames(db, localeRows.map((row) => row.code), hints);
-  const languageNames = await resolveLanguageNames(db, [language.code], hints);
+  const [localeResult, expressionCount, readingCount, mappedExpressionCount] = await Promise.all([
+    db.prepare(LANGUAGE_LOCALES_SQL).bind(code).all<LocaleRow>(),
+    db.prepare(EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>(),
+    db.prepare(READING_COUNT_SQL).bind(code).first<{ total: number }>(),
+    db.prepare(MAPPED_EXPRESSION_COUNT_SQL).bind(code, localeFilter, localeFilter).first<{ total: number }>(),
+  ]);
+  const { results: localeRows } = localeResult;
+  const [localeNames, languageNames] = await Promise.all([
+    resolveLocaleNames(db, localeRows.map((row) => row.code), hints),
+    resolveLanguageNames(db, [language.code], hints),
+  ]);
   const locales = localeRows.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, display_name: localeNames.get(row.code) ?? row.name, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, ...resolveCoordinate(row) }));
   // Yue currently has no dedicated language-name expression; use its canonical
   // locale name so the language page does not fall back to the English registry label.
@@ -128,13 +131,16 @@ export async function listLanguageExpressions(db: D1Database, code: string, quer
   const like = q ? `%${escapeLike(q)}%` : '';
   const locale = query.locale.trim();
   const filters = [code, q, like, locale, locale];
-  const totalRow = await db.prepare(LANGUAGE_EXPRESSIONS_COUNT_SQL).bind(...filters).first<{ total: number }>();
   const orderBy = query.sort === 'hot'
     ? 'mapping_count DESC, e.text ASC, e.homograph_index ASC, e.id ASC'
     : query.sort === 'new'
       ? 'e.created_at DESC, e.id ASC'
       : 'e.text ASC, e.homograph_index ASC, e.id ASC';
-  const { results } = await db.prepare(`${LANGUAGE_EXPRESSIONS_SELECT_SQL} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(...filters, query.limit, query.offset).all<LanguageExpressionRow>();
+  const [totalRow, pageResult] = await Promise.all([
+    db.prepare(LANGUAGE_EXPRESSIONS_COUNT_SQL).bind(...filters).first<{ total: number }>(),
+    db.prepare(`${LANGUAGE_EXPRESSIONS_SELECT_SQL} ORDER BY ${orderBy} LIMIT ? OFFSET ?`).bind(...filters, query.limit, query.offset).all<LanguageExpressionRow>(),
+  ]);
+  const { results } = pageResult;
   const names = await resolveLanguageNames(
     db,
     [code],

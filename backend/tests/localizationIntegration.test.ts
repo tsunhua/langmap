@@ -212,6 +212,18 @@ describe('localization API', () => {
     expect(body.error).toBe('VALIDATION_FAILED');
   });
 
+  it('rejects an oversized batch mapping request before resolving rows', async () => {
+    const token = await registerToken();
+    const res = await fetch(`${API}/mappings/batch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ mappings: Array.from({ length: 101 }, () => ({ message_key: 'unused', target_expression_id: 'missing' })) }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('LOCALIZATION_BATCH_TOO_LARGE');
+  });
+
   it('forbids non-admin users from activating a locale', async () => {
     const token = await registerToken();
     await ensureLocale(token, 'nan-Hant-TW');

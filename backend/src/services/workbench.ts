@@ -35,7 +35,6 @@ interface CandidateRow {
   created_at: string;
 }
 
-const CANDIDATES_PER_PAGE_LIMIT = 500;
 const CANDIDATES_PER_KEY_LIMIT = 5;
 
 const COUNT_SQL = "SELECT COUNT(*) AS total FROM ui_messages WHERE project_id = ? AND status = ? AND (? = '' OR message_key LIKE ? ESCAPE '\\' OR source_text LIKE ? ESCAPE '\\')";
@@ -44,7 +43,31 @@ const PAGE_SQL = "SELECT message_key, source_expression_id, source_text, placeho
 
 const LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
 
-const CANDIDATES_SQL = `SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at FROM ui_messages m JOIN expression_edges e ON e.expression_a_id = m.source_expression_id OR e.expression_b_id = m.source_expression_id JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = m.source_expression_id THEN e.expression_b_id ELSE e.expression_a_id END WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ? AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?) ORDER BY m.message_key ASC, e.score DESC, e.created_at ASC, t.id ASC LIMIT ${CANDIDATES_PER_PAGE_LIMIT}`;
+export const CANDIDATES_SQL = `WITH candidate_rows AS (
+  SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
+  FROM ui_messages m
+  JOIN expression_edges e ON e.expression_a_id = m.source_expression_id
+  JOIN expressions t ON t.id = e.expression_b_id
+  WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
+  UNION ALL
+  SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
+  FROM ui_messages m
+  JOIN expression_edges e ON e.expression_b_id = m.source_expression_id
+  JOIN expressions t ON t.id = e.expression_a_id
+  WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ?
+    AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
+), ranked AS (
+  SELECT candidate_rows.*, ROW_NUMBER() OVER (
+    PARTITION BY message_key
+    ORDER BY score DESC, created_at ASC, target_id ASC
+  ) AS candidate_rank
+  FROM candidate_rows
+)
+SELECT message_key, placeholders_json, target_id, target_text, edge_id, score, created_at
+FROM ranked
+WHERE candidate_rank <= 5
+ORDER BY message_key ASC, score DESC, created_at ASC, target_id ASC`;
 
 function parsePlaceholders(placeholdersJson: string): string[] {
   try {
@@ -68,16 +91,12 @@ export async function loadWorkbenchMessages(
   const q = (options.q ?? '').trim();
   const like = q ? `%${escapeLike(q)}%` : '';
 
-  const totalRow = await db
-    .prepare(COUNT_SQL)
-    .bind(projectId, 'active', q, like, like)
-    .first<{ total: number }>();
+  const [totalRow, messagePage] = await Promise.all([
+    db.prepare(COUNT_SQL).bind(projectId, 'active', q, like, like).first<{ total: number }>(),
+    db.prepare(PAGE_SQL).bind(projectId, 'active', q, like, like, options.limit, options.offset).all<MessageRow>(),
+  ]);
   const total = totalRow?.total ?? 0;
-
-  const { results: messageRows } = await db
-    .prepare(PAGE_SQL)
-    .bind(projectId, 'active', q, like, like, options.limit, options.offset)
-    .all<MessageRow>();
+  const { results: messageRows } = messagePage;
 
   const items: WorkbenchMessage[] = messageRows.map((row) => ({
     key: row.message_key,
@@ -98,7 +117,7 @@ export async function loadWorkbenchMessages(
   const keys = items.map((item) => item.key);
   const { results: candidateRows } = await db
     .prepare(CANDIDATES_SQL)
-    .bind(projectId, 'active', JSON.stringify(keys), langRow.lang_code, languageLocaleCode)
+    .bind(projectId, 'active', JSON.stringify(keys), langRow.lang_code, languageLocaleCode, projectId, 'active', JSON.stringify(keys), langRow.lang_code, languageLocaleCode)
     .all<CandidateRow>();
 
   const byKey = new Map(items.map((item) => [item.key, item]));

@@ -2,6 +2,7 @@ import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types'
 import type { EdgeRow } from '../types/mapping';
 import { buildExpressionId } from './expressionIdentity';
 import { listAffectedUiLocaleCodes, prepareRevisionBumps } from './localizationDomain';
+import { MAX_SPLIT_EDGE_IDS } from '../utils/limits';
 
 const EXPRESSION_COLUMNS = `id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at`;
 const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
@@ -18,6 +19,7 @@ export async function splitExpression(
   input: { source_expression_id: string; edge_ids: string[]; created_by: number; project_id?: string },
 ): Promise<{ split_id: string; target_expression_id: string; moved_edge_count: number }> {
   if (!input.edge_ids.length) throw new SplitError('EXPRESSION_SPLIT_EMPTY');
+  if (input.edge_ids.length > MAX_SPLIT_EDGE_IDS) throw new SplitError('EXPRESSION_SPLIT_TOO_LARGE');
 
   const source = await db
     .prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions WHERE id = ?`)

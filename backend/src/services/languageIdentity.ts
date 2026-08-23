@@ -142,10 +142,12 @@ export async function assertReferenceCodesExist(
   scriptCode: string,
   regionCode: string,
 ): Promise<void> {
-  const lang = await db.prepare('SELECT 1 FROM languages WHERE code = ?').bind(langCode).first();
+  const [lang, script, region] = await Promise.all([
+    db.prepare('SELECT 1 FROM languages WHERE code = ?').bind(langCode).first(),
+    db.prepare('SELECT 1 FROM scripts WHERE code = ?').bind(scriptCode).first(),
+    db.prepare('SELECT 1 FROM regions WHERE code = ?').bind(regionCode).first(),
+  ]);
   if (!lang) throw new LanguageLocaleError('INVALID_LANG_CODE');
-  const script = await db.prepare('SELECT 1 FROM scripts WHERE code = ?').bind(scriptCode).first();
   if (!script) throw new LanguageLocaleError('INVALID_SCRIPT_CODE');
-  const region = await db.prepare('SELECT 1 FROM regions WHERE code = ?').bind(regionCode).first();
   if (!region) throw new LanguageLocaleError('INVALID_REGION_CODE');
 }

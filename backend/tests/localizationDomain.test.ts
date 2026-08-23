@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocalizationError, computeCoverage, recalculateForExpressions, resolveBundle } from '../src/services/localizationDomain';
+import { CANDIDATE_SQL, LocalizationError, computeCoverage, recalculateForExpressions, resolveBundle } from '../src/services/localizationDomain';
 
 type Handler = () => unknown;
 
@@ -38,7 +38,7 @@ describe('computeCoverage', () => {
     const db = fakeD1({
       'SELECT COUNT(*) AS total FROM ui_messages WHERE project_id = ? AND status = ?': () => ({ total: 3 }),
       'SELECT lang_code FROM language_locales WHERE code = ?': () => ({ lang_code: 'cmn' }),
-      'SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at FROM ui_messages m JOIN expression_edges e ON e.expression_a_id = m.source_expression_id OR e.expression_b_id = m.source_expression_id JOIN expressions t ON t.id = CASE WHEN e.expression_a_id = m.source_expression_id THEN e.expression_b_id ELSE e.expression_a_id END WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ? AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?) ORDER BY m.message_key ASC, e.score DESC, e.created_at ASC, t.id ASC':
+      [CANDIDATE_SQL]:
         () => ({
           results: [
             { message_key: 'a.key', placeholders_json: '[]', source_text: 'Hello', target_id: 'cmn:t1', target_text: '你好', edge_id: 'e1', score: 0, created_at: '2026-01-01' },

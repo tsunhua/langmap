@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import feed from '../src/routes/feed';
 
-function fakeDb() {
+function fakeDb(capturedSql: string[] = []) {
   return {
     prepare(sql: string) {
+      capturedSql.push(sql);
       return {
         bind(..._args: unknown[]) {
           return {
@@ -38,6 +39,35 @@ describe('feed API', () => {
       expect(body.success).toBe(true);
       expect(body.data[0].id).toBe('edge-1');
     }
+  });
+
+  it('limits each new-feed source before merging the latest rows', async () => {
+    const capturedSql: string[] = [];
+    const app = new Hono<{ Bindings: { DB: D1Database } }>();
+    app.route('/feed', feed);
+
+    const response = await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb(capturedSql) });
+    expect(response.status).toBe(200);
+
+    const feedSql = capturedSql.find((sql) => sql.includes("'mapping' AS type"));
+    expect(feedSql).toBeDefined();
+    expect(feedSql).toContain('WITH latest_mappings AS');
+    expect(feedSql).toContain('latest_expressions AS');
+    expect(feedSql).toContain('ORDER BY ed.created_at DESC, ed.id ASC');
+    expect(feedSql).toContain('ORDER BY e.created_at DESC, e.id ASC');
+    expect(feedSql?.match(/LIMIT \?/g)).toHaveLength(3);
+  });
+
+  it('keeps hot feed ordering compatible with the score index', async () => {
+    const capturedSql: string[] = [];
+    const app = new Hono<{ Bindings: { DB: D1Database } }>();
+    app.route('/feed', feed);
+
+    const response = await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(capturedSql) });
+    expect(response.status).toBe(200);
+    const feedSql = capturedSql.find((sql) => sql.includes('ORDER BY ed.score DESC'));
+    expect(feedSql).toContain('ORDER BY ed.score DESC, ed.created_at DESC, ed.id ASC');
+    expect(feedSql).toContain('LIMIT ?');
   });
 
   it('attaches resolved language names to hot and new rows', async () => {
