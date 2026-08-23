@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MappingGraph from './MappingGraph.vue'
 import type { MappingGraphResponse } from './mappingGraphTypes'
@@ -117,5 +117,23 @@ describe('MappingGraph', () => {
       global: { stubs: { teleport: true } },
     })
     expect(wrapper.find('[data-node-id]').exists()).toBe(false)
+  })
+
+  it('does not remeasure node cards when semantic zoom level changes', async () => {
+    const measureSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    const wrapper = mount(MappingGraph, {
+      props: { graph: makeGraph(), semanticLevel: 'full' },
+      global: { stubs: { teleport: true } },
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    const callsAfterInitialMeasure = measureSpy.mock.calls.length
+
+    await wrapper.setProps({ semanticLevel: 'medium' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(measureSpy.mock.calls.length).toBe(callsAfterInitialMeasure)
+    wrapper.unmount()
+    measureSpy.mockRestore()
   })
 })

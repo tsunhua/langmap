@@ -266,9 +266,9 @@ watch(
   },
 )
 
-watch(currentSemanticLevel, () => {
-  scheduleMeasure()
-})
+// Semantic zoom only changes the visible text. Re-measuring at every level
+// would change the layout bounds, which triggers viewport.fit(), changes the
+// zoom level again, and can oscillate between full and medium for long labels.
 
 function onSelectNode(id: string) {
   emit('select', id)

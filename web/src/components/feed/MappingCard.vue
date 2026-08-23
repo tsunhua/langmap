@@ -43,7 +43,7 @@ function scoreClass(score: number) {
 <style scoped>
 .map-card {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   background: var(--surface);
@@ -59,12 +59,12 @@ function scoreClass(score: number) {
 .mc-node { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .mc-node.r { align-items: flex-end; text-align: right; }
 .mc-tx {
+  width: 100%;
+  min-width: 0;
   font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .mc-lc {
   font-family: var(--mono);
@@ -85,4 +85,19 @@ function scoreClass(score: number) {
 .mc-edge.s3 .mc-line { width: 20px; height: 3px; }
 .mc-edge.s2 .mc-line { width: 16px; height: 2px; opacity: 0.5; }
 .mc-edge.s1 .mc-line { width: 13px; height: 2px; opacity: 0.35; }
+
+@media (max-width: 640px) {
+  .map-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .mc-node.r {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .mc-edge {
+    grid-row: 2;
+    justify-content: center;
+  }
+}
 </style>
