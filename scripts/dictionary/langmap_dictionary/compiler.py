@@ -6,6 +6,7 @@ import base64
 import hashlib
 import json
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
@@ -90,6 +91,12 @@ def _allocate_clusters(connection: sqlite3.Connection, release_id: str, inventor
         "SELECT cluster_key, lang_code, canonical_text FROM lexical_clusters WHERE release_id=? AND lang_code IS NOT NULL ORDER BY lang_code, canonical_text, cluster_key",
         (release_id,),
     )
+    claims_by_cluster: dict[str, list[str]] = defaultdict(list)
+    for member in connection.execute(
+        "SELECT cluster_key, claim_key FROM cluster_members WHERE release_id=? ORDER BY cluster_key, claim_key",
+        (release_id,),
+    ):
+        claims_by_cluster[str(member["cluster_key"])].append(str(member["claim_key"]))
     used_indexes: dict[tuple[str, str], int] = {
         (str(key[0]), str(key[1])): int(value)
         for key, value in inventory.max_homograph_by_text.items()
@@ -98,7 +105,7 @@ def _allocate_clusters(connection: sqlite3.Connection, release_id: str, inventor
     for row in rows:
         cluster = str(row["cluster_key"])
         lang, text = str(row["lang_code"]), str(row["canonical_text"])
-        claims = [str(item["claim_key"]) for item in connection.execute("SELECT claim_key FROM cluster_members WHERE release_id=? AND cluster_key=? ORDER BY claim_key", (release_id, cluster))]
+        claims = claims_by_cluster.get(cluster, [])
         parents = sorted({inventory.bindings_by_claim[claim] for claim in claims if claim in inventory.bindings_by_claim})
         if len(parents) > 1:
             raise ValueError(f"published_identity_conflict:{cluster}")
