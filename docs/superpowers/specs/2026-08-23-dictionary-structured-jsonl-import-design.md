@@ -8,7 +8,8 @@
 
 LangMap 要把
 `/Users/lim/Documents/Code/tsunhua/dictionary/export/structured-jsonl/`
-中的 22 部詞典納入一套可更新、可重跑、可驗證及可回退的受管資料集。
+中的全部詞典納入一套可更新、可重跑、可驗證及可回退的受管資料集。詞典集合由
+release manifest 掃描決定，不以設計時的固定檔案數量作為程式條件。
 
 匯入不能只按 `(lang_code, text)` 建立 Expression。相同文字可能有多個彼此獨立的語義鄰域；例如繁中英詞典把 `cod` 分成三個同形 entry，分別對應魚類、袋／莢／陰囊，以及愚弄／玩笑／虛假。三組對應若掛到同一個 `cod` Expression，圖譜會產生錯誤的間接關係。
 
@@ -18,9 +19,10 @@ LangMap 要把
 
 ### 2.1 資料規模
 
-目前 structured JSONL 共：
+以下為 2026-08-23 最初 22 個檔案的已完成深度統計基準。設計期間另有 export job
+持續加入檔案；Phase 1 必須等該 job 完成後重新掃描目錄並凍結完整 manifest，不能沿用
+這組局部總數作全 corpus 驗收：
 
-- 22 個檔案；
 - 2,025,579 筆 entry；
 - 873,875,683 bytes；
 - 2,525,824 個已抽出的 sense；
@@ -68,7 +70,7 @@ LangMap 要把
 
 ## 3. 目標
 
-1. 讓 22 部詞典中的每筆輸入記錄都能被追蹤為「已發布」或具明確錯誤碼的 quarantine，禁止靜默遺失。
+1. 讓 manifest 中每部詞典的每筆輸入記錄都能被追蹤為「已發布」或具明確錯誤碼的 quarantine，禁止靜默遺失。
 2. 正確保留同文多義；不同義項不得因文字相同而自動共用 Expression。
 3. 讓 AI 自動合併經評測證明足夠可靠的同義 claims，同時優先避免錯誤合併。
 4. 完整保留 exporter 已抽取的欄位，供重新處理、AI 對齊與品質稽核。
@@ -140,6 +142,7 @@ AI 可以自動：
 | pronunciations | 原始值與正規化值並存 | 合法 reading |
 | sense definitions | 完整保留 | 不發布 |
 | equivalents | 原始值與原子化結果並存 | Expression＋mapping |
+| synonym／antonym relations | 原始關係與原子化結果並存 | synonym 發布為 Expression＋mapping；antonym 第一版不發布 |
 | examples | 完整保留 | 成對者發布為 Expression＋mapping |
 | labels | 完整保留 | 不發布 |
 | POS | 原始值與正規化值並存 | 詞性佐證 |
@@ -169,7 +172,7 @@ Exporter v2 位於 dictionary 專案，負責忠實抽取，不負責 LangMap id
 - entry 同時保留 `raw_headword`、`canonical_headword` 與 `homograph_marker`。
 - 保留可用的原生 entry／sense 定位，例如 HTML `lexid`、element ID 或其他穩定屬性。
 - 保留逐筆語言方向提示；不得只寫詞典層級的單一方向。
-- definitions、equivalents、examples、labels、POS、forms 與 pronunciations 保留原始節點順序和原始文字。
+- definitions、equivalents、明示的 synonym／antonym relations、examples、labels、POS、forms 與 pronunciations 保留原始節點順序和原始文字。
 - `sense_key` 優先使用原生穩定定位；沒有時使用 record fingerprint 加局部 ordinal，並標記為 fallback identity。
 - metadata 只在明確的前導 metadata 區段、且 key 符合 allowlist 時解析；`#` 與 `#9110` 等真實詞頭不得被吞掉。
 - sense traversal 按 DOM 文件順序，不先收集所有 `.se2` 再收集 `.semb`。
@@ -180,12 +183,13 @@ Exporter v2 不把顯示數字硬編碼為語言文字，也不在不知道語�
 
 ### 7.2 離線 staging
 
-Staging 使用本機 SQLite，而不是把 800 MiB 以上 JSONL 全部載入記憶體。Loader 逐行驗證 JSON schema 並寫入下列邏輯表：
+Staging 使用本機 SQLite，而不是把全 corpus JSONL 載入記憶體。Loader 逐行驗證 JSON schema 並寫入下列邏輯表：
 
 - `dataset_releases`
 - `input_entries`
 - `input_senses`
 - `input_equivalents`
+- `input_relations`
 - `input_examples`
 - `input_pronunciations`
 - `input_forms`
@@ -308,12 +312,16 @@ Compiler 必須在 inventory fingerprint 一致時才能 apply。Inventory 在 p
 每個可發布 input sense claim 建立：
 
 - headword lexical cluster 到每個 equivalent lexical cluster 的直接 edge；
+- 詞典明示的 synonym claim 由 headword cluster 到 synonym cluster 建立直接 edge；
 - example text cluster 到對應 example translation cluster 的直接 edge。
+
+Antonym claim 保存在 staging／artifact，但第一版不發布：現有 edge 沒有可區分「相反」與「同義／對譯」的 relation type，不能把相反詞偽裝成普通 mapping。
 
 不得：
 
 - 把同一 sense 的所有節點做 clique；
 - 因多個 equivalents 並列便推論它們彼此同義；
+- 因多個 synonyms 並列便建立 synonym 彼此之間的 edge；
 - 把 example 與 headword 建立輸入未明示的關係；
 - 跨義項按文字去重 target Expression。
 
@@ -337,7 +345,7 @@ inspect → stage → reconcile → plan → apply → verify → rollback
 
 所有命令支援 JSON 輸出、明確輸入／輸出路徑、非零錯誤碼及 dry run。正式 apply 必須透過現有 `scripts/db` 受管操作記錄與 inventory lock，不提供繞過 guard 的簡寫。
 
-大型 SQL 按 D1 寫入限制分塊。每塊有序號、checksum 與完成 journal；重跑只跳過 checksum 相同且已驗證的 chunk。只有所有 chunks 與全量驗證通過後，release 才能設為 active。
+大型 SQL 按 D1 寫入限制分塊。每塊有序號、checksum 與完成 checkpoint；重跑只跳過 checksum 相同且已驗證的 chunk。只有所有 chunks 與全量驗證通過後，才能原子切換 active release 指標。
 
 ## 8. 線上資料模型
 
@@ -345,7 +353,7 @@ inspect → stage → reconcile → plan → apply → verify → rollback
 
 ### 8.1 `dictionary_dataset_releases`
 
-記錄不可變 release 與 active 狀態：
+記錄不可變 release 與載入狀態：
 
 ```text
 id
@@ -356,12 +364,12 @@ exporter_schema_version
 adapter_bundle_hash
 reconciliation_config_hash
 artifact_hash
-status: planned | applying | validated | active | failed | rolled_back
+status: planned | applying | validated | failed
 created_at
 activated_at
 ```
 
-同一 `dataset_key` 最多一個 active release。相同完整配置與 artifact hash 重跑是 no-op。
+`dictionary_dataset_state(dataset_key, active_release_id, updated_at)` 是唯一的 active 真相；release status 不表示公開可見性。相同完整配置與 artifact hash 重跑是 no-op。
 
 ### 8.2 `dictionary_expression_bindings`
 
@@ -386,7 +394,7 @@ binding_kind: allocated | reused | ai_merged | explicit_group
 release_id
 edge_id
 claim_key
-evidence_kind: equivalent | example
+evidence_kind: equivalent | synonym | example
 ```
 
 主鍵為 `(release_id, edge_id, claim_key, evidence_kind)`。Edge 本身仍全域唯一；evidence 不影響 score 或 votes。
@@ -401,9 +409,12 @@ object_kind: expression | edge | reading | locale_attestation | pos_attestation
 object_id
 claim_key
 object_action: created | reused
+promoted_at
+promotion_actor_kind: user | system
+promoted_by
 ```
 
-這是內部 membership／ownership journal。每個 active release 使用的 reading、locale attestation 與 POS attestation 都必須有 membership，不能只記錄首次建立的 object。它不取代各實體的外鍵或唯一約束；publisher 在寫入前後都必須驗證 object 實際存在且 identity 一致。
+這是內部 membership／ownership journal。每個 release 使用的 Expression、edge、reading、locale attestation 與 POS attestation 都必須有 membership，不能只記錄首次建立的 object。普通使用者或系統寫入重用 pipeline 建立的物件時，第一次 promotion 會使該物件日後不受 release 回退隱藏；promotion 時間與 actor 不得覆寫。它不取代各實體的外鍵或唯一約束；publisher 在寫入前後都必須驗證 object 實際存在且 identity 一致。
 
 ### 8.5 `parts_of_speech`
 
@@ -444,7 +455,7 @@ created_at
 
 ### 9.1 可見性
 
-Managed mapping 若只由本 pipeline 建立，只有在其 evidence 屬於 active release 時才參與公開 mapping 查詢。Managed reading、locale attestation 與 POS attestation 同樣只有在 active release 具有 membership 時才出現在公開詳情。若同一物件同時有一般使用者或系統建立的關係，release 切換不得隱藏它。
+Managed mapping 若只由本 pipeline 建立且尚未 promotion，只有在其 evidence 屬於 active release 時才參與公開 mapping 查詢。Managed reading、locale attestation 與 POS attestation 同樣只有在 active release 具有 membership、或已 promotion 時才出現在公開詳情。若同一物件其後被一般使用者或系統寫入重用，release 切換不得隱藏它。
 
 第一版 rollback 的產品保證是「恢復 active release 的 mapping、reading、locale attestation 與 POS 投影」，不是強制刪除所有曾建立的 Expression row。未被 active release 使用的 dictionary-only Expression 可由 verify 報告列為 cleanup candidate；已有其他引用的節點必須保留。
 
@@ -463,11 +474,10 @@ Managed mapping 若只由本 pipeline 建立，只有在其 evidence 屬於 acti
 Rollback 按以下順序：
 
 1. 驗證目標 parent release 仍完整且 artifact checksum 相符。
-2. 把目前 release 標為 `rolled_back`。
-3. 原子切換 active release 指標。
-4. 驗證公開 mapping、reading、locale attestation 與 POS 計數符合 parent manifest。
-5. 產生不再被 active release 使用的 object 清單。
-6. 只清理沒有任何其他引用、且 identity 與 ownership journal 完全吻合的物件。
+2. 原子切換 active release 指標；release status 保持 `validated`。
+3. 驗證公開 mapping、reading、locale attestation 與 POS 計數符合 parent manifest。
+4. 產生不再被 active release 使用的 object 清單。
+5. 只清理沒有任何其他引用、且 identity 與 ownership journal 完全吻合的物件。
 
 清理不是 activation rollback 的前置條件；切換必須先恢復正確可見性，再做可安全重跑的垃圾清理。
 
@@ -501,7 +511,7 @@ Quarantine item 必須保存原始 JSON、input key、entry／sense 定位、ada
 
 Gold set 必須分層涵蓋：
 
-- 22 部詞典各自的 adapter；
+- manifest 中每部詞典各自的 adapter／profile；
 - 各語言與雙向區段；
 - 同文同義、同文近義、同文異義；
 - 詞性衝突、專名、縮寫、語用差異；
@@ -701,7 +711,7 @@ staged claims = published claims + quarantined claims + explicitly skipped claim
 ### Phase 1：Exporter v2 與資料稽核
 
 - 修正 exporter schema 與已知抽取問題。
-- 重新輸出 22 個 JSONL。
+- 重新輸出 manifest 掃描到的全部 JSONL。
 - 建立全量 coverage／diagnostics 報告。
 
 驗收：每筆輸入記錄都有 v2 entry 或明確 exporter error；同一輸入重跑 byte-stable。
