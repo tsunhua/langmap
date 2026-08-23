@@ -11,9 +11,12 @@ from pathlib import Path
 from typing import Any, Mapping
 
 try:
-    from lib.runner import CommandError, run_command
-except ModuleNotFoundError:  # package import from dictionary tooling/tests
-    from .runner import CommandError, run_command
+    from scripts.db.lib.runner import CommandError, run_command
+except ModuleNotFoundError:
+    try:
+        from .runner import CommandError, run_command
+    except ImportError:  # direct execution from scripts/db
+        from lib.runner import CommandError, run_command
 
 
 class DictionaryReleaseError(RuntimeError):
