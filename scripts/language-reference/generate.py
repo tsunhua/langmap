@@ -29,10 +29,19 @@ REFERENCE_LOCALES = (
     ('cmn-Hans-CN', 'cmn', 'Hans', None, 'CN', '', '普通话', 'Simplified Chinese'),
     ('cmn-Hant-TW', 'cmn', 'Hant', None, 'TW', '', '華語', 'Taiwan Mandarin'),
     ('eng-Latn-US', 'eng', 'Latn', None, 'US', '', 'English', 'English (US)'),
+    ('eng-Latn-GB', 'eng', 'Latn', None, 'GB', '', 'English', 'English (UK)'),
     ('jpn-Jpan-JP', 'jpn', 'Jpan', None, 'JP', '', '日本語', 'Japanese (Japan)'),
     ('nan-Hant-CN', 'nan', 'Hant', None, 'CN', '', '閩南語', 'Min Nan Chinese'),
+    ('nan-Hant-CN_Chaozhou', 'nan', 'Hant', None, 'CN', 'Chaozhou', '潮州話', 'Chaozhou Hokkien'),
+    ('nan-Hant-CN_LufengJiazi', 'nan', 'Hant', None, 'CN', 'LufengJiazi', '陸豐甲子話', 'Lufeng Jiazi Hokkien'),
+    ('nan-Latn-CN_LufengJiazi', 'nan', 'Latn', None, 'CN', 'LufengJiazi', '陸豐甲子話（拉丁字）', 'Lufeng Jiazi Hokkien (Latin)'),
     ('nan-Hant-TW', 'nan', 'Hant', None, 'TW', '', '台語', 'Taiwanese Hokkien'),
     ('spa-Latn-ES', 'spa', 'Latn', None, 'ES', '', 'Español', 'Spanish (Spain)'),
+    ('ral-Latn-IN', 'ral', 'Latn', None, 'IN', '', 'Ralte', 'Ralte'),
+    ('swh-Latn-TZ', 'swh', 'Latn', None, 'TZ', '', 'Kiswahili', 'Swahili'),
+    ('wuu-Hans-CN_Wenzhou', 'wuu', 'Hans', None, 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu'),
+    ('wuu-Hant-CN_Taizhou', 'wuu', 'Hant', None, 'CN', 'Taizhou', '台州話', 'Taizhou Wu'),
+    ('yue-Hant-HK', 'yue', 'Hant', None, 'HK', '', '粵語', 'Cantonese'),
 )
 
 

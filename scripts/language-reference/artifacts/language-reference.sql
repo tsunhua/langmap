@@ -8351,8 +8351,17 @@ INSERT OR IGNORE INTO regions (code, name_en, latitude, longitude) VALUES
 INSERT OR IGNORE INTO language_locales (id, code, language_id, script_code, orthography, region_code, place_path, name, name_en, latitude, longitude) VALUES
   (1, 'cmn-Hans-CN', 1303, 'Hans', NULL, 'CN', '', '普通话', 'Simplified Chinese', NULL, NULL),
   (2, 'cmn-Hant-TW', 1303, 'Hant', NULL, 'TW', '', '華語', 'Taiwan Mandarin', NULL, NULL),
-  (3, 'eng-Latn-US', 1818, 'Latn', NULL, 'US', '', 'English', 'English (US)', NULL, NULL),
-  (4, 'jpn-Jpan-JP', 2777, 'Jpan', NULL, 'JP', '', '日本語', 'Japanese (Japan)', NULL, NULL),
-  (5, 'nan-Hant-CN', 4427, 'Hant', NULL, 'CN', '', '閩南語', 'Min Nan Chinese', NULL, NULL),
-  (6, 'nan-Hant-TW', 4427, 'Hant', NULL, 'TW', '', '台語', 'Taiwanese Hokkien', NULL, NULL),
-  (7, 'spa-Latn-ES', 5958, 'Latn', NULL, 'ES', '', 'Español', 'Spanish (Spain)', NULL, NULL);
+  (3, 'eng-Latn-GB', 1818, 'Latn', NULL, 'GB', '', 'English', 'English (UK)', NULL, NULL),
+  (4, 'eng-Latn-US', 1818, 'Latn', NULL, 'US', '', 'English', 'English (US)', NULL, NULL),
+  (5, 'jpn-Jpan-JP', 2777, 'Jpan', NULL, 'JP', '', '日本語', 'Japanese (Japan)', NULL, NULL),
+  (6, 'nan-Hant-CN', 4427, 'Hant', NULL, 'CN', '', '閩南語', 'Min Nan Chinese', NULL, NULL),
+  (7, 'nan-Hant-CN_Chaozhou', 4427, 'Hant', NULL, 'CN', 'Chaozhou', '潮州話', 'Chaozhou Hokkien', NULL, NULL),
+  (8, 'nan-Hant-CN_LufengJiazi', 4427, 'Hant', NULL, 'CN', 'LufengJiazi', '陸豐甲子話', 'Lufeng Jiazi Hokkien', NULL, NULL),
+  (9, 'nan-Hant-TW', 4427, 'Hant', NULL, 'TW', '', '台語', 'Taiwanese Hokkien', NULL, NULL),
+  (10, 'nan-Latn-CN_LufengJiazi', 4427, 'Latn', NULL, 'CN', 'LufengJiazi', '陸豐甲子話（拉丁字）', 'Lufeng Jiazi Hokkien (Latin)', NULL, NULL),
+  (11, 'ral-Latn-IN', 5487, 'Latn', NULL, 'IN', '', 'Ralte', 'Ralte', NULL, NULL),
+  (12, 'spa-Latn-ES', 5958, 'Latn', NULL, 'ES', '', 'Español', 'Spanish (Spain)', NULL, NULL),
+  (13, 'swh-Latn-TZ', 6095, 'Latn', NULL, 'TZ', '', 'Kiswahili', 'Swahili', NULL, NULL),
+  (14, 'wuu-Hans-CN_Wenzhou', 7108, 'Hans', NULL, 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu', NULL, NULL),
+  (15, 'wuu-Hant-CN_Taizhou', 7108, 'Hant', NULL, 'CN', 'Taizhou', '台州話', 'Taizhou Wu', NULL, NULL),
+  (16, 'yue-Hant-HK', 7639, 'Hant', NULL, 'HK', '', '粵語', 'Cantonese', NULL, NULL);
