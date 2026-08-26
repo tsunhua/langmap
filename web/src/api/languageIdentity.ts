@@ -135,6 +135,7 @@ export async function listContentLanguages(filters: ContentLanguagePageQuery = {
     ui_locale: filters.ui_locale ?? '',
   }
   if (filters.secondary_ui_locale) params.secondary_ui_locale = filters.secondary_ui_locale
+  if (import.meta.env.DEV) params._local_refresh = Date.now()
   const { data } = await api.get('/languages', { params, signal })
   return page<ContentLanguage>(data)
 }
