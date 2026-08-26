@@ -26,6 +26,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--locale-links-only", action="store_true")
     args = parser.parse_args()
     db = sqlite3.connect(args.source)
     db.row_factory = sqlite3.Row
@@ -35,6 +36,15 @@ def main() -> int:
     handbooks = db.execute("SELECT * FROM handbooks ORDER BY id").fetchall()
     sections = db.execute("SELECT * FROM handbook_sections ORDER BY id").fetchall()
     items = db.execute("SELECT * FROM handbook_section_items ORDER BY section_id,position").fetchall()
+    attestations = db.execute("SELECT DISTINCT e.lang_code,e.text,e.homograph_index,a.language_locale_code FROM expressions e JOIN expression_locale_attestations a ON a.expression_id=e.id WHERE e.created_by IS NOT NULL ORDER BY e.id,a.language_locale_code").fetchall()
+    if args.locale_links_only:
+        lines = [f"INSERT OR IGNORE INTO expression_locale_links(expression_id,locale_id) SELECT e.id,ll.id FROM expressions e JOIN languages l ON l.id=e.language_id JOIN language_locales ll ON ll.code={q(r['language_locale_code'])} WHERE l.code={q(r['lang_code'])} AND e.text={q(r['text'])} AND e.homograph_index={r['homograph_index']};" for r in attestations]
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        for existing in args.output_dir.glob("*.sql"): existing.unlink()
+        for index, start in enumerate(range(0, len(lines), 700), start=1):
+            (args.output_dir / f"{index:04d}.sql").write_text("\n".join(lines[start:start + 700]) + "\n", encoding="utf-8")
+        print({"locale_links": len(attestations)})
+        return 0
     lines = ["PRAGMA foreign_keys=ON;", "CREATE TABLE v2_expression_map(old_id TEXT PRIMARY KEY, new_id INTEGER NOT NULL);", "CREATE TABLE v2_handbook_map(old_id TEXT PRIMARY KEY, new_id INTEGER NOT NULL);", "CREATE TABLE v2_section_map(old_id TEXT PRIMARY KEY, new_id INTEGER NOT NULL);"]
     for row in users:
         lines.append("INSERT OR IGNORE INTO users(id,username,email,password_hash,role,email_verified,created_at,updated_at) VALUES(" + ",".join(q(row[k]) for k in ('id','username','email','password_hash','role','email_verified','created_at','updated_at')) + ");")
