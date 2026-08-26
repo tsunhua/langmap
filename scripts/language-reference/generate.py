@@ -23,6 +23,14 @@ MIN_LANGUAGES = 7000
 MIN_SCRIPTS = 100
 MIN_REGIONS = 200
 
+# These are system content categories rather than ISO languages, retained for
+# imported image and emoji expressions. Append them after ISO rows so existing
+# integer IDs remain stable across registry regenerations.
+SYSTEM_CONTENT_LANGUAGES = (
+    ('x-image', 'Image'),
+    ('x-emoji', 'Emoji'),
+)
+
 # Canonical locales used by the application and dictionary adapters. Their
 # integer IDs are allocated from this stable code order during fresh rebuild.
 REFERENCE_LOCALES = (
@@ -43,6 +51,8 @@ REFERENCE_LOCALES = (
     ('wuu-Hant-CN_Taizhou', 'wuu', 'Hant', None, 'CN', 'Taizhou', '台州話', 'Taizhou Wu'),
     ('yue-Hant-HK', 'yue', 'Hant', None, 'HK', '', '粵語', 'Cantonese'),
     ('zyg-Latn-CN_Jingxi', 'zyg', 'Latn', None, 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang'),
+    ('x-image-Latn-US', 'x-image', 'Latn', None, 'US', '', 'Image', 'Image'),
+    ('x-emoji-Latn-US', 'x-emoji', 'Latn', None, 'US', '', 'Emoji', 'Emoji'),
 )
 
 
@@ -393,7 +403,7 @@ def build_manifest(languages, scripts, regions, directions, region_coords, sql_t
 def main() -> int:
     directions = read_script_directions()
     region_coords = read_region_coords()
-    languages = read_languages()
+    languages = read_languages() + list(SYSTEM_CONTENT_LANGUAGES)
     scripts = read_scripts(directions)
     regions = read_regions(region_coords)
     overrides, locale_texts = read_name_canonical_texts()

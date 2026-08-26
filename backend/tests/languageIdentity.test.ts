@@ -94,6 +94,11 @@ describe('buildLanguageLocaleCode', () => {
 });
 
 describe('parseLanguageLocaleCode', () => {
+  it('accepts the reserved image and emoji content locales', () => {
+    expect(parseLanguageLocaleCode('x-image-Latn-US')?.lang_code).toBe('x-image');
+    expect(parseLanguageLocaleCode('x-emoji-Latn-US')?.lang_code).toBe('x-emoji');
+  });
+
   it('parses code without orthography', () => {
     const result = parseLanguageLocaleCode('nan-Latn-TW');
     expect(result).toEqual({

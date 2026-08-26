@@ -27,16 +27,64 @@ def main() -> int:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--locale-links-only", action="store_true")
+    parser.add_argument("--only-language", action="append", default=[], help="Import these language codes and their direct edge endpoints")
+    parser.add_argument("--expressions-only", action="store_true", help="Skip handbooks and sections")
     args = parser.parse_args()
     db = sqlite3.connect(args.source)
     db.row_factory = sqlite3.Row
-    users = db.execute("SELECT DISTINCT u.* FROM users u JOIN expressions e ON e.created_by=u.id WHERE e.created_by IS NOT NULL ORDER BY u.id").fetchall()
-    expressions = db.execute("SELECT * FROM expressions WHERE created_by IS NOT NULL ORDER BY id").fetchall()
-    edges = db.execute("SELECT ed.* FROM expression_edges ed JOIN expressions a ON a.id=ed.expression_a_id JOIN expressions b ON b.id=ed.expression_b_id WHERE a.created_by IS NOT NULL AND b.created_by IS NOT NULL ORDER BY ed.id").fetchall()
-    handbooks = db.execute("SELECT * FROM handbooks ORDER BY id").fetchall()
-    sections = db.execute("SELECT * FROM handbook_sections ORDER BY id").fetchall()
-    items = db.execute("SELECT * FROM handbook_section_items ORDER BY section_id,position").fetchall()
-    attestations = db.execute("SELECT DISTINCT e.lang_code,e.text,e.homograph_index,a.language_locale_code FROM expressions e JOIN expression_locale_attestations a ON a.expression_id=e.id WHERE e.created_by IS NOT NULL ORDER BY e.id,a.language_locale_code").fetchall()
+    only_languages = sorted(set(args.only_language))
+    if only_languages:
+        marks = ",".join("?" for _ in only_languages)
+        expressions = db.execute(f"""
+            SELECT DISTINCT e.* FROM expressions e
+            WHERE e.lang_code IN ({marks})
+               OR e.id IN (
+                 SELECT CASE WHEN a.lang_code IN ({marks}) THEN ed.expression_b_id ELSE ed.expression_a_id END
+                 FROM expression_edges ed
+                 JOIN expressions a ON a.id=ed.expression_a_id
+                 JOIN expressions b ON b.id=ed.expression_b_id
+                 WHERE a.lang_code IN ({marks}) OR b.lang_code IN ({marks})
+               )
+            ORDER BY e.id
+        """, only_languages * 4).fetchall()
+    else:
+        expressions = db.execute("SELECT * FROM expressions WHERE created_by IS NOT NULL ORDER BY id").fetchall()
+    expression_ids = [str(row['id']) for row in expressions]
+    expression_marks = ",".join("?" for _ in expression_ids)
+    creator_ids = sorted({row['created_by'] for row in expressions if row['created_by'] is not None})
+    users = db.execute(f"SELECT * FROM users WHERE id IN ({','.join('?' for _ in creator_ids)}) ORDER BY id", creator_ids).fetchall() if creator_ids else []
+    if expression_ids and only_languages:
+        language_marks = ",".join("?" for _ in only_languages)
+        edges = db.execute(
+            f"""SELECT ed.* FROM expression_edges ed
+                JOIN expressions a ON a.id=ed.expression_a_id
+                JOIN expressions b ON b.id=ed.expression_b_id
+                WHERE ed.expression_a_id IN ({expression_marks}) AND ed.expression_b_id IN ({expression_marks})
+                  AND (a.lang_code IN ({language_marks}) OR b.lang_code IN ({language_marks}))
+                ORDER BY ed.id""",
+            expression_ids * 2 + only_languages * 2,
+        ).fetchall()
+    elif expression_ids:
+        edges = db.execute(
+            f"SELECT * FROM expression_edges WHERE expression_a_id IN ({expression_marks}) AND expression_b_id IN ({expression_marks}) ORDER BY id",
+            expression_ids * 2,
+        ).fetchall()
+    else:
+        edges = []
+    handbooks = [] if args.expressions_only else db.execute("SELECT * FROM handbooks ORDER BY id").fetchall()
+    sections = [] if args.expressions_only else db.execute("SELECT * FROM handbook_sections ORDER BY id").fetchall()
+    items = [] if args.expressions_only else db.execute("SELECT * FROM handbook_section_items ORDER BY section_id,position").fetchall()
+    attestations = db.execute(f"""
+        SELECT DISTINCT e.lang_code,e.text,e.homograph_index,a.language_locale_code
+        FROM expressions e JOIN expression_locale_attestations a ON a.expression_id=e.id
+        WHERE e.id IN ({expression_marks})
+        UNION
+        SELECT e.lang_code,e.text,e.homograph_index,
+               CASE e.lang_code WHEN 'x-image' THEN 'x-image-Latn-US' ELSE 'x-emoji-Latn-US' END
+        FROM expressions e
+        WHERE e.id IN ({expression_marks}) AND e.lang_code IN ('x-image','x-emoji')
+        ORDER BY 1,2,3,4
+    """, expression_ids * 2).fetchall() if expression_ids else []
     if args.locale_links_only:
         lines = [f"INSERT OR IGNORE INTO expression_locale_links(expression_id,locale_id) SELECT e.id,ll.id FROM expressions e JOIN languages l ON l.id=e.language_id JOIN language_locales ll ON ll.code={q(r['language_locale_code'])} WHERE l.code={q(r['lang_code'])} AND e.text={q(r['text'])} AND e.homograph_index={r['homograph_index']};" for r in attestations]
         args.output_dir.mkdir(parents=True, exist_ok=True)

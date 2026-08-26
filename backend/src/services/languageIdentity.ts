@@ -77,7 +77,7 @@ export async function queryReferenceTable(
   return { items: results as Record<string, unknown>[], total };
 }
 
-const LANG_CODE_RE = /^[a-z]{3}$/;
+const LANG_CODE_RE = /^(?:[a-z]{3}|x-(?:image|emoji))$/;
 const SCRIPT_CODE_RE = /^[A-Z][a-z]{3}$/;
 const REGION_CODE_RE = /^[A-Z]{2}$/;
 const PLACE_SEGMENT_RE = /^[A-Z][A-Za-z]*$/;
@@ -120,7 +120,7 @@ export function buildLanguageLocaleCode(input: {
 }
 
 export function parseLanguageLocaleCode(code: string): LanguageLocaleParts | null {
-  const match = /^([a-z]{3})-([A-Z][a-z]{3})(?:_([A-Z][A-Za-z]*))?-([A-Z]{2})(?:_([A-Z][A-Za-z]*(?:_[A-Z][A-Za-z]*)*))?$/.exec(code);
+  const match = /^([a-z]{3}|x-(?:image|emoji))-([A-Z][a-z]{3})(?:_([A-Z][A-Za-z]*))?-([A-Z]{2})(?:_([A-Z][A-Za-z]*(?:_[A-Z][A-Za-z]*)*))?$/.exec(code);
   if (!match) return null;
 
   const [, lang, script, orthography, region, placePath] = match;
