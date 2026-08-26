@@ -4434,7 +4434,7 @@ INSERT OR IGNORE INTO languages (id, code, name_en) VALUES
   (4424, 'nak', 'Nakanai'),
   (4425, 'nal', 'Nalik'),
   (4426, 'nam', 'Ngan''gityemerri'),
-  (4427, 'nan', 'Min Nan Chinese'),
+  (4427, 'nan', 'Min Nan Chinese (Hokkien)'),
   (4428, 'nao', 'Naaba'),
   (4429, 'nap', 'Neapolitan'),
   (4430, 'naq', 'Khoekhoe'),
@@ -7871,6 +7871,7 @@ INSERT OR IGNORE INTO languages (id, code, name_en) VALUES
   (7854, 'zyn', 'Yongnan Zhuang'),
   (7855, 'zyp', 'Zyphe Chin'),
   (7856, 'zzj', 'Zuojiang Zhuang');
+UPDATE languages SET name_en='Min Nan Chinese (Hokkien)' WHERE code='nan';
 INSERT OR IGNORE INTO scripts (code, name_en, direction) VALUES
   ('Adlm', 'Adlam', 'rtl'),
   ('Afak', 'Afaka', 'ltr'),
@@ -12996,6 +12997,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Min Bei Chinese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Min Dong Chinese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Min Nan Chinese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Min Nan Chinese (Hokkien)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Min Zhong Chinese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mina (Cameroon)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Minaean', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -13376,9 +13378,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Nayi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nayini', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ncane', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Nchumbulu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Nda''nda''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Nchumbulu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Nda''nda''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndaka', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndali', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -13877,9 +13879,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Oku', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ol Chiki (Ol Cemet’, Ol, Santali)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ol Onal', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Old Aramaic (up to 700 BCE)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Old Avar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Old Aramaic (up to 700 BCE)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Old Avar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Old Breton', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Old Burmese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Old Cham', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14378,9 +14380,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Qatabanian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qatar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qau', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Qawasqar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Qila Muji', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Qawasqar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Qila Muji', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qimant', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qiubei Zhuang', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Quapaw', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14879,9 +14881,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Shuhi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shuishu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shumashti', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Shumcho', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Shuswap', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Shumcho', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Shuswap', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shwai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shwe Palaung', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Sialum', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15380,9 +15382,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Tampias Lobu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tampuan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tampulma', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Tanacross', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Tanahmerah', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Tanacross', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Tanahmerah', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tanaina', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tanapag', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tandaganon', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15881,9 +15883,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ukpe-Bayobiri', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukpet-Ehom', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukraine', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Ukrainian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Ukrainian Sign Language', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Ukrainian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Ukrainian Sign Language', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukue', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukuriguma', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukwa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -16382,9 +16384,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Xiang Chinese', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xibe', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xicotepec De Juárez Totonac', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Xinca', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Xingú Asuriní', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Xinca', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Xingú Asuriní', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xipaya', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xiri', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xiriâna', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
