@@ -1,96 +1,39 @@
-# LangMap 詞彙表
+# LangMap 術語表
 
-LangMap 是收集世界各地語言詞句、展示跨語言對照的社群平台。本檔案是此專案專屬的術語詞彙表——只收錄本專案特有的概念,不是規格,也不是實作筆記。
+LangMap 是以詞句與直接語義關係為核心的多語對照平台。本檔案只定義目前資料模型仍使用的專案術語；表結構以 `backend/schema.sql` 為準。
 
-## 核心資料
+## 身份與 locale
 
-**語言代碼 (Lang Code)**:
-嚴格採用 ISO 639-3 個體語言代碼，識別詞句所屬的語言，例如 `nan`、`cmn` 或 `yue`；不以方言、書寫系統或地點另造語言代碼。
-_Avoid_: Glottocode、macrolanguage 覆寫、locale code
+**語言（Language）**：ISO 639-3 語言 registry 的一列。公開 API 使用 `code`，資料庫內部關聯使用整數 `languages.id`。`name_en` 是英文回退名稱；`name_expression_id` 指向名稱圖的 canonical English expression。
 
-**地域形式代碼 (Locale Code)**:
-標記某個語言在特定書寫系統與地點出現的地域形式，例如 `nan-Hant-CN_Quanzhou_Nanan`。格式為 `{lang}-{script}-{region}(_{place_segment})*`：`-` 分隔語言、書寫系統與地區三種頂層欄位，`_` 分隔地點路徑內由大至小的層級。書寫系統必須是 ISO 15924 標準代碼。`region` 必須是 ISO 3166-1 alpha-2 地區代碼，其餘地點層級均可選，按實際佐證採可變深度，不以空值或佔位符補齊；各次級地點段由使用者自訂，必須符合 `^[A-Z][A-Za-z]*$`，可用段內大寫表示多字地名，例如 `NewYork`。它用於標記讀音及記錄當地自稱，不是 BCP 47 tag，也不是介面語系。
-_Avoid_: lang code、BCP 47 content tag、UI locale
+**語言 locale（Language Locale）**：語言在特定書寫系統、正字法、地區與可選地點路徑下的 profile。代碼格式為 `{lang}-{script}(_{orthography})?-{region}(_{place_segment})*`，例如 `nan-Hant-CN_Chaozhou`。`language_locales.id` 是所有 locale 關聯的整數鍵；locale 的自稱存於 `name`。
 
-**介面語系 (UI Locale)**:
-一個專案可提供的介面翻譯形式，保存在獨立資料模型中並關聯到一個地域形式代碼。新介面語系先累積 UI 詞句翻譯，覆蓋率達 60% 時自動啟用，也可由有權限的維護者手動啟用；啟用後不因覆蓋率下降而自動停用，只有管理員能將它封存。Fallback 補上的詞句不計入覆蓋率。它的翻譯狀態不代表地域形式的讀音或地理繼承。
-_Avoid_: language locale、未啟用的可選介面語言、地域形式 fallback
+**介面 locale（UI Locale）**：某一 `language_locale` 被啟用為介面翻譯的狀態，保存在 `ui_locales`。使用者可選 primary 與 secondary UI locale；缺少譯文時依序回退另一個 UI locale 與英文原文。
 
-**語言偏好 (Language Preferences)**:
-使用者選擇的第一地域形式與可選的第二地域形式。介面逐條 UI 詞句先查第一語言的已啟用翻譯，缺少時依序退到第二語言與英語原文；fallback 是使用者層級的選擇，不是介面語系或地域形式之間的固有關係。
-_Avoid_: locale inheritance、把 fallback 譯文計入覆蓋率、將整個介面一次切換到 fallback
+**名稱圖（Localized Name Graph）**：語言、locale、script 與 region 的名稱一律是 ordinary expression。registry 列只指向 canonical English expression；譯名必須與它有 direct `expression_edge`，且目標 expression 具有請求完整 locale 的 `expression_locale_link`。這避免在 registry 複製逐語系名稱欄位。
 
-**讀音標記 (Expression Reading)**:
-某個詞句在一個地域形式下的一筆文字讀音佐證，必須綁定地域形式代碼，並以 `scheme` 短代碼標明記法，例如 Pinyin、Wade–Giles、IPA 或具名的 phonics 方法；`scheme` 不另設註冊表。同一詞句、地域形式與記法可保存多筆不同來源的記錄；各地域的記錄彼此獨立，不建立無地域、宣稱全語言通用或由上層地域自動繼承的讀音記錄。
-_Avoid_: 音檔、唯一標準發音、書寫系統、未具名的 phonics
+## 詞句與關係
 
-**地域佐證 (Locale Attestation)**:
-有來源支持某個詞句曾在一個地域形式中出現的記錄。貢獻詞句時可選擇是否提供地域形式；未提供時不建立佐證、`NULL` 或未知地域代碼。地域佐證只隨新證據追加，不表示該詞句的完整地理分布；一筆讀音標記也同時構成其詞句與地域形式之間的地域佐證。
-_Avoid_: 分布範圍、完整覆蓋、未知地域佔位
+**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接語義 edge。
 
-**詞句 (Expression)**:
-某個語言裡的一段具體話語(詞或短語),是平台最基礎的單位。預設以語言代碼與 canonical 文字的短 hash 共同識別；同形詞只有在映射圖已出現需要分離的不同語義時才拆分。
-_Avoid_: 詞條(易與詞典「詞條」混淆)
+**同形拆分（Homograph Split）**：同一文字需要分離不同語義時，建立較大的 `homograph_index` 並以 `expression_splits` 記錄可追溯的 edge 搬移。系統不依文字自動推斷詞義。
 
-**同形拆分 (Homograph Split)**:
-維護者發現一個詞句的映射鄰域混合不同語義後，手動建立帶 `.2`、`.3` 等不透明後綴的新詞句 ID，並把相關映射搬到新詞句的維護操作。系統不自動偵測、提示或拆分同形詞；數字後綴只用於識別，不表達語義或順序。
-_Avoid_: sense gloss、自動詞義判斷、由後綴推測詞義
+**映射／語義 edge（Expression Edge）**：兩個 expression 的直接語義關係。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 表示關係種類，`score` 由 `edge_votes` 聚合。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
 
-**映射 (Mapping)**:
-兩個不同語言的詞句之間「表達的是同一件事」的關係。是跨語言連結的第一性概念。
-_Avoid_: meaning、語義組(舊概念,指詞句對「組」的從屬,不是詞句對詞句的關係)
+**詞形 edge（Expression Form Edge）**：變化形指向辭書形的有向關係，與語義 edge 分開。`expression_form_edge_features` 掛載形態特徵；特徵與維度名稱也以 expression 做國際化。
 
-## 映射的種類
+**讀音（Expression Reading）**：某 expression 在一個 language locale 下，使用一個 scheme 記錄的文字讀音。它的複合主鍵為 expression、locale、scheme、value。
 
-**直接映射 (Direct Mapping)**:
-由人顯式建立的映射——某人明確斷言「這兩個詞句表達同一件事」。是貢獻的原子單位。
+## 社群內容
 
-**間接映射 (Indirect Mapping)**:
-兩個詞句之間沒有直接映射,但可經由其他詞句串起來(傳遞閉包),由系統自動推導而得。永遠由系統產生,不由人建立;置信度低於直接映射。
+**手冊（Handbook）**：使用者建立的學習手冊，由有序的 section 與 expression item 組成；手冊可公開或私人，並可由 `handbook_votes` 評分。
 
-## 詞形變化
+**來源（Source）**：可選的 provenance 列。expression 與 reading 只保留 `source_id` 整數引用；不為每一筆輸入複製來源文字。
 
-**辭書形 (Lemma)**:
-變化形以形態邊指向的詞句，是同一詞位（lexeme）在不同形態下的代表形式。系統不自動標記辭書形，也不自動產生或補齊範式。
-_Avoid_: 原形、字典形、base form
+## 資料生命週期
 
-**變化形 (Form)**:
-辭書形的一種有向形態變化（陰陽性、單複數、時態、活用等），以形態邊指向其辭書形；一個變化形可指向多個辭書形，也可同時是他詞的辭書形。
-_Avoid_: 詞形、屈折形、variant
+**canonical schema**：`backend/schema.sql` 描述乾淨重建時的資料庫。變更 schema 時，必須新增順序 migration、同步 schema 與 migration lock。
 
-**形態邊 (Form Edge)**:
-變化形指向辭書形、表達「同一詞位、不同形式」的有向關聯，邊上掛可疊加的形態特徵；與表達「同一件事」的語義映射分屬兩層，不進語義圖譜。
-_Avoid_: 形態映射、屈折
+**language reference registry**：`scripts/language-reference/` 的固定輸入與 generator 產生的 seed。它建立 ISO registry、reference locale，以及名稱圖的 canonical expression、翻譯 edge 與 locale link。
 
-**形態特徵 (Morphological Feature)**:
-掛在形態邊上的原子標記（如 `feminine`、`plural`），隸屬一個形態維度；代碼登錄於封閉清單，顯示名走 expression mapping 國際化，不加逐語系欄位。
-
-**形態維度 (Morphological Dimension)**:
-形態特徵的分類軸（如 gender、number），決定範式表的欄／列標題；代碼登錄於封閉清單。
-
-## 貢獻
-
-**批次貢獻 (Batch Contribution)**:
-一次提交 N 個宣稱「表達同一件事」的詞句;系統在兩兩之間建立直接映射(完全圖,共 N(N−1)/2 條),每條各自獨立可讚可踩。一次批次視為對其中所有 pair 的集體斷言。是產生映射的主要途徑。
-
-## 策展
-
-**手冊 (Handbook)**:
-用戶策展的學習清單,由若干章節組成;每個章節有自訂標題和一組有序的詞句。無 Markdown、無正文,純粹是「標題 + 詞句順序」。條目單位是詞句(非映射),作者直接挑選,不經對照集推導。
-
-## 社群表態
-
-**讚 / 踩 (Upvote / Downvote)**:
-用戶對社群貢獻的內容(映射、手冊)表達認同/不認同的表態。對象是**映射**與**手冊**,不是詞句本身。
-_Avoid_: 按讚(社群媒體味)
-
-**評分 (Score)**:
-一條社群貢獻內容上,由讚/踩累積而成的淨值,代表社群認可程度。映射上只掛在直接映射(間接映射無評分);手冊上的評分用於手冊的熱門排序。
-
-## 顯示與折疊
-
-**對照集 (Neighborhood)**:
-以某個詞句為錨、沿映射遍歷得到的「相關詞句 + 映射」集合,是詞句頁「對照」區塊的內容來源。預設只顯示 1 跳(直接映射相鄰詞句),用戶可手動展開至最多 3 跳。
-
-**折疊 (Fold)**:
-一條映射在對照集中預設收合、需用戶主動展開的狀態。唯一觸發條件是該映射**評分過低**(間接映射無評分,故不適用)。
+**v2 canonical import**：`scripts/db/import_v2_canonical.py` 從匯出的舊 v2 SQLite 產生可重跑 SQL，將適用資料寫入現行整數 schema。local rebuild 會清除結果，因此匯入必須保持可重跑。

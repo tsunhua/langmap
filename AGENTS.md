@@ -11,7 +11,6 @@
 - 前端：`web/`，Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS。
 - 後端：`backend/`，Hono + TypeScript + Cloudflare Workers + D1。
 - API prefix：`/api/v2`，一般回應格式為 `{ success, data?, error?, message? }`。
-- `web/`、`backend/` 是舊版；除非需求明確指向，否則不要同步修改。
 - `apple/` 是獨立 SwiftUI 客戶端，不要在 Web/API 任務中順手修改。
 
 ## 目錄
@@ -46,7 +45,7 @@ cd backend && npm test
 - 後端新路由放 `backend/src/routes/`，使用 `utils/response.ts` 的回應 helper。
 - API 契約變更時同步更新型別、composable、測試及相關規格。
 - schema 變更同時新增 migration 並更新 `schema.sql`。
-- 資料問題回到來源、匯入腳本或 migration 修正，不在前端寫死例外。
+- 資料問題回到來源、registry seed、匯入腳本或 migration 修正，不在前端寫死例外。
 - 查詢、圖遍歷與佈局必須有穩定排序，並處理循環、重複與數量上限。
 - 註釋只解釋 WHY，不重述程式碼。
 
@@ -63,13 +62,20 @@ cd backend && npm test
 
 ## Domain
 
-- `expression`：單一語言中的詞或句，綁定到 `language_profile_code`。
-- `mapping` / `expression_edge`：兩個 expression 的語義關係。
-- `language_variety`：語言或方言的使用者面向身份（code、名稱、描述、glottocode），每個 variety 可有多個 profile。
-- `language_profile`：精確的 BCP 47 content tag，expression 綁定的最小單位。
-- `contribution`：一批新增或關聯提交。
+- `language`：ISO 639-3 語言 registry；以整數 `id` 作內部引用，`code` 作穩定公開識別。
+- `language_locale`：精確的書寫系統／地區／地點 profile；詞句可透過 `expression_locale_links` 連到零至多個 locale。
+- `expression`：單一語言中的詞或句，綁定 `language_id`；ID 為整數。
+- `mapping` / `expression_edge`：兩個 expression 的直接語義關係；端點採排序後的整數 ID。
+- 語言、locale、script 與 region 的名稱本身也是 expression；registry 列僅保留其 canonical English expression 的整數引用，譯名透過 direct edge 加完整 locale link 解析。
 - `handbook`：學習手冊。
 - `/mapping/:id` 以 expression ID 為中心展示關係，不要混淆詞句節點與映射邊。
+
+## 本地 D1 與 registry
+
+- `backend/schema.sql` 是 greenfield canonical schema；`scripts/language-reference/generate.py` 產生 language registry、reference locale 與名稱 expression/edge seed。
+- `./dev.sh --rebuild` 會重建本地 D1，並清除手動匯入的資料。需要保留 local 匯入時，先確認其可重跑的來源／腳本，再重建。
+- `scripts/db/import_v2_canonical.py` 是從 v2 SQLite 匯出產生可重跑 canonical 匯入 SQL 的工具；變更匯入範圍時優先修正它，而非手動補前端或資料庫例外。
+- production D1 依 `docs/runbooks/database-migrations.md` 的 plan/apply 流程操作；不得以直接 remote migration apply 取代該流程。
 
 ## 文檔與安全
 
