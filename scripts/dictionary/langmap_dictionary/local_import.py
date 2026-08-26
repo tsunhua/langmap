@@ -79,7 +79,7 @@ def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, 
     return {
         "code": code, "language_id": language_id, "lang_code": language_code,
         "script_code": script or "Zyyy", "orthography": None,
-        "region_code": region or "ZZ", "place_path": "", "name": code, "name_en": code,
+        "region_code": region, "place_path": "", "name": code, "name_en": code,
     }
 
 
@@ -258,7 +258,7 @@ def import_release_to_local_d1(
         for claim_key, row in example_rows.items():
             if not claim_key.endswith(":translation"):
                 continue
-            text_row = example_rows.get(claim_key[:-12])
+            text_row = example_rows.get(claim_key[: -len(":translation")] + ":text")
             if text_row is None:
                 continue
             left = cluster_ids.get(str(text_row["cluster_key"]))

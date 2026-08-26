@@ -6,6 +6,7 @@ from scripts.dictionary.incremental_import import order_jsonl_files, run_increme
 
 ROOT = Path(__file__).parents[3]
 SCHEMA = ROOT / "backend" / "schema.sql"
+REFERENCE = ROOT / "scripts" / "language-reference" / "artifacts" / "language-reference.sql"
 FIXTURE = Path(__file__).parent / "fixtures" / "traditional_chinese_english_v2.jsonl"
 
 
@@ -25,6 +26,7 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
     d1_path = tmp_path / "d1.sqlite"
     d1 = sqlite3.connect(d1_path)
     d1.executescript(SCHEMA.read_text(encoding="utf-8"))
+    d1.executescript(REFERENCE.read_text(encoding="utf-8"))
     d1.close()
 
     state_path = tmp_path / "state.json"
@@ -32,7 +34,7 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
     first = run_incremental_import(input_dir, d1_path, state_path, staging_root)
     assert first[0]["status"] == "success"
     assert first[0]["expressions"] == 9
-    assert first[0]["d1_after"]["terms"] == 9
+    assert first[0]["d1_after"]["terms"] - first[0]["d1_before"]["terms"] == 9
     assert list(staging_root.iterdir()) == []
 
     second = run_incremental_import(input_dir, d1_path, state_path, staging_root)

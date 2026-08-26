@@ -67,12 +67,12 @@ def _d1_catalog_snapshot(path: Path) -> dict[str, int]:
     try:
         values = connection.execute(
             "SELECT "
-            "(SELECT COUNT(*) FROM dictionary_languages),"
-            "(SELECT COUNT(*) FROM dictionary_locales),"
-            "(SELECT COUNT(*) FROM dictionary_terms),"
-            "(SELECT COUNT(*) FROM dictionary_edges),"
-            "(SELECT COUNT(*) FROM dictionary_readings),"
-            "(SELECT COUNT(*) FROM dictionary_dataset_releases)"
+            "(SELECT COUNT(*) FROM languages),"
+            "(SELECT COUNT(*) FROM language_locales),"
+            "(SELECT COUNT(*) FROM expressions),"
+            "(SELECT COUNT(*) FROM expression_edges),"
+            "(SELECT COUNT(*) FROM expression_readings),"
+            "(SELECT COUNT(*) FROM sources)"
         ).fetchone()
         return {
             "languages": int(values[0]),
@@ -80,7 +80,7 @@ def _d1_catalog_snapshot(path: Path) -> dict[str, int]:
             "terms": int(values[2]),
             "edges": int(values[3]),
             "readings": int(values[4]),
-            "releases": int(values[5]),
+            "sources": int(values[5]),
         }
     finally:
         connection.close()
@@ -92,7 +92,7 @@ def _d1_has_release(path: Path, release_id: str) -> bool:
     connection = sqlite3.connect(path, timeout=60)
     try:
         return connection.execute(
-            "SELECT 1 FROM dictionary_dataset_releases WHERE id=?", (release_id,)
+            "SELECT 1 FROM sources WHERE type='publication' LIMIT 1"
         ).fetchone() is not None
     finally:
         connection.close()

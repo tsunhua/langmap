@@ -61,6 +61,8 @@ node_modules/
 .codegraph/
 
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 .opencode/backend/remote-old.sql
 remote-*.sql
