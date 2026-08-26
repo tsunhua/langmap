@@ -42,6 +42,7 @@ REFERENCE_LOCALES = (
     ('wuu-Hans-CN_Wenzhou', 'wuu', 'Hans', None, 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu'),
     ('wuu-Hant-CN_Taizhou', 'wuu', 'Hant', None, 'CN', 'Taizhou', '台州話', 'Taizhou Wu'),
     ('yue-Hant-HK', 'yue', 'Hant', None, 'HK', '', '粵語', 'Cantonese'),
+    ('zyg-Latn-CN_Jingxi', 'zyg', 'Latn', None, 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang'),
 )
 
 

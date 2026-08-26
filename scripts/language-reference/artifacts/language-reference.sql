@@ -8364,4 +8364,5 @@ INSERT OR IGNORE INTO language_locales (id, code, language_id, script_code, orth
   (13, 'swh-Latn-TZ', 6095, 'Latn', NULL, 'TZ', '', 'Kiswahili', 'Swahili', NULL, NULL),
   (14, 'wuu-Hans-CN_Wenzhou', 7108, 'Hans', NULL, 'CN', 'Wenzhou', '温州话', 'Wenzhou Wu', NULL, NULL),
   (15, 'wuu-Hant-CN_Taizhou', 7108, 'Hant', NULL, 'CN', 'Taizhou', '台州話', 'Taizhou Wu', NULL, NULL),
-  (16, 'yue-Hant-HK', 7639, 'Hant', NULL, 'HK', '', '粵語', 'Cantonese', NULL, NULL);
+  (16, 'yue-Hant-HK', 7639, 'Hant', NULL, 'HK', '', '粵語', 'Cantonese', NULL, NULL),
+  (17, 'zyg-Latn-CN_Jingxi', 7852, 'Latn', NULL, 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang', NULL, NULL);
