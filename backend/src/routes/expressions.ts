@@ -4,6 +4,7 @@ import { badRequest, created, internalError, notFoundCode, paginated, success } 
 import { ExpressionError, createExpression, createLocaleLink, getExpression, searchExpressions } from '../services/expressions';
 import { ReadingError, createReading } from '../services/readings';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
+import { getMappingGraph } from '../services/mappingGraph';
 import { parseIntegerId, serializeIntegerId } from '../utils/ids';
 import type { Bindings, Variables } from '../types';
 
@@ -36,6 +37,14 @@ expressions.get('/:id', async (c) => {
   const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_EXPRESSION_ID');
   const result = await getExpression(c.env.DB, id); if (!result) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   return success(c, { ...result, expression: expressionDto(result.expression), locales: result.locales.map((row) => ({ ...row, expression_id: serializeIntegerId(row.expression_id), locale_id: serializeIntegerId(row.locale_id) })), readings: result.readings.map((row) => ({ ...row, expression_id: serializeIntegerId(row.expression_id), locale_id: serializeIntegerId(row.locale_id) })) });
+});
+
+expressions.get('/:id/graph', async (c) => {
+  const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_EXPRESSION_ID');
+  const rawHops = Number.parseInt(c.req.query('hops') ?? '1', 10); if (![1, 2, 3].includes(rawHops)) return badRequest(c, 'INVALID_HOPS');
+  const graph = await getMappingGraph(c.env.DB, id, rawHops as 1 | 2 | 3, c.req.query('target_language')?.toLowerCase());
+  if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
+  return success(c, { ...graph, root_id: serializeIntegerId(graph.root_id), nodes: graph.nodes.map((node) => ({ ...node, expression_id: serializeIntegerId(node.expression_id) })), edges: graph.edges.map((edge) => ({ ...edge, edge_id: serializeIntegerId(edge.edge_id), source_id: serializeIntegerId(edge.source_id), target_id: serializeIntegerId(edge.target_id) })) });
 });
 
 expressions.post('/:id/locales', requireAuth, async (c) => {
