@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { escapeLike } from './languageIdentity';
+import { parseLocaleHints, resolveLanguageNames } from './localizedName';
 
 export interface LanguageContentSummary { code: string; name_en: string; name: string; expression_count: number; locale_count: number; active_ui_locale_count: number; }
 export interface LanguageLocaleSummary { code: string; name: string; name_en: string; display_name: string; script_code: string | null; region_code: string | null; place_path: string; latitude: number | null; longitude: number | null; coordinate_source: 'locale' | 'region' | null; }
@@ -8,9 +9,10 @@ export interface LanguageExpressionRow { id: number; lang_code: string; text: st
 
 export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
   const q = query.q.trim(); const where = q ? "WHERE l.code LIKE ? ESCAPE '\\' OR l.name_en LIKE ? ESCAPE '\\'" : ''; const params = q ? [`%${escapeLike(q)}%`, `%${escapeLike(q)}%`] : [];
-  const base = `SELECT l.code,l.name_en,l.name_en AS name,COUNT(DISTINCT e.id) AS expression_count,COUNT(DISTINCT ll.id) AS locale_count,COUNT(DISTINCT u.locale_id) AS active_ui_locale_count FROM languages l LEFT JOIN expressions e ON e.language_id=l.id LEFT JOIN language_locales ll ON ll.language_id=l.id LEFT JOIN ui_locales u ON u.locale_id=ll.id AND u.status='active' ${where} GROUP BY l.id HAVING COUNT(e.id)>0 OR COUNT(ll.id)>0`;
+  const base = `SELECT l.code,l.name_en,COUNT(DISTINCT e.id) AS expression_count,COUNT(DISTINCT ll.id) AS locale_count,COUNT(DISTINCT u.locale_id) AS active_ui_locale_count FROM languages l LEFT JOIN expressions e ON e.language_id=l.id LEFT JOIN language_locales ll ON ll.language_id=l.id LEFT JOIN ui_locales u ON u.locale_id=ll.id AND u.status='active' ${where} GROUP BY l.id HAVING COUNT(e.id)>0 OR COUNT(ll.id)>0`;
   const count = await db.prepare(`SELECT COUNT(*) AS total FROM (${base})`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; const rows = await db.prepare(`${base} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
-  return { items: rows.results, total: count?.total ?? 0 };
+  const names = await resolveLanguageNames(db, rows.results.map((row) => row.code), parseLocaleHints(query.uiLocale, query.secondaryUiLocale));
+  return { items: rows.results.map((row) => ({ ...row, name: names.get(row.code) ?? row.name_en })), total: count?.total ?? 0 };
 }
 
 export async function getLanguageDetail(db: D1Database, code: string, _hints = {}, locale = ''): Promise<LanguageDetail | null> {

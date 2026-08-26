@@ -34,13 +34,14 @@ class TestGenerator(unittest.TestCase):
         self.assertGreaterEqual(manifest['counts']['regions'], 200)
         self.assertEqual(hashlib.sha256((ARTIFACTS / 'language-reference.sql').read_bytes()).hexdigest(), manifest['artifacts']['language_reference_sql']['sha256'])
 
-    def test_registry_rows_use_integer_ids_and_no_legacy_expression_seed(self):
+    def test_registry_rows_use_integer_ids_and_expression_backed_names(self):
         sql = (ARTIFACTS / 'language-reference.sql').read_text(encoding='utf-8')
         self.assertIn('INSERT OR IGNORE INTO languages (id, code, name_en)', sql)
         self.assertIn('INSERT OR IGNORE INTO language_locales (id, code, language_id', sql)
-        self.assertNotIn('INSERT OR IGNORE INTO expressions', sql)
-        self.assertNotIn('name-edge:', sql)
-        self.assertNotIn('name-att:', sql)
+        self.assertIn('INSERT OR IGNORE INTO expressions (language_id, text, source_id)', sql)
+        self.assertIn('INSERT OR IGNORE INTO expression_edges', sql)
+        self.assertIn('INSERT OR IGNORE INTO expression_locale_links', sql)
+        self.assertIn('UPDATE languages SET name_expression_id=', sql)
 
     def test_script_names_keep_direction(self):
         sql = (ARTIFACTS / 'language-reference.sql').read_text(encoding='utf-8')

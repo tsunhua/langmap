@@ -242,93 +242,58 @@ def _insert_blocks(table: str, columns: list[str], value_rows: list[str]) -> lis
     return out
 
 
-def collect_canonical_name_texts(
-    languages: list[tuple[str, str]],
-    overrides: dict[str, str],
-    locale_texts: dict[str, str],
-    scripts: list[tuple[str, str, str]],
-    regions: list[tuple[str, str, float | None, float | None]],
-) -> list[str]:
-    texts = {override for override in overrides.values()}
-    for code, name_en in languages:
-        texts.add(overrides.get(code, name_en))
-    texts.update(locale_texts.values())
-    for _, name_en, _direction in scripts:
-        texts.add(name_en)
-    for _, name_en, _lat, _lon in regions:
-        texts.add(name_en)
-    return sorted(texts)
-
-
 def emit_name_seed_sql(
-    canonical_texts: list[str],
-    locale_texts: dict[str, str],
-    translations: list[dict[str, str]],
+    languages: list[tuple[str, str]], scripts: list[tuple[str, str, str]],
+    regions: list[tuple[str, str, float | None, float | None]],
+    translations: list[dict[str, str]], language_ids: dict[str, int],
 ) -> tuple[list[str], dict[str, int]]:
-    lines = ["-- NAME LOCALIZATION SEED (spec 2026-08-15-localized-language-names-design.md)"]
-    lines.append("INSERT OR IGNORE INTO sources (id, type, name) VALUES ('system-names', 'system', 'LangMap canonical names seed');")
+    """Emit canonical name expressions, their translations, and direct edges.
 
-    expr_rows: list[str] = []
-    expr_id_by_text: dict[str, str] = {}
-    for text in canonical_texts:
-        h = expression_text_hash(text)
-        eid = build_expression_id("eng", h)
-        expr_id_by_text[text] = eid
-        expr_rows.append(f"  ({sql_str(eid)}, 'eng', {sql_str(text)}, {sql_str(h)}, 'system-names')")
-    lines += _insert_blocks("expressions", ["id", "lang_code", "text", "text_hash", "source_id"], expr_rows)
+    Names stay in the ordinary expression graph.  Registry tables only retain a
+    numeric pointer to the English canonical expression; they never duplicate a
+    localized label.
+    """
+    locale_names = [row[7] for row in REFERENCE_LOCALES]
+    canonical_texts = sorted({name for _code, name in languages} | {name for _code, name, _direction in scripts} | {name for _code, name, _lat, _lon in regions} | set(locale_names))
+    eng_id = language_ids['eng']
+    lines = ['-- LOCALIZED NAME EXPRESSIONS AND DIRECT SEMANTIC EDGES']
+    lines.append("INSERT OR IGNORE INTO sources (type, name) VALUES ('system', 'LangMap canonical names seed');")
+    source_exprs = [f"  ({eng_id}, {sql_str(text)}, (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'))" for text in canonical_texts]
+    lines += _insert_blocks('expressions', ['language_id', 'text', 'source_id'], source_exprs)
 
-    edge_rows: list[str] = []
-    att_rows: list[str] = []
-    target_rows: list[str] = []
-    for t in translations:
-        src = expr_id_by_text.get(t["canonical_text"])
-        if src is None:
-            raise ValueError(f"translation references unknown canonical text {t['canonical_text']!r}")
-        lang = t["target_locale"].split("-", 1)[0]
-        h = expression_text_hash(t["text"])
-        tgt = build_expression_id(lang, h)
-        target_rows.append(f"  ({sql_str(tgt)}, {sql_str(lang)}, {sql_str(t['text'])}, {sql_str(h)}, 'system-names')")
-        a, b = sorted((src, tgt))
-        edge_rows.append(f"  ({sql_str(f'name-edge:{a}:{b}')}, {sql_str(a)}, {sql_str(b)}, 0, 'translation')")
-        attestation_id = f"name-att:{tgt}:{t['target_locale']}"
-        att_rows.append(f"  ({sql_str(attestation_id)}, {sql_str(tgt)}, {sql_str(t['target_locale'])}, 'system-names')")
+    target_exprs: list[str] = []
+    for item in translations:
+        lang = item['target_locale'].split('-', 1)[0]
+        target_exprs.append(f"  ({language_ids[lang]}, {sql_str(item['text'])}, (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'))")
+    lines += _insert_blocks('expressions', ['language_id', 'text', 'source_id'], target_exprs)
 
-    if target_rows:
-        lines += _insert_blocks("expressions", ["id", "lang_code", "text", "text_hash", "source_id"], target_rows)
-    if edge_rows:
-        lines += _insert_blocks("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], edge_rows)
-    if att_rows:
-        lines += _insert_blocks("expression_locale_attestations", ["id", "expression_id", "language_locale_code", "source_id"], att_rows)
+    for item in translations:
+        locale = item['target_locale']; lang = locale.split('-', 1)[0]
+        source = sql_str(item['canonical_text']); target = sql_str(item['text'])
+        lines.append(
+            "INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) "
+            f"SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt "
+            f"WHERE src.language_id={eng_id} AND src.text={source} AND tgt.language_id={language_ids[lang]} AND tgt.text={target};"
+        )
+        lines.append(
+            "INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) "
+            f"SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code={sql_str(locale)} "
+            f"WHERE e.language_id={language_ids[lang]} AND e.text={target};"
+        )
 
     bindings = [
-        "-- Bind each language / locale / script / region to its canonical (eng) name expression by current name_en text.",
-        "-- Unmatched rows stay NULL (safe fallback to name_en / self-name / code).",
-        "UPDATE languages AS l",
-        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
-        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en);",
-        "",
-        "UPDATE language_locales AS l",
-        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en LIMIT 1)",
-        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = l.name_en);",
-        "",
-        "UPDATE scripts AS s",
-        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = s.name_en LIMIT 1)",
-        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = s.name_en);",
-        "",
-        "UPDATE regions AS r",
-        "SET name_expression_id = (SELECT e.id FROM expressions e WHERE e.lang_code = 'eng' AND e.text = r.name_en LIMIT 1)",
-        "WHERE EXISTS (SELECT 1 FROM expressions e WHERE e.lang_code = 'eng' AND e.text = r.name_en);",
+        "UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=languages.name_en LIMIT 1);" % eng_id,
+        "UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=language_locales.name_en LIMIT 1);" % eng_id,
+        "UPDATE scripts SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=scripts.name_en LIMIT 1);" % eng_id,
+        "UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=regions.name_en LIMIT 1);" % eng_id,
     ]
-    lines.append("\n".join(bindings))
-
-    counts = {
-        "name_canonical_expressions": len(expr_rows),
-        "name_target_expressions": len(target_rows),
-        "name_edges": len(edge_rows),
-        "name_attestations": len(att_rows),
-        "name_locales_bound_target": len(locale_texts),
+    lines.extend(bindings)
+    return lines, {
+        'name_canonical_expressions': len(canonical_texts),
+        'name_target_expressions': len(target_exprs),
+        'name_edges': len(translations),
+        'name_attestations': len(translations),
     }
-    return lines, counts
 
 
 def emit_sql(
@@ -371,13 +336,10 @@ def emit_sql(
         locale_rows,
     )
 
-    name_counts = {
-        "language_locales": len(locale_rows),
-        "name_canonical_expressions": 0,
-        "name_target_expressions": 0,
-        "name_edges": 0,
-        "name_attestations": 0,
-    }
+    name_lines, name_counts = emit_name_seed_sql(languages, scripts, regions, translations, language_ids)
+    lines.extend(name_lines)
+
+    name_counts['language_locales'] = len(locale_rows)
 
     return "\n".join(lines) + "\n", name_counts
 

@@ -235,6 +235,12 @@
       "filename": "0039_canonical_integer_storage.sql",
       "size": 12998,
       "sha256": "567f860acebe55e18d62f50330aae752bb9cb04c2eb223adc65a5708c7d432c6"
+    },
+    {
+      "sequence": 40,
+      "filename": "0040_restore_localized_name_expressions.sql",
+      "size": 580,
+      "sha256": "50508b34c4f26ace018382f74468d2be291f29764bbc60c86defe704c02c3eaf"
     }
   ]
 }

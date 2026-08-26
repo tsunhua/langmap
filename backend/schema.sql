@@ -45,18 +45,21 @@ CREATE TABLE users (
 CREATE TABLE languages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   code TEXT NOT NULL UNIQUE,
-  name_en TEXT NOT NULL
+  name_en TEXT NOT NULL,
+  name_expression_id INTEGER REFERENCES expressions(id)
 );
 
 CREATE TABLE scripts (
   code TEXT PRIMARY KEY,
   name_en TEXT NOT NULL,
-  direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl'))
+  direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl')),
+  name_expression_id INTEGER REFERENCES expressions(id)
 );
 
 CREATE TABLE regions (
   code TEXT PRIMARY KEY,
   name_en TEXT NOT NULL,
+  name_expression_id INTEGER REFERENCES expressions(id),
   latitude REAL,
   longitude REAL,
   CHECK ((latitude IS NULL) = (longitude IS NULL))
@@ -72,6 +75,7 @@ CREATE TABLE language_locales (
   place_path TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL,
   name_en TEXT NOT NULL,
+  name_expression_id INTEGER REFERENCES expressions(id),
   latitude REAL,
   longitude REAL,
   CHECK ((latitude IS NULL) = (longitude IS NULL)),
