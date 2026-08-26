@@ -13,6 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd -P)"
 INPUT_DIR="/Volumes/DATA/langmap-structured-jsonl"
 STATE="/Volumes/DATA/langmap-incremental-state.json"
+export STATE
 STAGING_ROOT="/Volumes/DATA/langmap-staging-parts"
 BATCH_SIZE="${LANGMAP_IMPORT_BATCH:-5000}"
 COMMIT_EVERY="${LANGMAP_IMPORT_COMMIT:-20000}"
@@ -23,11 +24,13 @@ if [ -z "$D1" ]; then
   exit 1
 fi
 
-LIMIT="1"
+# Default: import a single additional file after the already-successful ones.
 if [[ "${1:-}" == "--all" ]]; then
   LIMIT=""
 elif [ -n "${1:-}" ]; then
   LIMIT="$1"
+else
+  LIMIT="$(python3 -c "import json,os;d=json.load(open(os.environ['STATE']));print(len([v for v in d.get('files',{}).values() if v.get('status')=='success'])+1)" 2>/dev/null || echo 1)"
 fi
 
 PYTHONPATH="$ROOT/scripts/dictionary" python3 "$ROOT/scripts/dictionary/incremental_import.py" \
