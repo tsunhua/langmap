@@ -69,7 +69,7 @@ expressions.post('/:id/mappings', requireAuth, async (c) => {
 expressions.get('/:id/edges', async (c) => {
   const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_EXPRESSION_ID'); const limit = Math.min(Math.max(Number(c.req.query('limit') ?? 20) || 20, 1), 50);
   const result = await getExpressionMappings(c.env.DB, id, { limit, cursor: c.req.query('cursor') });
-  return success(c, { ...result, items: result.items.map((row) => ({ ...row, id: serializeIntegerId(row.id), expression_a_id: serializeIntegerId(row.expression_a_id), expression_b_id: serializeIntegerId(row.expression_b_id), neighbor_id: serializeIntegerId(row.neighbor_id) })) });
+  return success(c, { ...result, items: result.items.map((row) => ({ ...row, edge_id: serializeIntegerId(row.edge_id), neighbor_id: serializeIntegerId(row.neighbor_id) })) });
 });
 
 export default expressions;
