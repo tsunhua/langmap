@@ -9,6 +9,8 @@ export interface ExpressionReading extends ExpressionLocale { scheme: string; va
 export interface ExpressionDetail {
   expression: { id: string; lang_code: string; text: string; source_type: string | null; source_name: string | null; language_name?: string | null; created_by_username?: string | null }
   locales: ExpressionLocale[]
+  /** Compatibility alias for callers written before locale links were renamed. */
+  attestations: ExpressionLocale[]
   readings: ExpressionReading[]
 }
 export interface ExpressionEdge { edge_id: string; neighbor_id: string; neighbor_lang_code: string; neighbor_text: string; relation_mask?: number; score?: number; source?: string; created_at?: string }
@@ -43,12 +45,13 @@ function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_loc
 export async function getExpression(id: string | number, hints?: LocaleHints, signal?: AbortSignal): Promise<ExpressionDetail> {
   const params = hintParams(hints)
   const config = Object.keys(params).length ? { params, signal } : { signal }
-  return unwrap<ExpressionDetail>(await api.get(path(id), config))
+  const detail = unwrap<Omit<ExpressionDetail, 'attestations'>>(await api.get(path(id), config))
+  return { ...detail, attestations: detail.locales }
 }
 export async function getMappingGraph(id: string | number, hops: 1 | 2 | 3 = 1, hints?: LocaleHints, targetLanguage?: string, signal?: AbortSignal): Promise<MappingGraphResponse> {
   return unwrap<MappingGraphResponse>(await api.get(`${path(id)}/graph`, { params: { hops, ...(targetLanguage ? { target_language: targetLanguage } : {}), ...hintParams(hints) }, signal }))
 }
-export async function getExpressionEdges(id: string | number, limit = 50, cursor?: string, signal?: AbortSignal): Promise<CursorPage<ExpressionEdge>> {
+export async function getExpressionEdges(id: string | number, limit = 50, cursor?: string | number, signal?: AbortSignal): Promise<CursorPage<ExpressionEdge>> {
   return unwrap<CursorPage<ExpressionEdge>>(await api.get(`${path(id)}/edges`, { params: { limit, ...(cursor ? { cursor } : {}) }, signal }))
 }
 export async function createExpression(input: { lang_code: string; text: string; language_locale_code?: string }, signal?: AbortSignal) {

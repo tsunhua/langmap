@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { getLanguageDetail, listLanguageExpressions, listLanguagesWithContent } from '../services/languageContent';
 import { parseReferenceQuery } from '../services/languageIdentity';
-import { parseLocaleHints } from '../services/localizedName';
 import type { Bindings, Variables } from '../types';
 import { notFound, paginated, success } from '../utils/response';
 
@@ -45,7 +44,7 @@ languages.get('/:code', async (c) => {
   const detail = await getLanguageDetail(
     c.env.DB,
     (c.req.param('code') ?? '').toLowerCase(),
-    parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale')),
+    {},
     c.req.query('locale') ?? '',
   );
   if (!detail) return notFound(c, 'Language');

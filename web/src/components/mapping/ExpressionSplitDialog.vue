@@ -6,7 +6,7 @@ const props = defineProps<{ edges: ExpressionEdge[]; submitting: boolean; error?
 const emit = defineEmits<{ close: []; confirm: [edgeIds: string[]] }>()
 const selected = ref(new Set<string>())
 watch(() => props.edges, () => { selected.value = new Set() })
-const orderedEdges = computed(() => [...props.edges].sort((a, b) => b.score - a.score || a.created_at.localeCompare(b.created_at) || a.edge_id.localeCompare(b.edge_id)))
+const orderedEdges = computed(() => [...props.edges].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || (a.created_at ?? '').localeCompare(b.created_at ?? '') || a.edge_id.localeCompare(b.edge_id)))
 function toggle(id: string) { const next = new Set(selected.value); next.has(id) ? next.delete(id) : next.add(id); selected.value = next }
 function confirm() { if (selected.value.size) emit('confirm', [...selected.value].sort((a, b) => a.localeCompare(b))) }
 </script>

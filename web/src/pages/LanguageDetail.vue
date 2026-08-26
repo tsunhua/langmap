@@ -142,7 +142,7 @@ async function loadExpressions(append = false) {
     })
     if (!expressionsRequest.isCurrent(request)) return
     exprs.value = append ? [...exprs.value, ...page.items] : page.items
-    nextCursor.value = page.next_cursor
+    nextCursor.value = page.next_cursor ?? null
   } catch (cause: unknown) {
     if (!expressionsRequest.isCurrent(request)) return
     if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))

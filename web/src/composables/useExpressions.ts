@@ -34,11 +34,13 @@ export function useExpressions() {
     }
   }
 
-  async function search(prefix: string, lang: string, limit = 10, cursor?: string, hints: LocaleHints = {}) {
+  async function search(prefix: string, lang?: string, limit = 10, cursor?: string | LocaleHints, hints: LocaleHints = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/expressions/search', { params: { prefix, lang_code: lang, limit, ...(cursor ? { cursor } : {}), ...hints } })
+      const resolvedHints = typeof cursor === 'object' ? cursor : hints
+      const resolvedCursor = typeof cursor === 'string' ? cursor : undefined
+      const { data } = await api.get('/expressions/search', { params: { q: prefix, ...(lang ? { lang_code: lang } : {}), limit, ...(resolvedCursor ? { cursor: resolvedCursor } : {}), ...resolvedHints } })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'

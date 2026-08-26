@@ -55,7 +55,7 @@ async function loadLanguages(append = false) {
     })
     if (!languagesRequest.isCurrent(request)) return
     languages.value = append ? [...languages.value, ...page.items] : page.items
-    nextCursor.value = page.next_cursor
+    nextCursor.value = page.next_cursor ?? null
   } catch (cause: unknown) {
     if (!languagesRequest.isCurrent(request)) return
     if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))

@@ -1,6 +1,6 @@
 import api from './client'
 
-export interface Page<T> { items: T[]; next_cursor: string | null; has_more: boolean; /** @deprecated canonical API no longer returns offset totals. */ total?: number; skip?: number; limit?: number; hasMore?: boolean }
+export interface Page<T> { items: T[]; next_cursor?: string | null; has_more?: boolean; total?: number; skip?: number; limit?: number; hasMore?: boolean }
 
 export interface LocaleHints { ui_locale?: string; secondary_ui_locale?: string }
 
@@ -47,7 +47,8 @@ export interface ContentLanguagePageQuery {
   q?: string
   sort?: 'new' | 'alpha'
   limit?: number
-  cursor?: string
+  cursor?: string | number
+  offset?: number
   /** UI locale the caller renders in; the API resolves `name` against it. */
   ui_locale?: string
   secondary_ui_locale?: string
@@ -60,7 +61,7 @@ export interface LanguageExpressionPageQuery {
   sort?: 'new' | 'alpha'
   locale?: string
   limit?: number
-  cursor?: string
+  cursor?: string | number
   /** @deprecated canonical API uses cursor. */
   offset?: number
   ui_locale?: string
@@ -82,6 +83,7 @@ export interface LanguageExpressionSummary {
   created_at: string
   reading_count: number
   mapping_count: number
+  review_status?: string
 }
 
 function page<T>(data: unknown): Page<T> {
@@ -99,14 +101,14 @@ function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_loc
   return params
 }
 
-async function listReference<T>(path: string, q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal): Promise<Page<T>> {
+async function listReference<T>(path: string, q = '', limit = 20, cursor: string | number = '', hints?: LocaleHints, signal?: AbortSignal): Promise<Page<T>> {
   const { data } = await api.get(path, { params: { q, limit, ...(cursor ? { cursor } : {}), ...hintParams(hints) }, signal })
   return page<T>(data)
 }
 
-export const listLanguages = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Language>('/language-registry/languages', q, limit, cursor, hints, signal)
-export const listScripts = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, cursor, hints, signal)
-export const listRegions = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, cursor, hints, signal)
+export const listLanguages = (q = '', limit = 20, cursor: string | number = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Language>('/language-registry/languages', q, limit, cursor, hints, signal)
+export const listScripts = (q = '', limit = 20, cursor: string | number = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, cursor, hints, signal)
+export const listRegions = (q = '', limit = 20, cursor: string | number = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, cursor, hints, signal)
 
 export async function listLanguageLocales(filters: LocaleFilters = {}, signal?: AbortSignal): Promise<Page<LanguageLocale>> {
   const { cursor, offset: _offset, ...rest } = filters
