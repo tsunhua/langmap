@@ -109,7 +109,7 @@ interface EdgeFeatureRow {
   dimension_sort: number;
 }
 
-const EXPRESSION_REF_SQL = 'SELECT id, lang_code, text FROM expressions WHERE id = ?';
+const EXPRESSION_REF_SQL = 'SELECT id, lang_code, text FROM all_expression_rows WHERE id = ?';
 const FORM_EDGE_PAIR_SQL = 'SELECT id FROM expression_form_edges WHERE form_id = ? AND lemma_id = ?';
 const INSERT_FORM_EDGE_SQL =
   'INSERT INTO expression_form_edges (id, form_id, lemma_id, pair_low, pair_high, source, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)';
@@ -118,14 +118,14 @@ const INSERT_FORM_EDGE_FEATURE_SQL =
 const FEATURE_CODES_SQL =
   'SELECT code FROM morphological_features WHERE code IN (SELECT value FROM json_each(?))';
 const AS_FORM_EDGES_SQL =
-  'SELECT e.id AS edge_id, l.id AS neighbor_id, l.text AS neighbor_text, l.lang_code AS neighbor_lang_code FROM expression_form_edges e JOIN expressions l ON l.id = e.lemma_id WHERE e.form_id = ? ORDER BY l.id ASC';
+  'SELECT e.id AS edge_id, l.id AS neighbor_id, l.text AS neighbor_text, l.lang_code AS neighbor_lang_code FROM expression_form_edges e JOIN all_expression_rows l ON l.id = e.lemma_id WHERE e.form_id = ? ORDER BY l.id ASC';
 const AS_LEMMA_EDGES_SQL =
-  'SELECT e.id AS edge_id, f.id AS neighbor_id, f.text AS neighbor_text, f.lang_code AS neighbor_lang_code FROM expression_form_edges e JOIN expressions f ON f.id = e.form_id WHERE e.lemma_id = ?';
+  'SELECT e.id AS edge_id, f.id AS neighbor_id, f.text AS neighbor_text, f.lang_code AS neighbor_lang_code FROM expression_form_edges e JOIN all_expression_rows f ON f.id = e.form_id WHERE e.lemma_id = ?';
 const EDGE_FEATURES_SQL =
   'SELECT ef.edge_id, mf.code, mf.dimension_code, mf.name_expression_id, mf.sort_order AS feature_sort, d.sort_order AS dimension_sort FROM expression_form_edge_features ef JOIN morphological_features mf ON mf.code = ef.feature_code JOIN morphological_dimensions d ON d.code = mf.dimension_code WHERE ef.edge_id IN (SELECT value FROM json_each(?)) ORDER BY d.sort_order ASC, mf.sort_order ASC, mf.code ASC';
 const FORM_OF_LIMIT = 3;
 const FORM_OF_EDGES_SQL =
-  'SELECT e.id AS edge_id, e.form_id, l.id AS lemma_id, l.text AS lemma_text, l.lang_code AS lemma_lang_code FROM expression_form_edges e JOIN expressions l ON l.id = e.lemma_id WHERE e.form_id IN (SELECT value FROM json_each(?)) ORDER BY e.form_id ASC, e.lemma_id ASC';
+  'SELECT e.id AS edge_id, e.form_id, l.id AS lemma_id, l.text AS lemma_text, l.lang_code AS lemma_lang_code FROM expression_form_edges e JOIN all_expression_rows l ON l.id = e.lemma_id WHERE e.form_id IN (SELECT value FROM json_each(?)) ORDER BY e.form_id ASC, e.lemma_id ASC';
 
 interface FormOfEdgeRow {
   edge_id: string;

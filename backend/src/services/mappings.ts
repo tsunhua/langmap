@@ -1,10 +1,7 @@
-import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
+import type { D1Database } from '@cloudflare/workers-types';
 import type { EdgeRow, EdgeWithNeighborRow } from '../types/mapping';
-import { ulid } from '../utils/ulid';
-import { D1_WRITE_CHUNK_SIZE } from '../utils/limits';
-import { dictionaryReleaseSchemaAvailable, edgeEligibilityPredicate, promoteManagedObject } from './dictionaryReleaseEligibility';
 
-const EDGE_COLUMNS = `id, expression_a_id, expression_b_id, score, source, created_by, created_at`;
+const EDGE_COLUMNS = 'id, expression_a_id, expression_b_id, relation_mask, score, created_by';
 
 export class MappingError extends Error {
   constructor(public code: string) {
@@ -13,155 +10,168 @@ export class MappingError extends Error {
   }
 }
 
-export function canonicalizeEdgePair(a: string, b: string): [string, string] {
-  if (!a || !b || a === b) throw new MappingError('VALIDATION_FAILED');
+export interface MappingCursor {
+  phase: 'a' | 'b';
+  key: number;
+}
+
+export function encodeMappingCursor(cursor: MappingCursor): string {
+  return `${cursor.phase}:${cursor.key}`;
+}
+
+export function decodeMappingCursor(value: string | null | undefined): MappingCursor | null {
+  if (!value) return null;
+  const match = /^([ab]):(0|[1-9]\d*)$/.exec(value);
+  if (!match) return null;
+  const key = Number(match[2]);
+  const phase = match[1] as 'a' | 'b';
+  return Number.isSafeInteger(key) && (key > 0 || phase === 'b') ? { phase, key } : null;
+}
+
+export function canonicalizeEdgePair(a: number, b: number): [number, number] {
+  if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b) || a <= 0 || b <= 0 || a === b) {
+    throw new MappingError('VALIDATION_FAILED');
+  }
   return a < b ? [a, b] : [b, a];
+}
+
+function validateRelationMask(value: number): void {
+  if (!Number.isInteger(value) || value < 1 || value > 7) throw new MappingError('INVALID_RELATION_MASK');
 }
 
 export async function createEdge(
   db: D1Database,
-  input: { expression_a_id: string; expression_b_id: string; source: string; created_by: number },
+  input: { expression_a_id: number; expression_b_id: number; relation_mask?: number; created_by: number },
 ): Promise<{ edge: EdgeRow; created: boolean }> {
   const [lowId, highId] = canonicalizeEdgePair(input.expression_a_id, input.expression_b_id);
+  const relationMask = input.relation_mask ?? 1;
+  validateRelationMask(relationMask);
 
   const existing = await db
     .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE expression_a_id = ? AND expression_b_id = ?`)
     .bind(lowId, highId)
     .first<EdgeRow>();
   if (existing) {
-    if (await dictionaryReleaseSchemaAvailable(db)) {
-      await promoteManagedObject(db, 'edge', existing.id, { kind: 'user', userId: input.created_by });
+    const combined = existing.relation_mask | relationMask;
+    if (combined !== existing.relation_mask) {
+      await db.prepare('UPDATE expression_edges SET relation_mask = ? WHERE id = ?').bind(combined, existing.id).run();
     }
-    return { edge: existing, created: false };
+    return { edge: { ...existing, relation_mask: combined }, created: false };
   }
 
-  const id = ulid();
-  await db
-    .prepare('INSERT INTO expression_edges (id, expression_a_id, expression_b_id, source, created_by) VALUES (?, ?, ?, ?, ?)')
-    .bind(id, lowId, highId, input.source, input.created_by)
-    .run();
-
-  const edge = await db
-    .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE id = ?`)
-    .bind(id)
+  const inserted = await db
+    .prepare(`INSERT INTO expression_edges (expression_a_id, expression_b_id, relation_mask, created_by)
+      VALUES (?, ?, ?, ?) RETURNING ${EDGE_COLUMNS}`)
+    .bind(lowId, highId, relationMask, input.created_by)
     .first<EdgeRow>();
-  return { edge: edge as EdgeRow, created: true };
+  if (!inserted) throw new MappingError('EDGE_CREATE_FAILED');
+  return { edge: inserted, created: true };
 }
 
 export async function createEdgesBatch(
   db: D1Database,
-  input: { expression_ids: string[]; source: string; created_by: number },
+  input: { expression_ids: number[]; relation_mask?: number; created_by: number },
 ): Promise<{ edges: EdgeRow[]; created_count: number }> {
-  const ids = [...new Set(input.expression_ids.filter((id) => Boolean(id)))];
+  const ids = [...new Set(input.expression_ids)];
   if (ids.length < 2) throw new MappingError('VALIDATION_FAILED');
-
-  const pairs: Array<[string, string]> = [];
-  for (let i = 0; i < ids.length; i++) {
-    for (let j = i + 1; j < ids.length; j++) {
-      const [lowId, highId] = canonicalizeEdgePair(ids[i], ids[j]);
-      pairs.push([lowId, highId]);
+  const edges: EdgeRow[] = [];
+  let createdCount = 0;
+  for (let left = 0; left < ids.length; left += 1) {
+    for (let right = left + 1; right < ids.length; right += 1) {
+      const result = await createEdge(db, {
+        expression_a_id: ids[left],
+        expression_b_id: ids[right],
+        relation_mask: input.relation_mask,
+        created_by: input.created_by,
+      });
+      edges.push(result.edge);
+      if (result.created) createdCount += 1;
     }
   }
-  const results = await createEdgesForPairs(db, { pairs, source: input.source, created_by: input.created_by });
-  return {
-    edges: results.map((result) => result.edge),
-    created_count: results.filter((result) => result.created).length,
-  };
+  return { edges, created_count: createdCount };
 }
 
 export async function createEdgesForPairs(
   db: D1Database,
-  input: { pairs: Array<[string, string]>; source: string; created_by: number },
+  input: { pairs: Array<[number, number]>; relation_mask?: number; created_by: number },
 ): Promise<Array<{ edge: EdgeRow; created: boolean }>> {
-  const pairs: Array<{ lowId: string; highId: string; generatedId?: string }> = [];
   const seen = new Set<string>();
-  for (const [a, b] of input.pairs) {
-    const [lowId, highId] = canonicalizeEdgePair(a, b);
-    const key = pairKey(lowId, highId);
+  const results: Array<{ edge: EdgeRow; created: boolean }> = [];
+  for (const [left, right] of input.pairs) {
+    const pair = canonicalizeEdgePair(left, right);
+    const key = `${pair[0]}:${pair[1]}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    pairs.push({ lowId, highId });
+    results.push(await createEdge(db, {
+      expression_a_id: pair[0],
+      expression_b_id: pair[1],
+      relation_mask: input.relation_mask,
+      created_by: input.created_by,
+    }));
   }
-  if (pairs.length === 0) return [];
-
-  const existingByPair = new Map<string, EdgeRow>();
-  for (const chunk of chunkArray(pairs, D1_WRITE_CHUNK_SIZE)) {
-    const where = chunk.map(() => '(expression_a_id = ? AND expression_b_id = ?)').join(' OR ');
-    const bindings = chunk.flatMap((pair) => [pair.lowId, pair.highId]);
-    const { results } = await db
-      .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE ${where}`)
-      .bind(...bindings)
-      .all<EdgeRow>();
-    for (const edge of results) existingByPair.set(pairKey(edge.expression_a_id, edge.expression_b_id), edge);
-  }
-
-  const statements: D1PreparedStatement[] = [];
-  const releaseTablesReady = existingByPair.size > 0 && await dictionaryReleaseSchemaAvailable(db);
-  for (const pair of pairs) {
-    const existing = existingByPair.get(pairKey(pair.lowId, pair.highId));
-    if (existing) {
-      if (releaseTablesReady) {
-        await promoteManagedObject(db, 'edge', existing.id, { kind: 'user', userId: input.created_by });
-      }
-      continue;
-    }
-    pair.generatedId = ulid();
-    statements.push(db.prepare(
-      'INSERT OR IGNORE INTO expression_edges (id, expression_a_id, expression_b_id, source, created_by) VALUES (?, ?, ?, ?, ?)',
-    ).bind(pair.generatedId, pair.lowId, pair.highId, input.source, input.created_by));
-  }
-  for (const chunk of chunkArray(statements, D1_WRITE_CHUNK_SIZE)) await db.batch(chunk);
-
-  const edgesByPair = new Map<string, EdgeRow>();
-  for (const chunk of chunkArray(pairs, D1_WRITE_CHUNK_SIZE)) {
-    const where = chunk.map(() => '(expression_a_id = ? AND expression_b_id = ?)').join(' OR ');
-    const bindings = chunk.flatMap((pair) => [pair.lowId, pair.highId]);
-    const { results } = await db
-      .prepare(`SELECT ${EDGE_COLUMNS} FROM expression_edges WHERE ${where}`)
-      .bind(...bindings)
-      .all<EdgeRow>();
-    for (const edge of results) edgesByPair.set(pairKey(edge.expression_a_id, edge.expression_b_id), edge);
-  }
-
-  return pairs.map((pair) => {
-    const edge = edgesByPair.get(pairKey(pair.lowId, pair.highId));
-    if (!edge) throw new MappingError('EDGE_CREATE_FAILED');
-    return { edge, created: Boolean(pair.generatedId && edge.id === pair.generatedId) };
-  });
+  return results;
 }
 
-function pairKey(lowId: string, highId: string): string {
-  return `${lowId}\u0000${highId}`;
-}
+const A_SIDE_SQL = `SELECT e.id AS edge_id, n.id AS neighbor_id, l.code AS neighbor_lang_code,
+  n.text AS neighbor_text, e.relation_mask, e.score
+ FROM expression_edges e
+ JOIN expressions n ON n.id = e.expression_b_id
+ JOIN languages l ON l.id = n.language_id
+ WHERE e.expression_a_id = ? AND e.expression_b_id > ?
+ ORDER BY e.expression_b_id ASC
+ LIMIT ?`;
 
-function chunkArray<T>(items: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
-  return chunks;
-}
+const B_SIDE_SQL = `SELECT e.id AS edge_id, n.id AS neighbor_id, l.code AS neighbor_lang_code,
+  n.text AS neighbor_text, e.relation_mask, e.score
+ FROM expression_edges e
+ JOIN expressions n ON n.id = e.expression_a_id
+ JOIN languages l ON l.id = n.language_id
+ WHERE e.expression_b_id = ? AND e.id > ?
+ ORDER BY e.id ASC
+ LIMIT ?`;
 
 export async function getExpressionMappings(
   db: D1Database,
-  expressionId: string,
-  query: { limit: number; offset: number },
-): Promise<{ items: EdgeWithNeighborRow[]; total: number }> {
-  const releaseTablesReady = await dictionaryReleaseSchemaAvailable(db);
-  const eligibility = releaseTablesReady ? ` AND ${edgeEligibilityPredicate('e')}` : '';
-  const countQuery = releaseTablesReady
-    ? `SELECT COUNT(*) AS total FROM expression_edges e WHERE (e.expression_a_id = ? OR e.expression_b_id = ?)${edgeEligibilityPredicate('e') ? ` AND ${edgeEligibilityPredicate('e')}` : ''}`
-    : 'SELECT COUNT(*) AS total FROM expression_edges WHERE expression_a_id = ? OR expression_b_id = ?';
-  const pageQuery = releaseTablesReady
-    ? `SELECT e.id AS edge_id, n.id AS neighbor_id, n.lang_code AS neighbor_lang_code, n.text AS neighbor_text, e.score, e.source, e.created_at FROM expression_edges e JOIN expressions n ON n.id = CASE WHEN e.expression_a_id = ? THEN e.expression_b_id ELSE e.expression_a_id END WHERE (e.expression_a_id = ? OR e.expression_b_id = ?)${eligibility} ORDER BY e.score DESC, e.created_at ASC, e.id ASC LIMIT ? OFFSET ?`
-    : 'SELECT e.id AS edge_id, n.id AS neighbor_id, n.lang_code AS neighbor_lang_code, n.text AS neighbor_text, e.score, e.source, e.created_at FROM expression_edges e JOIN expressions n ON n.id = CASE WHEN e.expression_a_id = ? THEN e.expression_b_id ELSE e.expression_a_id END WHERE e.expression_a_id = ? OR e.expression_b_id = ? ORDER BY e.score DESC, e.created_at ASC, e.id ASC LIMIT ? OFFSET ?';
-  const [countRow, page] = await Promise.all([
-    db
-    .prepare(countQuery)
-    .bind(expressionId, expressionId)
-    .first<{ total: number }>(),
-    db
-    .prepare(pageQuery)
-    .bind(expressionId, expressionId, expressionId, query.limit, query.offset)
-    .all<EdgeWithNeighborRow>(),
-  ]);
-  return { items: page.results, total: countRow?.total ?? 0 };
+  expressionId: number,
+  query: { limit: number; cursor?: string | null },
+): Promise<{ items: EdgeWithNeighborRow[]; next_cursor: string | null; has_more: boolean }> {
+  const limit = Math.max(1, Math.min(100, Math.trunc(query.limit)));
+  const cursor = decodeMappingCursor(query.cursor);
+  if (query.cursor && !cursor) throw new MappingError('INVALID_CURSOR');
+
+  if (cursor?.phase === 'b') {
+    const { results } = await db.prepare(B_SIDE_SQL).bind(expressionId, cursor.key, limit + 1).all<EdgeWithNeighborRow>();
+    const items = results.slice(0, limit);
+    return {
+      items,
+      has_more: results.length > limit,
+      next_cursor: results.length > limit && items.length
+        ? encodeMappingCursor({ phase: 'b', key: items[items.length - 1].edge_id })
+        : null,
+    };
+  }
+
+  const aKey = cursor?.key ?? 0;
+  const { results: aRows } = await db.prepare(A_SIDE_SQL).bind(expressionId, aKey, limit + 1).all<EdgeWithNeighborRow>();
+  if (aRows.length > limit) {
+    const items = aRows.slice(0, limit);
+    return {
+      items,
+      has_more: true,
+      next_cursor: encodeMappingCursor({ phase: 'a', key: items[items.length - 1].neighbor_id }),
+    };
+  }
+
+  const remaining = limit - aRows.length;
+  const { results: bRows } = await db.prepare(B_SIDE_SQL).bind(expressionId, 0, remaining + 1).all<EdgeWithNeighborRow>();
+  const bItems = bRows.slice(0, remaining);
+  const items = [...aRows, ...bItems];
+  const hasMore = bRows.length > remaining;
+  return {
+    items,
+    has_more: hasMore,
+    next_cursor: hasMore
+      ? encodeMappingCursor({ phase: 'b', key: bItems.length ? bItems[bItems.length - 1].edge_id : 0 })
+      : null,
+  };
 }

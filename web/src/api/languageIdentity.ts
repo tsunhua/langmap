@@ -1,12 +1,6 @@
 import api from './client'
 
-export interface Page<T> {
-  items: T[]
-  total: number
-  skip: number
-  limit: number
-  hasMore: boolean
-}
+export interface Page<T> { items: T[]; next_cursor: string | null; has_more: boolean; /** @deprecated canonical API no longer returns offset totals. */ total?: number; skip?: number; limit?: number; hasMore?: boolean }
 
 export interface LocaleHints { ui_locale?: string; secondary_ui_locale?: string }
 
@@ -39,7 +33,7 @@ export interface CreateLanguageLocaleInput {
   source?: { type: 'publication' | 'url'; name: string; ref?: string }
 }
 
-export interface LocaleFilters { lang_code?: string; script_code?: string; region_code?: string; q?: string; limit?: number; offset?: number; ui_locale?: string; secondary_ui_locale?: string }
+export interface LocaleFilters { lang_code?: string; script_code?: string; region_code?: string; q?: string; limit?: number; offset?: number; cursor?: string; ui_locale?: string; secondary_ui_locale?: string }
 export interface ContentLanguage {
   code: string
   name: string
@@ -51,19 +45,23 @@ export interface ContentLanguage {
 
 export interface ContentLanguagePageQuery {
   q?: string
-  sort?: 'count' | 'alpha'
+  sort?: 'new' | 'alpha'
   limit?: number
-  offset?: number
+  cursor?: string
   /** UI locale the caller renders in; the API resolves `name` against it. */
   ui_locale?: string
   secondary_ui_locale?: string
 }
 
 export interface LanguageExpressionPageQuery {
+  prefix?: string
+  /** @deprecated use prefix. Kept for old callers during the cutover. */
   q?: string
-  sort?: 'hot' | 'new' | 'alpha'
+  sort?: 'new' | 'alpha'
   locale?: string
   limit?: number
+  cursor?: string
+  /** @deprecated canonical API uses cursor. */
   offset?: number
   ui_locale?: string
   secondary_ui_locale?: string
@@ -79,9 +77,8 @@ export interface LanguageExpressionSummary {
   id: string
   lang_code: string
   text: string
-  description: string
+  description?: string
   homograph_index: number
-  review_status: string
   created_at: string
   reading_count: number
   mapping_count: number
@@ -90,8 +87,8 @@ export interface LanguageExpressionSummary {
 function page<T>(data: unknown): Page<T> {
   const result = data as { data?: Partial<Page<T>> }
   return {
-    items: result.data?.items ?? [], total: result.data?.total ?? 0,
-    skip: result.data?.skip ?? 0, limit: result.data?.limit ?? 20, hasMore: result.data?.hasMore ?? false,
+    items: result.data?.items ?? [], next_cursor: result.data?.next_cursor ?? null,
+    has_more: result.data?.has_more ?? false,
   }
 }
 
@@ -102,22 +99,23 @@ function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_loc
   return params
 }
 
-async function listReference<T>(path: string, q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal): Promise<Page<T>> {
-  const { data } = await api.get(path, { params: { q, limit, offset, ...hintParams(hints) }, signal })
+async function listReference<T>(path: string, q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal): Promise<Page<T>> {
+  const { data } = await api.get(path, { params: { q, limit, ...(cursor ? { cursor } : {}), ...hintParams(hints) }, signal })
   return page<T>(data)
 }
 
-export const listLanguages = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Language>('/language-registry/languages', q, limit, offset, hints, signal)
-export const listScripts = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, offset, hints, signal)
-export const listRegions = (q = '', limit = 20, offset = 0, hints?: LocaleHints, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, offset, hints, signal)
+export const listLanguages = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Language>('/language-registry/languages', q, limit, cursor, hints, signal)
+export const listScripts = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Script>('/language-registry/scripts', q, limit, cursor, hints, signal)
+export const listRegions = (q = '', limit = 20, cursor = '', hints?: LocaleHints, signal?: AbortSignal) => listReference<Region>('/language-registry/regions', q, limit, cursor, hints, signal)
 
 export async function listLanguageLocales(filters: LocaleFilters = {}, signal?: AbortSignal): Promise<Page<LanguageLocale>> {
-  const { data } = await api.get('/language-locales', { params: { q: '', limit: 20, offset: 0, ...filters }, signal })
+  const { cursor, offset: _offset, ...rest } = filters
+  const { data } = await api.get('/language-locales', { params: { q: '', limit: 20, ...rest, ...(cursor ? { cursor } : {}) }, signal })
   return page<LanguageLocale>(data)
 }
 
-export async function getLanguageLocale(code: string, signal?: AbortSignal): Promise<LanguageLocale> {
-  const { data } = await api.get(`/language-locales/${encodeURIComponent(code)}`, { signal })
+export async function getLanguageLocale(code: string | number, signal?: AbortSignal): Promise<LanguageLocale> {
+  const { data } = await api.get(`/language-locales/${encodeURIComponent(String(code))}`, { signal })
   return (data as { data: LanguageLocale }).data
 }
 
@@ -129,9 +127,9 @@ export async function createLanguageLocale(input: CreateLanguageLocaleInput, sig
 export async function listContentLanguages(filters: ContentLanguagePageQuery = {}, signal?: AbortSignal): Promise<Page<ContentLanguage>> {
   const params: Record<string, string | number> = {
     q: filters.q ?? '',
-    sort: filters.sort ?? 'count',
+    sort: filters.sort ?? 'alpha',
     limit: filters.limit ?? 20,
-    offset: filters.offset ?? 0,
+    ...(filters.cursor ? { cursor: filters.cursor } : {}),
     ui_locale: filters.ui_locale ?? '',
   }
   if (filters.secondary_ui_locale) params.secondary_ui_locale = filters.secondary_ui_locale
@@ -139,23 +137,23 @@ export async function listContentLanguages(filters: ContentLanguagePageQuery = {
   return page<ContentLanguage>(data)
 }
 
-export async function getLanguageDetail(code: string, hints: LocaleHints = {}, locale = '', signal?: AbortSignal): Promise<LanguageDetail> {
+export async function getLanguageDetail(code: string | number, hints: LocaleHints = {}, locale = '', signal?: AbortSignal): Promise<LanguageDetail> {
   const params: Record<string, string> = { ...hintParams(hints) }
   if (locale) params.locale = locale
-  const { data } = await api.get(`/languages/${encodeURIComponent(code)}`, { params, signal })
+  const { data } = await api.get(`/languages/${encodeURIComponent(String(code))}`, { params, signal })
   return (data as { data: LanguageDetail }).data
 }
 
-export async function listLanguageExpressions(code: string, filters: LanguageExpressionPageQuery = {}, signal?: AbortSignal): Promise<Page<LanguageExpressionSummary>> {
+export async function listLanguageExpressions(code: string | number, filters: LanguageExpressionPageQuery = {}, signal?: AbortSignal): Promise<Page<LanguageExpressionSummary>> {
   const params: Record<string, string | number> = {
-    q: filters.q ?? '',
-    sort: filters.sort ?? 'hot',
+    prefix: filters.prefix ?? filters.q ?? '',
+    sort: filters.sort ?? 'alpha',
     locale: filters.locale ?? '',
     limit: filters.limit ?? 20,
-    offset: filters.offset ?? 0,
+    ...(filters.cursor ? { cursor: filters.cursor } : {}),
     ui_locale: filters.ui_locale ?? '',
   }
   if (filters.secondary_ui_locale) params.secondary_ui_locale = filters.secondary_ui_locale
-  const { data } = await api.get(`/languages/${encodeURIComponent(code)}/expressions`, { params, signal })
+  const { data } = await api.get(`/languages/${encodeURIComponent(String(code))}/expressions`, { params, signal })
   return page<LanguageExpressionSummary>(data)
 }

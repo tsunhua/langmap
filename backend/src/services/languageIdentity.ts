@@ -16,8 +16,8 @@ export interface ReferenceListResult {
 
 const COLUMNS: Record<ReferenceTable, readonly string[]> = {
   languages: ['code', 'name_en'],
-  scripts: ['code', 'name_en', 'name_expression_id', 'direction'],
-  regions: ['code', 'name_en', 'name_expression_id', 'latitude', 'longitude'],
+  scripts: ['code', 'name_en', 'direction'],
+  regions: ['code', 'name_en', 'latitude', 'longitude'],
 };
 
 const MAX_LIMIT = 50;

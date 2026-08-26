@@ -47,15 +47,15 @@ const LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
 export const CANDIDATES_SQL = `WITH candidate_rows AS (
   SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
   FROM ui_messages m
-  JOIN expression_edges e ON e.expression_a_id = m.source_expression_id
-  JOIN expressions t ON t.id = e.expression_b_id
+  JOIN all_expression_edges e ON e.expression_a_id = m.source_expression_id
+  JOIN all_expression_rows t ON t.id = e.expression_b_id
   WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ?
     AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
   UNION ALL
   SELECT m.message_key, m.placeholders_json, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
   FROM ui_messages m
-  JOIN expression_edges e ON e.expression_b_id = m.source_expression_id
-  JOIN expressions t ON t.id = e.expression_a_id
+  JOIN all_expression_edges e ON e.expression_b_id = m.source_expression_id
+  JOIN all_expression_rows t ON t.id = e.expression_a_id
   WHERE m.project_id = ? AND m.status = ? AND m.message_key IN (SELECT value FROM json_each(?)) AND t.lang_code = ?
     AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
 ), ranked AS (

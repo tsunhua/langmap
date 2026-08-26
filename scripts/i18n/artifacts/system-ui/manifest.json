@@ -11,13 +11,13 @@
   ],
   "counts": {
     "locale_count": 5,
-    "message_count": 390,
+    "message_count": 397,
     "translation_count": 1560
   },
   "inputs": {
     "source_catalog": {
       "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
-      "sha256": "c75d8f684f18910ef989a866aa34b48cf41e1417a732c6dd1a09c37156825568"
+      "sha256": "b51eb2f461903ade37da787ae771badcbcdb145a9707631c7e536fcabc1ae34a"
     },
     "locales": {
       "cmn-Hans-CN": {
@@ -41,7 +41,7 @@
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "0538223e2108773e36a745c5212e3c92de3a4f6dac1cbc9ec3daac215289230e"
+      "sha256": "606de72f2fe9f7da3fbfb8e7f4e44d224541e609483a586a806483a230917050"
     }
   }
 }

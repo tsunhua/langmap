@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+"""Import Structured JSONL files into the local packed catalog one at a time."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import shutil
+import sqlite3
+import tempfile
+import time
+from pathlib import Path
+from typing import Any
+
+from langmap_dictionary.adapters.traditional_chinese_english import normalize_release
+from langmap_dictionary.clusters import build_explicit_clusters
+from langmap_dictionary.loader import load_jsonl_release
+from langmap_dictionary.local_import import import_release_to_local_d1
+from langmap_dictionary.schema import create_staging_database
+
+
+STATE_VERSION = 1
+
+
+def order_jsonl_files(input_dir: Path) -> list[Path]:
+    """Return JSONL inputs in deterministic small-first order."""
+
+    return sorted(
+        (path for path in Path(input_dir).glob("*.jsonl") if path.is_file()),
+        key=lambda path: (path.stat().st_size, path.name),
+    )
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _load_state(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"version": STATE_VERSION, "files": {}}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or payload.get("version") != STATE_VERSION:
+        raise ValueError(f"unsupported incremental state: {path}")
+    files = payload.get("files")
+    if not isinstance(files, dict):
+        raise ValueError(f"incremental state files must be an object: {path}")
+    return payload
+
+
+def _write_state(path: Path, state: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{time.time_ns()}.tmp")
+    temporary.write_text(
+        json.dumps(state, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
+def _d1_catalog_snapshot(path: Path) -> dict[str, int]:
+    connection = sqlite3.connect(path, timeout=60)
+    try:
+        values = connection.execute(
+            "SELECT "
+            "(SELECT COUNT(*) FROM dictionary_languages),"
+            "(SELECT COUNT(*) FROM dictionary_locales),"
+            "(SELECT COUNT(*) FROM dictionary_terms),"
+            "(SELECT COUNT(*) FROM dictionary_edges),"
+            "(SELECT COUNT(*) FROM dictionary_readings),"
+            "(SELECT COUNT(*) FROM dictionary_dataset_releases)"
+        ).fetchone()
+        return {
+            "languages": int(values[0]),
+            "locales": int(values[1]),
+            "terms": int(values[2]),
+            "edges": int(values[3]),
+            "readings": int(values[4]),
+            "releases": int(values[5]),
+        }
+    finally:
+        connection.close()
+
+
+def _d1_has_release(path: Path, release_id: str) -> bool:
+    if not release_id or not path.is_file():
+        return False
+    connection = sqlite3.connect(path, timeout=60)
+    try:
+        return connection.execute(
+            "SELECT 1 FROM dictionary_dataset_releases WHERE id=?", (release_id,)
+        ).fetchone() is not None
+    finally:
+        connection.close()
+
+
+def _d1_bytes(path: Path) -> int:
+    return sum(
+        candidate.stat().st_size
+        for candidate in (
+            path,
+            path.with_name(path.name + "-wal"),
+            path.with_name(path.name + "-shm"),
+        )
+        if candidate.exists()
+    )
+
+
+def _prepare_staging(
+    source: Path,
+    staging_path: Path,
+    *,
+    batch_size: int,
+    commit_every: int,
+) -> tuple[str, int, int, int]:
+    staging = create_staging_database(staging_path, fast=True)
+    try:
+        loaded = load_jsonl_release(
+            staging,
+            [source],
+            batch_size=batch_size,
+            compact=True,
+        )
+    finally:
+        staging.close()
+
+    staging = create_staging_database(staging_path, fast=True)
+    try:
+        normalized = normalize_release(
+            staging,
+            loaded.release_id,
+            batch_size=batch_size,
+            commit_every=commit_every,
+        )
+        clusters = build_explicit_clusters(staging, loaded.release_id)
+    finally:
+        staging.close()
+    return loaded.release_id, loaded.input_records, normalized, clusters.clusters
+
+
+def run_incremental_import(
+    input_dir: Path,
+    d1_database: Path,
+    state_path: Path,
+    staging_root: Path,
+    *,
+    batch_size: int = 5_000,
+    commit_every: int = 20_000,
+    resume: bool = True,
+    keep_staging: bool = False,
+    limit_files: int | None = None,
+    stop_on_error: bool = False,
+) -> list[dict[str, Any]]:
+    """Run independent stage/normalize/import transactions in small-first order."""
+
+    if batch_size < 1 or commit_every < 1:
+        raise ValueError("batch_size and commit_every must be positive")
+    input_dir = Path(input_dir).resolve()
+    d1_database = Path(d1_database).resolve()
+    state_path = Path(state_path).resolve()
+    staging_root = Path(staging_root).resolve()
+    if not input_dir.is_dir():
+        raise NotADirectoryError(input_dir)
+    if not d1_database.is_file():
+        raise FileNotFoundError(d1_database)
+    staging_root.mkdir(parents=True, exist_ok=True)
+
+    files = order_jsonl_files(input_dir)
+    if limit_files is not None:
+        if limit_files < 1:
+            raise ValueError("limit_files must be positive")
+        files = files[:limit_files]
+    state = _load_state(state_path)
+    results: list[dict[str, Any]] = []
+
+    for ordinal, source in enumerate(files, 1):
+        source_size = source.stat().st_size
+        digest = file_sha256(source)
+        previous = state["files"].get(source.name)
+        if (
+            resume
+            and isinstance(previous, dict)
+            and previous.get("status") == "success"
+            and previous.get("sha256") == digest
+            and _d1_has_release(d1_database, str(previous.get("release_id") or ""))
+        ):
+            skipped = {
+                "file": source.name,
+                "ordinal": ordinal,
+                "bytes": source_size,
+                "sha256": digest,
+                "status": "skipped",
+                "release_id": previous.get("release_id"),
+                "reason": "already_imported",
+            }
+            results.append(skipped)
+            print(json.dumps(skipped, ensure_ascii=False, sort_keys=True), flush=True)
+            continue
+
+        started = time.perf_counter()
+        staging_dir = Path(tempfile.mkdtemp(prefix="langmap-file-", dir=staging_root))
+        staging_path = staging_dir / "staging.sqlite"
+        row: dict[str, Any] = {
+            "file": source.name,
+            "ordinal": ordinal,
+            "bytes": source_size,
+            "sha256": digest,
+            "status": "failed",
+            "staging_path": str(staging_path),
+        }
+        try:
+            before = _d1_catalog_snapshot(d1_database)
+            release_id, input_records, normalized, clusters = _prepare_staging(
+                source,
+                staging_path,
+                batch_size=batch_size,
+                commit_every=commit_every,
+            )
+            append = before["languages"] > 0 or before["terms"] > 0
+            summary = import_release_to_local_d1(
+                staging_path,
+                d1_database,
+                release_id,
+                packed=True,
+                append=append,
+            )
+            after = _d1_catalog_snapshot(d1_database)
+            elapsed = time.perf_counter() - started
+            row.update(
+                {
+                    "status": "success",
+                    "release_id": release_id,
+                    "input_records": input_records,
+                    "normalized_entries": normalized,
+                    "clusters": clusters,
+                    "expressions": summary.expressions,
+                    "bindings": summary.bindings,
+                    "edges": summary.edges,
+                    "readings": summary.readings,
+                    "pos_attestations": summary.pos_attestations,
+                    "seconds": round(elapsed, 3),
+                    "entries_per_second": round(input_records / elapsed, 2) if elapsed else 0,
+                    "mb_per_second": round(source_size / elapsed / 1024 / 1024, 3) if elapsed else 0,
+                    "d1_before": before,
+                    "d1_after": after,
+                    "d1_bytes": _d1_bytes(d1_database),
+                    "staging_path": str(staging_path) if keep_staging else None,
+                }
+            )
+            state["files"][source.name] = row
+            _write_state(state_path, state)
+            results.append(row)
+            print(json.dumps(row, ensure_ascii=False, sort_keys=True), flush=True)
+            if not keep_staging:
+                shutil.rmtree(staging_dir, ignore_errors=True)
+        except Exception as error:
+            row.update(
+                {
+                    "seconds": round(time.perf_counter() - started, 3),
+                    "error": f"{type(error).__name__}: {error}",
+                    "staging_path": str(staging_path),
+                }
+            )
+            state["files"][source.name] = row
+            _write_state(state_path, state)
+            results.append(row)
+            print(json.dumps(row, ensure_ascii=False, sort_keys=True), flush=True)
+            if stop_on_error:
+                raise
+    return results
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input-dir", required=True, type=Path)
+    parser.add_argument("--d1-database", required=True, type=Path)
+    parser.add_argument("--state", required=True, type=Path)
+    parser.add_argument("--staging-root", required=True, type=Path)
+    parser.add_argument("--batch-size", type=int, default=5_000)
+    parser.add_argument("--commit-every", type=int, default=20_000)
+    parser.add_argument("--no-resume", action="store_true")
+    parser.add_argument("--keep-staging", action="store_true")
+    parser.add_argument("--limit-files", type=int)
+    parser.add_argument("--stop-on-error", action="store_true")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    rows = run_incremental_import(
+        args.input_dir,
+        args.d1_database,
+        args.state,
+        args.staging_root,
+        batch_size=args.batch_size,
+        commit_every=args.commit_every,
+        resume=not args.no_resume,
+        keep_staging=args.keep_staging,
+        limit_files=args.limit_files,
+        stop_on_error=args.stop_on_error,
+    )
+    return 0 if all(row.get("status") in {"success", "skipped"} for row in rows) else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

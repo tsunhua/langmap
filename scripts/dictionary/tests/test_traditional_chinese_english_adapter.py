@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from scripts.dictionary.langmap_dictionary.adapters.traditional_chinese_english import TraditionalChineseEnglishAdapter, normalize_release
 from scripts.dictionary.langmap_dictionary.clusters import build_explicit_clusters
 from scripts.dictionary.langmap_dictionary.loader import load_jsonl_release
@@ -19,6 +21,35 @@ def test_adapter_maps_languages_readings_pos_and_keeps_offline_fields(tmp_path):
     assert connection.execute("SELECT code FROM normalized_pos WHERE sense_key='cod-1-s1'").fetchone()[0] == "noun"
     assert connection.execute("SELECT definitions_json,labels_json FROM input_senses WHERE sense_key='cod-1-s1'").fetchone()[0] == '["fish"]'
     assert build_explicit_clusters(connection, summary.release_id).clusters >= 3
+
+
+def test_normalization_resume_uses_checkpoint_without_duplicate_rows(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+    assert normalize_release(connection, summary.release_id, batch_size=1) == 3
+    occurrence_count = connection.execute("SELECT COUNT(*) FROM lexical_occurrences").fetchone()[0]
+
+    assert normalize_release(connection, summary.release_id, resume=True, batch_size=1) == 0
+    assert connection.execute("SELECT COUNT(*) FROM lexical_occurrences").fetchone()[0] == occurrence_count
+    assert connection.execute(
+        "SELECT processed_entries,status FROM normalization_progress WHERE release_id=?",
+        (summary.release_id,),
+    ).fetchone()[:] == (3, "completed")
+
+    connection.execute("DELETE FROM normalization_progress WHERE release_id=?", (summary.release_id,))
+    connection.commit()
+    assert normalize_release(connection, summary.release_id, resume=True, batch_size=1) == 0
+    assert connection.execute("SELECT COUNT(*) FROM lexical_occurrences").fetchone()[0] == occurrence_count
+
+
+def test_normalization_rejects_invalid_batch_settings(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+
+    with pytest.raises(ValueError, match="batch_size"):
+        normalize_release(connection, summary.release_id, batch_size=0)
+    with pytest.raises(ValueError, match="commit_every"):
+        normalize_release(connection, summary.release_id, commit_every=0)
 
 
 def test_adapter_removes_bullet_only_from_normalized_equivalent():

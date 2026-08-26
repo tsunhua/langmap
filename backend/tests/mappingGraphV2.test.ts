@@ -19,13 +19,13 @@ function fakeD1(edges: Edge[], maxBindVariables = Number.POSITIVE_INFINITY, filt
     prepare(sql: string) {
       return {
         bind(...args: unknown[]) {
-          if (sql.includes('FROM expression_edges') && args.length > maxBindVariables) {
+          if (sql.includes('FROM all_expression_edges') && args.length > maxBindVariables) {
             throw new Error('too many SQL variables');
           }
           return {
-            first: async <T>() => (sql.includes('FROM expressions') ? { id: args[0], text: '食', lang_code: 'nan', language_name: 'Minnan' } : null) as T,
+            first: async <T>() => (sql.includes('FROM all_expression_rows') ? { id: args[0], text: '食', lang_code: 'nan', language_name: 'Minnan' } : null) as T,
             all: async <T>() => ({
-              results: (sql.includes('FROM expression_edges')
+              results: (sql.includes('FROM all_expression_edges')
                 ? (filterByArgs ? edges.filter((edge) => args.includes(edge.expression_a_id) || args.includes(edge.expression_b_id)) : edges)
                 : []) as T[],
             }),

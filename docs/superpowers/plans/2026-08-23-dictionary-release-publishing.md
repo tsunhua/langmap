@@ -4,7 +4,7 @@
 
 **Goal:** Add the minimal D1 release/binding/evidence/POS model and a guarded publisher so a dictionary fixture release can be applied, activated, verified, and rolled back without changing ordinary LangMap data.
 
-**Architecture:** Store immutable release rows and use one `dictionary_dataset_state.active_release_id` pointer as the atomic visibility switch. Reuse existing Expression and edge identities, attach release-specific bindings/evidence/membership, centralize active-release SQL predicates, and extend the existing `scripts/db` plan/apply/bookmark workflow for approved dictionary artifacts.
+**Architecture:** Store immutable release rows and use one `dictionary_dataset_state.active_release_id` pointer as the atomic visibility switch. Reuse existing Expression and edge identities, attach release-specific bindings/evidence, and extend the existing `scripts/db` plan/apply workflow for approved dictionary artifacts. The per-object ownership journal is intentionally removed to keep D1 compact.
 
 **Tech Stack:** Cloudflare D1/SQLite, Hono, TypeScript, Vitest, Python 3.12 standard library, Wrangler 4, existing `scripts/db` framework.
 
@@ -17,7 +17,7 @@
 - One managed edge remains one row in `expression_edges`; multiple claims use evidence rows.
 - The single-row dataset-state update is the visibility commit point; chunk loading must not become publicly visible before it.
 - Unmanaged objects are always visible. A reused user/system object must not become hidden after release rollback.
-- When an ordinary API write reuses an object originally created only by a dictionary release, mark its historical ownership rows promoted; do not delete the audit rows or create a duplicate object.
+- Do not create a per-object release ownership or promotion journal; release membership is represented by binding/evidence rows.
 - Expressions remain addressable after rollback; cleanup only removes safely unreferenced objects created by a release.
 - All query builders validate aliases/kinds from closed sets; never interpolate request data into SQL.
 - Backend changes use no `any`; API responses retain `{ success, data?, error?, message? }`.
@@ -30,7 +30,7 @@
 
 | File | Responsibility |
 |---|---|
-| `backend/migrations/0034_dictionary_dataset_releases.sql` | Release, state, binding, evidence, membership and POS DDL |
+| `backend/migrations/0034_dictionary_dataset_releases.sql` | Release, state, binding, evidence and POS DDL |
 | `backend/src/services/dictionaryReleaseEligibility.ts` | Closed-set SQL eligibility builders |
 | `backend/src/services/dictionaryReleases.ts` | Active release and POS read models |
 | `backend/src/types/dictionaryRelease.ts` | Release/POS row types |
@@ -50,7 +50,7 @@
 - Modify: `scripts/db/migration-lock.json`
 
 **Interfaces:**
-- Produces tables `dictionary_dataset_releases`, `dictionary_dataset_state`, `dictionary_expression_bindings`, `expression_edge_evidence`, `dictionary_release_objects`, `parts_of_speech`, `expression_pos_attestations`.
+- Produces tables `dictionary_dataset_releases`, `dictionary_dataset_state`, `dictionary_expression_bindings`, `expression_edge_evidence`, `parts_of_speech`, `expression_pos_attestations`.
 - Dataset key for this program is `managed-dictionaries`.
 
 - [ ] **Step 1: Add failing schema contract assertions**
@@ -65,7 +65,7 @@ it('defines dictionary release identity and one active pointer', () => {
 it('defines release bindings, edge evidence, object membership, and POS', () => {
   for (const table of [
     'dictionary_expression_bindings', 'expression_edge_evidence',
-    'dictionary_release_objects', 'parts_of_speech', 'expression_pos_attestations',
+    'parts_of_speech', 'expression_pos_attestations',
   ]) expect(schema).toMatch(new RegExp(`CREATE TABLE ${table}`));
 });
 ```
@@ -128,25 +128,8 @@ CREATE TABLE expression_edge_evidence (
   FOREIGN KEY (edge_id) REFERENCES expression_edges(id)
 );
 
-CREATE TABLE dictionary_release_objects (
-  release_id TEXT NOT NULL,
-  object_kind TEXT NOT NULL CHECK (object_kind IN ('expression','edge','reading','locale_attestation','pos_attestation')),
-  object_id TEXT NOT NULL,
-  claim_key TEXT NOT NULL,
-  object_action TEXT NOT NULL CHECK (object_action IN ('created','reused')),
-  promoted_at TEXT,
-  promotion_actor_kind TEXT CHECK (promotion_actor_kind IN ('user','system')),
-  promoted_by INTEGER,
-  PRIMARY KEY (release_id, object_kind, object_id, claim_key),
-  FOREIGN KEY (release_id) REFERENCES dictionary_dataset_releases(id),
-  FOREIGN KEY (promoted_by) REFERENCES users(id),
-  CHECK (promoted_at IS NULL OR object_action = 'created'),
-  CHECK (
-    (promoted_at IS NULL AND promotion_actor_kind IS NULL AND promoted_by IS NULL)
-    OR (promoted_at IS NOT NULL AND promotion_actor_kind = 'user' AND promoted_by IS NOT NULL)
-    OR (promoted_at IS NOT NULL AND promotion_actor_kind = 'system' AND promoted_by IS NULL)
-  )
-);
+-- No dictionary_release_objects table: D1 release membership is kept only in
+-- dictionary_expression_bindings and expression_edge_evidence.
 ```
 
 `status` records load validity only. It never represents public visibility; `dictionary_dataset_state.active_release_id` is the sole active truth. Activation/rollback does not rewrite release status. `activated_at` records the first successful activation for audit and is set with `COALESCE(activated_at, CURRENT_TIMESTAMP)` in the same transaction as the pointer switch.
@@ -155,7 +138,7 @@ Add POS tables and seed the closed codes `noun`, `proper-noun`, `verb`, `auxilia
 
 - [ ] **Step 4: Add indexes**
 
-Create indexes for active pointer joins, binding lookup by expression, evidence lookup by edge/release, object lookup by kind/id/action/release, and POS lookup by expression/release. Extend `mappingQueryIndexes.test.ts` to assert the correlated eligibility predicates have covering index prefixes. Do not add a partial unique active-status index; `dictionary_dataset_state` is the sole active pointer.
+Create indexes for active pointer joins, binding lookup by expression, evidence lookup by edge/release, and POS lookup by expression/release. Do not add a partial unique active-status index; `dictionary_dataset_state` is the sole active pointer. The release/claim indexes duplicated composite primary keys and are removed by migration `0036_dictionary_remove_redundant_indexes.sql`.
 
 - [ ] **Step 5: Sync migration lock**
 
@@ -199,7 +182,7 @@ git commit -m "feat(db): add managed dictionary release schema"
 
 ```ts
 expect(edgeEligibilityPredicate('ed')).toContain('expression_edge_evidence');
-expect(edgeEligibilityPredicate('ed')).toContain('dictionary_release_objects');
+expect(edgeEligibilityPredicate('ed')).toContain('active_release_id');
 expect(releaseObjectEligibilityPredicate('reading', 'r.id')).toContain("'reading'");
 ```
 
@@ -221,10 +204,10 @@ export type ManagedObjectKind = 'reading' | 'locale_attestation' | 'pos_attestat
 export type ManagedObjectKindWithEdge = ManagedObjectKind | 'edge';
 export type ManagedObjectIdSql = 'r.id' | 'a.id' | 'pa.id';
 export type ManagedObjectIdSqlWithEdge = ManagedObjectIdSql | 'e.id' | 'ed.id' | 'g.id' | 'direct_edge.id';
-export type ReleaseIdSql = 'b.release_id' | 'ev.release_id' | 'pa.release_id' | 'ro.release_id';
+export type ReleaseIdSql = 'b.release_id' | 'ev.release_id' | 'pa.release_id';
 ```
 
-For edges, return true when no unpromoted `dictionary_release_objects` row with `object_kind='edge'`, matching ID, and `object_action='created'` exists, or when active `expression_edge_evidence` exists. For other objects, use the same unpromoted-created test plus active `dictionary_release_objects` membership. `dictionaryManagedObjectPredicate` answers historical ownership regardless of active release or promotion and is the split guard. Promotion updates only previously unpromoted historical `created` rows for that object in one D1 batch; reruns never overwrite the first actor/time.
+For edges, return true when the edge has no dictionary evidence, or when its evidence belongs to the active release. Other object predicates are ordinary entity visibility because those entities do not carry release membership. No promotion update is emitted.
 
 - [ ] **Step 4: Run tests**
 
@@ -305,13 +288,13 @@ Apply non-edge membership predicates explicitly to:
 - `localizedName.ts`, `localizationDomain.ts`, and `workbench.ts`: target-locale candidate `EXISTS` clauses;
 - `handbooks.ts`: language-profile locale projection.
 
-- [ ] **Step 4: Add failing route/vote/split/promotion tests**
+- [ ] **Step 4: Add failing route/vote/split tests**
 
-Assert inactive edges never appear in feed, user activity or localization reads, cannot receive a new vote, and cannot be selected for admin split. In `users.ts`, cover both the mapping-activity branch and vote-activity branch joined back to an eligible edge. For handbooks, assert an inactive managed-only locale attestation cannot supply `language_profile_code/name`, while unmanaged or promoted attestations remain valid. Reused unmanaged edges remain visible and mutable after rollback. When `createEdge`, `createEdgesForPairs`, `createReading`, or `createLocaleAttestation` reuses an inactive managed-created object through an ordinary user or system write, assert all previously unpromoted historical created-membership rows receive the immutable first promotion actor/time and the object remains visible after rollback.
+Assert inactive managed edges never appear in feed, user activity or localization reads, cannot receive a new vote, and cannot be selected for admin split. In `users.ts`, cover both the mapping-activity branch and vote-activity branch joined back to an eligible edge. Ordinary readings and locale attestations remain visible because they have no release membership column.
 
 - [ ] **Step 5: Update direct route SQL and write guards**
 
-Apply the helper to direct SQL routes. In `votes.ts`, edge existence means eligible edge. Make `castVote` return the already validated endpoints so `routes/localization.ts` does not perform an unfiltered second edge lookup. In `splits.ts`, use `dictionaryManagedObjectPredicate` and reject edges ever created by a managed release with `DICTIONARY_MANAGED_EDGE_IMMUTABLE`; promotion does not make artifact endpoints mutable. Call `promoteManagedObject` only on ordinary write-path reuse; publisher SQL never calls promotion.
+Apply the helper to direct SQL routes. In `votes.ts`, edge existence means eligible edge. Make `castVote` return the already validated endpoints so `routes/localization.ts` does not perform an unfiltered second edge lookup. In `splits.ts`, use `dictionaryManagedObjectPredicate` and reject edges with dictionary evidence using `DICTIONARY_MANAGED_EDGE_IMMUTABLE`.
 
 - [ ] **Step 6: Run all affected tests**
 
@@ -414,11 +397,11 @@ Sort unbound clusters by `(lang_code, canonical_text, cluster_key)`. Reuse exact
 
 - [ ] **Step 5: Implement star-edge and membership SQL**
 
-For each normalized sense, emit headword→equivalent and explicitly asserted headword→synonym pairs only; examples emit text→translation pairs. Antonym relations remain in the offline artifact and emit no edge. Sort endpoint IDs, reject self-pairs, reuse inventory edges, and emit one evidence row per claim. Emit release membership for every allocated/reused Expression, reading, locale attestation, edge and POS attestation so ownership audit and cleanup-candidate calculation are complete.
+For each normalized sense, emit headword→equivalent and explicitly asserted headword→synonym pairs only; examples emit text→translation pairs. Antonym relations remain in the offline artifact and emit no edge. Sort endpoint IDs, reject self-pairs, reuse inventory edges, and emit one evidence row per claim. Release membership is represented by binding/evidence rows; no per-object audit rows are emitted.
 
 - [ ] **Step 6: Implement chunked artifact writer**
 
-Each SQL chunk starts with foreign keys enabled, has a deterministic sequence and SHA-256, and stays below the configured statement count. The final chunk validates expected counts and sets release status `validated`; activation is not part of ordinary data chunks. Artifact verification excludes mutable promotion columns from its content identity, but asserts promotion is allowed only on `created` membership, and that an existing first actor/time is never overwritten by apply or rerun.
+Each SQL chunk starts with foreign keys enabled, has a deterministic sequence and SHA-256, and stays below the configured statement count. The final chunk validates expected counts and sets release status `validated`; activation is not part of ordinary data chunks.
 
 - [ ] **Step 7: Run Task 5 tests**
 

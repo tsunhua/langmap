@@ -18,31 +18,24 @@ describe('dictionary release eligibility SQL', () => {
   it('allows unmanaged or active evidence edges', () => {
     const sql = edgeEligibilityPredicate('ed');
     expect(sql).toContain('expression_edge_evidence');
-    expect(sql).toContain('dictionary_release_objects');
-    expect(sql).toContain("ro_created.object_kind = 'edge'");
-    expect(sql).toContain('ev.edge_id = ed.id');
+    expect(sql).toContain('ev_managed.edge_id = ed.id');
+    expect(sql).toContain('ev_active.edge_id = ed.id');
     expect(sql).toContain('active_release_id');
     expect(sql).not.toContain("e.source = 'dictionary'");
   });
 
-  it('keeps object kinds and aliases closed', () => {
+  it('keeps the compatibility predicate while the ownership journal is absent', () => {
     const sql = releaseObjectEligibilityPredicate('reading', 'r.id');
-    expect(sql).toContain("ro_created.object_kind = 'reading'");
-    expect(sql).toContain('ro_created.object_id = r.id');
-    expect(sql).toContain("ro_active.object_kind = 'reading'");
+    expect(sql).toBe('(1 = 1)');
     expect(dictionaryManagedObjectPredicate('edge', 'direct_edge.id')).toContain('direct_edge.id');
+    expect(dictionaryManagedObjectPredicate('edge', 'direct_edge.id')).toContain("direct_edge.source = 'dictionary'");
   });
 
-  it('promotes only unpromoted historical created ownership rows', async () => {
-    const run = vi.fn(async () => ({ success: true }));
+  it('makes promotion a no-op after removing per-object ownership', async () => {
     const db = {
-      prepare: vi.fn(() => ({ bind: vi.fn(() => ({ run })) })),
+      prepare: vi.fn(),
     } as unknown as import('@cloudflare/workers-types').D1Database;
     await promoteManagedObject(db, 'reading', 'r-1', { kind: 'user', userId: 7 });
-    expect(run).toHaveBeenCalledOnce();
-    const prepareSql = (db.prepare as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
-    expect(prepareSql).toContain("object_action = 'created'");
-    expect(prepareSql).toContain('promoted_at IS NULL');
-    expect((db.prepare as ReturnType<typeof vi.fn>).mock.results[0].value.bind).toBeDefined();
+    expect(db.prepare).not.toHaveBeenCalled();
   });
 });

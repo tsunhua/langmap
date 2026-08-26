@@ -129,6 +129,21 @@ def _allocate_clusters(connection: sqlite3.Connection, release_id: str, inventor
 def _occurrence_bindings(connection: sqlite3.Connection, release_id: str, cluster_to_expression: Mapping[str, str]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     role_by_kind = {"headword": "headword", "equivalent": "equivalent", "synonym": "synonym", "example": "example_text"}
+    ai_claims = {
+        str(row[0])
+        for row in connection.execute(
+            "SELECT left_cluster_key FROM merge_decisions WHERE release_id=? AND decision='merge' "
+            "UNION SELECT right_cluster_key FROM merge_decisions WHERE release_id=? AND decision='merge'",
+            (release_id, release_id),
+        )
+    }
+    explicit_group_sizes = {
+        str(row[0]): int(row[1])
+        for row in connection.execute(
+            "SELECT cluster_key,COUNT(*) FROM cluster_members WHERE release_id=? GROUP BY cluster_key",
+            (release_id,),
+        )
+    }
     for row in connection.execute("SELECT * FROM lexical_occurrences WHERE release_id=? AND lang_code IS NOT NULL AND errors_json='[]' ORDER BY claim_key", (release_id,)):
         expression_id = cluster_to_expression.get(str(row["cluster_key"]))
         if expression_id is None:
@@ -137,8 +152,30 @@ def _occurrence_bindings(connection: sqlite3.Connection, release_id: str, cluste
         role = "example_translation" if kind == "example" and str(row["claim_key"]).endswith(":translation") else role_by_kind.get(kind)
         if role is None:
             continue
-        rows.append({"claim_key": row["claim_key"], "cluster_key": row["cluster_key"], "role": role, "expression_id": expression_id, "entry_key": row["entry_key"], "sense_key": row["sense_key"]})
+        claim_key = str(row["claim_key"])
+        cluster_key = str(row["cluster_key"])
+        binding_kind = "ai_merged" if claim_key in ai_claims else (
+            "explicit_group" if explicit_group_sizes.get(cluster_key, 0) > 1 else ""
+        )
+        rows.append({"claim_key": claim_key, "cluster_key": cluster_key, "role": role, "expression_id": expression_id, "entry_key": row["entry_key"], "sense_key": row["sense_key"], "binding_kind": binding_kind})
     return rows
+
+
+def _reconciliation_config_hash(connection: sqlite3.Connection, release_id: str) -> str:
+    hashes: set[str] = set()
+    for row in connection.execute(
+        "SELECT rationale_json FROM merge_decisions WHERE release_id=? ORDER BY decision_key",
+        (release_id,),
+    ):
+        try:
+            value = json.loads(str(row[0]))
+        except (TypeError, ValueError) as error:
+            raise ValueError("invalid reconciliation rationale JSON") from error
+        if isinstance(value, dict) and value.get("config_hash"):
+            hashes.add(str(value["config_hash"]))
+    if len(hashes) > 1:
+        raise ValueError("staging release contains multiple reconciliation config hashes")
+    return next(iter(hashes), "")
 
 
 def _edge_id(left: str, right: str) -> str:
@@ -156,13 +193,9 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
     statements.append(insert_or_ignore("dictionary_dataset_releases", ["id", "dataset_key", "parent_release_id", "input_manifest_hash", "exporter_schema_version", "adapter_bundle_hash", "reconciliation_config_hash", "artifact_hash", "status"], [release_id, metadata.get("dataset_key", "managed-dictionaries"), metadata.get("parent_release_id"), metadata.get("input_manifest_hash", ""), metadata.get("exporter_schema_version", 2), metadata.get("adapter_bundle_hash", ""), metadata.get("reconciliation_config_hash", ""), metadata.get("artifact_hash", ""), "planned"]))
     for row in expression_rows:
         statements.append(insert_or_ignore("expressions", ["id", "lang_code", "text", "text_hash", "homograph_index", "description", "tags_json", "review_status"], [row["id"], row["lang_code"], row["text"], row["text_hash"], row["homograph_index"], "", "[]", "approved"]))
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "expression", row["id"], row["id"], row["object_action"]]))
-    # Membership is recorded for reused identities as well as newly allocated
-    # ones, so release cleanup and visibility audits see the complete object set.
-    for expression_id in sorted(set(cluster_ids.values())):
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "expression", expression_id, expression_id, "created" if expression_id in allocated else "reused"]))
     for row in binding_rows:
-        statements.append(insert_or_ignore("dictionary_expression_bindings", ["release_id", "claim_key", "cluster_key", "role", "expression_id", "binding_kind"], [release_id, row["claim_key"], row["cluster_key"], row["role"], row["expression_id"], "allocated" if row["expression_id"] in allocated else "reused"]))
+        binding_kind = row.get("binding_kind") or ("allocated" if row["expression_id"] in allocated else "reused")
+        statements.append(insert_or_ignore("dictionary_expression_bindings", ["release_id", "claim_key", "cluster_key", "role", "expression_id", "binding_kind"], [release_id, row["claim_key"], row["cluster_key"], row["role"], row["expression_id"], binding_kind]))
     # Headword/equivalent and explicit synonym pairs are online edges.
     # Example text/translation pairs are separate mappings; definitions and
     # labels remain in offline staging.
@@ -182,7 +215,6 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         pair = _pair_key(left, right)
         edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
         statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "edge", edge_id, row["claim_key"], "reused" if edge_id in inventory.edges_by_pair.values() else "created"]))
         evidence_kind = "synonym" if row["role"] == "synonym" else "equivalent"
         statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, row["claim_key"], evidence_kind]))
         edge_count += 1
@@ -207,7 +239,6 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         pair = _pair_key(left, right)
         edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
         statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "edge", edge_id, translation_row["claim_key"], "reused" if edge_id in inventory.edges_by_pair.values() else "created"]))
         statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, translation_row["claim_key"], "example"]))
         edge_count += 1
         evidence_count += 1
@@ -215,16 +246,13 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         head = head_by_sense.get(str(row["sense_key"]).split(":s", 1)[0])
         if head is None:
             continue
-        pos_id = f"dict-pos:{release_id}:{row['claim_key']}"
         statements.append(insert_or_ignore("expression_pos_attestations", ["release_id", "expression_id", "pos_code", "claim_key"], [release_id, head["expression_id"], row["code"], row["claim_key"]]))
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "pos_attestation", pos_id, row["claim_key"], "created"]))
     for row in connection.execute("SELECT * FROM lexical_readings WHERE release_id=? AND errors_json='[]' ORDER BY claim_key", (release_id,)):
         head = head_by_sense.get(str(row["entry_key"]))
         if head is None or not row["locale_code"]:
             continue
         reading_id = f"dict-reading:{release_id}:{row['claim_key']}"
         statements.append(insert_or_ignore("expression_readings", ["id", "expression_id", "language_locale_code", "scheme", "value"], [reading_id, head["expression_id"], row["locale_code"], row["scheme"], row["value"]]))
-        statements.append(insert_or_ignore("dictionary_release_objects", ["release_id", "object_kind", "object_id", "claim_key", "object_action"], [release_id, "reading", reading_id, row["claim_key"], "created"]))
     statements.append(update_release_status(release_id, "validated"))
     return statements, {"expressions": len(expression_rows), "bindings": len(binding_rows), "edges": edge_count, "evidence": evidence_count}
 
@@ -237,7 +265,7 @@ def compile_release(staging_db: sqlite3.Connection | Path, release_id: str, inve
         raise ValueError(f"release is not staged: {release_id}")
     cluster_ids, expression_rows, allocated = _allocate_clusters(connection, release_id, inventory)
     bindings = _occurrence_bindings(connection, release_id, cluster_ids)
-    metadata = {"dataset_key": "managed-dictionaries", "input_manifest_hash": release["manifest_hash"], "exporter_schema_version": 2, "adapter_bundle_hash": "", "reconciliation_config_hash": "", "input_fingerprint": inventory.fingerprint}
+    metadata = {"dataset_key": "managed-dictionaries", "input_manifest_hash": release["manifest_hash"], "exporter_schema_version": 2, "adapter_bundle_hash": "", "reconciliation_config_hash": _reconciliation_config_hash(connection, release_id), "input_fingerprint": inventory.fingerprint}
     statements, counts = _compile_statements(connection, release_id, inventory, cluster_ids, expression_rows, bindings, allocated, metadata)
     chunks: dict[str, bytes] = {}
     for offset in range(0, len(statements), max(1, chunk_statement_count)):

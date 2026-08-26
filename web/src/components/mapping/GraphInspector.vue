@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import VotePill from './VotePill.vue'
 import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
-import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
+import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
 
@@ -13,7 +13,7 @@ const props = defineProps<{
   displayTree: DisplayTree
   anchorText: string
   collapsedIds?: Set<string>
-  attestations?: LocaleAttestation[]
+  locales?: ExpressionLocale[]
   readings?: ExpressionReading[]
 }>()
 const { t } = useI18n()
@@ -109,7 +109,7 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
       <span class="gi-count">{{ t('components.relationCount', { count: crossEdgeCount }) }}</span>
     </div>
 
-    <ExpressionEvidenceList :attestations="attestations ?? []" :readings="readings ?? []" />
+    <ExpressionEvidenceList :locales="locales ?? []" :readings="readings ?? []" />
 
     <div v-if="node.expression_id !== graph.root_id" class="gi-acts">
       <button

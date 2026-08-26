@@ -1,38 +1,37 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useHandbooks } from '@/composables/useHandbooks'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useHandbooks, type HandbookSummary } from '@/composables/useHandbooks'
 import HandbookCard from '@/components/handbook/HandbookCard.vue'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import SegControl from '@/components/ui/SegControl.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 
 const { list } = useHandbooks()
 const { t } = useI18n()
 
-const handbooks = ref<any[]>([])
+const handbooks = ref<HandbookSummary[]>([])
 const searchQuery = ref('')
 const sortBy = ref('new')
 const loading = ref(true)
 const loadError = ref('')
 let loadRequest = 0
 
-const filtered = computed(() => {
-  if (!searchQuery.value) return handbooks.value
-  const q = searchQuery.value.toLowerCase()
-  return handbooks.value.filter((h: any) => h.title.toLowerCase().includes(q))
-})
+const nextCursor = ref<string | null>(null)
+const filtered = computed(() => handbooks.value)
 
 async function load() {
   const request = ++loadRequest
-  const requestedSort = sortBy.value
+  const requestedSort = sortBy.value as 'new' | 'hot'
   loading.value = true
   loadError.value = ''
   try {
-    const data = await list({ sort: requestedSort, limit: 50 })
+    const data = await list({ sort: requestedSort, limit: 50, search: searchQuery.value.trim() || undefined })
     if (request !== loadRequest) return
     handbooks.value = data.items
+    nextCursor.value = data.next_cursor
   } catch (e: any) {
     if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('handbooks.loadFailed')
@@ -43,8 +42,18 @@ async function load() {
 
 onMounted(load)
 
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+watch(searchQuery, () => { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(load, 250) })
+
 async function changeSort() {
   await load()
+}
+
+async function loadMore() {
+  if (!nextCursor.value) return
+  const data = await list({ sort: sortBy.value as 'new' | 'hot', limit: 50, cursor: nextCursor.value, search: searchQuery.value.trim() || undefined })
+  handbooks.value = handbooks.value.concat(data.items)
+  nextCursor.value = data.next_cursor
 }
 </script>
 
@@ -77,6 +86,7 @@ async function changeSort() {
         v-bind="hb"
       />
     </div>
+    <Pagination v-if="nextCursor" :has-more="Boolean(nextCursor)" @load-more="loadMore" />
   </div>
 </template>
 

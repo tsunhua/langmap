@@ -38,15 +38,15 @@ const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json 
 export const CANDIDATE_SQL = `WITH candidate_rows AS (
   SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
   FROM ui_messages m
-  JOIN expression_edges e ON e.expression_a_id = m.source_expression_id
-  JOIN expressions t ON t.id = e.expression_b_id
+  JOIN all_expression_edges e ON e.expression_a_id = m.source_expression_id
+  JOIN all_expression_rows t ON t.id = e.expression_b_id
   WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ?
     AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
   UNION ALL
   SELECT m.message_key, m.placeholders_json, m.source_text, t.id AS target_id, t.text AS target_text, e.id AS edge_id, e.score, e.created_at
   FROM ui_messages m
-  JOIN expression_edges e ON e.expression_b_id = m.source_expression_id
-  JOIN expressions t ON t.id = e.expression_a_id
+  JOIN all_expression_edges e ON e.expression_b_id = m.source_expression_id
+  JOIN all_expression_rows t ON t.id = e.expression_a_id
   WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND t.lang_code = ?
     AND EXISTS (SELECT 1 FROM expression_locale_attestations WHERE expression_id = t.id AND language_locale_code = ?)
 ), ranked AS (
@@ -69,7 +69,7 @@ function eligibleCandidateSql(): string {
     .replaceAll('  WHERE m.project_id = ? AND m.status = ?', `  WHERE ${edge} AND m.project_id = ? AND m.status = ?`);
 }
 
-const EXPRESSION_LANGS_SQL = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
+const EXPRESSION_LANGS_SQL = 'SELECT DISTINCT lang_code FROM all_expression_rows WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
 
 const PROJECT_LOCALES_FOR_LANG_SQL = 'SELECT language_locale_code FROM ui_locales WHERE project_id = ? AND language_locale_code LIKE ? ORDER BY language_locale_code ASC LIMIT 200';
 

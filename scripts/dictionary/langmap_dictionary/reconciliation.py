@@ -11,6 +11,7 @@ from typing import Any, Mapping, Sequence
 
 from .candidates import Candidate, generate_candidates
 from .decision_schema import ReconciliationRequest, ReconciliationResponse
+from .evaluation import auto_merge_enabled, evaluate_decisions
 from .features import CandidateFeatures, CandidateKey
 from .provider import ProviderError, ProviderRun, run_provider
 
@@ -52,6 +53,8 @@ class ReconciliationSummary:
     provider_runs: tuple[ProviderRun, ...]
     config_hash: str
     provider_error: str | None = None
+    evaluation_gate_enabled: bool = False
+    evaluation_gate_reasons: tuple[str, ...] = ()
 
 
 def config_fingerprint(config: Mapping[str, Any]) -> str:
@@ -88,6 +91,7 @@ def _accepted(candidate: Candidate, first: ReconciliationResponse, second: Recon
         return None, "dual_pass_disagreement"
     if first.conflict_codes or second.conflict_codes:
         return None, "provider_conflict"
+    threshold = max(0.98, threshold)
     if first.confidence < threshold or second.confidence < threshold:
         return None, "confidence_below_threshold"
     if len(set(first.evidence_codes)) < 2 or len(set(second.evidence_codes)) < 2:
@@ -120,8 +124,21 @@ def build_complete_link_clusters(
             unit = sorted(set(unit) & set(keys))
         placed = False
         for cluster in clusters:
-            combined = cluster + unit
-            if all(frozenset((left, right)) in accepted for index, left in enumerate(combined) for right in combined[index + 1:] if left != right):
+            # Members of one explicit group are already known to be the same
+            # indivisible unit; only newly introduced cross-unit pairs need AI
+            # acceptance.  Requiring an artificial self-pair here would make
+            # every explicit group impossible to merge with another unit.
+            cross_pairs_verified = all(
+                (
+                    grouped.get(left) is not None
+                    and grouped.get(left) == grouped.get(right)
+                )
+                or frozenset((left, right)) in accepted
+                for left in cluster
+                for right in unit
+                if left != right
+            )
+            if cross_pairs_verified:
                 cluster.extend(item for item in unit if item not in cluster)
                 placed = True
                 break
@@ -135,6 +152,115 @@ def build_complete_link_clusters(
     return tuple(sorted(result, key=lambda item: item.occurrence_keys))
 
 
+def _explicit_cluster_groups(
+    connection: sqlite3.Connection, release_id: str,
+) -> tuple[tuple[str, ...], ...]:
+    """Return the existing entry-local groups as indivisible reconciliation units."""
+
+    groups: dict[str, list[str]] = {}
+    for row in connection.execute(
+        "SELECT cluster_key,claim_key FROM cluster_members "
+        "WHERE release_id=? ORDER BY cluster_key,claim_key",
+        (release_id,),
+    ):
+        groups.setdefault(str(row[0]), []).append(str(row[1]))
+    return tuple(tuple(members) for members in groups.values())
+
+
+def _reconciled_cluster_key(members: Sequence[str], config_hash: str) -> str:
+    """Version an AI-produced identity by the reconciliation policy."""
+
+    payload = "reconciled\0" + config_hash + "\0" + "\0".join(sorted(set(members)))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
+
+
+def build_reconciled_clusters(
+    connection: sqlite3.Connection,
+    release_id: str,
+    occurrence_keys: Sequence[str],
+    accepted_pairs: Sequence[AcceptedPair],
+    config_hash: str,
+) -> tuple[LexicalCluster, ...]:
+    """Build final clusters while preserving explicit groups and versioning merges.
+
+    Existing entry-local groups are passed as indivisible units.  A cluster that
+    remains exactly the same keeps its original key, while a cluster changed by
+    accepted AI pairs receives a deterministic key containing the config hash.
+    This makes a reconciliation rerun auditable and prevents a policy change
+    from silently reusing an old identity.
+    """
+
+    groups = _explicit_cluster_groups(connection, release_id)
+    # Build the key map in one pass; SQLite group_concat ordering is not
+    # portable, so retain the explicit row ordering in Python.
+    explicit_by_key: dict[str, list[str]] = {}
+    for row in connection.execute(
+        "SELECT cluster_key,claim_key FROM cluster_members "
+        "WHERE release_id=? ORDER BY cluster_key,claim_key",
+        (release_id,),
+    ):
+        explicit_by_key.setdefault(str(row[0]), []).append(str(row[1]))
+    explicit_keys = {
+        tuple(sorted(members)): cluster_key
+        for cluster_key, members in explicit_by_key.items()
+    }
+    raw = build_complete_link_clusters(occurrence_keys, accepted_pairs, groups)
+    return tuple(
+        LexicalCluster(
+            item.occurrence_keys,
+            explicit_keys.get(item.occurrence_keys)
+            or _reconciled_cluster_key(item.occurrence_keys, config_hash),
+        )
+        for item in raw
+    )
+
+
+def apply_reconciled_clusters(
+    connection: sqlite3.Connection,
+    release_id: str,
+    clusters: Sequence[LexicalCluster],
+) -> None:
+    """Replace staging clusters with the already-validated reconciliation result."""
+
+    occurrence_rows: dict[str, sqlite3.Row] = {}
+    for cluster in clusters:
+        for claim_key in cluster.occurrence_keys:
+            row = connection.execute(
+                "SELECT occurrence_kind,lang_code,canonical_text "
+                "FROM lexical_occurrences WHERE release_id=? AND claim_key=?",
+                (release_id, claim_key),
+            ).fetchone()
+            if row is None:
+                raise ValueError(f"reconciliation references unknown claim: {claim_key}")
+            occurrence_rows[claim_key] = row
+
+    connection.execute("DELETE FROM cluster_members WHERE release_id=?", (release_id,))
+    connection.execute("DELETE FROM lexical_clusters WHERE release_id=?", (release_id,))
+    for cluster in clusters:
+        first = occurrence_rows[cluster.occurrence_keys[0]]
+        connection.execute(
+            "INSERT INTO lexical_clusters "
+            "(release_id,cluster_key,occurrence_kind,lang_code,canonical_text) "
+            "VALUES (?,?,?,?,?)",
+            (
+                release_id,
+                cluster.cluster_key,
+                first["occurrence_kind"],
+                first["lang_code"],
+                first["canonical_text"],
+            ),
+        )
+        connection.executemany(
+            "INSERT INTO cluster_members(release_id,cluster_key,claim_key) VALUES (?,?,?)",
+            ((release_id, cluster.cluster_key, claim_key) for claim_key in cluster.occurrence_keys),
+        )
+        connection.executemany(
+            "UPDATE lexical_occurrences SET cluster_key=? "
+            "WHERE release_id=? AND claim_key=?",
+            ((cluster.cluster_key, release_id, claim_key) for claim_key in cluster.occurrence_keys),
+        )
+
+
 def reconcile_release(
     connection: sqlite3.Connection,
     release_id: str,
@@ -142,6 +268,7 @@ def reconcile_release(
     config: Mapping[str, Any],
     *,
     output_dir: Path | None = None,
+    gold_rows: Sequence[Mapping[str, Any]] | None = None,
 ) -> ReconciliationSummary:
     candidates = generate_candidates(connection, release_id, int(config.get("max_candidate_group_size", 50))).candidates
     eligible = tuple(item for item in candidates if not item.blockers)
@@ -170,6 +297,38 @@ def reconcile_release(
         if pair:
             accepted.append(pair)
         decisions.append(ReconciliationDecision(candidate.key, "merge" if pair else "keep_separate", reason, pair.confidence_min if pair else min(left.confidence, right.confidence), (left, right), candidate.features.features_fingerprint))
+    holdout = tuple(
+        row for row in (gold_rows or ())
+        if not row.get("split") or row.get("split") == "holdout"
+    )
+    gate_reasons: list[str] = []
+    if not holdout:
+        gate_reasons.append("evaluation_gold_missing")
+    else:
+        adapters = {
+            str(row.get("adapter_id", "")): True
+            for row in holdout
+            if str(row.get("adapter_id", ""))
+        }
+        report = evaluate_decisions(holdout, decisions, config_hash=config_hash)
+        gate = auto_merge_enabled(
+            report,
+            config_hash,
+            adapters,
+            minimum_holdout_auto_candidates=int(config.get("minimum_holdout_auto_candidates", 1000)),
+            minimum_adapter_auto_candidates=int(config.get("minimum_adapter_auto_candidates", 50)),
+            minimum_precision=float(config.get("minimum_precision", 0.995)),
+            minimum_wilson_lower=float(config.get("minimum_wilson_lower", 0.99)),
+        )
+        gate_reasons.extend(gate.reasons)
+    gate_enabled = not gate_reasons
+    if not gate_enabled:
+        accepted = []
+        decisions = [
+            replace(item, decision="keep_separate", reason_code="evaluation_gate:" + ",".join(gate_reasons))
+            if item.decision == "merge" else item
+            for item in decisions
+        ]
     occurrence_keys = [row[0] for row in connection.execute("SELECT claim_key FROM lexical_occurrences WHERE release_id=? ORDER BY claim_key", (release_id,))]
-    clusters = build_complete_link_clusters(occurrence_keys, accepted)
-    return ReconciliationSummary(release_id, candidates, tuple(decisions), tuple(accepted), clusters, tuple(runs), config_hash)
+    clusters = build_reconciled_clusters(connection, release_id, occurrence_keys, accepted, config_hash)
+    return ReconciliationSummary(release_id, candidates, tuple(decisions), tuple(accepted), clusters, tuple(runs), config_hash, None, gate_enabled, tuple(gate_reasons))

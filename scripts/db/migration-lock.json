@@ -205,6 +205,36 @@
       "filename": "0034_dictionary_dataset_releases.sql",
       "size": 5253,
       "sha256": "0d23cd45922ee74ae525fca4eeb591d0838fc2f27a270b107262c8d5b64e50cd"
+    },
+    {
+      "sequence": 35,
+      "filename": "0035_dictionary_language_registry.sql",
+      "size": 842,
+      "sha256": "994e40239495e069da3c897d7355bafaebe80a5b38c39670eaf5f62beb63a890"
+    },
+    {
+      "sequence": 36,
+      "filename": "0036_dictionary_remove_redundant_indexes.sql",
+      "size": 509,
+      "sha256": "db0c0743c01151feb8c627d29c3f99817a172ad9d14caefc0b3bb2b433608e22"
+    },
+    {
+      "sequence": 37,
+      "filename": "0037_dictionary_packed_catalog.sql",
+      "size": 4713,
+      "sha256": "7f6fe0a29dc385b14f3404a847546ad877c8a869d704a5d144dc46f74714309a"
+    },
+    {
+      "sequence": 38,
+      "filename": "0038_dictionary_integer_codebooks.sql",
+      "size": 5533,
+      "sha256": "5d72947967ffe6722a61872fa963775db694a10745a9fc8e2099143341ec937b"
+    },
+    {
+      "sequence": 39,
+      "filename": "0039_canonical_integer_storage.sql",
+      "size": 12998,
+      "sha256": "567f860acebe55e18d62f50330aae752bb9cb04c2eb223adc65a5708c7d432c6"
     }
   ]
 }

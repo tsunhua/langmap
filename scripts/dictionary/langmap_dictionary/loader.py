@@ -9,9 +9,14 @@ import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, Sequence
+from typing import Any, Callable, Iterator, Sequence
 
 from .models import StagedEntry, StagedPronunciation, StagedSense
+
+try:
+    import ujson as _fast_json
+except ImportError:  # pragma: no cover - the standard library remains supported
+    _fast_json = json
 
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 
@@ -31,7 +36,7 @@ class StageLoadError(ValueError):
 
 
 def _json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return _fast_json.dumps(value, ensure_ascii=False, sort_keys=True)
 
 
 def _text(value: Any, label: str) -> str:
@@ -46,9 +51,12 @@ def _array(value: Any, label: str) -> list[Any]:
     return value
 
 
-def _manifest(paths: Sequence[Path]) -> tuple[str, str]:
+ProgressCallback = Callable[[dict[str, Any]], None]
+
+
+def _manifest(paths: Sequence[Path], progress: ProgressCallback | None = None) -> tuple[str, str]:
     digest = hashlib.sha256()
-    for path in paths:
+    for ordinal, path in enumerate(paths, 1):
         if not path.is_file():
             raise FileNotFoundError(path)
         file_digest = hashlib.sha256()
@@ -59,6 +67,8 @@ def _manifest(paths: Sequence[Path]) -> tuple[str, str]:
         digest.update(b"\0")
         digest.update(file_digest.hexdigest().encode("ascii"))
         digest.update(b"\0")
+        if progress is not None:
+            progress({"phase": "hash", "files": ordinal, "total_files": len(paths), "file": path.name})
     value = digest.hexdigest()
     return f"release-{value[:32]}", value
 
@@ -108,8 +118,14 @@ def _child_text(item: Any, key: str, label: str) -> str:
     return _text(item.get(key) or item.get("value") or item.get("text"), label)
 
 
-def _insert_entry(connection: sqlite3.Connection, release_id: str, record: dict[str, Any]) -> tuple[int, int]:
-    rows, sense_count = _entry_rows(release_id, record)
+def _insert_entry(
+    connection: sqlite3.Connection,
+    release_id: str,
+    record: dict[str, Any],
+    *,
+    compact: bool = False,
+) -> tuple[int, int]:
+    rows, sense_count = _entry_rows(release_id, record, compact=compact)
     for table in ("input_entries", "input_forms", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
         values = rows[table]
         if values:
@@ -128,8 +144,12 @@ _INSERT_SQL = {
     "input_pos": "INSERT INTO input_pos VALUES (?,?,?,?,?)",
 }
 
-
-def _entry_rows(release_id: str, record: dict[str, Any]) -> tuple[dict[str, list[tuple[Any, ...]]], int]:
+def _entry_rows(
+    release_id: str,
+    record: dict[str, Any],
+    *,
+    compact: bool = False,
+) -> tuple[dict[str, list[tuple[Any, ...]]], int]:
     rows: dict[str, list[tuple[Any, ...]]] = defaultdict(list)
     entry_key = record["entry_key"]
     rows["input_entries"].append(
@@ -137,7 +157,8 @@ def _entry_rows(release_id: str, record: dict[str, Any]) -> tuple[dict[str, list
     )
     for ordinal, item in enumerate(record["forms"], 1):
         value = _child_text(item, "value", f"form {ordinal}")
-        rows["input_forms"].append((release_id, entry_key, ordinal, value, _json(item)))
+        if not compact:
+            rows["input_forms"].append((release_id, entry_key, ordinal, value, _json(item)))
     for ordinal, item in enumerate(record["pronunciations"], 1):
         if not isinstance(item, dict):
             raise ValueError(f"pronunciation {ordinal} must be an object")
@@ -158,21 +179,25 @@ def _entry_rows(release_id: str, record: dict[str, Any]) -> tuple[dict[str, list
         )
         for child_ordinal, item in enumerate(arrays["equivalents"], 1):
             value = _child_text(item, "value", f"equivalent {sense_key}:{child_ordinal}")
-            language_hint = item.get("language") or item.get("language_hint") if isinstance(item, dict) else None
-            rows["input_equivalents"].append((release_id, sense_key, child_ordinal, value, language_hint, _json(item)))
+            if not compact:
+                language_hint = item.get("language") or item.get("language_hint") if isinstance(item, dict) else None
+                rows["input_equivalents"].append((release_id, sense_key, child_ordinal, value, language_hint, _json(item)))
         for child_ordinal, item in enumerate(arrays["relations"], 1):
             if not isinstance(item, dict):
                 raise ValueError(f"relation {sense_key}:{child_ordinal} must be an object")
             kind = _text(item.get("kind"), "relation.kind")
             related_text = _child_text(item, "related_text", "relation.related_text")
-            rows["input_relations"].append((release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language"), _json(item)))
+            if not compact:
+                rows["input_relations"].append((release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language"), _json(item)))
         for child_ordinal, item in enumerate(arrays["examples"], 1):
             text = _child_text(item, "text", f"example {sense_key}:{child_ordinal}")
-            translation = item.get("translation") if isinstance(item, dict) else None
-            rows["input_examples"].append((release_id, sense_key, child_ordinal, text, translation, _json(item)))
+            if not compact:
+                translation = item.get("translation") if isinstance(item, dict) else None
+                rows["input_examples"].append((release_id, sense_key, child_ordinal, text, translation, _json(item)))
         for child_ordinal, item in enumerate(arrays["pos"], 1):
             value = _child_text(item, "value", f"pos {sense_key}:{child_ordinal}")
-            rows["input_pos"].append((release_id, sense_key, child_ordinal, value, _json(item)))
+            if not compact:
+                rows["input_pos"].append((release_id, sense_key, child_ordinal, value, _json(item)))
         sense_count += 1
     return rows, sense_count
 
@@ -183,13 +208,20 @@ def _quarantine(connection: sqlite3.Connection, release_id: str, record: Any, er
     connection.execute("INSERT OR IGNORE INTO quarantine_items (release_id,dictionary_key,entry_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?)", (release_id, dictionary_key, entry_key, error_code, detail, _json(record)))
 
 
-def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *, batch_size: int = 500) -> StageSummary:
+def load_jsonl_release(
+    connection: sqlite3.Connection,
+    paths: Sequence[Path],
+    *,
+    batch_size: int = 500,
+    progress: ProgressCallback | None = None,
+    compact: bool = False,
+) -> StageSummary:
     """Load one or more v2 JSONL files atomically and idempotently."""
 
     if not paths:
         raise ValueError("at least one JSONL path is required")
     normalized_paths = tuple(Path(path) for path in paths)
-    release_id, manifest_hash = _manifest(normalized_paths)
+    release_id, manifest_hash = _manifest(normalized_paths, progress)
     existing = connection.execute("SELECT * FROM staging_releases WHERE id = ?", (release_id,)).fetchone()
     if existing is not None:
         return StageSummary(existing["input_records"], existing["staged_entries"], existing["staged_senses"], existing["quarantined"], manifest_hash, release_id)
@@ -199,6 +231,7 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
     input_records = staged_entries = staged_senses = quarantined = 0
     pending_rows: dict[str, list[tuple[Any, ...]]] = defaultdict(list)
     pending_records: list[tuple[dict[str, Any], int]] = []
+    next_progress = 100_000
 
     def flush_pending() -> tuple[int, int, int]:
         nonlocal pending_rows, pending_records
@@ -220,7 +253,7 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
             for record, sense_count in pending_records:
                 connection.execute("SAVEPOINT entry_row")
                 try:
-                    _insert_entry(connection, release_id, record)
+                    _insert_entry(connection, release_id, record, compact=compact)
                     connection.execute("RELEASE SAVEPOINT entry_row")
                     inserted += 1
                     senses += sense_count
@@ -242,7 +275,7 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
                 if not first:
                     raise StageLoadError(f"{path}: empty JSONL")
                 try:
-                    header_record = json.loads(first)
+                    header_record = _fast_json.loads(first)
                 except json.JSONDecodeError as error:
                     raise StageLoadError(f"{path}: invalid header JSON: {error}") from error
                 header = _header(header_record, path)
@@ -252,7 +285,7 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
                     if not raw_line.strip():
                         continue
                     try:
-                        record = json.loads(raw_line)
+                        record = _fast_json.loads(raw_line)
                         if isinstance(record, dict) and record.get("record_type") == "dictionary":
                             raise StageLoadError(f"{path}:{line_number}: duplicate dictionary header")
                         if not isinstance(record, dict) or record.get("record_type") != "entry":
@@ -260,7 +293,7 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
                         input_records += 1
                         file_count += 1
                         validated = _entry(record, path, line_number, release_id)
-                        rows, senses = _entry_rows(release_id, validated)
+                        rows, senses = _entry_rows(release_id, validated, compact=compact)
                         for table, values in rows.items():
                             pending_rows[table].extend(values)
                         pending_records.append((validated, senses))
@@ -269,6 +302,10 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
                             staged_entries += inserted
                             staged_senses += inserted_senses
                             quarantined += failed
+                            if progress is not None and input_records >= next_progress:
+                                progress({"phase": "stage", "input_records": input_records, "file": path.name})
+                                while next_progress <= input_records:
+                                    next_progress += 100_000
                     except StageLoadError:
                         raise
                     except (ValueError, sqlite3.IntegrityError) as error:
@@ -280,6 +317,8 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
                 staged_entries += inserted
                 staged_senses += inserted_senses
                 quarantined += failed
+                if progress is not None:
+                    progress({"phase": "stage-file", "input_records": input_records, "file": path.name})
         connection.execute("UPDATE staging_releases SET status='staged', input_records=?, staged_entries=?, staged_senses=?, quarantined=? WHERE id=?", (input_records, staged_entries, staged_senses, quarantined, release_id))
         connection.commit()
     except Exception as error:
@@ -290,11 +329,110 @@ def load_jsonl_release(connection: sqlite3.Connection, paths: Sequence[Path], *,
     return StageSummary(input_records, staged_entries, staged_senses, quarantined, manifest_hash, release_id)
 
 
-def iter_staged_entries(connection: sqlite3.Connection, release_id: str) -> Iterator[StagedEntry]:
-    rows = connection.execute("SELECT * FROM input_entries WHERE release_id=? ORDER BY dictionary_key, entry_key", (release_id,))
-    for row in rows:
-        pronunciations = tuple(StagedPronunciation(r["ordinal"], r["value"], r["scheme"], json.loads(r["raw_json"])) for r in connection.execute("SELECT * FROM input_pronunciations WHERE release_id=? AND entry_key=? ORDER BY ordinal", (release_id, row["entry_key"])))
-        senses = []
-        for sense in connection.execute("SELECT * FROM input_senses WHERE release_id=? AND entry_key=? ORDER BY ordinal, sense_key", (release_id, row["entry_key"])):
-            senses.append(StagedSense(sense["sense_key"], sense["ordinal"], tuple(json.loads(sense["definitions_json"])), tuple(json.loads(sense["pos_json"])), tuple(json.loads(sense["equivalents_json"])), tuple(json.loads(sense["relations_json"])), tuple(json.loads(sense["examples_json"])), tuple(json.loads(sense["labels_json"])), json.loads(sense["raw_json"])))
-        yield StagedEntry(row["release_id"], row["dictionary_key"], row["entry_key"], row["canonical_headword"], row["raw_headword"], row["homograph_marker"], row["direction_hint"], row["record_fingerprint"], pronunciations, tuple(senses), tuple(json.loads(r["raw_json"]) for r in connection.execute("SELECT raw_json FROM input_forms WHERE release_id=? AND entry_key=? ORDER BY ordinal", (release_id, row["entry_key"]))), json.loads(row["raw_json"]))
+def iter_staged_entry_rows(
+    connection: sqlite3.Connection,
+    release_id: str,
+    *,
+    start_rowid: int = 0,
+    batch_size: int = 500,
+) -> Iterator[tuple[int, StagedEntry]]:
+    """Yield staged entries with one sequential scan per staging table."""
+
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    entries = connection.execute(
+        "SELECT rowid AS staging_rowid,* FROM input_entries NOT INDEXED "
+        "WHERE release_id=? AND rowid>? ORDER BY rowid",
+        (release_id, start_rowid),
+    )
+
+    def child_rows(table: str) -> Iterator[sqlite3.Row]:
+        # Child rows are inserted in the same entry order as input_entries.
+        # Fresh and legacy-resume runs avoid joins entirely.  Checkpoint resumes
+        # add one parent lookup per child to filter the already committed prefix.
+        if start_rowid == 0:
+            return iter(connection.execute(
+                f"SELECT * FROM {table} NOT INDEXED WHERE release_id=? ORDER BY rowid",
+                (release_id,),
+            ))
+        return iter(connection.execute(
+            f"SELECT child.* FROM {table} child NOT INDEXED "
+            "JOIN input_entries parent ON parent.release_id=child.release_id AND parent.entry_key=child.entry_key "
+            "WHERE child.release_id=? AND parent.rowid>? ORDER BY child.rowid",
+            (release_id, start_rowid),
+        ))
+
+    pronunciation_rows = child_rows("input_pronunciations")
+    sense_rows = child_rows("input_senses")
+    form_rows = child_rows("input_forms")
+    current_pronunciation = next(pronunciation_rows, None)
+    current_sense = next(sense_rows, None)
+    current_form = next(form_rows, None)
+
+    for row in entries:
+        entry_key = str(row["entry_key"])
+        pronunciations: list[StagedPronunciation] = []
+        while current_pronunciation is not None and current_pronunciation["entry_key"] == entry_key:
+            pronunciations.append(StagedPronunciation(
+                current_pronunciation["ordinal"],
+                current_pronunciation["value"],
+                current_pronunciation["scheme"],
+                _fast_json.loads(current_pronunciation["raw_json"]),
+            ))
+            current_pronunciation = next(pronunciation_rows, None)
+        senses: list[StagedSense] = []
+        while current_sense is not None and current_sense["entry_key"] == entry_key:
+            senses.append(StagedSense(
+                current_sense["sense_key"],
+                current_sense["ordinal"],
+                tuple(_fast_json.loads(current_sense["definitions_json"])),
+                tuple(_fast_json.loads(current_sense["pos_json"])),
+                tuple(_fast_json.loads(current_sense["equivalents_json"])),
+                tuple(_fast_json.loads(current_sense["relations_json"])),
+                tuple(_fast_json.loads(current_sense["examples_json"])),
+                tuple(_fast_json.loads(current_sense["labels_json"])),
+                _fast_json.loads(current_sense["raw_json"]),
+            ))
+            current_sense = next(sense_rows, None)
+        forms: list[object] = []
+        while current_form is not None and current_form["entry_key"] == entry_key:
+            forms.append(_fast_json.loads(current_form["raw_json"]))
+            current_form = next(form_rows, None)
+        yield int(row["staging_rowid"]), StagedEntry(
+            row["release_id"],
+            row["dictionary_key"],
+            entry_key,
+            row["canonical_headword"],
+            row["raw_headword"],
+            row["homograph_marker"],
+            row["direction_hint"],
+            row["record_fingerprint"],
+            tuple(pronunciations),
+            tuple(senses),
+            tuple(forms),
+            _fast_json.loads(row["raw_json"]),
+        )
+    if current_pronunciation is not None or current_sense is not None or current_form is not None:
+        raise StageLoadError("child row order does not match staged entry order")
+
+
+def iter_staged_entries(
+    connection: sqlite3.Connection,
+    release_id: str,
+    *,
+    start_after: tuple[str, str] | None = None,
+    batch_size: int = 500,
+) -> Iterator[StagedEntry]:
+    start_rowid = 0
+    if start_after is not None:
+        row = connection.execute(
+            "SELECT rowid FROM input_entries WHERE release_id=? AND dictionary_key=? AND entry_key=?",
+            (release_id, start_after[0], start_after[1]),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"unknown staged entry cursor: {start_after!r}")
+        start_rowid = int(row[0])
+    for _, entry in iter_staged_entry_rows(
+        connection, release_id, start_rowid=start_rowid, batch_size=batch_size
+    ):
+        yield entry

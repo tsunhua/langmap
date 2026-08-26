@@ -181,8 +181,8 @@ describe('searchExpressions', () => {
       { id: 'nan:bbbb', lang_code: 'nan', text: '食飯', text_hash: 'bbbb', homograph_index: 1, description: '', tags_json: '[]', source_id: null, source_ref: null, review_status: 'pending', created_by: 1, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00' },
     ];
     const db = fakeD1({
-      'SELECT COUNT(*) AS total FROM expressions WHERE text LIKE ? ESCAPE \'\\\'': () => ({ total: 2 }),
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
+      'SELECT COUNT(*) AS total FROM all_expression_rows WHERE text LIKE ? ESCAPE \'\\\'': () => ({ total: 2 }),
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM all_expression_rows WHERE text LIKE ? ESCAPE \'\\\' ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: rows }),
     });
     const result = await searchExpressions(db, { q: '食', sort: 'alpha', limit: 20, offset: 0 });
@@ -193,8 +193,8 @@ describe('searchExpressions', () => {
 
   it('filters by lang_code when provided', async () => {
     const db = fakeD1({
-      'SELECT COUNT(*) AS total FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ?': () => ({ total: 1 }),
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ? ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
+      'SELECT COUNT(*) AS total FROM all_expression_rows WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ?': () => ({ total: 1 }),
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM all_expression_rows WHERE text LIKE ? ESCAPE \'\\\' AND lang_code = ? ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: [] }),
     });
     const result = await searchExpressions(db, { q: '食', lang_code: 'nan', sort: 'alpha', limit: 20, offset: 0 });
@@ -218,9 +218,9 @@ describe('searchExpressions', () => {
     await searchExpressions(db, { q: '', sort: 'new', limit: 20, offset: 0 });
 
     const pageQueries = observedSql.filter((sql) => sql.includes(' LIMIT ? OFFSET ?'));
-    expect(pageQueries[0]).toContain('SELECT COUNT(*) FROM expression_edges');
-    expect(pageQueries[0]).toContain('g.expression_a_id = expressions.id OR g.expression_b_id = expressions.id');
-    expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM expression_edges');
+    expect(pageQueries[0]).toContain('SELECT COUNT(*) FROM all_expression_edges');
+    expect(pageQueries[0]).toContain('g.expression_a_id = all_expression_rows.id OR g.expression_b_id = all_expression_rows.id');
+    expect(pageQueries[0]).toContain('ORDER BY (SELECT COUNT(*) FROM all_expression_edges');
     expect(pageQueries[1]).toContain('ORDER BY created_at DESC, id ASC');
   });
 
@@ -229,8 +229,8 @@ describe('searchExpressions', () => {
       { id: 'cmn:aaaa', lang_code: 'cmn', text: '你好', text_hash: 'aaaa', homograph_index: 1, description: '', tags_json: '[]', source_id: null, source_ref: null, review_status: 'pending', created_by: 1, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00' },
     ];
     const db = fakeD1({
-      'SELECT COUNT(*) AS total FROM expressions': () => ({ total: 1 }),
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
+      'SELECT COUNT(*) AS total FROM all_expression_rows': () => ({ total: 1 }),
+      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM all_expression_rows ORDER BY text ASC, homograph_index ASC, id ASC LIMIT ? OFFSET ?':
         () => ({ results: rows }),
       'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))':
         () => ({ results: [{ code: 'cmn', name_expression_id: null, name_en: 'Mandarin Chinese', name: null }] }),
@@ -299,7 +299,7 @@ describe('getExpression', () => {
 
   it('returns null for a missing expression', async () => {
     const db = fakeD1({
-      'SELECT e.id, e.lang_code, e.text, e.text_hash, e.homograph_index, e.description, e.tags_json, e.source_id, e.source_ref, e.review_status, e.created_by, e.created_at, e.updated_at, s.type AS source_type, s.name AS source_name, u.username AS created_by_username FROM expressions e LEFT JOIN sources s ON s.id = e.source_id LEFT JOIN users u ON u.id = e.created_by WHERE e.id = ?':
+      'SELECT e.id, e.lang_code, e.text, e.text_hash, e.homograph_index, e.description, e.tags_json, e.source_id, e.source_ref, e.review_status, e.created_by, e.created_at, e.updated_at, s.type AS source_type, s.name AS source_name, u.username AS created_by_username FROM all_expression_rows e LEFT JOIN sources s ON s.id = e.source_id LEFT JOIN users u ON u.id = e.created_by WHERE e.id = ?':
         () => null,
     });
     expect(await getExpression(db, 'nan:missing')).toBeNull();
@@ -400,7 +400,7 @@ describe('expressions route GET /:id', () => {
             bind(..._args: unknown[]) {
               return {
                 async first() {
-                  if (sql.includes('FROM expressions e LEFT JOIN sources')) {
+                  if (sql.includes('FROM all_expression_rows e LEFT JOIN sources')) {
                     return { id: 'nan:aaaa', lang_code: 'nan', text: '食', source_type: null, source_name: null };
                   }
                   return null;

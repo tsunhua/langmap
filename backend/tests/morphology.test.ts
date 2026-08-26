@@ -48,7 +48,7 @@ describe('listMorphologicalFeatures', () => {
           { code: 'plural', dimension_code: 'number', name_expression_id: PLURAL_EN, sort_order: 2 },
         ] }),
       },
-      { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [
+      { sql: 'FROM all_expression_rows WHERE id IN', handler: () => ({ results: [
         { id: GENDER_EN, text: 'gender' },
         { id: NUMBER_EN, text: 'number' },
         { id: MASCULINE_EN, text: 'masculine' },
@@ -87,7 +87,7 @@ describe('listMorphologicalFeatures', () => {
         sql: 'FROM morphological_features',
         handler: () => ({ results: [{ code: 'plural', dimension_code: 'number', name_expression_id: PLURAL_EN, sort_order: 2 }] }),
       },
-      { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [
+      { sql: 'FROM all_expression_rows WHERE id IN', handler: () => ({ results: [
         { id: NUMBER_EN, text: 'number' },
         { id: PLURAL_EN, text: 'plural' },
       ] }) },
@@ -110,7 +110,7 @@ describe('listMorphologicalFeatures', () => {
         sql: 'FROM morphological_features',
         handler: () => ({ results: [{ code: 'perfect', dimension_code: 'aspect', name_expression_id: 'eng:missing', sort_order: 1 }] }),
       },
-      { sql: 'FROM expressions WHERE id IN', handler: () => ({ results: [] }) },
+      { sql: 'FROM all_expression_rows WHERE id IN', handler: () => ({ results: [] }) },
     ]);
     const result = await listMorphologicalFeatures(db, {});
     expect(result.dimensions[0]?.name).toBe('aspect');
@@ -197,11 +197,11 @@ function storeD1(store: MorphologyStore) {
         .sort((a, b) => (a.form_id < b.form_id ? -1 : a.form_id > b.form_id ? 1 : a.lemma_id < b.lemma_id ? -1 : a.lemma_id > b.lemma_id ? 1 : 0));
       return { results };
     }
-    if (sql.includes('FROM expressions WHERE id IN')) {
+    if (sql.includes('FROM all_expression_rows WHERE id IN')) {
       const ids = JSON.parse(String(params[0] ?? '[]')) as string[];
       return { results: ids.map((id) => store.expressions.get(id)).filter((row): row is StoredExpression => Boolean(row)) };
     }
-    if (sql.includes('FROM expressions WHERE id = ?')) {
+    if (sql.includes('FROM all_expression_rows WHERE id = ?')) {
       return store.expressions.get(String(params[0])) ?? null;
     }
     if (sql.includes('FROM expression_form_edges WHERE form_id = ? AND lemma_id = ?')) {

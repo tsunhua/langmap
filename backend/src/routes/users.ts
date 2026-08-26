@@ -26,16 +26,16 @@ SELECT 'expression' AS type,
        'Added expression "' || e.text || '" (' || e.lang_code || ')' AS description,
        e.id AS ref_id,
        e.created_at
-FROM expressions e
+FROM all_expression_rows e
 WHERE e.created_by = ?
 UNION ALL
 SELECT 'mapping' AS type,
        'Mapped "' || ea.text || '" → "' || eb.text || '"' AS description,
        ee.id AS ref_id,
        ee.created_at
-FROM expression_edges ee
-JOIN expressions ea ON ee.expression_a_id = ea.id
-JOIN expressions eb ON ee.expression_b_id = eb.id
+FROM all_expression_edges ee
+JOIN all_expression_rows ea ON ee.expression_a_id = ea.id
+JOIN all_expression_rows eb ON ee.expression_b_id = eb.id
 WHERE ee.created_by = ?
 UNION ALL
 SELECT 'handbook' AS type,
@@ -59,7 +59,7 @@ function managedActivityQuery(releaseTablesReady: boolean): string {
   if (!releaseTablesReady) return ACTIVITY_QUERY;
   return ACTIVITY_QUERY
     .replace('WHERE ee.created_by = ?', `WHERE ee.created_by = ? AND ${edgeEligibilityPredicate('ee')}`)
-    .replace('WHERE v.user_id = ?', `WHERE v.user_id = ? AND EXISTS (SELECT 1 FROM expression_edges vote_edge WHERE vote_edge.id = v.target_id AND ${edgeEligibilityPredicate('vote_edge')})`);
+    .replace('WHERE v.user_id = ?', `WHERE v.user_id = ? AND EXISTS (SELECT 1 FROM all_expression_edges vote_edge WHERE vote_edge.id = v.target_id AND ${edgeEligibilityPredicate('vote_edge')})`);
 }
 
 users.get('/me', requireAuth, async (c) => {

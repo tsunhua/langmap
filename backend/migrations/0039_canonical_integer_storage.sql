@@ -1,6 +1,6 @@
--- Canonical greenfield schema for local D1 rebuilds.
--- The 0039 migration is intentionally destructive and has the same contract.
-PRAGMA foreign_keys = ON;
+-- Destructive greenfield cutover. Only disposable or explicitly authorized
+-- databases may apply this migration; no legacy IDs are preserved.
+PRAGMA foreign_keys = OFF;
 
 DROP VIEW IF EXISTS all_expression_readings;
 DROP VIEW IF EXISTS all_expression_edges;
@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS ui_locales;
 DROP TABLE IF EXISTS user_preferences;
 DROP TABLE IF EXISTS expression_readings;
 DROP TABLE IF EXISTS expression_locale_links;
+DROP TABLE IF EXISTS expression_locale_attestations;
 DROP TABLE IF EXISTS expression_edges;
 DROP TABLE IF EXISTS expressions;
 DROP TABLE IF EXISTS sources;
@@ -29,7 +30,20 @@ DROP TABLE IF EXISTS regions;
 DROP TABLE IF EXISTS scripts;
 DROP TABLE IF EXISTS languages;
 DROP TABLE IF EXISTS parts_of_speech;
+DROP TABLE IF EXISTS dictionary_dataset_releases;
+DROP TABLE IF EXISTS dictionary_dataset_state;
+DROP TABLE IF EXISTS dictionary_expression_bindings;
+DROP TABLE IF EXISTS expression_edge_evidence;
+DROP TABLE IF EXISTS dictionary_release_objects;
+DROP TABLE IF EXISTS expression_pos_attestations;
+DROP TABLE IF EXISTS dictionary_languages;
+DROP TABLE IF EXISTS dictionary_locales;
+DROP TABLE IF EXISTS dictionary_terms;
+DROP TABLE IF EXISTS dictionary_readings;
+DROP TABLE IF EXISTS dictionary_edges;
 DROP TABLE IF EXISTS users;
+
+PRAGMA foreign_keys = ON;
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,27 +55,9 @@ CREATE TABLE users (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE languages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  code TEXT NOT NULL UNIQUE,
-  name_en TEXT NOT NULL
-);
-
-CREATE TABLE scripts (
-  code TEXT PRIMARY KEY,
-  name_en TEXT NOT NULL,
-  direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl'))
-);
-
-CREATE TABLE regions (
-  code TEXT PRIMARY KEY,
-  name_en TEXT NOT NULL,
-  latitude REAL,
-  longitude REAL,
-  CHECK ((latitude IS NULL) = (longitude IS NULL))
-);
-
+CREATE TABLE languages (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, name_en TEXT NOT NULL);
+CREATE TABLE scripts (code TEXT PRIMARY KEY, name_en TEXT NOT NULL, direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl')));
+CREATE TABLE regions (code TEXT PRIMARY KEY, name_en TEXT NOT NULL, latitude REAL, longitude REAL, CHECK ((latitude IS NULL) = (longitude IS NULL)));
 CREATE TABLE language_locales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   code TEXT NOT NULL UNIQUE,
@@ -79,23 +75,14 @@ CREATE TABLE language_locales (
   FOREIGN KEY (script_code) REFERENCES scripts(code) ON DELETE RESTRICT,
   FOREIGN KEY (region_code) REFERENCES regions(code) ON DELETE RESTRICT
 );
-CREATE UNIQUE INDEX idx_language_locales_identity
-  ON language_locales(language_id, COALESCE(script_code, ''), COALESCE(orthography, ''), COALESCE(region_code, ''), place_path);
-
-CREATE TABLE sources (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  type TEXT NOT NULL,
-  name TEXT NOT NULL,
-  UNIQUE (type, name)
-);
-
+CREATE UNIQUE INDEX idx_language_locales_identity ON language_locales(language_id, COALESCE(script_code, ''), COALESCE(orthography, ''), COALESCE(region_code, ''), place_path);
+CREATE TABLE sources (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, name TEXT NOT NULL, UNIQUE (type, name));
 CREATE TABLE parts_of_speech (
   code TEXT PRIMARY KEY,
   name_en TEXT NOT NULL,
   sort_order INTEGER NOT NULL UNIQUE,
   bit_index INTEGER NOT NULL UNIQUE CHECK (bit_index BETWEEN 0 AND 62)
 );
-
 CREATE TABLE expressions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   language_id INTEGER NOT NULL,
@@ -111,7 +98,6 @@ CREATE TABLE expressions (
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE INDEX idx_expressions_language_created ON expressions(language_id, created_at DESC);
-
 CREATE TABLE expression_locale_links (
   expression_id INTEGER NOT NULL,
   locale_id INTEGER NOT NULL,
@@ -120,7 +106,6 @@ CREATE TABLE expression_locale_links (
   FOREIGN KEY (locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT
 ) WITHOUT ROWID;
 CREATE INDEX idx_expression_locale_links_locale ON expression_locale_links(locale_id, expression_id);
-
 CREATE TABLE expression_readings (
   expression_id INTEGER NOT NULL,
   locale_id INTEGER NOT NULL,
@@ -132,7 +117,6 @@ CREATE TABLE expression_readings (
   FOREIGN KEY (locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT,
   FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL
 ) WITHOUT ROWID;
-
 CREATE TABLE expression_edges (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   expression_a_id INTEGER NOT NULL,
@@ -147,7 +131,6 @@ CREATE TABLE expression_edges (
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE INDEX idx_expression_edges_b_id ON expression_edges(expression_b_id);
-
 CREATE TABLE edge_votes (
   user_id INTEGER NOT NULL,
   edge_id INTEGER NOT NULL,
@@ -157,7 +140,6 @@ CREATE TABLE edge_votes (
   FOREIGN KEY (edge_id) REFERENCES expression_edges(id) ON DELETE CASCADE
 ) WITHOUT ROWID;
 CREATE INDEX idx_edge_votes_edge ON edge_votes(edge_id);
-
 CREATE TABLE handbooks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -173,7 +155,6 @@ CREATE TABLE handbooks (
 );
 CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC);
 CREATE INDEX idx_handbooks_visibility_score ON handbooks(visibility, score DESC, created_at DESC, id ASC);
-
 CREATE TABLE handbook_votes (
   user_id INTEGER NOT NULL,
   handbook_id INTEGER NOT NULL,
@@ -183,7 +164,6 @@ CREATE TABLE handbook_votes (
   FOREIGN KEY (handbook_id) REFERENCES handbooks(id) ON DELETE CASCADE
 ) WITHOUT ROWID;
 CREATE INDEX idx_handbook_votes_handbook ON handbook_votes(handbook_id);
-
 CREATE TABLE handbook_sections (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   handbook_id INTEGER NOT NULL,
@@ -195,7 +175,6 @@ CREATE TABLE handbook_sections (
   FOREIGN KEY (parent_section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_handbook_sections_parent ON handbook_sections(handbook_id, parent_section_id, position, id);
-
 CREATE TABLE handbook_section_items (
   section_id INTEGER NOT NULL,
   position INTEGER NOT NULL,
@@ -205,7 +184,6 @@ CREATE TABLE handbook_section_items (
   FOREIGN KEY (section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE,
   FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE RESTRICT
 ) WITHOUT ROWID;
-
 CREATE TABLE morphological_dimensions (
   code TEXT PRIMARY KEY,
   name_expression_id INTEGER NOT NULL,
@@ -221,7 +199,6 @@ CREATE TABLE morphological_features (
   FOREIGN KEY (dimension_code) REFERENCES morphological_dimensions(code) ON DELETE CASCADE,
   FOREIGN KEY (name_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT
 );
-
 CREATE TABLE expression_form_edges (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   form_id INTEGER NOT NULL,
@@ -237,10 +214,7 @@ CREATE INDEX idx_expression_form_edges_lemma_id ON expression_form_edges(lemma_i
 CREATE TRIGGER trg_expression_form_edges_no_reverse
 BEFORE INSERT ON expression_form_edges
 WHEN EXISTS (SELECT 1 FROM expression_form_edges WHERE form_id = NEW.lemma_id AND lemma_id = NEW.form_id)
-BEGIN
-  SELECT RAISE(ABORT, 'reverse expression form edge exists');
-END;
-
+BEGIN SELECT RAISE(ABORT, 'reverse expression form edge exists'); END;
 CREATE TABLE expression_form_edge_features (
   edge_id INTEGER NOT NULL,
   feature_code TEXT NOT NULL,
@@ -248,7 +222,6 @@ CREATE TABLE expression_form_edge_features (
   FOREIGN KEY (edge_id) REFERENCES expression_form_edges(id) ON DELETE CASCADE,
   FOREIGN KEY (feature_code) REFERENCES morphological_features(code) ON DELETE RESTRICT
 ) WITHOUT ROWID;
-
 CREATE TABLE expression_splits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   source_expression_id INTEGER NOT NULL,
@@ -265,7 +238,6 @@ CREATE TABLE expression_split_moves (
   FOREIGN KEY (split_id) REFERENCES expression_splits(id) ON DELETE CASCADE,
   FOREIGN KEY (edge_id) REFERENCES expression_edges(id) ON DELETE RESTRICT
 ) WITHOUT ROWID;
-
 CREATE TABLE ui_locales (
   project_id TEXT NOT NULL,
   locale_id INTEGER NOT NULL,
@@ -282,7 +254,6 @@ CREATE TABLE ui_locales (
   FOREIGN KEY (activated_by) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) WITHOUT ROWID;
-
 CREATE TABLE ui_messages (
   project_id TEXT NOT NULL,
   message_key TEXT NOT NULL,
@@ -294,7 +265,6 @@ CREATE TABLE ui_messages (
   FOREIGN KEY (source_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT
 ) WITHOUT ROWID;
 CREATE INDEX idx_ui_messages_source_expression ON ui_messages(project_id, status, source_expression_id);
-
 CREATE TABLE user_preferences (
   user_id INTEGER NOT NULL,
   preference_key TEXT NOT NULL,
@@ -303,20 +273,9 @@ CREATE TABLE user_preferences (
   PRIMARY KEY (user_id, preference_key),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) WITHOUT ROWID;
-
 INSERT OR IGNORE INTO parts_of_speech(code, name_en, sort_order, bit_index) VALUES
-  ('noun', 'Noun', 1, 0),
-  ('proper-noun', 'Proper noun', 2, 1),
-  ('verb', 'Verb', 3, 2),
-  ('auxiliary', 'Auxiliary verb', 4, 3),
-  ('adjective', 'Adjective', 5, 4),
-  ('adverb', 'Adverb', 6, 5),
-  ('pronoun', 'Pronoun', 7, 6),
-  ('determiner', 'Determiner', 8, 7),
-  ('numeral', 'Numeral', 9, 8),
-  ('adposition', 'Adposition', 10, 9),
-  ('conjunction', 'Conjunction', 11, 10),
-  ('particle', 'Particle', 12, 11),
-  ('interjection', 'Interjection', 13, 12),
-  ('abbreviation', 'Abbreviation', 14, 13),
-  ('phrase', 'Phrase', 15, 14);
+  ('noun', 'Noun', 1, 0), ('proper-noun', 'Proper noun', 2, 1), ('verb', 'Verb', 3, 2),
+  ('auxiliary', 'Auxiliary verb', 4, 3), ('adjective', 'Adjective', 5, 4), ('adverb', 'Adverb', 6, 5),
+  ('pronoun', 'Pronoun', 7, 6), ('determiner', 'Determiner', 8, 7), ('numeral', 'Numeral', 9, 8),
+  ('adposition', 'Adposition', 10, 9), ('conjunction', 'Conjunction', 11, 10), ('particle', 'Particle', 12, 11),
+  ('interjection', 'Interjection', 13, 12), ('abbreviation', 'Abbreviation', 14, 13), ('phrase', 'Phrase', 15, 14);

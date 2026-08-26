@@ -26,6 +26,68 @@ python3 scripts/dictionary/manage.py inspect \
 
 Preview 包含排序穩定的 `manifest.json`、`bindings.jsonl`、`quarantine.jsonl` 與 `quality-report.json`。釋義、標籤、關係、例句與詞性均保留在 staging；preview 只輸出可供後續發布的詞句綁定。舊的 flat importer 只保留遷移提示，請使用上述 `manage.py`。
 
+### 高信心合併與本地 D1
+
+`reconcile run` 會對候選執行兩次輸入順序不同的 provider 判定；只有兩次都是
+`merge`、達到設定的信心門檻、沒有 blocker 且至少有兩個 evidence code 的候選會
+自動回寫為同一個 staging cluster。其餘候選保持分離：
+
+```bash
+python3 scripts/dictionary/manage.py reconcile run \
+  --database /tmp/langmap-dictionary/staging.sqlite \
+  --release release-... \
+  --config scripts/dictionary/config/reconciliation.json \
+  --gold scripts/dictionary/gold/holdout.jsonl \
+  --provider-command python3 path/to/provider.py
+```
+
+完成 reconciliation 後可直接集合式匯入本地 D1：
+
+```bash
+python3 scripts/dictionary/manage.py local-import \
+  --database /tmp/langmap-dictionary/staging.sqlite \
+  --release release-... \
+  --d1-database /tmp/langmap-dictionary/d1.sqlite
+```
+
+若以空白本地 D1 優先節省空間，使用 packed catalog：
+
+```bash
+python3 scripts/dictionary/manage.py local-import \
+  --database /tmp/langmap-dictionary/staging.sqlite \
+  --release release-... \
+  --d1-database /tmp/langmap-dictionary/d1.sqlite \
+  --packed
+```
+
+`--packed` 只寫入整數鍵的詞句、mapping、reading，以及語言／locale codebook 與詞性 bitmask；claim、cluster、
+AI 判定及其他抽取欄位仍保存在 staging。此模式要求新的 dictionary catalog，適合
+全量重建；不會把舊 catalog 與新 release 疊加。
+
+### 小檔案優先的增量匯入
+
+全量資料不要一次建立單一 staging 交易；使用增量入口，每部 JSONL 各自提交，完成一部就能在本地 API 查到：
+
+```bash
+D1=$(find backend/.wrangler/state/v3/d1/miniflare-D1DatabaseObject \
+  -maxdepth 1 -type f -name '*.sqlite' ! -name metadata.sqlite -print -quit)
+python3 scripts/dictionary/incremental_import.py \
+  --input-dir /Volumes/DATA/langmap-structured-jsonl \
+  --d1-database "$D1" \
+  --state /Volumes/DATA/langmap-incremental-state.json \
+  --staging-root /Volumes/DATA/langmap-staging-parts \
+  --batch-size 5000 \
+  --commit-every 20000
+```
+
+檔案會依 `(bytes, filename)` 小到大排序；狀態檔以輸入 SHA-256 與 release ID 判斷是否已成功，重跑會跳過已完成檔案。每行 stdout JSON 都包含耗時、`entries_per_second`、`mb_per_second`、D1 前後計數與檔案大小。成功後預設刪除該部暫存 staging；原始 JSONL 不會刪除。若只做第一部基準測試，加上 `--limit-files 1`；若要保留暫存抽取欄位，加上 `--keep-staging`。
+
+此增量模式使用 `--packed --append` 的等價行為逐部追加 integer codebook；不執行跨檔案 AI 合併。要做跨檔案高信心合併，仍需保留完整 staging release 後另行執行 reconciliation，再發布新的整體 release。
+
+一般模式會寫入既有 expression／edge 表，適合相容性 fixture。packed 模式的 read-only
+compatibility views 讓 API 仍可用原有 expression／edge DTO；一般使用者寫入仍走既有
+通用表。
+
 驗證 `cod` 三個同形詞保持分離：
 
 ```bash

@@ -1,28 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
+import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 
-const props = defineProps<{ attestations: LocaleAttestation[]; readings: ExpressionReading[] }>()
+const props = defineProps<{ locales?: ExpressionLocale[]; attestations?: ExpressionLocale[]; readings: ExpressionReading[] }>()
 const { t } = useI18n()
 
-const attestations = computed(() => [...props.attestations].sort((a, b) =>
-  a.language_locale_code.localeCompare(b.language_locale_code) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
+const locales = computed(() => [...(props.locales ?? props.attestations ?? [])].sort((a, b) =>
+  a.language_locale_code.localeCompare(b.language_locale_code),
 ))
 const readings = computed(() => [...props.readings].sort((a, b) =>
-  a.language_locale_code.localeCompare(b.language_locale_code) || a.scheme.localeCompare(b.scheme) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
+  a.language_locale_code.localeCompare(b.language_locale_code) || a.scheme.localeCompare(b.scheme) || a.value.localeCompare(b.value),
 ))
 </script>
 
 <template>
-  <section v-if="attestations.length || readings.length" class="evidence" :aria-label="t('components.evidence')">
+  <section v-if="locales.length || readings.length" class="evidence" :aria-label="t('components.evidence')">
     <h4>{{ t('components.evidence') }}</h4>
     <ul>
-      <li v-for="attestation in attestations" :key="attestation.id" :data-evidence-code="attestation.language_locale_code">
-        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="attestation.locale_display_name || attestation.language_locale_code">{{ attestation.language_locale_code }}<template v-if="attestation.locale_display_name"> · {{ attestation.locale_display_name }}</template><template v-if="attestation.created_by_username"> · @{{ attestation.created_by_username.toLowerCase() }}</template></span>
+      <li v-for="locale in locales" :key="locale.language_locale_code" :data-evidence-code="locale.language_locale_code">
+        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="locale.locale_display_name || locale.language_locale_code">{{ locale.language_locale_code }}<template v-if="locale.locale_display_name"> · {{ locale.locale_display_name }}</template></span>
       </li>
-      <li v-for="reading in readings" :key="reading.id" :data-evidence-code="`${reading.language_locale_code} / ${reading.scheme}`">
-        <span class="evidence-kind">{{ t('components.reading') }}</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.language_locale_code }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template><template v-if="reading.created_by_username"> · @{{ reading.created_by_username.toLowerCase() }}</template></span> / {{ reading.scheme }}: {{ reading.value }}
+      <li v-for="reading in readings" :key="`${reading.language_locale_code}:${reading.scheme}:${reading.value}`" :data-evidence-code="`${reading.language_locale_code} / ${reading.scheme}`">
+        <span class="evidence-kind">{{ t('components.reading') }}</span> <span :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.language_locale_code }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template></span> / {{ reading.scheme }}: {{ reading.value }}
       </li>
     </ul>
   </section>

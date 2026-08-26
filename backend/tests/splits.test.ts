@@ -104,7 +104,7 @@ describe('splitExpression', () => {
       { id: '01EDGE1', expression_a_id: 'eng:bbb', expression_b_id: 'nan:aaaa', score: 3, source: 'contribution', created_by: 1, created_at: '2026-08-13' },
       { id: '01EDGE2', expression_a_id: 'jpn:ccc', expression_b_id: 'nan:aaaa', score: 0, source: 'contribution', created_by: 1, created_at: '2026-08-13' },
     ];
-    const expressionLangSql = 'SELECT DISTINCT lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
+    const expressionLangSql = 'SELECT DISTINCT lang_code FROM all_expression_rows WHERE id IN (SELECT value FROM json_each(?)) ORDER BY lang_code ASC';
     const localeSql = 'SELECT language_locale_code FROM ui_locales WHERE project_id = ? AND language_locale_code LIKE ? ORDER BY language_locale_code ASC LIMIT 200';
     const db = fakeD1({
       'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?': () => sourceExpression,

@@ -1,163 +1,60 @@
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const schema = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
 
-describe('greenfield schema contract', () => {
-  it('defines the reference registry tables with the spec columns', () => {
-    expect(schema).toMatch(/CREATE TABLE languages[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?name_en TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE languages[\s\S]*?name_expression_id TEXT REFERENCES expressions\(id\)/s);
-    expect(schema).toMatch(/CREATE TABLE scripts[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?direction TEXT NOT NULL CHECK \(direction IN \('ltr', 'rtl'\)\)/s);
-    expect(schema).toMatch(/CREATE TABLE regions[\s\S]*?code TEXT PRIMARY KEY[\s\S]*?CHECK \(\(latitude IS NULL\) = \(longitude IS NULL\)\)/s);
+describe('canonical integer schema contract', () => {
+  it('uses integer identity keys and canonical language relationships', () => {
+    expect(schema).toMatch(/CREATE TABLE languages[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT[\s\S]*?code TEXT NOT NULL UNIQUE/s);
+    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT[\s\S]*?language_id INTEGER NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT[\s\S]*?language_id INTEGER NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?pos_mask INTEGER NOT NULL DEFAULT 0/s);
+    expect(schema).toMatch(/CREATE UNIQUE INDEX idx_language_locales_identity/);
   });
 
-  it('keeps the users table for auth', () => {
-    expect(schema).toMatch(/CREATE TABLE users/);
+  it('uses compact locale, reading, edge and vote tables', () => {
+    expect(schema).toMatch(/CREATE TABLE expression_locale_links[\s\S]*?PRIMARY KEY \(expression_id, locale_id\)[\s\S]*?WITHOUT ROWID/s);
+    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?PRIMARY KEY \(expression_id, locale_id, scheme, value\)[\s\S]*?WITHOUT ROWID/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?relation_mask INTEGER NOT NULL DEFAULT 1/s);
+    expect(schema).toMatch(/CREATE TABLE edge_votes[\s\S]*?PRIMARY KEY \(user_id, edge_id\)[\s\S]*?WITHOUT ROWID/s);
+    expect(schema).toMatch(/CREATE TABLE handbook_votes[\s\S]*?PRIMARY KEY \(user_id, handbook_id\)[\s\S]*?WITHOUT ROWID/s);
   });
 
-  it('defines the sources table for two-layer provenance', () => {
-    expect(schema).toMatch(/CREATE TABLE sources[\s\S]*?type TEXT NOT NULL CHECK \(type IN \('publication', 'url', 'system'\)\)[\s\S]*?UNIQUE \(type, name\)/s);
-    expect(schema).toMatch(/CREATE TABLE sources[\s\S]*?FOREIGN KEY \(created_by\) REFERENCES users\(id\)/s);
+  it('defines handbook, morphology, split and UI integer foreign keys', () => {
+    expect(schema).toMatch(/CREATE TABLE handbooks[\s\S]*?language_locale_id INTEGER/s);
+    expect(schema).toMatch(/CREATE TABLE handbook_sections[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT/s);
+    expect(schema).toMatch(/CREATE TABLE handbook_section_items[\s\S]*?PRIMARY KEY \(section_id, position\)[\s\S]*?WITHOUT ROWID/s);
+    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT/s);
+    expect(schema).toMatch(/CREATE TRIGGER trg_expression_form_edges_no_reverse/);
+    expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?PRIMARY KEY \(split_id, edge_id\)[\s\S]*?WITHOUT ROWID/s);
+    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?locale_id INTEGER NOT NULL/s);
+    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?source_expression_id INTEGER NOT NULL/s);
   });
 
-  it('defines language_locales with the spec columns and checks', () => {
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?code TEXT PRIMARY KEY/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name TEXT NOT NULL[\s\S]*?name_en TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?name_expression_id TEXT REFERENCES expressions\(id\)/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?UNIQUE \(lang_code, script_code, orthography, region_code, place_path\)/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(\(latitude IS NULL\) = \(longitude IS NULL\)\)/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
-    expect(schema).toMatch(/CREATE TABLE language_locales[\s\S]*?FOREIGN KEY \(lang_code\) REFERENCES languages\(code\)[\s\S]*?FOREIGN KEY \(script_code\) REFERENCES scripts\(code\)[\s\S]*?FOREIGN KEY \(region_code\) REFERENCES regions\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
-  });
-
-  it('seeds the three system locales', () => {
-    expect(schema).toMatch(/eng-Latn-US/);
-    expect(schema).toMatch(/cmn-Hant-TW/);
-    expect(schema).toMatch(/cmn-Hans-CN/);
-  });
-
-  it('defines expressions with identity fields and hash constraints', () => {
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?id TEXT PRIMARY KEY/s);
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?text_hash TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?homograph_index INTEGER NOT NULL DEFAULT 1 CHECK \(homograph_index >= 1\)/s);
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?UNIQUE \(lang_code, text, homograph_index\)[\s\S]*?UNIQUE \(lang_code, text_hash, homograph_index\)/s);
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
-    expect(schema).toMatch(/CREATE TABLE expressions[\s\S]*?FOREIGN KEY \(lang_code\) REFERENCES languages\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
-  });
-
-  it('defines expression_locale_attestations with provenance and uniqueness', () => {
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?id TEXT PRIMARY KEY/s);
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?language_locale_code TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code\)/s);
-    expect(schema).not.toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?UNIQUE \(expression_id, language_locale_code, source_id, source_ref\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_locale_attestations[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)[\s\S]*?FOREIGN KEY \(source_id\) REFERENCES sources\(id\)/s);
-  });
-
-  it('defines expression_edges with pair ordering check and uniqueness', () => {
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?id TEXT PRIMARY KEY/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?score INTEGER NOT NULL DEFAULT 0/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?source TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?CHECK \(expression_a_id < expression_b_id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?UNIQUE \(expression_a_id, expression_b_id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?FOREIGN KEY \(expression_a_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(expression_b_id\) REFERENCES expressions\(id\)/s);
-  });
-
-  it('defines expression_splits and expression_split_moves audit tables', () => {
-    expect(schema).toMatch(/CREATE TABLE expression_splits[\s\S]*?source_expression_id TEXT NOT NULL[\s\S]*?target_expression_id TEXT NOT NULL[\s\S]*?created_by INTEGER NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expression_splits[\s\S]*?FOREIGN KEY \(source_expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(target_expression_id\) REFERENCES expressions\(id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?split_id TEXT NOT NULL[\s\S]*?edge_id TEXT NOT NULL[\s\S]*?PRIMARY KEY \(split_id, edge_id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_split_moves[\s\S]*?previous_a_id[\s\S]*?new_a_id/s);
-  });
-
-  it('defines morphological form-edge tables with registry, checks and indexes', () => {
-    expect(schema).toMatch(/CREATE TABLE morphological_dimensions/);
-    expect(schema).toMatch(/CREATE TABLE morphological_features/);
-    expect(schema).toMatch(/CREATE TABLE expression_form_edges/);
-    expect(schema).toMatch(/CREATE TABLE expression_form_edge_features/);
-
-    expect(schema).toMatch(/CREATE TABLE morphological_dimensions[\s\S]*?name_expression_id TEXT NOT NULL[\s\S]*?UNIQUE \(sort_order\)/s);
-    expect(schema).toMatch(/CREATE TABLE morphological_features[\s\S]*?name_expression_id TEXT NOT NULL[\s\S]*?UNIQUE \(dimension_code, sort_order\)/s);
-
-    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?CHECK \(form_id <> lemma_id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?CHECK \(pair_low < pair_high\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?UNIQUE \(form_id, lemma_id\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?UNIQUE \(pair_low, pair_high\)/s);
-
-    expect(schema).toMatch(/CREATE TABLE expression_form_edge_features[\s\S]*?PRIMARY KEY \(edge_id, feature_code\)/s);
-
-    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edges\(form_id\)/);
-    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edges\(lemma_id\)/);
-    expect(schema).toMatch(/CREATE INDEX[\s\S]*?ON expression_form_edge_features\(feature_code\)/);
-
-    expect(schema).toMatch(/INSERT OR IGNORE INTO morphological_dimensions/);
-    expect(schema).toMatch(/INSERT OR IGNORE INTO morphological_features/);
-  });
-
-  it('seeds the system-split source for split provenance', () => {
-    expect(schema).toMatch(/system-split/);
-  });
-
-  it('defines expression_readings with scheme, value and provenance uniqueness', () => {
-    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?scheme TEXT NOT NULL[\s\S]*?value TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?UNIQUE \(expression_id, language_locale_code, scheme, value, source_id, source_ref\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?CHECK \(source_ref IS NULL OR source_id IS NOT NULL\)/s);
-    expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?FOREIGN KEY \(expression_id\) REFERENCES expressions\(id\)[\s\S]*?FOREIGN KEY \(language_locale_code\) REFERENCES language_locales\(code\)/s);
-  });
-
-  it('defines user_preferences with composite key and cascade delete', () => {
-    expect(schema).toMatch(/CREATE TABLE user_preferences[\s\S]*?PRIMARY KEY \(user_id, preference_key\)/s);
-    expect(schema).toMatch(/CREATE TABLE user_preferences[\s\S]*?FOREIGN KEY \(user_id\) REFERENCES users\(id\) ON DELETE CASCADE/s);
-  });
-
-  it('defines ui_locales with status, revision and activation tracking', () => {
-    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?PRIMARY KEY \(project_id, language_locale_code\)/s);
-    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?CHECK \(status IN \('draft', 'active', 'archived'\)\)/s);
-    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?mapping_revision INTEGER NOT NULL DEFAULT 0/s);
-    expect(schema).toMatch(/CREATE TABLE ui_locales[\s\S]*?CHECK \(activation_source IN \('system', 'auto', 'manual'\)\)/s);
-  });
-
-  it('defines ui_messages with source expression FK', () => {
-    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?source_expression_id TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?PRIMARY KEY \(project_id, message_key\)/s);
-    expect(schema).toMatch(/CREATE TABLE ui_messages[\s\S]*?FOREIGN KEY \(source_expression_id\) REFERENCES expressions\(id\)/s);
-  });
-
-  it('seeds eng-Latn-US as the system source UI locale for langmap-web', () => {
-    expect(schema).toMatch(/langmap-web.*eng-Latn-US.*active.*system/s);
-  });
-
-  it('defines votes with generic target and bounded vote value', () => {
-    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?target_id TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?CHECK \(vote IN \(-1, 1\)\)/s);
-    expect(schema).toMatch(/CREATE TABLE votes[\s\S]*?UNIQUE \(user_id, target_type, target_id\)/s);
-  });
-
-  it('defines managed dictionary releases with one active pointer', () => {
-    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_releases[\s\S]*?artifact_hash TEXT NOT NULL/s);
-    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_releases[\s\S]*?UNIQUE \(dataset_key, input_manifest_hash, adapter_bundle_hash, reconciliation_config_hash\)/s);
-    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_state[\s\S]*?active_release_id TEXT/s);
-    expect(schema).toMatch(/CREATE TABLE dictionary_dataset_state[\s\S]*?dataset_key TEXT PRIMARY KEY/s);
-  });
-
-  it('defines release claims, evidence, ownership promotion and POS', () => {
+  it('keeps POS bits stable and removes release and packed tables', () => {
+    expect(schema).toMatch(/CREATE TABLE parts_of_speech[\s\S]*?bit_index INTEGER NOT NULL UNIQUE[\s\S]*?CHECK \(bit_index BETWEEN 0 AND 62\)/s);
     for (const table of [
-      'dictionary_expression_bindings',
-      'expression_edge_evidence',
-      'dictionary_release_objects',
-      'parts_of_speech',
-      'expression_pos_attestations',
-    ]) expect(schema).toMatch(new RegExp(`CREATE TABLE ${table}`));
-    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?promoted_at TEXT/s);
-    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?promotion_actor_kind TEXT/s);
-    expect(schema).toMatch(/dictionary_release_objects[\s\S]*?FOREIGN KEY \(promoted_by\) REFERENCES users\(id\)/s);
-    expect(schema).toMatch(/INSERT OR IGNORE INTO parts_of_speech[\s\S]*?\('noun', 'Noun', 1\)/s);
-    expect(schema).toMatch(/INSERT OR IGNORE INTO parts_of_speech[\s\S]*?\('phrase', 'Phrase', 15\)/s);
+      'dictionary_dataset_releases', 'dictionary_dataset_state',
+      'dictionary_expression_bindings', 'expression_edge_evidence',
+      'expression_pos_attestations', 'dictionary_languages', 'dictionary_locales',
+      'dictionary_terms', 'dictionary_readings', 'dictionary_edges',
+    ]) expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));
+    expect(schema).not.toMatch(/CREATE VIEW all_expression_rows/);
   });
 
-  it('does not contain obsolete identity tables', () => {
-    for (const table of ['languoids', 'language_subtags', 'language_varieties', 'language_profiles', 'language_locations']) {
-      expect(schema).not.toMatch(new RegExp(`CREATE TABLE ${table}`));
-    }
+  it('keeps only the canonical explicit indexes and reverse form trigger', () => {
+    for (const index of [
+      'idx_language_locales_identity', 'idx_expressions_language_created',
+      'idx_expression_locale_links_locale', 'idx_expression_edges_b_id',
+      'idx_edge_votes_edge', 'idx_handbook_votes_handbook',
+      'idx_handbooks_visibility_created', 'idx_handbooks_visibility_score',
+      'idx_handbook_sections_parent', 'idx_expression_form_edges_lemma_id',
+      'idx_ui_messages_source_expression',
+    ]) expect(schema).toContain(index);
+    for (const removed of [
+      'idx_expression_edges_score_feed', 'idx_expression_edges_created_by_at',
+      'idx_handbook_section_items_section', 'idx_expression_form_edges_form_id',
+      'idx_votes_target', 'idx_users_username', 'idx_users_email',
+    ]) expect(schema).not.toContain(removed);
   });
 });

@@ -35,6 +35,7 @@ const localization = useLocalizationStore()
 const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
+const targetLanguage = ref('')
 const loading = ref(true)
 const updatingHops = ref(false)
 const loadError = ref('')
@@ -89,12 +90,14 @@ function initFromUrl() {
   if (h) hops.value = parseHops(h)
   const nodeId = typeof route.query.node === 'string' ? route.query.node : null
   if (nodeId) selectedNodeId.value = nodeId
+  targetLanguage.value = typeof route.query.target_language === 'string' ? route.query.target_language : ''
 }
 
 function syncUrl() {
   const query: Record<string, string> = {}
   if (hops.value > 1) query.hops = String(hops.value)
   if (selectedNodeId.value) query.node = selectedNodeId.value
+  if (targetLanguage.value) query.target_language = targetLanguage.value
   router.replace({ query })
 }
 
@@ -111,7 +114,7 @@ async function load() {
   try {
     const [nextExpression, nextGraph] = await Promise.all([
       detail(requestedId, localeParams.value),
-      mappingGraph(requestedId, requestedHops, localeParams.value),
+      mappingGraph(requestedId, requestedHops, localeParams.value, targetLanguage.value || undefined),
     ])
     if (request !== loadRequest) return
     expr.value = nextExpression
@@ -177,7 +180,7 @@ async function changeHops(h: 1 | 2 | 3) {
   hops.value = h
   updatingHops.value = true
   try {
-    const nextGraph = await mappingGraph(requestedId, h, localeParams.value)
+    const nextGraph = await mappingGraph(requestedId, h, localeParams.value, targetLanguage.value || undefined)
     if (request !== graphRequest || requestedId !== id.value) return
     graph.value = nextGraph
     trySelectNodeFromUrl()
@@ -190,6 +193,7 @@ async function changeHops(h: 1 | 2 | 3) {
 }
 
 watch(hops, () => syncUrl())
+watch(targetLanguage, () => { syncUrl(); if (graph.value) void changeHops(hops.value) })
 watch(selectedNodeId, () => syncUrl())
 
 watch(selectedNodeId, async (nodeId) => {
@@ -206,7 +210,7 @@ watch(selectedNodeId, async (nodeId) => {
   }
 })
 
-const inspectorAttestations = computed(() => selectedExpr.value?.attestations ?? expr.value?.attestations ?? [])
+const inspectorLocales = computed(() => selectedExpr.value?.locales ?? expr.value?.locales ?? [])
 const inspectorReadings = computed(() => selectedExpr.value?.readings ?? expr.value?.readings ?? [])
 
 function selectNode(nodeId: string) {
@@ -429,6 +433,13 @@ const coords = computed(() => {
         · <b>{{ hops }}</b> {{ t('mappingDetail.hops') }}
       </span>
     </div>
+    <label class="target-language-filter">
+      <span>{{ t('mappingDetail.targetLanguage') }}</span>
+      <input v-model="targetLanguage" :placeholder="t('mappingDetail.allLanguages')" />
+    </label>
+    <p v-if="graph?.truncated" class="md-truncated" role="status">
+      {{ t('mappingDetail.graphTruncated', { count: graph.omitted_count }) }}
+    </p>
 
     <template v-if="hasMappings">
       <div v-if="isMobile" class="md-mobile-bar">
@@ -479,7 +490,7 @@ const coords = computed(() => {
           :display-tree="displayTree"
           :anchor-text="expr.expression.text"
           :collapsed-ids="collapsedIds"
-          :attestations="inspectorAttestations"
+          :locales="inspectorLocales"
           :readings="inspectorReadings"
           @close="clearSelection"
           @navigate="navigateToNode"
@@ -505,7 +516,7 @@ const coords = computed(() => {
         :display-tree="displayTree"
         :anchor-text="expr.expression.text"
         :collapsed-ids="collapsedIds"
-        :attestations="inspectorAttestations"
+        :locales="inspectorLocales"
         :readings="inspectorReadings"
         @close="clearSelection"
         @navigate="navigateToNode"

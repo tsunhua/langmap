@@ -104,6 +104,13 @@ CREATE TABLE IF NOT EXISTS normalized_pos (
   PRIMARY KEY (release_id, claim_key),
   FOREIGN KEY (release_id, sense_key) REFERENCES input_senses(release_id, sense_key) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS normalization_progress (
+  release_id TEXT PRIMARY KEY,
+  last_entry_rowid INTEGER NOT NULL DEFAULT 0,
+  processed_entries INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL CHECK (status IN ('running','completed')),
+  FOREIGN KEY (release_id) REFERENCES staging_releases(id) ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS lexical_clusters (
   release_id TEXT NOT NULL, cluster_key TEXT NOT NULL, occurrence_kind TEXT NOT NULL,
   lang_code TEXT, canonical_text TEXT NOT NULL,
@@ -126,22 +133,27 @@ CREATE TABLE IF NOT EXISTS quarantine_items (
   detail TEXT NOT NULL, raw_json TEXT, UNIQUE (release_id, claim_key, error_code, detail),
   FOREIGN KEY (release_id) REFERENCES staging_releases(id) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_input_entries_release_dict ON input_entries(release_id, dictionary_key);
-CREATE INDEX IF NOT EXISTS idx_input_senses_release_entry ON input_senses(release_id, entry_key, ordinal, sense_key);
 CREATE INDEX IF NOT EXISTS idx_quarantine_release_error ON quarantine_items(release_id, error_code);
-CREATE INDEX IF NOT EXISTS idx_occurrence_text ON lexical_occurrences(release_id, lang_code, canonical_text);
 CREATE INDEX IF NOT EXISTS idx_clusters_text ON lexical_clusters(release_id, lang_code, canonical_text);
 """
 
 
-def create_staging_database(path: Path) -> sqlite3.Connection:
+def create_staging_database(path: Path, *, fast: bool = False) -> sqlite3.Connection:
     """Create/open a staging database and enable integrity protections."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA journal_mode = WAL")
+    if fast:
+        # Fast mode is restricted to reproducible, disposable staging data.
+        connection.execute("PRAGMA journal_mode = OFF")
+        connection.execute("PRAGMA synchronous = OFF")
+        connection.execute("PRAGMA locking_mode = EXCLUSIVE")
+        connection.execute("PRAGMA temp_store = MEMORY")
+        connection.execute("PRAGMA cache_size = -524288")
+    else:
+        connection.execute("PRAGMA journal_mode = WAL")
     connection.executescript(DDL)
     connection.commit()
     return connection

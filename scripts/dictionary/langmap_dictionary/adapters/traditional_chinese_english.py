@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
-from typing import Any
+from typing import Any, Callable
 
-from ..loader import iter_staged_entries
+from ..loader import iter_staged_entry_rows
 from ..models import (
     NormalizedEntry,
     NormalizedOccurrence,
@@ -16,6 +16,11 @@ from ..models import (
     NormalizedSense,
     StagedEntry,
 )
+
+try:
+    import ujson as _fast_json
+except ImportError:  # pragma: no cover - the standard library remains supported
+    _fast_json = json
 
 _HAN = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]")
 _POS = {
@@ -192,24 +197,120 @@ class TraditionalChineseEnglishAdapter:
         return NormalizedPos(_claim("sense", sense_key, "pos", str(index)), sense_key, raw, code, errors)
 
 
-def normalize_release(connection, release_id: str, adapter: TraditionalChineseEnglishAdapter | None = None) -> int:
+def normalize_release(
+    connection,
+    release_id: str,
+    adapter: TraditionalChineseEnglishAdapter | None = None,
+    *,
+    resume: bool = False,
+    resume_after: tuple[str, str] | None = None,
+    batch_size: int = 500,
+    commit_every: int = 10_000,
+    progress: Callable[[dict[str, Any]], None] | None = None,
+) -> int:
+    if batch_size <= 0:
+        raise ValueError("batch_size must be greater than zero")
+    if commit_every <= 0:
+        raise ValueError("commit_every must be greater than zero")
     adapter = adapter or TraditionalChineseEnglishAdapter()
-    connection.execute("DELETE FROM normalized_pos WHERE release_id=?", (release_id,))
-    connection.execute("DELETE FROM lexical_readings WHERE release_id=?", (release_id,))
-    connection.execute("DELETE FROM lexical_occurrences WHERE release_id=?", (release_id,))
+    progress = connection.execute(
+        "SELECT last_entry_rowid,processed_entries FROM normalization_progress WHERE release_id=?",
+        (release_id,),
+    ).fetchone()
+    start_rowid = int(progress["last_entry_rowid"]) if resume and progress else 0
+    processed_entries = int(progress["processed_entries"]) if resume and progress else 0
+    existing_entries: set[str] = set()
+    if resume and progress is None and resume_after is not None:
+        cursor = connection.execute(
+            "SELECT rowid FROM input_entries WHERE release_id=? AND dictionary_key=? AND entry_key=?",
+            (release_id, resume_after[0], resume_after[1]),
+        ).fetchone()
+        if cursor is None:
+            raise ValueError(f"unknown staged entry cursor: {resume_after!r}")
+        start_rowid = int(cursor[0])
+    elif resume and progress is None:
+        existing_entries = {
+            str(row[0])
+            for row in connection.execute(
+                "SELECT entry_key FROM lexical_occurrences NOT INDEXED "
+                "WHERE release_id=? AND occurrence_kind='headword'",
+                (release_id,),
+            )
+        }
+        processed_entries = len(existing_entries)
+    if not resume:
+        connection.execute("DELETE FROM normalized_pos WHERE release_id=?", (release_id,))
+        connection.execute("DELETE FROM lexical_readings WHERE release_id=?", (release_id,))
+        connection.execute("DELETE FROM lexical_occurrences WHERE release_id=?", (release_id,))
+        connection.execute(
+            "DELETE FROM quarantine_items WHERE release_id=? AND claim_key IS NOT NULL",
+            (release_id,),
+        )
+        connection.execute("DELETE FROM normalization_progress WHERE release_id=?", (release_id,))
+        connection.commit()
     count = 0
-    for entry in iter_staged_entries(connection, release_id):
+    occurrence_rows: list[tuple[Any, ...]] = []
+    reading_rows: list[tuple[Any, ...]] = []
+    pos_rows: list[tuple[Any, ...]] = []
+    quarantine_rows: list[tuple[Any, ...]] = []
+
+    def flush() -> None:
+        if occurrence_rows:
+            occurrence_rows.sort(key=lambda row: row[1])
+            connection.executemany("INSERT INTO lexical_occurrences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", occurrence_rows)
+            occurrence_rows.clear()
+        if reading_rows:
+            reading_rows.sort(key=lambda row: row[1])
+            connection.executemany("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?)", reading_rows)
+            reading_rows.clear()
+        if pos_rows:
+            pos_rows.sort(key=lambda row: row[1])
+            connection.executemany("INSERT INTO normalized_pos VALUES (?,?,?,?,?,?)", pos_rows)
+            pos_rows.clear()
+        if quarantine_rows:
+            quarantine_rows.sort(key=lambda row: str(row[4]))
+            connection.executemany(
+                "INSERT OR IGNORE INTO quarantine_items(release_id,dictionary_key,entry_key,sense_key,claim_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?,?,?)",
+                quarantine_rows,
+            )
+            quarantine_rows.clear()
+
+    last_rowid = start_rowid
+    for rowid, entry in iter_staged_entry_rows(
+        connection, release_id, start_rowid=start_rowid, batch_size=batch_size
+    ):
+        last_rowid = rowid
+        if entry.entry_key in existing_entries:
+            continue
         normalized = adapter.normalize_entry(entry)
         values = (normalized.headword, *(occurrence for sense in normalized.senses for occurrence in sense.occurrences))
         for occurrence in values:
-            connection.execute("INSERT INTO lexical_occurrences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), json.dumps(occurrence.errors)))
+            occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
             if occurrence.errors:
-                connection.execute("INSERT OR IGNORE INTO quarantine_items (release_id,dictionary_key,entry_key,sense_key,claim_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?,?,?)", (release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
+                quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
         for reading in normalized.readings:
-            connection.execute("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?)", (release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, json.dumps(reading.errors)))
+            reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False)))
         for sense in normalized.senses:
             for pos in sense.pos:
-                connection.execute("INSERT INTO normalized_pos VALUES (?,?,?,?,?,?)", (release_id, pos.claim_key, pos.sense_key, pos.raw_value, pos.code, json.dumps(pos.errors)))
+                pos_rows.append((release_id, pos.claim_key, pos.sense_key, pos.raw_value, pos.code, _fast_json.dumps(pos.errors, ensure_ascii=False)))
         count += 1
+        if count % commit_every == 0:
+            flush()
+            processed_entries += commit_every
+            connection.execute(
+                "INSERT INTO normalization_progress(release_id,last_entry_rowid,processed_entries,status) VALUES (?,?,?,'running') "
+                "ON CONFLICT(release_id) DO UPDATE SET last_entry_rowid=excluded.last_entry_rowid,processed_entries=excluded.processed_entries,status='running'",
+                (release_id, last_rowid, processed_entries),
+            )
+            connection.commit()
+            if progress is not None:
+                progress({"phase": "normalize", "processed_entries": processed_entries})
+    flush()
+    processed_entries += count % commit_every
+    connection.execute(
+        "INSERT INTO normalization_progress(release_id,last_entry_rowid,processed_entries,status) VALUES (?,?,?,'completed') "
+        "ON CONFLICT(release_id) DO UPDATE SET last_entry_rowid=excluded.last_entry_rowid,processed_entries=excluded.processed_entries,status='completed'",
+        (release_id, last_rowid, processed_entries),
+    )
     connection.commit()
     return count

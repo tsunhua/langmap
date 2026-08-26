@@ -21,11 +21,11 @@ export function useExpressions() {
     }
   }
 
-  async function mappingGraph(id: string, hops: 1 | 2 | 3 = 1, hints: LocaleHints = {}): Promise<MappingGraphResponse> {
+  async function mappingGraph(id: string, hops: 1 | 2 | 3 = 1, hints: LocaleHints = {}, targetLanguage?: string): Promise<MappingGraphResponse> {
     loading.value = true
     error.value = null
     try {
-      return await getMappingGraph(id, hops, hints)
+      return await getMappingGraph(id, hops, hints, targetLanguage)
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'
       throw e
@@ -34,11 +34,11 @@ export function useExpressions() {
     }
   }
 
-  async function search(q: string, lang?: string, limit = 10, hints: LocaleHints = {}) {
+  async function search(prefix: string, lang: string, limit = 10, cursor?: string, hints: LocaleHints = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/expressions/search', { params: { q, lang_code: lang, limit, ...hints } })
+      const { data } = await api.get('/expressions/search', { params: { prefix, lang_code: lang, limit, ...(cursor ? { cursor } : {}), ...hints } })
       return data.data
     } catch (e: any) {
       error.value = e.response?.data?.error || 'Request failed'

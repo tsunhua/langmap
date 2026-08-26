@@ -129,7 +129,7 @@ def sql_str(value: str) -> str:
 
 @dataclass(frozen=True)
 class Expression:
-    id: str
+    id: str | int
     lang_code: str
     text: str
     text_hash: str
@@ -138,15 +138,16 @@ class Expression:
 @dataclass(frozen=True)
 class Attestation:
     id: str
-    expression_id: str
+    expression_id: str | int
     locale_code: str
+    locale_id: int = 0
 
 
 @dataclass(frozen=True)
 class Edge:
-    id: str
-    expression_a_id: str
-    expression_b_id: str
+    id: str | int
+    expression_a_id: str | int
+    expression_b_id: str | int
 
 
 def load_names(path: Path) -> dict[str, dict[str, str]]:
@@ -248,11 +249,27 @@ def build_seed(names: dict[str, dict[str, str]]) -> tuple[
                 )
 
     self_check(names, expressions, attestations, locale_expression_ids)
+    sorted_expressions = sorted(expressions.values(), key=lambda item: (item.lang_code, item.text, str(item.id)))
+    expression_ids = {str(item.id): index for index, item in enumerate(sorted_expressions, start=1)}
+    locale_ids = {code: index for index, code in enumerate(sorted(LOCALES), start=1)}
+    canonical_expressions = [
+        Expression(id=expression_ids[str(item.id)], lang_code=item.lang_code, text=item.text, text_hash=item.text_hash)
+        for item in sorted_expressions
+    ]
+    canonical_attestations = [
+        Attestation(id='', expression_id=expression_ids[str(item.expression_id)], locale_code=item.locale_code, locale_id=locale_ids[item.locale_code])
+        for item in sorted(attestations.values(), key=lambda item: (item.locale_code, str(item.expression_id)))
+    ]
+    canonical_edges = [
+        Edge(id=index, expression_a_id=min(expression_ids[str(item.expression_a_id)], expression_ids[str(item.expression_b_id)]), expression_b_id=max(expression_ids[str(item.expression_a_id)], expression_ids[str(item.expression_b_id)]))
+        for index, item in enumerate(sorted(edges.values(), key=lambda item: (str(item.expression_a_id), str(item.expression_b_id))), start=1)
+    ]
+    canonical_names = {code: expression_ids[str(expression_id)] for code, expression_id in name_expression_ids.items()}
     return (
-        sorted(expressions.values(), key=lambda item: (item.lang_code, item.text, item.id)),
-        sorted(attestations.values(), key=lambda item: (item.locale_code, item.expression_id)),
-        sorted(edges.values(), key=lambda item: (item.expression_a_id, item.expression_b_id)),
-        name_expression_ids,
+        canonical_expressions,
+        canonical_attestations,
+        canonical_edges,
+        canonical_names,
     )
 
 
@@ -308,30 +325,24 @@ def render_sql(
     ]
     for expression in expressions:
         lines.append(
-            'INSERT OR IGNORE INTO expressions '
-            '(id, lang_code, text, text_hash, homograph_index, description, tags_json, '
-            'source_id, source_ref, review_status, created_by) '
-            f'VALUES ({sql_str(expression.id)}, {sql_str(expression.lang_code)}, '
-            f'{sql_str(expression.text)}, {sql_str(expression.text_hash)}, '
-            "1, '', '[]', NULL, NULL, 'approved', NULL);"
+            'INSERT OR IGNORE INTO expressions (id, language_id, text, homograph_index, pos_mask) '
+            f'VALUES ({expression.id}, (SELECT id FROM languages WHERE code = {sql_str(expression.lang_code)}), '
+            f'{sql_str(expression.text)}, 1, 0);'
         )
 
     lines.extend(['', '-- 2. Locale attestations'])
     for attestation in attestations:
         lines.append(
-            'INSERT OR IGNORE INTO expression_locale_attestations '
-            '(id, expression_id, language_locale_code, source_id, source_ref, created_by) '
-            f'VALUES ({sql_str(attestation.id)}, {sql_str(attestation.expression_id)}, '
-            f'{sql_str(attestation.locale_code)}, NULL, NULL, NULL);'
+            'INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) '
+            f'VALUES ({attestation.expression_id}, {attestation.locale_id});'
         )
 
     lines.extend(['', '-- 3. Translation edges (source=seed)'])
     for edge in edges:
         lines.append(
             'INSERT OR IGNORE INTO expression_edges '
-            '(id, expression_a_id, expression_b_id, score, source, created_by) '
-            f'VALUES ({sql_str(edge.id)}, {sql_str(edge.expression_a_id)}, '
-            f'{sql_str(edge.expression_b_id)}, 0, \'seed\', NULL);'
+            '(id, expression_a_id, expression_b_id, relation_mask, score, created_by) '
+            f'VALUES ({edge.id}, {edge.expression_a_id}, {edge.expression_b_id}, 1, 0, NULL);'
         )
 
     lines.extend(['', '-- 4. Morphological dimensions'])
@@ -339,7 +350,7 @@ def render_sql(
         lines.append(
             'INSERT OR IGNORE INTO morphological_dimensions '
             '(code, name_expression_id, sort_order) '
-            f'VALUES ({sql_str(code)}, {sql_str(name_expression_ids[code])}, {sort_order});'
+            f'VALUES ({sql_str(code)}, {name_expression_ids[code]}, {sort_order});'
         )
 
     lines.extend(['', '-- 5. Morphological features'])
@@ -348,7 +359,7 @@ def render_sql(
             'INSERT OR IGNORE INTO morphological_features '
             '(code, dimension_code, name_expression_id, sort_order) '
             f'VALUES ({sql_str(code)}, {sql_str(dimension_code)}, '
-            f'{sql_str(name_expression_ids[code])}, {sort_order});'
+            f'{name_expression_ids[code]}, {sort_order});'
         )
 
     lines.append('')

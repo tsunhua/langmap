@@ -180,7 +180,7 @@ localization.post('/projects/:projectId/mappings', requireAuth, async (c) => {
         created_by: user?.id ?? 0,
       });
       const targetExpr = await c.env.DB
-        .prepare('SELECT lang_code FROM expressions WHERE id = ?')
+        .prepare('SELECT lang_code FROM all_expression_rows WHERE id = ?')
         .bind(targetExpressionId)
         .first<{ lang_code: string }>();
       if (targetExpr) {
@@ -231,7 +231,7 @@ localization.post('/projects/:projectId/mappings/batch', requireAuth, async (c) 
         : Promise.resolve({ results: [] as Array<{ message_key: string; source_expression_id: string }> }),
       targetIds.length
         ? c.env.DB.prepare(
-          'SELECT id, lang_code FROM expressions WHERE id IN (SELECT value FROM json_each(?))',
+          'SELECT id, lang_code FROM all_expression_rows WHERE id IN (SELECT value FROM json_each(?))',
         ).bind(JSON.stringify(targetIds)).all<{ id: string; lang_code: string }>()
         : Promise.resolve({ results: [] as Array<{ id: string; lang_code: string }> }),
     ]);
@@ -321,8 +321,8 @@ localization.post('/projects/:projectId/votes', requireAuth, async (c) => {
 
       const releaseTablesReady = await dictionaryReleaseSchemaAvailable(c.env.DB);
       const edgeQuery = releaseTablesReady
-        ? `SELECT expression_a_id, expression_b_id FROM expression_edges e WHERE e.id = ? AND ${edgeEligibilityPredicate('e')}`
-        : 'SELECT expression_a_id, expression_b_id FROM expression_edges WHERE id = ?';
+        ? `SELECT expression_a_id, expression_b_id FROM all_expression_edges e WHERE e.id = ? AND ${edgeEligibilityPredicate('e')}`
+        : 'SELECT expression_a_id, expression_b_id FROM all_expression_edges WHERE id = ?';
       const edge = await c.env.DB
         .prepare(edgeQuery)
         .bind(edgeId)

@@ -25,7 +25,6 @@ interface SearchResult {
   id: string
   text: string
   lang_code: string
-  language_profile_code?: string
   language_name?: string
   mapping_count?: number
   source_type?: string
@@ -34,9 +33,8 @@ interface SearchResult {
 }
 const query = ref((route.query.q as string) || '')
 const langs = ref<string[]>([])
-const sortBy = ref('hot')
 const results = ref<SearchResult[]>([])
-const total = ref(0)
+const nextCursor = ref<string | null>(null)
 const loading = ref(false)
 const loadingMore = ref(false)
 const searched = ref(false)
@@ -51,10 +49,15 @@ async function doSearch() {
   if (!query.value.trim()) {
     searchRequest += 1
     results.value = []
-    total.value = 0
+    nextCursor.value = null
     searched.value = false
     loadError.value = ''
     loadMoreError.value = ''
+    return
+  }
+  if (!langs.value[0]) {
+    searched.value = false
+    loadError.value = t('search.languageRequired')
     return
   }
   const request = ++searchRequest
@@ -65,14 +68,12 @@ async function doSearch() {
   try {
     const data = await search(requestedQuery, {
       lang: langs.value[0],
-      sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
-      offset: 0,
       ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = data.items
-    total.value = data.total
+    nextCursor.value = data.next_cursor ?? null
     searched.value = true
   } catch (e: unknown) {
     if (request !== searchRequest) return
@@ -83,22 +84,21 @@ async function doSearch() {
 }
 
 async function loadMore() {
-  if (loadingMore.value || results.value.length >= total.value) return
+  if (loadingMore.value || !nextCursor.value) return
   const request = searchRequest
   const requestedQuery = query.value.trim()
-  const offset = results.value.length
   loadingMore.value = true
   loadMoreError.value = ''
   try {
     const data = await search(requestedQuery, {
       lang: langs.value[0],
-      sort: sortBy.value as 'hot' | 'new' | 'alpha',
       limit: PAGE,
-      offset,
+      cursor: nextCursor.value,
       ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = results.value.concat(data.items)
+    nextCursor.value = data.next_cursor ?? null
   } catch (e: unknown) {
     if (request !== searchRequest) return
     loadMoreError.value = apiErrorMessage(e, t('search.loadMoreFailed'))
@@ -113,8 +113,8 @@ watch(query, () => {
   debounceTimer = setTimeout(doSearch, 300)
 })
 
-// Re-search immediately when sort or language filter changes (only after a search has started).
-watch([sortBy, langs], () => { if (searched.value) doSearch() })
+// Re-search immediately when language filter changes (only after a search has started).
+watch(langs, () => { if (searched.value || query.value) doSearch() })
 
 // Re-search when UI locale changes.
 watch([() => localization.locale, () => localization.secondary], () => { if (searched.value) doSearch() })
@@ -139,12 +139,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="searched || loading" class="se-meta">
-      <span class="se-count">{{ t('search.results', { count: total }) }}</span>
-      <div class="se-sort" role="group" :aria-label="t('search.sort')">
-        <button :class="{ on: sortBy === 'hot' }" @click="sortBy = 'hot'">{{ t('search.popular') }}</button>
-        <button :class="{ on: sortBy === 'new' }" @click="sortBy = 'new'">{{ t('search.newest') }}</button>
-        <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">{{ t('search.alphabetical') }}</button>
-      </div>
+      <span class="se-count">{{ t('search.prefixResults') }}</span>
     </div>
 
     <LoadingSpinner v-if="loading" />
@@ -159,10 +154,10 @@ onUnmounted(() => {
           v-for="r in results"
           :key="r.id"
           v-bind="r"
-          :language_profile_code="r.language_profile_code || r.lang_code"
+          :show-language="true"
         />
       </div>
-      <Pagination :has-more="results.length < total" @load-more="loadMore" />
+      <Pagination :has-more="Boolean(nextCursor)" @load-more="loadMore" />
       <p v-if="loadingMore" class="se-more" role="status">{{ t('common.loading') }}</p>
       <p v-else-if="loadMoreError" class="se-more se-more-error" role="alert">{{ loadMoreError }}</p>
     </template>

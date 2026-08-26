@@ -2,7 +2,7 @@
 
 > 日期：2026-08-23
 >
-> 狀態：設計已確認，尚未實作
+> 狀態：設計已確認；相容性匯入與 packed 本地匯入已實作，正式環境切換仍待驗收
 
 ## 1. 摘要
 
@@ -13,7 +13,7 @@ release manifest 掃描決定，不以設計時的固定檔案數量作為程式
 
 匯入不能只按 `(lang_code, text)` 建立 Expression。相同文字可能有多個彼此獨立的語義鄰域；例如繁中英詞典把 `cod` 分成三個同形 entry，分別對應魚類、袋／莢／陰囊，以及愚弄／玩笑／虛假。三組對應若掛到同一個 `cod` Expression，圖譜會產生錯誤的間接關係。
 
-本設計採用「離線義項層＋最小線上證據層」：完整抽取內容保存在本機 staging；AI 在發布前對齊同文義項；線上仍使用既有 Expression／edge 圖，不新增公開 sense entity。只有經評測校準、符合硬性規則的高信心候選可由 AI 自動合併，其餘保持分離。
+本設計採用「離線義項層＋兩種線上投影」：完整抽取內容、AI 對齊結果與決策保存在 staging；線上不新增公開 sense entity。一般 fixture 可使用保留 binding／evidence 的相容性投影；全量詞典預設使用空間優先的 packed catalog，只發布詞句、mapping、reading 與詞性 bitmask，不把 claim、evidence 或逐物件審計複製到 D1。只有經評測校準、符合硬性規則的高信心候選可由 AI 自動合併，其餘保持分離。
 
 ## 2. 現況與問題
 
@@ -74,7 +74,7 @@ release manifest 掃描決定，不以設計時的固定檔案數量作為程式
 2. 正確保留同文多義；不同義項不得因文字相同而自動共用 Expression。
 3. 讓 AI 自動合併經評測證明足夠可靠的同義 claims，同時優先避免錯誤合併。
 4. 完整保留 exporter 已抽取的欄位，供重新處理、AI 對齊與品質稽核。
-5. 線上 D1 只發布 LangMap 產品模型需要的 Expression、mapping、reading、例句 mapping、詞性與最小技術綁定。
+5. 線上 D1 只發布 LangMap 產品模型需要的詞句、mapping、reading、例句 mapping 與詞性；全量模式以 packed catalog 取代線上 claim／evidence 綁定。
 6. 支援全量、增量、子集重跑、失敗續跑、dry run、驗證與 release 回退。
 7. `homograph_index` 一旦發布便保持穩定；資料重排、加入新詞典或只跑子集都不能重新編號既有 Expression。
 8. 所有轉換、排序、ID 與 artifact 必須 deterministic。
@@ -145,8 +145,21 @@ AI 可以自動：
 | synonym／antonym relations | 原始關係與原子化結果並存 | synonym 發布為 Expression＋mapping；antonym 第一版不發布 |
 | examples | 完整保留 | 成對者發布為 Expression＋mapping |
 | labels | 完整保留 | 不發布 |
-| POS | 原始值與正規化值並存 | 詞性佐證 |
+| POS | 原始值與正規化值並存 | packed 模式寫入詞句的詞性 bitmask；相容性模式寫入詞性佐證 |
 | diagnostics | 完整保留 | release 摘要計數 |
+
+### 6.5 空間優先的 packed catalog
+
+全量 D1 使用 packed 模式，採整數外鍵避免在每條 mapping／reading 重複長字串 ID。語言與
+locale 另以小型 codebook 還原 API 所需的字串；線上只保留：
+
+- `dictionary_languages`、`dictionary_locales`：語言／locale codebook；
+- `dictionary_terms`：整數 `term_id`、語言、詞面、穩定 `homograph_index` 及詞性 bitmask；
+- `dictionary_edges`：整數 edge 與兩個 term 外鍵，另存 equivalent／synonym／example 的關係種類；
+- `dictionary_readings`：整數 reading 與 term 外鍵；
+- `dictionary_expression_rows`、`dictionary_edge_rows`、`dictionary_reading_rows` 及 `all_*` read-only views：把 packed rows 映射成既有 API 使用的短 public ID。
+
+definitions、labels、原始 POS、claim、cluster、AI decision、quarantine 與完整例句欄位仍留在 staging，不進線上資料庫。Packed catalog 是可重建的單一全量投影；更新採建立新空白 D1、驗證後切換，不在同一個 catalog 內累積歷史版本。這個限制換取可預估的檔案大小與較短匯入時間。
 
 ## 7. 整體架構
 
@@ -349,7 +362,7 @@ inspect → stage → reconcile → plan → apply → verify → rollback
 
 ## 8. 線上資料模型
 
-本設計不改 `expressions` 的 identity，也不改 `expression_edges` 的 pairwise 語義。新增下列最小表。
+本設計不改一般 `expressions` 的 identity，也不改一般 `expression_edges` 的 pairwise 語義。相容性模式新增下列 release／binding 表；全量 packed 模式另外使用 8.7 的整數 catalog。兩種模式共用 API read-only views。
 
 ### 8.1 `dictionary_dataset_releases`
 
@@ -399,22 +412,18 @@ evidence_kind: equivalent | synonym | example
 
 主鍵為 `(release_id, edge_id, claim_key, evidence_kind)`。Edge 本身仍全域唯一；evidence 不影響 score 或 votes。
 
-### 8.4 `dictionary_release_objects`
+### 8.4 不建立逐物件發布審計表
 
-記錄某一 release 使用的線上物件，以及該物件是本版建立或重用，供 active-release eligibility、verify、rollback 與安全清理：
+為控制 D1 空間，第一版不建立逐物件 ownership／promotion journal。相容性模式的 release membership
+只由 `dictionary_expression_bindings` 與 `expression_edge_evidence` 保存；packed 模式不寫入這兩類
+線上資料，直接把單一 catalog 視為 active projection。發布切換只更新
+`dictionary_dataset_state.active_release_id`，不追蹤每個物件的 promotion actor 或時間。
 
-```text
-release_id
-object_kind: expression | edge | reading | locale_attestation | pos_attestation
-object_id
-claim_key
-object_action: created | reused
-promoted_at
-promotion_actor_kind: user | system
-promoted_by
-```
-
-這是內部 membership／ownership journal。每個 release 使用的 Expression、edge、reading、locale attestation 與 POS attestation 都必須有 membership，不能只記錄首次建立的 object。普通使用者或系統寫入重用 pipeline 建立的物件時，第一次 promotion 會使該物件日後不受 release 回退隱藏；promotion 時間與 actor 不得覆寫。它不取代各實體的外鍵或唯一約束；publisher 在寫入前後都必須驗證 object 實際存在且 identity 一致。
+相容性模式的 managed edge 可由是否存在 active release 的 evidence 判定；沒有 dictionary evidence
+的普通 edge 保持可見。Packed edge 由 `dictionary_edge_rows.source = 'dictionary'` 提供，因為同一
+catalog 只有一個 active release，不再建立逐 edge membership。Reading、locale attestation 等
+沒有 release foreign key 的既有實體不套用逐物件過濾。這是明確的空間／簡潔性取捨；packed 更新
+以新空白 catalog 驗證後替換，不在舊 catalog 內保留歷史投影。
 
 ### 8.5 `parts_of_speech`
 
@@ -441,7 +450,32 @@ created_at
 
 唯一語義為 `(expression_id, part_of_speech_code, release_id, claim_key)`。Expression 詳情 API 聚合後按 `parts_of_speech.sort_order, code` 穩定回傳；原始 POS 文字不進此表。
 
-### 8.7 Schema 生命週期
+### 8.7 Packed catalog tables 與 views
+
+Packed 模式使用以下線上結構：
+
+```text
+dictionary_languages(language_id INTEGER PRIMARY KEY, code)
+dictionary_locales(locale_id INTEGER PRIMARY KEY, code, language_id)
+dictionary_terms(term_id INTEGER PRIMARY KEY, language_id, text, text_hash,
+                 homograph_index, pos_mask)
+dictionary_edges(edge_id INTEGER PRIMARY KEY, expression_a_id INTEGER,
+                 expression_b_id INTEGER, relation_kind INTEGER)
+dictionary_readings(reading_id INTEGER PRIMARY KEY, expression_id INTEGER,
+                    locale_id, scheme, value)
+```
+
+`dictionary_edges` 只保存 canonical pair；`relation_kind` 的值 `0/1/2` 分別代表
+equivalent、synonym、example。匯入前由 staging 做去重與關係優先級決定，線上不再保存每條
+claim 的 evidence。Views 對外提供 `d/e/r` 加八位十進位序號的短 ID，並以 `UNION ALL` 合併
+一般 LangMap rows，讓搜尋、詳情、mapping graph、feed、localization 與 morphology 的讀取路徑
+不需要複製一套 API。
+
+Packed catalog 要求空白 dictionary tables；舊 catalog 不做增量 append。重建完成後必須驗證
+term／edge／reading／POS 計數、foreign key、pair 唯一性與 `cod` 三個 homograph 鄰域，再切換
+本地 D1 或部署單位。
+
+### 8.8 Schema 生命週期
 
 以上資料表必須：
 
@@ -455,13 +489,20 @@ created_at
 
 ### 9.1 可見性
 
-Managed mapping 若只由本 pipeline 建立且尚未 promotion，只有在其 evidence 屬於 active release 時才參與公開 mapping 查詢。Managed reading、locale attestation 與 POS attestation 同樣只有在 active release 具有 membership、或已 promotion 時才出現在公開詳情。若同一物件其後被一般使用者或系統寫入重用，release 切換不得隱藏它。
+相容性模式的 managed edge 只有在其 evidence 屬於 active release 時才參與公開 mapping 查詢；
+沒有 dictionary evidence 的普通 edge 保持可見。Packed catalog 的 edge／reading／term 都隨單一
+active projection 一起可見，不再做逐物件 membership 過濾。一般 Expression 查詢沿用實體本身的
+可見性，不再依賴逐物件發布審計 membership。
 
-第一版 rollback 的產品保證是「恢復 active release 的 mapping、reading、locale attestation 與 POS 投影」，不是強制刪除所有曾建立的 Expression row。未被 active release 使用的 dictionary-only Expression 可由 verify 報告列為 cleanup candidate；已有其他引用的節點必須保留。
+相容性模式 rollback 的產品保證是「恢復 active release 的 mapping、reading、locale attestation
+與 POS 投影」，不是強制刪除所有曾建立的 Expression row。Packed 模式不在同一 D1 保留多個歷史
+catalog；回退以切回上一個已驗證的 D1／部署單位完成。未被 active release 使用的相容性
+dictionary-only Expression 可由 verify 報告列為 cleanup candidate；已有其他引用的節點必須保留。
 
 ### 9.2 增量更新
 
-新 release 以目前 active release 為 parent：
+相容性模式的新 release 以目前 active release 為 parent；packed 模式以新空白 D1 建立完整
+catalog，不在同一資料庫內做增量 append：
 
 - 相同 claim key＋相同 fingerprint：直接重用 binding 與決策。
 - 相同 claim key＋內容改變：重新 normalize／reconcile，但優先保留既有 Expression identity。
@@ -473,11 +514,13 @@ Managed mapping 若只由本 pipeline 建立且尚未 promotion，只有在其 e
 
 Rollback 按以下順序：
 
-1. 驗證目標 parent release 仍完整且 artifact checksum 相符。
-2. 原子切換 active release 指標；release status 保持 `validated`。
-3. 驗證公開 mapping、reading、locale attestation 與 POS 計數符合 parent manifest。
-4. 產生不再被 active release 使用的 object 清單。
-5. 只清理沒有任何其他引用、且 identity 與 ownership journal 完全吻合的物件。
+1. 相容性模式驗證目標 parent release 仍完整且 artifact checksum 相符；packed 模式驗證上一個
+   已驗證的 D1／部署單位可用。
+2. 相容性模式原子切換 active release 指標；packed 模式切換到新 catalog 所在的 D1／部署單位。
+3. 驗證公開 mapping、reading、locale attestation 與 POS 計數；packed 另驗證 term／edge／reading
+   foreign key 與 `cod` homograph 鄰域。
+4. 相容性模式才產生不再被 active release 使用的 object 清單並做可選清理；packed 舊 catalog
+   直接作為可丟棄的整體版本，不在同一 D1 逐物件刪除。
 
 清理不是 activation rollback 的前置條件；切換必須先恢復正確可見性，再做可安全重跑的垃圾清理。
 
@@ -592,7 +635,10 @@ Recall 只報告，不設為放寬 precision 的理由。任何模型、prompt�
 
 查詢仍按既有 score、created time 與 ID 規則穩定排序，並保持既有數量上限。Dataset release 切換不能讓同一端點在不同 query path 看見不一致的 managed edges。
 
-Expression 詳情中的 readings、locale attestations 與 POS 使用同一 active-release membership helper；既有一般使用者或系統資料不受 release 過濾。不得只在 mapping 查詢實作 activation，卻讓已回退 release 的 reading 或 POS 繼續顯示。
+相容性模式的 Expression 詳情中的 readings、locale attestations 與 POS 使用同一 active-release
+membership helper；packed 模式的 term／reading／POS 隨單一 active catalog 一起切換。既有一般
+使用者或系統資料不受 release 過濾。不得只在 mapping 查詢實作 activation，卻讓已回退 release
+的 reading 或 POS 繼續顯示。
 
 ### 13.3 內部操作介面
 
@@ -656,7 +702,8 @@ Artifact 路徑由 CLI 明確指定。臨時 SQL 可在 apply／verify 完成後
 - 以開啟 foreign keys 的 SQLite 載入等價 schema，執行真實 artifact SQL。
 - 同一 artifact 執行兩次，各表計數不變。
 - 所有 edge 端點存在、`a < b`、沒有 self-edge 或重複 pair。
-- 每個已發布 claim 有 binding；每條 managed mapping 有 active evidence。
+- 相容性模式每個已發布 claim 有 binding、每條 managed mapping 有 active evidence；packed 模式
+  驗證每個 term／mapping／reading 的整數外鍵、pair 唯一性與 active catalog 計數。
 - activate、apply 中斷續跑、inventory mismatch、verify failure 與 rollback 都有整合測試。
 - 一般使用者建立的 mapping、votes 與 handbook 引用不因 release rollback 消失。
 
@@ -690,14 +737,16 @@ staged claims = published claims + quarantined claims + explicitly skipped claim
 
 ## 16. 本地與正式環境生命週期
 
-詞典資料不寫入 `backend/schema.sql`，也不作普通 schema seed。
+詞典內容不寫入 `backend/schema.sql`，也不作普通 schema seed；`backend/schema.sql` 只包含
+packed catalog 的空表與 read-only views 定義。
 
 本地開發：
 
 - 一般 `local rebuild` 保持輕量，不預設載入兩百萬筆完整 corpus。
 - `scripts/dictionary` 提供小型 fixture release，供 schema、API 與 `cod` 整合測試。
-- 需要完整 corpus 時，以明確 CLI 套用指定 release artifact。
-- 本地 inventory／fingerprint 在套用 corpus 後記錄 active dictionary release。
+- 需要完整 corpus 時，以明確 CLI 的 `local-import --packed` 套用指定 staging release。
+- packed 匯入使用空白 D1；驗證完成後記錄 active dictionary release，舊本地 catalog 可直接刪除。
+- 一般 fixture 仍可使用非 packed 相容性模式驗證 binding／evidence 與 release rollback。
 
 正式環境：
 
@@ -726,7 +775,8 @@ staged claims = published claims + quarantined claims + explicitly skipped claim
 
 ### Phase 3：線上最小資料層與 release publisher
 
-- 新增 release、binding、edge evidence、ownership、POS tables。
+- 新增 release、binding、edge evidence、POS tables；不新增逐物件 ownership table；另新增 packed
+  term／edge／reading catalog 與 API compatibility views。
 - 接入 active-release mapping eligibility。
 - 完成 plan／apply／verify／rollback。
 
@@ -762,4 +812,5 @@ staged claims = published claims + quarantined claims + explicitly skipped claim
 7. 每筆輸入 claim 都可對應到發布 binding、quarantine 或明確 skip reason。
 8. Release apply 可驗證、可續跑；activation 失敗時舊 release 仍有效。
 9. Rollback 恢復上一版可見 mapping／reading／POS，且不破壞一般使用者資料。
-10. 全量處理使用串流／有界批次，排序、ID 與 artifact 均 deterministic。
+10. 全量處理使用串流／有界批次，排序、ID 與 artifact 均 deterministic；packed 線上 D1 的
+    預估與實測大小維持在 5GB 以內。

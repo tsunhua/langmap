@@ -13,7 +13,7 @@ export class SourceError extends Error {
 export async function findOrCreateSource(
   db: D1Database,
   source: { type: string; name: string },
-): Promise<string> {
+): Promise<number> {
   const type = source.type;
   if (!SOURCE_TYPES.includes(type as SourceType)) throw new SourceError('INVALID_SOURCE');
   const name = source.name.trim();
@@ -21,12 +21,12 @@ export async function findOrCreateSource(
   const existing = await db
     .prepare('SELECT id FROM sources WHERE type = ? AND name = ?')
     .bind(type, name)
-    .first<{ id: string }>();
+    .first<{ id: number }>();
   if (existing) return existing.id;
-  const id = crypto.randomUUID();
-  await db
-    .prepare('INSERT INTO sources (id, type, name) VALUES (?, ?, ?)')
-    .bind(id, type, name)
-    .run();
-  return id;
+  const created = await db
+    .prepare('INSERT INTO sources (type, name) VALUES (?, ?) RETURNING id')
+    .bind(type, name)
+    .first<{ id: number }>();
+  if (!created) throw new SourceError('SOURCE_CREATE_FAILED');
+  return created.id;
 }

@@ -11,7 +11,7 @@ describe('getExpression', () => {
           bind(..._args: unknown[]) {
             return {
               async first<T>() {
-                return (sql.includes('FROM expressions e LEFT JOIN sources')
+                return (sql.includes('FROM all_expression_rows e LEFT JOIN sources')
                   ? { id: 'nan:hash', lang_code: 'nan', text: '食', source_type: 'url', source_name: 'Dictionary' }
                   : null) as T;
               },
@@ -27,7 +27,7 @@ describe('getExpression', () => {
 
     const detail = await getExpression(db, 'nan:hash');
     expect(detail?.readings[0]).toMatchObject({ id: 'read-1', source_name: 'Dictionary' });
-    expect(queries.find((sql) => sql.includes('FROM expression_readings'))).toContain(
+    expect(queries.find((sql) => sql.includes('FROM all_expression_readings'))).toContain(
       'ORDER BY r.language_locale_code ASC, r.scheme ASC, r.created_at ASC, r.id ASC',
     );
   });

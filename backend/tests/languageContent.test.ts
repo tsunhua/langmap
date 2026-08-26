@@ -20,9 +20,9 @@ const LANGUAGE_ROW_SQL = 'SELECT code, name_en FROM languages WHERE code = ?';
 const IDENTITY_LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, (SELECT l.name FROM language_locales l WHERE l.lang_code = languages.code ORDER BY l.code ASC LIMIT 1) AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
 const IDENTITY_LOCALE_SQL = 'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
 const LANGUAGE_LOCALES_SQL = 'SELECT l.code, l.name, l.name_en, l.script_code, l.region_code, l.place_path, l.latitude AS locale_latitude, l.longitude AS locale_longitude, r.latitude AS region_latitude, r.longitude AS region_longitude FROM language_locales l LEFT JOIN regions r ON r.code = l.region_code WHERE l.lang_code = ? ORDER BY l.code ASC LIMIT 500';
-const EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
-const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM expression_readings WHERE expression_id IN (SELECT id FROM expressions WHERE lang_code = ?)';
-const MAPPED_EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM expressions e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?)) AND EXISTS (SELECT 1 FROM expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)";
+const EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM all_expression_rows e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?))";
+const READING_COUNT_SQL = 'SELECT COUNT(*) AS total FROM all_expression_readings WHERE expression_id IN (SELECT id FROM all_expression_rows WHERE lang_code = ?)';
+const MAPPED_EXPRESSION_COUNT_SQL = "SELECT COUNT(*) AS total FROM all_expression_rows e WHERE e.lang_code = ? AND (? = '' OR EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = e.id AND a.language_locale_code = ?)) AND EXISTS (SELECT 1 FROM all_expression_edges g WHERE g.expression_a_id = e.id OR g.expression_b_id = e.id)";
 
 describe('getLanguageDetail', () => {
   it('returns null for an unknown language code', async () => {

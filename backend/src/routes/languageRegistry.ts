@@ -1,7 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { paginated } from '../utils/response';
 import { parseReferenceQuery, queryReferenceTable, type ReferenceTable } from '../services/languageIdentity';
-import { parseLocaleHints, resolveLanguageNames, resolveNamesByExpressionIds } from '../services/localizedName';
 import type { Bindings } from '../types';
 
 const languageRegistry = new Hono<{ Bindings: Bindings }>();
@@ -17,23 +16,7 @@ function parseQs(c: { req: { query: (k: string) => string | undefined } }) {
 async function respond(c: Context<{ Bindings: Bindings }>, table: ReferenceTable) {
   const query = parseReferenceQuery(parseQs(c));
   const { items, total } = await queryReferenceTable(c.env.DB, table, query);
-  const hints = parseLocaleHints(c.req.query('ui_locale'), c.req.query('secondary_ui_locale'));
-  if (table === 'languages') {
-    const codes = items.map((item) => String(item.code ?? ''));
-    const names = await resolveLanguageNames(c.env.DB, codes, hints);
-    const localized = items.map((item) => ({ ...item, name: names.get(String(item.code)) ?? item.name_en }));
-    return paginated(c, localized, total, query.offset, query.limit);
-  }
-  if (table === 'scripts' || table === 'regions') {
-    const ids = items.map((item) => String(item.name_expression_id ?? ''));
-    const names = await resolveNamesByExpressionIds(c.env.DB, ids, hints);
-    const localized = items.map((item) => {
-      const id = String(item.name_expression_id ?? '');
-      return { ...item, name: (id && names.get(id)?.name) || item.name_en };
-    });
-    return paginated(c, localized, total, query.offset, query.limit);
-  }
-  return paginated(c, items, total, query.offset, query.limit);
+  return paginated(c, items.map((item) => ({ ...item, name: item.name_en })), total, query.offset, query.limit);
 }
 
 languageRegistry.get('/languages', (c) => respond(c, 'languages'));

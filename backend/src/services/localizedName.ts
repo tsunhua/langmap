@@ -53,18 +53,18 @@ const IDENTITY_LOCALE_SQL =
 const LOCALE_LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
 export const CANDIDATE_SQL = `WITH candidate_rows AS (
   SELECT src.id AS source_id, t.id AS target_id, t.text AS target_text, e.score, e.created_at
-  FROM expression_edges e
-  JOIN expressions src ON src.id = e.expression_a_id
-  JOIN expressions t ON t.id = e.expression_b_id
+  FROM all_expression_edges e
+  JOIN all_expression_rows src ON src.id = e.expression_a_id
+  JOIN all_expression_rows t ON t.id = e.expression_b_id
   WHERE e.expression_a_id IN (SELECT value FROM json_each(?))
     AND e.score >= 0
     AND t.lang_code = ?
     AND EXISTS (SELECT 1 FROM expression_locale_attestations a WHERE a.expression_id = t.id AND a.language_locale_code = ?)
   UNION ALL
   SELECT src.id AS source_id, t.id AS target_id, t.text AS target_text, e.score, e.created_at
-  FROM expression_edges e
-  JOIN expressions src ON src.id = e.expression_b_id
-  JOIN expressions t ON t.id = e.expression_a_id
+  FROM all_expression_edges e
+  JOIN all_expression_rows src ON src.id = e.expression_b_id
+  JOIN all_expression_rows t ON t.id = e.expression_a_id
   WHERE e.expression_b_id IN (SELECT value FROM json_each(?))
     AND e.score >= 0
     AND t.lang_code = ?
@@ -154,7 +154,7 @@ async function loadCandidateMap(
   return selected;
 }
 
-const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT value FROM json_each(?))';
+const EXPRESSIONS_SQL = 'SELECT id, text FROM all_expression_rows WHERE id IN (SELECT value FROM json_each(?))';
 
 interface ExpressionNameResolution {
   name: string;

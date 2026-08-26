@@ -5,7 +5,7 @@ export type ManagedObjectKind = 'expression' | 'reading' | 'locale_attestation' 
 export type ManagedObjectKindWithEdge = ManagedObjectKind | 'edge';
 export type ManagedObjectIdSql = 'e.id' | 'r.id' | 'a.id' | 'pa.id';
 export type ManagedObjectIdSqlWithEdge = ManagedObjectIdSql | 'e.id' | 'ed.id' | 'g.id' | 'direct_edge.id';
-export type ReleaseIdSql = 'b.release_id' | 'ev.release_id' | 'pa.release_id' | 'ro.release_id';
+export type ReleaseIdSql = 'b.release_id' | 'ev.release_id' | 'pa.release_id';
 
 export const MANAGED_DICTIONARY_DATASET_KEY = 'managed-dictionaries';
 
@@ -15,6 +15,25 @@ export async function dictionaryReleaseSchemaAvailable(db: D1Database): Promise<
       "SELECT 1 AS available FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_dataset_state'",
     ).bind().first<{ available: number }>();
     return Boolean(row?.available);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Packed dictionary tables were introduced after the release lifecycle tables.
+ * Keep the fast path opt-in so a database caught between those migrations can
+ * continue using the compatibility queries.
+ */
+export async function dictionaryPackedSchemaAvailable(db: D1Database): Promise<boolean> {
+  try {
+    const row = await db.prepare(
+      `SELECT COUNT(*) AS available
+       FROM sqlite_master
+       WHERE type = 'table'
+         AND name IN ('dictionary_languages', 'dictionary_terms', 'dictionary_edges')`,
+    ).bind().first<{ available: number }>();
+    return Number(row?.available ?? 0) === 3;
   } catch {
     return false;
   }
@@ -42,16 +61,13 @@ export function edgeEligibilityPredicate(edgeAlias: EdgeAlias): string {
   const edgeId = `${edgeAlias}.id`;
   return `(
     NOT EXISTS (
-      SELECT 1 FROM dictionary_release_objects ro_created
-      WHERE ro_created.object_kind = 'edge'
-        AND ro_created.object_id = ${edgeId}
-        AND ro_created.object_action = 'created'
-        AND ro_created.promoted_at IS NULL
+      SELECT 1 FROM expression_edge_evidence ev_managed
+      WHERE ev_managed.edge_id = ${edgeId}
     )
     OR EXISTS (
-      SELECT 1 FROM expression_edge_evidence ev
-      WHERE ev.edge_id = ${edgeId}
-        AND ${activeReleaseMembership('ev.release_id')}
+      SELECT 1 FROM expression_edge_evidence ev_active
+      WHERE ev_active.edge_id = ${edgeId}
+        AND ${activeReleaseMembership('ev_active.release_id')}
     )
   )`;
 }
@@ -60,33 +76,24 @@ export function releaseObjectEligibilityPredicate(
   kind: ManagedObjectKind,
   objectIdSql: ManagedObjectIdSql,
 ): string {
-  return `(
-    NOT EXISTS (
-      SELECT 1 FROM dictionary_release_objects ro_created
-      WHERE ro_created.object_kind = '${kind}'
-        AND ro_created.object_id = ${objectIdSql}
-        AND ro_created.object_action = 'created'
-        AND ro_created.promoted_at IS NULL
-    )
-    OR EXISTS (
-      SELECT 1 FROM dictionary_release_objects ro_active
-      WHERE ro_active.object_kind = '${kind}'
-        AND ro_active.object_id = ${objectIdSql}
-        AND ${activeReleaseMembership('ro_active.release_id')}
-    )
-  )`;
+  // Readings and locale attestations do not carry a release_id.  With the
+  // ownership journal removed, their ordinary entity visibility is the only
+  // safe predicate; POS visibility is already release-scoped by its table.
+  void kind;
+  void objectIdSql;
+  return '(1 = 1)';
 }
 
-/** Historical ownership guard used by immutable split operations. */
+/** Managed-edge guard used by immutable split operations. */
 export function dictionaryManagedObjectPredicate(
   kind: ManagedObjectKindWithEdge,
   objectIdSql: ManagedObjectIdSqlWithEdge,
 ): string {
-  return `(EXISTS (
-    SELECT 1 FROM dictionary_release_objects ro_managed
-    WHERE ro_managed.object_kind = '${kind}'
-      AND ro_managed.object_id = ${objectIdSql}
-      AND ro_managed.object_action = 'created'
+  if (kind !== 'edge') return '(0 = 1)';
+  const edgeAlias = objectIdSql.replace(/\.id$/, '');
+  return `(${edgeAlias}.source = 'dictionary' OR EXISTS (
+    SELECT 1 FROM expression_edge_evidence ev_managed
+    WHERE ev_managed.edge_id = ${objectIdSql}
   ))`;
 }
 
@@ -96,16 +103,11 @@ export async function promoteManagedObject(
   objectId: string,
   actor: PromotionActor,
 ): Promise<void> {
-  const actorKind = actor.kind;
-  const actorId = actor.kind === 'user' ? actor.userId : null;
-  await db.prepare(
-    `UPDATE dictionary_release_objects
-     SET promoted_at = CURRENT_TIMESTAMP,
-         promotion_actor_kind = ?,
-         promoted_by = ?
-     WHERE object_kind = ?
-       AND object_id = ?
-       AND object_action = 'created'
-       AND promoted_at IS NULL`,
-  ).bind(actorKind, actorId, kind, objectId).run();
+  // There is no per-object ownership journal.  Ordinary writes remain visible
+  // through the base entity tables, while managed edges are scoped by their
+  // evidence membership in edgeEligibilityPredicate().
+  void db;
+  void kind;
+  void objectId;
+  void actor;
 }
