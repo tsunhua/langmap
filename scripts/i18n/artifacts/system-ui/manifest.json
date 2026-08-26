@@ -42,6 +42,32 @@
     "system_ui_sql": {
       "path": "system-ui.sql",
       "sha256": "e210012ebb44f1327e6e33ea21b7c22c27e1c20c0e6c5024c2546afd09d3c14f"
-    }
+    },
+    "system_ui_edges_sql": [
+      {
+        "path": "system-ui-edges-001.sql",
+        "sha256": "cc3261f8f9dd63db21146cfff32dc84b99890be371ea8aa4285be3228d44098d"
+      },
+      {
+        "path": "system-ui-edges-002.sql",
+        "sha256": "ec6bea2b8369558d37855f2146dd36378573004a5c5b0e653e3b082b6deccf0a"
+      },
+      {
+        "path": "system-ui-edges-003.sql",
+        "sha256": "d2b2ff87291c03deb913e45be2dbc50b02837b5679c31d585259d1617057db8f"
+      },
+      {
+        "path": "system-ui-edges-004.sql",
+        "sha256": "a693822e28d97bc51f5a4ee9d1743d6e98ec56ccd5ea6d332d3d9fa6f375e894"
+      },
+      {
+        "path": "system-ui-edges-005.sql",
+        "sha256": "5d137c2e455ac53bec6738b6c4593fe70b54f379aa4b90362dd78180d711c8f0"
+      },
+      {
+        "path": "system-ui-edges-006.sql",
+        "sha256": "7b67738b74d96c384189ee559344cc4596e8a404fd885e32e7fa530b05c59b7f"
+      }
+    ]
   }
 }

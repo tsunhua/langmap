@@ -127,6 +127,17 @@ class ProjectPaths:
         )
 
     @property
+    def system_ui_edges_sql_paths(self) -> list[Path]:
+        artifact_dir = (
+            self.repo_root
+            / "scripts"
+            / "i18n"
+            / "artifacts"
+            / "system-ui"
+        )
+        return sorted(artifact_dir.glob("system-ui-edges-*.sql"))
+
+    @property
     def local_dev_user_sql_path(self) -> Path:
         return self.repo_root / "scripts" / "db" / "local-dev-user.sql"
 

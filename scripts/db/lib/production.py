@@ -512,6 +512,17 @@ def apply_production(
                 str(paths.system_ui_sql_path),
             ]
         )
+        for edge_sql_path in paths.system_ui_edges_sql_paths:
+            executor.mutate(
+                [
+                    "d1",
+                    "execute",
+                    database_name,
+                    "--remote",
+                    "--file",
+                    str(edge_sql_path),
+                ]
+            )
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
         if plan.get("pending_migrations"):
             check_target_schema(paths, verified)

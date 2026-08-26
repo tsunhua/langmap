@@ -59,6 +59,8 @@ def rebuild_local_state(
         executor.execute_file(temp_state_dir, paths.schema_path)
         executor.execute_file(temp_state_dir, paths.language_registry_sql_path)
         executor.execute_file(temp_state_dir, paths.system_ui_sql_path)
+        for edge_sql_path in paths.system_ui_edges_sql_paths:
+            executor.execute_file(temp_state_dir, edge_sql_path)
         executor.execute_file(temp_state_dir, paths.local_dev_user_sql_path)
         write_migration_baseline(paths, executor=executor, persist_to=temp_state_dir)
         verification_report = verify_local_state(

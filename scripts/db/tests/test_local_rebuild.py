@@ -154,6 +154,7 @@ INSERT INTO regions (code, name_en, latitude, longitude) VALUES
     }
     (ui_dir / "manifest.json").write_text(json.dumps(ui_manifest, indent=2) + "\n", encoding="utf-8")
     (ui_dir / "system-ui.sql").write_text("-- ui seed fixture\n", encoding="utf-8")
+    (ui_dir / "system-ui-edges-001.sql").write_text("-- ui edge fixture\n", encoding="utf-8")
     (root / "scripts" / "db").mkdir(parents=True, exist_ok=True)
     (root / "scripts" / "db" / "local-dev-user.sql").write_text(
         "INSERT OR IGNORE INTO users (username, email, password_hash, role, email_verified)\n"
@@ -230,14 +231,15 @@ class LocalRebuildTests(unittest.TestCase):
             self.assertTrue((paths.local_state_dir / "verification-report.json").exists())
 
             calls = read_fake_log(log_path)
-            # Greenfield loads schema + registry + UI + local-dev user, then baseline.
-            self.assertEqual([Path(call["subject"]).name for call in calls[:4]], [
+            # Greenfield loads schema + registry + UI + UI edges + local-dev user, then baseline.
+            self.assertEqual([Path(call["subject"]).name for call in calls[:5]], [
                 "schema.sql",
                 "language-reference.sql",
                 "system-ui.sql",
+                "system-ui-edges-001.sql",
                 "local-dev-user.sql",
             ])
-            self.assertEqual(calls[4]["mode"], "command")
+            self.assertEqual(calls[5]["mode"], "command")
 
             database_path = paths.local_d1_state_dir / "fake-d1.sqlite3"
             self.assertTrue(database_path.exists())
