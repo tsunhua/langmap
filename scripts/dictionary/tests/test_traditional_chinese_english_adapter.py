@@ -5,6 +5,7 @@ import pytest
 from scripts.dictionary.langmap_dictionary.adapters.traditional_chinese_english import TraditionalChineseEnglishAdapter, normalize_release
 from scripts.dictionary.langmap_dictionary.clusters import build_explicit_clusters
 from scripts.dictionary.langmap_dictionary.loader import load_jsonl_release
+from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedSense
 from scripts.dictionary.langmap_dictionary.schema import create_staging_database
 
 FIXTURE = Path(__file__).parent / "fixtures" / "traditional_chinese_english_v2.jsonl"
@@ -54,11 +55,37 @@ def test_normalization_rejects_invalid_batch_settings(tmp_path):
 
 def test_adapter_removes_bullet_only_from_normalized_equivalent():
     adapter = TraditionalChineseEnglishAdapter()
-    from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedSense
     entry = StagedEntry("r", "d", "e", "頭", "頭", None, "cmn-Hant-to-eng", "a" * 64, senses=(StagedSense("s", 1, equivalents=("• head",)),))
     occurrence = adapter.normalize_entry(entry).senses[0].occurrences[0]
     assert occurrence.raw_value == "• head"
     assert occurrence.canonical_text == "head"
+
+
+def test_adapter_promotes_foreign_script_definition_to_equivalent():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.kn-en.oup", "e", "book", "book", None,
+        "eng-to-kan", "a" * 64,
+        senses=(StagedSense("s", 1, definitions=("a written work published as printed pages", "(ಮುದ್ರಿತ) ಗ್ರಂಥ; ಪುಸ್ತಕ"), equivalents=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.lang_code == "eng"
+    promoted = [o for o in normalized.senses[0].occurrences if o.occurrence_kind == "equivalent" and o.lang_code == "kan"]
+    assert len(promoted) == 1
+    assert promoted[0].canonical_text.startswith("(ಮುದ್ರಿತ)")
+
+
+def test_adapter_keeps_latin_definition_as_meaning_not_equivalent():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_HK-en.idioms.cp", "e", "一不做，二不休", "一不做，二不休", None,
+        "cmn-Hant-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, definitions=("once you start, finish it",), equivalents=("no half measures",)),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    equivalents = [o.canonical_text for o in normalized.senses[0].occurrences if o.occurrence_kind == "equivalent"]
+    assert "no half measures" in equivalents
+    assert "once you start, finish it" not in equivalents
 
 
 def test_adapter_uses_non_english_direction_profiles():

@@ -62,14 +62,33 @@ def _insert_ignore(connection: sqlite3.Connection, table: str, values: Mapping[s
     )
 
 
-def _language_id(connection: sqlite3.Connection, code: str) -> int:
-    row = connection.execute("SELECT id FROM languages WHERE code=?", (code,)).fetchone()
-    if row is None:
-        _insert_ignore(connection, "languages", {"code": code, "name_en": code})
-        row = connection.execute("SELECT id FROM languages WHERE code=?", (code,)).fetchone()
-    if row is None:
-        raise ValueError(f"unable to register language: {code}")
-    return int(row[0])
+# ISO 639-3 macrolanguage codes used by Apple dictionary bundles that the
+# LangMap registry does not pin (it keeps individual-language codes only).
+# Dictionary imports must resolve these to the pinned individual code instead
+# of silently expanding the registry.
+_LANGUAGE_CODE_ALIASES: dict[str, str] = {
+    "msa": "zsm",  # Malay → Standard Malay
+    "ara": "arb",  # Arabic → Standard Arabic
+    "nor": "nob",  # Norwegian → Norwegian Bokmål
+}
+
+
+def _resolve_language_code(connection: sqlite3.Connection, code: str) -> str | None:
+    if connection.execute("SELECT 1 FROM languages WHERE code=?", (code,)).fetchone() is not None:
+        return code
+    if code in _LANGUAGE_CODE_ALIASES:
+        alias = _LANGUAGE_CODE_ALIASES[code]
+        if connection.execute("SELECT 1 FROM languages WHERE code=?", (alias,)).fetchone() is not None:
+            return alias
+    return None
+
+
+def _language_id(connection: sqlite3.Connection, code: str) -> int | None:
+    resolved = _resolve_language_code(connection, code)
+    if resolved is None:
+        return None
+    row = connection.execute("SELECT id FROM languages WHERE code=?", (resolved,)).fetchone()
+    return int(row[0]) if row is not None else None
 
 
 def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, Any]:
@@ -86,7 +105,13 @@ def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, 
 def _locale_id(connection: sqlite3.Connection, code: str, language_code: str) -> int:
     row = connection.execute("SELECT id FROM language_locales WHERE code=?", (code,)).fetchone()
     if row is None:
-        _insert_ignore(connection, "language_locales", _locale_parts(code, language_code, _language_id(connection, language_code)))
+        resolved = _resolve_language_code(connection, language_code)
+        if resolved is None:
+            raise ValueError(f"unable to register locale with unknown language: {code} ({language_code})")
+        language_id = _language_id(connection, resolved)
+        if language_id is None:
+            raise ValueError(f"unable to register locale language: {language_code}")
+        _insert_ignore(connection, "language_locales", _locale_parts(code, resolved, language_id))
         row = connection.execute("SELECT id FROM language_locales WHERE code=?", (code,)).fetchone()
     if row is None:
         raise ValueError(f"unable to register locale: {code}")
@@ -144,6 +169,8 @@ def _expression_for_cluster(connection: sqlite3.Connection, cluster: sqlite3.Row
     language_code = str(cluster["lang_code"])
     text = canonical_text(str(cluster["canonical_text"]))
     language_id = _language_id(connection, language_code)
+    if language_id is None:
+        raise ValueError(f"dictionary language not in registry: {language_code}")
     source_keys = sorted({str(claim_rows[key]["dictionary_key"]) for key in cluster_members if key in claim_rows})
     source_key = max(source_keys or ["dictionary"], key=lambda key: (_source_rank(key, source_catalog), key))
     source_id = _source_id(connection, source_key, source_catalog)

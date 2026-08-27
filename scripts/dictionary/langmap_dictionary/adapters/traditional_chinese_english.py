@@ -23,6 +23,36 @@ except ImportError:  # pragma: no cover - the standard library remains supported
     _fast_json = json
 
 _HAN = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]")
+
+# Unicode block ranges that uniquely identify a dictionary target language script.
+# Used to split ``definitions`` entries that bundle an English definition with its
+# foreign-language equivalent (common in Kannada/Telugu/Malayalam OUP bundles).
+_SCRIPT_RANGES: dict[str, tuple[tuple[int, int], ...]] = {
+    "arab": ((0x0600, 0x06FF), (0x0750, 0x077F), (0x08A0, 0x08FF)),
+    "beng": ((0x0980, 0x09FF),),
+    "cyrl": ((0x0400, 0x052F),),
+    "deva": ((0x0900, 0x097F),),
+    "geor": ((0x10A0, 0x10FF),),
+    "grek": ((0x0370, 0x03FF),),
+    "gujr": ((0x0A80, 0x0AFF),),
+    "guru": ((0x0A00, 0x0A7F),),
+    "hang": ((0xAC00, 0xD7AF), (0x1100, 0x11FF)),
+    "hebr": ((0x0590, 0x05FF),),
+    "jpan": ((0x3040, 0x30FF),),
+    "knda": ((0x0C80, 0x0CFF),),
+    "mlym": ((0x0D00, 0x0D7F),),
+    "taml": ((0x0B80, 0x0BFF),),
+    "telu": ((0x0C00, 0x0C7F),),
+    "thai": ((0x0E00, 0x0E7F),),
+}
+
+_SCRIPT_LANGUAGE = {
+    "arab": "arb", "beng": "ben", "cyrl": "rus", "deva": "hin",
+    "geor": "kat", "grek": "ell", "gujr": "guj", "guru": "pan",
+    "hang": "kor", "hebr": "heb", "jpan": "jpn", "knda": "kan",
+    "mlym": "mal", "taml": "tam", "telu": "tel", "thai": "tha",
+}
+
 _POS = {
     "n": "noun", "noun": "noun", "名詞": "noun",
     "v": "verb", "verb": "verb", "動詞": "verb",
@@ -36,7 +66,7 @@ _PROFILE_LOCALES = {
     "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
     "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
     "yue": ("yue", "yue-Hant-HK"), "jpn": ("jpn", "jpn-Jpan-JP"),
-    "ara": ("ara", "ara-Arab"), "ben": ("ben", "ben-Beng"),
+    "arb": ("arb", "arb-Arab"), "ben": ("ben", "ben-Beng"),
     "ces": ("ces", "ces-Latn"), "dan": ("dan", "dan-Latn"),
     "deu": ("deu", "deu-Latn"), "ell": ("ell", "ell-Grek"),
     "fin": ("fin", "fin-Latn"), "fra": ("fra", "fra-Latn"),
@@ -45,8 +75,8 @@ _PROFILE_LOCALES = {
     "ind": ("ind", "ind-Latn"), "ita": ("ita", "ita-Latn"),
     "kan": ("kan", "kan-Knda"), "kaz": ("kaz", "kaz-Cyrl"),
     "kor": ("kor", "kor-Hang"), "mal": ("mal", "mal-Mlym"),
-    "msa": ("msa", "msa-Latn"), "nld": ("nld", "nld-Latn"),
-    "nor": ("nor", "nor-Latn"), "pan": ("pan", "pan-Guru"),
+    "zsm": ("zsm", "zsm-Latn"), "nld": ("nld", "nld-Latn"),
+    "nob": ("nob", "nob-Latn"), "pan": ("pan", "pan-Guru"),
     "pol": ("pol", "pol-Latn"), "por": ("por", "por-Latn"),
     "rus": ("rus", "rus-Cyrl"), "slk": ("slk", "slk-Latn"),
     "spa": ("spa", "spa-Latn-ES"), "swe": ("swe", "swe-Latn"),
@@ -71,6 +101,18 @@ def _is_han(value: str) -> bool:
     return bool(_HAN.search(value))
 
 
+def _script_language(value: str) -> str | None:
+    """Return the language identified by a distinctive Unicode script, if any."""
+    for char in value:
+        codepoint = ord(char)
+        for script, ranges in _SCRIPT_RANGES.items():
+            if any(start <= codepoint <= end for start, end in ranges):
+                return _SCRIPT_LANGUAGE[script]
+    if _is_han(value):
+        return "cmn"
+    return None
+
+
 def _language(value: str, hint: str | None = None) -> tuple[str | None, str | None, str | None]:
     token = (hint or "").lower()
     profile = token.split("-to-", 1)[0] if "-to-" in token else token
@@ -82,11 +124,20 @@ def _language(value: str, hint: str | None = None) -> tuple[str | None, str | No
         return "eng", "eng-Latn-US", None
     if "cmn" in token or "hant" in token or token in {"zh", "zh-tw", "zh-hant"}:
         return "cmn", "cmn-Hant-TW", None
-    if _is_han(value):
-        return "cmn", "cmn-Hant-TW", None
+    detected = _script_language(value)
+    if detected is not None:
+        language, locale = _PROFILE_LOCALES.get(detected, (detected, None))
+        return language, locale or (_known_locale(detected)), None
     if value and all(ord(char) < 0x2E80 or char.isspace() or char.isascii() for char in value):
         return "eng", "eng-Latn-US", None
     return None, None, "unknown_locale"
+
+
+def _known_locale(language: str) -> str | None:
+    seen: dict[str, str] = {
+        "heb": "heb-Hebr", "kat": "kat-Geor", "rus": "rus-Cyrl", "pan": "pan-Guru",
+    }
+    return seen.get(language)
 
 
 def _side_hint(direction: str | None, headword: bool) -> str | None:
@@ -119,20 +170,49 @@ class TraditionalChineseEnglishAdapter:
         senses: list[NormalizedSense] = []
         for sense in entry.senses:
             occurrences: list[NormalizedOccurrence] = []
+            equivalent_texts: set[str] = set()
+
+            def add_occurrence(raw_value: str, hint: str | None, kind: str, ordinal: str, extra: dict[str, Any]) -> None:
+                cleaned = canonicalize_text(raw_value)
+                bullet = cleaned.startswith("•")
+                if bullet:
+                    cleaned = cleaned[1:].lstrip()
+                lang, locale, error = _language(cleaned, hint)
+                occurrences.append(NormalizedOccurrence(
+                    _claim("entry", entry.entry_key, "sense", sense.sense_key, kind, ordinal),
+                    kind, raw_value, cleaned, lang, locale,
+                    _claim("claim", entry.entry_key, sense.sense_key, kind, ordinal),
+                    entry.entry_key, sense.sense_key, {**(extra or {}), "bullet_removed": extra.get("bullet_removed", bullet)},
+                    (error,) if error else (),
+                ))
+                equivalent_texts.add(cleaned.lower())
+
             for ordinal, raw_item in enumerate(sense.equivalents, 1):
                 item = raw_item if isinstance(raw_item, dict) else {"value": raw_item}
                 raw_value = item.get("value") or item.get("text")
                 if not isinstance(raw_value, str) or not raw_value.strip():
                     continue
-                cleaned, had_bullet = clean_equivalent(raw_value)
                 hint = item.get("language") or item.get("language_hint") or _side_hint(entry.direction_hint, False)
-                lang, locale, error = _language(cleaned, hint)
-                occurrences.append(NormalizedOccurrence(
-                    _claim("entry", entry.entry_key, "sense", sense.sense_key, "equivalent", str(ordinal)),
-                    "equivalent", raw_value, cleaned, lang, locale,
-                    _claim("claim", entry.entry_key, sense.sense_key, "equivalent", str(ordinal)),
-                    entry.entry_key, sense.sense_key, {"bullet_removed": had_bullet}, (error,) if error else (),
-                ))
+                add_occurrence(raw_value, hint, "equivalent", str(ordinal), {"bullet_removed": False})
+
+            # Some OUP bundles (Kannada, Telugu, Malayalam, ...) store the
+            # foreign equivalence inside the definition list rather than as a
+            # separate equivalents entry. A definition carrying a distinctive
+            # non-Latin script (e.g. Kannada/Telugu for a headword-language
+            # English bundle) is the target-language equivalent, whereas a
+            # Latin-script definition is a plain meaning and stays untouched.
+            for ordinal, definition in enumerate(sense.definitions, 1):
+                if not isinstance(definition, str) or not definition.strip():
+                    continue
+                cleaned = canonicalize_text(definition)
+                if not cleaned or cleaned.lower() in equivalent_texts:
+                    continue
+                if _script_language(cleaned) is None:
+                    continue
+                lang, _, _ = _language(cleaned, _side_hint(entry.direction_hint, False))
+                if lang is None:
+                    continue
+                add_occurrence(cleaned, _side_hint(entry.direction_hint, False), "equivalent", f"def{ordinal}", {"definition_sourced": True})
             for ordinal, raw_item in enumerate(sense.relations, 1):
                 item = raw_item if isinstance(raw_item, dict) else {}
                 if item.get("kind") != "synonym":

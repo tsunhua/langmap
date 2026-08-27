@@ -38,6 +38,8 @@ def _stage(path: Path = FIXTURE):
 def _d1(path: Path) -> None:
     connection = sqlite3.connect(path)
     connection.executescript(CANONICAL_SCHEMA)
+    connection.execute("INSERT INTO languages(code,name_en) VALUES ('cmn','Mandarin'),('eng','English')")
+    connection.commit()
     connection.close()
 
 
