@@ -113,6 +113,22 @@ function abortIfStale(error: unknown) {
     || (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'ERR_CANCELED')
 }
 
+const EMPTY_EDGES: ExpressionFormEdges = {
+  as_form: [],
+  as_lemma: [],
+  as_form_truncated: false,
+  as_form_omitted_count: 0,
+  as_lemma_truncated: false,
+  as_lemma_omitted_count: 0,
+}
+
+function isMissingFormEdges(error: unknown) {
+  const axiosError = error as { response?: { status?: number; data?: { error?: string } } }
+  if (axiosError.response?.status === 404) return true
+  const code = axiosError.response?.data?.error
+  return code === 'EXPRESSION_NOT_FOUND' || code === 'NOT_FOUND'
+}
+
 async function loadEdges() {
   const request = ++edgesRequest
   edgesAbort?.abort()
@@ -133,8 +149,12 @@ async function loadEdges() {
     dimensions.value = nextFeatures.dimensions ?? []
   } catch (error: unknown) {
     if (request !== edgesRequest || abortIfStale(error)) return
-    loadError.value = apiErrorMessage(error, t('morphology.loadFailed'))
-    edges.value = null
+    if (isMissingFormEdges(error)) {
+      edges.value = EMPTY_EDGES
+    } else {
+      loadError.value = apiErrorMessage(error, t('morphology.loadFailed'))
+      edges.value = null
+    }
   } finally {
     if (request === edgesRequest) loading.value = false
   }

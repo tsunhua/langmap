@@ -138,6 +138,18 @@ describe('MorphologyPanel', () => {
     expect(wrapper.text()).toContain('Word forms')
   })
 
+  it('shows the empty state instead of an error when form edges are not available', async () => {
+    vi.mocked(getExpressionFormEdges).mockRejectedValue({
+      response: { status: 404, data: { error: 'NOT_FOUND' } },
+    })
+
+    const wrapper = mountPanel()
+    await flushPromises()
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('No word-form links yet')
+  })
+
   it('keeps the mark-as-form controls collapsed until opened', async () => {
     vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
     const wrapper = mountPanel()
