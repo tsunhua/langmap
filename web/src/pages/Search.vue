@@ -15,6 +15,7 @@ import { useLocalizationStore } from '@/stores/localization'
 import type { SearchFormOf } from '@/api/expressions'
 
 const route = useRoute()
+const router = useRouter()
 const { search } = useSearch()
 const { t } = useI18n()
 const localeParams = useLocaleParams()
@@ -32,9 +33,9 @@ interface SearchResult {
   form_of?: SearchFormOf[]
 }
 const query = ref((route.query.q as string) || '')
-const langs = ref<string[]>([])
+const langs = ref<string[]>(typeof route.query.lang === 'string' && route.query.lang ? [route.query.lang] : [])
 const results = ref<SearchResult[]>([])
-const nextCursor = ref<string | null>(null)
+const total = ref(0)
 const loading = ref(false)
 const loadingMore = ref(false)
 const searched = ref(false)
@@ -44,15 +45,24 @@ const loadMoreError = ref('')
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let searchRequest = 0
 
+function syncUrl() {
+  const params: Record<string, string> = {}
+  const q = query.value.trim()
+  if (q) params.q = q
+  if (langs.value[0]) params.lang = langs.value[0]
+  router.replace({ query: params })
+}
+
 async function doSearch() {
   if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null }
   if (!query.value.trim()) {
     searchRequest += 1
     results.value = []
-    nextCursor.value = null
+    total.value = 0
     searched.value = false
     loadError.value = ''
     loadMoreError.value = ''
+    syncUrl()
     return
   }
   if (!langs.value[0]) {
@@ -69,12 +79,14 @@ async function doSearch() {
     const data = await search(requestedQuery, {
       lang: langs.value[0],
       limit: PAGE,
+      offset: 0,
       ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = data.items
-    nextCursor.value = data.next_cursor ?? null
+    total.value = data.total
     searched.value = true
+    syncUrl()
   } catch (e: unknown) {
     if (request !== searchRequest) return
     loadError.value = apiErrorMessage(e, t('search.loadFailed'))
@@ -84,21 +96,22 @@ async function doSearch() {
 }
 
 async function loadMore() {
-  if (loadingMore.value || !nextCursor.value) return
+  if (loadingMore.value || results.value.length >= total.value) return
   const request = searchRequest
   const requestedQuery = query.value.trim()
+  const offset = results.value.length
   loadingMore.value = true
   loadMoreError.value = ''
   try {
     const data = await search(requestedQuery, {
       lang: langs.value[0],
       limit: PAGE,
-      cursor: nextCursor.value,
+      offset,
       ...localeParams.value,
     })
     if (request !== searchRequest) return
     results.value = results.value.concat(data.items)
-    nextCursor.value = data.next_cursor ?? null
+    total.value = data.total
   } catch (e: unknown) {
     if (request !== searchRequest) return
     loadMoreError.value = apiErrorMessage(e, t('search.loadMoreFailed'))
@@ -114,7 +127,21 @@ watch(query, () => {
 })
 
 // Re-search immediately when language filter changes (only after a search has started).
-watch(langs, () => { if (searched.value || query.value) doSearch() })
+watch(langs, () => {
+  syncUrl()
+  if (searched.value || query.value) doSearch()
+})
+
+// Sync state back when the URL changes externally (back/forward, typed URL).
+watch(() => route.query, (next) => {
+  const urlQ = typeof next.q === 'string' ? next.q : ''
+  const urlLang = typeof next.lang === 'string' ? next.lang : ''
+  if (urlQ !== query.value) query.value = urlQ
+  if (urlLang !== langs.value[0]) {
+    langs.value = urlLang ? [urlLang] : []
+    doSearch()
+  }
+})
 
 // Re-search when UI locale changes.
 watch([() => localization.locale, () => localization.secondary], () => { if (searched.value) doSearch() })
@@ -139,7 +166,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="searched || loading" class="se-meta">
-      <span class="se-count">{{ t('search.prefixResults') }}</span>
+      <span class="se-count">{{ t('search.results', { count: total }) }}</span>
     </div>
 
     <LoadingSpinner v-if="loading" />
@@ -157,7 +184,7 @@ onUnmounted(() => {
           :show-language="true"
         />
       </div>
-      <Pagination :has-more="Boolean(nextCursor)" @load-more="loadMore" />
+      <Pagination :has-more="results.length < total" @load-more="loadMore" />
       <p v-if="loadingMore" class="se-more" role="status">{{ t('common.loading') }}</p>
       <p v-else-if="loadMoreError" class="se-more se-more-error" role="alert">{{ loadMoreError }}</p>
     </template>

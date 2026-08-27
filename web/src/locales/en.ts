@@ -36,6 +36,7 @@ export const en = {
     loadMoreFailed: 'Unable to load more results',
     hint: 'Tip: search currently matches expression text. Translation (semantic) search is coming later.',
     loadFailed: 'Search failed',
+    languageRequired: 'Select a language to search in',
   },
   expression: {
     imageAlt: 'Expression image',

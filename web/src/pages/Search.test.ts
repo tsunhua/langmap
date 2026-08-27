@@ -23,7 +23,7 @@ async function mountPage(query = '') {
       { path: '/mapping/:id', component: { template: '<p>Mapping</p>' } },
     ],
   })
-  await router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+  await router.push(query ? `/search?${query}` : '/search')
   await router.isReady()
   return mount(Search, { global: { plugins: [createPinia(), router] } })
 }
@@ -31,21 +31,18 @@ async function mountPage(query = '') {
 describe('Search page', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('searches, displays current lang_code, and sends the selected sort', async () => {
+  it('searches with q/offset and shows the selected language', async () => {
     vi.mocked(api.get).mockImplementation((path: string, config?: { params?: Record<string, unknown> }) => {
       if (path === '/language-registry/languages') return Promise.resolve(page([]))
       if (path === '/expressions/search') return Promise.resolve(page([expression('eng:first', 'First')]))
       throw new Error(`unexpected ${path} ${JSON.stringify(config)}`)
     })
-    const wrapper = await mountPage('first')
+    const wrapper = await mountPage('q=first&lang=eng')
     await flushPromises()
 
     expect(wrapper.get('a[href="/mapping/eng:first"]').text()).toContain('eng')
-    await wrapper.get('.se-sort button:nth-child(2)').trigger('click')
-    await flushPromises()
-
     expect(api.get).toHaveBeenLastCalledWith('/expressions/search', {
-      params: { q: 'first', lang_code: undefined, sort: 'new', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
+      params: { q: 'first', lang_code: 'eng', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
     })
   })
 
@@ -55,7 +52,7 @@ describe('Search page', () => {
       if (path === '/language-registry/languages') return Promise.resolve(page([]))
       return new Promise((resolve) => pending.set(String(config?.params?.q), resolve))
     })
-    const wrapper = await mountPage()
+    const wrapper = await mountPage('lang=eng')
     const input = wrapper.get('.search-input')
 
     await input.setValue('old')
@@ -77,7 +74,7 @@ describe('Search page', () => {
       if (config?.params?.offset === 0) return Promise.resolve(page([expression('eng:first', 'First')], 2))
       return Promise.reject({ response: { data: { message: 'More results unavailable' } } })
     })
-    const wrapper = await mountPage('first')
+    const wrapper = await mountPage('q=first&lang=eng')
     await flushPromises()
 
     await wrapper.get('.pag button').trigger('click')
@@ -102,7 +99,7 @@ describe('Search page', () => {
       }
       throw new Error(`unexpected ${path}`)
     })
-    const wrapper = await mountPage('gatas')
+    const wrapper = await mountPage('q=gatas&lang=spa')
     await flushPromises()
     expect(wrapper.get('.ex-form').text()).toBe('plural ← gato')
   })

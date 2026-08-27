@@ -5,16 +5,16 @@ export function useSearch() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function search(prefix: string, params: { lang: string; limit?: number; cursor?: string; ui_locale?: string; secondary_ui_locale?: string } ) {
+  async function search(q: string, params: { lang?: string; limit?: number; offset?: number; ui_locale?: string; secondary_ui_locale?: string } = {}) {
     loading.value = true
     error.value = null
     try {
       const { data } = await api.get('/expressions/search', {
         params: {
-          prefix,
-          lang_code: params.lang,
+          q,
+          ...(params.lang ? { lang_code: params.lang } : {}),
           limit: params.limit,
-          ...(params.cursor ? { cursor: params.cursor } : {}),
+          offset: params.offset,
           ...(params.ui_locale ? { ui_locale: params.ui_locale } : {}),
           ...(params.secondary_ui_locale ? { secondary_ui_locale: params.secondary_ui_locale } : {}),
         },
