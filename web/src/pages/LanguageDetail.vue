@@ -27,12 +27,12 @@ const localeParams = useLocaleParams()
 const lang = ref<LanguageDetailData | null>(null)
 const exprs = ref<LanguageExpressionSummary[]>([])
 const searchQuery = ref('')
-const sortBy = ref<'new' | 'alpha'>('alpha')
+const sortBy = ref<'hot' | 'new' | 'alpha'>('hot')
 const selectedLocaleCode = ref('')
 const detailLoading = ref(false)
 const expressionsLoading = ref(false)
 const loadingMore = ref(false)
-const nextCursor = ref<string | null>(null)
+const exprTotal = ref(0)
 const loadError = ref('')
 const loadMoreError = ref('')
 const detailRequest = useLatestRequest()
@@ -121,7 +121,7 @@ function clearUnknownLocale(locale: string) {
 }
 
 async function loadExpressions(append = false) {
-  if (!code.value || (append && (loadingMore.value || !nextCursor.value))) return
+  if (!code.value || (append && (loadingMore.value || exprs.value.length >= exprTotal.value))) return
   const request = append ? expressionsRequest.current() : expressionsRequest.begin()
   if (append) {
     loadingMore.value = true
@@ -133,16 +133,16 @@ async function loadExpressions(append = false) {
   }
   try {
     const page = await expressions(code.value, {
-      prefix: searchQuery.value.trim(),
+      q: searchQuery.value.trim(),
       locale: selectedLocaleCode.value,
       sort: sortBy.value,
       limit: PAGE,
-      cursor: append ? nextCursor.value ?? undefined : undefined,
+      offset: append ? exprs.value.length : 0,
       ...localeParams.value,
     })
     if (!expressionsRequest.isCurrent(request)) return
     exprs.value = append ? [...exprs.value, ...page.items] : page.items
-    nextCursor.value = page.next_cursor ?? null
+    exprTotal.value = page.total ?? 0
   } catch (cause: unknown) {
     if (!expressionsRequest.isCurrent(request)) return
     if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
@@ -161,7 +161,7 @@ async function loadDetail(keepContent = false) {
   if (!keepContent) {
     lang.value = null
     exprs.value = []
-    nextCursor.value = null
+    exprTotal.value = 0
   }
   detailLoading.value = true
   loadError.value = ''
@@ -181,7 +181,7 @@ async function loadDetail(keepContent = false) {
   }
 }
 
-function changeSort(sort: 'new' | 'alpha') {
+function changeSort(sort: 'hot' | 'new' | 'alpha') {
   if (sort === sortBy.value) return
   sortBy.value = sort
   void loadExpressions()
@@ -251,6 +251,7 @@ onUnmounted(() => {
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
       <div class="ld-sort" role="group" :aria-label="t('languageDetail.expressions')">
+        <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
         <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
         <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">{{ t('languageDetail.alphabetical') }}</button>
       </div>
@@ -262,7 +263,7 @@ onUnmounted(() => {
       <div class="ld-list">
         <ExpressionRow v-for="expr in exprs" :key="expr.id" v-bind="expr" :show-language="false" />
       </div>
-      <Pagination :has-more="Boolean(nextCursor)" @load-more="loadExpressions(true)" />
+      <Pagination :has-more="exprs.length < exprTotal" @load-more="loadExpressions(true)" />
       <p v-if="loadingMore" class="ld-more" role="status">{{ t('common.loading') }}</p>
       <p v-else-if="loadMoreError" class="ld-more ld-error" role="alert">{{ loadMoreError }}</p>
     </template>

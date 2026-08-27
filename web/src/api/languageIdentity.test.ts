@@ -1,11 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import api from './client'
 import { listContentLanguages, listLanguageExpressions, listLanguageLocales, listLanguages } from './languageIdentity'
 
 vi.mock('./client', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 
 describe('language identity API', () => {
-  beforeEach(() => vi.mocked(api.get).mockResolvedValue({ data: { data: { items: [], total: 0, skip: 0, limit: 20, hasMore: false } } }))
+  beforeEach(() => {
+    vi.stubEnv('DEV', false)
+    vi.mocked(api.get).mockResolvedValue({ data: { data: { items: [], total: 0, skip: 0, limit: 20, hasMore: false } } })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
 
   it('queries ISO registries and language locales through v2 contracts', async () => {
     await listLanguages('nan')

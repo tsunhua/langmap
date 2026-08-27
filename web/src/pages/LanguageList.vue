@@ -22,8 +22,8 @@ const localeParams = useLocaleParams()
 
 const languages = ref<ContentLanguage[]>([])
 const searchQuery = ref('')
-const sortBy = ref<'new' | 'alpha'>('alpha')
-const nextCursor = ref<string | null>(null)
+const sortBy = ref<'count' | 'alpha'>('count')
+const total = ref(0)
 const loading = ref(false)
 const loadingMore = ref(false)
 const loadError = ref('')
@@ -34,7 +34,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | undefined
 const totalExpressions = computed(() => languages.value.reduce((sum, language) => sum + language.expression_count, 0))
 
 async function loadLanguages(append = false) {
-  if (append && (loadingMore.value || !nextCursor.value)) return
+  if (append && (loadingMore.value || languages.value.length >= total.value)) return
   const request = append ? languagesRequest.current() : languagesRequest.begin()
   if (append) {
     loadingMore.value = true
@@ -50,12 +50,12 @@ async function loadLanguages(append = false) {
       q: searchQuery.value.trim(),
       sort: sortBy.value,
       limit: PAGE,
-      cursor: append ? nextCursor.value ?? undefined : undefined,
+      offset: append ? languages.value.length : 0,
       ...localeParams.value,
     })
     if (!languagesRequest.isCurrent(request)) return
     languages.value = append ? [...languages.value, ...page.items] : page.items
-    nextCursor.value = page.next_cursor ?? null
+    total.value = page.total ?? 0
   } catch (cause: unknown) {
     if (!languagesRequest.isCurrent(request)) return
     if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
@@ -100,7 +100,7 @@ onUnmounted(() => {
     <div class="lg-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languagesPage.searchPlaceholder')" style="flex: 1;" />
       <div class="lg-sort" role="group" :aria-label="t('languagesPage.title')">
-        <button :class="{ on: sortBy === 'new' }" @click="sortBy = 'new'">{{ t('languagesPage.sortNewest') }}</button>
+        <button :class="{ on: sortBy === 'count' }" @click="sortBy = 'count'">{{ t('languagesPage.sortCount') }}</button>
         <button :class="{ on: sortBy === 'alpha' }" @click="sortBy = 'alpha'">{{ t('languagesPage.sortAlphabetical') }}</button>
       </div>
     </div>
@@ -112,7 +112,7 @@ onUnmounted(() => {
       <div class="lg-list">
         <LanguageCard v-for="lang in languages" :key="lang.code" v-bind="lang" />
       </div>
-      <Pagination :has-more="Boolean(nextCursor)" @load-more="loadLanguages(true)" />
+      <Pagination :has-more="languages.length < total" @load-more="loadLanguages(true)" />
       <p v-if="loadingMore" class="lg-more" role="status">{{ t('common.loading') }}</p>
       <p v-else-if="loadMoreError" class="lg-more lg-more-error" role="alert">{{ loadMoreError }}</p>
     </template>
