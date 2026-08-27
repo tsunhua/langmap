@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { markContentChanged } from '@/utils/contentRevision'
 
 const api = axios.create({
   baseURL: '/api/v2',
@@ -13,7 +14,17 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const method = res.config.method?.toLowerCase()
+    const url = res.config.url ?? ''
+    if (method && method !== 'get' && (
+      url === '/contributions' ||
+      url.startsWith('/expressions') ||
+      url.startsWith('/language-locales') ||
+      url.includes('/mappings')
+    )) markContentChanged()
+    return res
+  },
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token')

@@ -31,12 +31,12 @@ describe('language identity API', () => {
 
     await listContentLanguages({ q: 'min', sort: 'alpha', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal)
     expect(api.get).toHaveBeenLastCalledWith('/languages', {
-      params: { q: 'min', sort: 'alpha', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal,
+      params: { q: 'min', sort: 'alpha', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN', _content_revision: 0 }, signal,
     })
 
     await listLanguageExpressions('nan', { q: '食', sort: 'new', locale: 'nan-Hant-CN_Quanzhou_Nanan', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal)
     expect(api.get).toHaveBeenLastCalledWith('/languages/nan/expressions', {
-      params: { q: '食', sort: 'new', locale: 'nan-Hant-CN_Quanzhou_Nanan', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN' }, signal,
+      params: { q: '食', sort: 'new', locale: 'nan-Hant-CN_Quanzhou_Nanan', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN', _content_revision: 0 }, signal,
     })
   })
 })

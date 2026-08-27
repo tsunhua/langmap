@@ -14,6 +14,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
+import { contentRevision } from '@/utils/contentRevision'
 
 const PAGE = 20
 const { t } = useI18n()
@@ -200,6 +201,7 @@ watch(selectedLocaleCode, (code) => { syncSelects(code) })
 
 watch(code, () => { void loadDetail() }, { immediate: true })
 watch([() => localization.locale, () => localization.secondary], () => { void loadDetail() })
+watch(contentRevision, () => { void loadDetail(true) })
 watch(() => route.query.locale, () => {
   if (!lang.value) return
   const requestedLocale = routeLocale()

@@ -29,9 +29,9 @@ const EXPRESSION_CACHE: CachePolicy = {
 };
 
 const CONTENT_CACHE: CachePolicy = {
-  browserSeconds: 300,
-  edgeSeconds: 1800,
-  staleSeconds: 3600,
+  browserSeconds: 30,
+  edgeSeconds: 60,
+  staleSeconds: 0,
   authIndependent: true,
 };
 

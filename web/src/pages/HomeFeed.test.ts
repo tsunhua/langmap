@@ -10,7 +10,7 @@ vi.mock('@/api/client', () => ({ default: { get: vi.fn() } }))
 // /feed/hot rows carry an edge id and both endpoint expression ids (a_id/b_id);
 // the card anchors on a_id. /feed/new 'mapping' rows likewise anchor on a_id.
 const hotRow = { id: 'edge-hot', a_id: 'nan:a-hot', a_text: '食', a_lang: 'nan', b_text: 'eat', b_lang: 'eng', score: 8 }
-const newRow = { id: 'edge-new', type: 'mapping', a_id: 'nan:a-new', left_text: '食', left_lang: 'nan', right_text: 'eat', right_lang: 'eng' }
+const newRow = { id: 'edge-new', type: 'mapping', a_id: 'nan:a-new', a_text: '食', a_lang: 'nan', b_text: 'eat', b_lang: 'eng' }
 
 async function mountPage() {
   const router = createRouter({
@@ -38,6 +38,8 @@ describe('HomeFeed', () => {
 
     expect(wrapper.find('a[href="/mapping/nan:a-hot"]').exists()).toBe(true)
     expect(wrapper.find('a[href="/mapping/nan:a-new"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('食')
+    expect(wrapper.text()).toContain('eat')
 
     await wrapper.get('button[aria-pressed="false"]:nth-child(2)').trigger('click')
     expect(wrapper.find('a[href="/mapping/nan:a-new"]').exists()).toBe(false)

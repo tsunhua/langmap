@@ -10,10 +10,10 @@ describe('API cache policy', () => {
     expect(getCachePolicy('https://langmap.io/api/v2/expressions/example/mappings')?.edgeSeconds).toBe(600);
   });
 
-  it('uses the longest content TTL for language and localization reads', () => {
-    expect(getCachePolicy('https://langmap.io/api/v2/languages?ui_locale=cmn-Hant-TW')?.browserSeconds).toBe(300);
-    expect(getCachePolicy('https://langmap.io/api/v2/localization/projects/langmap-web/messages?primary=cmn-Hant-TW')?.edgeSeconds).toBe(1800);
-    expect(getCachePolicy('https://langmap.io/api/v2/language-locales')?.staleSeconds).toBe(3600);
+  it('uses short content TTLs for language and localization reads', () => {
+    expect(getCachePolicy('https://langmap.io/api/v2/languages?ui_locale=cmn-Hant-TW')?.browserSeconds).toBe(30);
+    expect(getCachePolicy('https://langmap.io/api/v2/localization/projects/langmap-web/messages?primary=cmn-Hant-TW')?.edgeSeconds).toBe(60);
+    expect(getCachePolicy('https://langmap.io/api/v2/language-locales')?.staleSeconds).toBe(0);
   });
 
   it('does not cache user-specific endpoints', () => {
@@ -34,7 +34,9 @@ describe('API cache policy', () => {
     app.get('/api/v2/language-locales/missing', (c) => c.notFound());
 
     const success = await app.request('https://langmap.io/api/v2/languages');
-    expect(success.headers.get('cache-control')).toContain('max-age=300');
+    expect(success.headers.get('cache-control')).toContain('max-age=30');
+    expect(success.headers.get('cache-control')).toContain('s-maxage=60');
+    expect(success.headers.get('cache-control')).not.toContain('stale-while-revalidate');
 
     const missing = await app.request('https://langmap.io/api/v2/language-locales/missing');
     expect(missing.headers.get('cache-control')).toBeNull();

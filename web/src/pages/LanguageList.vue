@@ -13,6 +13,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalizationStore } from '@/stores/localization'
 import { useLocaleParams } from '@/composables/useLocaleParams'
+import { contentRevision } from '@/utils/contentRevision'
 
 const PAGE = 20
 const { list } = useLanguages()
@@ -74,6 +75,8 @@ watch(searchQuery, () => {
 })
 
 watch(sortBy, () => { void loadLanguages() })
+
+watch(contentRevision, () => { void loadLanguages() })
 
 watch([() => localization.locale, () => localization.secondary], () => { void loadLanguages() })
 

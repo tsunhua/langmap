@@ -8,10 +8,10 @@ defineProps<{
   a_id?: string
   b_id?: string
   type?: string
-  left_text: string
-  left_lang: string
-  right_text?: string
-  right_lang?: string
+  a_text: string
+  a_lang: string
+  b_text?: string
+  b_lang?: string
   author?: string
   created_at?: string
 }>()
@@ -37,14 +37,14 @@ function timeAgo(dateStr?: string): string {
     </span>
     <span class="new-body">
       <span class="new-pair">
-        <span class="tx">{{ left_text }}</span>
-        <template v-if="type !== 'expression' && right_text">
+        <span class="tx">{{ a_text }}</span>
+        <template v-if="type !== 'expression' && b_text">
           <span class="arrow"><ArrowLeftRight :size="12" aria-hidden="true" /></span>
-          <span class="tx">{{ right_text }}</span>
+          <span class="tx">{{ b_text }}</span>
         </template>
       </span>
       <span class="lang-badge">
-        {{ type === 'expression' || !right_lang ? left_lang : `${left_lang} · ${right_lang}` }}
+        {{ type === 'expression' || !b_lang ? a_lang : `${a_lang} · ${b_lang}` }}
       </span>
     </span>
     <span class="new-meta">

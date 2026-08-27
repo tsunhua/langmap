@@ -1,4 +1,5 @@
 import api from './client'
+import { contentRevision } from '@/utils/contentRevision'
 
 export interface Page<T> { items: T[]; next_cursor?: string | null; has_more?: boolean; total?: number; skip?: number; limit?: number; hasMore?: boolean }
 
@@ -140,15 +141,15 @@ export async function listContentLanguages(filters: ContentLanguagePageQuery = {
     limit: filters.limit ?? 20,
     offset: filters.offset ?? 0,
     ui_locale: filters.ui_locale ?? '',
+    _content_revision: contentRevision.value,
   }
   if (filters.secondary_ui_locale) params.secondary_ui_locale = filters.secondary_ui_locale
-  if (import.meta.env.DEV) params._local_refresh = Date.now()
   const { data } = await api.get('/languages', { params, signal })
   return page<ContentLanguage>(data)
 }
 
 export async function getLanguageDetail(code: string | number, hints: LocaleHints = {}, locale = '', signal?: AbortSignal): Promise<LanguageDetail> {
-  const params: Record<string, string> = { ...hintParams(hints) }
+  const params: Record<string, string | number> = { ...hintParams(hints), _content_revision: contentRevision.value }
   if (locale) params.locale = locale
   const { data } = await api.get(`/languages/${encodeURIComponent(String(code))}`, { params, signal })
   return (data as { data: LanguageDetail }).data
@@ -162,6 +163,7 @@ export async function listLanguageExpressions(code: string | number, filters: La
     limit: filters.limit ?? 20,
     offset: filters.offset ?? 0,
     ui_locale: filters.ui_locale ?? '',
+    _content_revision: contentRevision.value,
   }
   if (filters.secondary_ui_locale) params.secondary_ui_locale = filters.secondary_ui_locale
   const { data } = await api.get(`/languages/${encodeURIComponent(String(code))}/expressions`, { params, signal })
