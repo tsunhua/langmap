@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${LANGMAP_PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 BUNDLE_SQL="$PROJECT_ROOT/scripts/i18n/artifacts/system-ui/system-ui.sql"
+EDGE_SQL_DIR="$PROJECT_ROOT/scripts/i18n/artifacts/system-ui"
 
 usage() {
   echo "Usage: $0 --local | --remote" >&2
@@ -37,6 +38,10 @@ echo "匯入 local bundle..."
   cd "$PROJECT_ROOT/backend"
   npx wrangler d1 execute langmap-v2 \
     --local --file "$BUNDLE_SQL"
+  for edge_sql in "$EDGE_SQL_DIR"/system-ui-edges-*.sql; do
+    npx wrangler d1 execute langmap-v2 \
+      --local --file "$edge_sql"
+  done
 )
 
 echo "managed system UI bundle 匯入完成。"

@@ -296,7 +296,7 @@ async function openSplitDialog() {
     splitEdges.value = (await getExpressionEdges(id.value)).items
     showSplitDialog.value = true
   } catch (error: any) {
-    splitError.value = error.response?.data?.error || 'Unable to load mappings for split'
+    splitError.value = error.response?.data?.error || t('mappingDetail.splitLoadFailed')
     showSplitDialog.value = true
   }
 }
@@ -309,7 +309,7 @@ async function confirmSplit(edgeIds: string[]) {
     showSplitDialog.value = false
     await router.push(`/mapping/${encodeURIComponent(result.target_expression_id)}`)
   } catch (error: any) {
-    splitError.value = error.response?.data?.error || 'Unable to split expression'
+    splitError.value = error.response?.data?.error || t('mappingDetail.splitFailed')
   } finally {
     splitSubmitting.value = false
   }
@@ -388,7 +388,7 @@ const coords = computed(() => {
         <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
       <button v-if="isAdmin" class="btn btn-sm" type="button" @click="openSplitDialog">
-        <Split :size="14" aria-hidden="true" /> Split expression
+        <Split :size="14" aria-hidden="true" /> {{ t('mappingDetail.splitExpression') }}
       </button>
     </div>
 

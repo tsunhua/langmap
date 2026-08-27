@@ -11,62 +11,62 @@
   ],
   "counts": {
     "locale_count": 5,
-    "message_count": 397,
-    "translation_count": 1560
+    "message_count": 409,
+    "translation_count": 1636
   },
   "inputs": {
     "source_catalog": {
       "path": "/Users/lim/Documents/Code/tsunhua/langmap/web/src/locales/en.ts",
-      "sha256": "b51eb2f461903ade37da787ae771badcbcdb145a9707631c7e536fcabc1ae34a"
+      "sha256": "9d4a2b0141497c6be0dcd51ab1ca99a5a15e4c06728419b5653158e04e5fbbc1"
     },
     "locales": {
       "cmn-Hans-CN": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hans-CN.json",
-        "sha256": "3907f090eb691ad411c9542e91af3c36daac0d4c1dc8c23914d159910cf5d577"
+        "sha256": "663b2ae3d30dd5458f4137e33b9f794824a90f8afad37488af1fe3cb0b51311c"
       },
       "cmn-Hant-TW": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/cmn-Hant-TW.json",
-        "sha256": "61482177a51ddef539c11a4c7d169fe9086be441f76978eb9735b3f680bbd6ff"
+        "sha256": "08912566134815777d745ad06c0ee8b87a731bd8b1e863b6da50e9e59032ceea"
       },
       "spa-Latn-ES": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/spa-Latn-ES.json",
-        "sha256": "f142e265f73af21bcab5ef346475bc290d3d83dd84601d78b5607836843450e1"
+        "sha256": "a590e20c7bc6b66fe21032597b60dbde951cf52ad37a4b130b187d71d41edb6c"
       },
       "jpn-Jpan-JP": {
         "path": "/Users/lim/Documents/Code/tsunhua/langmap/scripts/i18n/jpn-Jpan-JP.json",
-        "sha256": "ee93a654ed16c0c8f127e7133c95764e7d02e3cedfb4221b14b2e7f1e6910ed1"
+        "sha256": "441825850faaceb621e4ab0650d01eb5adc39fbfea213a62f2ac9692aac278ae"
       }
     }
   },
   "artifacts": {
     "system_ui_sql": {
       "path": "system-ui.sql",
-      "sha256": "e210012ebb44f1327e6e33ea21b7c22c27e1c20c0e6c5024c2546afd09d3c14f"
+      "sha256": "70f71382c548a65a2a5b7e7e4e3ea17f3cfc1c67480d6dbbe3b580c4cf3a4847"
     },
     "system_ui_edges_sql": [
       {
         "path": "system-ui-edges-001.sql",
-        "sha256": "cc3261f8f9dd63db21146cfff32dc84b99890be371ea8aa4285be3228d44098d"
+        "sha256": "b2cfaa76e5695dffb452f153c0543f3f824d2ca68d483bff7666705b79cecd40"
       },
       {
         "path": "system-ui-edges-002.sql",
-        "sha256": "ec6bea2b8369558d37855f2146dd36378573004a5c5b0e653e3b082b6deccf0a"
+        "sha256": "a3d177286e309e5e3a70352bc84269bc01cce9ac4e12df08dd420d5eb09cd867"
       },
       {
         "path": "system-ui-edges-003.sql",
-        "sha256": "d2b2ff87291c03deb913e45be2dbc50b02837b5679c31d585259d1617057db8f"
+        "sha256": "b74635d0429bcdb9710c421b568efc1889698eee450a8d5521dd7eb585481675"
       },
       {
         "path": "system-ui-edges-004.sql",
-        "sha256": "a693822e28d97bc51f5a4ee9d1743d6e98ec56ccd5ea6d332d3d9fa6f375e894"
+        "sha256": "aec115f185d728a0d48ec218120c6d636035f66ed92804516da1bb0e3545180c"
       },
       {
         "path": "system-ui-edges-005.sql",
-        "sha256": "5d137c2e455ac53bec6738b6c4593fe70b54f379aa4b90362dd78180d711c8f0"
+        "sha256": "a8816b9e4b79de40ad740f2aaccea29e7da03af0aeb64c6978c074add62c1dd9"
       },
       {
         "path": "system-ui-edges-006.sql",
-        "sha256": "7b67738b74d96c384189ee559344cc4596e8a404fd885e32e7fa530b05c59b7f"
+        "sha256": "031e97efee719930af84196ff64f4a097905b2bb018da7e3e1c0f3cb93f459ac"
       }
     ]
   }

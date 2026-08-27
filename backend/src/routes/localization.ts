@@ -4,6 +4,8 @@ import { requireAuth } from '../middleware/auth';
 import { badRequest, created, forbidden, notFound, success } from '../utils/response';
 import { parseIntegerId, serializeIntegerId } from '../utils/ids';
 import { createEdge, MappingError } from '../services/mappings';
+import { parseLanguageLocaleCode } from '../services/languageIdentity';
+import { resolveBundle } from '../services/localizationDomain';
 import type { Bindings, Variables } from '../types';
 
 const localization = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -11,7 +13,11 @@ const localeRows = (db: D1Database, projectId: string) => db.prepare("SELECT ll.
 
 localization.get('/projects/:projectId/locales', async (c) => success(c, await localeRows(c.env.DB,c.req.param('projectId')).then((x)=>x.results)));
 localization.get('/projects/:projectId/messages', async (c) => {
-  const rows=await c.env.DB.prepare("SELECT message_key AS key,source_text AS text,'source' AS resolved_from FROM ui_messages WHERE project_id=? AND status='active' ORDER BY message_key").bind(c.req.param('projectId')).all(); return success(c,{messages:rows.results});
+  const primary = c.req.query('primary')?.trim() ?? '';
+  const secondary = c.req.query('secondary')?.trim() ?? '';
+  if (primary && !parseLanguageLocaleCode(primary)) return badRequest(c, 'INVALID_LANGUAGE_LOCALE_CODE');
+  if (secondary && !parseLanguageLocaleCode(secondary)) return badRequest(c, 'INVALID_LANGUAGE_LOCALE_CODE');
+  return success(c, { messages: await resolveBundle(c.env.DB, c.req.param('projectId'), primary || undefined, secondary || undefined) });
 });
 localization.post('/projects/:projectId/locales', requireAuth, async (c) => {
   const body=await c.req.json<Record<string,unknown>>().catch(()=>({}));const code=typeof body.language_locale_code==='string'?body.language_locale_code.trim():'';if(!code)return badRequest(c,'INVALID_LANGUAGE_LOCALE_CODE');const locale=await c.env.DB.prepare('SELECT id FROM language_locales WHERE code=?').bind(code).first<{id:number}>();if(!locale)return badRequest(c,'INVALID_LANGUAGE_LOCALE_CODE');await c.env.DB.prepare("INSERT OR IGNORE INTO ui_locales(project_id,locale_id,status,created_by) VALUES(?,?,'draft',?)").bind(c.req.param('projectId'),locale.id,c.get('user')!.id).run();const rows=await localeRows(c.env.DB,c.req.param('projectId'));const row=rows.results.find((item:any)=>item.language_locale_code===code);return created(c,row);

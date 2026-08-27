@@ -33,391 +33,391 @@ WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
   ('cmn-Hans-CN', 'cmn', 'common.submit', '提交'),
   ('cmn-Hans-CN', 'cmn', 'components.actualSize', '实际尺寸 100%'),
   ('cmn-Hans-CN', 'cmn', 'components.anonymous', '匿名'),
-  ('cmn-Hans-CN', 'cmn', 'components.childNodes', '{count} 个子节点；点击收起')
+  ('cmn-Hans-CN', 'cmn', 'components.avoidOverlap', '排列以避免重叠')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'components.childNodes', '{count} 个子节点；点击收起'),
   ('cmn-Hans-CN', 'cmn', 'components.cliqueNote', '每条边皆为可投票的独立直接映射；低分映射自动收起'),
   ('cmn-Hans-CN', 'cmn', 'components.cliqueTitle', '待建立的映射图谱'),
   ('cmn-Hans-CN', 'cmn', 'components.closeInfoPanel', '关闭信息面板'),
-  ('cmn-Hans-CN', 'cmn', 'components.collapse', '收起'),
-  ('cmn-Hans-CN', 'cmn', 'components.collapseBranch', '收起子分支')
+  ('cmn-Hans-CN', 'cmn', 'components.collapse', '收起')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'components.collapseBranch', '收起子分支'),
   ('cmn-Hans-CN', 'cmn', 'components.collapseToFirst', '收起至第一层'),
+  ('cmn-Hans-CN', 'cmn', 'components.collapseToolbar', '收起图谱工具栏'),
   ('cmn-Hans-CN', 'cmn', 'components.daysAgo', '{count} 天前'),
-  ('cmn-Hans-CN', 'cmn', 'components.depth', '深度 {depth}'),
-  ('cmn-Hans-CN', 'cmn', 'components.directMappingList', '直接映射词句'),
-  ('cmn-Hans-CN', 'cmn', 'components.downvote', '踩')
+  ('cmn-Hans-CN', 'cmn', 'components.depth', '深度 {depth}')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'components.directMappingList', '直接映射词句'),
+  ('cmn-Hans-CN', 'cmn', 'components.downvote', '踩'),
   ('cmn-Hans-CN', 'cmn', 'components.edgeCount', '{count} 条边'),
   ('cmn-Hans-CN', 'cmn', 'components.empty', '暂无数据'),
-  ('cmn-Hans-CN', 'cmn', 'components.evidence', '证据'),
-  ('cmn-Hans-CN', 'cmn', 'components.exitFullscreen', '退出全屏'),
-  ('cmn-Hans-CN', 'cmn', 'components.expand', '展开')
+  ('cmn-Hans-CN', 'cmn', 'components.evidence', '证据')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'components.exitFullscreen', '退出全屏'),
+  ('cmn-Hans-CN', 'cmn', 'components.expand', '展开'),
   ('cmn-Hans-CN', 'cmn', 'components.expandAll', '全部展开'),
   ('cmn-Hans-CN', 'cmn', 'components.expandBranch', '展开子分支'),
+  ('cmn-Hans-CN', 'cmn', 'components.expandToolbar', '展开图谱工具栏')
+) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
+WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
   ('cmn-Hans-CN', 'cmn', 'components.expression', '词句'),
   ('cmn-Hans-CN', 'cmn', 'components.filterLanguages', '筛选语言…'),
-  ('cmn-Hans-CN', 'cmn', 'components.fullscreen', '全屏')
+  ('cmn-Hans-CN', 'cmn', 'components.fullscreen', '全屏'),
+  ('cmn-Hans-CN', 'cmn', 'components.graphLabel', '词句映射图谱'),
+  ('cmn-Hans-CN', 'cmn', 'components.graphLoading', '加载图谱…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.graphLabel', '词句映射图谱'),
-  ('cmn-Hans-CN', 'cmn', 'components.graphLoading', '加载图谱…'),
   ('cmn-Hans-CN', 'cmn', 'components.graphMode', '图谱模式'),
   ('cmn-Hans-CN', 'cmn', 'components.graphStats', '{nodes} 个映射节点 · {edges} 个关系'),
-  ('cmn-Hans-CN', 'cmn', 'components.graphToolbar', '图谱工具栏')
+  ('cmn-Hans-CN', 'cmn', 'components.graphToolbar', '图谱工具栏'),
+  ('cmn-Hans-CN', 'cmn', 'components.hierarchyList', '映射层级列表'),
+  ('cmn-Hans-CN', 'cmn', 'components.hops', '跳数')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.hierarchyList', '映射层级列表'),
-  ('cmn-Hans-CN', 'cmn', 'components.hops', '跳数'),
   ('cmn-Hans-CN', 'cmn', 'components.hoursAgo', '{count} 小时前'),
   ('cmn-Hans-CN', 'cmn', 'components.justNow', '刚刚'),
-  ('cmn-Hans-CN', 'cmn', 'components.languageLoadFailed', '无法加载语言')
+  ('cmn-Hans-CN', 'cmn', 'components.languageLoadFailed', '无法加载语言'),
+  ('cmn-Hans-CN', 'cmn', 'components.listMode', '列表模式'),
+  ('cmn-Hans-CN', 'cmn', 'components.loadMore', '加载更多')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.listMode', '列表模式'),
-  ('cmn-Hans-CN', 'cmn', 'components.loadMore', '加载更多'),
   ('cmn-Hans-CN', 'cmn', 'components.loadingRelated', '加载相关词句中'),
   ('cmn-Hans-CN', 'cmn', 'components.locale', '语言环境'),
-  ('cmn-Hans-CN', 'cmn', 'components.mapping', '映射')
+  ('cmn-Hans-CN', 'cmn', 'components.mapping', '映射'),
+  ('cmn-Hans-CN', 'cmn', 'components.mappingScore', '映射评分'),
+  ('cmn-Hans-CN', 'cmn', 'components.minutesAgo', '{count} 分钟前')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.mappingScore', '映射评分'),
-  ('cmn-Hans-CN', 'cmn', 'components.minutesAgo', '{count} 分钟前'),
   ('cmn-Hans-CN', 'cmn', 'components.moreActions', '更多操作'),
   ('cmn-Hans-CN', 'cmn', 'components.moreMappings', '完整图谱中还有 {count} 个映射'),
-  ('cmn-Hans-CN', 'cmn', 'components.noDirectMappings', '暂无直接映射')
+  ('cmn-Hans-CN', 'cmn', 'components.noDirectMappings', '暂无直接映射'),
+  ('cmn-Hans-CN', 'cmn', 'components.noExpressions', '找不到相符词句'),
+  ('cmn-Hans-CN', 'cmn', 'components.nodeCount', '{count} 个节点')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.noExpressions', '找不到相符词句'),
-  ('cmn-Hans-CN', 'cmn', 'components.nodeCount', '{count} 个节点'),
   ('cmn-Hans-CN', 'cmn', 'components.nodeInfo', '节点信息'),
   ('cmn-Hans-CN', 'cmn', 'components.otherRelations', '其他关系'),
-  ('cmn-Hans-CN', 'cmn', 'components.reading', '读音')
+  ('cmn-Hans-CN', 'cmn', 'components.reading', '读音'),
+  ('cmn-Hans-CN', 'cmn', 'components.relatedExpressions', '相关词句'),
+  ('cmn-Hans-CN', 'cmn', 'components.relationCount', '{count} 个关系')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.relatedExpressions', '相关词句'),
-  ('cmn-Hans-CN', 'cmn', 'components.relationCount', '{count} 个关系'),
   ('cmn-Hans-CN', 'cmn', 'components.removeLanguage', '移除 {code}'),
   ('cmn-Hans-CN', 'cmn', 'components.resetLayout', '重置布局'),
-  ('cmn-Hans-CN', 'cmn', 'components.rootNode', '根节点')
+  ('cmn-Hans-CN', 'cmn', 'components.rootNode', '根节点'),
+  ('cmn-Hans-CN', 'cmn', 'components.search', '搜索'),
+  ('cmn-Hans-CN', 'cmn', 'components.searchExpressions', '搜索词句…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.search', '搜索'),
-  ('cmn-Hans-CN', 'cmn', 'components.searchExpressions', '搜索词句…'),
   ('cmn-Hans-CN', 'cmn', 'components.searching', '搜索中…'),
   ('cmn-Hans-CN', 'cmn', 'components.selectNodeHint', '在图谱中选取节点以查看详情'),
-  ('cmn-Hans-CN', 'cmn', 'components.sourcePath', '来源路径')
+  ('cmn-Hans-CN', 'cmn', 'components.sourcePath', '来源路径'),
+  ('cmn-Hans-CN', 'cmn', 'components.upvote', '赞'),
+  ('cmn-Hans-CN', 'cmn', 'components.viewExpression', '查看词句详情')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'components.upvote', '赞'),
-  ('cmn-Hans-CN', 'cmn', 'components.viewExpression', '查看词句详情'),
   ('cmn-Hans-CN', 'cmn', 'components.voteFailed', '投票失败，已撤销'),
   ('cmn-Hans-CN', 'cmn', 'components.zoomIn', '放大'),
-  ('cmn-Hans-CN', 'cmn', 'components.zoomOut', '缩小')
+  ('cmn-Hans-CN', 'cmn', 'components.zoomOut', '缩小'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.addExpression', '+ 添加词句'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.chooseImage', '选择图片（最大 480px／100KB）')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'contribute.addExpression', '+ 添加词句'),
   ('cmn-Hans-CN', 'cmn', 'contribute.completeGraph', '完全图'),
   ('cmn-Hans-CN', 'cmn', 'contribute.delete', '删除'),
   ('cmn-Hans-CN', 'cmn', 'contribute.directMappingCount', '{count} 个直接映射'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.expression', '词句')
+  ('cmn-Hans-CN', 'cmn', 'contribute.expression', '词句'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.expressionCount', '{count} 个词句')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'contribute.expressionCount', '{count} 个词句'),
   ('cmn-Hans-CN', 'cmn', 'contribute.expressionPlaceholder', '输入词句…'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.language', '语言'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.lead', '提交含义相同的词句。系统会在每对之间创建直接映射。复数、过去式、敬体等词形变化请到词句映射页，不要在这里提交。'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.locale', '语言环境')
+  ('cmn-Hans-CN', 'cmn', 'contribute.imageTooLarge', '压缩后的图片不得超过 100KB'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.imageUploadFailed', '无法上传图片'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.imageUploading', '上传中…'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.language', '语言')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'contribute.lead', '提交含义相同的词句。系统会在每对之间创建直接映射。复数、过去式、敬体等词形变化请到词句映射页，不要在这里提交。'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.locale', '语言环境'),
   ('cmn-Hans-CN', 'cmn', 'contribute.minRows', '至少需要 2 行，每行需填写语言和词句'),
   ('cmn-Hans-CN', 'cmn', 'contribute.submit', '提交'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.submitFailed', '提交失败'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.submitting', '提交中…'),
-  ('cmn-Hans-CN', 'cmn', 'contribute.tags', '标签')
+  ('cmn-Hans-CN', 'cmn', 'contribute.submitFailed', '提交失败')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'contribute.submitting', '提交中…'),
+  ('cmn-Hans-CN', 'cmn', 'contribute.tags', '标签'),
   ('cmn-Hans-CN', 'cmn', 'contribute.title', '批量提交'),
   ('cmn-Hans-CN', 'cmn', 'errors.home', '返回首页'),
-  ('cmn-Hans-CN', 'cmn', 'errors.loadFailed', '无法加载'),
-  ('cmn-Hans-CN', 'cmn', 'errors.pageMissing', '页面未找到'),
-  ('cmn-Hans-CN', 'cmn', 'expression.imageAlt', '词句图片')
+  ('cmn-Hans-CN', 'cmn', 'errors.loadFailed', '无法加载')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'errors.pageMissing', '页面未找到'),
+  ('cmn-Hans-CN', 'cmn', 'expression.imageAlt', '词句图片'),
   ('cmn-Hans-CN', 'cmn', 'feed.all', '全部'),
   ('cmn-Hans-CN', 'cmn', 'feed.contributeMapping', '提交映射 →'),
-  ('cmn-Hans-CN', 'cmn', 'feed.hot', '热门'),
-  ('cmn-Hans-CN', 'cmn', 'feed.mappingsAndExpressions', '映射 + 新词句'),
-  ('cmn-Hans-CN', 'cmn', 'feed.missing', '找不到所需内容？')
+  ('cmn-Hans-CN', 'cmn', 'feed.hot', '热门')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'feed.mappingsAndExpressions', '映射 + 新词句'),
+  ('cmn-Hans-CN', 'cmn', 'feed.missing', '找不到所需内容？'),
   ('cmn-Hans-CN', 'cmn', 'feed.newContributions', '新贡献'),
   ('cmn-Hans-CN', 'cmn', 'feed.newest', '最新'),
-  ('cmn-Hans-CN', 'cmn', 'feed.noActivity', '暂无动态'),
-  ('cmn-Hans-CN', 'cmn', 'feed.popularMappings', '热门映射'),
-  ('cmn-Hans-CN', 'cmn', 'feed.ratedThisWeek', '按评分 · 本周')
+  ('cmn-Hans-CN', 'cmn', 'feed.noActivity', '暂无动态')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'feed.popularMappings', '热门映射'),
+  ('cmn-Hans-CN', 'cmn', 'feed.ratedThisWeek', '按评分 · 本周'),
   ('cmn-Hans-CN', 'cmn', 'feed.subtitle', '语义图的最新脉动——热门映射和新贡献。'),
   ('cmn-Hans-CN', 'cmn', 'feed.title', '动态'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.addExpression', '新增词句'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.addSection', '新增章节'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.back', '手册列表')
+  ('cmn-Hans-CN', 'cmn', 'handbook.addExpression', '新增词句')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.addSection', '新增章节'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.back', '手册列表'),
   ('cmn-Hans-CN', 'cmn', 'handbook.chapter', '第 {number} 章'),
   ('cmn-Hans-CN', 'cmn', 'handbook.closeExpressionInfo', '关闭词句信息'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.collapsePicker', '收起'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.deleteSection', '删除章节'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.edit', '编辑手册')
+  ('cmn-Hans-CN', 'cmn', 'handbook.collapsePicker', '收起')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.deleteSection', '删除章节'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.edit', '编辑手册'),
   ('cmn-Hans-CN', 'cmn', 'handbook.expressionInfo', '词句信息'),
   ('cmn-Hans-CN', 'cmn', 'handbook.expressionInfoHint', '词句的语言、地区和来源将显示在此处。'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.helpful', '这本手册有帮助吗？'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.inspectorFailed', '无法加载词句'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.loadFailed', '无法加载')
+  ('cmn-Hans-CN', 'cmn', 'handbook.helpful', '这本手册有帮助吗？')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.inspectorFailed', '无法加载词句'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.loadFailed', '无法加载'),
   ('cmn-Hans-CN', 'cmn', 'handbook.locale', '语言'),
   ('cmn-Hans-CN', 'cmn', 'handbook.moveDown', '下移'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.moveSectionDown', '下移章节'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.moveSectionUp', '上移章节'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.moveUp', '上移')
+  ('cmn-Hans-CN', 'cmn', 'handbook.moveSectionDown', '下移章节')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.moveSectionUp', '上移章节'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.moveUp', '上移'),
   ('cmn-Hans-CN', 'cmn', 'handbook.private', '私密'),
   ('cmn-Hans-CN', 'cmn', 'handbook.public', '公开'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.publish', '发布'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.region', '地区'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.relationsFailed', '无法加载相关词句')
+  ('cmn-Hans-CN', 'cmn', 'handbook.publish', '发布')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.region', '地区'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.relationsFailed', '无法加载相关词句'),
   ('cmn-Hans-CN', 'cmn', 'handbook.removeExpression', '移除 {text}'),
   ('cmn-Hans-CN', 'cmn', 'handbook.saveDraft', '保存草稿'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.saving', '保存中…'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.sectionTitle', '章节标题'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.selectExpression', '选择词句')
+  ('cmn-Hans-CN', 'cmn', 'handbook.saving', '保存中…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.sectionTitle', '章节标题'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.selectExpression', '选择词句'),
   ('cmn-Hans-CN', 'cmn', 'handbook.source', '来源'),
   ('cmn-Hans-CN', 'cmn', 'handbook.sourceAi', 'AI'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.sourceAuthority', '权威'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.sourceUser', '用户'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.titlePlaceholder', '手册标题')
+  ('cmn-Hans-CN', 'cmn', 'handbook.sourceAuthority', '权威')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbook.sourceUser', '用户'),
+  ('cmn-Hans-CN', 'cmn', 'handbook.titlePlaceholder', '手册标题'),
   ('cmn-Hans-CN', 'cmn', 'handbook.toc', '目录'),
   ('cmn-Hans-CN', 'cmn', 'handbook.viewFullGraph', '查看完整关系图'),
-  ('cmn-Hans-CN', 'cmn', 'handbook.visibility', '可见性'),
-  ('cmn-Hans-CN', 'cmn', 'handbooks.create', '新建手册'),
-  ('cmn-Hans-CN', 'cmn', 'handbooks.loadFailed', '加载手册失败')
+  ('cmn-Hans-CN', 'cmn', 'handbook.visibility', '可见性')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbooks.create', '新建手册'),
+  ('cmn-Hans-CN', 'cmn', 'handbooks.loadFailed', '加载手册失败'),
   ('cmn-Hans-CN', 'cmn', 'handbooks.newest', '最新'),
   ('cmn-Hans-CN', 'cmn', 'handbooks.noResults', '未找到手册'),
-  ('cmn-Hans-CN', 'cmn', 'handbooks.popular', '热门'),
-  ('cmn-Hans-CN', 'cmn', 'handbooks.searchPlaceholder', '搜索手册…'),
-  ('cmn-Hans-CN', 'cmn', 'handbooks.sections', '章节')
+  ('cmn-Hans-CN', 'cmn', 'handbooks.popular', '热门')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'handbooks.searchPlaceholder', '搜索手册…'),
+  ('cmn-Hans-CN', 'cmn', 'handbooks.sections', '章节'),
   ('cmn-Hans-CN', 'cmn', 'handbooks.title', '手册'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.back', '上一步'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.cancel', '取消'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.close', '关闭'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.create', '创建语言')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.cancel', '取消')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.close', '关闭'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.create', '创建语言'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.createFailed', '语言创建失败'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.creating', '创建中…'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorDescription', '请输入描述'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorGlottolog', '请选择 Glottolog 匹配或选择「无匹配」'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorName', '请输入语言名称')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorDescription', '请输入描述')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorGlottolog', '请选择 Glottolog 匹配或选择「无匹配」'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.errorName', '请输入语言名称'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.errorReason', '请选择仅限社区创建的原因'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.errorTag', '请输入语言子标签以继续'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologCandidates', '找到 {count} 个候选'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologChoose', '选择匹配或标明无合适条目'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologExactMatch', '匹配此候选')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologCandidates', '找到 {count} 个候选')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologChoose', '选择匹配或标明无合适条目'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologExactMatch', '匹配此候选'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologLevelDialect', '方言'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologLevelLanguage', '语言'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologNoMatch', 'Glottolog 无合适条目'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologSearchPlaceholder', '搜索 Glottolog…'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataDescription', '描述')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologNoMatch', 'Glottolog 无合适条目')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.glottologSearchPlaceholder', '搜索 Glottolog…'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataDescription', '描述'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataDescriptionPlaceholder', '描述此语言或变体…'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataName', '名称'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataNameEn', '英文名称'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReason', '为何此语言未收录于 Glottolog？'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonCommunity', '社区特定用法')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataNameEn', '英文名称')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReason', '为何此语言未收录于 Glottolog？'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonCommunity', '社区特定用法'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonEmerging', '新兴变体'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonMissing', 'Glottolog 未收录'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonOther', '其他'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonPlaceholder', '选择原因…'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.next', '下一步')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonOther', '其他')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.metadataReasonPlaceholder', '选择原因…'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.next', '下一步'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.optional', '可选'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.previewCanonicalCode', '规范代码'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewExisting', '此语言已存在'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewExistingAction', '使用现有语言'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewTitle', '创建语言')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewExisting', '此语言已存在')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewExistingAction', '使用现有语言'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.previewTitle', '创建语言'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.previewWarnings', '警告'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.provisionalTag', '临时标签'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.requiredHint', '带 * 的字段为必填项'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.stepGlottolog', 'Glottolog 匹配'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.stepMetadata', '元数据')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.requiredHint', '带 * 的字段为必填项')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.stepGlottolog', 'Glottolog 匹配'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.stepMetadata', '元数据'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.stepPreview', '预览并创建'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.stepTag', '语言标签'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagLanguage', '语言'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagRegion', '地区'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagScript', '文字')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagLanguage', '语言')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagRegion', '地区'),
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagScript', '文字'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagSearch', '搜索子标签…'),
   ('cmn-Hans-CN', 'cmn', 'languageCreate.subtagVariant', '变体'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.variantRemoved', '已移除 1 个变体'),
-  ('cmn-Hans-CN', 'cmn', 'languageCreate.variantsRemoved', '已移除 {count} 个变体'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.allOthers', '全部')
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.variantRemoved', '已移除 1 个变体')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageCreate.variantsRemoved', '已移除 {count} 个变体'),
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.allOthers', '全部'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.allVariants', '全部变体'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.alphabetical', '按字母排序'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.back', '语言'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.expressions', '词句'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.latest', '最新')
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.back', '语言')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.expressions', '词句'),
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.latest', '最新'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.loadFailed', '无法加载'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.mapped', '已映射'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.noResults', '没有找到词句'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.otherLabel', '其他'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.popular', '热门')
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.noResults', '没有找到词句')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.otherLabel', '其他'),
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.popular', '热门'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.regionalForms', '地区形式'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.representativeCities', '代表城市'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.representativeCitiesNote', '这些城市仅供参考'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Hans', '简体'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Hant', '傳承體')
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.representativeCitiesNote', '这些城市仅供参考')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Hans', '简体'),
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Hant', '傳承體'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Jpan', '日文'),
   ('cmn-Hans-CN', 'cmn', 'languageDetail.scripts.Latn', '拉丁'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.searchPlaceholder', '搜索词句…'),
-  ('cmn-Hans-CN', 'cmn', 'languageDetail.variantLabel', '文字'),
-  ('cmn-Hans-CN', 'cmn', 'languagePicker.clear', '清除选择')
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.searchPlaceholder', '搜索词句…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageDetail.variantLabel', '文字'),
+  ('cmn-Hans-CN', 'cmn', 'languagePicker.clear', '清除选择'),
   ('cmn-Hans-CN', 'cmn', 'languagePicker.createLanguage', '创建新语言或变体'),
   ('cmn-Hans-CN', 'cmn', 'languagePicker.noResults', '无匹配语言'),
-  ('cmn-Hans-CN', 'cmn', 'languagePicker.placeholder', '搜索语言…'),
-  ('cmn-Hans-CN', 'cmn', 'languageSwitcher.browserSuggested', '浏览器推荐'),
-  ('cmn-Hans-CN', 'cmn', 'languageSwitcher.helpTranslate', '协助翻译 LangMap')
+  ('cmn-Hans-CN', 'cmn', 'languagePicker.placeholder', '搜索语言…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languageSwitcher.browserSuggested', '浏览器推荐'),
+  ('cmn-Hans-CN', 'cmn', 'languageSwitcher.helpTranslate', '协助翻译 LangMap'),
   ('cmn-Hans-CN', 'cmn', 'languageSwitcher.noResults', '无匹配的语言'),
   ('cmn-Hans-CN', 'cmn', 'languageSwitcher.recent', '最近使用的语言'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.addLanguage', '添加语言'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.expressionCount', '词句'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.languageCount', '语言')
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.addLanguage', '添加语言')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.expressionCount', '词句'),
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.languageCount', '语言'),
   ('cmn-Hans-CN', 'cmn', 'languagesPage.loadFailed', '无法加载语言'),
   ('cmn-Hans-CN', 'cmn', 'languagesPage.noResults', '未找到语言'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.searchPlaceholder', '搜索语言…'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.sortAlphabetical', 'A–Z'),
-  ('cmn-Hans-CN', 'cmn', 'languagesPage.sortCount', '按数量')
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.searchPlaceholder', '搜索语言…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.sortAlphabetical', 'A–Z'),
+  ('cmn-Hans-CN', 'cmn', 'languagesPage.sortCount', '按数量'),
   ('cmn-Hans-CN', 'cmn', 'languagesPage.subtitle', '浏览所有语言的词句与映射'),
   ('cmn-Hans-CN', 'cmn', 'languagesPage.title', '语言'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.codePreviewEmpty', '填写必填字段以预览代码'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.create', '创建语言环境'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.createFailed', '无法创建语言环境')
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.codePreviewEmpty', '填写必填字段以预览代码')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.create', '创建语言环境'),
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.createFailed', '无法创建语言环境'),
   ('cmn-Hans-CN', 'cmn', 'localeCreate.englishName', '英文名称'),
   ('cmn-Hans-CN', 'cmn', 'localeCreate.heading', '创建语言环境'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.latitude', '纬度'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.localName', '当地名称'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.longitude', '经度')
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.latitude', '纬度')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.localName', '当地名称'),
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.longitude', '经度'),
   ('cmn-Hans-CN', 'cmn', 'localeCreate.place', '地名片段'),
   ('cmn-Hans-CN', 'cmn', 'localeCreate.placePlaceholder', '泉州_南安'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.region', '地区'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.regionPlaceholder', 'ISO 3166-1 代码'),
-  ('cmn-Hans-CN', 'cmn', 'localeCreate.script', '文字')
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.region', '地区')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.regionPlaceholder', 'ISO 3166-1 代码'),
+  ('cmn-Hans-CN', 'cmn', 'localeCreate.script', '文字'),
   ('cmn-Hans-CN', 'cmn', 'localeCreate.scriptPlaceholder', 'ISO 15924 代码'),
   ('cmn-Hans-CN', 'cmn', 'mapLens.anchor', '锚点'),
-  ('cmn-Hans-CN', 'cmn', 'mapLens.back', '返回映射'),
-  ('cmn-Hans-CN', 'cmn', 'mapLens.languages', '{count} 种语言'),
-  ('cmn-Hans-CN', 'cmn', 'mapLens.loadFailed', '无法加载')
+  ('cmn-Hans-CN', 'cmn', 'mapLens.back', '返回映射')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'mapLens.languages', '{count} 种语言'),
+  ('cmn-Hans-CN', 'cmn', 'mapLens.loadFailed', '无法加载'),
   ('cmn-Hans-CN', 'cmn', 'mapLens.members', '映射成员'),
   ('cmn-Hans-CN', 'cmn', 'mapLens.noData', '此词句无地理分布数据'),
-  ('cmn-Hans-CN', 'cmn', 'mapLens.regions', '{count} 个地区'),
-  ('cmn-Hans-CN', 'cmn', 'mapLens.title', '词句分布'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.addAndMap', '新增并建立映射')
+  ('cmn-Hans-CN', 'cmn', 'mapLens.regions', '{count} 个地区')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'mapLens.title', '词句分布'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.addAndMap', '新增并建立映射'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.addExpression', '新增词句'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.addFailed', '无法新增词句'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.adding', '新增中…'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.authority', '权威'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.breadcrumb', '面包屑')
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.adding', '新增中…')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.allLanguages', '所有语言'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.authority', '权威'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.breadcrumb', '面包屑'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.closeQuickAdd', '关闭快速新增'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.contribute', '贡献映射'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.contribute', '贡献映射')
+) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
+WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.direct', '直接映射'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.enterRequired', '请输入词句与语言代码'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.expression', '词句')
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.expression', '词句'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.expressionPlaceholder', '输入词句…'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.graph', '图谱')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.expressionPlaceholder', '输入词句…'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.graph', '图谱'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.graphTruncated', '图谱已截断；略过 {count} 个相关词句。'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.home', '首页'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.hops', '跳数'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.indirect', '间接')
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.indirect', '间接'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.languageCode', '语言代码')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.languageCode', '语言代码'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.languageCodePlaceholder', '例如 en / cmn-Hant'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.list', '列表'),
   ('cmn-Hans-CN', 'cmn', 'mappingDetail.loadFailed', '无法加载'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.mappingSet', '映射集合')
-) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
-WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.noMappings', '尚无映射'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.optional', '选填'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.quickAdd', '快速新增词句'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.quickAddLead', '新增词句并直接映射到当前词句。'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.region', '地区')
-) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
-WITH ui_translation_seed(locale_code, lang_code, message_key, text) AS (VALUES
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.user', '用户'),
-  ('cmn-Hans-CN', 'cmn', 'mappingDetail.viewMap', '在地图上查看此词句'),
-  ('cmn-Hans-CN', 'cmn', 'morphology.addFormLink', '新增词形关联'),
-  ('cmn-Hans-CN', 'cmn', 'morphology.class.adjective', '形容词'),
-  ('cmn-Hans-CN', 'cmn', 'morphology.class.noun', '名词')
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.mappingSet', '映射集合'),
+  ('cmn-Hans-CN', 'cmn', 'mappingDetail.noMappings', '尚无映射')
 ) INSERT OR IGNORE INTO expression_edges(expression_a_id, expression_b_id, relation_mask) SELECT CASE WHEN m.source_expression_id < e.id THEN m.source_expression_id ELSE e.id END, CASE WHEN m.source_expression_id < e.id THEN e.id ELSE m.source_expression_id END, 1 FROM ui_translation_seed t JOIN ui_messages m ON m.project_id='langmap-web' AND m.message_key=t.message_key JOIN languages l ON l.code=t.lang_code JOIN expressions e ON e.language_id=l.id AND e.text=t.text AND e.homograph_index=1 WHERE m.source_expression_id<>e.id;
 -- Done
