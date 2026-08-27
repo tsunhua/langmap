@@ -15,7 +15,7 @@ import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/map
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split } from 'lucide-vue-next'
+import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split, Filter } from 'lucide-vue-next'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -36,6 +36,8 @@ const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
 const targetLanguage = ref('')
+const targetLanguageInput = ref('')
+const targetLanguageOpen = ref(false)
 const loading = ref(true)
 const updatingHops = ref(false)
 const loadError = ref('')
@@ -62,6 +64,7 @@ const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
 let loadRequest = 0
 let graphRequest = 0
+let targetLanguageTimer: ReturnType<typeof setTimeout> | undefined
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
@@ -91,6 +94,7 @@ function initFromUrl() {
   const nodeId = typeof route.query.node === 'string' ? route.query.node : null
   if (nodeId) selectedNodeId.value = nodeId
   targetLanguage.value = typeof route.query.target_language === 'string' ? route.query.target_language : ''
+  targetLanguageInput.value = targetLanguage.value
 }
 
 function syncUrl() {
@@ -163,6 +167,7 @@ onUnmounted(() => {
   if (mql && mqlListener) {
     mql.removeEventListener('change', mqlListener)
   }
+  if (targetLanguageTimer) clearTimeout(targetLanguageTimer)
 })
 
 watch(id, () => {
@@ -330,6 +335,35 @@ function collapseToFirst() {
 const directCount = computed(() => graph.value?.layer_counts[1] ?? 0)
 const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (graph.value?.layer_counts[3] ?? 0))
 
+const targetLanguageOptions = computed(() => [...new Map(
+  (graph.value?.nodes ?? []).map(node => [node.lang_code, node.language_name || node.lang_code]),
+).entries()].sort((a, b) => a[1].localeCompare(b[1])))
+const visibleTargetLanguageOptions = computed(() => {
+  const query = targetLanguageInput.value.trim().toLocaleLowerCase()
+  return targetLanguageOptions.value.filter(([code, name]) => !query || code.includes(query) || name.toLocaleLowerCase().includes(query)).slice(0, 8)
+})
+
+function updateTargetLanguage() {
+  if (targetLanguageTimer) clearTimeout(targetLanguageTimer)
+  targetLanguageTimer = setTimeout(() => {
+    targetLanguage.value = targetLanguageInput.value.trim().toLowerCase()
+  }, 250)
+}
+
+function clearTargetLanguage() {
+  if (targetLanguageTimer) clearTimeout(targetLanguageTimer)
+  targetLanguageInput.value = ''
+  targetLanguage.value = ''
+  targetLanguageOpen.value = false
+}
+
+function selectTargetLanguage(code: string) {
+  if (targetLanguageTimer) clearTimeout(targetLanguageTimer)
+  targetLanguageInput.value = code
+  targetLanguage.value = code
+  targetLanguageOpen.value = false
+}
+
 const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
 
 const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === id.value)?.language_name ?? '')
@@ -432,11 +466,17 @@ const coords = computed(() => {
         <b>{{ directCount }}</b> {{ t('mappingDetail.direct') }}<template v-if="indirectCount"> · <b>{{ indirectCount }}</b> {{ t('mappingDetail.indirect') }}</template>
         · <b>{{ hops }}</b> {{ t('mappingDetail.hops') }}
       </span>
+      <div class="target-language-filter">
+        <label for="target-language" class="target-language-filter__label"><Filter :size="14" aria-hidden="true" /><span class="sr-only">{{ t('mappingDetail.targetLanguage') }}</span></label>
+        <div class="target-language-filter__control">
+          <input id="target-language" v-model="targetLanguageInput" type="text" role="combobox" :aria-label="t('mappingDetail.targetLanguage')" :aria-expanded="targetLanguageOpen" aria-controls="target-language-options" autocomplete="off" :placeholder="t('mappingDetail.allLanguages')" @focus="targetLanguageOpen = true" @input="updateTargetLanguage(); targetLanguageOpen = true" @keydown.esc.prevent="clearTargetLanguage" />
+        <button v-if="targetLanguageInput" class="target-language-filter__clear" type="button" :aria-label="t('common.cancel')" @click="clearTargetLanguage"><X :size="15" aria-hidden="true" /></button>
+        <div v-if="targetLanguageOpen && visibleTargetLanguageOptions.length" id="target-language-options" role="listbox" class="target-language-filter__options">
+          <button v-for="[code, name] in visibleTargetLanguageOptions" :key="code" type="button" role="option" @mousedown.prevent="selectTargetLanguage(code)"><span>{{ name }}</span><code>{{ code }}</code></button>
+        </div>
+        </div>
+      </div>
     </div>
-    <label class="target-language-filter">
-      <span>{{ t('mappingDetail.targetLanguage') }}</span>
-      <input v-model="targetLanguage" :placeholder="t('mappingDetail.allLanguages')" />
-    </label>
     <p v-if="graph?.truncated" class="md-truncated" role="status">
       {{ t('mappingDetail.graphTruncated', { count: graph.omitted_count }) }}
     </p>
@@ -621,6 +661,31 @@ const coords = computed(() => {
 .anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .anchor-meta .coords { font-size: 11px; }
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.target-language-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 0 6px 0 8px;
+  width: 168px;
+  min-height: 34px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.target-language-filter:focus-within { border-color: var(--accent); }
+.target-language-filter__label { display: inline-flex; color: var(--muted); }.target-language-filter__control { position: relative; flex: 1; min-width: 0; }
+.target-language-filter input { width: 100%; height: 32px; appearance: none; border: 0 !important; box-shadow: none !important; background: transparent; color: var(--fg); padding: 0 30px 0 4px; font: inherit; font-size: 13px; }
+.target-language-filter input:focus { outline: none; }
+.target-language-filter input::placeholder { color: var(--muted); }
+.target-language-filter__clear { position: absolute; inset: 0 0 0 auto; display: grid; place-items: center; width: 30px; border: 0; border-radius: var(--r); background: transparent; color: var(--muted); cursor: pointer; }
+.target-language-filter__clear:hover { background: var(--surface-2); color: var(--fg); }
+.target-language-filter__clear:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.target-language-filter__options { position: absolute; z-index: 20; top: calc(100% + 6px); left: -10px; width: min(320px, calc(100vw - 56px)); overflow: hidden; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); box-shadow: 0 8px 20px oklch(0 0 0 / .12); }
+.target-language-filter__options button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--fg); text-align: left; cursor: pointer; }
+.target-language-filter__options button:last-child { border-bottom: 0; }.target-language-filter__options button:hover, .target-language-filter__options button:focus-visible { background: var(--accent-soft); outline: 0; }.target-language-filter__options code { color: var(--muted); font-family: var(--mono); font-size: 12px; }
 
 .quick-add {
   margin-top: 16px;
@@ -689,5 +754,6 @@ const coords = computed(() => {
 
 @media (max-width: 700px) {
   .qa-grid { grid-template-columns: 1fr; }
+  .target-language-filter { width: 148px; }
 }
 </style>
