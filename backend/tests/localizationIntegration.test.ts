@@ -269,9 +269,7 @@ describe('localization API', () => {
 });
 
 describe('localization workbench API', () => {
-  // ROUTE GAP: the current worker has no /workbench/:code handler; requests
-  // return 404. Kept as skipped cases so the gap stays visible.
-  it.skip('gets workbench coverage for a locale', async () => {
+  it('gets workbench coverage for a locale', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/workbench/nan-Hant-TW`, {
       headers: { authorization: `Bearer ${token}` },
@@ -279,7 +277,7 @@ describe('localization workbench API', () => {
     expect(res.status).toBe(200);
   });
 
-  it.skip('returns paged workbench messages with candidate slots', async () => {
+  it('returns paged workbench messages with candidate slots', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/workbench/nan-Hant-TW?limit=5`, {
       headers: { authorization: `Bearer ${token}` },
@@ -287,7 +285,7 @@ describe('localization workbench API', () => {
     expect(res.status).toBe(200);
   });
 
-  it.skip('filters workbench messages by query', async () => {
+  it('filters workbench messages by query', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/workbench/nan-Hant-TW?q=cancel&limit=50`, {
       headers: { authorization: `Bearer ${token}` },
@@ -297,9 +295,7 @@ describe('localization workbench API', () => {
 });
 
 describe('localization batch mapping API', () => {
-  // ROUTE GAP: the current worker has no /mappings/batch handler; requests
-  // return 404. Kept as skipped cases so the gap stays visible.
-  it.skip('processes an empty-safe batch mapping request', async () => {
+  it('processes an empty-safe batch mapping request', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/mappings/batch`, {
       method: 'POST',
@@ -309,7 +305,7 @@ describe('localization batch mapping API', () => {
     expect(res.status).toBe(200);
   });
 
-  it.skip('rejects a batch mapping request without mappings', async () => {
+  it('rejects a batch mapping request without mappings', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/mappings/batch`, {
       method: 'POST',
@@ -319,7 +315,7 @@ describe('localization batch mapping API', () => {
     expect(res.status).toBe(400);
   });
 
-  it.skip('rejects an oversized batch mapping request before resolving rows', async () => {
+  it('rejects an oversized batch mapping request before resolving rows', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/mappings/batch`, {
       method: 'POST',
@@ -331,9 +327,7 @@ describe('localization batch mapping API', () => {
 });
 
 describe('mapping vote API', () => {
-  // ROUTE GAP: the current worker has no /localization/.../votes handler;
-  // requests return 404. Kept as skipped cases so the gap stays visible.
-  it.skip('records a vote and flips it without double counting', async () => {
+  it('records a vote and flips it without double counting', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/votes`, {
       method: 'POST',
@@ -343,7 +337,7 @@ describe('mapping vote API', () => {
     expect(res.status).toBe(200);
   });
 
-  it.skip('rejects an out-of-range vote value', async () => {
+  it('rejects an out-of-range vote value', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/votes`, {
       method: 'POST',
@@ -353,7 +347,7 @@ describe('mapping vote API', () => {
     expect(res.status).toBe(400);
   });
 
-  it.skip('returns 404 when voting on an unknown edge', async () => {
+  it('returns 404 when voting on an unknown edge', async () => {
     const token = await registerToken();
     const res = await fetch(`${API}/votes`, {
       method: 'POST',
@@ -363,7 +357,7 @@ describe('mapping vote API', () => {
     expect(res.status).toBe(404);
   });
 
-  it.skip('requires authentication', async () => {
+  it('requires authentication', async () => {
     const res = await fetch(`${API}/votes`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

@@ -151,9 +151,7 @@ describe('mappings API', () => {
 });
 
 describe('split API', () => {
-  // ROUTE GAP: the current worker has no POST /expressions/:id/split handler;
-  // requests return 404. Kept as skipped cases so the gap stays visible.
-  it.skip('forbids non-admin users from splitting', async () => {
+  it('forbids non-admin users from splitting', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 10);
     const idA = await createExpression(token, `權限A${unique}`);
@@ -165,7 +163,7 @@ describe('split API', () => {
     expect(res.status).toBe(403);
   });
 
-  it.skip('rejects empty edge_ids from an admin', async () => {
+  it('rejects empty edge_ids from an admin', async () => {
     const adminToken = await getAdminToken();
     const unique = Math.random().toString(36).slice(2, 10);
     const idA = await createExpression(adminToken, `空邊A${unique}`);

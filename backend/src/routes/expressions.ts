@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/auth';
-import { badRequest, created, internalError, notFoundCode, paginated, success } from '../utils/response';
+import { badRequest, created, forbidden, internalError, notFoundCode, paginated, success } from '../utils/response';
 import { ExpressionError, createExpression, createLocaleLink, getExpression, searchExpressions } from '../services/expressions';
 import { ReadingError, createReading } from '../services/readings';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
+import { SplitError, splitExpression } from '../services/splits';
 import { getMappingGraph } from '../services/mappingGraph';
 import { parseIntegerId, serializeIntegerId } from '../utils/ids';
 import type { Bindings, Variables } from '../types';
@@ -64,6 +65,23 @@ expressions.post('/:id/mappings', requireAuth, async (c) => {
   if (!target) return badRequest(c, 'INVALID_EXPRESSION_ID');
   try { const result = await createEdge(c.env.DB, { expression_a_id: id, expression_b_id: target, relation_mask: typeof body.relation_mask === 'number' ? body.relation_mask : 1, created_by: c.get('user')?.id ?? 0 }); return (result.created ? created : success)(c, { ...result, edge: { ...result.edge, id: serializeIntegerId(result.edge.id), expression_a_id: serializeIntegerId(result.edge.expression_a_id), expression_b_id: serializeIntegerId(result.edge.expression_b_id) } }); }
   catch (error) { return error instanceof MappingError ? badRequest(c, error.code) : internalError(c); }
+});
+
+expressions.post('/:id/split', requireAuth, async (c) => {
+  const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_EXPRESSION_ID');
+  if (c.get('user')?.role !== 'admin') return forbidden(c);
+  const body = await c.req.json<Body>().catch(() => ({}));
+  const edge_ids: number[] = [];
+  if (Array.isArray(body.edge_ids)) {
+    for (const value of body.edge_ids) {
+      const parsed = typeof value === 'number' ? value : (typeof value === 'string' ? parseIntegerId(value) : null);
+      if (parsed !== null) edge_ids.push(parsed);
+    }
+  }
+  try {
+    const result = await splitExpression(c.env.DB, { source_expression_id: id, edge_ids, created_by: c.get('user')?.id ?? 0 });
+    return success(c, { ...result, split_id: serializeIntegerId(result.split_id), target_expression_id: serializeIntegerId(result.target_expression_id) });
+  } catch (error) { return error instanceof SplitError ? badRequest(c, error.code) : internalError(c); }
 });
 
 expressions.get('/:id/edges', async (c) => {
