@@ -18,6 +18,6 @@ describe('ExpressionEvidenceList', () => {
     expect(wrapper.findAll('li')[0].text()).toContain('nan-Hant-CN')
     expect(wrapper.findAll('li')[1].text()).toContain('臺語')
     expect(wrapper.findAll('li')[2].text()).toContain('臺語')
-    expect(wrapper.findAll('li')[1].find('[title="nan-Hant-TW"]').attributes('title')).toBe('nan-Hant-TW')
+    expect(wrapper.findAll('li')[1].find('[title="臺語"]').attributes('title')).toBe('臺語')
   })
 })

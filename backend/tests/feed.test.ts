@@ -2,6 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import feed from '../src/routes/feed';
 
+type FeedRow = {
+  id: number;
+  score: number;
+  relation_mask: number;
+  a_id: number;
+  a_text: string;
+  a_lang: string;
+  b_id: number;
+  b_text: string;
+  b_lang: string;
+};
+
+const SIMPLE_ROW: FeedRow = {
+  id: 101, score: 2, relation_mask: 1,
+  a_id: 201, a_text: '食', a_lang: 'nan',
+  b_id: 202, b_text: 'eat', b_lang: 'eng',
+};
+
 function fakeDb(capturedSql: string[] = []) {
   return {
     prepare(sql: string) {
@@ -10,16 +28,7 @@ function fakeDb(capturedSql: string[] = []) {
         bind(..._args: unknown[]) {
           return {
             async all() {
-              if (sql.includes('name_expression_id')) {
-                return { results: [
-                  { code: 'nan', name_expression_id: null, name_en: 'Min Nan Chinese (Hokkien)', name: null },
-                  { code: 'eng', name_expression_id: null, name_en: 'English', name: null },
-                ] };
-              }
-              if (sql.includes("'mapping' AS type")) {
-                return { results: [{ id: 'edge-1', type: 'mapping', left_text: '食', left_lang: 'nan', right_text: 'eat', right_lang: 'eng', created_at: '2026-08-12' }] };
-              }
-              return { results: [{ edge_id: 'edge-1', id: 'edge-1', a_text: '食', a_lang: 'nan', b_text: 'eat', b_lang: 'eng', score: 2 }] };
+              return { results: [SIMPLE_ROW] };
             },
           };
         },
@@ -29,59 +38,45 @@ function fakeDb(capturedSql: string[] = []) {
 }
 
 describe('feed API', () => {
-  it('returns stable hot and new feed rows using text expression ids', async () => {
-    const app = new Hono<{ Bindings: { DB: D1Database } }>();
+  it('returns stable hot and new rows with integer ids serialized to strings', async () => {
+    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
     for (const path of ['/feed/hot?limit=20', '/feed/new?limit=20']) {
-      const response = await app.request(`http://example.test${path}`, undefined, { DB: fakeDb() });
+      const response = await app.request(`http://example.test${path}`, undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
       expect(response.status).toBe(200);
-      const body = await response.json() as { success: boolean; data: Array<{ id: string }> };
+      const body = await response.json() as { success: boolean; data: Array<{ id: string; a_id: string; b_id: string }> };
       expect(body.success).toBe(true);
-      expect(body.data[0].id).toBe('edge-1');
+      expect(body.data[0]).toMatchObject({ id: '101', a_id: '201', b_id: '202' });
     }
   });
 
-  it('limits each new-feed source before merging the latest rows', async () => {
+  it('orders hot rows by score and new rows by recency, both limited', async () => {
     const capturedSql: string[] = [];
-    const app = new Hono<{ Bindings: { DB: D1Database } }>();
+    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
 
-    const response = await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb(capturedSql) });
-    expect(response.status).toBe(200);
+    await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(capturedSql), SECRET_KEY: 'test' });
+    await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb(capturedSql), SECRET_KEY: 'test' });
 
-    const feedSql = capturedSql.find((sql) => sql.includes("'mapping' AS type"));
-    expect(feedSql).toBeDefined();
-    expect(feedSql).toContain('WITH latest_mappings AS');
-    expect(feedSql).toContain('latest_expressions AS');
-    expect(feedSql).toContain('ORDER BY ed.created_at DESC, ed.id ASC');
-    expect(feedSql).toContain('ORDER BY e.created_at DESC, e.id ASC');
-    expect(feedSql?.match(/LIMIT \?/g)).toHaveLength(3);
+    const hot = capturedSql.find((sql) => sql.includes('ORDER BY e.score DESC,e.id ASC'));
+    const fresh = capturedSql.find((sql) => sql.includes('ORDER BY e.id DESC'));
+    expect(hot).toBeDefined();
+    expect(fresh).toBeDefined();
+    expect(hot).toContain('LIMIT ?');
+    expect(fresh).toContain('LIMIT ?');
+    expect(capturedSql).toHaveLength(2);
   });
 
-  it('keeps hot feed ordering compatible with the score index', async () => {
-    const capturedSql: string[] = [];
-    const app = new Hono<{ Bindings: { DB: D1Database } }>();
+  it('attaches language codes as language names to hot and new rows', async () => {
+    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
 
-    const response = await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(capturedSql) });
-    expect(response.status).toBe(200);
-    const feedSql = capturedSql.find((sql) => sql.includes('ORDER BY ed.score DESC'));
-    expect(feedSql).toContain('ORDER BY ed.score DESC, ed.created_at DESC, ed.id ASC');
-    expect(feedSql).toContain('LIMIT ?');
-  });
+    const hot = await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
+    const hotBody = await hot.json() as { data: Array<{ a_language_name: string; b_language_name: string }> };
+    expect(hotBody.data[0]).toMatchObject({ a_language_name: 'nan', b_language_name: 'eng' });
 
-  it('attaches resolved language names to hot and new rows', async () => {
-    const app = new Hono<{ Bindings: { DB: D1Database } }>();
-    app.route('/feed', feed);
-
-    const hot = await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb() });
-    const hotBody = await hot.json() as { data: Array<{ a_lang: string; a_language_name: string; b_language_name: string }> };
-    expect(hotBody.data[0].a_language_name).toBe('Min Nan Chinese (Hokkien)');
-    expect(hotBody.data[0].b_language_name).toBe('English');
-
-    const fresh = await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb() });
-    const newBody = await fresh.json() as { data: Array<{ left_lang: string | null; left_language_name: string | null; right_language_name: string | null }> };
-    expect(newBody.data[0].left_language_name).toBe('Min Nan Chinese (Hokkien)');
-    expect(newBody.data[0].right_language_name).toBe('English');
+    const fresh = await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
+    const newBody = await fresh.json() as { data: Array<{ a_language_name: string; b_language_name: string }> };
+    expect(newBody.data[0]).toMatchObject({ a_language_name: 'nan', b_language_name: 'eng' });
   });
 });

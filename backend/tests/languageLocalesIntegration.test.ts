@@ -41,12 +41,12 @@ describe('language locales API', () => {
     const res = await fetch(`${BASE_URL}/api/v2/language-locales/eng-Latn-US`);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      data: { code: string; name_en: string; coordinate_source: string | null; latitude: number | null };
+      data: { code: string; name_en: string; coordinate_source: string | null; resolved_latitude: number | null };
     };
     expect(body.data.code).toBe('eng-Latn-US');
     expect(body.data.name_en).toBe('English (US)');
     expect(body.data.coordinate_source).toBe('region');
-    expect(typeof body.data.latitude).toBe('number');
+    expect(typeof body.data.resolved_latitude).toBe('number');
   });
 
   it('rejects a malformed code', async () => {
@@ -70,7 +70,7 @@ describe('language locales API', () => {
     expect(res.status).toBe(401);
   });
 
-  it('creates a locale with place segments and source', async () => {
+  it('creates a locale with place segments', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).replace(/[^a-z]/g, '').slice(0, 6);
     const res = await fetch(`${BASE_URL}/api/v2/language-locales`, {
@@ -83,16 +83,16 @@ describe('language locales API', () => {
         place_segments: ['Quanzhou', `Nanan${unique}`],
         name: '閩南語',
         name_en: `Quanzhou Southern Min ${unique}`,
-        source: { type: 'url', name: 'Test Dictionary', ref: `https://example.test/${unique}` },
       }),
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as {
-      data: { code: string; source_id: string | null; source_ref: string | null };
+      data: { code: string; place_path: string; name: string; name_en: string };
     };
     expect(body.data.code).toBe(`nan-Hant-CN_Quanzhou_Nanan${unique}`);
-    expect(body.data.source_id).toBeTruthy();
-    expect(body.data.source_ref).toBe(`https://example.test/${unique}`);
+    expect(body.data.place_path).toBe(`Quanzhou_Nanan${unique}`);
+    expect(body.data.name).toBe('閩南語');
+    expect(body.data.name_en).toBe(`Quanzhou Southern Min ${unique}`);
   });
 
   it('returns 409 for a duplicate locale', async () => {

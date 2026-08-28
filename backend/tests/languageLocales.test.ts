@@ -130,28 +130,28 @@ describe('findOrCreateSource', () => {
   it('returns the existing source id without inserting', async () => {
     let inserted = 0;
     const db = fakeD1({
-      'SELECT id FROM sources WHERE type = ? AND name = ?': () => ({ id: 'existing-id' }),
-      'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => {
+      'SELECT id FROM sources WHERE type = ? AND name = ?': () => ({ id: 12 }),
+      'INSERT INTO sources (type, name) VALUES (?, ?) RETURNING id': () => {
         inserted += 1;
-        return { success: true };
+        return { id: 99 };
       },
     });
-    await expect(findOrCreateSource(db, { type: 'url', name: '某辭典' })).resolves.toBe('existing-id');
+    await expect(findOrCreateSource(db, { type: 'url', name: '某辭典' })).resolves.toBe(12);
     expect(inserted).toBe(0);
   });
 
-  it('creates a source when missing and returns a new id', async () => {
-    let inserted = 0;
+  it('creates a missing source and returns the new integer id', async () => {
+    let created = 0;
     const db = fakeD1({
       'SELECT id FROM sources WHERE type = ? AND name = ?': () => null,
-      'INSERT INTO sources (id, type, name) VALUES (?, ?, ?)': () => {
-        inserted += 1;
-        return { success: true };
+      'INSERT INTO sources (type, name) VALUES (?, ?) RETURNING id': () => {
+        created += 1;
+        return { id: 99 };
       },
     });
     const id = await findOrCreateSource(db, { type: 'url', name: '某辭典' });
-    expect(id).toBeTruthy();
-    expect(inserted).toBe(1);
+    expect(id).toBe(99);
+    expect(created).toBe(1);
   });
 
   it('rejects unknown type and empty name with INVALID_SOURCE', async () => {

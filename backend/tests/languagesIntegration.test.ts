@@ -83,12 +83,14 @@ describe('languages API', () => {
     expect(map.get('jpn')).toBe('日语');
   });
 
-  it('resolves locale display_name from seed while keeping self-name', async () => {
-    const res = await fetch(`${BASE_URL}/api/v2/language-locales/jpn-Jpan-JP?ui_locale=cmn-Hans-CN`);
+  it('resolves a seeded locale self-name in the locale detail', async () => {
+    const res = await fetch(`${BASE_URL}/api/v2/language-locales/jpn-Jpan-JP`);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data: { code: string; display_name: string; name: string } };
-    expect(body.data.display_name).toBe('日语（日本）');
+    const body = await res.json() as { data: { code: string; name: string; name_en: string; coordinate_source: string | null } };
+    expect(body.data.code).toBe('jpn-Jpan-JP');
     expect(body.data.name).toBe('日本語');
+    expect(body.data.name_en).toBe('Japanese (Japan)');
+    expect(body.data.coordinate_source).toBe('region');
   });
 
   it('returns language detail with locales and coordinate provenance', async () => {
@@ -131,8 +133,8 @@ describe('languages API', () => {
     expect(newResponse.status).toBe(200);
     const alpha = await alphaResponse.json() as { data: { items: Array<{ id: string; text: string; homograph_index: number }> } };
     const newest = await newResponse.json() as { data: { items: Array<{ id: string; created_at: string }> } };
-    const alphaKeys = alpha.data.items.map((item) => `${item.text}\u0000${String(item.homograph_index).padStart(8, '0')}\u0000${item.id}`);
-    const newestKeys = newest.data.items.map((item) => `${item.created_at}\u0000${item.id}`);
+    const alphaKeys = alpha.data.items.map((item) => `${item.text}\u0000${String(item.homograph_index).padStart(8, '0')}\u0000${String(item.id).padStart(16, '0')}`);
+    const newestKeys = newest.data.items.map((item) => `${item.created_at}\u0000${String(item.id).padStart(16, '0')}`);
     expect(alphaKeys).toEqual([...alphaKeys].sort());
     expect(newestKeys).toEqual([...newestKeys].sort((a, b) => {
       const [dateA, idA] = a.split('\u0000');

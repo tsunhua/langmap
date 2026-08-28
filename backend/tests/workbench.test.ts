@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_SQL, loadWorkbenchMessages } from '../src/services/workbench';
+import { Hono } from 'hono';
+import localization from '../src/routes/localization';
+import { CANDIDATE_SQL } from '../src/services/localizationDomain';
 
 type Handler = () => unknown;
 
@@ -23,66 +25,44 @@ function fakeD1(handlers: Record<string, Handler>) {
   return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
 }
 
-const COUNT_SQL = 'SELECT COUNT(*) AS total FROM ui_messages WHERE project_id = ? AND status = ? AND (? = \'\' OR message_key LIKE ? ESCAPE \'\\\' OR source_text LIKE ? ESCAPE \'\\\')';
-const PAGE_SQL = 'SELECT message_key, source_expression_id, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? AND (? = \'\' OR message_key LIKE ? ESCAPE \'\\\' OR source_text LIKE ? ESCAPE \'\\\') ORDER BY message_key ASC LIMIT ? OFFSET ?';
-const LANG_SQL = 'SELECT lang_code FROM language_locales WHERE code = ?';
+const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC';
+const LOCALE_STATUS_SQL = 'SELECT status FROM ui_locales WHERE project_id = ? AND locale_id = (SELECT id FROM language_locales WHERE code = ?)';
 
-describe('loadWorkbenchMessages', () => {
-  it('returns messages with empty candidates when the locale has no language row', async () => {
+type BundleEntry = { key: string; text: string; resolved_from: 'primary' | 'secondary' | 'source' };
+
+function fetchMessages(db: import('@cloudflare/workers-types').D1Database, query: string): Promise<Response> {
+  const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+  app.route('/localization', localization);
+  return app.request(`http://example.test/localization/projects/langmap-web/messages${query}`, undefined, { DB: db, SECRET_KEY: 'test-secret' });
+}
+
+describe('localization messages endpoint (workbench)', () => {
+  it('resolves a UI message from an active primary locale candidate', async () => {
     const db = fakeD1({
-      [COUNT_SQL]: () => ({ total: 1 }),
-      [PAGE_SQL]: () => ({ results: [{ message_key: 'common.cancel', source_expression_id: 'eng:x1', source_text: 'Cancel', placeholders_json: '[]' }] }),
-      [LANG_SQL]: () => null,
+      [ACTIVE_MESSAGES_SQL]: () => ({ results: [{ message_key: 'greeting', source_text: 'Hello', placeholders_json: '[]' }] }),
+      [LOCALE_STATUS_SQL]: () => ({ status: 'active' }),
+      [CANDIDATE_SQL]: () => ({ results: [{ message_key: 'greeting', placeholders_json: '[]', target_id: 7, target_text: '你好', score: 1 }] }),
     });
-    const result = await loadWorkbenchMessages(db, 'langmap-web', 'zzz-Zzzz-ZZ', { limit: 20, offset: 0 });
-    expect(result.total).toBe(1);
-    expect(result.items[0].key).toBe('common.cancel');
-    expect(result.items[0].candidates).toEqual([]);
+    const response = await fetchMessages(db, '?primary=cmn-Hant-TW');
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { messages: BundleEntry[] } };
+    expect(body.data.messages).toEqual([{ key: 'greeting', text: '你好', resolved_from: 'primary' }]);
   });
 
-  it('attaches ordered candidates and flags placeholder mismatches', async () => {
+  it('falls back to the source text when the primary locale is not active', async () => {
     const db = fakeD1({
-      [COUNT_SQL]: () => ({ total: 2 }),
-      [PAGE_SQL]: () => ({
-        results: [
-          { message_key: 'a.key', source_expression_id: 'eng:a', source_text: 'Hello {name}', placeholders_json: '["name"]' },
-          { message_key: 'b.key', source_expression_id: 'eng:b', source_text: 'World', placeholders_json: '[]' },
-        ],
-      }),
-      [LANG_SQL]: () => ({ lang_code: 'cmn' }),
-      [CANDIDATES_SQL]: () => ({
-        results: [
-          { message_key: 'a.key', placeholders_json: '["name"]', target_id: 'cmn:a1', target_text: '你好 {name}', edge_id: 'e1', score: 3, created_at: '2026-01-01' },
-          { message_key: 'a.key', placeholders_json: '["name"]', target_id: 'cmn:a2', target_text: '哈囉', edge_id: 'e2', score: 1, created_at: '2026-01-02' },
-        ],
-      }),
+      [ACTIVE_MESSAGES_SQL]: () => ({ results: [{ message_key: 'greeting', source_text: 'Hello', placeholders_json: '[]' }] }),
+      [LOCALE_STATUS_SQL]: () => ({ status: 'draft' }),
     });
-    const result = await loadWorkbenchMessages(db, 'langmap-web', 'cmn-Hant-TW', { limit: 20, offset: 0 });
-    expect(result.items[0].candidates.map((candidate) => candidate.edge_id)).toEqual(['e1', 'e2']);
-    expect(result.items[0].candidates[0].placeholders_ok).toBe(true);
-    expect(result.items[0].candidates[1].placeholders_ok).toBe(false);
-    expect(result.items[0].placeholders).toEqual(['name']);
-    expect(result.items[1].candidates).toEqual([]);
+    const response = await fetchMessages(db, '?primary=cmn-Hant-TW');
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { messages: BundleEntry[] } };
+    expect(body.data.messages).toEqual([{ key: 'greeting', text: 'Hello', resolved_from: 'source' }]);
   });
 
-  it('does not query candidates when the page is empty', async () => {
-    const seen: string[] = [];
-    const db = {
-      prepare(sql: string) {
-        seen.push(sql);
-        return {
-          bind() {
-            return {
-              async first() { return { total: 0 }; },
-              async run() { return { success: true }; },
-              async all() { return { results: [] }; },
-            };
-          },
-        };
-      },
-    } as unknown as import('@cloudflare/workers-types').D1Database;
-    const result = await loadWorkbenchMessages(db, 'langmap-web', 'cmn-Hant-TW', { limit: 20, offset: 0 });
-    expect(result.items).toEqual([]);
-    expect(seen.some((sql) => sql.includes('json_each'))).toBe(false);
+  it('rejects an invalid locale code with INVALID_LANGUAGE_LOCALE_CODE', async () => {
+    const response = await fetchMessages(fakeD1({}), '?primary=not-a-locale');
+    expect(response.status).toBe(400);
+    expect((await response.json() as { error: string }).error).toBe('INVALID_LANGUAGE_LOCALE_CODE');
   });
 });

@@ -1,41 +1,70 @@
-import { describe, expect, it, vi } from 'vitest';
-import {
-  activeReleasePredicate,
-  dictionaryManagedObjectPredicate,
-  edgeEligibilityPredicate,
-  promoteManagedObject,
-  releaseObjectEligibilityPredicate,
-} from '../src/services/dictionaryReleaseEligibility';
+// The managed-dictionary release/eligibility predicates this suite covered were
+// removed with the canonical dictionary storage refactor. Dictionary ownership
+// now lives only as per-object source markers in `expression_sources` /
+// `expression_edge_sources`, surfaced by the mapping graph as `edge.sources`.
+import { describe, expect, it } from 'vitest';
+import { getMappingGraph } from '../src/services/mappingGraph';
 
-describe('dictionary release eligibility SQL', () => {
-  it('uses the dataset state pointer for active releases', () => {
-    const sql = activeReleasePredicate('b.release_id');
-    expect(sql).toContain('dictionary_dataset_state');
-    expect(sql).toContain("ds.dataset_key = 'managed-dictionaries'");
-    expect(sql).toContain('ds.active_release_id = b.release_id');
+type Handler = () => unknown;
+
+function fakeD1(handlers: Record<string, Handler>) {
+  const prepare = (sql: string) => {
+    const handler = handlers[sql] ?? Object.entries(handlers).find(
+      ([registered]) => registered.replace(/\s+/g, ' ').trim() === sql.replace(/\s+/g, ' ').trim(),
+    )?.[1];
+    return {
+      bind(..._args: unknown[]) {
+        const run = async () => (handler ? handler() : { results: [] });
+        return {
+          async first<T>() { return (await run()) as T; },
+          async all<T>() {
+            const result = (await run()) as { results?: unknown };
+            return { results: (result?.results ?? []) as T };
+          },
+        };
+      },
+    };
+  };
+  return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+}
+
+const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
+const EDGE_SQL = 'SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE expression_a_id IN (?) OR expression_b_id IN (?) ORDER BY id';
+const NODE_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (?)';
+const EDGE_SOURCES_SQL = 'SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (?) ORDER BY edge_id,source_id,source_marker';
+
+describe('dictionary edge provenance', () => {
+  it('attaches dictionary source markers to edges instead of release predicates', async () => {
+    const db = fakeD1({
+      [ROOT_SQL]: () => ({ id: 1, text: '食', lang_code: 'nan' }),
+      [EDGE_SQL]: () => ({ results: [{ id: 10, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 3 }] }),
+      [NODE_SQL]: () => ({ results: [{ id: 2, text: 'eat', lang_code: 'eng' }] }),
+      [EDGE_SOURCES_SQL]: () => ({
+        results: [
+          { edge_id: 10, source_id: 5, source_marker: '1' },
+          { edge_id: 10, source_id: 6, source_marker: '2' },
+        ],
+      }),
+    });
+
+    const graph = await getMappingGraph(db, 1, 1);
+
+    expect(graph?.edges[0].sources).toEqual([
+      { source_id: 5, marker: '1' },
+      { source_id: 6, marker: '2' },
+    ]);
   });
 
-  it('allows unmanaged or active evidence edges', () => {
-    const sql = edgeEligibilityPredicate('ed');
-    expect(sql).toContain('expression_edge_evidence');
-    expect(sql).toContain('ev_managed.edge_id = ed.id');
-    expect(sql).toContain('ev_active.edge_id = ed.id');
-    expect(sql).toContain('active_release_id');
-    expect(sql).not.toContain("e.source = 'dictionary'");
-  });
+  it('keeps edge sources empty when the provenance table is unavailable', async () => {
+    const db = fakeD1({
+      [ROOT_SQL]: () => ({ id: 1, text: '食', lang_code: 'nan' }),
+      [EDGE_SQL]: () => ({ results: [{ id: 10, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 3 }] }),
+      [NODE_SQL]: () => ({ results: [{ id: 2, text: 'eat', lang_code: 'eng' }] }),
+      [EDGE_SOURCES_SQL]: () => { throw new Error('no such table: expression_edge_sources'); },
+    });
 
-  it('keeps the compatibility predicate while the ownership journal is absent', () => {
-    const sql = releaseObjectEligibilityPredicate('reading', 'r.id');
-    expect(sql).toBe('(1 = 1)');
-    expect(dictionaryManagedObjectPredicate('edge', 'direct_edge.id')).toContain('direct_edge.id');
-    expect(dictionaryManagedObjectPredicate('edge', 'direct_edge.id')).toContain("direct_edge.source = 'dictionary'");
-  });
+    const graph = await getMappingGraph(db, 1, 1);
 
-  it('makes promotion a no-op after removing per-object ownership', async () => {
-    const db = {
-      prepare: vi.fn(),
-    } as unknown as import('@cloudflare/workers-types').D1Database;
-    await promoteManagedObject(db, 'reading', 'r-1', { kind: 'user', userId: 7 });
-    expect(db.prepare).not.toHaveBeenCalled();
+    expect(graph?.edges[0].sources).toEqual([]);
   });
 });

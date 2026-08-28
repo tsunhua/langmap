@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { VoteError, castVote, getVoteScore } from '../src/services/votes';
+import { Hono } from 'hono';
+import { SignJWT } from 'jose';
+import handbooks from '../src/routes/handbooks';
+
+const SECRET_KEY = 'test-secret';
 
 type Handler = (args: unknown[]) => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+type D1Mock = import('@cloudflare/workers-types').D1Database & { batchSql: string[][] };
+
+function fakeD1(handlers: Record<string, Handler>): D1Mock {
   const batchSql: string[][] = [];
   const prepare = (sql: string) => {
     const handler = handlers[sql];
@@ -32,62 +38,86 @@ function fakeD1(handlers: Record<string, Handler>) {
       });
     },
     batchSql,
-  } as unknown as import('@cloudflare/workers-types').D1Database & { batchSql: string[][] };
+  } as unknown as D1Mock;
 }
 
-const EDGE_EXISTS_SQL = 'SELECT 1 FROM expression_edges WHERE id = ?';
-const SCORE_SQL = 'SELECT COALESCE(SUM(vote), 0) AS score FROM votes WHERE target_type = ? AND target_id = ?';
+const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
+const HANDBOOK_EXISTS_SQL = 'SELECT 1 FROM handbooks WHERE id=?';
+const UPSERT_VOTE_SQL = 'INSERT INTO handbook_votes(user_id,handbook_id,vote) VALUES(?,?,?) ON CONFLICT(user_id,handbook_id) DO UPDATE SET vote=excluded.vote';
+const UPDATE_SCORE_SQL = 'UPDATE handbooks SET score=(SELECT COALESCE(SUM(vote),0) FROM handbook_votes WHERE handbook_id=?) WHERE id=?';
+const SCORE_SQL = 'SELECT score FROM handbooks WHERE id=?';
 
-describe('castVote', () => {
+async function authenticate(): Promise<{ headers: { 'content-type': string; authorization: string } }> {
+  const token = await new SignJWT({ id: 1, username: 'editor', role: 'admin' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .sign(new TextEncoder().encode(SECRET_KEY));
+  return { headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` } };
+}
+
+async function voteApp(db: D1Mock): Promise<Response> {
+  const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+  app.route('/handbooks', handbooks);
+  return app.request('http://example.test/handbooks/1/vote', {
+    method: 'POST',
+    headers: (await authenticate()).headers,
+    body: JSON.stringify({ vote: 1 }),
+  }, { DB: db, SECRET_KEY });
+}
+
+describe('handbook vote endpoint', () => {
   it('rejects a vote value outside -1 and 1', async () => {
-    const db = fakeD1({});
-    await expect(
-      castVote(db, { target_type: 'edge', target_id: 'e1', vote: 5, user_id: 1 }),
-    ).rejects.toMatchObject({ code: 'VOTE_INVALID_VALUE' });
+    const db = fakeD1({ [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }) });
+    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    app.route('/handbooks', handbooks);
+    const response = await app.request('http://example.test/handbooks/1/vote', {
+      method: 'POST',
+      headers: (await authenticate()).headers,
+      body: JSON.stringify({ vote: 5 }),
+    }, { DB: db, SECRET_KEY });
+    expect(response.status).toBe(400);
+    expect((await response.json() as { error: string }).error).toBe('VOTE_INVALID_VALUE');
   });
 
-  it('rejects a vote against a missing edge', async () => {
-    const db = fakeD1({ [EDGE_EXISTS_SQL]: () => null });
-    await expect(
-      castVote(db, { target_type: 'edge', target_id: 'nope', vote: 1, user_id: 1 }),
-    ).rejects.toMatchObject({ code: 'VOTE_TARGET_NOT_FOUND' });
+  it('rejects a vote against a missing handbook', async () => {
+    const db = fakeD1({
+      [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
+      [HANDBOOK_EXISTS_SQL]: () => null,
+    });
+    const response = await voteApp(db);
+    expect(response.status).toBe(404);
+    const body = await response.json() as { success: boolean };
+    expect(body.success).toBe(false);
   });
 
   it('returns the recomputed score after upserting a vote', async () => {
     const db = fakeD1({
-      [EDGE_EXISTS_SQL]: () => ({ 1: 1 }),
-      'SELECT score FROM expression_edges WHERE id = ?': () => ({ results: [{ score: 3 }] }),
+      [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
+      [HANDBOOK_EXISTS_SQL]: () => ({ ok: 1 }),
+      [UPSERT_VOTE_SQL]: () => ({ success: true }),
+      [UPDATE_SCORE_SQL]: () => ({ success: true }),
+      [SCORE_SQL]: () => ({ score: 3 }),
     });
-    const result = await castVote(db, { target_type: 'edge', target_id: 'e1', vote: 1, user_id: 7 });
-    expect(result.score).toBe(3);
-    expect(result.user_vote).toBe(1);
+    const response = await voteApp(db);
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { score: number; user_vote: number } };
+    expect(body.data).toEqual({ score: 3, user_vote: 1 });
   });
 
-  it('updates the edge score in the same batch as the vote', async () => {
-    const updateScoreSql = "UPDATE expression_edges SET score = (SELECT COALESCE(SUM(vote), 0) FROM votes WHERE target_type = 'edge' AND target_id = ?) WHERE id = ?";
-    const readScoreSql = 'SELECT score FROM expression_edges WHERE id = ?';
+  it('updates the handbook score in the same batch as the vote', async () => {
     const db = fakeD1({
-      [EDGE_EXISTS_SQL]: () => ({ 1: 1 }),
-      [readScoreSql]: () => ({ results: [{ score: 3 }] }),
-      [updateScoreSql]: () => ({ success: true }),
+      [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
+      [HANDBOOK_EXISTS_SQL]: () => ({ ok: 1 }),
+      [UPSERT_VOTE_SQL]: () => ({ success: true }),
+      [UPDATE_SCORE_SQL]: () => ({ success: true }),
+      [SCORE_SQL]: () => ({ score: 3 }),
     });
-
-    const result = await castVote(db, { target_type: 'edge', target_id: 'e1', vote: 1, user_id: 7 });
-
-    expect(db.batchSql).toEqual([
-      [
-        expect.stringContaining('INSERT INTO votes'),
-        updateScoreSql,
-        readScoreSql,
-      ],
-    ]);
-    expect(result).toEqual({ score: 3, user_vote: 1 });
-  });
-});
-
-describe('getVoteScore', () => {
-  it('returns 0 when there are no votes', async () => {
-    const db = fakeD1({ [SCORE_SQL]: () => ({ score: 0 }) });
-    expect(await getVoteScore(db, 'edge', 'e1')).toBe(0);
+    const response = await voteApp(db);
+    expect(response.status).toBe(200);
+    expect(db.batchSql).toEqual([[
+      expect.stringContaining('INSERT INTO handbook_votes'),
+      expect.stringContaining('UPDATE handbooks SET score'),
+    ]]);
+    const body = await response.json() as { data: { score: number; user_vote: number } };
+    expect(body.data).toEqual({ score: 3, user_vote: 1 });
   });
 });

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
 
+const INTEGER_ID = /^[1-9]\d*$/;
+
 async function registerToken(): Promise<string> {
   const unique = Math.random().toString(36).slice(2, 10);
   const response = await fetch(`${BASE_URL}/api/v2/auth/register`, {
@@ -15,6 +17,16 @@ async function registerToken(): Promise<string> {
   });
   const body = (await response.json()) as { data: { token: string } };
   return body.data.token;
+}
+
+async function createExpression(token: string, text: string, lang = 'nan'): Promise<string> {
+  const res = await fetch(`${BASE_URL}/api/v2/expressions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lang_code: lang, text }),
+  });
+  const body = (await res.json()) as { data: { expression: { id: string } } };
+  return body.data.expression.id;
 }
 
 describe('expressions API', () => {
@@ -32,7 +44,7 @@ describe('expressions API', () => {
     expect(body.data.created).toBe(true);
     expect(body.data.expression.lang_code).toBe('nan');
     expect(body.data.expression.text).toBe(text);
-    expect(body.data.expression.id.startsWith('nan:')).toBe(true);
+    expect(body.data.expression.id).toMatch(INTEGER_ID);
   });
 
   it('reuses an existing expression on duplicate submission', async () => {
@@ -105,88 +117,67 @@ describe('expressions API', () => {
   });
 
   it('honors stable alphabetical search ordering', async () => {
-    const res = await fetch(`${BASE_URL}/api/v2/expressions/search?q=&sort=alpha&limit=50`);
+    const res = await fetch(`${BASE_URL}/api/v2/expressions/search?q=&limit=50`);
     expect(res.status).toBe(200);
     const body = await res.json() as { data: { items: Array<{ id: string; text: string; homograph_index: number }> } };
-    const keys = body.data.items.map((item) => `${item.text}\u0000${String(item.homograph_index).padStart(8, '0')}\u0000${item.id}`);
+    const keys = body.data.items.map((item) => `${item.text}\u0000${String(item.homograph_index).padStart(8, '0')}\u0000${item.id.padStart(16, '0')}`);
     expect(keys).toEqual([...keys].sort());
   });
 
   it('returns 404 for a missing expression', async () => {
-    const res = await fetch(`${BASE_URL}/api/v2/expressions/nan:missing000000000000000`);
+    const res = await fetch(`${BASE_URL}/api/v2/expressions/999999999999`);
     expect(res.status).toBe(404);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe('EXPRESSION_NOT_FOUND');
   });
 
-  it('creates an expression with an optional locale attestation', async () => {
+  it('links a locale via language_locale_code at creation', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 10);
     const res = await fetch(`${BASE_URL}/api/v2/expressions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lang_code: 'nan', text: `有佐證${unique}`, language_locale_code: 'nan-Hant-CN' }),
+      body: JSON.stringify({ lang_code: 'nan', text: `有查證${unique}`, language_locale_code: 'nan-Hant-CN' }),
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { data: { expression: { id: string } } };
     const detailRes = await fetch(`${BASE_URL}/api/v2/expressions/${body.data.expression.id}`);
-    const detail = (await detailRes.json()) as { data: { attestations: Array<{ language_locale_code: string; source_id: string | null }> } };
-    expect(detail.data.attestations).toHaveLength(1);
-    expect(detail.data.attestations[0].language_locale_code).toBe('nan-Hant-CN');
-    expect(detail.data.attestations[0].source_id).toBeNull();
+    const detail = (await detailRes.json()) as { data: { locales: Array<{ language_locale_code: string }> } };
+    expect(detail.data.locales).toHaveLength(1);
+    expect(detail.data.locales[0].language_locale_code).toBe('nan-Hant-CN');
   });
 
-  it('adds a sourced locale attestation and dedups it', async () => {
+  it('adds and dedups a locale link', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 10);
-    const createRes = await fetch(`${BASE_URL}/api/v2/expressions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lang_code: 'nan', text: `去重測驗${unique}` }),
-    });
-    const createBody = (await createRes.json()) as { data: { expression: { id: string } } };
-    const id = createBody.data.expression.id;
-    const body = {
-      language_locale_code: 'nan-Hant-TW',
-      source: { type: 'url', name: `Test Source ${unique}`, ref: `https://example.test/${unique}` },
-    };
+    const id = await createExpression(token, `去重測驗${unique}`);
     const post = () =>
-      fetch(`${BASE_URL}/api/v2/expressions/${id}/locale-attestations`, {
+      fetch(`${BASE_URL}/api/v2/expressions/${id}/locales`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ language_locale_code: 'nan-Hant-TW' }),
       });
     const first = await post();
     const second = await post();
     expect(first.status).toBe(201);
     expect(second.status).toBe(200);
-    const secondBody = (await second.json()) as { data: { attestation: { id: string }; created: boolean } };
+    const firstBody = (await first.json()) as { data: { locale: { language_locale_code: string }; created: boolean } };
+    const secondBody = (await second.json()) as { data: { locale: { language_locale_code: string }; created: boolean } };
+    expect(firstBody.data.created).toBe(true);
     expect(secondBody.data.created).toBe(false);
-
-    const third = await fetch(`${BASE_URL}/api/v2/expressions/${id}/locale-attestations`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ language_locale_code: 'nan-Hant-TW' }),
-    });
-    expect(third.status).toBe(200);
-    const thirdBody = (await third.json()) as { data: { attestation: { id: string }; created: boolean } };
-    expect(thirdBody.data).toMatchObject({ created: false, attestation: { id: secondBody.data.attestation.id } });
+    expect(secondBody.data.locale.language_locale_code).toBe('nan-Hant-TW');
 
     const detailRes = await fetch(`${BASE_URL}/api/v2/expressions/${id}`);
-    const detail = (await detailRes.json()) as { data: { attestations: Array<{ language_locale_code: string }> } };
-    expect(detail.data.attestations).toHaveLength(1);
+    const detail = (await detailRes.json()) as { data: { locales: Array<{ language_locale_code: string }> } };
+    expect(detail.data.locales).toHaveLength(1);
+    expect(detail.data.locales[0].language_locale_code).toBe('nan-Hant-TW');
   });
 
-  it('rejects an attestation for an unknown locale', async () => {
+  it('rejects a locale link for an unknown locale', async () => {
     const token = await registerToken();
     const unique = Math.random().toString(36).slice(2, 10);
-    const createRes = await fetch(`${BASE_URL}/api/v2/expressions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lang_code: 'nan', text: `錯誤佐證${unique}` }),
-    });
-    const createBody = (await createRes.json()) as { data: { expression: { id: string } } };
-    const res = await fetch(`${BASE_URL}/api/v2/expressions/${createBody.data.expression.id}/locale-attestations`, {
+    const id = await createExpression(token, `錯誤查證${unique}`);
+    const res = await fetch(`${BASE_URL}/api/v2/expressions/${id}/locales`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({ language_locale_code: 'nan-Hant-ZZ' }),

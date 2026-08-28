@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ReadingError, createReading, validateReadingScheme } from '../src/services/readings';
+import { createReading, validateReadingScheme } from '../src/services/readings';
+import type { ReadingRow } from '../src/types/expression';
 
 type Handler = () => unknown;
 
@@ -30,6 +31,18 @@ function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
   return fn().then(() => '', (e: unknown) => String((e as { code?: string }).code ?? ''));
 }
 
+const EXPRESSION_SQL = 'SELECT id FROM expressions WHERE id = ?';
+const LOCALE_SQL = 'SELECT id FROM language_locales WHERE code = ?';
+const READING_COLUMNS = 'r.expression_id, r.locale_id, l.code AS language_locale_code, r.scheme, r.value, r.source_id';
+const FIND_READING_SQL = `SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? AND r.locale_id=? AND r.scheme=? AND r.value=?`;
+const INSERT_READING_SQL = 'INSERT INTO expression_readings(expression_id, locale_id, scheme, value, source_id) VALUES (?, ?, ?, ?, ?)';
+const SOURCE_SQL = 'SELECT id FROM sources WHERE type = ? AND name = ?';
+
+const readingRow: ReadingRow = {
+  expression_id: 1, locale_id: 5, language_locale_code: 'nan-Hant-TW',
+  scheme: 'ipa', value: 't͡sit', source_id: null,
+};
+
 describe('validateReadingScheme', () => {
   it('accepts valid schemes', () => {
     expect(validateReadingScheme('ipa')).toBe(true);
@@ -47,90 +60,90 @@ describe('validateReadingScheme', () => {
 });
 
 describe('createReading', () => {
-  it('creates a reading after ensuring attestation exists', async () => {
-    const mockReading = {
-      id: 'r1', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
-      scheme: 'ipa', value: 't͡sit', source_id: null, source_ref: null,
-      created_by: 1, created_at: '2026-08-14',
-    };
+  it('creates a reading after ensuring the locale exists', async () => {
+    let stored: ReadingRow | null = null;
     const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
-        () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
-      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?':
-        () => null,
-      'INSERT INTO expression_locale_attestations (id, expression_id, language_locale_code, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?)':
-        () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by, created_at FROM expression_readings WHERE expression_id = ? AND language_locale_code = ? AND scheme = ? AND value = ? AND source_id IS ? AND source_ref IS ?':
-        () => null,
-      'INSERT INTO expression_readings (id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)':
-        () => ({ success: true }),
-      'SELECT id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by, created_at FROM expression_readings WHERE id = ?':
-        () => mockReading,
+      [EXPRESSION_SQL]: () => ({ id: 1 }),
+      [LOCALE_SQL]: () => ({ id: 5 }),
+      [FIND_READING_SQL]: () => stored,
+      [INSERT_READING_SQL]: () => { stored = readingRow; return { success: true }; },
     });
     const result = await createReading(db, {
-      expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
+      expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'ipa', value: 't͡sit', created_by: 1,
     });
     expect(result.created).toBe(true);
-    expect(result.reading.scheme).toBe('ipa');
+    expect(result.reading).toEqual(readingRow);
   });
 
   it('reuses an existing reading on duplicate', async () => {
-    const existing = {
-      id: 'r-old', expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
-      scheme: 'ipa', value: 't͡sit', source_id: null, source_ref: null,
-      created_by: 1, created_at: '2026-08-14',
-    };
     const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
-        () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
-      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-      'SELECT id FROM expression_locale_attestations WHERE expression_id = ? AND language_locale_code = ?':
-        () => ({ id: 'att-old' }),
-      'SELECT id, expression_id, language_locale_code, scheme, value, source_id, source_ref, created_by, created_at FROM expression_readings WHERE expression_id = ? AND language_locale_code = ? AND scheme = ? AND value = ? AND source_id IS ? AND source_ref IS ?':
-        () => existing,
+      [EXPRESSION_SQL]: () => ({ id: 1 }),
+      [LOCALE_SQL]: () => ({ id: 5 }),
+      [FIND_READING_SQL]: () => readingRow,
     });
     const result = await createReading(db, {
-      expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
+      expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'ipa', value: 't͡sit', created_by: 1,
     });
     expect(result.created).toBe(false);
-    expect(result.reading.id).toBe('r-old');
+    expect(result.reading).toBe(readingRow);
+  });
+
+  it('resolves an optional source to its integer id before storing', async () => {
+    let stored: ReadingRow | null = null;
+    const db = fakeD1({
+      [EXPRESSION_SQL]: () => ({ id: 1 }),
+      [LOCALE_SQL]: () => ({ id: 5 }),
+      [SOURCE_SQL]: () => ({ id: 3 }),
+      [FIND_READING_SQL]: () => stored,
+      [INSERT_READING_SQL]: () => { stored = { ...readingRow, source_id: 3 }; return { success: true }; },
+    });
+    const result = await createReading(db, {
+      expression_id: 1, language_locale_code: 'nan-Hant-TW',
+      scheme: 'ipa', value: 't͡sit',
+      source: { type: 'publication', name: 'Tâi-lô Pronunciation Guide' },
+      created_by: 1,
+    });
+    expect(result.created).toBe(true);
+    expect(result.reading.source_id).toBe(3);
   });
 
   it('rejects an invalid scheme with INVALID_READING_SCHEME', async () => {
-    const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
-        () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
-      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-    });
+    const db = fakeD1({});
     expect(await captureAsyncCode(() => createReading(db, {
-      expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
+      expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'Invalid', value: 'x', created_by: 1,
     }))).toBe('INVALID_READING_SCHEME');
   });
 
   it('rejects an empty value with VALIDATION_FAILED', async () => {
-    const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
-        () => ({ id: 'nan:aaaa', lang_code: 'nan' }),
-      'SELECT 1 FROM language_locales WHERE code = ?': () => ({ ok: 1 }),
-    });
+    const db = fakeD1({});
     expect(await captureAsyncCode(() => createReading(db, {
-      expression_id: 'nan:aaaa', language_locale_code: 'nan-Hant-TW',
+      expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'ipa', value: '  ', created_by: 1,
     }))).toBe('VALIDATION_FAILED');
   });
 
   it('rejects a missing expression with EXPRESSION_NOT_FOUND', async () => {
     const db = fakeD1({
-      'SELECT id, lang_code, text, text_hash, homograph_index, description, tags_json, source_id, source_ref, review_status, created_by, created_at, updated_at FROM expressions WHERE id = ?':
-        () => null,
+      [EXPRESSION_SQL]: () => null,
+      [LOCALE_SQL]: () => ({ id: 5 }),
     });
     expect(await captureAsyncCode(() => createReading(db, {
-      expression_id: 'nan:missing', language_locale_code: 'nan-Hant-TW',
+      expression_id: 999, language_locale_code: 'nan-Hant-TW',
       scheme: 'ipa', value: 'x', created_by: 1,
     }))).toBe('EXPRESSION_NOT_FOUND');
+  });
+
+  it('rejects an unknown locale with INVALID_LANGUAGE_LOCALE_CODE', async () => {
+    const db = fakeD1({
+      [EXPRESSION_SQL]: () => ({ id: 1 }),
+      [LOCALE_SQL]: () => null,
+    });
+    expect(await captureAsyncCode(() => createReading(db, {
+      expression_id: 1, language_locale_code: 'nan-Hant-ZZ',
+      scheme: 'ipa', value: 'x', created_by: 1,
+    }))).toBe('INVALID_LANGUAGE_LOCALE_CODE');
   });
 });

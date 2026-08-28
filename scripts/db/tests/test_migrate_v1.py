@@ -92,7 +92,10 @@ class MigrateV1Test(unittest.TestCase):
         self.assertIsNone(result['expressions'][0]['created_by'])
 
     def test_migrates_handbook_sections_and_items(self) -> None:
-        self.assertEqual(parse_sections('## §2 {{相借問}}\n{{text:翁|mid:1}}\n\n### Two\n{{2}}'), [('§2 相借問', ['text:相借問', 'text:翁', '2'])])
+        self.assertEqual(
+            parse_sections('## §2 {{相借問}}\n{{text:翁|mid:1}}\n\n### Two\n{{2}}'),
+            [('§2 相借問', ['text:相借問', 'text:翁'], 2), ('Two', ['2'], 3)],
+        )
         result = migrate_handbooks(
             [{'id': 10, 'user_id': 7, 'title': 'Guide', 'is_public': 1, 'content': '## One\n{{text:翁}}\n{{999}}'}],
             [],

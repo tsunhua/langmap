@@ -185,6 +185,32 @@ def read_fake_log(path: Path) -> list[dict[str, str]]:
 
 
 class LocalRebuildTests(unittest.TestCase):
+    def test_refresh_language_statistics_runs_only_when_table_exists(self) -> None:
+        from lib import local as local_lib  # noqa: E402
+
+        calls: list[str] = []
+
+        class FakeExecutor:
+            def execute_query(self, persist_to, sql: str) -> list[dict]:
+                calls.append(sql)
+                if "sqlite_master" in sql:
+                    if not SELF.table_exists:
+                        return [{"results": []}]
+                    return [{"results": [{"name": "language_statistics"}]}]
+                return [{"results": [], "success": True}]
+
+        SELF = type("S", (), {"table_exists": True})()
+        executor = FakeExecutor()
+        local_lib.refresh_language_statistics(executor, None)
+        self.assertEqual(len(calls), 2)
+        self.assertIn(local_lib.REFRESH_LANGUAGE_STATISTICS_SQL, calls)
+
+        calls.clear()
+        SELF.table_exists = False
+        local_lib.refresh_language_statistics(executor, None)
+        self.assertEqual(len(calls), 1)
+        self.assertNotIn(local_lib.REFRESH_LANGUAGE_STATISTICS_SQL, calls)
+
     def test_rebuild_creates_missing_local_metadata_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

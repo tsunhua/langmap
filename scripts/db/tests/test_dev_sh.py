@@ -133,6 +133,16 @@ exit 0
 """,
     )
     write_executable(
+        fake_bin / "lsof",
+        """#!/usr/bin/env bash
+set -euo pipefail
+# The real host may have LangMap dev servers listening on 8788/5173. Fake
+# lsof as "no listeners" so stop_port_process sees an empty set instead of
+# inspecting real host processes through the fake ps.
+exit 1
+""",
+    )
+    write_executable(
         fake_bin / "ps",
         """#!/usr/bin/env bash
 set -euo pipefail
