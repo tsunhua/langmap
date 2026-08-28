@@ -5,7 +5,14 @@ const NODE_LIMIT = 200;
 interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; }
 interface NodeRow { id:number; text:string; lang_code:string; }
 
+/** Parses a comma-separated language filter (e.g. "eng,cmn-Hant") into a lowercase code set. */
+function parseTargetLanguages(value: string | undefined): Set<string> {
+  return new Set((value ?? '').split(',').map((code) => code.trim().toLowerCase()).filter(Boolean));
+}
+
 export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 2 | 3, targetLanguage?: string): Promise<MappingGraphResponse | null> {
+  // Filtering applies at every hop so traversal never hops through excluded languages.
+  const targetLanguages = parseTargetLanguages(targetLanguage);
   const root = await db.prepare('SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?').bind(rootId).first<NodeRow>();
   if (!root) return null;
   const nodes = new Map<number, MappingGraphNode>([[root.id, { expression_id: root.id, text: root.text, lang_code: root.lang_code, language_name: root.lang_code, depth: 0 }]]);
@@ -18,7 +25,8 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     const nodeRows = unknown.length ? await db.prepare(`SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${unknown.map(() => '?').join(',')})`).bind(...unknown).all<NodeRow>() : { results: [] as NodeRow[] };
     const next: number[] = [];
     for (const row of nodeRows.results) {
-      if (targetLanguage && depth === 1 && row.lang_code !== targetLanguage) continue;
+      // The root anchor is kept regardless; every other hop must be in the filtered set.
+      if (targetLanguages.size && !targetLanguages.has(row.lang_code)) continue;
       if (nodes.size >= NODE_LIMIT) { omitted++; continue; }
       nodes.set(row.id, { expression_id: row.id, text: row.text, lang_code: row.lang_code, language_name: row.lang_code, depth }); next.push(row.id);
     }
