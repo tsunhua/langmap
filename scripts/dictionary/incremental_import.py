@@ -10,8 +10,9 @@ import shutil
 import sqlite3
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from langmap_dictionary.adapters.traditional_chinese_english import normalize_release
 from langmap_dictionary.clusters import build_explicit_clusters
@@ -21,6 +22,16 @@ from langmap_dictionary.schema import create_staging_database
 
 
 STATE_VERSION = 1
+ProgressCallback = Callable[[dict[str, Any]], None]
+
+
+@dataclass(frozen=True)
+class StagingPreparation:
+    release_id: str
+    input_records: int
+    normalized_entries: int
+    clusters: int
+    phase_seconds: dict[str, float]
 
 
 def order_jsonl_files(input_dir: Path) -> list[Path]:
@@ -116,7 +127,24 @@ def _prepare_staging(
     *,
     batch_size: int,
     commit_every: int,
-) -> tuple[str, int, int, int]:
+    progress: ProgressCallback | None = None,
+) -> StagingPreparation:
+    phase_seconds: dict[str, float] = {}
+
+    def phase_callback(phase: str, started: float):
+        def emit(event: dict[str, Any]) -> None:
+            if progress is None:
+                return
+            payload = dict(event)
+            payload["step"] = str(payload.get("step") or payload.get("phase") or phase)
+            payload["phase"] = phase
+            payload["elapsed_seconds"] = round(time.perf_counter() - started, 3)
+            progress(payload)
+        return emit
+
+    stage_started = time.perf_counter()
+    if progress is not None:
+        progress({"phase": "stage", "step": "start", "processed": 0, "elapsed_seconds": 0.0})
     staging = create_staging_database(staging_path, fast=True)
     try:
         loaded = load_jsonl_release(
@@ -124,22 +152,51 @@ def _prepare_staging(
             [source],
             batch_size=batch_size,
             compact=True,
+            progress=phase_callback("stage", stage_started),
         )
     finally:
         staging.close()
+    phase_seconds["stage"] = round(time.perf_counter() - stage_started, 3)
 
+    normalize_started = time.perf_counter()
+    if progress is not None:
+        progress({"phase": "normalize", "step": "start", "processed": 0, "elapsed_seconds": 0.0})
     staging = create_staging_database(staging_path, fast=True)
     try:
+        normalize_timings: dict[str, float] = {}
         normalized = normalize_release(
             staging,
             loaded.release_id,
             batch_size=batch_size,
             commit_every=commit_every,
+            progress=phase_callback("normalize", normalize_started),
+            defer_foreign_keys=True,
+            timings=normalize_timings,
         )
-        clusters = build_explicit_clusters(staging, loaded.release_id)
+        phase_seconds["normalize"] = round(time.perf_counter() - normalize_started, 3)
+        phase_seconds.update(normalize_timings)
+        cluster_started = time.perf_counter()
+        if progress is not None:
+            progress({"phase": "cluster", "step": "start", "processed": 0, "elapsed_seconds": 0.0})
+        cluster_timings: dict[str, float] = {}
+        clusters = build_explicit_clusters(
+            staging,
+            loaded.release_id,
+            progress=phase_callback("cluster", cluster_started),
+            defer_foreign_keys=True,
+            timings=cluster_timings,
+        )
+        phase_seconds["cluster"] = round(time.perf_counter() - cluster_started, 3)
+        phase_seconds.update(cluster_timings)
     finally:
         staging.close()
-    return loaded.release_id, loaded.input_records, normalized, clusters.clusters
+    return StagingPreparation(
+        loaded.release_id,
+        loaded.input_records,
+        normalized,
+        clusters.clusters,
+        phase_seconds,
+    )
 
 
 def run_incremental_import(
@@ -149,11 +206,13 @@ def run_incremental_import(
     staging_root: Path,
     *,
     batch_size: int = 5_000,
-    commit_every: int = 20_000,
+    commit_every: int = 50_000,
     resume: bool = True,
     keep_staging: bool = False,
     limit_files: int | None = None,
+    only_names: set[str] | None = None,
     stop_on_error: bool = False,
+    progress: ProgressCallback | None = None,
 ) -> list[dict[str, Any]]:
     """Run independent stage/normalize/import transactions in small-first order."""
 
@@ -170,6 +229,8 @@ def run_incremental_import(
     staging_root.mkdir(parents=True, exist_ok=True)
 
     files = order_jsonl_files(input_dir)
+    if only_names is not None:
+        files = [path for path in files if path.name in only_names]
     if limit_files is not None:
         if limit_files < 1:
             raise ValueError("limit_files must be positive")
@@ -214,40 +275,47 @@ def run_incremental_import(
         }
         try:
             before = _d1_catalog_snapshot(d1_database)
-            release_id, input_records, normalized, clusters = _prepare_staging(
+            prepared = _prepare_staging(
                 source,
                 staging_path,
                 batch_size=batch_size,
                 commit_every=commit_every,
+                progress=progress,
             )
             append = before["languages"] > 0 or before["terms"] > 0
             summary = import_release_to_local_d1(
                 staging_path,
                 d1_database,
-                release_id,
+                prepared.release_id,
                 packed=True,
                 append=append,
+                progress=progress,
             )
             after = _d1_catalog_snapshot(d1_database)
             elapsed = time.perf_counter() - started
             row.update(
                 {
                     "status": "success",
-                    "release_id": release_id,
-                    "input_records": input_records,
-                    "normalized_entries": normalized,
-                    "clusters": clusters,
+                    "release_id": prepared.release_id,
+                    "input_records": prepared.input_records,
+                    "normalized_entries": prepared.normalized_entries,
+                    "clusters": prepared.clusters,
                     "expressions": summary.expressions,
                     "bindings": summary.bindings,
                     "edges": summary.edges,
                     "readings": summary.readings,
                     "pos_attestations": summary.pos_attestations,
                     "seconds": round(elapsed, 3),
-                    "entries_per_second": round(input_records / elapsed, 2) if elapsed else 0,
+                    "entries_per_second": round(prepared.input_records / elapsed, 2) if elapsed else 0,
                     "mb_per_second": round(source_size / elapsed / 1024 / 1024, 3) if elapsed else 0,
                     "d1_before": before,
                     "d1_after": after,
                     "d1_bytes": _d1_bytes(d1_database),
+                    "phase_seconds": {
+                        **prepared.phase_seconds,
+                        **summary.phase_seconds,
+                        "total": round(elapsed, 3),
+                    },
                     "staging_path": str(staging_path) if keep_staging else None,
                 }
             )
@@ -281,16 +349,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--staging-root", required=True, type=Path)
     parser.add_argument("--batch-size", type=int, default=5_000)
-    parser.add_argument("--commit-every", type=int, default=20_000)
+    parser.add_argument("--commit-every", type=int, default=50_000)
     parser.add_argument("--no-resume", action="store_true")
     parser.add_argument("--keep-staging", action="store_true")
     parser.add_argument("--limit-files", type=int)
+    parser.add_argument("--only", dest="only_names", action="append", type=str,
+                        help="process only JSONL files whose name contains this substring (repeatable)")
     parser.add_argument("--stop-on-error", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    only_names: set[str] | None = None
+    if args.only_names:
+        all_names = {path.name for path in Path(args.input_dir).glob("*.jsonl")}
+        only_names = {name for name in all_names if any(fragment in name for fragment in args.only_names)}
+        missing = set(args.only_names) - {name for name in only_names for fragment in args.only_names if fragment in name}
+        if missing:
+            print(f"警告：沒有檔名含 {sorted(missing)} 的 JSONL", file=sys.stderr)
     rows = run_incremental_import(
         args.input_dir,
         args.d1_database,
@@ -301,6 +378,7 @@ def main(argv: list[str] | None = None) -> int:
         resume=not args.no_resume,
         keep_staging=args.keep_staging,
         limit_files=args.limit_files,
+        only_names=only_names,
         stop_on_error=args.stop_on_error,
     )
     return 0 if all(row.get("status") in {"success", "skipped"} for row in rows) else 1

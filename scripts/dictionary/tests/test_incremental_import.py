@@ -31,10 +31,21 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
 
     state_path = tmp_path / "state.json"
     staging_root = tmp_path / "staging"
-    first = run_incremental_import(input_dir, d1_path, state_path, staging_root)
+    events = []
+    first = run_incremental_import(input_dir, d1_path, state_path, staging_root, progress=events.append)
     assert first[0]["status"] == "success"
     assert first[0]["expressions"] == 9
     assert first[0]["d1_after"]["terms"] - first[0]["d1_before"]["terms"] == 9
+    assert set(first[0]["phase_seconds"]) == {
+        "stage", "normalize", "normalize_staging_read", "normalize_compute",
+        "normalize_sqlite_flush", "normalize_checkpoint_commit",
+        "normalize_foreign_key_check", "cluster", "cluster_cleanup",
+        "cluster_clusters_insert", "cluster_members_insert", "cluster_foreign_key_check",
+        "cluster_index", "cluster_commit", "staging_load", "d1_write", "total",
+    }
+    assert {event["phase"] for event in events} == {
+        "stage", "normalize", "cluster", "staging_load", "d1_write",
+    }
     assert list(staging_root.iterdir()) == []
 
     second = run_incremental_import(input_dir, d1_path, state_path, staging_root)

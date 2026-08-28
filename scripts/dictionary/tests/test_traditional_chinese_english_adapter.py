@@ -53,6 +53,94 @@ def test_normalization_rejects_invalid_batch_settings(tmp_path):
         normalize_release(connection, summary.release_id, commit_every=0)
 
 
+def test_normalization_reports_monotonic_progress(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+    events = []
+
+    normalize_release(
+        connection,
+        summary.release_id,
+        commit_every=1,
+        progress=events.append,
+    )
+
+    processed = [event["processed_entries"] for event in events]
+    assert processed == sorted(processed)
+    assert {1, 2, 3} <= set(processed)
+    assert events[-1]["status"] == "completed"
+
+
+def test_normalization_flushes_progress_more_often_than_it_commits(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+    events = []
+    statements = []
+    connection.set_trace_callback(statements.append)
+
+    normalize_release(
+        connection,
+        summary.release_id,
+        batch_size=1,
+        commit_every=10,
+        progress=events.append,
+    )
+
+    running = [event["processed_entries"] for event in events if event["status"] == "running"]
+    assert running == [1, 2, 3]
+    assert sum(statement == "COMMIT" for statement in statements) == 1
+
+
+def test_normalization_can_defer_and_restore_foreign_key_checks(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+    normalize_release(connection, summary.release_id)
+    build_explicit_clusters(connection, summary.release_id)
+    statements = []
+    connection.set_trace_callback(statements.append)
+
+    normalize_release(
+        connection,
+        summary.release_id,
+        defer_foreign_keys=True,
+    )
+
+    normalized = [statement.upper().replace(" ", "") for statement in statements]
+    assert "PRAGMAFOREIGN_KEYS=OFF" in normalized
+    assert "PRAGMAFOREIGN_KEY_CHECK" in normalized
+    assert "PRAGMAFOREIGN_KEYS=ON" in normalized
+    assert connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+    assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_normalization_reports_component_timings(tmp_path):
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [FIXTURE])
+    events = []
+    timings = {}
+
+    normalize_release(
+        connection,
+        summary.release_id,
+        batch_size=1,
+        progress=events.append,
+        timings=timings,
+        defer_foreign_keys=True,
+    )
+
+    expected = {
+        "normalize_staging_read",
+        "normalize_compute",
+        "normalize_sqlite_flush",
+        "normalize_checkpoint_commit",
+        "normalize_foreign_key_check",
+    }
+    assert set(timings) == expected
+    assert all(value >= 0 for value in timings.values())
+    assert events[-1]["status"] == "completed"
+    assert set(events[-1]["timings"]) == expected
+
+
 def test_adapter_removes_bullet_only_from_normalized_equivalent():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry("r", "d", "e", "頭", "頭", None, "cmn-Hant-to-eng", "a" * 64, senses=(StagedSense("s", 1, equivalents=("• head",)),))
@@ -86,6 +174,31 @@ def test_adapter_keeps_latin_definition_as_meaning_not_equivalent():
     equivalents = [o.canonical_text for o in normalized.senses[0].occurrences if o.occurrence_kind == "equivalent"]
     assert "no half measures" in equivalents
     assert "once you start, finish it" not in equivalents
+
+
+def test_adapter_does_not_promote_same_language_definition():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_HK.common", "e", "腦子", "腦子", None,
+        "cmn-Hant-to-cmn-Hant", "a" * 64,
+        senses=(StagedSense("s", 1, definitions=(".腦力。",), equivalents=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    promoted = [o for o in normalized.senses[0].occurrences if o.occurrence_kind == "equivalent"]
+    assert promoted == []
+
+
+def test_adapter_strips_leading_sentence_punctuation_from_promoted_definition():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.kn-en.oup", "e", "book", "book", None,
+        "eng-to-kan", "a" * 64,
+        senses=(StagedSense("s", 1, definitions=(".ಮುದ್ರಿತ ಗ್ರಂಥ",), equivalents=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    promoted = [o for o in normalized.senses[0].occurrences if o.occurrence_kind == "equivalent"]
+    assert len(promoted) == 1
+    assert promoted[0].canonical_text.startswith("ಮುದ್ರಿತ")
 
 
 def test_adapter_uses_non_english_direction_profiles():

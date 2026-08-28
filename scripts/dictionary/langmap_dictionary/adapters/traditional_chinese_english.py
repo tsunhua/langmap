@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
+import time
 import unicodedata
 from typing import Any, Callable
 
@@ -198,21 +200,30 @@ class TraditionalChineseEnglishAdapter:
             # Some OUP bundles (Kannada, Telugu, Malayalam, ...) store the
             # foreign equivalence inside the definition list rather than as a
             # separate equivalents entry. A definition carrying a distinctive
-            # non-Latin script (e.g. Kannada/Telugu for a headword-language
-            # English bundle) is the target-language equivalent, whereas a
-            # Latin-script definition is a plain meaning and stays untouched.
+            # non-Latin script that differs from the headword language (e.g.
+            # Kannada/Telugu inside an English-headword bundle) is the
+            # target-language equivalent, whereas a Latin-script or same-language
+            # definition is a plain meaning and stays untouched.
             for ordinal, definition in enumerate(sense.definitions, 1):
                 if not isinstance(definition, str) or not definition.strip():
                     continue
                 cleaned = canonicalize_text(definition)
+                # Kannada/Telugu/Malayalam OUP definitions are a semicolon-joined
+                # list inside one sense; the trailing ``;`` is a list separator,
+                # not part of the word.
+                cleaned = cleaned.rstrip(";").rstrip()
+                # A stray leading sentence punctuation (e.g. ``.腦力。``) is a
+                # source-data blemish, not part of the meaning.
+                cleaned = cleaned.lstrip(".,，。、·").strip()
                 if not cleaned or cleaned.lower() in equivalent_texts:
                     continue
-                if _script_language(cleaned) is None:
+                inferred = _script_language(cleaned)
+                if inferred is None or inferred == head_lang:
                     continue
-                lang, _, _ = _language(cleaned, _side_hint(entry.direction_hint, False))
+                lang, _, _ = _language(cleaned, inferred)
                 if lang is None:
                     continue
-                add_occurrence(cleaned, _side_hint(entry.direction_hint, False), "equivalent", f"def{ordinal}", {"definition_sourced": True})
+                add_occurrence(cleaned, inferred, "equivalent", f"def{ordinal}", {"definition_sourced": True})
             for ordinal, raw_item in enumerate(sense.relations, 1):
                 item = raw_item if isinstance(raw_item, dict) else {}
                 if item.get("kind") != "synonym":
@@ -287,20 +298,92 @@ def normalize_release(
     batch_size: int = 500,
     commit_every: int = 10_000,
     progress: Callable[[dict[str, Any]], None] | None = None,
+    defer_foreign_keys: bool = False,
+    timings: dict[str, float] | None = None,
 ) -> int:
     if batch_size <= 0:
         raise ValueError("batch_size must be greater than zero")
     if commit_every <= 0:
         raise ValueError("commit_every must be greater than zero")
+    component_timings = timings if timings is not None else {}
+    timing_keys = (
+        "normalize_staging_read",
+        "normalize_compute",
+        "normalize_sqlite_flush",
+        "normalize_checkpoint_commit",
+        "normalize_foreign_key_check",
+    )
+    component_timings.update({key: 0.0 for key in timing_keys})
+    foreign_keys_enabled = bool(connection.execute("PRAGMA foreign_keys").fetchone()[0])
+    restore_foreign_keys = defer_foreign_keys and foreign_keys_enabled
+    if restore_foreign_keys:
+        # SQLite only changes this PRAGMA outside an active transaction.
+        connection.commit()
+        connection.execute("PRAGMA foreign_keys = OFF")
+    try:
+        count = _normalize_release_rows(
+            connection,
+            release_id,
+            adapter=adapter,
+            resume=resume,
+            resume_after=resume_after,
+            batch_size=batch_size,
+            commit_every=commit_every,
+            progress=progress,
+            timings=component_timings,
+        )
+        check_started = time.perf_counter()
+        try:
+            if defer_foreign_keys:
+                violation = connection.execute("PRAGMA foreign_key_check").fetchone()
+                if violation is not None:
+                    raise sqlite3.IntegrityError(f"staging foreign key violation: {tuple(violation)!r}")
+        finally:
+            component_timings["normalize_foreign_key_check"] += time.perf_counter() - check_started
+        for key in timing_keys:
+            component_timings[key] = round(component_timings[key], 6)
+        if progress is not None:
+            processed = connection.execute(
+                "SELECT processed_entries FROM normalization_progress WHERE release_id=?",
+                (release_id,),
+            ).fetchone()
+            progress({
+                "phase": "normalize",
+                "step": "completed",
+                "processed_entries": int(processed[0]) if processed is not None else count,
+                "status": "completed",
+                "timings": _timing_snapshot(component_timings),
+            })
+        return count
+    finally:
+        if restore_foreign_keys:
+            if connection.in_transaction:
+                connection.rollback()
+            connection.execute("PRAGMA foreign_keys = ON")
+
+
+def _normalize_release_rows(
+    connection,
+    release_id: str,
+    adapter: TraditionalChineseEnglishAdapter | None = None,
+    *,
+    resume: bool = False,
+    resume_after: tuple[str, str] | None = None,
+    batch_size: int = 500,
+    commit_every: int = 10_000,
+    progress: Callable[[dict[str, Any]], None] | None = None,
+    timings: dict[str, float] | None = None,
+) -> int:
+    timings = timings if timings is not None else {}
     adapter = adapter or TraditionalChineseEnglishAdapter()
-    progress = connection.execute(
+    checkpoint = connection.execute(
         "SELECT last_entry_rowid,processed_entries FROM normalization_progress WHERE release_id=?",
         (release_id,),
     ).fetchone()
-    start_rowid = int(progress["last_entry_rowid"]) if resume and progress else 0
-    processed_entries = int(progress["processed_entries"]) if resume and progress else 0
+    start_rowid = int(checkpoint["last_entry_rowid"]) if resume and checkpoint else 0
+    processed_entries = int(checkpoint["processed_entries"]) if resume and checkpoint else 0
     existing_entries: set[str] = set()
-    if resume and progress is None and resume_after is not None:
+    if resume and checkpoint is None and resume_after is not None:
         cursor = connection.execute(
             "SELECT rowid FROM input_entries WHERE release_id=? AND dictionary_key=? AND entry_key=?",
             (release_id, resume_after[0], resume_after[1]),
@@ -308,7 +391,7 @@ def normalize_release(
         if cursor is None:
             raise ValueError(f"unknown staged entry cursor: {resume_after!r}")
         start_rowid = int(cursor[0])
-    elif resume and progress is None:
+    elif resume and checkpoint is None:
         existing_entries = {
             str(row[0])
             for row in connection.execute(
@@ -319,6 +402,10 @@ def normalize_release(
         }
         processed_entries = len(existing_entries)
     if not resume:
+        # Normalized rows invalidate any clusters built by an earlier run. This
+        # must be explicit when bulk mode temporarily disables FK cascades.
+        connection.execute("DELETE FROM cluster_members WHERE release_id=?", (release_id,))
+        connection.execute("DELETE FROM lexical_clusters WHERE release_id=?", (release_id,))
         connection.execute("DELETE FROM normalized_pos WHERE release_id=?", (release_id,))
         connection.execute("DELETE FROM lexical_readings WHERE release_id=?", (release_id,))
         connection.execute("DELETE FROM lexical_occurrences WHERE release_id=?", (release_id,))
@@ -327,7 +414,6 @@ def normalize_release(
             (release_id,),
         )
         connection.execute("DELETE FROM normalization_progress WHERE release_id=?", (release_id,))
-        connection.commit()
     count = 0
     occurrence_rows: list[tuple[Any, ...]] = []
     reading_rows: list[tuple[Any, ...]] = []
@@ -335,62 +421,96 @@ def normalize_release(
     quarantine_rows: list[tuple[Any, ...]] = []
 
     def flush() -> None:
-        if occurrence_rows:
-            occurrence_rows.sort(key=lambda row: row[1])
-            connection.executemany("INSERT INTO lexical_occurrences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", occurrence_rows)
-            occurrence_rows.clear()
-        if reading_rows:
-            reading_rows.sort(key=lambda row: row[1])
-            connection.executemany("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?)", reading_rows)
-            reading_rows.clear()
-        if pos_rows:
-            pos_rows.sort(key=lambda row: row[1])
-            connection.executemany("INSERT INTO normalized_pos VALUES (?,?,?,?,?,?)", pos_rows)
-            pos_rows.clear()
-        if quarantine_rows:
-            quarantine_rows.sort(key=lambda row: str(row[4]))
-            connection.executemany(
-                "INSERT OR IGNORE INTO quarantine_items(release_id,dictionary_key,entry_key,sense_key,claim_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?,?,?)",
-                quarantine_rows,
+        started = time.perf_counter()
+        try:
+            if occurrence_rows:
+                occurrence_rows.sort(key=lambda row: row[1])
+                connection.executemany("INSERT INTO lexical_occurrences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", occurrence_rows)
+                occurrence_rows.clear()
+            if reading_rows:
+                reading_rows.sort(key=lambda row: row[1])
+                connection.executemany("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?)", reading_rows)
+                reading_rows.clear()
+            if pos_rows:
+                pos_rows.sort(key=lambda row: row[1])
+                connection.executemany("INSERT INTO normalized_pos VALUES (?,?,?,?,?,?)", pos_rows)
+                pos_rows.clear()
+            if quarantine_rows:
+                quarantine_rows.sort(key=lambda row: str(row[4]))
+                connection.executemany(
+                    "INSERT OR IGNORE INTO quarantine_items(release_id,dictionary_key,entry_key,sense_key,claim_key,error_code,detail,raw_json) VALUES (?,?,?,?,?,?,?,?)",
+                    quarantine_rows,
+                )
+                quarantine_rows.clear()
+        finally:
+            timings["normalize_sqlite_flush"] += time.perf_counter() - started
+
+    def checkpoint(status: str) -> None:
+        started = time.perf_counter()
+        try:
+            connection.execute(
+                "INSERT INTO normalization_progress(release_id,last_entry_rowid,processed_entries,status) VALUES (?,?,?,?) "
+                "ON CONFLICT(release_id) DO UPDATE SET last_entry_rowid=excluded.last_entry_rowid,processed_entries=excluded.processed_entries,status=excluded.status",
+                (release_id, last_rowid, processed_entries + count, status),
             )
-            quarantine_rows.clear()
+            connection.commit()
+        finally:
+            timings["normalize_checkpoint_commit"] += time.perf_counter() - started
+
+    def timed_entries():
+        iterator = iter(iter_staged_entry_rows(
+            connection, release_id, start_rowid=start_rowid, batch_size=batch_size
+        ))
+        while True:
+            started = time.perf_counter()
+            try:
+                item = next(iterator)
+            except StopIteration:
+                timings["normalize_staging_read"] += time.perf_counter() - started
+                return
+            timings["normalize_staging_read"] += time.perf_counter() - started
+            yield item
 
     last_rowid = start_rowid
-    for rowid, entry in iter_staged_entry_rows(
-        connection, release_id, start_rowid=start_rowid, batch_size=batch_size
-    ):
+    for rowid, entry in timed_entries():
         last_rowid = rowid
         if entry.entry_key in existing_entries:
             continue
-        normalized = adapter.normalize_entry(entry)
-        values = (normalized.headword, *(occurrence for sense in normalized.senses for occurrence in sense.occurrences))
-        for occurrence in values:
-            occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
-            if occurrence.errors:
-                quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
-        for reading in normalized.readings:
-            reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False)))
-        for sense in normalized.senses:
-            for pos in sense.pos:
-                pos_rows.append((release_id, pos.claim_key, pos.sense_key, pos.raw_value, pos.code, _fast_json.dumps(pos.errors, ensure_ascii=False)))
+        compute_started = time.perf_counter()
+        try:
+            normalized = adapter.normalize_entry(entry)
+            values = (normalized.headword, *(occurrence for sense in normalized.senses for occurrence in sense.occurrences))
+            for occurrence in values:
+                occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
+                if occurrence.errors:
+                    quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
+            for reading in normalized.readings:
+                reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False)))
+            for sense in normalized.senses:
+                for pos in sense.pos:
+                    pos_rows.append((release_id, pos.claim_key, pos.sense_key, pos.raw_value, pos.code, _fast_json.dumps(pos.errors, ensure_ascii=False)))
+        finally:
+            timings["normalize_compute"] += time.perf_counter() - compute_started
         count += 1
-        if count % commit_every == 0:
+        flush_due = count % batch_size == 0
+        commit_due = count % commit_every == 0
+        if flush_due or commit_due:
             flush()
-            processed_entries += commit_every
-            connection.execute(
-                "INSERT INTO normalization_progress(release_id,last_entry_rowid,processed_entries,status) VALUES (?,?,?,'running') "
-                "ON CONFLICT(release_id) DO UPDATE SET last_entry_rowid=excluded.last_entry_rowid,processed_entries=excluded.processed_entries,status='running'",
-                (release_id, last_rowid, processed_entries),
-            )
-            connection.commit()
-            if progress is not None:
-                progress({"phase": "normalize", "processed_entries": processed_entries})
+        if commit_due:
+            checkpoint("running")
+        if (flush_due or commit_due) and progress is not None:
+            progress({
+                "phase": "normalize",
+                "step": "checkpoint" if commit_due else "flush",
+                "processed_entries": processed_entries + count,
+                "status": "running",
+                "timings": _timing_snapshot(timings),
+            })
     flush()
-    processed_entries += count % commit_every
-    connection.execute(
-        "INSERT INTO normalization_progress(release_id,last_entry_rowid,processed_entries,status) VALUES (?,?,?,'completed') "
-        "ON CONFLICT(release_id) DO UPDATE SET last_entry_rowid=excluded.last_entry_rowid,processed_entries=excluded.processed_entries,status='completed'",
-        (release_id, last_rowid, processed_entries),
-    )
-    connection.commit()
+    checkpoint("completed")
+    processed_entries += count
     return count
+
+
+def _timing_snapshot(timings: dict[str, float]) -> dict[str, float]:
+    return {key: round(value, 3) for key, value in timings.items()}
