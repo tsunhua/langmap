@@ -21,6 +21,7 @@ api.interceptors.response.use(
       url === '/contributions' ||
       url.startsWith('/expressions') ||
       url.startsWith('/language-locales') ||
+      url.startsWith('/localization/projects/') ||
       url.includes('/mappings')
     )) markContentChanged()
     return res
