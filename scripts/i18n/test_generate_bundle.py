@@ -291,7 +291,7 @@ class GenerateBundleTests(unittest.TestCase):
             )
             self.assertEqual(
                 manifest["counts"],
-                {"locale_count": 5, "message_count": 3, "translation_count": 12},
+                {"locale_count": 5, "message_count": 3, "translation_count": 12, "edge_count": 12},
             )
             self.assertEqual(
                 manifest["inputs"]["source_catalog"]["sha256"],

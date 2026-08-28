@@ -23,6 +23,10 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
   if (existing) { if (locale) await db.prepare('INSERT OR IGNORE INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)').bind(existing.id, locale.id).run(); return { expression: existing, created: false }; }
   const inserted = await db.prepare('INSERT INTO expressions(language_id,text,pos_mask,source_id,created_by) VALUES(?,?,?,?,?) RETURNING id').bind(language.id, text, posMask, sourceId, input.created_by).first<{ id: number }>();
   if (!inserted) throw new ExpressionError('EXPRESSION_CREATE_FAILED');
+  try { await db.prepare(`INSERT INTO language_statistics(language_id, expression_count, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP)
+    ON CONFLICT(language_id) DO UPDATE SET expression_count=expression_count+1, updated_at=CURRENT_TIMESTAMP`).bind(language.id).run(); } catch (error) {
+    if (!String(error).toLowerCase().includes('language_statistics')) throw error;
+  }
   if (locale) await db.prepare('INSERT INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)').bind(inserted.id, locale.id).run();
   const expression = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?`).bind(inserted.id).first<ExpressionRow>();
   if (!expression) throw new ExpressionError('EXPRESSION_CREATE_FAILED');

@@ -12,7 +12,8 @@
   "counts": {
     "locale_count": 5,
     "message_count": 409,
-    "translation_count": 1636
+    "translation_count": 1636,
+    "edge_count": 1366
   },
   "inputs": {
     "source_catalog": {

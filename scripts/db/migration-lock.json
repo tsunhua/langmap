@@ -241,6 +241,12 @@
       "filename": "0040_restore_localized_name_expressions.sql",
       "size": 580,
       "sha256": "50508b34c4f26ace018382f74468d2be291f29764bbc60c86defe704c02c3eaf"
+    },
+    {
+      "sequence": 41,
+      "filename": "0041_language_statistics.sql",
+      "size": 777,
+      "sha256": "460ba2ab6b2a6a652bafacb65c9b27ca6ee5a63a4793c9abeb2167eb96e34c95"
     }
   ]
 }

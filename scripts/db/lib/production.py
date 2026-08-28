@@ -326,7 +326,7 @@ def plan_production(
     expected_refs = {
         "languages": str(language_manifest["counts"]["languages"]),
         "ui_messages": str(ui_manifest["counts"]["message_count"]),
-        "managed_ui_edges": str(ui_manifest["counts"]["translation_count"]),
+        "managed_ui_edges": str(ui_manifest["counts"].get("edge_count", ui_manifest["counts"]["translation_count"])),
     }
     actual_refs = {
         "languages": str(inventory["counts"].get("languages", 0)),
@@ -836,11 +836,32 @@ SELECT 'users' AS metric, COUNT(*) AS count FROM users;
 SELECT 'handbooks' AS metric, COUNT(*) AS count FROM handbooks;
 SELECT 'handbook_sections' AS metric, COUNT(*) AS count FROM handbook_sections;
 SELECT 'handbook_section_items' AS metric, COUNT(*) AS count FROM handbook_section_items;
-SELECT 'votes' AS metric, COUNT(*) AS count FROM votes;
+SELECT 'edge_votes' AS metric, COUNT(*) AS count FROM edge_votes;
+SELECT 'handbook_votes' AS metric, COUNT(*) AS count FROM handbook_votes;
 SELECT 'ui_locales' AS metric, COUNT(*) AS count FROM ui_locales;
 SELECT 'ui_messages' AS metric, COUNT(*) AS count FROM ui_messages;
 SELECT 'managed_ui_messages' AS metric, COUNT(*) FROM ui_messages WHERE project_id = 'langmap-web';
-SELECT 'managed_ui_edges' AS metric, COUNT(*) AS count FROM expression_edges WHERE id LIKE 'ui-edge:%';
+SELECT 'managed_ui_edges' AS metric, COUNT(DISTINCT edge.id) AS count
+FROM ui_messages message
+JOIN expression_edges edge
+  ON edge.expression_a_id = message.source_expression_id
+  OR edge.expression_b_id = message.source_expression_id
+JOIN expressions translation
+  ON translation.id = CASE
+    WHEN edge.expression_a_id = message.source_expression_id THEN edge.expression_b_id
+    ELSE edge.expression_a_id
+  END
+JOIN sources source ON source.id = translation.source_id
+JOIN expression_locale_links locale_link ON locale_link.expression_id = translation.id
+JOIN ui_locales ui_locale
+  ON ui_locale.locale_id = locale_link.locale_id
+ AND ui_locale.project_id = 'langmap-web'
+ AND ui_locale.status = 'active'
+WHERE message.project_id = 'langmap-web'
+  AND message.status = 'active'
+  AND translation.id <> message.source_expression_id
+  AND source.type = 'system'
+  AND source.name = 'system-ui';
 SELECT 'ui_key' AS kind, message_key AS key, source_expression_id AS source_hash
 FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY message_key;
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;

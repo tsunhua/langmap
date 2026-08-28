@@ -381,6 +381,12 @@ def build_manifest(
     sql_text: str,
     edge_sql_texts: list[str],
 ) -> dict:
+    managed_edge_pairs = {
+        tuple(sorted((row.source_expression_id, row.target_expression_id)))
+        for rows in rows_by_locale.values()
+        for row in rows
+        if row.source_expression_id != row.target_expression_id
+    }
     return {
         'schema_version': SCHEMA_VERSION,
         'project_id': i18n_sql.PROJECT_ID,
@@ -390,6 +396,7 @@ def build_manifest(
             'locale_count': len(snapshot.locales) + 1,
             'message_count': len(source_map),
             'translation_count': sum(len(rows) for rows in rows_by_locale.values()),
+            'edge_count': len(managed_edge_pairs),
         },
         'inputs': {
             'source_catalog': {

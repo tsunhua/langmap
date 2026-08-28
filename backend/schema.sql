@@ -49,6 +49,15 @@ CREATE TABLE languages (
   name_expression_id INTEGER REFERENCES expressions(id)
 );
 
+CREATE TABLE language_statistics (
+  language_id INTEGER PRIMARY KEY,
+  expression_count INTEGER NOT NULL DEFAULT 0,
+  locale_count INTEGER NOT NULL DEFAULT 0,
+  active_ui_locale_count INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE
+);
+
 CREATE TABLE scripts (
   code TEXT PRIMARY KEY,
   name_en TEXT NOT NULL,
