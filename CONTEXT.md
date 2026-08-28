@@ -14,11 +14,13 @@ LangMap 是以詞句與直接語義關係為核心的多語對照平台。本檔
 
 ## 詞句與關係
 
-**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接語義 edge。
+**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接語義 edge。詞典匯入時，同一 `(language_id, text)` 的條目一律合併為 `homograph_index = 1` 的單一列，不再依來源詞典增量配號。
 
-**同形拆分（Homograph Split）**：同一文字需要分離不同語義時，建立較大的 `homograph_index` 並以 `expression_splits` 記錄可追溯的 edge 搬移。系統不依文字自動推斷詞義。
+**同形拆分（Homograph Split）**：管理員以 `expression_splits` 記錄可追溯的 edge 搬移，將同一文字分離成較大的 `homograph_index`。這是人為校正動作；系統（含詞典匯入）不依文字自動推斷或拆分詞義。
 
-**映射／語義 edge（Expression Edge）**：兩個 expression 的直接語義關係。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 表示關係種類，`score` 由 `edge_votes` 聚合。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
+**來源標記（Source Marker）**：來源詞典自身對同一詞形的 homograph 編號（如 NOAD 的 `cod 1/2/3`、繁中英的 `1/2/3`）。匯入時以 `(source_id, source_marker)` 保留：`expression_sources` 記錄合併後詞句的來源與編號，`expression_edge_sources` 記錄每條 edge 的來源與編號。**同一來源詞典內不同的編號代表不同的含義；跨來源詞典的編號不互相宣稱相同**，亦不作為全域語義身分。
+
+**映射／語義 edge（Expression Edge）**：兩個 expression 的直接語義關係。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 表示關係種類，`score` 由 `edge_votes` 聚合。一條 edge 同一對端點可匯聚多個來源標記（以 `expression_edge_sources` 記錄）；來源標記只掛在 edge 與 expression 上，不建立 sense 實體。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
 
 **詞形 edge（Expression Form Edge）**：變化形指向辭書形的有向關係，與語義 edge 分開。`expression_form_edge_features` 掛載形態特徵；特徵與維度名稱也以 expression 做國際化。
 

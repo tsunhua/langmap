@@ -167,6 +167,7 @@ export const en = {
     depth: 'Depth {depth}',
     sourcePath: 'Source path',
     mappingScore: 'Mapping score',
+    edgeSources: 'Source markers',
     otherRelations: 'Other relations',
     relationCount: '{count} relations',
     expandBranch: 'Expand child branch',

@@ -274,36 +274,40 @@ def load_staging_snapshot(
     return StagingSnapshot(occurrences, clusters, members, entry_sources)
 
 
-def _expression_for_cluster(context: _CanonicalImportContext, cluster: sqlite3.Row, cluster_members: list[str], claim_rows: Mapping[str, sqlite3.Row], entry_sources: Mapping[str, str], sense_pos: Mapping[str, set[str]]) -> int:
+def _expression_for_cluster(context: _CanonicalImportContext, cluster: sqlite3.Row, cluster_members: list[str], claim_rows: Mapping[str, sqlite3.Row], entry_sources: Mapping[str, str], sense_pos: Mapping[str, set[str]], marker_by_entry: Mapping[str, str] | None = None) -> int:
     connection = context.connection
     language_code = str(cluster["lang_code"])
     text = canonical_text(str(cluster["canonical_text"]))
     language_id = context.language_id(language_code)
     if language_id is None:
         raise ValueError(f"dictionary language not in registry: {language_code}")
+    members = [key for key in cluster_members if key in claim_rows]
+    source_key = max(sorted({entry_sources[str(claim_rows[key]["entry_key"])] for key in members}) or ["dictionary"], key=lambda key: (_source_rank(key, context.source_catalog), key))
+    existing = connection.execute(
+        "SELECT id FROM expressions WHERE language_id=? AND text=? ORDER BY homograph_index LIMIT 1",
+        (language_id, text),
+    ).fetchone()
+    if existing is not None:
+        expression_id = int(existing[0])
+    else:
+        pos_codes = set().union(*(sense_pos.get(str(claim_rows[key]["sense_key"]), set()) for key in members))
+        connection.execute(
+            "INSERT INTO expressions(language_id,text,homograph_index,pos_mask,source_id) VALUES (?,?,?,?,?) "
+            "ON CONFLICT(language_id,text,homograph_index) DO UPDATE SET pos_mask=expressions.pos_mask | excluded.pos_mask",
+            (language_id, text, 1, context.pos_mask(pos_codes), context.source_id(source_key)),
+        )
+        row = connection.execute("SELECT id FROM expressions WHERE language_id=? AND text=? AND homograph_index=?", (language_id, text, 1)).fetchone()
+        if row is None:
+            raise ValueError(f"unable to create canonical expression: {language_code}:{text}")
+        expression_id = int(row[0])
+    marker = ""
     is_headword = str(cluster["cluster_key"]).startswith("headword:")
-    if not is_headword:
-        existing = connection.execute(
-            "SELECT id FROM expressions WHERE language_id=? AND text=? ORDER BY homograph_index LIMIT 1",
-            (language_id, text),
-        ).fetchone()
-        if existing is not None:
-            return int(existing[0])
-    source_keys = sorted({entry_sources[str(claim_rows[key]["entry_key"])] for key in cluster_members if key in claim_rows})
-    source_key = max(source_keys or ["dictionary"], key=lambda key: (_source_rank(key, context.source_catalog), key))
-    source_id = context.source_id(source_key)
-    existing = connection.execute("SELECT homograph_index FROM expressions WHERE language_id=? AND text=? ORDER BY homograph_index", (language_id, text)).fetchall()
-    homograph = int(existing[-1][0]) + 1 if existing else 1
-    pos_codes = set().union(*(sense_pos.get(str(claim_rows[key]["sense_key"]), set()) for key in cluster_members if key in claim_rows))
-    connection.execute(
-        "INSERT INTO expressions(language_id,text,homograph_index,pos_mask,source_id) VALUES (?,?,?,?,?) "
-        "ON CONFLICT(language_id,text,homograph_index) DO UPDATE SET pos_mask=expressions.pos_mask | excluded.pos_mask",
-        (language_id, text, homograph, context.pos_mask(pos_codes), source_id),
-    )
-    row = connection.execute("SELECT id FROM expressions WHERE language_id=? AND text=? AND homograph_index=?", (language_id, text, homograph)).fetchone()
-    if row is None:
-        raise ValueError(f"unable to create canonical expression: {language_code}:{text}:{homograph}")
-    return int(row[0])
+    if is_headword:
+        entry_keys = sorted({str(claim_rows[key]["entry_key"]) for key in members})
+        if entry_keys and marker_by_entry is not None:
+            marker = marker_by_entry.get(entry_keys[0], "")
+    context.insert_ignore("expression_sources", {"expression_id": expression_id, "source_id": context.source_id(source_key), "source_marker": marker})
+    return expression_id
 
 
 def _upsert_reading(context: _CanonicalImportContext, expression_id: int, locale_id: int, scheme: str, value: str, source_id: int | None, source_rank: int = 0) -> bool:
@@ -318,20 +322,23 @@ def _upsert_reading(context: _CanonicalImportContext, expression_id: int, locale
     return True
 
 
-def _upsert_edge(context: _CanonicalImportContext, left: int, right: int, relation_mask: int, created_by: int | None) -> bool:
+def _upsert_edge(context: _CanonicalImportContext, left: int, right: int, relation_mask: int, created_by: int | None) -> int | None:
     if left == right:
-        return False
+        return None
     left, right = sorted((int(left), int(right)))
     connection = context.connection
     if "relation_mask" not in context.columns("expression_edges"):
         raise ValueError("canonical expression_edges.relation_mask is required")
-    before = connection.total_changes
     connection.execute(
         "INSERT INTO expression_edges(expression_a_id,expression_b_id,relation_mask,score,created_by) VALUES (?,?,?,?,?) "
         "ON CONFLICT(expression_a_id,expression_b_id) DO UPDATE SET relation_mask=expression_edges.relation_mask | excluded.relation_mask",
         (left, right, relation_mask, 0, created_by),
     )
-    return connection.total_changes > before
+    row = connection.execute(
+        "SELECT id FROM expression_edges WHERE expression_a_id=? AND expression_b_id=?",
+        (left, right),
+    ).fetchone()
+    return int(row[0]) if row is not None else None
 
 
 def _refresh_language_statistics(connection: sqlite3.Connection, language_ids: set[int]) -> None:
@@ -390,6 +397,16 @@ def import_release_to_local_d1(
         sense_pos: dict[str, set[str]] = {}
         for row in staging.execute("SELECT sense_key,code FROM normalized_pos WHERE release_id=? AND code IS NOT NULL AND errors_json='[]'", (release_id,)):
             sense_pos.setdefault(str(row["sense_key"]), set()).add(str(row["code"]))
+        marker_by_entry: dict[str, str] = {}
+        for claim_key, row in sorted(occurrences.items()):
+            if str(row["occurrence_kind"]) != "headword" or str(row["entry_key"]) in marker_by_entry:
+                continue
+            try:
+                metadata = json.loads(str(row["metadata_json"])) if row["metadata_json"] else {}
+            except ValueError:
+                metadata = {}
+            marker = metadata.get("homograph_marker")
+            marker_by_entry[str(row["entry_key"])] = str(marker) if marker else ""
         write_started = time.perf_counter()
         _report_progress(progress, write_started, "d1_write", "start", 0)
         connection.execute("BEGIN IMMEDIATE")
@@ -400,7 +417,7 @@ def import_release_to_local_d1(
         cluster_ids: dict[str, int] = {}
         for offset in range(0, len(ordered_clusters), chunk_size):
             for cluster_key, cluster in ordered_clusters[offset:offset + chunk_size]:
-                cluster_ids[cluster_key] = _expression_for_cluster(context, cluster, members.get(cluster_key, []), occurrences, entry_sources, sense_pos)
+                cluster_ids[cluster_key] = _expression_for_cluster(context, cluster, members.get(cluster_key, []), occurrences, entry_sources, sense_pos, marker_by_entry)
                 affected_language_ids.add(context.language_id(str(cluster["lang_code"])))
             _report_progress(progress, write_started, "d1_write", "expressions", min(offset + chunk_size, len(ordered_clusters)), len(ordered_clusters))
         links = readings = edges = 0
@@ -449,7 +466,11 @@ def import_release_to_local_d1(
             if head is None or target is None:
                 continue
             relation = RELATION_SYNONYM if kind == "synonym" else RELATION_MAPPING
-            edges += int(_upsert_edge(context, head, target, relation, system_user_id))
+            edge_id = _upsert_edge(context, head, target, relation, system_user_id)
+            if edge_id is not None:
+                source_key = source_by_entry.get(str(row["entry_key"]), "dictionary")
+                context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(str(row["entry_key"]), "")})
+                edges += 1
         example_rows = {str(row["claim_key"]): row for row in occurrences.values() if str(row["occurrence_kind"]) == "example"}
         for claim_key in sorted(example_rows):
             row = example_rows[claim_key]
@@ -461,7 +482,12 @@ def import_release_to_local_d1(
             left = cluster_ids.get(str(text_row["cluster_key"]))
             right = cluster_ids.get(str(row["cluster_key"]))
             if left is not None and right is not None:
-                edges += int(_upsert_edge(context, left, right, RELATION_EXAMPLE, system_user_id))
+                edge_id = _upsert_edge(context, left, right, RELATION_EXAMPLE, system_user_id)
+                if edge_id is not None:
+                    entry_key = str(text_row["entry_key"])
+                    source_key = entry_sources.get(entry_key, "dictionary")
+                    context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(entry_key, "")})
+                    edges += 1
         _report_progress(progress, write_started, "d1_write", "edges", edges, edges)
         pos_updates = int(connection.execute("SELECT COUNT(*) FROM expressions WHERE pos_mask<>0").fetchone()[0]) if "pos_mask" in context.columns("expressions") else 0
         _refresh_language_statistics(connection, affected_language_ids)
@@ -470,7 +496,7 @@ def import_release_to_local_d1(
         _report_progress(progress, write_started, "d1_write", "commit", len(cluster_ids), len(cluster_ids))
         return LocalImportSummary(
             release_id,
-            len(cluster_ids),
+            len(set(cluster_ids.values())),
             links,
             readings,
             edges,

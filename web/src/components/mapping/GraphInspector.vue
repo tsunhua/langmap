@@ -47,6 +47,8 @@ const primaryEdge = computed(() => {
   return getPrimaryIncomingEdge(props.selectedNodeId, props.graph)
 })
 
+const primaryEdgeSources = computed(() => primaryEdge.value?.sources ?? [])
+
 const pathToRoot = computed(() => {
   if (!props.selectedNodeId) return [] as string[]
   return getPathToRoot(props.selectedNodeId, props.displayTree)
@@ -102,6 +104,15 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
         target-type="mapping"
         :score="primaryEdge.score"
       />
+    </div>
+
+    <div v-if="primaryEdgeSources.length > 0" class="gi-sources">
+      <span class="gi-label">{{ t('components.edgeSources') }}</span>
+      <ul class="gi-source-list">
+        <li v-for="s in primaryEdgeSources" :key="`${s.source_id}-${s.marker ?? ''}`" class="gi-source-chip">
+          <span class="gi-source-id">#{{ s.source_id }}</span><sup v-if="s.marker" class="gi-source-marker">{{ s.marker }}</sup>
+        </li>
+      </ul>
     </div>
 
     <div v-if="crossEdgeCount > 0" class="gi-multipath">
@@ -203,6 +214,42 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.gi-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gi-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gi-source-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted);
+  background: color-mix(in oklch, var(--edge) 8%, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+.gi-source-id {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gi-source-marker {
+  font-size: 9px;
+  color: var(--accent);
 }
 .gi-count {
   font-size: 13px;

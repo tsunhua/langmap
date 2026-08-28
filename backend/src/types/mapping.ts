@@ -31,6 +31,12 @@ export interface MappingGraphEdge {
   relation_mask: number;
   score: number;
   depth: number;
+  sources: EdgeSourceMarker[];
+}
+
+export interface EdgeSourceMarker {
+  source_id: number;
+  marker: string | null;
 }
 
 export interface MappingGraphResponse {

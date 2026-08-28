@@ -13,6 +13,12 @@ export interface MappingGraphEdge {
   target_id: string
   score: number
   depth: number
+  sources: EdgeSourceMarker[]
+}
+
+export interface EdgeSourceMarker {
+  source_id: string
+  marker: string | null
 }
 
 export interface MappingGraphResponse {

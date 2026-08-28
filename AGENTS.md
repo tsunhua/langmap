@@ -64,8 +64,10 @@ cd backend && npm test
 
 - `language`：ISO 639-3 語言 registry；以整數 `id` 作內部引用，`code` 作穩定公開識別。
 - `language_locale`：精確的書寫系統／地區／地點 profile；詞句可透過 `expression_locale_links` 連到零至多個 locale。
-- `expression`：單一語言中的詞或句，綁定 `language_id`；ID 為整數。
+- `expression`：單一語言中的詞或句，綁定 `language_id`；ID 為整數。詞典匯入將同一 `(language_id, text)` 合併為 `homograph_index = 1` 的單一列，不依來源增量配號。
 - `mapping` / `expression_edge`：兩個 expression 的直接語義關係；端點採排序後的整數 ID。
+- 來源標記（source marker）：詞典自己的 homograph 編號以 `(source_id, source_marker)` 保留在 `expression_sources`（expression 層）與 `expression_edge_sources`（edge 層）。同來源不同編號＝不同含義；跨來源編號不互宣稱相同，不建立 sense 實體。
+- 詞典匯入、合併身份、來源標記的變更集中在 `scripts/dictionary/langmap_dictionary/`；改動必須同步 `backend/schema.sql`、migration、pytest 與 mappingGraph 型別。
 - 語言、locale、script 與 region 的名稱本身也是 expression；registry 列僅保留其 canonical English expression 的整數引用，譯名透過 direct edge 加完整 locale link 解析。
 - `handbook`：學習手冊。
 - `/mapping/:id` 以 expression ID 為中心展示關係，不要混淆詞句節點與映射邊。

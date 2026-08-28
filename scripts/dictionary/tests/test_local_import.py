@@ -25,6 +25,8 @@ CREATE TABLE expressions(id INTEGER PRIMARY KEY AUTOINCREMENT,language_id INTEGE
 CREATE TABLE expression_locale_links(expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,PRIMARY KEY(expression_id,locale_id),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(locale_id) REFERENCES language_locales(id)) WITHOUT ROWID;
 CREATE TABLE expression_readings(expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,scheme TEXT NOT NULL,value TEXT NOT NULL,source_id INTEGER,PRIMARY KEY(expression_id,locale_id,scheme,value),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(locale_id) REFERENCES language_locales(id)) WITHOUT ROWID;
 CREATE TABLE expression_edges(id INTEGER PRIMARY KEY AUTOINCREMENT,expression_a_id INTEGER NOT NULL,expression_b_id INTEGER NOT NULL,relation_mask INTEGER NOT NULL DEFAULT 1,score INTEGER NOT NULL DEFAULT 0,created_by INTEGER,CHECK(expression_a_id<expression_b_id),UNIQUE(expression_a_id,expression_b_id),FOREIGN KEY(expression_a_id) REFERENCES expressions(id),FOREIGN KEY(expression_b_id) REFERENCES expressions(id));
+CREATE TABLE expression_sources(expression_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(expression_id,source_id,source_marker),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(source_id) REFERENCES sources(id)) WITHOUT ROWID;
+CREATE TABLE expression_edge_sources(edge_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(edge_id,source_id,source_marker),FOREIGN KEY(edge_id) REFERENCES expression_edges(id),FOREIGN KEY(source_id) REFERENCES sources(id)) WITHOUT ROWID;
 """
 
 
@@ -173,25 +175,60 @@ def test_local_import_writes_canonical_rows_and_no_runtime_tables(tmp_path):
     _d1(d1_path)
     summary = import_release_to_local_d1(staging_path, d1_path, run_id, chunk_size=2)
     connection = sqlite3.connect(d1_path)
-    assert summary.expressions == 9
+    assert summary.expressions == 7
     assert summary.edges == 5
-    assert connection.execute("SELECT COUNT(*) FROM expressions").fetchone()[0] == 9
+    assert connection.execute("SELECT COUNT(*) FROM expressions").fetchone()[0] == 7
     assert connection.execute("SELECT COUNT(*) FROM expression_edges").fetchone()[0] == 5
     assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE relation_mask=4").fetchone()[0] == 1
+    assert connection.execute("SELECT COUNT(*) FROM expression_sources").fetchone()[0] >= 7
+    assert connection.execute("SELECT COUNT(*) FROM expression_edge_sources").fetchone()[0] == 5
     assert connection.execute("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'dictionary_%'").fetchone()[0] == 0
     assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
     connection.close()
 
 
-def test_cod_has_three_stable_homographs_and_distinct_mappings(tmp_path):
+def test_cod_merges_into_single_expression_with_source_markers(tmp_path):
     staging_path, run_id = _stage()
     d1_path = tmp_path / "d1.sqlite"
     _d1(d1_path)
     import_release_to_local_d1(staging_path, d1_path, run_id)
     connection = sqlite3.connect(d1_path)
-    rows = connection.execute("SELECT text,homograph_index FROM expressions WHERE text='cod' ORDER BY homograph_index").fetchall()
-    assert rows == [("cod", 1), ("cod", 2), ("cod", 3)]
-    assert connection.execute("SELECT COUNT(DISTINCT expression_b_id) FROM expression_edges").fetchone()[0] >= 3
+    connection.row_factory = sqlite3.Row
+    rows = [tuple(r) for r in connection.execute("SELECT text,homograph_index FROM expressions WHERE text='cod' ORDER BY homograph_index")]
+    assert rows == [("cod", 1)]
+    cod_id = connection.execute("SELECT id FROM expressions WHERE text='cod'").fetchone()[0]
+    assert {r["source_marker"] for r in connection.execute(
+        "SELECT source_marker FROM expression_sources WHERE expression_id=?", (cod_id,)
+    )} == {"1", "2", "3"}
+    markers_by_neighbor: dict[str, set[str]] = {}
+    for r in connection.execute(
+        "SELECT t.text text, ees.source_marker marker FROM expression_edges ed "
+        "JOIN expressions t ON t.id = CASE WHEN ed.expression_a_id=? THEN ed.expression_b_id ELSE ed.expression_a_id END "
+        "JOIN expression_edge_sources ees ON ees.edge_id=ed.id "
+        "WHERE ed.expression_a_id=? OR ed.expression_b_id=?",
+        (cod_id, cod_id, cod_id),
+    ):
+        markers_by_neighbor.setdefault(str(r["text"]), set()).add(str(r["marker"]))
+    assert markers_by_neighbor.get("欺騙") == {"2"}
+    assert markers_by_neighbor.get("責罵") == {"3"}
+    assert "1" in markers_by_neighbor.get("fish", set())
+    assert connection.execute(
+        "SELECT COUNT(DISTINCT t.id) FROM expression_edges ed JOIN expressions t ON t.id = CASE WHEN ed.expression_a_id=? THEN ed.expression_b_id ELSE ed.expression_a_id END WHERE ed.expression_a_id=? OR ed.expression_b_id=?",
+        (cod_id, cod_id, cod_id),
+    ).fetchone()[0] >= 3
+    connection.close()
+
+
+def test_import_provenance_is_idempotent_across_reimport(tmp_path):
+    staging_path, run_id = _stage()
+    d1_path = tmp_path / "d1.sqlite"
+    _d1(d1_path)
+    import_release_to_local_d1(staging_path, d1_path, run_id)
+    connection = sqlite3.connect(d1_path)
+    before = tuple(connection.execute("SELECT COUNT(*) FROM expression_sources").fetchone() + connection.execute("SELECT COUNT(*) FROM expression_edge_sources").fetchone())
+    import_release_to_local_d1(staging_path, d1_path, run_id)
+    after = tuple(connection.execute("SELECT COUNT(*) FROM expression_sources").fetchone() + connection.execute("SELECT COUNT(*) FROM expression_edge_sources").fetchone())
+    assert before == after
     connection.close()
 
 

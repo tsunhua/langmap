@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { ExpressionLocaleRow, ExpressionPartOfSpeech, ExpressionRow, ReadingRow } from '../types/expression';
+import type { ExpressionLocaleRow, ExpressionPartOfSpeech, ExpressionRow, ExpressionSourceRow, ReadingRow } from '../types/expression';
 import { canonicalizeExpressionText, expressionPrefixUpperBound } from './expressionIdentity';
 import { resolveSource, type SourceInput } from './provenance';
 import { SourceError } from './sources';
@@ -33,7 +33,7 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
   return { expression, created: true };
 }
 
-export async function getExpression(db: D1Database, id: number): Promise<{ expression: ExpressionRow; locales: ExpressionLocaleRow[]; readings: ReadingRow[]; parts_of_speech: ExpressionPartOfSpeech[] } | null> {
+export async function getExpression(db: D1Database, id: number): Promise<{ expression: ExpressionRow; locales: ExpressionLocaleRow[]; readings: ReadingRow[]; parts_of_speech: ExpressionPartOfSpeech[]; sources: ExpressionSourceRow[] } | null> {
   const expression = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?`).bind(id).first<ExpressionRow>();
   if (!expression) return null;
   const [localeResult, readingResult, posResult] = await Promise.all([
@@ -41,7 +41,20 @@ export async function getExpression(db: D1Database, id: number): Promise<{ expre
     db.prepare(`SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value`).bind(id).all<ReadingRow>(),
     db.prepare('SELECT code,name_en FROM parts_of_speech WHERE (? & (1 << bit_index)) != 0 ORDER BY sort_order').bind(expression.pos_mask).all<ExpressionPartOfSpeech>(),
   ]);
-  return { expression, locales: localeResult.results, readings: readingResult.results, parts_of_speech: posResult.results };
+  let sources: ExpressionSourceRow[] = [];
+  try {
+    const sourceResult = await db.prepare('SELECT source_id,source_marker FROM expression_sources WHERE expression_id=? ORDER BY source_id,source_marker').bind(id).all<{ source_id:number; source_marker:string }>();
+    sources = sourceResult.results.map((row) => ({ source_id: row.source_id, marker: row.source_marker || null }));
+  } catch {
+    // Expression provenance is optional: pre-migration databases return an empty list.
+  }
+  return {
+    expression,
+    locales: localeResult.results,
+    readings: readingResult.results,
+    parts_of_speech: posResult.results,
+    sources,
+  };
 }
 
 export async function searchExpressions(db: D1Database, query: { q: string; lang_code?: string; limit: number; offset: number }): Promise<{ items: ExpressionRow[]; total: number }> {

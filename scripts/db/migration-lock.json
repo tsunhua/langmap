@@ -247,6 +247,12 @@
       "filename": "0041_language_statistics.sql",
       "size": 777,
       "sha256": "460ba2ab6b2a6a652bafacb65c9b27ca6ee5a63a4793c9abeb2167eb96e34c95"
+    },
+    {
+      "sequence": 42,
+      "filename": "0042_dictionary_source_markers.sql",
+      "size": 1087,
+      "sha256": "62f65d1737ab30797ce57cbce6b998410d6e8960bea10475e599ffff8a6c9d89"
     }
   ]
 }

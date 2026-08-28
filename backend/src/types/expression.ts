@@ -30,3 +30,8 @@ export interface ExpressionPartOfSpeech {
   code: string;
   name_en: string;
 }
+
+export interface ExpressionSourceRow {
+  source_id: number;
+  marker: string | null;
+}

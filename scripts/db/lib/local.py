@@ -20,6 +20,43 @@ class LocalRebuildError(RuntimeError):
         self.temp_state_dir = temp_state_dir
 
 
+_LANGUAGE_STATISTICS_PROBE_SQL = (
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='language_statistics';"
+)
+# Mirrors the dictionary import writer's per-language upsert so seed-only
+# languages (name graph, system UI) also become visible through the
+# language-statistics-backed content API after a greenfield rebuild. The
+# target is a freshly created, child-free statistics table, so INSERT OR
+# REPLACE is idempotent and avoids SQLite's INSERT-SELECT upsert parsing.
+REFRESH_LANGUAGE_STATISTICS_SQL = """
+INSERT OR REPLACE INTO language_statistics(language_id, expression_count, locale_count, active_ui_locale_count, updated_at)
+SELECT l.id,
+       (SELECT COUNT(*) FROM expressions e WHERE e.language_id = l.id),
+       (SELECT COUNT(*) FROM language_locales ll WHERE ll.language_id = l.id),
+       (SELECT COUNT(*) FROM ui_locales u JOIN language_locales ll ON ll.id = u.locale_id
+         WHERE ll.language_id = l.id AND u.status = 'active'),
+       CURRENT_TIMESTAMP
+FROM languages l;
+"""
+
+
+def refresh_language_statistics(executor: Any, persist_to: Path) -> None:
+    """Recompute language statistics after bootstrap seeds when the table exists.
+
+    The migration baseline records migrations without executing their SQL, so the
+    ``language_statistics`` backfill that production gets from migration 0041 is
+    otherwise never applied to a freshly rebuilt local database.
+    """
+    probe = executor.execute_query(persist_to, _LANGUAGE_STATISTICS_PROBE_SQL)
+    exists = any(
+        row.get("name") == "language_statistics"
+        for statement in probe
+        for row in statement.get("results", [])
+    )
+    if exists:
+        executor.execute_query(persist_to, REFRESH_LANGUAGE_STATISTICS_SQL)
+
+
 def rebuild_local_state(
     paths: ProjectPaths,
     *,
@@ -62,6 +99,7 @@ def rebuild_local_state(
         for edge_sql_path in paths.system_ui_edges_sql_paths:
             executor.execute_file(temp_state_dir, edge_sql_path)
         executor.execute_file(temp_state_dir, paths.local_dev_user_sql_path)
+        refresh_language_statistics(executor, temp_state_dir)
         write_migration_baseline(paths, executor=executor, persist_to=temp_state_dir)
         verification_report = verify_local_state(
             paths,

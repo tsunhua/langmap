@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
+import type { EdgeSourceMarker, MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
 
 const NODE_LIMIT = 200;
 interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; }
@@ -32,9 +32,25 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     }
     for (const edge of result.results) {
       const a = nodes.get(edge.expression_a_id); const b = nodes.get(edge.expression_b_id);
-      if (a && b) edges.set(edge.id, { edge_id: edge.id, source_id: edge.expression_a_id, target_id: edge.expression_b_id, relation_mask: edge.relation_mask, score: edge.score, depth });
+      if (a && b) edges.set(edge.id, { edge_id: edge.id, source_id: edge.expression_a_id, target_id: edge.expression_b_id, relation_mask: edge.relation_mask, score: edge.score, depth, sources: [] });
     }
     frontier = next; resolved = depth;
+  }
+  const edgeIds = [...edges.keys()];
+  if (edgeIds.length) {
+    // Edge provenance is optional: pre-migration databases keep an empty list instead of failing the whole graph.
+    try {
+      const markerRows = await db.prepare(`SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (${edgeIds.map(() => '?').join(',')}) ORDER BY edge_id,source_id,source_marker`).bind(...edgeIds).all<{ edge_id:number; source_id:number; source_marker:string }>();
+      const byEdge = new Map<number, EdgeSourceMarker[]>();
+      for (const row of markerRows.results) {
+        const markers = byEdge.get(row.edge_id) ?? [];
+        markers.push({ source_id: row.source_id, marker: row.source_marker || null });
+        byEdge.set(row.edge_id, markers);
+      }
+      for (const edge of edges.values()) edge.sources = byEdge.get(edge.edge_id) ?? [];
+    } catch {
+      // Leave sources empty when the provenance tables are absent.
+    }
   }
   const layer_counts: Record<number, number> = { 0: 1, 1: 0, 2: 0, 3: 0 }; for (const node of nodes.values()) layer_counts[node.depth] = (layer_counts[node.depth] ?? 0) + (node.depth ? 1 : 0);
   return { root_id: rootId, requested_hops: hops, resolved_hops: resolved, nodes: [...nodes.values()].sort((a,b) => a.depth-b.depth || a.expression_id-b.expression_id), edges: [...edges.values()].sort((a,b) => a.edge_id-b.edge_id), layer_counts, truncated: omitted > 0, omitted_count: omitted };

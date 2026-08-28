@@ -34,8 +34,8 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
     events = []
     first = run_incremental_import(input_dir, d1_path, state_path, staging_root, progress=events.append)
     assert first[0]["status"] == "success"
-    assert first[0]["expressions"] == 9
-    assert first[0]["d1_after"]["terms"] - first[0]["d1_before"]["terms"] == 9
+    assert first[0]["expressions"] == 7
+    assert first[0]["d1_after"]["terms"] - first[0]["d1_before"]["terms"] == 7
     assert set(first[0]["phase_seconds"]) == {
         "stage", "normalize", "normalize_staging_read", "normalize_compute",
         "normalize_sqlite_flush", "normalize_checkpoint_commit",
