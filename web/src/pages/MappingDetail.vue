@@ -662,7 +662,7 @@ const coords = computed(() => {
 }
 .target-language-filter__label { display: inline-flex; color: var(--muted); }
 .target-language-filter :deep(.lang-select) { flex: 1; min-width: 160px; }
-.target-language-filter :deep(.lang-select-tagwrap) { min-height: 40px; }
+.target-language-filter :deep(.lang-select-tagwrap) { min-height: 36px; }
 
 .quick-add {
   margin-top: 16px;

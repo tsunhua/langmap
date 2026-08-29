@@ -186,8 +186,8 @@ onUnmounted(() => {
 .lang-select { position: relative; }
 .lang-select-tagwrap {
   display: flex; flex-wrap: wrap; gap: 4px;
-  padding: 6px 10px; border: 1px solid var(--border);
-  border-radius: var(--r); background: var(--surface); min-height: 48px; cursor: text;
+  padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: var(--r); background: var(--surface); min-height: 36px; cursor: text;
   align-items: center;
 }
 .lang-select-tagwrap:focus-within {
@@ -208,8 +208,8 @@ onUnmounted(() => {
 }
 .lang-tag-remove:hover { background: color-mix(in oklch, var(--accent) 15%, transparent); }
 .lang-select-input {
-  border: none; outline: none; font-size: 14px; flex: 1; min-width: 80px;
-  background: transparent; min-height: 36px;
+  border: none; outline: none; font-size: 13px; flex: 1; min-width: 80px;
+  background: transparent; min-height: 28px;
 }
 .lang-select-dropdown {
   position: absolute; top: 100%; left: 0; right: 0;
