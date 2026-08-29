@@ -96,4 +96,10 @@ async function loadMore() {
 .hb-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
 .hb-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-md); }
 .hb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 14px; }
+@media (max-width: 768px) {
+  .hb-page { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 640px) {
+  .hb-page { padding-left: 16px; padding-right: 16px; }
+}
 </style>

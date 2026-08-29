@@ -222,6 +222,7 @@ async function submit() {
 .contrib-right { position: sticky; top: 60px; }
 
 @media (max-width: 760px) {
+  .contrib-page { padding-left: 20px; padding-right: 20px; }
   .contrib-grid { grid-template-columns: 1fr; }
   .contrib-right { position: static; }
   .ex-head { display: none; }
@@ -229,5 +230,8 @@ async function submit() {
   .ex-row :deep(.locale-picker), .ex-row > input { grid-column: 1; }
   .ex-row :deep(.locale-picker > label) { display: block; margin-bottom: 4px; }
   .ex-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; width: 44px; height: 44px; }
+}
+@media (max-width: 640px) {
+  .contrib-page { padding-left: 16px; padding-right: 16px; }
 }
 </style>

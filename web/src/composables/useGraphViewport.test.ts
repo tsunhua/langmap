@@ -21,6 +21,12 @@ describe('calcFitTransform', () => {
     expect(result.k).toBe(2.5)
   })
 
+  it('caps the fit scale on narrow viewports so nodes do not over-zoom', () => {
+    const bounds: GraphBounds = { x: 0, y: 0, width: 100, height: 50 }
+    expect(calcFitTransform(bounds, 375, 600, 40).k).toBe(1)
+    expect(calcFitTransform(bounds, 640, 700, 40).k).toBe(1.5)
+  })
+
   it('clamps scale to lower limit 0.25', () => {
     const bounds: GraphBounds = { x: 0, y: 0, width: 10000, height: 5000 }
     const result = calcFitTransform(bounds, 800, 600, 40)
@@ -40,9 +46,9 @@ describe('calcFitTransform', () => {
   })
 
   it('applies padding correctly', () => {
-    const bounds: GraphBounds = { x: 0, y: 0, width: 100, height: 100 }
-    const noPad = calcFitTransform(bounds, 200, 200, 0)
-    const padded = calcFitTransform(bounds, 200, 200, 20)
+    const bounds: GraphBounds = { x: 0, y: 0, width: 600, height: 600 }
+    const noPad = calcFitTransform(bounds, 800, 800, 0)
+    const padded = calcFitTransform(bounds, 800, 800, 20)
     expect(padded.k).toBeLessThan(noPad.k)
   })
 })

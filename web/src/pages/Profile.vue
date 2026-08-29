@@ -247,8 +247,11 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+@media (max-width: 768px) {
+  .profile-page { padding-left: 20px; padding-right: 20px; }
+}
 @media (max-width: 640px) {
-  .profile-page { margin-top: var(--space-md); }
+  .profile-page { margin-top: var(--space-md); padding-left: 16px; padding-right: 16px; }
   .activity-desc { white-space: normal; }
 }
 </style>

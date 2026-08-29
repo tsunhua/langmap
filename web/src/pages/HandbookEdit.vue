@@ -177,4 +177,10 @@ async function save(status: string) {
 .he-vis { padding: 8px 10px; }
 .he-actions { margin-bottom: var(--space-md); }
 .error { color: var(--down); font-size: 13px; margin-top: var(--space-base); }
+@media (max-width: 768px) {
+  .he-page { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 640px) {
+  .he-page { padding-left: 16px; padding-right: 16px; }
+}
 </style>

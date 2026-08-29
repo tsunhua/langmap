@@ -86,7 +86,11 @@ onUnmounted(() => { feedRequest++ })
 }
 .feed-cta a { color: var(--accent); font-weight: 500; }
 .feed-cta a:hover { filter: brightness(1.08); }
+@media (max-width: 768px) {
+  .feed-page { padding-left: 20px; padding-right: 20px; }
+}
 @media (max-width: 640px) {
+  .feed-page { padding-left: 16px; padding-right: 16px; }
   .feed-hero { margin-bottom: var(--space-md); }
 }
 </style>

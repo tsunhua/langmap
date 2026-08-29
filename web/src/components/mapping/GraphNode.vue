@@ -297,6 +297,39 @@ function onKeydown(e: KeyboardEvent) {
   min-width: 60px;
 }
 
+@media (max-width: 640px) {
+  .graph-node {
+    padding: 3px 6px;
+    font-size: 11px;
+    min-width: 44px;
+    max-width: 140px;
+  }
+  .graph-node.anchor {
+    font-size: 13px;
+    min-width: 72px;
+    padding: 5px 10px;
+  }
+  .graph-node.level-compact {
+    padding: 2px 4px;
+    min-width: 40px;
+  }
+  .graph-node.level-compact .gn-text {
+    font-size: 9px;
+  }
+  .graph-node.level-medium {
+    padding: 3px 6px;
+    min-width: 40px;
+  }
+  .gn-meta {
+    gap: 4px;
+    margin-top: 1px;
+  }
+  .gn-lang,
+  .gn-children {
+    font-size: 9px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .graph-node {
     transition: none;

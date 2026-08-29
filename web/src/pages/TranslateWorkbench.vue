@@ -324,6 +324,9 @@ tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
 .btn-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in oklch, #fff 45%, transparent); border-top-color: #fff; animation: btn-spin 0.7s linear infinite; }
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 
+@media (max-width: 768px) {
+  .translate-page { padding-left: 20px; padding-right: 20px; }
+}
 @media (max-width: 680px) {
   .page-head { align-items: stretch; flex-direction: column; }
   .page-head .locale-picker { min-width: 0; }
@@ -331,6 +334,7 @@ tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
   .search-box { flex: 1 1 100%; }
   .shown-count { order: 3; margin-left: auto; }
   .toolbar .btn { flex: 1 1 auto; }
+  .translate-page { padding-left: 16px; padding-right: 16px; }
   .translation textarea { font-size: 16px; }
 }
 </style>

@@ -303,6 +303,10 @@ onUnmounted(cleanup)
   .leaflet-map { height: 350px; }
   .lens-list { max-height: none; }
   .lens-item { min-height: 44px; }
+  .lens-page { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 640px) {
+  .lens-page { padding-left: 16px; padding-right: 16px; }
 }
 </style>
 

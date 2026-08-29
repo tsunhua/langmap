@@ -20,7 +20,10 @@ export function calcFitTransform(
   }
   const scaleX = (viewportWidth - padding * 2) / bounds.width
   const scaleY = (viewportHeight - padding * 2) / bounds.height
-  const k = Math.max(0.25, Math.min(scaleX, scaleY, 2.5))
+  // On narrow screens a graph with few nodes must not auto-zoom cards to
+  // screen-filling size; keep the initial fit at or below natural scale.
+  const maxK = viewportWidth < 480 ? 1 : viewportWidth < 768 ? 1.5 : 2.5
+  const k = Math.max(0.25, Math.min(scaleX, scaleY, maxK))
   const x = (viewportWidth - bounds.width * k) / 2 - bounds.x * k
   const y = (viewportHeight - bounds.height * k) / 2 - bounds.y * k
   return { x, y, k }
