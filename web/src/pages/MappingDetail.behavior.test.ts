@@ -220,4 +220,31 @@ describe('MappingDetail page state', () => {
 
     expect(wrapper.find('[aria-controls="morph-form"]').exists()).toBe(false)
   })
+
+  it('shows the anchor expression readings under the title', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue({
+      expression: { id: 'anchor', text: 'peg', lang_code: 'eng', source_type: 'user', source_name: null },
+      attestations: [],
+      readings: [
+        {
+          language_locale_code: 'cmn-Hant-TW',
+          locale_display_name: 'Mandarin',
+          scheme: 'pinyin',
+          value: 'nán tiě',
+        },
+      ],
+    })
+    mappingGraph.mockResolvedValue(graph('anchor'))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const readings = wrapper.findAll('.anchor-reading')
+    expect(readings).toHaveLength(1)
+    expect(readings[0].text()).toContain('TW:')
+    expect(readings[0].text()).toContain('[nán tiě]')
+    expect(readings[0].text()).toContain('(pinyin)')
+    expect(readings[0].text()).not.toContain('cmn-Hant-TW')
+  })
 })

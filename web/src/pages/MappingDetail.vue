@@ -22,6 +22,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
+import { regionFromLocale } from '@/utils/localeRegion'
 
 const { t } = useI18n()
 
@@ -373,6 +374,22 @@ const coords = computed(() => {
   return null
 })
 
+const anchorReadingItems = computed(() =>
+  [...(expr.value?.readings ?? [])]
+    .sort((a, b) =>
+      a.language_locale_code.localeCompare(b.language_locale_code)
+      || a.scheme.localeCompare(b.scheme)
+      || a.value.localeCompare(b.value),
+    )
+    .map((r) => ({
+      key: `${r.language_locale_code}:${r.scheme}:${r.value}`,
+      scheme: r.scheme,
+      value: r.value,
+      region: regionFromLocale(r.language_locale_code),
+      title: `${r.language_locale_code} / ${r.scheme}`,
+    })),
+)
+
 </script>
 
 <template>
@@ -394,6 +411,19 @@ const coords = computed(() => {
         <img class="anchor-image anchor-image--large" :src="anchorImageUrl" :alt="t('expression.imageAlt')" />
       </a>
       <LangBadge :code="expr.expression.lang_code" :name="anchorLangName" />
+    </div>
+
+    <div v-if="anchorReadingItems.length" class="anchor-readings">
+      <span
+        v-for="r in anchorReadingItems"
+        :key="r.key"
+        class="anchor-reading"
+        :title="r.title"
+      >
+        <span v-if="r.region" class="anchor-reading-region">{{ r.region }}:</span>
+        <span class="anchor-reading-value">[{{ r.value }}]</span>
+        <span class="anchor-reading-scheme">({{ r.scheme }})</span>
+      </span>
     </div>
 
     <div class="anchor-meta">
@@ -661,6 +691,30 @@ const coords = computed(() => {
 .anchor-title h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
 .anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .anchor-meta .coords { font-size: 11px; }
+.anchor-readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--fg);
+}
+.anchor-reading { min-width: 0; overflow-wrap: anywhere; display: inline-flex; align-items: baseline; gap: 6px; }
+.anchor-reading-region {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px;
+}
+.anchor-reading-value {
+  color: var(--fg);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.anchor-reading-scheme {
+  font-size: 11px;
+  color: var(--faint);
+}
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .target-language-filter {
