@@ -79,6 +79,19 @@ cd backend && npm test
 - `scripts/db/import_v2_canonical.py` 是從 v2 SQLite 匯出產生可重跑 canonical 匯入 SQL 的工具；變更匯入範圍時優先修正它，而非手動補前端或資料庫例外。
 - production D1 依 `docs/runbooks/database-migrations.md` 的 plan/apply 流程操作；不得以直接 remote migration apply 取代該流程。
 
+### production 詞典發布
+
+- canonical schema（migration 0039 起）已移除 release/claim/packed 表；詞典逐部以 `import_with_progress.py` merge 進「mirror」，再以受管 `approved_data_migration` 發布。
+- **structured JSONL 由獨立 exporter 產出**：`/Users/lim/Documents/Code/tsunhua/dictionary`（`dictionary-jsonl-export`）把 Apple bundle CSV 轉成 `/Volumes/DATA/langmap-structured-jsonl/`。exporter 的 parser ／ profile 改變屬於該 repo，發布前抽查攔下的資料問題多半要回源到這裡修正並重新匯出，不是在 langmap 側硬編例外。
+- **mirror 每次都用 production 現況重建**：`wrangler d1 export --remote` → 灌進全新 SQLite。不可用 `./dev.sh --rebuild` 的 generator seed（ID 空間與 production 不一致），也不可沿用舊快照（AUTOINCREMENT 錯位會讓 delta 的明確 ID 撞到既有 source／expression）。
+- 每部流程：export production → 重建 mirror → `import_with_progress.py --d1 <mirror>` → `scripts/db/export_dictionary_delta.py` 產 `INSERT OR IGNORE` SQL → `manage.sh production plan --approved-data-migration <delta>` → `production apply`（bookmark 後執行）。
+- **每次發布後須刷新 `language_statistics`**：delta 只寫 expressions/edges/readings，不會更新統計表；否則 `/languages` 與語言列表停滯在舊 counts。刷新語句（`INSERT OR REPLACE ... SELECT ... FROM languages l`）在 apply 後對 production 執行。
+- **發布前由 agent 抽查**：對即將發布的詞典抽樣 insight——逐一檢視 headword 語言、direction、equivalents、readings 是否合理（如 Crown 假名被標 cmn-to-jpn 的錯誤即在抽查中攔下）。任何抽樣異常先回 source 修正，不帶病發布。修正 exporter 後**必須以 `dictionary-jsonl-export` 重新匯出該部 JSONL 再重新抽查**，確認 entry count 不變、readings 合理後才覆寫 `/Volumes/DATA/langmap-structured-jsonl/<部>.jsonl`（先複製 `.pre-tyfix` 備份）。
+- **established JSONL 的發音必須乾淨**：繁體常用詞等 bundle 以 `ty_pinyin`／`ty_jyutping`（及 `ty_IPA`）class 標記 headword 發音，exporter 依此輸出 `pinyin`／`jyutping` scheme，並忽略「案／隔／叮」這類同音字提示節點；多音字與雙語辭典的 readings 落在 sense 底層，抽查不得只數 total。發現 CJK 字元出現在 readings 即代表該用 homophone-hint 過濾。
+- `import_with_progress.py` 的 state 檔屬 dev D1，發布用 mirror 前要先清掉該檔的殘留「success」記錄，否則會跳過。
+- **大資料張力**：D1 單一 execute 有 CPU time limit。超過時把 DELETE 拆成 `.split.sql`（plan 帶 `mode=split`，逐語句 `--command` 執行）；超大 DELETE（十萬 rows 級）再分批（每批約 5 萬 rows）。混合 DELETE+INSERT 的巨型單檔不可靠，先拆。
+- **拼音是 reading，不是詞句**：Crown 等 bundle 把拼音混進 equivalents；adapter 對 `zhs-ja.Crown` 把拼音樣式值判為 headword 的 `pinyin` reading，不建 expression 節點。
+
 ## 文檔與安全
 
 - 大型改造先更新 `docs/superpowers/specs/`；施工拆解放 `docs/superpowers/plans/`。
