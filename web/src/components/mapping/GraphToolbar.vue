@@ -352,7 +352,5 @@ function toggleMore() {
     width: 36px;
     height: 36px;
   }
-  .tb-btn-hide-mobile { display: none; }
-  .tb-group-more-mobile { display: flex; }
 }
 </style>
