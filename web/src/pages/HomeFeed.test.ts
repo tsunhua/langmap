@@ -7,9 +7,7 @@ import HomeFeed from './HomeFeed.vue'
 
 vi.mock('@/api/client', () => ({ default: { get: vi.fn() } }))
 
-// /feed/hot rows carry an edge id and both endpoint expression ids (a_id/b_id);
-// the card anchors on a_id. /feed/new 'mapping' rows likewise anchor on a_id.
-const hotRow = { id: 'edge-hot', a_id: 'nan:a-hot', a_text: '食', a_lang: 'nan', b_text: 'eat', b_lang: 'eng', score: 8 }
+// /feed/new 'mapping' rows anchor on a_id.
 const newRow = { id: 'edge-new', type: 'mapping', a_id: 'nan:a-new', a_text: '食', a_lang: 'nan', b_text: 'eat', b_lang: 'eng' }
 
 async function mountPage() {
@@ -29,24 +27,18 @@ async function mountPage() {
 describe('HomeFeed', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('shows stable hot and new content and lets users filter either section', async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: { data: [hotRow] } })
-      .mockResolvedValueOnce({ data: { data: [newRow] } })
+  it('shows the latest contributions', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { data: [newRow] } })
     const wrapper = await mountPage()
     await flushPromises()
 
-    expect(wrapper.find('a[href="/mapping/nan:a-hot"]').exists()).toBe(true)
     expect(wrapper.find('a[href="/mapping/nan:a-new"]').exists()).toBe(true)
+    expect(wrapper.find('section.feed-sec').exists()).toBe(true)
     expect(wrapper.text()).toContain('食')
     expect(wrapper.text()).toContain('eat')
-
-    await wrapper.get('button[aria-pressed="false"]:nth-child(2)').trigger('click')
-    expect(wrapper.find('a[href="/mapping/nan:a-new"]').exists()).toBe(false)
-    expect(wrapper.find('a[href="/mapping/nan:a-hot"]').exists()).toBe(true)
   })
 
-  it('shows one empty state when both feeds are empty', async () => {
+  it('shows one empty state when there is no new contribution', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: { data: [] } })
     const wrapper = await mountPage()
     await flushPromises()
@@ -55,10 +47,8 @@ describe('HomeFeed', () => {
     expect(wrapper.text()).toContain('No activity yet')
   })
 
-  it('shows the response message when either initial request fails', async () => {
-    vi.mocked(api.get)
-      .mockRejectedValueOnce({ response: { data: { message: 'Feed temporarily unavailable' } } })
-      .mockResolvedValueOnce({ data: { data: [] } })
+  it('shows the response message when the request fails', async () => {
+    vi.mocked(api.get).mockRejectedValue({ response: { data: { message: 'Feed temporarily unavailable' } } })
     const wrapper = await mountPage()
     await flushPromises()
 
