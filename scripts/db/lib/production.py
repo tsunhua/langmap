@@ -293,6 +293,7 @@ def plan_production(
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
     dictionary_artifact_manifest: Path | None = None,
+    approved_data_migration: Path | None = None,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
     operation_id = uuid.uuid4().hex
@@ -347,6 +348,15 @@ def plan_production(
     dictionary_artifact: dict[str, Any] | None = None
     if dictionary_artifact_manifest is not None:
         dictionary_artifact = _validate_dictionary_artifact(paths, dictionary_artifact_manifest)
+    approved_data: dict[str, Any] | None = None
+    if approved_data_migration is not None:
+        resolved = _resolve_managed_artifact(paths, str(approved_data_migration))
+        approved_data = {
+            "path": str(resolved.relative_to(paths.repo_root.resolve())),
+            "sha256": _sha256_path(resolved),
+            "bytes": resolved.stat().st_size,
+            "mode": "split" if str(approved_data_migration).endswith(".split.sql") else "file",
+        }
     plan = {
         "status": "blocked" if baseline_error else "ready",
         "environment": "production",
@@ -378,7 +388,7 @@ def plan_production(
             "language_registry": str(paths.language_registry_sql_path.relative_to(paths.repo_root)),
             "system_ui": str(paths.system_ui_sql_path.relative_to(paths.repo_root)),
         },
-        "approved_data_migration": None,
+        "approved_data_migration": approved_data,
         "dictionary_artifact": dictionary_artifact,
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
@@ -424,6 +434,7 @@ def apply_production(
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
     confirm_release_id: str | None = None,
+    timeout_seconds: float = 120.0,
 ) -> dict[str, Any]:
     plan = _load_plan(plan_path)
     configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
@@ -439,6 +450,7 @@ def apply_production(
         paths=paths,
         wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
         env=env,
+        timeout_seconds=timeout_seconds,
     )
     operation = {
         "operation_id": str(plan["operation_id"]),
@@ -483,10 +495,25 @@ def apply_production(
             journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "dictionary-release-activated", "release_id": release_id})
         approved_data_migration = plan.get("approved_data_migration")
         if approved_data_migration and not dictionary_artifact:
-            data_path = _resolve_managed_artifact(paths, str(approved_data_migration))
-            executor.mutate(
-                ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
-            )
+            relative = approved_data_migration.get("path")
+            if not isinstance(relative, str):
+                raise ProductionInventoryError("approved data migration path is invalid")
+            data_path = _resolve_managed_artifact(paths, relative)
+            expected = approved_data_migration.get("sha256")
+            if not isinstance(expected, str) or not expected:
+                raise ProductionInventoryError("approved data migration checksum is invalid")
+            if _sha256_path(data_path) != expected:
+                raise ProductionInventoryError("approved data migration checksum mismatch")
+            mode = approved_data_migration.get("mode", "file")
+            if mode == "split":
+                for statement in _split_approved_sql(data_path):
+                    executor.mutate(
+                        ["d1", "execute", database_name, "--remote", "--command", statement]
+                    )
+            else:
+                executor.mutate(
+                    ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
+                )
         else:
             journal.append_operation(
                 paths.production_operation_journal_path,
@@ -579,7 +606,6 @@ def restore_production(
                 "time-travel",
                 "restore",
                 database_name,
-                "--remote",
                 "--bookmark",
                 bookmark,
                 "--json",
@@ -620,10 +646,31 @@ def _load_plan(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _split_approved_sql(path: Path) -> list[str]:
+    """Split an approved data migration into standalone statements for D1's
+    per-statement ``--command`` execution.  Statements are separated by ``;``
+    at end-of-line; comments and the trailing pragmas are ignored."""
+    raw = path.read_text(encoding="utf-8")
+    statements: list[str] = []
+    for chunk in raw.split(";\n"):
+        lines = [
+            line.strip()
+            for line in chunk.splitlines()
+            if not line.strip().startswith("--") and line.strip()
+        ]
+        if not lines:
+            continue
+        statement = " ".join(lines).strip()
+        if statement and not statement.upper().startswith("PRAGMA"):
+            statements.append(statement)
+    return statements
+
+
 def _resolve_managed_artifact(paths: ProjectPaths, relative_path: str) -> Path:
-    candidate = (paths.repo_root / relative_path).resolve()
+    boundary = paths.repo_root.resolve()
+    candidate = (boundary / relative_path).resolve()
     try:
-        candidate.relative_to(paths.repo_root)
+        candidate.relative_to(boundary)
     except ValueError as exc:
         raise ProductionInventoryError("approved data migration escapes repository") from exc
     if not candidate.is_file():

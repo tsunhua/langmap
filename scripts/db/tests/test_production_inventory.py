@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -140,6 +141,46 @@ class ProductionInventoryTests(unittest.TestCase):
                 self.assertNotIn("UPDATE", line.upper())
                 self.assertNotIn("DELETE", line.upper())
 
+    def test_plan_records_approved_data_migration_with_repo_relative_path_and_sha(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+            data_path = root / "scripts" / "db" / "state" / "approved-delta.sql"
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            data_path.write_text("INSERT INTO expressions (id) VALUES (1);", encoding="utf-8")
+
+            from lib.production import ProductionInventoryError, plan_production  # noqa: E402
+
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                plan = plan_production(
+                    paths,
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+                    approved_data_migration=Path("scripts/db/state/approved-delta.sql"),
+                )
+
+            self.assertIsNotNone(plan["approved_data_migration"])
+            recorded = plan["approved_data_migration"]
+            self.assertEqual(recorded["path"], "scripts/db/state/approved-delta.sql")
+            self.assertEqual(
+                recorded["sha256"],
+                hashlib.sha256(data_path.read_bytes()).hexdigest(),
+            )
+            stored = json.loads(
+                (paths.production_plan_dir / f"{plan['operation_id']}.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(stored["approved_data_migration"], recorded)
+
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                with self.assertRaises(ProductionInventoryError):
+                    plan_production(
+                        paths,
+                        wrangler_bin=FAKE_WRANGLER,
+                        env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+                        approved_data_migration=Path("../outside.sql"),
+                    )
+
     def test_apply_requires_confirmation_and_bookmarks_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -205,6 +246,7 @@ class ProductionInventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             paths = self._paths(root)
+            log_path = root / "wrangler.log"
 
             from lib.production import inventory_production, restore_production  # noqa: E402
 
@@ -226,13 +268,19 @@ class ProductionInventoryTests(unittest.TestCase):
                 database_name="langmap-v2",
                 confirmation="langmap-v2",
                 wrangler_bin=FAKE_WRANGLER,
-                env={"FAKE_PRODUCTION_ALLOW_MUTATIONS": "1"},
+                env={
+                    "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
+                    "FAKE_PRODUCTION_WRANGLER_LOG": str(log_path),
+                },
             )
 
             self.assertEqual(result["status"], "succeeded")
             self.assertEqual(result["previous_bookmark"], "previous-bookmark-123")
             journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
             self.assertIn('"previous_bookmark": "previous-bookmark-123"', journal)
+            calls = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+            restore_call = next(call for call in calls if "restore" in call)
+            self.assertNotIn("--remote", restore_call)
 
     def test_verify_checks_baseline_and_orphan_counts_read_only(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -331,3 +379,44 @@ class ReferenceDiffTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(load_migration_metadata(migration)["reversible"], True)
+
+
+class ApprovedSqlSplitTests(unittest.TestCase):
+    def test_split_approved_sql_ignores_comments_and_pragmas(self) -> None:
+        from lib.production import _split_approved_sql  # noqa: E402
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "x.sql"
+            path.write_text(
+                "-- header comment\n"
+                "PRAGMA defer_foreign_keys=TRUE;\n"
+                "DELETE FROM expression_sources\n"
+                " WHERE source_id = 17;\n"
+                "DELETE FROM expressions WHERE source_id = 17;\n"
+                "PRAGMA defer_foreign_keys=FALSE;\n",
+                encoding="utf-8",
+            )
+            statements = _split_approved_sql(path)
+            self.assertEqual(len(statements), 2)
+            self.assertIn("DELETE FROM expression_sources", statements[0])
+            self.assertIn("DELETE FROM expressions", statements[1])
+
+    def test_plan_marks_split_mode_for_dot_split_sql(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = ProductionInventoryTests._paths(self, root)
+            log_path = root / "wrangler.log"
+            data_path = root / "scripts" / "db" / "state" / "approved.split.sql"
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            data_path.write_text("DELETE FROM sources WHERE name='x';\n", encoding="utf-8")
+
+            from lib.production import plan_production  # noqa: E402
+
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                plan = plan_production(
+                    paths,
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+                    approved_data_migration=Path("scripts/db/state/approved.split.sql"),
+                )
+            self.assertEqual(plan["approved_data_migration"]["mode"], "split")

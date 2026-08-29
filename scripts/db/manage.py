@@ -44,12 +44,14 @@ def build_parser() -> argparse.ArgumentParser:
     inventory_parser.set_defaults(handler=_production_inventory_handler)
     plan_parser = production_commands.add_parser("plan")
     plan_parser.add_argument("--dictionary-artifact-manifest", type=Path)
+    plan_parser.add_argument("--approved-data-migration", type=Path)
     plan_parser.set_defaults(handler=_production_plan_handler)
     apply_parser = production_commands.add_parser("apply")
     apply_parser.add_argument("--plan", type=Path, required=True)
     apply_parser.add_argument("--database-name", required=True)
     apply_parser.add_argument("--confirm-production", required=True)
     apply_parser.add_argument("--confirm-release-id")
+    apply_parser.add_argument("--timeout-seconds", type=float, default=120.0)
     apply_parser.set_defaults(handler=_production_apply_handler)
     verify_parser = production_commands.add_parser("verify")
     verify_parser.set_defaults(handler=_production_verify_handler)
@@ -121,7 +123,12 @@ def _production_inventory_handler(paths: ProjectPaths, args: argparse.Namespace)
 
 
 def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
-    plan = plan_production(paths, wrangler_bin=_wrangler_bin_from_env(), dictionary_artifact_manifest=args.dictionary_artifact_manifest)
+    plan = plan_production(
+        paths,
+        wrangler_bin=_wrangler_bin_from_env(),
+        dictionary_artifact_manifest=args.dictionary_artifact_manifest,
+        approved_data_migration=args.approved_data_migration,
+    )
     print(json.dumps(plan, ensure_ascii=False))
     return 0 if plan["status"] == "ready" else 1
 
@@ -134,6 +141,7 @@ def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> 
         confirmation=args.confirm_production,
         wrangler_bin=_wrangler_bin_from_env(),
         confirm_release_id=args.confirm_release_id,
+        timeout_seconds=args.timeout_seconds,
     )
     print(json.dumps(result, ensure_ascii=False))
     return 0
