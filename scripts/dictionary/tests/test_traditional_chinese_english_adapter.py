@@ -2,13 +2,22 @@ from pathlib import Path
 
 import pytest
 
-from scripts.dictionary.langmap_dictionary.adapters.traditional_chinese_english import TraditionalChineseEnglishAdapter, normalize_release
+from scripts.dictionary.langmap_dictionary.adapters.traditional_chinese_english import TraditionalChineseEnglishAdapter, canonicalize_text, normalize_release
 from scripts.dictionary.langmap_dictionary.clusters import build_explicit_clusters
 from scripts.dictionary.langmap_dictionary.loader import load_jsonl_release
-from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedSense
+from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedPronunciation, StagedSense
 from scripts.dictionary.langmap_dictionary.schema import create_staging_database
 
 FIXTURE = Path(__file__).parent / "fixtures" / "traditional_chinese_english_v2.jsonl"
+
+
+def test_canonicalize_text_removes_terminal_periods_but_keeps_other_punctuation():
+    assert canonicalize_text("祝日を楽しく祝う.") == "祝日を楽しく祝う"
+    assert canonicalize_text("喜び祝う．") == "喜び祝う"
+    assert canonicalize_text("歡慶節日。") == "歡慶節日"
+    assert canonicalize_text("真的嗎？") == "真的嗎？"
+    assert canonicalize_text("太好了！") == "太好了！"
+    assert canonicalize_text("...") == "..."
 
 
 def test_adapter_maps_languages_readings_pos_and_keeps_offline_fields(tmp_path):
@@ -203,10 +212,207 @@ def test_adapter_strips_leading_sentence_punctuation_from_promoted_definition():
 
 def test_adapter_uses_non_english_direction_profiles():
     adapter = TraditionalChineseEnglishAdapter()
-    from scripts.dictionary.langmap_dictionary.models import StagedEntry, StagedSense
     entry = StagedEntry("r", "d", "e", "mot", "mot", None, "fra-to-eng", "a" * 64, senses=(StagedSense("s", 1, equivalents=("word",), examples=({"text": "mot exemple", "translation": "example word"},)),))
     normalized = adapter.normalize_entry(entry)
     assert normalized.headword.lang_code == "fra"
     assert normalized.senses[0].occurrences[0].lang_code == "eng"
     assert normalized.senses[0].occurrences[1].lang_code == "fra"
     assert normalized.senses[0].occurrences[2].lang_code == "eng"
+
+
+def _pronunciation(ordinal: int, scheme: str, value: str) -> StagedPronunciation:
+    return StagedPronunciation(ordinal, value, scheme, {})
+
+
+def _yue_entry(pronunciations):
+    return StagedEntry(
+        "r", "com.apple.dictionary.yue-en.oup", "e", "撻", "撻", "1",
+        "yue-to-eng", "a" * 64, pronunciations=tuple(pronunciations),
+    )
+
+
+def test_adapter_publishes_cantonese_jyutping_reading_without_spaced_tones():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = _yue_entry([
+        _pronunciation(1, "unknown", "daat 3"),
+        _pronunciation(2, "jyutping", "daat³"),
+        _pronunciation(3, "unknown", "cyu 4 fong 4/2 lou 2 daat 3 saang 1 jyu 4/2"),
+    ])
+    published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
+    assert {r.scheme for r in published} == {"jyutping"}
+    assert {r.locale_code for r in published} == {"yue-Hant-HK"}
+    assert {r.value for r in published} == {"daat³"}
+
+
+def test_adapter_quarantines_example_transcription_inside_cantonese_entry():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = _yue_entry([
+        _pronunciation(1, "unknown", "taat 3"),
+        _pronunciation(2, "jyutping", "taat³"),
+        _pronunciation(3, "unknown", "keoi 5 taat 3 zo 2 jat 1 cin 1 man 4/1"),
+    ])
+    rejected = [r for r in adapter.normalize_entry(entry).readings if r.errors]
+    assert rejected and all(r.scheme == "unknown" and r.locale_code is None for r in rejected)
+
+
+def test_adapter_accepts_capitalized_jyutping_scheme_and_removes_digit_spaces():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.yue-en.cp", "e", "一了百了", "一了百了", None,
+        "yue-to-eng", "a" * 64,
+        pronunciations=(
+            _pronunciation(1, "unknown", "jat 1 liu 5 baak 3 liu 5"),
+            _pronunciation(2, "Jyutping", "jat¹ liu⁵ baak³ liu⁵"),
+        ),
+    )
+    published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
+    assert {r.value for r in published} == {"jat¹ liu⁵ baak³ liu⁵"}
+    assert {r.locale_code for r in published} == {"yue-Hant-HK"}
+
+
+def test_adapter_keeps_unknown_scheme_readings_of_other_languages_quarantined():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_TW.wn", "e", "丫", "丫", None,
+        "cmn-Hant-to-cmn-Hant", "a" * 64,
+        pronunciations=(_pronunciation(1, "unknown", "| yā |"),),
+    )
+    readings = adapter.normalize_entry(entry).readings
+    assert readings and all(r.errors == ("unknown_reading_scheme",) for r in readings)
+
+
+def test_adapter_reclassifies_cmn_headword_ipa_scheme_pinyin_as_pinyin():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_CN.idioms", "e", "阿聾送殯", "阿聾送殯", None,
+        "cmn-Hant-to-eng", "a" * 64,
+        pronunciations=(_pronunciation(1, "UK_IPA solitary", "ā lóng sòng bìn"),),
+    )
+    published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
+    assert [(r.scheme, r.locale_code, r.value) for r in published] == [("pinyin", "cmn-Hant-TW", "ā lóng sòng bìn")]
+
+
+def test_adapter_keeps_english_ipa_reading_on_english_headword():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.yue-en.oup", "e", "supposing", "supposing", None,
+        "eng-to-yue", "b" * 64,
+        pronunciations=(_pronunciation(1, "UK_IPA", "səˈpəʊzɪŋ"),),
+    )
+    published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
+    assert [(r.scheme, r.locale_code, r.value) for r in published] == [("ipa", "eng-Latn-GB", "səˈpəʊzɪŋ")]
+
+
+def test_adapter_folds_crown_pinyin_equivalent_into_cmn_headword_reading():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "切迫", "切迫", None,
+        "cmn-Hans-to-jpn", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=("緊迫", "jǐnpò", "期限紧迫", "qīxiàn jǐnpò"), examples=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    published = [r for r in normalized.readings if not r.errors]
+    assert {"pinyin" for r in published} == {"pinyin"}
+    assert {r.locale_code for r in published} == {"cmn-Hant-TW"}
+    assert {"jǐnpò", "qīxiàn jǐnpò"}.issubset({r.value for r in published})
+    kinds = {occ.occurrence_kind for sense in normalized.senses for occ in sense.occurrences}
+    assert "equivalent" in kinds
+    texts = {occ.raw_value for sense in normalized.senses for occ in sense.occurrences}
+    assert "緊迫" in texts and "jǐnpò" not in texts
+
+
+def test_adapter_drops_pinyin_equivalent_when_headword_is_not_chinese():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "もう", "もう", None,
+        "jpn-to-cmn-Hans", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=("快要…", "kuàiyào…", "是要来了", "kuàiyào lái le"), examples=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    texts = {occ.raw_value for sense in normalized.senses for occ in sense.occurrences}
+    assert "快要…" in texts and "kuàiyào…" not in texts and "kuàiyào lái le" not in texts
+    assert normalized.readings == ()
+
+
+def test_adapter_classifies_crown_latin_gloss_as_english_after_dropping_pinyin():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "置き忘れる", "おきわすれる", None,
+        "jpn-to-cmn-Hans", "a" * 64,
+        senses=(StagedSense(
+            "s", 1,
+            equivalents=("遗失", "yíshī", "忘", "wàng", "mislay", "leave"),
+            examples=(),
+        ),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    occurrences = {
+        occurrence.raw_value: occurrence
+        for sense in normalized.senses
+        for occurrence in sense.occurrences
+    }
+    assert occurrences["遗失"].lang_code == "cmn"
+    assert occurrences["忘"].lang_code == "cmn"
+    assert occurrences["mislay"].lang_code == "eng"
+    assert occurrences["leave"].locale_code == "eng-Latn-US"
+    assert "yíshī" not in occurrences and "wàng" not in occurrences
+
+
+def test_adapter_corrects_crown_chinese_name_direction_from_pinyin_and_japanese_equivalent():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "马可・波罗", "马可・波罗", None,
+        "jpn-to-cmn-Hans", "a" * 64,
+        pronunciations=(_pronunciation(1, "1", "Mǎkě・Bōluó"),),
+        senses=(StagedSense(
+            "s", 1,
+            equivalents=("マルコ・ポーロ．イタリアの商人・旅行家．",),
+            examples=(),
+        ),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.lang_code == "cmn"
+    assert normalized.headword.locale_code == "cmn-Hans-CN"
+    equivalent = normalized.senses[0].occurrences[0]
+    assert equivalent.lang_code == "jpn"
+    assert [(r.scheme, r.value) for r in normalized.readings if not r.errors] == [
+        ("pinyin", "Mǎkě・Bōluó")
+    ]
+
+
+def test_adapter_does_not_flip_japanese_entry_with_example_pinyin():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "挨拶", "あいさつ", None,
+        "jpn-to-cmn-Hans", "a" * 64,
+        pronunciations=(_pronunciation(1, "1", "nǐ hǎo"),),
+        senses=(StagedSense("s", 1, equivalents=("问候",), examples=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.lang_code == "jpn"
+
+
+def test_adapter_classifies_numeric_scheme_pinyin_pronunciation_as_pinyin():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "AA制", "AA制", None,
+        "cmn-Hans-to-jpn", "a" * 64,
+        pronunciations=(_pronunciation(1, "1", "AA zhì"),),
+    )
+    published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
+    assert [(r.scheme, r.locale_code, r.value) for r in published] == [("pinyin", "cmn-Hant-TW", "AA zhì")]
+
+
+def test_adapter_keeps_pinyin_equivalent_in_non_crown_bundle():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_CN-en.OCD", "e", "切迫", "切迫", None,
+        "cmn-Hant-to-eng", "a" * 64,
+        pronunciations=(_pronunciation(1, "1", "AA zhì"),),
+        senses=(StagedSense("s", 1, equivalents=("緊迫", "jǐnpò"), examples=()),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    texts = {occ.raw_value for sense in normalized.senses for occ in sense.occurrences}
+    assert "jǐnpò" in texts
+    readings = [r for r in normalized.readings if not r.errors]
+    assert not readings

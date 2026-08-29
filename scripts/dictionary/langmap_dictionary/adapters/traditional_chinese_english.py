@@ -90,7 +90,9 @@ _PROFILE_LOCALES = {
 
 
 def canonicalize_text(value: str) -> str:
-    return unicodedata.normalize("NFC", value.strip())
+    normalized = unicodedata.normalize("NFC", value.strip())
+    without_period = normalized.rstrip(".．。").rstrip()
+    return without_period or normalized
 
 
 def clean_equivalent(value: str) -> tuple[str, bool]:
@@ -154,11 +156,92 @@ def _claim(*parts: str) -> str:
     return ":".join(parts)
 
 
+_PINYIN_TONE_MARKS = frozenset("āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ")
+
+
+def _has_pinyin_tone_marks(value: str) -> bool:
+    """True when ``value`` carries pinyin tone diacritics (ḿ kamu, ē, ǎ…).
+
+    Apple's Chinese bundles label the headword pinyin as ``UK_IPA``/``solitary``;
+    the tone-marked Latin spelling is the reliable signal to reclassify it as
+    pinyin instead of attaching it to an English IPA reading and locale."""
+    return any(character in _PINYIN_TONE_MARKS for character in value)
+
+
+_LATIN_PINYIN_ALLOWED = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    " \t'’·，。？！、；：・…—（）()·,?!."
+) | _PINYIN_TONE_MARKS
+
+
+def _is_pinyin_spelling(value: str) -> bool:
+    """``Crown`` bundles mix romanized pinyin into ``equivalents`` (e.g.
+    ``kuàiyào lái le``).  Pinyin is a reading, not a word, so an equivalent
+    that carries pinyin tone marks and otherwise stays within the pinyin/Latin
+    character set is folded into a reading instead of being allocated an
+    expression node."""
+    if not _has_pinyin_tone_marks(value):
+        return False
+    return all(character in _LATIN_PINYIN_ALLOWED for character in value)
+
+
+def _is_latin_expression(value: str) -> bool:
+    """Identify Crown's unlabelled English glosses after pinyin is removed."""
+    letters = [character for character in value if character.isalpha()]
+    return bool(letters) and all(
+        "LATIN" in unicodedata.name(character, "") for character in letters
+    )
+
+
+_JYUTPING_SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def _canonical_jyutping(value: str) -> str:
+    """Collapse the OUP/CP spaced-tone spelling (``daat 3``, ``taat 3/1``)
+    into the canonical Jyutping tone superscripts (``daat³``, ``taat³/¹``)."""
+    value = re.sub(r"[ \t]+([0-9])", lambda match: match.group(1).translate(_JYUTPING_SUPERSCRIPT), value)
+    value = re.sub(r"(?<=/)([0-9])", lambda match: match.group(1).translate(_JYUTPING_SUPERSCRIPT), value)
+    return value.strip()
+
+
+def _entry_jyutping_values(entry: StagedEntry) -> set[str]:
+    return {
+        _canonical_jyutping(pronunciation.value)
+        for pronunciation in entry.pronunciations
+        if pronunciation.scheme.strip().lower() == "jyutping"
+    }
+
+
 class TraditionalChineseEnglishAdapter:
     id = "traditional-chinese-english"
 
     def normalize_entry(self, entry: StagedEntry) -> NormalizedEntry:
-        head_hint = _side_hint(entry.direction_hint, True)
+        crown = str(entry.dictionary_key or "").endswith("zhs-ja.Crown")
+        direction_hint = entry.direction_hint
+        # A small set of Crown Chinese names/events is tagged jpn-to-cmn even
+        # though its structured headword pronunciation is pinyin and its first
+        # equivalent is Japanese. Require both independent source signals so
+        # Japanese entries that merely contain example pinyin stay unchanged.
+        if crown and str(direction_hint or "").startswith("jpn") and any(
+            _is_pinyin_spelling(str(item.value)) for item in entry.pronunciations
+        ):
+            first_equivalent = ""
+            for sense in entry.senses:
+                for raw in sense.equivalents:
+                    value = (
+                        str(raw.get("value") or raw.get("text") or "")
+                        if isinstance(raw, dict)
+                        else str(raw)
+                    )
+                    if value.strip():
+                        first_equivalent = value
+                        break
+                if first_equivalent:
+                    break
+            if _script_language(first_equivalent) == "jpn":
+                direction_hint = "cmn-Hans-to-jpn"
+
+        head_hint = _side_hint(direction_hint, True)
         head_lang, head_locale, head_error = _language(entry.canonical_headword, head_hint)
         head_errors = (head_error,) if head_error else ()
         marker = entry.homograph_marker or "none"
@@ -168,7 +251,13 @@ class TraditionalChineseEnglishAdapter:
             canonicalize_text(entry.canonical_headword), head_lang, head_locale, head_cluster,
             entry.entry_key, None, {"homograph_marker": entry.homograph_marker}, head_errors,
         )
-        readings = tuple(self._reading(entry, index, item) for index, item in enumerate(entry.pronunciations, 1))
+        # Only the ``Crown`` bundle mixes romanized pinyin into equivalents and
+        # uses bare tone numbers as pronunciation schemes.  Isolating the
+        # folding here keeps the English/bilingual adapters' behavior unchanged.
+        extended_readings = list(
+            self._reading(entry, index, item, _entry_jyutping_values(entry), head_lang, fold_pinyin=crown)
+            for index, item in enumerate(entry.pronunciations, 1)
+        )
         senses: list[NormalizedSense] = []
         for sense in entry.senses:
             occurrences: list[NormalizedOccurrence] = []
@@ -179,7 +268,25 @@ class TraditionalChineseEnglishAdapter:
                 bullet = cleaned.startswith("•")
                 if bullet:
                     cleaned = cleaned[1:].lstrip()
-                lang, locale, error = _language(cleaned, hint)
+                # ``Crown`` mixes romanized pinyin into equivalents.  Pinyin is
+                # a reading, not a word: fold it into the headword reading when
+                # the headword is Chinese, otherwise drop it instead of creating
+                # a bogus expression node.
+                if crown and kind == "equivalent" and _is_pinyin_spelling(cleaned):
+                    if head_lang == "cmn":
+                        extended_readings.append(NormalizedReading(
+                            _claim("entry", entry.entry_key, "sense", sense.sense_key, "reading", f"eq{ordinal}"),
+                            entry.entry_key, raw_value, cleaned, "pinyin", "cmn-Hant-TW", (),
+                        ))
+                    return
+                # Crown supplies Chinese/Japanese direction only, while its
+                # equivalent list also contains unlabelled English glosses.
+                # Pinyin was handled above; a remaining Latin expression is an
+                # English gloss and must not inherit the direction target.
+                if crown and kind == "equivalent" and _is_latin_expression(cleaned):
+                    lang, locale, error = "eng", "eng-Latn-US", None
+                else:
+                    lang, locale, error = _language(cleaned, hint)
                 occurrences.append(NormalizedOccurrence(
                     _claim("entry", entry.entry_key, "sense", sense.sense_key, kind, ordinal),
                     kind, raw_value, cleaned, lang, locale,
@@ -194,7 +301,7 @@ class TraditionalChineseEnglishAdapter:
                 raw_value = item.get("value") or item.get("text")
                 if not isinstance(raw_value, str) or not raw_value.strip():
                     continue
-                hint = item.get("language") or item.get("language_hint") or _side_hint(entry.direction_hint, False)
+                hint = item.get("language") or item.get("language_hint") or _side_hint(direction_hint, False)
                 add_occurrence(raw_value, hint, "equivalent", str(ordinal), {"bullet_removed": False})
 
             # Some OUP bundles (Kannada, Telugu, Malayalam, ...) store the
@@ -234,7 +341,7 @@ class TraditionalChineseEnglishAdapter:
                 if not isinstance(raw_value, str) or not raw_value.strip():
                     continue
                 cleaned = canonicalize_text(raw_value)
-                hint = item.get("language") or item.get("language_hint") or _side_hint(entry.direction_hint, False)
+                hint = item.get("language") or item.get("language_hint") or _side_hint(direction_hint, False)
                 lang, locale, error = _language(cleaned, hint)
                 occurrences.append(NormalizedOccurrence(
                     _claim("entry", entry.entry_key, "sense", sense.sense_key, "synonym", str(ordinal)),
@@ -246,7 +353,7 @@ class TraditionalChineseEnglishAdapter:
                 item = raw_item if isinstance(raw_item, dict) else {"text": raw_item}
                 text = item.get("text")
                 if isinstance(text, str) and text.strip():
-                    lang, locale, error = _language(text, item.get("language") or _side_hint(entry.direction_hint, True))
+                    lang, locale, error = _language(text, item.get("language") or _side_hint(direction_hint, True))
                     occurrences.append(NormalizedOccurrence(
                         _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "text"),
                         "example", text, canonicalize_text(text), lang, locale,
@@ -255,7 +362,7 @@ class TraditionalChineseEnglishAdapter:
                     ))
                 translation = item.get("translation")
                 if isinstance(translation, str) and translation.strip():
-                    lang, locale, error = _language(translation, item.get("translation_language") or _side_hint(entry.direction_hint, False))
+                    lang, locale, error = _language(translation, item.get("translation_language") or _side_hint(direction_hint, False))
                     occurrences.append(NormalizedOccurrence(
                         _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "translation"),
                         "example", translation, canonicalize_text(translation), lang, locale,
@@ -263,23 +370,48 @@ class TraditionalChineseEnglishAdapter:
                         entry.entry_key, sense.sense_key, {}, (error,) if error else (),
                     ))
             pos = tuple(self._pos(sense.sense_key, entry.entry_key, index, value) for index, value in enumerate(sense.pos, 1))
-            senses.append(NormalizedSense(sense.sense_key, tuple(occurrences), readings, pos))
-        return NormalizedEntry(entry.dictionary_key, entry.entry_key, head, tuple(senses), readings, entry.raw)
+            senses.append(NormalizedSense(sense.sense_key, tuple(occurrences), tuple(extended_readings), pos))
+        return NormalizedEntry(entry.dictionary_key, entry.entry_key, head, tuple(senses), tuple(extended_readings), entry.raw)
 
-    def _reading(self, entry: StagedEntry, index: int, item: Any) -> NormalizedReading:
+    def _reading(self, entry: StagedEntry, index: int, item: Any, yue_readings: set[str], head_lang: str | None, fold_pinyin: bool = False) -> NormalizedReading:
         scheme = item.scheme
         upper = scheme.upper()
         if "IPA" in upper:
-            normalized_scheme = "ipa"
-            locale = "eng-Latn-GB" if upper.startswith("UK") else "eng-Latn-US" if upper.startswith("US") else None
-            errors = () if locale else ("unknown_locale",)
+            # Apple's Chinese->English bundles store the headword pinyin under a
+            # ``UK_IPA``-style scheme. Tone-marked Latin is pinyin, not an
+            # English IPA reading, so reclassify it to the Chinese locale.
+            if head_lang in {"cmn", "yue"} and _has_pinyin_tone_marks(item.value):
+                normalized_scheme, locale, errors = "pinyin", "cmn-Hant-TW", ()
+                value = canonicalize_text(item.value)
+            else:
+                normalized_scheme = "ipa"
+                locale = "eng-Latn-GB" if upper.startswith("UK") else "eng-Latn-US" if upper.startswith("US") else None
+                errors = () if locale else ("unknown_locale",)
+                value = canonicalize_text(item.value)
         elif "PINYIN" in upper or "BOPOMOFO" in upper:
             normalized_scheme = "pinyin" if "PINYIN" in upper else "bopomofo"
             locale = "cmn-Hant-TW"
             errors = ()
+            value = canonicalize_text(item.value)
+        elif "JYUTPING" in upper:
+            normalized_scheme, locale, errors = "jyutping", "yue-Hant-HK", ()
+            value = _canonical_jyutping(item.value)
+        elif scheme.strip().isdigit() and fold_pinyin and _is_pinyin_spelling(str(item.value)):
+            # ``Crown`` pronunciations carry only the tone number as their
+            # scheme (``1``) alongside the pinyin value; classify as pinyin.
+            normalized_scheme, locale, errors = "pinyin", "cmn-Hant-TW", ()
+            value = canonicalize_text(item.value)
         else:
             normalized_scheme, locale, errors = scheme, None, ("unknown_reading_scheme",)
-        return NormalizedReading(_claim("entry", entry.entry_key, "reading", str(index)), entry.entry_key, item.value, canonicalize_text(item.value), normalized_scheme, locale, errors)
+            value = canonicalize_text(item.value)
+            # Apple's Cantonese bundles also spell the headword Jyutping in a
+            # spaced-tone form under the legacy ``unknown`` scheme. Publish only
+            # the value that collapses onto the entry's own canonical reading;
+            # example-sentence transcriptions stay quarantined.
+            candidate = _canonical_jyutping(item.value)
+            if candidate in yue_readings:
+                normalized_scheme, locale, value, errors = "jyutping", "yue-Hant-HK", candidate, ()
+        return NormalizedReading(_claim("entry", entry.entry_key, "reading", str(index)), entry.entry_key, item.value, value, normalized_scheme, locale, errors)
 
     def _pos(self, sense_key: str, entry_key: str, index: int, value: Any) -> NormalizedPos:
         raw = value if isinstance(value, str) else value.get("value") if isinstance(value, dict) else str(value)
