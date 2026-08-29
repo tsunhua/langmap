@@ -5,44 +5,221 @@
     "database_name": "langmap-v2"
   },
   "schema_objects": [
-    { "type": "index", "name": "idx_edge_votes_edge" },
-    { "type": "index", "name": "idx_expression_edges_b_id" },
-    { "type": "index", "name": "idx_expression_form_edges_lemma_id" },
-    { "type": "index", "name": "idx_expression_locale_links_locale" },
-    { "type": "index", "name": "idx_expressions_language_created" },
-    { "type": "index", "name": "idx_handbook_sections_parent" },
-    { "type": "index", "name": "idx_handbook_votes_handbook" },
-    { "type": "index", "name": "idx_handbooks_visibility_created" },
-    { "type": "index", "name": "idx_handbooks_visibility_score" },
-    { "type": "index", "name": "idx_language_locales_identity" },
-    { "type": "index", "name": "idx_ui_messages_source_expression" },
-    { "type": "table", "name": "_cf_KV" },
-    { "type": "table", "name": "edge_votes" },
-    { "type": "table", "name": "expression_edges" },
-    { "type": "table", "name": "expression_form_edge_features" },
-    { "type": "table", "name": "expression_form_edges" },
-    { "type": "table", "name": "expression_locale_links" },
-    { "type": "table", "name": "expression_readings" },
-    { "type": "table", "name": "expression_split_moves" },
-    { "type": "table", "name": "expression_splits" },
-    { "type": "table", "name": "expressions" },
-    { "type": "table", "name": "handbook_section_items" },
-    { "type": "table", "name": "handbook_sections" },
-    { "type": "table", "name": "handbook_votes" },
-    { "type": "table", "name": "handbooks" },
-    { "type": "table", "name": "language_locales" },
-    { "type": "table", "name": "languages" },
-    { "type": "table", "name": "morphological_dimensions" },
-    { "type": "table", "name": "morphological_features" },
-    { "type": "table", "name": "parts_of_speech" },
-    { "type": "table", "name": "regions" },
-    { "type": "table", "name": "scripts" },
-    { "type": "table", "name": "sources" },
-    { "type": "table", "name": "ui_locales" },
-    { "type": "table", "name": "ui_messages" },
-    { "type": "table", "name": "user_preferences" },
-    { "type": "table", "name": "users" },
-    { "type": "trigger", "name": "trg_expression_form_edges_no_reverse" }
+    {
+      "name": "idx_edge_votes_edge",
+      "sql": "CREATE INDEX idx_edge_votes_edge ON edge_votes(edge_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expression_edge_sources_edge",
+      "sql": "CREATE INDEX idx_expression_edge_sources_edge ON expression_edge_sources(edge_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expression_edges_b_id",
+      "sql": "CREATE INDEX idx_expression_edges_b_id ON expression_edges(expression_b_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expression_form_edges_lemma_id",
+      "sql": "CREATE INDEX idx_expression_form_edges_lemma_id ON expression_form_edges(lemma_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expression_locale_links_locale",
+      "sql": "CREATE INDEX idx_expression_locale_links_locale ON expression_locale_links(locale_id, expression_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expression_sources_expression",
+      "sql": "CREATE INDEX idx_expression_sources_expression ON expression_sources(expression_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_expressions_language_created",
+      "sql": "CREATE INDEX idx_expressions_language_created ON expressions(language_id, created_at DESC)",
+      "type": "index"
+    },
+    {
+      "name": "idx_handbook_sections_parent",
+      "sql": "CREATE INDEX idx_handbook_sections_parent ON handbook_sections(handbook_id, parent_section_id, position, id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_handbook_votes_handbook",
+      "sql": "CREATE INDEX idx_handbook_votes_handbook ON handbook_votes(handbook_id)",
+      "type": "index"
+    },
+    {
+      "name": "idx_handbooks_visibility_created",
+      "sql": "CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC)",
+      "type": "index"
+    },
+    {
+      "name": "idx_handbooks_visibility_score",
+      "sql": "CREATE INDEX idx_handbooks_visibility_score ON handbooks(visibility, score DESC, created_at DESC, id ASC)",
+      "type": "index"
+    },
+    {
+      "name": "idx_language_locales_identity",
+      "sql": "CREATE UNIQUE INDEX idx_language_locales_identity\n  ON language_locales(language_id, COALESCE(script_code, ''), COALESCE(orthography, ''), COALESCE(region_code, ''), place_path)",
+      "type": "index"
+    },
+    {
+      "name": "idx_ui_messages_source_expression",
+      "sql": "CREATE INDEX idx_ui_messages_source_expression ON ui_messages(project_id, status, source_expression_id)",
+      "type": "index"
+    },
+    {
+      "name": "_cf_KV",
+      "sql": "CREATE TABLE _cf_KV (\n        key TEXT PRIMARY KEY,\n        value BLOB\n      ) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "edge_votes",
+      "sql": "CREATE TABLE edge_votes (\n  user_id INTEGER NOT NULL,\n  edge_id INTEGER NOT NULL,\n  vote INTEGER NOT NULL CHECK (vote IN (-1, 1)),\n  PRIMARY KEY (user_id, edge_id),\n  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,\n  FOREIGN KEY (edge_id) REFERENCES expression_edges(id) ON DELETE CASCADE\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_edge_sources",
+      "sql": "CREATE TABLE expression_edge_sources (\n  edge_id INTEGER NOT NULL,\n  source_id INTEGER NOT NULL,\n  source_marker TEXT NOT NULL DEFAULT '',\n  PRIMARY KEY (edge_id, source_id, source_marker),\n  FOREIGN KEY (edge_id) REFERENCES expression_edges(id) ON DELETE CASCADE,\n  FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_edges",
+      "sql": "CREATE TABLE expression_edges (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  expression_a_id INTEGER NOT NULL,\n  expression_b_id INTEGER NOT NULL,\n  relation_mask INTEGER NOT NULL DEFAULT 1 CHECK (relation_mask BETWEEN 1 AND 7),\n  score INTEGER NOT NULL DEFAULT 0,\n  created_by INTEGER,\n  CHECK (expression_a_id < expression_b_id),\n  UNIQUE (expression_a_id, expression_b_id),\n  FOREIGN KEY (expression_a_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (expression_b_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL\n)",
+      "type": "table"
+    },
+    {
+      "name": "expression_form_edge_features",
+      "sql": "CREATE TABLE expression_form_edge_features (\n  edge_id INTEGER NOT NULL,\n  feature_code TEXT NOT NULL,\n  PRIMARY KEY (edge_id, feature_code),\n  FOREIGN KEY (edge_id) REFERENCES expression_form_edges(id) ON DELETE CASCADE,\n  FOREIGN KEY (feature_code) REFERENCES morphological_features(code) ON DELETE RESTRICT\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_form_edges",
+      "sql": "CREATE TABLE expression_form_edges (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  form_id INTEGER NOT NULL,\n  lemma_id INTEGER NOT NULL,\n  created_by INTEGER,\n  CHECK (form_id <> lemma_id),\n  UNIQUE (form_id, lemma_id),\n  FOREIGN KEY (form_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (lemma_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL\n)",
+      "type": "table"
+    },
+    {
+      "name": "expression_locale_links",
+      "sql": "CREATE TABLE expression_locale_links (\n  expression_id INTEGER NOT NULL,\n  locale_id INTEGER NOT NULL,\n  PRIMARY KEY (expression_id, locale_id),\n  FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_readings",
+      "sql": "CREATE TABLE expression_readings (\n  expression_id INTEGER NOT NULL,\n  locale_id INTEGER NOT NULL,\n  scheme TEXT NOT NULL,\n  value TEXT NOT NULL,\n  source_id INTEGER,\n  PRIMARY KEY (expression_id, locale_id, scheme, value),\n  FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT,\n  FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_sources",
+      "sql": "CREATE TABLE expression_sources (\n  expression_id INTEGER NOT NULL,\n  source_id INTEGER NOT NULL,\n  source_marker TEXT NOT NULL DEFAULT '',\n  PRIMARY KEY (expression_id, source_id, source_marker),\n  FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE CASCADE,\n  FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_split_moves",
+      "sql": "CREATE TABLE expression_split_moves (\n  split_id INTEGER NOT NULL,\n  edge_id INTEGER NOT NULL,\n  PRIMARY KEY (split_id, edge_id),\n  FOREIGN KEY (split_id) REFERENCES expression_splits(id) ON DELETE CASCADE,\n  FOREIGN KEY (edge_id) REFERENCES expression_edges(id) ON DELETE RESTRICT\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "expression_splits",
+      "sql": "CREATE TABLE expression_splits (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  source_expression_id INTEGER NOT NULL,\n  target_expression_id INTEGER NOT NULL,\n  created_by INTEGER,\n  FOREIGN KEY (source_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT,\n  FOREIGN KEY (target_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT,\n  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL\n)",
+      "type": "table"
+    },
+    {
+      "name": "expressions",
+      "sql": "CREATE TABLE expressions (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  language_id INTEGER NOT NULL,\n  text TEXT NOT NULL,\n  homograph_index INTEGER NOT NULL DEFAULT 1 CHECK (homograph_index >= 1),\n  pos_mask INTEGER NOT NULL DEFAULT 0 CHECK (pos_mask >= 0),\n  source_id INTEGER,\n  created_by INTEGER,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE (language_id, text, homograph_index),\n  FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE RESTRICT,\n  FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL,\n  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL\n)",
+      "type": "table"
+    },
+    {
+      "name": "handbook_section_items",
+      "sql": "CREATE TABLE handbook_section_items (\n  section_id INTEGER NOT NULL,\n  position INTEGER NOT NULL,\n  expression_id INTEGER NOT NULL,\n  PRIMARY KEY (section_id, position),\n  UNIQUE (section_id, expression_id),\n  FOREIGN KEY (section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE,\n  FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE RESTRICT\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "handbook_sections",
+      "sql": "CREATE TABLE handbook_sections (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  handbook_id INTEGER NOT NULL,\n  title TEXT,\n  position INTEGER NOT NULL,\n  parent_section_id INTEGER,\n  UNIQUE (handbook_id, position),\n  FOREIGN KEY (handbook_id) REFERENCES handbooks(id) ON DELETE CASCADE,\n  FOREIGN KEY (parent_section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE\n)",
+      "type": "table"
+    },
+    {
+      "name": "handbook_votes",
+      "sql": "CREATE TABLE handbook_votes (\n  user_id INTEGER NOT NULL,\n  handbook_id INTEGER NOT NULL,\n  vote INTEGER NOT NULL CHECK (vote IN (-1, 1)),\n  PRIMARY KEY (user_id, handbook_id),\n  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,\n  FOREIGN KEY (handbook_id) REFERENCES handbooks(id) ON DELETE CASCADE\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "handbooks",
+      "sql": "CREATE TABLE handbooks (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id INTEGER NOT NULL,\n  title TEXT NOT NULL,\n  visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private')),\n  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),\n  language_locale_id INTEGER,\n  score INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,\n  FOREIGN KEY (language_locale_id) REFERENCES language_locales(id) ON DELETE SET NULL\n)",
+      "type": "table"
+    },
+    {
+      "name": "language_locales",
+      "sql": "CREATE TABLE language_locales (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  code TEXT NOT NULL UNIQUE,\n  language_id INTEGER NOT NULL,\n  script_code TEXT,\n  orthography TEXT,\n  region_code TEXT,\n  place_path TEXT NOT NULL DEFAULT '',\n  name TEXT NOT NULL,\n  name_en TEXT NOT NULL,\n  name_expression_id INTEGER REFERENCES expressions(id),\n  latitude REAL,\n  longitude REAL,\n  CHECK ((latitude IS NULL) = (longitude IS NULL)),\n  FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE RESTRICT,\n  FOREIGN KEY (script_code) REFERENCES scripts(code) ON DELETE RESTRICT,\n  FOREIGN KEY (region_code) REFERENCES regions(code) ON DELETE RESTRICT\n)",
+      "type": "table"
+    },
+    {
+      "name": "language_statistics",
+      "sql": "CREATE TABLE language_statistics (\n  language_id INTEGER PRIMARY KEY,\n  expression_count INTEGER NOT NULL DEFAULT 0,\n  locale_count INTEGER NOT NULL DEFAULT 0,\n  active_ui_locale_count INTEGER NOT NULL DEFAULT 0,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE\n)",
+      "type": "table"
+    },
+    {
+      "name": "languages",
+      "sql": "CREATE TABLE languages (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  code TEXT NOT NULL UNIQUE,\n  name_en TEXT NOT NULL,\n  name_expression_id INTEGER REFERENCES expressions(id)\n)",
+      "type": "table"
+    },
+    {
+      "name": "morphological_dimensions",
+      "sql": "CREATE TABLE morphological_dimensions (\n  code TEXT PRIMARY KEY,\n  name_expression_id INTEGER NOT NULL,\n  sort_order INTEGER NOT NULL UNIQUE,\n  FOREIGN KEY (name_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT\n)",
+      "type": "table"
+    },
+    {
+      "name": "morphological_features",
+      "sql": "CREATE TABLE morphological_features (\n  code TEXT PRIMARY KEY,\n  dimension_code TEXT NOT NULL,\n  name_expression_id INTEGER NOT NULL,\n  sort_order INTEGER NOT NULL,\n  UNIQUE (dimension_code, sort_order),\n  FOREIGN KEY (dimension_code) REFERENCES morphological_dimensions(code) ON DELETE CASCADE,\n  FOREIGN KEY (name_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT\n)",
+      "type": "table"
+    },
+    {
+      "name": "parts_of_speech",
+      "sql": "CREATE TABLE parts_of_speech (\n  code TEXT PRIMARY KEY,\n  name_en TEXT NOT NULL,\n  sort_order INTEGER NOT NULL UNIQUE,\n  bit_index INTEGER NOT NULL UNIQUE CHECK (bit_index BETWEEN 0 AND 62)\n)",
+      "type": "table"
+    },
+    {
+      "name": "regions",
+      "sql": "CREATE TABLE regions (\n  code TEXT PRIMARY KEY,\n  name_en TEXT NOT NULL,\n  name_expression_id INTEGER REFERENCES expressions(id),\n  latitude REAL,\n  longitude REAL,\n  CHECK ((latitude IS NULL) = (longitude IS NULL))\n)",
+      "type": "table"
+    },
+    {
+      "name": "scripts",
+      "sql": "CREATE TABLE scripts (\n  code TEXT PRIMARY KEY,\n  name_en TEXT NOT NULL,\n  direction TEXT NOT NULL CHECK (direction IN ('ltr', 'rtl')),\n  name_expression_id INTEGER REFERENCES expressions(id)\n)",
+      "type": "table"
+    },
+    {
+      "name": "sources",
+      "sql": "CREATE TABLE sources (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  type TEXT NOT NULL,\n  name TEXT NOT NULL,\n  UNIQUE (type, name)\n)",
+      "type": "table"
+    },
+    {
+      "name": "ui_locales",
+      "sql": "CREATE TABLE ui_locales (\n  project_id TEXT NOT NULL,\n  locale_id INTEGER NOT NULL,\n  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'archived')),\n  mapping_revision INTEGER NOT NULL DEFAULT 0,\n  activation_source TEXT CHECK (activation_source IN ('system', 'auto', 'manual')),\n  activated_at TEXT,\n  activated_by INTEGER,\n  created_by INTEGER,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (project_id, locale_id),\n  FOREIGN KEY (locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT,\n  FOREIGN KEY (activated_by) REFERENCES users(id) ON DELETE SET NULL,\n  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "ui_messages",
+      "sql": "CREATE TABLE ui_messages (\n  project_id TEXT NOT NULL,\n  message_key TEXT NOT NULL,\n  source_expression_id INTEGER NOT NULL,\n  source_text TEXT NOT NULL,\n  placeholders_json TEXT NOT NULL DEFAULT '[]',\n  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft', 'active', 'archived')),\n  PRIMARY KEY (project_id, message_key),\n  FOREIGN KEY (source_expression_id) REFERENCES expressions(id) ON DELETE RESTRICT\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "user_preferences",
+      "sql": "CREATE TABLE user_preferences (\n  user_id INTEGER NOT NULL,\n  preference_key TEXT NOT NULL,\n  value_json TEXT NOT NULL,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (user_id, preference_key),\n  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE\n) WITHOUT ROWID",
+      "type": "table"
+    },
+    {
+      "name": "users",
+      "sql": "CREATE TABLE users (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  username TEXT NOT NULL UNIQUE,\n  email TEXT NOT NULL UNIQUE,\n  password_hash TEXT NOT NULL,\n  role TEXT NOT NULL DEFAULT 'user',\n  email_verified INTEGER NOT NULL DEFAULT 0,\n  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP\n)",
+      "type": "table"
+    },
+    {
+      "name": "trg_expression_form_edges_no_reverse",
+      "sql": "CREATE TRIGGER trg_expression_form_edges_no_reverse\nBEFORE INSERT ON expression_form_edges\nWHEN EXISTS (SELECT 1 FROM expression_form_edges WHERE form_id = NEW.lemma_id AND lemma_id = NEW.form_id)\nBEGIN\n  SELECT RAISE(ABORT, 'reverse expression form edge exists');\nEND",
+      "type": "trigger"
+    }
   ],
   "migration_checksums": {
     "0001_initial_schema.sql": "9a979020969e4b2511194e32036a7154d37397218bf53abef1e3ce7862ddd012",
@@ -84,6 +261,8 @@
     "0037_dictionary_packed_catalog.sql": "7f6fe0a29dc385b14f3404a847546ad877c8a869d704a5d144dc46f74714309a",
     "0038_dictionary_integer_codebooks.sql": "5d72947967ffe6722a61872fa963775db694a10745a9fc8e2099143341ec937b",
     "0039_canonical_integer_storage.sql": "567f860acebe55e18d62f50330aae752bb9cb04c2eb223adc65a5708c7d432c6",
-    "0040_restore_localized_name_expressions.sql": "50508b34c4f26ace018382f74468d2be291f29764bbc60c86defe704c02c3eaf"
+    "0040_restore_localized_name_expressions.sql": "50508b34c4f26ace018382f74468d2be291f29764bbc60c86defe704c02c3eaf",
+    "0041_language_statistics.sql": "460ba2ab6b2a6a652bafacb65c9b27ca6ee5a63a4793c9abeb2167eb96e34c95",
+    "0042_dictionary_source_markers.sql": "62f65d1737ab30797ce57cbce6b998410d6e8960bea10475e599ffff8a6c9d89"
   }
 }
