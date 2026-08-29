@@ -61,6 +61,21 @@ const splitSubmitting = ref(false)
 const splitError = ref('')
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
+const morphFormOpen = ref(false)
+
+const isMorphWord = computed(() => {
+  const text = expr.value?.expression.text ?? ''
+  const langCode = expr.value?.expression.lang_code ?? ''
+  return !/\s/.test(text.trim()) && langCode !== 'x-image' && langCode !== 'x-emoji'
+})
+
+function toggleMorphForm() {
+  if (!auth.isLoggedIn) {
+    router.push('/auth')
+    return
+  }
+  morphFormOpen.value = !morphFormOpen.value
+}
 let loadRequest = 0
 let graphRequest = 0
 
@@ -172,6 +187,7 @@ onUnmounted(() => {
 watch(id, () => {
   collapsedIds.value = new Set()
   selectedNodeId.value = null
+  morphFormOpen.value = false
   initFromUrl()
   load()
 })
@@ -391,6 +407,16 @@ const coords = computed(() => {
       <router-link v-if="canViewMap" :to="`/map/${encodeURIComponent(expr.expression.id)}`" class="btn btn-sm">
         <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
+      <button
+        v-if="isMorphWord"
+        class="btn btn-sm"
+        type="button"
+        :aria-expanded="morphFormOpen"
+        aria-controls="morph-form"
+        @click="toggleMorphForm"
+      >
+        <Plus :size="14" aria-hidden="true" /> {{ morphFormOpen ? t('morphology.hideForm') : t('morphology.addFormLink') }}
+      </button>
       <button v-if="isAdmin" class="btn btn-sm" type="button" @click="openSplitDialog">
         <Split :size="14" aria-hidden="true" /> {{ t('mappingDetail.splitExpression') }}
       </button>
@@ -425,6 +451,7 @@ const coords = computed(() => {
 
     <MorphologyPanel
       v-if="expr.expression.lang_code !== 'x-image' && expr.expression.lang_code !== 'x-emoji'"
+      v-model:form-open="morphFormOpen"
       :expression-id="id"
       :lang-code="expr.expression.lang_code"
       :text="expr.expression.text"

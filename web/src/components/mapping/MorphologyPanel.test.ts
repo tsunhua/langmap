@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MorphologyPanel from './MorphologyPanel.vue'
-import { useAuthStore } from '@/stores/auth'
 import {
   getExpressionFormEdges,
   listMorphologicalFeatures,
@@ -15,11 +14,6 @@ vi.mock('@/api/morphology', () => ({
 }))
 vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({ search: vi.fn().mockResolvedValue({ items: [] }) }),
-}))
-
-const push = vi.fn()
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push }),
 }))
 
 const RouterLinkStub = {
@@ -39,11 +33,11 @@ function formEdges(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function mountPanel(text = 'gatas') {
+function mountPanel(text = 'gatas', formOpen = false) {
   const pinia = createPinia()
   setActivePinia(pinia)
   return mount(MorphologyPanel, {
-    props: { expressionId: 'spa:gatas', langCode: 'spa', text },
+    props: { expressionId: 'spa:gatas', langCode: 'spa', text, formOpen },
     global: {
       plugins: [pinia],
       stubs: { RouterLink: RouterLinkStub },
@@ -54,7 +48,6 @@ function mountPanel(text = 'gatas') {
 describe('MorphologyPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    push.mockReset()
     setActivePinia(createPinia())
     vi.mocked(listMorphologicalFeatures).mockResolvedValue({ dimensions: [] })
   })
@@ -126,7 +119,7 @@ describe('MorphologyPanel', () => {
     expect(wrapper.text()).not.toContain('Mappings of the dictionary form')
   })
 
-  it('keeps a load failure inside the panel', async () => {
+  it('hides the panel when word forms fail to load', async () => {
     vi.mocked(getExpressionFormEdges).mockRejectedValue({
       response: { data: { message: 'form edges down' } },
     })
@@ -134,11 +127,11 @@ describe('MorphologyPanel', () => {
     const wrapper = mountPanel()
     await flushPromises()
 
-    expect(wrapper.get('[role="alert"]').text()).toBe('form edges down')
-    expect(wrapper.text()).toContain('Word forms')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Word forms')
   })
 
-  it('shows the empty state instead of an error when form edges are not available', async () => {
+  it('hides the panel when form edges are not available', async () => {
     vi.mocked(getExpressionFormEdges).mockRejectedValue({
       response: { status: 404, data: { error: 'NOT_FOUND' } },
     })
@@ -147,31 +140,21 @@ describe('MorphologyPanel', () => {
     await flushPromises()
 
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('No word-form links yet')
+    expect(wrapper.text()).not.toContain('Word forms')
   })
 
-  it('keeps the mark-as-form controls collapsed until opened', async () => {
+  it('shows the mark-as-form form only when formOpen is set', async () => {
     vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
-    const wrapper = mountPanel()
+
+    const closed = mountPanel()
     await flushPromises()
-    expect(wrapper.text()).toContain('Add a word-form link')
-    expect(wrapper.text()).not.toContain('Save form link')
-    const auth = useAuthStore()
-    auth.token = 'session'
-    await wrapper.vm.$nextTick()
-    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
+    expect(closed.text()).not.toContain('Word forms')
+
+    const wrapper = mountPanel('gatas', true)
+    await flushPromises()
+    expect(wrapper.text()).toContain('Word forms')
+    expect(wrapper.text()).toContain('Mark as a form of…')
     expect(wrapper.text()).toContain('Save form link')
-    expect(wrapper.text()).toContain('Features')
-  })
-
-  it('sends signed-out users to /auth when the add button is clicked', async () => {
-    vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges())
-    const wrapper = mountPanel()
-    await flushPromises()
-    expect(wrapper.text()).toContain('Add a word-form link')
-    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
-    expect(push).toHaveBeenCalledWith('/auth')
-    expect(wrapper.text()).not.toContain('Save form link')
   })
 
   it('hides the whole panel for expressions that are not single words', async () => {
@@ -208,12 +191,8 @@ describe('MorphologyPanel', () => {
         },
       ],
     })
-    const wrapper = mountPanel()
+    const wrapper = mountPanel('gatas', true)
     await flushPromises()
-    const auth = useAuthStore()
-    auth.token = 'session'
-    await wrapper.vm.$nextTick()
-    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
     expect(wrapper.text()).toContain('Noun')
     expect(wrapper.text()).not.toContain('feminine')
     await wrapper.get('input[value="noun"]').trigger('change')
@@ -233,12 +212,8 @@ describe('MorphologyPanel', () => {
         ],
       }],
     })
-    const wrapper = mountPanel()
+    const wrapper = mountPanel('gatas', true)
     await flushPromises()
-    const auth = useAuthStore()
-    auth.token = 'session'
-    await wrapper.vm.$nextTick()
-    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
     await wrapper.get('input[value="noun"]').trigger('change')
 
     const featureInputs = wrapper.findAll('input[type="radio"]').filter((input) => input.attributes('value') === 'feminine' || input.attributes('value') === 'masculine')

@@ -1,8 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { reactive } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MappingDetail from './MappingDetail.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const { detail, mappingGraph, push, replace } = vi.hoisted(() => ({
   detail: vi.fn(),
@@ -68,10 +69,10 @@ function graph(id: string) {
   }
 }
 
-function mountPage() {
+function mountPage(pinia: Pinia = createPinia()) {
   return mount(MappingDetail, {
     global: {
-      plugins: [createPinia()],
+      plugins: [pinia],
       stubs: {
         RouterLink: { props: ['to'], template: '<a><slot /></a>' },
         LanguagePicker: passiveComponent,
@@ -173,5 +174,50 @@ describe('MappingDetail page state', () => {
 
     expect(wrapper.find('.mapping-graph-stub').exists()).toBe(true)
     expect(wrapper.find('.md-empty').exists()).toBe(false)
+  })
+
+  it('sends signed-out users to /auth when adding a word-form link', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    mappingGraph.mockResolvedValue(graph('anchor'))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
+    expect(push).toHaveBeenCalledWith('/auth')
+  })
+
+  it('toggles the word-form form for signed-in users', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    mappingGraph.mockResolvedValue(graph('anchor'))
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    useAuthStore().token = 'session'
+
+    const wrapper = mountPage(pinia)
+    await flushPromises()
+
+    expect((wrapper.vm as any).morphFormOpen).toBe(false)
+    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
+    expect((wrapper.vm as any).morphFormOpen).toBe(true)
+    await wrapper.get('[aria-controls="morph-form"]').trigger('click')
+    expect((wrapper.vm as any).morphFormOpen).toBe(false)
+  })
+
+  it('does not show the word-form action for non-word expressions', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue({
+      expression: { id: 'anchor', text: '🐈', lang_code: 'x-emoji', source_type: 'user', source_name: null },
+      attestations: [],
+      readings: [],
+    })
+    mappingGraph.mockResolvedValue(graph('anchor'))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.find('[aria-controls="morph-form"]').exists()).toBe(false)
   })
 })

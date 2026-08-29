@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useExpressions } from '@/composables/useExpressions'
@@ -25,11 +23,14 @@ const props = defineProps<{
   expressionId: string
   langCode: string
   text: string
+  formOpen: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:formOpen': [value: boolean]
 }>()
 
 const { t } = useI18n()
-const router = useRouter()
-const auth = useAuthStore()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
 const { search } = useExpressions()
@@ -49,7 +50,6 @@ const selectedLemma = ref<{ id: string; text: string; lang_code: string } | null
 const selectedFeatures = ref<string[]>([])
 const submitting = ref(false)
 const submitError = ref('')
-const formOpen = ref(false)
 const saveNotice = ref('')
 const showAllFeatures = ref(false)
 const wordClass = ref<MorphologyWordClass | null>(null)
@@ -193,20 +193,6 @@ function selectLemma(item: { id: string; text: string; lang_code: string }) {
   saveNotice.value = ''
 }
 
-function toggleForm() {
-  if (!auth.isLoggedIn) {
-    router.push('/auth')
-    return
-  }
-  formOpen.value = !formOpen.value
-  submitError.value = ''
-  saveNotice.value = ''
-  if (!formOpen.value) {
-    showAllFeatures.value = false
-    wordClass.value = null
-  }
-}
-
 function selectFeature(dimensionCode: string, featureCode: string) {
   const dimensionCodes = new Set(
     dimensions.value
@@ -238,8 +224,10 @@ async function submitFormEdge() {
     selectedFeatures.value = []
     lemmaQuery.value = ''
     lemmaResults.value = []
+    showAllFeatures.value = false
+    wordClass.value = null
     saveNotice.value = t('morphology.saved')
-    formOpen.value = false
+    emit('update:formOpen', false)
     await loadEdges()
   } catch (error: unknown) {
     submitError.value = apiErrorMessage(error, t('morphology.submitFailed'))
@@ -269,24 +257,14 @@ watch(
 </script>
 
 <template>
-  <section v-if="isSingleWord" class="morph" :aria-label="t('morphology.title')">
+  <section v-if="hasEdges || formOpen" class="morph" :aria-label="t('morphology.title')">
     <div class="nb-head">
       <h2>{{ t('morphology.title') }}</h2>
-      <button
-        class="btn btn-sm"
-        type="button"
-        :aria-expanded="formOpen"
-        :aria-controls="'morph-form'"
-        @click="toggleForm"
-      >
-        {{ formOpen ? t('morphology.hideForm') : t('morphology.addFormLink') }}
-      </button>
     </div>
     <p v-if="saveNotice" class="morph-note" role="status">{{ saveNotice }}</p>
 
     <p v-if="loading && !edges" class="morph-note">{{ t('common.loading') }}</p>
     <p v-else-if="loadError" class="morph-error" role="alert">{{ loadError }}</p>
-    <p v-else-if="!hasEdges && !formOpen" class="morph-note">{{ t('morphology.empty') }}</p>
 
     <template v-else>
       <ul v-if="edges && edges.as_form.length" class="morph-chips">
@@ -420,7 +398,6 @@ watch(
 <style scoped>
 .morph { min-width: 0; }
 .morph :deep(.nb-head) { align-items: center; }
-.morph :deep(.nb-head .btn) { flex-shrink: 0; }
 .morph-block {
   display: grid;
   gap: var(--space-sm);
