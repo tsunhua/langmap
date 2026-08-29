@@ -44,7 +44,7 @@ const selectedNodeId = ref<string | null>(null)
 const selectedExpr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const collapsedIds = ref<Set<string>>(new Set())
 const graphRef = ref<{ centerOnNodeById: (id: string) => void } | null>(null)
-const mobileMode = ref<'graph' | 'list'>('list')
+const mobileMode = ref<'graph' | 'list'>('graph')
 const isMobile = ref(false)
 
 const isFullscreen = ref(false)
@@ -588,6 +588,16 @@ const coords = computed(() => {
 @media (max-width: 900px) {
   .md-graph-area {
     grid-template-columns: 1fr;
+  }
+  .anchor {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+@media (max-width: 640px) {
+  .anchor {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 .md-mobile-bar {
