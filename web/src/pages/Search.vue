@@ -12,6 +12,8 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
+import { useLanguagesStore } from '@/stores/languages'
+import { useSearchLanguages, rememberSearchLanguage } from '@/composables/useSearchLanguages'
 import type { SearchFormOf } from '@/api/expressions'
 
 const route = useRoute()
@@ -20,6 +22,8 @@ const { search } = useSearch()
 const { t } = useI18n()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
+const languagesStore = useLanguagesStore()
+const { recent } = useSearchLanguages()
 
 const PAGE = 20
 interface SearchResult {
@@ -33,7 +37,13 @@ interface SearchResult {
   form_of?: SearchFormOf[]
 }
 const query = ref((route.query.q as string) || '')
-const langs = ref<string[]>(typeof route.query.lang === 'string' && route.query.lang ? [route.query.lang] : [])
+const initialLang = (() => {
+  const urlLang = typeof route.query.lang === 'string' && route.query.lang
+  if (urlLang) return [urlLang]
+  const first = recent.value[0]
+  return first ? [first] : []
+})()
+const langs = ref<string[]>(initialLang)
 const results = ref<SearchResult[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -41,6 +51,7 @@ const loadingMore = ref(false)
 const searched = ref(false)
 const loadError = ref('')
 const loadMoreError = ref('')
+const languageMissing = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let searchRequest = 0
@@ -67,9 +78,14 @@ async function doSearch() {
   }
   if (!langs.value[0]) {
     searched.value = false
-    loadError.value = t('search.languageRequired')
+    languageMissing.value = Boolean(query.value.trim())
+    loadError.value = ''
+    results.value = []
+    total.value = 0
+    syncUrl()
     return
   }
+  languageMissing.value = false
   const request = ++searchRequest
   const requestedQuery = query.value.trim()
   loading.value = true
@@ -86,6 +102,7 @@ async function doSearch() {
     results.value = data.items
     total.value = data.total
     searched.value = true
+    rememberSearchLanguage(langs.value[0])
     syncUrl()
   } catch (e: unknown) {
     if (request !== searchRequest) return
@@ -118,6 +135,19 @@ async function loadMore() {
   } finally {
     if (request === searchRequest) loadingMore.value = false
   }
+}
+
+function recentLabel(code: string) {
+  return languagesStore.getName(code)
+}
+
+function selectRecentLanguage(code: string) {
+  if (langs.value[0] === code) return
+  langs.value = [code]
+}
+
+function isRecentActive(code: string) {
+  return langs.value.includes(code)
 }
 
 // Debounced search on query input.
@@ -161,7 +191,23 @@ onUnmounted(() => {
       <h1>{{ t('search.title') }}</h1>
       <div class="se-qrow">
         <SearchBar v-model="query" :placeholder="t('search.placeholder')" :large="true" @search="doSearch" />
-        <LanguageSelect v-model="langs" />
+        <LanguageSelect v-model="langs" :class="{ 'se-lang-required': languageMissing }" />
+      </div>
+      <div v-if="languageMissing" class="se-lang-warn" role="status">
+        {{ t('search.languageRequired') }}
+      </div>
+      <div v-if="recent.length" class="se-recents" :aria-label="t('components.filterLanguages')">
+        <button
+          v-for="code in recent"
+          :key="code"
+          type="button"
+          class="se-recent"
+          :class="{ on: isRecentActive(code) }"
+          :aria-pressed="isRecentActive(code)"
+          @click="selectRecentLanguage(code)"
+        >
+          {{ recentLabel(code) }}
+        </button>
       </div>
     </div>
 
@@ -199,6 +245,42 @@ onUnmounted(() => {
 .se-hero h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: var(--space-base); }
 .se-qrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .se-qrow > :first-child { flex: 1; min-width: 0; }
+.se-lang-required :deep(.lang-select-tagwrap) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 22%, transparent);
+}
+.se-lang-warn {
+  margin-top: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--accent);
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, var(--border));
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--accent) 7%, var(--surface));
+}
+.se-recents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 var(--space-base);
+}
+.se-recent {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.se-recent:hover { border-color: var(--accent); color: var(--accent); }
+.se-recent.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.se-recent:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .se-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .se-count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 .se-count b { color: var(--fg); font-weight: 500; }
@@ -215,5 +297,6 @@ onUnmounted(() => {
 }
 @media (max-width: 640px) {
   .se-page { padding-left: 16px; padding-right: 16px; }
+  .se-recent { min-height: 44px; }
 }
 </style>

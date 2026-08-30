@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '@/api/client'
 import Search from './Search.vue'
+import { rememberSearchLanguage, resetRecentSearchLanguages } from '@/composables/useSearchLanguages'
 
 vi.mock('@/api/client', () => ({ default: { get: vi.fn() } }))
 
@@ -29,7 +30,10 @@ async function mountPage(query = '') {
 }
 
 describe('Search page', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetRecentSearchLanguages()
+  })
 
   it('searches with q/offset and shows the selected language', async () => {
     vi.mocked(api.get).mockImplementation((path: string, config?: { params?: Record<string, unknown> }) => {
@@ -102,5 +106,62 @@ describe('Search page', () => {
     const wrapper = await mountPage('q=gatas&lang=spa')
     await flushPromises()
     expect(wrapper.get('.ex-form').text()).toBe('plural ← gato')
+  })
+
+  it('reuses the last-selected language on the next visit', async () => {
+    vi.mocked(api.get).mockImplementation((path: string) => {
+      if (path === '/language-registry/languages') return Promise.resolve(page([]))
+      if (path === '/expressions/search') return Promise.resolve(page([expression('eng:first', 'First')]))
+      throw new Error(`unexpected ${path}`)
+    })
+
+    const first = await mountPage('q=first&lang=eng')
+    await flushPromises()
+    first.unmount()
+
+    const second = await mountPage('q=second')
+    await flushPromises()
+    expect(api.get).toHaveBeenLastCalledWith('/expressions/search', {
+      params: { q: 'second', lang_code: 'eng', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
+    })
+    second.unmount()
+  })
+
+  it('shows inline guidance instead of an error block when a language is missing', async () => {
+    vi.mocked(api.get).mockImplementation((path: string) => {
+      if (path === '/language-registry/languages') return Promise.resolve(page([]))
+      throw new Error(`unexpected ${path}`)
+    })
+
+    const wrapper = await mountPage('q=peg')
+    await flushPromises()
+
+    expect(wrapper.find('.se-lang-warn').exists()).toBe(true)
+    expect(wrapper.find('.se-lang-required').exists()).toBe(true)
+    expect(api.get).not.toHaveBeenCalledWith('/expressions/search', expect.anything())
+    expect(wrapper.find('.md-empty').exists()).toBe(false)
+  })
+
+  it('runs the search in a recent language when its chip is tapped', async () => {
+    rememberSearchLanguage('spa')
+    rememberSearchLanguage('eng')
+    vi.mocked(api.get).mockImplementation((path: string) => {
+      if (path === '/language-registry/languages') return Promise.resolve(page([]))
+      if (path === '/expressions/search') return Promise.resolve(page([expression('eng:cat', 'cat')]))
+      throw new Error(`unexpected ${path}`)
+    })
+
+    const wrapper = await mountPage('q=cat')
+    await flushPromises()
+    const chips = wrapper.findAll('.se-recent')
+    expect(chips.length).toBeGreaterThanOrEqual(2)
+    const engChip = chips.find((chip) => chip.text().includes('eng'))
+    expect(engChip).toBeTruthy()
+    await engChip!.trigger('click')
+    await flushPromises()
+
+    expect(api.get).toHaveBeenLastCalledWith('/expressions/search', {
+      params: { q: 'cat', lang_code: 'eng', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
+    })
   })
 })
