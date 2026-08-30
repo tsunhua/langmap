@@ -197,6 +197,33 @@ def test_adapter_does_not_promote_same_language_definition():
     assert promoted == []
 
 
+def test_adapter_publishes_exporter_raw_related_text_synonym():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_CN.thes", "e", "哀", "哀", None,
+        "cmn-Hans-to-cmn-Hans", "a" * 64,
+        senses=(StagedSense(
+            "s", 1,
+            relations=({
+                "kind": "synonym",
+                "raw_related_text": "悲",
+                "reading": "bēi",
+                "language_hint": "cmn-Hans",
+            },),
+        ),),
+    )
+
+    synonyms = [
+        occurrence
+        for occurrence in adapter.normalize_entry(entry).senses[0].occurrences
+        if occurrence.occurrence_kind == "synonym"
+    ]
+
+    assert [(item.raw_value, item.canonical_text, item.lang_code, item.locale_code) for item in synonyms] == [
+        ("悲", "悲", "cmn", "cmn-Hans-CN")
+    ]
+
+
 def test_adapter_strips_leading_sentence_punctuation_from_promoted_definition():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(

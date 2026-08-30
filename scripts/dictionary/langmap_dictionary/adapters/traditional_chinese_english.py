@@ -337,11 +337,11 @@ class TraditionalChineseEnglishAdapter:
                     # Antonyms remain fully available in input_relations.raw_json,
                     # but the first online model has no opposition edge kind.
                     continue
-                raw_value = item.get("related_text") or item.get("text")
+                raw_value = item.get("raw_related_text") or item.get("related_text") or item.get("text")
                 if not isinstance(raw_value, str) or not raw_value.strip():
                     continue
                 cleaned = canonicalize_text(raw_value)
-                hint = item.get("language") or item.get("language_hint") or _side_hint(direction_hint, False)
+                hint = item.get("language_hint") or item.get("language") or _side_hint(direction_hint, False)
                 lang, locale, error = _language(cleaned, hint)
                 occurrences.append(NormalizedOccurrence(
                     _claim("entry", entry.entry_key, "sense", sense.sense_key, "synonym", str(ordinal)),

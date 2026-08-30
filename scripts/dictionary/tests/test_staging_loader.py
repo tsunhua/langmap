@@ -31,6 +31,24 @@ def test_loader_preserves_children_and_is_idempotent(tmp_path):
     assert connection.execute("SELECT COUNT(*) FROM input_pos").fetchone()[0] == 1
 
 
+def test_loader_accepts_exporter_raw_related_text(tmp_path):
+    source = tmp_path / "fixture.jsonl"
+    record = _record()
+    record["senses"][0]["relations"] = [
+        {"kind": "synonym", "raw_related_text": "top", "reading": None, "language_hint": "eng"}
+    ]
+    _write(source, [record])
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+
+    summary = load_jsonl_release(connection, [source])
+
+    assert summary.staged_entries == 1
+    assert summary.quarantined == 0
+    assert connection.execute(
+        "SELECT kind,related_text,language_hint FROM input_relations"
+    ).fetchone()[:] == ("synonym", "top", "eng")
+
+
 def test_compact_loader_keeps_all_fields_without_redundant_child_rows(tmp_path):
     source = tmp_path / "fixture.jsonl"
     record = _record()

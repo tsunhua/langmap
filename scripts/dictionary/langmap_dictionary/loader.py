@@ -186,9 +186,15 @@ def _entry_rows(
             if not isinstance(item, dict):
                 raise ValueError(f"relation {sense_key}:{child_ordinal} must be an object")
             kind = _text(item.get("kind"), "relation.kind")
-            related_text = _child_text(item, "related_text", "relation.related_text")
+            related_text = _text(
+                item.get("raw_related_text")
+                or item.get("related_text")
+                or item.get("value")
+                or item.get("text"),
+                "relation.raw_related_text",
+            )
             if not compact:
-                rows["input_relations"].append((release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language"), _json(item)))
+                rows["input_relations"].append((release_id, sense_key, child_ordinal, kind, related_text, item.get("reading"), item.get("language_hint") or item.get("language"), _json(item)))
         for child_ordinal, item in enumerate(arrays["examples"], 1):
             text = _child_text(item, "text", f"example {sense_key}:{child_ordinal}")
             if not compact:
