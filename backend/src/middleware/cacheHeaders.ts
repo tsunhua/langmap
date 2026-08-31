@@ -35,6 +35,15 @@ const CONTENT_CACHE: CachePolicy = {
   authIndependent: true,
 };
 
+// The language list only changes on dictionary releases, so it can hold edge
+// copies longer while stale-while-revalidate keeps repeat loads instant.
+const LANGUAGES_CACHE: CachePolicy = {
+  browserSeconds: 120,
+  edgeSeconds: 900,
+  staleSeconds: 3600,
+  authIndependent: true,
+};
+
 const HANDBOOK_CACHE: CachePolicy = {
   browserSeconds: 30,
   edgeSeconds: 60,
@@ -67,7 +76,7 @@ export function getCachePolicy(url: string): CachePolicy | null {
   if (pathname === '/api/v2/auth/health') return AUTH_HEALTH_CACHE;
   if (pathname === '/api/v2/feed' || pathname === '/api/v2/feed/hot' || pathname === '/api/v2/feed/new') return FEED_CACHE;
   if (matchesExpressionRead(pathname)) return EXPRESSION_CACHE;
-  if (pathname === '/api/v2/languages' || pathname.startsWith('/api/v2/languages/')) return CONTENT_CACHE;
+  if (pathname === '/api/v2/languages' || pathname.startsWith('/api/v2/languages/')) return LANGUAGES_CACHE;
   if (pathname === '/api/v2/language-locales' || pathname.startsWith('/api/v2/language-locales/')) return CONTENT_CACHE;
   if (pathname === '/api/v2/morphological-features') return REFERENCE_CACHE;
   if (pathname.startsWith('/api/v2/language-registry/')) return REFERENCE_CACHE;

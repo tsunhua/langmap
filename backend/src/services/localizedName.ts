@@ -13,23 +13,28 @@ const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT va
 // A name is only translated through a direct semantic edge whose target is
 // attested in the requested full locale. The two UNION branches keep the
 // canonical expression usable regardless of its numeric edge orientation.
+// Driving from the source node ids (instead of the target language's
+// expression table) keeps cost proportional to the edges around the handful of
+// registry names, not to the target language size. CROSS JOIN prevents SQLite
+// from reordering the scan back onto the (potentially huge) target language.
 export const CANDIDATE_SQL = `WITH candidate_rows AS (
-  SELECT e.expression_a_id AS source_id, t.id AS target_id, t.text AS target_text, e.score
-  FROM expression_edges e
-  JOIN expressions t ON t.id = e.expression_b_id
-  WHERE e.expression_a_id IN (SELECT value FROM json_each(?))
-    AND e.score >= 0
-    AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
-    AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)
-  UNION ALL
-  SELECT e.expression_b_id AS source_id, t.id AS target_id, t.text AS target_text, e.score
-  FROM expression_edges e
-  JOIN expressions t ON t.id = e.expression_a_id
-  WHERE e.expression_b_id IN (SELECT value FROM json_each(?))
-    AND e.score >= 0
-    AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
-    AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)
-) SELECT source_id, target_id, target_text, score FROM candidate_rows`;
+  SELECT value AS source_id FROM json_each(?)
+)
+SELECT candidate_rows.source_id, t.id AS target_id, t.text AS target_text, e.score
+FROM candidate_rows
+CROSS JOIN expression_edges e ON e.expression_a_id = candidate_rows.source_id
+JOIN expressions t ON t.id = e.expression_b_id
+WHERE e.score >= 0
+  AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
+  AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)
+UNION ALL
+SELECT candidate_rows.source_id, t.id AS target_id, t.text AS target_text, e.score
+FROM candidate_rows
+CROSS JOIN expression_edges e ON e.expression_b_id = candidate_rows.source_id
+JOIN expressions t ON t.id = e.expression_a_id
+WHERE e.score >= 0
+  AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
+  AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)`;
 
 export function parseLocaleHints(primary?: string, secondary?: string): LocaleHints {
   const clean = (value?: string) => {
@@ -43,7 +48,7 @@ export function parseLocaleHints(primary?: string, secondary?: string): LocaleHi
 async function candidates(db: D1Database, ids: readonly number[], locale?: string): Promise<Map<number, string>> {
   if (!locale || ids.length === 0) return new Map();
   const json = JSON.stringify(ids);
-  const { results } = await db.prepare(CANDIDATE_SQL).bind(json, locale, locale, json, locale, locale).all<CandidateRow>();
+  const { results } = await db.prepare(CANDIDATE_SQL).bind(json, locale, locale, locale, locale).all<CandidateRow>();
   const selected = new Map<number, CandidateRow>();
   for (const row of results) {
     const current = selected.get(row.source_id);
