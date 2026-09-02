@@ -1,0 +1,96 @@
+# TODO
+
+## 詞典讀音資料修復
+
+- [x] 修復本地 dev D1 的簡體中文同義詞典舊讀音污染。
+  - 現象：`/mapping/12498` 的「浪费」除正確的 `lànɡfèi` 外，還錯掛
+    `huīhuò`、`zāota`、`jiéyuē`、`àixī`。
+  - 根因：舊版 exporter 曾把 `relations[].reading` 當成 headword
+    `pronunciations`；dev D1 的 source 3 因此有 6,578／8,620 筆 relation
+    reading 污染。
+  - 處理：以目前 canonical JSONL 建立精確的 `(headword, reading)` 白名單，先備份
+    D1，再刪除 6,578 筆不在白名單的 readings；expressions／edges 數量不變、外鍵檢查
+    通過，「浪费」只剩 `lànɡfèi`。
+  - 禁止方案：不要刪除 source 3 的全部 readings 後直接 `--force` 重匯；舊 dev 身分
+    空間會額外建立 7,295 expressions。
+
+- [x] 修復 Thai－English 詞典把泰文字母擬音誤標為 GB IPA。
+  - 現象：`/mapping/142479` 的 `pronto` 顯示 `GB: [พรอน' โท] (ipa)`；
+    `/mapping/78415` 的 `peg` 顯示 `GB: [เพก] (ipa)`。
+  - 根因：Apple bundle 把供泰語讀者使用的泰文字母擬音標成 `d:prn="UK_IPA"`；
+    exporter 原樣輸出，adapter 再映射為 `eng-Latn-GB / ipa`。
+  - 語義判定：這是英語 headword 的 native-script respelling，不是泰語詞，也不是
+    IPA；因此不建立 `tha-Thai` 或 `eng-Thai-TH` reading。現有資料模型沒有合適的
+    respelling scheme，先安全丟棄，日後另行建模。
+  - 處理：重新匯出 Thai JSONL（entry count 49,219 不變；保留泰語 equivalents），
+    清理 dev source 7 的 20,344 筆 rows；以受管 production migration
+    `007-remove-thai-english-respellings.sql` 清理 production source 13 的 20,344
+    筆 rows。
+  - production apply：operation
+    `579df6132ac84fca87716b84803db5d7`，bookmark
+    `000000b4-00000000-000050d7-e89982f114772d4af693a60af5a546bd`；遠端驗證 source
+    13 與 `peg`／`pronto` 均無誤掛讀音。
+
+- [x] 從 exporter、adapter 到 staging 建立讀音品質防線。
+  - exporter 過濾「scheme 含 IPA 但值含明確非 IPA 文字系統」的節點（Thai、Bengali、
+    Devanagari、Hangul、Han 等），不再把 native-script respelling 當 IPA；adapter
+    另以 `reading_script_mismatch` 與 `relation_reading_as_headword` 防禦性隔離。
+  - staging 將 reading errors 寫入 `quarantine_items`，`_prepare_staging` 在 clustering
+    前以 blocking gate 失敗關閉；未通過品質 gate 不得發布 dictionary delta。
+  - 已重新匯出並抽查 Korean－English、The Standard Dictionary、Traditional
+    Chinese－English；entry count 維持不變，blocking reading errors 為 0。
+
+- [ ] 完成其餘來源的重新匯出與發布前抽查。
+  - 全 corpus raw scan（5,116,056 entries／4,542,553 readings）在上述三部重匯後，仍有
+    215,898 筆「IPA 標籤＋非 IPA script」值：Bangla 19,887、Gujarati 53,830、Hindi
+    21,292、Kannada 21,208、Kazakh 2、Korean 99,088、Punjabi 213、Tamil 5、Urdu 373。
+  - 這些 JSONL 所指向的 CSV 目前不在 `dictionary` repo 的可用 export 目錄；不可手改
+    JSONL 或在 LangMap 加例外。待原始 CSV 恢復後，使用同一 exporter 重新匯出，確認
+    entry count 不變、raw scan 與 adapter gate 均為 0，再進行 mirror／production delta。
+  - exporter 最後一輪擴充未知文字系統的 fail-closed heuristic 後，四部已存在來源也應
+    在外部寫入權限恢復時重新匯出一次；本輪測試已驗證 parser 行為，但不把舊產物冒充為
+    這一輪的新輸出。
+
+- [ ] 將修復後的簡體中文同義詞典 JSONL 按 production mirror 流程發布（若 production
+  尚未包含該部的修正版）：import → `export_dictionary_delta.py` → managed plan/apply
+  → replay delta 回 mirror，並在 apply 後刷新 `language_statistics`。
+
+- [x] 優先導入中文與西班牙語詞典（2026-08-30）。
+  - 已完成 mirror 合併：簡中／繁中 8 部、西語 2 部；繁中－英語使用最新重匯輸出，
+    10 部均通過 reading gate。
+  - 已產生待審 delta：`scripts/db/state/backup/delta/008-cn-es-priority.sql`，
+    sha256 `1d9d4e1b8ce7d64849f10e9bacf02e525934f5686655b66e361c84133dbe4461`，約 253MB。
+  - production apply 已完成：operation `14fad2e3f6cf44b592c75c53365d3aea`，bookmark
+    `000000ba-00000000-000050d7-2d33b51bf078a5ae2a37b70c27dbd35d`；delta 已 replay 回 mirror。
+  - `language_statistics` 已以 operation `069d15b302f44358a1770370a7129a7a` 刷新。
+
+- [x] 修復詞頭尾逗號與漢語拼音誤建 expression。
+  - `to leak out,` 應由 exporter canonicalize 為 `to leak out`；外部 exporter 已修正，production 已移除重複 punctuation row（保留 canonical id 181512）。
+  - `kǎoguān`（expression 1847232）已移除，並折疊為 `考官` 的 `pinyin` reading；adapter 已擴大 pinyin reading folding。
+  - production operation `196c1d3aaa47410ca9d73cf0b50fe30d` 已成功，bookmark `000000c0-00000000-000050d7-2562977cbc2b7e67d7b087a93e49ef70`；delta 已 replay 回 mirror。
+
+- [x] 修復 mapping graph 在大量邊時回傳 500。
+  - 根因是 D1 bind variable 上限；graph provenance 與邊查詢已分塊，避免 `/expressions/758326/graph?hops=1` 的 669 條邊觸發超限。
+
+- [x] 清理 `/languages/rus` 與 `/languages/ell` 的混合文字誤分類。
+  - 根因：中文／西文定義中的俄文、希臘字母符號被錯當成整句語言。
+  - 已移除 source 23/24/25 產生的 41 筆錯誤 expression；production operation `0eceb5a265394caca754d6f05ef958a8` 已執行，遠端 rus／ell expression count 均為 0。
+
+- [x] 導入 ChhoeTaigi 九部詞典（2026-08-30）。
+  - source-side exporter 維護於 `/Users/lim/Documents/Code/tsunhua/dictionary`：使用 `.venv/bin/dictionary-chhoetaigi-export`（或 `bin/export-chhoetaigi-jsonl.py`）將 CSV 轉出 JSONL；`han` 作 nan headword，`poj` 作 nan 文字 equivalent（不是 reading），`tl` 作 `tailo` reading，`en` 作 eng mapping，`zh_TW` 作 cmn mapping。
+  - `ChhoeTaigi_KamJitian`（《廈門音新字典》）使用 `nan-Hant-CN`；其餘八部使用 `nan-Hant-TW`。
+  - mirror／production 新增 9 sources、192,946 nan expressions；readings 為 CN 27,848、TW 344,641。delta `012-chhoetaigi.sql` 約 79MB。
+  - production operation `f8ae26ad99aa4439bfd50f1a9b7ac5e5` 已成功，bookmark `000000c4-00000000-000050d7-3108c50413f6034c004de3e788bc5a77`；statistics operation `cea227809bb34a948c53f46102575a68` 已刷新。
+  - source 中沒有 `han` 的舊籍資料目前以 POJ fallback headword 保留，標記為 `fallback_poj_headword`；後續若補齊漢字欄位，應以 source re-export 與 repair delta 合併回漢字 expression。
+
+- [x] 修正 ChhoeTaigi POJ 誤作 reading（2026-08-31）。
+  - 初次發布曾把 `poj` 與 `tl` 都輸出成 reading；已在 converter 根源修正為 POJ 文字 equivalent、TL reading。
+  - production repair operation `927f4c46595c43c4836a717a61db092f` 已成功，bookmark `000000c8-00000000-000050d8-36d3f0b7909522dd2fb09e1f88fc78aa`；delta `013-chhoetaigi-poj-repair.sql` sha256 `d464d246c130247508f5e0366e6f67b2bcc7c88138f0bd975ef777f11ac17bdc`。
+  - repair 移除九部來源的 226,811 筆錯誤 POJ readings，新增 82,634 nan expressions、145,192 edges；Tailo readings 保留 145,678 筆。statistics refresh operation `e07066153d7d4146947a3f6b1c75a1d2` 已成功。
+
+- [x] 清理舊 Simplified Chinese－English source 28 的拼音 expression（以 `/mapping/1828256` 為例）。
+  - 根因不是 ChhoeTaigi，而是 `com.apple.dictionary.zh_CN-en.OCD` 的 parser 將目標漢字後的 `<span class="trans ty_pinyin">…</span>` 當成普通 `trans`，把 76,010 個帶聲調拉丁拼音直接當成 `cmn` expression；`dēngjì xiàngmù`（1828256）因此只有 English edges，沒有 reading。
+  - dictionary exporter 已修正並重新匯出；entry count 維持 136,120，fixed JSONL sha256 `3ebfee5e474757db037675e23fea2935a1a1c7a1354bac5286d799519b01605d`。修正 parser 的回歸測試通過（71 passed）。
+  - production cleanup operation `f5278e506f5a4636924f731f43758608` 已成功，bookmark `000000c9-00000000-000050d8-6408b03faeeb9326e790fb7d3e9a21f4`；移除 76,010 個拼音 expressions 及其 115,189 條 source-28 edges。
+  - production reading repair operation `d9f5c958ba374a80904256737f609778` 已成功，bookmark `000000cf-00000000-000050d9-9f0c7ebf44110925dda0c463c1994060`；從原始 HTML 配對 84,928 筆漢字／拼音，寫入 `cmn-Hans-CN / pinyin` readings，並清除舊錯誤 locale rows。statistics refresh operation `ee63b862fca54197ba0dc45612ea9800` 已重試成功，bookmark `000000ce-00000000-000050d9-7c48582a1e7377cd4375eb81ae628f88`。
+  - 後續抽查發現首版配對包含例句／關係節點；首版 operation `d9f5c958ba374a80904256737f609778` 先寫入 84,928 筆，後續由 operation `bda5019097064ff9bb4e1973a4cb641f`（delta `018-ocd-pinyin-readings-correct.sql`）收斂為 80,975 筆真正目標漢字 readings（locale `cmn-Hans-CN`），bookmark `000000d1-00000000-000050d9-2ec5b988797f1157302abd2a7d5d0fa5`，並移除 3,953 筆誤配 rows。statistics refresh operation `e0e6b1bf190b45539d5dca9d68e366aa` 最終成功，bookmark `000000d3-000001fe-000050d9-b8517773453091a2bfc6436b40d63416`。`1828256` 已不存在，`登记项目` 現在顯示 `dēngjì xiàngmù` reading。

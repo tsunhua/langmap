@@ -16,7 +16,7 @@ from langmap_dictionary.corpus import freeze_corpus, scan_corpus
 from langmap_dictionary.loader import load_jsonl_release
 from langmap_dictionary.local_import import import_release_to_local_d1
 from langmap_dictionary.preview import build_preview
-from langmap_dictionary.quality import evaluate_quality
+from langmap_dictionary.quality import assert_reading_quality, evaluate_quality
 from langmap_dictionary.report import write_quality_report
 from langmap_dictionary.schema import create_staging_database
 from langmap_dictionary.publisher import publish_command
@@ -136,6 +136,7 @@ def main(argv: list[str] | None = None) -> int:
                 commit_every=args.commit_every,
                 progress=_emit_progress,
             )
+            assert_reading_quality(connection, args.release)
             normalized_seconds = time.perf_counter() - started
             started = time.perf_counter()
             summary = build_explicit_clusters(connection, args.release)

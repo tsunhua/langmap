@@ -92,7 +92,7 @@ def _local_status_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
 def _local_rebuild_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
     payload = rebuild_local_state(
         paths,
-        wrangler_bin=_wrangler_bin_from_env(),
+        wrangler_bin=_wrangler_bin_from_env(paths),
         owner="scripts/db/manage.py",
         created_at="2026-08-01T00:00:00Z",
     )
@@ -101,13 +101,13 @@ def _local_rebuild_handler(paths: ProjectPaths, args: argparse.Namespace) -> int
 
 
 def _local_verify_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
-    payload = verify_local_environment(paths, wrangler_bin=_wrangler_bin_from_env())
+    payload = verify_local_environment(paths, wrangler_bin=_wrangler_bin_from_env(paths))
     print(json.dumps(payload, ensure_ascii=False))
     return 0
 
 
 def _production_inventory_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
-    report = inventory_production(paths, wrangler_bin=_wrangler_bin_from_env())
+    report = inventory_production(paths, wrangler_bin=_wrangler_bin_from_env(paths))
     summary = {
         "status": report["status"],
         "environment": "production",
@@ -125,7 +125,7 @@ def _production_inventory_handler(paths: ProjectPaths, args: argparse.Namespace)
 def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
     plan = plan_production(
         paths,
-        wrangler_bin=_wrangler_bin_from_env(),
+        wrangler_bin=_wrangler_bin_from_env(paths),
         dictionary_artifact_manifest=args.dictionary_artifact_manifest,
         approved_data_migration=args.approved_data_migration,
     )
@@ -139,7 +139,7 @@ def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> 
         plan_path=args.plan,
         database_name=args.database_name,
         confirmation=args.confirm_production,
-        wrangler_bin=_wrangler_bin_from_env(),
+        wrangler_bin=_wrangler_bin_from_env(paths),
         confirm_release_id=args.confirm_release_id,
         timeout_seconds=args.timeout_seconds,
     )
@@ -148,7 +148,7 @@ def _production_apply_handler(paths: ProjectPaths, args: argparse.Namespace) -> 
 
 
 def _production_verify_handler(paths: ProjectPaths, args: argparse.Namespace) -> int:
-    result = verify_production(paths, wrangler_bin=_wrangler_bin_from_env())
+    result = verify_production(paths, wrangler_bin=_wrangler_bin_from_env(paths))
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
@@ -159,15 +159,18 @@ def _production_restore_handler(paths: ProjectPaths, args: argparse.Namespace) -
         bookmark=args.bookmark,
         database_name=args.database_name,
         confirmation=args.confirm_production,
-        wrangler_bin=_wrangler_bin_from_env(),
+        wrangler_bin=_wrangler_bin_from_env(paths),
     )
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
 
-def _wrangler_bin_from_env() -> Path | None:
+def _wrangler_bin_from_env(paths: ProjectPaths) -> Path | None:
     configured = os.environ.get("LANGMAP_WRANGLER_BIN")
-    return Path(configured) if configured else None
+    if not configured:
+        return None
+    path = Path(configured).expanduser()
+    return path if path.is_absolute() else (paths.repo_root / path).resolve()
 
 
 if __name__ == "__main__":

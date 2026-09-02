@@ -55,6 +55,13 @@ _SCRIPT_LANGUAGE = {
     "mlym": "mal", "taml": "tam", "telu": "tel", "thai": "tha",
 }
 
+_IPA_INCOMPATIBLE_SCRIPTS = tuple(
+    ranges for script, ranges in _SCRIPT_RANGES.items() if script != "grek"
+)
+_IPA_COMPATIBLE_NAME_MARKERS = (
+    "LATIN", "GREEK", "MODIFIER LETTER", "COMBINING", "SUPERSCRIPT", "SUBSCRIPT",
+)
+
 _POS = {
     "n": "noun", "noun": "noun", "名詞": "noun",
     "v": "verb", "verb": "verb", "動詞": "verb",
@@ -68,6 +75,8 @@ _PROFILE_LOCALES = {
     "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
     "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
     "yue": ("yue", "yue-Hant-HK"), "jpn": ("jpn", "jpn-Jpan-JP"),
+    "nan": ("nan", "nan-Hant-TW"), "nan-Hant-TW": ("nan", "nan-Hant-TW"),
+    "nan-Hant-CN": ("nan", "nan-Hant-CN"),
     "arb": ("arb", "arb-Arab"), "ben": ("ben", "ben-Beng"),
     "ces": ("ces", "ces-Latn"), "dan": ("dan", "dan-Latn"),
     "deu": ("deu", "deu-Latn"), "ell": ("ell", "ell-Grek"),
@@ -115,6 +124,46 @@ def _script_language(value: str) -> str | None:
     if _is_han(value):
         return "cmn"
     return None
+
+
+def _has_ipa_incompatible_script(value: str) -> bool:
+    for character in value:
+        if any(
+            start <= ord(character) <= end
+            for ranges in _IPA_INCOMPATIBLE_SCRIPTS
+            for start, end in ranges
+        ) or _is_han(character):
+            return True
+        name = unicodedata.name(character, "")
+        if unicodedata.category(character).startswith("L") and not any(
+            marker in name for marker in _IPA_COMPATIBLE_NAME_MARKERS
+        ):
+            # Keep the gate fail-closed for a future dictionary that introduces
+            # a script not yet listed in _SCRIPT_RANGES.
+            return True
+    return False
+
+
+def _relation_reading_values(entry: StagedEntry) -> set[str]:
+    if entry.dictionary_key != "com.apple.dictionary.zh_CN.thes":
+        return set()
+    pronunciations = tuple(
+        canonicalize_text(pronunciation.value) for pronunciation in entry.pronunciations
+    )
+    relation_values = {
+        canonicalize_text(str(item["reading"]))
+        for sense in entry.senses
+        for item in sense.relations
+        if isinstance(item, dict)
+        and isinstance(item.get("reading"), str)
+        and str(item["reading"]).strip()
+    }
+    # A single legitimate homophone can coincide with a synonym's reading.
+    # The legacy exporter bug is the larger pattern where a valid headword
+    # reading is accompanied by one or more relation readings.
+    if len(pronunciations) < 2 or not any(value not in relation_values for value in pronunciations):
+        return set()
+    return relation_values
 
 
 def _language(value: str, hint: str | None = None) -> tuple[str | None, str | None, str | None]:
@@ -251,11 +300,19 @@ class TraditionalChineseEnglishAdapter:
             canonicalize_text(entry.canonical_headword), head_lang, head_locale, head_cluster,
             entry.entry_key, None, {"homograph_marker": entry.homograph_marker}, head_errors,
         )
-        # Only the ``Crown`` bundle mixes romanized pinyin into equivalents and
-        # uses bare tone numbers as pronunciation schemes.  Isolating the
-        # folding here keeps the English/bilingual adapters' behavior unchanged.
+        # Chinese bundles may mix romanized pinyin into equivalents and use bare
+        # tone numbers as pronunciation schemes. Pinyin is a reading, never a
+        # separate expression node.
         extended_readings = list(
-            self._reading(entry, index, item, _entry_jyutping_values(entry), head_lang, fold_pinyin=crown)
+            self._reading(
+                entry,
+                index,
+                item,
+                _entry_jyutping_values(entry),
+                head_lang,
+                fold_pinyin=crown or head_lang == "cmn",
+                relation_readings=_relation_reading_values(entry),
+            )
             for index, item in enumerate(entry.pronunciations, 1)
         )
         senses: list[NormalizedSense] = []
@@ -272,7 +329,7 @@ class TraditionalChineseEnglishAdapter:
                 # a reading, not a word: fold it into the headword reading when
                 # the headword is Chinese, otherwise drop it instead of creating
                 # a bogus expression node.
-                if crown and kind == "equivalent" and _is_pinyin_spelling(cleaned):
+                if (crown or head_lang == "cmn") and kind == "equivalent" and _is_pinyin_spelling(cleaned):
                     if head_lang == "cmn":
                         extended_readings.append(NormalizedReading(
                             _claim("entry", entry.entry_key, "sense", sense.sense_key, "reading", f"eq{ordinal}"),
@@ -324,6 +381,14 @@ class TraditionalChineseEnglishAdapter:
                 cleaned = cleaned.lstrip(".,，。、·").strip()
                 if not cleaned or cleaned.lower() in equivalent_texts:
                     continue
+                if head_lang == "cmn" and _is_han(cleaned):
+                    continue
+                # A Chinese/Spanish/English definition may contain a single
+                # Greek or Cyrillic symbol as notation; it is not a language
+                # switch. Require two distinctive-script characters here.
+                distinctive = [char for char in cleaned if _script_language(char)]
+                if len(distinctive) < 2:
+                    continue
                 inferred = _script_language(cleaned)
                 if inferred is None or inferred == head_lang:
                     continue
@@ -373,7 +438,16 @@ class TraditionalChineseEnglishAdapter:
             senses.append(NormalizedSense(sense.sense_key, tuple(occurrences), tuple(extended_readings), pos))
         return NormalizedEntry(entry.dictionary_key, entry.entry_key, head, tuple(senses), tuple(extended_readings), entry.raw)
 
-    def _reading(self, entry: StagedEntry, index: int, item: Any, yue_readings: set[str], head_lang: str | None, fold_pinyin: bool = False) -> NormalizedReading:
+    def _reading(
+        self,
+        entry: StagedEntry,
+        index: int,
+        item: Any,
+        yue_readings: set[str],
+        head_lang: str | None,
+        fold_pinyin: bool = False,
+        relation_readings: set[str] | None = None,
+    ) -> NormalizedReading:
         scheme = item.scheme
         upper = scheme.upper()
         if "IPA" in upper:
@@ -396,6 +470,9 @@ class TraditionalChineseEnglishAdapter:
         elif "JYUTPING" in upper:
             normalized_scheme, locale, errors = "jyutping", "yue-Hant-HK", ()
             value = _canonical_jyutping(item.value)
+        elif upper in {"TL", "TAILO", "TAI-LO"}:
+            normalized_scheme, locale, errors = "tailo", str(item.raw.get("locale") or "nan-Hant-TW"), ()
+            value = canonicalize_text(item.value)
         elif scheme.strip().isdigit() and fold_pinyin and _is_pinyin_spelling(str(item.value)):
             # ``Crown`` pronunciations carry only the tone number as their
             # scheme (``1``) alongside the pinyin value; classify as pinyin.
@@ -411,6 +488,10 @@ class TraditionalChineseEnglishAdapter:
             candidate = _canonical_jyutping(item.value)
             if candidate in yue_readings:
                 normalized_scheme, locale, value, errors = "jyutping", "yue-Hant-HK", candidate, ()
+        if normalized_scheme == "ipa" and _has_ipa_incompatible_script(value):
+            locale, errors = None, ("reading_script_mismatch",)
+        elif value in (relation_readings or set()):
+            locale, errors = None, ("relation_reading_as_headword",)
         return NormalizedReading(_claim("entry", entry.entry_key, "reading", str(index)), entry.entry_key, item.value, value, normalized_scheme, locale, errors)
 
     def _pos(self, sense_key: str, entry_key: str, index: int, value: Any) -> NormalizedPos:
@@ -618,6 +699,8 @@ def _normalize_release_rows(
                     quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
             for reading in normalized.readings:
                 reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False)))
+                if reading.errors:
+                    quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, None, reading.claim_key, reading.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
             for sense in normalized.senses:
                 for pos in sense.pos:
                     pos_rows.append((release_id, pos.claim_key, pos.sense_key, pos.raw_value, pos.code, _fast_json.dumps(pos.errors, ensure_ascii=False)))

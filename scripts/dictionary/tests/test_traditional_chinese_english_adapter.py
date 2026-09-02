@@ -330,6 +330,86 @@ def test_adapter_keeps_english_ipa_reading_on_english_headword():
     assert [(r.scheme, r.locale_code, r.value) for r in published] == [("ipa", "eng-Latn-GB", "səˈpəʊzɪŋ")]
 
 
+def test_adapter_quarantines_thai_respelling_mislabeled_as_english_ipa():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.th-en.oup", "e", "peg", "peg", None,
+        "eng-to-tha", "a" * 64,
+        pronunciations=(_pronunciation(1, "UK_IPA solitary", "เพก"),),
+    )
+
+    readings = adapter.normalize_entry(entry).readings
+
+    assert [(r.scheme, r.locale_code, r.value, r.errors) for r in readings] == [
+        ("ipa", None, "เพก", ("reading_script_mismatch",))
+    ]
+
+
+def test_adapter_quarantines_hangul_value_mislabeled_as_ipa():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.ko.NewAce", "e", "ㄱㄴㄷ순", "ㄱㄴㄷ-순", None,
+        "kor-to-kor", "a" * 64,
+        pronunciations=(_pronunciation(1, "UK_IPA solitary", "-영-쑨"),),
+    )
+
+    readings = adapter.normalize_entry(entry).readings
+
+    assert [(r.scheme, r.locale_code, r.value, r.errors) for r in readings] == [
+        ("ipa", None, "-영-쑨", ("reading_script_mismatch",))
+    ]
+
+
+def test_adapter_quarantines_relation_reading_promoted_to_headword_pronunciation():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_CN.thes", "e", "浪费", "浪费", None,
+        "cmn-Hans-to-cmn-Hans", "a" * 64,
+        pronunciations=(
+            _pronunciation(1, "pinyin", "lànɡfèi"),
+            _pronunciation(2, "pinyin", "huīhuò"),
+        ),
+        senses=(StagedSense(
+            "s", 1,
+            relations=({
+                "kind": "synonym",
+                "raw_related_text": "挥霍",
+                "reading": "huīhuò",
+                "language_hint": "cmn-Hans",
+            },),
+        ),),
+    )
+
+    readings = adapter.normalize_entry(entry).readings
+
+    assert [(r.value, r.errors) for r in readings] == [
+        ("lànɡfèi", ()),
+        ("huīhuò", ("relation_reading_as_headword",)),
+    ]
+
+
+def test_adapter_keeps_a_legitimate_single_homophone_reading():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zh_CN.thes", "e", "行", "行", None,
+        "cmn-Hans-to-cmn-Hans", "a" * 64,
+        pronunciations=(_pronunciation(1, "pinyin", "xíng"),),
+        senses=(StagedSense(
+            "s", 1,
+            relations=({
+                "kind": "synonym",
+                "raw_related_text": "走",
+                "reading": "xíng",
+                "language_hint": "cmn-Hans",
+            },),
+        ),),
+    )
+
+    readings = adapter.normalize_entry(entry).readings
+
+    assert [(r.value, r.errors) for r in readings] == [("xíng", ())]
+
+
 def test_adapter_folds_crown_pinyin_equivalent_into_cmn_headword_reading():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(
@@ -430,7 +510,7 @@ def test_adapter_classifies_numeric_scheme_pinyin_pronunciation_as_pinyin():
     assert [(r.scheme, r.locale_code, r.value) for r in published] == [("pinyin", "cmn-Hant-TW", "AA zhì")]
 
 
-def test_adapter_keeps_pinyin_equivalent_in_non_crown_bundle():
+def test_adapter_folds_pinyin_equivalent_in_non_crown_bundle():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(
         "r", "com.apple.dictionary.zh_CN-en.OCD", "e", "切迫", "切迫", None,
@@ -440,9 +520,9 @@ def test_adapter_keeps_pinyin_equivalent_in_non_crown_bundle():
     )
     normalized = adapter.normalize_entry(entry)
     texts = {occ.raw_value for sense in normalized.senses for occ in sense.occurrences}
-    assert "jǐnpò" in texts
+    assert "jǐnpò" not in texts
     readings = [r for r in normalized.readings if not r.errors]
-    assert not readings
+    assert [(r.scheme, r.value) for r in readings] == [("pinyin", "AA zhì"), ("pinyin", "jǐnpò")]
 
 
 def test_adapter_accepts_chhoetaigi_language_hints_and_tailo_readings():

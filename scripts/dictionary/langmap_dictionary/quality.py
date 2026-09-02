@@ -7,6 +7,31 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 
+_BLOCKING_READING_ERRORS = (
+    "reading_script_mismatch",
+    "relation_reading_as_headword",
+)
+
+
+class ReadingQualityError(ValueError):
+    """A source-reading defect that must block dictionary publication."""
+
+
+def assert_reading_quality(connection: sqlite3.Connection, release_id: str) -> None:
+    """Fail closed when normalization quarantined a source-reading defect."""
+
+    placeholders = ",".join("?" for _ in _BLOCKING_READING_ERRORS)
+    rows = connection.execute(
+        "SELECT error_code,COUNT(*) FROM quarantine_items "
+        f"WHERE release_id=? AND error_code IN ({placeholders}) "
+        "GROUP BY error_code ORDER BY error_code",
+        (release_id, *_BLOCKING_READING_ERRORS),
+    ).fetchall()
+    if rows:
+        detail = ", ".join(f"{error}={count}" for error, count in rows)
+        raise ReadingQualityError(f"blocking reading quality errors: {detail}")
+
+
 @dataclass(frozen=True)
 class QualityGate:
     input_records: int

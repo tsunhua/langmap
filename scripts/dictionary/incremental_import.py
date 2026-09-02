@@ -8,6 +8,7 @@ import hashlib
 import json
 import shutil
 import sqlite3
+import sys
 import tempfile
 import time
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from langmap_dictionary.adapters.traditional_chinese_english import normalize_re
 from langmap_dictionary.clusters import build_explicit_clusters
 from langmap_dictionary.loader import load_jsonl_release
 from langmap_dictionary.local_import import import_release_to_local_d1
+from langmap_dictionary.quality import ReadingQualityError, assert_reading_quality
 from langmap_dictionary.schema import create_staging_database
 
 
@@ -173,6 +175,7 @@ def _prepare_staging(
             defer_foreign_keys=True,
             timings=normalize_timings,
         )
+        assert_reading_quality(staging, loaded.release_id)
         phase_seconds["normalize"] = round(time.perf_counter() - normalize_started, 3)
         phase_seconds.update(normalize_timings)
         cluster_started = time.perf_counter()

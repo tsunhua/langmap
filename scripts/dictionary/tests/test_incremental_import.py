@@ -1,7 +1,17 @@
+import json
 import sqlite3
 from pathlib import Path
 
-from scripts.dictionary.incremental_import import order_jsonl_files, run_incremental_import
+import pytest
+
+from scripts.dictionary.incremental_import import (
+    ReadingQualityError,
+    _prepare_staging,
+    assert_reading_quality,
+    order_jsonl_files,
+    run_incremental_import,
+)
+from scripts.dictionary.langmap_dictionary.schema import create_staging_database
 
 
 ROOT = Path(__file__).parents[3]
@@ -16,6 +26,76 @@ def test_order_jsonl_files_is_small_first_and_deterministic(tmp_path):
     (tmp_path / "ignored.txt").write_bytes(b"0")
 
     assert [path.name for path in order_jsonl_files(tmp_path)] == ["a.jsonl", "b.jsonl"]
+
+
+@pytest.mark.parametrize(
+    "error_code",
+    ["reading_script_mismatch", "relation_reading_as_headword"],
+)
+def test_reading_quality_gate_blocks_source_reading_defects(tmp_path, error_code):
+    connection = create_staging_database(tmp_path / "staging.sqlite")
+    connection.execute(
+        "INSERT INTO staging_releases(id,manifest_hash,schema_version,status) "
+        "VALUES ('release-test','hash',1,'staged')"
+    )
+    connection.execute(
+        "INSERT INTO quarantine_items(release_id,error_code,detail) VALUES (?,?,?)",
+        ("release-test", error_code, "fixture"),
+    )
+
+    with pytest.raises(ReadingQualityError, match=error_code):
+        assert_reading_quality(connection, "release-test")
+
+
+def test_reading_quality_gate_allows_nonblocking_quarantine(tmp_path):
+    connection = create_staging_database(tmp_path / "staging.sqlite")
+    connection.execute(
+        "INSERT INTO staging_releases(id,manifest_hash,schema_version,status) "
+        "VALUES ('release-test','hash',1,'staged')"
+    )
+    connection.execute(
+        "INSERT INTO quarantine_items(release_id,error_code,detail) VALUES (?,?,?)",
+        ("release-test", "unknown_pos", "fixture"),
+    )
+
+    assert_reading_quality(connection, "release-test")
+
+
+def test_staging_fails_closed_on_mislabeled_ipa_reading(tmp_path):
+    source = tmp_path / "bad.jsonl"
+    header = {
+        "record_type": "dictionary",
+        "schema_version": 2,
+        "dictionary_key": "com.apple.dictionary.th-en.oup",
+        "input_file_name": "bad.csv",
+        "input_sha256": "a" * 64,
+        "entry_count": 1,
+        "exporter_version": "test",
+    }
+    entry = {
+        "record_type": "entry",
+        "schema_version": 2,
+        "dictionary_key": "com.apple.dictionary.th-en.oup",
+        "entry_key": "e1",
+        "record_fingerprint": "b" * 64,
+        "csv_row_number": 1,
+        "raw_headword": "peg",
+        "canonical_headword": "peg",
+        "homograph_marker": None,
+        "direction_hint": "eng-to-tha",
+        "forms": [],
+        "pronunciations": [{"value": "เพก", "scheme": "UK_IPA"}],
+        "senses": [],
+        "diagnostics": [],
+    }
+    source.write_text(
+        json.dumps(header, ensure_ascii=False) + "\n"
+        + json.dumps(entry, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReadingQualityError, match="reading_script_mismatch"):
+        _prepare_staging(source, tmp_path / "staging.sqlite", batch_size=1, commit_every=1)
 
 
 def test_incremental_import_commits_one_file_and_resumes(tmp_path):

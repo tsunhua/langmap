@@ -2,6 +2,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { EdgeSourceMarker, MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
 
 const NODE_LIMIT = 200;
+const SQLITE_BIND_CHUNK = 80;
 interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; }
 interface NodeRow { id:number; text:string; lang_code:string; }
 
@@ -18,11 +19,23 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
   const nodes = new Map<number, MappingGraphNode>([[root.id, { expression_id: root.id, text: root.text, lang_code: root.lang_code, language_name: root.lang_code, depth: 0 }]]);
   const edges = new Map<number, MappingGraphEdge>(); let frontier = [rootId]; let omitted = 0; let resolved: 0 | 1 | 2 | 3 = 0;
   for (let depth = 1 as 1 | 2 | 3; depth <= hops && frontier.length; depth = (depth + 1) as 1 | 2 | 3) {
-    const marks = frontier.map(() => '?').join(',');
-    const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE expression_a_id IN (${marks}) OR expression_b_id IN (${marks}) ORDER BY id`).bind(...frontier,...frontier).all<EdgeRow>();
+    const edgeResults: EdgeRow[] = [];
+    for (let offset = 0; offset < frontier.length; offset += SQLITE_BIND_CHUNK) {
+      const chunk = frontier.slice(offset, offset + SQLITE_BIND_CHUNK);
+      const marks = chunk.map(() => '?').join(',');
+      const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE expression_a_id IN (${marks}) OR expression_b_id IN (${marks}) ORDER BY id`).bind(...chunk, ...chunk).all<EdgeRow>();
+      edgeResults.push(...result.results);
+    }
+    edgeResults.sort((a, b) => a.id - b.id);
+    const result = { results: edgeResults };
     const neighbors = new Set<number>(); for (const edge of result.results) { neighbors.add(edge.expression_a_id); neighbors.add(edge.expression_b_id); }
     const unknown = [...neighbors].filter((id) => !nodes.has(id));
-    const nodeRows = unknown.length ? await db.prepare(`SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${unknown.map(() => '?').join(',')})`).bind(...unknown).all<NodeRow>() : { results: [] as NodeRow[] };
+    const nodeRows: { results: NodeRow[] } = { results: [] };
+    for (let offset = 0; offset < unknown.length; offset += SQLITE_BIND_CHUNK) {
+      const chunk = unknown.slice(offset, offset + SQLITE_BIND_CHUNK);
+      const rows = await db.prepare(`SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).all<NodeRow>();
+      nodeRows.results.push(...rows.results);
+    }
     const next: number[] = [];
     for (const row of nodeRows.results) {
       // The root anchor is kept regardless; every other hop must be in the filtered set.
@@ -40,9 +53,15 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
   if (edgeIds.length) {
     // Edge provenance is optional: pre-migration databases keep an empty list instead of failing the whole graph.
     try {
-      const markerRows = await db.prepare(`SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (${edgeIds.map(() => '?').join(',')}) ORDER BY edge_id,source_id,source_marker`).bind(...edgeIds).all<{ edge_id:number; source_id:number; source_marker:string }>();
+      const markerRows: { edge_id:number; source_id:number; source_marker:string }[] = [];
+      for (let offset = 0; offset < edgeIds.length; offset += SQLITE_BIND_CHUNK) {
+        const chunk = edgeIds.slice(offset, offset + SQLITE_BIND_CHUNK);
+        const rows = await db.prepare(`SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (${chunk.map(() => '?').join(',')}) ORDER BY edge_id,source_id,source_marker`).bind(...chunk).all<{ edge_id:number; source_id:number; source_marker:string }>();
+        markerRows.push(...rows.results);
+      }
+      markerRows.sort((a, b) => a.edge_id - b.edge_id || a.source_id - b.source_id || a.source_marker.localeCompare(b.source_marker));
       const byEdge = new Map<number, EdgeSourceMarker[]>();
-      for (const row of markerRows.results) {
+      for (const row of markerRows) {
         const markers = byEdge.get(row.edge_id) ?? [];
         markers.push({ source_id: row.source_id, marker: row.source_marker || null });
         byEdge.set(row.edge_id, markers);
