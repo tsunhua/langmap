@@ -107,23 +107,23 @@ describe('listLanguagesWithContent', () => {
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.code)).toEqual(['cmn', 'eng']);
     expect(result.items[0].name).toBe('普通话');
-    expect(result.items[1].name).toBe('English');
+    expect(result.items[1].name).toBe('英语');
   });
 
   it('falls back to name_en when no locale translation exists', async () => {
     const db = fakeD1([
       { sql: 'COUNT(*) AS total FROM (', handler: () => ({ total: 1 }) },
       { sql: 'JOIN language_statistics s', handler: () => ({ results: [
-        { code: 'cmn', name_en: 'Mandarin Chinese', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
+        { code: 'cmn', name_en: 'Some language', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
       ] }) },
       { sql: LANGUAGE_IDENTITY_SQL, handler: () => ({ results: [
-        { code: 'cmn', name_expression_id: 101, name_en: 'Mandarin Chinese', name: null },
+        { code: 'cmn', name_expression_id: 101, name_en: 'Some language', name: null },
       ] }) },
-      { sql: EXPRESSIONS_SQL, handler: () => ({ results: [{ id: 101, text: 'Mandarin Chinese' }] }) },
+      { sql: EXPRESSIONS_SQL, handler: () => ({ results: [{ id: 101, text: 'Some language' }] }) },
       { sql: CANDIDATE_SQL, handler: () => ({ results: [] }) },
     ]);
     const result = await listLanguagesWithContent(db, { q: '', sort: 'count', limit: 20, offset: 0, uiLocale: 'cmn-Hans-CN', secondaryUiLocale: '' });
-    expect(result.items[0].name).toBe('Mandarin Chinese');
+    expect(result.items[0].name).toBe('Some language');
   });
 
   it('applies the LIKE filter when a search query is present', async () => {

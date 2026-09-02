@@ -22,6 +22,7 @@ function fakeD1(matchers: Array<{ sql: string; match?: (params: unknown[]) => bo
 
 const JPN_NAME = 101;
 const CMN_NAME = 102;
+const SPANISH_NAME = 303;
 const PLURAL_EN = 301;
 const RIKYU = 201;
 const KYUGO = 202;
@@ -52,7 +53,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
     ]);
     const langs = await resolveLanguageNames(db, ['jpn', 'eng'], parseLocaleHints('cmn-Hans-CN'));
     expect(langs.get('jpn')).toBe('日语');
-    expect(langs.get('eng')).toBe('English');
+    expect(langs.get('eng')).toBe('英语');
   });
 
   it('omits codes with no registry row so callers fall back to the code', async () => {
@@ -73,7 +74,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: CMN_NAME, target_id: KYUGO, target_text: '簡化字', score: 0 }] }) },
     ]);
     const locales = await resolveLocaleNames(db, ['jpn-Jpan-JP', 'cmn-Hans-CN'], parseLocaleHints('cmn-Hant-TW'));
-    expect(locales.get('jpn-Jpan-JP')).toBe('日本語');
+    expect(locales.get('jpn-Jpan-JP')).toBe('日語（日本）');
     expect(locales.get('cmn-Hans-CN')).toBe('簡化字');
   });
 
@@ -84,8 +85,8 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
         { code: 'cmn', name_expression_id: CMN_NAME, name_en: 'Mandarin Chinese', name: null },
       ] }) },
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [
-        { id: JPN_NAME, text: 'Japanese' },
-        { id: CMN_NAME, text: 'Mandarin Chinese' },
+        { id: JPN_NAME, text: 'Japanese (custom)' },
+        { id: CMN_NAME, text: 'Mandarin Chinese (custom)' },
       ] }) },
       { sql: 'WITH candidate_rows AS', handler: (params: unknown[]) => {
         expect(JSON.parse(String(params[0]))).toEqual([JPN_NAME, CMN_NAME]);
@@ -102,6 +103,15 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
 });
 
 describe('resolveNamesByExpressionIds', () => {
+  it('prefers the project name translation before querying mapping candidates', async () => {
+    const db = fakeD1([
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: SPANISH_NAME, text: 'Spanish' }] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => { throw new Error('mapping candidates should not override project translations'); } },
+    ]);
+    const map = await resolveNamesByExpressionIds(db, [SPANISH_NAME], parseLocaleHints('cmn-Hant-TW'));
+    expect(map.get(SPANISH_NAME)).toEqual({ name: '西班牙語', name_en: 'Spanish' });
+  });
+
   it('resolves a known name_expression_id via the primary locale', async () => {
     const db = fakeD1([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: PLURAL_EN, text: 'plural' }] }) },
@@ -122,7 +132,7 @@ describe('resolveNamesByExpressionIds', () => {
 
   it('falls back to the secondary locale when the primary has no candidate', async () => {
     const db = fakeD1([
-      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: JPN_NAME, text: 'Japanese' }] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: JPN_NAME, text: 'Japanese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: (params: unknown[]) => (params[1] === 'cmn-Hans-CN'
         ? { results: [] }
         : { results: [{ source_id: JPN_NAME, target_id: KYUGO, target_text: '日語', score: 0 }] }) },
@@ -156,7 +166,7 @@ describe('CANDIDATE_SQL contract', () => {
 
   it('picks the stable winner (higher score, then lower target id) from ties', async () => {
     const db = fakeD1([
-      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese' }] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: CMN_NAME, target_id: 220, target_text: '普通话B', score: 0 },
         { source_id: CMN_NAME, target_id: 210, target_text: '普通话A', score: 0 },
@@ -168,7 +178,7 @@ describe('CANDIDATE_SQL contract', () => {
 
   it('prefers a higher-scoring candidate regardless of target id', async () => {
     const db = fakeD1([
-      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese' }] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: CMN_NAME, target_id: 210, target_text: '低分', score: 0 },
         { source_id: CMN_NAME, target_id: 200, target_text: '高分', score: 1 },
