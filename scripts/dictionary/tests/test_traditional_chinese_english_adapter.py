@@ -443,3 +443,35 @@ def test_adapter_keeps_pinyin_equivalent_in_non_crown_bundle():
     assert "jǐnpò" in texts
     readings = [r for r in normalized.readings if not r.errors]
     assert not readings
+
+
+def test_adapter_accepts_chhoetaigi_language_hints_and_tailo_readings():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "org.chhoetaigi.ChhoeTaigi_KamJitian", "e", "行", "行", None,
+        "nan-to-eng", "a" * 64,
+        pronunciations=(StagedPronunciation(1, "kiânn", "tailo", {"locale": "nan-Hant-CN"}),),
+        senses=(StagedSense(
+            "s", 1,
+            equivalents=(
+                {"value": "kiâⁿ", "language_hint": "nan-Hant-CN"},
+                {"value": "go", "language_hint": "eng"},
+                {"value": "行", "language_hint": "cmn-Hant"},
+            ),
+        ),),
+    )
+
+    normalized = adapter.normalize_entry(entry)
+    occurrences = {
+        occurrence.raw_value: occurrence
+        for sense in normalized.senses
+        for occurrence in sense.occurrences
+    }
+
+    assert occurrences["kiâⁿ"].lang_code == "nan"
+    assert occurrences["kiâⁿ"].locale_code == "nan-Hant-CN"
+    assert occurrences["go"].locale_code == "eng-Latn-US"
+    assert occurrences["行"].locale_code == "cmn-Hant-TW"
+    assert [(reading.scheme, reading.locale_code, reading.value) for reading in normalized.readings] == [
+        ("tailo", "nan-Hant-CN", "kiânn")
+    ]
