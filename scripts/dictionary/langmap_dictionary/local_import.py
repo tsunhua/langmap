@@ -72,11 +72,15 @@ _LANGUAGE_CODE_ALIASES: dict[str, str] = {
 def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, Any]:
     parts = code.split("-")
     script = next((part for part in parts[1:] if len(part) == 4), None)
-    region = next((part for part in parts[1:] if len(part) in (2, 3) and part != script), None)
+    region_and_place = next(
+        (part for part in parts[1:] if len(part.split("_", 1)[0]) in (2, 3) and part != script),
+        "",
+    )
+    region, _, place_path = region_and_place.partition("_")
     return {
         "code": code, "language_id": language_id, "lang_code": language_code,
         "script_code": script or "Zyyy", "orthography": None,
-        "region_code": region, "place_path": "", "name": code, "name_en": code,
+        "region_code": region or None, "place_path": place_path, "name": code, "name_en": code,
     }
 
 

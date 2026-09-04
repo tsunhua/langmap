@@ -30,6 +30,13 @@ CREATE TABLE expression_edge_sources(edge_id INTEGER NOT NULL,source_id INTEGER 
 """
 
 
+def test_locale_parts_preserve_place_suffix_for_dictionary_locales():
+    parts = local_import._locale_parts("yue-Hans-CN_Guangzhou", "yue", 7639)
+    assert parts["script_code"] == "Hans"
+    assert parts["region_code"] == "CN"
+    assert parts["place_path"] == "Guangzhou"
+
+
 def _stage(path: Path = FIXTURE):
     staging_path = path.parent / (path.stem + ".stage.sqlite")
     staging_path.unlink(missing_ok=True)

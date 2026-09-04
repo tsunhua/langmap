@@ -94,3 +94,41 @@
   - production cleanup operation `f5278e506f5a4636924f731f43758608` 已成功，bookmark `000000c9-00000000-000050d8-6408b03faeeb9326e790fb7d3e9a21f4`；移除 76,010 個拼音 expressions 及其 115,189 條 source-28 edges。
   - production reading repair operation `d9f5c958ba374a80904256737f609778` 已成功，bookmark `000000cf-00000000-000050d9-9f0c7ebf44110925dda0c463c1994060`；從原始 HTML 配對 84,928 筆漢字／拼音，寫入 `cmn-Hans-CN / pinyin` readings，並清除舊錯誤 locale rows。statistics refresh operation `ee63b862fca54197ba0dc45612ea9800` 已重試成功，bookmark `000000ce-00000000-000050d9-7c48582a1e7377cd4375eb81ae628f88`。
   - 後續抽查發現首版配對包含例句／關係節點；首版 operation `d9f5c958ba374a80904256737f609778` 先寫入 84,928 筆，後續由 operation `bda5019097064ff9bb4e1973a4cb641f`（delta `018-ocd-pinyin-readings-correct.sql`）收斂為 80,975 筆真正目標漢字 readings（locale `cmn-Hans-CN`），bookmark `000000d1-00000000-000050d9-2ec5b988797f1157302abd2a7d5d0fa5`，並移除 3,953 筆誤配 rows。statistics refresh operation `e0e6b1bf190b45539d5dca9d68e366aa` 最終成功，bookmark `000000d3-000001fe-000050d9-b8517773453091a2bfc6436b40d63416`。`1828256` 已不存在，`登记项目` 現在顯示 `dēngjì xiàngmù` reading。
+
+- [x] 導入 Jyutjyu 粵語辭典（2026-09-04，v15）。
+  - source-side exporter 位於 `/Users/lim/Documents/Code/tsunhua/dictionary`，本輪輸出
+    `/Volumes/DATA/langmap-structured-jsonl-jyutjyu-20260904-v15`，共 10 部、171,079
+    筆 entries；包含使用者明確要求的 `hk-cantowords.csv` 與 `ts-english-dict.csv`。
+  - locale 按辭典來源地區拆分，全部使用 `yue-Hans`：廣州 42／44／45／46／47／49，開平
+    43，欽州 48，台山 58，香港 59；沒有把所有來源誤標為 HK，也沒有回到 Hant。
+  - `hk-cantowords.csv` 的 Jyutping、英語義項與例句已解析；例句中的 `～`／`~` 會補成
+    真正 headword。production 抽查到「佢个细路好百厌」（expression 2737802），未留下
+    placeholder。
+  - reading gate、source/locale/direction 抽查及 deterministic replay 通過；十部 reading
+    均為 `jyutping`，production reading locale 與來源一致。v15 fail-closed 摘要為
+    invalid 2,227、missing 101、skipped 2,313、filtered 9,950，未猜測無法安全判定的讀音。
+  - `gz-modern` 的 `source_merged_row_truncated` diagnostic 保留；另保留 4 個非例句中的
+    合法 `~` 記號（年代範圍、來源標記或約數），沒有把它們當作 placeholder。
+  - production source rows 為 42–49、58–59；主 delta
+    `scripts/db/state/backup/delta/021-jyutjyu-v15-20260904.sql`，sha256
+    `d0c2094973cf3edc2d30dd92c4f64215180449a5dd00e81eb080065bc6ba158a`；cleanup 使用
+    `scripts/db/state/backup/delta/021-jyutjyu-v15-20260904-cleanup-chunked.split.sql`，
+    sha256 `24d1e7c110c9ee498e445c289238dd29a8439344063c1540643a5e79183513d1`。
+  - cleanup operation `13304b6d9cf54e5891c8fb93538c7088` 已成功，bookmark
+    `000000f2-00000000-000050dc-438a45832f1e12e129c50a4303e338f4`；主 delta operation
+    `378bded6e5d64ef993cf78f150efcdb1` 已成功，bookmark
+    `000000f2-00000387-000050dc-1905a943202cb9d434786d9bcd2f8264`。
+  - `language_statistics` refresh operation `5e753cf2ea7749419c11ec5f238bccf8` 已成功，
+    bookmark `000000f5-00000000-000050dc-33222957921444fe5ac2cedefd76a19f`；production yue
+    統計為 205,475 expressions、6 locales。mirror 已 replay、同步 refresh，八張核心表
+    計數一致且 `foreign_key_check=0`。
+  - production inventory：sources 36、locales 28、expressions 2,740,525、edges 2,412,690、
+    readings 796,699；十部 source 的 expression claims、reading claims 與 edge claims
+    已逐部核對。
+
+- [ ] 待確認 Jyutjyu 受限來源的公開再分發權。
+  - 使用者已明確授權本輪導入 production；但 `hk-cantowords.csv` 原文仍標示
+    `ALL RIGHTS RESERVED`，`ts-english-dict.csv` 授權仍未知。若 LangMap 要公開再分發，
+    應先取得可核驗授權，否則不要再向外部鏡像或打包分發這兩部資料。
+- [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
+  需在 dictionary exporter 修正後重新匯出並重新抽查，不要直接手改 JSONL 或 production。

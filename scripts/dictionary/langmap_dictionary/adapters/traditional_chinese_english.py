@@ -74,7 +74,13 @@ _POS = {
 _PROFILE_LOCALES = {
     "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
     "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
-    "yue": ("yue", "yue-Hant-HK"), "jpn": ("jpn", "jpn-Jpan-JP"),
+    "yue": ("yue", "yue-Hant-HK"),
+    "yue-Hans-HK": ("yue", "yue-Hans-HK"),
+    "yue-Hans-CN_Guangzhou": ("yue", "yue-Hans-CN_Guangzhou"),
+    "yue-Hans-CN_Kaiping": ("yue", "yue-Hans-CN_Kaiping"),
+    "yue-Hans-CN_Qinzhou": ("yue", "yue-Hans-CN_Qinzhou"),
+    "yue-Hans-CN_Taishan": ("yue", "yue-Hans-CN_Taishan"),
+    "jpn": ("jpn", "jpn-Jpan-JP"),
     "nan": ("nan", "nan-Hant-TW"), "nan-Hant-TW": ("nan", "nan-Hant-TW"),
     "nan-Hant-CN": ("nan", "nan-Hant-CN"),
     "arb": ("arb", "arb-Arab"), "ben": ("ben", "ben-Beng"),
@@ -381,7 +387,7 @@ class TraditionalChineseEnglishAdapter:
                 cleaned = cleaned.lstrip(".,，。、·").strip()
                 if not cleaned or cleaned.lower() in equivalent_texts:
                     continue
-                if head_lang == "cmn" and _is_han(cleaned):
+                if head_lang in {"cmn", "yue"} and _is_han(cleaned):
                     continue
                 # A Chinese/Spanish/English definition may contain a single
                 # Greek or Cyrillic symbol as notation; it is not a language
@@ -468,7 +474,7 @@ class TraditionalChineseEnglishAdapter:
             errors = ()
             value = canonicalize_text(item.value)
         elif "JYUTPING" in upper:
-            normalized_scheme, locale, errors = "jyutping", "yue-Hant-HK", ()
+            normalized_scheme, locale, errors = "jyutping", str(item.raw.get("locale") or "yue-Hant-HK"), ()
             value = _canonical_jyutping(item.value)
         elif upper in {"TL", "TAILO", "TAI-LO"}:
             normalized_scheme, locale, errors = "tailo", str(item.raw.get("locale") or "nan-Hant-TW"), ()
@@ -487,7 +493,7 @@ class TraditionalChineseEnglishAdapter:
             # example-sentence transcriptions stay quarantined.
             candidate = _canonical_jyutping(item.value)
             if candidate in yue_readings:
-                normalized_scheme, locale, value, errors = "jyutping", "yue-Hant-HK", candidate, ()
+                normalized_scheme, locale, value, errors = "jyutping", str(item.raw.get("locale") or "yue-Hant-HK"), candidate, ()
         if normalized_scheme == "ipa" and _has_ipa_incompatible_script(value):
             locale, errors = None, ("reading_script_mismatch",)
         elif value in (relation_readings or set()):
