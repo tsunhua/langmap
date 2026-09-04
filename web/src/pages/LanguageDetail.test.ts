@@ -56,8 +56,9 @@ describe('LanguageDetail', () => {
     await flushPromises()
 
     expect(expressions).toHaveBeenCalledWith('cmn', {
-      q: '', locale: 'cmn-Hant-TW', sort: 'hot', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
+      q: '', locale: 'cmn-Hant-TW', sort: 'new', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
     })
+    expect(wrapper.find('.ld-sort').exists()).toBe(false)
     expect(detail).toHaveBeenCalledWith('cmn', { ui_locale: 'eng-Latn-US' }, 'cmn-Hant-TW')
     const selects = wrapper.findAll('.ld-select')
     expect(selects).toHaveLength(2)
@@ -66,6 +67,29 @@ describe('LanguageDetail', () => {
     expect(wrapper.find('h1').text()).toBe('台灣華語')
     expect(wrapper.find('.ld-sub').text()).toBe('華語')
     expect(wrapper.find('.lang-badge').text()).toBe('cmn-Hant-TW')
+  })
+
+  it('shows only the newest 20 expressions without sorting or load-more controls', async () => {
+    expressions.mockResolvedValue({
+      ...page,
+      items: Array.from({ length: 20 }, (_, index) => ({
+        id: `cmn:${index}`,
+        lang_code: 'cmn',
+        text: `詞語${index}`,
+        description: '',
+        homograph_index: 1,
+        created_at: '',
+        reading_count: 0,
+        mapping_count: 0,
+      })),
+      total: 21,
+    })
+    const wrapper = mountDetail()
+    await flushPromises()
+
+    expect(wrapper.findAll('.ex-row')).toHaveLength(20)
+    expect(wrapper.find('.ld-sort').exists()).toBe(false)
+    expect(wrapper.find('.pag').exists()).toBe(false)
   })
 
   it('picking a single-region variant hides the region select and auto-selects it', async () => {
@@ -191,7 +215,7 @@ describe('LanguageDetail', () => {
 
     expect(replace).toHaveBeenCalledWith({ query: {} })
     expect(expressions).toHaveBeenCalledWith('cmn', {
-      q: '', locale: '', sort: 'hot', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
+      q: '', locale: '', sort: 'new', limit: 20, offset: 0, ui_locale: 'eng-Latn-US',
     })
     const selects = wrapper.findAll('.ld-select')
     expect((selects[0].element as HTMLSelectElement).value).toBe('')

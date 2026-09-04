@@ -10,7 +10,6 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
@@ -28,14 +27,10 @@ const localeParams = useLocaleParams()
 const lang = ref<LanguageDetailData | null>(null)
 const exprs = ref<LanguageExpressionSummary[]>([])
 const searchQuery = ref('')
-const sortBy = ref<'hot' | 'new' | 'alpha'>('hot')
 const selectedLocaleCode = ref('')
 const detailLoading = ref(false)
 const expressionsLoading = ref(false)
-const loadingMore = ref(false)
-const exprTotal = ref(0)
 const loadError = ref('')
-const loadMoreError = ref('')
 const detailRequest = useLatestRequest()
 const expressionsRequest = useLatestRequest()
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -121,37 +116,28 @@ function clearUnknownLocale(locale: string) {
   void router.replace({ query })
 }
 
-async function loadExpressions(append = false) {
-  if (!code.value || (append && (loadingMore.value || exprs.value.length >= exprTotal.value))) return
-  const request = append ? expressionsRequest.current() : expressionsRequest.begin()
-  if (append) {
-    loadingMore.value = true
-    loadMoreError.value = ''
-  } else {
-    expressionsLoading.value = true
-    loadError.value = ''
-    loadMoreError.value = ''
-  }
+async function loadExpressions() {
+  if (!code.value) return
+  const request = expressionsRequest.begin()
+  expressionsLoading.value = true
+  loadError.value = ''
   try {
     const page = await expressions(code.value, {
       q: searchQuery.value.trim(),
       locale: selectedLocaleCode.value,
-      sort: sortBy.value,
+      sort: 'new',
       limit: PAGE,
-      offset: append ? exprs.value.length : 0,
+      offset: 0,
       ...localeParams.value,
     })
     if (!expressionsRequest.isCurrent(request)) return
-    exprs.value = append ? [...exprs.value, ...page.items] : page.items
-    exprTotal.value = page.total ?? 0
+    exprs.value = page.items
   } catch (cause: unknown) {
     if (!expressionsRequest.isCurrent(request)) return
-    if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
-    else loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
+    loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
   } finally {
     if (expressionsRequest.isCurrent(request)) {
-      if (append) loadingMore.value = false
-      else expressionsLoading.value = false
+      expressionsLoading.value = false
     }
   }
 }
@@ -162,7 +148,6 @@ async function loadDetail(keepContent = false) {
   if (!keepContent) {
     lang.value = null
     exprs.value = []
-    exprTotal.value = 0
   }
   detailLoading.value = true
   loadError.value = ''
@@ -180,12 +165,6 @@ async function loadDetail(keepContent = false) {
   } finally {
     if (detailRequest.isCurrent(request)) detailLoading.value = false
   }
-}
-
-function changeSort(sort: 'hot' | 'new' | 'alpha') {
-  if (sort === sortBy.value) return
-  sortBy.value = sort
-  void loadExpressions()
 }
 
 watch(variantSelect, () => {
@@ -252,11 +231,6 @@ onUnmounted(() => {
     </div>
     <div class="ld-toolbar">
       <SearchBar v-model="searchQuery" :placeholder="t('languageDetail.searchPlaceholder')" style="flex: 1;" />
-      <div class="ld-sort" role="group" :aria-label="t('languageDetail.expressions')">
-        <button :class="{ on: sortBy === 'hot' }" @click="changeSort('hot')">{{ t('languageDetail.popular') }}</button>
-        <button :class="{ on: sortBy === 'new' }" @click="changeSort('new')">{{ t('languageDetail.latest') }}</button>
-        <button :class="{ on: sortBy === 'alpha' }" @click="changeSort('alpha')">{{ t('languageDetail.alphabetical') }}</button>
-      </div>
     </div>
     <LoadingSpinner v-if="expressionsLoading" />
     <p v-else-if="loadError" class="ld-error" role="alert">{{ loadError }}</p>
@@ -265,9 +239,6 @@ onUnmounted(() => {
       <div class="ld-list">
         <ExpressionRow v-for="expr in exprs" :key="expr.id" v-bind="expr" :show-language="false" />
       </div>
-      <Pagination :has-more="exprs.length < exprTotal" @load-more="loadExpressions(true)" />
-      <p v-if="loadingMore" class="ld-more" role="status">{{ t('common.loading') }}</p>
-      <p v-else-if="loadMoreError" class="ld-more ld-error" role="alert">{{ loadMoreError }}</p>
     </template>
   </div>
 </template>
@@ -281,7 +252,6 @@ onUnmounted(() => {
 .ld-sub { font-size: 16px; color: var(--muted); margin: 6px 0; }
 .ld-stats { display: flex; gap: 28px; flex-wrap: wrap; padding: 14px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .ld-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-base); }
-.ld-sort { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .ld-locales { display: flex; gap: 8px; margin: 8px 0; }
 .ld-sel { position: relative; flex: 0 0 auto; max-width: 320px; }
 .ld-select {
@@ -299,12 +269,8 @@ onUnmounted(() => {
   transform: translateY(-70%) rotate(45deg); pointer-events: none;
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ld-sort button { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; border: none; border-radius: 0; background: var(--surface); color: var(--muted); cursor: pointer; min-height: 44px; padding: 0 18px; }
-.ld-sort button:hover { color: var(--fg); }
-.ld-sort button.on { background: var(--fg); color: var(--surface); }
-.ld-sort button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.ld-more, .ld-error { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
+.ld-error { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .ld-error { color: var(--down); }
 @media (max-width: 640px) {
   .ld-page { padding-right: 16px; padding-left: 16px; }
