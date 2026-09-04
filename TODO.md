@@ -142,8 +142,9 @@
     修正 16,334 個 expression、合併 67 個重複 expression、重接 68 條 edge；
     `/mapping/2993892` 保留原 ID，內容為「純粹發泄下工作嘅苦悶咋」，locale 為
     `yue-Hant-HK`，英文關係保留。repair SQL：
-    `scripts/db/state/backup/delta/022-jyutjyu-hk-example-repair-20260904.sql`，
-    sha256 `a204a4a093332088c9a2a3e3b11ffeb1881bb2cb6f059f7c0d6db83b64484393`。
+    `scripts/db/state/backup/delta/022-jyutjyu-hk-example-repair-20260904.split.sql`，
+    208 個受管語句、1,371,882 bytes，sha256
+    `3a7d1c80a835becad816c049246ee4af73a9a32612ffcdcb34865da46e78cc04`。
 - [ ] 回源裁定 `hk-cantowords` 仍有 105 條未清理的括號內容；它們含缺調號、非 Jyutping
   token 或不完整音節，不能安全猜測為發音提示。待人工確認後才可另行修正與發布。
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
