@@ -10,12 +10,14 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import StatBox from '@/components/ui/StatBox.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { contentRevision } from '@/utils/contentRevision'
 
 const PAGE = 20
+const MAX_EXPRESSIONS = 100
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -30,12 +32,16 @@ const searchQuery = ref('')
 const selectedLocaleCode = ref('')
 const detailLoading = ref(false)
 const expressionsLoading = ref(false)
+const loadingMore = ref(false)
+const exprTotal = ref(0)
 const loadError = ref('')
+const loadMoreError = ref('')
 const detailRequest = useLatestRequest()
 const expressionsRequest = useLatestRequest()
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
 const selectedLocale = computed(() => lang.value?.locales.find((locale) => locale.code === selectedLocaleCode.value) ?? null)
+const hasMoreExpressions = computed(() => exprs.value.length < Math.min(exprTotal.value, MAX_EXPRESSIONS))
 const title = computed(() => selectedLocale.value?.display_name ?? lang.value?.name ?? lang.value?.name_en ?? '')
 const subtitle = computed(() => {
   const sub = selectedLocale.value?.name ?? lang.value?.name_en ?? ''
@@ -116,28 +122,37 @@ function clearUnknownLocale(locale: string) {
   void router.replace({ query })
 }
 
-async function loadExpressions() {
-  if (!code.value) return
-  const request = expressionsRequest.begin()
-  expressionsLoading.value = true
-  loadError.value = ''
+async function loadExpressions(append = false) {
+  if (!code.value || (append && (loadingMore.value || !hasMoreExpressions.value))) return
+  const request = append ? expressionsRequest.current() : expressionsRequest.begin()
+  if (append) {
+    loadingMore.value = true
+    loadMoreError.value = ''
+  } else {
+    expressionsLoading.value = true
+    loadError.value = ''
+    loadMoreError.value = ''
+  }
   try {
     const page = await expressions(code.value, {
       q: searchQuery.value.trim(),
       locale: selectedLocaleCode.value,
       sort: 'new',
-      limit: PAGE,
-      offset: 0,
+      limit: Math.min(PAGE, MAX_EXPRESSIONS - (append ? exprs.value.length : 0)),
+      offset: append ? exprs.value.length : 0,
       ...localeParams.value,
     })
     if (!expressionsRequest.isCurrent(request)) return
-    exprs.value = page.items
+    exprs.value = append ? [...exprs.value, ...page.items].slice(0, MAX_EXPRESSIONS) : page.items.slice(0, PAGE)
+    exprTotal.value = page.total ?? 0
   } catch (cause: unknown) {
     if (!expressionsRequest.isCurrent(request)) return
-    loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
+    if (append) loadMoreError.value = apiErrorMessage(cause, t('search.loadMoreFailed'))
+    else loadError.value = apiErrorMessage(cause, t('languageDetail.loadFailed'))
   } finally {
     if (expressionsRequest.isCurrent(request)) {
-      expressionsLoading.value = false
+      if (append) loadingMore.value = false
+      else expressionsLoading.value = false
     }
   }
 }
@@ -148,6 +163,7 @@ async function loadDetail(keepContent = false) {
   if (!keepContent) {
     lang.value = null
     exprs.value = []
+    exprTotal.value = 0
   }
   detailLoading.value = true
   loadError.value = ''
@@ -239,6 +255,9 @@ onUnmounted(() => {
       <div class="ld-list">
         <ExpressionRow v-for="expr in exprs" :key="expr.id" v-bind="expr" :show-language="false" />
       </div>
+      <Pagination :has-more="hasMoreExpressions" @load-more="loadExpressions(true)" />
+      <p v-if="loadingMore" class="ld-more" role="status">{{ t('common.loading') }}</p>
+      <p v-else-if="loadMoreError" class="ld-more ld-error" role="alert">{{ loadMoreError }}</p>
     </template>
   </div>
 </template>
@@ -270,7 +289,7 @@ onUnmounted(() => {
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ld-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.ld-error { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
+.ld-more, .ld-error { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .ld-error { color: var(--down); }
 @media (max-width: 640px) {
   .ld-page { padding-right: 16px; padding-left: 16px; }

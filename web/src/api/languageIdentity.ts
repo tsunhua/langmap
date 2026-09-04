@@ -86,9 +86,16 @@ export interface LanguageExpressionSummary {
 
 function page<T>(data: unknown): Page<T> {
   const result = data as { data?: Partial<Page<T>> }
+  const resultPage = result.data
+  const hasMore = resultPage?.hasMore ?? resultPage?.has_more ?? false
   return {
-    items: result.data?.items ?? [], next_cursor: result.data?.next_cursor ?? null,
-    has_more: result.data?.has_more ?? false,
+    items: resultPage?.items ?? [],
+    next_cursor: resultPage?.next_cursor ?? null,
+    has_more: hasMore,
+    total: resultPage?.total,
+    skip: resultPage?.skip,
+    limit: resultPage?.limit,
+    hasMore,
   }
 }
 

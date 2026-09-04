@@ -69,7 +69,7 @@ describe('LanguageDetail', () => {
     expect(wrapper.find('.lang-badge').text()).toBe('cmn-Hant-TW')
   })
 
-  it('shows only the newest 20 expressions without sorting or load-more controls', async () => {
+  it('shows the newest 20 expressions and exposes load-more without sorting controls', async () => {
     expressions.mockResolvedValue({
       ...page,
       items: Array.from({ length: 20 }, (_, index) => ({
@@ -89,6 +89,36 @@ describe('LanguageDetail', () => {
 
     expect(wrapper.findAll('.ex-row')).toHaveLength(20)
     expect(wrapper.find('.ld-sort').exists()).toBe(false)
+    expect(wrapper.find('.pag').exists()).toBe(true)
+  })
+
+  it('stops loading expressions after 100 rows', async () => {
+    expressions.mockImplementation((_code: string, query: { offset: number }) => Promise.resolve({
+      ...page,
+      items: Array.from({ length: 20 }, (_, index) => ({
+        id: `cmn:${query.offset + index}`,
+        lang_code: 'cmn',
+        text: `詞語${query.offset + index}`,
+        description: '',
+        homograph_index: 1,
+        created_at: '',
+        reading_count: 0,
+        mapping_count: 0,
+      })),
+      total: 150,
+    }))
+    const wrapper = mountDetail()
+    await flushPromises()
+
+    for (let count = 0; count < 4; count += 1) {
+      await wrapper.get('.pag button').trigger('click')
+      await flushPromises()
+    }
+
+    expect(wrapper.findAll('.ex-row')).toHaveLength(100)
+    expect(expressions).toHaveBeenLastCalledWith('cmn', {
+      q: '', locale: 'cmn-Hant-TW', sort: 'new', limit: 20, offset: 80, ui_locale: 'eng-Latn-US',
+    })
     expect(wrapper.find('.pag').exists()).toBe(false)
   })
 

@@ -39,4 +39,14 @@ describe('language identity API', () => {
       params: { q: '食', sort: 'new', locale: 'nan-Hant-CN_Quanzhou_Nanan', limit: 10, offset: 20, ui_locale: 'cmn-Hans-CN', _content_revision: 0 }, signal,
     })
   })
+
+  it('preserves pagination metadata from language content responses', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: { data: { items: [], total: 101, skip: 20, limit: 20, hasMore: true } },
+    })
+
+    await expect(listLanguageExpressions('nan')).resolves.toMatchObject({
+      items: [], total: 101, skip: 20, limit: 20, has_more: true, hasMore: true,
+    })
+  })
 })
