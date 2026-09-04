@@ -282,6 +282,25 @@ def test_adapter_quarantines_example_transcription_inside_cantonese_entry():
     assert rejected and all(r.scheme == "unknown" and r.locale_code is None for r in rejected)
 
 
+def test_adapter_preserves_traditional_cantonese_example_locale():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "org.jyutjyu.hk-cantowords", "e", "苦悶", "苦悶", None,
+        "yue-Hans-HK-to-eng", "a" * 64,
+        senses=(StagedSense(
+            "s", 1,
+            examples=({
+                "text": "純粹發泄下工作嘅苦悶咋",
+                "translation": "This is just to vent out my boredom at work",
+                "language_hint": "yue-Hant-HK",
+            },),
+        ),),
+    )
+    occurrences = adapter.normalize_entry(entry).senses[0].occurrences
+    example = next(item for item in occurrences if item.occurrence_kind == "example" and item.lang_code == "yue")
+    assert example.locale_code == "yue-Hant-HK"
+
+
 def test_adapter_accepts_capitalized_jyutping_scheme_and_removes_digit_spaces():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(

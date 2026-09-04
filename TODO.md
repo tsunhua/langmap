@@ -130,5 +130,21 @@
   - 使用者已明確授權本輪導入 production；但 `hk-cantowords.csv` 原文仍標示
     `ALL RIGHTS RESERVED`，`ts-english-dict.csv` 授權仍未知。若 LangMap 要公開再分發，
     應先取得可核驗授權，否則不要再向外部鏡像或打包分發這兩部資料。
+- [x] 修復 `hk-cantowords.csv` 例句污染與 HK 例句 locale（2026-09-04）。
+  - 根因：來源例句把完整 Jyutping 放在句末括號內；句末 `.`、`!`、`?` 或引號會令舊
+    parser 無法判定為發音提示，整個括號因而進入 yue expression。另因 adapter 只讀
+    `examples[].language`，忽略 JSONL 的 `language_hint`，明確繁體例句被錯落到
+    `yue-Hans-HK`。
+  - source-side exporter commit `ca52c23`：完整 Jyutping 括號（含句內標點）會被移除；
+    具明確繁體字形的 HK 例句使用 `yue-Hant-HK`。重匯 entry count 仍為 58,105，JSONL
+    sha256 `f7fc4bb3cf06e32879cbb2b5e1a424690a2a074b0e41eacfccb30f22fe74acaa`。
+  - adapter 已補上 `yue-Hant-HK` profile 及 `language_hint` 支援；mirror repair 已原地
+    修正 16,334 個 expression、合併 67 個重複 expression、重接 68 條 edge；
+    `/mapping/2993892` 保留原 ID，內容為「純粹發泄下工作嘅苦悶咋」，locale 為
+    `yue-Hant-HK`，英文關係保留。repair SQL：
+    `scripts/db/state/backup/delta/022-jyutjyu-hk-example-repair-20260904.sql`，
+    sha256 `a204a4a093332088c9a2a3e3b11ffeb1881bb2cb6f059f7c0d6db83b64484393`。
+- [ ] 回源裁定 `hk-cantowords` 仍有 105 條未清理的括號內容；它們含缺調號、非 Jyutping
+  token 或不完整音節，不能安全猜測為發音提示。待人工確認後才可另行修正與發布。
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
   需在 dictionary exporter 修正後重新匯出並重新抽查，不要直接手改 JSONL 或 production。

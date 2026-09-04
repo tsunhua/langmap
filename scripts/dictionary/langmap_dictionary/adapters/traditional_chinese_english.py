@@ -75,6 +75,7 @@ _PROFILE_LOCALES = {
     "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
     "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
     "yue": ("yue", "yue-Hant-HK"),
+    "yue-Hant-HK": ("yue", "yue-Hant-HK"),
     "yue-Hans-HK": ("yue", "yue-Hans-HK"),
     "yue-Hans-CN_Guangzhou": ("yue", "yue-Hans-CN_Guangzhou"),
     "yue-Hans-CN_Kaiping": ("yue", "yue-Hans-CN_Kaiping"),
@@ -424,7 +425,10 @@ class TraditionalChineseEnglishAdapter:
                 item = raw_item if isinstance(raw_item, dict) else {"text": raw_item}
                 text = item.get("text")
                 if isinstance(text, str) and text.strip():
-                    lang, locale, error = _language(text, item.get("language") or _side_hint(direction_hint, True))
+                    lang, locale, error = _language(
+                        text,
+                        item.get("language") or item.get("language_hint") or _side_hint(direction_hint, True),
+                    )
                     occurrences.append(NormalizedOccurrence(
                         _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "text"),
                         "example", text, canonicalize_text(text), lang, locale,
