@@ -3,6 +3,9 @@ import type { EdgeSourceMarker, MappingGraphEdge, MappingGraphNode, MappingGraph
 
 const NODE_LIMIT = 200;
 const SQLITE_BIND_CHUNK = 80;
+// Edge adjacency uses the frontier twice in its OR predicate, so keep the
+// effective bind count below D1's SQLite variable limit.
+const EDGE_BIND_CHUNK = 40;
 interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; }
 interface NodeRow { id:number; text:string; lang_code:string; }
 
@@ -20,8 +23,8 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
   const edges = new Map<number, MappingGraphEdge>(); let frontier = [rootId]; let omitted = 0; let resolved: 0 | 1 | 2 | 3 = 0;
   for (let depth = 1 as 1 | 2 | 3; depth <= hops && frontier.length; depth = (depth + 1) as 1 | 2 | 3) {
     const edgeResults: EdgeRow[] = [];
-    for (let offset = 0; offset < frontier.length; offset += SQLITE_BIND_CHUNK) {
-      const chunk = frontier.slice(offset, offset + SQLITE_BIND_CHUNK);
+    for (let offset = 0; offset < frontier.length; offset += EDGE_BIND_CHUNK) {
+      const chunk = frontier.slice(offset, offset + EDGE_BIND_CHUNK);
       const marks = chunk.map(() => '?').join(',');
       const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE expression_a_id IN (${marks}) OR expression_b_id IN (${marks}) ORDER BY id`).bind(...chunk, ...chunk).all<EdgeRow>();
       edgeResults.push(...result.results);

@@ -10,11 +10,14 @@ type NodeSeed = Record<number, { text: string; lang_code: string }>;
  * 2. edge lookup  SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE ... IN (...)
  * 3. node lookup  SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ... WHERE e.id IN (...)
  */
-function fakeD1(nodes: NodeSeed, edges: Edge[]) {
+function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
   return {
     prepare(sql: string) {
       return {
         bind(...args: number[]) {
+          if (maxBindVariables && sql.includes('FROM expression_edges') && args.length > maxBindVariables) {
+            throw new Error('too many SQL variables');
+          }
           return {
             first: async <T>() => {
               // Root lookup is the only query without an e.id IN (...)
@@ -143,5 +146,25 @@ describe('getMappingGraph', () => {
       graph.nodes.some((node) => node.expression_id === edge.source_id)
       && graph.nodes.some((node) => node.expression_id === edge.target_id),
     )).toBe(true);
+  });
+
+  it('keeps three-hop traversal within the D1 bind-variable limit', async () => {
+    const nodes: NodeSeed = { 1: { text: 'root', lang_code: 'eng' } };
+    const edges: Edge[] = [];
+    for (let index = 0; index < 51; index += 1) {
+      const firstHopId = 2 + index;
+      const secondHopId = 53 + index;
+      nodes[firstHopId] = { text: `first ${firstHopId}`, lang_code: 'cmn' };
+      nodes[secondHopId] = { text: `second ${secondHopId}`, lang_code: 'jpn' };
+      edges.push(
+        { id: index + 1, expression_a_id: 1, expression_b_id: firstHopId, relation_mask: 1, score: 1 },
+        { id: index + 52, expression_a_id: firstHopId, expression_b_id: secondHopId, relation_mask: 1, score: 1 },
+      );
+    }
+
+    const graph = await getMappingGraph(fakeD1(nodes, edges, 100), 1, 3);
+
+    expect(graph).toMatchObject({ resolved_hops: 3, truncated: false });
+    expect(graph?.nodes).toHaveLength(103);
   });
 });

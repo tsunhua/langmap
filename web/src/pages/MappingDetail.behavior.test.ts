@@ -31,10 +31,10 @@ vi.mock('vue-router', () => ({
 
 const passiveComponent = { template: '<div><slot /></div>' }
 const MappingGraphStub = {
-  props: ['graph'],
+  props: ['graph', 'currentHops'],
   emits: ['change-hops'],
   template: `
-    <div class="mapping-graph-stub">
+    <div class="mapping-graph-stub" :data-hops="currentHops">
       <span class="graph-label">{{ graph.nodes[1]?.text }}</span>
       <button class="hop-2" @click="$emit('change-hops', 2)">2 hops</button>
       <button class="hop-3" @click="$emit('change-hops', 3)">3 hops</button>
@@ -56,10 +56,10 @@ function expression(id: string, text: string) {
   }
 }
 
-function graph(id: string) {
+function graph(id: string, requestedHops: 1 | 2 | 3 = 1) {
   return {
     root_id: id,
-    requested_hops: 1,
+    requested_hops: requestedHops,
     resolved_hops: 0,
     nodes: [{ expression_id: id, text: id, lang_code: 'eng', language_name: 'English', depth: 0 }],
     edges: [],
@@ -159,6 +159,26 @@ describe('MappingDetail page state', () => {
 
     expect(wrapper.text()).toContain('Newest graph')
     expect(wrapper.text()).not.toContain('Stale graph')
+  })
+
+  it('keeps the hop selector aligned with the loaded graph when a hop request fails', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    const initial = graph('anchor')
+    initial.nodes.push({ expression_id: 'initial', text: 'Initial graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    initial.layer_counts[1] = 1
+    mappingGraph.mockImplementation((_id: string, hops: number) => hops === 3
+      ? Promise.reject(new Error('hop request failed'))
+      : Promise.resolve(initial))
+
+    const wrapper = mountPage()
+    await flushPromises()
+    await wrapper.get('.hop-3').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.mapping-graph-stub').attributes('data-hops')).toBe('1')
+    expect(wrapper.text()).toContain('Initial graph')
+    expect(wrapper.find('.md-graph-error').exists()).toBe(true)
   })
 
   it('does not show the no-mappings state when the graph has a related expression', async () => {

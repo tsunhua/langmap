@@ -199,6 +199,7 @@ async function changeHops(h: 1 | 2 | 3) {
   const request = ++graphRequest
   const requestedId = id.value
   hops.value = h
+  loadError.value = ''
   updatingHops.value = true
   try {
     const nextGraph = await mappingGraph(requestedId, h, localeParams.value, targetLanguageCodes.value.join(',') || undefined)
@@ -208,6 +209,8 @@ async function changeHops(h: 1 | 2 | 3) {
   } catch (e: any) {
     if (request !== graphRequest || requestedId !== id.value) return
     loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
+    // Keep the selector and URL aligned with the graph still displayed.
+    hops.value = graph.value?.requested_hops ?? 1
   } finally {
     if (request === graphRequest) updatingHops.value = false
   }
@@ -498,6 +501,7 @@ const anchorReadingItems = computed(() =>
         <LanguageSelect v-model="targetLanguageCodes" />
       </div>
     </div>
+    <p v-if="loadError && graph" class="md-graph-error" role="alert">{{ loadError }}</p>
     <p v-if="graph?.truncated" class="md-truncated" role="status">
       {{ t('mappingDetail.graphTruncated', { count: graph.omitted_count }) }}
     </p>
@@ -790,6 +794,8 @@ const anchorReadingItems = computed(() =>
 .crumb-image-id { font-family: var(--mono); font-size: 12px; }
 .qa-error { margin: 10px 0 0; color: var(--down); font-size: 13px; }
 .qa-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+.md-graph-error { margin: 8px 0 0; color: var(--down); font-size: 13px; }
 
 .md-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; }
 
