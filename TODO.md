@@ -145,6 +145,12 @@
     `scripts/db/state/backup/delta/022-jyutjyu-hk-example-repair-20260904.split.sql`，
     208 個受管語句、1,371,882 bytes，sha256
     `3a7d1c80a835becad816c049246ee4af73a9a32612ffcdcb34865da46e78cc04`。
+  - production repair operation `ed28ddc5fa4a4f22a0ef99dd8c3f2ebb` 已成功，bookmark
+    `000000fb-000000ca-000050dc-5e548d38e70c12fe4f8672435aa9a01b`；
+    `language_statistics` refresh operation `481bc20b918547ecaa1d61f009be7cf0` 亦已成功，
+    bookmark `000000fb-00000702-000050dc-aabebefe8ff52fd947ce5539a42cc619`。
+    mirror 已 replay repair／stats delta；核心表計數與 production 一致，mirror
+    `foreign_key_check=0`。
 - [ ] 回源裁定 `hk-cantowords` 仍有 105 條未清理的括號內容；它們含缺調號、非 Jyutping
   token 或不完整音節，不能安全猜測為發音提示。待人工確認後才可另行修正與發布。
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
