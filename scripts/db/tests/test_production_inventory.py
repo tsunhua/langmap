@@ -296,6 +296,13 @@ class ProductionInventoryTests(unittest.TestCase):
                             "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
                         },
                     )
+            events = [
+                json.loads(line)
+                for line in paths.production_operation_journal_path.read_text(
+                    encoding="utf-8"
+                ).splitlines()
+            ]
+            self.assertNotIn("references-applied", {event["status"] for event in events})
 
     def test_dictionary_postflight_samples_are_compared_by_primary_key(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

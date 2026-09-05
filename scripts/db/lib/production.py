@@ -755,6 +755,38 @@ def apply_production(
                 paths.production_operation_journal_path,
                 {**operation, "status": "statistics-refreshed"},
             )
+        dictionary_postflight_verified = "dictionary-postflight-verified" in completed_stages
+        if (
+            isinstance(dictionary_postflight, dict)
+            and not dictionary_postflight_verified
+            and "references-applied" not in completed_stages
+        ):
+            # References can add dictionary edges, so lock the dictionary delta
+            # before applying the independently managed reference artifacts.
+            current_stage = "verify"
+            verified = inventory_production(
+                paths, wrangler_bin=executor.wrangler_bin, env=env
+            )
+            if plan.get("pending_migrations"):
+                check_target_schema(paths, verified)
+            else:
+                check_baseline(paths, verified)
+            _validate_dictionary_postflight_after(dictionary_postflight, verified)
+            sample_error = _validate_dictionary_postflight_samples(
+                paths,
+                dictionary_postflight,
+                sections=("after", "added"),
+                wrangler_bin=executor.wrangler_bin,
+                env=env,
+            )
+            if sample_error:
+                raise ProductionInventoryError(sample_error)
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {**operation, "status": "dictionary-postflight-verified"},
+            )
+            completed_stages.add("dictionary-postflight-verified")
+            dictionary_postflight_verified = True
         reference_artifacts = plan.get("reference_artifacts")
         apply_references = not isinstance(reference_artifacts, dict) or (
             reference_artifacts.get("action", "apply") == "apply"
@@ -807,7 +839,7 @@ def apply_production(
             check_target_schema(paths, verified)
         else:
             check_baseline(paths, verified)
-        if isinstance(dictionary_postflight, dict):
+        if isinstance(dictionary_postflight, dict) and not dictionary_postflight_verified:
             _validate_dictionary_postflight_after(dictionary_postflight, verified)
             sample_error = _validate_dictionary_postflight_samples(
                 paths,
