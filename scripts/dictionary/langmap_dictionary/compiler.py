@@ -128,7 +128,7 @@ def _allocate_clusters(connection: sqlite3.Connection, release_id: str, inventor
 
 def _occurrence_bindings(connection: sqlite3.Connection, release_id: str, cluster_to_expression: Mapping[str, str]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    role_by_kind = {"headword": "headword", "equivalent": "equivalent", "synonym": "synonym", "example": "example_text"}
+    role_by_kind = {"headword": "headword", "form": "form", "equivalent": "equivalent", "synonym": "synonym", "example": "example_text"}
     ai_claims = {
         str(row[0])
         for row in connection.execute(

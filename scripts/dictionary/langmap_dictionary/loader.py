@@ -107,6 +107,7 @@ def _entry(record: Any, path: Path, line: int, release_id: str) -> dict[str, Any
         raise ValueError("csv_row_number must be positive")
     for key in ("forms", "pronunciations", "senses", "diagnostics"):
         _array(record[key], key)
+    _array(record.get("mappings", []), "mappings")
     return record
 
 
@@ -126,7 +127,7 @@ def _insert_entry(
     compact: bool = False,
 ) -> tuple[int, int]:
     rows, sense_count = _entry_rows(release_id, record, compact=compact)
-    for table in ("input_entries", "input_forms", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
+    for table in ("input_entries", "input_forms", "input_mappings", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
         values = rows[table]
         if values:
             connection.executemany(_INSERT_SQL[table], values)
@@ -136,6 +137,7 @@ def _insert_entry(
 _INSERT_SQL = {
     "input_entries": "INSERT INTO input_entries VALUES (?,?,?,?,?,?,?,?,?)",
     "input_forms": "INSERT INTO input_forms VALUES (?,?,?,?,?)",
+    "input_mappings": "INSERT INTO input_mappings VALUES (?,?,?,?,?)",
     "input_pronunciations": "INSERT INTO input_pronunciations VALUES (?,?,?,?,?,?)",
     "input_senses": "INSERT INTO input_senses VALUES (?,?,?,?,?,?,?,?,?,?,?)",
     "input_equivalents": "INSERT INTO input_equivalents VALUES (?,?,?,?,?,?)",
@@ -159,6 +161,10 @@ def _entry_rows(
         value = _child_text(item, "value", f"form {ordinal}")
         if not compact:
             rows["input_forms"].append((release_id, entry_key, ordinal, value, _json(item)))
+    for ordinal, item in enumerate(record.get("mappings", []), 1):
+        value = _child_text(item, "value", f"mapping {ordinal}")
+        if not compact:
+            rows["input_mappings"].append((release_id, entry_key, ordinal, value, _json(item)))
     for ordinal, item in enumerate(record["pronunciations"], 1):
         if not isinstance(item, dict):
             raise ValueError(f"pronunciation {ordinal} must be an object")
@@ -246,7 +252,7 @@ def load_jsonl_release(
         inserted = senses = failed = 0
         connection.execute("SAVEPOINT entry_batch")
         try:
-            for table in ("input_entries", "input_forms", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
+            for table in ("input_entries", "input_forms", "input_mappings", "input_pronunciations", "input_senses", "input_equivalents", "input_relations", "input_examples", "input_pos"):
                 values = pending_rows[table]
                 if values:
                     connection.executemany(_INSERT_SQL[table], values)
@@ -371,12 +377,15 @@ def iter_staged_entry_rows(
     pronunciation_rows = child_rows("input_pronunciations")
     sense_rows = child_rows("input_senses")
     form_rows = child_rows("input_forms")
+    mapping_rows = child_rows("input_mappings")
     current_pronunciation = next(pronunciation_rows, None)
     current_sense = next(sense_rows, None)
     current_form = next(form_rows, None)
+    current_mapping = next(mapping_rows, None)
 
     for row in entries:
         entry_key = str(row["entry_key"])
+        raw_record = _fast_json.loads(row["raw_json"])
         pronunciations: list[StagedPronunciation] = []
         while current_pronunciation is not None and current_pronunciation["entry_key"] == entry_key:
             pronunciations.append(StagedPronunciation(
@@ -404,6 +413,14 @@ def iter_staged_entry_rows(
         while current_form is not None and current_form["entry_key"] == entry_key:
             forms.append(_fast_json.loads(current_form["raw_json"]))
             current_form = next(form_rows, None)
+        if not forms and raw_record.get("forms"):
+            forms = list(raw_record["forms"])
+        mappings: list[object] = []
+        while current_mapping is not None and current_mapping["entry_key"] == entry_key:
+            mappings.append(_fast_json.loads(current_mapping["raw_json"]))
+            current_mapping = next(mapping_rows, None)
+        if not mappings and raw_record.get("mappings"):
+            mappings = list(raw_record["mappings"])
         yield int(row["staging_rowid"]), StagedEntry(
             row["release_id"],
             row["dictionary_key"],
@@ -416,9 +433,10 @@ def iter_staged_entry_rows(
             tuple(pronunciations),
             tuple(senses),
             tuple(forms),
-            _fast_json.loads(row["raw_json"]),
+            raw_record,
+            tuple(mappings),
         )
-    if current_pronunciation is not None or current_sense is not None or current_form is not None:
+    if current_pronunciation is not None or current_sense is not None or current_form is not None or current_mapping is not None:
         raise StageLoadError("child row order does not match staged entry order")
 
 

@@ -1,5 +1,8 @@
 {
   "profiles": {
+    "tw.edu.moe.hakkadict": {
+      "adapter": "traditional-chinese-english"
+    },
     "com.apple.dictionary.NOAD": {
       "adapter": "traditional-chinese-english"
     },

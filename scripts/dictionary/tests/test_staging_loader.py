@@ -8,7 +8,7 @@ from scripts.dictionary.langmap_dictionary.schema import create_staging_database
 
 
 def _record(entry_key="e1", *, schema_version=2):
-    return {"record_type": "entry", "schema_version": schema_version, "dictionary_key": "fixture", "entry_key": entry_key, "record_fingerprint": "a" * 64, "csv_row_number": 1, "raw_headword": "頭", "canonical_headword": "頭", "homograph_marker": None, "direction_hint": "cmn-Hant-to-eng", "forms": [], "pronunciations": [], "diagnostics": [], "senses": [{"sense_key": entry_key + ":s1", "ordinal": 1, "definitions": ["keep offline"], "pos": ["noun"], "equivalents": [{"value": "head", "language": "eng"}], "relations": [{"kind": "synonym", "related_text": "top"}], "examples": [{"text": "頭很痛", "translation": "head hurts"}], "labels": ["body"]}]}
+    return {"record_type": "entry", "schema_version": schema_version, "dictionary_key": "fixture", "entry_key": entry_key, "record_fingerprint": "a" * 64, "csv_row_number": 1, "raw_headword": "頭", "canonical_headword": "頭", "homograph_marker": None, "direction_hint": "cmn-Hant-to-eng", "forms": [], "mappings": [], "pronunciations": [], "diagnostics": [], "senses": [{"sense_key": entry_key + ":s1", "ordinal": 1, "definitions": ["keep offline"], "pos": ["noun"], "equivalents": [{"value": "head", "language": "eng"}], "relations": [{"kind": "synonym", "related_text": "top"}], "examples": [{"text": "頭很痛", "translation": "head hurts"}], "labels": ["body"]}]}
 
 
 def _write(path: Path, records, *, count=None, version=2):
@@ -61,9 +61,34 @@ def test_compact_loader_keeps_all_fields_without_redundant_child_rows(tmp_path):
     assert raw["forms"] == record["forms"]
     assert raw["senses"] == record["senses"]
     assert connection.execute("SELECT COUNT(*) FROM input_senses").fetchone()[0] == 1
-    for table in ("input_forms", "input_equivalents", "input_relations", "input_examples", "input_pos"):
+    for table in ("input_forms", "input_mappings", "input_equivalents", "input_relations", "input_examples", "input_pos"):
         assert connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
     assert [entry.entry_key for entry in iter_staged_entries(connection, release)] == ["e1"]
+
+
+def test_loader_preserves_optional_entry_level_mappings(tmp_path):
+    source = tmp_path / "mapping.jsonl"
+    record = _record()
+    record["mappings"] = [{
+        "value": "阿怙",
+        "language_hint": "hak-Hant-TW_Zhaoan",
+        "readings": [{"value": "a11 u24", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Zhaoan"}],
+        "labels": ["source-related-word"],
+    }]
+    _write(source, [record])
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    release = load_jsonl_release(connection, [source]).release_id
+
+    entry = next(iter_staged_entries(connection, release))
+    assert entry.mappings[0]["language_hint"] == "hak-Hant-TW_Zhaoan"
+    assert connection.execute("SELECT value FROM input_mappings").fetchone()[0] == "阿怙"
+
+    compact_path = tmp_path / "compact-stage.sqlite"
+    compact_connection = create_staging_database(compact_path)
+    compact_release = load_jsonl_release(compact_connection, [source], compact=True).release_id
+    compact_entry = next(iter_staged_entries(compact_connection, compact_release))
+    assert compact_entry.mappings[0]["value"] == "阿怙"
+    assert compact_connection.execute("SELECT COUNT(*) FROM input_mappings").fetchone()[0] == 0
 
 
 def test_schema_failure_rolls_back_rows_and_records_failed_release(tmp_path):

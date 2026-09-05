@@ -253,6 +253,12 @@
       "filename": "0042_dictionary_source_markers.sql",
       "size": 1087,
       "sha256": "62f65d1737ab30797ce57cbce6b998410d6e8960bea10475e599ffff8a6c9d89"
+    },
+    {
+      "sequence": 43,
+      "filename": "0043_hakka_locales.sql",
+      "size": 2068,
+      "sha256": "ae0c0ffebe0f28770301774ada51ec32bc0e977a539e21859ebaf976e7840272"
     }
   ]
 }

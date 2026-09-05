@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from pathlib import Path
 
@@ -51,7 +52,7 @@ def _stage(path: Path = FIXTURE):
 def _d1(path: Path) -> None:
     connection = sqlite3.connect(path)
     connection.executescript(CANONICAL_SCHEMA)
-    connection.execute("INSERT INTO languages(code,name_en) VALUES ('cmn','Mandarin'),('eng','English')")
+    connection.execute("INSERT INTO languages(code,name_en) VALUES ('cmn','Mandarin'),('eng','English'),('hak','Hakka Chinese')")
     connection.commit()
     connection.close()
 
@@ -251,6 +252,109 @@ def test_import_is_idempotent_for_external_resume_checkpoint(tmp_path):
     before = tuple(connection.execute("SELECT COUNT(*) FROM expressions").fetchone())
     connection.close()
     assert first.expressions == before[0]
+
+
+def test_local_import_preserves_mapping_target_locales_and_folds_self_targets(tmp_path):
+    source = tmp_path / "hakka-mapping.jsonl"
+    entries = [
+        {
+            "record_type": "entry", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict",
+            "entry_key": "tw.edu.moe.hakkadict:HK1", "record_fingerprint": "a" * 64, "csv_row_number": 2,
+            "raw_headword": "阿爸", "canonical_headword": "阿爸", "homograph_marker": None,
+            "direction_hint": "hak-Hant-TW-to-cmn-Hant", "forms": [], "mappings": [
+                {"value": "阿怙", "language_hint": "hak-Hant-TW_Zhaoan", "readings": [{"value": "a11 u24", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Zhaoan"}], "labels": ["source-related-word"]},
+            ], "pronunciations": [], "diagnostics": [],
+            "senses": [{"sense_key": "tw.edu.moe.hakkadict:HK1:sense:1", "ordinal": 1, "definitions": ["父親"], "pos": [], "equivalents": [], "relations": [], "examples": [], "labels": []}],
+        },
+        {
+            "record_type": "entry", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict",
+            "entry_key": "tw.edu.moe.hakkadict:HK2", "record_fingerprint": "b" * 64, "csv_row_number": 3,
+            "raw_headword": "祖公", "canonical_headword": "祖公", "homograph_marker": None,
+            "direction_hint": "hak-Hant-TW-to-cmn-Hant", "forms": [], "mappings": [
+                {"value": "阿怙", "language_hint": "hak-Hant-TW_Dapu", "readings": [{"value": "a11 u24", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Dapu"}], "labels": ["source-related-word"]},
+            ], "pronunciations": [], "diagnostics": [],
+            "senses": [{"sense_key": "tw.edu.moe.hakkadict:HK2:sense:1", "ordinal": 1, "definitions": ["祖父"], "pos": [], "equivalents": [], "relations": [], "examples": [], "labels": []}],
+        },
+        {
+            "record_type": "entry", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict",
+            "entry_key": "tw.edu.moe.hakkadict:HK3", "record_fingerprint": "c" * 64, "csv_row_number": 4,
+            "raw_headword": "祖先", "canonical_headword": "祖先", "homograph_marker": None,
+            "direction_hint": "hak-Hant-TW-to-cmn-Hant", "forms": [], "mappings": [
+                {"value": "祖先", "language_hint": "hak-Hant-TW_Zhaoan", "readings": [{"value": "zu31 sien11", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Zhaoan"}]},
+            ], "pronunciations": [], "diagnostics": [],
+            "senses": [{"sense_key": "tw.edu.moe.hakkadict:HK3:sense:1", "ordinal": 1, "definitions": ["先祖"], "pos": [], "equivalents": [], "relations": [], "examples": [], "labels": []}],
+        },
+    ]
+    header = {"record_type": "dictionary", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict", "input_file_name": "hakka.csv", "input_sha256": "d" * 64, "entry_count": len(entries), "exporter_version": "dictionary-export/hakka/1"}
+    source.write_text("\n".join(json.dumps(item, ensure_ascii=False, sort_keys=True) for item in [header, *entries]) + "\n", encoding="utf-8")
+
+    staging_path = tmp_path / "staging.sqlite"
+    staging = create_staging_database(staging_path)
+    run_id = load_jsonl_release(staging, [source]).release_id
+    normalize_release(staging, run_id)
+    build_explicit_clusters(staging, run_id)
+    staging.close()
+    d1_path = tmp_path / "d1.sqlite"
+    _d1(d1_path)
+
+    summary = import_release_to_local_d1(staging_path, d1_path, run_id)
+    connection = sqlite3.connect(d1_path)
+    assert summary.edges == 2
+    target = connection.execute("SELECT id FROM expressions WHERE text='阿怙'").fetchone()[0]
+    assert connection.execute("SELECT COUNT(*) FROM expressions WHERE text='阿怙'").fetchone()[0] == 1
+    assert {(row[0], row[1]) for row in connection.execute(
+        "SELECT ll.code, er.value FROM expression_readings er JOIN language_locales ll ON ll.id=er.locale_id WHERE er.expression_id=?",
+        (target,),
+    )} == {("hak-Hant-TW_Zhaoan", "a11 u24"), ("hak-Hant-TW_Dapu", "a11 u24")}
+    self_id = connection.execute("SELECT id FROM expressions WHERE text='祖先'").fetchone()[0]
+    assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE expression_a_id=? OR expression_b_id=?", (self_id, self_id)).fetchone()[0] == 0
+    assert connection.execute("SELECT value FROM expression_readings er WHERE er.expression_id=?", (self_id,)).fetchone()[0] == "zu31 sien11"
+    connection.close()
+
+
+def test_hakka_paren_gloss_pairs_import_as_mappings(tmp_path):
+    source = tmp_path / "hakka-gloss.jsonl"
+    entries = [
+        {
+            "record_type": "entry", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict",
+            "entry_key": "tw.edu.moe.hakkadict:HK-G1", "record_fingerprint": "0" * 64, "csv_row_number": 2,
+            "raw_headword": "青瞑仔", "canonical_headword": "青瞑仔", "homograph_marker": None,
+            "direction_hint": "hak-Hant-TW-to-cmn-Hant", "forms": [], "mappings": [], "pronunciations": [], "diagnostics": [],
+            "senses": [{"sense_key": "tw.edu.moe.hakkadict:HK-G1:sense:1", "ordinal": 1, "definitions": ["失明的人"], "pos": [], "equivalents": [], "relations": [], "examples": [{"text": "青瞑仔", "translation": "盲人"}], "labels": []}],
+        },
+        {
+            "record_type": "entry", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict",
+            "entry_key": "tw.edu.moe.hakkadict:HK-G2", "record_fingerprint": "1" * 64, "csv_row_number": 3,
+            "raw_headword": "手巾拔著凳仔項。", "canonical_headword": "手巾拔著凳仔項。", "homograph_marker": None,
+            "direction_hint": "hak-Hant-TW-to-cmn-Hant", "forms": [], "mappings": [], "pronunciations": [], "diagnostics": [],
+            "senses": [{"sense_key": "tw.edu.moe.hakkadict:HK-G2:sense:1", "ordinal": 1, "definitions": ["毛巾掛在凳子上"], "pos": [], "equivalents": [], "relations": [], "examples": [{"text": "手巾拔著凳仔項。", "translation": "毛巾掛在凳子上"}], "labels": []}],
+        },
+    ]
+    header = {"record_type": "dictionary", "schema_version": 2, "dictionary_key": "tw.edu.moe.hakkadict", "input_file_name": "hakka.csv", "input_sha256": "0123456789abcdef" * 4, "entry_count": len(entries), "exporter_version": "dictionary-export/hakka/1"}
+    source.write_text("\n".join(json.dumps(item, ensure_ascii=False, sort_keys=True) for item in [header, *entries]) + "\n", encoding="utf-8")
+
+    staging_path = tmp_path / "staging.sqlite"
+    staging = create_staging_database(staging_path)
+    run_id = load_jsonl_release(staging, [source]).release_id
+    normalize_release(staging, run_id)
+    build_explicit_clusters(staging, run_id)
+    staging.close()
+    d1_path = tmp_path / "d1.sqlite"
+    _d1(d1_path)
+
+    import_release_to_local_d1(staging_path, d1_path, run_id)
+    connection = sqlite3.connect(d1_path)
+    assert connection.execute("SELECT COUNT(*) FROM expression_edges").fetchone()[0] == 2
+    assert connection.execute("SELECT DISTINCT relation_mask FROM expression_edges").fetchall() == [(1,)]
+    pairs = {
+        tuple(connection.execute(
+            "SELECT t.text FROM expression_edges ed JOIN expressions a ON a.id=ed.expression_a_id JOIN expressions b ON b.id=ed.expression_b_id JOIN expressions t ON t.id=CASE WHEN a.text=? THEN b.id ELSE a.id END WHERE a.text=? OR b.text=?",
+            (anchor, anchor, anchor),
+        ).fetchone() or ("",)) for anchor in ("青瞑仔", "手巾拔著凳仔項")
+    }
+    assert ("盲人",) in pairs
+    assert ("毛巾掛在凳子上",) in pairs
+    connection.close()
 
 
 def test_equivalent_reuses_existing_expression_for_same_text(tmp_path):

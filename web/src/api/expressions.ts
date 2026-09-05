@@ -1,6 +1,7 @@
 import api from './client'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import type { LocaleHints } from './languageIdentity'
+import { contentRevision } from '@/utils/contentRevision'
 
 export interface ExpressionSource { type: string; name: string; ref?: string }
 export interface ExpressionLocale { language_locale_code: string; locale_display_name?: string }
@@ -35,8 +36,8 @@ export type Page<T> = CursorPage<T>
 const path = (id: string | number) => `/expressions/${encodeURIComponent(String(id))}`
 const unwrap = <T>(result: { data: { data: T } }) => result.data.data
 
-function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_locale?: string } {
-  const params: { ui_locale?: string; secondary_ui_locale?: string } = {}
+function hintParams(hints?: LocaleHints): Record<string, string | number> {
+  const params: Record<string, string | number> = { _content_revision: contentRevision.value }
   if (hints?.ui_locale) params.ui_locale = hints.ui_locale
   if (hints?.secondary_ui_locale) params.secondary_ui_locale = hints.secondary_ui_locale
   return params
@@ -44,8 +45,7 @@ function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_loc
 
 export async function getExpression(id: string | number, hints?: LocaleHints, signal?: AbortSignal): Promise<ExpressionDetail> {
   const params = hintParams(hints)
-  const config = Object.keys(params).length ? { params, signal } : { signal }
-  const detail = unwrap<Omit<ExpressionDetail, 'attestations'>>(await api.get(path(id), config))
+  const detail = unwrap<Omit<ExpressionDetail, 'attestations'>>(await api.get(path(id), { params, signal }))
   return { ...detail, attestations: detail.locales }
 }
 export async function getMappingGraph(id: string | number, hops: 1 | 2 | 3 = 1, hints?: LocaleHints, targetLanguage?: string, signal?: AbortSignal): Promise<MappingGraphResponse> {

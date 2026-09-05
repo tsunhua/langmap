@@ -69,6 +69,12 @@
     { "canonical_text": "France", "target_locale": "cmn-Hans-CN", "text": "法国" },
     { "canonical_text": "France", "target_locale": "cmn-Hant-TW", "text": "法國" },
     { "canonical_text": "Germany", "target_locale": "cmn-Hans-CN", "text": "德国" },
-    { "canonical_text": "Germany", "target_locale": "cmn-Hant-TW", "text": "德國" }
+    { "canonical_text": "Germany", "target_locale": "cmn-Hant-TW", "text": "德國" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "cmn-Hant-TW", "text": "客語" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "cmn-Hans-CN", "text": "客家话" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "jpn-Jpan-JP", "text": "客語" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "nan-Hant-TW", "text": "客語" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "spa-Latn-ES", "text": "Hakka" },
+    { "canonical_text": "Hakka Chinese", "target_locale": "eng-Latn-US", "text": "Hakka Chinese" }
   ]
 }

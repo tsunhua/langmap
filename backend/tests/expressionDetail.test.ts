@@ -27,8 +27,8 @@ function fakeD1(handlers: Record<string, Handler>) {
 }
 
 const EXPRESSION_BY_ID = 'SELECT e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
-const LOCALE_LINKS_SQL = 'SELECT x.expression_id,x.locale_id,l.code AS language_locale_code FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code';
-const READINGS_SQL = 'SELECT r.expression_id, r.locale_id, l.code AS language_locale_code, r.scheme, r.value, r.source_id FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value';
+const LOCALE_LINKS_SQL = 'SELECT x.expression_id,x.locale_id,l.code AS language_locale_code,l.name AS locale_display_name FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code';
+const READINGS_SQL = 'SELECT r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value';
 const POS_SQL = 'SELECT code,name_en FROM parts_of_speech WHERE (? & (1 << bit_index)) != 0 ORDER BY sort_order';
 const SOURCES_SQL = 'SELECT source_id,source_marker FROM expression_sources WHERE expression_id=? ORDER BY source_id,source_marker';
 

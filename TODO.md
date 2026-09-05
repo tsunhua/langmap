@@ -182,6 +182,36 @@
     本輪保留，抽樣與完整統計見 `026-ocd-example-edge-repair-20260905.report.json`。
     若要清理，需逐批對照原始 JSON／詞典版本後另產 repair delta。
 
+- [x] 補齊客家話語言名的本地化翻譯（2026-09-05）。
+  - `/languages` 列表顯示「Hakka Chinese」非「客語」，因 hak 的 canonical name expression
+    （`Hakka Chinese`，id 2420）沒有直譯邊；`resolveLanguageNames` 的 overlay（
+    `name-translations.json`）也缺 `Hakka Chinese`。
+  - 修正：production 補 `Hakka Chinese ↔ 客語`（cmn-Hant-TW）mapping 邊（id 4114529，operation
+    `4a7aa58b09294c5dbbe8ab8baa0f8b9e`），已回放回 mirror；同時在 overlay 新增
+    `Hakka Chinese`→`客語`（cmn-Hant-TW）／`客家话`（cmn-Hans-CN）內建翻譯。
+  - 接續補齊其他 UI locale：`客家话`（cmn-Hans-CN，邊 4114530）與 `客語`（jpn-Jpan-JP，邊
+    4114531），operation `454e6c4e1bb448dfbb4f5b4ceb965a7c`；overlay 亦加 jpn/spa/eng/nan。
+    三邊皆已回放回 mirror（production/mirror edges 2,445,252）。
+  - 註：`active_ui_locale_count`（ui_locales）≠名稱本地化；hak 無 UI locale 屬正常（非 UI 語言）。
+
+- [x] 發布臺灣客家語常用詞辭典（`tw.edu.moe.hakkadict`，2026-09-05）。
+  - Structured JSONL `tw.edu.moe.hakkadict.jsonl`（15,446 entries、7,569 mappings、262 self
+    targets）已備份舊 artifact 為 `.pre-gloss-split-20260905`（舊版未拆括號例句、translation
+    null）；新 artifact sha256 `79c22a8738ec3a8840a5942c17ed1ac823aca1d1bb8f5f3f1160133eaa78c9eb`。
+  - 括號 gloss（青瞑仔（盲人）、已煞（很果決、相當果決））為「前一個詞句的 cmn 含義關聯」，
+    以 `RELATION_MAPPING`（mask 1）匯入並顯示在 mapping 圖；完整句 example（Cantonese 等）
+    仍維持 `RELATION_EXAMPLE`（mask 4，`local_import.py` 依來源 `PAREN_GLOSS_SOURCE` 分類）。
+  - 7 個 Hakka locale（base + 六腔）以固定 id 128/129/131–135 建立（`0043_hakka_locales.sql`
+    明確 id＋`INSERT OR IGNORE`），中文名（客語（大埔腔）…）由 delta／migration 帶入；production
+    的 language-reference / system-ui reference 套用與 mirror 同步一致。
+  - production delta `026-hakka-dictionary-20260905.sql` sha256
+    `fb4882837a0e76912d118274189667817f62235454705c66123eb015cedacb57`；主要 apply operation
+    `b4990f0668164748b5f378d4b62ccc7f` 已成功，stats refresh operation
+    `ffbba9190c114179bb3cabaa37408771` 已成功，delta 已 replay 回 mirror。
+  - 發布後 mirror／production 核心計數一致：expressions 2,904,151、readings 981,884、
+    edges 2,445,249；hak statistics 37,388 expressions、7 locales。`已煞 ↔ 很果決／相當果決`
+    為 mask 1，`盎` 大埔腔 reading `ang33/35/53` 已存在；`language_statistics` 已刷新。
+
 - [x] 補入 `hk-cantowords.csv` 例句層級 Jyutping reading（2026-09-05）。
   - 根因：舊版 `ExampleV2` 沒有 `readings` 欄位；清理例句末尾括號時只保留乾淨句子，
     adapter／compiler 也只會把 reading 綁到 headword，因此完整粵拼沒有落到例句 expression。

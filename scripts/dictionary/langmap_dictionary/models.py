@@ -41,6 +41,7 @@ class StagedEntry:
     senses: tuple[StagedSense, ...] = ()
     forms: tuple[Any, ...] = ()
     raw: dict[str, Any] = field(default_factory=dict)
+    mappings: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,7 @@ class NormalizedEntry:
     senses: tuple[NormalizedSense, ...]
     readings: tuple[NormalizedReading, ...] = ()
     raw: dict[str, Any] = field(default_factory=dict)
+    mappings: tuple[NormalizedOccurrence, ...] = ()
 
 
 @dataclass(frozen=True)

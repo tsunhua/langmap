@@ -25,6 +25,7 @@ import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useLanguagesStore } from '@/stores/languages'
 import { regionFromLocale } from '@/utils/localeRegion'
+import { readingSchemeLabel } from '@/utils/readingLabel'
 
 const { t } = useI18n()
 
@@ -420,10 +421,11 @@ const anchorReadingItems = computed(() =>
     )
     .map((r) => ({
       key: `${r.language_locale_code}:${r.scheme}:${r.value}`,
-      scheme: r.scheme,
+      scheme: readingSchemeLabel(r.scheme),
       value: r.value,
       region: regionFromLocale(r.language_locale_code),
-      title: `${r.language_locale_code} / ${r.scheme}`,
+      localeLabel: r.locale_display_name ?? r.language_locale_code,
+      title: `${r.locale_display_name ?? r.language_locale_code} / ${r.scheme}`,
     })),
 )
 
@@ -459,6 +461,7 @@ const anchorReadingItems = computed(() =>
       >
         <span v-if="r.region" class="anchor-reading-region">{{ r.region }}:</span>
         <span class="anchor-reading-value">[{{ r.value }}]</span>
+        <span class="anchor-reading-locale">{{ r.localeLabel }}</span>
         <span class="anchor-reading-scheme">({{ r.scheme }})</span>
       </span>
     </div>
@@ -752,6 +755,11 @@ const anchorReadingItems = computed(() =>
 .anchor-reading-scheme {
   font-size: 11px;
   color: var(--faint);
+}
+.anchor-reading-locale {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
 }
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

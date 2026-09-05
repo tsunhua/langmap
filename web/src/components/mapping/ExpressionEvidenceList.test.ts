@@ -17,11 +17,22 @@ describe('ExpressionEvidenceList', () => {
       .toEqual(['nan-Hant-CN', 'nan-Hant-TW', 'nan-Hant-TW / ipa'])
     expect(wrapper.findAll('li')[0].text()).toContain('nan-Hant-CN')
     expect(wrapper.findAll('li')[1].text()).toContain('臺語')
+    expect(wrapper.findAll('li')[1].text()).not.toContain('nan-Hant-TW')
     expect(wrapper.findAll('li')[2].text()).toContain('臺語')
-    expect(wrapper.findAll('li')[1].find('[title="臺語"]').attributes('title')).toBe('臺語')
+    expect(wrapper.findAll('li')[1].find('[title="nan-Hant-TW"]').attributes('title')).toBe('nan-Hant-TW')
     expect(wrapper.findAll('li')[2].text()).toContain('tsiaʔ')
     expect(wrapper.findAll('li')[2].text()).toContain('TW · 臺語')
-    expect(wrapper.findAll('li')[2].text()).toContain('/ ipa')
+    expect(wrapper.findAll('li')[2].text()).toContain('/ IPA')
     expect(wrapper.findAll('li')[2].text()).not.toContain('nan-Hant-TW')
+  })
+
+  it('uses the local name for extended locale readings', () => {
+    const wrapper = mount(ExpressionEvidenceList, {
+      props: {
+        readings: [{ language_locale_code: 'hak-Hant-TW_Dapu', locale_display_name: '客語（大埔腔）', scheme: 'hakka-pinyin', value: 'gung33 ngi53' }],
+      },
+    })
+    expect(wrapper.text()).toContain('客語（大埔腔）')
+    expect(wrapper.text()).not.toContain('hak-Hant-TW_Dapu')
   })
 })

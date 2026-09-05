@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { regionFromLocale } from '@/utils/localeRegion'
+import { readingSchemeLabel } from '@/utils/readingLabel'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 
 const props = defineProps<{ locales?: ExpressionLocale[]; attestations?: ExpressionLocale[]; readings: ExpressionReading[] }>()
@@ -14,8 +15,10 @@ const readings = computed(() => [...props.readings].sort((a, b) =>
   a.language_locale_code.localeCompare(b.language_locale_code) || a.scheme.localeCompare(b.scheme) || a.value.localeCompare(b.value),
 ))
 
-function readingLabel(reading: ExpressionReading) {
-  return regionFromLocale(reading.language_locale_code) ?? reading.language_locale_code
+function readingLocaleLabel(reading: ExpressionReading) {
+  const region = regionFromLocale(reading.language_locale_code)
+  if (reading.locale_display_name) return region ? `${region} · ${reading.locale_display_name}` : reading.locale_display_name
+  return region ?? reading.language_locale_code
 }
 </script>
 
@@ -24,7 +27,7 @@ function readingLabel(reading: ExpressionReading) {
     <h4>{{ t('components.evidence') }}</h4>
     <ul>
       <li v-for="locale in locales" :key="locale.language_locale_code" :data-evidence-code="locale.language_locale_code">
-        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="locale.locale_display_name || locale.language_locale_code">{{ locale.language_locale_code }}<template v-if="locale.locale_display_name"> · {{ locale.locale_display_name }}</template></span>
+        <span class="evidence-kind">{{ t('components.locale') }}</span> <span :title="locale.language_locale_code">{{ locale.locale_display_name || locale.language_locale_code }}</span>
       </li>
       <li
         v-for="reading in readings"
@@ -34,7 +37,7 @@ function readingLabel(reading: ExpressionReading) {
       >
         <span class="evidence-kind rx-kind">{{ t('components.reading') }}</span>
         <span class="rx-value" :title="`${reading.language_locale_code} / ${reading.scheme}`">{{ reading.value }}</span>
-        <span class="rx-meta">{{ readingLabel(reading) }}<template v-if="reading.locale_display_name"> · {{ reading.locale_display_name }}</template><span class="rx-scheme">/ {{ reading.scheme }}</span></span>
+        <span class="rx-meta">{{ readingLocaleLabel(reading) }}<span class="rx-scheme">/ {{ readingSchemeLabel(reading.scheme) }}</span></span>
       </li>
     </ul>
   </section>

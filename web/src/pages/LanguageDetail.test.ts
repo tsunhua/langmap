@@ -66,7 +66,8 @@ describe('LanguageDetail', () => {
     expect((selects[1].element as HTMLSelectElement).value).toBe('TW')
     expect(wrapper.find('h1').text()).toBe('台灣華語')
     expect(wrapper.find('.ld-sub').text()).toBe('華語')
-    expect(wrapper.find('.lang-badge').text()).toBe('cmn-Hant-TW')
+    expect(wrapper.find('.lang-badge').text()).toBe('台灣華語')
+    expect(wrapper.find('.lang-badge').attributes('title')).toBe('cmn-Hant-TW')
   })
 
   it('shows the newest 20 expressions and exposes load-more without sorting controls', async () => {

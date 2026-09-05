@@ -42,6 +42,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | undefined
 
 const selectedLocale = computed(() => lang.value?.locales.find((locale) => locale.code === selectedLocaleCode.value) ?? null)
 const hasMoreExpressions = computed(() => exprs.value.length < Math.min(exprTotal.value, MAX_EXPRESSIONS))
+const selectedLocaleLabel = computed(() => selectedLocale.value?.display_name ?? selectedLocale.value?.name ?? selectedLocale.value?.name_en ?? selectedLocale.value?.code ?? lang.value?.code ?? '')
 const title = computed(() => selectedLocale.value?.display_name ?? lang.value?.name ?? lang.value?.name_en ?? '')
 const subtitle = computed(() => {
   const sub = selectedLocale.value?.name ?? lang.value?.name_en ?? ''
@@ -222,7 +223,7 @@ onUnmounted(() => {
     <router-link to="/languages" class="ld-back">← {{ t('languageDetail.back') }}</router-link>
     <div class="ld-title">
       <h1>{{ title }}</h1>
-      <span class="lang-badge">{{ selectedLocale?.code ?? lang.code }}</span>
+      <span class="lang-badge" :title="selectedLocale?.code ?? lang.code">{{ selectedLocaleLabel }}</span>
     </div>
     <div v-if="showLocaleSelects" class="ld-locales" role="group" :aria-label="t('languageDetail.regionalForms')">
       <div v-if="hasVariants" class="ld-sel">

@@ -33,7 +33,7 @@ function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
 
 const EXPRESSION_SQL = 'SELECT id FROM expressions WHERE id = ?';
 const LOCALE_SQL = 'SELECT id FROM language_locales WHERE code = ?';
-const READING_COLUMNS = 'r.expression_id, r.locale_id, l.code AS language_locale_code, r.scheme, r.value, r.source_id';
+const READING_COLUMNS = 'r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id';
 const FIND_READING_SQL = `SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? AND r.locale_id=? AND r.scheme=? AND r.value=?`;
 const INSERT_READING_SQL = 'INSERT INTO expression_readings(expression_id, locale_id, scheme, value, source_id) VALUES (?, ?, ?, ?, ?)';
 const SOURCE_SQL = 'SELECT id FROM sources WHERE type = ? AND name = ?';

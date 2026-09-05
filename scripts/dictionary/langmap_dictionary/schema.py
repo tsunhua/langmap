@@ -54,6 +54,12 @@ CREATE TABLE IF NOT EXISTS input_forms (
   PRIMARY KEY (release_id, entry_key, ordinal),
   FOREIGN KEY (release_id, entry_key) REFERENCES input_entries(release_id, entry_key) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS input_mappings (
+  release_id TEXT NOT NULL, entry_key TEXT NOT NULL, ordinal INTEGER NOT NULL,
+  value TEXT NOT NULL, raw_json TEXT NOT NULL,
+  PRIMARY KEY (release_id, entry_key, ordinal),
+  FOREIGN KEY (release_id, entry_key) REFERENCES input_entries(release_id, entry_key) ON DELETE CASCADE
+);
 CREATE TABLE IF NOT EXISTS input_pronunciations (
   release_id TEXT NOT NULL, entry_key TEXT NOT NULL, ordinal INTEGER NOT NULL,
   value TEXT NOT NULL, scheme TEXT NOT NULL, raw_json TEXT NOT NULL,

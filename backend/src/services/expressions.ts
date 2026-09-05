@@ -5,7 +5,7 @@ import { resolveSource, type SourceInput } from './provenance';
 import { SourceError } from './sources';
 
 const EXPRESSION_COLUMNS = `e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at`;
-const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, r.scheme, r.value, r.source_id`;
+const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id`;
 export class ExpressionError extends Error { constructor(public code: string) { super(code); this.name = 'ExpressionError'; } }
 
 export async function createExpression(db: D1Database, input: { lang_code: string; text: string; language_locale_code?: string; pos_mask?: number; source?: SourceInput; created_by: number }): Promise<{ expression: ExpressionRow; created: boolean }> {
@@ -37,7 +37,7 @@ export async function getExpression(db: D1Database, id: number): Promise<{ expre
   const expression = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?`).bind(id).first<ExpressionRow>();
   if (!expression) return null;
   const [localeResult, readingResult, posResult] = await Promise.all([
-    db.prepare('SELECT x.expression_id,x.locale_id,l.code AS language_locale_code FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code').bind(id).all<ExpressionLocaleRow>(),
+    db.prepare('SELECT x.expression_id,x.locale_id,l.code AS language_locale_code,l.name AS locale_display_name FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code').bind(id).all<ExpressionLocaleRow>(),
     db.prepare(`SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value`).bind(id).all<ReadingRow>(),
     db.prepare('SELECT code,name_en FROM parts_of_speech WHERE (? & (1 << bit_index)) != 0 ORDER BY sort_order').bind(expression.pos_mask).all<ExpressionPartOfSpeech>(),
   ]);

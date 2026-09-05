@@ -74,6 +74,13 @@ _POS = {
 _PROFILE_LOCALES = {
     "eng": ("eng", "eng-Latn-US"), "cmn": ("cmn", "cmn-Hant-TW"),
     "cmn-Hant": ("cmn", "cmn-Hant-TW"), "cmn-Hans": ("cmn", "cmn-Hans-CN"),
+    "hak": ("hak", "hak-Hant-TW"), "hak-Hant-TW": ("hak", "hak-Hant-TW"),
+    "hak-Hant-TW_Sixian": ("hak", "hak-Hant-TW_Sixian"),
+    "hak-Hant-TW_Hailu": ("hak", "hak-Hant-TW_Hailu"),
+    "hak-Hant-TW_Dapu": ("hak", "hak-Hant-TW_Dapu"),
+    "hak-Hant-TW_Jaoping": ("hak", "hak-Hant-TW_Jaoping"),
+    "hak-Hant-TW_Zhaoan": ("hak", "hak-Hant-TW_Zhaoan"),
+    "hak-Hant-TW_SouthernSixian": ("hak", "hak-Hant-TW_SouthernSixian"),
     "yue": ("yue", "yue-Hant-HK"),
     "yue-Hant-HK": ("yue", "yue-Hant-HK"),
     "yue-Hans-HK": ("yue", "yue-Hans-HK"),
@@ -322,6 +329,109 @@ class TraditionalChineseEnglishAdapter:
             )
             for index, item in enumerate(entry.pronunciations, 1)
         )
+        form_occurrences: list[NormalizedOccurrence] = []
+        for ordinal, raw_item in enumerate(entry.forms, 1):
+            item = raw_item if isinstance(raw_item, dict) else {"value": raw_item}
+            raw_value = item.get("value") or item.get("text")
+            if not isinstance(raw_value, str) or not raw_value.strip():
+                continue
+            cleaned = canonicalize_text(raw_value)
+            hint = item.get("language") or item.get("language_hint")
+            lang, locale, error = _language(cleaned, hint)
+            form_claim = _claim("entry", entry.entry_key, "form", str(ordinal))
+            form_occurrences.append(NormalizedOccurrence(
+                form_claim,
+                "form",
+                raw_value,
+                cleaned,
+                lang,
+                locale,
+                form_claim,
+                entry.entry_key,
+                None,
+                {"labels": item.get("labels", []), "form_ordinal": ordinal},
+                (error,) if error else (),
+            ))
+            for reading_ordinal, raw_reading in enumerate(item.get("readings") or (), 1):
+                if not isinstance(raw_reading, dict):
+                    continue
+                raw_reading_value = raw_reading.get("value")
+                raw_scheme = raw_reading.get("scheme")
+                if not isinstance(raw_reading_value, str) or not raw_reading_value.strip() or not isinstance(raw_scheme, str):
+                    continue
+                if raw_scheme.strip().lower() == "hakka-pinyin":
+                    reading_scheme = "hakka-pinyin"
+                    reading_locale = str(raw_reading.get("locale") or locale or "hak-Hant-TW")
+                    reading_value = canonicalize_text(raw_reading_value)
+                    reading_errors: tuple[str, ...] = ()
+                else:
+                    reading_scheme = raw_scheme
+                    reading_locale = str(raw_reading.get("locale") or locale) if (raw_reading.get("locale") or locale) else None
+                    reading_value = canonicalize_text(raw_reading_value)
+                    reading_errors = ("unknown_reading_scheme",)
+                extended_readings.append(NormalizedReading(
+                    _claim(form_claim, "reading", str(reading_ordinal)),
+                    entry.entry_key,
+                    raw_reading_value,
+                    reading_value,
+                    reading_scheme,
+                    reading_locale,
+                    reading_errors,
+                    form_claim,
+                ))
+        mapping_occurrences: list[NormalizedOccurrence] = []
+        for ordinal, raw_item in enumerate(entry.mappings, 1):
+            item = raw_item if isinstance(raw_item, dict) else {"value": raw_item}
+            raw_value = item.get("value") or item.get("text")
+            if not isinstance(raw_value, str) or not raw_value.strip():
+                continue
+            cleaned = canonicalize_text(raw_value)
+            hint = item.get("language") or item.get("language_hint")
+            lang, locale, error = _language(cleaned, hint)
+            mapping_claim = _claim("entry", entry.entry_key, "mapping", str(ordinal))
+            cluster = head_cluster if lang == head_lang and cleaned == head.canonical_text else _claim(
+                "mapping", lang or "unknown", cleaned,
+            )
+            mapping_occurrences.append(NormalizedOccurrence(
+                mapping_claim,
+                "equivalent",
+                raw_value,
+                cleaned,
+                lang,
+                locale,
+                cluster,
+                entry.entry_key,
+                None,
+                {"labels": item.get("labels", []), "mapping_ordinal": ordinal, "entry_level": True},
+                (error,) if error else (),
+            ))
+            for reading_ordinal, raw_reading in enumerate(item.get("readings") or (), 1):
+                if not isinstance(raw_reading, dict):
+                    continue
+                raw_reading_value = raw_reading.get("value")
+                raw_scheme = raw_reading.get("scheme")
+                if not isinstance(raw_reading_value, str) or not raw_reading_value.strip() or not isinstance(raw_scheme, str):
+                    continue
+                if raw_scheme.strip().lower() == "hakka-pinyin":
+                    reading_scheme = "hakka-pinyin"
+                    reading_locale = str(raw_reading.get("locale") or locale or "hak-Hant-TW")
+                    reading_value = canonicalize_text(raw_reading_value)
+                    reading_errors: tuple[str, ...] = ()
+                else:
+                    reading_scheme = raw_scheme
+                    reading_locale = str(raw_reading.get("locale") or locale) if (raw_reading.get("locale") or locale) else None
+                    reading_value = canonicalize_text(raw_reading_value)
+                    reading_errors = ("unknown_reading_scheme",)
+                extended_readings.append(NormalizedReading(
+                    _claim(mapping_claim, "reading", str(reading_ordinal)),
+                    entry.entry_key,
+                    raw_reading_value,
+                    reading_value,
+                    reading_scheme,
+                    reading_locale,
+                    reading_errors,
+                    mapping_claim,
+                ))
         senses: list[NormalizedSense] = []
         for sense in entry.senses:
             occurrences: list[NormalizedOccurrence] = []
@@ -388,7 +498,7 @@ class TraditionalChineseEnglishAdapter:
                 cleaned = cleaned.lstrip(".,，。、·").strip()
                 if not cleaned or cleaned.lower() in equivalent_texts:
                     continue
-                if head_lang in {"cmn", "yue"} and _is_han(cleaned):
+                if head_lang in {"cmn", "yue", "hak"} and _is_han(cleaned):
                     continue
                 # A Chinese/Spanish/English definition may contain a single
                 # Greek or Cyrillic symbol as notation; it is not a language
@@ -479,7 +589,18 @@ class TraditionalChineseEnglishAdapter:
                     ))
             pos = tuple(self._pos(sense.sense_key, entry.entry_key, index, value) for index, value in enumerate(sense.pos, 1))
             senses.append(NormalizedSense(sense.sense_key, tuple(occurrences), tuple(extended_readings), pos))
-        return NormalizedEntry(entry.dictionary_key, entry.entry_key, head, tuple(senses), tuple(extended_readings), entry.raw)
+        if form_occurrences and senses:
+            first = senses[0]
+            senses[0] = NormalizedSense(first.sense_key, first.occurrences + tuple(form_occurrences), first.readings, first.pos)
+        return NormalizedEntry(
+            entry.dictionary_key,
+            entry.entry_key,
+            head,
+            tuple(senses),
+            tuple(extended_readings),
+            entry.raw,
+            tuple(mapping_occurrences),
+        )
 
     def _reading(
         self,
@@ -493,7 +614,12 @@ class TraditionalChineseEnglishAdapter:
     ) -> NormalizedReading:
         scheme = item.scheme
         upper = scheme.upper()
-        if "IPA" in upper:
+        if scheme.strip().lower() == "hakka-pinyin":
+            normalized_scheme = "hakka-pinyin"
+            locale = str(item.raw.get("locale") or "hak-Hant-TW")
+            errors = ()
+            value = canonicalize_text(item.value)
+        elif "IPA" in upper:
             # Apple's Chinese->English bundles store the headword pinyin under a
             # ``UK_IPA``-style scheme. Tone-marked Latin is pinyin, not an
             # English IPA reading, so reclassify it to the Chinese locale.
@@ -735,7 +861,11 @@ def _normalize_release_rows(
         compute_started = time.perf_counter()
         try:
             normalized = adapter.normalize_entry(entry)
-            values = (normalized.headword, *(occurrence for sense in normalized.senses for occurrence in sense.occurrences))
+            values = (
+                normalized.headword,
+                *(occurrence for sense in normalized.senses for occurrence in sense.occurrences),
+                *normalized.mappings,
+            )
             for occurrence in values:
                 occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
                 if occurrence.errors:

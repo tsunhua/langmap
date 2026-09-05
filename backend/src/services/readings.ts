@@ -3,7 +3,7 @@ import type { ReadingRow } from '../types/expression';
 import { SourceError } from './sources';
 import { resolveSource, type SourceInput } from './provenance';
 
-const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, r.scheme, r.value, r.source_id`;
+const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id`;
 const SCHEME_RE = /^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$/;
 export class ReadingError extends Error { constructor(public code: string) { super(code); this.name = 'ReadingError'; } }
 export function validateReadingScheme(scheme: string): boolean { return SCHEME_RE.test(scheme); }

@@ -605,3 +605,58 @@ def test_adapter_accepts_chhoetaigi_language_hints_and_tailo_readings():
     assert [(reading.scheme, reading.locale_code, reading.value) for reading in normalized.readings] == [
         ("tailo", "nan-Hant-CN", "kiânn")
     ]
+
+
+def test_adapter_maps_hakka_dialects_and_mapping_readings_to_equivalent_occurrences():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "tw.edu.moe.hakkadict", "tw.edu.moe.hakkadict:HK1", "食", "食", None,
+        "hak-Hant-TW-to-cmn-Hant", "a" * 64,
+        pronunciations=(StagedPronunciation(1, "siid11", "hakka-pinyin", {"locale": "hak-Hant-TW_Sixian"}),),
+        mappings=({
+            "value": "食个",
+            "language_hint": "hak-Hant-TW_Dapu",
+            "readings": [{"value": "shid33", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Dapu"}],
+            "labels": ["source-related-word"],
+        },),
+        senses=(StagedSense("tw.edu.moe.hakkadict:HK1:sense:1", 1, definitions=("漢字釋義",), equivalents=()),),
+    )
+
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.lang_code == "hak"
+    assert normalized.headword.locale_code == "hak-Hant-TW"
+    assert [(reading.scheme, reading.locale_code) for reading in normalized.readings] == [
+        ("hakka-pinyin", "hak-Hant-TW_Sixian"),
+        ("hakka-pinyin", "hak-Hant-TW_Dapu"),
+    ]
+    mappings = list(normalized.mappings)
+    assert [(mapping.occurrence_kind, mapping.lang_code, mapping.locale_code, mapping.sense_key) for mapping in mappings] == [
+        ("equivalent", "hak", "hak-Hant-TW_Dapu", None),
+    ]
+    assert normalized.readings[1].target_claim_key == mappings[0].claim_key
+    assert mappings[0].metadata["entry_level"] is True
+    assert not any(occurrence.lang_code == "cmn" for sense in normalized.senses for occurrence in sense.occurrences)
+
+
+def test_adapter_shares_nonself_mapping_clusters_and_folds_self_targets():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "tw.edu.moe.hakkadict", "tw.edu.moe.hakkadict:HK2", "祖先", "祖先", None,
+        "hak-Hant-TW-to-cmn-Hant", "a" * 64,
+        mappings=(
+            {"value": "祖先", "language_hint": "hak-Hant-TW_Zhaoan", "readings": [{"value": "zu31 sien11", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Zhaoan"}]},
+            {"value": "阿怙", "language_hint": "hak-Hant-TW_Dapu", "readings": [{"value": "a11 u24", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_Dapu"}]},
+            {"value": "阿怙", "language_hint": "hak-Hant-TW_SouthernSixian", "readings": [{"value": "a11 vu24", "scheme": "hakka-pinyin", "locale": "hak-Hant-TW_SouthernSixian"}]},
+        ),
+        senses=(StagedSense("tw.edu.moe.hakkadict:HK2:sense:1", 1, definitions=("漢字釋義",), equivalents=()),),
+    )
+
+    normalized = adapter.normalize_entry(entry)
+    self_mapping, dapu_mapping, southern_mapping = normalized.mappings
+    assert self_mapping.cluster_key == normalized.headword.cluster_key
+    assert dapu_mapping.cluster_key == southern_mapping.cluster_key
+    assert [reading.target_claim_key for reading in normalized.readings] == [
+        self_mapping.claim_key,
+        dapu_mapping.claim_key,
+        southern_mapping.claim_key,
+    ]

@@ -13,6 +13,12 @@ from typing import Any, Callable, Mapping
 RELATION_MAPPING = 1
 RELATION_SYNONYM = 2
 RELATION_EXAMPLE = 4
+# The Hakka dictionary's example column is a parenthetical cmn gloss of the
+# headword (e.g. 青瞑仔（盲人）, 已煞（很果決、相當果決）), i.e. a meaning
+# association rather than a usage sentence, so those pairs join the mapping
+# graph as mappings while example translations from other dictionaries stay
+# example-only evidence.
+PAREN_GLOSS_SOURCE = "tw.edu.moe.hakkadict"
 ProgressCallback = Callable[[dict[str, Any]], None]
 
 
@@ -491,10 +497,11 @@ def import_release_to_local_d1(
             left = cluster_ids.get(str(text_row["cluster_key"]))
             right = cluster_ids.get(str(row["cluster_key"]))
             if left is not None and right is not None:
-                edge_id = _upsert_edge(context, left, right, RELATION_EXAMPLE, system_user_id)
+                entry_key = str(text_row["entry_key"])
+                source_key = entry_sources.get(entry_key, "dictionary")
+                relation = RELATION_MAPPING if source_key == PAREN_GLOSS_SOURCE else RELATION_EXAMPLE
+                edge_id = _upsert_edge(context, left, right, relation, system_user_id)
                 if edge_id is not None:
-                    entry_key = str(text_row["entry_key"])
-                    source_key = entry_sources.get(entry_key, "dictionary")
                     context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(entry_key, "")})
                     edges += 1
         _report_progress(progress, write_started, "d1_write", "edges", edges, edges)

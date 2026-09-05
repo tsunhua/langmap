@@ -10,10 +10,10 @@ describe('expressions API', () => {
   it('encodes IDs and unwraps the API envelope', async () => {
     const id = '123456'
     await getExpression(id)
-    expect(api.get).toHaveBeenCalledWith(`/expressions/${id}`, { signal: undefined })
+    expect(api.get).toHaveBeenCalledWith(`/expressions/${id}`, { params: { _content_revision: 0 }, signal: undefined })
 
     await getMappingGraph(id, 2)
-    expect(api.get).toHaveBeenLastCalledWith(`/expressions/${id}/graph`, { params: { hops: 2 }, signal: undefined })
+    expect(api.get).toHaveBeenLastCalledWith(`/expressions/${id}/graph`, { params: { hops: 2, _content_revision: 0 }, signal: undefined })
 
     await getExpressionEdges(id, 50, 10)
     expect(api.get).toHaveBeenLastCalledWith(`/expressions/${id}/edges`, { params: { limit: 50, cursor: 10 }, signal: undefined })
