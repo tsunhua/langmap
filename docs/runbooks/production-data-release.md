@@ -70,7 +70,7 @@ identity mismatch、plan commit 改變、ownership 不明或 verify 失敗時停
 
 - 不繞過 plan、confirmation 或 bookmark gate。
 - 不在 apply 腳本中呼叫 deploy。
-- 不在沒有 postflight verify 的情況下宣告 release 成功。
+- 不在沒有 mirror replay 與 postflight verify 的情況下宣告 release 成功。
 
 ## 單一準備入口
 
@@ -89,4 +89,4 @@ python3 scripts/dictionary/release_dictionary.py \
 
 需要在線上執行受管 D1 apply 時，額外加入 `--apply`、`--database-name <完整資料庫名稱>`
 與 `--confirm-production <完整資料庫名稱>`；兩個名稱必須完全相同。大型 delta 可加
-`--split`。此入口不執行 Web deploy。
+`--split`。apply 成功後會 replay 同一份 delta 回 mirror 並檢查外鍵；此入口不執行 Web deploy。

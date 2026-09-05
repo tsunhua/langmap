@@ -22,6 +22,7 @@ import argparse
 import json
 import os
 import re
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,11 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "db"))
 from incremental_import import run_incremental_import  # noqa: E402
 from export_dictionary_delta import export_delta  # noqa: E402
 from lib.paths import ProjectPaths  # noqa: E402
-from lib.production import apply_production, plan_production  # noqa: E402
+from lib.production import (  # noqa: E402
+    _approved_sql_batches,
+    apply_production,
+    plan_production,
+)
 
 
 RELEASE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -105,6 +110,23 @@ def _relative(repo_root: Path, path: Path) -> Path:
         return path.resolve().relative_to(repo_root.resolve())
     except ValueError as exc:
         raise ValueError(f"release artifact 必須位於 repository 內：{path}") from exc
+
+
+def replay_delta_to_mirror(d1_database: Path, delta_path: Path) -> dict[str, Any]:
+    """Idempotently replay the approved delta and check the mirror's FKs."""
+
+    batches = 0
+    with sqlite3.connect(d1_database, timeout=60) as connection:
+        connection.execute("PRAGMA foreign_keys=ON")
+        for _batch_index, batch in _approved_sql_batches(delta_path):
+            connection.executescript(batch)
+            batches += 1
+        foreign_key_errors = connection.execute("PRAGMA foreign_key_check").fetchall()
+        if foreign_key_errors:
+            raise RuntimeError(
+                f"mirror foreign_key_check failed with {len(foreign_key_errors)} rows"
+            )
+    return {"status": "replayed", "batches": batches}
 
 
 def run_release(args: argparse.Namespace) -> dict[str, Any]:
@@ -199,6 +221,7 @@ def run_release(args: argparse.Namespace) -> dict[str, Any]:
     )
     summary["status"] = applied["status"]
     summary["apply"] = applied
+    summary["replay"] = replay_delta_to_mirror(d1_database, delta_path)
     return summary
 
 

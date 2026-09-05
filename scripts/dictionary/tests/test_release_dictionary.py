@@ -1,16 +1,42 @@
 from __future__ import annotations
 
-import json
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from scripts.dictionary.release_dictionary import build_parser, run_release
+from scripts.dictionary.release_dictionary import (
+    build_parser,
+    replay_delta_to_mirror,
+    run_release,
+)
 from scripts.db.tests.test_local_rebuild import build_fixture_repo
 
 
 class ReleaseDictionaryTests(unittest.TestCase):
+    def test_replay_delta_is_batched_and_checks_foreign_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            database = root / "mirror.sqlite"
+            delta = root / "delta.sql"
+            with sqlite3.connect(database) as connection:
+                connection.execute("CREATE TABLE entries (id INTEGER PRIMARY KEY, text TEXT NOT NULL)")
+                connection.commit()
+            delta.write_text(
+                "PRAGMA defer_foreign_keys=TRUE;\n"
+                "INSERT OR IGNORE INTO entries (id, text) VALUES (1, 'one');\n"
+                "INSERT OR IGNORE INTO entries (id, text) VALUES (2, 'two');\n"
+                "PRAGMA defer_foreign_keys=FALSE;\n",
+                encoding="utf-8",
+            )
+
+            result = replay_delta_to_mirror(database, delta)
+
+            self.assertEqual(result, {"status": "replayed", "batches": 1})
+            with sqlite3.connect(database) as connection:
+                self.assertEqual(connection.execute("SELECT COUNT(*) FROM entries").fetchone()[0], 2)
+
     def test_prepare_runs_import_delta_manifest_and_plan_as_one_flow(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

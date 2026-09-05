@@ -413,7 +413,7 @@ git commit -m "feat: verify dictionary release counts"
 - Modify: `TODO.md`
 
 **Interfaces:**
-- Provides one entry point for import → before snapshot reuse → delta／postflight manifest → production plan.
+- Provides one entry point for import → before snapshot reuse → delta／postflight manifest → production plan/apply → mirror replay.
 - Defaults to plan-only; `--apply` requires exact `--database-name` and `--confirm-production` values.
 - Supports `--split`, `--refresh-language-statistics`, `--only`, and importer resume options.
 
@@ -425,8 +425,9 @@ artifacts in the production plan, and refuses `--apply` without an exact databas
 - [x] **Step 2: Implement the single entry point**
 
 Keep the existing importer, exporter, and managed production apply as the underlying operations;
-the CLI only composes them and emits one JSON summary. A run with only skipped inputs exits as a
-successful no-op and never creates a duplicate delta.
+the CLI composes them, replays the approved delta idempotently after a successful apply, and emits
+one JSON summary. A run with only skipped inputs exits as a successful no-op and never creates a
+duplicate delta.
 
 - [x] **Step 3: Document the safe invocation and apply gate**
 

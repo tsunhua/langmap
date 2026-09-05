@@ -13,8 +13,8 @@
     的計數，以及 deterministic source／locale／reading／mapping samples；plan 先做
     production before-count／sample gate，apply 完成後再做 after-count／sample gate。
   - 單一入口 `scripts/dictionary/release_dictionary.py` 會串起 snapshot → import →
-    delta／manifest → plan；預設 plan-only，`--apply` 仍受 exact database confirmation
-    gate 保護，Web deploy 維持獨立操作。
+    delta／manifest → plan/apply → replay；預設 plan-only，`--apply` 仍受 exact database
+    confirmation gate 保護，Web deploy 維持獨立操作。
 
 ## 詞典讀音資料修復
 
