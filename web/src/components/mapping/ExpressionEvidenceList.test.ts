@@ -49,8 +49,8 @@ describe('ExpressionEvidenceList', () => {
     const wrapper = mount(ExpressionEvidenceList, {
       props: {
         readings: [
-          { language_locale_code: 'cmn-Hant-TW', scheme: 'pinyin', value: 'chǎojià' },
-          { language_locale_code: 'cmn-Hant-TW', scheme: 'pinyin', value: 'chǎo jià' },
+          { language_locale_code: 'cmn-Hant-TW', locale_display_name: '華語', scheme: 'pinyin', value: 'chǎojià' },
+          { language_locale_code: 'cmn-Hant-TW', locale_display_name: '華語', scheme: 'pinyin', value: 'chǎo jià' },
         ],
       },
     })
@@ -58,6 +58,7 @@ describe('ExpressionEvidenceList', () => {
     expect(wrapper.findAll('.rx-item')).toHaveLength(1)
     expect(wrapper.find('.rx-item').text()).toContain('chǎo jià')
     expect(wrapper.find('.rx-item').text()).not.toContain('chǎojià')
+    expect(wrapper.find('.rx-locales').text()).toBe('(TW · 華語)')
   })
 
   it('uses the local name for extended locale readings', () => {

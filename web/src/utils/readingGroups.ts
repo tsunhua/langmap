@@ -60,3 +60,11 @@ export function readingLocaleLabel(reading: ExpressionReading): string {
   if (displayName) return region ? `${region} · ${displayName}` : displayName
   return region ?? reading.language_locale_code
 }
+
+export function uniqueReadingLocaleLabels(readings: readonly ExpressionReading[]): string[] {
+  return [...new Set(readings.map(readingLocaleLabel))]
+}
+
+export function uniqueReadingLocaleCodes(readings: readonly ExpressionReading[]): string[] {
+  return [...new Set(readings.map((reading) => reading.language_locale_code))]
+}

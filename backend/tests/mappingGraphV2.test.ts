@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { getMappingGraph } from '../src/services/mappingGraph';
 
 type Edge = { id: number; expression_a_id: number; expression_b_id: number; relation_mask: number; score: number };
-type NodeSeed = Record<number, { text: string; lang_code: string }>;
+type NodeSeed = Record<number, { text: string; lang_code: string; language_name?: string }>;
 
 /**
  * Emulates the three query shapes the service issues:
  * 1. root lookup  SELECT ... FROM expressions e JOIN languages l ... WHERE e.id=?
  * 2. edge lookup  SELECT ... FROM expression_edges WHERE ... IN (...) AND semantic relation mask
- * 3. node lookup  SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ... WHERE e.id IN (...)
+ * 3. node lookup  SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ... WHERE e.id IN (...)
  */
 function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
   return {
@@ -69,6 +69,23 @@ describe('getMappingGraph', () => {
     // Unresolved registry names fall back to the language code.
     expect(graph?.nodes[0]).toMatchObject({ lang_code: 'nan', language_name: 'nan' });
     expect(new Set(graph?.edges.map((edge) => edge.edge_id)).size).toBe(graph?.edges.length);
+  });
+
+  it('includes registry language names on graph nodes', async () => {
+    const nodes: NodeSeed = {
+      1: { text: '食', lang_code: 'nan', language_name: 'Min Nan Chinese' },
+      2: { text: 'rice', lang_code: 'eng', language_name: 'English' },
+    };
+    const edges: Edge[] = [
+      { id: 1, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 0 },
+    ];
+
+    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+
+    expect(graph?.nodes).toEqual([
+      { expression_id: 1, text: '食', lang_code: 'nan', language_name: 'Min Nan Chinese', depth: 0 },
+      { expression_id: 2, text: 'rice', lang_code: 'eng', language_name: 'English', depth: 1 },
+    ]);
   });
 
   it('does not traverse example-only edges as semantic mappings', async () => {

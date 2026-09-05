@@ -44,4 +44,16 @@ describe('buildLanguageFilterOptions', () => {
 
     expect(result).toEqual([{ code: 'jpn', name: 'jpn', count: 1 }])
   })
+
+  it('falls back to names carried by the graph when the language store has no name', () => {
+    const value = graph([
+      { expression_id: 'root', lang_code: 'eng', depth: 0 },
+      { expression_id: 'a', lang_code: 'hak', depth: 1 },
+    ])
+    value.nodes[1].language_name = 'Hakka Chinese'
+
+    expect(buildLanguageFilterOptions(value, (code) => code, 1)).toEqual([
+      { code: 'hak', name: 'Hakka Chinese', count: 1 },
+    ])
+  })
 })

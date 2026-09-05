@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { readingSchemeLabel } from '@/utils/readingLabel'
-import { groupReadings, hasMultipleReadingSchemes, readingLocaleLabel } from '@/utils/readingGroups'
+import { groupReadings, hasMultipleReadingSchemes, uniqueReadingLocaleLabels, uniqueReadingLocaleCodes } from '@/utils/readingGroups'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 
 const props = defineProps<{ locales?: ExpressionLocale[]; attestations?: ExpressionLocale[]; readings: ExpressionReading[] }>()
@@ -15,11 +15,11 @@ const readingGroups = computed(() => groupReadings(props.readings))
 const showReadingScheme = computed(() => hasMultipleReadingSchemes(readingGroups.value))
 
 function readingLocalesLabel(readings: ExpressionReading[]) {
-  return readings.map(readingLocaleLabel).join(', ')
+  return uniqueReadingLocaleLabels(readings).join(', ')
 }
 
 function readingLocalesTitle(readings: ExpressionReading[]) {
-  return readings.map((reading) => reading.language_locale_code).join(', ')
+  return uniqueReadingLocaleCodes(readings).join(', ')
 }
 </script>
 

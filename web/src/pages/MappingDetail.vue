@@ -25,7 +25,7 @@ import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useLanguagesStore } from '@/stores/languages'
 import { readingSchemeLabel } from '@/utils/readingLabel'
-import { groupReadings, hasMultipleReadingSchemes, readingLocaleLabel } from '@/utils/readingGroups'
+import { groupReadings, hasMultipleReadingSchemes, uniqueReadingLocaleLabels, uniqueReadingLocaleCodes } from '@/utils/readingGroups'
 import type { ReadingGroup } from '@/utils/readingGroups'
 
 const { t } = useI18n()
@@ -417,11 +417,11 @@ const anchorReadingGroups = computed(() => groupReadings(expr.value?.readings ??
 const showAnchorReadingScheme = computed(() => hasMultipleReadingSchemes(anchorReadingGroups.value))
 
 function anchorReadingLocalesLabel(readings: ReadingGroup['readings']) {
-  return readings.map(readingLocaleLabel).join(', ')
+  return uniqueReadingLocaleLabels(readings).join(', ')
 }
 
 function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
-  return readings.map((reading) => reading.language_locale_code).join(', ')
+  return uniqueReadingLocaleCodes(readings).join(', ')
 }
 
 </script>
