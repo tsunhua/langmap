@@ -2,8 +2,11 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Search, Menu, X, Plus } from 'lucide-vue-next'
+import { Menu, X, Plus } from 'lucide-vue-next'
 import LangSwitcher from './LangSwitcher.vue'
+import ExpressionSearchControls from '@/components/search/ExpressionSearchControls.vue'
+import { useLocaleParams } from '@/composables/useLocaleParams'
+import { useSearchLanguages } from '@/composables/useSearchLanguages'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -12,15 +15,70 @@ const auth = useAuthStore()
 const { t } = useI18n()
 
 const searchQuery = ref('')
+const searchLanguage = ref('')
+const searchLanguageMissing = ref(false)
 const menuOpen = ref(false)
 const drawerEl = ref<HTMLElement | null>(null)
 const toggleEl = ref<HTMLElement | null>(null)
-const searchInput = ref<HTMLInputElement | null>(null)
+const desktopSearchControls = ref<InstanceType<typeof ExpressionSearchControls> | null>(null)
+const drawerSearchControls = ref<InstanceType<typeof ExpressionSearchControls> | null>(null)
+const localeParams = useLocaleParams()
+const searchLanguages = useSearchLanguages()
+
+async function initializeSearchLanguage() {
+  try {
+    await searchLanguages.loadSearchLanguages(localeParams.value)
+    searchLanguage.value = searchLanguages.resolveSearchLanguage(searchLanguage.value)
+    if (searchLanguage.value) searchLanguageMissing.value = false
+  } catch {
+    searchLanguage.value = ''
+  }
+}
+
+function onSearchLanguageUpdate(value: string) {
+  searchLanguage.value = value
+  searchLanguageMissing.value = false
+}
+
+function controlsHost(control: InstanceType<typeof ExpressionSearchControls>): HTMLElement | null {
+  const root = control.$el as HTMLElement | null
+  return root?.closest('.search-center, .drawer-search') as HTMLElement | null
+}
+
+function isControlsVisible(control: InstanceType<typeof ExpressionSearchControls>): boolean {
+  const host = controlsHost(control)
+  if (!host) return true
+  const style = typeof window.getComputedStyle === 'function' ? window.getComputedStyle(host) : null
+  if (style?.display === 'none' || style?.visibility === 'hidden') return false
+  // jsdom does not calculate layout boxes. In a real browser, a mounted
+  // control with no box is hidden; retain a permissive fallback for tests.
+  if (host.getClientRects().length > 0 || host.offsetParent !== null) return true
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 960px)').matches) return false
+  return true
+}
+
+function visibleSearchControls() {
+  if (menuOpen.value && drawerSearchControls.value && isControlsVisible(drawerSearchControls.value)) {
+    return drawerSearchControls.value
+  }
+  if (desktopSearchControls.value && isControlsVisible(desktopSearchControls.value)) {
+    return desktopSearchControls.value
+  }
+  if (drawerSearchControls.value && isControlsVisible(drawerSearchControls.value)) {
+    return drawerSearchControls.value
+  }
+  return null
+}
 
 function onSearch() {
   const q = searchQuery.value.trim()
   if (!q) return
-  router.push({ path: '/search', query: { q } })
+  if (!searchLanguage.value) {
+    searchLanguageMissing.value = true
+    nextTick(() => visibleSearchControls()?.focusLanguage())
+    return
+  }
+  router.push({ path: '/search', query: { q, lang: searchLanguage.value } })
   menuOpen.value = false
 }
 
@@ -47,14 +105,18 @@ function toggleMenu() {
 
 function isTyping() {
   const el = document.activeElement as HTMLElement | null
-  return !!el && /input|textarea|select/i.test(el.tagName)
+  if (!el) return false
+  if (/input|textarea|select/i.test(el.tagName)) return true
+  if (el.tagName.toLowerCase() === 'button' && el.getAttribute('role') === 'combobox') return true
+  return el.isContentEditable || el.getAttribute('contenteditable') === '' || el.getAttribute('contenteditable') === 'true'
 }
 
 function onKeydown(e: KeyboardEvent) {
-  // "/" focuses desktop search when not already typing elsewhere
-  if (e.key === '/' && !isTyping() && searchInput.value) {
+  // "/" focuses the visible search control when not already typing elsewhere.
+  const controls = e.key === '/' && !isTyping() ? visibleSearchControls() : null
+  if (controls) {
     e.preventDefault()
-    searchInput.value.focus()
+    controls.focusSearch()
     return
   }
   if (!menuOpen.value) return
@@ -70,34 +132,44 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
+onMounted(() => { void initializeSearchLanguage() })
+watch(
+  () => [localeParams.value.ui_locale, localeParams.value.secondary_ui_locale],
+  () => { void initializeSearchLanguage() },
+)
+
 // Close the mobile drawer whenever the route changes.
 watch(() => route.path, () => { menuOpen.value = false })
 </script>
 
 <template>
   <header class="appbar">
-    <router-link to="/" class="brand" :aria-label="`${t('nav.home')} LangMap`">
-      Lang<span class="em">Map</span>
-    </router-link>
+    <div class="left-group">
+      <router-link to="/" class="brand" :aria-label="`${t('nav.home')} LangMap`">
+        Lang<span class="em">Map</span>
+      </router-link>
 
-    <nav class="appnav" :aria-label="t('nav.menu')">
-      <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
-      <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
-    </nav>
+      <nav class="appnav" :aria-label="t('nav.menu')">
+        <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
+        <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
+      </nav>
+    </div>
 
-    <div class="right-group">
-      <form v-if="route.path !== '/search'" class="top-search" role="search" @submit.prevent="onSearch">
-        <Search :size="14" aria-hidden="true" />
-        <kbd>/</kbd>
-        <input
-          ref="searchInput"
-          v-model="searchQuery"
-          type="search"
-          :placeholder="`${t('nav.searchExpressions')}…`"
-          :aria-label="t('nav.searchExpressions')"
+    <div v-if="route.path !== '/search'" class="search-center">
+      <form class="top-search" role="search" @submit.prevent="onSearch">
+        <ExpressionSearchControls
+          ref="desktopSearchControls"
+          v-model:query="searchQuery"
+          v-model:language="searchLanguage"
+          :language-required="searchLanguageMissing"
+          @update:language="onSearchLanguageUpdate"
+          @submit="onSearch"
         />
         <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
       </form>
+    </div>
+
+    <div class="right-group">
       <router-link to="/contribute" class="btn btn-primary btn-sm contrib-btn">
         <Plus :size="14" aria-hidden="true" /> {{ t('nav.contribute') }}
       </router-link>
@@ -123,12 +195,13 @@ watch(() => route.path, () => { menuOpen.value = false })
     <transition name="drawer">
       <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" :aria-label="t('nav.menu')">
         <form v-if="route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
-          <Search :size="16" aria-hidden="true" />
-          <input
-            v-model="searchQuery"
-            type="search"
-            :placeholder="`${t('nav.searchExpressions')}…`"
-            :aria-label="t('nav.searchExpressions')"
+          <ExpressionSearchControls
+            ref="drawerSearchControls"
+            v-model:query="searchQuery"
+            v-model:language="searchLanguage"
+            :language-required="searchLanguageMissing"
+            @update:language="onSearchLanguageUpdate"
+            @submit="onSearch"
           />
           <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
         </form>
@@ -150,6 +223,12 @@ watch(() => route.path, () => { menuOpen.value = false })
 </template>
 
 <style scoped>
+.appbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 560px) minmax(0, 1fr);
+  align-items: center;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -175,7 +254,14 @@ watch(() => route.path, () => { menuOpen.value = false })
 .brand:hover {
   border-color: var(--muted);
 }
-.appnav { display: flex; gap: 2px; margin-left: 8px; }
+.left-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-self: start;
+}
+.appnav { display: flex; gap: 2px; }
 .appnav a {
   font-family: var(--mono);
   font-size: 14px;
@@ -190,36 +276,21 @@ watch(() => route.path, () => { menuOpen.value = false })
 }
 .appnav a:hover, .appnav a.on { color: var(--fg); background: var(--bg); }
 
+.search-center {
+  grid-column: 2;
+  width: 100%;
+  min-width: 0;
+  justify-self: center;
+}
 .top-search {
-  display: flex; align-items: center; gap: 6px;
-  position: relative;
-  color: var(--muted);
-}
-.top-search input {
-  width: 220px;
-  height: 30px;
-  padding: 0 30px 0 28px;
-  font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--surface);
-  color: var(--fg);
-}
-.top-search input:focus { outline: none; border-color: var(--accent); }
-.top-search :deep(svg) { position: absolute; left: 8px; }
-.top-search kbd {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-family: var(--mono); font-size: 12px;
-  border: 1px solid var(--border); border-radius: 2px;
-  padding: 1px 5px; color: var(--muted); background: var(--surface);
-  pointer-events: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .right-group {
-  margin-left: auto;
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -263,14 +334,10 @@ a.user-badge:hover {
   box-shadow: 0 8px 20px oklch(0 0 0 / 0.08);
 }
 .drawer-search {
-  display: flex; align-items: center; gap: 8px; position: relative;
-  color: var(--muted); margin-bottom: 12px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 12px;
 }
-.drawer-search input {
-  flex: 1; height: 44px; padding: 0 12px 0 36px;
-  font-size: 16px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface);
-}
-.drawer-search :deep(svg) { position: absolute; left: 10px; }
 .drawer-nav { display: flex; flex-direction: column; }
 .drawer-nav a {
   padding: 12px 4px; min-height: 44px; display: flex; align-items: center;
@@ -291,13 +358,56 @@ a.user-badge:hover {
 .drawer-enter-active, .drawer-leave-active { transition: opacity 0.18s, transform 0.18s; }
 .drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(-8px); }
 
-@media (max-width: 768px) {
+@media (max-width: 1180px) {
+  .appbar {
+    grid-template-columns: auto minmax(320px, 1fr) auto;
+  }
+  .search-center {
+    max-width: 440px;
+  }
+}
+
+@media (max-width: 960px) {
+  .appbar {
+    display: flex;
+  }
   .appnav,
-  .top-search,
+  .search-center,
   .right-group,
   .lang-inline {
     display: none;
   }
   .menu-toggle { display: inline-flex; width: 44px; height: 44px; }
+
+  .drawer-search :deep(.expression-search) {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+  }
+  .drawer-search :deep(.expression-search-language-wrap) {
+    border: 0;
+  }
+  .drawer-search :deep(.expression-search-language),
+  .drawer-search :deep(.expression-search-query) {
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--surface);
+  }
+  .drawer-search :deep(.expression-search-language) {
+    height: 44px;
+  }
+  .drawer-search :deep(.expression-search-query) {
+    padding: 0 12px;
+  }
+  .drawer-search :deep(.expression-search-input) {
+    min-height: 44px;
+  }
+  .drawer-search :deep(.expression-search-dropdown) {
+    width: 100%;
+    max-width: none;
+  }
 }
 </style>

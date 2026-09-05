@@ -37,6 +37,11 @@ export const en = {
     hint: 'Tip: search currently matches expression text. Translation (semantic) search is coming later.',
     loadFailed: 'Search failed',
     languageRequired: 'Select a language to search in',
+    chooseLanguage: 'Choose a language',
+    recentLanguages: 'Recent languages',
+    allLanguages: 'All languages',
+    languagesLoadFailed: 'Unable to load searchable languages',
+    expressionsAvailable: '{count} expressions',
   },
   expression: {
     imageAlt: 'Expression image',
