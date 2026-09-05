@@ -15,7 +15,8 @@
 
 只有 operator 審核 plan 後，才可使用 plan 指定的 production apply gate。apply 會先
 取得 bookmark，依 migration → approved data → reference bundles → verify 順序執行，
-且不自動 deploy。
+且不自動 deploy。每個 mutation stage 成功後會寫入 operation journal；舊 plan 沒有
+`reference_artifacts` 欄位時維持 full-reference 行為。
 
 ```bash
 ./scripts/db/manage.sh production apply \
@@ -27,7 +28,9 @@
 ## 失敗處理
 
 任一 preflight、checksum、SQL 或 postflight verify 失敗即停止；查看 operation journal
-與 bookmark，交由 operator 決定是否 restore。不要手動重放後續 stage。
+與 bookmark。暫時性失敗以同一 plan 重跑，已完成的 `migrations-applied`、`data-applied`
+與 `references-applied` stage 不會再次執行，且沿用第一次 mutation 前的 bookmark。
+若需回退，必須使用該 bookmark；不要手動重放後續 stage。
 
 ## 禁止事項
 
