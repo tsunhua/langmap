@@ -50,6 +50,7 @@ const isMobile = ref(false)
 
 const isFullscreen = ref(false)
 const MAX_HOPS = 3
+const ANONYMOUS_MAX_HOPS = 2
 const showQuickAdd = ref(false)
 const quickAddText = ref('')
 const quickAddLang = ref('')
@@ -62,6 +63,7 @@ const splitSubmitting = ref(false)
 const splitError = ref('')
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
+const maxHops = computed<2 | 3>(() => auth.isLoggedIn ? MAX_HOPS : ANONYMOUS_MAX_HOPS)
 const morphFormOpen = ref(false)
 
 const isMorphWord = computed(() => {
@@ -95,16 +97,16 @@ function toggleFullscreen() {
 let mql: MediaQueryList | null = null
 let mqlListener: ((e: MediaQueryListEvent) => void) | null = null
 
-function parseHops(value: unknown): 1 | 2 | 3 {
+function parseHops(value: unknown, maximum: 2 | 3 = MAX_HOPS): 1 | 2 | 3 {
   const n = typeof value === 'string' ? parseInt(value) : NaN
   if (n === 2) return 2
-  if (n === 3) return 3
+  if (n === 3) return maximum === 3 ? 3 : 2
   return 1
 }
 
 function initFromUrl() {
   const h = route.query.hops
-  if (h) hops.value = parseHops(h)
+  if (h) hops.value = parseHops(h, maxHops.value)
   const nodeId = typeof route.query.node === 'string' ? route.query.node : null
   if (nodeId) selectedNodeId.value = nodeId
   const rawTargetLanguages = typeof route.query.target_language === 'string' ? route.query.target_language : ''
@@ -195,14 +197,15 @@ watch(id, () => {
 
 watch([() => localization.locale, () => localization.secondary], () => { load() })
 
-async function changeHops(h: 1 | 2 | 3) {
+async function changeHops(h: number) {
+  const nextHops = Math.min(Math.max(Math.trunc(h), 1), maxHops.value) as 1 | 2 | 3
   const request = ++graphRequest
   const requestedId = id.value
-  hops.value = h
+  hops.value = nextHops
   loadError.value = ''
   updatingHops.value = true
   try {
-    const nextGraph = await mappingGraph(requestedId, h, localeParams.value, targetLanguageCodes.value.join(',') || undefined)
+    const nextGraph = await mappingGraph(requestedId, nextHops, localeParams.value, targetLanguageCodes.value.join(',') || undefined)
     if (request !== graphRequest || requestedId !== id.value) return
     graph.value = nextGraph
     trySelectNodeFromUrl()
@@ -217,6 +220,9 @@ async function changeHops(h: 1 | 2 | 3) {
 }
 
 watch(hops, () => syncUrl())
+watch(maxHops, (maximum) => {
+  if (hops.value > maximum) void changeHops(maximum)
+})
 watch(targetLanguageCodes, () => { syncUrl(); if (graph.value) void changeHops(hops.value) })
 watch(selectedNodeId, () => syncUrl())
 
@@ -537,13 +543,13 @@ const anchorReadingItems = computed(() =>
               :selected-node-id="selectedNodeId"
               :collapsed-ids="collapsedIds"
               :current-hops="hops"
-              :max-hops="MAX_HOPS"
+              :max-hops="maxHops"
               :is-fullscreen="isFullscreen"
               @select="selectNode"
               @navigate="navigateToNode"
               @clear-selection="clearSelection"
               @toggle-collapse="toggleCollapse"
-              @change-hops="(h: number) => changeHops(h as 1 | 2 | 3)"
+              @change-hops="changeHops"
               @toggle-fullscreen="toggleFullscreen"
             />
           </template>

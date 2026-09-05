@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { requireAuth } from '../middleware/auth';
-import { badRequest, created, forbidden, internalError, notFoundCode, paginated, success } from '../utils/response';
+import { optionalAuth, requireAuth } from '../middleware/auth';
+import { badRequest, created, forbidden, internalError, notFoundCode, paginated, success, unauthorized } from '../utils/response';
 import { ExpressionError, createExpression, createLocaleLink, getExpression, searchExpressions } from '../services/expressions';
 import { ReadingError, createReading } from '../services/readings';
 import { MappingError, createEdge, getExpressionMappings } from '../services/mappings';
@@ -40,9 +40,10 @@ expressions.get('/:id', async (c) => {
   return success(c, { ...result, expression: expressionDto(result.expression), locales: result.locales.map((row) => ({ ...row, expression_id: serializeIntegerId(row.expression_id), locale_id: serializeIntegerId(row.locale_id) })), readings: result.readings.map((row) => ({ ...row, expression_id: serializeIntegerId(row.expression_id), locale_id: serializeIntegerId(row.locale_id) })), sources: result.sources.map((row) => ({ ...row, source_id: serializeIntegerId(row.source_id) })) });
 });
 
-expressions.get('/:id/graph', async (c) => {
+expressions.get('/:id/graph', optionalAuth, async (c) => {
   const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_EXPRESSION_ID');
   const rawHops = Number.parseInt(c.req.query('hops') ?? '1', 10); if (![1, 2, 3].includes(rawHops)) return badRequest(c, 'INVALID_HOPS');
+  if (rawHops === 3 && !c.get('user')) return unauthorized(c, 'AUTH_REQUIRED', 'Authentication is required for 3-hop graphs');
   const graph = await getMappingGraph(c.env.DB, id, rawHops as 1 | 2 | 3, c.req.query('target_language')?.toLowerCase());
   if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
   return success(c, { ...graph, root_id: serializeIntegerId(graph.root_id), nodes: graph.nodes.map((node) => ({ ...node, expression_id: serializeIntegerId(node.expression_id) })), edges: graph.edges.map((edge) => ({ ...edge, edge_id: serializeIntegerId(edge.edge_id), source_id: serializeIntegerId(edge.source_id), target_id: serializeIntegerId(edge.target_id), sources: edge.sources.map((item) => ({ ...item, source_id: serializeIntegerId(item.source_id) })) })) });

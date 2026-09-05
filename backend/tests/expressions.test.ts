@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
+import { SignJWT } from 'jose';
 import expressions from '../src/routes/expressions';
 import {
   createExpression,
@@ -285,5 +286,51 @@ describe('expressions route GET /:id', () => {
     expect(body.data.expression.id).toBe('1');
     expect(body.data.locales[0]).toEqual({ expression_id: '1', locale_id: '2', language_locale_code: 'nan-Hant-TW' });
     expect(body.data.readings[0]).toEqual({ expression_id: '1', locale_id: '2', language_locale_code: 'nan-Hant-TW', scheme: 'poj', value: 'chia̍h', source_id: null });
+  });
+});
+
+describe('expressions route GET /:id/graph hop access', () => {
+  const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
+  const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
+
+  function graphDb(includeUser: boolean) {
+    return fakeD1({
+      ...(includeUser ? { [USER_SQL]: () => ({ id: 1, username: 'reader', role: 'user' }) } : {}),
+      [ROOT_SQL]: () => ({ id: 1, text: 'root', lang_code: 'eng' }),
+    });
+  }
+
+  async function authenticatedHeaders() {
+    const token = await new SignJWT({ id: 1, username: 'reader', role: 'user' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .sign(new TextEncoder().encode('test'));
+    return { authorization: `Bearer ${token}` };
+  }
+
+  it('rejects anonymous three-hop graph requests', async () => {
+    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    app.route('/expressions', expressions);
+
+    const response = await app.request('http://example.test/expressions/1/graph?hops=3', undefined, { DB: graphDb(false), SECRET_KEY: 'test' });
+    expect(response.status).toBe(401);
+    expect((await response.json() as { error: string }).error).toBe('AUTH_REQUIRED');
+  });
+
+  it('keeps two-hop graphs available anonymously', async () => {
+    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    app.route('/expressions', expressions);
+
+    const response = await app.request('http://example.test/expressions/1/graph?hops=2', undefined, { DB: graphDb(false), SECRET_KEY: 'test' });
+    expect(response.status).toBe(200);
+    expect((await response.json() as { data: { requested_hops: number } }).data.requested_hops).toBe(2);
+  });
+
+  it('allows three-hop graph requests for authenticated users', async () => {
+    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    app.route('/expressions', expressions);
+
+    const response = await app.request('http://example.test/expressions/1/graph?hops=3', { headers: await authenticatedHeaders() }, { DB: graphDb(true), SECRET_KEY: 'test' });
+    expect(response.status).toBe(200);
+    expect((await response.json() as { data: { requested_hops: number } }).data.requested_hops).toBe(3);
   });
 });

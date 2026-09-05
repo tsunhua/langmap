@@ -31,13 +31,13 @@ vi.mock('vue-router', () => ({
 
 const passiveComponent = { template: '<div><slot /></div>' }
 const MappingGraphStub = {
-  props: ['graph', 'currentHops'],
+  props: ['graph', 'currentHops', 'maxHops'],
   emits: ['change-hops'],
   template: `
     <div class="mapping-graph-stub" :data-hops="currentHops">
       <span class="graph-label">{{ graph.nodes[1]?.text }}</span>
-      <button class="hop-2" @click="$emit('change-hops', 2)">2 hops</button>
-      <button class="hop-3" @click="$emit('change-hops', 3)">3 hops</button>
+      <button v-if="maxHops >= 2" class="hop-2" @click="$emit('change-hops', 2)">2 hops</button>
+      <button v-if="maxHops >= 3" class="hop-3" @click="$emit('change-hops', 3)">3 hops</button>
     </div>
   `,
 }
@@ -89,6 +89,13 @@ function mountPage(pinia: Pinia = createPinia()) {
   })
 }
 
+function signedInPinia() {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  useAuthStore().token = 'session'
+  return pinia
+}
+
 describe('MappingDetail page state', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -137,7 +144,7 @@ describe('MappingDetail page state', () => {
       return Promise.resolve(value)
     })
 
-    const wrapper = mountPage()
+    const wrapper = mountPage(signedInPinia())
     await flushPromises()
     const hop2 = wrapper.get('.hop-2').element as HTMLButtonElement
     const hop3 = wrapper.get('.hop-3').element as HTMLButtonElement
@@ -171,7 +178,7 @@ describe('MappingDetail page state', () => {
       ? Promise.reject(new Error('hop request failed'))
       : Promise.resolve(initial))
 
-    const wrapper = mountPage()
+    const wrapper = mountPage(signedInPinia())
     await flushPromises()
     await wrapper.get('.hop-3').trigger('click')
     await flushPromises()
@@ -179,6 +186,34 @@ describe('MappingDetail page state', () => {
     expect(wrapper.get('.mapping-graph-stub').attributes('data-hops')).toBe('1')
     expect(wrapper.text()).toContain('Initial graph')
     expect(wrapper.find('.md-graph-error').exists()).toBe(true)
+  })
+
+  it('limits anonymous users to two hops', async () => {
+    route.params.id = 'anchor'
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    const value = graph('anchor')
+    value.nodes.push({ expression_id: 'related', text: 'Related', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    value.layer_counts[1] = 1
+    mappingGraph.mockResolvedValue(value)
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.find('.hop-2').exists()).toBe(true)
+    expect(wrapper.find('.hop-3').exists()).toBe(false)
+  })
+
+  it('downgrades a three-hop URL for anonymous users', async () => {
+    route.params.id = 'anchor'
+    route.query = { hops: '3' }
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    mappingGraph.mockResolvedValue(graph('anchor'))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(mappingGraph).toHaveBeenCalledWith('anchor', 2, expect.anything(), undefined)
+    expect((wrapper.vm as any).hops).toBe(2)
   })
 
   it('does not show the no-mappings state when the graph has a related expression', async () => {
