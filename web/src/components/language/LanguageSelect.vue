@@ -28,7 +28,6 @@ const filtered = computed(() => {
   return props.options
     .filter(option => !selected.value.includes(option.code))
     .filter(option => !normalized || `${option.name} ${option.code}`.toLocaleLowerCase().includes(normalized))
-    .slice(0, 20)
 })
 
 watch(filtered, () => {

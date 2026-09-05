@@ -180,7 +180,7 @@ Expected: FAIL because the component currently performs remote search and has no
 
 - [ ] **Step 3: Implement local option behavior**
 
-Remove the component's `listLanguages` search/debounce/abort path. Add the required `options: LanguageFilterOption[]` prop, derive `filtered` from `options` excluding selected codes and matching `query.trim().toLocaleLowerCase()` against name or code, and render the count in a right-aligned metadata span. Keep the existing click-outside, keyboard navigation, ARIA IDs, selected tag removal, and 44px option minimum height. Keep `useLanguagesStore` only for localized name lookup if available, with `option.name` as the fallback.
+Remove the component's `listLanguages` search/debounce/abort path. Add the required `options: LanguageFilterOption[]` prop, derive `filtered` from all `options` (without an arbitrary result cap) excluding selected codes and matching `query.trim().toLocaleLowerCase()` against name or code, and render the count in a right-aligned metadata span. Keep the existing click-outside, keyboard navigation, ARIA IDs, selected tag removal, and 44px option minimum height. Use the localized `option.name` supplied by the page, with the language code as its fallback.
 
 - [ ] **Step 4: Run the focused test and verify it passes**
 

@@ -43,4 +43,15 @@ describe('LanguageSelect', () => {
       'Japanesejpn4', 'Englisheng2',
     ])
   })
+
+  it('shows every available language instead of capping the graph-derived list', async () => {
+    const manyOptions = Array.from({ length: 21 }, (_, index) => ({
+      code: `l${index}`,
+      name: `Language ${index}`,
+      count: 1,
+    }))
+    const wrapper = mount(LanguageSelect, { props: { modelValue: [], options: manyOptions } })
+    await wrapper.get('input').trigger('focus')
+    expect(wrapper.findAll('[role="option"]')).toHaveLength(21)
+  })
 })
