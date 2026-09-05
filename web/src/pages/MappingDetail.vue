@@ -24,8 +24,9 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useLanguagesStore } from '@/stores/languages'
-import { regionFromLocale } from '@/utils/localeRegion'
 import { readingSchemeLabel } from '@/utils/readingLabel'
+import { groupReadings, hasMultipleReadingSchemes, readingLocaleLabel } from '@/utils/readingGroups'
+import type { ReadingGroup } from '@/utils/readingGroups'
 
 const { t } = useI18n()
 
@@ -412,22 +413,16 @@ const coords = computed(() => {
   return null
 })
 
-const anchorReadingItems = computed(() =>
-  [...(expr.value?.readings ?? [])]
-    .sort((a, b) =>
-      a.language_locale_code.localeCompare(b.language_locale_code)
-      || a.scheme.localeCompare(b.scheme)
-      || a.value.localeCompare(b.value),
-    )
-    .map((r) => ({
-      key: `${r.language_locale_code}:${r.scheme}:${r.value}`,
-      scheme: readingSchemeLabel(r.scheme),
-      value: r.value,
-      region: regionFromLocale(r.language_locale_code),
-      localeLabel: r.locale_display_name ?? r.language_locale_code,
-      title: `${r.locale_display_name ?? r.language_locale_code} / ${r.scheme}`,
-    })),
-)
+const anchorReadingGroups = computed(() => groupReadings(expr.value?.readings ?? []))
+const showAnchorReadingScheme = computed(() => hasMultipleReadingSchemes(anchorReadingGroups.value))
+
+function anchorReadingLocalesLabel(readings: ReadingGroup['readings']) {
+  return readings.map(readingLocaleLabel).join(', ')
+}
+
+function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
+  return readings.map((reading) => reading.language_locale_code).join(', ')
+}
 
 </script>
 
@@ -452,17 +447,16 @@ const anchorReadingItems = computed(() =>
       <LangBadge :code="expr.expression.lang_code" :name="anchorLangName" />
     </div>
 
-    <div v-if="anchorReadingItems.length" class="anchor-readings">
+    <div v-if="anchorReadingGroups.length" class="anchor-readings">
       <span
-        v-for="r in anchorReadingItems"
-        :key="r.key"
+        v-for="group in anchorReadingGroups"
+        :key="`${group.scheme}:${group.value}`"
         class="anchor-reading"
-        :title="r.title"
+        :title="anchorReadingLocalesTitle(group.readings)"
       >
-        <span v-if="r.region" class="anchor-reading-region">{{ r.region }}:</span>
-        <span class="anchor-reading-value">[{{ r.value }}]</span>
-        <span class="anchor-reading-locale">{{ r.localeLabel }}</span>
-        <span class="anchor-reading-scheme">({{ r.scheme }})</span>
+        <span class="anchor-reading-value">[{{ group.value }}]</span>
+        <span v-if="showAnchorReadingScheme" class="anchor-reading-scheme">{{ readingSchemeLabel(group.scheme) }} · </span>
+        <span class="anchor-reading-locale">({{ anchorReadingLocalesLabel(group.readings) }})</span>
       </span>
     </div>
 
@@ -742,11 +736,6 @@ const anchorReadingItems = computed(() =>
   color: var(--fg);
 }
 .anchor-reading { min-width: 0; overflow-wrap: anywhere; display: inline-flex; align-items: baseline; gap: 6px; }
-.anchor-reading-region {
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 12px;
-}
 .anchor-reading-value {
   color: var(--fg);
   font-weight: 600;

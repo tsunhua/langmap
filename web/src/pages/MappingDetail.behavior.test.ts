@@ -338,12 +338,10 @@ describe('MappingDetail page state', () => {
       expression: { id: 'anchor', text: 'peg', lang_code: 'eng', source_type: 'user', source_name: null },
       attestations: [],
       readings: [
-        {
-          language_locale_code: 'cmn-Hant-TW',
-          locale_display_name: 'Mandarin',
-          scheme: 'pinyin',
-          value: 'nán tiě',
-        },
+        { language_locale_code: 'cmn-Hant-TW', locale_display_name: 'Mandarin', scheme: 'pinyin', value: 'nán tiě' },
+        { language_locale_code: 'cmn-Hant-TW', scheme: 'pinyin', value: 'nántiě' },
+        { language_locale_code: 'cmn-Hant-CN', scheme: 'pinyin', value: 'nán tiě' },
+        { language_locale_code: 'cmn-Hant-SG', scheme: 'pinyin', value: 'nan tie' },
       ],
     })
     mappingGraph.mockResolvedValue(graph('anchor'))
@@ -352,11 +350,12 @@ describe('MappingDetail page state', () => {
     await flushPromises()
 
     const readings = wrapper.findAll('.anchor-reading')
-    expect(readings).toHaveLength(1)
-    expect(readings[0].text()).toContain('TW:')
+    expect(readings).toHaveLength(2)
     expect(readings[0].text()).toContain('[nán tiě]')
-    expect(readings[0].text()).toContain('Mandarin')
-    expect(readings[0].text()).toContain('(漢語拼音)')
+    expect(readings[0].text()).toContain('CN, TW · Mandarin')
+    expect(readings[0].text()).not.toContain('nántiě')
+    expect(readings[0].text()).not.toContain('漢語拼音')
     expect(readings[0].text()).not.toContain('cmn-Hant-TW')
+    expect(readings[1].text()).toContain('[nan tie]')
   })
 })
