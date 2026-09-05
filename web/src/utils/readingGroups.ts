@@ -50,14 +50,23 @@ export function hasMultipleReadingSchemes(readings: readonly ReadingGroup[]): bo
   return new Set(readings.map((reading) => reading.scheme)).size > 1
 }
 
-/** Prefer the place name inside locale labels such as「客語（大埔腔）」. */
+function trimReadingLocaleSuffix(value: string): string {
+  const trimmed = value.trim()
+  const shortened = trimmed.replace(/[腔話]\s*$/, '').trim()
+  return shortened || trimmed
+}
+
+/** Prefer the place name inside locale labels and omit conventional suffixes. */
 export function readingLocaleLabel(reading: ExpressionReading): string {
   const displayName = reading.locale_display_name?.trim()
-  const placeName = displayName?.match(/[（(]([^）)]*)[）)]$/)?.[1]?.replace(/腔\s*$/, '').trim()
-  if (placeName) return placeName
+  const placeName = displayName?.match(/[（(]([^）)]*)[）)]$/)?.[1]
+  if (placeName) return trimReadingLocaleSuffix(placeName)
 
   const region = regionFromLocale(reading.language_locale_code)
-  if (displayName) return region ? `${region} · ${displayName}` : displayName
+  if (displayName) {
+    const label = trimReadingLocaleSuffix(displayName)
+    return region ? `${region} · ${label}` : label
+  }
   return region ?? reading.language_locale_code
 }
 
