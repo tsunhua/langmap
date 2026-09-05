@@ -259,6 +259,12 @@
       "filename": "0043_hakka_locales.sql",
       "size": 2068,
       "sha256": "ae0c0ffebe0f28770301774ada51ec32bc0e977a539e21859ebaf976e7840272"
+    },
+    {
+      "sequence": 44,
+      "filename": "0044_shanghai_wu_locale.sql",
+      "size": 444,
+      "sha256": "4dee8ede926eaa206edb6adf4b5838e9bba58f1c7be1973ab0fe1f4f5c3696ee"
     }
   ]
 }

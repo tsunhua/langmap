@@ -91,6 +91,8 @@ _PROFILE_LOCALES = {
     "jpn": ("jpn", "jpn-Jpan-JP"),
     "nan": ("nan", "nan-Hant-TW"), "nan-Hant-TW": ("nan", "nan-Hant-TW"),
     "nan-Hant-CN": ("nan", "nan-Hant-CN"),
+    "wuu": ("wuu", "wuu-Hant-CN_Shanghai"),
+    "wuu-Hant-CN_Shanghai": ("wuu", "wuu-Hant-CN_Shanghai"),
     "arb": ("arb", "arb-Arab"), "ben": ("ben", "ben-Beng"),
     "ces": ("ces", "ces-Latn"), "dan": ("dan", "dan-Latn"),
     "deu": ("deu", "deu-Latn"), "ell": ("ell", "ell-Grek"),
@@ -641,6 +643,11 @@ class TraditionalChineseEnglishAdapter:
             value = _canonical_jyutping(item.value)
         elif upper in {"TL", "TAILO", "TAI-LO"}:
             normalized_scheme, locale, errors = "tailo", str(item.raw.get("locale") or "nan-Hant-TW"), ()
+            value = canonicalize_text(item.value)
+        elif scheme.strip().lower() == "shanghai-church-romanization":
+            normalized_scheme = "shanghai-church-romanization"
+            locale = str(item.raw.get("locale") or "wuu-Hant-CN_Shanghai")
+            errors = ()
             value = canonicalize_text(item.value)
         elif scheme.strip().isdigit() and fold_pinyin and _is_pinyin_spelling(str(item.value)):
             # ``Crown`` pronunciations carry only the tone number as their

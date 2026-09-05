@@ -33,6 +33,22 @@ def test_adapter_maps_languages_readings_pos_and_keeps_offline_fields(tmp_path):
     assert build_explicit_clusters(connection, summary.release_id).clusters >= 3
 
 
+def test_adapter_normalizes_shanghai_wu_headword_and_church_romanization():
+    entry = StagedEntry(
+        "r", "org.langmap.shanghai.pott.1913", "e", "押", "押", None,
+        "wuu-to-eng", "a" * 64,
+        pronunciations=(StagedPronunciation(1, "Ah", "shanghai-church-romanization", {"locale": "wuu-Hant-CN_Shanghai"}),),
+        senses=(StagedSense("s", 1, equivalents=({"value": "to mortgage.", "language_hint": "eng"},)),),
+    )
+
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(entry)
+
+    assert (normalized.headword.lang_code, normalized.headword.locale_code) == ("wuu", "wuu-Hant-CN_Shanghai")
+    assert (normalized.readings[0].scheme, normalized.readings[0].locale_code, normalized.readings[0].errors) == (
+        "shanghai-church-romanization", "wuu-Hant-CN_Shanghai", (),
+    )
+
+
 def test_normalization_resume_uses_checkpoint_without_duplicate_rows(tmp_path):
     connection = create_staging_database(tmp_path / "stage.sqlite")
     summary = load_jsonl_release(connection, [FIXTURE])

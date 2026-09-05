@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-08-26T13:37:26Z",
+  "generated_at": "2026-09-05T14:06:59Z",
   "sources": {
     "iso639-3": {
       "name": "ISO 639-3 (individual scope)",
@@ -42,7 +42,7 @@
     },
     "name_translations": {
       "path": "overlays/name-translations.json",
-      "translation_count": 918
+      "translation_count": 924
     },
     "script_region_zh_names": {
       "path": "overlays/script-region-zh-names.json",
@@ -56,14 +56,14 @@
     "regions": 249,
     "language_locales": 19,
     "name_canonical_expressions": 8300,
-    "name_target_expressions": 918,
-    "name_edges": 918,
-    "name_attestations": 918
+    "name_target_expressions": 924,
+    "name_edges": 924,
+    "name_attestations": 924
   },
   "artifacts": {
     "language_reference_sql": {
       "path": "language-reference.sql",
-      "sha256": "5003d038cd7923707817c78c27a7de885d01df9b2fa609ba9710c520943c0000"
+      "sha256": "80f409517af716cd9280b8188bf56880f296e81fd5a09667704257741534f241"
     }
   }
 }
