@@ -27,11 +27,11 @@ def _literal(value: object) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
-def _write_values(
+def _write_cte_batches(
     handle,
-    table: str,
     columns: Sequence[str],
     rows: Sequence[Sequence[object]],
+    statement: str,
     *,
     batch_size: int,
 ) -> None:
@@ -42,7 +42,7 @@ def _write_values(
             "(" + ", ".join(_literal(value) for value in row) + ")"
             for row in batch
         )
-        handle.write(f'INSERT INTO "{table}" ({names}) VALUES\n  {values};\n')
+        handle.write(f"WITH rows({names}) AS (VALUES\n  {values}\n)\n{statement}\n")
 
 
 def _rows(connection: sqlite3.Connection, sql: str, parameters: Iterable[object]) -> list[tuple[Any, ...]]:
@@ -167,6 +167,26 @@ def export_source_delta(
         missing_nodes = sorted(referenced_ids - node_ids)
         if missing_nodes:
             raise ValueError(f"source rows reference missing staging expressions: {missing_nodes[:5]}")
+        node_by_id = {int(row[0]): row[1:] for row in nodes}
+        claim_rows = [(*node_by_id[int(local_id)][:3], marker) for local_id, marker in claims]
+        locale_link_rows = [
+            (*node_by_id[int(local_id)][:3], locale_code)
+            for local_id, locale_code in locale_links
+        ]
+        reading_rows = [
+            (*node_by_id[int(local_id)][:3], locale_code, scheme, value)
+            for local_id, locale_code, scheme, value in readings
+        ]
+        edge_rows = [
+            (
+                *node_by_id[int(a_id)][:3],
+                *node_by_id[int(b_id)][:3],
+                relation_mask,
+                score,
+                marker,
+            )
+            for _edge_id, a_id, b_id, relation_mask, score, marker in edges
+        ]
 
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8") as handle:
@@ -190,108 +210,84 @@ def export_source_delta(
                     + f" FROM languages l WHERE l.code={_literal(locale[1])};\n"
                 )
 
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_nodes ("
-                "local_id INTEGER PRIMARY KEY,language_code TEXT NOT NULL,text TEXT NOT NULL,"
-                "homograph_index INTEGER NOT NULL,pos_mask INTEGER NOT NULL,created_at TEXT NOT NULL);\n"
-            )
-            _write_values(
+            _write_cte_batches(
                 handle,
-                "_dictionary_nodes",
-                ("local_id", "language_code", "text", "homograph_index", "pos_mask", "created_at"),
-                nodes,
-                batch_size=rows_per_insert,
-            )
-            handle.write(
+                ("language_code", "text", "homograph_index", "pos_mask", "created_at"),
+                [row[1:] for row in nodes],
                 "INSERT OR IGNORE INTO expressions "
                 "(language_id,text,homograph_index,pos_mask,source_id,created_at) "
-                "SELECT l.id,n.text,n.homograph_index,n.pos_mask,s.id,n.created_at "
-                "FROM _dictionary_nodes n JOIN languages l ON l.code=n.language_code "
-                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)} "
-                "ORDER BY n.local_id;\n"
-            )
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_expression_ids ("
-                "local_id INTEGER PRIMARY KEY,expression_id INTEGER NOT NULL UNIQUE);\n"
-                "INSERT INTO _dictionary_expression_ids (local_id,expression_id) "
-                "SELECT n.local_id,e.id FROM _dictionary_nodes n "
-                "JOIN languages l ON l.code=n.language_code "
-                "JOIN expressions e ON e.language_id=l.id AND e.text=n.text "
-                "AND e.homograph_index=n.homograph_index ORDER BY n.local_id;\n"
-            )
-
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_claims ("
-                "local_id INTEGER NOT NULL,source_marker TEXT NOT NULL);\n"
-            )
-            _write_values(handle, "_dictionary_claims", ("local_id", "source_marker"), claims, batch_size=rows_per_insert)
-            handle.write(
-                "INSERT OR IGNORE INTO expression_sources (expression_id,source_id,source_marker) "
-                "SELECT m.expression_id,s.id,c.source_marker FROM _dictionary_claims c "
-                "JOIN _dictionary_expression_ids m ON m.local_id=c.local_id "
-                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};\n"
-            )
-
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_locale_links ("
-                "local_id INTEGER NOT NULL,locale_code TEXT NOT NULL);\n"
-            )
-            _write_values(handle, "_dictionary_locale_links", ("local_id", "locale_code"), locale_links, batch_size=rows_per_insert)
-            handle.write(
-                "INSERT OR IGNORE INTO expression_locale_links (expression_id,locale_id) "
-                "SELECT m.expression_id,ll.id FROM _dictionary_locale_links x "
-                "JOIN _dictionary_expression_ids m ON m.local_id=x.local_id "
-                "JOIN language_locales ll ON ll.code=x.locale_code;\n"
-            )
-
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_readings ("
-                "local_id INTEGER NOT NULL,locale_code TEXT NOT NULL,scheme TEXT NOT NULL,value TEXT NOT NULL);\n"
-            )
-            _write_values(handle, "_dictionary_readings", ("local_id", "locale_code", "scheme", "value"), readings, batch_size=rows_per_insert)
-            handle.write(
-                "INSERT OR IGNORE INTO expression_readings (expression_id,locale_id,scheme,value,source_id) "
-                "SELECT m.expression_id,ll.id,r.scheme,r.value,s.id FROM _dictionary_readings r "
-                "JOIN _dictionary_expression_ids m ON m.local_id=r.local_id "
-                "JOIN language_locales ll ON ll.code=r.locale_code "
-                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};\n"
-            )
-
-            handle.write(
-                "CREATE TEMP TABLE _dictionary_edges ("
-                "local_edge_id INTEGER NOT NULL,a_local_id INTEGER NOT NULL,b_local_id INTEGER NOT NULL,"
-                "relation_mask INTEGER NOT NULL,score INTEGER NOT NULL,source_marker TEXT NOT NULL);\n"
-            )
-            _write_values(
-                handle,
-                "_dictionary_edges",
-                ("local_edge_id", "a_local_id", "b_local_id", "relation_mask", "score", "source_marker"),
-                edges,
+                "SELECT l.id,r.text,r.homograph_index,r.pos_mask,s.id,r.created_at "
+                "FROM rows r JOIN languages l ON l.code=r.language_code "
+                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
                 batch_size=rows_per_insert,
             )
-            handle.write(
-                "INSERT OR IGNORE INTO expression_edges "
-                "(expression_a_id,expression_b_id,relation_mask,score) "
-                "SELECT DISTINCT CASE WHEN a.expression_id<b.expression_id THEN a.expression_id ELSE b.expression_id END,"
-                "CASE WHEN a.expression_id<b.expression_id THEN b.expression_id ELSE a.expression_id END,"
-                "x.relation_mask,x.score FROM _dictionary_edges x "
-                "JOIN _dictionary_expression_ids a ON a.local_id=x.a_local_id "
-                "JOIN _dictionary_expression_ids b ON b.local_id=x.b_local_id;\n"
-                "INSERT OR IGNORE INTO expression_edge_sources (edge_id,source_id,source_marker) "
-                "SELECT e.id,s.id,x.source_marker FROM _dictionary_edges x "
-                "JOIN _dictionary_expression_ids a ON a.local_id=x.a_local_id "
-                "JOIN _dictionary_expression_ids b ON b.local_id=x.b_local_id "
-                "JOIN expression_edges e ON e.expression_a_id=CASE WHEN a.expression_id<b.expression_id THEN a.expression_id ELSE b.expression_id END "
-                "AND e.expression_b_id=CASE WHEN a.expression_id<b.expression_id THEN b.expression_id ELSE a.expression_id END "
-                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};\n"
+            _write_cte_batches(
+                handle,
+                ("language_code", "text", "homograph_index", "source_marker"),
+                claim_rows,
+                "INSERT OR IGNORE INTO expression_sources (expression_id,source_id,source_marker) "
+                "SELECT e.id,s.id,r.source_marker FROM rows r "
+                "JOIN languages l ON l.code=r.language_code "
+                "JOIN expressions e ON e.language_id=l.id AND e.text=r.text AND e.homograph_index=r.homograph_index "
+                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
+                batch_size=rows_per_insert,
             )
-            handle.write(
-                "DROP TABLE _dictionary_edges;\n"
-                "DROP TABLE _dictionary_readings;\n"
-                "DROP TABLE _dictionary_locale_links;\n"
-                "DROP TABLE _dictionary_claims;\n"
-                "DROP TABLE _dictionary_expression_ids;\n"
-                "DROP TABLE _dictionary_nodes;\n"
+            _write_cte_batches(
+                handle,
+                ("language_code", "text", "homograph_index", "locale_code"),
+                locale_link_rows,
+                "INSERT OR IGNORE INTO expression_locale_links (expression_id,locale_id) "
+                "SELECT e.id,ll.id FROM rows r JOIN languages l ON l.code=r.language_code "
+                "JOIN expressions e ON e.language_id=l.id AND e.text=r.text AND e.homograph_index=r.homograph_index "
+                "JOIN language_locales ll ON ll.code=r.locale_code;",
+                batch_size=rows_per_insert,
+            )
+            _write_cte_batches(
+                handle,
+                ("language_code", "text", "homograph_index", "locale_code", "scheme", "value"),
+                reading_rows,
+                "INSERT OR IGNORE INTO expression_readings (expression_id,locale_id,scheme,value,source_id) "
+                "SELECT e.id,ll.id,r.scheme,r.value,s.id FROM rows r "
+                "JOIN languages l ON l.code=r.language_code "
+                "JOIN expressions e ON e.language_id=l.id AND e.text=r.text AND e.homograph_index=r.homograph_index "
+                "JOIN language_locales ll ON ll.code=r.locale_code "
+                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
+                batch_size=rows_per_insert,
+            )
+            edge_columns = (
+                "a_language_code", "a_text", "a_homograph_index",
+                "b_language_code", "b_text", "b_homograph_index",
+                "relation_mask", "score", "source_marker",
+            )
+            edge_joins = (
+                "FROM rows r "
+                "JOIN languages al ON al.code=r.a_language_code "
+                "JOIN expressions a ON a.language_id=al.id AND a.text=r.a_text AND a.homograph_index=r.a_homograph_index "
+                "JOIN languages bl ON bl.code=r.b_language_code "
+                "JOIN expressions b ON b.language_id=bl.id AND b.text=r.b_text AND b.homograph_index=r.b_homograph_index "
+            )
+            _write_cte_batches(
+                handle,
+                edge_columns,
+                edge_rows,
+                "INSERT OR IGNORE INTO expression_edges (expression_a_id,expression_b_id,relation_mask,score) "
+                "SELECT DISTINCT CASE WHEN a.id<b.id THEN a.id ELSE b.id END,"
+                "CASE WHEN a.id<b.id THEN b.id ELSE a.id END,r.relation_mask,r.score "
+                + edge_joins
+                + ";",
+                batch_size=rows_per_insert,
+            )
+            _write_cte_batches(
+                handle,
+                edge_columns,
+                edge_rows,
+                "INSERT OR IGNORE INTO expression_edge_sources (edge_id,source_id,source_marker) "
+                "SELECT e.id,s.id,r.source_marker "
+                + edge_joins
+                + "JOIN expression_edges e ON e.expression_a_id=CASE WHEN a.id<b.id THEN a.id ELSE b.id END "
+                "AND e.expression_b_id=CASE WHEN a.id<b.id THEN b.id ELSE a.id END "
+                f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
+                batch_size=rows_per_insert,
             )
             handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
 
