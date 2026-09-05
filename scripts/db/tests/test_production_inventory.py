@@ -317,6 +317,104 @@ class ProductionInventoryTests(unittest.TestCase):
             journal = paths.production_operation_journal_path.read_text(encoding="utf-8")
             self.assertIn('"status": "succeeded"', journal)
 
+    def test_apply_resumes_after_data_stage_without_replaying_delta(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+            data_path = root / "scripts" / "db" / "state" / "approved-delta.sql"
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            data_path.write_text(
+                "INSERT OR IGNORE INTO expressions (id) VALUES (1);",
+                encoding="utf-8",
+            )
+
+            from lib import production as production_lib  # noqa: E402
+
+            inventory = production_lib.inventory_production(
+                paths, wrangler_bin=FAKE_WRANGLER, env={}
+            )
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            plan_path = paths.production_plan_dir / "resume-plan.json"
+            plan_path.parent.mkdir(parents=True, exist_ok=True)
+            plan_path.write_text(
+                json.dumps(
+                    {
+                        "status": "ready",
+                        "operation_id": "resume-operation",
+                        "identity": inventory["identity"],
+                        "git_commit": "fixture-commit",
+                        "pending_migrations": [],
+                        "approved_data_migration": {
+                            "path": "scripts/db/state/approved-delta.sql",
+                            "sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+                            "bytes": data_path.stat().st_size,
+                            "mode": "file",
+                        },
+                        "dictionary_artifact": None,
+                        "reference_artifacts": {
+                            "action": "skip",
+                            "reason": "unchanged-data-only-release",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            apply_kwargs = {
+                "plan_path": plan_path,
+                "database_name": "langmap-v2",
+                "confirmation": "langmap-v2",
+                "wrangler_bin": FAKE_WRANGLER,
+                "env": {
+                    "FAKE_PRODUCTION_WRANGLER_LOG": str(log_path),
+                    "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
+                },
+            }
+
+            with mock.patch.object(
+                production_lib, "_current_git_commit", return_value="fixture-commit"
+            ), mock.patch.object(
+                production_lib,
+                "inventory_production",
+                side_effect=production_lib.ProductionInventoryError("verify unavailable"),
+            ):
+                with self.assertRaisesRegex(
+                    production_lib.ProductionInventoryError, "verify unavailable"
+                ):
+                    production_lib.apply_production(paths, **apply_kwargs)
+
+            with mock.patch.object(
+                production_lib, "_current_git_commit", return_value="fixture-commit"
+            ):
+                result = production_lib.apply_production(paths, **apply_kwargs)
+
+            self.assertEqual(result["status"], "succeeded")
+            self.assertTrue(result["resumed"])
+            calls = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+            delta_calls = [
+                call for call in calls
+                if "--file" in call and Path(call[call.index("--file") + 1]).name == "approved-delta.sql"
+            ]
+            bookmark_calls = [call for call in calls if "time-travel" in call]
+            self.assertEqual(len(delta_calls), 1)
+            self.assertEqual(len(bookmark_calls), 1)
+            events = [
+                json.loads(line)
+                for line in paths.production_operation_journal_path.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertIn("data-applied", {event["status"] for event in events})
+            self.assertEqual(events[-1]["status"], "succeeded")
+
     def test_restore_verifies_after_restore_and_records_previous_bookmark(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

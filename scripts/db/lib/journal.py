@@ -24,3 +24,23 @@ def append_operation(path: Path, payload: dict[str, Any]) -> None:
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_text(previous + line + "\n", encoding="utf-8")
     os.replace(temporary, path)
+
+
+def read_operation_events(path: Path, operation_id: str) -> list[dict[str, Any]]:
+    """Read one operation's append-only events and fail closed on a corrupt journal."""
+
+    if not path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid operation journal line {line_number}: {path}") from exc
+        if not isinstance(event, dict):
+            raise ValueError(f"operation journal line {line_number} is not an object: {path}")
+        if str(event.get("operation_id", "")) == operation_id:
+            events.append(event)
+    return events

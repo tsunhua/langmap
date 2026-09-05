@@ -472,6 +472,44 @@ def apply_production(
         raise ProductionInventoryError("production plan identity mismatch")
     if plan.get("git_commit") != _current_git_commit(paths):
         raise ProductionInventoryError("production plan Git commit mismatch")
+    operation_id = str(plan["operation_id"])
+    try:
+        prior_events = journal.read_operation_events(
+            paths.production_operation_journal_path,
+            operation_id,
+        )
+    except ValueError as exc:
+        raise ProductionInventoryError(str(exc)) from exc
+    expected_plan_path = plan_path.resolve()
+    for event in prior_events:
+        recorded_database = event.get("database")
+        if recorded_database is not None and recorded_database != configured:
+            raise ProductionInventoryError("production operation database changed during resume")
+        recorded_plan_path = event.get("plan_path")
+        if isinstance(recorded_plan_path, str) and recorded_plan_path:
+            candidate = Path(recorded_plan_path)
+            if not candidate.is_absolute():
+                candidate = paths.repo_root / candidate
+            if candidate.resolve() != expected_plan_path:
+                raise ProductionInventoryError("production operation plan changed during resume")
+    completed_stages = {
+        str(event.get("status", "")) for event in prior_events
+    }
+    prior_bookmark = next(
+        (
+            str(event["bookmark"])
+            for event in prior_events
+            if isinstance(event.get("bookmark"), str) and event["bookmark"]
+        ),
+        None,
+    )
+    if "succeeded" in completed_stages:
+        return {
+            "status": "succeeded",
+            "bookmark": prior_bookmark,
+            "operation_id": operation_id,
+            "resumed": True,
+        }
     executor = ProductionExecutor(
         paths=paths,
         wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
@@ -479,98 +517,130 @@ def apply_production(
         timeout_seconds=timeout_seconds,
     )
     operation = {
-        "operation_id": str(plan["operation_id"]),
+        "operation_id": operation_id,
         "status": "started",
         "database": configured,
         "plan_path": str(plan_path),
         "failed_stage": None,
+        "resumed": bool(prior_events),
     }
     journal.append_operation(paths.production_operation_journal_path, operation)
+    current_stage = "identity"
     try:
         remote_identity = normalize_remote_identity(executor.info(database_name))
         assert_identity(configured, remote_identity)
-        bookmark = _extract_bookmark(executor.bookmark(database_name))
-        operation["bookmark"] = bookmark
-        journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "bookmarked"})
-        if plan.get("pending_migrations"):
-            executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
-        dictionary_artifact = plan.get("dictionary_artifact")
-        if dictionary_artifact:
-            release_id = str(dictionary_artifact.get("release_id", ""))
-            if not confirm_release_id or confirm_release_id != release_id:
-                raise ProductionInventoryError("dictionary release confirmation mismatch")
-            manifest_path = _resolve_dictionary_artifact(paths, str(dictionary_artifact["manifest_path"]))
-            result = apply_dictionary_release(
-                ReleasePaths(paths.repo_root, paths.state_dir),
-                manifest_path,
-                environment="production",
-                database_name=database_name,
-                wrangler_bin=executor.wrangler_bin,
-                env=env,
-            )
-            if result.status != "validated":
-                raise ProductionInventoryError("dictionary release did not validate")
-            activate_dictionary_release(
-                ReleasePaths(paths.repo_root, paths.state_dir),
-                release_id,
-                environment="production",
-                database_name=database_name,
-                wrangler_bin=executor.wrangler_bin,
-                env=env,
-            )
-            journal.append_operation(paths.production_operation_journal_path, {**operation, "status": "dictionary-release-activated", "release_id": release_id})
-        approved_data_migration = plan.get("approved_data_migration")
-        if approved_data_migration and not dictionary_artifact:
-            relative = approved_data_migration.get("path")
-            if not isinstance(relative, str):
-                raise ProductionInventoryError("approved data migration path is invalid")
-            data_path = _resolve_managed_artifact(paths, relative)
-            expected = approved_data_migration.get("sha256")
-            if not isinstance(expected, str) or not expected:
-                raise ProductionInventoryError("approved data migration checksum is invalid")
-            if _sha256_path(data_path) != expected:
-                raise ProductionInventoryError("approved data migration checksum mismatch")
-            mode = approved_data_migration.get("mode", "file")
-            if mode == "split":
-                for statement in _split_approved_sql(data_path):
-                    executor.mutate(
-                        ["d1", "execute", database_name, "--remote", "--command", statement]
-                    )
-            else:
-                executor.mutate(
-                    ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
+        checkpointed_stages = {
+            "migrations-applied",
+            "dictionary-release-activated",
+            "data-applied",
+            "references-applied",
+        }
+        mutation_may_have_started = any(
+            event.get("status") == "failed"
+            and event.get("failed_stage") in {"migrations", "data", "references"}
+            for event in prior_events
+        )
+        if completed_stages & checkpointed_stages or mutation_may_have_started:
+            if prior_bookmark is None:
+                raise ProductionInventoryError(
+                    "resumable production operation is missing its original bookmark"
                 )
+            bookmark = prior_bookmark
         else:
+            current_stage = "bookmark"
+            bookmark = _extract_bookmark(executor.bookmark(database_name))
+        operation["bookmark"] = bookmark
+        if not (completed_stages & checkpointed_stages) and not mutation_may_have_started:
             journal.append_operation(
                 paths.production_operation_journal_path,
-                {**operation, "status": "data-migration-skipped"},
+                {**operation, "status": "bookmarked"},
+            )
+        if plan.get("pending_migrations") and "migrations-applied" not in completed_stages:
+            current_stage = "migrations"
+            executor.mutate(["d1", "migrations", "apply", database_name, "--remote"])
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {**operation, "status": "migrations-applied"},
+            )
+        dictionary_artifact = plan.get("dictionary_artifact")
+        approved_data_migration = plan.get("approved_data_migration")
+        data_already_applied = (
+            "data-applied" in completed_stages
+            or "dictionary-release-activated" in completed_stages
+        )
+        if not data_already_applied:
+            current_stage = "data"
+            if dictionary_artifact:
+                release_id = str(dictionary_artifact.get("release_id", ""))
+                if not confirm_release_id or confirm_release_id != release_id:
+                    raise ProductionInventoryError("dictionary release confirmation mismatch")
+                manifest_path = _resolve_dictionary_artifact(paths, str(dictionary_artifact["manifest_path"]))
+                result = apply_dictionary_release(
+                    ReleasePaths(paths.repo_root, paths.state_dir),
+                    manifest_path,
+                    environment="production",
+                    database_name=database_name,
+                    wrangler_bin=executor.wrangler_bin,
+                    env=env,
+                )
+                if result.status != "validated":
+                    raise ProductionInventoryError("dictionary release did not validate")
+                activate_dictionary_release(
+                    ReleasePaths(paths.repo_root, paths.state_dir),
+                    release_id,
+                    environment="production",
+                    database_name=database_name,
+                    wrangler_bin=executor.wrangler_bin,
+                    env=env,
+                )
+                journal.append_operation(
+                    paths.production_operation_journal_path,
+                    {
+                        **operation,
+                        "status": "dictionary-release-activated",
+                        "release_id": release_id,
+                    },
+                )
+            elif approved_data_migration:
+                relative = approved_data_migration.get("path")
+                if not isinstance(relative, str):
+                    raise ProductionInventoryError("approved data migration path is invalid")
+                data_path = _resolve_managed_artifact(paths, relative)
+                expected = approved_data_migration.get("sha256")
+                if not isinstance(expected, str) or not expected:
+                    raise ProductionInventoryError("approved data migration checksum is invalid")
+                if _sha256_path(data_path) != expected:
+                    raise ProductionInventoryError("approved data migration checksum mismatch")
+                mode = approved_data_migration.get("mode", "file")
+                if mode == "split":
+                    for statement in _split_approved_sql(data_path):
+                        executor.mutate(
+                            ["d1", "execute", database_name, "--remote", "--command", statement]
+                        )
+                else:
+                    executor.mutate(
+                        ["d1", "execute", database_name, "--remote", "--file", str(data_path)]
+                    )
+            else:
+                journal.append_operation(
+                    paths.production_operation_journal_path,
+                    {**operation, "status": "data-migration-skipped"},
+                )
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {
+                    **operation,
+                    "status": "data-applied",
+                    "mutation": bool(dictionary_artifact or approved_data_migration),
+                },
             )
         reference_artifacts = plan.get("reference_artifacts")
         apply_references = not isinstance(reference_artifacts, dict) or (
             reference_artifacts.get("action", "apply") == "apply"
         )
-        if apply_references:
-            executor.mutate(
-                [
-                    "d1",
-                    "execute",
-                    database_name,
-                    "--remote",
-                    "--file",
-                    str(paths.language_registry_sql_path),
-                ]
-            )
-            executor.mutate(
-                [
-                    "d1",
-                    "execute",
-                    database_name,
-                    "--remote",
-                    "--file",
-                    str(paths.system_ui_sql_path),
-                ]
-            )
-            for edge_sql_path in paths.system_ui_edges_sql_paths:
+        if "references-applied" not in completed_stages:
+            current_stage = "references"
+            if apply_references:
                 executor.mutate(
                     [
                         "d1",
@@ -578,9 +648,39 @@ def apply_production(
                         database_name,
                         "--remote",
                         "--file",
-                        str(edge_sql_path),
+                        str(paths.language_registry_sql_path),
                     ]
                 )
+                executor.mutate(
+                    [
+                        "d1",
+                        "execute",
+                        database_name,
+                        "--remote",
+                        "--file",
+                        str(paths.system_ui_sql_path),
+                    ]
+                )
+                for edge_sql_path in paths.system_ui_edges_sql_paths:
+                    executor.mutate(
+                        [
+                            "d1",
+                            "execute",
+                            database_name,
+                            "--remote",
+                            "--file",
+                            str(edge_sql_path),
+                        ]
+                    )
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {
+                    **operation,
+                    "status": "references-applied",
+                    "action": "apply" if apply_references else "skip",
+                },
+            )
+        current_stage = "verify"
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
         if plan.get("pending_migrations"):
             check_target_schema(paths, verified)
@@ -590,11 +690,21 @@ def apply_production(
             paths.production_operation_journal_path,
             {**operation, "status": "succeeded", "verified": True},
         )
-        return {"status": "succeeded", "bookmark": bookmark, "operation_id": operation["operation_id"]}
+        return {
+            "status": "succeeded",
+            "bookmark": bookmark,
+            "operation_id": operation["operation_id"],
+            "resumed": bool(prior_events),
+        }
     except Exception as exc:
         journal.append_operation(
             paths.production_operation_journal_path,
-            {**operation, "status": "failed", "error": str(exc)},
+            {
+                **operation,
+                "status": "failed",
+                "failed_stage": current_stage,
+                "error": str(exc),
+            },
         )
         raise
 
