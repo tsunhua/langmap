@@ -256,6 +256,145 @@ class ProductionInventoryTests(unittest.TestCase):
             ]
             self.assertEqual([Path(path).name for path in file_paths], ["approved-delta.sql"])
 
+    def test_split_sql_is_grouped_into_bounded_batches(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "approved.split.sql"
+            path.write_text(
+                "INSERT OR IGNORE INTO expressions (id) VALUES (1);\n"
+                "INSERT OR IGNORE INTO expressions (id) VALUES (2);\n"
+                "INSERT OR IGNORE INTO expressions (id) VALUES (3);\n",
+                encoding="utf-8",
+            )
+
+            from lib.production import _approved_sql_batches  # noqa: E402
+
+            batches = list(_approved_sql_batches(path, max_bytes=120))
+
+            self.assertEqual([index for index, _ in batches], [0, 1])
+            self.assertIn("VALUES (1);\nINSERT OR IGNORE", batches[0][1])
+            self.assertLessEqual(len(batches[0][1].encode("utf-8")), 120)
+            self.assertIn("VALUES (3);", batches[1][1])
+
+    def test_split_apply_resumes_from_last_successful_batch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+            data_path = root / "scripts" / "db" / "state" / "approved.split.sql"
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            data_path.write_text(
+                "INSERT OR IGNORE INTO expressions (id) VALUES (1);\n"
+                "INSERT OR IGNORE INTO expressions (id) VALUES (2);\n"
+                "INSERT OR IGNORE INTO expressions (id) VALUES (3);\n",
+                encoding="utf-8",
+            )
+
+            from lib import production as production_lib  # noqa: E402
+
+            inventory = production_lib.inventory_production(
+                paths, wrangler_bin=FAKE_WRANGLER, env={}
+            )
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            plan_path = paths.production_plan_dir / "split-resume-plan.json"
+            plan_path.parent.mkdir(parents=True, exist_ok=True)
+            plan_path.write_text(
+                json.dumps(
+                    {
+                        "status": "ready",
+                        "operation_id": "split-resume-operation",
+                        "identity": inventory["identity"],
+                        "git_commit": "fixture-commit",
+                        "pending_migrations": [],
+                        "approved_data_migration": {
+                            "path": "scripts/db/state/approved.split.sql",
+                            "sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+                            "bytes": data_path.stat().st_size,
+                            "mode": "split",
+                        },
+                        "dictionary_artifact": None,
+                        "reference_artifacts": {
+                            "action": "skip",
+                            "reason": "unchanged-data-only-release",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            apply_kwargs = {
+                "plan_path": plan_path,
+                "database_name": "langmap-v2",
+                "confirmation": "langmap-v2",
+                "wrangler_bin": FAKE_WRANGLER,
+                "env": {
+                    "FAKE_PRODUCTION_WRANGLER_LOG": str(log_path),
+                    "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
+                },
+            }
+            mutation_calls: list[list[str]] = []
+            failed = False
+
+            def mutate_once_then_fail(_executor, args):
+                nonlocal failed
+                mutation_calls.append(args)
+                if "--command" in args and not failed:
+                    failed = True
+                    return ""
+                if "--command" in args and len(mutation_calls) == 2:
+                    raise production_lib.ProductionInventoryError("batch unavailable")
+                return ""
+
+            with mock.patch.object(
+                production_lib, "_current_git_commit", return_value="fixture-commit"
+            ), mock.patch.object(
+                production_lib, "SPLIT_SQL_BATCH_BYTES", 80
+            ), mock.patch.object(
+                production_lib.ProductionExecutor,
+                "mutate",
+                autospec=True,
+                side_effect=mutate_once_then_fail,
+            ):
+                with self.assertRaisesRegex(
+                    production_lib.ProductionInventoryError, "batch unavailable"
+                ):
+                    production_lib.apply_production(paths, **apply_kwargs)
+
+            with mock.patch.object(
+                production_lib, "_current_git_commit", return_value="fixture-commit"
+            ), mock.patch.object(
+                production_lib, "SPLIT_SQL_BATCH_BYTES", 80
+            ), mock.patch.object(
+                production_lib.ProductionExecutor,
+                "mutate",
+                autospec=True,
+                side_effect=lambda _executor, args: mutation_calls.append(args),
+            ):
+                result = production_lib.apply_production(paths, **apply_kwargs)
+
+            self.assertEqual(result["status"], "succeeded")
+            self.assertEqual(
+                sum("--command" in args for args in mutation_calls),
+                4,
+            )
+            self.assertEqual(
+                sum(
+                    "VALUES (1);" in args[args.index("--command") + 1]
+                    for args in mutation_calls
+                    if "--command" in args
+                ),
+                1,
+            )
+            self.assertIn("data-batch-applied", paths.production_operation_journal_path.read_text(encoding="utf-8"))
+
     def test_apply_requires_confirmation_and_bookmarks_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

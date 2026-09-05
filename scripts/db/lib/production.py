@@ -4,6 +4,7 @@ import json
 import hashlib
 import re
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -18,6 +19,9 @@ from lib.dictionary_release import ReleasePaths, apply_release as apply_dictiona
 
 class ProductionInventoryError(RuntimeError):
     pass
+
+
+SPLIT_SQL_BATCH_BYTES = 256 * 1024
 
 
 @dataclass(frozen=True)
@@ -613,9 +617,31 @@ def apply_production(
                     raise ProductionInventoryError("approved data migration checksum mismatch")
                 mode = approved_data_migration.get("mode", "file")
                 if mode == "split":
-                    for statement in _split_approved_sql(data_path):
+                    completed_batches = {
+                        int(event["batch_index"])
+                        for event in prior_events
+                        if event.get("status") == "data-batch-applied"
+                        and event.get("data_sha256") == expected
+                        and isinstance(event.get("batch_index"), int)
+                    }
+                    for batch_index, batch in _approved_sql_batches(
+                        data_path,
+                        max_bytes=SPLIT_SQL_BATCH_BYTES,
+                    ):
+                        if batch_index in completed_batches:
+                            continue
                         executor.mutate(
-                            ["d1", "execute", database_name, "--remote", "--command", statement]
+                            ["d1", "execute", database_name, "--remote", "--command", batch]
+                        )
+                        journal.append_operation(
+                            paths.production_operation_journal_path,
+                            {
+                                **operation,
+                                "status": "data-batch-applied",
+                                "batch_index": batch_index,
+                                "batch_bytes": len(batch.encode("utf-8")),
+                                "data_sha256": expected,
+                            },
                         )
                 else:
                     executor.mutate(
@@ -805,6 +831,36 @@ def _split_approved_sql(path: Path) -> list[str]:
         if statement and not statement.upper().startswith("PRAGMA"):
             statements.append(statement)
     return statements
+
+
+def _approved_sql_batches(
+    path: Path,
+    *,
+    max_bytes: int = SPLIT_SQL_BATCH_BYTES,
+) -> Iterator[tuple[int, str]]:
+    """Group standalone approved SQL statements into bounded remote commands."""
+
+    if max_bytes < 1:
+        raise ValueError("max_bytes must be positive")
+    statements: list[str] = []
+    current_bytes = 0
+    batch_index = 0
+    for statement in _split_approved_sql(path):
+        statement = statement.rstrip()
+        if not statement.endswith(";"):
+            statement += ";"
+        statement_bytes = len(statement.encode("utf-8"))
+        separator_bytes = len("\n".encode("utf-8")) if statements else 0
+        if statements and current_bytes + separator_bytes + statement_bytes > max_bytes:
+            yield batch_index, "\n".join(statements)
+            batch_index += 1
+            statements = []
+            current_bytes = 0
+            separator_bytes = 0
+        statements.append(statement)
+        current_bytes += separator_bytes + statement_bytes
+    if statements:
+        yield batch_index, "\n".join(statements)
 
 
 def _resolve_managed_artifact(paths: ProjectPaths, relative_path: str) -> Path:

@@ -277,3 +277,42 @@ git commit -m "docs: describe resumable dictionary releases"
 - [x] **Step 5: Post progress to issue #120**
 
 Use `gh issue comment 120 --body-file <summary-file>` with commit hashes, test result, completed acceptance criteria, and the next implementation slice.
+
+### Task 6: Batch and Resume Split Approved SQL
+
+**Files:**
+- Modify: `scripts/db/lib/production.py`
+- Test: `scripts/db/tests/test_production_inventory.py`
+
+**Interfaces:**
+- Produces: `_approved_sql_batches(path: Path, max_bytes: int = 256 * 1024) -> Iterator[tuple[int, str]]`.
+- Produces journal status `data-batch-applied` with `batch_index`, `data_sha256`, and `batch_bytes`.
+
+- [x] **Step 1: Write failing batching and resume tests**
+
+Use a split SQL fixture larger than a small test batch. Assert one remote `--command` contains several statements, and when the second batch fails, a second apply of the same plan executes the first batch only once and reuses the first bookmark.
+
+- [x] **Step 2: Run tests to verify failure**
+
+Run: `python3 -m pytest scripts/db/tests/test_production_inventory.py -q`
+
+Expected: FAIL because split mode currently invokes one remote command per statement and has no batch checkpoints.
+
+- [x] **Step 3: Implement bounded SQL batching**
+
+Group `_split_approved_sql(path)` statements until adding the next statement would exceed 256 KiB; permit a single larger statement as one batch. Preserve statement order and the existing checksum validation.
+
+- [x] **Step 4: Journal and resume each batch**
+
+After each successful batch append `data-batch-applied`; on retry skip only recorded batches whose `data_sha256` matches the approved file. If a mutation-stage failure has no final `data-applied` event, reuse the original bookmark so a partially applied batch remains rollback-safe.
+
+- [x] **Step 5: Run split recovery tests and commit**
+
+Run: `python3 -m pytest scripts/db/tests/test_production_inventory.py -q`
+
+Expected: all production tests PASS.
+
+```bash
+git add scripts/db/lib/production.py scripts/db/tests/test_production_inventory.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
+git commit -m "perf: batch resumable split data releases"
+```
