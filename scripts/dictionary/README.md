@@ -104,6 +104,24 @@ python3 scripts/dictionary/release_dictionary.py \
 批次。`--apply` 成功後會以同一份 delta idempotently replay 回 mirror 並執行外鍵檢查；不包含
 Web deploy。
 
+## 修復舊版例句 mapping
+
+若舊版 importer 曾把例句翻譯誤接到 headword，可先用目前的 Structured JSONL 重新匯入
+mirror，再以來源驅動腳本產生可審核的 repair SQL：
+
+```bash
+python3 scripts/dictionary/repair_example_edges.py \
+  --jsonl "/Volumes/DATA/langmap-structured-jsonl/Simplified Chinese - English.jsonl" \
+  --mirror scripts/db/state/backup/publish-mirror.incremental.sqlite \
+  --output scripts/db/state/backup/delta/<topic>-repair.split.sql \
+  --report scripts/db/state/backup/delta/<topic>-repair.report.json
+```
+
+腳本只會移除能由同一份來源明確識別的 headword→例句翻譯 claim，並把正確的例句 edge
+保留為 relation bit `4`；無法安全判定的 legacy claim 只寫入 report，不會自動刪除。
+新增的 expression／edge 仍須使用 `export_dictionary_delta.py` 產生 additions delta，
+並在 managed production plan 中按 additions→repair 順序發布。
+
 一般模式會寫入既有 expression／edge 表，適合相容性 fixture。packed 模式的 read-only
 compatibility views 讓 API 仍可用原有 expression／edge DTO；一般使用者寫入仍走既有
 通用表。

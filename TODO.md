@@ -175,6 +175,13 @@
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
   需在 dictionary exporter 修正後重新匯出並重新抽查，不要直接手改 JSONL 或 production。
 
+- [ ] 完成 Simplified Chinese－English issue #119 的未匹配 legacy edge 人工裁定。
+  - 已用最新 Structured JSONL 重新匯入 mirror；可明確識別並修復 137,884 個
+    `headword → example translation` 污染 claim，正確例句 edge 保留為 relation `4`。
+  - 仍有 18,484 個 source 28 舊 edge claim 無法只靠本次 source diff 判定是否應移除；
+    本輪保留，抽樣與完整統計見 `026-ocd-example-edge-repair-20260905.report.json`。
+    若要清理，需逐批對照原始 JSON／詞典版本後另產 repair delta。
+
 - [x] 補入 `hk-cantowords.csv` 例句層級 Jyutping reading（2026-09-05）。
   - 根因：舊版 `ExampleV2` 沒有 `readings` 欄位；清理例句末尾括號時只保留乾淨句子，
     adapter／compiler 也只會把 reading 綁到 headword，因此完整粵拼沒有落到例句 expression。

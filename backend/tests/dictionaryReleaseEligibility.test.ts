@@ -29,7 +29,7 @@ function fakeD1(handlers: Record<string, Handler>) {
 }
 
 const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
-const EDGE_SQL = 'SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE expression_a_id IN (?) OR expression_b_id IN (?) ORDER BY id';
+const EDGE_SQL = 'SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE (expression_a_id IN (?) OR expression_b_id IN (?)) AND (relation_mask & 3) <> 0 ORDER BY id';
 const NODE_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (?)';
 const EDGE_SOURCES_SQL = 'SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (?) ORDER BY edge_id,source_id,source_marker';
 

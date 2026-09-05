@@ -23,7 +23,7 @@ export const CANDIDATE_SQL = `WITH candidate_rows AS (
   FROM ui_messages m
   JOIN expression_edges e ON e.expression_a_id = m.source_expression_id
   JOIN expressions t ON t.id = e.expression_b_id
-  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0
+  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND (e.relation_mask & 3) <> 0
     AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
     AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id = x.locale_id WHERE x.expression_id = t.id AND l.code = ?)
   UNION ALL
@@ -31,7 +31,7 @@ export const CANDIDATE_SQL = `WITH candidate_rows AS (
   FROM ui_messages m
   JOIN expression_edges e ON e.expression_b_id = m.source_expression_id
   JOIN expressions t ON t.id = e.expression_a_id
-  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0
+  WHERE m.project_id = ? AND m.status = ? AND e.score >= 0 AND (e.relation_mask & 3) <> 0
     AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
     AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id = x.locale_id WHERE x.expression_id = t.id AND l.code = ?)
 ) SELECT message_key, placeholders_json, target_id, target_text, score

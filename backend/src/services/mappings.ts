@@ -2,6 +2,9 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { EdgeRow, EdgeWithNeighborRow } from '../types/mapping';
 
 const EDGE_COLUMNS = 'id, expression_a_id, expression_b_id, relation_mask, score, created_by';
+// Example-only edges are retained as dictionary evidence, but are not direct
+// semantic mappings for the mapping list.
+const DIRECT_RELATION_MASK = 1 | 2;
 
 export class MappingError extends Error {
   constructor(public code: string) {
@@ -117,7 +120,7 @@ const A_SIDE_SQL = `SELECT e.id AS edge_id, n.id AS neighbor_id, l.code AS neigh
  FROM expression_edges e
  JOIN expressions n ON n.id = e.expression_b_id
  JOIN languages l ON l.id = n.language_id
- WHERE e.expression_a_id = ? AND e.expression_b_id > ?
+ WHERE e.expression_a_id = ? AND e.expression_b_id > ? AND (e.relation_mask & ${DIRECT_RELATION_MASK}) <> 0
  ORDER BY e.expression_b_id ASC
  LIMIT ?`;
 
@@ -126,7 +129,7 @@ const B_SIDE_SQL = `SELECT e.id AS edge_id, n.id AS neighbor_id, l.code AS neigh
  FROM expression_edges e
  JOIN expressions n ON n.id = e.expression_a_id
  JOIN languages l ON l.id = n.language_id
- WHERE e.expression_b_id = ? AND e.id > ?
+ WHERE e.expression_b_id = ? AND e.id > ? AND (e.relation_mask & ${DIRECT_RELATION_MASK}) <> 0
  ORDER BY e.id ASC
  LIMIT ?`;
 

@@ -71,5 +71,6 @@ describe('getExpressionMappings', () => {
     expect(result.next_cursor).toBeNull();
     expect(statements).toHaveLength(2);
     expect(statements.every((sql) => !/OFFSET|ORDER BY\s+e\.score/i.test(sql))).toBe(true);
+    expect(statements.every((sql) => sql.includes('(e.relation_mask & 3) <> 0'))).toBe(true);
   });
 });

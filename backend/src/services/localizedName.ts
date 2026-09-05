@@ -35,6 +35,7 @@ FROM candidate_rows
 CROSS JOIN expression_edges e ON e.expression_a_id = candidate_rows.source_id
 JOIN expressions t ON t.id = e.expression_b_id
 WHERE e.score >= 0
+  AND (e.relation_mask & 3) <> 0
   AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
   AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)
 UNION ALL
@@ -43,6 +44,7 @@ FROM candidate_rows
 CROSS JOIN expression_edges e ON e.expression_b_id = candidate_rows.source_id
 JOIN expressions t ON t.id = e.expression_a_id
 WHERE e.score >= 0
+  AND (e.relation_mask & 3) <> 0
   AND t.language_id = (SELECT language_id FROM language_locales WHERE code = ?)
   AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)`;
 
