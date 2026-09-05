@@ -289,6 +289,37 @@ class ProductionInventoryTests(unittest.TestCase):
                         },
                     )
 
+    def test_dictionary_postflight_samples_are_compared_by_primary_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            from lib import production as production_lib  # noqa: E402
+
+            sample = {"id": 1, "type": "system", "name": "seed"}
+            postflight = {
+                "samples": {
+                    "before": {"sources": [sample]},
+                    "after": {"sources": [sample]},
+                    "added": {"sources": [sample]},
+                }
+            }
+            with mock.patch.object(
+                production_lib.ProductionExecutor,
+                "select",
+                return_value=[{"results": [sample]}],
+            ) as select:
+                error = production_lib._validate_dictionary_postflight_samples(
+                    paths,
+                    postflight,
+                    sections=("before",),
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={},
+                )
+
+            self.assertIsNone(error)
+            self.assertIn('FROM "sources"', select.call_args.args[1])
+            self.assertIn('"id" IS 1', select.call_args.args[1])
+
     def test_data_only_plan_skips_unchanged_reference_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

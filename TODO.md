@@ -9,8 +9,9 @@
     batch resume；statistics refresh 可納入同一 operation。
   - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`、`15d7b3c6`、`97f87c62`、
     `734dff08`、`d5b41316`。
-  - 後置 manifest 會鎖定 before／after SQLite SHA-256 與八張 canonical dictionary table
-    的計數；plan 先做 production before-count gate，apply 完成後再做 after-count gate。
+  - 後置 manifest 會鎖定 before／after SQLite SHA-256、八張 canonical dictionary table
+    的計數，以及 deterministic source／locale／reading／mapping samples；plan 先做
+    production before-count／sample gate，apply 完成後再做 after-count／sample gate。
   - 單一入口 `scripts/dictionary/release_dictionary.py` 會串起 snapshot → import →
     delta／manifest → plan；預設 plan-only，`--apply` 仍受 exact database confirmation
     gate 保護，Web deploy 維持獨立操作。

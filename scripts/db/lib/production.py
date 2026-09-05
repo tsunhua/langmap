@@ -33,6 +33,16 @@ DICTIONARY_POSTFLIGHT_TABLES = (
     "expression_edges",
     "expression_edge_sources",
 )
+DICTIONARY_POSTFLIGHT_PRIMARY_KEYS = {
+    "sources": ("id",),
+    "language_locales": ("id",),
+    "expressions": ("id",),
+    "expression_sources": ("expression_id", "source_id", "source_marker"),
+    "expression_locale_links": ("expression_id", "locale_id"),
+    "expression_readings": ("expression_id", "locale_id", "scheme", "value"),
+    "expression_edges": ("id",),
+    "expression_edge_sources": ("edge_id", "source_id", "source_marker"),
+}
 
 
 @dataclass(frozen=True)
@@ -383,6 +393,16 @@ def plan_production(
         )
         if postflight_error:
             baseline_error = postflight_error
+        else:
+            sample_error = _validate_dictionary_postflight_samples(
+                paths,
+                dictionary_postflight,
+                sections=("before",),
+                wrangler_bin=wrangler_bin,
+                env=env,
+            )
+            if sample_error:
+                baseline_error = sample_error
     statistics_refresh: dict[str, Any] | None = None
     if refresh_language_statistics:
         refresh_path = (
@@ -789,6 +809,15 @@ def apply_production(
             check_baseline(paths, verified)
         if isinstance(dictionary_postflight, dict):
             _validate_dictionary_postflight_after(dictionary_postflight, verified)
+            sample_error = _validate_dictionary_postflight_samples(
+                paths,
+                dictionary_postflight,
+                sections=("after", "added"),
+                wrangler_bin=executor.wrangler_bin,
+                env=env,
+            )
+            if sample_error:
+                raise ProductionInventoryError(sample_error)
         journal.append_operation(
             paths.production_operation_journal_path,
             {**operation, "status": "succeeded", "verified": True},
@@ -991,12 +1020,61 @@ def _validate_dictionary_postflight_manifest(
                 f"dictionary postflight manifest has invalid {hash_name}"
             )
 
+    samples_payload = payload.get("samples")
+    samples: dict[str, dict[str, list[dict[str, Any]]]] | None = None
+    if samples_payload is not None:
+        if not isinstance(samples_payload, dict):
+            raise ProductionInventoryError("dictionary postflight samples are invalid")
+        samples = {}
+        for section in ("before", "after", "added"):
+            raw_section = samples_payload.get(section)
+            if not isinstance(raw_section, dict):
+                raise ProductionInventoryError(
+                    f"dictionary postflight samples require {section}"
+                )
+            section_samples: dict[str, list[dict[str, Any]]] = {}
+            for table, rows in raw_section.items():
+                if table not in DICTIONARY_POSTFLIGHT_TABLES:
+                    raise ProductionInventoryError(
+                        f"dictionary postflight samples contain unknown table {table}"
+                    )
+                if not isinstance(rows, list) or len(rows) > 3:
+                    raise ProductionInventoryError(
+                        f"dictionary postflight samples for {table} are invalid"
+                    )
+                normalized_rows: list[dict[str, Any]] = []
+                for row in rows:
+                    if not isinstance(row, dict) or not row:
+                        raise ProductionInventoryError(
+                            f"dictionary postflight sample row for {table} is invalid"
+                        )
+                    if any(
+                        not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(column))
+                        or not _is_json_scalar(value)
+                        for column, value in row.items()
+                    ):
+                        raise ProductionInventoryError(
+                            f"dictionary postflight sample values for {table} are invalid"
+                        )
+                    if any(
+                        primary_key not in row
+                        for primary_key in DICTIONARY_POSTFLIGHT_PRIMARY_KEYS[table]
+                    ):
+                        raise ProductionInventoryError(
+                            f"dictionary postflight sample key is incomplete for {table}"
+                        )
+                    normalized_rows.append({str(column): value for column, value in row.items()})
+                section_samples[table] = normalized_rows
+            samples[section] = section_samples
+
     metadata = {
         "path": str(resolved.relative_to(paths.repo_root.resolve())),
         "sha256": _sha256_path(resolved),
         "bytes": resolved.stat().st_size,
         **count_sets,
     }
+    if samples is not None:
+        metadata["samples"] = samples
     mismatches = {
         table: {
             "expected": count_sets["before_counts"][table],
@@ -1013,6 +1091,136 @@ def _validate_dictionary_postflight_manifest(
             + json.dumps(mismatches, sort_keys=True),
         )
     return metadata, None
+
+
+def _is_json_scalar(value: Any) -> bool:
+    return value is None or isinstance(value, (bool, int, float, str))
+
+
+def _sql_literal(value: Any) -> str:
+    if value is None:
+        return "NULL"
+    if isinstance(value, bool):
+        return "1" if value else "0"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return repr(value)
+    if isinstance(value, str):
+        return "'" + value.replace("'", "''") + "'"
+    raise ProductionInventoryError("dictionary postflight sample value is not scalar")
+
+
+def _quoted_identifier(value: str) -> str:
+    return '"' + value.replace('"', '""') + '"'
+
+
+def _dictionary_postflight_sample_queries(
+    samples: dict[str, dict[str, list[dict[str, Any]]]],
+    sections: tuple[str, ...],
+) -> tuple[str, list[tuple[str, str]]]:
+    statements: list[str] = []
+    descriptors: list[tuple[str, str]] = []
+    for section in sections:
+        for table in DICTIONARY_POSTFLIGHT_TABLES:
+            rows = samples.get(section, {}).get(table, [])
+            if not rows:
+                continue
+            columns = list(rows[0])
+            if any(list(row) != columns for row in rows):
+                raise ProductionInventoryError(
+                    f"dictionary postflight sample columns differ for {table}"
+                )
+            primary_keys = DICTIONARY_POSTFLIGHT_PRIMARY_KEYS[table]
+            predicates = []
+            for row in rows:
+                predicates.append(
+                    "(" + " AND ".join(
+                        f"{_quoted_identifier(column)} IS {_sql_literal(row[column])}"
+                        for column in primary_keys
+                    ) + ")"
+                )
+            select_columns = ", ".join(_quoted_identifier(column) for column in columns)
+            order_columns = ", ".join(_quoted_identifier(column) for column in primary_keys)
+            statements.append(
+                f"SELECT {select_columns} FROM {_quoted_identifier(table)} "
+                f"WHERE {' OR '.join(predicates)} ORDER BY {order_columns}"
+            )
+            descriptors.append((section, table))
+    return "; ".join(statements), descriptors
+
+
+def _query_dictionary_postflight_samples(
+    paths: ProjectPaths,
+    postflight: dict[str, Any],
+    *,
+    sections: tuple[str, ...],
+    wrangler_bin: Path | None,
+    env: Mapping[str, str] | None,
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    samples = postflight.get("samples")
+    if not isinstance(samples, dict):
+        return {}
+    sql, descriptors = _dictionary_postflight_sample_queries(samples, sections)
+    if not sql:
+        return {section: {} for section in sections}
+    configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
+    executor = ProductionExecutor(
+        paths=paths,
+        wrangler_bin=wrangler_bin or (paths.backend_dir / "node_modules" / ".bin" / "wrangler"),
+        env=env,
+    )
+    results = executor.select(configured["database_name"], sql)
+    if not isinstance(results, list) or len(results) != len(descriptors):
+        raise ProductionInventoryError("dictionary postflight sample query response is invalid")
+    actual: dict[str, dict[str, list[dict[str, Any]]]] = {
+        section: {} for section in sections
+    }
+    for descriptor, result in zip(descriptors, results):
+        if not isinstance(result, dict) or not isinstance(result.get("results"), list):
+            raise ProductionInventoryError("dictionary postflight sample rows are invalid")
+        section, table = descriptor
+        actual[section][table] = [
+            row for row in result["results"] if isinstance(row, dict)
+        ]
+    return actual
+
+
+def _validate_dictionary_postflight_samples(
+    paths: ProjectPaths,
+    postflight: dict[str, Any],
+    *,
+    sections: tuple[str, ...],
+    wrangler_bin: Path | None,
+    env: Mapping[str, str] | None,
+) -> str | None:
+    samples = postflight.get("samples")
+    if not isinstance(samples, dict):
+        return None
+    actual = _query_dictionary_postflight_samples(
+        paths,
+        postflight,
+        sections=sections,
+        wrangler_bin=wrangler_bin,
+        env=env,
+    )
+    mismatches: dict[str, Any] = {}
+    for section in sections:
+        expected_section = samples.get(section, {})
+        actual_section = actual.get(section, {})
+        for table in DICTIONARY_POSTFLIGHT_TABLES:
+            expected_rows = expected_section.get(table, [])
+            actual_rows = actual_section.get(table, [])
+            if expected_rows != actual_rows:
+                mismatches[f"{section}.{table}"] = {
+                    "expected": expected_rows,
+                    "actual": actual_rows,
+                }
+    if mismatches:
+        return "dictionary postflight sample mismatch: " + json.dumps(
+            mismatches, ensure_ascii=False, sort_keys=True
+        )
+    return None
 
 
 def _validate_dictionary_postflight_after(

@@ -107,6 +107,24 @@ def _insert_statement(
     return f'INSERT OR IGNORE INTO "{table}" ({names}) VALUES\n  {values};'
 
 
+def _sample_rows(
+    connection: sqlite3.Connection,
+    table: str,
+    pk: list[str],
+    columns: list[str],
+    *,
+    schema: str = "main",
+    limit: int = 3,
+) -> list[dict[str, object]]:
+    selected = ", ".join(f'"{column}"' for column in columns)
+    ordered_primary_key = ", ".join(f'"{column}"' for column in pk)
+    rows = connection.execute(
+        f'SELECT {selected} FROM {schema}."{table}" '
+        f'ORDER BY {ordered_primary_key} LIMIT {limit}'
+    )
+    return [dict(row) for row in rows]
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -132,6 +150,11 @@ def export_delta(
     counts: dict[str, int] = {}
     before_counts: dict[str, int] = {}
     after_counts: dict[str, int] = {}
+    samples: dict[str, dict[str, list[dict[str, object]]]] = {
+        "before": {},
+        "after": {},
+        "added": {},
+    }
     try:
         with output.open("w", encoding="utf-8") as handle:
             handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
@@ -151,8 +174,15 @@ def export_delta(
                 after_counts[table] = int(
                     after_conn.execute(f'SELECT COUNT(*) FROM main."{table}"').fetchone()[0]
                 )
+                samples["before"][table] = _sample_rows(
+                    before_conn, table, pk, columns
+                )
+                samples["after"][table] = _sample_rows(
+                    after_conn, table, pk, columns
+                )
                 count = 0
                 batch: list[sqlite3.Row] = []
+                added_samples: list[dict[str, object]] = []
                 for row in _iter_added_rows(
                     after_conn,
                     table,
@@ -161,6 +191,8 @@ def export_delta(
                     limit=limit,
                 ):
                     batch.append(row)
+                    if len(added_samples) < 3:
+                        added_samples.append(dict(row))
                     count += 1
                     if len(batch) == rows_per_insert:
                         handle.write(_insert_statement(table, batch, columns) + "\n")
@@ -168,6 +200,7 @@ def export_delta(
                 if batch:
                     handle.write(_insert_statement(table, batch, columns) + "\n")
                 counts[table] = count
+                samples["added"][table] = added_samples
             handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
         if manifest is not None:
             manifest.parent.mkdir(parents=True, exist_ok=True)
@@ -178,6 +211,7 @@ def export_delta(
                 "before_counts": before_counts,
                 "after_counts": after_counts,
                 "added_counts": counts,
+                "samples": samples,
             }
             temporary = manifest.with_name(f".{manifest.name}.{os.getpid()}.tmp")
             temporary.write_text(

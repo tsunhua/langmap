@@ -156,6 +156,8 @@ class ExportDeltaTests(unittest.TestCase):
             self.assertEqual(payload["after_counts"]["expressions"], 2)
             self.assertEqual(payload["before_sha256"], _sha256(before))
             self.assertEqual(payload["after_sha256"], _sha256(after))
+            self.assertEqual(payload["samples"]["added"]["expressions"][0]["text"], "逮捕")
+            self.assertEqual(payload["samples"]["after"]["expression_readings"][0]["scheme"], "jyutping")
 
     def test_empty_delta(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -370,7 +370,7 @@ git commit -m "feat: refresh language statistics in data release"
 - Test: `scripts/db/tests/test_manage.py`
 
 **Interfaces:**
-- Produces `export_delta(..., manifest: Path | None = None) -> dict[str, int]` and a JSON manifest with before/after database SHA-256 plus canonical table counts.
+- Produces `export_delta(..., manifest: Path | None = None) -> dict[str, int]` and a JSON manifest with before/after database SHA-256, canonical table counts, and deterministic source／locale／reading／mapping samples.
 - Produces CLI flag `production plan --dictionary-postflight-manifest <path>`.
 - Produces plan field `dictionary_postflight` and raises a production verification error when actual counts differ from the manifest.
 
@@ -388,9 +388,9 @@ Expected: FAIL because delta export and production plan/apply have no postflight
 
 Add `--manifest` to `export_dictionary_delta.py`; record before／after SHA-256, per-table before／after counts, and added row counts. Keep JSON sorted and atomically written.
 
-- [x] **Step 4: Enforce preflight and postflight counts**
+- [x] **Step 4: Enforce preflight and postflight counts and samples**
 
-Add `--dictionary-postflight-manifest` to plan. Validate its path and SHA-256, compare production inventory counts to manifest before counts during planning, and compare post-apply inventory counts to after counts. Keep old plans without the field compatible.
+Add `--dictionary-postflight-manifest` to plan. Validate its path and SHA-256, compare production inventory counts and before samples to the manifest during planning, and compare post-apply counts plus after／added samples to the manifest. Keep old plans without the field compatible.
 
 - [x] **Step 5: Run tests and commit**
 
