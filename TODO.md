@@ -152,6 +152,8 @@
     mirror 已 replay repair／stats delta；核心表計數與 production 一致，mirror
     `foreign_key_check=0`。
 - [ ] 回源裁定 `hk-cantowords` 仍有 105 條未清理的括號內容；它們含缺調號、非 Jyutping
-  token 或不完整音節，不能安全猜測為發音提示。待人工確認後才可另行修正與發布。
+  token 或不完整音節，不能安全猜測為發音提示。逐條清單見
+  `docs/2026-09-05-hk-cantowords-uncertain-parentheticals.md`；待人工確認後才可另行
+  修正與發布。
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
   需在 dictionary exporter 修正後重新匯出並重新抽查，不要直接手改 JSONL 或 production。
