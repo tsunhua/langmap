@@ -1425,11 +1425,11 @@ SELECT 'migration' AS kind, name FROM d1_migrations ORDER BY id;
 
 def _build_column_inventory_sql(table_names: list[str]) -> str:
     if not table_names:
-        return "PRAGMA table_info('')"
+        return 'PRAGMA table_info("")'
     statements = []
     for table_name in table_names:
-        escaped_name = table_name.replace("'", "''")
-        statements.append(f"PRAGMA table_info('{escaped_name}')")
+        escaped_name = table_name.replace('"', '""')
+        statements.append(f'PRAGMA table_info("{escaped_name}")')
     return "; ".join(statements)
 
 

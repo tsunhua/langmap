@@ -18,6 +18,14 @@ FAKE_WRANGLER = REPO_ROOT / "scripts" / "db" / "tests" / "fixtures" / "wrangler-
 
 
 class ProductionInventoryTests(unittest.TestCase):
+    def test_column_inventory_uses_sqlite_identifiers_for_d1_compatibility(self) -> None:
+        from lib.production import _build_column_inventory_sql  # noqa: E402
+
+        self.assertEqual(
+            _build_column_inventory_sql(["edge_votes", "expression_edges"]),
+            'PRAGMA table_info("edge_votes"); PRAGMA table_info("expression_edges")',
+        )
+
     def _paths(self, root: Path):
         paths = build_fixture_repo(root)
         (paths.backend_dir / "wrangler.jsonc").write_text(
