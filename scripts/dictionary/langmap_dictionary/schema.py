@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS lexical_occurrences (
 CREATE TABLE IF NOT EXISTS lexical_readings (
   release_id TEXT NOT NULL, claim_key TEXT NOT NULL, entry_key TEXT NOT NULL,
   raw_value TEXT NOT NULL, value TEXT NOT NULL, scheme TEXT NOT NULL, locale_code TEXT,
-  errors_json TEXT NOT NULL, PRIMARY KEY (release_id, claim_key),
+  errors_json TEXT NOT NULL, target_claim_key TEXT, PRIMARY KEY (release_id, claim_key),
   FOREIGN KEY (release_id, entry_key) REFERENCES input_entries(release_id, entry_key) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS normalized_pos (

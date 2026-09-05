@@ -67,6 +67,7 @@ class NormalizedReading:
     scheme: str
     locale_code: str | None
     errors: tuple[str, ...] = ()
+    target_claim_key: str | None = None
 
 
 @dataclass(frozen=True)

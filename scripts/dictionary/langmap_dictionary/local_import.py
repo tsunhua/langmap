@@ -451,7 +451,12 @@ def import_release_to_local_d1(
         ))
         ordered_readings = sorted(reading_rows, key=lambda item: str(item["claim_key"]))
         for index, row in enumerate(ordered_readings, 1):
-            expression_id = head_by_entry.get(str(row["entry_key"]))
+            target_claim_key = row["target_claim_key"]
+            if target_claim_key:
+                target = occurrences.get(str(target_claim_key))
+                expression_id = cluster_ids.get(str(target["cluster_key"])) if target is not None else None
+            else:
+                expression_id = head_by_entry.get(str(row["entry_key"]))
             if expression_id is None or not row["locale_code"]:
                 continue
             code = str(row["locale_code"])

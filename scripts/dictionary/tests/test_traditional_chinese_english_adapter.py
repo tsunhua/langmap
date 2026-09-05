@@ -301,6 +301,37 @@ def test_adapter_preserves_traditional_cantonese_example_locale():
     assert example.locale_code == "yue-Hant-HK"
 
 
+def test_adapter_routes_cantonese_example_reading_to_example_expression():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "org.jyutjyu.hk-cantowords", "e", "苦悶", "苦悶", None,
+        "yue-Hans-HK-to-eng", "a" * 64,
+        senses=(StagedSense(
+            "s", 1,
+            examples=({
+                "text": "純粹發泄下工作嘅苦悶咋",
+                "translation": "This is just to vent out my boredom at work",
+                "language_hint": "yue-Hant-HK",
+                "readings": [{
+                    "value": "seon4 seoi5 faat3 sit3 haa5 gung1 zok3 ge3 fu2 mun6 zaa3",
+                    "scheme": "jyutping",
+                    "locale": "yue-Hant-HK",
+                }],
+            },),
+        ),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    readings = [reading for reading in normalized.readings if reading.target_claim_key]
+    assert [(reading.scheme, reading.locale_code, reading.value, reading.target_claim_key) for reading in readings] == [
+        (
+            "jyutping",
+            "yue-Hant-HK",
+            "seon4 seoi5 faat3 sit3 haa5 gung1 zok3 ge3 fu2 mun6 zaa3",
+            "entry:e:sense:s:example:1:text",
+        ),
+    ]
+
+
 def test_adapter_accepts_capitalized_jyutping_scheme_and_removes_digit_spaces():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(

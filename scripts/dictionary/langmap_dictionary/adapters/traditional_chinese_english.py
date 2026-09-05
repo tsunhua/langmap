@@ -423,6 +423,11 @@ class TraditionalChineseEnglishAdapter:
                 ))
             for ordinal, raw_item in enumerate(sense.examples, 1):
                 item = raw_item if isinstance(raw_item, dict) else {"text": raw_item}
+                example_claim_prefix = _claim(
+                    "entry", entry.entry_key, "sense", sense.sense_key,
+                    "example", str(ordinal),
+                )
+                locale: str | None = None
                 text = item.get("text")
                 if isinstance(text, str) and text.strip():
                     lang, locale, error = _language(
@@ -430,7 +435,7 @@ class TraditionalChineseEnglishAdapter:
                         item.get("language") or item.get("language_hint") or _side_hint(direction_hint, True),
                     )
                     occurrences.append(NormalizedOccurrence(
-                        _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "text"),
+                        example_claim_prefix + ":text",
                         "example", text, canonicalize_text(text), lang, locale,
                         _claim("claim", entry.entry_key, sense.sense_key, "example", str(ordinal), "text"),
                         entry.entry_key, sense.sense_key, {}, (error,) if error else (),
@@ -439,10 +444,38 @@ class TraditionalChineseEnglishAdapter:
                 if isinstance(translation, str) and translation.strip():
                     lang, locale, error = _language(translation, item.get("translation_language") or _side_hint(direction_hint, False))
                     occurrences.append(NormalizedOccurrence(
-                        _claim("entry", entry.entry_key, "sense", sense.sense_key, "example", str(ordinal), "translation"),
+                        example_claim_prefix + ":translation",
                         "example", translation, canonicalize_text(translation), lang, locale,
                         _claim("claim", entry.entry_key, sense.sense_key, "example", str(ordinal), "translation"),
                         entry.entry_key, sense.sense_key, {}, (error,) if error else (),
+                    ))
+                for reading_ordinal, raw_reading in enumerate(item.get("readings") or (), 1):
+                    if not isinstance(raw_reading, dict):
+                        continue
+                    raw_value = raw_reading.get("value")
+                    scheme = raw_reading.get("scheme")
+                    if not isinstance(raw_value, str) or not raw_value.strip() or not isinstance(scheme, str):
+                        continue
+                    upper_scheme = scheme.strip().upper()
+                    if "JYUTPING" in upper_scheme:
+                        normalized_scheme = "jyutping"
+                        value = _canonical_jyutping(raw_value)
+                        reading_locale = str(raw_reading.get("locale") or locale or "yue-Hant-HK")
+                        reading_errors: tuple[str, ...] = ()
+                    else:
+                        normalized_scheme = scheme
+                        value = canonicalize_text(raw_value)
+                        reading_locale = str(raw_reading.get("locale") or locale) if (raw_reading.get("locale") or locale) else None
+                        reading_errors = ("unknown_reading_scheme",)
+                    extended_readings.append(NormalizedReading(
+                        example_claim_prefix + ":reading:" + str(reading_ordinal),
+                        entry.entry_key,
+                        raw_value,
+                        value,
+                        normalized_scheme,
+                        reading_locale,
+                        reading_errors,
+                        example_claim_prefix + ":text",
                     ))
             pos = tuple(self._pos(sense.sense_key, entry.entry_key, index, value) for index, value in enumerate(sense.pos, 1))
             senses.append(NormalizedSense(sense.sense_key, tuple(occurrences), tuple(extended_readings), pos))
@@ -652,7 +685,7 @@ def _normalize_release_rows(
                 occurrence_rows.clear()
             if reading_rows:
                 reading_rows.sort(key=lambda row: row[1])
-                connection.executemany("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?)", reading_rows)
+                connection.executemany("INSERT INTO lexical_readings VALUES (?,?,?,?,?,?,?,?,?)", reading_rows)
                 reading_rows.clear()
             if pos_rows:
                 pos_rows.sort(key=lambda row: row[1])
@@ -708,7 +741,7 @@ def _normalize_release_rows(
                 if occurrence.errors:
                     quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
             for reading in normalized.readings:
-                reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False)))
+                reading_rows.append((release_id, reading.claim_key, reading.entry_key, reading.raw_value, reading.value, reading.scheme, reading.locale_code, _fast_json.dumps(reading.errors, ensure_ascii=False), reading.target_claim_key))
                 if reading.errors:
                     quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, None, reading.claim_key, reading.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
             for sense in normalized.senses:

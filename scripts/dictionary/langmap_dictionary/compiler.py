@@ -248,7 +248,9 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
             continue
         statements.append(insert_or_ignore("expression_pos_attestations", ["release_id", "expression_id", "pos_code", "claim_key"], [release_id, head["expression_id"], row["code"], row["claim_key"]]))
     for row in connection.execute("SELECT * FROM lexical_readings WHERE release_id=? AND errors_json='[]' ORDER BY claim_key", (release_id,)):
-        head = head_by_sense.get(str(row["entry_key"]))
+        target_claim_key = row["target_claim_key"]
+        target = by_claim.get(str(target_claim_key)) if target_claim_key else None
+        head = head_by_sense.get(str(row["entry_key"])) if target is None else target
         if head is None or not row["locale_code"]:
             continue
         reading_id = f"dict-reading:{release_id}:{row['claim_key']}"
