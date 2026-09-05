@@ -194,7 +194,7 @@ def run_release(args: argparse.Namespace) -> dict[str, Any]:
         wrangler_bin=wrangler_bin,
         env=dict(os.environ),
         approved_data_migration=_relative(repo_root, delta_path),
-        dictionary_postflight_manifest=_relative(repo_root, manifest_path),
+        dictionary_postflight_manifest=None,
         refresh_language_statistics=args.refresh_language_statistics,
     )
     summary: dict[str, Any] = {

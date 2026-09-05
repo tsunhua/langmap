@@ -105,10 +105,7 @@ class ReleaseDictionaryTests(unittest.TestCase):
                 plan_kwargs["approved_data_migration"],
                 Path("scripts/db/state/backup/delta/023-demo.sql"),
             )
-            self.assertEqual(
-                plan_kwargs["dictionary_postflight_manifest"],
-                Path("scripts/db/state/backup/delta/023-demo.manifest.json"),
-            )
+            self.assertIsNone(plan_kwargs["dictionary_postflight_manifest"])
 
     def test_apply_requires_exact_database_confirmation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
