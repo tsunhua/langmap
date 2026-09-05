@@ -1,6 +1,7 @@
 import json
 import sqlite3
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -8,6 +9,7 @@ from scripts.dictionary.incremental_import import (
     ReadingQualityError,
     _prepare_staging,
     assert_reading_quality,
+    file_sha256,
     order_jsonl_files,
     run_incremental_import,
 )
@@ -111,11 +113,26 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
 
     state_path = tmp_path / "state.json"
     staging_root = tmp_path / "staging"
+    snapshot_root = tmp_path / "snapshots"
     events = []
-    first = run_incremental_import(input_dir, d1_path, state_path, staging_root, progress=events.append)
+    first = run_incremental_import(
+        input_dir,
+        d1_path,
+        state_path,
+        staging_root,
+        snapshot_root=snapshot_root,
+        progress=events.append,
+    )
     assert first[0]["status"] == "success"
     assert first[0]["expressions"] == 7
     assert first[0]["d1_after"]["terms"] - first[0]["d1_before"]["terms"] == 7
+    snapshot = Path(first[0]["before_snapshot_path"])
+    assert snapshot.parent == snapshot_root
+    assert snapshot.is_file()
+    assert first[0]["before_snapshot_sha256"] == file_sha256(snapshot)
+    snapshot_db = sqlite3.connect(snapshot)
+    assert snapshot_db.execute("SELECT COUNT(*) FROM expressions").fetchone()[0] == first[0]["d1_before"]["terms"]
+    snapshot_db.close()
     assert set(first[0]["phase_seconds"]) == {
         "stage", "normalize", "normalize_staging_read", "normalize_compute",
         "normalize_sqlite_flush", "normalize_checkpoint_commit",
@@ -128,7 +145,13 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
     }
     assert list(staging_root.iterdir()) == []
 
-    second = run_incremental_import(input_dir, d1_path, state_path, staging_root)
+    second = run_incremental_import(
+        input_dir,
+        d1_path,
+        state_path,
+        staging_root,
+        snapshot_root=snapshot_root,
+    )
     assert second == [
         {
             "file": "small.jsonl",
@@ -138,5 +161,36 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
             "status": "skipped",
             "release_id": first[0]["release_id"],
             "reason": "already_imported",
+            "before_snapshot_path": first[0]["before_snapshot_path"],
+            "before_snapshot_sha256": first[0]["before_snapshot_sha256"],
+            "snapshot_run_key": first[0]["snapshot_run_key"],
         }
     ]
+
+
+def test_incremental_import_does_not_snapshot_before_quality_gate(tmp_path):
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    (input_dir / "bad.jsonl").write_bytes(FIXTURE.read_bytes())
+    d1_path = tmp_path / "d1.sqlite"
+    d1 = sqlite3.connect(d1_path)
+    d1.executescript(SCHEMA.read_text(encoding="utf-8"))
+    d1.executescript(REFERENCE.read_text(encoding="utf-8"))
+    d1.close()
+    snapshot_root = tmp_path / "snapshots"
+
+    with mock.patch(
+        "scripts.dictionary.incremental_import._prepare_staging",
+        side_effect=ReadingQualityError("fixture quality failure"),
+    ):
+        with pytest.raises(ReadingQualityError, match="fixture quality failure"):
+            run_incremental_import(
+                input_dir,
+                d1_path,
+                tmp_path / "state.json",
+                tmp_path / "staging",
+                snapshot_root=snapshot_root,
+                stop_on_error=True,
+            )
+
+    assert not snapshot_root.exists()

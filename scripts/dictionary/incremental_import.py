@@ -53,6 +53,64 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def create_sqlite_snapshot(source: Path, destination: Path) -> str:
+    """Create a consistent SQLite backup without copying live WAL sidecars."""
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}.{time.time_ns()}.tmp")
+    try:
+        with sqlite3.connect(source, timeout=60) as source_db:
+            with sqlite3.connect(temporary) as snapshot_db:
+                source_db.backup(snapshot_db)
+        temporary.replace(destination)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+    return file_sha256(destination)
+
+
+def _snapshot_run_key(files: list[tuple[Path, int, str]]) -> str:
+    payload = [
+        {"name": source.name, "bytes": size, "sha256": digest}
+        for source, size, digest in files
+    ]
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _ensure_before_snapshot(
+    state: dict[str, Any],
+    state_path: Path,
+    snapshot_root: Path,
+    run_key: str,
+    d1_database: Path,
+) -> dict[str, str]:
+    snapshots = state.setdefault("before_snapshots", {})
+    if not isinstance(snapshots, dict):
+        raise ValueError("incremental state before_snapshots must be an object")
+    existing = snapshots.get(run_key)
+    if isinstance(existing, dict):
+        existing_path = Path(str(existing.get("path", "")))
+        existing_sha256 = str(existing.get("sha256", ""))
+        if (
+            existing_path.is_file()
+            and existing_sha256
+            and file_sha256(existing_path) == existing_sha256
+        ):
+            return {"path": str(existing_path), "sha256": existing_sha256}
+        raise ValueError(f"recorded before snapshot is missing or changed: {existing_path}")
+
+    destination = snapshot_root / (
+        f"before-{run_key[:16]}-{time.time_ns()}.sqlite"
+    )
+    sha256 = create_sqlite_snapshot(d1_database, destination)
+    metadata = {"path": str(destination), "sha256": sha256}
+    snapshots[run_key] = metadata
+    _write_state(state_path, state)
+    return metadata
+
+
 def _load_state(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"version": STATE_VERSION, "files": {}}
@@ -208,6 +266,7 @@ def run_incremental_import(
     state_path: Path,
     staging_root: Path,
     *,
+    snapshot_root: Path | None = None,
     batch_size: int = 5_000,
     commit_every: int = 50_000,
     resume: bool = True,
@@ -225,6 +284,7 @@ def run_incremental_import(
     d1_database = Path(d1_database).resolve()
     state_path = Path(state_path).resolve()
     staging_root = Path(staging_root).resolve()
+    snapshot_root = Path(snapshot_root or state_path.parent / "snapshots").resolve()
     if not input_dir.is_dir():
         raise NotADirectoryError(input_dir)
     if not d1_database.is_file():
@@ -238,12 +298,14 @@ def run_incremental_import(
         if limit_files < 1:
             raise ValueError("limit_files must be positive")
         files = files[:limit_files]
+    file_details = [
+        (source, source.stat().st_size, file_sha256(source)) for source in files
+    ]
+    run_key = _snapshot_run_key(file_details)
     state = _load_state(state_path)
     results: list[dict[str, Any]] = []
 
-    for ordinal, source in enumerate(files, 1):
-        source_size = source.stat().st_size
-        digest = file_sha256(source)
+    for ordinal, (source, source_size, digest) in enumerate(file_details, 1):
         previous = state["files"].get(source.name)
         if (
             resume
@@ -261,6 +323,13 @@ def run_incremental_import(
                 "release_id": previous.get("release_id"),
                 "reason": "already_imported",
             }
+            for key in (
+                "before_snapshot_path",
+                "before_snapshot_sha256",
+                "snapshot_run_key",
+            ):
+                if previous.get(key):
+                    skipped[key] = previous[key]
             results.append(skipped)
             print(json.dumps(skipped, ensure_ascii=False, sort_keys=True), flush=True)
             continue
@@ -277,7 +346,6 @@ def run_incremental_import(
             "staging_path": str(staging_path),
         }
         try:
-            before = _d1_catalog_snapshot(d1_database)
             prepared = _prepare_staging(
                 source,
                 staging_path,
@@ -285,6 +353,25 @@ def run_incremental_import(
                 commit_every=commit_every,
                 progress=progress,
             )
+            snapshot = _ensure_before_snapshot(
+                state,
+                state_path,
+                snapshot_root,
+                run_key,
+                d1_database,
+            )
+            row.update(
+                {
+                    "status": "snapshot_created",
+                    "release_id": prepared.release_id,
+                    "before_snapshot_path": snapshot["path"],
+                    "before_snapshot_sha256": snapshot["sha256"],
+                    "snapshot_run_key": run_key,
+                }
+            )
+            state["files"][source.name] = row
+            _write_state(state_path, state)
+            before = _d1_catalog_snapshot(d1_database)
             append = before["languages"] > 0 or before["terms"] > 0
             summary = import_release_to_local_d1(
                 staging_path,
@@ -351,6 +438,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--d1-database", required=True, type=Path)
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--staging-root", required=True, type=Path)
+    parser.add_argument(
+        "--snapshot-root",
+        type=Path,
+        help="directory for immutable pre-import SQLite snapshots; defaults beside --state",
+    )
     parser.add_argument("--batch-size", type=int, default=5_000)
     parser.add_argument("--commit-every", type=int, default=50_000)
     parser.add_argument("--no-resume", action="store_true")
@@ -376,6 +468,7 @@ def main(argv: list[str] | None = None) -> int:
         args.d1_database,
         args.state,
         args.staging_root,
+        snapshot_root=args.snapshot_root,
         batch_size=args.batch_size,
         commit_every=args.commit_every,
         resume=not args.no_resume,
