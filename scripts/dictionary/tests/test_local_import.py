@@ -38,6 +38,12 @@ def test_locale_parts_preserve_place_suffix_for_dictionary_locales():
     assert parts["place_path"] == "Guangzhou"
 
 
+def test_locale_parts_use_shanghai_display_names():
+    parts = local_import._locale_parts("wuu-Hant-CN_Shanghai", "wuu", 7108)
+    assert parts["name"] == "上海話"
+    assert parts["name_en"] == "Shanghai Wu"
+
+
 def _stage(path: Path = FIXTURE):
     staging_path = path.parent / (path.stem + ".stage.sqlite")
     staging_path.unlink(missing_ok=True)

@@ -74,6 +74,13 @@ _LANGUAGE_CODE_ALIASES: dict[str, str] = {
     "nor": "nob",  # Norwegian → Norwegian Bokmål
 }
 
+# Locale display names are importer metadata, not part of the dictionary's
+# lexical payload. Keep source-specific names here so a rerun does not fall
+# back to exposing the machine-readable locale code as the user-facing label.
+_LOCALE_DISPLAY_NAMES: dict[str, tuple[str, str]] = {
+    "wuu-Hant-CN_Shanghai": ("上海話", "Shanghai Wu"),
+}
+
 
 def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, Any]:
     parts = code.split("-")
@@ -83,10 +90,11 @@ def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, 
         "",
     )
     region, _, place_path = region_and_place.partition("_")
+    name, name_en = _LOCALE_DISPLAY_NAMES.get(code, (code, code))
     return {
         "code": code, "language_id": language_id, "lang_code": language_code,
         "script_code": script or "Zyyy", "orthography": None,
-        "region_code": region or None, "place_path": place_path, "name": code, "name_en": code,
+        "region_code": region or None, "place_path": place_path, "name": name, "name_en": name_en,
     }
 
 
