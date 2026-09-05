@@ -8,7 +8,7 @@
     apply 以 journal stage checkpoint 從同一 plan 恢復；split SQL 已改為有限大小批次並支援
     batch resume；statistics refresh 可納入同一 operation。
   - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`、`15d7b3c6`、`97f87c62`、
-    `734dff08`，以及本輪的單一 release CLI commit。
+    `734dff08`、`d5b41316`。
   - 後置 manifest 會鎖定 before／after SQLite SHA-256 與八張 canonical dictionary table
     的計數；plan 先做 production before-count gate，apply 完成後再做 after-count gate。
   - 單一入口 `scripts/dictionary/release_dictionary.py` 會串起 snapshot → import →

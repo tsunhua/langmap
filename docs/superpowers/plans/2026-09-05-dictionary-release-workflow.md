@@ -392,7 +392,7 @@ Add `--manifest` to `export_dictionary_delta.py`; record before／after SHA-256,
 
 Add `--dictionary-postflight-manifest` to plan. Validate its path and SHA-256, compare production inventory counts to manifest before counts during planning, and compare post-apply inventory counts to after counts. Keep old plans without the field compatible.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 Run: `python3 -m pytest scripts/db/tests/test_export_dictionary_delta.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py -q`
 
@@ -433,7 +433,7 @@ successful no-op and never creates a duplicate delta.
 Document the default plan-only behavior, explicit apply confirmation, split mode, and the fact that
 Web deploy remains a separate operation.
 
-- [ ] **Step 4: Run complete verification and commit**
+- [x] **Step 4: Run complete verification and commit**
 
 Run `python3 -m pytest scripts/db/tests scripts/dictionary/tests -q` and `git diff --check`, then
 commit the CLI and documentation.
