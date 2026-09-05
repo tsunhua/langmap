@@ -402,3 +402,38 @@ Expected: all tests PASS.
 git add scripts/db/export_dictionary_delta.py scripts/db/lib/production.py scripts/db/manage.py scripts/db/tests/test_export_dictionary_delta.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
 git commit -m "feat: verify dictionary release counts"
 ```
+
+### Task 9: Provide One Re-runnable Dictionary Release CLI
+
+**Files:**
+- Create: `scripts/dictionary/release_dictionary.py`
+- Test: `scripts/dictionary/tests/test_release_dictionary.py`
+- Modify: `scripts/dictionary/README.md`
+- Modify: `docs/runbooks/production-data-release.md`
+- Modify: `TODO.md`
+
+**Interfaces:**
+- Provides one entry point for import → before snapshot reuse → delta／postflight manifest → production plan.
+- Defaults to plan-only; `--apply` requires exact `--database-name` and `--confirm-production` values.
+- Supports `--split`, `--refresh-language-statistics`, `--only`, and importer resume options.
+
+- [x] **Step 1: Write CLI orchestration tests**
+
+Assert that one invocation passes the importer snapshot to the delta exporter, records both managed
+artifacts in the production plan, and refuses `--apply` without an exact database confirmation.
+
+- [x] **Step 2: Implement the single entry point**
+
+Keep the existing importer, exporter, and managed production apply as the underlying operations;
+the CLI only composes them and emits one JSON summary. A run with only skipped inputs exits as a
+successful no-op and never creates a duplicate delta.
+
+- [x] **Step 3: Document the safe invocation and apply gate**
+
+Document the default plan-only behavior, explicit apply confirmation, split mode, and the fact that
+Web deploy remains a separate operation.
+
+- [ ] **Step 4: Run complete verification and commit**
+
+Run `python3 -m pytest scripts/db/tests scripts/dictionary/tests -q` and `git diff --check`, then
+commit the CLI and documentation.

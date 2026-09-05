@@ -2,14 +2,18 @@
 
 ## 詞典發布流程
 
-- [ ] 完成 [GitHub issue #120](https://github.com/tsunhua/langmap/issues/120) 的詞典修復／發布流程優化。
+- [x] 完成 [GitHub issue #120](https://github.com/tsunhua/langmap/issues/120) 的詞典修復／發布流程優化。
   - 第一階段已完成：mirror mutation 前自動建立 SQLite before snapshot；delta exporter 改用
     `ATTACH` anti-join 串流；data-only plan 可跳過未變更 reference artifacts；production
     apply 以 journal stage checkpoint 從同一 plan 恢復；split SQL 已改為有限大小批次並支援
     batch resume；statistics refresh 可納入同一 operation。
-  - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`、`15d7b3c6`。
-  - 待完成：dictionary-specific postflight assertions，以及 snapshot → publish → replay →
-    verify 的單一 CLI 入口。
+  - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`、`15d7b3c6`、`97f87c62`、
+    `734dff08`，以及本輪的單一 release CLI commit。
+  - 後置 manifest 會鎖定 before／after SQLite SHA-256 與八張 canonical dictionary table
+    的計數；plan 先做 production before-count gate，apply 完成後再做 after-count gate。
+  - 單一入口 `scripts/dictionary/release_dictionary.py` 會串起 snapshot → import →
+    delta／manifest → plan；預設 plan-only，`--apply` 仍受 exact database confirmation
+    gate 保護，Web deploy 維持獨立操作。
 
 ## 詞典讀音資料修復
 

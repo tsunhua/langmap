@@ -16,6 +16,7 @@ Usage:
   python3 scripts/db/export_dictionary_delta.py \
       --before <snapshot.sqlite> --after <local.sqlite> \
       --output scripts/db/state/backup/delta/<source>.sql \
+      [--manifest scripts/db/state/backup/delta/<source>.manifest.json] \
       [--rows-per-insert 100] [--limit N]
 """
 

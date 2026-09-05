@@ -84,6 +84,25 @@ python3 scripts/dictionary/incremental_import.py \
 
 此增量模式使用 `--packed --append` 的等價行為逐部追加 integer codebook；不執行跨檔案 AI 合併。要做跨檔案高信心合併，仍需保留完整 staging release 後另行執行 reconciliation，再發布新的整體 release。
 
+若要把 mirror、delta、postflight manifest 與 production plan 串成同一個可重跑入口，使用
+`release_dictionary.py`。預設只準備 release，不會修改 production；加入 `--apply` 時仍必須
+提供完全相同的 `--database-name` 與 `--confirm-production`：
+
+```bash
+python3 scripts/dictionary/release_dictionary.py \
+  --input-dir /Volumes/DATA/langmap-structured-jsonl \
+  --d1-database scripts/db/state/backup/publish-mirror.incremental.sqlite \
+  --state scripts/db/state/backup/import-state/<release>.json \
+  --staging-root /tmp/langmap-dictionary-staging \
+  --snapshot-root scripts/db/state/backup/snapshots \
+  --release-name <NNN>-<topic> \
+  --refresh-language-statistics
+```
+
+成功後輸出會包含 delta、manifest 與 plan 路徑；重跑同一批輸入會沿用 importer 的 state
+與 before snapshot。大型資料可加 `--split`，讓 production apply 使用有限大小的 SQL
+批次。`--apply` 只執行受管 D1 release，不包含 Web deploy。
+
 一般模式會寫入既有 expression／edge 表，適合相容性 fixture。packed 模式的 read-only
 compatibility views 讓 API 仍可用原有 expression／edge DTO；一般使用者寫入仍走既有
 通用表。

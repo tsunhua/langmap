@@ -30,7 +30,8 @@ state 的成功紀錄包含 `before_snapshot_path`、`before_snapshot_sha256` �
 python3 scripts/db/export_dictionary_delta.py \
   --before <state.before_snapshot_path> \
   --after scripts/db/state/backup/publish-mirror.incremental.sqlite \
-  --output scripts/db/state/backup/delta/<NNN>-<topic>.sql
+  --output scripts/db/state/backup/delta/<NNN>-<topic>.sql \
+  --manifest scripts/db/state/backup/delta/<NNN>-<topic>.manifest.json
 ```
 
 delta exporter 以 SQLite `ATTACH`／primary-key anti-join 串流輸出；記憶體只保留一個
@@ -44,6 +45,7 @@ LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
 LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
   ./scripts/db/manage.sh production plan \
   --approved-data-migration scripts/db/state/backup/delta/<NNN>-<topic>.sql \
+  --dictionary-postflight-manifest scripts/db/state/backup/delta/<NNN>-<topic>.manifest.json \
   --refresh-language-statistics
 LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
   ./scripts/db/manage.sh production apply \
@@ -69,3 +71,22 @@ identity mismatch、plan commit 改變、ownership 不明或 verify 失敗時停
 - 不繞過 plan、confirmation 或 bookmark gate。
 - 不在 apply 腳本中呼叫 deploy。
 - 不在沒有 postflight verify 的情況下宣告 release 成功。
+
+## 單一準備入口
+
+上述步驟也可由一個可重跑命令完成 import、delta／manifest 產出與 production plan：
+
+```bash
+python3 scripts/dictionary/release_dictionary.py \
+  --input-dir /Volumes/DATA/langmap-structured-jsonl \
+  --d1-database scripts/db/state/backup/publish-mirror.incremental.sqlite \
+  --state scripts/db/state/backup/import-state/<release>.json \
+  --staging-root /tmp/langmap-dictionary-staging \
+  --snapshot-root scripts/db/state/backup/snapshots \
+  --release-name <NNN>-<topic> \
+  --refresh-language-statistics
+```
+
+需要在線上執行受管 D1 apply 時，額外加入 `--apply`、`--database-name <完整資料庫名稱>`
+與 `--confirm-production <完整資料庫名稱>`；兩個名稱必須完全相同。大型 delta 可加
+`--split`。此入口不執行 Web deploy。
