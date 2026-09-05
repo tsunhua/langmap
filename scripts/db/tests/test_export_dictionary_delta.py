@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import inspect
+import json
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 
 from scripts.db.export_dictionary_delta import _iter_added_rows, export_delta
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _make_db(path: Path, *, extra: bool = False) -> None:
@@ -130,6 +137,25 @@ class ExportDeltaTests(unittest.TestCase):
             self.assertIn("'逮捕'", text)
             self.assertIn("'jyutping'", text)
             self.assertNotIn("'base'", text)
+
+    def test_delta_writes_deterministic_postflight_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            before = root / "before.sqlite"
+            after = root / "after.sqlite"
+            output = root / "delta.sql"
+            manifest = root / "manifest.json"
+            _make_db(before)
+            _make_db(after, extra=True)
+
+            counts = export_delta(before, after, output, manifest=manifest)
+
+            payload = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(payload["added_counts"], counts)
+            self.assertEqual(payload["before_counts"]["expressions"], 1)
+            self.assertEqual(payload["after_counts"]["expressions"], 2)
+            self.assertEqual(payload["before_sha256"], _sha256(before))
+            self.assertEqual(payload["after_sha256"], _sha256(after))
 
     def test_empty_delta(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

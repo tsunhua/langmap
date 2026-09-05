@@ -172,6 +172,7 @@ class ManageCliTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("--refresh-language-statistics", result.stdout)
+        self.assertIn("--dictionary-postflight-manifest", result.stdout)
 
 
 class ProjectPathsTests(unittest.TestCase):

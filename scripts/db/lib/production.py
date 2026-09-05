@@ -23,6 +23,17 @@ class ProductionInventoryError(RuntimeError):
 
 SPLIT_SQL_BATCH_BYTES = 256 * 1024
 
+DICTIONARY_POSTFLIGHT_TABLES = (
+    "sources",
+    "language_locales",
+    "expressions",
+    "expression_sources",
+    "expression_locale_links",
+    "expression_readings",
+    "expression_edges",
+    "expression_edge_sources",
+)
+
 
 @dataclass(frozen=True)
 class ProductionExecutor:
@@ -298,6 +309,7 @@ def plan_production(
     env: Mapping[str, str] | None = None,
     dictionary_artifact_manifest: Path | None = None,
     approved_data_migration: Path | None = None,
+    dictionary_postflight_manifest: Path | None = None,
     refresh_language_statistics: bool = False,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
@@ -362,6 +374,15 @@ def plan_production(
             "bytes": resolved.stat().st_size,
             "mode": "split" if str(approved_data_migration).endswith(".split.sql") else "file",
         }
+    dictionary_postflight: dict[str, Any] | None = None
+    if dictionary_postflight_manifest is not None:
+        dictionary_postflight, postflight_error = _validate_dictionary_postflight_manifest(
+            paths,
+            dictionary_postflight_manifest,
+            inventory,
+        )
+        if postflight_error:
+            baseline_error = postflight_error
     statistics_refresh: dict[str, Any] | None = None
     if refresh_language_statistics:
         refresh_path = (
@@ -438,6 +459,7 @@ def plan_production(
         },
         "approved_data_migration": approved_data,
         "dictionary_artifact": dictionary_artifact,
+        "dictionary_postflight": dictionary_postflight,
         "reference_artifacts": reference_artifacts,
         "statistics_refresh": statistics_refresh,
     }
@@ -540,6 +562,11 @@ def apply_production(
         env=env,
         timeout_seconds=timeout_seconds,
     )
+    dictionary_postflight = plan.get("dictionary_postflight")
+    if dictionary_postflight is not None:
+        if not isinstance(dictionary_postflight, dict):
+            raise ProductionInventoryError("dictionary postflight metadata is invalid")
+        _validate_dictionary_postflight_artifact(paths, dictionary_postflight)
     operation = {
         "operation_id": operation_id,
         "status": "started",
@@ -760,6 +787,8 @@ def apply_production(
             check_target_schema(paths, verified)
         else:
             check_baseline(paths, verified)
+        if isinstance(dictionary_postflight, dict):
+            _validate_dictionary_postflight_after(dictionary_postflight, verified)
         journal.append_operation(
             paths.production_operation_journal_path,
             {**operation, "status": "succeeded", "verified": True},
@@ -921,6 +950,103 @@ def _resolve_managed_artifact(paths: ProjectPaths, relative_path: str) -> Path:
     if not candidate.is_file():
         raise ProductionInventoryError("approved data migration artifact is missing")
     return candidate
+
+
+def _validate_dictionary_postflight_manifest(
+    paths: ProjectPaths,
+    manifest_path: Path,
+    inventory: dict[str, Any],
+) -> tuple[dict[str, Any], str | None]:
+    candidate = Path(manifest_path)
+    try:
+        resolved = _resolve_managed_artifact(paths, str(candidate))
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ProductionInventoryError) as exc:
+        raise ProductionInventoryError("dictionary postflight manifest is invalid") from exc
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        raise ProductionInventoryError("dictionary postflight manifest schema version is invalid")
+
+    count_sets: dict[str, dict[str, int]] = {}
+    for count_name in ("before_counts", "after_counts", "added_counts"):
+        raw_counts = payload.get(count_name)
+        if not isinstance(raw_counts, dict):
+            raise ProductionInventoryError(
+                f"dictionary postflight manifest requires {count_name}"
+            )
+        counts: dict[str, int] = {}
+        for table in DICTIONARY_POSTFLIGHT_TABLES:
+            value = raw_counts.get(table)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ProductionInventoryError(
+                    f"dictionary postflight {count_name} has invalid {table}"
+                )
+            counts[table] = value
+        count_sets[count_name] = counts
+    for hash_name in ("before_sha256", "after_sha256"):
+        value = payload.get(hash_name)
+        if not isinstance(value, str) or len(value) != 64 or any(
+            character not in "0123456789abcdef" for character in value.lower()
+        ):
+            raise ProductionInventoryError(
+                f"dictionary postflight manifest has invalid {hash_name}"
+            )
+
+    metadata = {
+        "path": str(resolved.relative_to(paths.repo_root.resolve())),
+        "sha256": _sha256_path(resolved),
+        "bytes": resolved.stat().st_size,
+        **count_sets,
+    }
+    mismatches = {
+        table: {
+            "expected": count_sets["before_counts"][table],
+            "actual": inventory.get("counts", {}).get(table),
+        }
+        for table in DICTIONARY_POSTFLIGHT_TABLES
+        if inventory.get("counts", {}).get(table)
+        != count_sets["before_counts"][table]
+    }
+    if mismatches:
+        return (
+            metadata,
+            "dictionary postflight before-count mismatch: "
+            + json.dumps(mismatches, sort_keys=True),
+        )
+    return metadata, None
+
+
+def _validate_dictionary_postflight_after(
+    postflight: dict[str, Any], inventory: dict[str, Any]
+) -> None:
+    expected_counts = postflight.get("after_counts")
+    if not isinstance(expected_counts, dict):
+        raise ProductionInventoryError("dictionary postflight after-counts are missing")
+    mismatches = {
+        table: {
+            "expected": expected_counts.get(table),
+            "actual": inventory.get("counts", {}).get(table),
+        }
+        for table in DICTIONARY_POSTFLIGHT_TABLES
+        if inventory.get("counts", {}).get(table) != expected_counts.get(table)
+    }
+    if mismatches:
+        raise ProductionInventoryError(
+            "dictionary postflight after-count mismatch: "
+            + json.dumps(mismatches, sort_keys=True)
+        )
+
+
+def _validate_dictionary_postflight_artifact(
+    paths: ProjectPaths, postflight: dict[str, Any]
+) -> Path:
+    relative = postflight.get("path")
+    expected = postflight.get("sha256")
+    if not isinstance(relative, str) or not isinstance(expected, str) or not expected:
+        raise ProductionInventoryError("dictionary postflight artifact metadata is invalid")
+    artifact_path = _resolve_managed_artifact(paths, relative)
+    if _sha256_path(artifact_path) != expected:
+        raise ProductionInventoryError("dictionary postflight manifest checksum mismatch")
+    return artifact_path
 
 
 def _resolve_dictionary_artifact(paths: ProjectPaths, relative_path: str) -> Path:
@@ -1120,10 +1246,15 @@ def _annotate_column_rows(table_names: list[str], results: Any) -> list[dict[str
     return rows
 
 INVENTORY_COUNTS_SQL = """
+SELECT 'sources' AS metric, COUNT(*) AS count FROM sources;
 SELECT 'languages' AS metric, COUNT(*) AS count FROM languages;
 SELECT 'language_locales' AS metric, COUNT(*) AS count FROM language_locales;
 SELECT 'expressions' AS metric, COUNT(*) AS count FROM expressions;
+SELECT 'expression_sources' AS metric, COUNT(*) AS count FROM expression_sources;
+SELECT 'expression_locale_links' AS metric, COUNT(*) AS count FROM expression_locale_links;
+SELECT 'expression_readings' AS metric, COUNT(*) AS count FROM expression_readings;
 SELECT 'expression_edges' AS metric, COUNT(*) AS count FROM expression_edges;
+SELECT 'expression_edge_sources' AS metric, COUNT(*) AS count FROM expression_edge_sources;
 SELECT 'users' AS metric, COUNT(*) AS count FROM users;
 SELECT 'handbooks' AS metric, COUNT(*) AS count FROM handbooks;
 SELECT 'handbook_sections' AS metric, COUNT(*) AS count FROM handbook_sections;

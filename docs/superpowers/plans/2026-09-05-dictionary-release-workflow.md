@@ -358,3 +358,47 @@ Expected: all production tests PASS.
 git add scripts/db/manage.py scripts/db/lib/production.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
 git commit -m "feat: refresh language statistics in data release"
 ```
+
+### Task 8: Add Checksum-locked Dictionary Postflight Manifest
+
+**Files:**
+- Modify: `scripts/db/export_dictionary_delta.py`
+- Modify: `scripts/db/lib/production.py`
+- Modify: `scripts/db/manage.py`
+- Test: `scripts/db/tests/test_export_dictionary_delta.py`
+- Test: `scripts/db/tests/test_production_inventory.py`
+- Test: `scripts/db/tests/test_manage.py`
+
+**Interfaces:**
+- Produces `export_delta(..., manifest: Path | None = None) -> dict[str, int]` and a JSON manifest with before/after database SHA-256 plus canonical table counts.
+- Produces CLI flag `production plan --dictionary-postflight-manifest <path>`.
+- Produces plan field `dictionary_postflight` and raises a production verification error when actual counts differ from the manifest.
+
+- [x] **Step 1: Write failing manifest and plan/apply tests**
+
+Assert that delta export writes deterministic manifest counts, plan rejects a production baseline whose counts differ from manifest before counts, and apply rejects a postflight inventory whose counts differ from manifest after counts.
+
+- [x] **Step 2: Run tests to verify failure**
+
+Run: `python3 -m pytest scripts/db/tests/test_export_dictionary_delta.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py -q`
+
+Expected: FAIL because delta export and production plan/apply have no postflight manifest interface.
+
+- [x] **Step 3: Generate and checksum manifest**
+
+Add `--manifest` to `export_dictionary_delta.py`; record before／after SHA-256, per-table before／after counts, and added row counts. Keep JSON sorted and atomically written.
+
+- [x] **Step 4: Enforce preflight and postflight counts**
+
+Add `--dictionary-postflight-manifest` to plan. Validate its path and SHA-256, compare production inventory counts to manifest before counts during planning, and compare post-apply inventory counts to after counts. Keep old plans without the field compatible.
+
+- [ ] **Step 5: Run tests and commit**
+
+Run: `python3 -m pytest scripts/db/tests/test_export_dictionary_delta.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py -q`
+
+Expected: all tests PASS.
+
+```bash
+git add scripts/db/export_dictionary_delta.py scripts/db/lib/production.py scripts/db/manage.py scripts/db/tests/test_export_dictionary_delta.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
+git commit -m "feat: verify dictionary release counts"
+```

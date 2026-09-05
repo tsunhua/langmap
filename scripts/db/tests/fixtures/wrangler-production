@@ -65,11 +65,17 @@ def main(argv: list[str]) -> int:
         ]))
         return 0
     metrics = [
+        ("sources", 0),
         ("languages", 62),
         ("languoids", 27177),
         ("language_locations", 45),
+        ("language_locales", 0),
         ("expressions", 1308),
+        ("expression_sources", 0),
+        ("expression_locale_links", 0),
+        ("expression_readings", 0),
         ("expression_edges", 1058),
+        ("expression_edge_sources", 0),
         ("users", 0),
         ("email_verification_tokens", 0),
         ("handbooks", 0),

@@ -22,6 +22,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import os
 import sqlite3
 import sys
 from collections.abc import Iterator
@@ -103,6 +106,14 @@ def _insert_statement(
     return f'INSERT OR IGNORE INTO "{table}" ({names}) VALUES\n  {values};'
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def export_delta(
     before: Path,
     after: Path,
@@ -110,6 +121,7 @@ def export_delta(
     *,
     limit: int | None = None,
     rows_per_insert: int = 100,
+    manifest: Path | None = None,
 ) -> dict[str, int]:
     if rows_per_insert < 1:
         raise ValueError("rows_per_insert must be positive")
@@ -117,6 +129,8 @@ def export_delta(
     before_conn = _connect(before)
     after_conn.execute("ATTACH DATABASE ? AS before_db", (str(before.resolve()),))
     counts: dict[str, int] = {}
+    before_counts: dict[str, int] = {}
+    after_counts: dict[str, int] = {}
     try:
         with output.open("w", encoding="utf-8") as handle:
             handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
@@ -130,6 +144,12 @@ def export_delta(
                     raise ValueError(
                         f"table {table} missing pk columns: {', '.join(missing_pk)}"
                     )
+                before_counts[table] = int(
+                    before_conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+                )
+                after_counts[table] = int(
+                    after_conn.execute(f'SELECT COUNT(*) FROM main."{table}"').fetchone()[0]
+                )
                 count = 0
                 batch: list[sqlite3.Row] = []
                 for row in _iter_added_rows(
@@ -148,6 +168,22 @@ def export_delta(
                     handle.write(_insert_statement(table, batch, columns) + "\n")
                 counts[table] = count
             handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
+        if manifest is not None:
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "schema_version": 1,
+                "before_sha256": _sha256(before),
+                "after_sha256": _sha256(after),
+                "before_counts": before_counts,
+                "after_counts": after_counts,
+                "added_counts": counts,
+            }
+            temporary = manifest.with_name(f".{manifest.name}.{os.getpid()}.tmp")
+            temporary.write_text(
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            os.replace(temporary, manifest)
     finally:
         before_conn.close()
         after_conn.close()
@@ -161,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--rows-per-insert", type=int, default=100)
+    parser.add_argument("--manifest", type=Path)
     args = parser.parse_args(argv)
     if not args.before.is_file() or not args.after.is_file():
         print("before/after sqlite files are required", file=sys.stderr)
@@ -172,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         args.output,
         limit=args.limit,
         rows_per_insert=args.rows_per_insert,
+        manifest=args.manifest,
     )
     print(
         "exported " + ", ".join(f"{k}={v}" for k, v in counts.items()),
