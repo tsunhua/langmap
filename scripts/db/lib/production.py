@@ -357,6 +357,31 @@ def plan_production(
             "bytes": resolved.stat().st_size,
             "mode": "split" if str(approved_data_migration).endswith(".split.sql") else "file",
         }
+    reference_changes = any(
+        action != "unchanged" for action in reference_actions.values()
+    ) or any(
+        key_diff.counts.get(key, 0)
+        for key in ("insert", "update", "manual_review", "delete")
+    )
+    if (
+        approved_data is not None
+        and dictionary_artifact is None
+        and not pending_migrations
+        and not reference_changes
+    ):
+        reference_artifacts = {
+            "action": "skip",
+            "reason": "unchanged-data-only-release",
+        }
+    else:
+        reference_artifacts = {
+            "action": "apply",
+            "reason": (
+                "reference-changes-detected"
+                if reference_changes
+                else "full-release"
+            ),
+        }
     plan = {
         "status": "blocked" if baseline_error else "ready",
         "environment": "production",
@@ -390,6 +415,7 @@ def plan_production(
         },
         "approved_data_migration": approved_data,
         "dictionary_artifact": dictionary_artifact,
+        "reference_artifacts": reference_artifacts,
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
     return plan
@@ -519,27 +545,11 @@ def apply_production(
                 paths.production_operation_journal_path,
                 {**operation, "status": "data-migration-skipped"},
             )
-        executor.mutate(
-            [
-                "d1",
-                "execute",
-                database_name,
-                "--remote",
-                "--file",
-                str(paths.language_registry_sql_path),
-            ]
+        reference_artifacts = plan.get("reference_artifacts")
+        apply_references = not isinstance(reference_artifacts, dict) or (
+            reference_artifacts.get("action", "apply") == "apply"
         )
-        executor.mutate(
-            [
-                "d1",
-                "execute",
-                database_name,
-                "--remote",
-                "--file",
-                str(paths.system_ui_sql_path),
-            ]
-        )
-        for edge_sql_path in paths.system_ui_edges_sql_paths:
+        if apply_references:
             executor.mutate(
                 [
                     "d1",
@@ -547,9 +557,30 @@ def apply_production(
                     database_name,
                     "--remote",
                     "--file",
-                    str(edge_sql_path),
+                    str(paths.language_registry_sql_path),
                 ]
             )
+            executor.mutate(
+                [
+                    "d1",
+                    "execute",
+                    database_name,
+                    "--remote",
+                    "--file",
+                    str(paths.system_ui_sql_path),
+                ]
+            )
+            for edge_sql_path in paths.system_ui_edges_sql_paths:
+                executor.mutate(
+                    [
+                        "d1",
+                        "execute",
+                        database_name,
+                        "--remote",
+                        "--file",
+                        str(edge_sql_path),
+                    ]
+                )
         verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
         if plan.get("pending_migrations"):
             check_target_schema(paths, verified)

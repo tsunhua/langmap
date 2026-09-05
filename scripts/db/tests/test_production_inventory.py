@@ -181,6 +181,81 @@ class ProductionInventoryTests(unittest.TestCase):
                         approved_data_migration=Path("../outside.sql"),
                     )
 
+    def test_data_only_plan_skips_unchanged_reference_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            paths = self._paths(root)
+            log_path = root / "wrangler.log"
+            data_path = root / "scripts" / "db" / "state" / "approved-delta.sql"
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            data_path.write_text(
+                "INSERT OR IGNORE INTO expressions (id) VALUES (1);",
+                encoding="utf-8",
+            )
+            ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
+            ui_manifest["counts"].update(
+                {"message_count": 312, "translation_count": 1058}
+            )
+            paths.ui_bundle_manifest_path.write_text(
+                json.dumps(ui_manifest), encoding="utf-8"
+            )
+            language_manifest = json.loads(
+                paths.language_manifest_path.read_text(encoding="utf-8")
+            )
+            language_manifest["counts"]["languages"] = 62
+            paths.language_manifest_path.write_text(
+                json.dumps(language_manifest), encoding="utf-8"
+            )
+
+            from lib.production import apply_production, inventory_production, plan_production  # noqa: E402
+
+            inventory = inventory_production(paths, wrangler_bin=FAKE_WRANGLER, env={})
+            paths.production_baseline_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "identity": inventory["identity"],
+                        "schema_objects": inventory["schema_objects"],
+                        "migration_checksums": inventory["migrations"]["checksums"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                plan = plan_production(
+                    paths,
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
+                    approved_data_migration=Path("scripts/db/state/approved-delta.sql"),
+                )
+
+            self.assertEqual(
+                plan["reference_artifacts"],
+                {"action": "skip", "reason": "unchanged-data-only-release"},
+            )
+            log_path.write_text("", encoding="utf-8")
+            with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
+                result = apply_production(
+                    paths,
+                    plan_path=paths.production_plan_dir / f"{plan['operation_id']}.json",
+                    database_name="langmap-v2",
+                    confirmation="langmap-v2",
+                    wrangler_bin=FAKE_WRANGLER,
+                    env={
+                        "FAKE_PRODUCTION_WRANGLER_LOG": str(log_path),
+                        "FAKE_PRODUCTION_ALLOW_MUTATIONS": "1",
+                    },
+                )
+
+            self.assertEqual(result["status"], "succeeded")
+            calls = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+            file_paths = [
+                call[call.index("--file") + 1]
+                for call in calls
+                if "--file" in call
+            ]
+            self.assertEqual([Path(path).name for path in file_paths], ["approved-delta.sql"])
+
     def test_apply_requires_confirmation_and_bookmarks_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
