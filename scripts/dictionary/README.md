@@ -101,7 +101,8 @@ python3 scripts/dictionary/release_dictionary.py \
 
 成功後輸出會包含 delta、manifest 與 plan 路徑；重跑同一批輸入會沿用 importer 的 state
 與 before snapshot。大型資料可加 `--split`，讓 production apply 使用有限大小的 SQL
-批次。`--apply` 只執行受管 D1 release，不包含 Web deploy。
+批次。`--apply` 成功後會以同一份 delta idempotently replay 回 mirror 並執行外鍵檢查；不包含
+Web deploy。
 
 一般模式會寫入既有 expression／edge 表，適合相容性 fixture。packed 模式的 read-only
 compatibility views 讓 API 仍可用原有 expression／edge DTO；一般使用者寫入仍走既有
