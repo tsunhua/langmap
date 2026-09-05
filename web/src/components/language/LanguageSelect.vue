@@ -1,60 +1,33 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useLanguagesStore } from '@/stores/languages'
-import { listLanguages, type Language } from '@/api/languageIdentity'
+import type { LanguageFilterOption } from './languageFilterOptions'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useLocaleParams } from '@/composables/useLocaleParams'
 const { t } = useI18n()
-const localeParams = useLocaleParams()
 
 const props = defineProps<{
   modelValue: string[]
+  options: LanguageFilterOption[]
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 
-const store = useLanguagesStore()
 const open = ref(false)
 const query = ref('')
 const inputRef = ref<HTMLInputElement>()
-const loadError = ref('')
-const searchResults = ref<Language[]>([])
-const loading = ref(false)
 const activeIndex = ref(-1)
 const listId = `lang-select-list-${Math.random().toString(36).slice(2, 8)}`
 
 const selected = computed(() => props.modelValue)
 
-let searchController: AbortController | null = null
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
-
-async function search(q: string) {
-  searchController?.abort()
-  if (!q.trim()) {
-    searchResults.value = []
-    return
-  }
-  searchController = new AbortController()
-  loading.value = true
-  try {
-    searchResults.value = (await listLanguages(q, 20, 0, localeParams.value, searchController.signal)).items
-  } catch (e: unknown) {
-    if (!(e instanceof DOMException && e.name === 'AbortError')) {
-      searchResults.value = []
-    }
-  } finally {
-    if (!searchController?.signal.aborted) loading.value = false
-  }
-}
-
-function onQueryChange() {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => search(query.value), 200)
+function selectedName(code: string): string {
+  return props.options.find(option => option.code === code)?.name || code
 }
 
 const filtered = computed(() => {
-  return searchResults.value
-    .filter(l => !selected.value.includes(l.code))
+  const normalized = query.value.trim().toLocaleLowerCase()
+  return props.options
+    .filter(option => !selected.value.includes(option.code))
+    .filter(option => !normalized || `${option.name} ${option.code}`.toLocaleLowerCase().includes(normalized))
     .slice(0, 20)
 })
 
@@ -63,11 +36,8 @@ watch(filtered, () => {
 })
 
 function add(code: string) {
-  const found = searchResults.value.find(l => l.code === code)
-  if (found) store.upsertLanguage(found)
   emit('update:modelValue', [...selected.value, code])
   query.value = ''
-  searchResults.value = []
   nextTick(() => inputRef.value?.focus())
 }
 
@@ -117,12 +87,9 @@ function onKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  store.fetchLanguages(localeParams.value).catch(() => { loadError.value = t('components.languageLoadFailed') })
 })
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  searchController?.abort()
-  if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
 
@@ -130,7 +97,7 @@ onUnmounted(() => {
   <div class="lang-select">
     <div class="lang-select-tagwrap" @click="inputRef?.focus()">
       <span v-for="code in selected" :key="code" class="lang-tag">
-        {{ store.getName(code) || code }}
+        {{ selectedName(code) }}
         <button
           :aria-label="t('components.removeLanguage', { code })"
           class="lang-tag-remove"
@@ -149,18 +116,16 @@ onUnmounted(() => {
         class="lang-select-input"
         :placeholder="t('components.filterLanguages')"
         @focus="open = true"
-        @input="onQueryChange"
         @keydown="onKeydown"
         @blur="onBlur"
       />
     </div>
     <div
-      v-if="open && (filtered.length > 0 || loading || query)"
+      v-if="open && (filtered.length > 0 || query)"
       :id="listId"
       role="listbox"
       class="lang-select-dropdown"
     >
-      <div v-if="loading" class="lang-loading">{{ t('common.loading') }}</div>
       <button
         v-for="(l, i) in filtered"
         :key="l.code"
@@ -171,14 +136,13 @@ onUnmounted(() => {
         :class="{ 'lang-opt-active': i === activeIndex }"
         @mousedown.prevent="add(l.code)"
       >
-        <span class="lang-opt-name">{{ l.name || l.name_en }}</span>
-        <span class="lang-opt-code">{{ l.code }}</span>
+        <span class="lang-opt-name">{{ l.name }}</span>
+        <span class="lang-opt-meta"><span class="lang-opt-code">{{ l.code }}</span><span class="lang-opt-count">{{ l.count }}</span></span>
       </button>
-      <div v-if="!loading && filtered.length === 0 && query" class="lang-loading">
+      <div v-if="filtered.length === 0 && query" class="lang-loading">
         {{ t('languagePicker.noResults') }}
       </div>
     </div>
-    <div v-if="loadError" class="lang-err" role="alert">{{ loadError }}</div>
   </div>
 </template>
 
@@ -227,7 +191,8 @@ onUnmounted(() => {
 .lang-opt:hover { background: var(--accent-soft); }
 .lang-opt-active { background: var(--accent-soft); }
 .lang-opt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lang-opt-meta { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .lang-opt-code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.lang-opt-count { min-width: 1.5em; text-align: right; color: var(--fg); font-variant-numeric: tabular-nums; }
 .lang-loading { padding: 10px 12px; font-size: 13px; color: var(--muted); text-align: center; }
-.lang-err { font-size: 13px; color: var(--down); margin-top: 4px; }
 </style>
