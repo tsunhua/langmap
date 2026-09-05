@@ -152,8 +152,29 @@
     mirror 已 replay repair／stats delta；核心表計數與 production 一致，mirror
     `foreign_key_check=0`。
 - [ ] 回源裁定 `hk-cantowords` 仍有 105 條未清理的括號內容；它們含缺調號、非 Jyutping
-  token 或不完整音節，不能安全猜測為發音提示。逐條清單見
+  token 或不完整音節，不能安全猜測為 canonical reading。完整 Jyutping 例句已改為
+  例句層級 reading；這 105 條歷史清單仍只代表尚未能安全正規化的候選，逐條清單見
   `docs/2026-09-05-hk-cantowords-uncertain-parentheticals.md`；待人工確認後才可另行
   修正與發布。
 - [ ] 回源核對 v15 的 invalid／missing reading 與 `source_merged_row_truncated` diagnostics；
   需在 dictionary exporter 修正後重新匯出並重新抽查，不要直接手改 JSONL 或 production。
+
+- [x] 補入 `hk-cantowords.csv` 例句層級 Jyutping reading（2026-09-05）。
+  - 根因：舊版 `ExampleV2` 沒有 `readings` 欄位；清理例句末尾括號時只保留乾淨句子，
+    adapter／compiler 也只會把 reading 綁到 headword，因此完整粵拼沒有落到例句 expression。
+  - dictionary source commit `6cfd1ce` 新增例句 reading schema／解析與完整 Jyutping 判定；
+    LangMap commit `cab4ba23` 新增 `target_claim_key`，將 reading 路由到例句 expression。
+    相關測試為 dictionary `89 passed`、LangMap `180 passed`。
+  - 重新匯出仍為 58,105 entries；新 JSONL sha256
+    `e47ea8a33f4449089c1766cd76e56184fc7d82ef6c16c9862a114114ef08dcdd`，已備份舊 artifact
+    為 `hk-cantowords.jsonl.pre-example-readings-20260905`。
+  - production delta `024-jyutjyu-example-readings-20260905.sql` sha256
+    `f11ac2ff1569a6ffff60cbce295920ab9602a6bd052350387accfc2a6818497b`；主要 apply operation
+    `54633edb8ff34fa8b313edfb94c580a3` 已成功，stats refresh operation
+    `9201e64408ce40d18db658ac1c6e6f19` 已成功，delta 已 replay 回 mirror。
+  - `/mapping/2993892` 現在是乾淨句子「純粹發泄下工作嘅苦悶咋」，locale 為
+    `yue-Hant-HK`，並有 `jyutping` reading
+    `seon4 seoi5 faat3 sit3 haa5 gung1 zok3 ge3 fu2 mun6 zaa3`；英文關係保留。
+  - 發布後 mirror／production 核心計數一致：expressions 2,740,541、readings 849,426、
+    edges 2,412,766；yue statistics 為 205,491 expressions、6 locales。缺調號或混入非
+    Jyutping token 的括號不自動補猜，繼續保留在上方 TODO。

@@ -2,6 +2,11 @@
 
 這份清單此前沒有被保存；先前 `TODO.md` 只記錄了數量。現依 2026-09-04 的重匯 JSONL 補存，供人工逐條裁定。
 
+2026-09-05 已修正完整 Jyutping 例句的資料路徑：完整括號會從句子移除，並以例句層級
+`jyutping` reading 發布。以下清單仍是「未能通過完整 Jyutping parser」的歷史候選，
+不是可直接發布的 reading 清單；缺調號、混合英文／專名或不完整音節須回源確認，不能由
+LangMap 猜補。
+
 判定範圍：例句末尾／內容中的括號含有 Jyutping-like token（正則 `\b[a-z]+[1-6]`），但整段括號未能通過 exporter 的完整 Jyutping parser。這不是自動刪除清單；括號可能是漏調號、不完整音節、英文／專名混入，或本來就是語義註釋，需人工判定。
 
 - JSONL：`/tmp/langmap-issue-yue-script-export/hk-cantowords.jsonl`
@@ -117,4 +122,3 @@
 | 103 | 402877 | 53768 | 戰利品 | 1/3 | yue-Hant-HK | 佢哋兩個下晝去咗shopping，帶咗三大袋戰利品返屋企。 (keoi5 dei6 loeng5 go3 haa6 zau3 heoi3 zo2 shopping, daai3 zo2 saam1 daai6 doi6 zin3 lei6 ban2 faan1 uk1 kei2.) | They went shopping this afternoon, and brought back three large sacks full of booties |
 | 104 | 414132 | 55440 | 摟屌 | 2/1 | yue-Hans-HK | 我哋聽日就要 present，你而家話唔舒服，摟屌呀？ (ngo5 dei6 ting1 jat6 zau6 jiu3 present, nei5 ji4 gaa1 waa6 m4 syu1 fuk6, lau3 diu2 aa4?) | We have a presentation tomorrow, and you're calling in sick now. Are you asking for trouble? |
 | 105 | 417565 | 56004 | down機 | 1/1 | yue-Hans-HK | 今朝Whatsapp down咗機。 (gam1 ziu1 whatsapp daan1 zo2 gei1.) | This morning (the server of) Whatsapp was down |
-
