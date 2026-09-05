@@ -11,6 +11,13 @@ const { detail, mappingGraph, push, replace } = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
 }))
+
+vi.mock('@/stores/languages', () => ({
+  useLanguagesStore: () => ({
+    fetchLanguages: vi.fn().mockResolvedValue(undefined),
+    getName: (code: string) => ({ eng: 'English', nan: 'Taiwanese', jpn: 'Japanese' }[code] ?? code),
+  }),
+}))
 const route = reactive<{ params: { id: string }; query: Record<string, string> }>({
   params: { id: 'old' },
   query: {},
@@ -41,6 +48,11 @@ const MappingGraphStub = {
     </div>
   `,
 }
+const LanguageSelectStub = {
+  name: 'LanguageSelect',
+  props: ['modelValue', 'options'],
+  template: '<div data-testid="language-options">{{ JSON.stringify(options) }}</div>',
+}
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -69,6 +81,18 @@ function graph(id: string, requestedHops: 1 | 2 | 3 = 1) {
   }
 }
 
+function languageGraph(id: string, requestedHops: 1 | 2 | 3 = 2) {
+  const value = graph(id, requestedHops)
+  value.nodes.push(
+    { expression_id: 'nan-1', text: 'nan 1', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 },
+    { expression_id: 'nan-2', text: 'nan 2', lang_code: 'nan', language_name: 'Taiwanese', depth: 2 },
+    { expression_id: 'eng-1', text: 'eng 1', lang_code: 'eng', language_name: 'English', depth: 1 },
+  )
+  value.layer_counts[1] = 2
+  value.layer_counts[2] = 1
+  return value
+}
+
 function mountPage(pinia: Pinia = createPinia()) {
   return mount(MappingDetail, {
     global: {
@@ -84,6 +108,7 @@ function mountPage(pinia: Pinia = createPinia()) {
         ExpressionSplitDialog: passiveComponent,
         MorphologyPanel: passiveComponent,
         LangBadge: passiveComponent,
+        LanguageSelect: LanguageSelectStub,
       },
     },
   })
@@ -109,6 +134,37 @@ describe('MappingDetail page state', () => {
         removeEventListener: vi.fn(),
       })),
     })
+  })
+
+  it('passes counted languages from the unfiltered graph to LanguageSelect', async () => {
+    route.params.id = 'anchor'
+    route.query = { hops: '2' }
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    mappingGraph.mockResolvedValue(languageGraph('anchor'))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="language-options"]').text()).toBe(JSON.stringify([
+      { code: 'nan', name: 'Taiwanese', count: 2 },
+      { code: 'eng', name: 'English', count: 1 },
+    ]))
+  })
+
+  it('keeps the full option list when a filtered graph contains only the root', async () => {
+    route.params.id = 'anchor'
+    route.query = { target_language: 'eng' }
+    detail.mockResolvedValue(expression('anchor', 'Anchor'))
+    mappingGraph.mockImplementation((_id: string, _hops: number, _hints: unknown, target?: string) =>
+      Promise.resolve(target ? graph('anchor') : languageGraph('anchor')))
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="language-options"]').text()).toContain('nan')
+    expect(wrapper.get('[data-testid="language-options"]').text()).toContain('eng')
+    expect(mappingGraph).toHaveBeenCalledWith('anchor', 1, expect.anything(), 'eng')
+    expect(mappingGraph).toHaveBeenCalledWith('anchor', 1, expect.anything())
   })
 
   it('keeps the newest route result when an older request finishes later', async () => {

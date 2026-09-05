@@ -12,6 +12,7 @@ import ExpressionSplitDialog from '@/components/mapping/ExpressionSplitDialog.vu
 import MorphologyPanel from '@/components/mapping/MorphologyPanel.vue'
 import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
+import { buildLanguageFilterOptions } from '@/components/language/languageFilterOptions'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -22,6 +23,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
+import { useLanguagesStore } from '@/stores/languages'
 import { regionFromLocale } from '@/utils/localeRegion'
 
 const { t } = useI18n()
@@ -33,9 +35,11 @@ const id = computed(() => decodeURIComponent(route.params.id as string))
 const { detail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
+const languageStore = useLanguagesStore()
 
 const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
+const optionGraph = ref<MappingGraphResponse | null>(null)
 const hops = ref<1 | 2 | 3>(1)
 const targetLanguageCodes = ref<string[]>([])
 const loading = ref(true)
@@ -65,6 +69,9 @@ const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'admin')
 const maxHops = computed<2 | 3>(() => auth.isLoggedIn ? MAX_HOPS : ANONYMOUS_MAX_HOPS)
 const morphFormOpen = ref(false)
+const languageFilterOptions = computed(() =>
+  buildLanguageFilterOptions(optionGraph.value, languageStore.getName, hops.value),
+)
 
 const isMorphWord = computed(() => {
   const text = expr.value?.expression.text ?? ''
@@ -115,6 +122,23 @@ function initFromUrl() {
     : []
 }
 
+async function loadGraphPair(requestedId: string, requestedHops: 1 | 2 | 3) {
+  const targetLanguage = targetLanguageCodes.value.join(',') || undefined
+  const displayPromise = mappingGraph(requestedId, requestedHops, localeParams.value, targetLanguage)
+  if (!targetLanguage) {
+    const display = await displayPromise
+    return { display, options: display }
+  }
+
+  const optionPromise = mappingGraph(requestedId, requestedHops, localeParams.value)
+  const [displayResult, optionResult] = await Promise.all([
+    displayPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
+    optionPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
+  ])
+  if (!displayResult.ok) throw displayResult.reason
+  return { display: displayResult.value, options: optionResult.ok ? optionResult.value : null }
+}
+
 function syncUrl() {
   const query: Record<string, string> = {}
   if (hops.value > 1) query.hops = String(hops.value)
@@ -130,17 +154,19 @@ async function load() {
   ++graphRequest
   expr.value = null
   graph.value = null
+  optionGraph.value = null
   loading.value = true
   updatingHops.value = false
   loadError.value = ''
   try {
     const [nextExpression, nextGraph] = await Promise.all([
       detail(requestedId, localeParams.value),
-      mappingGraph(requestedId, requestedHops, localeParams.value, targetLanguageCodes.value.join(',') || undefined),
+      loadGraphPair(requestedId, requestedHops),
     ])
     if (request !== loadRequest) return
     expr.value = nextExpression
-    graph.value = nextGraph
+    graph.value = nextGraph.display
+    optionGraph.value = nextGraph.options
     trySelectNodeFromUrl()
   } catch (e: any) {
     if (request !== loadRequest) return
@@ -171,6 +197,7 @@ function trySelectNodeFromUrl() {
 
 onMounted(() => {
   initFromUrl()
+  void languageStore.fetchLanguages(localeParams.value).catch(() => {})
   load()
   mql = window.matchMedia('(max-width: 767px)')
   isMobile.value = mql.matches
@@ -205,9 +232,10 @@ async function changeHops(h: number) {
   loadError.value = ''
   updatingHops.value = true
   try {
-    const nextGraph = await mappingGraph(requestedId, nextHops, localeParams.value, targetLanguageCodes.value.join(',') || undefined)
+    const nextGraph = await loadGraphPair(requestedId, nextHops)
     if (request !== graphRequest || requestedId !== id.value) return
-    graph.value = nextGraph
+    graph.value = nextGraph.display
+    optionGraph.value = nextGraph.options
     trySelectNodeFromUrl()
   } catch (e: any) {
     if (request !== graphRequest || requestedId !== id.value) return
@@ -504,7 +532,7 @@ const anchorReadingItems = computed(() =>
       </span>
       <div class="target-language-filter">
         <div class="target-language-filter__label"><Filter :size="14" aria-hidden="true" /><span class="sr-only">{{ t('mappingDetail.targetLanguage') }}</span></div>
-        <LanguageSelect v-model="targetLanguageCodes" />
+        <LanguageSelect v-model="targetLanguageCodes" :options="languageFilterOptions" />
       </div>
     </div>
     <p v-if="loadError && graph" class="md-graph-error" role="alert">{{ loadError }}</p>
