@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import inspect
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.db.export_dictionary_delta import export_delta
+from scripts.db.export_dictionary_delta import _iter_added_rows, export_delta
 
 
 def _make_db(path: Path, *, extra: bool = False) -> None:
@@ -69,6 +70,29 @@ def _make_db(path: Path, *, extra: bool = False) -> None:
 
 
 class ExportDeltaTests(unittest.TestCase):
+    def test_added_rows_are_streamed_in_primary_key_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            before = root / "before.sqlite"
+            after = root / "after.sqlite"
+            _make_db(before)
+            _make_db(after, extra=True)
+
+            connection = sqlite3.connect(after)
+            connection.row_factory = sqlite3.Row
+            connection.execute("ATTACH DATABASE ? AS before_db", (str(before),))
+            rows = _iter_added_rows(
+                connection,
+                "expressions",
+                ["id"],
+                ["id", "language_id", "text", "homograph_index", "source_id", "created_at"],
+                limit=None,
+            )
+
+            self.assertTrue(inspect.isgenerator(rows))
+            self.assertEqual([row["text"] for row in rows], ["逮捕"])
+            connection.close()
+
     def test_delta_contains_only_new_rows_in_fk_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

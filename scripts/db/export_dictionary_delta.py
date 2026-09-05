@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import sqlite3
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 
@@ -51,18 +52,33 @@ def _table_columns(connection: sqlite3.Connection, table: str) -> list[str]:
     return [str(row["name"]) for row in connection.execute(f"PRAGMA table_info({table})")]
 
 
-def _rows_by_pk(
-    connection: sqlite3.Connection, table: str, pk: list[str]
-) -> dict[tuple, sqlite3.Row]:
-    columns = _table_columns(connection, table)
-    ordered = ", ".join(f'"{column}"' for column in columns)
-    rows: dict[tuple, sqlite3.Row] = {}
-    for row in connection.execute(f'SELECT {ordered} FROM "{table}"'):
-        for column in pk:
-            if column not in row.keys():
-                raise ValueError(f"table {table} missing pk column {column}")
-        rows[tuple(row[column] for column in pk)] = row
-    return rows
+def _iter_added_rows(
+    connection: sqlite3.Connection,
+    table: str,
+    pk: list[str],
+    columns: list[str],
+    *,
+    limit: int | None,
+) -> Iterator[sqlite3.Row]:
+    selected = ", ".join(
+        f'current."{column}" AS "{column}"' for column in columns
+    )
+    same_primary_key = " AND ".join(
+        f'previous."{column}" IS current."{column}"' for column in pk
+    )
+    ordered_primary_key = ", ".join(f'current."{column}"' for column in pk)
+    sql = (
+        f'SELECT {selected} FROM main."{table}" AS current '
+        f'WHERE NOT EXISTS ('
+        f'SELECT 1 FROM before_db."{table}" AS previous '
+        f'WHERE {same_primary_key}'
+        f') ORDER BY {ordered_primary_key}'
+    )
+    parameters: tuple[int, ...] = ()
+    if limit is not None:
+        sql += " LIMIT ?"
+        parameters = (limit,)
+    yield from connection.execute(sql, parameters)
 
 
 def _literal(value) -> str:
@@ -97,29 +113,44 @@ def export_delta(
 ) -> dict[str, int]:
     if rows_per_insert < 1:
         raise ValueError("rows_per_insert must be positive")
-    before_conn = _connect(before)
     after_conn = _connect(after)
+    before_conn = _connect(before)
+    after_conn.execute("ATTACH DATABASE ? AS before_db", (str(before.resolve()),))
     counts: dict[str, int] = {}
-    with output.open("w", encoding="utf-8") as handle:
-        handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
-        for table, pk in TABLES:
-            expected = _rows_by_pk(before_conn, table, pk)
-            actual = _rows_by_pk(after_conn, table, pk)
-            added = [actual[key] for key in sorted(actual) if key not in expected]
-            if limit is not None and len(added) > limit:
-                added = added[:limit]
-            counts[table] = len(added)
-            columns = _table_columns(after_conn, table)
-            for offset in range(0, len(added), rows_per_insert):
-                handle.write(
-                    _insert_statement(
-                        table, added[offset : offset + rows_per_insert], columns
+    try:
+        with output.open("w", encoding="utf-8") as handle:
+            handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
+            for table, pk in TABLES:
+                before_columns = _table_columns(before_conn, table)
+                columns = _table_columns(after_conn, table)
+                if before_columns != columns:
+                    raise ValueError(f"table {table} columns differ between before and after")
+                missing_pk = [column for column in pk if column not in columns]
+                if missing_pk:
+                    raise ValueError(
+                        f"table {table} missing pk columns: {', '.join(missing_pk)}"
                     )
-                    + "\n"
-                )
-        handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
-    before_conn.close()
-    after_conn.close()
+                count = 0
+                batch: list[sqlite3.Row] = []
+                for row in _iter_added_rows(
+                    after_conn,
+                    table,
+                    pk,
+                    columns,
+                    limit=limit,
+                ):
+                    batch.append(row)
+                    count += 1
+                    if len(batch) == rows_per_insert:
+                        handle.write(_insert_statement(table, batch, columns) + "\n")
+                        batch = []
+                if batch:
+                    handle.write(_insert_statement(table, batch, columns) + "\n")
+                counts[table] = count
+            handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
+    finally:
+        before_conn.close()
+        after_conn.close()
     return counts
 
 
