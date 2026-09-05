@@ -126,6 +126,22 @@ python3 scripts/dictionary/repair_example_edges.py \
 compatibility views 讓 API 仍可用原有 expression／edge DTO；一般使用者寫入仍走既有
 通用表。
 
+若某條舊 source claim 已不在目前 JSONL、但已由人工抽查確認為污染，可使用 targeted
+模式，只核實指定 edge 在 mirror 中仍由該 source 聲明，不重新掃描整份 JSONL：
+
+```bash
+python3 scripts/dictionary/repair_example_edges.py \
+  --jsonl "/Volumes/DATA/langmap-structured-jsonl/Simplified Chinese - English.jsonl" \
+  --mirror scripts/db/state/backup/publish-mirror.incremental.sqlite \
+  --output scripts/db/state/backup/delta/<topic>-targeted-repair.split.sql \
+  --report scripts/db/state/backup/delta/<topic>-targeted-repair.report.json \
+  --only-remove-unmatched-edge \
+  --remove-unmatched-edge <edge-id>
+```
+
+`--remove-unmatched-edge` 是明確批准清單；targeted 模式不會刪除未列出的 claim，且
+必須在 managed production plan/apply 中發布。
+
 驗證 `cod` 三個同形詞保持分離：
 
 ```bash

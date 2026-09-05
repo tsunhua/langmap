@@ -2,7 +2,11 @@ import json
 import sqlite3
 from pathlib import Path
 
-from scripts.dictionary.repair_example_edges import load_source_pairs, repair
+from scripts.dictionary.repair_example_edges import (
+    load_source_pairs,
+    repair,
+    repair_approved_unmatched_edges,
+)
 
 
 def _database(path: Path) -> None:
@@ -104,3 +108,50 @@ def test_repair_retypes_examples_and_removes_stale_source_claims(tmp_path: Path)
     assert result["polluted_edge_count"] == 1
     assert result["unmatched_edge_count"] == 1
     assert json.loads(report.read_text(encoding="utf-8"))["polluted_source_claim_count"] == 1
+
+
+def test_repair_can_remove_explicitly_approved_unmatched_claim(tmp_path: Path):
+    source = tmp_path / "source.jsonl"
+    mirror = tmp_path / "mirror.sqlite"
+    output = tmp_path / "repair.split.sql"
+    report = tmp_path / "repair.report.json"
+    _jsonl(source)
+    _database(mirror)
+
+    result = repair(
+        source,
+        mirror,
+        output,
+        report,
+        remove_unmatched_edges=[12],
+    )
+    connection = sqlite3.connect(mirror)
+    connection.executescript(output.read_text(encoding="utf-8"))
+
+    assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE id=12").fetchone()[0] == 0
+    assert connection.execute("SELECT COUNT(*) FROM expression_edge_sources WHERE edge_id=12").fetchone()[0] == 0
+    connection.close()
+
+    assert result["approved_unmatched_edge_count"] == 1
+    assert result["unmatched_edge_count"] == 0
+    assert json.loads(report.read_text(encoding="utf-8"))["approved_unmatched_edges"][0]["edge_id"] == 12
+
+
+def test_targeted_repair_checks_only_approved_edge_claims(tmp_path: Path):
+    source = tmp_path / "source.jsonl"
+    mirror = tmp_path / "mirror.sqlite"
+    output = tmp_path / "repair.split.sql"
+    report = tmp_path / "repair.report.json"
+    _jsonl(source)
+    _database(mirror)
+
+    result = repair_approved_unmatched_edges(source, mirror, output, report, [12])
+    connection = sqlite3.connect(mirror)
+    connection.executescript(output.read_text(encoding="utf-8"))
+
+    assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE id=12").fetchone()[0] == 0
+    connection.close()
+    assert result["approval_mode"] == "explicit-unmatched-edge"
+    assert result["source_claims_not_scanned"] is True
+    assert result["approved_unmatched_edges"][0]["edge_id"] == 12
+    assert "Explicitly approved unmatched" in output.read_text(encoding="utf-8")
