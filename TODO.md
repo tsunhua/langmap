@@ -5,10 +5,11 @@
 - [ ] 完成 [GitHub issue #120](https://github.com/tsunhua/langmap/issues/120) 的詞典修復／發布流程優化。
   - 第一階段已完成：mirror mutation 前自動建立 SQLite before snapshot；delta exporter 改用
     `ATTACH` anti-join 串流；data-only plan 可跳過未變更 reference artifacts；production
-    apply 以 journal stage checkpoint 從同一 plan 恢復。
-  - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`。
-  - 待完成：split statement cursor／批次、statistics 納入同一 operation、dictionary-specific
-    postflight assertions，以及 snapshot → publish → replay → verify 的單一 CLI 入口。
+    apply 以 journal stage checkpoint 從同一 plan 恢復；split SQL 已改為有限大小批次並支援
+    batch resume；statistics refresh 可納入同一 operation。
+  - commits：`1a8f83a4`、`9c3e893e`、`26f91bf9`、`d987275b`、`15d7b3c6`。
+  - 待完成：dictionary-specific postflight assertions，以及 snapshot → publish → replay →
+    verify 的單一 CLI 入口。
 
 ## 詞典讀音資料修復
 

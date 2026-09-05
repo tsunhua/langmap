@@ -167,6 +167,12 @@ class ManageCliTests(unittest.TestCase):
         self.assertEqual(extra.returncode, 2)
         self.assertIn("database-name", extra.stderr)
 
+    def test_production_plan_exposes_statistics_refresh_flag(self) -> None:
+        result = run_manage("production", "plan", "--help")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("--refresh-language-statistics", result.stdout)
+
 
 class ProjectPathsTests(unittest.TestCase):
     def test_discovers_expected_repository_paths(self) -> None:

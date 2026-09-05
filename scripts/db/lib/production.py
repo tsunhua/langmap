@@ -298,6 +298,7 @@ def plan_production(
     env: Mapping[str, str] | None = None,
     dictionary_artifact_manifest: Path | None = None,
     approved_data_migration: Path | None = None,
+    refresh_language_statistics: bool = False,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
     operation_id = uuid.uuid4().hex
@@ -361,6 +362,24 @@ def plan_production(
             "bytes": resolved.stat().st_size,
             "mode": "split" if str(approved_data_migration).endswith(".split.sql") else "file",
         }
+    statistics_refresh: dict[str, Any] | None = None
+    if refresh_language_statistics:
+        refresh_path = (
+            paths.repo_root
+            / "scripts"
+            / "db"
+            / "state"
+            / "backup"
+            / "delta"
+            / "006-refresh-language-statistics.sql"
+        )
+        resolved_refresh = _resolve_managed_artifact(paths, str(refresh_path.relative_to(paths.repo_root)))
+        statistics_refresh = {
+            "path": str(resolved_refresh.relative_to(paths.repo_root.resolve())),
+            "sha256": _sha256_path(resolved_refresh),
+            "bytes": resolved_refresh.stat().st_size,
+            "mode": "file",
+        }
     reference_changes = any(
         action != "unchanged" for action in reference_actions.values()
     ) or any(
@@ -420,6 +439,7 @@ def plan_production(
         "approved_data_migration": approved_data,
         "dictionary_artifact": dictionary_artifact,
         "reference_artifacts": reference_artifacts,
+        "statistics_refresh": statistics_refresh,
     }
     journal.write_json_report(paths.production_plan_dir / f"{operation_id}.json", plan)
     return plan
@@ -538,10 +558,11 @@ def apply_production(
             "dictionary-release-activated",
             "data-applied",
             "references-applied",
+            "statistics-refreshed",
         }
         mutation_may_have_started = any(
             event.get("status") == "failed"
-            and event.get("failed_stage") in {"migrations", "data", "references"}
+            and event.get("failed_stage") in {"migrations", "data", "statistics", "references"}
             for event in prior_events
         )
         if completed_stages & checkpointed_stages or mutation_may_have_started:
@@ -659,6 +680,33 @@ def apply_production(
                     "status": "data-applied",
                     "mutation": bool(dictionary_artifact or approved_data_migration),
                 },
+            )
+        statistics_refresh = plan.get("statistics_refresh")
+        if (
+            isinstance(statistics_refresh, dict)
+            and "statistics-refreshed" not in completed_stages
+        ):
+            current_stage = "statistics"
+            relative = statistics_refresh.get("path")
+            expected = statistics_refresh.get("sha256")
+            if not isinstance(relative, str) or not isinstance(expected, str) or not expected:
+                raise ProductionInventoryError("statistics refresh artifact metadata is invalid")
+            statistics_path = _resolve_managed_artifact(paths, relative)
+            if _sha256_path(statistics_path) != expected:
+                raise ProductionInventoryError("statistics refresh checksum mismatch")
+            executor.mutate(
+                [
+                    "d1",
+                    "execute",
+                    database_name,
+                    "--remote",
+                    "--file",
+                    str(statistics_path),
+                ]
+            )
+            journal.append_operation(
+                paths.production_operation_journal_path,
+                {**operation, "status": "statistics-refreshed"},
             )
         reference_artifacts = plan.get("reference_artifacts")
         apply_references = not isinstance(reference_artifacts, dict) or (

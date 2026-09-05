@@ -316,3 +316,45 @@ Expected: all production tests PASS.
 git add scripts/db/lib/production.py scripts/db/tests/test_production_inventory.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
 git commit -m "perf: batch resumable split data releases"
 ```
+
+### Task 7: Include Statistics Refresh in the Same Release Operation
+
+**Files:**
+- Modify: `scripts/db/manage.py`
+- Modify: `scripts/db/lib/production.py`
+- Test: `scripts/db/tests/test_production_inventory.py`
+- Test: `scripts/db/tests/test_manage.py`
+
+**Interfaces:**
+- Produces CLI flag `production plan --refresh-language-statistics`.
+- Produces plan field `statistics_refresh` containing a repository-relative path, SHA-256, and mode.
+- Produces journal status `statistics-refreshed`.
+
+- [x] **Step 1: Write failing plan/apply tests**
+
+Create the managed refresh SQL fixture and assert that a plan with `--approved-data-migration` plus `--refresh-language-statistics` records its checksum; apply must execute the data file and refresh file in that order.
+
+- [x] **Step 2: Run tests to verify failure**
+
+Run: `python3 -m pytest scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py -q`
+
+Expected: FAIL because the CLI and plan do not accept or apply a statistics refresh stage.
+
+- [x] **Step 3: Add checksum-locked statistics metadata**
+
+Add `--refresh-language-statistics` to the production plan parser and include the managed `006-refresh-language-statistics.sql` artifact metadata in the plan. Reject the plan if the artifact is missing or changes after planning.
+
+- [x] **Step 4: Apply and checkpoint the refresh stage**
+
+Execute the refresh after data and before references, append `statistics-refreshed` only after success, and skip it when that checkpoint already exists during same-plan resume. Treat failures as a mutation-stage failure that retains the original bookmark.
+
+- [x] **Step 5: Run tests and commit**
+
+Run: `python3 -m pytest scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py -q`
+
+Expected: all production tests PASS.
+
+```bash
+git add scripts/db/manage.py scripts/db/lib/production.py scripts/db/tests/test_production_inventory.py scripts/db/tests/test_manage.py docs/superpowers/plans/2026-09-05-dictionary-release-workflow.md
+git commit -m "feat: refresh language statistics in data release"
+```

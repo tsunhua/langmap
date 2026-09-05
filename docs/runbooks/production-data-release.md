@@ -43,7 +43,8 @@ LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
   ./scripts/db/manage.sh production inventory
 LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
   ./scripts/db/manage.sh production plan \
-  --approved-data-migration scripts/db/state/backup/delta/<NNN>-<topic>.sql
+  --approved-data-migration scripts/db/state/backup/delta/<NNN>-<topic>.sql \
+  --refresh-language-statistics
 LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
   ./scripts/db/manage.sh production apply \
   --plan scripts/db/state/production/plans/<operation-id>.json \
@@ -52,7 +53,8 @@ LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
 ```
 
 apply 先取得並 journal bookmark，再按固定順序執行；成功訊息只表示資料變更已驗證，
-仍須另行執行 deploy 流程。純 approved-data release 且 plan 確認 reference diff 無變更時，
+仍須另行執行 deploy 流程。指定 `--refresh-language-statistics` 後，統計刷新會在同一
+operation 的 data stage 後執行。純 approved-data release 且 plan 確認 reference diff 無變更時，
 `reference_artifacts.action` 為 `skip`，不重播 language registry／system UI。
 
 ## 失敗處理

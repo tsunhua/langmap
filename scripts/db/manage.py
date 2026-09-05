@@ -45,6 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan_parser = production_commands.add_parser("plan")
     plan_parser.add_argument("--dictionary-artifact-manifest", type=Path)
     plan_parser.add_argument("--approved-data-migration", type=Path)
+    plan_parser.add_argument("--refresh-language-statistics", action="store_true")
     plan_parser.set_defaults(handler=_production_plan_handler)
     apply_parser = production_commands.add_parser("apply")
     apply_parser.add_argument("--plan", type=Path, required=True)
@@ -128,6 +129,7 @@ def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> i
         wrangler_bin=_wrangler_bin_from_env(paths),
         dictionary_artifact_manifest=args.dictionary_artifact_manifest,
         approved_data_migration=args.approved_data_migration,
+        refresh_language_statistics=args.refresh_language_statistics,
     )
     print(json.dumps(plan, ensure_ascii=False))
     return 0 if plan["status"] == "ready" else 1

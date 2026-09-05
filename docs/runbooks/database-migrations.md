@@ -14,7 +14,7 @@
 ```
 
 只有 operator 審核 plan 後，才可使用 plan 指定的 production apply gate。apply 會先
-取得 bookmark，依 migration → approved data → reference bundles → verify 順序執行，
+取得 bookmark，依 migration → approved data → statistics（若 plan 指定）→ reference bundles → verify 順序執行，
 且不自動 deploy。每個 mutation stage 成功後會寫入 operation journal；舊 plan 沒有
 `reference_artifacts` 欄位時維持 full-reference 行為。
 

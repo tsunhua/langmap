@@ -192,6 +192,20 @@ class ProductionInventoryTests(unittest.TestCase):
                 "INSERT OR IGNORE INTO expressions (id) VALUES (1);",
                 encoding="utf-8",
             )
+            statistics_path = (
+                root
+                / "scripts"
+                / "db"
+                / "state"
+                / "backup"
+                / "delta"
+                / "006-refresh-language-statistics.sql"
+            )
+            statistics_path.parent.mkdir(parents=True, exist_ok=True)
+            statistics_path.write_text(
+                "INSERT OR IGNORE INTO language_statistics (language_id) VALUES (1);",
+                encoding="utf-8",
+            )
             ui_manifest = json.loads(paths.ui_bundle_manifest_path.read_text(encoding="utf-8"))
             ui_manifest["counts"].update(
                 {"message_count": 312, "translation_count": 1058}
@@ -227,11 +241,16 @@ class ProductionInventoryTests(unittest.TestCase):
                     wrangler_bin=FAKE_WRANGLER,
                     env={"FAKE_PRODUCTION_WRANGLER_LOG": str(log_path)},
                     approved_data_migration=Path("scripts/db/state/approved-delta.sql"),
+                    refresh_language_statistics=True,
                 )
 
             self.assertEqual(
                 plan["reference_artifacts"],
                 {"action": "skip", "reason": "unchanged-data-only-release"},
+            )
+            self.assertEqual(
+                plan["statistics_refresh"]["path"],
+                "scripts/db/state/backup/delta/006-refresh-language-statistics.sql",
             )
             log_path.write_text("", encoding="utf-8")
             with mock.patch("lib.production._current_git_commit", return_value="fixture-commit"):
@@ -254,7 +273,10 @@ class ProductionInventoryTests(unittest.TestCase):
                 for call in calls
                 if "--file" in call
             ]
-            self.assertEqual([Path(path).name for path in file_paths], ["approved-delta.sql"])
+            self.assertEqual(
+                [Path(path).name for path in file_paths],
+                ["approved-delta.sql", "006-refresh-language-statistics.sql"],
+            )
 
     def test_split_sql_is_grouped_into_bounded_batches(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
