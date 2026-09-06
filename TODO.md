@@ -1,5 +1,13 @@
 # TODO
 
+## 舊 v1 指定用戶／甲子 handbook recovery（2026-09-06）
+
+- [x] 依「`monhiko`、`benojan`、`ladybug`＋《甲子話表達分類手冊（更新中）》＋一階 meaning 直接關聯」選取舊資料；納入 4,311 筆舊 expression rows，canonical 合併為 4,238 個 expression identities，保留 4,311 個 source claims。`system` 的 33 筆只因屬於選定 meaning 關聯而納入；`langmap.*` UI 翻譯、無精確 locale、`nan-TW`／舊 POJ／TL、收藏集與舊輔助表均未納入。
+- [x] locale 分布：`cmn-Hans-CN` 1,650、`cmn-Hant-TW` 69、`eng-Latn-GB` 91、`eng-Latn-US` 86、`jpn-Jpan-JP` 21、`nan-Hant-CN_LufengJiazi` 1,820、`nan-Latn-CN_LufengJiazi` 107、`ral-Latn-IN` 14、`spa-Latn-ES` 21、`swh-Latn-TZ` 10、`wuu-Hant-CN_Shanghai` 11、`wuu-Hant-CN_Taizhou` 157、`x-emoji-Latn-US` 179、`x-image-Latn-US` 9、`yue-Hant-HK` 13、`zyg-Latn-CN_Jingxi` 53。
+- [x] 產生可重跑 canonical recovery script `scripts/db/migrate_v1/recover_selected.py` 與測試；delta `scripts/db/state/backup/delta/034-v1-jiazi-recovery-20260906.split.sql`，1,470,846 bytes，SHA-256 `ddf19dcaad2097d7e3b90d4018e53221083bf27b8911d9053f0771114b5a0302`。delta 含 12 個用戶、3,818 條 edge／3,820 個 meaning source markers、Jiazi handbook 1 本／45 節／1,691 項，未匯入 readings。
+- [x] production 已發布：operation `d04cb515b8554224b4352de3b7dfa39a`，bookmark `00000156-00000000-000050de-3d5cca25adaf3a2e8237a7d9eebefbdc`，status `succeeded`／`verified`；reference artifacts 判定 unchanged 並跳過，`language_statistics` 已刷新。
+- [x] production source-scoped verify：recovery source 為 1 個，expression identities／claims 為 4,238／4,311，edges／edge claims 為 3,818／3,820；users 12，handbooks 1，Jiazi sections/items 45／1,691；第二本《各地中文常用語對照》為 0；orphan edges 與 orphan handbook items 均為 0。staging fresh-copy 套用並重播兩次通過，資料庫與 dictionary tests 225 passed。
+
 ## 匯入匯總 Teochew CSV（2026-09-06）
 
 - [x] 以 `/Users/lim/Documents/Code/hokkien-writing/dataset/export/teochew.csv` 為唯一來源，輸入 SHA-256 為

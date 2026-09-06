@@ -26,6 +26,16 @@ class ProductionInventoryTests(unittest.TestCase):
             'PRAGMA table_info("edge_votes"); PRAGMA table_info("expression_edges")',
         )
 
+    def test_bundle_message_keys_reads_canonical_natural_key_cte(self) -> None:
+        from lib.production import _load_bundle_message_keys  # noqa: E402
+
+        keys = _load_bundle_message_keys(
+            REPO_ROOT / "scripts" / "i18n" / "artifacts" / "system-ui" / "system-ui.sql"
+        )
+        self.assertEqual(len(keys), 409)
+        self.assertEqual(keys["activity.expression"], "Added expression")
+        self.assertEqual(keys["auth.noAccount"], "Don't have an account?")
+
     def _paths(self, root: Path):
         paths = build_fixture_repo(root)
         (paths.backend_dir / "wrangler.jsonc").write_text(

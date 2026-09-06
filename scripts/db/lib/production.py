@@ -1406,13 +1406,36 @@ def load_migration_metadata(path: Path) -> dict[str, Any]:
 
 def _load_bundle_message_keys(sql_path: Path) -> dict[str, str]:
     sql = sql_path.read_text(encoding="utf-8")
-    pattern = re.compile(
+    legacy_pattern = re.compile(
         r"INSERT OR IGNORE INTO ui_messages\s*\([^)]*\)\s*VALUES\s*\(\s*'langmap-web'\s*,\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'",
         re.IGNORECASE | re.DOTALL,
     )
-    return {
+    legacy = {
         key.replace("''", "'"): source_expression_id.replace("''", "'")
-        for key, source_expression_id in pattern.findall(sql)
+        for key, source_expression_id in legacy_pattern.findall(sql)
+    }
+    if legacy:
+        return legacy
+
+    # The canonical bundle is natural-key SQL: the source expression ID is
+    # resolved by D1, so compare the stable source text instead of a staging
+    # integer ID.  Keep this parser scoped to the English seed CTE and avoid
+    # treating translated rows as managed message keys.
+    seed_pattern = re.compile(
+        r"WITH\s+system_ui_seed\s*\(message_key\s*,\s*source_text\s*,\s*placeholders_json\)"
+        r"\s+AS\s*\(VALUES\s*(.*?)\)\s+INSERT\s+OR\s+IGNORE\s+INTO\s+expressions",
+        re.IGNORECASE | re.DOTALL,
+    )
+    value_pattern = re.compile(
+        r"\(\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'\s*,\s*'((?:[^']|'')*)'\s*\)",
+        re.DOTALL,
+    )
+    match = seed_pattern.search(sql)
+    if match is None:
+        return {}
+    return {
+        key.replace("''", "'"): source_text.replace("''", "'")
+        for key, source_text, _placeholders in value_pattern.findall(match.group(1))
     }
 
 
@@ -1525,7 +1548,7 @@ WHERE message.project_id = 'langmap-web'
   AND translation.id <> message.source_expression_id
   AND source.type = 'system'
   AND source.name = 'system-ui';
-SELECT 'ui_key' AS kind, message_key AS key, source_expression_id AS source_hash
+SELECT 'ui_key' AS kind, message_key AS key, source_text AS source_hash
 FROM ui_messages WHERE project_id = 'langmap-web' ORDER BY message_key;
 SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN expressions e ON e.id = m.source_expression_id WHERE e.id IS NULL;
 SELECT 'orphan_expression_edges' AS metric, COUNT(*) FROM expression_edges x LEFT JOIN expressions a ON a.id = x.expression_a_id LEFT JOIN expressions b ON b.id = x.expression_b_id WHERE a.id IS NULL OR b.id IS NULL;
