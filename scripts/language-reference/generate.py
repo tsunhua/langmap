@@ -31,8 +31,8 @@ SYSTEM_CONTENT_LANGUAGES = (
     ('x-emoji', 'Emoji'),
 )
 
-# Canonical locales used by the application and dictionary adapters. Their
-# integer IDs are allocated from this stable code order during fresh rebuild.
+# Canonical locales used by the application and dictionary adapters. Locale IDs
+# are pinned below so adding a profile never renumbers existing registry rows.
 REFERENCE_LOCALES = (
     ('cmn-Hans-CN', 'cmn', 'Hans', None, 'CN', '', '普通话', 'Simplified Chinese'),
     ('cmn-Hant-TW', 'cmn', 'Hant', None, 'TW', '', '華語', 'Taiwan Mandarin'),
@@ -53,7 +53,30 @@ REFERENCE_LOCALES = (
     ('zyg-Latn-CN_Jingxi', 'zyg', 'Latn', None, 'CN', 'Jingxi', '靖西壮语', 'Jingxi Zhuang'),
     ('x-image-Latn-US', 'x-image', 'Latn', None, 'US', '', 'Image', 'Image'),
     ('x-emoji-Latn-US', 'x-emoji', 'Latn', None, 'US', '', 'Emoji', 'Emoji'),
+    ('nan-Latn_Pehoeji-TW', 'nan', 'Latn', 'Pehoeji', 'TW', '', '白話字', 'POJ'),
+    ('nan-Latn_Tailo-TW', 'nan', 'Latn', 'Tailo', 'TW', '', '臺羅', 'Tailo'),
+    ('nan-Latn_Pehoeji-CN', 'nan', 'Latn', 'Pehoeji', 'CN', '', '閩南語（白話字）', 'Min Nan Chinese (POJ)'),
+    ('nan-Latn_Tailo-CN', 'nan', 'Latn', 'Tailo', 'CN', '', '閩南語（臺羅）', 'Min Nan Chinese (Tailo)'),
 )
+
+REFERENCE_LOCALE_IDS = {
+    code: index
+    for index, code in enumerate(
+        (
+            'cmn-Hans-CN', 'cmn-Hant-TW', 'eng-Latn-GB', 'eng-Latn-US',
+            'jpn-Jpan-JP', 'nan-Hant-CN', 'nan-Hant-CN_Chaozhou',
+            'nan-Hant-CN_LufengJiazi', 'nan-Hant-TW', 'nan-Latn-CN_LufengJiazi',
+            'ral-Latn-IN', 'spa-Latn-ES', 'swh-Latn-TZ', 'wuu-Hans-CN_Wenzhou',
+            'wuu-Hant-CN_Taizhou', 'x-emoji-Latn-US', 'x-image-Latn-US',
+            'yue-Hant-HK', 'zyg-Latn-CN_Jingxi', 'nan-Latn_Pehoeji-CN',
+            'nan-Latn_Pehoeji-TW', 'nan-Latn_Tailo-CN', 'nan-Latn_Tailo-TW',
+        ),
+        start=1,
+    )
+}
+
+if set(REFERENCE_LOCALE_IDS) != {row[0] for row in REFERENCE_LOCALES}:
+    raise ValueError('REFERENCE_LOCALE_IDS must cover REFERENCE_LOCALES exactly')
 
 
 def sha256_file(path: Path) -> str:
@@ -340,7 +363,7 @@ def emit_sql(
         if lang not in language_ids:
             raise ValueError(f"locale {code!r} references unknown language {lang!r}")
         locale_rows.append(
-            f"  ({len(locale_rows) + 1}, {sql_str(code)}, {language_ids[lang]}, {sql_str(script)}, "
+            f"  ({REFERENCE_LOCALE_IDS[code]}, {sql_str(code)}, {language_ids[lang]}, {sql_str(script)}, "
             f"{('NULL' if orthography is None else sql_str(orthography))}, {sql_str(region)}, "
             f"{sql_str(place)}, {sql_str(name)}, {sql_str(name_en)}, NULL, NULL)"
         )

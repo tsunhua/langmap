@@ -84,27 +84,35 @@ _LOCALE_DISPLAY_NAMES: dict[str, tuple[str, str]] = {
     "nan-Latn-CN_Swatow_DP": ("汕頭話（潮州拼音）", "Swatow Hokkien (DP)"),
     "nan-Latn-CN_Chaozhou": ("潮州話（PUJ）", "Chaozhou Hokkien (PUJ)"),
     "nan-Latn-CN_Chaozhou_DP": ("潮州話（潮州拼音）", "Chaozhou Hokkien (DP)"),
+    "nan-Latn_Pehoeji-TW": ("白話字", "POJ"),
+    "nan-Latn_Tailo-TW": ("臺羅", "Tailo"),
+    "nan-Latn_Pehoeji-CN": ("閩南語（白話字）", "Min Nan Chinese (POJ)"),
+    "nan-Latn_Tailo-CN": ("閩南語（臺羅）", "Min Nan Chinese (Tailo)"),
 }
 _LOCALE_ORTHOGRAPHIES: dict[str, str] = {
     "nan-Latn-CN_Swatow": "PUJ",
     "nan-Latn-CN_Swatow_DP": "DP",
     "nan-Latn-CN_Chaozhou": "PUJ",
     "nan-Latn-CN_Chaozhou_DP": "DP",
+    "nan-Latn_Pehoeji-TW": "Pehoeji",
+    "nan-Latn_Tailo-TW": "Tailo",
+    "nan-Latn_Pehoeji-CN": "Pehoeji",
+    "nan-Latn_Tailo-CN": "Tailo",
 }
 
 
 def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, Any]:
     parts = code.split("-")
-    script = next((part for part in parts[1:] if len(part) == 4), None)
-    region_and_place = next(
-        (part for part in parts[1:] if len(part.split("_", 1)[0]) in (2, 3) and part != script),
-        "",
-    )
+    language_parts = 2 if parts[:1] == ["x"] else 1
+    script_and_orthography = parts[language_parts] if len(parts) > language_parts else ""
+    script, _, embedded_orthography = script_and_orthography.partition("_")
+    region_and_place = parts[language_parts + 1] if len(parts) > language_parts + 1 else ""
     region, _, place_path = region_and_place.partition("_")
     name, name_en = _LOCALE_DISPLAY_NAMES.get(code, (code, code))
     return {
         "code": code, "language_id": language_id, "lang_code": language_code,
-        "script_code": script or "Zyyy", "orthography": _LOCALE_ORTHOGRAPHIES.get(code),
+        "script_code": script or "Zyyy",
+        "orthography": embedded_orthography or _LOCALE_ORTHOGRAPHIES.get(code),
         "region_code": region or None, "place_path": place_path, "name": name, "name_en": name_en,
     }
 

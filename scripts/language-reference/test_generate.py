@@ -43,6 +43,14 @@ class TestGenerator(unittest.TestCase):
         self.assertIn('INSERT OR IGNORE INTO expression_locale_links', sql)
         self.assertIn('UPDATE languages SET name_expression_id=', sql)
 
+    def test_poj_and_tailo_profiles_are_canonical_without_renumbering(self):
+        sql = (ARTIFACTS / 'language-reference.sql').read_text(encoding='utf-8')
+        self.assertIn("(20, 'nan-Latn_Pehoeji-CN'", sql)
+        self.assertIn("(21, 'nan-Latn_Pehoeji-TW'", sql)
+        self.assertIn("(22, 'nan-Latn_Tailo-CN'", sql)
+        self.assertIn("(23, 'nan-Latn_Tailo-TW'", sql)
+        self.assertIn("(9, 'nan-Hant-TW'", sql)
+
     def test_script_names_keep_direction(self):
         sql = (ARTIFACTS / 'language-reference.sql').read_text(encoding='utf-8')
         self.assertIn("('Arab', 'Arabic', 'rtl')", sql)

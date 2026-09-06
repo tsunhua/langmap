@@ -58,6 +58,19 @@ def test_locale_parts_use_chaozhou_dp_profile():
     assert parts["orthography"] == "DP"
 
 
+def test_locale_parts_parse_orthography_before_region():
+    poj = local_import._locale_parts("nan-Latn_Pehoeji-TW", "nan", 4427)
+    assert poj["script_code"] == "Latn"
+    assert poj["orthography"] == "Pehoeji"
+    assert poj["region_code"] == "TW"
+    assert poj["place_path"] == ""
+
+    tailo = local_import._locale_parts("nan-Latn_Tailo-CN", "nan", 4427)
+    assert tailo["script_code"] == "Latn"
+    assert tailo["orthography"] == "Tailo"
+    assert tailo["region_code"] == "CN"
+
+
 def _stage(path: Path = FIXTURE):
     staging_path = path.parent / (path.stem + ".stage.sqlite")
     staging_path.unlink(missing_ok=True)
