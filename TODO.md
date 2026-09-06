@@ -148,6 +148,13 @@
   - production repair operation `927f4c46595c43c4836a717a61db092f` 已成功，bookmark `000000c8-00000000-000050d8-36d3f0b7909522dd2fb09e1f88fc78aa`；delta `013-chhoetaigi-poj-repair.sql` sha256 `d464d246c130247508f5e0366e6f67b2bcc7c88138f0bd975ef777f11ac17bdc`。
   - repair 移除九部來源的 226,811 筆錯誤 POJ readings，新增 82,634 nan expressions、145,192 edges；Tailo readings 保留 145,678 筆。statistics refresh operation `e07066153d7d4146947a3f6b1c75a1d2` 已成功。
 
+- [x] 修正 ChhoeTaigi POJ／臺羅被誤掛 Hant locale（2026-09-06）。
+  - 根因已回到 source exporter：`dictionary` commit `7555997` 依來源輸出 Hant、POJ（`nan-Latn_Pehoeji-*`）與 Tailo（`nan-Latn_Tailo-*`）；無 `han` 的條目以 POJ fallback headword，並不再把 POJ 當 reading。
+  - LangMap commit `a108b5a0` 增加四個 orthography locale、固定 reference locale IDs，並讓 importer 正確解析 `Latn_Pehoeji`／`Latn_Tailo`。
+  - production locale repair operation `90dc26e8c32843239176bb43f2148d1c` 已成功，bookmark `0000014a-00000000-000050de-98cd7c0e3e0179b8d2b6fcc68c3f4cc4`；delta `034-chhoetaigi-locale-repair-20260906.split.sql` sha256 `f2e6eb7568fa2b97e0eaafa1d21cffef52d76c4ccdfbfc553498572189ca425b`，新增 163,420 個 POJ links、重建 145,678 個 Tailo readings，移除 163,985 個舊 Hant links。
+  - 抽查發現雙表示法條目的 Hant headword 也需保留；補救 operation `95bab2a3537d4191a711955585097738` 已成功，bookmark `0000014b-00000000-000050de-c70bddd9c9b5812fb2608d678080cb18`；補回 119,020 個必要 Hant links，delta `035-chhoetaigi-restore-hant-links-20260906.split.sql` sha256 `a7bb6d74b0e8e113759dd781188a26f08da964db5a3a2e8a551a40aca31e1934`。
+  - 最終驗證：`ka-tī`（expression `2150802`）僅為 `nan-Latn_Pehoeji-TW`；`家己`、`家治` 保留 Hant；九部來源的 Tailo readings 全部落在 `nan-Latn_Tailo-CN/TW`；`nan` 的 `language_statistics` 與實際值一致（357,017 expressions、13 locales）。
+
 - [x] 清理舊 Simplified Chinese－English source 28 的拼音 expression（以 `/mapping/1828256` 為例）。
   - 根因不是 ChhoeTaigi，而是 `com.apple.dictionary.zh_CN-en.OCD` 的 parser 將目標漢字後的 `<span class="trans ty_pinyin">…</span>` 當成普通 `trans`，把 76,010 個帶聲調拉丁拼音直接當成 `cmn` expression；`dēngjì xiàngmù`（1828256）因此只有 English edges，沒有 reading。
   - dictionary exporter 已修正並重新匯出；entry count 維持 136,120，fixed JSONL sha256 `3ebfee5e474757db037675e23fea2935a1a1c7a1354bac5286d799519b01605d`。修正 parser 的回歸測試通過（71 passed）。
