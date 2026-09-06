@@ -78,6 +78,8 @@ describe('TopNav', () => {
     const { wrapper, router } = await mountNav()
     await flushPromises()
 
+    await wrapper.get('.search-center [role="combobox"]').trigger('click')
+    await flushPromises()
     expect(wrapper.get('.search-center [role="combobox"]').text()).toContain('Español')
     await wrapper.get('.search-center input[type="search"]').setValue('  star  ')
     await wrapper.get('.search-center form[role="search"]').trigger('submit')

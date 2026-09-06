@@ -11,7 +11,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
-import { useSearchLanguages } from '@/composables/useSearchLanguages'
+import { loadSearchLanguage, useSearchLanguages } from '@/composables/useSearchLanguages'
 import type { SearchFormOf } from '@/api/expressions'
 
 const route = useRoute()
@@ -177,9 +177,7 @@ watch(() => route.query, (next) => {
     return
   }
   expectedRoute = null
-  const resolvedLanguage = urlLang
-    ? (searchLanguages.isSearchLanguageAvailable(urlLang) ? urlLang : '')
-    : searchLanguages.resolveSearchLanguage()
+  const resolvedLanguage = urlLang || searchLanguages.resolveSearchLanguage()
   const queryChanged = urlQ !== query.value
   const languageChanged = resolvedLanguage !== language.value
   if (!queryChanged && !languageChanged) return
@@ -200,21 +198,16 @@ watch(() => route.query, (next) => {
 watch([() => localization.locale, () => localization.secondary], () => { if (initialized && searched.value) void doSearch() })
 
 onMounted(async () => {
-  try {
-    await searchLanguages.loadSearchLanguages(localeParams.value)
-  } catch {
-    // The shared control renders the localized loading error; without a validated
-    // language the page must not send an expression search request.
-    language.value = ''
-    languageMissing.value = Boolean(query.value.trim())
-    initialized = true
-    return
-  }
-
   const requested = routeQueryValue(route.query.lang)
-  language.value = requested
-    ? (searchLanguages.isSearchLanguageAvailable(requested) ? requested : '')
-    : searchLanguages.resolveSearchLanguage()
+  if (requested) {
+    try {
+      language.value = (await loadSearchLanguage(requested, localeParams.value))?.code ?? ''
+    } catch {
+      language.value = ''
+    }
+  } else {
+    language.value = searchLanguages.resolveSearchLanguage()
+  }
 
   // Keep all watchers quiet while the URL state is normalized and the initial
   // request is made. This prevents the language and query watchers from issuing

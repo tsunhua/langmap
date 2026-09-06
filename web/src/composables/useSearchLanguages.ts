@@ -1,14 +1,11 @@
 import { computed, readonly, ref } from 'vue'
-import {
-  listContentLanguages,
-  type ContentLanguage,
-  type LocaleHints,
-} from '@/api/languageIdentity'
+import type { ContentLanguage, LocaleHints } from '@/api/languageIdentity'
+import { contentRevision } from '@/utils/contentRevision'
+import { loadAllContentLanguages, loadContentLanguagePage } from './contentLanguageCache'
 
 const STORAGE_KEY = 'langmap.search.languages'
 const MAX_RECENT = 3
 const DEFAULT_PAGE_SIZE = 100
-const MAX_PAGES = 100
 
 function readStoredRecent(): string[] {
   try {
@@ -51,7 +48,7 @@ let activeLocaleKey = ''
 let activeLoadCount = 0
 
 function localeKey(hints: LocaleHints): string {
-  return `${hints.ui_locale ?? ''}|${hints.secondary_ui_locale ?? ''}`
+  return `${contentRevision.value}|${hints.ui_locale ?? ''}|${hints.secondary_ui_locale ?? ''}`
 }
 
 function compareLanguages(a: ContentLanguage, b: ContentLanguage): number {
@@ -95,24 +92,22 @@ async function fetchSearchLanguages(
   hints: LocaleHints,
   pageSize: number,
 ): Promise<ContentLanguage[]> {
-  const byCode = new Map<string, ContentLanguage>()
-  let offset = 0
+  const items = await loadAllContentLanguages(hints, { pageSize })
+  return items.filter(item => item.expression_count > 0)
+}
 
-  for (let pageNumber = 0; pageNumber < MAX_PAGES; pageNumber += 1) {
-    const page = await listContentLanguages({
-      ...hints,
-      sort: 'alpha',
-      limit: pageSize,
-      offset,
-    })
-    for (const item of page.items) {
-      if (item.expression_count > 0) byCode.set(item.code, item)
-    }
-    if (page.items.length === 0 || !(page.hasMore ?? page.has_more)) break
-    offset += page.items.length
-  }
-
-  return [...byCode.values()]
+export async function loadSearchLanguage(
+  code: string,
+  hints: LocaleHints = {},
+): Promise<ContentLanguage | null> {
+  const page = await loadContentLanguagePage({
+    q: code,
+    sort: 'alpha',
+    limit: 50,
+    offset: 0,
+    ...hints,
+  })
+  return page.items.find(item => item.code === code && item.expression_count > 0) ?? null
 }
 
 export async function loadSearchLanguages(

@@ -12,17 +12,16 @@ async function bootstrap() {
   app.use(pinia)
   app.use(router)
   app.use(i18n)
-
-  try {
-    // Resolve the saved locale before page components mount so they do not
-    // first fetch data for the default English locale and then refetch it.
-    await useLocalizationStore(pinia).loadLocales()
-  } catch (error) {
-    console.error('Localization bootstrap failed:', error)
-  }
+  const localization = useLocalizationStore(pinia)
 
   await router.isReady()
   app.mount('#app')
+
+  // The English catalog is bundled, so the shell can render while the saved
+  // locale and server-backed messages load in the background.
+  void localization.loadLocales().catch((error: unknown) => {
+    console.error('Localization bootstrap failed:', error)
+  })
 }
 
 void bootstrap()

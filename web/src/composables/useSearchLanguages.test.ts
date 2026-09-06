@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { listContentLanguages } from '@/api/languageIdentity'
 import {
+  clearContentLanguageCache,
+  loadContentLanguagePage,
+} from './contentLanguageCache'
+import {
   rememberSearchLanguage,
   resetRecentSearchLanguages,
   useSearchLanguages,
@@ -48,6 +52,7 @@ describe('useSearchLanguages', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    clearContentLanguageCache()
     if (typeof globalThis.localStorage?.clear !== 'function') {
       vi.stubGlobal('localStorage', new MemoryStorage())
     }
@@ -160,6 +165,30 @@ describe('useSearchLanguages', () => {
 
     await firstLanguages.loadSearchLanguages({ ui_locale: 'fra-Latn-FR' })
     expect(listContentLanguages).toHaveBeenCalledTimes(1)
+  })
+
+  it('reuses the language page cache when the search menu is opened later', async () => {
+    vi.mocked(listContentLanguages).mockResolvedValue({
+      items: [language('eng', 'English', 8), language('spa', 'Español', 5)],
+      total: 2,
+      skip: 0,
+      limit: 20,
+      hasMore: false,
+      has_more: false,
+    })
+
+    await loadContentLanguagePage({
+      sort: 'count',
+      limit: 20,
+      offset: 0,
+      ui_locale: 'ita-Latn-IT',
+    })
+
+    const searchLanguages = useSearchLanguages()
+    await searchLanguages.loadSearchLanguages({ ui_locale: 'ita-Latn-IT' })
+
+    expect(listContentLanguages).toHaveBeenCalledTimes(1)
+    expect(searchLanguages.languages.value.map(item => item.code)).toEqual(['eng', 'spa'])
   })
 
   it('exposes a stable load error and clears loading after a failed request', async () => {

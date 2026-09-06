@@ -25,13 +25,11 @@ const drawerSearchControls = ref<InstanceType<typeof ExpressionSearchControls> |
 const localeParams = useLocaleParams()
 const searchLanguages = useSearchLanguages()
 
-async function initializeSearchLanguage() {
-  try {
-    await searchLanguages.loadSearchLanguages(localeParams.value)
-    searchLanguage.value = searchLanguages.resolveSearchLanguage(searchLanguage.value)
-    if (searchLanguage.value) searchLanguageMissing.value = false
-  } catch {
-    searchLanguage.value = ''
+function applyRememberedSearchLanguage() {
+  const resolved = searchLanguages.resolveSearchLanguage(searchLanguage.value)
+  if (resolved) {
+    searchLanguage.value = resolved
+    searchLanguageMissing.value = false
   }
 }
 
@@ -132,10 +130,13 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
-onMounted(() => { void initializeSearchLanguage() })
+watch(searchLanguages.languages, applyRememberedSearchLanguage, { immediate: true })
 watch(
   () => [localeParams.value.ui_locale, localeParams.value.secondary_ui_locale],
-  () => { void initializeSearchLanguage() },
+  () => {
+    searchLanguage.value = ''
+    searchLanguageMissing.value = false
+  },
 )
 
 // Close the mobile drawer whenever the route changes.

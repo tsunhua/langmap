@@ -110,6 +110,7 @@ function activeIndexForSelection(): number {
 function openMenu() {
   menuOpen.value = true
   activeIndex.value = activeIndexForSelection()
+  void ensureLanguagesLoaded()
 }
 
 function toggleMenu() {
@@ -216,8 +217,8 @@ function onQueryKeydown(event: KeyboardEvent) {
   onSubmit()
 }
 
-function requestLanguageLoad() {
-  loadSearchLanguages(localeParams.value).catch(() => {
+function ensureLanguagesLoaded() {
+  void loadSearchLanguages(localeParams.value).catch(() => {
     // The composable exposes the reactive error state for the inline message.
   })
 }
@@ -235,7 +236,9 @@ defineExpose({ focusSearch, focusLanguage })
 
 watch(
   () => [localeParams.value.ui_locale, localeParams.value.secondary_ui_locale],
-  requestLanguageLoad,
+  () => {
+    if (menuOpen.value) void ensureLanguagesLoaded()
+  },
 )
 
 watch(options, (next) => {
@@ -247,7 +250,6 @@ watch(options, (next) => {
 onMounted(() => {
   document.addEventListener('mousedown', onDocumentPointerDown)
   document.addEventListener('click', onDocumentPointerDown)
-  requestLanguageLoad()
 })
 
 onUnmounted(() => {

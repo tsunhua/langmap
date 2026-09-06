@@ -8,6 +8,7 @@ import {
   type LocaleHints,
 } from '@/api/languageIdentity'
 import { apiErrorMessage } from '@/utils/apiError'
+import { loadContentLanguagePage } from './contentLanguageCache'
 
 export function useLanguages() {
   const loading = ref(false)
@@ -17,7 +18,7 @@ export function useLanguages() {
     loading.value = true
     error.value = null
     try {
-      return await listContentLanguages(params, signal)
+      return signal ? await listContentLanguages(params, signal) : await loadContentLanguagePage(params)
     } catch (cause: unknown) {
       error.value = apiErrorMessage(cause, 'Request failed')
       throw cause

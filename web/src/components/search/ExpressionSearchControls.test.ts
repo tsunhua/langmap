@@ -42,6 +42,16 @@ describe('ExpressionSearchControls', () => {
     mocks.loadSearchLanguages.mockResolvedValue(undefined)
   })
 
+  it('loads languages only when the language menu is opened', async () => {
+    const wrapper = mountControls()
+    await flushPromises()
+
+    expect(mocks.loadSearchLanguages).not.toHaveBeenCalled()
+
+    await wrapper.get('[role="combobox"]').trigger('click')
+    expect(mocks.loadSearchLanguages).toHaveBeenCalledTimes(1)
+  })
+
   it('renders recent and alphabetical groups with names, codes, and counts', async () => {
     const wrapper = mountControls()
     await flushPromises()
