@@ -1,5 +1,20 @@
 # TODO
 
+## 上海話 Pott 詞彙拆分（2026-09-06）
+
+- [x] 修復 Pott 1913 的並列對譯：exporter `dictionary` repo `73de697` 將 `you, ye.`
+  這類逗號/分號並列 gloss 拆成獨立 equivalents，剝除動詞記號 `to ` 與用法括號，
+  保留 8 筆定義式 gloss 整體（詞彙道問題）。entry count 保持 1,385。
+- [x] 源 artifact 重匯出並留 `.pre-wordsplit`；mirror 重匯後 source 65：
+  claims 2,651、readings 1,362、edges 1,592、owned expressions 1,655。
+- [x] production 修復發布：combined delete+insert delta
+  `032-shanghai-pott-wordsplit-20260906-combined.sql`
+  （sha256 `189cea2607965dc9f39a43a3f0bd57ee31734c0817b292535c5aab98b640b8d8`），
+  operation `d5e6eeb269b94a2f94ac7cf141e55e76`，bookmark
+  `0000013d-00000000-000050de-71dc76d79bb59573eb91fa9b1c180100`，
+  status `succeeded`/`verified`；`㑚` 現只連 `you`/`ye`。
+- [x] `language_statistics` 已刷新（wuu updated_at `2026-09-06 02:07:20`）。
+
 ## 詞典發布流程
 
 - [x] 完成 [GitHub issue #120](https://github.com/tsunhua/langmap/issues/120) 的詞典修復／發布流程優化。
