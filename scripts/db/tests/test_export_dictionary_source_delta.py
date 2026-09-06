@@ -104,6 +104,111 @@ class ExportDictionarySourceDeltaTests(unittest.TestCase):
                     locale_codes=(),
                 )
 
+    def _released_target(self, path: Path) -> sqlite3.Connection:
+        """A production-like target that already carries an earlier release of
+        the source, including a superseded packed-gloss expression."""
+        connection = _base(path, ids=(1, 2))
+        connection.execute(
+            "INSERT INTO language_locales(id,code,language_id,script_code,region_code,place_path,name,name_en)"
+            " VALUES (5,'wuu-Hant-CN_Shanghai',2,'Hant','CN','Shanghai','上海話','Shanghai Wu')"
+        )
+        connection.execute("INSERT INTO sources(id,type,name) VALUES (9,'system','seed'),(77,'publication','org.example.pott')")
+        connection.execute(
+            "INSERT INTO expressions(id,language_id,text,source_id) VALUES"
+            " (42,1,'hello',9),(80,1,'hello, greetings',77),(900,2,'儂好',77)"
+        )
+        connection.execute("INSERT INTO expression_sources VALUES (42,77,'1'),(80,77,'1'),(900,77,'1')")
+        connection.execute("INSERT INTO expression_locale_links VALUES (42,1),(80,1),(900,5)")
+        connection.execute("INSERT INTO expression_readings VALUES (900,5,'church','nong hau',77)")
+        connection.execute("INSERT INTO expression_edges(id,expression_a_id,expression_b_id) VALUES (60,42,80),(70,42,900)")
+        connection.execute("INSERT INTO expression_edge_sources VALUES (60,77,'1'),(70,77,'1')")
+        connection.commit()
+        return connection
+
+    def test_replace_mode_rebuilds_source_and_drops_superseded_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            staging = root / "staging.sqlite"
+            target = root / "target.sqlite"
+            delta = root / "delta.sql"
+            manifest = root / "manifest.json"
+            _staging(staging)
+            target_connection = self._released_target(target)
+
+            counts = export_source_delta(
+                staging,
+                delta,
+                source_type="publication",
+                source_name="org.example.pott",
+                locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+                manifest=manifest,
+                rows_per_insert=1,
+                replace=True,
+            )
+            sql = delta.read_text(encoding="utf-8")
+            self.assertIn("DELETE FROM expressions", sql)
+            self.assertLess(sql.index("DELETE FROM"), sql.index("INSERT OR IGNORE"))
+            target_connection.executescript(sql)
+            target_connection.executescript(sql)
+
+            source_id = target_connection.execute("SELECT id FROM sources WHERE name='org.example.pott'").fetchone()[0]
+            self.assertEqual(source_id, 77)
+            # Shared node owned by another source survives and keeps its id.
+            self.assertEqual(target_connection.execute("SELECT id FROM expressions WHERE text='hello'").fetchone()[0], 42)
+            # Superseded packed-gloss row is gone.
+            self.assertIsNone(target_connection.execute("SELECT id FROM expressions WHERE text='hello, greetings'").fetchone())
+            self.assertIsNone(target_connection.execute("SELECT id FROM expression_edges WHERE id=60").fetchone())
+            self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_locale_links WHERE expression_id=80").fetchone()[0], 0)
+            # Rebuilt rows match the staging description.
+            self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_sources WHERE source_id=?", (source_id,)).fetchone()[0], 2)
+            self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_edge_sources WHERE source_id=?", (source_id,)).fetchone()[0], 1)
+            self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_readings WHERE source_id=?", (source_id,)).fetchone()[0], 1)
+            self.assertEqual(counts["expression_locale_links"], 2)
+            payload = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertTrue(payload["replace"])
+            self.assertEqual(payload["expected_counts"], counts)
+            target_connection.close()
+
+    def test_default_mode_emits_no_deletes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            staging = root / "staging.sqlite"
+            _staging(staging)
+            export_source_delta(
+                staging,
+                root / "delta.sql",
+                source_type="publication",
+                source_name="org.example.pott",
+                locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+            )
+            self.assertNotIn("DELETE FROM", (root / "delta.sql").read_text(encoding="utf-8"))
+
+    def test_replace_mode_refuses_sources_sharing_owned_expressions(self) -> None:
+        sharings = (
+            ("claims", "INSERT INTO expression_sources VALUES (500,66,'1')"),
+            ("attestations", "INSERT INTO expression_edge_sources VALUES (700,66,'1')"),
+            ("readings", "INSERT INTO expression_readings VALUES (900,136,'other','nong hau',66)"),
+        )
+        for label, sharing_sql in sharings:
+            with self.subTest(sharing=label), tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                staging = root / "staging.sqlite"
+                _staging(staging)
+                connection = sqlite3.connect(staging)
+                connection.execute("INSERT INTO sources(id,type,name) VALUES (66,'publication','org.example.other')")
+                connection.execute(sharing_sql)
+                connection.commit()
+                connection.close()
+                with self.assertRaisesRegex(ValueError, "exclusively"):
+                    export_source_delta(
+                        staging,
+                        root / "delta.sql",
+                        source_type="publication",
+                        source_name="org.example.pott",
+                        locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+                        replace=True,
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

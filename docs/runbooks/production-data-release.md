@@ -64,6 +64,11 @@ python3 scripts/db/export_dictionary_source_delta.py \
   --manifest scripts/db/state/backup/delta/<NNN>-<topic>.source.json
 ```
 
+來源 artifact 修正後重發布（如 packed gloss 拆分改變了 expression identity）時加 `--replace`：
+delta 會先以自然鍵刪除該 source 擁有的全部 rows 再重插，被取代的舊 rows 不會殘留。
+`--replace` 在 staging 顯示其他 source 也使用該 source 擁有的 expression 時會拒絕產生，
+避免刪除傷及他人；目標尚無此 source 時 delete 段為 no-op，首次發布同樣可用。
+
 ## Plan / Apply / Verify
 
 ```bash
@@ -88,6 +93,10 @@ operation 的 data stage 後執行。純 approved-data release 且 plan 確認 r
 不再將 staging 的全庫 before／after counts 傳入 production plan。apply 後按 source key
 驗證 expressions、edges、readings、locale links 與 `language_statistics`；bookmark 是回退點，
 不是資料基線。
+
+每次 apply 成功後，立即在 `TODO.md` 記一條發布紀錄（source key、delta 路徑與 sha256、
+operation ID、bookmark、日期與 source-scoped counts）。這份 ledger 是接力 session 判斷
+「某 source 是否已上 production」的唯一入口，不得只靠翻 transcript 或 plan 檔推斷。
 
 ## 失敗處理
 

@@ -5,6 +5,13 @@ The staging database is used only to describe rows owned by one source. Integer
 IDs from staging are temporary join keys inside the generated SQL; production
 identities are resolved by source name, locale code, language code, expression
 identity, and edge endpoints.
+
+With ``replace=True`` the delta first deletes every row the source owns in the
+target, so re-releasing a source whose exporter output changed identity (e.g.
+packed glosses split into separate equivalents) does not leave superseded rows
+behind.  The delete resolves by natural key, is a no-op on targets that do not
+have the source yet, and is refused while staging shows another source using an
+expression this source owns.
 """
 
 from __future__ import annotations
@@ -57,6 +64,33 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _write_replace_deletes(handle, *, source_type: str, source_name: str) -> None:
+    """Emit child-before-parent deletes so the file also replays on databases
+    where foreign-key enforcement is unavailable, not just on cascade-enabled
+    ones.  Subqueries resolve to NULL (no-op) on targets that do not have the
+    source yet, which keeps a replace delta usable for a first release."""
+    lookup = (
+        f"(SELECT id FROM sources WHERE type={_literal(source_type)}"
+        f" AND name={_literal(source_name)})"
+    )
+    owned = f"(SELECT id FROM expressions WHERE source_id = {lookup})"
+    touching = (
+        "SELECT e.id FROM expression_edges e"
+        f" WHERE e.expression_a_id IN {owned} OR e.expression_b_id IN {owned}"
+    )
+    handle.write("-- Replace mode: drop every row this source owns before re-inserting.\n")
+    handle.write(f"DELETE FROM expression_edge_sources WHERE source_id = {lookup};\n")
+    handle.write(f"DELETE FROM expression_readings WHERE source_id = {lookup};\n")
+    handle.write(f"DELETE FROM expression_locale_links WHERE expression_id IN {owned};\n")
+    handle.write(f"DELETE FROM expression_edge_sources WHERE edge_id IN ({touching});\n")
+    handle.write(
+        f"DELETE FROM expression_edges WHERE expression_a_id IN {owned}"
+        f" OR expression_b_id IN {owned};\n"
+    )
+    handle.write(f"DELETE FROM expression_sources WHERE source_id = {lookup};\n")
+    handle.write(f"DELETE FROM expressions WHERE source_id = {lookup};\n")
+
+
 def export_source_delta(
     staging: Path,
     output: Path,
@@ -66,6 +100,7 @@ def export_source_delta(
     locale_codes: Sequence[str],
     manifest: Path | None = None,
     rows_per_insert: int = 100,
+    replace: bool = False,
 ) -> dict[str, int]:
     if rows_per_insert < 1:
         raise ValueError("rows_per_insert must be positive")
@@ -81,6 +116,43 @@ def export_source_delta(
         if source is None:
             raise ValueError(f"source not found in staging: {source_type}/{source_name}")
         source_id = int(source[0])
+
+        if replace:
+            shared_claims = connection.execute(
+                """
+                SELECT COUNT(*) FROM expressions e
+                JOIN expression_sources es ON es.expression_id=e.id AND es.source_id<>?
+                WHERE e.source_id=?
+                """,
+                (source_id, source_id),
+            ).fetchone()[0]
+            shared_attestations = connection.execute(
+                """
+                SELECT COUNT(*) FROM expression_edges e
+                JOIN expression_edge_sources es ON es.edge_id=e.id AND es.source_id<>?
+                WHERE e.expression_a_id IN (SELECT id FROM expressions WHERE source_id=?)
+                   OR e.expression_b_id IN (SELECT id FROM expressions WHERE source_id=?)
+                """,
+                (source_id, source_id, source_id),
+            ).fetchone()[0]
+            foreign_readings = connection.execute(
+                """
+                SELECT COUNT(*) FROM expression_readings r
+                JOIN expressions e ON e.id=r.expression_id
+                WHERE e.source_id=? AND (r.source_id IS NULL OR r.source_id<>?)
+                """,
+                (source_id, source_id),
+            ).fetchone()[0]
+            # The delete preamble drops every row the source owns; refuse while
+            # another source still claims, attests, or reads on an owned
+            # expression, because deleting it would damage that source.
+            if shared_claims or shared_attestations or foreign_readings:
+                raise ValueError(
+                    "replace mode requires expressions owned by the source to be used "
+                    f"exclusively by it: shared claims={shared_claims}, "
+                    f"shared edge attestations={shared_attestations}, "
+                    f"foreign readings={foreign_readings}"
+                )
 
         locales = _rows(
             connection,
@@ -191,6 +263,8 @@ def export_source_delta(
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8") as handle:
             handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
+            if replace:
+                _write_replace_deletes(handle, source_type=source_type, source_name=source_name)
             handle.write(
                 "INSERT OR IGNORE INTO sources (type,name) VALUES "
                 f"({_literal(source_type)},{_literal(source_name)});\n"
@@ -308,6 +382,7 @@ def export_source_delta(
                 "source": {"type": source_type, "name": source_name},
                 "locale_codes": sorted(found_codes),
                 "expected_counts": counts,
+                "replace": replace,
                 "delta_sha256": _sha256(output),
             }
             temporary = manifest.with_name(f".{manifest.name}.{os.getpid()}.tmp")
@@ -327,6 +402,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--locale-code", action="append", required=True, dest="locale_codes")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--rows-per-insert", type=int, default=100)
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="emit a source-scoped DELETE preamble so the delta replaces the "
+        "source's existing rows instead of only adding to them",
+    )
     args = parser.parse_args(argv)
     if not args.staging.is_file():
         print(f"staging SQLite not found: {args.staging}", file=sys.stderr)
@@ -340,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
             locale_codes=args.locale_codes,
             manifest=args.manifest,
             rows_per_insert=args.rows_per_insert,
+            replace=args.replace,
         )
     except (OSError, sqlite3.Error, ValueError) as exc:
         print(f"export failed: {exc}", file=sys.stderr)
