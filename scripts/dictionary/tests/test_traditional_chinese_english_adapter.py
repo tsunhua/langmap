@@ -49,6 +49,56 @@ def test_adapter_normalizes_shanghai_wu_headword_and_church_romanization():
     )
 
 
+def test_adapter_normalizes_swatow_puj_and_written_equivalents():
+    entry = StagedEntry(
+        "r", "org.example.swatow", "e", "si-kue", "Si-kue", None,
+        "nan-Latn-CN_Swatow-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=(
+            {"value": "四", "language_hint": "nan-Hant-CN_Swatow"},
+            {"value": "si-kue", "language_hint": "nan-Latn-CN_Swatow"},
+            {"value": "four", "language_hint": "eng"},
+        )),),
+    )
+
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(entry)
+
+    assert (normalized.headword.lang_code, normalized.headword.locale_code) == (
+        "nan", "nan-Latn-CN_Swatow",
+    )
+    assert [
+        (item.canonical_text, item.lang_code, item.locale_code)
+        for item in normalized.senses[0].occurrences
+    ] == [
+        ("四", "nan", "nan-Hant-CN_Swatow"),
+        ("si-kue", "nan", "nan-Latn-CN_Swatow"),
+        ("four", "eng", "eng-Latn-US"),
+    ]
+
+
+def test_adapter_normalizes_chaozhou_dp_and_mandarin_script_profiles():
+    entry = StagedEntry(
+        "r", "org.example.dieghv", "e", "a¹", "a¹", None,
+        "nan-Latn-CN_Chaozhou_DP-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=(
+            {"value": "亞", "language_hint": "nan-Hant-CN_Chaozhou"},
+            {"value": "简", "language_hint": "cmn-Hans-CN"},
+        )),),
+    )
+
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(entry)
+
+    assert (normalized.headword.lang_code, normalized.headword.locale_code) == (
+        "nan", "nan-Latn-CN_Chaozhou_DP",
+    )
+    assert [
+        (item.canonical_text, item.lang_code, item.locale_code)
+        for item in normalized.senses[0].occurrences
+    ] == [
+        ("亞", "nan", "nan-Hant-CN_Chaozhou"),
+        ("简", "cmn", "cmn-Hans-CN"),
+    ]
+
+
 def test_normalization_resume_uses_checkpoint_without_duplicate_rows(tmp_path):
     connection = create_staging_database(tmp_path / "stage.sqlite")
     summary = load_jsonl_release(connection, [FIXTURE])

@@ -79,6 +79,17 @@ _LANGUAGE_CODE_ALIASES: dict[str, str] = {
 # back to exposing the machine-readable locale code as the user-facing label.
 _LOCALE_DISPLAY_NAMES: dict[str, tuple[str, str]] = {
     "wuu-Hant-CN_Shanghai": ("上海話", "Shanghai Wu"),
+    "nan-Hant-CN_Swatow": ("汕頭話", "Swatow Hokkien"),
+    "nan-Latn-CN_Swatow": ("汕頭話（PUJ）", "Swatow Hokkien (PUJ)"),
+    "nan-Latn-CN_Swatow_DP": ("汕頭話（潮州拼音）", "Swatow Hokkien (DP)"),
+    "nan-Latn-CN_Chaozhou": ("潮州話（PUJ）", "Chaozhou Hokkien (PUJ)"),
+    "nan-Latn-CN_Chaozhou_DP": ("潮州話（潮州拼音）", "Chaozhou Hokkien (DP)"),
+}
+_LOCALE_ORTHOGRAPHIES: dict[str, str] = {
+    "nan-Latn-CN_Swatow": "PUJ",
+    "nan-Latn-CN_Swatow_DP": "DP",
+    "nan-Latn-CN_Chaozhou": "PUJ",
+    "nan-Latn-CN_Chaozhou_DP": "DP",
 }
 
 
@@ -93,7 +104,7 @@ def _locale_parts(code: str, language_code: str, language_id: int) -> dict[str, 
     name, name_en = _LOCALE_DISPLAY_NAMES.get(code, (code, code))
     return {
         "code": code, "language_id": language_id, "lang_code": language_code,
-        "script_code": script or "Zyyy", "orthography": None,
+        "script_code": script or "Zyyy", "orthography": _LOCALE_ORTHOGRAPHIES.get(code),
         "region_code": region or None, "place_path": place_path, "name": name, "name_en": name_en,
     }
 

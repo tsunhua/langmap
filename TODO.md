@@ -1,5 +1,34 @@
 # TODO
 
+## 匯入匯總 Teochew CSV（2026-09-06）
+
+- [x] 以 `/Users/lim/Documents/Code/hokkien-writing/dataset/export/teochew.csv` 為唯一來源，輸入 SHA-256 為
+  `a08848740c950eaf3f92dff367ff9874fa07019cad73d348b06d3da76bb75840`；匯出器
+  `scripts/dictionary/export_teochew_csv_jsonl.py` 按 `source` 分成 10 個 publication source，保留原有大小寫。
+  本檔實際欄位為 `puj`、`dp`、`han`、`han_variants`、`en`、`zh_CN`、`zh_TW`；沒有 `han_orig`，
+  `han_variants` 不另建 equivalent，`zh_CN` 無非空值。
+- [x] 將 `puj`／`dp` 作為 `nan` 詞頭（不是 reading），`han`、`en`、`zh_TW`／`zh_CN` 作為映射；`dp` 實際只出現在
+  `org.hokkien-writing.dieghv`，使用潮州話 DP locale。
+- [x] source profile：汕頭話為 `001`、`002`、`007` 與空 source（上游 `ssmp.csv`）；潮州話為 `003`、`008`、
+  `dieghv`、`teochew`、`teochew.chars`、`teochew.khau_sek`。空 source 與 generic source 的歸類依 dataset README／
+  上游檔名推定，未改動外部來源。
+- [x] 各 source 匯入量（CSV rows／expression claims／edge claims）：`001` 汕頭 6,172／14,110／10,707；`002` 汕頭
+  32,432／56,228／53,878；`003` 潮州 1,340／3,846／2,608；`007` 汕頭 48,611／94,275／53,605；`008` 潮州
+  5,684／12,515／11,214；`dieghv` 潮州 51,174／10,045／11,598；空 source（SSMP）汕頭 18,038／14,910／18,029；
+  `teochew` 潮州 22／60／42；`teochew.chars` 潮州 6,195／6,921／6,195；`teochew.khau_sek` 潮州 261／718／497。
+- [x] 本地 staging：169,929 entries，10 個 source，quarantine 與 normalization error 均為 0；自然鍵 delta
+  `scripts/db/state/backup/delta/033-teochew-sources-20260906.split.sql`（63,012,403 bytes，SHA-256
+  `bad70ae8eb4a8a1365c7f3541cc76b629dcc4a81075c5ec2877c96376abb871a`）在匯入前 snapshot dry-run 通過，
+  `integrity_check=ok`、`foreign_key_check=0`。
+- [x] production 已發布：operation `70784a0ab7fd468dac1351c35e483fb1`，bookmark
+  `00000141-00000000-000050de-ba6105f39fa29b6445c403460a8808a3`，status `succeeded`／`verified`；曾因一次
+  Cloudflare fetch failure 按 journal 從同一 bookmark 恢復，沒有重建 delta。production source claims 為 213,628、
+  edge claims 為 168,373、readings 為 0；`language_statistics` 已刷新。
+- [x] production 驗證通過：baseline 43 schema objects／migrations，10 個 source 均逐一對上 claims／edges；已確認
+  `nan-Hant-CN_Swatow`（汕頭話）、`nan-Latn-CN_Swatow`（汕頭話 PUJ）、`nan-Hant-CN_Chaozhou`（潮州話）、
+  `nan-Latn-CN_Chaozhou`（潮州話 PUJ）與 `nan-Latn-CN_Chaozhou_DP`（潮州話 DP）。`iū`、`si-kue` 等匯總檔既有的
+  小寫詞頭已按原值導入。
+
 ## 上海話 Pott 詞彙拆分（2026-09-06）
 
 - [x] 修復 Pott 1913 的並列對譯：exporter `dictionary` repo `73de697` 將 `you, ye.`

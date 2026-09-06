@@ -44,6 +44,20 @@ def test_locale_parts_use_shanghai_display_names():
     assert parts["name_en"] == "Shanghai Wu"
 
 
+def test_locale_parts_use_swatow_puj_profile():
+    parts = local_import._locale_parts("nan-Latn-CN_Swatow", "nan", 4427)
+    assert parts["name"] == "汕頭話（PUJ）"
+    assert parts["name_en"] == "Swatow Hokkien (PUJ)"
+    assert parts["orthography"] == "PUJ"
+
+
+def test_locale_parts_use_chaozhou_dp_profile():
+    parts = local_import._locale_parts("nan-Latn-CN_Chaozhou_DP", "nan", 4427)
+    assert parts["name"] == "潮州話（潮州拼音）"
+    assert parts["name_en"] == "Chaozhou Hokkien (DP)"
+    assert parts["orthography"] == "DP"
+
+
 def _stage(path: Path = FIXTURE):
     staging_path = path.parent / (path.stem + ".stage.sqlite")
     staging_path.unlink(missing_ok=True)

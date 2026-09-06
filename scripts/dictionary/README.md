@@ -84,6 +84,15 @@ python3 scripts/dictionary/incremental_import.py \
 
 此增量模式使用 `--packed --append` 的等價行為逐部追加 integer codebook；不執行跨檔案 AI 合併。要做跨檔案高信心合併，仍需保留完整 staging release 後另行執行 reconciliation，再發布新的整體 release。
 
+### 匯入匯總 Teochew CSV
+
+`export_teochew_csv_jsonl.py` 會依匯總 CSV 的 `source` 欄位各自產生 JSONL，並按來源標記為潮州話或汕頭話。`puj`／`dp` 作為詞頭，`han`、`en`、`zh_TW`、`zh_CN` 作為映射；不會改動來源欄位中的大小寫。`source` 留空的列按上游合併流程視為 SSMP 汕頭話資料。
+
+```bash
+python3 scripts/dictionary/export_teochew_csv_jsonl.py \
+  /path/to/teochew.csv /path/to/structured-jsonl
+```
+
 若要把 mirror、delta、postflight manifest 與 production plan 串成同一個可重跑入口，使用
 `release_dictionary.py`。預設只準備 release，不會修改 production；加入 `--apply` 時仍必須
 提供完全相同的 `--database-name` 與 `--confirm-production`：
