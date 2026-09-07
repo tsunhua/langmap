@@ -8,6 +8,7 @@ import pytest
 from scripts.dictionary.incremental_import import (
     ReadingQualityError,
     _prepare_staging,
+    _d1_has_release,
     assert_reading_quality,
     file_sha256,
     order_jsonl_files,
@@ -166,6 +167,28 @@ def test_incremental_import_commits_one_file_and_resumes(tmp_path):
             "snapshot_run_key": first[0]["snapshot_run_key"],
         }
     ]
+
+
+def test_resume_detects_url_sources_for_wikivoyage_files(tmp_path):
+    d1_path = tmp_path / "d1.sqlite"
+    d1 = sqlite3.connect(d1_path)
+    d1.executescript(SCHEMA.read_text(encoding="utf-8"))
+    d1.execute("INSERT INTO sources(type,name) VALUES('url',?)", ("https://en.wikivoyage.org/wiki/Japanese_phrasebook",))
+    d1.commit()
+    d1.close()
+
+    assert _d1_has_release(
+        d1_path,
+        "release-japanese",
+        source_type="url",
+        source_name="https://en.wikivoyage.org/wiki/Japanese_phrasebook",
+    )
+    assert not _d1_has_release(
+        d1_path,
+        "release-other",
+        source_type="url",
+        source_name="https://en.wikivoyage.org/wiki/French_phrasebook",
+    )
 
 
 def test_incremental_import_does_not_snapshot_before_quality_gate(tmp_path):

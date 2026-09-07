@@ -180,13 +180,24 @@ def _d1_catalog_snapshot(path: Path) -> dict[str, int]:
         connection.close()
 
 
-def _d1_has_release(path: Path, release_id: str) -> bool:
+def _d1_has_release(
+    path: Path,
+    release_id: str,
+    *,
+    source_type: str = "publication",
+    source_name: str | None = None,
+) -> bool:
     if not release_id or not path.is_file():
         return False
     connection = sqlite3.connect(path, timeout=60)
     try:
+        if source_name:
+            return connection.execute(
+                "SELECT 1 FROM sources WHERE type=? AND name=? LIMIT 1",
+                (source_type, source_name),
+            ).fetchone() is not None
         return connection.execute(
-            "SELECT 1 FROM sources WHERE type='publication' LIMIT 1"
+            "SELECT 1 FROM sources WHERE type=? LIMIT 1", (source_type,)
         ).fetchone() is not None
     finally:
         connection.close()
@@ -326,16 +337,25 @@ def run_incremental_import(
     ]
     run_key = _snapshot_run_key(file_details)
     state = _load_state(state_path)
+    source_catalog = _load_source_catalog(input_dir)
     results: list[dict[str, Any]] = []
 
     for ordinal, (source, source_size, digest) in enumerate(file_details, 1):
         previous = state["files"].get(source.name)
+        source_metadata = (source_catalog or {}).get(f"enwikivoyage:{source.stem}", {})
+        source_type = str(source_metadata.get("type") or "publication")
+        source_name = str(source_metadata.get("name") or "") or None
         if (
             resume
             and isinstance(previous, dict)
             and previous.get("status") == "success"
             and previous.get("sha256") == digest
-            and _d1_has_release(d1_database, str(previous.get("release_id") or ""))
+            and _d1_has_release(
+                d1_database,
+                str(previous.get("release_id") or ""),
+                source_type=source_type,
+                source_name=source_name,
+            )
         ):
             skipped = {
                 "file": source.name,
@@ -402,7 +422,7 @@ def run_incremental_import(
                 prepared.release_id,
                 packed=True,
                 append=append,
-                source_catalog=_load_source_catalog(input_dir),
+                source_catalog=source_catalog,
                 progress=progress,
             )
             after = _d1_catalog_snapshot(d1_database)
