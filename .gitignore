@@ -53,6 +53,7 @@ node_modules/
 .DS_Store
 
 /scripts/004_opus_data/opus_download/
+/scripts/wikivoyage/artifacts/
 
 # Git worktrees
 .worktrees/
