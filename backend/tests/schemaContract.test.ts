@@ -22,6 +22,8 @@ describe('canonical integer schema contract', () => {
 
   it('defines handbook, morphology, split and UI integer foreign keys', () => {
     expect(schema).toMatch(/CREATE TABLE handbooks[\s\S]*?language_locale_id INTEGER/s);
+    expect(schema).toMatch(/CREATE TABLE handbooks[\s\S]*?managed_key TEXT/s);
+    expect(schema).toMatch(/CREATE UNIQUE INDEX idx_handbooks_managed_key/);
     expect(schema).toMatch(/CREATE TABLE handbook_sections[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT/s);
     expect(schema).toMatch(/CREATE TABLE handbook_section_items[\s\S]*?PRIMARY KEY \(section_id, position\)[\s\S]*?WITHOUT ROWID/s);
     expect(schema).toMatch(/CREATE TABLE expression_form_edges[\s\S]*?id INTEGER PRIMARY KEY AUTOINCREMENT/s);

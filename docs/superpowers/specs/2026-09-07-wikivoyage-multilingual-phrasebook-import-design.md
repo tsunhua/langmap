@@ -2,7 +2,12 @@
 
 > 日期：2026-09-07
 >
-> 狀態：設計對話已確認，書面規格待覆核；尚未實作
+> 狀態：核心流程已實作並通過本地驗收；完整頁面 registry 審閱與 production release 待執行
+
+目前實作保留固定快照中的 317 個 namespace-0 頁面，並以 page catalog 明確列出狀態；其中
+11 頁已完成語言／locale／reading profile，306 頁維持 `blocked`，不猜測 ISO 或 locale。
+這是可重跑匯入流程的安全初始範圍，不代表 314 種語言已完成發布。解鎖其餘頁面需先補齊
+registry identity、逐頁抽查並依 release runbook 產生受管 delta。
 
 ## 1. 摘要
 

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { useHandbooks } from '@/composables/useHandbooks'
 import { useExpressions } from '@/composables/useExpressions'
+import HandbookTranslationPicker from '@/components/handbook/HandbookTranslationPicker.vue'
+import type { HandbookTranslation, HandbookTranslations } from '@/api/handbooks'
 import VotePill from '@/components/mapping/VotePill.vue'
 import { PanelRightOpen, Pencil } from 'lucide-vue-next'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
@@ -40,16 +42,135 @@ interface HandbookDetail {
   author_username?: string | null
   visibility?: string | null
   score: number
+  managed?: boolean
+  can_edit?: boolean
   sections: HandbookSection[]
 }
 
 const route = useRoute()
+const router = typeof useRouter === 'function' ? useRouter() : null
 const id = computed(() => route.params.id as string)
 
-const { detail } = useHandbooks()
+const { detail, translations: loadTranslations } = useHandbooks()
 const { detail: expressionDetail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
 const localization = useLocalizationStore()
+
+type RouteWithQuery = { query?: Record<string, unknown> }
+const routeQuery = computed(() => (route as unknown as RouteWithQuery).query ?? {})
+const routeTargetLocale = computed(() => {
+  const value = routeQuery.value.target_locale
+  return typeof value === 'string' ? value : ''
+})
+
+function storedTargetLocale(handbookId: string): string {
+  try {
+    return window.sessionStorage.getItem(`handbook:${handbookId}:target_locale`) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+const targetLocale = ref(routeTargetLocale.value || storedTargetLocale(id.value))
+const translationBySource = ref<Record<string, HandbookTranslation[]>>({})
+const translationLoading = ref(false)
+const translationError = ref('')
+let translationRequest = 0
+let translationController: AbortController | null = null
+
+const targetLanguageCode = computed(() => targetLocale.value.split('-', 1)[0] || undefined)
+
+function cacheKey(handbookId: string, locale: string): string {
+  return `handbook:${handbookId}:translations:${locale}`
+}
+
+function readTranslationCache(handbookId: string, locale: string): HandbookTranslations | null {
+  try {
+    const raw = window.sessionStorage.getItem(cacheKey(handbookId, locale))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as HandbookTranslations
+    return parsed && Array.isArray(parsed.items) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function writeTranslationCache(handbookId: string, locale: string, value: HandbookTranslations): void {
+  try {
+    window.sessionStorage.setItem(cacheKey(handbookId, locale), JSON.stringify(value))
+  } catch {
+    // Session storage is an optional performance cache; rendering must work without it.
+  }
+}
+
+function indexTranslations(value: HandbookTranslations): Record<string, HandbookTranslation[]> {
+  return Object.fromEntries(value.items.map(item => [item.source_expression_id, item.translations]))
+}
+
+function translationsFor(sourceExpressionId: string): HandbookTranslation[] {
+  return translationBySource.value[sourceExpressionId] ?? []
+}
+
+async function loadHandbookTranslations(): Promise<void> {
+  const locale = targetLocale.value
+  const request = ++translationRequest
+  translationController?.abort()
+  translationController = null
+  translationBySource.value = {}
+  translationError.value = ''
+  if (!locale || typeof loadTranslations !== 'function') {
+    translationLoading.value = false
+    return
+  }
+  const cached = readTranslationCache(id.value, locale)
+  if (cached) {
+    translationBySource.value = indexTranslations(cached)
+    translationLoading.value = false
+    return
+  }
+  const controller = new AbortController()
+  translationController = controller
+  translationLoading.value = true
+  try {
+    const value = await loadTranslations(id.value, locale, localeParams.value, controller.signal)
+    if (request !== translationRequest || controller.signal.aborted) return
+    writeTranslationCache(id.value, locale, value)
+    translationBySource.value = indexTranslations(value)
+  } catch (error: unknown) {
+    if (request !== translationRequest || controller.signal.aborted) return
+    const responseError = (error as { response?: { data?: { error?: string } } }).response?.data?.error
+    translationError.value = responseError || t('handbook.translationsFailed')
+  } finally {
+    if (request === translationRequest) translationLoading.value = false
+  }
+}
+
+function persistTargetLocale(value: string): void {
+  try {
+    if (value) window.sessionStorage.setItem(`handbook:${id.value}:target_locale`, value)
+    else window.sessionStorage.removeItem(`handbook:${id.value}:target_locale`)
+  } catch {
+    // Optional preference only.
+  }
+}
+
+function updateTargetLocale(value: string): void {
+  targetLocale.value = value
+  persistTargetLocale(value)
+  const query: LocationQueryRaw = Object.fromEntries(
+    Object.entries(routeQuery.value).filter(([, item]) => typeof item === 'string'),
+  ) as LocationQueryRaw
+  if (value) query.target_locale = value
+  else delete query.target_locale
+  if (router && typeof router.replace === 'function') {
+    void router.replace({ query })
+  } else if (typeof window !== 'undefined' && window.history?.replaceState) {
+    const url = new URL(window.location.href)
+    if (value) url.searchParams.set('target_locale', value)
+    else url.searchParams.delete('target_locale')
+    window.history.replaceState(window.history.state, '', url)
+  }
+}
 
 function sectionDepth(section: { parent_section_id?: string | null }, sections: Array<{ id: string; parent_section_id?: string | null }>): number {
   let depth = 0
@@ -94,12 +215,20 @@ async function load() {
   const request = ++loadRequest
   const requestedId = id.value
   hb.value = null
+  translationRequest++
+  translationController?.abort()
+  translationController = null
+  translationBySource.value = {}
+  translationLoading.value = false
+  translationError.value = ''
   loading.value = true
   loadError.value = ''
   try {
     const value = await detail(requestedId, localeParams.value)
     if (request !== loadRequest) return
     hb.value = value
+    if (value.managed) void loadHandbookTranslations()
+    else translationBySource.value = {}
   } catch (e: any) {
     if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('handbook.loadFailed')
@@ -132,7 +261,14 @@ async function selectExpressionById(
 
   const [detailResult, graphResult] = await Promise.allSettled([
     expressionDetail(expressionId, localeParams.value),
-    mappingGraph(expressionId, 1, localeParams.value),
+    mappingGraph(
+      expressionId,
+      1,
+      localeParams.value,
+      hb.value?.managed && (optimisticExpression?.lang_code ?? selectedExpression.value?.lang_code) === 'eng'
+        ? targetLanguageCode.value
+        : undefined,
+    ),
   ])
   if (request !== selectionRequest) return
 
@@ -199,11 +335,30 @@ onMounted(() => {
 onUnmounted(() => {
   loadRequest++
   selectionRequest++
+  translationRequest++
+  translationController?.abort()
   window.removeEventListener('keydown', onKeydown)
 })
 watch(id, () => {
+  targetLocale.value = routeTargetLocale.value || storedTargetLocale(id.value)
   closeInspector()
   load()
+})
+
+watch(routeTargetLocale, (value) => {
+  if (value && value !== targetLocale.value) {
+    targetLocale.value = value
+    persistTargetLocale(value)
+    if (hb.value?.managed) void loadHandbookTranslations()
+  }
+})
+
+watch(targetLocale, (value, previous) => {
+  if (value === previous) return
+  if (hb.value?.managed) void loadHandbookTranslations()
+  if (selectedExpression.value) {
+    void selectExpressionById(selectedExpression.value.id, selectedExpression.value)
+  }
 })
 
 watch([() => localization.locale, () => localization.secondary], () => {
@@ -233,11 +388,17 @@ watch([() => localization.locale, () => localization.secondary], () => {
       <router-link to="/handbooks" class="hv-back">← {{ t('handbook.back') }}</router-link>
       <div class="hv-title-row">
         <h1>{{ hb.title }}</h1>
-        <router-link :to="`/handbooks/${id}/edit`" class="btn btn-ghost hb-edit-btn">
+        <router-link v-if="hb.can_edit !== false" :to="`/handbooks/${id}/edit`" class="btn btn-ghost hb-edit-btn">
           <Pencil :size="15" aria-hidden="true" />
           <span>{{ t('handbook.edit') }}</span>
         </router-link>
       </div>
+      <HandbookTranslationPicker
+        v-if="hb.managed"
+        :model-value="targetLocale"
+        class="hv-translation-picker"
+        @update:model-value="updateTargetLocale"
+      />
       <div class="hv-meta">
         <span v-if="hb.author_username" class="hv-author">@{{ hb.author_username.toLowerCase() }}</span>
         <span v-if="hb.visibility" class="hv-visibility">{{ hb.visibility }}</span>
@@ -268,9 +429,31 @@ watch([() => localization.locale, () => localization.secondary], () => {
               <span class="lang-badge" :title="expr.language_profile_code || expr.lang_code">{{ expr.language_name || expr.language_profile_code || expr.lang_code }}</span>
               <span class="hb-go"><PanelRightOpen :size="15" aria-hidden="true" /></span>
             </button>
+            <div v-if="hb.managed && targetLocale && translationLoading" class="hb-translation-skeleton" role="status" :aria-label="t('handbook.translationsLoading')"></div>
+            <div v-else-if="hb.managed && targetLocale && translationError" class="hb-translation-error">{{ translationError }}</div>
+            <div v-else-if="hb.managed && targetLocale && translationsFor(expr.id).length" class="hb-translations" :aria-label="t('handbook.translationLanguage')">
+              <button
+                v-for="translation in translationsFor(expr.id)"
+                :key="translation.id"
+                type="button"
+                class="hb-translation"
+                @click="selectExpressionById(translation.id, { id: translation.id, text: translation.text, lang_code: translation.lang_code, language_name: translation.language_name, language_profile_code: translation.language_locale_code })"
+              >
+                <span class="hb-translation-text">{{ translation.text }}</span>
+                <span class="hb-translation-meta">{{ translation.language_name }} · {{ translation.language_locale_code }}</span>
+                <span v-for="reading in translation.readings" :key="`${translation.id}-${reading.scheme}-${reading.value}`" class="hb-reading">
+                  {{ reading.scheme }}: {{ reading.value }}
+                </span>
+              </button>
+            </div>
+            <div v-else-if="hb.managed && targetLocale" class="hb-no-translation">{{ t('handbook.noTranslation') }}</div>
           </li>
         </ol>
       </section>
+
+      <p v-if="hb.managed" class="hv-attribution">
+        <a href="https://en.wikivoyage.org/wiki/Category:Phrasebooks" target="_blank" rel="noreferrer">{{ t('handbook.adaptedFromWikivoyage') }}</a>
+      </p>
 
     </main>
 
@@ -309,6 +492,7 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hv-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .hv-title-row h1 { min-width: 0; }
 .hb-edit-btn { flex: 0 0 auto; min-height: 38px; margin-top: 1px; gap: 7px; white-space: nowrap; }
+.hv-translation-picker { max-width: 320px; margin: 12px 0 4px auto; }
 .hv-content h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
 .hv-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .hv-author { color: var(--fg); font-family: var(--mono); }
@@ -348,6 +532,33 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hb-tx { min-width: 0; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hb-go { display: grid; place-items: center; color: var(--faint); }
 .hb-expr:hover .hb-go, .hb-expr.selected .hb-go { color: var(--accent); }
+.hb-translations { display: grid; gap: 4px; margin: 0 8px 7px 40px; min-width: 0; }
+.hb-translation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hb-translation:hover { border-color: var(--edge); background: var(--surface-2); }
+.hb-translation:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hb-translation-text { min-width: 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 500; }
+.hb-translation-meta { min-width: 0; color: var(--muted); font-family: var(--mono); font-size: 9px; text-align: right; overflow-wrap: anywhere; }
+.hb-reading { grid-column: 1 / -1; color: var(--muted); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
+.hb-translation-skeleton { height: 32px; margin: 0 8px 7px 40px; border-radius: var(--r); background: var(--surface-2); }
+.hb-translation-error { margin: 0 8px 7px 40px; color: var(--down); font-size: 11px; }
+.hb-no-translation { margin: 0 8px 7px 40px; color: var(--muted); font-size: 11px; }
+.hv-attribution { margin-top: 28px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.hv-attribution a { color: inherit; }
 
 @media (max-width: 1200px) {
   .hv-layout {
@@ -381,6 +592,7 @@ watch([() => localization.locale, () => localization.secondary], () => {
 @media (max-width: 480px) {
   .hv-layout { padding-inline: 16px; }
   .hv-title-row { flex-direction: column; gap: 12px; }
+  .hv-translation-picker { max-width: none; margin-left: 0; }
   .hb-edit-btn { min-height: 44px; align-self: flex-start; }
   .hb-expr { gap: 8px; }
   .hv-vote-row { align-items: flex-start; flex-direction: column; }

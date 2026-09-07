@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import api from '@/api/client'
 import type { LocaleHints } from '@/api/languageIdentity'
+import { getHandbookTranslations, type HandbookTranslations } from '@/api/handbooks'
 
 export interface HandbookSummary { id: string; title: string; author_username?: string; section_count: number; expression_count: number; score: number; created_at?: string }
 export interface HandbookPage<T = HandbookSummary> { items: T[]; next_cursor: string | null; has_more: boolean }
@@ -34,6 +35,15 @@ export function useHandbooks() {
       throw e
     } finally {
       loading.value = false
+    }
+  }
+
+  async function translations(id: string, targetLocale: string, hints: LocaleHints = {}, signal?: AbortSignal): Promise<HandbookTranslations> {
+    try {
+      return await getHandbookTranslations(id, targetLocale, hints, signal)
+    } catch (e: any) {
+      error.value = e.response?.data?.error || 'Request failed'
+      throw e
     }
   }
 
@@ -83,5 +93,5 @@ export function useHandbooks() {
     return data.data
   }
 
-  return { loading, error, list, detail, create, update, remove, vote }
+  return { loading, error, list, detail, translations, create, update, remove, vote }
 }

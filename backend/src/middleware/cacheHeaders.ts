@@ -85,7 +85,7 @@ export function getCachePolicy(url: string): CachePolicy | null {
   if (pathname.endsWith('/messages') && pathname.startsWith('/api/v2/localization/projects/')) {
     return searchParams.has('primary') || searchParams.has('secondary') ? CONTENT_CACHE : null;
   }
-  if (pathname === '/api/v2/handbooks' || /^\/api\/v2\/handbooks\/[^/]+$/.test(pathname)) {
+  if (pathname === '/api/v2/handbooks' || /^\/api\/v2\/handbooks\/[^/]+(?:\/translations)?$/.test(pathname)) {
     return HANDBOOK_CACHE;
   }
   return null;

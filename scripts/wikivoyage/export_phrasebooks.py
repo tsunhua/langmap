@@ -59,6 +59,14 @@ def write_jsonl_v2(result, destination: Path, snapshot: PageSnapshot) -> Path:
     return destination
 
 
+def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(encoded, encoding="utf-8")
+    temporary.replace(path)
+
+
 def export_snapshot_directory(
     snapshot_dir: Path,
     output_dir: Path,
@@ -74,6 +82,8 @@ def export_snapshot_directory(
     section_catalog = load_section_catalog(section_catalog_path)
     report_pages: list[dict[str, Any]] = []
     source_catalog: dict[str, dict[str, Any]] = {}
+    quarantine_rows: list[dict[str, Any]] = []
+    removal_rows: list[dict[str, Any]] = []
     for raw in sorted(manifest["pages"], key=lambda item: int(item["pageid"])):
         descriptor = _descriptor(raw)
         content_path = snapshot_dir / descriptor.snapshot_file
@@ -98,6 +108,17 @@ def export_snapshot_directory(
         output_path = output_dir / f"{descriptor.pageid}.jsonl"
         if result.entries:
             write_jsonl_v2(result, output_path, snapshot)
+        for diagnostic in result.diagnostics:
+            # Page-level blocked reasons are registry accounting, not parser
+            # quarantine. Row-level diagnostics carry an error_code and are
+            # retained for review without entering the staging input.
+            if diagnostic.get("error_code"):
+                quarantine_rows.append({
+                    "pageid": descriptor.pageid,
+                    "title": descriptor.title,
+                    "revision": descriptor.revision,
+                    **diagnostic,
+                })
         report_pages.append({
             "pageid": descriptor.pageid,
             "title": descriptor.title,
@@ -118,10 +139,15 @@ def export_snapshot_directory(
         json.dumps({"schema_version": 1, "sources": source_catalog}, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    if report_path is not None:
-        report_path = Path(report_path)
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    review_dir = output_dir / "review"
+    _write_jsonl(review_dir / "quarantine.jsonl", sorted(quarantine_rows, key=lambda row: (int(row["pageid"]), int(row.get("line", 0)), str(row.get("error_code", "")))))
+    # Removals are intentionally an explicit, operator-reviewed input. The
+    # first export has no prior identity set; keeping an empty deterministic
+    # artifact makes the quality report and release package shape stable.
+    _write_jsonl(review_dir / "removals.jsonl", removal_rows)
+    report_path = Path(report_path or output_dir / "export-report.json")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report
 
 

@@ -217,6 +217,52 @@ class MediaWikiClient:
     def category_pages(self, category: str) -> tuple[tuple[int, str], ...]:
         return discover_pages(self.request, category)
 
+    def category_revisions(self, category: str) -> dict[int, tuple[int, str, bytes]]:
+        """Fetch one latest revision per category page using a generator.
+
+        MediaWiki rejects ``rvlimit`` when a generator yields multiple pages;
+        omitting it requests the default latest revision and keeps the number
+        of HTTPS round trips bounded by continuation pages.
+        """
+
+        continuation: dict[str, str] = {}
+        result: dict[int, tuple[int, str, bytes]] = {}
+        while True:
+            payload = self.request({
+                "action": "query",
+                "generator": "categorymembers",
+                "gcmtitle": category,
+                "gcmnamespace": "0",
+                "gcmlimit": "max",
+                "prop": "revisions",
+                "rvprop": "ids|timestamp|content",
+                "rvslots": "main",
+                "format": "json",
+                "formatversion": "2",
+                **continuation,
+            })
+            query = payload.get("query")
+            pages = query.get("pages") if isinstance(query, Mapping) else None
+            if not isinstance(pages, list):
+                raise DownloadError("revision generator response has no pages")
+            for page in pages:
+                if not isinstance(page, Mapping):
+                    continue
+                try:
+                    pageid = int(page["pageid"])
+                    title = str(page["title"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if page.get("revisions"):
+                    result[pageid] = _revision_from_payload({"query": {"pages": [page]}}, pageid, title)
+            raw_continue = payload.get("continue")
+            if not isinstance(raw_continue, Mapping):
+                break
+            continuation = {str(key): str(value) for key, value in raw_continue.items() if value is not None}
+            if not continuation:
+                break
+        return result
+
     def latest_revision(self, pageid: int, title: str) -> tuple[int, str, bytes]:
         payload = self.request({
             "action": "query",
@@ -287,9 +333,12 @@ def download_snapshot(
     output_dir = Path(output_dir)
     manifest_path = output_dir / "manifest.json"
     previous = _read_previous_manifest(manifest_path)
+    pages = client.category_pages(category)
+    batch_revisions = client.category_revisions(category) if hasattr(client, "category_revisions") else {}
     descriptors: list[PageDescriptor] = []
-    for pageid, title in client.category_pages(category):
-        revision, timestamp, content = client.latest_revision(pageid, title)
+    for pageid, title in pages:
+        revision_value = batch_revisions.get(pageid)
+        revision, timestamp, content = revision_value if revision_value is not None else client.latest_revision(pageid, title)
         digest = _sha256_bytes(content)
         snapshot_file = f"pages/{pageid}-{revision}.wikitext"
         snapshot_path = output_dir / snapshot_file
@@ -355,4 +404,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-

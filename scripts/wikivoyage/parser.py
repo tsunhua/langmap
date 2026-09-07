@@ -16,8 +16,24 @@ _ITALIC = re.compile(r"(?<!')''(?!')(.+?)(?<!')''")
 _TEMPLATE = re.compile(r"\{\{([^{}]*)\}\}")
 _LINK = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 _COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+_BRACKET_READING = re.compile(r"\[\s*['’]([^'’]+)['’]\s*\]")
+_TARGET_CORE_RANGES = r"\u2e80-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef"
+_TARGET_SCRIPT_RANGES = _TARGET_CORE_RANGES + r".,!?;:"
+_READING_CHARS = r"A-Za-z\u00c0-\u00ff\u0100-\u024f\u0300-\u036f"
+_INLINE_READING = re.compile(
+    rf"^(?P<target>.*?[{_TARGET_SCRIPT_RANGES}])\s+"
+    rf"(?P<reading>[{_READING_CHARS}][{_READING_CHARS}0-9'’ .,/!?-]*)\s*$"
+)
+_INLINE_TOKEN = re.compile(
+    rf"(?<=[{_TARGET_SCRIPT_RANGES}])\s+(?P<reading>[{_READING_CHARS}][{_READING_CHARS}0-9'’ .!?-]*?)"
+    rf"(?=\s*(?:[,;/]|\(|$|[{_TARGET_CORE_RANGES}]))"
+)
 _CJK = re.compile(r"[\u2e80-\u9fff\uf900-\ufaff]")
 _PLACEHOLDERS = frozenset({"", "-", "—", "…", "...", "n/a", "none", "tbd"})
+_READING_NOTE_WORDS = frozenset({
+    "formal", "informal", "polite", "colloquial", "literally", "lit", "example",
+    "examples", "optional", "preferred", "common", "more", "often", "usually", "or",
+})
 
 
 @dataclass(frozen=True)
@@ -91,6 +107,17 @@ def clean_markup(value: str) -> str:
     return canonicalize_text(text)
 
 
+def _looks_like_reading(value: str, *, allow_long: bool = False) -> bool:
+    """Reject prose annotations that happen to use italic markup."""
+
+    text = canonicalize_text(value).strip(" .。;；/,")
+    if not text or text.casefold() in _READING_NOTE_WORDS:
+        return False
+    if (not allow_long and len(text.split()) > 5) or any(char in text for char in '"“”():'):
+        return False
+    return True
+
+
 def _strip_outer_note(value: str) -> str:
     value = value.strip()
     while value.startswith("(") and value.endswith(")"):
@@ -124,27 +151,65 @@ def _split_definition(line: str) -> tuple[str, str] | None:
 
 
 def _reading_candidates(value: str) -> tuple[tuple[str, str], ...]:
-    candidates: list[tuple[str, str]] = []
+    candidates: list[tuple[int, str, str]] = []
     for match in _ITALIC.finditer(value):
         text = clean_markup(match.group(1)).strip(" .。;；")
-        if text and text.casefold() not in _PLACEHOLDERS:
-            candidates.append((text, "italic"))
+        if text and text.casefold() not in _PLACEHOLDERS and _looks_like_reading(text):
+            candidates.append((match.start(1), text, "italic"))
     for match in _TEMPLATE.finditer(value):
         body = match.group(1)
         if body.split("|", 1)[0].strip().casefold() in {"ipa", "ipa-all"}:
             text = clean_markup(body.split("|", 1)[-1]).strip(" .。;；/")
             if text:
-                candidates.append((text, "ipa"))
+                candidates.append((match.start(1), text, "ipa"))
+    for match in _BRACKET_READING.finditer(value):
+        text = clean_markup(match.group(1)).strip(" .。;；/")
+        if text and text.casefold() not in _PLACEHOLDERS and _looks_like_reading(text):
+            candidates.append((match.start(1), text, "bracket"))
+    inline = _INLINE_READING.match(canonicalize_text(value))
+    if inline:
+        text = clean_markup(inline.group("reading")).strip(" .。;；/")
+        if text and text.casefold() not in _PLACEHOLDERS and _looks_like_reading(text, allow_long=True):
+            candidates.append((inline.start("reading"), text, "inline"))
+    for match in _INLINE_TOKEN.finditer(value):
+        text = clean_markup(match.group("reading")).strip(" .。;；/,")
+        if text and text.casefold() not in _PLACEHOLDERS and _looks_like_reading(text, allow_long=True):
+            candidates.append((match.start("reading"), text, "inline"))
+    candidates.sort(key=lambda item: (item[0], item[2], item[1]))
     seen: set[tuple[str, str]] = set()
-    return tuple(item for item in candidates if not (item in seen or seen.add(item)))
+    result: list[tuple[str, str]] = []
+    for _position, text, scheme in candidates:
+        item = (text, scheme)
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return tuple(result)
 
 
 def _target_text(value: str) -> str:
     without_italics = _ITALIC.sub("", value)
+    without_italics = _BRACKET_READING.sub("", without_italics)
+    without_italics = _INLINE_TOKEN.sub(" ", without_italics)
+    inline = _INLINE_READING.match(canonicalize_text(without_italics))
+    if inline:
+        without_italics = inline.group("target")
     # Parenthesized pronunciation notes can be left behind after removing
     # italics. Remove only empty shells and preserve real lexical parentheses.
     without_italics = re.sub(r"\(\s*\)", "", without_italics)
-    return clean_markup(without_italics).strip(" /,;；")
+    cleaned = clean_markup(without_italics).strip(" /,;；")
+    # Parenthesized Latin notes describe usage rather than the target phrase.
+    # Keep parentheticals that contain target-script characters (for example a
+    # simplified/traditional pair), and remove only Latin-only notes.
+    if _CJK.search(cleaned):
+        cleaned = re.sub(
+            r"\((?P<note>[^()]*?)\)",
+            lambda match: "" if not _CJK.search(match.group("note")) else match.group(0),
+            cleaned,
+        )
+    cleaned = re.sub(r"\s+([,;/!?])", r"\1", cleaned)
+    cleaned = re.sub(r"\s*/\s*", "/", cleaned)
+    return canonicalize_text(cleaned).strip(" /,;；")
 
 
 def _valid_phrase(value: str) -> bool:
@@ -178,6 +243,7 @@ def _record(
     english: str,
     target: str,
     occurrence: int,
+    target_locale: str | None,
     readings: Iterable[tuple[str, str]],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     english = canonicalize_text(english)
@@ -185,7 +251,7 @@ def _record(
     entry_key = f"{snapshot.pageid}:{section_key}:{hashlib.sha256(english.encode('utf-8')).hexdigest()}:{occurrence}"
     pronunciation_rows: list[dict[str, Any]] = []
     diagnostics: list[dict[str, Any]] = []
-    locale = profile.locale_codes[0] if len(profile.locale_codes) == 1 else None
+    locale = target_locale if target_locale else (profile.locale_codes[0] if len(profile.locale_codes) == 1 else None)
     for ordinal, (reading, source_kind) in enumerate(readings, 1):
         scheme = _scheme_for(profile, ordinal - 1, source_kind)
         reading_locale = locale
@@ -278,46 +344,91 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
         if in_infobox:
             if "}}" in line:
                 in_infobox = False
-            continue
+            # Infobox prose is not a phrase row, but a few reviewed pages put
+            # compact definition-list vocabulary inside the box. Let those
+            # rows through while still ignoring all other explanatory text.
+            if not line.lstrip().startswith(";"):
+                continue
         if current_key is None:
             continue
         split = _split_definition(line)
         if split is None:
             continue
-        raw_english, raw_target = split
-        english = clean_markup(raw_english)
+        raw_left, raw_right = split
+        # A small number of Wikivoyage sections use the target language as the
+        # definition-list term and English as the definition. Detect this only
+        # when the scripts make the direction unambiguous; do not infer from
+        # title text or fuzzy language heuristics.
+        left_markup = clean_markup(raw_left)
+        right_markup = clean_markup(raw_right)
+        reversed_row = bool(_CJK.search(left_markup) and not _CJK.search(right_markup))
+        if reversed_row:
+            raw_english, raw_target = raw_right, raw_left
+        else:
+            raw_english, raw_target = raw_left, raw_right
+        english = _target_text(raw_english) if reversed_row else clean_markup(raw_english)
         target = _target_text(raw_target)
         if not _valid_phrase(english) or not _valid_phrase(target):
             diagnostics.append({"error_code": "empty_phrase_side", "line": line_number, "source_wikitext": raw_line})
             continue
-        row_number += 1
-        key = (current_key, english.casefold())
-        occurrence_by_english[key] = occurrence_by_english.get(key, 0) + 1
         readings = _reading_candidates(raw_target)
-        # The parser emits a provisional record; export_page supplies the
-        # immutable page metadata and recalculates the fingerprint.
-        provisional_snapshot = PageSnapshot.from_content(
-            pageid=page.pageid,
-            title=page.title,
-            canonical_url="",
-            revision=0,
-            revision_timestamp="",
-            content="",
-        )
-        record, row_diagnostics = _record(
-            snapshot=provisional_snapshot,
-            profile=page,
-            section_key=current_key,
-            section_title=current_title,
-            row_number=row_number,
-            english=english,
-            target=target,
-            occurrence=occurrence_by_english[key],
-            readings=readings,
-        )
-        record["raw"]["wikitext_line"] = line_number
-        diagnostics.extend({**item, "line": line_number} for item in row_diagnostics)
-        entries.append(record)
+        if reversed_row:
+            readings = _reading_candidates(raw_left) or _reading_candidates(raw_right)
+
+        # A reviewed split-by-locale profile (currently the Mandarin page)
+        # may carry a simplified form followed by its traditional form. If a
+        # row has no explicit pair, the same lexical form is linked to both
+        # reviewed locales; this is safer than silently choosing one region.
+        locale_targets: list[tuple[str, str | None]] = []
+        if page.split_by_locale and len(page.locale_codes) >= 2:
+            lexical = _ITALIC.sub("", raw_target)
+            lexical = _BRACKET_READING.sub("", lexical)
+            pair = re.match(r"^\s*(?P<first>[^()]+?)\s*\(\s*(?P<second>[^()]+?)\s*\)", lexical)
+            if pair and _CJK.search(pair.group("first")) and _CJK.search(pair.group("second")):
+                locale_targets = [
+                    (_target_text(pair.group("first")), page.locale_codes[0]),
+                    (_target_text(pair.group("second")), page.locale_codes[1]),
+                ]
+            else:
+                locale_targets = [(target, page.locale_codes[0]), (target, page.locale_codes[1])]
+        else:
+            locale_targets = [(target, page.locale_codes[0] if len(page.locale_codes) == 1 else None)]
+
+        for target_variant, target_locale in locale_targets:
+            if not _valid_phrase(target_variant):
+                diagnostics.append({"error_code": "empty_phrase_side", "line": line_number, "source_wikitext": raw_line})
+                continue
+            row_number += 1
+            key = (current_key, english.casefold())
+            occurrence_by_english[key] = occurrence_by_english.get(key, 0) + 1
+            # The parser emits a provisional record; export_page supplies the
+            # immutable page metadata and recalculates the fingerprint.
+            provisional_snapshot = PageSnapshot.from_content(
+                pageid=page.pageid,
+                title=page.title,
+                canonical_url="",
+                revision=0,
+                revision_timestamp="",
+                content="",
+            )
+            record, row_diagnostics = _record(
+                snapshot=provisional_snapshot,
+                profile=page,
+                section_key=current_key,
+                section_title=current_title,
+                row_number=row_number,
+                english=english,
+                target=target_variant,
+                occurrence=occurrence_by_english[key],
+                target_locale=target_locale,
+                readings=readings,
+            )
+            record["raw"]["wikitext_line"] = line_number
+            record["raw"]["source_wikitext"] = raw_line
+            record["raw"]["row_orientation"] = "target-to-english" if reversed_row else "english-to-target"
+            record["raw"]["source_marker"] = f"oldid:0#{current_key}/{row_number}"
+            diagnostics.extend({**item, "line": line_number} for item in row_diagnostics)
+            entries.append(record)
     state = "included" if entries else "empty"
     return PageParseResult(page.pageid, page.title, tuple(entries), state, tuple(diagnostics))
 

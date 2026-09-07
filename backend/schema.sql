@@ -197,6 +197,7 @@ CREATE TABLE handbooks (
   title TEXT NOT NULL,
   visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private')),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  managed_key TEXT,
   language_locale_id INTEGER,
   score INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -206,6 +207,7 @@ CREATE TABLE handbooks (
 );
 CREATE INDEX idx_handbooks_visibility_created ON handbooks(visibility, created_at DESC, id ASC);
 CREATE INDEX idx_handbooks_visibility_score ON handbooks(visibility, score DESC, created_at DESC, id ASC);
+CREATE UNIQUE INDEX idx_handbooks_managed_key ON handbooks(managed_key) WHERE managed_key IS NOT NULL;
 
 CREATE TABLE handbook_votes (
   user_id INTEGER NOT NULL,

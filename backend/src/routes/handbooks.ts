@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { optionalAuth, requireAuth } from '../middleware/auth';
 import { badRequest, created, forbidden, internalError, notFound, paginated, success } from '../utils/response';
 import { parseIntegerId, serializeIntegerId } from '../utils/ids';
+import { getHandbookTranslations, HandbookTranslationError } from '../services/handbookTranslations';
 import type { Bindings, Variables } from '../types';
 
 const handbooks = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -17,7 +18,37 @@ handbooks.get('/', optionalAuth, async (c) => {
 handbooks.get('/:id', optionalAuth, async (c) => {
   const id=numberId(c.req.param('id')); if(!id)return badRequest(c,'INVALID_HANDBOOK_ID'); const handbook=await c.env.DB.prepare('SELECT h.*,u.username AS author_username FROM handbooks h JOIN users u ON u.id=h.user_id WHERE h.id=?').bind(id).first<any>(); if(!handbook)return notFound(c,'Handbook'); const user=c.get('user'); if(handbook.visibility==='private'&&user?.id!==handbook.user_id&&user?.role!=='admin')return notFound(c,'Handbook');
   const sections=await c.env.DB.prepare('SELECT id,title,position,parent_section_id FROM handbook_sections WHERE handbook_id=? ORDER BY position,id').bind(id).all<any>(); const items=await c.env.DB.prepare('SELECT i.section_id,i.position,e.id,e.text,l.code AS lang_code FROM handbook_section_items i JOIN handbook_sections s ON s.id=i.section_id JOIN expressions e ON e.id=i.expression_id JOIN languages l ON l.id=e.language_id WHERE s.handbook_id=? ORDER BY i.section_id,i.position').bind(id).all<any>();
-  return success(c,{...handbook,id:serializeIntegerId(handbook.id),sections:sections.results.map((section)=>({...section,id:serializeIntegerId(section.id),parent_section_id:section.parent_section_id===null?null:serializeIntegerId(section.parent_section_id),items:items.results.filter((item)=>item.section_id===section.id).map((item)=>({...item,id:serializeIntegerId(item.id),section_id:serializeIntegerId(item.section_id),language_name:item.lang_code}))}))});
+  const canEdit = !handbook.managed_key && Boolean(user && (user.id===handbook.user_id || user.role==='admin'));
+  return success(c,{...handbook,id:serializeIntegerId(handbook.id),managed:Boolean(handbook.managed_key),can_edit:canEdit,sections:sections.results.map((section)=>({...section,id:serializeIntegerId(section.id),parent_section_id:section.parent_section_id===null?null:serializeIntegerId(section.parent_section_id),items:items.results.filter((item)=>item.section_id===section.id).map((item)=>({...item,id:serializeIntegerId(item.id),section_id:serializeIntegerId(item.section_id),language_name:item.lang_code}))}))});
+});
+
+handbooks.get('/:id/translations', optionalAuth, async (c) => {
+  const id = numberId(c.req.param('id')); if (!id) return badRequest(c, 'INVALID_HANDBOOK_ID');
+  const targetLocale = c.req.query('target_locale') ?? '';
+  try {
+    const user = c.get('user');
+    const result = await getHandbookTranslations(c.env.DB, id, targetLocale, {
+      allowPrivate: user?.role === 'admin',
+      viewerId: user?.id,
+    });
+    return success(c, {
+      target_locale: result.target_locale,
+      items: result.items.map((item) => ({
+        source_expression_id: serializeIntegerId(item.source_expression_id),
+        translations: item.translations.map((translation) => ({
+          ...translation,
+          id: serializeIntegerId(translation.id),
+        })),
+      })),
+    });
+  } catch (error) {
+    if (error instanceof HandbookTranslationError) {
+      if (error.code === 'HANDBOOK_NOT_FOUND' || error.code === 'HANDBOOK_PRIVATE') return notFound(c, 'Handbook');
+      return badRequest(c, error.code);
+    }
+    console.error('Handbook translations error:', error);
+    return internalError(c);
+  }
 });
 
 handbooks.post('/', requireAuth, async (c) => {
@@ -25,12 +56,12 @@ handbooks.post('/', requireAuth, async (c) => {
 });
 
 handbooks.put('/:id', requireAuth, async (c) => {
-  const id=numberId(c.req.param('id'));if(!id)return badRequest(c,'INVALID_HANDBOOK_ID');const current=await c.env.DB.prepare('SELECT user_id FROM handbooks WHERE id=?').bind(id).first<{user_id:number}>();if(!current)return notFound(c,'Handbook');if(current.user_id!==c.get('user')!.id&&c.get('user')!.role!=='admin')return forbidden(c);const body=await c.req.json<Record<string,unknown>>().catch(()=>({}));const title=typeof body.title==='string'?body.title.trim():null;if(title==='')return badRequest(c,'VALIDATION_FAILED');await c.env.DB.prepare('UPDATE handbooks SET title=COALESCE(?,title),visibility=COALESCE(?,visibility),status=COALESCE(?,status),updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(title,body.visibility===undefined?null:body.visibility==='private'?'private':'public',body.status===undefined?null:body.status==='draft'?'draft':'published',id).run();return success(c,{id:serializeIntegerId(id)});
+  const id=numberId(c.req.param('id'));if(!id)return badRequest(c,'INVALID_HANDBOOK_ID');const current=await c.env.DB.prepare('SELECT user_id,managed_key FROM handbooks WHERE id=?').bind(id).first<{user_id:number;managed_key?:string|null}>();if(!current)return notFound(c,'Handbook');if(current.managed_key)return forbidden(c,'MANAGED_HANDBOOK_READ_ONLY');if(current.user_id!==c.get('user')!.id&&c.get('user')!.role!=='admin')return forbidden(c);const body=await c.req.json<Record<string,unknown>>().catch(()=>({}));const title=typeof body.title==='string'?body.title.trim():null;if(title==='')return badRequest(c,'VALIDATION_FAILED');await c.env.DB.prepare('UPDATE handbooks SET title=COALESCE(?,title),visibility=COALESCE(?,visibility),status=COALESCE(?,status),updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(title,body.visibility===undefined?null:body.visibility==='private'?'private':'public',body.status===undefined?null:body.status==='draft'?'draft':'published',id).run();return success(c,{id:serializeIntegerId(id)});
 });
 
 handbooks.post('/:id/vote', requireAuth, async (c) => {
   const id=numberId(c.req.param('id'));if(!id)return badRequest(c,'INVALID_HANDBOOK_ID'); const body=await c.req.json<Record<string,unknown>>().catch(()=>({})); const vote=body.vote;if(vote!==1&&vote!==-1)return badRequest(c,'VOTE_INVALID_VALUE'); const exists=await c.env.DB.prepare('SELECT 1 FROM handbooks WHERE id=?').bind(id).first();if(!exists)return notFound(c,'Handbook'); await c.env.DB.batch([c.env.DB.prepare('INSERT INTO handbook_votes(user_id,handbook_id,vote) VALUES(?,?,?) ON CONFLICT(user_id,handbook_id) DO UPDATE SET vote=excluded.vote').bind(c.get('user')!.id,id,vote),c.env.DB.prepare('UPDATE handbooks SET score=(SELECT COALESCE(SUM(vote),0) FROM handbook_votes WHERE handbook_id=?) WHERE id=?').bind(id,id)]); const score=await c.env.DB.prepare('SELECT score FROM handbooks WHERE id=?').bind(id).first<{score:number}>();return success(c,{score:score?.score ?? 0,user_vote:vote});
 });
 
-handbooks.delete('/:id', requireAuth, async (c) => { const id=numberId(c.req.param('id'));if(!id)return badRequest(c,'INVALID_HANDBOOK_ID');const current=await c.env.DB.prepare('SELECT user_id FROM handbooks WHERE id=?').bind(id).first<{user_id:number}>();if(!current)return notFound(c,'Handbook');if(current.user_id!==c.get('user')!.id&&c.get('user')!.role!=='admin')return forbidden(c);await c.env.DB.prepare('DELETE FROM handbooks WHERE id=?').bind(id).run();return success(c,{deleted:true}); });
+handbooks.delete('/:id', requireAuth, async (c) => { const id=numberId(c.req.param('id'));if(!id)return badRequest(c,'INVALID_HANDBOOK_ID');const current=await c.env.DB.prepare('SELECT user_id,managed_key FROM handbooks WHERE id=?').bind(id).first<{user_id:number;managed_key?:string|null}>();if(!current)return notFound(c,'Handbook');if(current.managed_key)return forbidden(c,'MANAGED_HANDBOOK_READ_ONLY');if(current.user_id!==c.get('user')!.id&&c.get('user')!.role!=='admin')return forbidden(c);await c.env.DB.prepare('DELETE FROM handbooks WHERE id=?').bind(id).run();return success(c,{deleted:true}); });
 export default handbooks;

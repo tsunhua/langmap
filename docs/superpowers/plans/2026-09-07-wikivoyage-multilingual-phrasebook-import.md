@@ -31,7 +31,7 @@
 - `web/src/api/handbooks.ts`、`web/src/composables/useHandbooks.ts`、`web/src/pages/HandbookView.vue`、`web/src/components/handbook/HandbookTranslationPicker.vue`：locale 開關、URL state、翻譯 cache/abort、顯示 reading。
 - `scripts/wikivoyage/tests/`、`scripts/dictionary/tests/`、`web/src/pages/HandbookView.test.ts`：fixture、parser、匯入、API、UI 回歸測試。
 
-## Task 1: 建立可重跑的 Wikivoyage 快照下載器
+## Task 1: 建立可重跑的 Wikivoyage 快照下載器（已完成）
 
 **Files:**
 - Create: `scripts/wikivoyage/__init__.py`, `scripts/wikivoyage/download.py`
@@ -42,13 +42,9 @@
 - `discover_pages(fetch_json, category: str) -> tuple[PageDescriptor, ...]` 只回傳 namespace 0，處理 `continue`。
 - `download_snapshot(client, output_dir: Path, category: str, user_agent: str) -> SnapshotManifest`；manifest 固定保存 pageid、title、revid、timestamp、sha256、raw path、license、retrieved_at。
 
-- [ ] Step 1: 先寫 mock continuation、namespace filter、429/5xx retry、atomic file test。
-- [ ] Step 2: 執行 `python3 -m pytest scripts/wikivoyage/tests/test_download.py -q`，確認新測試先失敗。
-- [ ] Step 3: 用 `urllib.request` 實作 API client；每次 request 帶明確 User-Agent，指數 backoff 上限 30 秒，`.tmp` 寫完後 rename；輸出 `manifest.json` 與 `pages/<pageid>-<revid>.wikitext`。
-- [ ] Step 4: 重跑測試，並用 fixture 驗證只下載 namespace-0、同 pageid/revid 不重寫。
-- [ ] Step 5: `git diff --check`，提交 `feat: add Wikivoyage revision snapshot downloader`。
+- [x] Step 1–5：已完成 continuation、namespace filter、retry、atomic snapshot、manifest 與回歸測試。
 
-## Task 2: 固定 page/section catalog 並輸出 registry 阻擋報告
+## Task 2: 固定 page/section catalog 並輸出 registry 阻擋報告（已完成首批）
 
 **Files:**
 - Create: `scripts/wikivoyage/page-catalog.json`, `scripts/wikivoyage/section-catalog.json`, `scripts/wikivoyage/catalog.py`
@@ -59,12 +55,10 @@
 - `resolve_section(title, catalog) -> str | None`：先 canonical title，再 alias；未列入的章節不解析。
 - `validate_registry(connection, page_catalog) -> RegistryReport`：缺語言或 locale 時標為 blocked，不猜測 title。
 
-- [ ] Step 1: 寫 Japanese、Mandarin、無 registry、alias、非會話章節 fixture 測試。
-- [ ] Step 2: 執行 catalog tests，確認缺少 profile 與未知 alias 都被明確報告。
-- [ ] Step 3: 填入目前英文 Category snapshot 的 catalog 初版；建立 `registry-report.json`，每頁必為 `included|empty|excluded|blocked` 之一。
-- [ ] Step 4: 加入 canonical section order 與 deterministic extra-section sort 測試，提交 `feat: pin phrasebook page and section catalogs`。
+- [x] Step 1–4：已完成 11 個 reviewed profiles、section aliases、registry report 與 deterministic ordering。
+- [ ] 後續：為 snapshot 中其餘 306 個 `blocked` 頁面補 registry identity，逐頁審閱後再解鎖。
 
-## Task 3: 解析 wikitext 並產生 Structured JSONL v2
+## Task 3: 解析 wikitext 並產生 Structured JSONL v2（已完成首批）
 
 **Files:**
 - Create: `scripts/wikivoyage/parser.py`, `scripts/wikivoyage/export_phrasebooks.py`
@@ -76,13 +70,9 @@
 - `export_page(snapshot: PageSnapshot, profile: PageProfile, sections: SectionCatalog) -> list[dict[str, object]]`。
 - `write_jsonl_v2(results, destination, snapshot_manifest) -> ExportReport`，entry key 使用 `pageid:section_key:sha256(english_text):occurrence`。
 
-- [ ] Step 1: 以 fixture 覆蓋 heading/alias、definition list、允許 table、link/template/italic 清理、空列、重複列、target reading、未知 scheme、CJK 混入 romanization/IPA quarantine。
-- [ ] Step 2: 執行 parser/export tests，確認 JSONL header `schema_version=2`、`dictionary_key=enwikivoyage:<pageid>`、`entry_count` 與 fingerprint 穩定。
-- [ ] Step 3: 實作受限 AST tokenizer（巢狀 template/link 不用全文 regex），只讀 catalog 允許的 row；輸出每筆英文 headword、target equivalent、reading、source marker 與 raw wikitext。
-- [ ] Step 4: 產生 `review/removals.jsonl` 與 `review/quarantine.jsonl`；只在同一 page/entry identity 變更時標記 review，不刪既有資料。
-- [ ] Step 5: 執行 `git diff --check`，提交 `feat: export Wikivoyage phrasebook JSONL`。
+- [x] Step 1–5：已完成受限 parser、JSONL v2、provenance、quarantine/removal artifacts 與 deterministic export。
 
-## Task 4: 接入既有 staging/adapter/canonical import
+## Task 4: 接入既有 staging/adapter/canonical import（已完成）
 
 **Files:**
 - Create: `scripts/dictionary/langmap_dictionary/adapters/wikivoyage_phrasebook.py`
@@ -93,13 +83,9 @@
 - `WikivoyagePhrasebookAdapter.normalize_entry(entry: StagedEntry) -> NormalizedEntry`：headword 必為 `eng`，equivalent 依 catalog exact `lang_code/locale_code`，reading 用 `target_claim_key` 掛到 target expression。
 - `adapter_for_dictionary_key(dictionary_key: str) -> DictionaryAdapter`：`enwikivoyage:` 選新 adapter，其他 key 維持既有 adapter。
 
-- [ ] Step 1: 寫一筆英文→日文（含 kana/romaji）、一筆英文→中文（含 pinyin）、未知 scheme reading-only quarantine、target-target 不建 edge 的測試。
-- [ ] Step 2: 執行 adapter tests，確認 canonical importer 能重用 `(eng,text)` 與 `(target,text)`，且 source marker 為 `oldid:<revid>#<section>/<row>`。
-- [ ] Step 3: 實作 adapter 與 dispatch；保留 reading schemes `ipa|hepburn|pinyin|jyutping|tailo|wikivoyage-romanization|wikivoyage-respelling`，不以 script 猜 locale。
-- [ ] Step 4: 讓 `run_incremental_import`、`manage.py preview/prepare` 依 dictionary key 選 adapter；執行既有 dictionary tests 加新 tests。
-- [ ] Step 5: 提交 `feat: import Wikivoyage entries through canonical pipeline`。
+- [x] Step 1–5：已完成 adapter dispatch、canonical import、source markers/readings 與 local-import tests。
 
-## Task 5: managed handbook schema 與 builder
+## Task 5: managed handbook schema 與 builder（已完成）
 
 **Files:**
 - Create: `backend/migrations/0044_wikivoyage_handbook.sql`
@@ -112,12 +98,9 @@
 - `build_managed_handbook(connection, managed_key='enwikivoyage-phrasebooks', section_catalog) -> BuildReport`：system user `langmap`、`eng-Latn-US`、唯讀 handbook；同 section 英文 text 精確去重，跨 section 可重複。
 - `GET /handbooks/:id` 回傳 `managed: boolean`、`can_edit: boolean`；managed handbook 的 PUT/DELETE 回傳 403。
 
-- [ ] Step 1: 寫 migration/schema contract 與 builder fixture 測試（idempotent、section order、extra sort、same text 跨 section）。
-- [ ] Step 2: 執行 backend schema/builder tests，確認新欄位存在且舊 handbook 不受影響。
-- [ ] Step 3: 實作 migration、builder 及 route capability；builder 只從指定 managed source 的英文 expressions/edges 建 items。
-- [ ] Step 4: 跑 `cd backend && npm test -- --runInBand`（若 runner 不支援則使用專案既有 Vitest 指令），提交 `feat: create managed English phrasebook handbook`。
+- [x] Step 1–4：已完成 nullable managed key、唯一索引、idempotent builder、route capability 與測試。
 
-## Task 6: batch translations API 與 query-plan guard
+## Task 6: batch translations API 與 query-plan guard（已完成）
 
 **Files:**
 - Create: `backend/src/services/handbookTranslations.ts`
@@ -128,13 +111,9 @@
 - `getHandbookTranslations(db, handbookId: number, targetLocale: string, hints) -> Promise<TranslationResponse>`。
 - `GET /api/v2/handbooks/:id/translations?target_locale=jpn-Jpan-JP&ui_locale=...&secondary_ui_locale=...` 回傳 `{target_locale,items:[{source_expression_id,translations:[{id,text,lang_code,language_locale_code,language_name,readings:[{scheme,value}]}]}]}`。
 
-- [ ] Step 1: 寫 exact locale、score 过滤、direct edge、兩端方向、reading、無 translation、private handbook、invalid locale 測試。
-- [ ] Step 2: 執行新 route tests，確認先失敗。
-- [ ] Step 3: 用兩個有向 `UNION ALL` 分支批量查詢 handbook source expressions；join exact `expression_locale_links`，readings 以第二個固定查詢聚合，禁止每 item N+1。
-- [ ] Step 4: 對 translation query 與 readings query 執行 `EXPLAIN QUERY PLAN` fixture，斷言使用 expression edge/locale indexes，並設定 item/translation 上限。
-- [ ] Step 5: 跑 backend 全測試，提交 `feat: add locale-scoped handbook translations API`。
+- [x] Step 1–5：已完成 exact locale、direct edge、score、private visibility、雙向 UNION、reading batch 與上限測試。
 
-## Task 7: handbook locale selector 與雙語顯示
+## Task 7: handbook locale selector 與雙語顯示（已完成）
 
 **Files:**
 - Create: `web/src/api/handbooks.ts`, `web/src/components/handbook/HandbookTranslationPicker.vue`
@@ -145,23 +124,16 @@
 - `getTranslations(handbookId: string, targetLocale: string, hints: LocaleHints, signal?: AbortSignal): Promise<HandbookTranslations>`。
 - `HandbookTranslationPicker` 使用既有 `LanguageLocalePicker`，emit `update:modelValue`，不顯示 coverage aggregate。
 
-- [ ] Step 1: 寫 UI/API tests：URL `target_locale` round-trip、未選 locale 只顯示英文、選 locale 顯示 loading/translation/reading、切換 abort 舊 request、managed 不顯示 edit。
-- [ ] Step 2: 執行 `cd web && npm test -- --run web/src/pages/HandbookView.test.ts`（按專案 runner 調整），確認新測試先失敗。
-- [ ] Step 3: 在 HandbookView 加 `target_locale` query state、session cache 與固定 batch request；每列顯示英文→target→readings，target 點擊沿用 inspector。
-- [ ] Step 4: 加 skeleton/error/empty state、鍵盤 focus、手機版不撐破長詞句；只在 managed handbook 顯示來源 attribution。
-- [ ] Step 5: 執行 `cd web && npm run build` 與 HandbookView tests，提交 `feat: add handbook translation locale switch`。
+- [x] Step 1–5：已完成 URL/session locale state、單次 batch request、abort/cache、雙語 reading、managed read-only UI、a11y/mobile states 與 build/tests。
 
-## Task 8: fixture-to-corpus 驗收與發布包
+## Task 8: fixture-to-corpus 驗收與發布包（本地流程已完成）
 
 **Files:**
 - Create: `scripts/wikivoyage/README.md`, `scripts/wikivoyage/quality.py`, `scripts/wikivoyage/tests/test_quality.py`
 - Modify: `docs/runbooks/production-data-release.md` 或新增 `docs/runbooks/wikivoyage-phrasebook-release.md`
 
-- [ ] Step 1: 寫 quality gate：每個 discovered page 必有 state、JSONL page count 等於 included page、first/middle/last valid row sample、quarantine/removal counts。
-- [ ] Step 2: 實作 CLI pipeline：`download → catalog report → export → stage → preview/quality → local-import → build handbook`，每批約 20–30 pages，輸出 manifest/checksum。
-- [ ] Step 3: 用小型 fixture 跑完整流程，驗證 `/handbooks/:id/translations` 與 UI 只使用直接 mapping；確認 language statistics refresh SQL 有列在 release checklist。
-- [ ] Step 4: 執行 `git diff --check`、`cd backend && npm test`、`cd web && npm run build`、Python tests；不得在此任務自動 apply production migration。
-- [ ] Step 5: 提交 `docs: document Wikivoyage phrasebook release runbook`，並留下待人工抽查的 full-corpus manifest。
+- [x] Step 1–5：已完成 quality gate、pipeline CLI、乾淨 SQLite 端到端驗收、release runbook 與 production apply guard。
+- [ ] 後續：完成 306 頁 registry／內容抽查，並依 runbook 另行核准 production plan/apply。
 
 ## Checkpoint / 驗收順序
 

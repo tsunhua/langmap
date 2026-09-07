@@ -336,13 +336,23 @@ def _expression_for_cluster(context: _CanonicalImportContext, cluster: sqlite3.R
         if row is None:
             raise ValueError(f"unable to create canonical expression: {language_code}:{text}")
         expression_id = int(row[0])
-    marker = ""
-    is_headword = str(cluster["cluster_key"]).startswith("headword:")
-    if is_headword:
-        entry_keys = sorted({str(claim_rows[key]["entry_key"]) for key in members})
-        if entry_keys and marker_by_entry is not None:
-            marker = marker_by_entry.get(entry_keys[0], "")
-    context.insert_ignore("expression_sources", {"expression_id": expression_id, "source_id": context.source_id(source_key), "source_marker": marker})
+    entry_keys = sorted({str(claim_rows[key]["entry_key"]) for key in members})
+    # Wikivoyage markers identify the page/section/row for both endpoints of a
+    # direct mapping. Legacy dictionary imports retain their historical
+    # headword-only marker behavior.
+    wikivoyage_source = any(entry_sources.get(entry_key, "").startswith("enwikivoyage:") for entry_key in entry_keys)
+    if marker_by_entry is not None and (str(cluster["cluster_key"]).startswith("headword:") or wikivoyage_source):
+        for entry_key in entry_keys:
+            context.insert_ignore(
+                "expression_sources",
+                {
+                    "expression_id": expression_id,
+                    "source_id": context.source_id(source_key),
+                    "source_marker": marker_by_entry.get(entry_key, ""),
+                },
+            )
+    else:
+        context.insert_ignore("expression_sources", {"expression_id": expression_id, "source_id": context.source_id(source_key), "source_marker": ""})
     return expression_id
 
 

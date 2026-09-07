@@ -99,3 +99,29 @@ def test_client_reports_permanent_http_status() -> None:
     with pytest.raises(DownloadError, match="HTTP 400"):
         MediaWikiClient(max_retries=3, opener=opener).request({"action": "query"})
 
+
+def test_category_revisions_uses_generator_continuation() -> None:
+    responses = iter([
+        {
+            "query": {"pages": [{
+                "pageid": 20,
+                "title": "Japanese phrasebook",
+                "revisions": [{"revid": 123, "timestamp": "2026-09-07T00:00:00Z", "slots": {"main": {"content": "hello"}}}],
+            }]},
+            "continue": {"gcmcontinue": "next", "continue": "-||"},
+        },
+        {
+            "query": {"pages": [{
+                "pageid": 10,
+                "title": "Arabic phrasebook",
+                "revisions": [{"revid": 456, "timestamp": "2026-09-07T00:00:00Z", "slots": {"main": {"content": "marhaba"}}}],
+            }]},
+        },
+    ])
+    client = MediaWikiClient(opener=lambda *_args, **_kwargs: None)
+    client.request = lambda _params: next(responses)  # type: ignore[method-assign]
+
+    revisions = client.category_revisions("Category:Phrasebooks")
+
+    assert revisions[20][0] == 123
+    assert revisions[10][2] == b"marhaba"

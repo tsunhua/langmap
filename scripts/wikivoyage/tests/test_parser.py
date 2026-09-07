@@ -23,6 +23,28 @@ def _content() -> str:
     return (FIXTURE / "japanese_phrasebook.wikitext").read_text(encoding="utf-8")
 
 
+def test_split_profile_emits_exact_simplified_and_traditional_locales() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows("===Basics===\n; Hello : 你好。 (你好。) ''Nǐ hǎo''", profile, _sections())
+
+    assert len(result.entries) == 2
+    assert [(entry["raw_headword"], entry["raw"]["target_locale_code"]) for entry in result.entries] == [
+        ("你好。", "cmn-Hans-CN"),
+        ("你好。", "cmn-Hant-TW"),
+    ]
+    assert all(entry["pronunciations"][0]["locale"] == entry["raw"]["target_locale_code"] for entry in result.entries)
+
+
+def test_reverse_definition_row_keeps_target_and_inline_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
+    result = parse_phrase_rows("===Eating===\n;煎 jīn: pan-fried", profile, _sections())
+
+    assert len(result.entries) == 1
+    assert result.entries[0]["raw_headword"] == "煎"
+    assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "pan-fried"
+    assert result.entries[0]["pronunciations"][0]["value"] == "jīn"
+
+
 def test_parser_extracts_only_explicit_phrase_rows_and_readings() -> None:
     result = parse_phrase_rows(_content(), _profile(), _sections())
 
@@ -63,4 +85,3 @@ def test_cjk_in_romanization_is_quarantined_without_dropping_expression() -> Non
     assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "Hello"
     assert result.entries[0]["pronunciations"] == []
     assert any(item["error_code"] == "reading_script_mismatch" for item in result.diagnostics)
-

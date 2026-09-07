@@ -52,6 +52,23 @@ describe('handbooks API', () => {
     expect(body.data.sections[0].items[0]).toMatchObject({ id: '101', section_id: '1', lang_code: 'nan', language_name: 'nan' });
   });
 
+  it('exposes managed handbooks as read-only capabilities', async () => {
+    const db = fakeD1({
+      [HANDBOOK_SQL]: () => ({
+        id: 2, user_id: 1, title: 'Wikivoyage', visibility: 'public', status: 'published',
+        managed_key: 'enwikivoyage-phrasebooks', score: 0,
+        author_username: 'langmap',
+      }),
+      [SECTIONS_SQL]: () => ({ results: [] }),
+      [ITEMS_SQL]: () => ({ results: [] }),
+    });
+    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    app.route('/handbooks', handbooks);
+    const response = await app.request('http://example.test/handbooks/2', undefined, { DB: db, SECRET_KEY: 'test-secret' });
+    expect(response.status).toBe(200);
+    expect((await response.json() as { data: { managed: boolean; can_edit: boolean } }).data).toMatchObject({ managed: true, can_edit: false });
+  });
+
   it('rejects a non-canonical id with INVALID_HANDBOOK_ID and a missing handbook with 404', async () => {
     const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
