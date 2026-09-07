@@ -71,6 +71,21 @@ describe('getExpressionMappings', () => {
     expect(result.next_cursor).toBeNull();
     expect(statements).toHaveLength(2);
     expect(statements.every((sql) => !/OFFSET|ORDER BY\s+e\.score/i.test(sql))).toBe(true);
-    expect(statements.every((sql) => sql.includes('(e.relation_mask & 3) <> 0'))).toBe(true);
+    expect(statements.every((sql) => sql.includes('(e.relation_mask & 7) <> 0'))).toBe(true);
+  });
+
+  it('returns standalone example translations as ordinary mappings', async () => {
+    const db = {
+      prepare(sql: string) {
+        return { bind() { return { async all() {
+          return { results: [{ edge_id: 12, neighbor_id: 4, neighbor_lang_code: 'eng', neighbor_text: 'have you got enough?', relation_mask: 4, score: 0 }] };
+        } }; } };
+      },
+    } as unknown as D1Database;
+
+    const result = await getExpressionMappings(db, 3, { limit: 20, cursor: null });
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0].neighbor_text).toBe('have you got enough?');
   });
 });

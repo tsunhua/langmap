@@ -7,7 +7,7 @@ type NodeSeed = Record<number, { text: string; lang_code: string; language_name?
 /**
  * Emulates the three query shapes the service issues:
  * 1. root lookup  SELECT ... FROM expressions e JOIN languages l ... WHERE e.id=?
- * 2. edge lookup  SELECT ... FROM expression_edges WHERE ... IN (...) AND semantic relation mask
+ * 2. edge lookup  SELECT ... FROM expression_edges WHERE ... IN (...) AND mapping relation mask
  * 3. node lookup  SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ... WHERE e.id IN (...)
  */
 function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
@@ -32,7 +32,7 @@ function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
               if (sql.includes('FROM expression_edges')) {
                 results = edges.filter((edge) =>
                   (args.includes(edge.expression_a_id) || args.includes(edge.expression_b_id))
-                  && (!sql.includes('(relation_mask & 3) <> 0') || (edge.relation_mask & 3) !== 0),
+                  && (!sql.includes('(relation_mask & 7) <> 0') || (edge.relation_mask & 7) !== 0),
                 );
               } else if (sql.includes('FROM expressions')) {
                 results = args
@@ -88,7 +88,7 @@ describe('getMappingGraph', () => {
     ]);
   });
 
-  it('does not traverse example-only edges as semantic mappings', async () => {
+  it('traverses standalone example translations as ordinary mappings', async () => {
     const nodes: NodeSeed = {
       1: { text: 'star', lang_code: 'eng' },
       2: { text: '星', lang_code: 'cmn' },
@@ -100,10 +100,10 @@ describe('getMappingGraph', () => {
       { id: 2, expression_a_id: 3, expression_b_id: 4, relation_mask: 4, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+    const graph = await getMappingGraph(fakeD1(nodes, edges), 3, 1);
 
-    expect(graph?.nodes.map((node) => node.expression_id)).toEqual([1, 2]);
-    expect(graph?.edges.map((edge) => edge.edge_id)).toEqual([1]);
+    expect(graph?.nodes.map((node) => node.expression_id)).toEqual([3, 4]);
+    expect(graph?.edges.map((edge) => edge.edge_id)).toEqual([2]);
   });
 
   it('filters nodes at every hop so traversal never hops through excluded languages', async () => {

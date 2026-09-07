@@ -290,7 +290,7 @@ describe('expressions route GET /:id', () => {
 });
 
 describe('expressions route GET /:id/graph hop access', () => {
-  const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
+  const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
   const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
 
   function graphDb(includeUser: boolean) {

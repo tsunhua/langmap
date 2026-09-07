@@ -1,6 +1,6 @@
 # LangMap 術語表
 
-LangMap 是以詞句與直接語義關係為核心的多語對照平台。本檔案只定義目前資料模型仍使用的專案術語；表結構以 `backend/schema.sql` 為準。
+LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔案只定義目前資料模型仍使用的專案術語；表結構以 `backend/schema.sql` 為準。
 
 ## 身份與 locale
 
@@ -14,15 +14,15 @@ LangMap 是以詞句與直接語義關係為核心的多語對照平台。本檔
 
 ## 詞句與關係
 
-**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接語義 edge。詞典匯入時，同一 `(language_id, text)` 的條目一律合併為 `homograph_index = 1` 的單一列，不再依來源詞典增量配號。
+**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接 mapping edge；詞句本身不分主詞頭與例句層級，句子也是獨立詞句。詞典匯入時，同一 `(language_id, text)` 的條目一律合併為 `homograph_index = 1` 的單一列，不再依來源詞典增量配號。
 
 **同形拆分（Homograph Split）**：管理員以 `expression_splits` 記錄可追溯的 edge 搬移，將同一文字分離成較大的 `homograph_index`。這是人為校正動作；系統（含詞典匯入）不依文字自動推斷或拆分詞義。
 
 **來源標記（Source Marker）**：來源詞典自身對同一詞形的 homograph 編號（如 NOAD 的 `cod 1/2/3`、繁中英的 `1/2/3`）。匯入時以 `(source_id, source_marker)` 保留：`expression_sources` 記錄合併後詞句的來源與編號，`expression_edge_sources` 記錄每條 edge 的來源與編號。**同一來源詞典內不同的編號代表不同的含義；跨來源詞典的編號不互相宣稱相同**，亦不作為全域語義身分。
 
-**映射／語義 edge（Expression Edge）**：兩個 expression 的直接語義關係。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 表示關係種類，`score` 由 `edge_votes` 聚合。一條 edge 同一對端點可匯聚多個來源標記（以 `expression_edge_sources` 記錄）；來源標記只掛在 edge 與 expression 上，不建立 sense 實體。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
+**映射（Expression Edge）**：兩個 expression 之間的直接對照關係；兩端可以是詞、短語或句子。詞典例句的原句與譯句各自建立為獨立 expression，只在兩者之間建立普通 mapping，不建立主詞頭與例句的關聯。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 是內部相容欄位，不應被解讀為額外的產品內容層級，`score` 由 `edge_votes` 聚合。一條 edge 同一對端點可匯聚多個來源標記（以 `expression_edge_sources` 記錄）；來源標記只掛在 edge 與 expression 上，不建立 sense 實體。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
 
-**詞形 edge（Expression Form Edge）**：變化形指向辭書形的有向關係，與語義 edge 分開。`expression_form_edge_features` 掛載形態特徵；特徵與維度名稱也以 expression 做國際化。
+**詞形 edge（Expression Form Edge）**：變化形指向辭書形的有向關係，與 mapping edge 分開。`expression_form_edge_features` 掛載形態特徵；特徵與維度名稱也以 expression 做國際化。
 
 **讀音（Expression Reading）**：某 expression 在一個 language locale 下，使用一個 scheme 記錄的文字讀音。它的複合主鍵為 expression、locale、scheme、value。
 

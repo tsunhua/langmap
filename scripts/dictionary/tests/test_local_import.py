@@ -150,6 +150,40 @@ def test_staging_snapshot_rejects_occurrence_without_entry_source(tmp_path):
         connection.close()
 
 
+def test_staging_snapshot_omits_clusters_with_only_quarantined_occurrences(tmp_path):
+    staging_path = tmp_path / "staging.sqlite"
+    run_id = _stage_in(staging_path)
+    connection = sqlite3.connect(staging_path)
+    connection.row_factory = sqlite3.Row
+    connection.execute(
+        "INSERT INTO lexical_occurrences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            run_id, "synthetic:quarantined-form", "form",
+            connection.execute(
+                "SELECT entry_key FROM input_entries WHERE release_id=? LIMIT 1",
+                (run_id,),
+            ).fetchone()[0],
+            None, "～s", "～s", None, None, "synthetic:quarantined-cluster",
+            "{}", '["unknown_locale"]',
+        ),
+    )
+    connection.execute(
+        "INSERT INTO lexical_clusters VALUES (?,?,?,?,?)",
+        (run_id, "synthetic:quarantined-cluster", "form", None, "～s"),
+    )
+    connection.execute(
+        "INSERT INTO cluster_members VALUES (?,?,?)",
+        (run_id, "synthetic:quarantined-cluster", "synthetic:quarantined-form"),
+    )
+    connection.commit()
+
+    snapshot = load_staging_snapshot(connection, run_id)
+
+    assert "synthetic:quarantined-form" not in snapshot.occurrences
+    assert "synthetic:quarantined-cluster" not in snapshot.clusters
+    connection.close()
+
+
 def test_local_import_caches_repeated_canonical_lookups_per_call(tmp_path, monkeypatch):
     staging_path = tmp_path / "staging.sqlite"
     run_id = _stage_in(staging_path)
@@ -220,7 +254,7 @@ def test_local_import_writes_canonical_rows_and_no_runtime_tables(tmp_path):
     assert summary.edges == 5
     assert connection.execute("SELECT COUNT(*) FROM expressions").fetchone()[0] == 7
     assert connection.execute("SELECT COUNT(*) FROM expression_edges").fetchone()[0] == 5
-    assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE relation_mask=4").fetchone()[0] == 1
+    assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE relation_mask=4").fetchone()[0] == 0
     assert connection.execute("SELECT COUNT(*) FROM expression_sources").fetchone()[0] >= 7
     assert connection.execute("SELECT COUNT(*) FROM expression_edge_sources").fetchone()[0] == 5
     assert connection.execute("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'dictionary_%'").fetchone()[0] == 0

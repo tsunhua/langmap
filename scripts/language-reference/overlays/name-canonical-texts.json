@@ -1,6 +1,15 @@
 {
   "language_canonical_overrides": {
-    "nan": "Min Nan Chinese (Hokkien)"
+    "ell": "Modern Greek",
+    "nan": "Min Nan Chinese (Hokkien)",
+    "swh": "Swahili"
+  },
+  "script_canonical_overrides": {
+    "Arab": "Arabic script",
+    "Grek": "Greek script",
+    "Hebr": "Hebrew script",
+    "Latn": "Latin script",
+    "Thai": "Thai script"
   },
   "locale_canonical_texts": {
     "eng-Latn-US": "English (US)",

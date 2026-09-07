@@ -65,7 +65,7 @@ cd backend && npm test
 - `language`：ISO 639-3 語言 registry；以整數 `id` 作內部引用，`code` 作穩定公開識別。
 - `language_locale`：精確的書寫系統／地區／地點 profile；詞句可透過 `expression_locale_links` 連到零至多個 locale。
 - `expression`：單一語言中的詞或句，綁定 `language_id`；ID 為整數。詞典匯入將同一 `(language_id, text)` 合併為 `homograph_index = 1` 的單一列，不依來源增量配號。
-- `mapping` / `expression_edge`：兩個 expression 的直接語義關係；端點採排序後的整數 ID。
+- `mapping` / `expression_edge`：兩個 expression 的直接對照關係；兩端可以是詞、短語或句子，端點採排序後的整數 ID。例句原句與譯句各自是獨立 expression，只在兩者之間建立普通 mapping，不與主詞頭關聯。
 - 來源標記（source marker）：詞典自己的 homograph 編號以 `(source_id, source_marker)` 保留在 `expression_sources`（expression 層）與 `expression_edge_sources`（edge 層）。同來源不同編號＝不同含義；跨來源編號不互宣稱相同，不建立 sense 實體。
 - 詞典匯入、合併身份、來源標記的變更集中在 `scripts/dictionary/langmap_dictionary/`；改動必須同步 `backend/schema.sql`、migration、pytest 與 mappingGraph 型別。
 - 語言、locale、script 與 region 的名稱本身也是 expression；registry 列僅保留其 canonical English expression 的整數引用，譯名透過 direct edge 加完整 locale link 解析。
@@ -87,7 +87,7 @@ cd backend && npm test
 - **自然鍵 delta**：以 `export_dictionary_source_delta.py` 按 source key 匯出可重跑 SQL；staging 整數 ID 只作包內暫存 join key，production 以 language code、expression identity、locale code、source name 與 edge endpoints 解析實際 ID。staging 全庫 manifest 不傳入 `--dictionary-postflight-manifest`。來源 artifact 修正改變了 identity（如 packed gloss 拆分）時，重發布加 `--replace`：delta 先刪該 source 擁有的 rows 再重插，工具會在其他 source 共用其 owned expressions 時拒絕。
 - 每部流程：staging import → 品質 gate → 產生並 checksum source delta → `manage.sh production plan --approved-data-migration <delta>` → `production apply`（先 bookmark）→ source-scoped verify。全量 export 只用於事故調查、restore 後製作離線副本或明確要求，不是發布前置條件。
 - **每次發布後須刷新 `language_statistics`**：delta 只寫 expressions/edges/readings，不會更新統計表；否則 `/languages` 與語言列表停滯在舊 counts。刷新語句（`INSERT OR REPLACE ... SELECT ... FROM languages l`）在 apply 後對 production 執行。
-- **發布前由 agent 抽查**：對即將發布的詞典抽樣 insight——逐一檢視 headword 語言、direction、equivalents、readings 是否合理（如 Crown 假名被標 cmn-to-jpn 的錯誤即在抽查中攔下）。任何抽樣異常先回 source 修正，不帶病發布。修正 exporter 後**必須以 `dictionary-jsonl-export` 重新匯出該部 JSONL 再重新抽查**，確認 entry count 不變、readings 合理後才覆寫 `/Volumes/DATA/langmap-structured-jsonl/<部>.jsonl`（先複製 `.pre-tyfix` 備份）。
+- **發布前由 agent 抽查**：對即將發布的詞典抽樣 insight——逐一檢視 headword 語言、direction、equivalents、readings 是否合理；例句若成對，須確認原句與譯句各自是獨立 expression，且只建立兩者之間的 mapping，不得建立主詞頭與例句的關聯（如 Crown 假名被標 cmn-to-jpn 的錯誤即在抽查中攔下）。任何抽樣異常先回 source 修正，不帶病發布。修正 exporter 後**必須以 `dictionary-jsonl-export` 重新匯出該部 JSONL 再重新抽查**，確認 entry count 不變、readings 合理後才覆寫 `/Volumes/DATA/langmap-structured-jsonl/<部>.jsonl`（先複製 `.pre-tyfix` 備份）。
 - **established JSONL 的發音必須乾淨**：繁體常用詞等 bundle 以 `ty_pinyin`／`ty_jyutping`（及 `ty_IPA`）class 標記 headword 發音，exporter 依此輸出 `pinyin`／`jyutping` scheme，並忽略「案／隔／叮」這類同音字提示節點；多音字與雙語辭典的 readings 落在 sense 底層，抽查不得只數 total。發現 CJK 字元出現在 readings 即代表該用 homophone-hint 過濾。
 - `import_with_progress.py` 的 state 檔屬 dev D1，發布用 mirror 前要先清掉該檔的殘留「success」記錄，否則會跳過。
 - **大資料張力**：D1 單一 execute 有 CPU time limit。超過時把 DELETE 拆成 `.split.sql`（plan 帶 `mode=split`，逐語句 `--command` 執行）；超大 DELETE（十萬 rows 級）再分批（每批約 5 萬 rows）。混合 DELETE+INSERT 的巨型單檔不可靠，先拆。

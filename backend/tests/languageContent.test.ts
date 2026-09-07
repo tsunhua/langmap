@@ -114,10 +114,10 @@ describe('listLanguagesWithContent', () => {
     const db = fakeD1([
       { sql: 'COUNT(*) AS total FROM (', handler: () => ({ total: 1 }) },
       { sql: 'JOIN language_statistics s', handler: () => ({ results: [
-        { code: 'cmn', name_en: 'Some language', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
+        { code: 'zzz', name_en: 'Some language', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
       ] }) },
       { sql: LANGUAGE_IDENTITY_SQL, handler: () => ({ results: [
-        { code: 'cmn', name_expression_id: 101, name_en: 'Some language', name: null },
+        { code: 'zzz', name_expression_id: 101, name_en: 'Some language', name: null },
       ] }) },
       { sql: EXPRESSIONS_SQL, handler: () => ({ results: [{ id: 101, text: 'Some language' }] }) },
       { sql: CANDIDATE_SQL, handler: () => ({ results: [] }) },

@@ -53,8 +53,8 @@ class TestGenerator(unittest.TestCase):
 
     def test_script_names_keep_direction(self):
         sql = (ARTIFACTS / 'language-reference.sql').read_text(encoding='utf-8')
-        self.assertIn("('Arab', 'Arabic', 'rtl')", sql)
-        self.assertIn("('Latn', 'Latin', 'ltr')", sql)
+        self.assertIn("('Arab', 'Arabic script', 'rtl')", sql)
+        self.assertIn("('Latn', 'Latin script', 'ltr')", sql)
 
 
 if __name__ == '__main__':

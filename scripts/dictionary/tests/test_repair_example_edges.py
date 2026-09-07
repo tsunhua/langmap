@@ -83,7 +83,7 @@ def test_source_pairs_keep_examples_distinct_from_equivalents(tmp_path: Path):
     assert (("cmn", "我的星象怎么样？"), ("eng", "star")) in polluted_examples
 
 
-def test_repair_retypes_examples_and_removes_stale_source_claims(tmp_path: Path):
+def test_repair_normalizes_examples_and_removes_stale_source_claims(tmp_path: Path):
     source = tmp_path / "source.jsonl"
     mirror = tmp_path / "mirror.sqlite"
     output = tmp_path / "repair.split.sql"
@@ -96,8 +96,8 @@ def test_repair_retypes_examples_and_removes_stale_source_claims(tmp_path: Path)
     connection.executescript(output.read_text(encoding="utf-8"))
 
     assert connection.execute("SELECT relation_mask FROM expression_edges WHERE id=10").fetchone()[0] == 1
-    assert connection.execute("SELECT relation_mask FROM expression_edges WHERE id=11").fetchone()[0] == 4
-    assert connection.execute("SELECT relation_mask FROM expression_edges WHERE id=13").fetchone()[0] == 5
+    assert connection.execute("SELECT relation_mask FROM expression_edges WHERE id=11").fetchone()[0] == 1
+    assert connection.execute("SELECT relation_mask FROM expression_edges WHERE id=13").fetchone()[0] == 1
     assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE id=12").fetchone()[0] == 1
     assert connection.execute("SELECT COUNT(*) FROM expression_edges WHERE id=14").fetchone()[0] == 0
     assert connection.execute("SELECT COUNT(*) FROM expression_edge_sources WHERE source_id=28 AND edge_id=14").fetchone()[0] == 0

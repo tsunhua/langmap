@@ -184,17 +184,23 @@ def read_regions(coords: dict[str, tuple[float | None, float | None]]) -> list[t
     return rows
 
 
-def read_name_canonical_texts() -> tuple[dict[str, str], dict[str, str]]:
+def read_name_canonical_texts() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     data = json.loads((OVERLAYS / "name-canonical-texts.json").read_text(encoding="utf-8"))
     overrides = {k.strip(): v.strip() for k, v in data.get("language_canonical_overrides", {}).items() if v}
     locales = {k.strip(): v.strip() for k, v in data.get("locale_canonical_texts", {}).items() if v}
+    scripts = {k.strip(): v.strip() for k, v in data.get("script_canonical_overrides", {}).items() if v}
     for code, text in locales.items():
         lang = code.split("-", 1)[0]
         if len(lang) != 3:
             raise ValueError(f"locale {code!r} has invalid lang prefix {lang!r}")
         if not text:
             raise ValueError(f"locale {code!r} missing canonical text")
-    return overrides, locales
+    for code, text in scripts.items():
+        if len(code) != 4:
+            raise ValueError(f"script {code!r} has invalid canonical text override")
+        if not text:
+            raise ValueError(f"script {code!r} missing canonical text")
+    return overrides, locales, scripts
 
 
 def read_name_translations() -> list[dict[str, str]]:
@@ -212,6 +218,33 @@ def read_name_translations() -> list[dict[str, str]]:
         seen.add((canonical, locale))
         rows.append({"canonical_text": canonical, "target_locale": locale, "text": text})
     rows.sort(key=lambda r: (r["canonical_text"], r["target_locale"]))
+    return rows
+
+
+def read_language_name_translations() -> list[dict[str, str]]:
+    """Read the code-keyed language-name catalog produced by the assembler."""
+    path = OVERLAYS / "language-name-translations.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    translations = data.get("translations")
+    if not isinstance(translations, dict):
+        raise ValueError("language-name-translations.json has no translations object")
+    allowed_locales = {"cmn-Hans-CN", "cmn-Hant-TW", "jpn-Jpan-JP"}
+    rows: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for locale, values in translations.items():
+        if locale not in allowed_locales or not isinstance(values, dict):
+            raise ValueError(f"invalid language-name target locale {locale!r}")
+        for code, raw_text in values.items():
+            code = str(code).strip().lower()
+            text = str(raw_text).strip()
+            if not code or not text:
+                raise ValueError(f"incomplete language-name translation {locale!r}/{code!r}")
+            key = (code, locale)
+            if key in seen:
+                raise ValueError(f"duplicate language-name translation {code!r}/{locale!r}")
+            seen.add(key)
+            rows.append({"language_code": code, "target_locale": locale, "text": text})
+    rows.sort(key=lambda r: (r["language_code"], r["target_locale"]))
     return rows
 
 
@@ -260,6 +293,46 @@ def merge_zh_overlay(
     return merged
 
 
+def merge_language_name_catalog(
+    translations: list[dict[str, str]],
+    language_catalog: list[dict[str, str]],
+    canonical_languages: list[tuple[str, str]],
+    language_ids: dict[str, int],
+) -> list[dict[str, str]]:
+    """Add code-keyed language names without duplicating curated text keys.
+
+    The ordinary name graph is keyed by the English canonical expression, so
+    an existing curated translation for that expression wins over an external
+    code-keyed row.  The runtime resolver still retains the code-keyed catalog,
+    which lets it distinguish a language from a same-named script.
+    """
+    canonical_by_code = dict(canonical_languages)
+    covered = {(item["canonical_text"], item["target_locale"]) for item in translations}
+    merged = list(translations)
+    for item in language_catalog:
+        code = item["language_code"]
+        if code not in language_ids:
+            raise ValueError(f"language-name catalog references unknown language {code!r}")
+        canonical = canonical_by_code[code]
+        target_locale = item["target_locale"]
+        target_language = target_locale.split("-", 1)[0]
+        if target_language not in language_ids:
+            raise ValueError(
+                f"language-name catalog target {target_locale!r} references unknown language"
+            )
+        key = (canonical, target_locale)
+        if key in covered:
+            continue
+        merged.append({
+            "canonical_text": canonical,
+            "target_locale": target_locale,
+            "text": item["text"],
+        })
+        covered.add(key)
+    merged.sort(key=lambda r: (r["canonical_text"], r["target_locale"]))
+    return merged
+
+
 INSERT_BATCH = 500
 
 
@@ -289,7 +362,7 @@ def emit_name_seed_sql(
     locale_names = [row[7] for row in REFERENCE_LOCALES]
     canonical_texts = sorted({name for _code, name in languages} | {name for _code, name, _direction in scripts} | {name for _code, name, _lat, _lon in regions} | set(locale_names))
     eng_id = language_ids['eng']
-    lines = ['-- LOCALIZED NAME EXPRESSIONS AND DIRECT SEMANTIC EDGES']
+    lines = ['-- LOCALIZED NAME EXPRESSIONS AND DIRECT MAPPING EDGES']
     lines.append("INSERT OR IGNORE INTO sources (type, name) VALUES ('system', 'LangMap canonical names seed');")
     source_exprs = [f"  ({eng_id}, {sql_str(text)}, (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'))" for text in canonical_texts]
     lines += _insert_blocks('expressions', ['language_id', 'text', 'source_id'], source_exprs)
@@ -335,20 +408,28 @@ def emit_sql(
     regions: list[tuple[str, str, float | None, float | None]],
     overrides: dict[str, str],
     locale_texts: dict[str, str],
+    script_overrides: dict[str, str],
     translations: list[dict[str, str]],
+    language_catalog: list[dict[str, str]],
 ) -> tuple[str, dict[str, int]]:
     lines: list[str] = ["-- AUTO-GENERATED by scripts/language-reference/generate.py. Do not edit."]
 
     language_ids = {code: index for index, (code, _name) in enumerate(languages, start=1)}
     canonical_languages = [(code, overrides.get(code, name)) for code, name in languages]
+    canonical_scripts = [(code, script_overrides.get(code, name), direction) for code, name, direction in scripts]
+    original_script_names = {code: name for code, name, _direction in scripts}
     lang_vals = [f"  ({language_ids[c]}, {sql_str(c)}, {sql_str(n)})" for c, n in canonical_languages]
     lines += _insert_blocks("languages", ["id", "code", "name_en"], lang_vals)
     for code, canonical_name in canonical_languages:
         if canonical_name != dict(languages)[code]:
             lines.append(f"UPDATE languages SET name_en={sql_str(canonical_name)} WHERE code={sql_str(code)};")
 
-    script_vals = [f"  ({sql_str(c)}, {sql_str(n)}, {sql_str(d)})" for c, n, d in scripts]
+    script_vals = [f"  ({sql_str(c)}, {sql_str(n)}, {sql_str(d)})" for c, n, d in canonical_scripts]
     lines += _insert_blocks("scripts", ["code", "name_en", "direction"], script_vals)
+    for code, canonical_name, _direction in canonical_scripts:
+        if canonical_name == original_script_names[code]:
+            continue
+        lines.append(f"UPDATE scripts SET name_en={sql_str(canonical_name)} WHERE code={sql_str(code)};")
 
     region_vals: list[str] = []
     for c, n, lat, lon in regions:
@@ -373,15 +454,33 @@ def emit_sql(
         locale_rows,
     )
 
-    name_lines, name_counts = emit_name_seed_sql(canonical_languages, scripts, regions, translations, language_ids)
+    merged_translations = merge_language_name_catalog(
+        translations, language_catalog, canonical_languages, language_ids
+    )
+    name_lines, name_counts = emit_name_seed_sql(
+        canonical_languages, canonical_scripts, regions, merged_translations, language_ids
+    )
     lines.extend(name_lines)
 
     name_counts['language_locales'] = len(locale_rows)
+    name_counts['language_name_catalog_translations'] = len(language_catalog)
+    name_counts['language_name_graph_translations'] = len(merged_translations)
 
     return "\n".join(lines) + "\n", name_counts
 
 
-def build_manifest(languages, scripts, regions, directions, region_coords, sql_text, locale_texts, translations, name_counts) -> dict:
+def build_manifest(
+    languages,
+    scripts,
+    regions,
+    directions,
+    region_coords,
+    sql_text,
+    locale_texts,
+    translations,
+    language_catalog,
+    name_counts,
+) -> dict:
     def src(name: str, path: Path, **extra) -> dict:
         payload = {
             "name": name,
@@ -405,6 +504,11 @@ def build_manifest(languages, scripts, regions, directions, region_coords, sql_t
             "region_coordinates": {"path": "overlays/region-coordinates.tsv", "covered_regions": len(region_coords)},
             "name_canonical_texts": {"path": "overlays/name-canonical-texts.json", "locale_count": len(locale_texts)},
             "name_translations": {"path": "overlays/name-translations.json", "translation_count": len(translations)},
+            "language_name_translations": {
+                "path": "overlays/language-name-translations.json",
+                "sha256": sha256_file(OVERLAYS / "language-name-translations.json"),
+                "translation_count": len(language_catalog),
+            },
             "script_region_zh_names": {"path": "overlays/script-region-zh-names.json", "source": "Unicode CLDR cldr-localenames-full zh / zh-Hant", "translation_count": sum(len(v) for v in read_script_region_zh_names().values() for v in v.values())},
         },
         "counts": {
@@ -429,8 +533,9 @@ def main() -> int:
     languages = read_languages() + list(SYSTEM_CONTENT_LANGUAGES)
     scripts = read_scripts(directions)
     regions = read_regions(region_coords)
-    overrides, locale_texts = read_name_canonical_texts()
+    overrides, locale_texts, script_overrides = read_name_canonical_texts()
     translations = merge_zh_overlay(read_name_translations(), scripts, regions, read_script_region_zh_names())
+    language_catalog = read_language_name_translations()
 
     if len(languages) < MIN_LANGUAGES:
         raise SystemExit(f"languages count {len(languages)} < {MIN_LANGUAGES}")
@@ -439,8 +544,28 @@ def main() -> int:
     if len(regions) < MIN_REGIONS:
         raise SystemExit(f"regions count {len(regions)} < {MIN_REGIONS}")
 
-    sql_text, name_counts = emit_sql(languages, scripts, regions, overrides, locale_texts, translations)
-    manifest = build_manifest(languages, scripts, regions, directions, region_coords, sql_text, locale_texts, translations, name_counts)
+    sql_text, name_counts = emit_sql(
+        languages,
+        scripts,
+        regions,
+        overrides,
+        locale_texts,
+        script_overrides,
+        translations,
+        language_catalog,
+    )
+    manifest = build_manifest(
+        languages,
+        scripts,
+        regions,
+        directions,
+        region_coords,
+        sql_text,
+        locale_texts,
+        translations,
+        language_catalog,
+        name_counts,
+    )
 
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     (ARTIFACTS / "language-reference.sql").write_text(sql_text, encoding="utf-8")

@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import nameTranslations from '../../../scripts/language-reference/overlays/name-translations.json';
+import languageNameTranslations from '../../../scripts/language-reference/overlays/language-name-translations.json';
 import { parseLanguageLocaleCode } from './languageIdentity';
 
 export interface LocaleHints { primary?: string; secondary?: string; }
@@ -8,12 +9,19 @@ interface IdentityRow { code: string; name_expression_id: number | null; name_en
 interface CandidateRow { source_id: number; target_text: string; score: number; target_id: number; }
 
 interface NameTranslation { canonical_text: string; target_locale: string; text: string; }
+interface LanguageNameTranslationCatalog { translations: Record<string, Record<string, string>>; }
 
 const PROJECT_NAME_TRANSLATIONS = new Map(
   (nameTranslations as { translations: readonly NameTranslation[] }).translations.map((translation) => [
     `${translation.canonical_text}\u0000${translation.target_locale}`,
     translation.text,
   ]),
+);
+
+const PROJECT_LANGUAGE_NAME_TRANSLATIONS = new Map(
+  Object.entries((languageNameTranslations as LanguageNameTranslationCatalog).translations).flatMap(([locale, values]) =>
+    Object.entries(values).map(([code, text]) => [`${code}\u0000${locale}`, text] as const),
+  ),
 );
 
 const LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
@@ -66,6 +74,15 @@ function firstPartyName(canonicalText: string, hints: LocaleHints): string | und
   return projectName(canonicalText, hints.primary) ?? projectName(canonicalText, hints.secondary);
 }
 
+function projectLanguageName(code: string, locale?: string): string | undefined {
+  if (!locale) return undefined;
+  return PROJECT_LANGUAGE_NAME_TRANSLATIONS.get(`${code.toLowerCase()}\u0000${locale}`);
+}
+
+function firstPartyLanguageName(code: string, hints: LocaleHints): string | undefined {
+  return projectLanguageName(code, hints.primary) ?? projectLanguageName(code, hints.secondary);
+}
+
 async function candidates(db: D1Database, ids: readonly number[], locale?: string): Promise<Map<number, string>> {
   if (!locale || ids.length === 0) return new Map();
   const json = JSON.stringify(ids);
@@ -99,8 +116,9 @@ export async function resolveLanguageNames(db: D1Database, codes: readonly strin
   const { results } = await db.prepare(LANGUAGE_SQL).bind(JSON.stringify(distinct)).all<IdentityRow>();
   const resolved = await resolveNamesByExpressionIds(db, results.flatMap((row) => row.name_expression_id ?? []), hints);
   return new Map(results.map((row) => {
+    const codeName = firstPartyLanguageName(row.code, hints);
     const fallback = firstPartyName(row.name_en, hints) ?? row.name_en;
-    return [row.code, row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback];
+    return [row.code, codeName ?? (row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback)];
   }));
 }
 
