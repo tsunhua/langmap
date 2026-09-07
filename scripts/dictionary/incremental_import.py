@@ -53,6 +53,29 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _load_source_catalog(input_dir: Path) -> dict[str, dict[str, Any]] | None:
+    """Load optional per-file provenance emitted by an exporter.
+
+    Legacy dictionary directories do not have this sidecar, so returning
+    ``None`` preserves their existing source naming behavior.
+    """
+
+    path = Path(input_dir) / "source-catalog.json"
+    if not path.is_file():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and isinstance(payload.get("sources"), dict):
+        payload = payload["sources"]
+    if not isinstance(payload, dict):
+        raise ValueError(f"source catalog must be an object: {path}")
+    result: dict[str, dict[str, Any]] = {}
+    for key, value in payload.items():
+        if not isinstance(value, dict):
+            raise ValueError(f"source catalog entry must be an object: {key}")
+        result[str(key)] = dict(value)
+    return result
+
+
 def create_sqlite_snapshot(source: Path, destination: Path) -> str:
     """Create a consistent SQLite backup without copying live WAL sidecars."""
 
@@ -379,6 +402,7 @@ def run_incremental_import(
                 prepared.release_id,
                 packed=True,
                 append=append,
+                source_catalog=_load_source_catalog(input_dir),
                 progress=progress,
             )
             after = _d1_catalog_snapshot(d1_database)

@@ -240,6 +240,8 @@ def _record(
             "section_key": section_key,
             "section_title": section_title,
             "row": row_number,
+            "target_lang_code": profile.lang_code,
+            "target_locale_code": locale,
             "source_marker": f"oldid:{snapshot.revision}#{section_key}/{row_number}",
         },
     }

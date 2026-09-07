@@ -441,7 +441,7 @@ def import_release_to_local_d1(
                 metadata = json.loads(str(row["metadata_json"])) if row["metadata_json"] else {}
             except ValueError:
                 metadata = {}
-            marker = metadata.get("homograph_marker")
+            marker = metadata.get("source_marker") or metadata.get("homograph_marker")
             marker_by_entry[str(row["entry_key"])] = str(marker) if marker else ""
         write_started = time.perf_counter()
         _report_progress(progress, write_started, "d1_write", "start", 0)

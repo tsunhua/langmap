@@ -775,7 +775,10 @@ def _normalize_release_rows(
     timings: dict[str, float] | None = None,
 ) -> int:
     timings = timings if timings is not None else {}
-    adapter = adapter or TraditionalChineseEnglishAdapter()
+    if adapter is None:
+        from .registry import adapter_for_release
+
+        adapter = adapter_for_release(connection, release_id)
     checkpoint = connection.execute(
         "SELECT last_entry_rowid,processed_entries FROM normalization_progress WHERE release_id=?",
         (release_id,),

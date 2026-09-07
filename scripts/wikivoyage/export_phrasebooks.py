@@ -73,6 +73,7 @@ def export_snapshot_directory(
     page_catalog = load_page_catalog(page_catalog_path)
     section_catalog = load_section_catalog(section_catalog_path)
     report_pages: list[dict[str, Any]] = []
+    source_catalog: dict[str, dict[str, Any]] = {}
     for raw in sorted(manifest["pages"], key=lambda item: int(item["pageid"])):
         descriptor = _descriptor(raw)
         content_path = snapshot_dir / descriptor.snapshot_file
@@ -89,6 +90,11 @@ def export_snapshot_directory(
         )
         profile = profile_for(descriptor.pageid, descriptor.title, page_catalog)
         result = export_page(snapshot, profile, section_catalog)
+        source_catalog[f"enwikivoyage:{descriptor.pageid}"] = {
+            "type": "url",
+            "name": descriptor.canonical_url,
+            "source_rank": 100,
+        }
         output_path = output_dir / f"{descriptor.pageid}.jsonl"
         if result.entries:
             write_jsonl_v2(result, output_path, snapshot)
@@ -106,6 +112,12 @@ def export_snapshot_directory(
         "pages": report_pages,
         "counts": {state: sum(item["state"] == state for item in report_pages) for state in ("included", "empty", "excluded", "blocked", "quarantined")},
     }
+    source_catalog_path = output_dir / "source-catalog.json"
+    source_catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    source_catalog_path.write_text(
+        json.dumps({"schema_version": 1, "sources": source_catalog}, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     if report_path is not None:
         report_path = Path(report_path)
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,4 +150,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-
