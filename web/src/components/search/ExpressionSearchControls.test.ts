@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ExpressionSearchControls from './ExpressionSearchControls.vue'
 
 const mocks = vi.hoisted(() => ({
@@ -42,6 +42,10 @@ describe('ExpressionSearchControls', () => {
     mocks.loadSearchLanguages.mockResolvedValue(undefined)
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('loads languages only when the language menu is opened', async () => {
     const wrapper = mountControls()
     await flushPromises()
@@ -50,6 +54,20 @@ describe('ExpressionSearchControls', () => {
 
     await wrapper.get('[role="combobox"]').trigger('click')
     expect(mocks.loadSearchLanguages).toHaveBeenCalledTimes(1)
+  })
+
+  it('searches more languages from the dropdown input', async () => {
+    vi.useFakeTimers()
+    const wrapper = mountControls()
+
+    await wrapper.get('[role="combobox"]').trigger('click')
+    await wrapper.get('.expression-search-language-filter-input').setValue('Mandarin')
+    await vi.advanceTimersByTimeAsync(250)
+
+    expect(mocks.loadSearchLanguages).toHaveBeenLastCalledWith(
+      expect.any(Object),
+      { query: 'Mandarin' },
+    )
   })
 
   it('renders recent and alphabetical groups with names, codes, and counts', async () => {
@@ -97,11 +115,11 @@ describe('ExpressionSearchControls', () => {
   it('emits submit and exposes both focus targets', async () => {
     const wrapper = mountControls()
 
-    await wrapper.get('input[type="search"]').trigger('keydown', { key: 'Enter' })
+    await wrapper.get('.expression-search-input').trigger('keydown', { key: 'Enter' })
     expect(wrapper.emitted('submit')).toHaveLength(1)
 
     const language = wrapper.get('[role="combobox"]').element
-    const search = wrapper.get('input[type="search"]').element
+    const search = wrapper.get('.expression-search-input').element
     wrapper.vm.focusLanguage()
     expect(document.activeElement).toBe(language)
     wrapper.vm.focusSearch()

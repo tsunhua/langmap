@@ -81,7 +81,7 @@ describe('TopNav', () => {
     await wrapper.get('.search-center [role="combobox"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('.search-center [role="combobox"]').text()).toContain('Español')
-    await wrapper.get('.search-center input[type="search"]').setValue('  star  ')
+    await wrapper.get('.search-center .expression-search-input').setValue('  star  ')
     await wrapper.get('.search-center form[role="search"]').trigger('submit')
     await flushPromises()
 
@@ -92,7 +92,7 @@ describe('TopNav', () => {
     const { wrapper, router } = await mountNav()
     await flushPromises()
 
-    await wrapper.get('.search-center input[type="search"]').setValue('star')
+    await wrapper.get('.search-center .expression-search-input').setValue('star')
     await wrapper.get('.search-center form[role="search"]').trigger('submit')
     await flushPromises()
 
@@ -108,7 +108,7 @@ describe('TopNav', () => {
     await flushPromises()
 
     const drawer = wrapper.get('.drawer')
-    await drawer.get('input[type="search"]').setValue('star')
+    await drawer.get('.expression-search-input').setValue('star')
     await drawer.get('form[role="search"]').trigger('submit')
     await flushPromises()
 
@@ -139,7 +139,7 @@ describe('TopNav', () => {
     document.body.append(outside)
     outside.focus()
     document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true, cancelable: true }))
-    expect(document.activeElement).toBe(wrapper.get('.search-center input[type="search"]').element)
+    expect(document.activeElement).toBe(wrapper.get('.search-center .expression-search-input').element)
     outside.remove()
   })
 })

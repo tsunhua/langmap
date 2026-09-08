@@ -72,46 +72,44 @@ describe('useSearchLanguages', () => {
       .toEqual(['nan', 'eng', 'jpn'])
   })
 
-  it('loads every page, removes zero-count and stale languages, and groups recent first', async () => {
-    localStorage.setItem('langmap.search.languages', JSON.stringify(['zzz', 'spa', 'eng', 'jpn']))
-    resetRecentSearchLanguages({ reload: true })
-    vi.mocked(listContentLanguages)
-      .mockResolvedValueOnce({
-        items: [language('eng', 'English', 8), language('zzz', 'Empty', 0)],
-        total: 4,
-        skip: 0,
-        limit: 2,
-        hasMore: true,
-        has_more: true,
-      })
-      .mockResolvedValueOnce({
-        items: [language('spa', 'Español', 5), language('jpn', '日本語', 3)],
-        total: 4,
-        skip: 2,
-        limit: 2,
-        hasMore: false,
-        has_more: false,
-      })
+  it('loads only the first 20 content languages and searches more by query', async () => {
+    vi.mocked(listContentLanguages).mockImplementation((filters = {}) => Promise.resolve({
+      items: filters.q
+        ? [language('cmn', 'Mandarin Chinese', 12)]
+        : [language('eng', 'English', 8), language('empty', 'Empty', 0)],
+      total: filters.q ? 1 : 200,
+      skip: 0,
+      limit: 20,
+      hasMore: true,
+      has_more: true,
+    }))
 
     const searchLanguages = useSearchLanguages()
-    await searchLanguages.loadSearchLanguages({ ui_locale: 'cmn-Hant-TW' }, { pageSize: 2 })
+    await searchLanguages.loadSearchLanguages({ ui_locale: 'cmn-Hant-TW' })
 
-    expect(searchLanguages.groups.value.recent.map(item => item.code)).toEqual(['spa', 'eng', 'jpn'])
-    expect(searchLanguages.groups.value.alphabetical.map(item => item.code)).toEqual([])
-    expect(searchLanguages.languages.value.some(item => item.code === 'zzz')).toBe(false)
-    expect(searchLanguages.recent.value).toEqual(['spa', 'eng', 'jpn'])
+    expect(searchLanguages.languages.value.map(item => item.code)).toEqual(['eng'])
     expect(listContentLanguages).toHaveBeenNthCalledWith(1, {
+      q: '',
       ui_locale: 'cmn-Hant-TW',
-      sort: 'alpha',
-      limit: 2,
+      sort: 'count',
+      limit: 20,
       offset: 0,
     })
+
+    await searchLanguages.loadSearchLanguages(
+      { ui_locale: 'cmn-Hant-TW' },
+      { query: 'Mandarin' },
+    )
+
+    expect(searchLanguages.languages.value.map(item => item.code)).toEqual(['cmn'])
     expect(listContentLanguages).toHaveBeenNthCalledWith(2, {
+      q: 'Mandarin',
       ui_locale: 'cmn-Hant-TW',
-      sort: 'alpha',
-      limit: 2,
-      offset: 2,
+      sort: 'count',
+      limit: 20,
+      offset: 0,
     })
+    expect(listContentLanguages).toHaveBeenCalledTimes(2)
   })
 
   it('sorts non-recent languages by display name and then code', async () => {
@@ -228,26 +226,20 @@ describe('useSearchLanguages', () => {
       .toEqual(['spa', 'eng'])
   })
 
-  it('stops at the bounded page limit when the API keeps reporting more pages', async () => {
-    vi.mocked(listContentLanguages).mockImplementation((filters = {}) => Promise.resolve({
-      items: [language(`lang-${filters.offset ?? 0}`, `Language ${filters.offset ?? 0}`, 1)],
+  it('keeps the search-language request bounded to one page', async () => {
+    vi.mocked(listContentLanguages).mockResolvedValue({
+      items: [language('eng', 'English', 1)],
       total: 500,
-      skip: filters.offset ?? 0,
-      limit: filters.limit ?? 1,
+      skip: 0,
+      limit: 20,
       hasMore: true,
       has_more: true,
-    }))
+    })
 
     const searchLanguages = useSearchLanguages()
-    await searchLanguages.loadSearchLanguages({ ui_locale: 'rus-Latn-RU' }, { pageSize: 1 })
+    await searchLanguages.loadSearchLanguages({ ui_locale: 'rus-Latn-RU' })
 
-    expect(listContentLanguages).toHaveBeenCalledTimes(100)
-    expect(listContentLanguages).toHaveBeenLastCalledWith({
-      ui_locale: 'rus-Latn-RU',
-      sort: 'alpha',
-      limit: 1,
-      offset: 99,
-    })
-    expect(searchLanguages.languages.value).toHaveLength(100)
+    expect(listContentLanguages).toHaveBeenCalledTimes(1)
+    expect(searchLanguages.languages.value).toHaveLength(1)
   })
 })

@@ -33,10 +33,13 @@ const {
 
 const root = ref<HTMLElement | null>(null)
 const languageButton = ref<HTMLButtonElement | null>(null)
+const languageSearchInput = ref<HTMLInputElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
 const menuOpen = ref(false)
+const languageQuery = ref('')
 const activeIndex = ref(-1)
 const skipOptionClick = ref(false)
+let languageSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 const listId = `expression-search-list-${Math.random().toString(36).slice(2, 8)}`
 const recentHeadingId = `${listId}-recent-heading`
@@ -108,9 +111,10 @@ function activeIndexForSelection(): number {
 }
 
 function openMenu() {
+  languageQuery.value = ''
   menuOpen.value = true
   activeIndex.value = activeIndexForSelection()
-  void ensureLanguagesLoaded()
+  void ensureLanguagesLoaded('')
 }
 
 function toggleMenu() {
@@ -123,6 +127,11 @@ function toggleMenu() {
 
 function closeMenu() {
   menuOpen.value = false
+  if (languageSearchTimer) {
+    clearTimeout(languageSearchTimer)
+    languageSearchTimer = null
+  }
+  languageQuery.value = ''
   activeIndex.value = -1
 }
 
@@ -188,6 +197,17 @@ function onLanguageKeydown(event: KeyboardEvent) {
   if (event.key === 'Tab') closeMenu()
 }
 
+function onLanguageQueryKeydown(event: KeyboardEvent) {
+  event.stopPropagation()
+  if (event.key === 'Escape') {
+    closeMenu()
+    languageButton.value?.focus()
+    event.preventDefault()
+  } else if (event.key === 'Enter') {
+    event.preventDefault()
+  }
+}
+
 function onOptionKeydown(event: KeyboardEvent, code: string) {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
@@ -196,6 +216,11 @@ function onOptionKeydown(event: KeyboardEvent, code: string) {
 }
 
 function onFocusOut(event: FocusEvent) {
+  const nextTarget = event.relatedTarget as Node | null
+  if (!nextTarget || !root.value?.contains(nextTarget)) closeMenu()
+}
+
+function onLanguageBlur(event: FocusEvent) {
   const nextTarget = event.relatedTarget as Node | null
   if (!nextTarget || !root.value?.contains(nextTarget)) closeMenu()
 }
@@ -217,8 +242,8 @@ function onQueryKeydown(event: KeyboardEvent) {
   onSubmit()
 }
 
-function ensureLanguagesLoaded() {
-  void loadSearchLanguages(localeParams.value).catch(() => {
+function ensureLanguagesLoaded(query = languageQuery.value) {
+  void loadSearchLanguages(localeParams.value, { query }).catch(() => {
     // The composable exposes the reactive error state for the inline message.
   })
 }
@@ -241,6 +266,15 @@ watch(
   },
 )
 
+watch(languageQuery, (query) => {
+  if (!menuOpen.value) return
+  if (languageSearchTimer) clearTimeout(languageSearchTimer)
+  languageSearchTimer = setTimeout(() => {
+    languageSearchTimer = null
+    ensureLanguagesLoaded(query)
+  }, 250)
+})
+
 watch(options, (next) => {
   if (!menuOpen.value) return
   if (activeIndex.value >= next.length) activeIndex.value = activeIndexForSelection()
@@ -253,6 +287,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (languageSearchTimer) clearTimeout(languageSearchTimer)
   document.removeEventListener('mousedown', onDocumentPointerDown)
   document.removeEventListener('click', onDocumentPointerDown)
 })
@@ -282,7 +317,7 @@ onUnmounted(() => {
           :title="selectedName"
           @click="toggleMenu"
           @keydown="onLanguageKeydown"
-          @blur="closeMenu"
+          @blur="onLanguageBlur"
         >
           <span v-if="props.language && selectedLanguage" class="expression-search-language-name">
             {{ selectedName }}
@@ -305,6 +340,19 @@ onUnmounted(() => {
           :aria-label="t('search.chooseLanguage')"
           :aria-busy="loading"
         >
+          <label class="expression-search-language-filter">
+            <span class="sr-only">{{ t('languagesPage.searchPlaceholder') }}</span>
+            <input
+              ref="languageSearchInput"
+              v-model="languageQuery"
+              type="search"
+              class="expression-search-language-filter-input"
+              :placeholder="t('languagesPage.searchPlaceholder')"
+              :aria-label="t('languagesPage.searchPlaceholder')"
+              autocomplete="off"
+              @keydown="onLanguageQueryKeydown"
+            />
+          </label>
           <div v-if="loading" class="expression-search-state" role="status">
             {{ t('common.loading') }}
           </div>
@@ -372,7 +420,7 @@ onUnmounted(() => {
           </div>
 
           <div v-if="!loading && !hasOptions" class="expression-search-state" role="status">
-            {{ t('search.allLanguages') }}
+            {{ t('languagesPage.noResults') }}
           </div>
         </div>
       </div>
@@ -543,6 +591,41 @@ onUnmounted(() => {
   box-shadow: 0 6px 18px oklch(0 0 0 / 0.12);
 }
 
+.expression-search-language-filter {
+  display: block;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.expression-search-language-filter-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 13px;
+}
+
+.expression-search-language-filter-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .expression-search-group + .expression-search-group {
   border-top: 1px solid var(--border);
 }
@@ -655,6 +738,10 @@ onUnmounted(() => {
   .expression-search-dropdown {
     width: 100%;
     max-width: none;
+  }
+
+  .expression-search-language-filter-input {
+    min-height: 44px;
   }
 }
 

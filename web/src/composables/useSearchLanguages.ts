@@ -1,11 +1,11 @@
 import { computed, readonly, ref } from 'vue'
 import type { ContentLanguage, LocaleHints } from '@/api/languageIdentity'
 import { contentRevision } from '@/utils/contentRevision'
-import { loadAllContentLanguages, loadContentLanguagePage } from './contentLanguageCache'
+import { loadContentLanguagePage } from './contentLanguageCache'
 
 const STORAGE_KEY = 'langmap.search.languages'
 const MAX_RECENT = 3
-const DEFAULT_PAGE_SIZE = 100
+const DEFAULT_PAGE_SIZE = 20
 
 function readStoredRecent(): string[] {
   try {
@@ -47,8 +47,13 @@ const pendingLoads = new Map<string, Promise<ContentLanguage[]>>()
 let activeLocaleKey = ''
 let activeLoadCount = 0
 
-function localeKey(hints: LocaleHints): string {
-  return `${contentRevision.value}|${hints.ui_locale ?? ''}|${hints.secondary_ui_locale ?? ''}`
+function searchKey(hints: LocaleHints, query: string): string {
+  return JSON.stringify([
+    contentRevision.value,
+    hints.ui_locale ?? '',
+    hints.secondary_ui_locale ?? '',
+    query.trim().toLocaleLowerCase(),
+  ])
 }
 
 function compareLanguages(a: ContentLanguage, b: ContentLanguage): number {
@@ -61,11 +66,11 @@ function cleanRecent(available: ReadonlySet<string>) {
   persist(recent.value)
 }
 
-function activateLanguages(key: string, nextLanguages: ContentLanguage[]) {
+function activateLanguages(key: string, nextLanguages: ContentLanguage[], query: string) {
   languageCache.set(key, nextLanguages)
   if (activeLocaleKey !== key) return
   languages.value = nextLanguages
-  cleanRecent(new Set(nextLanguages.map(item => item.code)))
+  if (!query) cleanRecent(new Set(nextLanguages.map(item => item.code)))
 }
 
 const groups = computed<SearchLanguageGroups>(() => {
@@ -91,9 +96,18 @@ function normalizedPageSize(value: number | undefined): number {
 async function fetchSearchLanguages(
   hints: LocaleHints,
   pageSize: number,
+  query: string,
 ): Promise<ContentLanguage[]> {
-  const items = await loadAllContentLanguages(hints, { pageSize })
-  return items.filter(item => item.expression_count > 0)
+  // Count order places languages with expressions before registry-only rows,
+  // so the first bounded page remains useful after the count filter.
+  const page = await loadContentLanguagePage({
+    q: query,
+    sort: 'count',
+    limit: pageSize,
+    offset: 0,
+    ...hints,
+  })
+  return page.items.filter(item => item.expression_count > 0)
 }
 
 export async function loadSearchLanguage(
@@ -112,16 +126,17 @@ export async function loadSearchLanguage(
 
 export async function loadSearchLanguages(
   hints: LocaleHints = {},
-  options: { pageSize?: number } = {},
+  options: { pageSize?: number; query?: string } = {},
 ): Promise<void> {
-  const key = localeKey(hints)
+  const query = options.query?.trim() ?? ''
+  const key = searchKey(hints, query)
   const keyChanged = activeLocaleKey !== key
   activeLocaleKey = key
 
   const cached = languageCache.get(key)
   if (cached) {
     languages.value = cached
-    cleanRecent(new Set(cached.map(item => item.code)))
+    if (!query) cleanRecent(new Set(cached.map(item => item.code)))
     loadError.value = ''
     return
   }
@@ -132,7 +147,7 @@ export async function loadSearchLanguages(
     loadError.value = ''
     try {
       const result = await pending
-      activateLanguages(key, result)
+      activateLanguages(key, result, query)
     } catch (cause: unknown) {
       if (activeLocaleKey === key) {
         languages.value = []
@@ -149,11 +164,11 @@ export async function loadSearchLanguages(
   activeLoadCount += 1
   loading.value = true
 
-  const request = fetchSearchLanguages(hints, normalizedPageSize(options.pageSize))
+  const request = fetchSearchLanguages(hints, normalizedPageSize(options.pageSize), query)
   pendingLoads.set(key, request)
   try {
     const result = await request
-    activateLanguages(key, result)
+    activateLanguages(key, result, query)
   } catch {
     if (activeLocaleKey === key) {
       languages.value = []
