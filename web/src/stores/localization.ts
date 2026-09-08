@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { i18n, DEFAULT_LOCALE } from '@/locales'
+import { en } from '@/locales/en'
 import { projectTranslations } from '@/locales/project'
 import { getUiMessages, listUiLocales, type UiLocale } from '@/api/localization'
 import { getPreferences, putLanguageLocalePreference, type LanguageLocalePreference } from '@/api/preferences'
@@ -8,13 +9,28 @@ import { useAuthStore } from '@/stores/auth'
 
 const KEY = 'langmap.language-locales'
 function nested(messages: Array<{ key: string; text: string }>) { const out: Record<string, unknown> = {}; for (const { key, text } of messages) { let target = out; const parts = key.split('.'); for (const part of parts.slice(0, -1)) target = (target[part] ??= {}) as Record<string, unknown>; target[parts[parts.length - 1]] = text } return out }
+function flatten(messages: unknown, prefix = ''): Array<{ key: string; text: string }> {
+  if (typeof messages === 'string') return prefix ? [{ key: prefix, text: messages }] : []
+  if (!messages || typeof messages !== 'object' || Array.isArray(messages)) return []
+  return Object.entries(messages).flatMap(([key, value]) => flatten(value, prefix ? `${prefix}.${key}` : key))
+}
+
+const builtInEnglishMessages = flatten(en)
+const builtInEnglish = new Map(builtInEnglishMessages.map(({ key, text }) => [key, text]))
+
 function mergeMessages(messages: Array<{ key: string; text: string }>, primary?: string, secondary?: string) {
   const apiMessages = new Map(messages.map(({ key, text }) => [key, text]))
   const primaryMessages = projectTranslations(primary)
   const secondaryMessages = projectTranslations(secondary)
-  const keys = new Set([...Object.keys(primaryMessages), ...Object.keys(secondaryMessages), ...apiMessages.keys()])
+  const keys = new Set([
+    ...builtInEnglishMessages.map(({ key }) => key),
+    ...Object.keys(primaryMessages),
+    ...Object.keys(secondaryMessages),
+    ...apiMessages.keys(),
+  ])
   return [...keys].flatMap((key) => {
-    const text = primaryMessages[key] ?? secondaryMessages[key] ?? apiMessages.get(key)
+    // The backend bundle can lag the web release; keep missing source copy usable.
+    const text = primaryMessages[key] ?? secondaryMessages[key] ?? apiMessages.get(key) ?? builtInEnglish.get(key)
     return text === undefined ? [] : [{ key, text }]
   })
 }

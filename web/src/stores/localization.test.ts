@@ -31,6 +31,19 @@ describe('localization store', () => {
     expect(i18n.global.t('components.edgeSources')).toBe('API source markers')
   })
 
+  it('keeps built-in English messages when the API bundle is missing a key', async () => {
+    vi.mocked(getUiMessages).mockResolvedValueOnce([
+      { key: 'common.ok', text: 'OK', resolved_from: 'source' },
+    ])
+
+    const store = useLocalizationStore()
+    await store.setPreferences({ primary: 'eng-Latn-US' })
+
+    expect(i18n.global.t('search.chooseLanguage')).toBe('Choose a language')
+    expect(i18n.global.t('search.recentLanguages')).toBe('Recent languages')
+    expect(i18n.global.t('search.expressionsAvailable', { count: 2 })).toBe('2 expressions')
+  })
+
   it('deduplicates repeated locale initialization', async () => {
     const store = useLocalizationStore()
     await Promise.all([store.loadLocales(), store.loadLocales()])
