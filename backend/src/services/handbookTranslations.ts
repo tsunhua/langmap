@@ -122,7 +122,7 @@ export async function getHandbookTranslations(
     )
     ORDER BY section_position,item_position,target_text,target_expression_id
     LIMIT ?`;
-  const edgeRows = await db.prepare(edgeSql).bind(handbookId, normalizedLocale, handbookId, normalizedLocale, MAX_TRANSLATIONS).all<EdgeTranslationRow>();
+  const edgeRows = await db.prepare(edgeSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS).all<EdgeTranslationRow>();
 
   const readingSql = `WITH source_items AS (${SOURCE_ITEMS}), target_expressions AS (
       ${TARGET_EDGES}
@@ -135,7 +135,7 @@ export async function getHandbookTranslations(
     JOIN language_locales reading_locale ON reading_locale.id=readings.locale_id AND reading_locale.code=?
     ORDER BY readings.expression_id, readings.scheme, readings.value
     LIMIT ?`;
-  const readingRows = await db.prepare(readingSql).bind(handbookId, normalizedLocale, handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS).all<ReadingRow>();
+  const readingRows = await db.prepare(readingSql).bind(handbookId, normalizedLocale, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS).all<ReadingRow>();
 
   const readingsByExpression = new Map<number, HandbookTranslationReading[]>();
   const seenReadings = new Set<string>();

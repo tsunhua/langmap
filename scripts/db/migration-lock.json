@@ -259,6 +259,12 @@
       "filename": "0043_hakka_locales.sql",
       "size": 2068,
       "sha256": "ae0c0ffebe0f28770301774ada51ec32bc0e977a539e21859ebaf976e7840272"
+    },
+    {
+      "sequence": 44,
+      "filename": "0044_wikivoyage_handbook.sql",
+      "size": 170,
+      "sha256": "d7ad1d736a92c6dbf17732dee4400a5d22623da8eaaac8ff67cd5f74d17480fe"
     }
   ]
 }
