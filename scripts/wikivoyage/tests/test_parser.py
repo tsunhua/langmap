@@ -45,6 +45,46 @@ def test_reverse_definition_row_keeps_target_and_inline_reading() -> None:
     assert result.entries[0]["pronunciations"][0]["value"] == "jīn"
 
 
+def test_thai_target_first_row_keeps_target_language_and_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[35697]
+    result = parse_phrase_rows("===Basics===\n; เปิด (''pèrt'') : Open", profile, _sections())
+
+    assert len(result.entries) == 1
+    entry = result.entries[0]
+    assert entry["raw_headword"] == "เปิด"
+    assert entry["senses"][0]["equivalents"][0]["value"] == "Open"
+    assert entry["pronunciations"][0]["value"] == "pèrt"
+    assert entry["raw"]["row_orientation"] == "target-to-english"
+
+
+def test_reading_first_chinese_row_uses_parenthetical_english_gloss() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows("===Eating===\n;''sī'': 丝 (絲) (shredded)", profile, _sections())
+
+    assert [(entry["raw_headword"], entry["senses"][0]["equivalents"][0]["value"]) for entry in result.entries] == [
+        ("丝", "shredded"),
+        ("絲", "shredded"),
+    ]
+    assert all(entry["pronunciations"][0]["value"] == "sī" for entry in result.entries)
+    assert all(entry["raw"]["row_orientation"] == "reading-to-target-gloss" for entry in result.entries)
+
+
+def test_infobox_reading_markup_does_not_leak_into_english() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Lodging===\n{{infobox|Common signs|\n; 推 (推) : Push [''tuī'']\n; 饮水 (飲水) / 饮用水 (飲用水) : Drinking water [''yǐnshuǐ''] / [''yǐnyòngshuǐ'']}}",
+        profile,
+        _sections(),
+    )
+
+    assert [(entry["raw_headword"], entry["senses"][0]["equivalents"][0]["value"]) for entry in result.entries] == [
+        ("推", "Push"),
+        ("推", "Push"),
+        ("饮水", "Drinking water"),
+        ("飲水", "Drinking water"),
+    ]
+
+
 def test_parser_extracts_only_explicit_phrase_rows_and_readings() -> None:
     result = parse_phrase_rows(_content(), _profile(), _sections())
 

@@ -29,6 +29,9 @@ _INLINE_TOKEN = re.compile(
     rf"(?=\s*(?:[,;/]|\(|$|[{_TARGET_CORE_RANGES}]))"
 )
 _CJK = re.compile(r"[\u2e80-\u9fff\uf900-\ufaff]")
+_THAI = re.compile(r"[\u0e00-\u0e7f]")
+_JAPANESE = re.compile(r"[\u3040-\u30ff\u31f0-\u31ff\u2e80-\u9fff\uf900-\ufaff]")
+_KOREAN = re.compile(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]")
 _PLACEHOLDERS = frozenset({"", "-", "—", "…", "...", "n/a", "none", "tbd"})
 _READING_NOTE_WORDS = frozenset({
     "formal", "informal", "polite", "colloquial", "literally", "lit", "example",
@@ -449,6 +452,11 @@ def clean_markup(value: str) -> str:
     text = re.sub(r"<[^>]+>", "", text)
     text = text.replace("&nbsp;", " ").replace("&ndash;", "–").replace("&mdash;", "—")
     text = text.replace("'''", "").replace("''", "")
+    # Bracketed readings and infobox terminators can become visible after
+    # their italic/template wrappers are removed. They are source markup, not
+    # part of a phrase.
+    text = re.sub(r"\[\s*\]", "", text)
+    text = re.sub(r"\s*\}\}\s*$", "", text)
     return canonicalize_text(text)
 
 
@@ -559,6 +567,41 @@ def _target_text(value: str) -> str:
         )
     cleaned = re.sub(r"\s+([,;!?])", r"\1", cleaned)
     return canonicalize_text(cleaned).strip(" /,;；")
+
+
+def _looks_like_target_script(value: str, language_code: str | None) -> bool:
+    """Return whether a value contains the reviewed page's target script."""
+
+    if language_code in {"cmn", "yue"}:
+        return bool(_CJK.search(value))
+    if language_code == "jpn":
+        return bool(_JAPANESE.search(value))
+    if language_code == "kor":
+        return bool(_KOREAN.search(value))
+    if language_code == "tha":
+        return bool(_THAI.search(value))
+    # Preserve the original conservative behavior for an unlisted script.
+    return bool(_CJK.search(value))
+
+
+def _english_gloss(
+    value: str,
+    *,
+    language_code: str | None,
+    reading_values: Iterable[str] = (),
+) -> str:
+    """Extract a Latin parenthetical gloss from a reading-first row."""
+
+    reading_keys = {canonicalize_text(item).casefold() for item in reading_values}
+    candidates: list[str] = []
+    for match in re.finditer(r"\(([^()]*)\)", clean_markup(value)):
+        note = canonicalize_text(match.group(1)).strip(" .。;；/")
+        if not note or _looks_like_target_script(note, language_code):
+            continue
+        if note.casefold() in reading_keys or note.casefold() in _READING_NOTE_WORDS:
+            continue
+        candidates.append(note)
+    return candidates[-1] if candidates else ""
 
 
 def _valid_phrase(value: str) -> bool:
@@ -710,19 +753,52 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
         # title text or fuzzy language heuristics.
         left_markup = clean_markup(raw_left)
         right_markup = clean_markup(raw_right)
-        reversed_row = bool(_CJK.search(left_markup) and not _CJK.search(right_markup))
-        if reversed_row:
+        left_readings = _reading_candidates(raw_left)
+        left_reading_text = canonicalize_text(left_markup).strip(" /,;；").casefold()
+        explicit_reading_texts = {
+            canonicalize_text(reading).strip(" /,;；").casefold()
+            for reading, _scheme in left_readings
+        }
+        explicit_reading_texts.add(
+            canonicalize_text(" / ".join(reading for reading, _scheme in left_readings)).casefold()
+        )
+        reading_first = bool(
+            left_readings
+            and any(scheme in {"italic", "bracket", "ipa"} for _reading, scheme in left_readings)
+            and left_reading_text in explicit_reading_texts
+            and not _looks_like_target_script(left_markup, page.lang_code)
+            and _looks_like_target_script(right_markup, page.lang_code)
+        )
+        reversed_row = bool(
+            not reading_first
+            and _looks_like_target_script(left_markup, page.lang_code)
+            and not _looks_like_target_script(right_markup, page.lang_code)
+        )
+        if reading_first:
+            raw_english, raw_target = raw_right, raw_right
+            english = _english_gloss(
+                raw_right,
+                language_code=page.lang_code,
+                reading_values=(reading for reading, _scheme in left_readings),
+            )
+            target = _target_text(raw_target)
+            readings = left_readings
+        elif reversed_row:
             raw_english, raw_target = raw_right, raw_left
+            english = _target_text(raw_english)
+            target = _target_text(raw_target)
+            readings = _reading_candidates(raw_left) or _reading_candidates(raw_right)
         else:
             raw_english, raw_target = raw_left, raw_right
-        english = _target_text(raw_english) if reversed_row else clean_markup(raw_english)
-        target = _target_text(raw_target)
+            english = clean_markup(raw_english)
+            target = _target_text(raw_target)
+            readings = _reading_candidates(raw_target)
+        if reading_first and not _valid_phrase(english):
+            diagnostics.append({"error_code": "missing_english_gloss", "line": line_number, "source_wikitext": raw_line})
+            continue
         if not _valid_phrase(english) or not _valid_phrase(target):
             diagnostics.append({"error_code": "empty_phrase_side", "line": line_number, "source_wikitext": raw_line})
             continue
-        readings = _reading_candidates(raw_target)
-        if reversed_row:
-            readings = _reading_candidates(raw_left) or _reading_candidates(raw_right)
 
         # A reviewed split-by-locale profile (currently the Mandarin page)
         # may carry a simplified form followed by its traditional form. If a
@@ -783,7 +859,13 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
                 )
                 record["raw"]["wikitext_line"] = line_number
                 record["raw"]["source_wikitext"] = raw_line
-                record["raw"]["row_orientation"] = "target-to-english" if reversed_row else "english-to-target"
+                record["raw"]["row_orientation"] = (
+                    "reading-to-target-gloss"
+                    if reading_first
+                    else "target-to-english"
+                    if reversed_row
+                    else "english-to-target"
+                )
                 record["raw"]["source_marker"] = f"oldid:0#{current_key}/{row_number}"
                 diagnostics.extend({**item, "line": line_number} for item in row_diagnostics)
                 entries.append(record)

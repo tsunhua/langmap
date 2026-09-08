@@ -82,6 +82,10 @@ def build_managed_handbook(
 ) -> BuildReport:
     """Rebuild managed sections/items in one transaction and validate counts."""
 
+    # Rebuilding sections relies on ON DELETE CASCADE for their items. SQLite
+    # defaults foreign-key enforcement to off for a new connection, which can
+    # otherwise leave the previous generated item rows orphaned.
+    connection.execute("PRAGMA foreign_keys=ON")
     connection.row_factory = sqlite3.Row
     system = connection.execute("SELECT id FROM users WHERE username='langmap' ORDER BY id LIMIT 1").fetchone()
     if system is None:
@@ -141,6 +145,7 @@ def build_managed_handbook(
 def build_from_database(database: Path, section_catalog_path: Path) -> BuildReport:
     connection = sqlite3.connect(Path(database))
     try:
+        connection.execute("PRAGMA foreign_keys=ON")
         return build_managed_handbook(connection, load_section_catalog(section_catalog_path))
     finally:
         connection.close()
@@ -159,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     connection = sqlite3.connect(args.database)
     try:
+        connection.execute("PRAGMA foreign_keys=ON")
         report = build_managed_handbook(
             connection,
             load_section_catalog(args.section_catalog),
