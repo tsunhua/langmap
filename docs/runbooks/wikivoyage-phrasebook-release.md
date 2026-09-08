@@ -46,6 +46,10 @@ Quality gate 必須通過以下條件：
 - `review/quarantine.jsonl`、`review/removals.jsonl` 的數量已被人工檢視；
 - 無 `invalid_page_state`、`page_accounting_mismatch` 或 `jsonl_page_count_mismatch`。
 
+Parser 會省略詞句末尾句號，將詞句 `/` 替代輸出為獨立列，並將 reading 內的 `/` 拆成
+多個 reading；抽查時確認展開後仍保留完整上下文與來源 marker。括號備註及 IPA 記號的
+斜線不屬於詞句替代，不應強行拆開。
+
 `blocked` 不等於錯誤：它表示 page catalog 或 registry identity 尚未完成。要解鎖時先
 更新 language reference／locale seed，重新跑 registry report，再重做該頁 JSONL；不要在
 前端或 importer 寫例外。`quarantined`、reading script mismatch、反向列表方向或頁面

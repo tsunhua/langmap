@@ -5,6 +5,10 @@
 Structured JSONL v2，再交給既有 dictionary staging／local-import。最後可在本地 SQLite
 建立唯一的 `enwikivoyage-phrasebooks` managed handbook。
 
+解析時會移除詞句末尾的句號，並把詞句中的 `/` 替代展開成獨立詞句；讀音中的 `/` 也會
+展開為多個 reading。括號內的備註與 IPA 記號中的斜線不視為詞句替代；固定快照的來源
+標記仍以每個展開後的輸出列遞增，便於 handbook 重新建立與來源範圍驗證。
+
 原始快照與 JSONL 都是外部 artifact，不提交 Git。建議把它們放在
 `/Volumes/DATA/langmap-wikivoyage/` 或其他具備備份與 checksum 的目錄。
 

@@ -14,7 +14,7 @@ from .download import PageDescriptor
 from .parser import PageSnapshot, export_page
 
 
-EXPORTER_VERSION = "wikivoyage-phrasebook-1"
+EXPORTER_VERSION = "wikivoyage-phrasebook-2"
 
 
 def _load_manifest(path: Path) -> dict[str, Any]:

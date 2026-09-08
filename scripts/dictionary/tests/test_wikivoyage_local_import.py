@@ -61,7 +61,7 @@ def test_wikivoyage_import_preserves_direct_edge_reading_and_markers(tmp_path: P
         "entry_count": 1,
         "input_file_name": "pages/16153-5332510.wikitext",
         "input_sha256": "b" * 64,
-        "exporter_version": "wikivoyage-phrasebook-1",
+        "exporter_version": "wikivoyage-phrasebook-2",
     }
     jsonl.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in (header, _entry())) + "\n", encoding="utf-8")
     (tmp_path / "source-catalog.json").write_text(json.dumps({"sources": {

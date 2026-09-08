@@ -29,8 +29,8 @@ def test_split_profile_emits_exact_simplified_and_traditional_locales() -> None:
 
     assert len(result.entries) == 2
     assert [(entry["raw_headword"], entry["raw"]["target_locale_code"]) for entry in result.entries] == [
-        ("你好。", "cmn-Hans-CN"),
-        ("你好。", "cmn-Hant-TW"),
+        ("你好", "cmn-Hans-CN"),
+        ("你好", "cmn-Hant-TW"),
     ]
     assert all(entry["pronunciations"][0]["locale"] == entry["raw"]["target_locale_code"] for entry in result.entries)
 
@@ -51,8 +51,8 @@ def test_parser_extracts_only_explicit_phrase_rows_and_readings() -> None:
     assert result.state == "included"
     assert len(result.entries) == 5
     first = result.entries[0]
-    assert first["raw_headword"] == "こんにちは。"
-    assert first["senses"][0]["equivalents"][0]["value"] == "Good afternoon."
+    assert first["raw_headword"] == "こんにちは"
+    assert first["senses"][0]["equivalents"][0]["value"] == "Good afternoon"
     assert first["pronunciations"][0]["scheme"] == "hepburn"
     assert first["pronunciations"][1]["scheme"] == "hepburn"
     assert first["raw"]["section_key"] == "basics"
@@ -85,3 +85,41 @@ def test_cjk_in_romanization_is_quarantined_without_dropping_expression() -> Non
     assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "Hello"
     assert result.entries[0]["pronunciations"] == []
     assert any(item["error_code"] == "reading_script_mismatch" for item in result.diagnostics)
+
+
+def test_terminal_stops_and_slash_variants_are_normalized() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[35697]
+    result = parse_phrase_rows(
+        "===Shopping===\n; OK, I'll take it. : ตกลง ผม/ดิฉัน จะซื้อ (''tok long phŏm/dì-chăn jà súe'')",
+        profile,
+        _sections(),
+    )
+
+    assert [(entry["raw_headword"], entry["senses"][0]["equivalents"][0]["value"]) for entry in result.entries] == [
+        ("ตกลง ผม จะซื้อ", "OK, I'll take it"),
+        ("ตกลง ดิฉัน จะซื้อ", "OK, I'll take it"),
+    ]
+    assert [entry["pronunciations"][0]["value"] for entry in result.entries] == [
+        "tok long phŏm jà súe",
+        "tok long dì-chăn jà súe",
+    ]
+
+    no_space = parse_phrase_rows(
+        "===Shopping===\n; OK, I'll take it. : ตกลง ผม/ดิฉันเอา (''tok long phŏm/dì-chăn ao'')",
+        profile,
+        _sections(),
+    )
+    assert [entry["raw_headword"] for entry in no_space.entries] == ["ตกลง ผมเอา", "ตกลง ดิฉันเอา"]
+
+
+def test_slashes_in_readings_become_separate_readings_without_new_expression() -> None:
+    result = parse_phrase_rows(_content(), _profile(), _sections())
+
+    toilet = next(entry for entry in result.entries if entry["raw_headword"].startswith("お手洗い"))
+    assert len(result.entries) == 5
+    assert [reading["value"] for reading in toilet["pronunciations"]] == [
+        "Otearai wa doko desu ka?",
+        "toire wa doko desu ka?",
+        "Oh-teh-ah-rah-ee",
+        "toh-ee-reh",
+    ]
