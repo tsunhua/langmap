@@ -82,7 +82,71 @@ def test_infobox_reading_markup_does_not_leak_into_english() -> None:
         ("推", "Push"),
         ("饮水", "Drinking water"),
         ("飲水", "Drinking water"),
+        ("饮用水", "Drinking water"),
+        ("飲用水", "Drinking water"),
     ]
+
+
+def test_chinese_grammar_example_does_not_promote_formula_to_english() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Going to the doctor===\n{{infobox|Asking a question in Chinese|\n; Verb/Adj. + 不 (不) ''bù'' + Verb/Adj. : Example - 好不好？ （好不好？）''hăo bù hăo?'' - Is that okay? / Are you all right? (literally - good not good?)\n}}",
+        profile,
+        _sections(),
+    )
+
+    assert len(result.entries) == 4
+    assert {entry["raw_headword"] for entry in result.entries} == {"好不好？"}
+    assert {entry["senses"][0]["equivalents"][0]["value"] for entry in result.entries} == {
+        "Is that okay?",
+        "Are you all right?",
+    }
+    assert all(
+        not entry["raw_headword"].startswith("Example -")
+        and not entry["senses"][0]["equivalents"][0]["value"].startswith("Verb")
+        for entry in result.entries
+    )
+
+
+def test_chinese_positive_negative_pair_becomes_binary_question_phrase() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Problems===\n{{infobox|To be or not to be?|\n; To be or not to be: 是 (是) ''shì'', 不是 (不是) ''bú shì''\n}}",
+        profile,
+        _sections(),
+    )
+
+    assert len(result.entries) == 2
+    assert {entry["raw_headword"] for entry in result.entries} == {"是不是"}
+    assert {entry["senses"][0]["equivalents"][0]["value"] for entry in result.entries} == {
+        "To be or not to be"
+    }
+    assert all(
+        {reading["value"] for reading in entry["pronunciations"]} == {"shì bú shì"}
+        for entry in result.entries
+    )
+
+
+def test_chinese_slash_target_pairs_each_locale_form_with_its_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Lodging===\n{{infobox|Common signs|\n; 厕所 (廁所) / 洗手间  (洗手間) / 盥洗室 (盥洗室) : Toilet [''cèsuǒ''] / [''xǐshǒujiān''] / [''guànxǐshì'']\n}}",
+        profile,
+        _sections(),
+    )
+
+    assert len(result.entries) == 6
+    assert {
+        (entry["raw_headword"], entry["raw"]["target_locale_code"], entry["pronunciations"][0]["value"])
+        for entry in result.entries
+    } == {
+        ("厕所", "cmn-Hans-CN", "cèsuǒ"),
+        ("洗手间", "cmn-Hans-CN", "xǐshǒujiān"),
+        ("盥洗室", "cmn-Hans-CN", "guànxǐshì"),
+        ("廁所", "cmn-Hant-TW", "cèsuǒ"),
+        ("洗手間", "cmn-Hant-TW", "xǐshǒujiān"),
+        ("盥洗室", "cmn-Hant-TW", "guànxǐshì"),
+    }
 
 
 def test_parser_extracts_only_explicit_phrase_rows_and_readings() -> None:
@@ -163,3 +227,100 @@ def test_slashes_in_readings_become_separate_readings_without_new_expression() -
         "Oh-teh-ah-rah-ee",
         "toh-ee-reh",
     ]
+
+
+def test_two_line_chinese_definition_rows_are_imported() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Basics===\n;Yes, I've eaten.\n:已经吃了 (已經吃了) ''Yǐjīng chī le''",
+        profile,
+        _sections(),
+    )
+
+    assert [(entry["raw_headword"], entry["senses"][0]["equivalents"][0]["value"]) for entry in result.entries] == [
+        ("已经吃了", "Yes, I've eaten"),
+        ("已經吃了", "Yes, I've eaten"),
+    ]
+    assert all(entry["raw"]["wikitext_line"] == 2 for entry in result.entries)
+
+    slash = parse_phrase_rows(
+        "===Eating===\n; Takeout / take away\n: 打包 (打包) ''dǎ bāo'' / 外带 (外帶) ''wài dài''",
+        profile,
+        _sections(),
+    )
+    assert {entry["senses"][0]["equivalents"][0]["value"] for entry in slash.entries} == {"Takeout", "take away"}
+
+
+def test_nested_sections_inherit_the_reviewed_parent_and_driving_maps_to_transport() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Transportation===\n====Bus and Train====\n; bus : 公交车 (公交車) ''gōng jiāo chē''\n====Directions====\n; street : 街 (街) ''jiē''\n====Taxi====\n; Taxi : 出租车 (出租車) ''chū zū chē''\n===Driving===\n; I want to rent a car. : 我想要租车。 (我想要租車。) ''wǒ xiǎngyào zūchē''",
+        profile,
+        _sections(),
+    )
+
+    values = [entry["senses"][0]["equivalents"][0]["value"] for entry in result.entries]
+    assert values.count("bus") == 2
+    assert values.count("street") == 2
+    assert values.count("Taxi") == 2
+    assert values.count("I want to rent a car") == 2
+    assert {entry["raw"]["section_key"] for entry in result.entries if entry["senses"][0]["equivalents"][0]["value"] != "street"} == {"transport"}
+    assert {entry["raw"]["section_key"] for entry in result.entries if entry["senses"][0]["equivalents"][0]["value"] == "street"} == {"directions"}
+
+
+def test_spanish_regional_gender_row_drops_explanatory_prose() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[33822]
+    result = parse_phrase_rows(
+        "===Eating===\n; Excuse me, waiter/waitress? (getting attention of server'): ¡camarero/a! (''kah-mah-REH-roh/ah'') (Spain), ¡mesero/a! (''meh-SEH-roh/-rah'') (Latin America), ¡mozo/a! (''MOH-soh/sah'') (Argentina and Uruguay). In some places (e.g. Nicaragua) you may simply whistle or make a sssss ssssss sound to get the attention of a waitress/waiter",
+        profile,
+        _sections(),
+    )
+
+    targets = {entry["raw_headword"] for entry in result.entries}
+    assert targets == {"¡camarero!", "¡camarera!", "¡mesero!", "¡mesera!", "¡mozo!", "¡moza!"}
+    assert all("In some places" not in target and "waitress" not in target for target in targets)
+    readings = {reading["value"] for entry in result.entries for reading in entry["pronunciations"]}
+    assert "In some places" not in readings
+    assert "ah" in readings and "-rah" in readings
+
+
+def test_spanish_slash_target_drops_empty_reading_shell() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[33822]
+    result = parse_phrase_rows(
+        "===Transportation===\n; CAUTION/ATTENION : ¡PRECAUCIÓN!/¡ATENCIÓN! (''pray-caw-SYON''/''ah-ten-SYON'')",
+        profile,
+        _sections(),
+    )
+
+    assert [entry["raw_headword"] for entry in result.entries] == ["¡PRECAUCIÓN!", "¡ATENCIÓN!"]
+    assert [entry["senses"][0]["equivalents"][0]["value"] for entry in result.entries] == ["Caution", "Attenion"]
+    assert [entry["pronunciations"][0]["value"] for entry in result.entries] == [
+        "pray-caw-SYON",
+        "ah-ten-SYON",
+    ]
+
+
+def test_german_target_first_infobox_keeps_german_as_the_headword() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Basics===\n{{infobox|The right way to say yes|\n; Ja, ich esse gern Wurst. : Yes, I like eating sausages.\n}}",
+        profile,
+        _sections(),
+    )
+
+    assert len(result.entries) == 1
+    entry = result.entries[0]
+    assert entry["raw_headword"] == "Ja, ich esse gern Wurst"
+    assert entry["senses"][0]["equivalents"][0]["value"] == "Yes, I like eating sausages"
+    assert entry["raw"]["row_orientation"] == "target-to-english"
+
+
+def test_all_caps_multiword_english_phrase_uses_sentence_case() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[33822]
+    result = parse_phrase_rows(
+        "===Transportation===\n; ONE WAY : SENTIDO ÚNICO",
+        profile,
+        _sections(),
+    )
+
+    assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "One way"

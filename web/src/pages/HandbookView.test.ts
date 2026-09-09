@@ -39,6 +39,7 @@ function handbook(id: string, title: string) {
 describe('HandbookView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.sessionStorage.clear()
     route.params.id = 'old-handbook'
     route.query = {}
   })
@@ -86,6 +87,33 @@ describe('HandbookView', () => {
     expect(wrapper.text()).toContain('トイレはどこですか？')
     expect(wrapper.text()).toContain('hepburn: toire wa doko desu ka')
     expect(wrapper.find('.hb-edit-btn').exists()).toBe(false)
+  })
+
+  it('does not reuse a translation cache created for a previous handbook expression set', async () => {
+    route.params.id = 'managed-handbook'
+    route.query = { target_locale: 'jpn-Jpan-JP' }
+    window.sessionStorage.setItem('handbook:managed-handbook:translations:jpn-Jpan-JP', JSON.stringify({
+      target_locale: 'jpn-Jpan-JP',
+      items: [{ source_expression_id: 'old-10', translations: [{ id: '20', text: '舊翻譯', lang_code: 'jpn', language_locale_code: 'jpn-Jpan-JP', language_name: 'Japanese', readings: [] }] }],
+    }))
+    detail.mockResolvedValue({
+      ...handbook('managed-handbook', 'English phrasebook'),
+      managed: true,
+      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Where is the toilet?', lang_code: 'eng' }] }],
+    })
+    translations.mockResolvedValue({
+      target_locale: 'jpn-Jpan-JP',
+      items: [{ source_expression_id: '10', translations: [{ id: '21', text: '新翻譯', lang_code: 'jpn', language_locale_code: 'jpn-Jpan-JP', language_name: 'Japanese', readings: [] }] }],
+    })
+
+    const wrapper = mount(HandbookView, {
+      global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
+    })
+    await flushPromises()
+
+    expect(translations).toHaveBeenCalledWith('managed-handbook', 'jpn-Jpan-JP', expect.any(Object), expect.any(AbortSignal))
+    expect(wrapper.text()).toContain('新翻譯')
+    expect(wrapper.text()).not.toContain('舊翻譯')
   })
 
   it('does not render translation slots for an unmanaged handbook', async () => {

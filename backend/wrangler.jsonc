@@ -1,26 +1,54 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "langmap-backend-v2",
-  "compatibility_date": "2026-07-29",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "./src/index.tsx",
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  },
-  "routes": [
-    { "pattern": "langmap.io", "custom_domain": true }
-  ],
-  "d1_databases": [
-    { "binding": "DB", "database_name": "langmap-v2", "database_id": "75c7dea7-f453-4ada-8527-d5ff481b54f3" }
-  ],
-  "r2_buckets": [
-    { "binding": "IMAGE_BUCKET", "bucket_name": "langmap-images" }
-  ],
-  "observability": {
-    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
-    "traces": { "enabled": true, "head_sampling_rate": 0.01, "persist": true }
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "langmap-backend-v2",
+	"compatibility_date": "2026-07-29",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"main": "./src/index.tsx",
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"routes": [
+		{
+			"pattern": "langmap.io",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "langmap-v2",
+			"database_id": "75c7dea7-f453-4ada-8527-d5ff481b54f3"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "IMAGE_BUCKET",
+			"bucket_name": "langmap-images"
+		}
+	],
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true
+		},
+		"traces": {
+			"enabled": true,
+			"head_sampling_rate": 0.01,
+			"persist": true
+		},
+		"redact_query_string": false
+	},
+	"vars": {
+		"IMAGES_PUBLIC_URL": "https://images.langmap.io",
+		"R2_IMAGES_BUCKET": "langmap-images"
+	}
 }

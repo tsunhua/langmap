@@ -5,7 +5,7 @@
     "5837": {"pageid": 5837, "title": "Cantonese phrasebook", "lang_code": "yue", "locale_codes": ["yue-Hant-HK"], "reading_schemes": ["jyutping"], "status": "included", "allow_tables": true},
     "7357": {"pageid": 7357, "title": "Chinese phrasebook", "lang_code": "cmn", "locale_codes": ["cmn-Hans-CN", "cmn-Hant-TW"], "reading_schemes": ["pinyin"], "status": "included", "allow_tables": true, "split_by_locale": true},
     "12094": {"pageid": 12094, "title": "French phrasebook", "lang_code": "fra", "locale_codes": ["fra-Latn-FR"], "reading_schemes": ["wikivoyage-respelling"], "status": "included"},
-    "12641": {"pageid": 12641, "title": "German phrasebook", "lang_code": "deu", "locale_codes": ["deu-Latn-DE"], "reading_schemes": ["wikivoyage-respelling"], "status": "included"},
+    "12641": {"pageid": 12641, "title": "German phrasebook", "lang_code": "deu", "locale_codes": ["deu-Latn-DE"], "reading_schemes": ["wikivoyage-respelling"], "status": "included", "target_first_infoboxes": ["The right way to say yes"]},
     "15917": {"pageid": 15917, "title": "Italian phrasebook", "lang_code": "ita", "locale_codes": ["ita-Latn-IT"], "reading_schemes": ["wikivoyage-respelling"], "status": "included"},
     "16153": {"pageid": 16153, "title": "Japanese phrasebook", "lang_code": "jpn", "locale_codes": ["jpn-Jpan-JP"], "reading_schemes": ["hepburn"], "status": "included", "allow_tables": true},
     "18099": {"pageid": 18099, "title": "Korean phrasebook", "lang_code": "kor", "locale_codes": ["kor-Kore-KR"], "reading_schemes": ["wikivoyage-romanization"], "status": "included"},

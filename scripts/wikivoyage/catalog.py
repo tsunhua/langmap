@@ -22,6 +22,7 @@ class PageProfile:
     reason: str | None = None
     allow_tables: bool = False
     split_by_locale: bool = False
+    target_first_infoboxes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -115,6 +116,11 @@ def load_page_catalog(path: Path) -> dict[int, PageProfile]:
             reason=str(raw_profile["reason"]).strip() if raw_profile.get("reason") else None,
             allow_tables=bool(raw_profile.get("allow_tables", False)),
             split_by_locale=bool(raw_profile.get("split_by_locale", False)),
+            target_first_infoboxes=tuple(
+                str(value).strip()
+                for value in raw_profile.get("target_first_infoboxes", ())
+                if str(value).strip()
+            ),
         )
     return result
 

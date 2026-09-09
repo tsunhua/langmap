@@ -5,7 +5,7 @@ import { getLanguageLocale, listLanguageLocales, type LanguageLocale } from '@/a
 import { useLocaleParams } from '@/composables/useLocaleParams'
 import LanguageLocaleCreateDialog from './LanguageLocaleCreateDialog.vue'
 
-const props = withDefaults(defineProps<{ modelValue: string; label: string; langCode?: string | undefined; allowCreate?: boolean }>(), { allowCreate: true })
+const props = withDefaults(defineProps<{ modelValue: string; label: string; placeholder?: string; langCode?: string | undefined; allowCreate?: boolean }>(), { allowCreate: true, placeholder: 'Search language locales' })
 const localeParams = useLocaleParams()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -20,6 +20,7 @@ const open = ref(false)
 const dialogOpen = ref(false)
 const activeIndex = ref(-1)
 const listId = `locale-picker-${Math.random().toString(36).slice(2, 8)}`
+const inputId = `${listId}-input`
 const selectedLabel = computed(() => selectedLocale.value?.display_name ?? selectedLocale.value?.name ?? selectedLocale.value?.name_en ?? props.modelValue)
 watch(() => props.modelValue, (value) => {
   if (!value || selectedLocale.value?.code === value) {
@@ -61,7 +62,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 </script>
 
-<template><div class="locale-picker"><label>{{ label }}</label><div v-if="modelValue && !open" class="selected"><span class="selected-name" :title="modelValue">{{ selectedLabel }}</span><button type="button" aria-label="Clear locale" @click="clear"><X :size="16" /></button></div><div v-else class="input-wrap"><input ref="input" v-model="query" role="combobox" :aria-label="label" :aria-expanded="open" :aria-controls="listId" :aria-activedescendant="activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined" placeholder="Search language locales" @focus="open = true" @keydown="onKeydown"><div v-if="open && (query || options.length)" :id="listId" role="listbox" class="dropdown"><button v-for="(locale, index) in options" :id="`${listId}-${index}`" :key="locale.code" type="button" role="option" :aria-selected="index === activeIndex" @mousedown.prevent="select(locale)"><span class="option-name">{{ locale.display_name ?? locale.name }}</span><span class="option-meta"><span v-if="locale.name && locale.name_en && locale.name !== locale.name_en">{{ locale.name_en }}</span><code>{{ locale.code }}</code></span></button><span v-if="query && !options.length" class="empty">No locale found</span></div></div><button v-if="allowCreate" type="button" class="btn btn-ghost create" data-action="create-locale" @click="dialogOpen = true"><Plus :size="16" /> Create locale</button><LanguageLocaleCreateDialog :open="dialogOpen" :lang-code="langCode" @close="dialogOpen = false" @created="created" /></div></template>
+<template><div class="locale-picker"><label :for="inputId">{{ label }}</label><div v-if="modelValue && !open" class="selected"><span class="selected-name" :title="modelValue">{{ selectedLabel }}</span><button type="button" aria-label="Clear locale" @click="clear"><X :size="16" /></button></div><div v-else class="input-wrap"><input :id="inputId" ref="input" v-model="query" role="combobox" :aria-label="label" :aria-expanded="open" :aria-controls="listId" :aria-activedescendant="activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined" :placeholder="placeholder" @focus="open = true" @keydown="onKeydown"><div v-if="open && (query || options.length)" :id="listId" role="listbox" class="dropdown"><button v-for="(locale, index) in options" :id="`${listId}-${index}`" :key="locale.code" type="button" role="option" :aria-selected="index === activeIndex" @mousedown.prevent="select(locale)"><span class="option-name">{{ locale.display_name ?? locale.name }}</span><span class="option-meta"><span v-if="locale.name && locale.name_en && locale.name !== locale.name_en">{{ locale.name_en }}</span><code>{{ locale.code }}</code></span></button><span v-if="query && !options.length" class="empty">No locale found</span></div></div><button v-if="allowCreate" type="button" class="btn btn-ghost create" data-action="create-locale" @click="dialogOpen = true"><Plus :size="16" /> Create locale</button><LanguageLocaleCreateDialog :open="dialogOpen" :lang-code="langCode" @close="dialogOpen = false" @created="created" /></div></template>
 
 <style scoped>
 .locale-picker { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

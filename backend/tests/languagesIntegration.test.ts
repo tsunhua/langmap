@@ -29,13 +29,15 @@ async function createExpression(token: string, text: string, languageLocaleCode:
 }
 
 describe('languages API', () => {
-  it('lists only languages that have content', async () => {
+  it('lists every registered language, including languages without content', async () => {
     const res = await fetch(`${API}?limit=50`);
     expect(res.status).toBe(200);
     const body = await res.json() as { data: { total: number; items: Array<{ code: string; name: string; name_en: string; expression_count: number; locale_count: number }> } };
     expect(body.data.items.length).toBeGreaterThan(0);
-    expect(body.data.total).toBeLessThan(1000);
-    for (const item of body.data.items) expect(item.expression_count + item.locale_count).toBeGreaterThan(0);
+    const registry = await fetch(`${BASE_URL}/api/v2/language-registry/languages?limit=1`);
+    const registryBody = await registry.json() as { data: { total: number } };
+    expect(body.data.total).toBe(registryBody.data.total);
+    for (const item of body.data.items) expect(item.expression_count + item.locale_count).toBeGreaterThanOrEqual(0);
   });
 
   it('sorts language summaries alphabetically when requested', async () => {

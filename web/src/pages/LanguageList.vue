@@ -96,7 +96,7 @@ onUnmounted(() => {
     </div>
 
     <div class="lg-stats">
-      <StatBox :label="t('languagesPage.languageCount')" :value="languages.length" />
+      <StatBox :label="t('languagesPage.languageCount')" :value="total.toLocaleString()" />
       <StatBox :label="t('languagesPage.expressionCount')" :value="totalExpressions.toLocaleString()" />
     </div>
 

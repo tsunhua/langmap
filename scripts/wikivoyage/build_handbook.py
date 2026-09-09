@@ -27,6 +27,48 @@ class BuildReport:
     reused: bool
 
 
+def _casefold_text(text: str) -> str:
+    """Return the handbook identity key for an English expression.
+
+    The expression table intentionally keeps source spellings separate. A
+    managed handbook, however, should not show the same phrase twice merely
+    because one source writes it in all caps.
+    """
+
+    return text.strip().casefold()
+
+
+def _case_style_rank(text: str) -> int:
+    """Rank display spellings, preferring ordinary sentence case.
+
+    A lower rank is preferred. We only use this rank after grouping exact
+    casefold variants, so it never changes punctuation, wording, or spacing.
+    """
+
+    letters = [character for character in text if character.isalpha()]
+    if not letters:
+        return 4
+    if all(character.isupper() for character in letters):
+        return 3
+    if letters[0].isupper() and all(character.islower() for character in letters[1:]):
+        return 0
+    if letters[0].isupper():
+        return 1
+    return 2
+
+
+def _can_merge_case_variants(candidates: list[tuple[int, int, str]]) -> bool:
+    """Allow only groups with a sentence-case spelling to be collapsed.
+
+    A bare all-caps/lowercase pair can be an acronym versus a word (for
+    example ``US`` versus ``us``). Requiring a conventional sentence-case
+    spelling avoids silently merging that ambiguous class while still
+    collapsing ``CLOSED`` and ``Closed``.
+    """
+
+    return any(_case_style_rank(candidate[2]) == 0 for candidate in candidates)
+
+
 def _source_rows(connection: sqlite3.Connection) -> Iterable[sqlite3.Row]:
     return connection.execute(
         "SELECT es.source_marker, s.name, e.id AS expression_id, e.text "
@@ -128,7 +170,26 @@ def build_managed_handbook(
                 candidate = (row_number, expression_id, text)
                 if current is None or candidate < current:
                     by_expression[expression_id] = candidate
-            ordered_items = sorted(by_expression.values(), key=lambda item: (item[0], item[2], item[1]))
+            by_casefold: dict[str, list[tuple[int, int, str]]] = {}
+            for candidate in by_expression.values():
+                by_casefold.setdefault(_casefold_text(candidate[2]), []).append(candidate)
+
+            deduplicated: list[tuple[int, int, str]] = []
+            for variants in by_casefold.values():
+                if len(variants) == 1 or not _can_merge_case_variants(variants):
+                    deduplicated.extend(variants)
+                    continue
+                # Keep the earliest source position, but point at the
+                # sentence-case expression so its existing mappings remain
+                # available without mutating expression data.
+                earliest_row = min(candidate[0] for candidate in variants)
+                canonical = min(
+                    variants,
+                    key=lambda candidate: (_case_style_rank(candidate[2]), candidate[2], candidate[1]),
+                )
+                deduplicated.append((earliest_row, canonical[1], canonical[2]))
+
+            ordered_items = sorted(deduplicated, key=lambda item: (item[0], item[2], item[1]))
             for item_position, (_row_number, expression_id, _text) in enumerate(ordered_items, 1):
                 connection.execute(
                     "INSERT INTO handbook_section_items(section_id,position,expression_id) VALUES(?,?,?)",

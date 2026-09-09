@@ -12,6 +12,7 @@ const { t } = useI18n()
     <LanguageLocalePicker
       :model-value="modelValue"
       :label="t('handbook.translationLanguage')"
+      :placeholder="t('handbook.translationLocalePlaceholder')"
       :allow-create="false"
       @update:model-value="emit('update:modelValue', $event)"
     />
@@ -19,6 +20,29 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
-.handbook-translation-picker { min-width: min(300px, 100%); }
-.handbook-translation-picker :deep(.locale-picker > label) { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.handbook-translation-picker {
+  max-width: 260px;
+  min-width: 0;
+}
+.handbook-translation-picker :deep(.locale-picker) {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.handbook-translation-picker :deep(.locale-picker > label) {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.handbook-translation-picker :deep(.input-wrap) { flex: 1; }
+.handbook-translation-picker :deep(.input-wrap input) { min-height: 40px; }
+
+@media (max-width: 480px) {
+  .handbook-translation-picker {
+    max-width: none;
+  }
+}
 </style>

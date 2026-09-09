@@ -80,13 +80,26 @@ let translationController: AbortController | null = null
 
 const targetLanguageCode = computed(() => targetLocale.value.split('-', 1)[0] || undefined)
 
-function cacheKey(handbookId: string, locale: string): string {
-  return `handbook:${handbookId}:translations:${locale}`
+function sourceExpressionFingerprint(handbook: HandbookDetail | null): string {
+  const ids = handbook?.sections
+    .flatMap(section => section.items ?? [])
+    .map(item => item.id)
+    .sort() ?? []
+  let hash = 2166136261
+  for (const character of ids.join('\u0000')) {
+    hash ^= character.charCodeAt(0)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `${ids.length}-${(hash >>> 0).toString(16)}`
 }
 
-function readTranslationCache(handbookId: string, locale: string): HandbookTranslations | null {
+function cacheKey(handbookId: string, locale: string, sourceFingerprint: string): string {
+  return `handbook:${handbookId}:translations:${locale}:${sourceFingerprint}`
+}
+
+function readTranslationCache(handbookId: string, locale: string, sourceFingerprint: string): HandbookTranslations | null {
   try {
-    const raw = window.sessionStorage.getItem(cacheKey(handbookId, locale))
+    const raw = window.sessionStorage.getItem(cacheKey(handbookId, locale, sourceFingerprint))
     if (!raw) return null
     const parsed = JSON.parse(raw) as HandbookTranslations
     return parsed && Array.isArray(parsed.items) ? parsed : null
@@ -95,9 +108,9 @@ function readTranslationCache(handbookId: string, locale: string): HandbookTrans
   }
 }
 
-function writeTranslationCache(handbookId: string, locale: string, value: HandbookTranslations): void {
+function writeTranslationCache(handbookId: string, locale: string, sourceFingerprint: string, value: HandbookTranslations): void {
   try {
-    window.sessionStorage.setItem(cacheKey(handbookId, locale), JSON.stringify(value))
+    window.sessionStorage.setItem(cacheKey(handbookId, locale, sourceFingerprint), JSON.stringify(value))
   } catch {
     // Session storage is an optional performance cache; rendering must work without it.
   }
@@ -122,7 +135,8 @@ async function loadHandbookTranslations(): Promise<void> {
     translationLoading.value = false
     return
   }
-  const cached = readTranslationCache(id.value, locale)
+  const sourceFingerprint = sourceExpressionFingerprint(hb.value)
+  const cached = readTranslationCache(id.value, locale, sourceFingerprint)
   if (cached) {
     translationBySource.value = indexTranslations(cached)
     translationLoading.value = false
@@ -134,7 +148,7 @@ async function loadHandbookTranslations(): Promise<void> {
   try {
     const value = await loadTranslations(id.value, locale, localeParams.value, controller.signal)
     if (request !== translationRequest || controller.signal.aborted) return
-    writeTranslationCache(id.value, locale, value)
+    writeTranslationCache(id.value, locale, sourceFingerprint, value)
     translationBySource.value = indexTranslations(value)
   } catch (error: unknown) {
     if (request !== translationRequest || controller.signal.aborted) return
@@ -393,15 +407,17 @@ watch([() => localization.locale, () => localization.secondary], () => {
           <span>{{ t('handbook.edit') }}</span>
         </router-link>
       </div>
-      <HandbookTranslationPicker
-        v-if="hb.managed"
-        :model-value="targetLocale"
-        class="hv-translation-picker"
-        @update:model-value="updateTargetLocale"
-      />
       <div class="hv-meta">
-        <span v-if="hb.author_username" class="hv-author">@{{ hb.author_username.toLowerCase() }}</span>
-        <span v-if="hb.visibility" class="hv-visibility">{{ hb.visibility }}</span>
+        <div class="hv-meta-info">
+          <span v-if="hb.author_username" class="hv-author">@{{ hb.author_username.toLowerCase() }}</span>
+          <span v-if="hb.visibility" class="hv-visibility">{{ hb.visibility }}</span>
+        </div>
+        <HandbookTranslationPicker
+          v-if="hb.managed"
+          :model-value="targetLocale"
+          class="hv-translation-picker"
+          @update:model-value="updateTargetLocale"
+        />
       </div>
 
       <div class="hv-vote-row">
@@ -492,9 +508,10 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hv-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .hv-title-row h1 { min-width: 0; }
 .hb-edit-btn { flex: 0 0 auto; min-height: 38px; margin-top: 1px; gap: 7px; white-space: nowrap; }
-.hv-translation-picker { max-width: 320px; margin: 12px 0 4px auto; }
+.hv-translation-picker { flex: 0 1 260px; max-width: 260px; margin: 0 0 0 auto; }
 .hv-content h1 { font-size: clamp(26px, 3vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
-.hv-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.hv-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.hv-meta-info { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .hv-author { color: var(--fg); font-family: var(--mono); }
 .hv-visibility { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--r); color: var(--muted); font-family: var(--mono); font-size: 11px; text-transform: lowercase; }
 .hv-toc ol { list-style: none; padding: 0; margin: 0; }
@@ -592,7 +609,8 @@ watch([() => localization.locale, () => localization.secondary], () => {
 @media (max-width: 480px) {
   .hv-layout { padding-inline: 16px; }
   .hv-title-row { flex-direction: column; gap: 12px; }
-  .hv-translation-picker { max-width: none; margin-left: 0; }
+  .hv-meta { align-items: flex-start; flex-wrap: wrap; }
+  .hv-translation-picker { flex-basis: 100%; max-width: none; margin-left: 0; }
   .hb-edit-btn { min-height: 44px; align-self: flex-start; }
   .hb-expr { gap: 8px; }
   .hv-vote-row { align-items: flex-start; flex-direction: column; }

@@ -181,32 +181,32 @@ cd "$ROOT/web"
 
 step "決定 local bootstrap 流程"
 cd "$ROOT"
-if [ "$FORCE_REBUILD" -eq 1 ]; then
-  step "依旗標強制重建 local D1"
-  "$MANAGE_BIN" local rebuild
-else
-  status_json="$("$MANAGE_BIN" local status)"
-  rebuild_required="$(
-    printf '%s' "$status_json" | python3 -c 'import json, sys
-payload = json.load(sys.stdin)
-value = payload.get("rebuild_required")
-if not isinstance(value, bool):
-    raise SystemExit("status missing boolean rebuild_required")
-print("true" if value else "false")'
-  )"
+# if [ "$FORCE_REBUILD" -eq 1 ]; then
+#   step "依旗標強制重建 local D1"
+#   "$MANAGE_BIN" local rebuild
+# else
+#   status_json="$("$MANAGE_BIN" local status)"
+#   rebuild_required="$(
+#     printf '%s' "$status_json" | python3 -c 'import json, sys
+# payload = json.load(sys.stdin)
+# value = payload.get("rebuild_required")
+# if not isinstance(value, bool):
+#     raise SystemExit("status missing boolean rebuild_required")
+# print("true" if value else "false")'
+#   )"
 
-  if [ "$rebuild_required" = "true" ]; then
-    if [ "$ALLOW_REBUILD" -eq 0 ]; then
-      echo "local D1 需要重建，但收到 --no-rebuild；請先執行 ./dev.sh --rebuild。" >&2
-      exit 1
-    fi
-    step "fingerprint miss，重建 local D1"
-    "$MANAGE_BIN" local rebuild
-  else
-    step "fingerprint hit，驗證 local D1"
-    "$MANAGE_BIN" local verify
-  fi
-fi
+#   if [ "$rebuild_required" = "true" ]; then
+#     if [ "$ALLOW_REBUILD" -eq 0 ]; then
+#       echo "local D1 需要重建，但收到 --no-rebuild；請先執行 ./dev.sh --rebuild。" >&2
+#       exit 1
+#     fi
+#     step "fingerprint miss，重建 local D1"
+#     "$MANAGE_BIN" local rebuild
+#   else
+#     step "fingerprint hit，驗證 local D1"
+#     "$MANAGE_BIN" local verify
+#   fi
+# fi
 
 step "啟動後端 wrangler（port ${BACKEND_PORT}）"
 cd "$ROOT/backend"
