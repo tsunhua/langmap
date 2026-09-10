@@ -2,7 +2,7 @@
 
 > 日期：2026-09-10
 >
-> 狀態：方案已確認，待 implementation plan 與 production operator 審核；尚未修改 production D1
+> 狀態：簡化方案已確認，待 implementation plan 與 production operator 審核；尚未修改 production D1
 
 ## 1. 背景
 
@@ -14,9 +14,10 @@ Expression，並保留原有資料關係。Production expression 規模為幾百
 ## 2. 目標
 
 - 先盤點 locale／script 的大小寫能力，再決定可處理範圍。
-- 在 production D1 內以 set-based SQL、keyset 分批完成正規化與合併。
+- 使用不含 production row／ID 的固定 SQL，在 production D1 內以 set-based SQL、keyset 分批完成正規化與合併。
 - 合併後保留兩個原 Expression 的全部 mapping 及其他引用。
-- 不匯出或上傳本機 SQLite，不重用本機整數 ID。
+- 不匯出或上傳大量 production data，不重用本機整數 ID。
+- 在發布 SQL 前，只用本地 fixture 與有上限的小樣本驗證 SQL 行為。
 - 變更可由 bookmark 回復，並可在 apply 後驗證。
 
 ## 3. Locale／script case policy
@@ -53,10 +54,14 @@ Apply 前先產生唯讀 audit，至少包含 locale policy、各 policy 的 Exp
 
 ### 4.2 SQL 內容
 
-SQL migration 在 D1 內建立 migration map（`old_expression_id`、`survivor_expression_id`、
-`target_text`），只 materialize `cased` 範圍中需要變更或屬於 duplicate group 的資料。以
-Expression `id` 做 keyset 分批，避免單次 statement 超過 D1 CPU 限制；分批檔案仍屬於同一個
-operation，並可由同一 plan 重跑。
+SQL migration 是固定、資料無關的 SQL package，不包含 production expression 清單、production
+ID 或本地資料庫 dump。SQL 在 D1 內建立暫存 migration map（`old_expression_id`、
+`survivor_expression_id`、`target_text`），只 materialize `cased` 範圍中需要變更或屬於
+duplicate group 的資料。以 Expression `id` 做 keyset 分批，避免單次 statement 超過 D1 CPU
+限制；分批檔案仍屬於同一個 operation，並可由同一 plan 重跑。
+
+Case policy 以 SQL 內的固定 `VALUES`／CTE 表達，不從 production 匯出 locale registry。正式
+apply 只在 D1 內掃描及更新資料；本機不接收整庫 expressions、edges 或 readings。
 
 執行順序：
 
@@ -75,12 +80,29 @@ operation，並可由同一 plan 重跑。
 
 ### 4.3 大小寫實作限制
 
-SQL-only 路徑只把 D1 內可可靠處理的 ASCII case 轉換交給 SQLite；無大小寫 script 不做
-變更。非 ASCII 且有大小寫的 locale 另列為小批次處理範圍，不能假設 SQLite `lower()`／
-`upper()` 等同完整 Unicode sentence-case。若日後要求全部 Unicode 嚴格一致，改用
-Cloudflare-side Worker batch，仍禁止把整庫讀回本機。
+SQL-only 路徑只處理 D1 內可可靠處理的 ASCII case；無大小寫 script 不做變更。非 ASCII
+且有大小寫的資料在 audit 中標記為 `unsupported_case`，本次不靜默改寫，也不另開一套
+production Worker 流程。若日後需要完整 Unicode sentence-case，另立獨立 spec 與 migration。
 
-## 5. 驗證與回復
+## 5. 發布前本地採樣驗證
+
+這是 production SQL 的必要 gate，不需要下載 production 全量資料：
+
+1. 使用 `backend/schema.sql` 建立本地 fixture，覆蓋 `none`、`cased`、`unknown`、無 locale
+   link、多 locale、duplicate Expression、duplicate mapping、reading、source 與 Handbook
+   reference。
+2. 從 production 只執行有上限的抽樣查詢；每個 policy 最多 100 個 Expression，duplicate
+   group 最多 200 組，總樣本上限固定。樣本只作驗證，不作 production SQL 生成。
+3. 在本地 SQLite 執行與 production 完全相同的固定 SQL package。
+4. 驗證 `none` 未改變、`nan-Latn` 可處理、duplicate mapping 已合併、reading／source／
+   Handbook references 完整、沒有 orphan 或 self-edge。
+5. 採樣報告、SQL checksum、Git commit 一起寫入 production plan；任何 sample failure 都
+   禁止進入 apply。
+
+抽樣只允許取得必要欄位及固定數量 rows；禁止使用 production dump、全表 export 或把 sample
+之外的線上資料寫入本地 D1。
+
+## 6. 驗證與回復
 
 Postflight 必須確認：
 
@@ -95,15 +117,15 @@ Postflight 必須確認：
 任何錯誤以 operation journal 中的 bookmark 執行 Time Travel restore；不手動重播或編寫臨時
 rollback SQL。
 
-## 6. 非目標
+## 7. 非目標
 
 - 不改變 reading 的大小寫或內容。
 - 不把無 locale link 的 Expression 以字元集猜測歸類。
 - 不為 `cmn-Hans`、`cmn-Hant`、`jpn`、`kor` 或 `nan-Hant` 建立大小寫版本。
 - 不在本次 operation 同時匯入新的 Wikivoyage 或 dictionary source。
 
-## 7. 完成條件
+## 8. 完成條件
 
-Implementation plan 必須涵蓋 locale policy audit、production SQL package、分批／續跑、mapping
-merge、postflight 與 bookmark restore 測試；完成 operator review 前不得對 production D1
-執行 apply。
+Implementation plan 必須涵蓋 locale policy audit、固定 production SQL package、本地 fixture
+及 bounded sample gate、分批／續跑、mapping merge、postflight 與 bookmark restore 測試；完成
+sample review 與 operator review 前不得對 production D1 執行 apply。
