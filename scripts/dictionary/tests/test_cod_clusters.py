@@ -15,7 +15,7 @@ def test_cod_markers_produce_three_isolated_headword_clusters(tmp_path):
     summary = build_explicit_clusters(connection, release)
     rows = connection.execute("SELECT cluster_key,canonical_text FROM lexical_clusters WHERE occurrence_kind='headword' ORDER BY cluster_key").fetchall()
     assert len(rows) == 3
-    assert {row["canonical_text"] for row in rows} == {"cod"}
+    assert {row["canonical_text"] for row in rows} == {"Cod"}
     assert {row["cluster_key"] for row in rows} == {"headword:fixture.traditional-english:cod-1:1", "headword:fixture.traditional-english:cod-2:2", "headword:fixture.traditional-english:cod-3:3"}
     assert summary.occurrences >= 3
     assert connection.execute("SELECT COUNT(*) FROM cluster_members WHERE cluster_key LIKE 'claim:%'").fetchone()[0] >= 4

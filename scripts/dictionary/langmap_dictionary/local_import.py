@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from .text_identity import canonicalize_expression_text
+
 RELATION_MAPPING = 1
 RELATION_SYNONYM = 2
 ProgressCallback = Callable[[dict[str, Any]], None]
@@ -313,7 +315,7 @@ def load_staging_snapshot(
 def _expression_for_cluster(context: _CanonicalImportContext, cluster: sqlite3.Row, cluster_members: list[str], claim_rows: Mapping[str, sqlite3.Row], entry_sources: Mapping[str, str], sense_pos: Mapping[str, set[str]], marker_by_entry: Mapping[str, str] | None = None) -> int:
     connection = context.connection
     language_code = str(cluster["lang_code"])
-    text = canonical_text(str(cluster["canonical_text"]))
+    text = canonicalize_expression_text(str(cluster["canonical_text"]))
     language_id = context.language_id(language_code)
     if language_id is None:
         raise ValueError(f"dictionary language not in registry: {language_code}")

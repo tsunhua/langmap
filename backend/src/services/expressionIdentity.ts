@@ -1,5 +1,16 @@
 export function canonicalizeExpressionText(input: string): string {
-  return input.trim().normalize('NFC');
+  const normalized = input.trim().normalize('NFC');
+  if (!normalized) return normalized;
+
+  // Expression identity is sentence-case for cased scripts. Lowercasing the
+  // remainder collapses `closed`, `Closed`, and `CLOSED` into one node while
+  // leaving scripts without case (Chinese, Japanese, Thai, etc.) unchanged.
+  const lowered = normalized.toLowerCase();
+  const characters = Array.from(lowered);
+  const firstCased = characters.findIndex((character) => character.toLowerCase() !== character.toUpperCase());
+  if (firstCased < 0) return normalized;
+  characters[firstCased] = characters[firstCased].toUpperCase();
+  return characters.join('').normalize('NFC');
 }
 
 export function expressionPrefixUpperBound(prefix: string): string | null {

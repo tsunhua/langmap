@@ -33,8 +33,8 @@ class MigrateV1Test(unittest.TestCase):
         self.assertEqual(rows, [{'id': 1, 'text': 'wait; then go'}])
 
     def test_identity_vector_and_homographs(self) -> None:
-        self.assertEqual(compute_text_hash('hello'), 'ftze3os7wcrq4jxihmvmlopcty')
-        self.assertEqual(build_expression_id('eng', compute_text_hash('hello'), 2), 'eng:ftze3os7wcrq4jxihmvmlopcty.2')
+        self.assertEqual(compute_text_hash('hello'), 'dbpy3mzcoh7cl5lbu36jhczoey')
+        self.assertEqual(build_expression_id('eng', compute_text_hash('hello'), 2), 'eng:dbpy3mzcoh7cl5lbu36jhczoey.2')
 
     def test_mapping(self) -> None:
         self.assertEqual(map_language_code('nan-TW-POJ'), 'nan')

@@ -2,7 +2,7 @@
 """Generate INSERT OR IGNORE seed SQL for morphological dimensions and features.
 
 Identity matches scripts/i18n/generate-i18n-sql.py (and runtime
-expressionIdentity.ts): NFC + trim, SHA-256[:16], base32 alphabet
+expressionIdentity.ts): NFC + trim + sentence case, SHA-256[:16], base32 alphabet
 abcdefghijklmnopqrstuvwxyz234567, id {lang}:{hash}.
 
 Usage:
@@ -16,13 +16,16 @@ import argparse
 import hashlib
 import json
 import sys
-import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_NAMES_PATH = SCRIPT_DIR / 'names.json'
 PROJECT_ROOT = SCRIPT_DIR.parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text as _canonicalize_expression_text
 
 _BASE32_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567'
 
@@ -95,7 +98,7 @@ ALL_CODES: tuple[str, ...] = tuple(code for code, _ in DIMENSIONS) + tuple(
 
 
 def canonicalize_expression_text(text: str) -> str:
-    return unicodedata.normalize('NFC', text.strip())
+    return _canonicalize_expression_text(text)
 
 
 def compute_text_hash(canonical_text: str) -> str:

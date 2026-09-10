@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-09-07T12:06:16Z",
+  "generated_at": "2026-09-09T15:40:24Z",
   "sources": {
     "iso639-3": {
       "name": "ISO 639-3 (individual scope)",
@@ -70,7 +70,7 @@
   "artifacts": {
     "language_reference_sql": {
       "path": "language-reference.sql",
-      "sha256": "49632b72c016197e4e55e4370d53e1245e28cf5cdbb04699ce63546553afc966"
+      "sha256": "21a522c4b608dffeb6a2c7690587f44f3a58dec9ce9f1882846612687f0b2318"
     }
   }
 }

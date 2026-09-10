@@ -16,8 +16,13 @@ import hashlib
 import json
 import re
 import sys
-import unicodedata
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text as _canonicalize_expression_text
 
 PROJECT_ID = 'langmap-web'
 # Full BCP-47-ish locale code of the UI source copy (matches language_locales seed).
@@ -27,7 +32,6 @@ SOURCE_LANG_CODE = 'eng'
 # Provenance stamped onto seeded UI expressions (matches the 'system-ui' source
 # seeded in schema.sql and used by generate-ui-seed.py).
 SOURCE_ID = 'system-ui'
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EN_TS_PATH = PROJECT_ROOT / 'web/src/locales/en.ts'
 
 # Base32 alphabet used by the runtime computeTextHash
@@ -56,8 +60,8 @@ class TranslationRow:
 # ---------------------------------------------------------------------------
 
 def canonicalize_expression_text(text: str) -> str:
-    """Port of canonicalizeExpressionText: trim + NFC."""
-    return unicodedata.normalize('NFC', text.strip())
+    """Port of canonicalizeExpressionText: trim + NFC + sentence case."""
+    return _canonicalize_expression_text(text)
 
 
 def compute_text_hash(canonical_text: str) -> str:

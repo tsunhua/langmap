@@ -48,7 +48,7 @@ def test_reconciled_clusters_preserve_explicit_key_and_version_ai_key(tmp_path):
         row[0]
         for row in connection.execute(
             "SELECT claim_key FROM lexical_occurrences "
-            "WHERE release_id=? AND occurrence_kind='headword' AND canonical_text='cod' "
+            "WHERE release_id=? AND occurrence_kind='headword' AND canonical_text='Cod' "
             "ORDER BY claim_key",
             (release_id,),
         )

@@ -13,12 +13,13 @@ from typing import Any, Mapping
 
 from .artifact import ReleaseArtifact, canonical_json, write_release_artifact
 from .sql import insert_or_ignore, sql_literal, transaction, update_release_status
+from .text_identity import canonicalize_expression_text
 
 _BASE32 = "abcdefghijklmnopqrstuvwxyz234567"
 
 
 def expression_text_hash(text: str) -> str:
-    digest = hashlib.sha256(text.strip().encode("utf-8")).digest()[:16]
+    digest = hashlib.sha256(canonicalize_expression_text(text).encode("utf-8")).digest()[:16]
     bits = "".join(f"{byte:08b}" for byte in digest)
     return "".join(_BASE32[int(bits[index : index + 5].ljust(5, "0"), 2)] for index in range(0, 128, 5))
 
@@ -98,13 +99,13 @@ def _allocate_clusters(connection: sqlite3.Connection, release_id: str, inventor
     ):
         claims_by_cluster[str(member["cluster_key"])].append(str(member["claim_key"]))
     used_indexes: dict[tuple[str, str], int] = {
-        (str(key[0]), str(key[1])): int(value)
+        (str(key[0]), canonicalize_expression_text(str(key[1]))): int(value)
         for key, value in inventory.max_homograph_by_text.items()
         if isinstance(key, tuple) and len(key) == 2
     }
     for row in rows:
         cluster = str(row["cluster_key"])
-        lang, text = str(row["lang_code"]), str(row["canonical_text"])
+        lang, text = str(row["lang_code"]), canonicalize_expression_text(str(row["canonical_text"]))
         claims = claims_by_cluster.get(cluster, [])
         parents = sorted({inventory.bindings_by_claim[claim] for claim in claims if claim in inventory.bindings_by_claim})
         if len(parents) > 1:

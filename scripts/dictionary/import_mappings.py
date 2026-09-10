@@ -16,7 +16,6 @@ import hashlib
 import json
 import re
 import sys
-import unicodedata
 import uuid
 import urllib.error
 import urllib.parse
@@ -25,6 +24,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8788"
 DEFAULT_BATCH_SIZE = 20
@@ -152,7 +156,7 @@ def sql_quote(value: str | None) -> str:
 
 
 def expression_identity(lang_code: str, text: str) -> str:
-    canonical = unicodedata.normalize("NFC", text.strip())
+    canonical = canonicalize_expression_text(text)
     digest = hashlib.sha256(canonical.encode("utf-8")).digest()[:16]
     bits = "".join(f"{byte:08b}" for byte in digest)
     text_hash = "".join(BASE32_ALPHABET[int(bits[i:i + 5].ljust(5, "0"), 2)] for i in range(0, 128, 5))
@@ -176,7 +180,7 @@ def write_sql(path: Path, rows: list[dict[str, list[dict[str, str]]]], email: st
     print(f"sql: generating 0/{total} rows", file=sys.stderr)
     for row_index, row in enumerate(rows, start=1):
         for item in row["expressions"]:
-            key = (item["lang_code"].lower(), item["text"].strip(), int(item.get("homograph_index", "1")))
+            key = (item["lang_code"].lower(), canonicalize_expression_text(item["text"]), int(item.get("homograph_index", "1")))
             expression_id_value = ids_by_key.setdefault(key, generated_expression_id(*key))
             locale = item.get("language_locale_code")
             statements.append(
@@ -193,7 +197,7 @@ def write_sql(path: Path, rows: list[dict[str, list[dict[str, str]]]], email: st
                     f"({sql_quote(str(uuid.uuid4()))}, {sql_quote(expression_id_value)}, {sql_quote(locale)}, NULL, NULL, {creator});"
                 )
                 attestation_keys.add(attestation_key)
-        ids = [ids_by_key[(item["lang_code"].lower(), item["text"].strip(), int(item.get("homograph_index", "1")))] for item in row["expressions"]]
+        ids = [ids_by_key[(item["lang_code"].lower(), canonicalize_expression_text(item["text"]), int(item.get("homograph_index", "1")))] for item in row["expressions"]]
         for left_index, left_id in enumerate(ids):
             for right_id in ids[left_index + 1:]:
                 if left_id.split(":", 1)[0] == right_id.split(":", 1)[0]:

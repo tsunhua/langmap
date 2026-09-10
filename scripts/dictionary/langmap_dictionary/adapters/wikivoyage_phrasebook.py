@@ -13,6 +13,7 @@ from ..models import (
     NormalizedSense,
     StagedEntry,
 )
+from ..text_identity import canonicalize_expression_text
 
 
 _CJK = re.compile(r"[\u2e80-\u9fff\uf900-\ufaff]")
@@ -29,6 +30,10 @@ _READING_SCHEMES = frozenset({
 
 def _text(value: str) -> str:
     return unicodedata.normalize("NFC", str(value).strip())
+
+
+def _expression_text(value: str) -> str:
+    return canonicalize_expression_text(str(value))
 
 
 def _claim(*parts: str) -> str:
@@ -57,7 +62,7 @@ class WikivoyagePhrasebookAdapter:
             _claim("entry", entry.entry_key, "headword"),
             "headword",
             entry.raw_headword,
-            _text(entry.canonical_headword),
+            _expression_text(entry.canonical_headword),
             target_lang,
             target_locale,
             head_cluster,
@@ -101,7 +106,7 @@ class WikivoyagePhrasebookAdapter:
             for ordinal, raw_item in enumerate(sense.equivalents, 1):
                 item: dict[str, Any] = raw_item if isinstance(raw_item, dict) else {"value": raw_item}
                 value = item.get("value") or item.get("text")
-                english = _text(value) if isinstance(value, str) else ""
+                english = _expression_text(value) if isinstance(value, str) else ""
                 language = str(item.get("language") or "").strip() or None
                 locale = str(item.get("locale") or "").strip() or ("eng-Latn-US" if language == "eng" else None)
                 errors: tuple[str, ...] = ()
@@ -136,4 +141,3 @@ class WikivoyagePhrasebookAdapter:
 
 
 __all__ = ["WikivoyagePhrasebookAdapter"]
-

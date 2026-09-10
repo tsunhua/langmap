@@ -18,6 +18,7 @@ from ..models import (
     NormalizedSense,
     StagedEntry,
 )
+from ..text_identity import canonicalize_expression_text
 
 try:
     import ujson as _fast_json
@@ -888,7 +889,12 @@ def _normalize_release_rows(
                 *normalized.mappings,
             )
             for occurrence in values:
-                occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, occurrence.canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
+                canonical_text = (
+                    canonicalize_expression_text(occurrence.canonical_text)
+                    if occurrence.lang_code
+                    else occurrence.canonical_text
+                )
+                occurrence_rows.append((release_id, occurrence.claim_key, occurrence.occurrence_kind, occurrence.entry_key, occurrence.sense_key, occurrence.raw_value, canonical_text, occurrence.lang_code, occurrence.locale_code, occurrence.cluster_key, _fast_json.dumps(occurrence.metadata, ensure_ascii=False, sort_keys=True), _fast_json.dumps(occurrence.errors, ensure_ascii=False)))
                 if occurrence.errors:
                     quarantine_rows.append((release_id, entry.dictionary_key, entry.entry_key, occurrence.sense_key, occurrence.claim_key, occurrence.errors[0], "normalization failed", _fast_json.dumps(entry.raw, ensure_ascii=False, sort_keys=True)))
             for reading in normalized.readings:

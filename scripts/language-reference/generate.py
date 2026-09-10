@@ -10,9 +10,14 @@ import csv
 import hashlib
 import json
 import sys
-import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text
 
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "raw"
@@ -96,7 +101,7 @@ BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567"
 
 def expression_text_hash(text: str) -> str:
     # Mirrors backend/src/services/expressionIdentity.ts:computeTextHash.
-    normalized = unicodedata.normalize("NFC", text.strip())
+    normalized = canonicalize_expression_text(text)
     digest = hashlib.sha256(normalized.encode("utf-8")).digest()[:16]
     bits = "".join(f"{b:08b}" for b in digest)
     out: list[str] = []
@@ -360,7 +365,7 @@ def emit_name_seed_sql(
     localized label.
     """
     locale_names = [row[7] for row in REFERENCE_LOCALES]
-    canonical_texts = sorted({name for _code, name in languages} | {name for _code, name, _direction in scripts} | {name for _code, name, _lat, _lon in regions} | set(locale_names))
+    canonical_texts = sorted({canonicalize_expression_text(name) for _code, name in languages} | {canonicalize_expression_text(name) for _code, name, _direction in scripts} | {canonicalize_expression_text(name) for _code, name, _lat, _lon in regions} | {canonicalize_expression_text(name) for name in locale_names})
     eng_id = language_ids['eng']
     lines = ['-- LOCALIZED NAME EXPRESSIONS AND DIRECT MAPPING EDGES']
     lines.append("INSERT OR IGNORE INTO sources (type, name) VALUES ('system', 'LangMap canonical names seed');")
@@ -370,12 +375,12 @@ def emit_name_seed_sql(
     target_exprs: list[str] = []
     for item in translations:
         lang = item['target_locale'].split('-', 1)[0]
-        target_exprs.append(f"  ({language_ids[lang]}, {sql_str(item['text'])}, (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'))")
+        target_exprs.append(f"  ({language_ids[lang]}, {sql_str(canonicalize_expression_text(item['text']))}, (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'))")
     lines += _insert_blocks('expressions', ['language_id', 'text', 'source_id'], target_exprs)
 
     for item in translations:
         locale = item['target_locale']; lang = locale.split('-', 1)[0]
-        source = sql_str(item['canonical_text']); target = sql_str(item['text'])
+        source = sql_str(canonicalize_expression_text(item['canonical_text'])); target = sql_str(canonicalize_expression_text(item['text']))
         lines.append(
             "INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) "
             f"SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt "
@@ -387,12 +392,31 @@ def emit_name_seed_sql(
             f"WHERE e.language_id={language_ids[lang]} AND e.text={target};"
         )
 
-    bindings = [
-        "UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=languages.name_en LIMIT 1);" % eng_id,
-        "UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=language_locales.name_en LIMIT 1);" % eng_id,
-        "UPDATE scripts SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=scripts.name_en LIMIT 1);" % eng_id,
-        "UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=%d AND e.text=regions.name_en LIMIT 1);" % eng_id,
-    ]
+    bindings: list[str] = []
+    for code, name in languages:
+        bindings.append(
+            "UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e "
+            f"WHERE e.language_id={eng_id} AND e.text={sql_str(canonicalize_expression_text(name))} LIMIT 1) "
+            f"WHERE code={sql_str(code)};"
+        )
+    for code, _lang, _script, _orthography, _region, _place, _name, name_en in REFERENCE_LOCALES:
+        bindings.append(
+            "UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e "
+            f"WHERE e.language_id={eng_id} AND e.text={sql_str(canonicalize_expression_text(name_en))} LIMIT 1) "
+            f"WHERE code={sql_str(code)};"
+        )
+    for code, name, _direction in scripts:
+        bindings.append(
+            "UPDATE scripts SET name_expression_id=(SELECT e.id FROM expressions e "
+            f"WHERE e.language_id={eng_id} AND e.text={sql_str(canonicalize_expression_text(name))} LIMIT 1) "
+            f"WHERE code={sql_str(code)};"
+        )
+    for code, name, _lat, _lon in regions:
+        bindings.append(
+            "UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e "
+            f"WHERE e.language_id={eng_id} AND e.text={sql_str(canonicalize_expression_text(name))} LIMIT 1) "
+            f"WHERE code={sql_str(code)};"
+        )
     lines.extend(bindings)
     return lines, {
         'name_canonical_expressions': len(canonical_texts),

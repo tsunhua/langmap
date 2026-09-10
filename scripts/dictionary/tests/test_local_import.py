@@ -269,9 +269,9 @@ def test_cod_merges_into_single_expression_with_source_markers(tmp_path):
     import_release_to_local_d1(staging_path, d1_path, run_id)
     connection = sqlite3.connect(d1_path)
     connection.row_factory = sqlite3.Row
-    rows = [tuple(r) for r in connection.execute("SELECT text,homograph_index FROM expressions WHERE text='cod' ORDER BY homograph_index")]
-    assert rows == [("cod", 1)]
-    cod_id = connection.execute("SELECT id FROM expressions WHERE text='cod'").fetchone()[0]
+    rows = [tuple(r) for r in connection.execute("SELECT text,homograph_index FROM expressions WHERE text='Cod' ORDER BY homograph_index")]
+    assert rows == [("Cod", 1)]
+    cod_id = connection.execute("SELECT id FROM expressions WHERE text='Cod'").fetchone()[0]
     assert {r["source_marker"] for r in connection.execute(
         "SELECT source_marker FROM expression_sources WHERE expression_id=?", (cod_id,)
     )} == {"1", "2", "3"}
@@ -286,7 +286,7 @@ def test_cod_merges_into_single_expression_with_source_markers(tmp_path):
         markers_by_neighbor.setdefault(str(r["text"]), set()).add(str(r["marker"]))
     assert markers_by_neighbor.get("欺騙") == {"2"}
     assert markers_by_neighbor.get("責罵") == {"3"}
-    assert "1" in markers_by_neighbor.get("fish", set())
+    assert "1" in markers_by_neighbor.get("Fish", set())
     assert connection.execute(
         "SELECT COUNT(DISTINCT t.id) FROM expression_edges ed JOIN expressions t ON t.id = CASE WHEN ed.expression_a_id=? THEN ed.expression_b_id ELSE ed.expression_a_id END WHERE ed.expression_a_id=? OR ed.expression_b_id=?",
         (cod_id, cod_id, cod_id),
@@ -444,11 +444,11 @@ def test_equivalent_reuses_existing_expression_for_same_text(tmp_path):
     # collapse into one canonical expression rather than six homographs.
     import_release_to_local_d1(staging_path, d1_path, run_id)
     connection = sqlite3.connect(d1_path)
-    rows = connection.execute("SELECT text,tur,homograph_index FROM (SELECT e.text,e.homograph_index,(SELECT code FROM languages WHERE id=e.language_id) AS tur FROM expressions e) WHERE text='kin'").fetchall()
-    assert rows == [("kin", "tur", 1)], rows
+    rows = connection.execute("SELECT text,tur,homograph_index FROM (SELECT e.text,e.homograph_index,(SELECT code FROM languages WHERE id=e.language_id) AS tur FROM expressions e) WHERE text='Kin'").fetchall()
+    assert rows == [("Kin", "tur", 1)], rows
     edges = connection.execute(
         "SELECT COUNT(*) FROM expression_edges ed "
-        "JOIN expressions a ON a.id=ed.expression_b_id WHERE a.text='kin' AND a.language_id=(SELECT id FROM languages WHERE code='tur')"
+        "JOIN expressions a ON a.id=ed.expression_b_id WHERE a.text='Kin' AND a.language_id=(SELECT id FROM languages WHERE code='tur')"
     ).fetchone()[0]
     assert edges == 5, edges
     connection.close()

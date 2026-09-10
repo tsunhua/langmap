@@ -278,7 +278,9 @@ definition list 或 page profile 明確允許的等價表格。
 4. 可還原到 page、revision、section 與 row 的定位。
 
 Parser 移除顯示 markup，但保留語言文字本身的標點、大小寫與 placeholder。Expression
-canonicalization 沿用現有 `trim`＋Unicode normalization 契約，不做模糊標點合併或同義改寫。
+canonicalization 沿用 [Expression 大小寫正規化與 Production D1 合併設計](2026-09-10-expression-case-normalization-production-design.md)：
+對已核准的 cased locale 採 `trim`＋Unicode normalization＋sentence case；無大小寫 locale
+保持文字不變。不做模糊標點合併或同義改寫。
 
 ### 9.2 穩定鍵
 

@@ -9,6 +9,13 @@ from __future__ import annotations
 import argparse
 import sqlite3
 from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text
 
 
 def q(value: object) -> str:
@@ -86,7 +93,7 @@ def main() -> int:
         ORDER BY 1,2,3,4
     """, expression_ids * 2).fetchall() if expression_ids else []
     if args.locale_links_only:
-        lines = [f"INSERT OR IGNORE INTO expression_locale_links(expression_id,locale_id) SELECT e.id,ll.id FROM expressions e JOIN languages l ON l.id=e.language_id JOIN language_locales ll ON ll.code={q(r['language_locale_code'])} WHERE l.code={q(r['lang_code'])} AND e.text={q(r['text'])} AND e.homograph_index={r['homograph_index']};" for r in attestations]
+        lines = [f"INSERT OR IGNORE INTO expression_locale_links(expression_id,locale_id) SELECT e.id,ll.id FROM expressions e JOIN languages l ON l.id=e.language_id JOIN language_locales ll ON ll.code={q(r['language_locale_code'])} WHERE l.code={q(r['lang_code'])} AND e.text={q(canonicalize_expression_text(str(r['text'])))} AND e.homograph_index={r['homograph_index']};" for r in attestations]
         args.output_dir.mkdir(parents=True, exist_ok=True)
         for existing in args.output_dir.glob("*.sql"): existing.unlink()
         for index, start in enumerate(range(0, len(lines), 700), start=1):
@@ -98,8 +105,9 @@ def main() -> int:
         lines.append("INSERT OR IGNORE INTO users(id,username,email,password_hash,role,email_verified,created_at,updated_at) VALUES(" + ",".join(q(row[k]) for k in ('id','username','email','password_hash','role','email_verified','created_at','updated_at')) + ");")
     for batch in chunks(expressions):
         for r in batch:
-            lines.append(f"INSERT OR IGNORE INTO expressions(language_id,text,homograph_index,created_by,created_at) SELECT id,{q(r['text'])},{r['homograph_index']},{r['created_by']},{q(r['created_at'])} FROM languages WHERE code={q(r['lang_code'])};")
-            lines.append(f"INSERT OR REPLACE INTO v2_expression_map SELECT {q(r['id'])},e.id FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code={q(r['lang_code'])} AND e.text={q(r['text'])} AND e.homograph_index={r['homograph_index']};")
+            text = canonicalize_expression_text(str(r['text']))
+            lines.append(f"INSERT OR IGNORE INTO expressions(language_id,text,homograph_index,created_by,created_at) SELECT id,{q(text)},{r['homograph_index']},{r['created_by']},{q(r['created_at'])} FROM languages WHERE code={q(r['lang_code'])};")
+            lines.append(f"INSERT OR REPLACE INTO v2_expression_map SELECT {q(r['id'])},e.id FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code={q(r['lang_code'])} AND e.text={q(text)} AND e.homograph_index={r['homograph_index']};")
     for r in edges:
         lines.append(f"INSERT OR IGNORE INTO expression_edges(expression_a_id,expression_b_id,score) SELECT MIN(a.new_id,b.new_id),MAX(a.new_id,b.new_id),{r['score']} FROM v2_expression_map a JOIN v2_expression_map b WHERE a.old_id={q(r['expression_a_id'])} AND b.old_id={q(r['expression_b_id'])};")
     for r in handbooks:

@@ -9,12 +9,15 @@ describe('canonicalizeExpressionText', () => {
     expect(canonicalizeExpressionText('  食  ')).toBe('食');
   });
 
-  it('NFC-normalizes without case folding', () => {
-    expect(canonicalizeExpressionText('  cafe\u0301  ')).toBe('caf\u00e9');
+  it('NFC-normalizes and applies sentence case to Latin expressions', () => {
+    expect(canonicalizeExpressionText('  cafe\u0301  ')).toBe('Café');
+    expect(canonicalizeExpressionText('CLOSED')).toBe('Closed');
+    expect(canonicalizeExpressionText('i only eat Halal food')).toBe('I only eat halal food');
+    expect(canonicalizeExpressionText('廁所')).toBe('廁所');
   });
 
-  it('preserves inner whitespace and case', () => {
-    expect(canonicalizeExpressionText('A  B\tC')).toBe('A  B\tC');
+  it('preserves inner whitespace while normalizing case', () => {
+    expect(canonicalizeExpressionText('A  B\tC')).toBe('A  b\tc');
   });
 });
 

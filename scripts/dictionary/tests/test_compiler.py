@@ -8,7 +8,8 @@ from scripts.dictionary.langmap_dictionary.schema import create_staging_database
 
 
 def test_expression_identity_matches_worker_vector():
-    assert expression_text_hash("hello") == "ftze3os7wcrq4jxihmvmlopcty"
+    assert expression_text_hash("hello") == "dbpy3mzcoh7cl5lbu36jhczoey"
+    assert expression_text_hash("hello") == expression_text_hash("Hello")
     assert build_expression_id("eng", "hello", 2).endswith(".2")
 
 
