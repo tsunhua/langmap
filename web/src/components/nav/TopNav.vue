@@ -162,11 +162,11 @@ watch(() => route.path, () => { menuOpen.value = false })
           ref="desktopSearchControls"
           v-model:query="searchQuery"
           v-model:language="searchLanguage"
+          show-submit
           :language-required="searchLanguageMissing"
           @update:language="onSearchLanguageUpdate"
           @submit="onSearch"
         />
-        <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
       </form>
     </div>
 
@@ -200,11 +200,11 @@ watch(() => route.path, () => { menuOpen.value = false })
             ref="drawerSearchControls"
             v-model:query="searchQuery"
             v-model:language="searchLanguage"
+            show-submit
             :language-required="searchLanguageMissing"
             @update:language="onSearchLanguageUpdate"
             @submit="onSearch"
           />
-          <button type="submit" class="sr-submit" :aria-label="t('nav.submitSearch')">{{ t('nav.submitSearch') }}</button>
         </form>
         <nav class="drawer-nav" :aria-label="t('nav.menu')">
           <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
@@ -287,6 +287,13 @@ watch(() => route.path, () => { menuOpen.value = false })
   width: 100%;
   min-width: 0;
 }
+.top-search :deep(.expression-search.has-submit) {
+  grid-template-columns: minmax(112px, 0.38fr) minmax(0, 1fr) auto;
+}
+.top-search :deep(.expression-search-submit) {
+  min-width: 72px;
+  padding: 0 10px;
+}
 
 .right-group {
   grid-column: 3;
@@ -306,12 +313,6 @@ watch(() => route.path, () => { menuOpen.value = false })
 }
 a.user-badge:hover {
   color: var(--fg);
-}
-
-/* Visually-hidden but a11y-reachable submit */
-.sr-submit {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
 /* Hamburger button — hidden on desktop */
@@ -387,8 +388,14 @@ a.user-badge:hover {
     border: 0;
     background: transparent;
   }
+  .drawer-search :deep(.expression-search.has-submit) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
   .drawer-search :deep(.expression-search-language-wrap) {
     border: 0;
+  }
+  .drawer-search :deep(.expression-search.has-submit .expression-search-language-wrap) {
+    grid-column: 1 / -1;
   }
   .drawer-search :deep(.expression-search-language),
   .drawer-search :deep(.expression-search-query) {
@@ -402,6 +409,18 @@ a.user-badge:hover {
   }
   .drawer-search :deep(.expression-search-query) {
     padding: 0 12px;
+  }
+  .drawer-search :deep(.expression-search.has-submit .expression-search-query) {
+    grid-column: 1;
+  }
+  .drawer-search :deep(.expression-search.has-submit .expression-search-submit) {
+    grid-column: 2;
+    min-width: 72px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border-left: 0;
+    border-radius: var(--r);
   }
   .drawer-search :deep(.expression-search-input) {
     min-height: 44px;

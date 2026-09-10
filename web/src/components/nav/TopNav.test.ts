@@ -88,6 +88,16 @@ describe('TopNav', () => {
     expect(router.currentRoute.value.fullPath).toBe('/search?q=star&lang=spa')
   })
 
+  it('shows a visible submit button in desktop and drawer search controls', async () => {
+    const { wrapper } = await mountNav()
+    await flushPromises()
+
+    expect(wrapper.get('.search-center .expression-search-submit').text()).toBe('Search')
+
+    await wrapper.get('.menu-toggle').trigger('click')
+    expect(wrapper.get('.drawer .expression-search-submit').text()).toBe('Search')
+  })
+
   it('keeps the current route, reports a missing language, and focuses the visible control', async () => {
     const { wrapper, router } = await mountNav()
     await flushPromises()

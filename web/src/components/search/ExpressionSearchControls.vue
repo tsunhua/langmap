@@ -11,9 +11,11 @@ const props = withDefaults(defineProps<{
   language: string
   variant?: 'compact' | 'page'
   languageRequired?: boolean
+  showSubmit?: boolean
 }>(), {
   variant: 'compact',
   languageRequired: false,
+  showSubmit: false,
 })
 
 const emit = defineEmits<{
@@ -298,7 +300,7 @@ onUnmounted(() => {
     <div
       ref="root"
       class="expression-search"
-      :class="`variant-${variant}`"
+      :class="[`variant-${variant}`, { 'has-submit': props.showSubmit }]"
       @focusout="onFocusOut"
     >
       <div class="expression-search-language-wrap">
@@ -384,7 +386,6 @@ onUnmounted(() => {
             >
               <span class="expression-search-option-name">{{ optionName(item) }}</span>
               <code class="expression-search-option-code">{{ item.code }}</code>
-              <span class="expression-search-option-count">{{ countLabel(item) }}</span>
             </button>
           </div>
 
@@ -415,7 +416,6 @@ onUnmounted(() => {
             >
               <span class="expression-search-option-name">{{ optionName(item) }}</span>
               <code class="expression-search-option-code">{{ item.code }}</code>
-              <span class="expression-search-option-count">{{ countLabel(item) }}</span>
             </button>
           </div>
 
@@ -438,6 +438,10 @@ onUnmounted(() => {
           @keydown="onQueryKeydown"
         />
       </label>
+
+      <button v-if="props.showSubmit" type="submit" class="expression-search-submit">
+        {{ t('common.search') }}
+      </button>
     </div>
 
     <p v-if="props.languageRequired" :id="languageRequiredId" class="expression-search-required" role="status">
@@ -469,6 +473,10 @@ onUnmounted(() => {
 
 .expression-search.variant-page {
   height: 48px;
+}
+
+.expression-search.has-submit {
+  grid-template-columns: minmax(138px, 0.42fr) minmax(180px, 1fr) auto;
 }
 
 .expression-search-language-wrap {
@@ -512,6 +520,50 @@ onUnmounted(() => {
   border: 0;
   outline: none;
   box-shadow: none;
+}
+
+.expression-search-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  min-height: 40px;
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  border-left: 1px solid color-mix(in oklch, var(--surface) 30%, transparent);
+  border-radius: 0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: filter 0.15s;
+}
+
+.expression-search-submit:hover { filter: brightness(1.06); }
+.expression-search-submit:active { filter: brightness(0.96); }
+.expression-search-submit:focus-visible {
+  outline: 2px solid var(--surface);
+  outline-offset: -4px;
+}
+
+.expression-search.variant-compact .expression-search-submit {
+  border-left-color: var(--border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.expression-search.variant-compact .expression-search-submit:hover {
+  background: var(--accent);
+  color: #fff;
+  filter: none;
+}
+
+.expression-search.variant-compact .expression-search-submit:focus-visible {
+  outline-color: var(--accent);
 }
 
 .expression-search-language-name {
@@ -668,14 +720,6 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-.expression-search-option-count {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .expression-search-state {
   padding: 12px;
   color: var(--muted);
@@ -706,8 +750,16 @@ onUnmounted(() => {
     background: transparent;
   }
 
+  .expression-search.has-submit {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   .expression-search-language-wrap {
     border: 0;
+  }
+
+  .expression-search.has-submit .expression-search-language-wrap {
+    grid-column: 1 / -1;
   }
 
   .expression-search-language,
@@ -729,6 +781,18 @@ onUnmounted(() => {
 
   .expression-search-query {
     padding: 0 12px;
+  }
+
+  .expression-search.has-submit .expression-search-query {
+    grid-column: 1;
+  }
+
+  .expression-search.has-submit .expression-search-submit {
+    grid-column: 2;
+    min-height: 44px;
+    height: 44px;
+    border-left: 0;
+    border-radius: var(--r);
   }
 
   .expression-search-input {

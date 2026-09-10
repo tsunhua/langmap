@@ -230,6 +230,7 @@ onUnmounted(() => {
           v-model:query="query"
           v-model:language="language"
           variant="page"
+          show-submit
           :language-required="languageMissing"
           @submit="doSearch"
         />

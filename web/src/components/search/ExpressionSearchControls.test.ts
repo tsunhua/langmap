@@ -70,7 +70,7 @@ describe('ExpressionSearchControls', () => {
     )
   })
 
-  it('renders recent and alphabetical groups with names, codes, and counts', async () => {
+  it('renders recent and alphabetical groups with names and codes without visible counts', async () => {
     const wrapper = mountControls()
     await flushPromises()
 
@@ -81,7 +81,8 @@ describe('ExpressionSearchControls', () => {
     expect(wrapper.findAll('[role="option"]')).toHaveLength(3)
     expect(wrapper.get('[role="option"]').text()).toContain('English')
     expect(wrapper.text()).toContain('eng')
-    expect(wrapper.text()).toContain('8')
+    expect(wrapper.findAll('.expression-search-option-count')).toHaveLength(0)
+    expect(wrapper.get('[role="option"]').attributes('aria-label')).toContain('8 expressions')
     expect(wrapper.text()).not.toContain('Empty')
   })
 
@@ -124,6 +125,14 @@ describe('ExpressionSearchControls', () => {
     expect(document.activeElement).toBe(language)
     wrapper.vm.focusSearch()
     expect(document.activeElement).toBe(search)
+  })
+
+  it('renders a visible submit button for the full search form', () => {
+    const wrapper = mountControls({ variant: 'page', showSubmit: true })
+    const button = wrapper.get('.expression-search-submit')
+
+    expect(button.attributes('type')).toBe('submit')
+    expect(button.text()).toBe('Search')
   })
 
   it('closes the language list when focus or pointer leaves the control', async () => {
