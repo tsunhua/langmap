@@ -56,6 +56,11 @@
       "type": "index"
     },
     {
+      "name": "idx_handbooks_managed_key",
+      "sql": "CREATE UNIQUE INDEX idx_handbooks_managed_key ON handbooks(managed_key) WHERE managed_key IS NOT NULL",
+      "type": "index"
+    },
+    {
       "name": "idx_handbooks_visibility_score",
       "sql": "CREATE INDEX idx_handbooks_visibility_score ON handbooks(visibility, score DESC, created_at DESC, id ASC)",
       "type": "index"
@@ -264,6 +269,7 @@
     "0040_restore_localized_name_expressions.sql": "50508b34c4f26ace018382f74468d2be291f29764bbc60c86defe704c02c3eaf",
     "0041_language_statistics.sql": "460ba2ab6b2a6a652bafacb65c9b27ca6ee5a63a4793c9abeb2167eb96e34c95",
     "0042_dictionary_source_markers.sql": "62f65d1737ab30797ce57cbce6b998410d6e8960bea10475e599ffff8a6c9d89",
-    "0043_hakka_locales.sql": "ae0c0ffebe0f28770301774ada51ec32bc0e977a539e21859ebaf976e7840272"
+    "0043_hakka_locales.sql": "ae0c0ffebe0f28770301774ada51ec32bc0e977a539e21859ebaf976e7840272",
+    "0044_wikivoyage_handbook.sql": "d7ad1d736a92c6dbf17732dee4400a5d22623da8eaaac8ff67cd5f74d17480fe"
   }
 }
