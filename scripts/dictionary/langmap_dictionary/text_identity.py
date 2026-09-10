@@ -9,12 +9,22 @@ def canonicalize_expression_text(value: str) -> str:
     """Trim, NFC-normalize, and sentence-case expression text.
 
     The first cased character is uppercased and the remainder is lowercased.
-    Scripts without case (for example Chinese, Japanese, and Thai) are left
-    unchanged apart from trimming and NFC normalization.
+    An all-uppercase expression is preserved because it may be an acronym
+    such as ``UFO``. Scripts without case (for example Chinese, Japanese, and
+    Thai) are left unchanged apart from trimming and NFC normalization.
     """
 
     normalized = unicodedata.normalize("NFC", value.strip())
     if not normalized:
+        return normalized
+    cased_characters = [
+        character
+        for character in normalized
+        if character.lower() != character.upper()
+    ]
+    if cased_characters and all(
+        character == character.upper() for character in cased_characters
+    ):
         return normalized
     lowered = normalized.lower()
     characters = list(lowered)

@@ -11,13 +11,15 @@ describe('canonicalizeExpressionText', () => {
 
   it('NFC-normalizes and applies sentence case to Latin expressions', () => {
     expect(canonicalizeExpressionText('  cafe\u0301  ')).toBe('Café');
-    expect(canonicalizeExpressionText('CLOSED')).toBe('Closed');
+    expect(canonicalizeExpressionText('CLOSED')).toBe('CLOSED');
+    expect(canonicalizeExpressionText('UFO')).toBe('UFO');
+    expect(canonicalizeExpressionText('Closed')).toBe('Closed');
     expect(canonicalizeExpressionText('i only eat Halal food')).toBe('I only eat halal food');
     expect(canonicalizeExpressionText('廁所')).toBe('廁所');
   });
 
   it('preserves inner whitespace while normalizing case', () => {
-    expect(canonicalizeExpressionText('A  B\tC')).toBe('A  b\tc');
+    expect(canonicalizeExpressionText('A  B\tc')).toBe('A  b\tc');
   });
 });
 

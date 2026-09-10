@@ -25,7 +25,7 @@ def _fixture() -> sqlite3.Connection:
     )
     connection.execute(
         "INSERT INTO expressions(id,language_id,text,homograph_index,pos_mask,source_id) "
-        "VALUES(1,1,'Closed',1,1,1),(2,1,'CLOSED',1,2,NULL),(3,2,'Hola',1,1,1)"
+        "VALUES(1,1,'Closed',1,1,1),(2,1,'CloSED',1,2,NULL),(3,2,'Hola',1,1,1)"
     )
     connection.execute("UPDATE languages SET name_expression_id=2 WHERE id=1")
     connection.execute("INSERT INTO expression_locale_links VALUES(2,1)")
@@ -44,7 +44,7 @@ def _fixture() -> sqlite3.Connection:
     connection.execute("INSERT INTO handbook_section_items VALUES(1,1,2)")
     connection.execute(
         "INSERT INTO ui_messages(project_id,message_key,source_expression_id,source_text) "
-        "VALUES('fixture','closed',2,'CLOSED')"
+        "VALUES('fixture','closed',2,'CloSED')"
     )
     connection.commit()
     return connection

@@ -461,6 +461,24 @@ class ProductionInventoryTests(unittest.TestCase):
             self.assertLessEqual(len(batches[0][1].encode("utf-8")), 120)
             self.assertIn("VALUES (3);", batches[1][1])
 
+    def test_split_sql_honors_explicit_batch_markers(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "approved.split.sql"
+            path.write_text(
+                "INSERT OR IGNORE INTO expressions (id) VALUES (1);\n"
+                "-- langmap:batch\n"
+                "INSERT OR IGNORE INTO expressions (id) VALUES (2);\n",
+                encoding="utf-8",
+            )
+
+            from lib.production import _approved_sql_batches  # noqa: E402
+
+            batches = list(_approved_sql_batches(path, max_bytes=4096))
+
+            self.assertEqual([index for index, _ in batches], [0, 1])
+            self.assertIn("VALUES (1);", batches[0][1])
+            self.assertIn("VALUES (2);", batches[1][1])
+
     def test_split_apply_resumes_from_last_successful_batch(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

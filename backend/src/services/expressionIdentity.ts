@@ -2,9 +2,17 @@ export function canonicalizeExpressionText(input: string): string {
   const normalized = input.trim().normalize('NFC');
   if (!normalized) return normalized;
 
-  // Expression identity is sentence-case for cased scripts. Lowercasing the
-  // remainder collapses `closed`, `Closed`, and `CLOSED` into one node while
-  // leaving scripts without case (Chinese, Japanese, Thai, etc.) unchanged.
+  // Expression identity is sentence-case for cased scripts. Preserve
+  // all-uppercase expressions because they may be acronyms such as `UFO`.
+  const casedCharacters = Array.from(normalized).filter(
+    (character) => character.toLowerCase() !== character.toUpperCase(),
+  );
+  if (
+    casedCharacters.length > 0 &&
+    casedCharacters.every((character) => character === character.toUpperCase())
+  ) {
+    return normalized;
+  }
   const lowered = normalized.toLowerCase();
   const characters = Array.from(lowered);
   const firstCased = characters.findIndex((character) => character.toLowerCase() !== character.toUpperCase());

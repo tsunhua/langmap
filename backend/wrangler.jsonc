@@ -44,8 +44,7 @@
 			"enabled": true,
 			"head_sampling_rate": 0.01,
 			"persist": true
-		},
-		"redact_query_string": false
+		}
 	},
 	"vars": {
 		"IMAGES_PUBLIC_URL": "https://images.langmap.io",

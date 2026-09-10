@@ -2,7 +2,7 @@
 
 > 日期：2026-09-10
 >
-> 狀態：簡化方案已確認，待 implementation plan 與 production operator 審核；尚未修改 production D1
+> 狀態：簡化方案已確認；production SQL 已通過本地 fixture gate，尚未修改 production D1
 
 ## 1. 背景
 
@@ -28,18 +28,20 @@ Expression，並保留原有資料關係。Production expression 規模為幾百
 | policy | locale 範圍 | 行為 |
 | --- | --- | --- |
 | `none` | `cmn-Hans*`、`cmn-Hant*`、`jpn*`、`kor*`、`nan-Hant*` | 不改 Expression text |
-| `cased` | `nan-Latn*` | 參與 sentence-case 與去重 |
-| `unknown` | 其餘尚未審核範圍 | 第一版不修改，列入報告 |
+| `cased-ascii` | 除 `none` 外、且有至少一個 locale link 的 Expression | 只對完整 ASCII 文字參與 sentence-case 與去重；包含 `nan-Latn*`、`eng*` 等拉丁字母 locale |
+| `unsupported` | 無 locale link，或文字含非 ASCII 字元 | 不修改，列入報告 |
 
 判定規則：
 
-1. Expression 有 locale links 時，全部 links 都是 `none` 才跳過；只要有一個 `cased` link
-   就可處理。
+1. Expression 有 locale links 時，全部 links 都是 `none` 才跳過；只要有一個非 `none` link
+   且文字是完整 ASCII，就可處理。
 2. 沒有 locale link 的 Expression 不猜測，先保持不變並列出數量及抽樣。
 3. `nan-Hant` 與 `nan-Latn` 必須分開判定；不能因 language code 都是 `nan` 而整體排除
    `nan-Latn`。
 4. 同一 Expression 連到多個 locale 時，沿用單一 Expression identity；不能為不同 locale
    產生兩個文字版本。
+5. 完整 ASCII 且所有字母皆為大寫的 Expression（例如 `UFO`）視為縮寫，保持原文，不參與
+   sentence-case 或去重。
 
 Apply 前先產生唯讀 audit，至少包含 locale policy、各 policy 的 Expression 數量、無 link
 數量、多 locale／混合 policy 數量，以及待處理 duplicate group 數量。Audit 不修改 D1。
@@ -80,7 +82,8 @@ apply 只在 D1 內掃描及更新資料；本機不接收整庫 expressions、e
 
 ### 4.3 大小寫實作限制
 
-SQL-only 路徑只處理 D1 內可可靠處理的 ASCII case；無大小寫 script 不做變更。非 ASCII
+SQL-only 路徑只處理 D1 內可可靠處理的 ASCII case；無大小寫 script 不做變更。全大寫 ASCII
+縮寫不做變更。非 ASCII
 且有大小寫的資料在 audit 中標記為 `unsupported_case`，本次不靜默改寫，也不另開一套
 production Worker 流程。若日後需要完整 Unicode sentence-case，另立獨立 spec 與 migration。
 

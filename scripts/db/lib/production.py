@@ -951,24 +951,33 @@ def _load_plan(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _approved_sql_units(path: Path) -> Iterator[tuple[str, bool]]:
+    """Yield statements and whether a marker forces a new remote batch.
+
+    Large, set-based D1 repairs sometimes need smaller command boundaries than
+    the byte cap alone provides.  The marker is a comment, so the artifact
+    remains directly executable by SQLite and Wrangler.
+    """
+    raw = path.read_text(encoding="utf-8")
+    for chunk in raw.split(";\n"):
+        lines = [line.strip() for line in chunk.splitlines() if line.strip()]
+        force_batch = any(line.lower() == "-- langmap:batch" for line in lines)
+        statement_lines = [
+            line for line in lines
+            if not line.startswith("--")
+        ]
+        if not statement_lines:
+            continue
+        statement = " ".join(statement_lines).strip()
+        if statement and not statement.upper().startswith("PRAGMA"):
+            yield statement, force_batch
+
+
 def _split_approved_sql(path: Path) -> list[str]:
     """Split an approved data migration into standalone statements for D1's
     per-statement ``--command`` execution.  Statements are separated by ``;``
     at end-of-line; comments and the trailing pragmas are ignored."""
-    raw = path.read_text(encoding="utf-8")
-    statements: list[str] = []
-    for chunk in raw.split(";\n"):
-        lines = [
-            line.strip()
-            for line in chunk.splitlines()
-            if not line.strip().startswith("--") and line.strip()
-        ]
-        if not lines:
-            continue
-        statement = " ".join(lines).strip()
-        if statement and not statement.upper().startswith("PRAGMA"):
-            statements.append(statement)
-    return statements
+    return [statement for statement, _ in _approved_sql_units(path)]
 
 
 def _approved_sql_batches(
@@ -983,13 +992,16 @@ def _approved_sql_batches(
     statements: list[str] = []
     current_bytes = 0
     batch_index = 0
-    for statement in _split_approved_sql(path):
+    for statement, force_batch in _approved_sql_units(path):
         statement = statement.rstrip()
         if not statement.endswith(";"):
             statement += ";"
         statement_bytes = len(statement.encode("utf-8"))
         separator_bytes = len("\n".encode("utf-8")) if statements else 0
-        if statements and current_bytes + separator_bytes + statement_bytes > max_bytes:
+        if statements and (
+            force_batch
+            or current_bytes + separator_bytes + statement_bytes > max_bytes
+        ):
             yield batch_index, "\n".join(statements)
             batch_index += 1
             statements = []
