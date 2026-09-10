@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 import re
+import time
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -76,30 +77,36 @@ class ProductionExecutor:
 
     def mutate(self, args: list[str]) -> str:
         try:
-            result = run_command(
-                [str(self.wrangler_bin), *args],
-                cwd=self.paths.backend_dir,
-                env=self.env,
-                timeout=self.timeout_seconds,
-            )
+            result = self._command_with_retry([str(self.wrangler_bin), *args])
         except CommandError as exc:
             raise ProductionInventoryError(str(exc)) from exc
         return result.stdout
 
     def _run(self, args: list[str]) -> Any:
         try:
-            result = run_command(
-                args,
-                cwd=self.paths.backend_dir,
-                env=self.env,
-                timeout=self.timeout_seconds,
-            )
+            result = self._command_with_retry(args)
         except CommandError as exc:
             raise ProductionInventoryError(str(exc)) from exc
         try:
             return json.loads(result.stdout)
         except json.JSONDecodeError as exc:
             raise ProductionInventoryError("wrangler returned invalid JSON") from exc
+
+    def _command_with_retry(self, args: list[str]):
+        for attempt in range(3):
+            try:
+                return run_command(
+                    args,
+                    cwd=self.paths.backend_dir,
+                    env=self.env,
+                    timeout=self.timeout_seconds,
+                )
+            except CommandError as exc:
+                transient_text = f"{exc.stdout}\n{exc.stderr}".lower()
+                if "fetch failed" not in transient_text or attempt == 2:
+                    raise
+                time.sleep(2**attempt)
+        raise AssertionError("unreachable")
 
 
 def inventory_production(
