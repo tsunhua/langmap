@@ -1,0 +1,15 @@
+{
+  "preflight": [
+    "handbooks exists without managed_key",
+    "count handbooks rows",
+    "count non-null managed_key values",
+    "confirm no existing idx_handbooks_managed_key"
+  ],
+  "postflight": [
+    "handbooks contains managed_key",
+    "idx_handbooks_managed_key exists as a unique partial index",
+    "handbook row count is unchanged",
+    "count duplicate non-null managed_key values equals zero"
+  ],
+  "reversible": true
+}
