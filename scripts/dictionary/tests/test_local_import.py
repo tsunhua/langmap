@@ -452,3 +452,19 @@ def test_equivalent_reuses_existing_expression_for_same_text(tmp_path):
     ).fetchone()[0]
     assert edges == 5, edges
     connection.close()
+
+
+def test_local_import_pos_attestation_count_only_scans_affected_expressions(tmp_path):
+    staging_path, run_id = _stage()
+    d1_path = tmp_path / "d1.sqlite"
+    _d1(d1_path)
+    connection = sqlite3.connect(d1_path)
+    connection.execute(
+        "INSERT INTO expressions(language_id,text,homograph_index,pos_mask) "
+        "VALUES ((SELECT id FROM languages WHERE code='eng'),'unrelated existing',1,1)"
+    )
+    connection.commit()
+    connection.close()
+
+    summary = import_release_to_local_d1(staging_path, d1_path, run_id)
+    assert summary.pos_attestations == 6

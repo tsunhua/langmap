@@ -324,3 +324,38 @@ def test_all_caps_multiword_english_phrase_uses_sentence_case() -> None:
     )
 
     assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "One way"
+
+
+def test_inline_english_explanation_is_not_imported_as_chinese_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
+    result = parse_phrase_rows(
+        "===Eating===\n; Excuse me, waiter? : 服务员！ (服務員！) ''fúwùyuán'' <br/> In Taiwan it is common to call a waitress using the term 小姐 ''xiǎojiě''",
+        profile,
+        _sections(),
+    )
+
+    assert {entry["raw_headword"] for entry in result.entries} == {"服务员！", "服務員！"}
+    assert {
+        tuple(reading["value"] for reading in entry["pronunciations"])
+        for entry in result.entries
+    } == {("fúwùyuán", "xiǎojiě")}
+
+
+def test_target_metadata_does_not_leak_into_japanese_or_thai_headword() -> None:
+    japanese = load_page_catalog(ROOT / "page-catalog.json")[16153]
+    japanese_result = parse_phrase_rows(
+        "===Transportation===\n; I want to rent a car. : レンタカーお願いします。 (''Rentakā (rent-a-car) onegaishimasu.'') 0:01",
+        japanese,
+        _sections(),
+    )
+    assert japanese_result.entries[0]["raw_headword"] == "レンタカーお願いします"
+    assert "rent-a-car" not in japanese_result.entries[0]["raw_headword"]
+    assert "0:01" not in japanese_result.entries[0]["raw_headword"]
+
+    thai = load_page_catalog(ROOT / "page-catalog.json")[35697]
+    thai_result = parse_phrase_rows(
+        "===Basics===\n; Excuse me : น้องครับ (if the waiter looks younger than you)",
+        thai,
+        _sections(),
+    )
+    assert thai_result.entries[0]["raw_headword"] == "น้องครับ"

@@ -545,7 +545,19 @@ def import_release_to_local_d1(
                     context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(entry_key, "")})
                     edges += 1
         _report_progress(progress, write_started, "d1_write", "edges", edges, edges)
-        pos_updates = int(connection.execute("SELECT COUNT(*) FROM expressions WHERE pos_mask<>0").fetchone()[0]) if "pos_mask" in context.columns("expressions") else 0
+        # The import summary only needs rows touched by this release; scanning
+        # the full expressions table makes each incremental file scale with the
+        # entire mirror rather than with the release itself.
+        pos_updates = 0
+        if "pos_mask" in context.columns("expressions"):
+            affected_expression_ids = sorted(set(cluster_ids.values()))
+            for offset in range(0, len(affected_expression_ids), chunk_size):
+                expression_ids = affected_expression_ids[offset:offset + chunk_size]
+                placeholders = ",".join("?" for _ in expression_ids)
+                pos_updates += int(connection.execute(
+                    f"SELECT COUNT(*) FROM expressions WHERE id IN ({placeholders}) AND pos_mask<>0",
+                    expression_ids,
+                ).fetchone()[0])
         _refresh_language_statistics(connection, affected_language_ids)
         connection.commit()
         d1_write_seconds = time.perf_counter() - write_started

@@ -37,6 +37,10 @@ _READING_NOTE_WORDS = frozenset({
     "formal", "informal", "polite", "colloquial", "literally", "lit", "example",
     "examples", "optional", "preferred", "common", "more", "often", "usually", "or",
 })
+_READING_PROSE_WORDS = frozenset({
+    "a", "an", "and", "are", "but", "call", "common", "for", "in", "is", "it",
+    "of", "on", "some", "term", "the", "to", "using", "waitress", "waiter", "would",
+})
 _THAI_PRONOUNS = ("ผม", "ดิฉัน")
 _THAI_POLITE_ENDINGS = ("ครับ", "ค่ะ", "คะ")
 
@@ -692,6 +696,12 @@ def _looks_like_reading(value: str, *, allow_long: bool = False) -> bool:
         return False
     if (not allow_long and len(text.split()) > 5) or any(char in text for char in '"“”():'):
         return False
+    # Inline-reading detection runs across target-script boundaries. Without
+    # this guard, an explanatory English tail such as ``it is common to call
+    # a waitress ...`` can be mistaken for a long romanization.
+    words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", text.casefold())
+    if len(words) >= 2 and sum(word in _READING_PROSE_WORDS for word in words) >= 2:
+        return False
     return True
 
 
@@ -786,13 +796,18 @@ def _target_text(value: str, *, language_code: str | None = None) -> str:
     without_italics = re.sub(r"\(\s*\)", "", without_italics)
     without_italics = re.sub(r"\(\s*(?:[/|,;；、]\s*)+\)", "", without_italics)
     cleaned = clean_markup(without_italics).strip(" /,;；")
+    # Some pages append an audio-player timestamp to the target cell rather
+    # than keeping it in markup. It is metadata, not part of the expression.
+    cleaned = re.sub(r"\s+\d{1,2}:\d{2}$", "", cleaned)
     # Parenthesized Latin notes describe usage rather than the target phrase.
     # Keep parentheticals that contain target-script characters (for example a
     # simplified/traditional pair), and remove only Latin-only notes.
-    if _CJK.search(cleaned):
+    if language_code is not None and _looks_like_target_script(cleaned, language_code):
         cleaned = re.sub(
             r"\((?P<note>[^()]*?)\)",
-            lambda match: "" if not _CJK.search(match.group("note")) else match.group(0),
+            lambda match: ""
+            if not _looks_like_target_script(match.group("note"), language_code)
+            else match.group(0),
             cleaned,
         )
     cleaned = re.sub(r"\s+([,;!?])", r"\1", cleaned)
