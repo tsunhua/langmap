@@ -75,7 +75,7 @@ describe('HandbookView', () => {
     })
     translations.mockResolvedValue({
       target_locale: 'jpn-Jpan-JP',
-      items: [{ source_expression_id: '10', translations: [{ id: '20', text: 'トイレはどこですか？', lang_code: 'jpn', language_locale_code: 'jpn-Jpan-JP', language_name: 'Japanese', readings: [{ scheme: 'hepburn', value: 'toire wa doko desu ka' }] }] }],
+      items: [{ source_expression_id: '10', total_translation_count: 3, hidden_translation_count: 2, translations: [{ id: '20', text: 'トイレはどこですか？', lang_code: 'jpn', language_locale_code: 'jpn-Jpan-JP', language_name: 'Japanese', readings: [{ scheme: 'hepburn', value: 'toire wa doko desu ka' }] }] }],
     })
 
     const wrapper = mount(HandbookView, {
@@ -86,6 +86,8 @@ describe('HandbookView', () => {
     expect(translations).toHaveBeenCalledWith('managed-handbook', 'jpn-Jpan-JP', expect.any(Object), expect.any(AbortSignal))
     expect(wrapper.text()).toContain('トイレはどこですか？')
     expect(wrapper.text()).toContain('hepburn: toire wa doko desu ka')
+    expect(wrapper.text()).toContain('2 more translations hidden')
+    expect(wrapper.find('.hb-no-translation').exists()).toBe(false)
     expect(wrapper.find('.hb-edit-btn').exists()).toBe(false)
   })
 

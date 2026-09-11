@@ -1,7 +1,8 @@
 import type { D1Database } from '@cloudflare/workers-types';
 
 const MAX_ITEMS = 5000;
-const MAX_TRANSLATIONS = 10000;
+const MAX_TRANSLATIONS_PER_ITEM = 3;
+const MAX_TRANSLATION_ROWS = MAX_ITEMS * MAX_TRANSLATIONS_PER_ITEM;
 
 export interface HandbookTranslationReading {
   scheme: string;
@@ -20,6 +21,8 @@ export interface HandbookTranslation {
 export interface HandbookTranslationItem {
   source_expression_id: number;
   translations: HandbookTranslation[];
+  total_translation_count: number;
+  hidden_translation_count: number;
 }
 
 export interface HandbookTranslationsResponse {
@@ -41,8 +44,11 @@ interface EdgeTranslationRow {
   target_lang_code: string;
   target_language_name: string;
   target_locale_code: string;
+  edge_score: number;
   section_position: number;
   item_position: number;
+  translation_rank: number;
+  translation_count: number;
 }
 interface ReadingRow { expression_id: number; scheme: string; value: string }
 
@@ -63,6 +69,7 @@ const TARGET_EDGES = `
          target_language.code AS target_lang_code,
          target_language.name_en AS target_language_name,
          target_locale.code AS target_locale_code,
+         edge.score AS edge_score,
          source_items.section_position,
          source_items.item_position
   FROM source_items
@@ -81,6 +88,7 @@ const TARGET_EDGES_REVERSE = `
          target_language.code AS target_lang_code,
          target_language.name_en AS target_language_name,
          target_locale.code AS target_locale_code,
+         edge.score AS edge_score,
          source_items.section_position,
          source_items.item_position
   FROM source_items
@@ -90,6 +98,36 @@ const TARGET_EDGES_REVERSE = `
   JOIN expression_locale_links target_link ON target_link.expression_id=target_expression.id
   JOIN language_locales target_locale ON target_locale.id=target_link.locale_id
   WHERE target_language.code<>'eng' AND edge.score>=0 AND target_locale.code=?
+`;
+
+const RANKED_TARGET_EDGES = `
+  candidate_edges AS (
+    ${TARGET_EDGES}
+    UNION ALL
+    ${TARGET_EDGES_REVERSE}
+  ),
+  unique_edges AS (
+    SELECT source_expression_id,
+           target_expression_id,
+           MIN(target_text) AS target_text,
+           MIN(target_lang_code) AS target_lang_code,
+           MIN(target_language_name) AS target_language_name,
+           MIN(target_locale_code) AS target_locale_code,
+           MAX(edge_score) AS edge_score,
+           MIN(section_position) AS section_position,
+           MIN(item_position) AS item_position
+    FROM candidate_edges
+    GROUP BY source_expression_id, target_expression_id
+  ),
+  ranked_edges AS (
+    SELECT unique_edges.*,
+           ROW_NUMBER() OVER (
+             PARTITION BY source_expression_id
+             ORDER BY edge_score DESC, target_text COLLATE NOCASE, target_expression_id
+           ) AS translation_rank,
+           COUNT(*) OVER (PARTITION BY source_expression_id) AS translation_count
+    FROM unique_edges
+  )
 `;
 
 function readingKey(row: ReadingRow): string {
@@ -115,27 +153,23 @@ export async function getHandbookTranslations(
   if (!locale) throw new HandbookTranslationError('INVALID_TARGET_LOCALE');
 
   const sourceItems = `WITH source_items AS (${SOURCE_ITEMS})`;
-  const edgeSql = `${sourceItems}
-    SELECT * FROM (${TARGET_EDGES}
-      UNION ALL
-      ${TARGET_EDGES_REVERSE}
-    )
-    ORDER BY section_position,item_position,target_text,target_expression_id
+  const edgeSql = `${sourceItems}, ${RANKED_TARGET_EDGES}
+    SELECT *
+    FROM ranked_edges
+    WHERE translation_rank <= ?
+    ORDER BY section_position,item_position,source_expression_id,translation_rank
     LIMIT ?`;
-  const edgeRows = await db.prepare(edgeSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS).all<EdgeTranslationRow>();
+  const edgeRows = await db.prepare(edgeSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS_PER_ITEM, MAX_TRANSLATION_ROWS).all<EdgeTranslationRow>();
 
-  const readingSql = `WITH source_items AS (${SOURCE_ITEMS}), target_expressions AS (
-      ${TARGET_EDGES}
-      UNION
-      ${TARGET_EDGES_REVERSE}
-    )
+  const readingSql = `${sourceItems}, ${RANKED_TARGET_EDGES}
     SELECT DISTINCT readings.expression_id, readings.scheme, readings.value
     FROM expression_readings readings
-    JOIN target_expressions targets ON targets.target_expression_id=readings.expression_id
+    JOIN ranked_edges targets ON targets.target_expression_id=readings.expression_id
+      AND targets.translation_rank <= ?
     JOIN language_locales reading_locale ON reading_locale.id=readings.locale_id AND reading_locale.code=?
     ORDER BY readings.expression_id, readings.scheme, readings.value
     LIMIT ?`;
-  const readingRows = await db.prepare(readingSql).bind(handbookId, normalizedLocale, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS).all<ReadingRow>();
+  const readingRows = await db.prepare(readingSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS_PER_ITEM, normalizedLocale, MAX_TRANSLATION_ROWS).all<ReadingRow>();
 
   const readingsByExpression = new Map<number, HandbookTranslationReading[]>();
   const seenReadings = new Set<string>();
@@ -151,10 +185,17 @@ export async function getHandbookTranslations(
     let item = itemsBySource.get(row.source_expression_id);
     if (!item) {
       if (itemsBySource.size >= MAX_ITEMS) continue;
-      item = { source_expression_id: row.source_expression_id, translations: [] };
+      const totalTranslationCount = Number(row.translation_count) || 0;
+      item = {
+        source_expression_id: row.source_expression_id,
+        translations: [],
+        total_translation_count: totalTranslationCount,
+        hidden_translation_count: Math.max(0, totalTranslationCount - MAX_TRANSLATIONS_PER_ITEM),
+      };
       itemsBySource.set(row.source_expression_id, item);
     }
     if (item.translations.some((translation) => translation.id === row.target_expression_id)) continue;
+    if (item.translations.length >= MAX_TRANSLATIONS_PER_ITEM) continue;
     item.translations.push({
       id: row.target_expression_id,
       text: row.target_text,

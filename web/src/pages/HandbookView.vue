@@ -73,6 +73,8 @@ function storedTargetLocale(handbookId: string): string {
 
 const targetLocale = ref(routeTargetLocale.value || storedTargetLocale(id.value))
 const translationBySource = ref<Record<string, HandbookTranslation[]>>({})
+interface HandbookTranslationSummary { total: number; hidden: number }
+const translationMetaBySource = ref<Record<string, HandbookTranslationSummary>>({})
 const translationLoading = ref(false)
 const translationError = ref('')
 let translationRequest = 0
@@ -117,11 +119,19 @@ function writeTranslationCache(handbookId: string, locale: string, sourceFingerp
 }
 
 function indexTranslations(value: HandbookTranslations): Record<string, HandbookTranslation[]> {
+  translationMetaBySource.value = Object.fromEntries(value.items.map(item => [
+    item.source_expression_id,
+    { total: item.total_translation_count ?? item.translations.length, hidden: item.hidden_translation_count ?? 0 },
+  ]))
   return Object.fromEntries(value.items.map(item => [item.source_expression_id, item.translations]))
 }
 
 function translationsFor(sourceExpressionId: string): HandbookTranslation[] {
   return translationBySource.value[sourceExpressionId] ?? []
+}
+
+function translationSummaryFor(sourceExpressionId: string): HandbookTranslationSummary {
+  return translationMetaBySource.value[sourceExpressionId] ?? { total: 0, hidden: 0 }
 }
 
 async function loadHandbookTranslations(): Promise<void> {
@@ -130,6 +140,7 @@ async function loadHandbookTranslations(): Promise<void> {
   translationController?.abort()
   translationController = null
   translationBySource.value = {}
+  translationMetaBySource.value = {}
   translationError.value = ''
   if (!locale || typeof loadTranslations !== 'function') {
     translationLoading.value = false
@@ -233,6 +244,7 @@ async function load() {
   translationController?.abort()
   translationController = null
   translationBySource.value = {}
+  translationMetaBySource.value = {}
   translationLoading.value = false
   translationError.value = ''
   loading.value = true
@@ -242,7 +254,10 @@ async function load() {
     if (request !== loadRequest) return
     hb.value = value
     if (value.managed) void loadHandbookTranslations()
-    else translationBySource.value = {}
+    else {
+      translationBySource.value = {}
+      translationMetaBySource.value = {}
+    }
   } catch (e: any) {
     if (request !== loadRequest) return
     loadError.value = e.response?.data?.error || t('handbook.loadFailed')
@@ -462,7 +477,10 @@ watch([() => localization.locale, () => localization.secondary], () => {
                 </span>
               </button>
             </div>
-            <div v-else-if="hb.managed && targetLocale" class="hb-no-translation">{{ t('handbook.noTranslation') }}</div>
+            <div v-if="hb.managed && targetLocale && translationSummaryFor(expr.id).hidden > 0" class="hb-translation-more">
+              {{ t('handbook.moreTranslations', { count: translationSummaryFor(expr.id).hidden }) }}
+            </div>
+            <div v-if="hb.managed && targetLocale && !translationLoading && !translationError && !translationsFor(expr.id).length" class="hb-no-translation">{{ t('handbook.noTranslation') }}</div>
           </li>
         </ol>
       </section>
@@ -573,6 +591,7 @@ watch([() => localization.locale, () => localization.secondary], () => {
 .hb-reading { grid-column: 1 / -1; color: var(--muted); font-family: var(--mono); font-size: 10px; overflow-wrap: anywhere; }
 .hb-translation-skeleton { height: 32px; margin: 0 8px 7px 40px; border-radius: var(--r); background: var(--surface-2); }
 .hb-translation-error { margin: 0 8px 7px 40px; color: var(--down); font-size: 11px; }
+.hb-translation-more { margin: 0 8px 7px 40px; color: var(--muted); font-size: 10px; }
 .hb-no-translation { margin: 0 8px 7px 40px; color: var(--muted); font-size: 11px; }
 .hv-attribution { margin-top: 28px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .hv-attribution a { color: inherit; }

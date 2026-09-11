@@ -470,6 +470,8 @@ Endpoint 同時接受既有 `ui_locale` 與 `secondary_ui_locale` 顯示偏好�
     "items": [
       {
         "source_expression_id": "123",
+        "total_translation_count": 4,
+        "hidden_translation_count": 1,
         "translations": [
           {
             "id": "456",
@@ -498,8 +500,9 @@ Endpoint 同時接受既有 `ui_locale` 與 `secondary_ui_locale` 顯示偏好�
 5. Reading 必須屬於同一精確 locale，不跨 locale 回退。
 6. 沒有翻譯的 source item 不出現在 `items`；前端由缺席狀態顯示「暫無翻譯」。
 7. 不限制為 Wikivoyage source。社群或其他詞典建立的合格 direct mapping 會自動補充 Handbook。
-8. 多個譯文依 Wikivoyage source 優先、edge score 降冪、target text、target ID 排序；reading
-   依 scheme、value 排序。
+8. 多個譯文先按 edge score 降冪、target text、target ID 穩定排序；每個 source expression 預設只
+   回傳前 3 個。`total_translation_count` 保留候選總數，`hidden_translation_count` 表示未展示
+   的數量；reading 依 scheme、value 排序。
 
 不新增 `/handbooks/:id/locales` 或 coverage API。目標選擇器直接使用既有
 `/language-locales` 搜尋；選到沒有翻譯的 locale 是合法狀態。
@@ -509,7 +512,8 @@ Endpoint 同時接受既有 `ui_locale` 與 `secondary_ui_locale` 顯示偏好�
 翻譯查詢不得以每個 Handbook item 執行一次 SQL。Edge 的兩個方向使用兩個定向查詢
 `UNION ALL`，分別利用 `(expression_a_id, expression_b_id)` unique index 與
 `idx_expression_edges_b_id`，避免 `OR` adjacency 掃描。查詢由 Handbook sections／items 與
-精確 target locale 限定，只回傳實際命中的 translation 和 reading。
+精確 target locale 限定，只回傳實際命中的 translation 和 reading；translation 以 source expression
+分組截取前 3 個，避免單一詞句的過多同義詞撐大 handbook 回應。
 
 Route 最多使用固定數量的批次查詢：可見性／locale 驗證、translation rows、reading／顯示名稱
 補充；不得隨 item 數量線性增加 query count。實作完成後以 `EXPLAIN QUERY PLAN` 驗證兩個 edge

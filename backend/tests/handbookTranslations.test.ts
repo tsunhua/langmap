@@ -3,9 +3,20 @@ import { getHandbookTranslations, HandbookTranslationError } from '../src/servic
 
 type Row = Record<string, unknown>;
 
-function fakeD1(options: { visibility?: string; userId?: number } = {}) {
+function fakeD1(options: {
+  visibility?: string;
+  userId?: number;
+  edgeRows?: Row[];
+  readingRows?: Row[];
+} = {}) {
   const sql: string[] = [];
   const bindCalls: Array<{ statement: string; args: unknown[] }> = [];
+  const defaultEdgeRows: Row[] = [
+    { source_expression_id: 10, target_expression_id: 20, target_text: 'トイレ', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', edge_score: 1, translation_rank: 1, translation_count: 1, section_position: 1, item_position: 1 },
+    { source_expression_id: 10, target_expression_id: 20, target_text: 'トイレ', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', edge_score: 1, translation_rank: 1, translation_count: 1, section_position: 1, item_position: 1 },
+    { source_expression_id: 11, target_expression_id: 21, target_text: '駅', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', edge_score: 0.5, translation_rank: 1, translation_count: 1, section_position: 1, item_position: 2 },
+  ];
+  const defaultReadingRows: Row[] = [{ expression_id: 20, scheme: 'hepburn', value: 'toire' }];
   const db = {
     prepare(statement: string) {
       sql.push(statement);
@@ -21,16 +32,10 @@ function fakeD1(options: { visibility?: string; userId?: number } = {}) {
               return null as T;
             },
             async all<T>() {
-              if (statement.includes('SELECT * FROM (') && statement.includes('UNION ALL')) {
-                return {
-                  results: [
-                    { source_expression_id: 10, target_expression_id: 20, target_text: 'トイレ', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', section_position: 1, item_position: 1 },
-                    { source_expression_id: 10, target_expression_id: 20, target_text: 'トイレ', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', section_position: 1, item_position: 1 },
-                    { source_expression_id: 11, target_expression_id: 21, target_text: '駅', target_lang_code: 'jpn', target_language_name: 'Japanese', target_locale_code: 'jpn-Jpan-JP', section_position: 1, item_position: 2 },
-                  ],
-                } as { results: T[] };
+              if (statement.includes('SELECT *') && statement.includes('FROM ranked_edges')) {
+                return { results: (options.edgeRows ?? defaultEdgeRows) as T[] };
               }
-              return { results: [{ expression_id: 20, scheme: 'hepburn', value: 'toire' }] } as { results: T[] };
+              return { results: (options.readingRows ?? defaultReadingRows) as T[] };
             },
           };
         },
@@ -59,6 +64,8 @@ describe('handbook translations service', () => {
             language_name: 'Japanese',
             readings: [{ scheme: 'hepburn', value: 'toire' }],
           }],
+          total_translation_count: 1,
+          hidden_translation_count: 0,
         },
         {
           source_expression_id: 11,
@@ -70,15 +77,44 @@ describe('handbook translations service', () => {
             language_name: 'Japanese',
             readings: [],
           }],
+          total_translation_count: 1,
+          hidden_translation_count: 0,
         },
       ],
     });
-    const edgeQuery = sql.find((statement) => statement.includes('SELECT * FROM (')) ?? '';
+    const edgeQuery = sql.find((statement) => statement.includes('SELECT *') && statement.includes('FROM ranked_edges')) ?? '';
     expect(edgeQuery).toContain('UNION ALL');
+    expect(edgeQuery).toContain('ROW_NUMBER() OVER');
+    expect(edgeQuery).toContain('translation_rank <= ?');
     expect(edgeQuery).not.toMatch(/expression_a_id\s*=.*\sOR\s+expression_b_id\s*=/i);
-    expect(sql.filter((statement) => statement.includes('target_expressions'))).toHaveLength(1);
-    expect(bindCalls.find(({ statement }) => statement === edgeQuery)?.args).toHaveLength(4);
-    expect(bindCalls.find(({ statement }) => statement.includes('target_expressions'))?.args).toHaveLength(5);
+    expect(sql.filter((statement) => statement.includes('FROM expression_readings'))).toHaveLength(1);
+    expect(bindCalls.find(({ statement }) => statement === edgeQuery)?.args).toHaveLength(5);
+    expect(bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'))?.args).toHaveLength(6);
+  });
+
+  it('caps translations per source expression and reports hidden candidates', async () => {
+    const { db } = fakeD1({
+      edgeRows: [1, 2, 3, 4].map((id) => ({
+        source_expression_id: 10,
+        target_expression_id: 30 + id,
+        target_text: `候選${id}`,
+        target_lang_code: 'jpn',
+        target_language_name: 'Japanese',
+        target_locale_code: 'jpn-Jpan-JP',
+        edge_score: 1 - id / 10,
+        translation_rank: id,
+        translation_count: 4,
+        section_position: 1,
+        item_position: 1,
+      })),
+    });
+
+    const result = await getHandbookTranslations(db, 1, 'jpn-Jpan-JP');
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].translations.map((translation) => translation.id)).toEqual([31, 32, 33]);
+    expect(result.items[0].total_translation_count).toBe(4);
+    expect(result.items[0].hidden_translation_count).toBe(1);
   });
 
   it('rejects an empty locale before issuing database queries', async () => {

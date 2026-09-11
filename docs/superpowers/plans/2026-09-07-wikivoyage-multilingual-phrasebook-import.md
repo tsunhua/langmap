@@ -109,7 +109,7 @@
 
 **Interfaces:**
 - `getHandbookTranslations(db, handbookId: number, targetLocale: string, hints) -> Promise<TranslationResponse>`。
-- `GET /api/v2/handbooks/:id/translations?target_locale=jpn-Jpan-JP&ui_locale=...&secondary_ui_locale=...` 回傳 `{target_locale,items:[{source_expression_id,translations:[{id,text,lang_code,language_locale_code,language_name,readings:[{scheme,value}]}]}]}`。
+- `GET /api/v2/handbooks/:id/translations?target_locale=jpn-Jpan-JP&ui_locale=...&secondary_ui_locale=...` 回傳 `{target_locale,items:[{source_expression_id,total_translation_count,hidden_translation_count,translations:[{id,text,lang_code,language_locale_code,language_name,readings:[{scheme,value}]}]}]}`；每個 source expression 預設最多 3 個候選。
 
 - [x] Step 1–5：已完成 exact locale、direct edge、score、private visibility、雙向 UNION、reading batch 與上限測試。
 

@@ -14,6 +14,8 @@ export interface HandbookTranslation {
 export interface HandbookTranslationItem {
   source_expression_id: string
   translations: HandbookTranslation[]
+  total_translation_count?: number
+  hidden_translation_count?: number
 }
 export interface HandbookTranslations {
   target_locale: string
