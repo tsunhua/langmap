@@ -1,5 +1,14 @@
 # TODO
 
+## 英文 Wikivoyage 會話手冊發布（2026-09-11）
+
+- [x] 固定 English Wikivoyage `Category:Phrasebooks` 快照：317 頁，11 本已審核頁面，6,520 筆輸入；quality gate 通過，無 removal rows。
+- [x] parser 修正已提交於 `84d91c1b`：排除跨語言說明誤讀、日文音訊時間戳與非目標語言括號備註；local importer 同時避免每本詞本掃描全量 expressions。
+- [x] production delta `scripts/db/state/backup/delta/039-wikivoyage-phrasebooks-20260911.split.sql`，4,689,632 bytes，SHA-256 `9301b5ce9adfdf8e094bac82c4675db8143b4107055f12a24406d49fa51f23db`；local replay 通過。
+- [x] production 已發布：operation `91b6b10e22b64aca83c9da44d861c172`，bookmark `000001c7-00000000-000050e3-50fe17ba98cbbc232dc5fbaf31312abe`，status `succeeded`；source 11 個、expression claims 13,040、edge claims 6,520。
+- [x] managed handbook `1539253277`（`enwikivoyage-phrasebooks`）為 English phrasebook，12 sections／1,832 items，全部 item 為 `eng`，managed read-only；普通話批次翻譯 API 回傳 787 個 source rows。
+- [x] production verify 通過；language statistics 已刷新，並建立 7 個 Wikivoyage 使用的精確 locale；production orphan references 為 0。
+
 ## 舊 v1 指定用戶／甲子 handbook recovery（2026-09-06）
 
 - [x] 依「`monhiko`、`benojan`、`ladybug`＋《甲子話表達分類手冊（更新中）》＋一階 meaning 直接關聯」選取舊資料；納入 4,311 筆舊 expression rows，canonical 合併為 4,238 個 expression identities，保留 4,311 個 source claims。`system` 的 33 筆只因屬於選定 meaning 關聯而納入；`langmap.*` UI 翻譯、無精確 locale、`nan-TW`／舊 POJ／TL、收藏集與舊輔助表均未納入。
