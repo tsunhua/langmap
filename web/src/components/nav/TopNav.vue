@@ -304,6 +304,11 @@ watch(() => route.path, () => { menuOpen.value = false })
   gap: 12px;
 }
 
+.contrib-btn {
+  height: 30px;
+  min-height: 30px;
+}
+
 .user-badge {
   font-family: var(--mono); font-size: 13px;
   color: var(--muted);

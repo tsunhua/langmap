@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ArrowUpRight } from 'lucide-vue-next'
 import VotePill from './VotePill.vue'
 import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
@@ -39,6 +40,12 @@ const node = computed(() => {
 const primaryEdge = computed(() => {
   if (!props.selectedNodeId) return null
   return getPrimaryIncomingEdge(props.selectedNodeId, props.graph)
+})
+
+const languagePath = computed(() => {
+  const code = node.value?.lang_code
+  if (!code || code.toLowerCase().startsWith('x-')) return null
+  return `/languages/${encodeURIComponent(code)}`
 })
 
 const pathToRoot = computed(() => {
@@ -108,8 +115,15 @@ function onKeydown(e: KeyboardEvent) {
     </div>
 
     <div class="gm-meta">
-      <span class="gm-lang">{{ node.lang_code }}</span>
-      <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
+      <router-link v-if="languagePath" :to="languagePath" class="gm-language-link">
+        <span class="gm-lang">{{ node.lang_code }}</span>
+        <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
+        <ArrowUpRight :size="12" aria-hidden="true" />
+      </router-link>
+      <template v-else>
+        <span class="gm-lang">{{ node.lang_code }}</span>
+        <span v-if="node.language_name" class="gm-lang-name">{{ node.language_name }}</span>
+      </template>
       <span class="gm-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
 
@@ -216,9 +230,33 @@ function onKeydown(e: KeyboardEvent) {
 .gm-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   font-size: 12px;
   color: var(--muted);
+}
+.gm-language-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--border));
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--accent) 8%, var(--surface));
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.gm-language-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gm-language-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .gm-section {
   display: flex;

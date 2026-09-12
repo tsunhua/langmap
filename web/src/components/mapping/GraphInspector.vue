@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ArrowUpRight } from 'lucide-vue-next'
 import VotePill from './VotePill.vue'
 import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
@@ -40,6 +41,12 @@ const nodeImageUrl = computed(() => {
     const url = new URL(node.value.text, window.location.origin)
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
   } catch { return null }
+})
+
+const languagePath = computed(() => {
+  const code = node.value?.lang_code
+  if (!code || code.toLowerCase().startsWith('x-')) return null
+  return `/languages/${encodeURIComponent(code)}`
 })
 
 const primaryEdge = computed(() => {
@@ -87,8 +94,15 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
     </div>
 
     <div class="gi-meta">
-      <span class="gi-lang">{{ node.lang_code }}</span>
-      <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
+      <router-link v-if="languagePath" :to="languagePath" class="gi-language-link">
+        <span class="gi-lang">{{ node.lang_code }}</span>
+        <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
+        <ArrowUpRight :size="12" aria-hidden="true" />
+      </router-link>
+      <template v-else>
+        <span class="gi-lang">{{ node.lang_code }}</span>
+        <span v-if="node.language_name" class="gi-lang-name">{{ node.language_name }}</span>
+      </template>
       <span class="gi-depth">{{ t('components.depth', { depth: node.depth }) }}</span>
     </div>
 
@@ -183,9 +197,33 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
 .gi-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   font-size: 12px;
   color: var(--muted);
+}
+.gi-language-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in oklch, var(--accent) 35%, var(--border));
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--accent) 8%, var(--surface));
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.gi-language-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gi-language-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .gi-section {
   display: flex;

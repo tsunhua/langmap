@@ -58,6 +58,28 @@ describe('GraphInspector', () => {
     expect(wrapper.text()).toContain('French')
   })
 
+  it('links the selected language to its language page', () => {
+    const g = makeGraph()
+    const tree = buildDisplayTree(g)
+    const wrapper = mount(GraphInspector, {
+      props: {
+        selectedNodeId: "2",
+        graph: g,
+        displayTree: tree,
+        anchorText: 'root',
+      },
+      global: {
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="to"><slot /></a>',
+          },
+        },
+      },
+    })
+    expect(wrapper.get('.gi-language-link').attributes('href')).toBe('/languages/fr')
+  })
+
   it('shows path from root to selected node', () => {
     const g = makeGraph()
     const tree = buildDisplayTree(g)
