@@ -14,6 +14,14 @@ export interface MappingGraphEdge {
   score: number
   depth: number
   sources: EdgeSourceMarker[]
+  annotations?: MappingAnnotation[]
+}
+
+export interface MappingAnnotation {
+  text: string
+  side: 'a' | 'b' | 'both'
+  source_id: string | null
+  source_marker: string | null
 }
 
 export interface EdgeSourceMarker {

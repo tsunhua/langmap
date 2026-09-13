@@ -152,6 +152,7 @@ CREATE TABLE expression_edges (
   expression_b_id INTEGER NOT NULL,
   relation_mask INTEGER NOT NULL DEFAULT 1 CHECK (relation_mask BETWEEN 1 AND 7),
   score INTEGER NOT NULL DEFAULT 0,
+  annotations_json TEXT NOT NULL DEFAULT '[]',
   created_by INTEGER,
   CHECK (expression_a_id < expression_b_id),
   UNIQUE (expression_a_id, expression_b_id),

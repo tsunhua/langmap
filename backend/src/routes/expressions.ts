@@ -46,7 +46,7 @@ expressions.get('/:id/graph', optionalAuth, async (c) => {
   if (rawHops === 3 && !c.get('user')) return unauthorized(c, 'AUTH_REQUIRED', 'Authentication is required for 3-hop graphs');
   const graph = await getMappingGraph(c.env.DB, id, rawHops as 1 | 2 | 3, c.req.query('target_language')?.toLowerCase());
   if (!graph) return notFoundCode(c, 'EXPRESSION_NOT_FOUND', 'Expression not found');
-  return success(c, { ...graph, root_id: serializeIntegerId(graph.root_id), nodes: graph.nodes.map((node) => ({ ...node, expression_id: serializeIntegerId(node.expression_id) })), edges: graph.edges.map((edge) => ({ ...edge, edge_id: serializeIntegerId(edge.edge_id), source_id: serializeIntegerId(edge.source_id), target_id: serializeIntegerId(edge.target_id), sources: edge.sources.map((item) => ({ ...item, source_id: serializeIntegerId(item.source_id) })) })) });
+  return success(c, { ...graph, root_id: serializeIntegerId(graph.root_id), nodes: graph.nodes.map((node) => ({ ...node, expression_id: serializeIntegerId(node.expression_id) })), edges: graph.edges.map((edge) => ({ ...edge, edge_id: serializeIntegerId(edge.edge_id), source_id: serializeIntegerId(edge.source_id), target_id: serializeIntegerId(edge.target_id), sources: edge.sources.map((item) => ({ ...item, source_id: serializeIntegerId(item.source_id) })), annotations: (edge.annotations ?? []).map((item) => ({ ...item, source_id: item.source_id == null ? null : serializeIntegerId(item.source_id) })) })) });
 });
 
 expressions.post('/:id/locales', requireAuth, async (c) => {

@@ -6,7 +6,7 @@ import VotePill from './VotePill.vue'
 import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
-import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
+import type { MappingAnnotation, MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
 
 const props = defineProps<{
   selectedNodeId: string | null
@@ -55,6 +55,8 @@ const primaryEdge = computed(() => {
 })
 
 const primaryEdgeSources = computed(() => primaryEdge.value?.sources ?? [])
+const primaryEdgeAnnotations = computed(() => primaryEdge.value?.annotations ?? [])
+const annotationKey = (annotation: MappingAnnotation) => [annotation.side, annotation.source_id ?? '', annotation.source_marker ?? '', annotation.text].join(':')
 
 const pathToRoot = computed(() => {
   if (!props.selectedNodeId) return [] as string[]
@@ -125,6 +127,15 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
       <ul class="gi-source-list">
         <li v-for="s in primaryEdgeSources" :key="`${s.source_id}-${s.marker ?? ''}`" class="gi-source-chip">
           <span class="gi-source-id">#{{ s.source_id }}</span><sup v-if="s.marker" class="gi-source-marker">{{ s.marker }}</sup>
+        </li>
+      </ul>
+    </div>
+
+    <div v-if="primaryEdgeAnnotations.length > 0" class="gi-annotations">
+      <span class="gi-label">{{ t('components.mappingAnnotations') }}</span>
+      <ul class="gi-annotation-list">
+        <li v-for="annotation in primaryEdgeAnnotations" :key="annotationKey(annotation)" class="gi-annotation">
+          {{ annotation.text }}
         </li>
       </ul>
     </div>
@@ -293,6 +304,23 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
   font-size: 13px;
   color: var(--accent);
   font-weight: 500;
+}
+.gi-annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gi-annotation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.gi-annotation {
+  border-left: 2px solid var(--edge);
+  padding-left: 8px;
 }
 .gi-acts {
   margin-top: 4px;

@@ -15,7 +15,8 @@ describe('canonical integer schema contract', () => {
   it('uses compact locale, reading, edge and vote tables', () => {
     expect(schema).toMatch(/CREATE TABLE expression_locale_links[\s\S]*?PRIMARY KEY \(expression_id, locale_id\)[\s\S]*?WITHOUT ROWID/s);
     expect(schema).toMatch(/CREATE TABLE expression_readings[\s\S]*?PRIMARY KEY \(expression_id, locale_id, scheme, value\)[\s\S]*?WITHOUT ROWID/s);
-    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?relation_mask INTEGER NOT NULL DEFAULT 1/s);
+    expect(schema).toMatch(/CREATE TABLE expression_edges[\s\S]*?relation_mask INTEGER NOT NULL DEFAULT 1[\s\S]*?annotations_json TEXT NOT NULL DEFAULT '\[\]'/s);
+    expect(schema).not.toMatch(/CREATE TABLE expression_edge_annotations/);
     expect(schema).toMatch(/CREATE TABLE edge_votes[\s\S]*?PRIMARY KEY \(user_id, edge_id\)[\s\S]*?WITHOUT ROWID/s);
     expect(schema).toMatch(/CREATE TABLE handbook_votes[\s\S]*?PRIMARY KEY \(user_id, handbook_id\)[\s\S]*?WITHOUT ROWID/s);
   });

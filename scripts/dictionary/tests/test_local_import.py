@@ -25,7 +25,7 @@ INSERT INTO parts_of_speech VALUES ('noun','Noun',1,0),('verb','Verb',2,1),('adj
 CREATE TABLE expressions(id INTEGER PRIMARY KEY AUTOINCREMENT,language_id INTEGER NOT NULL,text TEXT NOT NULL,homograph_index INTEGER NOT NULL DEFAULT 1,pos_mask INTEGER NOT NULL DEFAULT 0,source_id INTEGER,UNIQUE(language_id,text,homograph_index),FOREIGN KEY(language_id) REFERENCES languages(id),FOREIGN KEY(source_id) REFERENCES sources(id));
 CREATE TABLE expression_locale_links(expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,PRIMARY KEY(expression_id,locale_id),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(locale_id) REFERENCES language_locales(id)) WITHOUT ROWID;
 CREATE TABLE expression_readings(expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,scheme TEXT NOT NULL,value TEXT NOT NULL,source_id INTEGER,PRIMARY KEY(expression_id,locale_id,scheme,value),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(locale_id) REFERENCES language_locales(id)) WITHOUT ROWID;
-CREATE TABLE expression_edges(id INTEGER PRIMARY KEY AUTOINCREMENT,expression_a_id INTEGER NOT NULL,expression_b_id INTEGER NOT NULL,relation_mask INTEGER NOT NULL DEFAULT 1,score INTEGER NOT NULL DEFAULT 0,created_by INTEGER,CHECK(expression_a_id<expression_b_id),UNIQUE(expression_a_id,expression_b_id),FOREIGN KEY(expression_a_id) REFERENCES expressions(id),FOREIGN KEY(expression_b_id) REFERENCES expressions(id));
+CREATE TABLE expression_edges(id INTEGER PRIMARY KEY AUTOINCREMENT,expression_a_id INTEGER NOT NULL,expression_b_id INTEGER NOT NULL,relation_mask INTEGER NOT NULL DEFAULT 1,score INTEGER NOT NULL DEFAULT 0,annotations_json TEXT NOT NULL DEFAULT '[]',created_by INTEGER,CHECK(expression_a_id<expression_b_id),UNIQUE(expression_a_id,expression_b_id),FOREIGN KEY(expression_a_id) REFERENCES expressions(id),FOREIGN KEY(expression_b_id) REFERENCES expressions(id));
 CREATE TABLE expression_sources(expression_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(expression_id,source_id,source_marker),FOREIGN KEY(expression_id) REFERENCES expressions(id),FOREIGN KEY(source_id) REFERENCES sources(id)) WITHOUT ROWID;
 CREATE TABLE expression_edge_sources(edge_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(edge_id,source_id,source_marker),FOREIGN KEY(edge_id) REFERENCES expression_edges(id),FOREIGN KEY(source_id) REFERENCES sources(id)) WITHOUT ROWID;
 """
@@ -451,6 +451,45 @@ def test_equivalent_reuses_existing_expression_for_same_text(tmp_path):
         "JOIN expressions a ON a.id=ed.expression_b_id WHERE a.text='Kin' AND a.language_id=(SELECT id FROM languages WHERE code='tur')"
     ).fetchone()[0]
     assert edges == 5, edges
+    connection.close()
+
+
+def test_local_import_writes_mapping_annotations_for_equivalent_edges(tmp_path):
+    staging_path, run_id = _stage()
+    staging = sqlite3.connect(staging_path)
+    target_claim = staging.execute(
+        "SELECT claim_key FROM lexical_occurrences WHERE release_id=? AND occurrence_kind='equivalent' ORDER BY claim_key LIMIT 1",
+        (run_id,),
+    ).fetchone()[0]
+    entry_key = staging.execute(
+        "SELECT entry_key FROM lexical_occurrences WHERE release_id=? AND claim_key=?",
+        (run_id, target_claim),
+    ).fetchone()[0]
+    head_claim = staging.execute(
+        "SELECT claim_key FROM lexical_occurrences WHERE release_id=? AND entry_key=? AND occurrence_kind='headword' ORDER BY claim_key LIMIT 1",
+        (run_id, entry_key),
+    ).fetchone()[0]
+    staging.execute(
+        "INSERT INTO lexical_annotations VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (run_id, f"{target_claim}:annotation", entry_key, None, "fish (only in this glossary)", "only in this glossary", target_claim, "equivalent", "{}", "[]"),
+    )
+    staging.execute(
+        "INSERT INTO lexical_annotations VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (run_id, f"{head_claim}:annotation", entry_key, None, "fish (spoken usage)", "spoken usage", head_claim, "headword", "{}", "[]"),
+    )
+    staging.commit()
+    staging.close()
+    d1_path = tmp_path / "d1.sqlite"
+    _d1(d1_path)
+
+    import_release_to_local_d1(staging_path, d1_path, run_id)
+    connection = sqlite3.connect(d1_path)
+    annotations_json = connection.execute(
+        "SELECT annotations_json FROM expression_edges"
+    ).fetchone()[0]
+    annotations = json.loads(annotations_json)
+    assert {item["text"] for item in annotations} == {"only in this glossary", "spoken usage"}
+    assert all(set(item) == {"side", "source_id", "source_marker", "text"} for item in annotations)
     connection.close()
 
 

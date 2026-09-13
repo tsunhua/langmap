@@ -20,9 +20,14 @@ _BRACKET_READING = re.compile(r"\[\s*['’]([^'’]+)['’]\s*\]")
 _TARGET_CORE_RANGES = r"\u2e80-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef"
 _TARGET_SCRIPT_RANGES = _TARGET_CORE_RANGES + r".,!?;:"
 _READING_CHARS = r"A-Za-z\u00c0-\u00ff\u0100-\u024f\u0300-\u036f"
+# Wikivoyage uses underscore slots in both the target phrase and its inline
+# respelling (for example ``过咗_____ Gwojó _____``).  Keep those slots in the
+# reading value; they are positional placeholders, not expression text.
+_READING_SLOT_CHARS = r" _\[\]{}…"
 _INLINE_READING = re.compile(
-    rf"^(?P<target>.*?[{_TARGET_SCRIPT_RANGES}])\s+"
-    rf"(?P<reading>[{_READING_CHARS}][{_READING_CHARS}0-9'’ .,/!?-]*)\s*$"
+    rf"^(?P<target>.*?[{_TARGET_SCRIPT_RANGES}][{_READING_SLOT_CHARS}-]*)"
+    rf"(?:\s+|(?<=[.!?！？。])(?=[{_READING_CHARS}]))"
+    rf"(?P<reading>[{_READING_CHARS}][{_READING_CHARS}0-9'’{_READING_SLOT_CHARS}.,/!?-]*)\s*$"
 )
 _INLINE_TOKEN = re.compile(
     rf"(?<=[{_TARGET_SCRIPT_RANGES}])\s+(?P<reading>[{_READING_CHARS}][{_READING_CHARS}0-9'’ .!?-]*?)"
@@ -40,6 +45,10 @@ _READING_NOTE_WORDS = frozenset({
 _READING_PROSE_WORDS = frozenset({
     "a", "an", "and", "are", "but", "call", "common", "for", "in", "is", "it",
     "of", "on", "some", "term", "the", "to", "using", "waitress", "waiter", "would",
+})
+_PLAIN_RESPelling_EXCLUSIONS = frozenset({
+    "formal", "informal", "polite", "colloquial", "literally", "optional",
+    "preferred", "common", "only", "telephone", "coming", "through",
 })
 _THAI_PRONOUNS = ("ผม", "ดิฉัน")
 _THAI_POLITE_ENDINGS = ("ครับ", "ค่ะ", "คะ")
@@ -688,6 +697,55 @@ def clean_markup(value: str) -> str:
     return canonicalize_text(text)
 
 
+def _terminal_parenthetical(value: str) -> tuple[str, str] | None:
+    cleaned = clean_markup(value)
+    stripped = cleaned.rstrip()
+    if not stripped or stripped[-1] != ")":
+        return None
+    depth = 0
+    for index in range(len(stripped) - 1, -1, -1):
+        character = stripped[index]
+        if character == ")":
+            depth += 1
+        elif character == "(":
+            depth -= 1
+            if depth == 0:
+                return stripped[:index].strip(), stripped[index + 1 : -1].strip()
+    return None
+
+
+def _plain_respelling(body: str, language_code: str | None) -> bool:
+    normalized = canonicalize_text(body).strip()
+    if not normalized or normalized.casefold() in _PLAIN_RESPelling_EXCLUSIONS:
+        return False
+    if any(character.isspace() or not (character.isalnum() or character in "'’·.-") for character in normalized):
+        return False
+    if language_code in {None, "eng"}:
+        return False
+    # A target-script parenthetical is a lexical alternate (for example the
+    # traditional form in ``厕所 (廁所)``), not a respelling.  Without this
+    # guard it is promoted to a CJK "reading" and then quarantined as a
+    # script mismatch, hiding the actual readings on the definition side.
+    if _looks_like_target_script(normalized, language_code):
+        return False
+    return any(ord(character) > 127 for character in normalized) or "-" in normalized or "'" in normalized or "’" in normalized
+
+
+def _strip_target_surface_shell(value: str, language_code: str | None) -> str:
+    terminal = _terminal_parenthetical(value)
+    if terminal is None:
+        return value
+    prefix, body = terminal
+    if not body.strip(" /,;；、"):
+        return prefix
+    spans = re.findall(r"/([^/]+)/", body)
+    if spans and all(span.strip() for span in spans):
+        return prefix
+    if _plain_respelling(body, language_code):
+        return prefix
+    return value
+
+
 def _looks_like_reading(value: str, *, allow_long: bool = False) -> bool:
     """Reject prose annotations that happen to use italic markup."""
 
@@ -739,6 +797,16 @@ def _split_definition(line: str) -> tuple[str, str] | None:
 
 def _reading_candidates(value: str, *, language_code: str | None = None) -> tuple[tuple[str, str], ...]:
     candidates: list[tuple[int, str, str]] = []
+    terminal = _terminal_parenthetical(value)
+    if terminal is not None:
+        target, body = terminal
+        slash_readings = [span.strip() for span in re.findall(r"/([^/]+)/", body) if span.strip()]
+        for reading in slash_readings:
+            if _looks_like_ipa_span(f"/{reading}/", 0):
+                candidates.append((value.rfind(reading), reading, "ipa"))
+        target_has_non_ascii = any(ord(character) > 127 for character in target)
+        if _plain_respelling(body, language_code) and (_looks_like_target_script(target, language_code) or target_has_non_ascii):
+            candidates.append((value.rfind(body), body, "romanization"))
     for match in _ITALIC.finditer(value):
         text = clean_markup(match.group(1)).strip(" .。;；")
         for variant_index, variant in enumerate(_expand_slash_variants(text, source_kind="romanization")):
@@ -785,6 +853,7 @@ def _target_text(value: str, *, language_code: str | None = None) -> str:
     value = _trim_target_prose(value, language_code)
     without_italics = _ITALIC.sub("", value)
     without_italics = _BRACKET_READING.sub("", without_italics)
+    without_italics = _strip_target_surface_shell(without_italics, language_code)
     if language_code is not None and _looks_like_target_script(value, language_code):
         without_italics = _INLINE_TOKEN.sub(" ", without_italics)
         inline = _INLINE_READING.match(canonicalize_text(without_italics))

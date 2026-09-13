@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { canonicalizeExpressionText } from '../src/services/expressionIdentity';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
 
@@ -43,7 +44,7 @@ describe('expressions API', () => {
     const body = (await res.json()) as { data: { expression: { id: string; text: string; lang_code: string }; created: boolean } };
     expect(body.data.created).toBe(true);
     expect(body.data.expression.lang_code).toBe('nan');
-    expect(body.data.expression.text).toBe(text);
+    expect(body.data.expression.text).toBe(canonicalizeExpressionText(text));
     expect(body.data.expression.id).toMatch(INTEGER_ID);
   });
 
@@ -113,7 +114,7 @@ describe('expressions API', () => {
       data: { items: Array<{ text: string; id: string }>; total: number; hasMore: boolean };
     };
     expect(body.data.total).toBeGreaterThanOrEqual(1);
-    expect(body.data.items.some((item) => item.text === text)).toBe(true);
+    expect(body.data.items.some((item) => item.text === canonicalizeExpressionText(text))).toBe(true);
   });
 
   it('honors stable alphabetical search ordering', async () => {

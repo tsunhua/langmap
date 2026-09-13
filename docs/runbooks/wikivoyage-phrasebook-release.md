@@ -99,6 +99,12 @@ builder 以 `managed_key=enwikivoyage-phrasebooks` 重用同一 handbook row，�
 完成抽查後，使用既有 source-scoped natural-key delta 流程；不要把 staging 全庫 counts
 當 production 基線，也不要直接執行 remote migration：
 
+Production 驗證採「小資料定點」策略：只按已知 `source_name`、page revision、section／row
+marker 或明確 expression ID 查詢，結果集固定加 `LIMIT`。不得為了比對 staging 而執行全表
+`COUNT(*)`、全庫 export、全量 mirror copy 或下載 production snapshot；delta 的身份解析由
+自然鍵與受管 plan 完成。若一次查詢的掃描量明顯超出定點資料範圍，立即停止並改用 source-scoped
+抽樣，不以增加 timeout 或分頁掩蓋全庫掃描。
+
 ```bash
 python3 scripts/db/export_dictionary_source_delta.py \
   --staging <staging.sqlite> \

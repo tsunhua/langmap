@@ -57,6 +57,68 @@ def test_thai_target_first_row_keeps_target_language_and_reading() -> None:
     assert entry["raw"]["row_orientation"] == "target-to-english"
 
 
+def test_plain_target_respelling_is_separate_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[37990]
+    result = parse_phrase_rows("===Basics===\n; CLOSED : Đóng cửa (dauung-kưə)", profile, _sections())
+
+    assert len(result.entries) == 1
+    entry = result.entries[0]
+    assert entry["raw_headword"] == "Đóng cửa"
+    assert entry["pronunciations"] == [{
+        "value": "dauung-kưə",
+        "scheme": "wikivoyage-respelling",
+        "locale": "vie-Latn-VN",
+    }]
+
+
+def test_cantonese_inline_reading_keeps_placeholder_slots_out_of_expression() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
+    result = parse_phrase_rows(
+        "===Directions===\n"
+        "; Where are there a lot of_____ ? : 边度有好多_____呀？ Bīndouh yáuh hóudō _____ a?\n"
+        "; Past the _____ : 过咗_____ Gwojó _____",
+        profile,
+        _sections(),
+    )
+
+    assert [(entry["raw_headword"], entry["pronunciations"][0]["value"]) for entry in result.entries] == [
+        ("边度有好多_____呀？", "Bīndouh yáuh hóudō _____ a?"),
+        ("过咗_____", "Gwojó _____"),
+    ]
+
+
+def test_cantonese_inline_reading_can_follow_sentence_punctuation_without_space() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
+    result = parse_phrase_rows(
+        "===Emergencies===\n; I am innocent : 我係冤枉㗎！Ngóh hai yūn wong gaa!",
+        profile,
+        _sections(),
+    )
+
+    assert result.entries[0]["raw_headword"] == "我係冤枉㗎！"
+    assert result.entries[0]["pronunciations"][0]["value"] == "Ngóh hai yūn wong gaa!"
+
+
+def test_target_reading_shell_is_removed_from_surface() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows("===Basics===\n; CLOSED : Fechado (, /fɨ.ˈʃa.du/)", profile, _sections())
+
+    assert result.entries[0]["raw_headword"] == "Fechado"
+    assert result.entries[0]["pronunciations"][0]["value"] == "fɨ.ˈʃa.du"
+
+
+def test_nested_respelling_parenthetical_keeps_ipa_reading() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Basics===\n; CLOSED : Fechado (''f(ih)-SHAH-doo'', /fɨ.ˈʃa.du/)",
+        profile,
+        _sections(),
+    )
+
+    assert result.entries[0]["raw_headword"] == "Fechado"
+    assert [reading["value"] for reading in result.entries[0]["pronunciations"]] == ["fɨ.ˈʃa.du"]
+
+
 def test_reading_first_chinese_row_uses_parenthetical_english_gloss() -> None:
     profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
     result = parse_phrase_rows("===Eating===\n;''sī'': 丝 (絲) (shredded)", profile, _sections())

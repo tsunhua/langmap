@@ -92,7 +92,7 @@ CURATED = {
     },
     "cmn": {
         "cmn-Hans-CN": "普通话",
-        "cmn-Hant-TW": "普通話",
+        "cmn-Hant-TW": "華語",
         "jpn-Jpan-JP": "普通話",
     },
     "ell": {

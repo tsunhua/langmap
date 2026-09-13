@@ -72,6 +72,19 @@ class NormalizedReading:
 
 
 @dataclass(frozen=True)
+class NormalizedAnnotation:
+    claim_key: str
+    entry_key: str
+    sense_key: str | None
+    raw_value: str
+    text: str
+    target_claim_key: str | None
+    side: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+    errors: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class NormalizedPos:
     claim_key: str
     sense_key: str
@@ -97,6 +110,8 @@ class NormalizedEntry:
     readings: tuple[NormalizedReading, ...] = ()
     raw: dict[str, Any] = field(default_factory=dict)
     mappings: tuple[NormalizedOccurrence, ...] = ()
+    annotations: tuple[NormalizedAnnotation, ...] = ()
+    headword_alternatives: tuple[NormalizedOccurrence, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -14,7 +14,7 @@ LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔
 
 ## 詞句與關係
 
-**詞句（Expression）**：單一語言中的詞、短語或句子。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接 mapping edge；詞句本身不分主詞頭與例句層級，句子也是獨立詞句。詞典匯入時，同一 `(language_id, text)` 的條目一律合併為 `homograph_index = 1` 的單一列，不再依來源詞典增量配號。
+**詞句（Expression）**：單一語言中可由使用者實際說出或寫出的詞、短語或句子。Expression text 只保存語言內容，不保存讀音、定義、語體／用法說明、來源導航文字、欄位標籤或解析殘留的首尾標點；內部具有語義的標點仍可保留。替代形式（例如 `你（們）好` 中的兩個形式）必須拆成各自的 expression，不把替代括號留在文字中。`expressions.id` 是整數；同一 `language_id + text + homograph_index` 唯一。詞句可有零至多個 locale link、讀音及直接 mapping edge；詞句本身不分主詞頭與例句層級，句子也是獨立詞句。詞典匯入時，同一 `(language_id, text)` 的條目一律合併為 `homograph_index = 1` 的單一列，不再依來源詞典增量配號。原始欄位與被移出的說明必須留在 staging／provenance，不能以清理後文字取代可追溯性。
 
 **同形拆分（Homograph Split）**：管理員以 `expression_splits` 記錄可追溯的 edge 搬移，將同一文字分離成較大的 `homograph_index`。這是人為校正動作；系統（含詞典匯入）不依文字自動推斷或拆分詞義。
 
@@ -22,9 +22,11 @@ LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔
 
 **映射（Expression Edge）**：兩個 expression 之間的直接對照關係；兩端可以是詞、短語或句子。詞典例句的原句與譯句各自建立為獨立 expression，只在兩者之間建立普通 mapping，不建立主詞頭與例句的關聯。端點以遞增整數 ID 儲存，避免同一對詞句重複；`relation_mask` 是內部相容欄位，不應被解讀為額外的產品內容層級，`score` 由 `edge_votes` 聚合。一條 edge 同一對端點可匯聚多個來源標記（以 `expression_edge_sources` 記錄）；來源標記只掛在 edge 與 expression 上，不建立 sense 實體。詞句頁的 mapping graph 是以某個 expression 為中心的關係圖，不是獨立的 mapping 實體。
 
+**映射註釋（Mapping Annotation）**：只描述一條 mapping 在某個來源、某一端或某個語境下的限制、用法、語體、地區或解釋的文字，例如 `Hello (only on the telephone)` 中的 `only on the telephone`。它不是 expression，不參與 expression identity 或文字去重；同一 mapping 可有多筆、不同來源的註釋。staging／provenance 保留原文，canonical `expression_edges.annotations_json` 只保留可展示的文字、端點與來源標記。若括號內容只是替代形式，應依 Expression 規則拆成多個 expression，而不是建立註釋。
+
 **詞形 edge（Expression Form Edge）**：變化形指向辭書形的有向關係，與 mapping edge 分開。`expression_form_edge_features` 掛載形態特徵；特徵與維度名稱也以 expression 做國際化。
 
-**讀音（Expression Reading）**：某 expression 在一個 language locale 下，使用一個 scheme 記錄的文字讀音。它的複合主鍵為 expression、locale、scheme、value。
+**讀音（Expression Reading）**：某 expression 在一個 language locale 下，使用一個 scheme 記錄的文字讀音。讀音永遠不嵌入 expression text；同一來源標示的多個讀音是多筆 reading，不是含斜線的單一文字。它的複合主鍵為 expression、locale、scheme、value。
 
 ## 社群內容
 

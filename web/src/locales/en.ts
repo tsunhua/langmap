@@ -166,6 +166,7 @@ export const en = {
     sourcePath: 'Source path',
     mappingScore: 'Mapping score',
     edgeSources: 'Source markers',
+    mappingAnnotations: 'Mapping notes',
     otherRelations: 'Other relations',
     relationCount: '{count} relations',
     expandBranch: 'Expand child branch',

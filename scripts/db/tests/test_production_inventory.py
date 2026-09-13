@@ -550,10 +550,10 @@ class ProductionInventoryTests(unittest.TestCase):
             def mutate_once_then_fail(_executor, args):
                 nonlocal failed
                 mutation_calls.append(args)
-                if "--command" in args and not failed:
+                if ("--command" in args or "--file" in args) and not failed:
                     failed = True
                     return ""
-                if "--command" in args and len(mutation_calls) == 2:
+                if ("--command" in args or "--file" in args) and len(mutation_calls) == 2:
                     raise production_lib.ProductionInventoryError("batch unavailable")
                 return ""
 

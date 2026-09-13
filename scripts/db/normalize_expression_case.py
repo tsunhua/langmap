@@ -220,6 +220,63 @@ def _merge_edge_children(
         connection.execute("DELETE FROM edge_votes WHERE edge_id=?", (old_edge_id,))
 
 
+def _merge_edge_annotations(
+    connection: sqlite3.Connection, old_edge_id: int, new_edge_id: int
+) -> None:
+    columns = {
+        str(row[1])
+        for row in connection.execute("PRAGMA table_info(expression_edges)")
+    }
+    if "annotations_json" not in columns:
+        return
+    rows = connection.execute(
+        "SELECT id,annotations_json FROM expression_edges WHERE id IN (?,?) ORDER BY id",
+        (new_edge_id, old_edge_id),
+    ).fetchall()
+    annotations: list[dict[str, Any]] = []
+    identities: set[tuple[object, ...]] = set()
+    for row in rows:
+        try:
+            values = json.loads(str(row["annotations_json"] or "[]"))
+        except (TypeError, ValueError):
+            values = []
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if not isinstance(value, dict):
+                continue
+            text = value.get("text")
+            side = value.get("side")
+            if not isinstance(text, str) or not text.strip() or side not in {"a", "b", "both"}:
+                continue
+            source_id = value.get("source_id")
+            if not isinstance(source_id, int) and source_id is not None:
+                source_id = None
+            source_marker = value.get("source_marker")
+            if not isinstance(source_marker, str) or not source_marker:
+                source_marker = None
+            item = {
+                "text": text.strip(),
+                "side": side,
+                "source_id": source_id,
+                "source_marker": source_marker,
+            }
+            identity = (item["text"], item["side"], item["source_id"], item["source_marker"])
+            if identity not in identities:
+                identities.add(identity)
+                annotations.append(item)
+    annotations.sort(key=lambda item: (
+        str(item["side"]),
+        -1 if item["source_id"] is None else int(item["source_id"]),
+        str(item["source_marker"] or ""),
+        str(item["text"]),
+    ))
+    connection.execute(
+        "UPDATE expression_edges SET annotations_json=? WHERE id=?",
+        (json.dumps(annotations[:20], ensure_ascii=False, sort_keys=True, separators=(",", ":")), new_edge_id),
+    )
+
+
 def _merge_expression_edges(connection: sqlite3.Connection, mapping: dict[int, int]) -> dict[str, int]:
     if not mapping or not table_exists(connection, "expression_edges"):
         return {"edge_groups_merged": 0, "edges_removed": 0, "self_edges_removed": 0}
@@ -256,6 +313,7 @@ def _merge_expression_edges(connection: sqlite3.Connection, mapping: dict[int, i
             edge_id = int(row["id"])
             if edge_id == survivor_id:
                 continue
+            _merge_edge_annotations(connection, edge_id, survivor_id)
             _merge_edge_children(connection, edge_id, survivor_id)
             connection.execute(
                 "UPDATE expression_edges SET relation_mask=?,score=?,created_by=COALESCE(created_by,?) WHERE id=?",

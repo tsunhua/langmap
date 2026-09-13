@@ -1,16 +1,66 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { EdgeSourceMarker, MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
+import type { EdgeSourceMarker, MappingAnnotation, MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
 
 const NODE_LIMIT = 200;
 const SQLITE_BIND_CHUNK = 80;
 // Edge adjacency uses the frontier twice in its OR predicate, so keep the
 // effective bind count below D1's SQLite variable limit.
 const EDGE_BIND_CHUNK = 40;
+const ANNOTATIONS_PER_EDGE = 20;
 // Examples are standalone expressions connected by ordinary translation
 // edges, so every currently valid edge participates in the mapping graph.
 const MAPPING_RELATION_MASK = 1 | 2 | 4;
-interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; }
+interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; annotations_json?:string | null; }
 interface NodeRow { id:number; text:string; lang_code:string; language_name?:string; }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseAnnotations(value: string | null | undefined): MappingAnnotation[] {
+  if (!value) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const annotations: MappingAnnotation[] = [];
+  const identities = new Set<string>();
+  for (const item of parsed) {
+    if (!isRecord(item) || typeof item.text !== 'string' || !item.text.trim()) continue;
+    if (item.side !== 'a' && item.side !== 'b' && item.side !== 'both') continue;
+    const sourceId = item.source_id === null || item.source_id === undefined
+      ? null
+      : (typeof item.source_id === 'number' && Number.isInteger(item.source_id) ? item.source_id : null);
+    const sourceMarker = typeof item.source_marker === 'string' && item.source_marker
+      ? item.source_marker
+      : null;
+    const identity = [item.side, sourceId ?? '', sourceMarker ?? '', item.text.trim()].join('\u0000');
+    if (identities.has(identity)) continue;
+    identities.add(identity);
+    annotations.push({
+      text: item.text.trim(),
+      side: item.side,
+      source_id: sourceId,
+      source_marker: sourceMarker,
+    });
+    if (annotations.length >= ANNOTATIONS_PER_EDGE) break;
+  }
+  return annotations;
+}
+
+async function loadEdges(db: D1Database, marks: string, chunk: number[]): Promise<EdgeRow[]> {
+  try {
+    const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score,annotations_json FROM expression_edges WHERE (expression_a_id IN (${marks}) OR expression_b_id IN (${marks})) AND (relation_mask & ${MAPPING_RELATION_MASK}) <> 0 ORDER BY id`).bind(...chunk, ...chunk).all<EdgeRow>();
+    return result.results;
+  } catch {
+    // Keep graph reads compatible while an additive schema migration is pending.
+    const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE (expression_a_id IN (${marks}) OR expression_b_id IN (${marks})) AND (relation_mask & ${MAPPING_RELATION_MASK}) <> 0 ORDER BY id`).bind(...chunk, ...chunk).all<Omit<EdgeRow, 'annotations_json'>>();
+    return result.results.map((edge) => ({ ...edge, annotations_json: '[]' }));
+  }
+}
 
 /** Parses a comma-separated language filter (e.g. "eng,cmn-Hant") into a lowercase code set. */
 function parseTargetLanguages(value: string | undefined): Set<string> {
@@ -29,8 +79,7 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     for (let offset = 0; offset < frontier.length; offset += EDGE_BIND_CHUNK) {
       const chunk = frontier.slice(offset, offset + EDGE_BIND_CHUNK);
       const marks = chunk.map(() => '?').join(',');
-      const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score FROM expression_edges WHERE (expression_a_id IN (${marks}) OR expression_b_id IN (${marks})) AND (relation_mask & ${MAPPING_RELATION_MASK}) <> 0 ORDER BY id`).bind(...chunk, ...chunk).all<EdgeRow>();
-      edgeResults.push(...result.results);
+      edgeResults.push(...await loadEdges(db, marks, chunk));
     }
     edgeResults.sort((a, b) => a.id - b.id);
     const result = { results: edgeResults };
@@ -51,7 +100,7 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     }
     for (const edge of result.results) {
       const a = nodes.get(edge.expression_a_id); const b = nodes.get(edge.expression_b_id);
-      if (a && b) edges.set(edge.id, { edge_id: edge.id, source_id: edge.expression_a_id, target_id: edge.expression_b_id, relation_mask: edge.relation_mask, score: edge.score, depth, sources: [] });
+      if (a && b) edges.set(edge.id, { edge_id: edge.id, source_id: edge.expression_a_id, target_id: edge.expression_b_id, relation_mask: edge.relation_mask, score: edge.score, depth, sources: [], annotations: parseAnnotations(edge.annotations_json) });
     }
     frontier = next; resolved = depth;
   }

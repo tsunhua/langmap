@@ -389,6 +389,75 @@ def _upsert_edge(context: _CanonicalImportContext, left: int, right: int, relati
     return int(row[0]) if row is not None else None
 
 
+def _upsert_annotation(
+    context: _CanonicalImportContext,
+    edge_id: int,
+    source_id: int | None,
+    source_marker: str,
+    side: str,
+    text: str,
+) -> bool:
+    if "annotations_json" not in context.columns("expression_edges"):
+        return False
+    normalized_text = canonical_text(text)
+    if not normalized_text or side not in {"a", "b", "both"}:
+        return False
+    row = context.connection.execute(
+        "SELECT annotations_json FROM expression_edges WHERE id=?", (edge_id,)
+    ).fetchone()
+    if row is None:
+        return False
+    try:
+        parsed = json.loads(str(row[0] or "[]"))
+    except (TypeError, ValueError):
+        parsed = []
+    entries: list[dict[str, Any]] = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if not isinstance(item, dict):
+                continue
+            item_text = item.get("text")
+            item_side = item.get("side")
+            if not isinstance(item_text, str) or not item_text.strip() or item_side not in {"a", "b", "both"}:
+                continue
+            item_source_id = item.get("source_id")
+            if not isinstance(item_source_id, int) and item_source_id is not None:
+                item_source_id = None
+            item_source_marker = item.get("source_marker")
+            if not isinstance(item_source_marker, str) or not item_source_marker:
+                item_source_marker = None
+            entries.append({
+                "text": canonical_text(item_text),
+                "side": item_side,
+                "source_id": item_source_id,
+                "source_marker": item_source_marker,
+            })
+    candidate = {
+        "text": normalized_text,
+        "side": side,
+        "source_id": source_id,
+        "source_marker": source_marker or None,
+    }
+    identity = lambda item: (item["text"], item["side"], item["source_id"], item["source_marker"])
+    if identity(candidate) in {identity(item) for item in entries}:
+        return False
+    entries.append(candidate)
+    entries.sort(key=lambda item: (
+        str(item["side"]),
+        -1 if item["source_id"] is None else int(item["source_id"]),
+        str(item["source_marker"] or ""),
+        str(item["text"]),
+    ))
+    entries = entries[:20]
+    if identity(candidate) not in {identity(item) for item in entries}:
+        return False
+    encoded = json.dumps(entries, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    context.connection.execute(
+        "UPDATE expression_edges SET annotations_json=? WHERE id=?", (encoded, edge_id)
+    )
+    return True
+
+
 def _refresh_language_statistics(connection: sqlite3.Connection, language_ids: set[int]) -> None:
     """Refresh only languages touched by this release, when the new table exists."""
     table = connection.execute(
@@ -482,12 +551,18 @@ def import_release_to_local_d1(
             if index % chunk_size == 0:
                 _report_progress(progress, write_started, "d1_write", "locale_links", index, len(ordered_occurrences))
         _report_progress(progress, write_started, "d1_write", "locale_links", len(ordered_occurrences), len(ordered_occurrences))
-        head_by_entry: dict[str, int] = {}
+        head_by_entry: dict[str, list[int]] = {}
+        head_claims_by_entry: dict[str, list[tuple[str, int]]] = {}
         source_by_entry: dict[str, str] = {}
         for claim_key in sorted(occurrences):
             row = occurrences[claim_key]
-            if str(row["occurrence_kind"]) == "headword" and str(row["entry_key"]) not in head_by_entry:
-                head_by_entry[str(row["entry_key"])] = cluster_ids.get(str(row["cluster_key"]))
+            if str(row["occurrence_kind"]) == "headword":
+                expression_id = cluster_ids.get(str(row["cluster_key"]))
+                if expression_id is not None:
+                    heads = head_by_entry.setdefault(str(row["entry_key"]), [])
+                    if expression_id not in heads:
+                        heads.append(expression_id)
+                    head_claims_by_entry.setdefault(str(row["entry_key"]), []).append((claim_key, expression_id))
                 source_by_entry[str(row["entry_key"])] = entry_sources[str(row["entry_key"])]
         reading_rows = list(staging.execute(
             "SELECT * FROM lexical_readings NOT INDEXED WHERE release_id=? AND errors_json='[]'",
@@ -500,7 +575,8 @@ def import_release_to_local_d1(
                 target = occurrences.get(str(target_claim_key))
                 expression_id = cluster_ids.get(str(target["cluster_key"])) if target is not None else None
             else:
-                expression_id = head_by_entry.get(str(row["entry_key"]))
+                expression_ids = head_by_entry.get(str(row["entry_key"]), [])
+                expression_id = expression_ids[0] if expression_ids else None
             if expression_id is None or not row["locale_code"]:
                 continue
             code = str(row["locale_code"])
@@ -509,21 +585,29 @@ def import_release_to_local_d1(
             if index % chunk_size == 0:
                 _report_progress(progress, write_started, "d1_write", "readings", index, len(ordered_readings))
         _report_progress(progress, write_started, "d1_write", "readings", len(ordered_readings), len(ordered_readings))
+        annotation_edges: dict[str, list[tuple[int, int, int, str]]] = {}
         for claim_key in sorted(occurrences):
             row = occurrences[claim_key]
             kind = str(row["occurrence_kind"])
             if kind not in {"equivalent", "synonym"}:
                 continue
-            head = head_by_entry.get(str(row["entry_key"]))
+            heads = head_by_entry.get(str(row["entry_key"]), [])
             target = cluster_ids.get(str(row["cluster_key"]))
-            if head is None or target is None:
+            if target is None:
                 continue
             relation = RELATION_SYNONYM if kind == "synonym" else RELATION_MAPPING
-            edge_id = _upsert_edge(context, head, target, relation, system_user_id)
-            if edge_id is not None:
-                source_key = source_by_entry.get(str(row["entry_key"]), "dictionary")
-                context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(str(row["entry_key"]), "")})
-                edges += 1
+            for head in heads:
+                edge_id = _upsert_edge(context, head, target, relation, system_user_id)
+                if edge_id is not None:
+                    source_key = source_by_entry.get(str(row["entry_key"]), "dictionary")
+                    source_marker = marker_by_entry.get(str(row["entry_key"]), "")
+                    context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": source_marker})
+                    edge_a, edge_b = sorted((head, target))
+                    annotation_edges.setdefault(claim_key, []).append((edge_id, edge_a, edge_b, source_key))
+                    for head_claim, head_expression in head_claims_by_entry.get(str(row["entry_key"]), ()):
+                        if head_expression == head:
+                            annotation_edges.setdefault(head_claim, []).append((edge_id, edge_a, edge_b, source_key))
+                    edges += 1
         example_rows = {str(row["claim_key"]): row for row in occurrences.values() if str(row["occurrence_kind"]) == "example"}
         for claim_key in sorted(example_rows):
             row = example_rows[claim_key]
@@ -543,7 +627,35 @@ def import_release_to_local_d1(
                 edge_id = _upsert_edge(context, left, right, RELATION_MAPPING, system_user_id)
                 if edge_id is not None:
                     context.insert_ignore("expression_edge_sources", {"edge_id": edge_id, "source_id": context.source_id(source_key), "source_marker": marker_by_entry.get(entry_key, "")})
+                    edge_a, edge_b = sorted((left, right))
+                    annotation_edges.setdefault(claim_key[: -len(":translation")] + ":text", []).append((edge_id, edge_a, edge_b, source_key))
+                    annotation_edges.setdefault(claim_key, []).append((edge_id, edge_a, edge_b, source_key))
                     edges += 1
+        annotations = list(staging.execute(
+            "SELECT * FROM lexical_annotations NOT INDEXED WHERE release_id=? AND errors_json='[]' ORDER BY claim_key",
+            (release_id,),
+        ))
+        for annotation in annotations:
+            target_claim = str(annotation["target_claim_key"] or "")
+            target_occurrence = occurrences.get(target_claim)
+            target_id = None if target_occurrence is None else cluster_ids.get(str(target_occurrence["cluster_key"]))
+            if target_id is None:
+                continue
+            for edge_id, edge_a, edge_b, source_key in annotation_edges.get(target_claim, ()):
+                if target_id == edge_a:
+                    side = "a"
+                elif target_id == edge_b:
+                    side = "b"
+                else:
+                    continue
+                _upsert_annotation(
+                    context,
+                    edge_id,
+                    context.source_id(source_key),
+                    marker_by_entry.get(str(annotation["entry_key"]), ""),
+                    side,
+                    str(annotation["text"]),
+                )
         _report_progress(progress, write_started, "d1_write", "edges", edges, edges)
         # The import summary only needs rows touched by this release; scanning
         # the full expressions table makes each incremental file scale with the

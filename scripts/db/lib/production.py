@@ -22,7 +22,9 @@ class ProductionInventoryError(RuntimeError):
     pass
 
 
-SPLIT_SQL_BATCH_BYTES = 256 * 1024
+# Keep the command payload below the Wrangler argv/parser cliff while reducing
+# per-batch process startup compared with the original 256 KB grouping.
+SPLIT_SQL_BATCH_BYTES = 512 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
     "sources",
@@ -328,6 +330,7 @@ def plan_production(
     approved_data_migration: Path | None = None,
     dictionary_postflight_manifest: Path | None = None,
     refresh_language_statistics: bool = False,
+    apply_reference_artifacts: bool = True,
 ) -> dict[str, Any]:
     inventory = inventory_production(paths, wrangler_bin=wrangler_bin, env=env)
     operation_id = uuid.uuid4().hex
@@ -434,7 +437,12 @@ def plan_production(
         key_diff.counts.get(key, 0)
         for key in ("insert", "update", "manual_review", "delete")
     )
-    if (
+    if not apply_reference_artifacts:
+        reference_artifacts = {
+            "action": "skip",
+            "reason": "explicit-data-only-release",
+        }
+    elif (
         approved_data is not None
         and dictionary_artifact is None
         and not pending_migrations

@@ -201,25 +201,25 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
     # Example text/translation pairs are separate mappings; definitions and
     # labels remain in offline staging.
     by_claim = {str(row["claim_key"]): row for row in binding_rows}
-    head_by_sense: dict[str, dict[str, Any]] = {}
+    heads_by_entry: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in binding_rows:
         if row["role"] == "headword":
-            head_by_sense[str(row["entry_key"])] = row
+            heads_by_entry[str(row["entry_key"])].append(row)
     evidence_count = edge_count = 0
     for row in binding_rows:
         if row["role"] not in {"equivalent", "synonym"}:
             continue
-        head = head_by_sense.get(str(row["entry_key"]))
-        if head is None or head["expression_id"] == row["expression_id"]:
-            continue
-        left, right = sorted((head["expression_id"], row["expression_id"]))
-        pair = _pair_key(left, right)
-        edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
-        statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
-        evidence_kind = "synonym" if row["role"] == "synonym" else "equivalent"
-        statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, row["claim_key"], evidence_kind]))
-        edge_count += 1
-        evidence_count += 1
+        for head in heads_by_entry.get(str(row["entry_key"]), ()):
+            if head["expression_id"] == row["expression_id"]:
+                continue
+            left, right = sorted((head["expression_id"], row["expression_id"]))
+            pair = _pair_key(left, right)
+            edge_id = inventory.edges_by_pair.get(pair) or inventory.edges_by_pair.get("|".join(pair)) or _edge_id(left, right)
+            statements.append(insert_or_ignore("expression_edges", ["id", "expression_a_id", "expression_b_id", "score", "source"], [edge_id, left, right, 0, "dictionary"]))
+            evidence_kind = "synonym" if row["role"] == "synonym" else "equivalent"
+            statements.append(insert_or_ignore("expression_edge_evidence", ["release_id", "edge_id", "claim_key", "evidence_kind"], [release_id, edge_id, row["claim_key"], evidence_kind]))
+            edge_count += 1
+            evidence_count += 1
     example_pairs: dict[tuple[str, str, str], dict[str, dict[str, Any]]] = {}
     for row in binding_rows:
         if row["role"] not in {"example_text", "example_translation"}:
@@ -244,14 +244,13 @@ def _compile_statements(connection: sqlite3.Connection, release_id: str, invento
         edge_count += 1
         evidence_count += 1
     for row in connection.execute("SELECT * FROM normalized_pos WHERE release_id=? AND code IS NOT NULL AND errors_json='[]' ORDER BY sense_key, claim_key", (release_id,)):
-        head = head_by_sense.get(str(row["sense_key"]).split(":s", 1)[0])
-        if head is None:
-            continue
-        statements.append(insert_or_ignore("expression_pos_attestations", ["release_id", "expression_id", "pos_code", "claim_key"], [release_id, head["expression_id"], row["code"], row["claim_key"]]))
+        heads = heads_by_entry.get(str(row["sense_key"]).split(":s", 1)[0], ())
+        for head in heads:
+            statements.append(insert_or_ignore("expression_pos_attestations", ["release_id", "expression_id", "pos_code", "claim_key"], [release_id, head["expression_id"], row["code"], row["claim_key"]]))
     for row in connection.execute("SELECT * FROM lexical_readings WHERE release_id=? AND errors_json='[]' ORDER BY claim_key", (release_id,)):
         target_claim_key = row["target_claim_key"]
         target = by_claim.get(str(target_claim_key)) if target_claim_key else None
-        head = head_by_sense.get(str(row["entry_key"])) if target is None else target
+        head = (heads_by_entry.get(str(row["entry_key"]), ()) or (None,))[0] if target is None else target
         if head is None or not row["locale_code"]:
             continue
         reading_id = f"dict-reading:{release_id}:{row['claim_key']}"

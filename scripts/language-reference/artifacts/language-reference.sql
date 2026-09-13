@@ -14030,6 +14030,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Oyster bay tasmanian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ozolotepec zapotec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ozumacín chinantec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'POJ', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pa di', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pa''a', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pa''o karen', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14291,7 +14292,6 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Podena', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pogolo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pohnpeian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Poj', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pokangá', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Poke', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pokomo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18715,7 +18715,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '夏威夷克里奥尔英语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハワイ・クレオール英語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '夏威夷手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '夏威夷手語 (Hsl)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '夏威夷手語 (HSL)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハワイ・ピジン手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '夏威夷语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '夏威夷文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -27459,8 +27459,8 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ハワイ・クレオール英語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Hawai''i sign language (hsl)' AND tgt.language_id=1303 AND tgt.text='夏威夷手语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='夏威夷手语';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Hawai''i sign language (hsl)' AND tgt.language_id=1303 AND tgt.text='夏威夷手語 (Hsl)';
-INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='夏威夷手語 (Hsl)';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Hawai''i sign language (hsl)' AND tgt.language_id=1303 AND tgt.text='夏威夷手語 (HSL)';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='夏威夷手語 (HSL)';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Hawai''i sign language (hsl)' AND tgt.language_id=2777 AND tgt.text='ハワイ・ピジン手話';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ハワイ・ピジン手話';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Hawaiian' AND tgt.language_id=1303 AND tgt.text='夏威夷语';
@@ -44794,7 +44794,7 @@ UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e W
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Jingxi zhuang' LIMIT 1) WHERE code='zyg-Latn-CN_Jingxi';
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Image' LIMIT 1) WHERE code='x-image-Latn-US';
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Emoji' LIMIT 1) WHERE code='x-emoji-Latn-US';
-UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Poj' LIMIT 1) WHERE code='nan-Latn_Pehoeji-TW';
+UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='POJ' LIMIT 1) WHERE code='nan-Latn_Pehoeji-TW';
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tailo' LIMIT 1) WHERE code='nan-Latn_Tailo-TW';
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Min nan chinese (poj)' LIMIT 1) WHERE code='nan-Latn_Pehoeji-CN';
 UPDATE language_locales SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Min nan chinese (tailo)' LIMIT 1) WHERE code='nan-Latn_Tailo-CN';

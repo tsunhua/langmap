@@ -44,6 +44,11 @@ const LANGUAGES_CACHE: CachePolicy = {
   authIndependent: true,
 };
 
+// Bump this when registry-backed names or counts change outside the D1 rows.
+// The revision is part of the internal Cache API key so a deploy cannot keep
+// serving a pre-release language label until the long stale window expires.
+const LANGUAGES_CACHE_REVISION = '2026-09-12-cmn-hant-name-v2';
+
 const HANDBOOK_CACHE: CachePolicy = {
   browserSeconds: 30,
   edgeSeconds: 60,
@@ -97,6 +102,14 @@ function cacheControl(policy: CachePolicy): string {
   return directives.join(', ');
 }
 
+function cacheKeyUrl(url: string): string {
+  const key = new URL(url);
+  if (key.pathname === '/api/v2/languages' || key.pathname.startsWith('/api/v2/languages/')) {
+    key.searchParams.set('__cache_revision', LANGUAGES_CACHE_REVISION);
+  }
+  return key.toString();
+}
+
 export async function addCacheHeaders(c: Context, next: Next): Promise<void> {
   if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
     await next();
@@ -107,7 +120,7 @@ export async function addCacheHeaders(c: Context, next: Next): Promise<void> {
   const hasAuthorization = Boolean(c.req.header('Authorization'));
   const cacheable = Boolean(policy && (!hasAuthorization || policy.authIndependent));
   const edgeCache = cacheable && c.req.method === 'GET' && typeof caches !== 'undefined' ? caches.default : undefined;
-  const cacheKey = edgeCache ? new Request(c.req.url, { method: 'GET' }) : undefined;
+  const cacheKey = edgeCache ? new Request(cacheKeyUrl(c.req.url), { method: 'GET' }) : undefined;
 
   if (edgeCache && cacheKey) {
     const cached = await edgeCache.match(cacheKey).catch(() => undefined);

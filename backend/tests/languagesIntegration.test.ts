@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { canonicalizeExpressionText } from '../src/services/expressionIdentity';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:8788';
 const API = `${BASE_URL}/api/v2/languages`;
@@ -176,8 +177,8 @@ describe('languages API', () => {
 
     const hans = await hansResponse.json() as { data: { total: number; items: Array<{ id: string; text: string }> } };
     const hant = await hantResponse.json() as { data: { total: number; items: Array<{ id: string; text: string }> } };
-    expect(hans.data.items.map((item) => item.text)).toEqual([hansText]);
-    expect(hant.data.items.map((item) => item.text)).toEqual([hantText]);
+    expect(hans.data.items.map((item) => item.text)).toEqual([canonicalizeExpressionText(hansText)]);
+    expect(hant.data.items.map((item) => item.text)).toEqual([canonicalizeExpressionText(hantText)]);
     expect(hans.data.total).toBe(1);
     expect(hant.data.total).toBe(1);
     expect(new Set([...hans.data.items, ...hant.data.items].map((item) => item.id)).size).toBe(2);

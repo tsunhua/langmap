@@ -114,11 +114,12 @@ export async function resolveLanguageNames(db: D1Database, codes: readonly strin
   const distinct = [...new Set(codes.filter(Boolean))];
   if (distinct.length === 0) return new Map();
   const { results } = await db.prepare(LANGUAGE_SQL).bind(JSON.stringify(distinct)).all<IdentityRow>();
+  const hasLocaleHint = Boolean(hints.primary || hints.secondary);
   const resolved = await resolveNamesByExpressionIds(db, results.flatMap((row) => row.name_expression_id ?? []), hints);
   return new Map(results.map((row) => {
     const codeName = firstPartyLanguageName(row.code, hints);
     const fallback = firstPartyName(row.name_en, hints) ?? row.name_en;
-    return [row.code, codeName ?? (row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback)];
+    return [row.code, codeName ?? (hasLocaleHint && row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback)];
   }));
 }
 

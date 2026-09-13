@@ -52,6 +52,54 @@ def test_adapter_quarantines_non_english_equivalent_and_unknown_reading() -> Non
     assert "unknown_reading_scheme" in normalized.readings[0].errors
 
 
+def test_adapter_splits_english_alternatives_and_keeps_explanation_as_annotation() -> None:
+    normalized = WikivoyagePhrasebookAdapter().normalize_entry(
+        StagedEntry(
+            "release-1",
+            "enwikivoyage:16153",
+            "entry",
+            "トイレはどこですか？",
+            "トイレはどこですか？",
+            None,
+            "jpn-to-eng",
+            "f" * 64,
+            senses=(StagedSense(
+                "sense",
+                1,
+                equivalents=({
+                    "value": "Hello!/i say!/hey! (only on the telephone)",
+                    "language": "eng",
+                    "locale": "eng-Latn-US",
+                },),
+            ),),
+            raw={"raw": {"target_lang_code": "jpn", "target_locale_code": "jpn-Jpan-JP"}},
+        )
+    )
+
+    assert [item.canonical_text for item in normalized.senses[0].occurrences] == [
+        "Hello!",
+        "I say!",
+        "Hey!",
+    ]
+    assert [annotation.text for annotation in normalized.annotations] == ["only on the telephone"] * 3
+
+
+def test_adapter_extracts_plain_target_respelling_as_reading() -> None:
+    normalized = WikivoyagePhrasebookAdapter().normalize_entry(
+        StagedEntry(
+            "release-1", "enwikivoyage:37990", "entry", "Đóng cửa (dauung-kưə)",
+            "Đóng cửa (dauung-kưə)", None, "vie-to-eng", "f" * 64,
+            senses=(StagedSense("sense", 1, equivalents=({"value": "Closed", "language": "eng", "locale": "eng-Latn-US"},)),),
+            raw={"raw": {"target_lang_code": "vie", "target_locale_code": "vie-Latn-VN"}},
+        )
+    )
+
+    assert normalized.headword.canonical_text == "Đóng cửa"
+    assert [(reading.scheme, reading.value, reading.errors) for reading in normalized.readings] == [
+        ("wikivoyage-respelling", "dauung-kưə", ()),
+    ]
+
+
 def test_dictionary_key_and_release_dispatch_are_explicit() -> None:
     assert isinstance(adapter_for_dictionary_key("enwikivoyage:16153"), WikivoyagePhrasebookAdapter)
     connection = sqlite3.connect(":memory:")

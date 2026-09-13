@@ -6,7 +6,7 @@ import VotePill from './VotePill.vue'
 import ExpressionEvidenceList from './ExpressionEvidenceList.vue'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 import { getPrimaryIncomingEdge, getPathToRoot, getRelatedCrossEdges } from './mappingGraphModel'
-import type { MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
+import type { MappingAnnotation, MappingGraphResponse, DisplayTree } from './mappingGraphTypes'
 
 const props = defineProps<{
   selectedNodeId: string | null
@@ -41,6 +41,8 @@ const primaryEdge = computed(() => {
   if (!props.selectedNodeId) return null
   return getPrimaryIncomingEdge(props.selectedNodeId, props.graph)
 })
+const primaryEdgeAnnotations = computed(() => primaryEdge.value?.annotations ?? [])
+const annotationKey = (annotation: MappingAnnotation) => [annotation.side, annotation.source_id ?? '', annotation.source_marker ?? '', annotation.text].join(':')
 
 const languagePath = computed(() => {
   const code = node.value?.lang_code
@@ -139,6 +141,13 @@ function onKeydown(e: KeyboardEvent) {
         target-type="mapping"
         :score="primaryEdge.score"
       />
+    </div>
+
+    <div v-if="primaryEdgeAnnotations.length > 0" class="gm-annotations">
+      <span class="gm-label">{{ t('components.mappingAnnotations') }}</span>
+      <ul class="gm-annotation-list">
+        <li v-for="annotation in primaryEdgeAnnotations" :key="annotationKey(annotation)">{{ annotation.text }}</li>
+      </ul>
     </div>
 
     <div v-if="crossEdgeCount > 0" class="gm-multipath">
@@ -290,6 +299,19 @@ function onKeydown(e: KeyboardEvent) {
   font-size: 13px;
   color: var(--accent);
   font-weight: 500;
+}
+.gm-annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gm-annotation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 .gm-acts {
   display: flex;

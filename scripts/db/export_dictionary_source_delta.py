@@ -41,10 +41,14 @@ def _write_cte_batches(
     statement: str,
     *,
     batch_size: int,
+    force_batch: bool = False,
 ) -> None:
     names = ", ".join(f'"{column}"' for column in columns)
     for start in range(0, len(rows), batch_size):
         batch = rows[start : start + batch_size]
+        if force_batch:
+            # Keep hot edge natural-key joins in their own remote command.
+            handle.write("-- langmap:batch\n")
         values = ",\n  ".join(
             "(" + ", ".join(_literal(value) for value in row) + ")"
             for row in batch
@@ -62,6 +66,148 @@ def _sha256(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _source_edge_annotations(raw_value: object, source_marker: str) -> list[dict[str, object]]:
+    """Keep only this source's edge annotations and drop staging IDs.
+
+    ``source_id`` is an integer local to the staging database.  The production
+    delta resolves the source by its natural key, so annotations carry the
+    source marker and a null ID instead of leaking that temporary integer.
+    """
+
+    try:
+        parsed = json.loads(str(raw_value or "[]"))
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(parsed, list):
+        return []
+    result: list[dict[str, object]] = []
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        marker = item.get("source_marker")
+        if str(marker or "") != source_marker:
+            continue
+        side = item.get("side")
+        text = item.get("text")
+        if side not in {"a", "b", "both"} or not isinstance(text, str) or not text.strip():
+            continue
+        result.append({
+            "side": side,
+            "source_id": None,
+            "source_marker": source_marker or None,
+            "text": " ".join(text.split()),
+        })
+    return result
+
+
+def _annotation_update_sql(
+    *,
+    a_identity: tuple[object, object, object],
+    b_identity: tuple[object, object, object],
+    source_marker: str,
+    annotations: Sequence[dict[str, object]],
+) -> str:
+    """Render a natural-key update that replaces this marker's annotations.
+
+    Existing annotations from other sources remain on a shared edge.  The
+    update is idempotent and works when the edge was already present before
+    this source-scoped release.
+    """
+
+    a_language, a_text, a_homograph = a_identity
+    b_language, b_text, b_homograph = b_identity
+    existing = (
+        "SELECT value AS item FROM json_each("
+        "CASE WHEN json_valid(expression_edges.annotations_json) "
+        "THEN expression_edges.annotations_json ELSE '[]' END) "
+        f"WHERE COALESCE(json_extract(value,'$.source_marker'),'') <> {_literal(source_marker)}"
+    )
+    items = [existing]
+    for annotation in annotations:
+        items.append(f"SELECT json({_literal(json.dumps(annotation, ensure_ascii=False, sort_keys=True, separators=(',', ':')))}) AS item")
+    merged = " UNION ALL ".join(items)
+    endpoint_query = (
+        "SELECT edge.id FROM expression_edges edge "
+        "JOIN expressions ea ON ea.id=edge.expression_a_id "
+        "JOIN languages la ON la.id=ea.language_id "
+        "JOIN expressions eb ON eb.id=edge.expression_b_id "
+        "JOIN languages lb ON lb.id=eb.language_id "
+        f"WHERE la.code={_literal(a_language)} AND ea.text={_literal(a_text)} "
+        f"AND ea.homograph_index={_literal(a_homograph)} "
+        f"AND lb.code={_literal(b_language)} AND eb.text={_literal(b_text)} "
+        f"AND eb.homograph_index={_literal(b_homograph)} LIMIT 1"
+    )
+    return (
+        "UPDATE expression_edges SET annotations_json=("
+        f"SELECT COALESCE(json_group_array(json(item)),'[]') FROM ({merged})"
+        f") WHERE id=({endpoint_query});\n"
+    )
+
+
+def _handbook_target_sql(*, source_lookup: str, item_alias: str) -> str:
+    """Find the newest English endpoint for a source marker.
+
+    An additive repair release may coexist with an older edge carrying the
+    same marker.  Newly inserted edges have the larger autoincrement id, so
+    choosing the newest edge moves managed handbook items to the repaired
+    expression without reading production IDs into the release artifact.
+    """
+
+    return (
+        "SELECT CASE WHEN la.code='eng' THEN a.id ELSE b.id END "
+        "FROM expression_edge_sources current_source "
+        "JOIN expression_edges current_edge ON current_edge.id=current_source.edge_id "
+        "JOIN expressions a ON a.id=current_edge.expression_a_id "
+        "JOIN languages la ON la.id=a.language_id "
+        "JOIN expressions b ON b.id=current_edge.expression_b_id "
+        "JOIN languages lb ON lb.id=b.language_id "
+        f"WHERE current_source.source_id={source_lookup} "
+        "AND ((la.code='eng' AND lb.code<>'eng') OR (lb.code='eng' AND la.code<>'eng')) "
+        "AND current_source.source_marker IN ("
+        "SELECT old_source.source_marker "
+        "FROM expression_edge_sources old_source "
+        "JOIN expression_edges old_edge ON old_edge.id=old_source.edge_id "
+        f"WHERE old_source.source_id={source_lookup} "
+        f"AND (old_edge.expression_a_id={item_alias}.expression_id "
+        f"OR old_edge.expression_b_id={item_alias}.expression_id)"
+        ") ORDER BY current_edge.id DESC, "
+        "CASE WHEN la.code='eng' THEN a.id ELSE b.id END ASC LIMIT 1"
+    )
+
+
+def _write_managed_handbook_remap(handle, *, source_type: str, source_name: str) -> None:
+    """Move managed handbook items off replaced source-owned expressions.
+
+    The handbook has a restrictive foreign key to expressions.  A source
+    repair therefore cannot delete an old expression until its item points at
+    the newest expression for the same source marker.  This additive release
+    hook performs that remap while keeping all IDs natural-key resolved.
+    """
+
+    lookup = (
+        f"(SELECT id FROM sources WHERE type={_literal(source_type)}"
+        f" AND name={_literal(source_name)})"
+    )
+    owned = f"(SELECT id FROM expressions WHERE source_id = {lookup})"
+    target_for_delete = _handbook_target_sql(source_lookup=lookup, item_alias="old_item")
+    target_for_update = _handbook_target_sql(source_lookup=lookup, item_alias="item")
+    handle.write("-- Remap managed handbook items to repaired English expressions.\n")
+    handle.write(
+        "DELETE FROM handbook_section_items AS old_item "
+        f"WHERE old_item.expression_id IN {owned} "
+        "AND EXISTS (SELECT 1 FROM handbook_section_items existing "
+        "WHERE existing.section_id=old_item.section_id "
+        f"AND existing.expression_id=({target_for_delete}) "
+        "AND existing.position<>old_item.position);\n"
+    )
+    handle.write(
+        "UPDATE handbook_section_items AS item SET expression_id=("
+        f"{target_for_update}"
+        ") WHERE item.expression_id IN "
+        f"{owned} AND ({target_for_update}) IS NOT NULL;\n"
+    )
 
 
 def _write_replace_deletes(handle, *, source_type: str, source_name: str) -> None:
@@ -91,6 +237,86 @@ def _write_replace_deletes(handle, *, source_type: str, source_name: str) -> Non
     handle.write(f"DELETE FROM expressions WHERE source_id = {lookup};\n")
 
 
+def _write_shared_safe_reconcile(
+    handle, *, source_type: str, source_name: str
+) -> None:
+    """Remove one source's assertions without deleting shared graph data.
+
+    A dictionary source commonly reuses canonical expressions and edges that
+    are also attested by other sources.  Strict replace mode must reject that
+    shape because its historical delete preamble removes whole expressions and
+    edges.  Reconcile mode is deliberately narrower: it removes only this
+    source's ownership rows, deletes an edge only when this source was its sole
+    source attestation (and no vote protects it), and leaves shared/orphaned
+    expressions in place.  Fresh rows emitted later in the delta can then
+    re-attach the corrected source facts by natural key.
+    """
+
+    lookup = (
+        f"(SELECT id FROM sources WHERE type={_literal(source_type)}"
+        f" AND name={_literal(source_name)})"
+    )
+    source_edges = (
+        "SELECT edge_id FROM expression_edge_sources "
+        f"WHERE source_id = {lookup}"
+    )
+    owned = f"(SELECT id FROM expressions WHERE source_id = {lookup})"
+    # Keep an edge when another source attests it or a user vote protects it.
+    # The source-edge subquery is evaluated before its source rows are removed.
+    handle.write("-- Shared-safe reconcile: remove only this source's assertions.\n")
+    handle.write(
+        "DELETE FROM expression_edges "
+        f"WHERE id IN ({source_edges}) "
+        f"AND NOT EXISTS (SELECT 1 FROM expression_edge_sources other "
+        f"WHERE other.edge_id=expression_edges.id AND other.source_id <> {lookup}) "
+        "AND NOT EXISTS (SELECT 1 FROM edge_votes vote "
+        "WHERE vote.edge_id=expression_edges.id);\n"
+    )
+    handle.write(f"DELETE FROM expression_edge_sources WHERE source_id = {lookup};\n")
+    handle.write(f"DELETE FROM expression_readings WHERE source_id = {lookup};\n")
+    handle.write(f"DELETE FROM expression_sources WHERE source_id = {lookup};\n")
+
+    # Drop locale links and expressions only after every source-owned claim has
+    # gone, and only when no graph, reading, handbook, or vote can still reach
+    # the expression.  Shared expressions are retained and their old source
+    # owner is cleared so a later INSERT OR IGNORE cannot inherit stale
+    # ownership metadata.
+    removable_subquery = (
+        f"e.source_id = {lookup} "
+        "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
+        "WHERE claim.expression_id=e.id) "
+        "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
+        "WHERE edge.expression_a_id=e.id OR edge.expression_b_id=e.id) "
+        "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
+        "WHERE reading.expression_id=e.id) "
+        "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
+        "WHERE item.expression_id=e.id)"
+    )
+    removable_delete = (
+        f"source_id = {lookup} "
+        "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
+        "WHERE claim.expression_id=expressions.id) "
+        "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
+        "WHERE edge.expression_a_id=expressions.id OR edge.expression_b_id=expressions.id) "
+        "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
+        "WHERE reading.expression_id=expressions.id) "
+        "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
+        "WHERE item.expression_id=expressions.id)"
+    )
+    handle.write(
+        "DELETE FROM expression_locale_links WHERE expression_id IN "
+        f"(SELECT e.id FROM expressions e WHERE {removable_subquery});\n"
+    )
+    handle.write(
+        "DELETE FROM expressions WHERE "
+        f"{removable_delete};\n"
+    )
+    handle.write(
+        "UPDATE expressions SET source_id=NULL WHERE source_id = "
+        f"{lookup};\n"
+    )
+
+
 def export_source_delta(
     staging: Path,
     output: Path,
@@ -101,11 +327,16 @@ def export_source_delta(
     manifest: Path | None = None,
     rows_per_insert: int = 100,
     replace: bool = False,
+    reconcile_shared: bool = False,
+    skip_edge_annotation_updates: bool = False,
+    remap_managed_handbook: bool = False,
 ) -> dict[str, int]:
     if rows_per_insert < 1:
         raise ValueError("rows_per_insert must be positive")
     if not locale_codes:
         raise ValueError("at least one locale code is required")
+    if reconcile_shared and not replace:
+        raise ValueError("reconcile_shared requires replace mode")
 
     connection = sqlite3.connect(staging, timeout=60)
     try:
@@ -117,7 +348,7 @@ def export_source_delta(
             raise ValueError(f"source not found in staging: {source_type}/{source_name}")
         source_id = int(source[0])
 
-        if replace:
+        if replace and not reconcile_shared:
             shared_claims = connection.execute(
                 """
                 SELECT COUNT(*) FROM expressions e
@@ -221,11 +452,18 @@ def export_source_delta(
             """,
             (source_id,),
         )
+        edge_columns_present = {
+            str(row[1])
+            for row in connection.execute("PRAGMA table_info(expression_edges)")
+        }
+        edge_annotation_column = (
+            ", e.annotations_json" if "annotations_json" in edge_columns_present else ""
+        )
         edges = _rows(
             connection,
-            """
+            f"""
             SELECT e.id,e.expression_a_id,e.expression_b_id,e.relation_mask,e.score,
-                   es.source_marker
+                   es.source_marker{edge_annotation_column}
             FROM expression_edge_sources es JOIN expression_edges e ON e.id=es.edge_id
             WHERE es.source_id=? ORDER BY e.id,es.source_marker
             """,
@@ -249,22 +487,49 @@ def export_source_delta(
             (*node_by_id[int(local_id)][:3], locale_code, scheme, value)
             for local_id, locale_code, scheme, value in readings
         ]
-        edge_rows = [
-            (
-                *node_by_id[int(a_id)][:3],
-                *node_by_id[int(b_id)][:3],
-                relation_mask,
-                score,
-                marker,
+        edge_rows: list[tuple[object, ...]] = []
+        edge_annotation_updates: list[str] = []
+        for edge in edges:
+            _edge_id, a_id, b_id, relation_mask, score, marker = edge[:6]
+            edge_rows.append(
+                (
+                    *node_by_id[int(a_id)][:3],
+                    *node_by_id[int(b_id)][:3],
+                    relation_mask,
+                    score,
+                    marker,
+                )
             )
-            for _edge_id, a_id, b_id, relation_mask, score, marker in edges
-        ]
+            if edge_annotation_column:
+                raw_annotations = edge[6] if len(edge) > 6 else "[]"
+                source_annotations = _source_edge_annotations(raw_annotations, str(marker))
+                # Additive releases only need to write non-empty annotations;
+                # emitting one expensive natural-key UPDATE for every ordinary
+                # edge can exceed D1's per-command CPU budget. Replace mode
+                # still emits empty updates so stale marker annotations are
+                # removed when a source is rebuilt.
+                if source_annotations or (replace and not skip_edge_annotation_updates):
+                    edge_annotation_updates.append(
+                        _annotation_update_sql(
+                            a_identity=tuple(node_by_id[int(a_id)][:3]),
+                            b_identity=tuple(node_by_id[int(b_id)][:3]),
+                            source_marker=str(marker),
+                            annotations=source_annotations,
+                        )
+                    )
 
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", encoding="utf-8") as handle:
             handle.write("PRAGMA defer_foreign_keys=TRUE;\n")
             if replace:
-                _write_replace_deletes(handle, source_type=source_type, source_name=source_name)
+                if reconcile_shared:
+                    _write_shared_safe_reconcile(
+                        handle, source_type=source_type, source_name=source_name
+                    )
+                else:
+                    _write_replace_deletes(
+                        handle, source_type=source_type, source_name=source_name
+                    )
             handle.write(
                 "INSERT OR IGNORE INTO sources (type,name) VALUES "
                 f"({_literal(source_type)},{_literal(source_name)});\n"
@@ -350,6 +615,7 @@ def export_source_delta(
                 + edge_joins
                 + ";",
                 batch_size=rows_per_insert,
+                force_batch=True,
             )
             _write_cte_batches(
                 handle,
@@ -362,7 +628,20 @@ def export_source_delta(
                 "AND e.expression_b_id=CASE WHEN a.id<b.id THEN b.id ELSE a.id END "
                 f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
                 batch_size=rows_per_insert,
+                force_batch=True,
             )
+            if edge_annotation_updates:
+                handle.write("-- Merge source-scoped edge annotations after edge identity resolution.\n")
+                for update in edge_annotation_updates:
+                    handle.write("-- langmap:batch\n")
+                    handle.write(update)
+            if remap_managed_handbook:
+                handle.write("-- langmap:batch\n")
+                _write_managed_handbook_remap(
+                    handle,
+                    source_type=source_type,
+                    source_name=source_name,
+                )
             handle.write("PRAGMA defer_foreign_keys=FALSE;\n")
 
         counts = {
@@ -383,6 +662,8 @@ def export_source_delta(
                 "locale_codes": sorted(found_codes),
                 "expected_counts": counts,
                 "replace": replace,
+                "reconcile_shared": reconcile_shared,
+                "skip_edge_annotation_updates": skip_edge_annotation_updates,
                 "delta_sha256": _sha256(output),
             }
             temporary = manifest.with_name(f".{manifest.name}.{os.getpid()}.tmp")
@@ -408,6 +689,22 @@ def main(argv: list[str] | None = None) -> int:
         help="emit a source-scoped DELETE preamble so the delta replaces the "
         "source's existing rows instead of only adding to them",
     )
+    parser.add_argument(
+        "--reconcile-shared",
+        action="store_true",
+        help="with --replace, remove only this source's assertions while preserving shared expressions and edges",
+    )
+    parser.add_argument(
+        "--skip-edge-annotation-updates",
+        action="store_true",
+        help="omit source-scoped edge annotation UPDATE statements for a faster lexical repair release",
+    )
+    parser.add_argument(
+        "--remap-managed-handbook",
+        action="store_true",
+        help="after an additive release, move managed handbook items to the newest "
+        "English expression for each source marker",
+    )
     args = parser.parse_args(argv)
     if not args.staging.is_file():
         print(f"staging SQLite not found: {args.staging}", file=sys.stderr)
@@ -422,6 +719,9 @@ def main(argv: list[str] | None = None) -> int:
             manifest=args.manifest,
             rows_per_insert=args.rows_per_insert,
             replace=args.replace,
+            reconcile_shared=args.reconcile_shared,
+            skip_edge_annotation_updates=args.skip_edge_annotation_updates,
+            remap_managed_handbook=args.remap_managed_handbook,
         )
     except (OSError, sqlite3.Error, ValueError) as exc:
         print(f"export failed: {exc}", file=sys.stderr)

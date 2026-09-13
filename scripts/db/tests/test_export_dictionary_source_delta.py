@@ -20,8 +20,10 @@ CREATE TABLE expressions (id INTEGER PRIMARY KEY AUTOINCREMENT,language_id INTEG
 CREATE TABLE expression_sources (expression_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(expression_id,source_id,source_marker)) WITHOUT ROWID;
 CREATE TABLE expression_locale_links (expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,PRIMARY KEY(expression_id,locale_id)) WITHOUT ROWID;
 CREATE TABLE expression_readings (expression_id INTEGER NOT NULL,locale_id INTEGER NOT NULL,scheme TEXT NOT NULL,value TEXT NOT NULL,source_id INTEGER,PRIMARY KEY(expression_id,locale_id,scheme,value)) WITHOUT ROWID;
-CREATE TABLE expression_edges (id INTEGER PRIMARY KEY AUTOINCREMENT,expression_a_id INTEGER NOT NULL,expression_b_id INTEGER NOT NULL,relation_mask INTEGER NOT NULL DEFAULT 1,score INTEGER NOT NULL DEFAULT 0,created_by INTEGER,CHECK(expression_a_id<expression_b_id),UNIQUE(expression_a_id,expression_b_id));
+CREATE TABLE expression_edges (id INTEGER PRIMARY KEY AUTOINCREMENT,expression_a_id INTEGER NOT NULL,expression_b_id INTEGER NOT NULL,relation_mask INTEGER NOT NULL DEFAULT 1,score INTEGER NOT NULL DEFAULT 0,annotations_json TEXT NOT NULL DEFAULT '[]',created_by INTEGER,CHECK(expression_a_id<expression_b_id),UNIQUE(expression_a_id,expression_b_id));
 CREATE TABLE expression_edge_sources (edge_id INTEGER NOT NULL,source_id INTEGER NOT NULL,source_marker TEXT NOT NULL DEFAULT '',PRIMARY KEY(edge_id,source_id,source_marker)) WITHOUT ROWID;
+CREATE TABLE edge_votes (user_id INTEGER NOT NULL,edge_id INTEGER NOT NULL,vote INTEGER NOT NULL,PRIMARY KEY(user_id,edge_id)) WITHOUT ROWID;
+CREATE TABLE handbook_section_items (section_id INTEGER NOT NULL,position INTEGER NOT NULL,expression_id INTEGER NOT NULL,PRIMARY KEY(section_id,position),UNIQUE(section_id,expression_id));
 """
 
 
@@ -45,6 +47,10 @@ def _staging(path: Path) -> None:
     connection.execute("INSERT INTO expression_locale_links VALUES (500,1),(900,136)")
     connection.execute("INSERT INTO expression_readings VALUES (900,136,'church','nong hau',65)")
     connection.execute("INSERT INTO expression_edges(id,expression_a_id,expression_b_id) VALUES (700,500,900)")
+    connection.execute(
+        "UPDATE expression_edges SET annotations_json=? WHERE id=700",
+        (json.dumps([{"side": "b", "source_id": 65, "source_marker": "1", "text": "register"}]),),
+    )
     connection.execute("INSERT INTO expression_edge_sources VALUES (700,65,'1')")
     connection.commit()
     connection.close()
@@ -84,10 +90,88 @@ class ExportDictionarySourceDeltaTests(unittest.TestCase):
             self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_sources WHERE source_id=?", (source_id,)).fetchone()[0], 2)
             self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_edge_sources WHERE source_id=?", (source_id,)).fetchone()[0], 1)
             self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM expression_readings WHERE source_id=?", (source_id,)).fetchone()[0], 1)
+            annotations = json.loads(
+                target_connection.execute("SELECT annotations_json FROM expression_edges").fetchone()[0]
+            )
+            self.assertEqual(annotations, [{"side": "b", "source_id": None, "source_marker": "1", "text": "register"}])
             self.assertEqual(counts["expression_locale_links"], 2)
             payload = json.loads(manifest.read_text(encoding="utf-8"))
             self.assertEqual(payload["expected_counts"], counts)
             self.assertEqual(payload["source"]["name"], "org.example.pott")
+            target_connection.close()
+
+    def test_source_scoped_annotations_preserve_other_markers(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            staging = root / "staging.sqlite"
+            target = root / "target.sqlite"
+            delta = root / "delta.sql"
+            _staging(staging)
+            target_connection = _base(target, ids=(1, 2))
+            target_connection.execute("INSERT INTO sources(id,type,name) VALUES (9,'system','seed')")
+            target_connection.commit()
+            export_source_delta(
+                staging,
+                delta,
+                source_type="publication",
+                source_name="org.example.pott",
+                locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+            )
+            target_connection.executescript(delta.read_text(encoding="utf-8"))
+            target_connection.execute(
+                "UPDATE expression_edges SET annotations_json=?",
+                (json.dumps([
+                    {"side": "a", "source_id": None, "source_marker": "seed", "text": "informal"},
+                    {"side": "b", "source_id": None, "source_marker": "1", "text": "old"},
+                ]),),
+            )
+            target_connection.commit()
+            target_connection.executescript(delta.read_text(encoding="utf-8"))
+            annotations = json.loads(
+                target_connection.execute("SELECT annotations_json FROM expression_edges").fetchone()[0]
+            )
+            self.assertEqual(
+                annotations,
+                [
+                    {"side": "a", "source_id": None, "source_marker": "seed", "text": "informal"},
+                    {"side": "b", "source_id": None, "source_marker": "1", "text": "register"},
+                ],
+            )
+            target_connection.close()
+
+    def test_additive_release_remaps_managed_handbook_items(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            staging = root / "staging.sqlite"
+            target = root / "target.sqlite"
+            delta = root / "delta.sql"
+            _staging(staging)
+            target_connection = _base(target, ids=(1, 2))
+            target_connection.execute("INSERT INTO sources(id,type,name) VALUES (9,'system','seed'),(77,'publication','org.example.pott')")
+            target_connection.execute(
+                "INSERT INTO expressions(id,language_id,text,source_id) VALUES"
+                " (42,1,'hello',9),(80,1,'hello (old)',77),(900,2,'儂好',77)"
+            )
+            target_connection.execute("INSERT INTO expression_sources VALUES (80,77,'1'),(900,77,'1')")
+            target_connection.execute("INSERT INTO expression_edges(id,expression_a_id,expression_b_id) VALUES (70,80,900)")
+            target_connection.execute("INSERT INTO expression_edge_sources VALUES (70,77,'1')")
+            target_connection.execute("INSERT INTO handbook_section_items VALUES (4,1,80)")
+            target_connection.commit()
+            export_source_delta(
+                staging,
+                delta,
+                source_type="publication",
+                source_name="org.example.pott",
+                locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+                remap_managed_handbook=True,
+            )
+            target_connection.executescript(delta.read_text(encoding="utf-8"))
+            self.assertEqual(
+                target_connection.execute("SELECT expression_id FROM handbook_section_items").fetchone()[0],
+                42,
+            )
+            target_connection.executescript(delta.read_text(encoding="utf-8"))
+            self.assertEqual(target_connection.execute("SELECT COUNT(*) FROM handbook_section_items").fetchone()[0], 1)
             target_connection.close()
 
     def test_requires_explicit_locales(self) -> None:
@@ -208,6 +292,68 @@ class ExportDictionarySourceDeltaTests(unittest.TestCase):
                         locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
                         replace=True,
                     )
+
+    def test_reconcile_shared_preserves_shared_nodes_and_rebuilds_source_claims(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            staging = root / "staging.sqlite"
+            target = root / "target.sqlite"
+            delta = root / "delta.sql"
+            _staging(staging)
+            target_connection = self._released_target(target)
+            # The source owns this node, but another publication also claims it.
+            target_connection.execute(
+                "INSERT INTO sources(id,type,name) VALUES (66,'publication','org.example.other')"
+            )
+            target_connection.execute("INSERT INTO expression_sources VALUES (900,66,'other')")
+            target_connection.commit()
+
+            counts = export_source_delta(
+                staging,
+                delta,
+                source_type="publication",
+                source_name="org.example.pott",
+                locale_codes=("eng-Latn-US", "wuu-Hant-CN_Shanghai"),
+                rows_per_insert=1,
+                replace=True,
+                reconcile_shared=True,
+            )
+            payload = delta.read_text(encoding="utf-8")
+            self.assertIn("Shared-safe reconcile", payload)
+            target_connection.executescript(payload)
+
+            source_id = target_connection.execute(
+                "SELECT id FROM sources WHERE name='org.example.pott'"
+            ).fetchone()[0]
+            # The shared Chinese node remains, and its old source owner is cleared
+            # rather than deleting the node used by the other publication.
+            self.assertIsNotNone(
+                target_connection.execute("SELECT id FROM expressions WHERE text='儂好'").fetchone()
+            )
+            self.assertIsNone(
+                target_connection.execute(
+                    "SELECT source_id FROM expressions WHERE text='儂好'"
+                ).fetchone()[0]
+            )
+            self.assertEqual(
+                target_connection.execute(
+                    "SELECT COUNT(*) FROM expression_sources WHERE source_id=?",
+                    (source_id,),
+                ).fetchone()[0],
+                counts["expression_sources"],
+            )
+            self.assertEqual(
+                target_connection.execute(
+                    "SELECT COUNT(*) FROM expression_edge_sources WHERE source_id=?",
+                    (source_id,),
+                ).fetchone()[0],
+                counts["expression_edge_sources"],
+            )
+            target_connection.execute("PRAGMA foreign_keys=ON")
+            self.assertEqual(
+                target_connection.execute("PRAGMA foreign_key_check").fetchall(), []
+            )
+            target_connection.close()
 
 
 if __name__ == "__main__":

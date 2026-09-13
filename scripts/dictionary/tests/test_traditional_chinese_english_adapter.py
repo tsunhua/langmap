@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import pytest
 
@@ -224,6 +225,136 @@ def test_adapter_removes_bullet_only_from_normalized_equivalent():
     assert occurrence.canonical_text == "head"
 
 
+def test_adapter_splits_sentence_and_slash_alternatives_with_stable_claims():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "d", "e", "你好", "你好", None, "cmn-Hant-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=(
+            {"value": "Hello!/i say!/hey!", "language_hint": "eng"},
+        )),),
+    )
+
+    occurrences = adapter.normalize_entry(entry).senses[0].occurrences
+
+    assert [(item.claim_key, item.canonical_text) for item in occurrences] == [
+        ("entry:e:sense:s:equivalent:1.1", "Hello!"),
+        ("entry:e:sense:s:equivalent:1.2", "i say!"),
+        ("entry:e:sense:s:equivalent:1.3", "hey!"),
+    ]
+
+
+def test_adapter_quarantines_punctuation_only_alternatives_after_splitting():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "d", "e", "你好", "你好", None, "cmn-Hant-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=(
+            {"value": "告知某人某事物/…", "language_hint": "cmn"},
+            {"value": "狗“汪汪！”地叫了起来", "language_hint": "cmn"},
+            {"value": "— Yes, please", "language_hint": "eng"},
+        )),),
+    )
+
+    occurrences = adapter.normalize_entry(entry).senses[0].occurrences
+    assert [(item.canonical_text, item.errors) for item in occurrences] == [
+        ("告知某人某事物", ()),
+        ("…", ("punctuation_only",)),
+        ("狗“汪汪！”地叫了起来", ()),
+        ("Yes, please", ()),
+    ]
+
+
+def test_adapter_quarantines_reading_only_expression_surface():
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(
+        StagedEntry(
+            "r", "d", "e", "頭", "頭", None, "cmn-Hant-to-eng", "a" * 64,
+            senses=(StagedSense("s", 1, equivalents=(
+                {"value": "/ˈbo.ɐ ˈtaɾ.dɨ/", "language_hint": "eng"},
+            )),),
+        )
+    )
+
+    assert "reading_in_expression" in normalized.senses[0].occurrences[0].errors
+
+
+def test_adapter_separates_reading_and_mapping_annotation_from_equivalent():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "d", "e", "問候", "問候", None, "cmn-Hant-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, equivalents=(
+            {"value": "Hello (only on the telephone)", "language_hint": "eng"},
+            {"value": "Boa tarde (, /ˈbo.ɐ ˈtaɾ.dɨ/)", "language_hint": "por"},
+            {"value": "你（們）好", "language_hint": "cmn-Hant"},
+        )),),
+    )
+
+    normalized = adapter.normalize_entry(entry)
+    values = [item.canonical_text for item in normalized.senses[0].occurrences]
+
+    assert "Hello" in values
+    assert "Boa tarde" in values
+    assert values.count("你好") == 1
+    assert values.count("你們好") == 1
+    assert [(annotation.text, annotation.target_claim_key) for annotation in normalized.annotations] == [
+        ("only on the telephone", "entry:e:sense:s:equivalent:1"),
+    ]
+    assert [
+        (reading.scheme, reading.value, reading.target_claim_key)
+        for reading in normalized.readings
+        if reading.target_claim_key == "entry:e:sense:s:equivalent:2"
+    ] == [("ipa", "ˈbo.ɐ ˈtaɾ.dɨ", "entry:e:sense:s:equivalent:2")]
+
+
+def test_normalize_release_persists_surface_annotations_and_readings(tmp_path):
+    header = {
+        "record_type": "dictionary",
+        "schema_version": 2,
+        "dictionary_key": "fixture.surface",
+        "input_file_name": "surface.csv",
+        "input_sha256": "b" * 64,
+        "entry_count": 1,
+        "exporter_version": "test",
+    }
+    record = {
+        "record_type": "entry",
+        "schema_version": 2,
+        "dictionary_key": "fixture.surface",
+        "entry_key": "surface-1",
+        "record_fingerprint": "c" * 64,
+        "csv_row_number": 1,
+        "raw_headword": "問候",
+        "canonical_headword": "問候",
+        "homograph_marker": None,
+        "direction_hint": "cmn-Hant-to-eng",
+        "forms": [],
+        "mappings": [],
+        "pronunciations": [],
+        "diagnostics": [],
+        "senses": [{
+            "sense_key": "surface-1-s1",
+            "ordinal": 1,
+            "definitions": [],
+            "pos": [],
+            "equivalents": [{"value": "Hello (only on the telephone)", "language_hint": "eng"}],
+            "relations": [],
+            "examples": [],
+            "labels": [],
+        }],
+    }
+    path = tmp_path / "surface.jsonl"
+    path.write_text(
+        "\n".join(json.dumps(item, ensure_ascii=False) for item in (header, record)) + "\n",
+        encoding="utf-8",
+    )
+    connection = create_staging_database(tmp_path / "stage.sqlite")
+    summary = load_jsonl_release(connection, [path])
+    normalize_release(connection, summary.release_id)
+
+    assert connection.execute(
+        "SELECT text,target_claim_key,side FROM lexical_annotations WHERE release_id=?",
+        (summary.release_id,),
+    ).fetchone()[:] == ("only on the telephone", "entry:surface-1:sense:surface-1-s1:equivalent:1", "equivalent")
+
+
 def test_adapter_promotes_foreign_script_definition_to_equivalent():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(
@@ -365,6 +496,69 @@ def test_adapter_preserves_traditional_cantonese_example_locale():
     occurrences = adapter.normalize_entry(entry).senses[0].occurrences
     example = next(item for item in occurrences if item.occurrence_kind == "example" and item.lang_code == "yue")
     assert example.locale_code == "yue-Hant-HK"
+
+
+def test_adapter_aligns_mismatched_translated_dialogue_turns():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.OxfordSpanish", "e", "ver", "ver", None,
+        "spa-to-eng", "a" * 64,
+        senses=(StagedSense("s", 1, examples=({
+            "text": "¡hombre! ¿tú por aquí? — ya ves, no tenía otra cosa que hacer",
+            "translation": "hello, what are you doing here? — well, i didn't have anything else to do",
+        },)),),
+    )
+    occurrences = adapter.normalize_entry(entry).senses[0].occurrences
+    examples = [item for item in occurrences if item.occurrence_kind == "example"]
+    assert [(item.claim_key, item.canonical_text) for item in examples] == [
+        (
+            "entry:e:sense:s:example:1.1:text",
+            "¡hombre! ¿tú por aquí?",
+        ),
+        (
+            "entry:e:sense:s:example:1.2:text",
+            "ya ves, no tenía otra cosa que hacer",
+        ),
+        (
+            "entry:e:sense:s:example:1.1:translation",
+            "hello, what are you doing here?",
+        ),
+        (
+            "entry:e:sense:s:example:1.2:translation",
+            "well, i didn't have anything else to do",
+        ),
+    ]
+
+
+def test_adapter_moves_wisdom_example_rewrite_into_annotation():
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(
+        StagedEntry(
+            "r", "com.apple.dictionary.ja-en.WISDOM", "e", "say", "say", None,
+            "eng-to-jpn", "a" * 64,
+            senses=(StagedSense("s", 1, examples=({
+                "text": "She said, “I wish I had a car.”⇒She said she wished she had a car",
+                "translation": "車があったらなあと彼女は言った",
+            },)),),
+        )
+    )
+
+    examples = [
+        item for item in normalized.senses[0].occurrences
+        if item.occurrence_kind == "example"
+    ]
+    assert [(item.canonical_text, item.lang_code) for item in examples] == [
+        ("She said, “I wish I had a car.”", "eng"),
+        ("車があったらなあと彼女は言った", "jpn"),
+    ]
+    assert [
+        (annotation.text, annotation.target_claim_key)
+        for annotation in normalized.annotations
+    ] == [
+        (
+            "rewrite: She said she wished she had a car",
+            "entry:e:sense:s:example:1:text",
+        ),
+    ]
 
 
 def test_adapter_routes_cantonese_example_reading_to_example_expression():
@@ -624,6 +818,30 @@ def test_adapter_classifies_numeric_scheme_pinyin_pronunciation_as_pinyin():
     )
     published = [r for r in adapter.normalize_entry(entry).readings if not r.errors]
     assert [(r.scheme, r.locale_code, r.value) for r in published] == [("pinyin", "cmn-Hant-TW", "AA zhì")]
+
+
+def test_adapter_keeps_crown_example_pinyin_as_a_reading():
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.zhs-ja.Crown", "e", "阿", "阿", None,
+        "cmn-Hans-to-jpn", "a" * 64,
+        senses=(StagedSense(
+            "s", 1,
+            equivalents=("阿大",),
+            examples=({
+                "text": "阿大",
+                "translation": "あんちゃん",
+                "readings": [{"value": "ādà", "scheme": "pinyin", "locale": "cmn-Hans-CN"}],
+            },),
+        ),),
+    )
+
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(entry)
+
+    assert [
+        (reading.scheme, reading.locale_code, reading.value, reading.target_claim_key)
+        for reading in normalized.readings
+        if reading.target_claim_key and ":example:" in reading.target_claim_key
+    ] == [("pinyin", "cmn-Hans-CN", "ādà", "entry:e:sense:s:example:1:text")]
 
 
 def test_adapter_folds_pinyin_equivalent_in_non_crown_bundle():

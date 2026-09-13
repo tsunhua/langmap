@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     plan_parser.add_argument("--approved-data-migration", type=Path)
     plan_parser.add_argument("--dictionary-postflight-manifest", type=Path)
     plan_parser.add_argument("--refresh-language-statistics", action="store_true")
+    plan_parser.add_argument(
+        "--skip-reference-artifacts",
+        action="store_true",
+        help="data-only release: do not apply language/UI reference bundles",
+    )
     plan_parser.set_defaults(handler=_production_plan_handler)
     apply_parser = production_commands.add_parser("apply")
     apply_parser.add_argument("--plan", type=Path, required=True)
@@ -132,6 +137,7 @@ def _production_plan_handler(paths: ProjectPaths, args: argparse.Namespace) -> i
         approved_data_migration=args.approved_data_migration,
         dictionary_postflight_manifest=args.dictionary_postflight_manifest,
         refresh_language_statistics=args.refresh_language_statistics,
+        apply_reference_artifacts=not args.skip_reference_artifacts,
     )
     print(json.dumps(plan, ensure_ascii=False))
     return 0 if plan["status"] == "ready" else 1

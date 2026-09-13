@@ -1,5 +1,37 @@
 # TODO
 
+## Production source surface repair（2026-09-13）
+
+- [x] OCD source `com.apple.dictionary.zh_CN-en.OCD`：以 source-only staging、natural-key delta 和本地回放发布；delta `076-expression-surface-correction-20260913/01-zh_CN-en.OCD.split.sql`（SHA-256 `88febe7d74b6ad5a6e20dfc7feadc3b110bc9aefe1567c61697044c980ea50d5`），operation `4b861533a74747ff84fdd3d54d4f54ef`，bookmark `0000021e-00000000-000050e5-70059660f0af952b0a16d1a40fd80f65`；postflight source claims／edge claims／readings `501,534／344,814／66,520`。
+- [x] Oxford Spanish source `com.apple.dictionary.OxfordSpanish`：同一受管流程发布；delta `076-expression-surface-correction-20260913/02-OxfordSpanish.split.sql`（SHA-256 `81b69d839be14e94a2bd7da2c5271b3ab7b84f1c17045bbc13088a4debdbe7f6`），operation `f6bd029445a44dd289110a74b5324498`，bookmark `0000021e-000001c9-000050e5-94fb95d3c471a3d2e5f25dc1d5225a45`；postflight `462,601／339,724／46,497`。
+- [x] DGLEV source `com.apple.dictionary.es.DGLEV`：第一次 100-row edge delta 因 D1 CPU limit 停止，未覆盖该失败记录；改用 source ownership/vote preflight（shared edge、多 marker、vote 均为 0）、简化 parent cleanup、50-row edge／256KB managed batches 后发布。最终 delta `082-expression-surface-correction-20260913/01-es.DGLEV.split.sql`（SHA-256 `76da0dd2d6f37917adc4eb5ae6fd75f3ea380724c8cad971a2b3de3e41f03782`），operation `d4243c632926478cbe809749a3c53912`，bookmark `00000226-00000000-000050e5-f8bf39efb2954ae4e6eb723fe2db52e4`，212 batches／statistics／verify 成功；postflight `124,882／8,129／0`。
+- [x] WISDOM source `com.apple.dictionary.ja-en.WISDOM`：50-row edge batch 在第 114 批触发 D1 CPU limit 后停止；改用同一 preflight、20-row edge／256KB managed batches，最终 delta `085-expression-surface-correction-20260913/01-ja-en.WISDOM.split.sql`（SHA-256 `ab29799f0f1185d20dc451d6afbcb78e9355f28dd32b9807473bd80f58ece1ac`），operation `e87999f7b4ab40b6959f9b661603da41`，bookmark `0000022d-00000000-000050e5-c8b918ececd04df0e7023608edc2048d`，377 batches／statistics／verify 成功；production postflight `664,248／502,046／14`。
+- [x] 对 DGLEV／WISDOM 做 production source-scoped postflight：已知异常 `’`、`”地叫了起来`、`— Yes, please` 均为 0；除西班牙语允许的 `¡`／`¿` 外，leading punctuation 聚合为空；orphan edge claims 为 0。整个修复过程没有导出或下载 production 全库。
+- [x] 修复 source diff exporter：同一 source 的不同 `source_marker` 不再误删 parent edge；仅在 ownership/vote preflight 明确证明 parent 可级联时，才省略冗余 edge-source cleanup 与保护谓词；新增回归测试，相关 focused tests `76 passed`。
+- [x] 清理 source-scoped 修复後仍遺留的三個 unowned legacy expression：`— Yes, please`、`— Sí, gracias` 與 `’`。乾淨的 `Yes, please ↔ Sí, gracias` edge 保留；定點 SQL `scripts/db/state/backup/delta/086-expression-surface-orphan-cleanup-20260913/01-legacy-orphan-expressions.sql`（SHA-256 `1d021498613e898a6bd198c340101de7d2e760533334d3ca394c2efb5e132f17`）先以最小 SQLite schema 回放，再經受管 production apply；operation `4cf80a19e72c402c837e423fe1aee6ca`，bookmark `00000230-00000000-000050e5-df14e576e3939d5c8ccb06de31f933d4`。postflight：三個錯誤節點／舊 edge 均為 0，乾淨 edge `7629195` 保留；未拉取 production 全庫。
+
+## 例句配對與改寫註釋修復（2026-09-13）
+
+- [x] 修復 Oxford Spanish 例句錯配與 WISDOM 改寫污染。
+  - Oxford Spanish 的 `¡hombre! ¿tú por aquí? — ya ves, no tenía otra cosa que hacer` 與英文句子被按不同句數錯誤地 ordinal pairing；移除錯誤 edge `¿Tú por aquí? ↔ Well, i didn't have anything else to do`，補上既有句子 `Ya ves, no tenía otra cosa que hacer ↔ Well, i didn't have anything else to do`（source 27、marker `2`）。
+  - WISDOM 的 `She said, “I wish I had a car.”⇒She said she wished she had a car` 不是一個 expression：canonical expression 只保留箭頭前的例句，改寫內容保存為 mapping annotation；移除舊 expression／edge，建立乾淨 expression 與日語 mapping。
+  - parser 新增 `⇒`／`→` 改寫註釋處理，並先按頂層對話破折號對齊，再在每段內保守拆分；拆分數量仍不一致時保留該段整體，避免 ordinal cross-pair；focused dictionary tests `71 passed`，完整 schema in-memory delta replay 通過。
+  - 定點 delta `scripts/db/state/backup/delta/088-example-pair-and-rewrite-repair-20260913/01-example-pair-and-rewrite-repair.sql`（SHA-256 `86a61f5a0199e8fcaa682cd0dc0d6c38f879b40a35b3cc908301e7e4b9beda17`）；production plan/apply operation `0be7c6ed644347cb9699a3fd9dd9c638`，bookmark `00000236-00000000-000050e5-aad29e0916e608fc3f1fba86936d12fe`；`language_statistics` 已在同一 operation 刷新。postflight：兩條舊錯誤 edge／舊 WISDOM expression 均為 0，正確 Oxford edge 與 WISDOM annotation 均存在，未拉取 production 全庫。
+  - 為保留使用者提供的深鏈 `/mapping/4620971?node=8164350`，再以 ID-preserving delta `scripts/db/state/backup/delta/089-wisdom-rewrite-id-preservation-20260913/01-wisdom-rewrite-id-preservation.sql`（SHA-256 `405001aeaf5afbb49864be8d7509af0741d85ea30cb47accac8fe707dff3b4b9`）將乾淨 expression 回放至原 ID；operation `abaa712fddfb45ed98d2eb17a4719ca4`，bookmark `00000238-00000000-000050e5-7985e9044950c8abcf8d8158f75febd7`。postflight 確認原 ID、locale、mapping annotation 保留，臨時新 ID 與 edge 均為 0。
+
+## Source surface repair（2026-09-13）
+
+- [x] DGLEV 以 source-only staging + natural-key delta 發布；未重新匯入本地全庫，也未下載 production 明細。delta `scripts/db/state/backup/delta/067-dictionary-surface-diff-20260913/01-es.DGLEV.split.sql`，SHA-256 `da52f21782a77e7e472d78986a5b7ac2a8c21c0d41be8c80f0056d6f8ff18b99`；operation `9643b6d4d21945569178f6943318560e`，bookmark `00000209-00000000-000050e4-86743c16d79948ab24d13d4d776ff4d8`，366 data batches／statistics refresh 成功。
+- [x] postflight 發現 mirror／production drift 造成 31 條 spa claim 未落地；以 31-key repair `scripts/db/state/backup/delta/068-dglev-reconcile-20260913/01-es.DGLEV-missing.sql`（SHA-256 `53d5a85fa3d7eaa8360e4b412f956c6f4b0a78764b7cbb2eb33513c36fb8218a`）補入 5 expressions、31 claims、31 locale links；operation `1db55674e8e549c88cd3198e73b0bc6d`，bookmark `00000211-00000000-000050e4-1286e85c6b280d56ce12b576bbe9ac0f`。
+- [x] DGLEV production／source-only staging 對齊：claims `166,007`、edge claims `14,150`；語言分布 `ell 48`／`eng 14,033`／`spa 151,926`；source markers 僅 default marker，shared edge `0`。本地驗證 `23 passed`，repair SQL in-memory replay 可重跑且計數不變。
+
+## Production deployment（2026-09-12）
+
+- [x] D1 production plan `c1e4c79fb4404959ab0fb3468f414c3f` 已套用並驗證；migration `0045_mapping_annotations.sql` checksum `e1a22bdb4c6c7a0d2b58937e22ade4da7d642ca998dd132fadc0631ceabf694e`，bookmark `000001d6-00000000-000050e4-4fc1ddd8e33114e229f2396684ded2f7`，operation status `succeeded`。
+- [x] production postflight：migration 45、`expression_edges.annotations_json` 已存在且預設 `[]`，orphan references 為 0；D1 counts 為 expressions 5,175,188、edges 4,424,423、handbook items 3,523。
+- [x] Worker／assets 已部署至 `langmap.io`，Worker version `2b8db884-8652-4d8e-be30-49e6cfbd570e`；health API 回傳 `{"success":true,"data":{"status":"ok"}}`。
+- [x] production `/api/v2/languages?ui_locale=cmn-Hant-TW` 已回傳 `cmn.name = 華語`；mapping graph response 已包含 `annotations` 欄位。未帶瀏覽器 User-Agent 的 curl 會被 Cloudflare challenge，瀏覽器 User-Agent 驗證通過。
+
 ## 英文 Wikivoyage 會話手冊發布（2026-09-11）
 
 - [x] 固定 English Wikivoyage `Category:Phrasebooks` 快照：317 頁，11 本已審核頁面，6,520 筆輸入；quality gate 通過，無 removal rows。
@@ -8,6 +40,15 @@
 - [x] production 已發布：operation `91b6b10e22b64aca83c9da44d861c172`，bookmark `000001c7-00000000-000050e3-50fe17ba98cbbc232dc5fbaf31312abe`，status `succeeded`；source 11 個、expression claims 13,040、edge claims 6,520。
 - [x] managed handbook `1539253277`（`enwikivoyage-phrasebooks`）為 English phrasebook，12 sections／1,832 items，全部 item 為 `eng`，managed read-only；普通話批次翻譯 API 回傳 787 個 source rows。
 - [x] production verify 通過；language statistics 已刷新，並建立 7 個 Wikivoyage 使用的精確 locale；production orphan references 為 0。
+
+## Chinese phrasebook 修復發布（2026-09-12）
+
+- [x] 僅針對 pinned English Wikivoyage `Chinese_phrasebook`（page 7357、revision 5308510）發布；沒有拉取 production 全量資料，也沒有把其他頁面的 artifact drift 帶入本次 release。
+- [x] source-scoped additive delta `046-wikivoyage-chinese-phrasebook-publish-20260912.split.sql`（690,900 bytes，SHA-256 `bb6fd94878e65cbd044f78cd161681b6f0c3b985a0b2cf04b9350f91d0aa4a7a`）已成功套用；operation `da85c2657988434ea37dca4199cedc5e`，bookmark `000001e8-00000000-000050e4-016d358c6862bef345fa299aa4776ff1`。
+- [x] handbook 外鍵 remap 後，來源舊 expression cleanup delta `047-wikivoyage-chinese-phrasebook-cleanup-20260912.split.sql`（16,139 bytes，SHA-256 `d780e5eee433c7a2667854391e609a3fbb17f1867c24bf1d25f68e6b0315353e`）已成功套用；operation `a57c87d8b22447cd95ca1dd92bcd4243`，bookmark `000001ea-00000000-000050e4-1cfa77a8d66172317f0eb255873337e7`。
+- [x] 移除止痛藥 row 誤掛的全局 `E`／`G` source edge marker；delta `048-wikivoyage-chinese-phrasebook-edge-marker-cleanup-20260912.split.sql`（1,736 bytes，SHA-256 `55ea5b6e699a4486885b1e34c41b579a15feaf415552054abe4c3c32add193c7`）operation `759fdc1c2c9e4b68a8ba86199e7ba255`，bookmark `000001eb-00000000-000050e4-901fe148b2bcbcd85acd2b9c81813536`。
+- [x] 三次受管 apply 的 data、statistics、reference、verify stages 均成功；source 148 定點聚合為 382 owned expressions／2,217 expression claims／855 edges／1,124 edge claims／755 readings。`language_statistics` 已刷新：cmn 893,069 expressions、eng 1,768,115 expressions（2026-09-12 06:08:06）。
+- [x] marker 定點驗收確認 `Excuse me`（註釋 `coming through`）、`Does this hurt?`、`Where is the bathroom`、`Do you go to`、`...Pain reliever` 均為乾淨 English expression；managed handbook `1539253277` 的 items 已指向這些 expression。`expression_surface.py` 對單字 `polite` 的括號備註已改放 mapping annotation，相關 expression-surface／Wikivoyage adapter tests 通過。
 
 ## 舊 v1 指定用戶／甲子 handbook recovery（2026-09-06）
 

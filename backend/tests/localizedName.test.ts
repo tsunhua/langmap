@@ -64,6 +64,17 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
     expect(langs.has('zzz')).toBe(false);
   });
 
+  it('keeps the registry English name when no locale is requested', async () => {
+    const db = fakeD1([
+      { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
+        { code: 'cmn', name_expression_id: CMN_NAME, name_en: 'Mandarin Chinese', name: null },
+      ] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin chinese' }] }) },
+    ]);
+    const langs = await resolveLanguageNames(db, ['cmn'], {});
+    expect(langs.get('cmn')).toBe('Mandarin Chinese');
+  });
+
   it('resolves locale names through the self name or a localized candidate', async () => {
     const db = fakeD1([
       { sql: 'FROM language_locales WHERE code IN', handler: () => ({ results: [

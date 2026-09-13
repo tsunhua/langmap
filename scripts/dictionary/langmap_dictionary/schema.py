@@ -104,6 +104,15 @@ CREATE TABLE IF NOT EXISTS lexical_readings (
   errors_json TEXT NOT NULL, target_claim_key TEXT, PRIMARY KEY (release_id, claim_key),
   FOREIGN KEY (release_id, entry_key) REFERENCES input_entries(release_id, entry_key) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS lexical_annotations (
+  release_id TEXT NOT NULL, claim_key TEXT NOT NULL, entry_key TEXT NOT NULL,
+  sense_key TEXT, raw_value TEXT NOT NULL, text TEXT NOT NULL,
+  target_claim_key TEXT, side TEXT NOT NULL, metadata_json TEXT NOT NULL,
+  errors_json TEXT NOT NULL, PRIMARY KEY (release_id, claim_key),
+  FOREIGN KEY (release_id, entry_key) REFERENCES input_entries(release_id, entry_key) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_lexical_annotations_target
+  ON lexical_annotations(release_id, target_claim_key);
 CREATE TABLE IF NOT EXISTS normalized_pos (
   release_id TEXT NOT NULL, claim_key TEXT NOT NULL, sense_key TEXT NOT NULL,
   raw_value TEXT NOT NULL, code TEXT, errors_json TEXT NOT NULL,

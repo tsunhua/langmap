@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { canonicalizeExpressionText } from '../src/services/expressionIdentity';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -53,6 +54,6 @@ describe('v2 auth smoke', () => {
     expect(searchResponse.status).toBe(200);
     const searchBody = await searchResponse.json();
     expect(searchBody.data.items).toHaveLength(1);
-    expect(searchBody.data.items[0].text).toBe(zhText);
+    expect(searchBody.data.items[0].text).toBe(canonicalizeExpressionText(zhText));
   });
 });

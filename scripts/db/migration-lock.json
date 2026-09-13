@@ -265,6 +265,12 @@
       "filename": "0044_wikivoyage_handbook.sql",
       "size": 170,
       "sha256": "d7ad1d736a92c6dbf17732dee4400a5d22623da8eaaac8ff67cd5f74d17480fe"
+    },
+    {
+      "sequence": 45,
+      "filename": "0045_mapping_annotations.sql",
+      "size": 87,
+      "sha256": "e1a22bdb4c6c7a0d2b58937e22ade4da7d642ca998dd132fadc0631ceabf694e"
     }
   ]
 }

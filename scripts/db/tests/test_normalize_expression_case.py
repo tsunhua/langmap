@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from pathlib import Path
 
@@ -37,6 +38,20 @@ def _fixture() -> sqlite3.Connection:
         "INSERT INTO expression_edges(expression_a_id,expression_b_id,relation_mask,score) VALUES(2,3,1,2)"
     )
     edge_id = connection.execute("SELECT id FROM expression_edges").fetchone()[0]
+    connection.execute(
+        "INSERT INTO expression_edges(expression_a_id,expression_b_id,relation_mask,score) VALUES(1,3,2,4)"
+    )
+    connection.execute(
+        "UPDATE expression_edges SET annotations_json=? WHERE id=?",
+        ('[{"text":"old note","side":"b","source_id":1,"source_marker":"old"}]', edge_id),
+    )
+    second_edge_id = connection.execute(
+        "SELECT id FROM expression_edges WHERE expression_a_id=1 AND expression_b_id=3"
+    ).fetchone()[0]
+    connection.execute(
+        "UPDATE expression_edges SET annotations_json=? WHERE id=?",
+        ('[{"text":"new note","side":"b","source_id":1,"source_marker":"new"}]', second_edge_id),
+    )
     connection.execute("INSERT INTO expression_edge_sources VALUES(?,1,'edge')", (edge_id,))
     connection.execute("INSERT INTO edge_votes(user_id,edge_id,vote) VALUES(1,?,1)", (edge_id,))
     connection.execute("INSERT INTO handbooks(id,user_id,title) VALUES(1,1,'Fixture')")
@@ -64,5 +79,7 @@ def test_normalization_merges_nodes_and_moves_references():
     assert connection.execute("SELECT expression_id FROM handbook_section_items").fetchone()[0] == 1
     assert tuple(connection.execute("SELECT source_expression_id,source_text FROM ui_messages").fetchone()) == (1, "Closed")
     assert tuple(connection.execute("SELECT expression_a_id,expression_b_id FROM expression_edges").fetchone()) == (1, 3)
+    annotations = connection.execute("SELECT annotations_json FROM expression_edges").fetchone()[0]
+    assert {item["text"] for item in json.loads(annotations)} == {"old note", "new note"}
     assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
     connection.close()
