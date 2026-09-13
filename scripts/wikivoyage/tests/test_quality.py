@@ -51,7 +51,9 @@ def test_quality_gate_checks_page_accounting_samples_and_review_counts(tmp_path:
     assert report.manifest_pages == report.report_pages == report.included_pages == report.jsonl_files == 1
     assert report.input_entries == 5
     assert len(report.samples) == 3
-    assert report.quarantine_rows == 2
+    # Pronunciation-only layout fragments are discarded before quarantine;
+    # the remaining malformed row is still retained for review.
+    assert report.quarantine_rows == 1
     assert report.removal_rows == 0
 
 

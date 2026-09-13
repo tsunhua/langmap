@@ -255,9 +255,10 @@ def test_adapter_quarantines_punctuation_only_alternatives_after_splitting():
     )
 
     occurrences = adapter.normalize_entry(entry).senses[0].occurrences
+    # A standalone ellipsis is a layout fragment, not an expression to
+    # quarantine; it is removed before the adapter sees the alternatives.
     assert [(item.canonical_text, item.errors) for item in occurrences] == [
         ("告知某人某事物", ()),
-        ("…", ("punctuation_only",)),
         ("狗“汪汪！”地叫了起来", ()),
         ("Yes, please", ()),
     ]

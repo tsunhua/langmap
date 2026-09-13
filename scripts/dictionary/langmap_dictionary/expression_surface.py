@@ -213,6 +213,13 @@ def _split_sentence_boundaries(value: str) -> tuple[str, ...]:
         ):
             index += 1
             continue
+        if character == "." and re.search(
+            r"\b(?:vs|e\.g|i\.e|lit|dr|mr|mrs|ms|st)\.$",
+            value[: index + 1],
+            re.IGNORECASE,
+        ):
+            index += 1
+            continue
         next_index = index + 1
         while next_index < len(value) and value[next_index].isspace():
             next_index += 1

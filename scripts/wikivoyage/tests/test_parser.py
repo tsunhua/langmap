@@ -243,6 +243,97 @@ def test_portuguese_sentence_punctuation_splits_target_phrases() -> None:
     assert [entry["raw_headword"] for entry in result.entries] == ["Pára!", "Ladrão!"]
 
 
+def test_german_nowiki_colon_stays_inside_time_gloss() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Time===\n; one o'clock AM (01<nowiki>:</nowiki>00): ein Uhr (''IGHN oor'')",
+        profile,
+        _sections(),
+    )
+
+    entry = result.entries[0]
+    assert entry["senses"][0]["equivalents"][0]["value"] == "one o'clock AM (01:00)"
+    assert entry["raw_headword"] == "ein Uhr"
+
+
+def test_german_gender_optional_and_sentence_variants_are_split() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Emergencies===\n"
+        "; Stop! Thief! : Halt! Ein Dieb!\n"
+        "; Doctor : (m) Arzt (''AHRTST''), (f) Ärztin (''ERTS-tin'')\n"
+        "; (fresh) vegetables : (frisches) Gemüse (''[FRISH-ess] guh-MUU-zuh'')",
+        profile,
+        _sections(),
+    )
+
+    assert {entry["raw_headword"] for entry in result.entries} >= {
+        "Halt!",
+        "Ein Dieb!",
+        "Arzt",
+        "Ärztin",
+        "Gemüse",
+        "frisches Gemüse",
+    }
+    assert all(not entry["raw_headword"].startswith("(") for entry in result.entries)
+    assert all(
+        not entry["senses"][0]["equivalents"][0]["value"].startswith("(")
+        for entry in result.entries
+    )
+
+
+def test_german_pronunciation_only_layout_rows_are_dropped_without_diagnostic() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Basics===\n"
+        "; ...Bars?: (''bahrss?'')\n"
+        ";Taxi!: (''TAHK-see'')",
+        profile,
+        _sections(),
+    )
+
+    assert result.entries == ()
+    assert result.diagnostics == ()
+
+
+def test_german_target_first_rows_drop_notes_and_keep_readings() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Shopping===\n"
+        "; Flugzeug : Airplane (lit. fly thing)\n"
+        "; Keep the change : Stimmt so! (''STEEMT zo!'') (Lit: Tally it like so)\n"
+        "; ...bars? (pub): ...Kneipen? (''KNIGH-pen?'') (pronounce the K)",
+        profile,
+        _sections(),
+    )
+
+    by_headword = {entry["raw_headword"]: entry for entry in result.entries}
+    assert by_headword["Flugzeug"]["senses"][0]["equivalents"][0]["value"] == "Airplane"
+    assert "Stimmt so!" in by_headword
+    assert not any("lit:" in entry["raw_headword"].casefold() for entry in result.entries)
+    assert any(
+        reading["value"] == "STEEMT zo"
+        for reading in by_headword["Stimmt so!"]["pronunciations"]
+    )
+    assert "Kneipen?" in by_headword
+    assert all(not entry["raw_headword"].startswith("...") for entry in result.entries)
+
+
+def test_german_reading_slashes_are_split_into_reading_values() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[12641]
+    result = parse_phrase_rows(
+        "===Directions===\n"
+        "; Where does this train/bus go? : Wohin fährt dieser Zug/Bus? (''voh-hin FEHRT dee-zer TSOOK/BOOSS?'')",
+        profile,
+        _sections(),
+    )
+
+    readings = {item["value"] for entry in result.entries for item in entry["pronunciations"]}
+    assert "voh-hin FEHRT dee-zer TSOOK" in readings
+    assert "voh-hin FEHRT dee-zer BOOSS" in readings
+    assert all("/" not in value for value in readings)
+
+
 def test_reading_first_chinese_row_uses_parenthetical_english_gloss() -> None:
     profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
     result = parse_phrase_rows("===Eating===\n;''sī'': 丝 (絲) (shredded)", profile, _sections())

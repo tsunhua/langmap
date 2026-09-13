@@ -66,7 +66,7 @@ def _normalize_phrase_text(value: str) -> str:
     # Wikivoyage uses a leading ellipsis to indicate an omitted context (for
     # example ``...a bathroom``). It is a layout cue, not part of the phrase
     # identity; keeping it creates a second, punctuation-prefixed expression.
-    text = re.sub(r"^(?:\.{3}|…)+\s*", "", text)
+    text = re.sub(r"^(?:\.+|…+)\s*", "", text)
     text = re.sub(r"^[—–‐‑‒―-]+\s+", "", text)
     # A full stop immediately before a parenthetical is sentence punctuation,
     # not part of the phrase. Keep the parenthetical itself for the English
@@ -76,6 +76,10 @@ def _normalize_phrase_text(value: str) -> str:
     # continuation layout markers, not part of a publishable expression.
     text = re.sub(r"\.+$", "", text)
     text = re.sub(r"。+$", "", text)
+    # Broken Wikivoyage rows occasionally leave one side of a reading shell;
+    # strip a terminal bracket only when the whole value is unbalanced.
+    if text.endswith(("(", ")")) and not _balanced(text):
+        text = text[:-1].rstrip()
     text = re.sub(r"\s+([,;!?])", r"\1", text)
     return canonicalize_text(text)
 
@@ -449,6 +453,122 @@ def _expand_portuguese_variants(value: str) -> tuple[str, ...]:
     return (normalized,)
 
 
+def _looks_like_german_reading_parenthetical(value: str) -> bool:
+    """Recognize German phrasebook respellings embedded beside the target."""
+
+    normalized = canonicalize_text(value).strip()
+    if not normalized or normalized.casefold() in {"m", "f", "men", "women", "ein", "nicht", "or"}:
+        return False
+    if normalized.startswith("-"):
+        return False
+    if "[" in normalized or "]" in normalized or "-" in normalized:
+        return True
+    letters = re.sub(r"[^A-Za-zÀ-ÖØ-öø-ÿ]", "", normalized)
+    if len(letters) < 4 or not letters:
+        return False
+    uppercase = sum(character.isupper() for character in letters)
+    return uppercase >= 2 and uppercase / len(letters) >= 0.45
+
+
+def _split_german_sentences(value: str) -> tuple[str, ...]:
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZÄÖÜẞÀ-ÖØ-Þ])", value)
+    return tuple(
+        _normalize_phrase_text(part)
+        for part in parts
+        if _valid_phrase(_normalize_phrase_text(part))
+    )
+
+
+def _expand_german_optional(value: str) -> tuple[str, ...]:
+    match = re.search(
+        r"(?P<open>[\[(])(?P<option>(?:[A-Za-zÄÖÜäöüß_-]+)(?:\s+(?:[A-Za-zÄÖÜäöüß_-]+))*)(?P<close>[\])])",
+        value,
+    )
+    if match is None:
+        return (value,)
+    option = match.group("option")
+    if option.casefold() in {"m", "f", "n", "men", "women", "or"}:
+        return (value,)
+    prefix = value[: match.start()]
+    suffix = value[match.end() :]
+    with_option = f"{prefix}{option}{suffix}"
+    without_option = f"{prefix}{suffix}"
+    return _dedupe_phrases((*_expand_german_optional(without_option), *_expand_german_optional(with_option)))
+
+
+def _expand_german_variants(value: str) -> tuple[str, ...]:
+    """Split German gender/region alternatives while dropping layout prose."""
+
+    normalized = canonicalize_text(value)
+    normalized = re.sub(
+        r"\((?P<body>[^()]*)\)",
+        lambda match: "" if _looks_like_german_reading_parenthetical(match.group("body")) else match.group(0),
+        normalized,
+    )
+    gender_pair = re.split(r"\s+or,\s*if\s+female,\s*", normalized, maxsplit=1, flags=re.IGNORECASE)
+    if len(gender_pair) == 2:
+        male = _expand_german_variants(gender_pair[0])
+        female = _expand_german_variants(gender_pair[1])
+        if len(male) == len(female):
+            return tuple(item for pair in zip(male, female) for item in pair)
+        return _dedupe_phrases((*male, *female))
+    region_parts = re.split(r"\s*,\s*or\s+(?:in\s+)?(?:Austria|Switzerland)\s*:\s*", normalized, flags=re.IGNORECASE)
+    pieces: list[str] = []
+    for region_part in region_parts:
+        for part in re.split(r"\s*\|\s*", region_part):
+            part = re.sub(r"^(?:Switzerland|Austria)\s*:\s*", "", part, flags=re.IGNORECASE).strip()
+            if not part:
+                continue
+            if re.search(r"\((?:m|f|men|women)\)", part, flags=re.IGNORECASE):
+                gender_parts = _split_top_level_commas(part)
+            else:
+                gender_parts = (part,)
+            pieces.extend(gender_parts)
+    expanded: list[str] = []
+    for part in pieces:
+        part = re.sub(r"^\((?:m|f|men|women)\)\s*", "", part, flags=re.IGNORECASE)
+        part = re.sub(r"\s+\((?:m|f|men|women)\)\s*", " ", part, flags=re.IGNORECASE)
+        part = re.sub(r"\((?:m|f|n)\)", "", part, flags=re.IGNORECASE)
+        for alternative in re.split(r"\s+or\s+", part, flags=re.IGNORECASE):
+            alternative = alternative.strip()
+            if not alternative:
+                continue
+            slash_variants: tuple[str, ...] = (alternative,)
+            for _ in range(8):
+                expanded_slashes: list[str] = []
+                changed = False
+                for slash_item in slash_variants:
+                    slash_positions = _slash_positions(slash_item)
+                    if not slash_positions:
+                        expanded_slashes.append(slash_item)
+                        continue
+                    spaced = tuple(
+                        position
+                        for position in slash_positions
+                        if (position > 0 and slash_item[position - 1].isspace())
+                        or (position + 1 < len(slash_item) and slash_item[position + 1].isspace())
+                        or (position > 0 and slash_item[position - 1] in ".!?。！？")
+                    )
+                    variants = _expand_embedded_slash(slash_item, tuple(position for position in slash_positions if position not in spaced))
+                    if variants is None:
+                        variants = _expand_spaced_group(slash_item, spaced)
+                    if variants is None:
+                        expanded_slashes.append(slash_item)
+                    else:
+                        expanded_slashes.extend(variants)
+                        changed = True
+                slash_variants = tuple(expanded_slashes)
+                if not changed:
+                    break
+            for slash_variant in slash_variants:
+                expanded.extend(_expand_german_optional(slash_variant))
+    return _dedupe_phrases(
+        sentence
+        for item in expanded
+        for sentence in _split_german_sentences(item)
+    ) or (normalized,)
+
+
 def _split_top_level_commas(value: str) -> tuple[str, ...]:
     """Split a target-side alternatives list without breaking parenthetical notes."""
 
@@ -570,6 +690,14 @@ def _spanish_target_variants(value: str) -> tuple[str, ...] | None:
 def _trim_target_prose(value: str, language_code: str | None) -> str:
     """Remove narrowly recognized explanatory tails from reviewed rows."""
 
+    if language_code == "deu":
+        # German phrasebook rows append long English notes after a line break;
+        # keep the lexical target and let the mapping annotation layer handle
+        # a future source-specific note capture.
+        value = re.split(r"\s*(?:<br\s*/?>|\n)\s*(?:NOTE|Note)\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
+        value = re.split(r"\s*\(\s*(?:NOTE|Note)\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
+        value = re.split(r"\s+better\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
+        value = re.split(r"\s*\(\s*also\s*:", value, maxsplit=1, flags=re.IGNORECASE)[0]
     if language_code == "cmn":
         # A second Chinese phrasebook alternative may be followed by an
         # Indonesia-specific parenthetical containing another target phrase.
@@ -581,6 +709,17 @@ def _trim_target_prose(value: str, language_code: str | None) -> str:
     # ``In some places ...``. The cue is deliberately narrow: a generic
     # period split would damage legitimate target phrases.
     return re.split(r"\.\s+(?=(?:In some places|You may simply)\b)", value, maxsplit=1, flags=re.IGNORECASE)[0]
+
+
+def _trim_german_english_annotation(value: str) -> str:
+    """Remove a trailing English gloss note from a German source row."""
+
+    # Parenthesized qualifiers such as ``(fresh) vegetables`` are lexical
+    # qualifiers, not phrase-boundary punctuation. Keep the qualifier while
+    # flattening the shell so normalization does not quarantine the mapping.
+    value = re.sub(r"^\((?P<qualifier>[^()]+)\)\s+(?P<rest>\S.*)$", r"\g<qualifier> \g<rest>", value)
+    value = re.sub(r"\s+\((?:lit\.\s*|literally\s*)[^)]*\)\s*\.?(?=\s|$)", "", value, flags=re.IGNORECASE)
+    return re.split(r"\.\s+(?=\"?To\s+watch\b)", value, maxsplit=1, flags=re.IGNORECASE)[0]
 
 
 def _chinese_example_parts(value: str, language_code: str | None) -> tuple[str, str] | None:
@@ -675,6 +814,8 @@ def _expand_slash_variants(
         return (_normalize_phrase_text(normalized),)
     if language_code == "por":
         return _expand_portuguese_variants(normalized)
+    if language_code == "deu":
+        return _expand_german_variants(normalized)
     if language_code == "spa":
         spanish_variants = _spanish_target_variants(normalized)
         if spanish_variants is not None:
@@ -859,7 +1000,19 @@ def _looks_like_target_annotation(body: str, language_code: str | None) -> bool:
     folded = normalized.casefold()
     if not normalized or _plain_respelling(normalized, language_code):
         return False
-    if folded.startswith(_TARGET_ANNOTATION_PREFIXES):
+    if folded.startswith(_TARGET_ANNOTATION_PREFIXES) or folded.startswith(
+        (
+            "lit.",
+            "lit:",
+            "literally ",
+            "also translated",
+            "this word ",
+            "a compound noun",
+            "pronounce ",
+        )
+    ):
+        return True
+    if re.search(r"\b(?:sound(?:s|ed)?|rhymes?|adopted into|compound noun)\b", folded):
         return True
     # Reviewed Wikivoyage rows sometimes explain a CJK word in a terminal note,
     # e.g. ``差佬 chāai lóu is in colloquial speech``.  A CJK span plus an
@@ -894,13 +1047,21 @@ def _remove_inline_reading_parentheticals(
     pieces: list[str] = []
     cursor = 0
     for match in re.finditer(r"\(([^()]*)\)", value):
-        body = canonicalize_text(match.group(1))
-        if not _plain_respelling(body, language_code):
+        body = clean_markup(match.group(1))
+        is_reading = _plain_respelling(body, language_code) or (
+            language_code == "deu"
+            and not re.search(r"\s+or\s+", body, re.IGNORECASE)
+            and _looks_like_german_reading_parenthetical(body)
+        )
+        if not is_reading:
             continue
         pieces.append(value[cursor:match.start()])
         pieces.append(" ")
         cursor = match.end()
-        readings.append(body)
+        readings.extend(
+            canonicalize_text(item).strip(" .。;；!?！")
+            for item in _expand_reading_variants(body, language_code)
+        )
     if not readings:
         return value, ()
     pieces.append(value[cursor:])
@@ -997,6 +1158,40 @@ def _looks_like_reading(value: str, *, allow_long: bool = False) -> bool:
     return True
 
 
+def _expand_reading_variants(value: str, language_code: str | None = None) -> tuple[str, ...]:
+    """Split slash-delimited respelling alternatives into separate readings."""
+
+    normalized = clean_markup(value).strip(" .。;；/")
+    if language_code != "deu" or "/" not in normalized:
+        return _expand_slash_variants(normalized, source_kind="romanization")
+    results = (normalized,)
+    for _ in range(8):
+        expanded: list[str] = []
+        changed = False
+        for item in results:
+            match = re.search(
+                r"(?P<prefix>.*?)(?P<left>[A-Za-zÀ-ÖØ-öø-ÿ0-9'’_-]+)\s*/\s*"
+                r"(?P<right>[A-Za-zÀ-ÖØ-öø-ÿ0-9'’_-]+)(?P<suffix>.*)",
+                item,
+            )
+            if match is None:
+                expanded.append(item)
+                continue
+            prefix = match.group("prefix")
+            suffix = match.group("suffix")
+            expanded.extend(
+                (
+                    f"{prefix}{match.group('left')}{suffix}",
+                    f"{prefix}{match.group('right')}{suffix}",
+                )
+            )
+            changed = True
+        results = tuple(expanded)
+        if not changed:
+            break
+    return _dedupe_phrases(results)
+
+
 def _strip_outer_note(value: str) -> str:
     value = value.strip()
     while value.startswith("(") and value.endswith(")"):
@@ -1014,12 +1209,19 @@ def _split_definition(line: str) -> tuple[str, str] | None:
     value = value[1:].strip()
     if not value:
         return None
-    # Wikivoyage phrase rows use a spaced colon. Fall back to the first colon
-    # for compact rows, but never treat a colon-less definition as bilingual.
-    marker = value.find(" : ")
+    # Wikivoyage phrase rows use a spaced colon. Protect colons inside
+    # ``<nowiki>:</nowiki>`` clock markup before the compact fallback; those
+    # colons are part of the English time, not the bilingual separator.
+    masked = re.sub(
+        r"<nowiki\b[^>]*>.*?</nowiki\s*>",
+        lambda match: match.group(0).replace(":", "\ufff0"),
+        value,
+        flags=re.IGNORECASE,
+    )
+    marker = masked.find(" : ")
     width = 3
     if marker < 0:
-        marker = value.find(":")
+        marker = masked.find(":")
         width = 1
     if marker <= 0:
         return None
@@ -1034,14 +1236,25 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
     terminal = _terminal_parenthetical(value)
     if terminal is not None:
         target, body = terminal
+        body_clean = clean_markup(body)
         for reading in _ipa_reading_spans(body):
             candidates.append((value.rfind(reading), reading, "ipa"))
         malformed = _malformed_ipa_tail(body)
         if malformed:
             candidates.append((value.rfind(malformed), malformed, "ipa"))
         target_has_non_ascii = any(ord(character) > 127 for character in target)
-        if _plain_respelling(body, language_code) and (_looks_like_target_script(target, language_code) or target_has_non_ascii):
-            candidates.append((value.rfind(body), body, "romanization"))
+        if not _ITALIC.search(value) and _plain_respelling(body_clean, language_code) and (_looks_like_target_script(target, language_code) or target_has_non_ascii):
+            candidates.append((value.rfind(body), body_clean, "romanization"))
+        elif (
+            language_code == "deu"
+            and not _ITALIC.search(value)
+            and not re.search(r"\s+or\s+", body, re.IGNORECASE)
+            and _looks_like_german_reading_parenthetical(body_clean)
+        ):
+            for variant_index, reading in enumerate(_expand_reading_variants(body_clean, language_code)):
+                reading = canonicalize_text(reading).strip(" .。;；!?！")
+                if _looks_like_reading(reading, allow_long=True):
+                    candidates.append((value.rfind(body) + variant_index, reading, "romanization"))
     elif not _balanced(value):
         # A small number of rows have a missing opening parenthesis around the
         # final IPA (``phrase? ''respelling'', /.../)``). Keep the IPA as a
@@ -1050,7 +1263,7 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
             candidates.append((value.rfind(reading), reading, "ipa"))
     for match in _ITALIC.finditer(value):
         text = clean_markup(match.group(1)).strip(" .。;；")
-        for variant_index, variant in enumerate(_expand_slash_variants(text, source_kind="romanization")):
+        for variant_index, variant in enumerate(_expand_reading_variants(text, language_code)):
             if variant and variant.casefold() not in _PLACEHOLDERS and _looks_like_reading(variant):
                 candidates.append((match.start(1) + variant_index, variant, "italic"))
     for match in _TEMPLATE.finditer(value):
@@ -1062,10 +1275,10 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
                     candidates.append((match.start(1) + variant_index, variant, "ipa"))
     for match in _BRACKET_READING.finditer(value):
         text = clean_markup(match.group(1)).strip(" .。;；/")
-        for variant_index, variant in enumerate(_expand_slash_variants(text, source_kind="romanization")):
+        for variant_index, variant in enumerate(_expand_reading_variants(text, language_code)):
             if variant and variant.casefold() not in _PLACEHOLDERS and _looks_like_reading(variant):
                 candidates.append((match.start(1) + variant_index, variant, "bracket"))
-    target_script_value = language_code is not None and _looks_like_target_script(value, language_code)
+    target_script_value = language_code is not None and language_code != "deu" and _looks_like_target_script(value, language_code)
     if target_script_value:
         inline = _INLINE_READING.match(canonicalize_text(value))
         if inline:
@@ -1093,10 +1306,16 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
 def _target_text(value: str, *, language_code: str | None = None) -> str:
     value = _trim_target_prose(value, language_code)
     value = _strip_unbalanced_ipa_tail(value)
-    without_italics = _ITALIC.sub("", value)
+    if language_code == "deu":
+        without_italics = _ITALIC.sub(
+            lambda match: " or " if clean_markup(match.group(1)).strip().casefold() == "or" else "",
+            value,
+        )
+    else:
+        without_italics = _ITALIC.sub("", value)
     without_italics = _BRACKET_READING.sub("", without_italics)
     without_italics = _strip_target_surface_shell(without_italics, language_code)
-    if language_code is not None and _looks_like_target_script(value, language_code):
+    if language_code is not None and language_code != "deu" and _looks_like_target_script(value, language_code):
         without_italics = _INLINE_TOKEN.sub(" ", without_italics)
         inline = _INLINE_READING.match(canonicalize_text(without_italics))
         if inline:
@@ -1106,6 +1325,18 @@ def _target_text(value: str, *, language_code: str | None = None) -> str:
     # separated reading) and preserve real lexical parentheses.
     without_italics = re.sub(r"\(\s*\)", "", without_italics)
     without_italics = re.sub(r"\(\s*(?:[/|,;；、]\s*)+\)", "", without_italics)
+    without_italics = re.sub(r"\(\s*(?:or\s*)+\)", "", without_italics, flags=re.IGNORECASE)
+    if language_code == "deu":
+        # Malformed respelling shells occasionally leave only a cue word after
+        # the italic markup has been removed (``(eekh )``). They are readings,
+        # not part of the German expression.
+        without_italics = re.sub(
+            r"\(\s*(?:eekh|eesh|ikh|voh|tow|brow)\s*\)",
+            "",
+            without_italics,
+            flags=re.IGNORECASE,
+        )
+        without_italics = re.sub(r"\s*\(\s*\?\s*\)", "", without_italics)
     cleaned = clean_markup(without_italics).strip(" /,;；")
     # Some pages append an audio-player timestamp to the target cell rather
     # than keeping it in markup. It is metadata, not part of the expression.
@@ -1113,7 +1344,7 @@ def _target_text(value: str, *, language_code: str | None = None) -> str:
     # Parenthesized Latin notes describe usage rather than the target phrase.
     # Keep parentheticals that contain target-script characters (for example a
     # simplified/traditional pair), and remove only Latin-only notes.
-    if language_code is not None and _looks_like_target_script(cleaned, language_code):
+    if language_code is not None and language_code != "deu" and _looks_like_target_script(cleaned, language_code):
         cleaned = re.sub(
             r"\((?P<note>[^()]*?)\)",
             lambda match: ""
@@ -1136,6 +1367,23 @@ def _looks_like_target_script(value: str, language_code: str | None) -> bool:
         return bool(_KOREAN.search(value))
     if language_code == "tha":
         return bool(_THAI.search(value))
+    if language_code == "deu":
+        german_hints = re.compile(
+            r"\b(?:rathaus|fernseher|bahnhof|arzt|gemüse|obst|wasser|frühstück|abendessen|"
+            r"magentabletten|tagesessen|menü|hallo|bitte|danke|ich|nicht|oder|"
+            r"ein|eine|der|die|das|ist|sind|bin|haben|sie|wir|zum|zur|flugzeug|"
+            r"bettzeug|bettwäsche|durchfall|feuerzeug|klobrille|spiegelei|regenschirm|"
+            r"zahnfleisch|backpfeifengesicht|kummerspeck|ohrwurm|schadenfreude|wanderlust|"
+            r"fernweh|sauerkraut|kneipen?|stimmt|drei|vier|eins|neunzehn|travellerschecks|"
+            r"versenden|geschwindigkeitsbeschränkung)\b",
+            re.IGNORECASE,
+        )
+        german_compound = re.compile(
+            r"\b[A-Za-zÄÖÜäöüß]+(?:zeug|wäsche|fall|schirm|fleisch|wurm|freude|lust|kraut|"
+            r"pfeife|pfeifen|speck|brille|bahn|stelle|fahrt|bürger(?:in)?|wärts)\b",
+            re.IGNORECASE,
+        )
+        return bool(re.search(r"[ÄÖÜäöüß]", value) or german_hints.search(value) or german_compound.search(value))
     # Preserve the original conservative behavior for an unlisted script.
     return bool(_CJK.search(value))
 
@@ -1239,7 +1487,12 @@ def _record(
         }:
             diagnostics.append({"error_code": "reading_script_mismatch", "reading": reading, "scheme": scheme, "row": row_number})
             continue
-        if reading.casefold() == target.casefold() or not _valid_phrase(reading):
+        if reading.casefold() == target.casefold():
+            # Some phrasebooks repeat a lexical headword in the pronunciation
+            # column (``gold (gold)``). It is not a reading, but it is also not
+            # an export error once the duplicate is omitted.
+            continue
+        if not _valid_phrase(reading):
             diagnostics.append({"error_code": "invalid_reading", "reading": reading, "row": row_number})
             continue
         pronunciation_rows.append({"value": reading, "scheme": scheme, "locale": reading_locale})
@@ -1440,14 +1693,15 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
             english = clean_markup(raw_english)
             target = _target_text(target_source, language_code=page.lang_code)
             readings = _reading_candidates(target_source, language_code=page.lang_code)
-        if page.lang_code == "yue":
+        pre_annotation_readings = tuple(readings) if page.lang_code == "deu" else ()
+        if page.lang_code in {"yue", "deu"}:
             target_source, target_annotation = _split_target_annotation(target_source, page.lang_code)
             target_source, embedded_readings = _remove_inline_reading_parentheticals(target_source, page.lang_code)
             inline_match = _INLINE_READING.match(canonicalize_text(target_source))
             split_spaced_readings = bool(
                 inline_match and " / " in inline_match.group("reading")
             )
-            if target_annotation or embedded_readings or split_spaced_readings:
+            if page.lang_code == "yue" and (target_annotation or embedded_readings or split_spaced_readings):
                 target_source, inline_readings = _split_inline_reading_surface(target_source, page.lang_code)
             else:
                 inline_readings = ()
@@ -1456,11 +1710,28 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
             inline_readings = ()
         target = _target_text(target_source, language_code=page.lang_code)
         embedded_reading_rows = tuple((value, "inline") for value in embedded_readings)
-        readings = tuple(dict.fromkeys((*embedded_reading_rows, *inline_readings, *readings, *_reading_candidates(target_source, language_code=page.lang_code))))
+        readings = tuple(
+            dict.fromkeys(
+                (
+                    *embedded_reading_rows,
+                    *inline_readings,
+                    *pre_annotation_readings,
+                    *readings,
+                    *_reading_candidates(target_source, language_code=page.lang_code),
+                )
+            )
+        )
         if reading_first and not _valid_phrase(english):
             diagnostics.append({"error_code": "missing_english_gloss", "line": source_line_number, "source_wikitext": source_line})
             continue
         if not _valid_phrase(english) or not _valid_phrase(target):
+            # Definition-list rows containing only an italic pronunciation
+            # (for example ``; Taxi!: (''TAHK-see'')``) are layout fragments,
+            # not bilingual entries. Drop them without quarantining the whole
+            # source artifact.
+            target_payload = clean_markup(_ITALIC.sub("", raw_target))
+            if not _valid_phrase(target) and not re.search(r"[A-Za-zÀ-ÖØ-öø-ÿ\u2e80-\u9fff]", target_payload):
+                continue
             diagnostics.append({"error_code": "empty_phrase_side", "line": source_line_number, "source_wikitext": source_line})
             continue
 
@@ -1498,8 +1769,13 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
             locale_targets = [(target, page.locale_codes[0] if len(page.locale_codes) == 1 else None, readings)]
 
         english_variants = tuple(
-            _normalize_english_case(item) for item in _expand_slash_variants(english)
+            sentence
+            for item in _expand_slash_variants(english)
+            for sentence in (_split_german_sentences(item) if page.lang_code == "deu" else (item,))
         )
+        if page.lang_code == "deu":
+            english_variants = tuple(_trim_german_english_annotation(item) for item in english_variants)
+        english_variants = tuple(_normalize_english_case(item) for item in english_variants)
         for target_base, target_locale, target_readings in locale_targets:
             target_variants = _expand_slash_variants(target_base, language_code=page.lang_code)
             if not target_variants or not all(_valid_phrase(item) for item in target_variants):

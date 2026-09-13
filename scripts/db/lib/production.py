@@ -22,9 +22,10 @@ class ProductionInventoryError(RuntimeError):
     pass
 
 
-# Keep the command payload below the Wrangler argv/parser cliff while reducing
-# per-batch process startup compared with the original 256 KB grouping.
-SPLIT_SQL_BATCH_BYTES = 512 * 1024
+# Keep each remote SQL command well below D1's API statement-size ceiling. A
+# larger grouping can be accepted by Wrangler locally but rejected remotely as
+# ``SQLITE_TOOBIG`` before SQLite starts executing the transaction.
+SPLIT_SQL_BATCH_BYTES = 64 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
     "sources",
