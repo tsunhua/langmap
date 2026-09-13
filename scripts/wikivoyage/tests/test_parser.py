@@ -87,6 +87,47 @@ def test_cantonese_inline_reading_keeps_placeholder_slots_out_of_expression() ->
     ]
 
 
+def test_cantonese_inline_reading_splits_pinned_lowercase_respelling() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
+    result = parse_phrase_rows(
+        "===Directions===\n"
+        "; past the _____ : 过咗_____/過咗_____ gwojó _____",
+        profile,
+        _sections(),
+    )
+
+    assert [(entry["raw_headword"], entry["pronunciations"][0]["value"]) for entry in result.entries] == [
+        ("过咗_____", "gwojó _____"),
+        ("過咗_____", "gwojó _____"),
+    ]
+
+
+def test_cantonese_notes_and_multiple_readings_stay_out_of_headword() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
+    result = parse_phrase_rows(
+        "===Eating===\n"
+        "; I want a dish containing _____. : 我要帶 _____ 嘅嘢食. Ngóh yiu daai _____ ge jè sik. (example: 帶檸檬嘅紅豆冰 red-bean ice with lemon)\n"
+        "; (fresh) vegetables : (新鮮) 菜 (sānsīn) choi\n"
+        "; coffee : 咖啡 gafē / go bī (in Malaysia, from Malay \"kopi\")\n"
+        "===Problems===\n"
+        "; I'll call the police. : 我会叫警察。/我會叫警察。 Ngóh wúih giu gíngchaat. (差佬 chāai lóu is in colloquial speech and this word is not vulgar.)",
+        profile,
+        _sections(),
+    )
+
+    by_headword = {entry["raw_headword"]: entry for entry in result.entries}
+    food = by_headword["我要帶 _____ 嘅嘢食"]
+    assert food["pronunciations"][0]["value"] == "Ngóh yiu daai _____ ge jè sik"
+    assert food["raw"]["target_annotation"].startswith("example:")
+    vegetables = by_headword["(新鮮) 菜"]
+    assert [item["value"] for item in vegetables["pronunciations"]] == ["sānsīn", "choi"]
+    coffee = by_headword["咖啡"]
+    assert [item["value"] for item in coffee["pronunciations"]] == ["gafē", "go bī"]
+    assert coffee["raw"]["target_annotation"] == 'in Malaysia, from Malay "kopi"'
+    police = [entry for entry in result.entries if entry["raw_headword"] == "我会叫警察"][0]
+    assert police["raw"]["target_annotation"].startswith("差佬")
+
+
 def test_cantonese_inline_reading_can_follow_sentence_punctuation_without_space() -> None:
     profile = load_page_catalog(ROOT / "page-catalog.json")[5837]
     result = parse_phrase_rows(

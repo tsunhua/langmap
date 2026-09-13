@@ -100,6 +100,20 @@ def test_adapter_extracts_plain_target_respelling_as_reading() -> None:
     ]
 
 
+def test_adapter_attaches_parser_target_annotation_to_mapping_edge() -> None:
+    normalized = WikivoyagePhrasebookAdapter().normalize_entry(
+        StagedEntry(
+            "release-1", "enwikivoyage:5837", "entry", "我会叫警察", "我会叫警察", None,
+            "yue-to-eng", "f" * 64,
+            senses=(StagedSense("sense", 1, equivalents=({"value": "I'll call the police", "language": "eng", "locale": "eng-Latn-US"},)),),
+            raw={"raw": {"target_lang_code": "yue", "target_locale_code": "yue-Hant-HK", "target_annotation": "差佬 is colloquial"}},
+        )
+    )
+
+    assert [annotation.text for annotation in normalized.annotations] == ["差佬 is colloquial"]
+    assert normalized.annotations[0].target_claim_key == normalized.headword.claim_key
+
+
 def test_dictionary_key_and_release_dispatch_are_explicit() -> None:
     assert isinstance(adapter_for_dictionary_key("enwikivoyage:16153"), WikivoyagePhrasebookAdapter)
     connection = sqlite3.connect(":memory:")

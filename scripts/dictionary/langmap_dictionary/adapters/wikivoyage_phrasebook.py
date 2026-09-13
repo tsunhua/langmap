@@ -66,6 +66,7 @@ class WikivoyagePhrasebookAdapter:
         if not target_locale:
             head_errors = (*head_errors, "missing_target_locale")
         head_surfaces, head_surface_readings, head_annotation = prepare_expression_value(entry.canonical_headword)
+        target_annotation = _text(raw_meta.get("target_annotation") or "") or None
         if not head_surfaces:
             head_surfaces = (entry.canonical_headword,)
         head_text = head_surfaces[0]
@@ -125,10 +126,11 @@ class WikivoyagePhrasebookAdapter:
                 reading_errors,
                 head.claim_key,
             ))
-        if head_annotation:
+        annotation_text = head_annotation or target_annotation
+        if annotation_text:
             annotations.append(NormalizedAnnotation(
                 f"{head.claim_key}:annotation", entry.entry_key, None, entry.raw_headword,
-                head_annotation, head.claim_key, "headword", {},
+                annotation_text, head.claim_key, "headword", {},
             ))
         headword_alternatives: list[NormalizedOccurrence] = []
         for alternative_index, alternative in enumerate(head_surfaces[1:], 2):

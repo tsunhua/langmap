@@ -46,6 +46,10 @@ _READING_PROSE_WORDS = frozenset({
     "a", "an", "and", "are", "but", "call", "common", "for", "in", "is", "it",
     "of", "on", "some", "term", "the", "to", "using", "waitress", "waiter", "would",
 })
+_TARGET_ANNOTATION_PREFIXES = (
+    "example:", "e.g.", "in ", "when ", "from ", "means ", "used ",
+    "usually ", "often ", "only ", "more commonly ",
+)
 _PLAIN_RESPelling_EXCLUSIONS = frozenset({
     "formal", "informal", "polite", "colloquial", "literally", "optional",
     "preferred", "common", "only", "telephone", "coming", "through",
@@ -731,6 +735,84 @@ def _plain_respelling(body: str, language_code: str | None) -> bool:
     return any(ord(character) > 127 for character in normalized) or "-" in normalized or "'" in normalized or "’" in normalized
 
 
+def _looks_like_target_annotation(body: str, language_code: str | None) -> bool:
+    """Recognize a prose note after a target phrase without stealing readings."""
+
+    normalized = canonicalize_text(body)
+    folded = normalized.casefold()
+    if not normalized or _plain_respelling(normalized, language_code):
+        return False
+    if folded.startswith(_TARGET_ANNOTATION_PREFIXES):
+        return True
+    # Reviewed Wikivoyage rows sometimes explain a CJK word in a terminal note,
+    # e.g. ``差佬 chāai lóu is in colloquial speech``.  A CJK span plus an
+    # English prose cue is a note, not a lexical parenthetical or reading.
+    if _looks_like_target_script(normalized, language_code) and re.search(
+        r"\b(?:is|are|used|before|after|in|from|means|common|colloquial|vulgar)\b",
+        folded,
+    ):
+        return True
+    return False
+
+
+def _split_target_annotation(value: str, language_code: str | None) -> tuple[str, str | None]:
+    """Remove one terminal explanatory note and return its text separately."""
+
+    terminal = _terminal_parenthetical(value)
+    if terminal is None:
+        return value, None
+    prefix, body = terminal
+    if not _looks_like_target_annotation(body, language_code):
+        return value, None
+    return prefix, canonicalize_text(body)
+
+
+def _remove_inline_reading_parentheticals(
+    value: str,
+    language_code: str | None,
+) -> tuple[str, tuple[str, ...]]:
+    """Remove plain respelling shells embedded between a target and its reading."""
+
+    readings: list[str] = []
+    pieces: list[str] = []
+    cursor = 0
+    for match in re.finditer(r"\(([^()]*)\)", value):
+        body = canonicalize_text(match.group(1))
+        if not _plain_respelling(body, language_code):
+            continue
+        pieces.append(value[cursor:match.start()])
+        pieces.append(" ")
+        cursor = match.end()
+        readings.append(body)
+    if not readings:
+        return value, ()
+    pieces.append(value[cursor:])
+    return canonicalize_text("".join(pieces)), tuple(dict.fromkeys(readings))
+
+
+def _split_inline_reading_surface(
+    value: str,
+    language_code: str | None,
+) -> tuple[str, tuple[tuple[str, str], ...]]:
+    """Detach a complete target-plus-inline-reading tail before surface cleanup."""
+
+    if language_code is None or not _looks_like_target_script(value, language_code):
+        return value, ()
+    inline = _INLINE_READING.match(canonicalize_text(value))
+    if inline is None:
+        return value, ()
+    text = clean_markup(inline.group("reading")).strip(" .。;；/")
+    if not _looks_like_reading(text, allow_long=True):
+        return value, ()
+    spaced_parts = _split_top_level_slashes(text) if " / " in text else (text,)
+    if len(spaced_parts) > 1 and all(_looks_like_reading(part, allow_long=True) for part in spaced_parts):
+        variants = _dedupe_phrases(spaced_parts)
+    else:
+        variants = _expand_slash_variants(text, source_kind="romanization")
+    readings = tuple((variant, "inline") for variant in variants if variant and _looks_like_reading(variant, allow_long=True))
+    return inline.group("target"), readings
+
+
 def _strip_target_surface_shell(value: str, language_code: str | None) -> str:
     terminal = _terminal_parenthetical(value)
     if terminal is None:
@@ -973,6 +1055,7 @@ def _record(
     occurrence: int,
     target_locale: str | None,
     readings: Iterable[tuple[str, str]],
+    target_annotation: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     english = _normalize_phrase_text(english)
     target = _normalize_phrase_text(target)
@@ -1000,6 +1083,21 @@ def _record(
             diagnostics.append({"error_code": "invalid_reading", "reading": reading, "row": row_number})
             continue
         pronunciation_rows.append({"value": reading, "scheme": scheme, "locale": reading_locale})
+    raw_metadata: dict[str, Any] = {
+        "pageid": snapshot.pageid,
+        "title": snapshot.title,
+        "revision": snapshot.revision,
+        "revision_timestamp": snapshot.revision_timestamp,
+        "canonical_url": snapshot.canonical_url,
+        "section_key": section_key,
+        "section_title": section_title,
+        "row": row_number,
+        "target_lang_code": profile.lang_code,
+        "target_locale_code": locale,
+        "source_marker": f"oldid:{snapshot.revision}#{section_key}/{row_number}",
+    }
+    if target_annotation:
+        raw_metadata["target_annotation"] = target_annotation
     record: dict[str, Any] = {
         "record_type": "entry",
         "schema_version": 2,
@@ -1025,19 +1123,7 @@ def _record(
             "labels": [],
         }],
         "diagnostics": diagnostics,
-        "raw": {
-            "pageid": snapshot.pageid,
-            "title": snapshot.title,
-            "revision": snapshot.revision,
-            "revision_timestamp": snapshot.revision_timestamp,
-            "canonical_url": snapshot.canonical_url,
-            "section_key": section_key,
-            "section_title": section_title,
-            "row": row_number,
-            "target_lang_code": profile.lang_code,
-            "target_locale_code": locale,
-            "source_marker": f"oldid:{snapshot.revision}#{section_key}/{row_number}",
-        },
+        "raw": raw_metadata,
     }
     record["record_fingerprint"] = _entry_fingerprint(record)
     return record, diagnostics
@@ -1160,6 +1246,7 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
             )
         )
         chinese_example = _chinese_example_parts(raw_right, page.lang_code)
+        target_annotation: str | None = None
         if chinese_example:
             # Grammar infobox rows put the real target example and its English
             # gloss on the definition side; the left side is only a formula.
@@ -1193,6 +1280,23 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
             english = clean_markup(raw_english)
             target = _target_text(target_source, language_code=page.lang_code)
             readings = _reading_candidates(target_source, language_code=page.lang_code)
+        if page.lang_code == "yue":
+            target_source, target_annotation = _split_target_annotation(target_source, page.lang_code)
+            target_source, embedded_readings = _remove_inline_reading_parentheticals(target_source, page.lang_code)
+            inline_match = _INLINE_READING.match(canonicalize_text(target_source))
+            split_spaced_readings = bool(
+                inline_match and " / " in inline_match.group("reading")
+            )
+            if target_annotation or embedded_readings or split_spaced_readings:
+                target_source, inline_readings = _split_inline_reading_surface(target_source, page.lang_code)
+            else:
+                inline_readings = ()
+        else:
+            embedded_readings = ()
+            inline_readings = ()
+        target = _target_text(target_source, language_code=page.lang_code)
+        embedded_reading_rows = tuple((value, "inline") for value in embedded_readings)
+        readings = tuple(dict.fromkeys((*embedded_reading_rows, *inline_readings, *readings, *_reading_candidates(target_source, language_code=page.lang_code))))
         if reading_first and not _valid_phrase(english):
             diagnostics.append({"error_code": "missing_english_gloss", "line": source_line_number, "source_wikitext": source_line})
             continue
@@ -1272,6 +1376,7 @@ def parse_phrase_rows(wikitext: str, page: PageProfile, sections: SectionCatalog
                     occurrence=occurrence_by_english[key],
                     target_locale=target_locale,
                     readings=record_readings,
+                    target_annotation=target_annotation,
                 )
                 record["raw"]["wikitext_line"] = source_line_number
                 record["raw"]["source_wikitext"] = source_line
