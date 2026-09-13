@@ -23,6 +23,7 @@ _QUOTE_OPENING = "“‘「『《〈"
 _QUOTE_CLOSING = "”’」』》〉"
 _QUOTE_PAIRS = {opening: closing for opening, closing in zip(_QUOTE_OPENING, _QUOTE_CLOSING)}
 _DIALOGUE_DASHES = "‒–—―"
+_LIST_MARKERS = "•‣▪"
 _EMPTY_PLACEHOLDER = re.compile(r"(?<!\w)\[\s*\](?!\w)")
 _BRACKET_NOTATION_WORDS = re.compile(
     r"(?:bracket|parenthes|ngoặc|kurung|括弧|括號|方括号|方括號|大括号|大括號)",
@@ -344,11 +345,53 @@ def _expand_cjk_parenthetical(value: str) -> tuple[str, ...] | None:
         before, after = value[:start], value[end + 1 :]
         if not (_CJK.search(before) or _CJK.search(after)):
             continue
+        # A CJK gloss inside an otherwise Latin sentence is explanatory
+        # material (``wood （木）``), not an optional spelling.  Only expand
+        # parentheticals whose surrounding lexical material is CJK-like; this
+        # keeps compact forms such as ``你（們）好`` while leaving bilingual
+        # prose intact.
+        surrounding = before + after
+        if any(
+            unicodedata.category(character)[0] in {"L", "N"}
+            and not _CJK.search(character)
+            for character in surrounding
+        ):
+            continue
         return (
             normalize_expression_surface(before + after),
             normalize_expression_surface(before + content + after),
         )
     return None
+
+
+def _expand_cjk_parentheticals(value: str) -> tuple[str, ...] | None:
+    """Expand all compact CJK optional forms with a bounded breadth-first walk."""
+
+    pending = [value]
+    results: list[str] = []
+    seen: set[str] = set()
+    changed = False
+    # A source value with more than five independent optional forms is almost
+    # certainly explanatory prose.  Keep the expansion bounded so malformed
+    # dictionary rows cannot create an exponential number of expressions.
+    while pending and len(seen) < 64:
+        candidate = pending.pop(0)
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        expanded = _expand_cjk_parenthetical(candidate)
+        if expanded is None:
+            results.append(candidate)
+            continue
+        changed = True
+        pending.extend(expanded)
+    if pending:
+        # Preserve the original value if the safety bound was reached; callers
+        # should not publish a partial optional-form expansion.
+        return None
+    if not changed:
+        return None
+    return tuple(dict.fromkeys(normalize_expression_surface(item) for item in results if item))
 
 
 def split_expression_alternatives(value: str) -> tuple[str, ...]:
@@ -362,9 +405,16 @@ def split_expression_alternatives(value: str) -> tuple[str, ...]:
     original = unicodedata.normalize("NFC", str(value)).strip()
     if not original or not _balanced(original):
         return (original,)
-    compact = _expand_cjk_parenthetical(original)
+    compact = _expand_cjk_parentheticals(original)
     if compact is not None:
-        return tuple(item for item in compact if item)
+        parts: list[str] = []
+        for candidate in compact:
+            parts.extend(
+                normalize_expression_surface(part)
+                for part in _split_sentence_boundaries(candidate)
+                if normalize_expression_surface(part)
+            )
+        return tuple(dict.fromkeys(parts)) or (original,)
     positions = _top_level_slashes(original)
     if not positions:
         return tuple(
@@ -555,7 +605,14 @@ def surface_errors(value: str) -> tuple[str, ...]:
     if re.fullmatch(r"/[^/]+/", original) and _reading_body(original[1:-1]):
         errors.append("reading_in_expression")
     reading_only = bool(re.fullmatch(r"/[^/]+/", original) and _reading_body(original[1:-1]))
-    normalized = normalize_expression_surface(original)
+    # Equivalence lists in Apple bundles use a leading bullet as a layout
+    # marker.  The adapter removes it from the published surface, so validate
+    # the payload after removing only that marker instead of quarantining an
+    # otherwise valid expression as ``leading_punctuation``.
+    quality_value = original
+    if quality_value.startswith(tuple(_LIST_MARKERS)):
+        quality_value = quality_value[1:].lstrip()
+    normalized = normalize_expression_surface(quality_value)
     has_lexical_character = any(
         unicodedata.category(character)[0] in {"L", "N"}
         for character in normalized

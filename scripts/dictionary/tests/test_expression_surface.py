@@ -49,6 +49,13 @@ def test_keeps_slashes_inside_parentheses_and_brackets():
 
 def test_expands_cjk_parenthetical_alternative_but_not_prose_note():
     assert split_expression_alternatives("你（們）好") == ("你好", "你們好")
+    assert split_expression_alternatives("咩（哶）都冇得咩（哶）") == (
+        "咩都冇得咩",
+        "咩都冇得咩哶",
+        "咩哶都冇得咩",
+        "咩哶都冇得咩哶",
+    )
+    assert split_expression_alternatives("wood （木）") == ("wood （木）",)
     assert split_expression_alternatives("Hello (only on the telephone)") == (
         "Hello (only on the telephone)",
     )
@@ -139,6 +146,7 @@ def test_reports_malformed_surface_and_reading_only_candidates():
     assert surface_errors("Hello (only on the telephone") == ("malformed_surface",)
     assert surface_errors("/ˈbo.ɐ ˈtaɾ.dɨ/") == ("reading_in_expression",)
     assert surface_errors("Push []") == ("placeholder_surface",)
+    assert surface_errors("• Two heads are better than one.") == ()
     assert surface_errors("”地叫了起来") == ("leading_punctuation",)
     assert surface_errors("’") == ("punctuation_only",)
     assert surface_errors("¿Qué?") == ()
