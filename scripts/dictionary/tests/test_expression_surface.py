@@ -146,6 +146,7 @@ def test_reports_malformed_surface_and_reading_only_candidates():
     assert surface_errors("Hello (only on the telephone") == ("malformed_surface",)
     assert surface_errors("/ˈbo.ɐ ˈtaɾ.dɨ/") == ("reading_in_expression",)
     assert surface_errors("Push []") == ("placeholder_surface",)
+    assert surface_errors("(心胸)寬廣") == ()
     assert surface_errors("• Two heads are better than one.") == ()
     assert surface_errors("”地叫了起来") == ("leading_punctuation",)
     assert surface_errors("’") == ("punctuation_only",)

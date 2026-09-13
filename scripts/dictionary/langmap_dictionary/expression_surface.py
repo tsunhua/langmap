@@ -617,9 +617,14 @@ def surface_errors(value: str) -> tuple[str, ...]:
         unicodedata.category(character)[0] in {"L", "N"}
         for character in normalized
     )
+    # A compact CJK optional form such as ``(心胸)寬廣`` is an input notation
+    # for the alternatives ``寬廣`` and ``心胸寬廣``.  The adapter keeps those
+    # alternatives and should not quarantine the original notation merely
+    # because its opening parenthesis is punctuation.
+    cjk_optional = _expand_cjk_parentheticals(original) is not None
     if not has_lexical_character and not _is_literal_bracket_notation(original):
         errors.append("punctuation_only")
-    elif not reading_only and normalized and normalized[0] not in "¡¿" and unicodedata.category(normalized[0]).startswith("P"):
+    elif not reading_only and not cjk_optional and normalized and normalized[0] not in "¡¿" and unicodedata.category(normalized[0]).startswith("P"):
         errors.append("leading_punctuation")
     return tuple(errors)
 
