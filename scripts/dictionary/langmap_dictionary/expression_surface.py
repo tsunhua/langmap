@@ -32,13 +32,14 @@ _BRACKET_NOTATION_WORDS = re.compile(
 _NON_READING_PARENTHESES = frozenset({
     "formal", "informal", "polite", "colloquial", "literally", "lit",
     "optional", "preferred", "common", "only", "telephone", "coming",
-    "through", "masc", "masc.", "fem", "fem.",
+    "through", "masc", "masc.", "fem", "fem.", "fresh",
 })
 _ANNOTATION_PREFIXES = (
     "only ", "coming through", "by telephone", "on the telephone",
     "at the telephone", "in writing", "spoken ", "used ", "usually ",
     "often ", "typically ", "for example", "e.g.", "figuratively",
     "regionally", "dialectally", "in this glossary", "in this dictionary",
+    "getting ",
 )
 _LEXICAL_PARENTHESES_PREFIXES = frozenset({
     "by", "on", "at", "to", "for", "from", "in", "out", "off", "up",
@@ -215,7 +216,7 @@ def _split_sentence_boundaries(value: str) -> tuple[str, ...]:
         next_index = index + 1
         while next_index < len(value) and value[next_index].isspace():
             next_index += 1
-        if next_index < len(value) and value[next_index] not in _CLOSING + "/":
+        if next_index < len(value) and value[next_index] not in _CLOSING + _OPENING + "/":
             boundaries.append(index + 1)
         index += 1
     if not boundaries:
@@ -311,6 +312,9 @@ def normalize_expression_surface(value: str) -> str:
     """Trim source residue while retaining semantic ``?``/``!`` punctuation."""
 
     normalized = unicodedata.normalize("NFC", str(value)).strip()
+    # Wikivoyage uses a leading ellipsis as a continuation marker (``...a
+    # bathroom``), not as part of the expression identity.
+    normalized = re.sub(r"^(?:\.{3}|…)+\s*", "", normalized)
     # Dialogue dashes are layout markers, not part of the lexical surface.
     # Keep this narrow: a dash without following whitespace/CJK remains
     # available for legitimate hyphenated or symbolic expressions.
@@ -483,6 +487,12 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     """
 
     surface, _ = extract_reading_parentheses(value)
+    leading = re.match(r"^\((?P<note>[^()]*)\)\s+(?P<expression>.+)$", surface)
+    if leading is not None:
+        note = normalize_expression_surface(leading.group("note"))
+        expression = normalize_expression_surface(leading.group("expression"))
+        if expression and _looks_like_mapping_annotation(note):
+            return expression, note
     arrow_positions = [
         (surface.find(arrow), arrow)
         for arrow in _TRANSFORMATION_ARROWS
@@ -613,6 +623,9 @@ def surface_errors(value: str) -> tuple[str, ...]:
     if quality_value.startswith(tuple(_LIST_MARKERS)):
         quality_value = quality_value[1:].lstrip()
     normalized = normalize_expression_surface(quality_value)
+    leading = re.match(r"^\((?P<note>[^()]*)\)\s+(?P<expression>.+)$", normalized)
+    if leading is not None and _looks_like_mapping_annotation(leading.group("note")):
+        normalized = normalize_expression_surface(leading.group("expression"))
     has_lexical_character = any(
         unicodedata.category(character)[0] in {"L", "N"}
         for character in normalized
@@ -624,7 +637,14 @@ def surface_errors(value: str) -> tuple[str, ...]:
     cjk_optional = _expand_cjk_parentheticals(original) is not None
     if not has_lexical_character and not _is_literal_bracket_notation(original):
         errors.append("punctuation_only")
-    elif not reading_only and not cjk_optional and normalized and normalized[0] not in "¡¿" and unicodedata.category(normalized[0]).startswith("P"):
+    elif (
+        not reading_only
+        and not cjk_optional
+        and normalized
+        and not normalized.startswith("_")
+        and normalized[0] not in "¡¿"
+        and unicodedata.category(normalized[0]).startswith("P")
+    ):
         errors.append("leading_punctuation")
     return tuple(errors)
 

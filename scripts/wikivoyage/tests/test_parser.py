@@ -160,6 +160,89 @@ def test_nested_respelling_parenthetical_keeps_ipa_reading() -> None:
     assert [reading["value"] for reading in result.entries[0]["pronunciations"]] == ["fɨ.ˈʃa.du"]
 
 
+def test_portuguese_gender_alternatives_are_clean_expression_rows() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Basics===\n"
+        "; Fine, thank you. : Bem, obrigado. (masc.) / Bem, obrigada. (fem.) (''buhny'', /bɐ̃j/)\n"
+        "; I'm lost. : Estou perdido. (masc.) / Estou perdida. (fem.) (''sh-TOH'', /ʃ.ˈto/)",
+        profile,
+        _sections(),
+    )
+
+    assert {entry["raw_headword"] for entry in result.entries} == {
+        "Bem, obrigado",
+        "Bem, obrigada",
+        "Estou perdido",
+        "Estou perdida",
+    }
+    assert all("masc" not in entry["raw_headword"] and "fem" not in entry["raw_headword"] for entry in result.entries)
+
+
+def test_portuguese_spaced_alternatives_before_readings_are_split() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Basics===\n"
+        "; I understand. : Compreendo. / Percebo. / Entendo. (''kohm-prih-EHN-doo'' / ''pihr-SIH-boo / ehn-TEHN-doo'', /kõ.pɾi.ˈẽ.du/, /pɨɾ.ˈse.bu/, /ẽ.ˈtẽ.du/)",
+        profile,
+        _sections(),
+    )
+
+    assert {entry["raw_headword"] for entry in result.entries} == {"Compreendo", "Percebo", "Entendo"}
+    assert all("/" not in entry["raw_headword"] for entry in result.entries)
+
+
+def test_portuguese_malformed_ipa_tail_is_a_reading_not_surface_text() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Food===\n"
+        "; Can I look at the menu, please? : Posso ver a ementa, por favor? ''POH-soo'', /ˈpo.su ˈveɾ/)",
+        profile,
+        _sections(),
+    )
+
+    entry = result.entries[0]
+    assert entry["raw_headword"] == "Posso ver a ementa, por favor?"
+    assert {reading["value"] for reading in entry["pronunciations"]} >= {"POH-soo", "ˈpo.su ˈveɾ"}
+
+
+def test_portuguese_unclosed_ipa_slash_is_a_reading_not_surface_text() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Food===\n"
+        "; It was delicious. : Estava uma delícia. (''sh-TAH-vuh'', /ʃ.ˈta.vɐ)",
+        profile,
+        _sections(),
+    )
+
+    entry = result.entries[0]
+    assert entry["raw_headword"] == "Estava uma delícia"
+    assert {reading["value"] for reading in entry["pronunciations"]} >= {"sh-TAH-vuh", "ʃ.ˈta.vɐ"}
+
+
+def test_portuguese_leading_ellipsis_is_layout_not_expression_text() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Lodging===\n; ...a bathroom? : ... Casa de banho (''KAH-zuh'')",
+        profile,
+        _sections(),
+    )
+
+    assert result.entries[0]["raw_headword"] == "Casa de banho"
+    assert result.entries[0]["senses"][0]["equivalents"][0]["value"] == "a bathroom?"
+
+
+def test_portuguese_sentence_punctuation_splits_target_phrases() -> None:
+    profile = load_page_catalog(ROOT / "page-catalog.json")[28280]
+    result = parse_phrase_rows(
+        "===Emergencies===\n; Stop! Thief! : Pára! Ladrão! (''PAH-ruh'')",
+        profile,
+        _sections(),
+    )
+
+    assert [entry["raw_headword"] for entry in result.entries] == ["Pára!", "Ladrão!"]
+
+
 def test_reading_first_chinese_row_uses_parenthetical_english_gloss() -> None:
     profile = load_page_catalog(ROOT / "page-catalog.json")[7357]
     result = parse_phrase_rows("===Eating===\n;''sī'': 丝 (絲) (shredded)", profile, _sections())

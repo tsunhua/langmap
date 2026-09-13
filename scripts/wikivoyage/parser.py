@@ -56,27 +56,37 @@ _PLAIN_RESPelling_EXCLUSIONS = frozenset({
 })
 _THAI_PRONOUNS = ("ผม", "ดิฉัน")
 _THAI_POLITE_ENDINGS = ("ครับ", "ค่ะ", "คะ")
+_GENDER_NOTE = re.compile(r"\s*\((?:masc(?:uline)?|fem(?:inine)?)\.?\)", re.IGNORECASE)
 
 
 def _normalize_phrase_text(value: str) -> str:
-    """Normalize phrase punctuation without changing meaningful ellipses."""
+    """Normalize phrase punctuation and discard layout-only prefixes."""
 
     text = canonicalize_text(value)
+    # Wikivoyage uses a leading ellipsis to indicate an omitted context (for
+    # example ``...a bathroom``). It is a layout cue, not part of the phrase
+    # identity; keeping it creates a second, punctuation-prefixed expression.
+    text = re.sub(r"^(?:\.{3}|…)+\s*", "", text)
+    text = re.sub(r"^[—–‐‑‒―-]+\s+", "", text)
     # A full stop immediately before a parenthetical is sentence punctuation,
     # not part of the phrase. Keep the parenthetical itself for the English
     # side, where it often disambiguates register or place.
     text = re.sub(r"[.。](?=\s*[\(\[])", "", text)
-    # Wikivoyage uses both ASCII and full-width sentence stops. Do not turn the
-    # placeholder/ellipsis `...` into an empty phrase.
-    if not re.search(r"\.{3,}$", text):
-        text = re.sub(r"\.+$", "", text)
+    # Wikivoyage uses both ASCII and full-width sentence stops. Ellipses are
+    # continuation layout markers, not part of a publishable expression.
+    text = re.sub(r"\.+$", "", text)
     text = re.sub(r"。+$", "", text)
+    text = re.sub(r"\s+([,;!?])", r"\1", text)
     return canonicalize_text(text)
 
 
 def _looks_like_ipa_span(value: str, slash_position: int) -> bool:
     """Return whether a slash pair is phonetic notation, not a lexical slot."""
 
+    # Lexical alternatives are written with spaces around the slash (``a / b``);
+    # an IPA span always starts immediately after its opening delimiter.
+    if slash_position + 1 >= len(value) or value[slash_position + 1].isspace():
+        return False
     if slash_position > 0 and not value[slash_position - 1].isspace() and value[slash_position - 1] not in "([{<":
         return False
     closing = value.find("/", slash_position + 1)
@@ -86,6 +96,49 @@ def _looks_like_ipa_span(value: str, slash_position: int) -> bool:
     # IPA spans contain at least one non-ASCII-letter phonetic symbol or a
     # length/stress marker. Plain `word/word` alternatives do not satisfy this.
     return bool(re.search(r"[ːˈˌɐ-ʯɶ-ʸəɪɔʊɑɛɜɞɡɣɲŋʃʒʔʦʧʤ.\[\]]", body))
+
+
+def _ipa_reading_spans(value: str) -> tuple[str, ...]:
+    """Extract every IPA slash pair without pairing neighbouring slashes."""
+
+    readings: list[str] = []
+    index = 0
+    while index < len(value):
+        if value[index] != "/" or not _looks_like_ipa_span(value, index):
+            index += 1
+            continue
+        closing = value.find("/", index + 1)
+        if closing < 0:
+            break
+        body = value[index + 1 : closing].strip(" .。;；/")
+        if body:
+            readings.append(body)
+        index = closing + 1
+    if not readings:
+        # A few snapshot rows omit the closing slash but retain the terminal
+        # parenthesis: ``phrase (..., /ˈipa/)`` becomes ``phrase (..., /ˈipa)``.
+        # Only accept a final slash tail with unmistakable IPA symbols.
+        match = re.search(r"/([^/]+)\s*\)?\s*$", value)
+        if (
+            match
+            and (body := match.group(1).strip(" .。;；/()"))
+            and not re.search(r"[\[\]{}'\"]", body)
+            and _looks_like_ipa_span(f"/{body}/", 0)
+        ):
+            readings.append(body.strip(" .。;；/"))
+    return tuple(dict.fromkeys(readings))
+
+
+def _malformed_ipa_tail(value: str) -> str | None:
+    """Recognize a final IPA token missing its opening slash."""
+
+    match = re.search(r"(?:^|[,;]\s*|\s)(?P<body>[A-Za-zÀ-ÿːˈˌɐ-ʯɶ-ʸəɪɔʊɑɛɜɞɡɣɲŋʃʒʔʦʧʤ.]+)\s*/\s*$", value)
+    if match is None:
+        return None
+    body = match.group("body").strip(" .。;；/")
+    if not body or re.search(r"[\[\]{}'\"]", body):
+        return None
+    return body if _looks_like_ipa_span(f"/{body}/", 0) else None
 
 
 def _slash_positions(value: str) -> tuple[int, ...]:
@@ -334,6 +387,68 @@ def _expand_thai_known_variants(value: str) -> tuple[str, ...]:
     return (value,)
 
 
+def _clean_portuguese_variant(value: str) -> str:
+    """Remove Portuguese gender labels from the lexical surface."""
+
+    # The page writes ``obrigado. (masc.)``. The full stop belongs to the
+    # phrase boundary, while ``(masc.)`` is a grammatical label rather than
+    # phrase text. Remove both before alternatives are aligned.
+    cleaned = _GENDER_NOTE.sub("", value)
+    return _normalize_phrase_text(cleaned)
+
+
+def _split_portuguese_sentences(value: str) -> tuple[str, ...]:
+    """Split adjacent Portuguese sentence phrases at top-level punctuation."""
+
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Þ])", value)
+    return tuple(_normalize_phrase_text(part) for part in parts if _valid_phrase(_normalize_phrase_text(part)))
+
+
+def _expand_portuguese_variants(value: str) -> tuple[str, ...]:
+    """Expand the reviewed Portuguese phrasebook's lexical alternatives.
+
+    Portuguese rows combine two different notations: spaced slashes for full
+    alternatives (``obrigado / obrigada``) and compact slashes for a shared
+    context (``comboio/autocarro``). Treat the former as independent rows and
+    delegate the latter to the existing context-preserving expander.
+    """
+
+    normalized = _clean_portuguese_variant(value)
+    optional = re.match(r"^\((?P<option>[^()]*)\)\s+(?P<rest>.+)$", normalized)
+    if optional is not None and optional.group("option").strip().casefold() not in {
+        "masc.", "fem.", "formal", "informal"
+    }:
+        option = _normalize_phrase_text(optional.group("option"))
+        rest = _normalize_phrase_text(optional.group("rest"))
+        if option and rest:
+            return _dedupe_phrases((rest, f"{option} {rest}"))
+    positions = _slash_positions(normalized)
+    if not positions:
+        return _dedupe_phrases(_split_portuguese_sentences(normalized))
+    spaced = tuple(
+        position
+        for position in positions
+        if (position > 0 and normalized[position - 1].isspace())
+        or (position + 1 < len(normalized) and normalized[position + 1].isspace())
+        or (position > 0 and normalized[position - 1] in ".!?。！？")
+    )
+    if spaced:
+        parts = _split_top_level_slashes(normalized)
+        return _dedupe_phrases(
+            sentence
+            for part in parts
+            for sentence in _split_portuguese_sentences(_clean_portuguese_variant(part))
+        )
+    embedded = _expand_embedded_slash(normalized, positions)
+    if embedded is not None:
+        return _dedupe_phrases(
+            sentence
+            for part in embedded
+            for sentence in _split_portuguese_sentences(_clean_portuguese_variant(part))
+        )
+    return (normalized,)
+
+
 def _split_top_level_commas(value: str) -> tuple[str, ...]:
     """Split a target-side alternatives list without breaking parenthetical notes."""
 
@@ -558,6 +673,8 @@ def _expand_slash_variants(
     normalized = canonicalize_text(value)
     if source_kind == "ipa":
         return (_normalize_phrase_text(normalized),)
+    if language_code == "por":
+        return _expand_portuguese_variants(normalized)
     if language_code == "spa":
         spanish_variants = _spanish_target_variants(normalized)
         if spanish_variants is not None:
@@ -663,7 +780,7 @@ def canonicalize_text(value: str) -> str:
 
 
 def _template_replace(match: re.Match[str]) -> str:
-    body = match.group(1)
+    body = match.group(1).strip(" .。;；/()")
     parts = [part.strip() for part in body.split("|")]
     if not parts:
         return ""
@@ -820,12 +937,47 @@ def _strip_target_surface_shell(value: str, language_code: str | None) -> str:
     prefix, body = terminal
     if not body.strip(" /,;；、"):
         return prefix
+    if _ipa_reading_spans(body) or _malformed_ipa_tail(body):
+        return prefix
     spans = re.findall(r"/([^/]+)/", body)
     if spans and all(span.strip() for span in spans):
         return prefix
     if _plain_respelling(body, language_code):
         return prefix
     return value
+
+
+def _balanced(value: str) -> bool:
+    pairs = {"(": ")", "[": "]", "{": "}", "（": "）", "［": "］", "｛": "｝"}
+    stack: list[str] = []
+    for character in value:
+        if character in pairs:
+            stack.append(pairs[character])
+        elif character in pairs.values():
+            if not stack or stack.pop() != character:
+                return False
+    return not stack
+
+
+def _strip_unbalanced_ipa_tail(value: str) -> str:
+    """Drop a trailing IPA fragment when its surrounding shell is malformed."""
+
+    if _balanced(value):
+        terminal = _terminal_parenthetical(value)
+        if terminal is None or re.search(r"/[^/]+/", terminal[1]):
+            return value
+        if "/" in terminal[1] and _ipa_reading_spans(terminal[1]):
+            return terminal[0]
+    matches = list(re.finditer(r"(?:,\s*)?/([^/]+)/\s*\)?\s*$", value))
+    if not matches:
+        matches = list(re.finditer(r"(?:,\s*)?/([^/]+)\s*\)?\s*$", value))
+    if not matches:
+        return value
+    match = matches[-1]
+    body = match.group(1)
+    if re.search(r"[\[\]{}'\"]", body) or not _looks_like_ipa_span(f"/{body}/", 0):
+        return value
+    return value[: match.start()].rstrip(" ,(")
 
 
 def _looks_like_reading(value: str, *, allow_long: bool = False) -> bool:
@@ -882,13 +1034,20 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
     terminal = _terminal_parenthetical(value)
     if terminal is not None:
         target, body = terminal
-        slash_readings = [span.strip() for span in re.findall(r"/([^/]+)/", body) if span.strip()]
-        for reading in slash_readings:
-            if _looks_like_ipa_span(f"/{reading}/", 0):
-                candidates.append((value.rfind(reading), reading, "ipa"))
+        for reading in _ipa_reading_spans(body):
+            candidates.append((value.rfind(reading), reading, "ipa"))
+        malformed = _malformed_ipa_tail(body)
+        if malformed:
+            candidates.append((value.rfind(malformed), malformed, "ipa"))
         target_has_non_ascii = any(ord(character) > 127 for character in target)
         if _plain_respelling(body, language_code) and (_looks_like_target_script(target, language_code) or target_has_non_ascii):
             candidates.append((value.rfind(body), body, "romanization"))
+    elif not _balanced(value):
+        # A small number of rows have a missing opening parenthesis around the
+        # final IPA (``phrase? ''respelling'', /.../)``). Keep the IPA as a
+        # reading and let target cleanup remove the malformed shell.
+        for reading in _ipa_reading_spans(value):
+            candidates.append((value.rfind(reading), reading, "ipa"))
     for match in _ITALIC.finditer(value):
         text = clean_markup(match.group(1)).strip(" .。;；")
         for variant_index, variant in enumerate(_expand_slash_variants(text, source_kind="romanization")):
@@ -933,6 +1092,7 @@ def _reading_candidates(value: str, *, language_code: str | None = None) -> tupl
 
 def _target_text(value: str, *, language_code: str | None = None) -> str:
     value = _trim_target_prose(value, language_code)
+    value = _strip_unbalanced_ipa_tail(value)
     without_italics = _ITALIC.sub("", value)
     without_italics = _BRACKET_READING.sub("", without_italics)
     without_italics = _strip_target_surface_shell(without_italics, language_code)
