@@ -88,6 +88,52 @@ def test_paired_examples_align_dialogue_turns_before_sentence_splitting():
     assert prepared[3] == ("hello, what are you doing here?", "well, i didn't have anything else to do")
 
 
+def test_cleans_quoted_dialogue_wrappers_and_mixed_quote_styles():
+    assert split_expression_alternatives("'how are you?' — 'I'm good!'") == (
+        "how are you?",
+        "I'm good!",
+    )
+    assert split_expression_alternatives("’هل هو مُحِقٌّ؟‘ —’أَظُنُّ ذلك‘") == (
+        "هل هو مُحِقٌّ؟",
+        "أَظُنُّ ذلك",
+    )
+    assert prepare_expression_value("‘were you disappointed?' — ‘sort of’")[0] == (
+        "were you disappointed?",
+        "sort of",
+    )
+
+
+def test_removes_example_wrappers_and_leading_parenthetical_labels():
+    assert prepare_expression_value("[A sample sentence]")[0] == ("A sample sentence",)
+    assert prepare_expression_value("(public) health service") == (
+        ("health service",),
+        (),
+        "public",
+    )
+    assert prepare_expression_value("(ال)كَثير من شَيْءٍ") == (
+        ("كَثير من شَيْءٍ",),
+        (),
+        "ال",
+    )
+
+
+def test_does_not_treat_slash_glosses_or_apostrophe_forms_as_readings():
+    assert extract_reading_parentheses("every one (of them/you/…)") == (
+        "every one (of them/you/…)",
+        (),
+    )
+    assert split_expression_alternatives("to drop one's 'H''s") == (
+        "to drop one's 'H's",
+    )
+    assert surface_errors("#MeToo") == ()
+
+
+def test_keeps_dotted_abbreviations_inside_sentence_surfaces():
+    assert split_expression_alternatives("must we really get up at 5 a.m.?") == (
+        "must we really get up at 5 a.m.?",
+    )
+
+
 def test_moves_grammatical_rewrite_after_arrow_to_mapping_annotation():
     assert prepare_expression_value(
         "She said, “I wish I had a car.”⇒She said she wished she had a car"

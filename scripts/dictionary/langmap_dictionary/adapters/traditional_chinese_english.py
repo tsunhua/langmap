@@ -20,7 +20,12 @@ from ..models import (
     StagedEntry,
 )
 from ..text_identity import canonicalize_expression_text
-from ..expression_surface import prepare_expression_value, prepare_paired_expression_values, surface_errors
+from ..expression_surface import (
+    prepare_expression_value,
+    prepare_paired_expression_values,
+    split_expression_alternatives,
+    surface_errors,
+)
 
 try:
     import ujson as _fast_json
@@ -546,8 +551,24 @@ class TraditionalChineseEnglishAdapter:
             occurrences: list[NormalizedOccurrence] = []
             equivalent_texts: set[str] = set()
 
-            def add_occurrence(raw_value: str, hint: str | None, kind: str, ordinal: str, extra: dict[str, Any]) -> None:
-                alternatives, surface_readings, annotation = prepare_expression_value(raw_value)
+            def add_occurrence(
+                raw_value: str,
+                hint: str | None,
+                kind: str,
+                ordinal: str,
+                extra: dict[str, Any],
+                *,
+                preserve_leading_parenthetical: bool = False,
+            ) -> None:
+                if preserve_leading_parenthetical:
+                    # Definition text is content, not a mapping annotation.
+                    # Keep a label such as ``(printed) book`` in the surface
+                    # while still applying the ordinary splitter.
+                    alternatives = split_expression_alternatives(raw_value)
+                    surface_readings: tuple[str, ...] = ()
+                    annotation: str | None = None
+                else:
+                    alternatives, surface_readings, annotation = prepare_expression_value(raw_value)
                 for alternative_index, alternative in enumerate(alternatives, 1):
                     cleaned = canonicalize_text(alternative)
                     bullet = cleaned.startswith("•")
@@ -638,7 +659,14 @@ class TraditionalChineseEnglishAdapter:
                 lang, _, _ = _language(cleaned, inferred)
                 if lang is None:
                     continue
-                add_occurrence(cleaned, inferred, "equivalent", f"def{ordinal}", {"definition_sourced": True})
+                add_occurrence(
+                    cleaned,
+                    inferred,
+                    "equivalent",
+                    f"def{ordinal}",
+                    {"definition_sourced": True},
+                    preserve_leading_parenthetical=True,
+                )
             for ordinal, raw_item in enumerate(sense.relations, 1):
                 item = raw_item if isinstance(raw_item, dict) else {}
                 if item.get("kind") != "synonym":

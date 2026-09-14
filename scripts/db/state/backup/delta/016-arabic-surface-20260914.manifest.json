@@ -1,0 +1,25 @@
+{
+  "delta_sha256": "542fd92b490bb2072088381e43ccf2e05bbbc3b22d2513717d98ae4816195160",
+  "expected_counts": {
+    "expression_edge_sources": 373431,
+    "expression_edges": 373431,
+    "expression_locale_links": 372809,
+    "expression_readings": 101796,
+    "expression_sources": 372809,
+    "expressions": 372686,
+    "language_locales": 2,
+    "sources": 1
+  },
+  "locale_codes": [
+    "arb-Arab",
+    "eng-Latn-US"
+  ],
+  "reconcile_shared": true,
+  "replace": true,
+  "schema_version": 1,
+  "skip_edge_annotation_updates": false,
+  "source": {
+    "name": "com.apple.dictionary.ar-en.oup",
+    "type": "publication"
+  }
+}

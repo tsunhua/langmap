@@ -21,8 +21,21 @@ _SENTENCE_END = ".．?!！？。"
 _OPENING = "([{（［｛"
 _QUOTE_OPENING = "“‘「『《〈"
 _QUOTE_CLOSING = "”’」』》〉"
-_QUOTE_PAIRS = {opening: closing for opening, closing in zip(_QUOTE_OPENING, _QUOTE_CLOSING)}
-_DIALOGUE_DASHES = "‒–—―"
+_QUOTE_PAIRS = {
+    opening: closing for opening, closing in zip(_QUOTE_OPENING, _QUOTE_CLOSING)
+}
+# Some dictionaries use straight quotes and some Arabic/European sources use
+# the typographic single quote in the reverse direction (``’text‘``).  Keep
+# these as explicit pairs so punctuation inside a quoted turn is not treated
+# as an expression boundary.
+_QUOTE_PAIRS.update({
+    '"': '"',
+    "'": "'",
+    "’": "‘",
+    "«": "»",
+    "»": "«",
+})
+_DIALOGUE_DASHES = "-‒–—―"
 _LIST_MARKERS = "•‣▪"
 _EMPTY_PLACEHOLDER = re.compile(r"(?<!\w)\[\s*\](?!\w)")
 _BRACKET_NOTATION_WORDS = re.compile(
@@ -47,6 +60,139 @@ _LEXICAL_PARENTHESES_PREFIXES = frozenset({
 })
 _CLOSING = ")]}）］｝"
 _TRANSFORMATION_ARROWS = ("⇒", "→")
+
+
+def _quote_opening(value: str, index: int, quote_stack: list[tuple[str, int, bool]]) -> bool:
+    """Return whether a quote-like character starts a quoted span."""
+
+    character = value[index]
+    previous = value[index - 1] if index else ""
+    following = value[index + 1] if index + 1 < len(value) else ""
+    if character == "'":
+        # Apostrophes inside a word (``don't``) are not quote delimiters.
+        if previous.isalnum() and following.isalnum():
+            return False
+        # A stray closing apostrophe after sentence punctuation is a layout
+        # marker, not the beginning of a new quoted span.
+        if previous in _SENTENCE_END and (not following or following.isspace()):
+            return False
+        # A bare contraction such as ``'ll``/``'d`` is a lexical surface, not
+        # an unterminated quote.  There is no matching closing quote anyway;
+        # treating it as ordinary punctuation lets the surface validator keep
+        # the established form.
+        if not quote_stack and index == 0 and value.strip() in {"'ll", "'d"}:
+            return False
+    return True
+
+
+def _internal_apostrophe(value: str, index: int) -> bool:
+    return (
+        value[index] == "'"
+        and index > 0
+        and index + 1 < len(value)
+        and value[index - 1].isalnum()
+        and value[index + 1].isalnum()
+    )
+
+
+def _mismatched_ascii_quote_close(value: str, index: int, quote_stack: list[tuple[str, int, bool]]) -> bool:
+    if not quote_stack or value[index] not in {"'", '"'} or _internal_apostrophe(value, index):
+        return False
+    following = value[index + 1] if index + 1 < len(value) else ""
+    return not following or following.isspace() or following in _SENTENCE_END
+
+
+def _strip_outer_wrappers(value: str) -> str:
+    """Remove a balanced presentation wrapper around one expression.
+
+    Source examples commonly arrive as ``[sentence]`` or ``‘sentence’``.
+    A wrapper is removed only when its matching closer is the final
+    non-whitespace character; this deliberately leaves a dialogue such as
+    ``‘one?’ — ‘two!’`` intact for turn splitting.
+    """
+
+    candidate = value.strip()
+    changed = True
+    while changed and len(candidate) >= 2:
+        changed = False
+        opening = candidate[0]
+        closing = {
+            "(": ")", "[": "]", "{": "}", "（": "）", "［": "］", "｛": "｝",
+            "“": "”", "‘": "’", "「": "」", "『": "』", "《": "》", "〈": "〉",
+            "«": "»", "»": "«",
+            '"': '"', "'": "'", "”": "“", "’": "‘",
+        }.get(opening)
+        if closing is None:
+            break
+        matched_edge = candidate[-1] == closing
+        if not matched_edge:
+            expected_closing = {
+                "“": "”", "‘": "’", "”": "“", "’": "‘",
+                "«": "»", "»": "«",
+            }.get(opening)
+            if expected_closing and expected_closing in candidate[1:-1]:
+                break
+            # Exported examples occasionally mix a typographic opening quote
+            # with a straight closing apostrophe. Treat that pair as a
+            # presentation shell when it is clearly at both edges.
+            quote_chars = set(_QUOTE_PAIRS) | set(_QUOTE_PAIRS.values()) | {'"', "'"}
+            if opening not in quote_chars or candidate[-1] not in quote_chars:
+                break
+            closing = candidate[-1]
+        inner = candidate[1:-1].strip()
+        if not inner or _is_literal_bracket_notation(candidate):
+            break
+        # If the same wrapper closes before the final character, the outer
+        # pair is part of a multi-turn dialogue rather than a single shell.
+        if opening in _QUOTE_PAIRS and matched_edge:
+            if opening in {"“", "‘", "”", "’", "«", "»"} and any(
+                character in {"'", '"'}
+                and index > 0
+                and index + 1 < len(inner)
+                and inner[index - 1] in _SENTENCE_END
+                and inner[index + 1].isspace()
+                for index, character in enumerate(inner)
+            ):
+                break
+            first_close = next(
+                (
+                    index
+                    for index, character in enumerate(inner)
+                    if character == closing
+                    and not (closing == "'" and _internal_apostrophe(inner, index))
+                ),
+                -1,
+            )
+            if first_close >= 0:
+                break
+        elif not _balanced(inner):
+            break
+        candidate = inner
+        changed = True
+    return candidate
+
+
+def _strip_leading_quoted_span(value: str) -> str:
+    """Remove a quoted phrase followed by ordinary explanatory prose."""
+
+    candidate = value.strip()
+    if not candidate or candidate[0] not in _QUOTE_PAIRS:
+        return candidate
+    opening = candidate[0]
+    closing = _QUOTE_PAIRS[opening]
+    for index in range(1, len(candidate)):
+        character = candidate[index]
+        # A straight apostrophe inside a word is not a closing delimiter.
+        if opening == "'" and character == "'":
+            previous = candidate[index - 1] if index else ""
+            following = candidate[index + 1] if index + 1 < len(candidate) else ""
+            if previous.isalnum() and following.isalnum():
+                continue
+        if character == closing:
+            remainder = candidate[index + 1 :].strip()
+            if remainder:
+                return f"{candidate[1:index].strip()} {remainder}".strip()
+    return candidate
 
 
 def _balanced(value: str) -> bool:
@@ -82,7 +228,7 @@ def _surface_reading_body(body: str) -> bool:
     # Plain prose notes are normally space-delimited. A non-ASCII letter or a
     # respelling hyphen is enough evidence for compact forms such as
     # ``dauung-kưə`` while keeping ``Hello (formal)`` as an annotation.
-    return any(ord(character) > 127 for character in normalized) or "-" in normalized or "'" in normalized or "’" in normalized
+    return any(ord(character) > 127 for character in normalized) or "-" in normalized
 
 
 def _looks_like_mapping_annotation(body: str) -> bool:
@@ -165,17 +311,39 @@ def _split_sentence_boundaries(value: str) -> tuple[str, ...]:
 
     boundaries: list[int] = []
     depth = 0
-    quote_stack: list[str] = []
+    quote_stack: list[tuple[str, int, bool]] = []
     index = 0
     while index < len(value):
         character = value[index]
-        if character in _QUOTE_PAIRS:
-            quote_stack.append(_QUOTE_PAIRS[character])
+        if quote_stack and quote_stack[-1][0] == character and not _internal_apostrophe(value, index):
+            _, opening_index, boundary_quote = quote_stack.pop()
+            # A complete quoted turn at the beginning of a value is itself an
+            # expression. Split after its closing quote when another token
+            # follows, but do not split embedded quotations such as
+            # ``狗“汪汪！”地叫了起来``.
+            if (
+                boundary_quote
+            ):
+                next_index = index + 1
+                while next_index < len(value) and value[next_index].isspace():
+                    next_index += 1
+                previous_is_sentence_end = index > 0 and value[index - 1] in _SENTENCE_END + "…"
+                next_is_quoted_segment = next_index < len(value) and value[next_index] in _QUOTE_PAIRS
+                if (
+                    next_index < len(value)
+                    and value[next_index] not in _DIALOGUE_DASHES + ",;:；：、"
+                    and (previous_is_sentence_end or next_is_quoted_segment)
+                ):
+                    boundaries.append(index + 1)
             index += 1
             continue
-        if character in _QUOTE_CLOSING:
-            if quote_stack and quote_stack[-1] == character:
-                quote_stack.pop()
+        if _mismatched_ascii_quote_close(value, index, quote_stack):
+            quote_stack.pop()
+            index += 1
+            continue
+        if character in _QUOTE_PAIRS and _quote_opening(value, index, quote_stack):
+            boundary_quote = index == 0 or value[index - 1].isspace() or value[index - 1] in _DIALOGUE_DASHES + _OPENING
+            quote_stack.append((_QUOTE_PAIRS[character], index, boundary_quote))
             index += 1
             continue
         if character in _OPENING:
@@ -220,10 +388,15 @@ def _split_sentence_boundaries(value: str) -> tuple[str, ...]:
         ):
             index += 1
             continue
+        if character in ".．" and index + 1 < len(value) and value[index + 1] in _SENTENCE_END + ",，;；:：":
+            # Dotted abbreviations (``a.m.?``/``p.m.,``) keep their internal
+            # periods; the following question mark or comma is the boundary.
+            index += 1
+            continue
         next_index = index + 1
         while next_index < len(value) and value[next_index].isspace():
             next_index += 1
-        if next_index < len(value) and value[next_index] not in _CLOSING + _OPENING + "/":
+        if next_index < len(value) and value[next_index] not in _CLOSING + _OPENING + "'\"/":
             boundaries.append(index + 1)
         index += 1
     if not boundaries:
@@ -252,18 +425,21 @@ def _split_dialogue_segments(value: str) -> tuple[str, ...]:
 
     parts: list[str] = []
     depth = 0
-    quote_stack: list[str] = []
+    quote_stack: list[tuple[str, int, bool]] = []
     start = 0
     index = 0
     while index < len(value):
         character = value[index]
-        if character in _QUOTE_PAIRS:
-            quote_stack.append(_QUOTE_PAIRS[character])
+        if quote_stack and quote_stack[-1][0] == character and not _internal_apostrophe(value, index):
+            quote_stack.pop()
             index += 1
             continue
-        if character in _QUOTE_CLOSING:
-            if quote_stack and quote_stack[-1] == character:
-                quote_stack.pop()
+        if _mismatched_ascii_quote_close(value, index, quote_stack):
+            quote_stack.pop()
+            index += 1
+            continue
+        if character in _QUOTE_PAIRS and _quote_opening(value, index, quote_stack):
+            quote_stack.append((_QUOTE_PAIRS[character], index, True))
             index += 1
             continue
         if character in _OPENING:
@@ -277,11 +453,25 @@ def _split_dialogue_segments(value: str) -> tuple[str, ...]:
         if (
             character in _DIALOGUE_DASHES
             and depth == 0
-            and not quote_stack
             and index > 0
             and index + 1 < len(value)
-            and value[index - 1].isspace()
-            and value[index + 1].isspace()
+            and (
+                (
+                    not quote_stack
+                    and value[index - 1].isspace()
+                    and value[index + 1].isspace()
+                )
+                or (
+                    (
+                        value[index - 1] in _QUOTE_CLOSING + "‘«»'\""
+                        and (value[index + 1].isspace() or value[index + 1] in _QUOTE_PAIRS)
+                    )
+                    or (
+                        value[index - 1].isspace()
+                        and value[index + 1] in _QUOTE_PAIRS
+                    )
+                )
+            )
         ):
             part = value[start:index].strip()
             if part:
@@ -332,6 +522,18 @@ def normalize_expression_surface(value: str) -> str:
     )
     if not _is_literal_bracket_notation(normalized):
         normalized = _EMPTY_PLACEHOLDER.sub("", normalized)
+    # Apple examples occasionally encode a quoted possessive as ``'H''s``;
+    # collapse the doubled delimiter before sentence/turn splitting.
+    normalized = re.sub(r"(?<=\w)''(?=\w)", "'", normalized)
+    normalized = _strip_outer_wrappers(normalized)
+    normalized = _strip_leading_quoted_span(normalized)
+    # A few source rows use a typographic quote as a one-sided layout marker
+    # around an example. Remove only those orphan edge markers; ordinary
+    # straight apostrophes remain available for contractions such as ``'ll``.
+    normalized = re.sub(r"^[‘’«]+(?=\w)", "", normalized)
+    if normalized not in {"'ll", "'d"}:
+        normalized = re.sub(r'''^[\'"](?=\w)''', "", normalized)
+    normalized = re.sub(r"(?<=[\w!?！？。])['‘’»]+$", "", normalized)
     normalized = re.sub(r"\s{2,}", " ", normalized)
     normalized = re.sub(r"\s+([,，.;:])$", r"\1", normalized)
     normalized = normalized.rstrip(_TERMINAL_ORPHAN_PUNCTUATION).rstrip()
@@ -405,7 +607,7 @@ def _expand_cjk_parentheticals(value: str) -> tuple[str, ...] | None:
     return tuple(dict.fromkeys(normalize_expression_surface(item) for item in results if item))
 
 
-def split_expression_alternatives(value: str) -> tuple[str, ...]:
+def split_expression_alternatives(value: str, *, _split_dialogue: bool = True) -> tuple[str, ...]:
     """Split only reliable top-level expression alternatives.
 
     Reading slash pairs, parenthetical notes, bracketed markup, URLs and other
@@ -414,8 +616,16 @@ def split_expression_alternatives(value: str) -> tuple[str, ...]:
     """
 
     original = unicodedata.normalize("NFC", str(value)).strip()
+    original = re.sub(r"(?<=\w)''(?=\w)", "'", original)
     if not original or not _balanced(original):
         return (original,)
+    if _split_dialogue:
+        dialogue = _split_dialogue_segments(original)
+        if len(dialogue) > 1:
+            parts: list[str] = []
+            for segment in dialogue:
+                parts.extend(split_expression_alternatives(segment, _split_dialogue=False))
+            return tuple(dict.fromkeys(part for part in parts if part)) or (original,)
     compact = _expand_cjk_parentheticals(original)
     if compact is not None:
         parts: list[str] = []
@@ -464,7 +674,11 @@ def extract_reading_parentheses(value: str) -> tuple[str, tuple[str, ...]]:
     terminal = _terminal_parenthetical(candidate)
     if terminal is not None:
         prefix, body = terminal
-        spans = re.findall(r"/([^/]+)/", body)
+        reading_shell = re.fullmatch(
+            r"\s*(?:[,;:，；：、]\s*)?(?:/([^/]+)/\s*)+",
+            body,
+        )
+        spans = re.findall(r"/([^/]+)/", body) if reading_shell else []
         if spans and all(_reading_body(span) for span in spans):
             readings.extend(span.strip() for span in spans)
             candidate = prefix
@@ -494,11 +708,15 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     """
 
     surface, _ = extract_reading_parentheses(value)
-    leading = re.match(r"^\((?P<note>[^()]*)\)\s+(?P<expression>.+)$", surface)
+    leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", surface)
     if leading is not None:
         note = normalize_expression_surface(leading.group("note"))
         expression = normalize_expression_surface(leading.group("expression"))
-        if expression and _looks_like_mapping_annotation(note):
+        # Leading parentheticals in dictionary forms are labels or optional
+        # grammatical material (``(public) health``, ``(the) least``), not
+        # part of the expression surface. CJK optional forms are expanded
+        # separately and must remain alternatives instead of annotations.
+        if expression and note and _expand_cjk_parenthetical(surface) is None:
             return expression, note
     arrow_positions = [
         (surface.find(arrow), arrow)
@@ -630,12 +848,30 @@ def surface_errors(value: str) -> tuple[str, ...]:
     if quality_value.startswith(tuple(_LIST_MARKERS)):
         quality_value = quality_value[1:].lstrip()
     normalized = normalize_expression_surface(quality_value)
-    leading = re.match(r"^\((?P<note>[^()]*)\)\s+(?P<expression>.+)$", normalized)
-    if leading is not None and _looks_like_mapping_annotation(leading.group("note")):
+    leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", normalized)
+    if leading is not None and leading.group("note").strip() and _expand_cjk_parenthetical(original) is None:
         normalized = normalize_expression_surface(leading.group("expression"))
+    # Validate the cleaned alternatives as well as the raw shell. This catches
+    # genuine punctuation-only rows while allowing quoted/bracketed examples
+    # once their presentation wrappers have been removed.
+    candidates = split_expression_alternatives(quality_value)
+    if not candidates:
+        candidates = (normalized,)
+    candidate_values_list: list[str] = []
+    for candidate in candidates:
+        candidate_value = normalize_expression_surface(candidate)
+        candidate_leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", candidate_value)
+        if (
+            candidate_leading is not None
+            and candidate_leading.group("note").strip()
+            and _expand_cjk_parenthetical(candidate_value) is None
+        ):
+            candidate_value = normalize_expression_surface(candidate_leading.group("expression"))
+        candidate_values_list.append(candidate_value)
+    candidate_values = tuple(candidate_values_list)
     has_lexical_character = any(
-        unicodedata.category(character)[0] in {"L", "N"}
-        for character in normalized
+        any(unicodedata.category(character)[0] in {"L", "N"} for character in candidate)
+        for candidate in candidate_values
     )
     # A compact CJK optional form such as ``(心胸)寬廣`` is an input notation
     # for the alternatives ``寬廣`` and ``心胸寬廣``.  The adapter keeps those
@@ -647,18 +883,24 @@ def surface_errors(value: str) -> tuple[str, ...]:
     elif (
         not reading_only
         and not cjk_optional
-        and normalized
-        and not normalized.startswith("_")
-        and normalized[0] not in "¡¿"
-        # Dictionary forms such as ``-backed`` and ``-ish`` are lexical
-        # suffixes, not stray leading punctuation. Keep the marker when it is
-        # directly attached to an alphanumeric surface.
-        and not (
-            normalized[0] in "-‐‑‒–—―"
-            and len(normalized) > 1
-            and normalized[1].isalnum()
+        and any(
+            candidate
+            and not candidate.startswith("_")
+            and candidate[0] not in "¡¿"
+            and not (
+                candidate[0] in "-‐‑‒–—―"
+                and len(candidate) > 1
+                and candidate[1].isalnum()
+            )
+            and not (
+                candidate[0] == "#"
+                and len(candidate) > 1
+                and any(character.isalnum() for character in candidate[1:])
+            )
+            and candidate not in {"'ll", "'d"}
+            and unicodedata.category(candidate[0]).startswith("P")
+            for candidate in candidate_values
         )
-        and unicodedata.category(normalized[0]).startswith("P")
     ):
         errors.append("leading_punctuation")
     return tuple(errors)
