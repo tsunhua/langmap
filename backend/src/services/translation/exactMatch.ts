@@ -1,5 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { APPROVED_PIVOT_LANGUAGES, MAX_ALTERNATIVES, MAX_DIRECT_PATHS_PER_ROOT } from '../../utils/limits';
+import { canonicalizeExpressionText } from '../expressionIdentity';
+import { resolveTargetLocale, type TargetLocaleResolution } from './validation';
 import type {
   SourceLanguageResult,
   TranslationEvidence,
@@ -45,9 +47,10 @@ export function hasPassingEdge(edge: { score: number; markerCount: number }): bo
   return edge.score > 0 || edge.markerCount >= 1;
 }
 
-interface LocaleResolution {
-  localeId: number;
-  langCode: string;
+// SQL mirror of hasPassingEdge, shared by the direct and two-hop queries so the
+// SQL predicate and the JS re-check stay one source of truth.
+export function edgePassesSql(edgeAlias: string): string {
+  return `(${edgeAlias}.score > 0 OR EXISTS (SELECT 1 FROM expression_edge_sources es WHERE es.edge_id = ${edgeAlias}.id))`;
 }
 
 interface DirectRow {
@@ -97,11 +100,6 @@ interface EdgeMarkerRow {
   marker: string;
 }
 
-const LOCALE_SQL = `SELECT ll.id AS locale_id, l.code AS lang_code
-FROM language_locales ll
-JOIN languages l ON l.id = ll.language_id
-WHERE ll.code = ?`;
-
 const EDGE_MARKERS_SQL = `SELECT s.name AS source_name, es.source_marker AS marker
 FROM expression_edge_sources es
 JOIN sources s ON s.id = es.source_id
@@ -121,7 +119,7 @@ function directSql(sourceLangCode: string | null): string {
  WHERE e.text = ?${sourceLangCode ? ' AND sl.code = ?' : ''}
    AND tgt.id <> e.id
    AND (edge.relation_mask & ${RELATION_MASK}) <> 0
-   AND (edge.score > 0 OR EXISTS (SELECT 1 FROM expression_edge_sources es WHERE es.edge_id = edge.id))
+   AND ${edgePassesSql('edge')}
  ORDER BY edge.score DESC, marker_count DESC, LENGTH(tgt.text) ASC, edge.id ASC, tgt.id ASC
  LIMIT ?`;
 }
@@ -149,22 +147,14 @@ function twoHopSql(sourceLangCode: string | null, pivotMarks: string): string {
    AND tgt.id <> e.id
    AND (edge1.relation_mask & ${RELATION_MASK}) <> 0
    AND (edge2.relation_mask & ${RELATION_MASK}) <> 0
-   AND (edge1.score > 0 OR EXISTS (SELECT 1 FROM expression_edge_sources es WHERE es.edge_id = edge1.id))
-   AND (edge2.score > 0 OR EXISTS (SELECT 1 FROM expression_edge_sources es WHERE es.edge_id = edge2.id))
+   AND ${edgePassesSql('edge1')}
+   AND ${edgePassesSql('edge2')}
  ORDER BY edge1.score + edge2.score DESC,
    (SELECT COUNT(*) FROM expression_edge_sources es WHERE es.edge_id = edge1.id)
      + (SELECT COUNT(*) FROM expression_edge_sources es WHERE es.edge_id = edge2.id) DESC,
    LENGTH(tgt.text) ASC,
    edge1.id ASC, edge2.id ASC, tgt.id ASC
  LIMIT ?`;
-}
-
-async function resolveTargetLocale(db: D1Database, targetLocaleCode: string): Promise<LocaleResolution | null> {
-  const row = await db
-    .prepare(LOCALE_SQL)
-    .bind(targetLocaleCode)
-    .first<{ locale_id: number; lang_code: string }>();
-  return row ? { localeId: row.locale_id, langCode: row.lang_code } : null;
 }
 
 async function queryDirect(
@@ -185,14 +175,14 @@ async function queryTwoHop(
   db: D1Database,
   canonicalText: string,
   sourceLangCode: string | null,
-  locale: LocaleResolution,
+  locale: TargetLocaleResolution,
   limits: ExactMatchLimits,
 ): Promise<TwoHopRow[]> {
   const pivotCodes = limits.approvedPivotLanguages;
   const marks = pivotCodes.map(() => '?').join(',');
-  const binds: unknown[] = [locale.localeId, canonicalText];
+  const binds: unknown[] = [locale.locale_id, canonicalText];
   if (sourceLangCode) binds.push(sourceLangCode);
-  binds.push(...pivotCodes, locale.langCode);
+  binds.push(...pivotCodes, locale.lang_code);
   if (sourceLangCode) binds.push(sourceLangCode);
   binds.push(maxRows(limits));
   const { results } = await db.prepare(twoHopSql(sourceLangCode, marks)).bind(...binds).all<TwoHopRow>();
@@ -206,8 +196,8 @@ function maxRows(limits: ExactMatchLimits): number {
 function directHits(rows: DirectRow[]): ExactHit[] {
   const hits: ExactHit[] = [];
   for (const row of rows) {
-    // SQL already enforces quality; re-check so the predicate stays a single
-    // source of truth that a fake or future caller cannot bypass.
+    // SQL enforces the same predicate via edgePassesSql; re-check in JS with
+    // hasPassingEdge so a fake or future caller cannot bypass the quality gate.
     if (!hasPassingEdge({ score: row.score, markerCount: row.marker_count })) continue;
     hits.push({
       sourceLangCode: row.source_lang_code,
@@ -319,20 +309,19 @@ export async function findExactTranslation(
   db: D1Database,
   input: ExactMatchInput,
 ): Promise<ExactMatchResult> {
-  const canonicalText = input.canonicalText.trim();
+  const canonicalText = canonicalizeExpressionText(input.canonicalText);
   if (!canonicalText) return { status: 'no_match' };
   // Callers pass the source code already lowercased; normalize defensively so
   // pivot comparisons stay stable.
   const sourceLangCode = input.sourceLangCode ? input.sourceLangCode.trim().toLowerCase() : null;
   const locale = await resolveTargetLocale(db, input.targetLocaleCode);
-  if (!locale) return { status: 'no_match' };
 
-  const directRows = await queryDirect(db, canonicalText, sourceLangCode, locale.localeId, input.limits);
+  const directRows = await queryDirect(db, canonicalText, sourceLangCode, locale.locale_id, input.limits);
   let hits = directHits(directRows);
 
   if (hits.length === 0) {
     const twoHopRows = await queryTwoHop(db, canonicalText, sourceLangCode, locale, input.limits);
-    hits = twoHopHits(twoHopRows, sourceLangCode, locale.langCode, input.limits);
+    hits = twoHopHits(twoHopRows, sourceLangCode, locale.lang_code, input.limits);
   }
 
   if (hits.length === 0) return { status: 'no_match' };

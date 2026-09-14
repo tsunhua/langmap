@@ -4,6 +4,7 @@ import { APPROVED_PIVOT_LANGUAGES } from '../src/utils/limits';
 import {
   DEFAULT_EXACT_MATCH_LIMITS,
   ExactMatchInput,
+  edgePassesSql,
   findExactTranslation,
   hasPassingEdge,
 } from '../src/services/translation/exactMatch';
@@ -23,7 +24,7 @@ interface StatementLogEntry {
 }
 
 const TARGET_LOCALE = 'jpn-Jpan-JP';
-const LOCALE_ROW = { locale_id: 30, lang_code: 'jpn' };
+const LOCALE_ROW = { id: 30, language_id: 7, lang_code: 'jpn' };
 
 function fakeD1(setup: FakeSetup, log: StatementLogEntry[] = []): D1Database {
   const route = (sql: string): Row[] => {
@@ -67,6 +68,67 @@ describe('hasPassingEdge', () => {
     expect(hasPassingEdge({ score: 1, markerCount: 0 })).toBe(true);
     expect(hasPassingEdge({ score: 0, markerCount: 1 })).toBe(true);
     expect(hasPassingEdge({ score: 0, markerCount: 0 })).toBe(false);
+  });
+});
+
+describe('findExactTranslation — input canonicalization', () => {
+  it('resolves a case-variant input against the canonicalized stored expression', async () => {
+    const log: StatementLogEntry[] = [];
+    const db = fakeD1({
+      locale: LOCALE_ROW,
+      direct: [{
+        edge_id: 11,
+        source_expr_id: 1,
+        source_text: 'Hello world',
+        source_lang_code: 'eng',
+        target_expr_id: 2,
+        target_text: 'こんにちは',
+        score: 5,
+        marker_count: 1,
+      }],
+    }, log);
+    const result = await findExactTranslation(db, input({ canonicalText: 'hello world' }));
+    expect(result.status).toBe('exact_match');
+    if (result.status !== 'exact_match') return;
+    expect(result.evidence[0].source_text).toBe('Hello world');
+    const directStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge ON'));
+    expect(directStatement?.args).toContain('Hello world');
+  });
+
+  it('normalizes a diacritic-decomposed input to the stored canonical form', async () => {
+    const log: StatementLogEntry[] = [];
+    const db = fakeD1({
+      locale: LOCALE_ROW,
+      direct: [{
+        edge_id: 11,
+        source_expr_id: 1,
+        source_text: 'Caf\u00e9',
+        source_lang_code: 'eng',
+        target_expr_id: 2,
+        target_text: 'コーヒー',
+        score: 5,
+        marker_count: 1,
+      }],
+    }, log);
+    const result = await findExactTranslation(db, input({ canonicalText: 'Cafe\u0301' }));
+    expect(result.status).toBe('exact_match');
+    if (result.status !== 'exact_match') return;
+    expect(result.evidence[0].source_text).toBe('Caf\u00e9');
+    const directStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge ON'));
+    expect(directStatement?.args).toContain('Caf\u00e9');
+  });
+});
+
+describe('findExactTranslation — quality predicate SQL', () => {
+  it('derives the direct and two-hop predicates from the shared edgePassesSql fragment', async () => {
+    const log: StatementLogEntry[] = [];
+    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    await findExactTranslation(db, input());
+    const directStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge ON'));
+    expect(directStatement?.sql).toContain(edgePassesSql('edge'));
+    const twoHopStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge1 ON'));
+    expect(twoHopStatement?.sql).toContain(edgePassesSql('edge1'));
+    expect(twoHopStatement?.sql).toContain(edgePassesSql('edge2'));
   });
 });
 
@@ -258,12 +320,14 @@ describe('findExactTranslation — source resolution', () => {
     expect(result.source).toEqual({ code: 'eng', confidence: 1 });
   });
 
-  it('returns no_match when the target locale does not resolve', async () => {
+  it('propagates TARGET_LOCALE_NOT_FOUND for a missing or non-string target locale', async () => {
     const log: StatementLogEntry[] = [];
     const db = fakeD1({ locale: null }, log);
-    const result = await findExactTranslation(db, input());
-    expect(result).toEqual({ status: 'no_match' });
+    await expect(findExactTranslation(db, input()))
+      .rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
     expect(log).toHaveLength(1);
+    await expect(findExactTranslation(db, input({ targetLocaleCode: 123 as unknown as string })))
+      .rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
   });
 
   it('returns no_match for empty canonical text without querying', async () => {

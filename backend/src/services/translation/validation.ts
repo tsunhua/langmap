@@ -45,7 +45,10 @@ export interface SourceLanguageResolution {
 }
 
 const SOURCE_LANGUAGE_SQL = 'SELECT id FROM languages WHERE code=?';
-const LOCALE_SQL = 'SELECT id, language_id FROM language_locales WHERE code=?';
+const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code
+FROM language_locales ll
+JOIN languages l ON l.id = ll.language_id
+WHERE ll.code = ?`;
 
 export async function resolveSourceLanguage(
   db: D1Database,
@@ -73,11 +76,15 @@ export async function resolveSourceLanguage(
 export interface TargetLocaleResolution {
   locale_id: number;
   language_id: number;
+  lang_code: string;
 }
 
 export async function resolveTargetLocale(db: D1Database, target_locale_code: string): Promise<TargetLocaleResolution> {
   if (typeof target_locale_code !== 'string') throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
-  const locale = await db.prepare(LOCALE_SQL).bind(target_locale_code).first<{ id: number; language_id: number }>();
+  const locale = await db
+    .prepare(LOCALE_SQL)
+    .bind(target_locale_code)
+    .first<{ id: number; language_id: number; lang_code: string }>();
   if (!locale) throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
-  return { locale_id: locale.id, language_id: locale.language_id };
+  return { locale_id: locale.id, language_id: locale.language_id, lang_code: locale.lang_code };
 }

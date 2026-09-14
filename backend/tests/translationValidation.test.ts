@@ -35,7 +35,10 @@ function fakeD1(handlers: Record<string, Handler>): D1Database {
 }
 
 const LANG_SQL = 'SELECT id FROM languages WHERE code=?';
-const LOCALE_SQL = 'SELECT id, language_id FROM language_locales WHERE code=?';
+const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code
+FROM language_locales ll
+JOIN languages l ON l.id = ll.language_id
+WHERE ll.code = ?`;
 
 function errorCodeOf(text: string): string | null {
   try {
@@ -229,15 +232,15 @@ describe('resolveSourceLanguage', () => {
 });
 
 describe('resolveTargetLocale', () => {
-  it('resolves an existing target locale with its language id', async () => {
-    const db = fakeD1({ [LOCALE_SQL]: () => ({ id: 12, language_id: 7 }) });
+  it('resolves an existing target locale with its language id and code', async () => {
+    const db = fakeD1({ [LOCALE_SQL]: () => ({ id: 12, language_id: 7, lang_code: 'jpn' }) });
     await expect(resolveTargetLocale(db, 'jpn-Jpan-JP'))
-      .resolves.toEqual({ locale_id: 12, language_id: 7 });
+      .resolves.toEqual({ locale_id: 12, language_id: 7, lang_code: 'jpn' });
   });
 
   it('looks up the target locale by exact code', async () => {
     let bound: unknown = null;
-    const db = fakeD1({ [LOCALE_SQL]: (args) => { bound = args[0]; return { id: 12, language_id: 7 }; } });
+    const db = fakeD1({ [LOCALE_SQL]: (args) => { bound = args[0]; return { id: 12, language_id: 7, lang_code: 'jpn' }; } });
     await resolveTargetLocale(db, 'jpn-Jpan-JP');
     expect(bound).toBe('jpn-Jpan-JP');
   });
