@@ -26,17 +26,17 @@
 - staging annotations：`440`，annotation errors `0`。
 - source mirror distinct expressions：`372,686`；source claims：`372,809`；surface revalidation errors `0`。
 - source mirror source-owned readings：`101,796`；source edge claims：`373,431`。
-- local delta replay：source-scoped `--replace --reconcile-shared` SQL 的重播只在 release workspace 執行；完成後須記錄 foreign-key 與 expected-count 結果，不把大型 SQL 納入 repository。
+- local delta replay：source-scoped additive SQL 的重播只在 release workspace 執行；完成後須記錄 foreign-key 與 expected-count 結果，不把大型 SQL 納入 repository。
 
 ## Delta
 
 - SQL：release workspace 中產生的 `016-arabic-surface-20260914.split.sql`（不提交至 repository）
 - manifest：`scripts/db/state/backup/delta/016-arabic-surface-20260914.manifest.json`
-- delta SHA-256：`dab9c714d5647a42755206ede8dcfd02d35f1b1912aef843e7b3341ab9a4c6d2`
-- delta bytes：`132,830,089`（source replace 先移除 source 16 assertion，再寫入自然鍵 rows）。
+- delta SHA-256：`ba41360a6353cdbcb62b00a9df75e062b15f4a13f336b8c1d4d113f7d03944bf`
+- delta bytes：`134,380,456`（additive natural-key rows；不再執行 source-wide DELETE）。
 - expected counts：`expressions=372,686`、`expression_sources=372,809`、`expression_edges=373,431`、`expression_edge_sources=373,431`、`expression_locale_links=372,809`、`expression_readings=101,796`、`language_locales=2`。
-- 生成選項：`--replace --reconcile-shared --remap-managed-handbook`；未匯出 production 全庫。
-- 高成本 reconcile DELETE／UPDATE 與首個 expression insert 以 `-- langmap:batch` 隔離，避免 D1 CPU slice 把多個掃描操作合併到同一個 remote command。
+- 生成選項：`--rows-per-insert 500 --edge-rows-per-insert 350 --remap-managed-handbook`；未匯出 production 全庫。
+- 產物共 2,695 個受 64 KiB 上限約束的 managed batches；additive release 讓已完成的 source assertions 以 `INSERT OR IGNORE` 冪等補回，不重掃整個 expressions/edges 表。
 
 SQL 由下列命令在發布工作區重建；發布前以 manifest 中的 SHA-256 驗證，不依賴 git checkout 中的資料副本：
 
@@ -50,11 +50,12 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/dictionary python3 \
   --locale-code eng-Latn-US \
   --output <release-workspace>/016-arabic-surface-20260914.split.sql \
   --manifest <release-workspace>/016-arabic-surface-20260914.manifest.json \
-  --rows-per-insert 1000 \
-  --replace --reconcile-shared --remap-managed-handbook
+  --rows-per-insert 500 \
+  --edge-rows-per-insert 350 \
+  --remap-managed-handbook
 ```
 
-127 MB 的 full-replace SQL 是一次性發布產物，不是可審查的程式碼；repository 只保留可重建所需的 manifest、命令與品質證據。先前未分隔的版本在 production apply 時觸發 D1 CPU limit 並被 reset，未完成任何 data batch；新版本已增加 batch marker，須以新 SHA 建立新的 managed plan。
+131 MB 的 additive SQL 是一次性發布產物，不是可審查的程式碼；repository 只保留可重建所需的 manifest、命令與品質證據。先前 full-replace plan 先後在 D1 CPU/storage limit（code 7429）停止；第二次 operation 已完成 4 個 source-cleanup batches，之後改用本 additive artifact 完成恢復，必須以新 SHA 建立 managed plan。
 
 ## Production release
 

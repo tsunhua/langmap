@@ -340,6 +340,7 @@ def export_source_delta(
     locale_codes: Sequence[str],
     manifest: Path | None = None,
     rows_per_insert: int = 100,
+    edge_rows_per_insert: int | None = None,
     replace: bool = False,
     reconcile_shared: bool = False,
     skip_edge_annotation_updates: bool = False,
@@ -347,6 +348,9 @@ def export_source_delta(
 ) -> dict[str, int]:
     if rows_per_insert < 1:
         raise ValueError("rows_per_insert must be positive")
+    edge_batch_size = edge_rows_per_insert or rows_per_insert
+    if edge_batch_size < 1:
+        raise ValueError("edge_rows_per_insert must be positive")
     if not locale_codes:
         raise ValueError("at least one locale code is required")
     if reconcile_shared and not replace:
@@ -633,8 +637,8 @@ def export_source_delta(
                 "CASE WHEN a.id<b.id THEN b.id ELSE a.id END,r.relation_mask,r.score "
                 + edge_joins
                 + ";",
-                batch_size=rows_per_insert,
-                force_batch=True,
+                batch_size=edge_batch_size,
+                force_batch=replace,
             )
             _write_cte_batches(
                 handle,
@@ -646,8 +650,8 @@ def export_source_delta(
                 + "JOIN expression_edges e ON e.expression_a_id=CASE WHEN a.id<b.id THEN a.id ELSE b.id END "
                 "AND e.expression_b_id=CASE WHEN a.id<b.id THEN b.id ELSE a.id END "
                 f"JOIN sources s ON s.type={_literal(source_type)} AND s.name={_literal(source_name)};",
-                batch_size=rows_per_insert,
-                force_batch=True,
+                batch_size=edge_batch_size,
+                force_batch=replace,
             )
             if edge_annotation_updates:
                 handle.write("-- Merge source-scoped edge annotations after edge identity resolution.\n")
@@ -702,6 +706,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--locale-code", action="append", required=True, dest="locale_codes")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--rows-per-insert", type=int, default=100)
+    parser.add_argument("--edge-rows-per-insert", type=int, default=None)
     parser.add_argument(
         "--replace",
         action="store_true",
@@ -734,9 +739,10 @@ def main(argv: list[str] | None = None) -> int:
             args.output,
             source_type=args.source_type,
             source_name=args.source_name,
-            locale_codes=args.locale_codes,
-            manifest=args.manifest,
-            rows_per_insert=args.rows_per_insert,
+        locale_codes=args.locale_codes,
+        manifest=args.manifest,
+        rows_per_insert=args.rows_per_insert,
+        edge_rows_per_insert=args.edge_rows_per_insert,
             replace=args.replace,
             reconcile_shared=args.reconcile_shared,
             skip_edge_annotation_updates=args.skip_edge_annotation_updates,

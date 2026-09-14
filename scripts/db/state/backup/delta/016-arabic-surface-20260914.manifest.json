@@ -1,5 +1,5 @@
 {
-  "delta_sha256": "dab9c714d5647a42755206ede8dcfd02d35f1b1912aef843e7b3341ab9a4c6d2",
+  "delta_sha256": "ba41360a6353cdbcb62b00a9df75e062b15f4a13f336b8c1d4d113f7d03944bf",
   "expected_counts": {
     "expression_edge_sources": 373431,
     "expression_edges": 373431,
@@ -14,8 +14,8 @@
     "arb-Arab",
     "eng-Latn-US"
   ],
-  "reconcile_shared": true,
-  "replace": true,
+  "reconcile_shared": false,
+  "replace": false,
   "schema_version": 1,
   "skip_edge_annotation_updates": false,
   "source": {
