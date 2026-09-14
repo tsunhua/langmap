@@ -208,6 +208,32 @@ describe('retrieveEvidence — path shape', () => {
     expect(log.some((entry) => /JOIN expression_edges edge1 ON/.test(entry.sql))).toBe(false);
   });
 
+  it('skips the two-hop query for later candidates once earlier direct hits fill the root quota', async () => {
+    const log: StatementLog[] = [];
+    const db = fakeD1(route({
+      locale: LOCALE_ROW,
+      exact: [expr(1, 'Hello'), expr(2, 'Hello'), expr(3, 'Hello')],
+      direct: (args) => {
+        const id = Number(args[1]);
+        if (id === 1) {
+          return [
+            directRow({ edge_id: 11, score: 3, target_text: 'A' }),
+            directRow({ edge_id: 12, score: 2, target_text: 'B' }),
+            directRow({ edge_id: 13, score: 1, target_text: 'C' }),
+          ];
+        }
+        return [];
+      },
+      twoHop: [twoHopRow({ target_text: 'Z' })],
+    }), log);
+    const result = await retrieveEvidence(db, input());
+    expect(result.items.map((item) => item.target_text)).toEqual(['A', 'B', 'C']);
+    expect(result.omitted_count).toBe(0);
+    const directCalls = log.filter((entry) => /JOIN expression_edges edge ON/.test(entry.sql));
+    expect(directCalls).toHaveLength(3);
+    expect(log.filter((entry) => /JOIN expression_edges edge1 ON/.test(entry.sql))).toHaveLength(0);
+  });
+
   it('opens the two-hop query only when direct paths are insufficient, with direct ranked first', async () => {
     const log: StatementLog[] = [];
     const db = fakeD1(route({

@@ -410,14 +410,18 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
       const rootHits: InternalHit[] = [];
       const candidates = await findRootCandidates(db, root, sourceLangCode, limits);
       if (interrupted()) return DEGRADED;
+      // Direct rows never rank below two-hop within a root, so the number of
+      // distinct direct rows kept so far pins down the slots two-hop can still
+      // occupy. Once that reaches the per-root quota, later candidates run no
+      // two-hop query at all: their rows would only be discarded by the slice.
+      const keptDirectKeys = new Set<string>();
       for (const candidate of candidates) {
         const directRows = await queryDirect(db, candidate.id, locale.locale_id, limits);
         if (interrupted()) return DEGRADED;
         const directHits = passingDirectHits(candidate, directRows);
         rootHits.push(...directHits);
-        // Two-hop only fills the slots direct paths left open; each hop is one
-        // bounded SQL statement, so cycles cannot expand across revisited nodes.
-        if (directHits.length < limits.maxPathsPerRoot) {
+        for (const hit of directHits) keptDirectKeys.add(hitKey(hit));
+        if (keptDirectKeys.size < limits.maxPathsPerRoot) {
           const twoHopRows = await queryTwoHop(
             db,
             candidate.id,
