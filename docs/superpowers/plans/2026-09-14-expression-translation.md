@@ -373,3 +373,11 @@
 - [ ] **p95 效能 benchmark harness 與固定 locale matrix fixture**（spec §13.3）：生產 beta flag 開啟前 gate；本版只建立單元/route 測試所需最小 fixture。
 - [ ] 隱私政策與 release checklist（spec §4、§12）：確認部署未寫入 secret/完整內容/prompt。
 - [ ] planner 門檻 0.75 與 generation output 2048 的 benchmark 校準。
+
+實作後已知偏差 / 待補（記錄以供後續對齊）：
+
+- [ ] **`source_confirmation_required.candidates` 目前為空陣列**：spec §8.3 期待事件帶可選語言候選，但 §9.3 planner schema 未輸出候選，plan Task 1.3 亦然。實作依 plan 送 `candidates: []`；前端確認流程需改以 language registry 讓使用者手選，或後續讓 planner 回傳候選（需 schema 與 benchmark 校準）。
+- [ ] **`413 PAYLOAD_TOO_LARGE`**：body >16 KiB 的錯誤碼未列於 spec §8.4 表；實作採 413 `PAYLOAD_TOO_LARGE`。需回填 spec 或改碼。
+- [ ] **首個 `status` 事件改由 orchestrator 發送**：spec §9.1.4 與 plan Task 1.7 原述「route 送首個 status」，實作改由 orchestrator 依 exact/assisted 決定並送（避免 route 需先探測快徑）。行為仍滿足「首事件為 status 且盡早送出」，但需同步 spec/plan 敘述。
+- [ ] **整合測試（實機 worker）未於本環境執行**：AI binding 為 remote session，`wrangler dev` 在無 `CLOUDFLARE_API_TOKEN` 的非互動環境無法啟動，導致所有整合測試（含既有 auth/users smoke）無法跑；`translationIntegration.test.ts` 已撰寫但待在具 token 的環境執行。單元測試（含 route/orchestrator 等 143+）全數通過。
+- [ ] **次要清理**：`utils/response.ts` 的 `notFoundCode` 參數語意易誤用（跨路由既有問題）；`RELATION_MASK` 等常數在 `exactMatch.ts`/`retrieval.ts` 重複；orchestrator `RunTranslationRequest.sourceLocaleCode` 目前未被消費。

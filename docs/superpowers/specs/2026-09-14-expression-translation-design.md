@@ -338,3 +338,13 @@ Vitest/Worker runtime 測試至少覆蓋：
 - [ ] 決定 quota counter 使用既有可用的 Cloudflare rate limit 或最小 D1 migration，並完成資料模型與回退設計。
 - [ ] 建立 retrieval fixture、planner schema fixture、locale benchmark 與 p95 measurement harness。
 - [ ] 完成前端 `/translate` 新頁面與 `/ui-translation` 搬遷後，再依驗證章節執行 build/test；本 spec 本身不代表功能已上線。
+
+## 16. 實作後已知偏差
+
+實作完成後與本 spec 的差異，已記錄於計畫的 Follow-up，摘要如下：
+
+- `source_confirmation_required.candidates` 目前為空陣列：§9.3 planner schema 未輸出候選；前端需以 language registry 手選，或後續擴充 planner。
+- body >16 KiB 回 `413 PAYLOAD_TOO_LARGE`（§8.4 表未列此碼）。
+- 首個 `status` 事件由 orchestrator 發送（§9.1.4 原述 route），行為仍滿足首事件為 status。
+- Quota（§9.6）本版未實作；route 保留計數點。
+- 整合測試（實機 worker）在無 `CLOUDFLARE_API_TOKEN` 的環境無法執行。
