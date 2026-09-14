@@ -42,6 +42,9 @@ _避免使用_：翻譯詞句、翻譯貢獻
 **翻譯結果（Translation Result）**：系統針對一筆翻譯請求生成的暫態譯文，可附帶 LangMap 檢索證據；沒有證據時須標明僅由模型生成。它不是 canonical expression 或 mapping；只有使用者明確提交後，才可另行進入既有社群貢獻流程。
 _避免使用_：正式譯文、AI mapping
 
+**精確匹配快徑（Exact Translation Fast Path）**：完整輸入經 expression identity 正規化後，命中既有 source expression，且有合格的 direct 或單一核准中介語言 two-hop path 解析到目標 locale expression。系統可直接回傳 canonical target text，不呼叫 planner 或 generation；片段命中與 prefix 命中不符合此定義。
+_避免使用_：無條件直譯、快取譯文
+
 **檢索證據（Retrieval Evidence）**：從 LangMap canonical expression graph 讀取、用來輔助生成翻譯結果的直接對照，或只經一個核准中介語言得到的兩跳對照資料。檢索證據不因被模型採用而建立新 expression、mapping 或來源。
 _避免使用_：AI 來源、生成式 mapping
 

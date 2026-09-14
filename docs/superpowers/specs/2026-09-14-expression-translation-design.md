@@ -8,7 +8,7 @@
 
 ## 1. 摘要
 
-LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入一段受長度限制的純文字，選定目標 `language_locale`，系統以 Workers AI 分析來源語言與不確定片段，再從 LangMap canonical graph 做完整輸入加上片段的檢索。檢索最多一跳直接對照，或經一個核准中介語言的兩跳對照；最後由 LLM 以目標 locale 生成純文字譯文。
+LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入一段受長度限制的純文字，選定目標 `language_locale`，系統先以完整輸入做精確匹配快徑：若 canonical graph 已有合格的直接或兩跳對照，直接回傳既有目標文字，不呼叫 AI。沒有可用的完整精確匹配時，才以 Workers AI 分析來源語言與不確定片段，再從 LangMap canonical graph 做完整輸入加上片段的檢索。檢索最多一跳直接對照，或經一個核准中介語言的兩跳對照；需要生成時才由 LLM 以目標 locale 生成純文字譯文。
 
 請求與結果均為暫態資料。系統不因生成結果自動建立 `expression`、`expression_edge`、來源標記或 AI provenance。使用者若確認結果，可只把一個主要譯文預填到既有 `/contribute` 流程，編輯並明確送出後才成為一般使用者貢獻。
 
@@ -27,9 +27,9 @@ LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入
 
 - 提供獨立、可理解且可鍵盤操作的詞句翻譯入口。
 - 支援來源語言自動偵測，也允許使用者搜尋並修正來源語言；目標必須是精確的 `language_locale`。
-- 對完整輸入必做一次檢索；由 planner 找出最多八個低把握片段，再批次檢索片段。
+- 先對完整輸入執行精確匹配快徑；快徑沒有合格結果時，才由 planner 找出最多八個低把握片段，再對完整輸入與片段批次檢索。
 - 檢索最多兩跳，第二跳只可使用十個固定核准中介語言，且兩條 edge 都必須通過品質門檻。
-- 以單次 POST 回應狀態、來源判定、檢索參考與譯文 delta；在可接受延遲內即使檢索或 planner 降級，仍能產生 model-only 譯文。
+- 精確匹配快徑直接回傳 canonical 目標文字；需要生成時才以單次 POST 回應狀態、來源判定、檢索參考與譯文 delta，在可接受延遲內即使檢索或 planner 降級，仍能產生 model-only 譯文。
 - 給出可核對的檢索路徑；沒有任何證據時明確標示「僅模型生成」，有證據時以證據本身說明，不增加「LangMap 輔助」徽章。
 - 讓使用者在確認、編輯後才可進入既有貢獻流程，且不新增 AI 永久 provenance。
 - 初始 beta 使用 Workers AI 的每日免費 Neurons 配額；配額耗盡時清楚回報並等待 UTC 重設，不自動換模型。
@@ -52,6 +52,7 @@ LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入
 | --- | --- |
 | 翻譯請求（Translation Request） | 登入使用者送出的暫態 `{text, source_lang_code?, source_locale_code?, target_locale_code}`。只存在 request 記憶體與前端狀態，不寫入 canonical 表。 |
 | 翻譯結果（Translation Result） | 主要譯文、零至兩個參考 alternatives、來源語言、目標 locale、檢索證據與 `model_only` 狀態。完成、取消或離開頁面即失去；不視為 expression 或 mapping。 |
+| 精確匹配快徑（Exact Translation Fast Path） | 完整輸入經既有 expression identity 正規化後，命中 source expression，並以合格的 direct 或單一核准 pivot two-hop path 解析到 target locale expression。按穩定排名直接回傳 canonical target text，不呼叫 planner 或 generation；片段命中、prefix 命中或沒有合格 edge 均不符合。 |
 | 檢索證據（Retrieval Evidence） | 來自 canonical graph 的直接 edge 或一個核准 pivot 的兩條 edge，含可展示的文字、locale、路徑與來源標記摘要。被模型採用不會創建任何 row。 |
 | 核准中介語言（Approved Pivot Language） | 固定 ISO 639-3：`eng`、`cmn`、`jpn`、`spa`、`fra`、`deu`、`por`、`kor`、`rus`、`arb`。只可出現在兩跳中間；不能讓模型動態宣告新的 pivot。 |
 | AI 輔助貢獻（AI-assisted Contribution） | 從結果頁把一個主要譯文預填到既有貢獻頁，使用者可編輯、檢查並明確送出。確認區說明 AI 輔助；送出後仍是使用者貢獻，第一版不保存永久 AI 標記。 |
@@ -75,14 +76,17 @@ LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入
 5. 允許一般空白（含 `\n`、`\r\n`、tab），拒絕空字串、NUL 與其他不可接受控制字元；辨識到 HTML tag 或 fenced Markdown 時回 `PLAIN_TEXT_ONLY`，不嘗試清理後送給模型。
 6. 送出按鈕在輸入、來源與目標通過驗證後啟用。請求進行中顯示取消按鈕；再次送出會先取消前一筆，前端以 request sequence 丟棄 stale stream。
 
+送出後先執行完整輸入的精確匹配快徑。快徑命中時不進入「分析詞句」或「生成譯文」，只顯示檢索與結果；未命中才進入 planner 與片段檢索。
+
 ### 6.3 結果與確認
 
 1. 進度依序呈現「分析詞句」、「檢索參考」、「生成譯文」三階段。每個階段有可讀狀態文字，不依賴顏色或動畫。
 2. 主要譯文以 delta 串流顯示；完成後可複製、重試或重新編輯輸入。輸出一律當純文字顯示。
 3. 有至少一條合格證據時顯示可展開的「檢索參考」，列出來源片段、目標候選與 `來源 → 目標` 或 `來源 → pivot → 目標` 路徑；不顯示內部整數 ID，也不增加「LangMap 輔助」徽章。
 4. 沒有證據，或檢索逾時而降級時，在結果附近顯示「僅模型生成」。這是 provenance 狀態，不是品質分數。
-5. 若檢索得到不同且排名足夠的目標文字，可顯示最多兩個「參考譯法」alternative；第一版 alternatives 只來自證據候選，不額外呼叫第二次 LLM。它們留在本次頁面狀態，不會自動進入貢獻。
-6. 「送入貢獻」只帶一個使用者選定的主要譯文與來源／目標 locale，透過記憶體中的暫態 prefill state 開啟 `/contribute`，不把原文或譯文放入 query string。貢獻頁顯示 AI 輔助確認文字，使用者可修改兩列內容後才按既有送出按鈕；alternatives 不一併提交。
+5. 精確匹配快徑命中時顯示「精確匹配」狀態與檢索路徑，不顯示「僅模型生成」，也不顯示 AI 輔助確認。若 canonical candidate 已是使用者要求的現有對照，預設不提供重複貢獻按鈕；使用者改寫主要譯文後仍可進入貢獻流程。
+6. 若檢索得到不同且排名足夠的目標文字，可顯示最多兩個「參考譯法」alternative；第一版 alternatives 只來自證據候選，不額外呼叫第二次 LLM。它們留在本次頁面狀態，不會自動進入貢獻。
+7. 「送入貢獻」只帶一個使用者選定的主要譯文與來源／目標 locale，透過記憶體中的暫態 prefill state 開啟 `/contribute`，不把原文或譯文放入 query string。需要 AI 的結果在貢獻頁顯示 AI 輔助確認文字；精確匹配結果不顯示該提示。使用者可修改兩列內容後才按既有送出按鈕；alternatives 不一併提交。
 
 ## 7. 前端資訊架構與可及性
 
@@ -130,18 +134,18 @@ LangMap 新增一個登入後才可見的「詞句翻譯」tab。使用者輸入
 
 ### 8.3 Stream response
 
-驗證、auth 與配額通過後回 `200 OK`，`Content-Type: application/x-ndjson; charset=utf-8`。每行都是既有 API envelope；成功事件形如 `{"success":true,"data":{...}}`，錯誤事件形如 `{"success":false,"error":"...","message":"..."}`。不得轉發 provider 原始 chunk 或 chain-of-thought。
+驗證、auth 與配額通過後回 `200 OK`，`Content-Type: application/x-ndjson; charset=utf-8`。每行都是既有 API envelope；成功事件形如 `{"success":true,"data":{...}}`，錯誤事件形如 `{"success":false,"error":"...","message":"..."}`。精確匹配快徑也使用同一串流契約，但可在 evidence 後立即送 result；不得轉發 provider 原始 chunk 或 chain-of-thought。
 
 `data.type` 事件如下：
 
 | type | 欄位 | 說明 |
 | --- | --- | --- |
-| `status` | `stage: analyzing \| retrieving \| generating`、`request_id` | 階段開始；分析事件應在回應建立後盡快送出。 |
+| `status` | `stage: analyzing \| retrieving \| generating`、`mode: exact_lookup \| assisted`、`request_id` | 階段開始；精確快徑只送 `retrieving`，分析事件應在回應建立後盡快送出。 |
 | `source_language` | `code`、`confidence`、可選 `candidates` | 最終採用的來源語言。使用者明確選取時 confidence 為 `1`。 |
 | `source_confirmation_required` | `candidates`、`reason` | 自動偵測低於設定門檻，要求使用者選取 language（或同語言 script 的 source locale）後重送；送出此事件即正常結束本串流，不進入生成。 |
 | `evidence` | `items`、`omitted_count`、`degraded` | 檢索完成或逾時。items 為已排序、去重、受上限約束的可展示路徑。 |
 | `translation_delta` | `text` | 主要譯文的純文字增量；前端按收到的順序串接。 |
-| `result` | `translation`、`alternatives`、`source_lang_code`、`target_locale_code`、`evidence_present`、`model_only`、`request_id` | 唯一完成事件；`alternatives` 最多兩項。 |
+| `result` | `translation`、`alternatives`、`source_lang_code`、`target_locale_code`、`evidence_present`、`model_only`、`resolution: exact_lookup \| assisted`、`generation_skipped`、`request_id` | 唯一完成事件；`alternatives` 最多兩項。精確快徑為 `resolution=exact_lookup`、`generation_skipped=true`、`model_only=false`。 |
 | `error` | `code`、`retryable`、可選 `retry_after_seconds`、`reset_at` | 串流開始後的失敗；前端保留可重試的輸入，不把 partial text 當完成結果。 |
 
 Evidence item 至少包含 `source_text`、`target_text`、`target_locale_code`、`path_type`（`direct` 或 `two_hop`）、可選 `pivot_lang_code`、`match_type`（`exact` 或 `prefix`）與來源標記摘要。分數可用於排序，但不向使用者承諾為翻譯品質百分比。
@@ -167,10 +171,21 @@ Evidence item 至少包含 `source_text`、`target_text`、`target_locale_code`�
 1. `requireAuth` 取得 user id。
 2. 以 bounded body reader 讀取並驗證 JSON、UTF-8/grapheme/控制字元、source/target registry。
 3. 執行 server-side distributed quota；先檢查 user quota，再建立串流。
-4. 建立 `AbortController` 與 request id，立即送 `status: analyzing`。
+4. 建立 `AbortController` 與 request id；若進入精確快徑，先送 `status: retrieving, mode: exact_lookup`，否則送 `status: analyzing, mode: assisted`。
 5. 呼叫 translation orchestrator，把事件映射為標準 envelope；不在 route 寫 SQL 圖遍歷或 provider prompt。
 
-### 9.2 Planner
+### 9.2 精確匹配快徑
+
+`translationExactMatch` 在 planner 前執行一次受限的完整輸入查詢，讓已存在於 LangMap 的翻譯不必再次付出 AI 延遲與 Neurons 成本：
+
+1. 以既有 `canonicalizeExpressionText` 對完整輸入做 NFC/identity 正規化，但保留原始文字給後續 model path。若使用者指定 source，只查該 language；source 未指定時查所有 language，但只保留能解析到目標 locale 的候選，並以固定上限與 `ORDER BY` 控制跨語言查詢。
+2. 先查 source expression 到 target locale expression 的合格 direct edge。direct 沒有結果時，再查一個固定核准 pivot 的合格 two-hop path；不查 prefix、片段、三跳或未核准 pivot。
+3. source expression 必須是完整輸入的 exact text；target expression 必須有 `expression_locale_links` 精確連到請求的 target locale；edge 使用 retrieval service 相同的品質 predicate。片段 exact、prefix 命中或只有不合格 edge，不能短路整句生成。
+4. direct path 優先於 two-hop；其餘按 match（此處皆 exact）、edge score、provenance marker 數、候選文字長度與 expression/edge id 的穩定順序選出主要文字，最多留下兩個不同 target text 作 alternatives。這個排序不代表模型信心；source expression、path 與 target candidate 的查詢總量必須受與 assisted path 相同的 bounded 上限約束。
+5. source 未指定且 exact candidates 涉及多個無法由排名消歧的 source language 時，送 `source_confirmation_required` 並結束串流，不呼叫 AI；使用者選定 source 後重送。只有單一 source language 時可由資料直接送 `source_language`，confidence 為 `1`。
+6. 命中後送 `evidence` 與 `result`，`resolution=exact_lookup`、`generation_skipped=true`、`model_only=false`；不呼叫 planner、retrieval fallback 或 generation。此請求仍計入 user request quota，但不消耗 Workers AI Neurons。
+
+### 9.3 Planner
 
 `translationPlanner` 使用同一個 Workers AI model 做一次非串流 structured-output 呼叫。Workers AI JSON mode 目前不能保證 schema，且不支援 streaming，因此回傳後必須由手寫 type guard（或小型既有 validator）逐欄驗證，不能直接信任 JSON。
 
@@ -192,9 +207,9 @@ uncertain_spans: 0..8 items
 - source 未指定且 confidence 低於設定門檻（初始 0.75，需以 benchmark 校準）時，送 `source_confirmation_required`，不猜測後繼檢索。
 - structured output 無效、planner 逾時或無法解析時，不重試 planner。若 source 已由使用者指定，仍以完整輸入作唯一檢索根；若 source 也無法從 planner 安全取得，跳過 graph 檢索直接走 model-only generation，避免猜錯語言、增加延遲與成本。
 
-### 9.3 Retrieval service
+### 9.4 Retrieval service
 
-`translationRetrieval` 是獨立服務，直接使用 D1，不呼叫既有 graph HTTP endpoint。它必須 bounded、cycle-safe、批次化且穩定排序。
+`translationRetrieval` 是精確快徑 miss 後使用的輔助服務，直接使用 D1，不呼叫既有 graph HTTP endpoint。它必須 bounded、cycle-safe、批次化且穩定排序。
 
 1. **根集合**：完整輸入永遠是第一根；planner 有效 span 依輸入出現順序加入，最多八個，共最多九根。
 2. **文字匹配**：使用現有 `canonicalizeExpressionText` 的 identity 規則做 exact match；沒有 exact 才做 prefix range fallback。每根最多保留三個 prefix candidate。原始輸入交給模型時不改寫。
@@ -206,9 +221,9 @@ uncertain_spans: 0..8 items
 8. **數量上限**：每根最多三個 prefix roots；每根最後最多三條 evidence path；全請求最多 24 條 evidence。超出時保留排名靠前者並在 `omitted_count` 告知，prompt 只放保留項。
 9. **證據內容**：送給模型與前端的只有必要文字、language/locale code、path type、pivot 與來源 marker 摘要；不送內部 ID、完整 annotations JSON 或不受限長文。序列化 evidence 設 32 KiB 上限。
 
-若 D1 檢索逾時、單次查詢失敗或結果為空，orchestrator 送 `evidence.degraded=true` 後以 model-only prompt 進入 generation；檢索失敗不能使整個翻譯請求不可用。
+若 D1 檢索逾時、單次查詢失敗或結果為空，orchestrator 送 `evidence.degraded=true` 後以 model-only prompt 進入 generation；檢索失敗不能使整個翻譯請求不可用。這個降級只適用於已經 miss 精確快徑的 assisted path。
 
-### 9.4 Generation service
+### 9.5 Generation service
 
 `translationModel` 只在一處封裝 provider：
 
@@ -221,7 +236,7 @@ uncertain_spans: 0..8 items
 
 生成失敗或逾時是 retryable error；第一版不做 provider/model failover。Workers AI binding 缺失或設定錯誤屬部署 gate，不可在 runtime 靜默退回另一服務。
 
-### 9.5 Quota 與營運資料
+### 9.6 Quota 與營運資料
 
 - 每個 user：每 60 秒最多 3 次、每 UTC 日最多 30 次；每日於 00:00 UTC 重設。伺服器回 `Retry-After` 或 `reset_at`，前端將 UTC reset 顯示為使用者本地時間。
 - quota 必須是 server-side、跨 isolate 有效且原子更新；可用 Cloudflare rate-limiting binding，或以最小 D1 counter migration 實作。實作計畫須在兩者中選一個，不能用 client-only counter 或 module mutable state。
@@ -242,6 +257,7 @@ Beta 策略：帳戶的免費 Neurons 尚未耗盡時正常服務；收到 provi
 
 在 staging fixture 與代表性 locale matrix 量測，首版 acceptance budget 為：
 
+- 精確匹配快徑在驗證後 p95 ≤ 500 ms，且不呼叫任何 AI；user quota 仍照常計數。
 - 驗證後的第一個 `status` event p95 < 500 ms。
 - planner 最多 2.5 s；無效或逾時立即走完整輸入 fallback，不重試。
 - retrieval 最多 2.0 s；逾時即 model-only generation。
@@ -275,6 +291,7 @@ Vitest/Worker runtime 測試至少覆蓋：
 
 - auth、body size、500 grapheme、8 KiB、控制字元、plain-text、source/target locale validation。
 - planner valid、invalid、timeout、重疊/錯位 span、source override 與低 confidence confirmation；invalid planner 不重試且仍能 model-only generation。
+- 完整輸入 exact direct/two-hop fast path 會在 mock AI 呼叫計數為零時回傳 canonical target；片段 exact、prefix、無 target link、品質不合格與 source ambiguity 不會誤走快徑。
 - exact 優先、prefix fallback 最多三項、direct 優先、兩跳 pivot allowlist、同語言 locale conversion、target exact locale link、品質 predicate、cycle/dedup、穩定排序、24 條 evidence cap。
 - target filter 不阻斷 pivot；不誤把三跳或未核准語言當證據；D1 timeout 會降級而非失敗。
 - NDJSON envelope/order、delta 組裝、abort、provider failure、generation timeout、output cap、user minute/day quota、UTC reset 與 Workers AI account quota error。
