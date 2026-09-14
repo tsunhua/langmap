@@ -162,6 +162,49 @@ def test_extracts_mapping_annotation_from_terminal_parentheses():
     )
 
 
+def test_extracts_leading_dictionary_usage_groups_as_mapping_annotation():
+    assert extract_mapping_annotation("《속담》 Birds of a feather flock together") == (
+        "Birds of a feather flock together",
+        "속담",
+    )
+    assert extract_mapping_annotation(
+        "［keep＋〈목〉］ 〈남을 위해〉 〈…을〉 보존하다"
+    ) == (
+        "보존하다",
+        "keep＋〈목〉；남을 위해；…을",
+    )
+    assert extract_mapping_annotation("[U] wooden tablet script") == (
+        "wooden tablet script",
+        "U",
+    )
+    assert extract_mapping_annotation("[a]one Kim/a man named Kim") == (
+        "one Kim/a man named Kim",
+        "a",
+    )
+    assert extract_mapping_annotation("[A sample sentence]") == (
+        "A sample sentence",
+        None,
+    )
+
+
+def test_metadata_only_surface_is_not_published_as_an_expression():
+    assert prepare_expression_value("［obstetrician/gynecologist］") == (
+        (),
+        (),
+        "obstetrician/gynecologist",
+    )
+    assert surface_errors("［obstetrician/gynecologist］") == ()
+
+
+def test_extracts_fullwidth_leading_notes_after_usage_groups():
+    assert extract_mapping_annotation(
+        "［know＋to do］ （…하지 않으면 안 되는 것을） 알고 있다"
+    ) == (
+        "알고 있다",
+        "know＋to do；하지 않으면 안 되는 것을",
+    )
+
+
 def test_keeps_lexical_parenthetical_complements_in_the_expression():
     assert extract_mapping_annotation("intimidated (by)") == (
         "intimidated (by)",

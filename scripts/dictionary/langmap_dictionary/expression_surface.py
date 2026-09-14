@@ -60,6 +60,13 @@ _LEXICAL_PARENTHESES_PREFIXES = frozenset({
 })
 _CLOSING = ")]}）］｝"
 _TRANSFORMATION_ARROWS = ("⇒", "→")
+_LEADING_ANNOTATION_PAIRS = {
+    "《": "》",
+    "〈": "〉",
+    "〔": "〕",
+    "［": "］",
+    "『": "』",
+}
 
 
 def _quote_opening(value: str, index: int, quote_stack: list[tuple[str, int, bool]]) -> bool:
@@ -696,6 +703,67 @@ def extract_reading_parentheses(value: str) -> tuple[str, tuple[str, ...]]:
     return normalize_expression_surface(candidate), tuple(dict.fromkeys(readings))
 
 
+def _extract_leading_annotation_groups(value: str) -> tuple[str, tuple[str, ...]]:
+    """Move source-layout groups before a lexical surface into annotations.
+
+    Apple bundles use corner and square brackets for usage frames, for example
+    ``《속담》 Birds ...`` or ``［keep＋〈목〉］ 〈남을 위해〉 보존하다``.
+    These groups describe the following expression; they are not part of the
+    expression identity.  Only the explicit full-width/corner pairs are
+    handled here so ordinary optional forms such as ``你（們）好`` remain
+    alternatives.
+    """
+
+    candidate = str(value).strip()
+    annotations: list[str] = []
+    pairs = _LEADING_ANNOTATION_PAIRS
+    while candidate:
+        if candidate[0] == "[":
+            # ASCII square labels in Apple equivalents are short usage or
+            # register markers (``[U]``, ``[정치]``).  Do not consume prose
+            # wrappers such as ``[A sample sentence]`` as annotations.
+            match = re.match(r"^\[(?P<label>[^\[\]]{1,40})\](?P<gap>\s*)(?P<surface>.+)$", candidate)
+            if match is None:
+                break
+            label = normalize_expression_surface(match.group("label"))
+            if not label or (
+                re.search(r"\s", label)
+                and not any(
+                    "\u3400" <= character <= "\u9fff"
+                    or "\uac00" <= character <= "\ud7af"
+                    for character in label
+                )
+            ):
+                break
+            annotations.append(label)
+            candidate = match.group("surface").strip()
+            continue
+        if candidate[0] not in pairs:
+            break
+        stack: list[str] = []
+        closing_index: int | None = None
+        for index, character in enumerate(candidate):
+            if character in pairs:
+                stack.append(pairs[character])
+            elif stack and character == stack[-1]:
+                stack.pop()
+                if not stack:
+                    closing_index = index
+                    break
+            elif character in _CLOSING:
+                break
+        if closing_index is None:
+            break
+        content = candidate[1:closing_index].strip()
+        remainder = candidate[closing_index + 1 :].strip()
+        if content:
+            annotations.append(re.sub(r"\s+", " ", content))
+        if not remainder:
+            return "", tuple(annotations)
+        candidate = remainder
+    return candidate, tuple(annotations)
+
+
 def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     """Extract a bounded explanatory note from an expression value.
 
@@ -707,9 +775,28 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     this way so symbols in ordinary source text remain untouched.
     """
 
-    surface, _ = extract_reading_parentheses(value)
-    leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", surface)
-    if leading is not None:
+    original = unicodedata.normalize("NFC", str(value)).strip()
+    surface, leading_annotations = _extract_leading_annotation_groups(original)
+    if leading_annotations:
+        if not surface:
+            return "", "；".join(leading_annotations)
+        cleaned, nested_annotation = extract_mapping_annotation(surface)
+        annotations = [*leading_annotations]
+        if nested_annotation:
+            annotations.append(nested_annotation)
+        return cleaned, "；".join(annotations)
+    surface, _ = extract_reading_parentheses(original)
+    if not surface:
+        return "", None
+    leading = re.match(
+        r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
+        surface,
+    )
+    if (
+        leading is not None
+        and not (leading.group("opener") == "（" and not leading.group("gap"))
+        and _expand_cjk_parenthetical(surface) is None
+    ):
         note = normalize_expression_surface(leading.group("note"))
         expression = normalize_expression_surface(leading.group("expression"))
         # Leading parentheticals in dictionary forms are labels or optional
@@ -763,9 +850,10 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
 def prepare_expression_value(value: str) -> tuple[tuple[str, ...], tuple[str, ...], str | None]:
     """Return expression alternatives, extracted readings and one annotation."""
 
-    surface, readings = extract_reading_parentheses(value)
-    surface, annotation = extract_mapping_annotation(surface)
-    return split_expression_alternatives(surface), readings, annotation
+    surface, annotation = extract_mapping_annotation(value)
+    _, readings = extract_reading_parentheses(value)
+    alternatives = split_expression_alternatives(surface) if surface or annotation is None else ()
+    return alternatives, readings, annotation
 
 
 def prepare_paired_expression_values(
@@ -787,10 +875,10 @@ def prepare_paired_expression_values(
     can silently connect unrelated sentences from a dialogue.
     """
 
-    left_surface, left_readings = extract_reading_parentheses(left)
-    left_surface, left_annotation = extract_mapping_annotation(left_surface)
-    right_surface, right_readings = extract_reading_parentheses(right)
-    right_surface, right_annotation = extract_mapping_annotation(right_surface)
+    left_surface, left_annotation = extract_mapping_annotation(left)
+    _, left_readings = extract_reading_parentheses(left)
+    right_surface, right_annotation = extract_mapping_annotation(right)
+    _, right_readings = extract_reading_parentheses(right)
     left_dialogue = _split_dialogue_segments(left_surface)
     right_dialogue = _split_dialogue_segments(right_surface)
     if len(left_dialogue) == len(right_dialogue) and len(left_dialogue) > 1:
@@ -845,11 +933,24 @@ def surface_errors(value: str) -> tuple[str, ...]:
     # the payload after removing only that marker instead of quarantining an
     # otherwise valid expression as ``leading_punctuation``.
     quality_value = original
+    cleaned_quality, leading_annotations = _extract_leading_annotation_groups(quality_value)
+    if leading_annotations:
+        quality_value = cleaned_quality
+        if not quality_value:
+            return ()
     if quality_value.startswith(tuple(_LIST_MARKERS)):
         quality_value = quality_value[1:].lstrip()
     normalized = normalize_expression_surface(quality_value)
-    leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", normalized)
-    if leading is not None and leading.group("note").strip() and _expand_cjk_parenthetical(original) is None:
+    leading = re.match(
+        r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
+        normalized,
+    )
+    if (
+        leading is not None
+        and leading.group("note").strip()
+        and not (leading.group("opener") == "（" and not leading.group("gap"))
+        and _expand_cjk_parenthetical(original) is None
+    ):
         normalized = normalize_expression_surface(leading.group("expression"))
     # Validate the cleaned alternatives as well as the raw shell. This catches
     # genuine punctuation-only rows while allowing quoted/bracketed examples
@@ -860,10 +961,14 @@ def surface_errors(value: str) -> tuple[str, ...]:
     candidate_values_list: list[str] = []
     for candidate in candidates:
         candidate_value = normalize_expression_surface(candidate)
-        candidate_leading = re.match(r"^\((?P<note>[^()]*)\)\s*(?P<expression>.+)$", candidate_value)
+        candidate_leading = re.match(
+            r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
+            candidate_value,
+        )
         if (
             candidate_leading is not None
             and candidate_leading.group("note").strip()
+            and not (candidate_leading.group("opener") == "（" and not candidate_leading.group("gap"))
             and _expand_cjk_parenthetical(candidate_value) is None
         ):
             candidate_value = normalize_expression_surface(candidate_leading.group("expression"))
