@@ -59,8 +59,29 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/dictionary python3 \
 
 ## Production release
 
-### 待執行
+### 已完成（2026-09-15）
 
-- 以 `manage.sh production plan --approved-data-migration ... --refresh-language-statistics` 建立受管 plan，再依 plan apply；apply 前建立 bookmark。
-- apply 後只做 source-scoped postflight：source claims／edges／readings、`arb-Arab`／`eng-Latn-US` links、IPA scheme、surface error 定點抽查，以及 `language_statistics` refresh。
-- plan／operation、bookmark、postflight counts 由發布後補記；若 production schema 不含 `annotations_json`，需按 managed tool 的相容分支記錄 annotation update skip。
+- production identity：`langmap-v2 / 75c7dea7-f453-4ada-8527-d5ff481b54f3`；schema preflight `44` objects／`45` migrations，所有 plan 均為 `--skip-reference-artifacts`。線上既有 UI reference 差異（managed UI edges `1387` vs bundle `1366`）未被此資料發布碰觸。
+- 不把 134 MB SQL 提交到 repository。原始 additive artifact 的 SHA-256／bytes 仍為 `ba41360a6353cdbcb62b00a9df75e062b15f4a13f336b8c1d4d113f7d03944bf`／`134,380,456`；為避開 D1 import gateway／CPU timeout，僅在 ignored release workspace 以語句邊界切成 8–16 MiB 檔案，再由同一份 checksum-locked source rows 逐批受管發布。
+- 成功的資料批次 operation：
+
+  | artifact batch | operation | bookmark（前綴） |
+  | --- | --- | --- |
+  | `chunk-001` | `6afcd65cc0e84eada85abf0301cac055` | `000002a6-00000000-...` |
+  | `part-002-003` | `7ff4b39c4dcf4f44b90a268aec889f11` | `000002a7-00000000-...` |
+  | `part-004-005` | `eda758d59fe54dfdb6405b2bbf1ed914` | `000002a7-000003cf-...` |
+  | `part-006-007` | `e061e5bf999b4c5b8d7867431b0f0277` | `000002a7-0000094f-...` |
+  | `part-008-009` | `16af66f1fd5f4eb7a865653008cd439d` | `000002a7-00000ded-...` |
+  | `part-010-011` | `4d139a86cfd54722af07cd8e7e264bd7` | `000002a7-000012b1-...` |
+  | `part-012-013` | `5402eee713fe4a6693644c00e18e775a` | `000002a7-00001a66-...` |
+  | `part-014-015` | `7daddd152321485f926d827b83593fcf` | `000002a7-00001dba-...` |
+  | `edge-001` | `31c863a230f24ea78ac538abe38725b0` | `000002ac-00000000-...` |
+  | `edge-002-003` | `f8c47c841d5d4fbe98831bb9ce24cd1f` | `000002ac-0000002c-...` |
+  | `edge-004-005` | `a7ee0d4d54944d5fbf26509b27de1998` | `000002ac-00000080-...` |
+  | `edge-006-source` | `65f57c00784f4384a764b90270e77bee` | `000002ae-00000000-...` |
+  | `edge-007-source` | `4942775fdbb6461b91126b4e7de87e21` | `000002ae-0000002c-...` |
+
+- 受管統計刷新與 verify operation：`f7b0a6aefa424e4e8e7c9a7618f5b20e`，bookmark `000002b0-00000000-...`，status `succeeded`／`verified=true`。
+- source-scoped postflight：`source_id=16`、`expression_sources=372,809`、distinct source expressions `372,686`、`expression_edge_sources=373,431`。`expression_readings.source_id=16` 為 `84,697`；低於 staging `101,796` 是 canonical reading primary key 去重後與其他來源共享 reading identity 的結果，不是整庫缺失。locale link 以 expression identity 去重後覆蓋 `372,686` 個 source expressions。
+- handbook remap：`expressions.source_id=16` 的 handbook rows 僅 `36` 筆；逐筆核對後 `35` 筆的最高 source16 English target 就是原 expression ID，`1` 筆沒有 source16 target，故 DELETE／UPDATE remap 是 no-op，沒有再執行會掃描大型 edge 表的 correlated SQL。以 `expression_sources` join 計算的 `572` 筆包含共享 expression，不屬於此 remap 條件。
+- 期間的整檔 file-mode／remap 嘗試（`09ebc150e3a44ca29e23a50f20cdb141`、`3a90dd291b494d7992cd88458e530f78`、`488a1e4b55b24502a576b1d9d2c430e4`、`aff144f560c248e3816ef56febd76cfe`）均在 Cloudflare code `7009` timeout 後回滾；後續均改用更小的受管檔案，未留下半批寫入。
