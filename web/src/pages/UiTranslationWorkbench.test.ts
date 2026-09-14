@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TranslateWorkbench from './TranslateWorkbench.vue'
+import UiTranslationWorkbench from './UiTranslationWorkbench.vue'
 
 const {
   addUiLocale,
@@ -46,7 +46,7 @@ const LanguageLocalePickerStub = {
 }
 
 function mountPage() {
-  return mount(TranslateWorkbench, {
+  return mount(UiTranslationWorkbench, {
     global: { stubs: { LanguageLocalePicker: LanguageLocalePickerStub } },
   })
 }
@@ -73,7 +73,7 @@ function workbench() {
   }
 }
 
-describe('TranslateWorkbench', () => {
+describe('UiTranslationWorkbench', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     authState.isLoggedIn = true
