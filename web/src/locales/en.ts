@@ -368,6 +368,7 @@ export const en = {
     errorQuota: 'The daily translation quota is used up. Try again after it resets.',
     errorOutputTooLarge: 'The translation was too long to finish. Try shorter text.',
     errorGeneric: 'Translation failed.',
+    sendToContributeFailed: 'Unable to prepare this translation for contribution. Try again.',
     loadLanguagesFailed: 'Unable to load languages',
     loadLocalesFailed: 'Unable to load language locales',
     signInRequired: 'Sign in to use phrase translation',

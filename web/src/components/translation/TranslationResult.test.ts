@@ -66,14 +66,25 @@ describe('TranslationResult', () => {
     expect(wrapper.text()).toContain('Copied')
   })
 
-  it('emits retry and edit, and only sends to contribute with a result', async () => {
-    const wrapper = mountResult()
-    await wrapper.get('[data-action="retry"]').trigger('click')
-    await wrapper.get('[data-action="edit"]').trigger('click')
-    await wrapper.get('[data-action="send-to-contribute"]').trigger('click')
-    expect(wrapper.emitted('retry')).toHaveLength(1)
-    expect(wrapper.emitted('edit')).toHaveLength(1)
+  it('hides send-to-contribute for exact matches and never emits it', async () => {
+    const wrapper = mountResult({ result: makeResult({ resolution: 'exact_lookup', generation_skipped: true }) })
+    expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(false)
     expect(wrapper.emitted('send-to-contribute')).toBeUndefined()
+  })
+
+  it('offers send-to-contribute for assisted results', () => {
+    const wrapper = mountResult({ result: makeResult({ resolution: 'assisted' }) })
+    expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(true)
+  })
+
+  it('emits retry and edit, and only sends to contribute with an assisted result', async () => {
+    const noResult = mountResult()
+    await noResult.get('[data-action="retry"]').trigger('click')
+    await noResult.get('[data-action="edit"]').trigger('click')
+    expect(noResult.find('[data-action="send-to-contribute"]').exists()).toBe(false)
+    expect(noResult.emitted('retry')).toHaveLength(1)
+    expect(noResult.emitted('edit')).toHaveLength(1)
+    expect(noResult.emitted('send-to-contribute')).toBeUndefined()
 
     const withResult = mountResult({ result: makeResult() })
     await withResult.get('[data-action="send-to-contribute"]').trigger('click')

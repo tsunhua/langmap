@@ -3,20 +3,12 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
+import { safeReturnPath } from '@/utils/safeReturnPath'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 const { t } = useI18n()
-
-// Only same-origin absolute paths are safe to bounce back to; reject protocol
-// relative (`//host`) and the auth page itself to avoid redirect loops.
-function safeReturnPath(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  if (!value.startsWith('/') || value.startsWith('//')) return null
-  if (value === '/auth' || value.startsWith('/auth/') || value.startsWith('/auth?')) return null
-  return value
-}
 
 const mode = ref<'login' | 'register'>('login')
 const username = ref('')

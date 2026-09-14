@@ -32,6 +32,12 @@ const status = computed<ResultStatus | null>(() => {
 })
 const shownAlternatives = computed(() => props.alternatives.slice(0, 2))
 
+// Exact lookups are already canonical mappings, so offering to contribute them
+// again would create duplicates. A rewrite-then-contribute flow is deferred.
+const canSendToContribute = computed(() =>
+  Boolean(props.result) && props.result?.resolution !== 'exact_lookup',
+)
+
 async function copy() {
   if (!props.translation) return
   const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : undefined
@@ -97,10 +103,10 @@ onUnmounted(() => {
         {{ t('phraseTranslate.edit') }}
       </button>
       <button
+        v-if="canSendToContribute"
         type="button"
         class="btn btn-ghost"
         data-action="send-to-contribute"
-        :disabled="!result"
         @click="sendToContribute"
       >
         <Send :size="16" aria-hidden="true" />

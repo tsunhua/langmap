@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '@/api/client'
 import Auth from './Auth.vue'
+import { safeReturnPath } from '@/utils/safeReturnPath'
 
 vi.mock('@/api/client', () => ({ default: { post: vi.fn(), get: vi.fn() } }))
 
@@ -93,5 +94,26 @@ describe('Auth page', () => {
     await flushPromises()
 
     expect(wrapper.get('[role="alert"]').text()).toBe('Invalid email or password')
+  })
+})
+
+describe('safeReturnPath', () => {
+  it.each<[unknown, string | null]>([
+    ['/translate', '/translate'],
+    ['/contribute', '/contribute'],
+    ['/auth', null],
+    ['/auth#x', null],
+    ['/auth?x=1', null],
+    ['/auth/profile', null],
+    ['//evil', null],
+    ['/\\evil.example', null],
+    ['\\evil.example', null],
+    ['/translate\\x', null],
+    ['https://evil.example', null],
+    ['/translate\n/x', null],
+    [undefined, null],
+    ['', null],
+  ])('maps %s to %s', (input, expected) => {
+    expect(safeReturnPath(input)).toBe(expected)
   })
 })

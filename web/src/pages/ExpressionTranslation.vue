@@ -7,17 +7,11 @@ import { useContributePrefillStore } from '@/stores/contributePrefill'
 import { useTranslationStream } from '@/composables/useTranslationStream'
 import { getLanguageLocale } from '@/api/languageIdentity'
 import type { TranslationRequestInput } from '@/api/translation'
-import TranslationForm from '@/components/translation/TranslationForm.vue'
+import TranslationForm, { type TranslationFormValue } from '@/components/translation/TranslationForm.vue'
 import TranslationProgress from '@/components/translation/TranslationProgress.vue'
 import TranslationResult from '@/components/translation/TranslationResult.vue'
 import EvidenceList from '@/components/translation/EvidenceList.vue'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
-
-interface TranslationFormModel {
-  sourceLangCode: string | null
-  targetLocaleCode: string
-  text: string
-}
 
 const router = useRouter()
 const { t } = useI18n()
@@ -39,10 +33,12 @@ const {
 } = stream
 
 const authorized = computed(() => auth.isLoggedIn)
-const form = ref<TranslationFormModel>({ sourceLangCode: null, targetLocaleCode: '', text: '' })
+const form = ref<TranslationFormValue>({ sourceLangCode: null, targetLocaleCode: '', text: '' })
 const lastInput = ref<TranslationRequestInput | null>(null)
 const confirmationSource = ref('')
+const confirmationHeading = ref<HTMLElement | null>(null)
 const formHost = ref<HTMLElement | null>(null)
+const contributeError = ref('')
 
 // Auth-gated route: the query only carries where to come back to, never text.
 if (!auth.isLoggedIn) {
@@ -52,7 +48,11 @@ if (!auth.isLoggedIn) {
 // Candidates may be empty (planner sends none today), so fall back to whatever
 // the user already picked in the form.
 watch(confirmation, (value) => {
-  if (value) confirmationSource.value = value.candidates[0]?.code ?? form.value.sourceLangCode ?? ''
+  if (!value) return
+  confirmationSource.value = value.candidates[0]?.code ?? form.value.sourceLangCode ?? ''
+  // The block appears asynchronously; announce it and move focus for keyboard
+  // and screen-reader users.
+  void nextTick(() => confirmationHeading.value?.focus())
 })
 
 const hasActivity = computed(() =>
@@ -68,11 +68,12 @@ function buildInput(sourceLangCode: string | null): TranslationRequestInput {
   }
 }
 
-function onFormUpdate(value: TranslationFormModel) {
+function onFormUpdate(value: TranslationFormValue) {
   form.value = value
 }
 
 function submit() {
+  contributeError.value = ''
   const input = buildInput(form.value.sourceLangCode)
   lastInput.value = input
   void stream.submit(input)
@@ -80,6 +81,7 @@ function submit() {
 
 function confirmSource() {
   if (!confirmationSource.value) return
+  contributeError.value = ''
   form.value = { ...form.value, sourceLangCode: confirmationSource.value }
   const input = buildInput(confirmationSource.value)
   lastInput.value = input
@@ -88,6 +90,7 @@ function confirmSource() {
 
 function retry() {
   if (!lastInput.value) return
+  contributeError.value = ''
   void stream.submit(lastInput.value)
 }
 
@@ -102,14 +105,20 @@ async function sendToContribute() {
   const input = lastInput.value
   const completed = result.value
   if (!input || !completed) return
-  let targetLangCode = ''
+  contributeError.value = ''
+  let targetLangCode: string
   try {
     targetLangCode = (await getLanguageLocale(input.target_locale_code)).lang_code
   } catch {
-    targetLangCode = ''
+    // Without a resolved target language code the prefill would be unusable.
+    contributeError.value = t('phraseTranslate.sendToContributeFailed')
+    return
   }
   prefillStore.set({
-    sourceLangCode: sourceLanguage.value?.code ?? input.source_lang_code ?? '',
+    // The exact fast path sends no source_language event, so the result is the
+    // authoritative source when detection never streamed one.
+    sourceLangCode:
+      sourceLanguage.value?.code ?? completed.source_lang_code ?? input.source_lang_code ?? '',
     sourceLocaleCode: '',
     sourceText: input.text,
     targetLangCode,
@@ -143,9 +152,17 @@ async function sendToContribute() {
     <section
       v-if="confirmation"
       class="source-confirmation"
+      role="status"
+      aria-live="polite"
       aria-labelledby="source-confirm-heading"
     >
-      <h2 id="source-confirm-heading">{{ t('phraseTranslate.sourceConfirmHeading') }}</h2>
+      <h2
+        id="source-confirm-heading"
+        ref="confirmationHeading"
+        tabindex="-1"
+      >
+        {{ t('phraseTranslate.sourceConfirmHeading') }}
+      </h2>
       <p class="hint">{{ t('phraseTranslate.sourceConfirmHint') }}</p>
       <LanguagePicker
         :model-value="confirmationSource"
@@ -182,6 +199,8 @@ async function sendToContribute() {
         @edit="edit"
         @send-to-contribute="sendToContribute"
       />
+
+      <p v-if="contributeError" class="contribute-error" role="alert">{{ contributeError }}</p>
 
       <EvidenceList
         v-if="evidence"
@@ -259,6 +278,19 @@ async function sendToContribute() {
   justify-self: start;
   min-height: 44px;
   padding: 0 18px;
+}
+.source-confirmation h2:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.contribute-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklch, var(--down) 40%, var(--border));
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--down);
+  font-size: 13px;
 }
 @media (max-width: 640px) {
   .expression-translation {

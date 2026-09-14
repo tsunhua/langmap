@@ -400,6 +400,10 @@ describe('ExpressionTranslation page', () => {
 
     expect(wrapper.find('.source-confirmation').exists()).toBe(true)
     expect(wrapper.get('.source-confirmation').text()).toContain('Confirm the source language')
+    const block = wrapper.get('.source-confirmation')
+    expect(block.attributes('role')).toBe('status')
+    expect(block.attributes('aria-live')).toBe('polite')
+    expect(document.activeElement).toBe(wrapper.get('#source-confirm-heading').element)
 
     await wrapper.get('.source-confirmation .pick-source').trigger('click')
     await wrapper.get('[data-action="confirm-source"]').trigger('click')
@@ -444,8 +448,7 @@ describe('ExpressionTranslation page', () => {
     expect(router.currentRoute.value.query).toEqual({})
   })
 
-  it('marks exact-match results as not AI-assisted in the prefill', async () => {
-    vi.mocked(getLanguageLocale).mockResolvedValue({ code: 'cmn-Hant-TW', lang_code: 'cmn' } as LanguageLocale)
+  it('hides send-to-contribute for exact-match results', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
       Promise.resolve(streamResponse([
         line({ type: 'source_language', code: 'nan', confidence: 1 }),
@@ -457,10 +460,50 @@ describe('ExpressionTranslation page', () => {
     await wrapper.get('[data-action="submit"]').trigger('click')
     await settle()
 
+    expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(false)
+  })
+
+  it('falls back to result.source_lang_code for the prefill when no source_language event arrives', async () => {
+    vi.mocked(getLanguageLocale).mockResolvedValue({ code: 'cmn-Hant-TW', lang_code: 'cmn' } as LanguageLocale)
+    vi.mocked(postTranslation).mockImplementation(() =>
+      Promise.resolve(streamResponse([
+        resultLine({ resolution: 'exact_lookup', generation_skipped: true, source_lang_code: 'nan' }),
+      ])),
+    )
+    const { wrapper } = await mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+
+    // Exact results hide the action, so drive the handler directly to exercise
+    // the source fallback ordering.
+    await (wrapper.vm as unknown as { sendToContribute: () => Promise<void> }).sendToContribute()
+    await settle()
+
+    const prefill = useContributePrefillStore().prefill
+    expect(prefill?.sourceLangCode).toBe('nan')
+    expect(prefill?.aiAssisted).toBe(false)
+  })
+
+  it('shows an error and does not navigate when the target locale cannot be resolved', async () => {
+    vi.mocked(getLanguageLocale).mockRejectedValueOnce(new Error('offline'))
+    vi.mocked(postTranslation).mockImplementation(() =>
+      Promise.resolve(streamResponse([
+        line({ type: 'source_language', code: 'nan', confidence: 0.9 }),
+        resultLine(),
+      ])),
+    )
+    const { wrapper, router } = await mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+
     await wrapper.get('[data-action="send-to-contribute"]').trigger('click')
     await settle()
 
-    expect(useContributePrefillStore().prefill?.aiAssisted).toBe(false)
+    expect(router.currentRoute.value.path).toBe('/translate')
+    expect(useContributePrefillStore().prefill).toBeNull()
+    expect(wrapper.get('.contribute-error').text()).toContain('Unable to prepare this translation')
   })
 
   it('exposes an alert for errors and a polite live region for progress', async () => {
