@@ -214,7 +214,11 @@ export async function runTranslation(
     // Last resort only: every stage maps its own failures above. An error here
     // must still surface as a stream error, never as an unhandled rejection.
     if (ctx.signal.aborted) return;
-    emitEvent(ctx, errorEvent('TRANSLATION_FAILED', false));
+    try {
+      emitEvent(ctx, errorEvent('TRANSLATION_FAILED', false));
+    } catch {
+      // The sink itself failed; runTranslation must never reject, so swallow.
+    }
   }
 }
 

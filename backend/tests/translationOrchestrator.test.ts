@@ -547,8 +547,16 @@ describe('runTranslation — error mapping', () => {
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
     const parsed = parseLines(h.collector);
-    expect(eventTypes(parsed).at(-1)).toBe('AI_PROVIDER_FAILED');
+    expect(eventTypes(parsed)).toEqual([
+      'status',
+      'source_language',
+      'status',
+      'evidence',
+      'status',
+      'AI_PROVIDER_FAILED',
+    ]);
     expect(parsed.at(-1)).toMatchObject({ success: false, error: 'AI_PROVIDER_FAILED', retryable: true });
+    expect(parsed.some((entry) => entry.data?.type === 'result')).toBe(false);
   });
 
   it('maps a Workers AI daily quota error to AI_DAILY_QUOTA_EXHAUSTED with reset_at', async () => {
@@ -560,19 +568,42 @@ describe('runTranslation — error mapping', () => {
 
     const parsed = parseLines(h.collector);
     const error = parsed.at(-1);
+    expect(eventTypes(parsed)).toEqual([
+      'status',
+      'source_language',
+      'status',
+      'evidence',
+      'status',
+      'AI_DAILY_QUOTA_EXHAUSTED',
+    ]);
     expect(error).toMatchObject({ success: false, error: 'AI_DAILY_QUOTA_EXHAUSTED', retryable: false });
-    expect(error?.reset_at).toMatch(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/);
+    const resetAt = error?.reset_at as string;
+    expect(resetAt).toMatch(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/);
+    expect(Number.isNaN(Date.parse(resetAt))).toBe(false);
+    expect(parsed.some((entry) => entry.data?.type === 'result')).toBe(false);
   });
 
   it('maps an oversized translation to TRANSLATION_OUTPUT_TOO_LARGE with no result', async () => {
     const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['X'.repeat(MAX_TRANSLATION_OUTPUT_TOKENS + 100)]),
+      generation: () => makeStream(['partial', 'X'.repeat(MAX_TRANSLATION_OUTPUT_TOKENS + 100)]),
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
     const parsed = parseLines(h.collector);
-    expect(eventTypes(parsed).at(-1)).toBe('TRANSLATION_OUTPUT_TOO_LARGE');
+    expect(eventTypes(parsed)).toEqual([
+      'status',
+      'source_language',
+      'status',
+      'evidence',
+      'status',
+      'translation_delta',
+      'TRANSLATION_OUTPUT_TOO_LARGE',
+    ]);
+    const deltaIndex = eventTypes(parsed).indexOf('translation_delta');
+    const errorIndex = eventTypes(parsed).indexOf('TRANSLATION_OUTPUT_TOO_LARGE');
+    expect(deltaIndex).toBeGreaterThanOrEqual(0);
+    expect(deltaIndex).toBeLessThan(errorIndex);
     expect(parsed.at(-1)).toMatchObject({ success: false, error: 'TRANSLATION_OUTPUT_TOO_LARGE', retryable: false });
     expect(parsed.some((entry) => entry.data?.type === 'result')).toBe(false);
   });
@@ -626,7 +657,7 @@ describe('runTranslation — envelope contract', () => {
   });
 
   it('every request begins with a status event', async () => {
-    const cases: Array<() => { harness: () => HarnessWithCalls; request: RunTranslationRequest }> = [
+    const cases: Array<() => { harness: () => Harness; request: RunTranslationRequest }> = [
       () => ({
         harness: () => harness(route({ locale: LOCALE_ROW, markers: [markerRow(11)], exactFixed: { direct: [exactDirectRow()], twoHop: [] } })),
         request: request(),
