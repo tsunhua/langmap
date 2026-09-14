@@ -188,6 +188,9 @@ export async function planTranslation(ai: Pick<Ai, 'run'>, input: PlannerInput):
       { signal: controller.signal },
     );
   } catch {
+    // A caller abort must not degrade into a fallback result; let the
+    // orchestrator stop instead of spending work on a dead request.
+    if (callerSignal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
     return fallback(sourceLangCode);
   } finally {
     clearTimeout(timer);

@@ -221,15 +221,23 @@ describe('planTranslation — timeout, provider errors and abort', () => {
     }
   });
 
-  it('aborts in-flight provider work when the caller signal fires without surfacing an error', async () => {
+  it('rejects with AbortError when the caller signal fires mid-call instead of degrading to a fallback', async () => {
     const { ai, calls } = fakeAi(async (signal) => pendingUntilSignal(signal));
     const controller = new AbortController();
     const resultPromise = planTranslation(ai, plannerInput({ signal: controller.signal }));
     controller.abort();
-    const result = await resultPromise;
-    expect(result).toEqual({ status: 'unavailable' });
+    await expect(resultPromise).rejects.toMatchObject({ name: 'AbortError' });
     expect(calls).toHaveLength(1);
     expect((calls[0].options?.signal as AbortSignal).aborted).toBe(true);
+  });
+
+  it('rejects with AbortError when the caller signal is already aborted before the call', async () => {
+    const { ai, calls } = fakeAi(async (signal) => pendingUntilSignal(signal));
+    const controller = new AbortController();
+    controller.abort();
+    const resultPromise = planTranslation(ai, plannerInput({ signal: controller.signal }));
+    await expect(resultPromise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(calls).toHaveLength(1);
   });
 
   it('converts a provider error into the failure contract with a single call', async () => {
