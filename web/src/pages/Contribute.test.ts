@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Contribute from './Contribute.vue'
+import { useContributePrefillStore, type ContributePrefill } from '@/stores/contributePrefill'
 
 vi.mock('@/api/client', () => ({
   default: {
@@ -43,15 +44,27 @@ const LanguageLocalePickerStub = {
   },
 }
 
-function mountPage() {
+function mountPage(pinia = createPinia(), setup?: (pinia: ReturnType<typeof createPinia>) => void) {
+  setActivePinia(pinia)
+  setup?.(pinia)
   return mount(Contribute, {
     global: {
-      plugins: [setActivePinia(createPinia())],
+      plugins: [pinia],
       stubs: {
         LanguageLocalePicker: LanguageLocalePickerStub,
       },
     },
   })
+}
+
+const prefillPair: ContributePrefill = {
+  sourceLangCode: 'yue',
+  sourceLocaleCode: 'yue-Hant-CN-x-hegusan',
+  sourceText: 'hello',
+  targetLangCode: 'cmn',
+  targetLocaleCode: 'cmn-Hans',
+  targetText: '你好',
+  aiAssisted: true,
 }
 
 describe('Contribute page with LanguageLocalePicker', () => {
@@ -138,5 +151,63 @@ describe('Contribute page with LanguageLocalePicker', () => {
 
     expect(wrapper.get('[role="alert"]').text()).toContain('DUPLICATE_PAIR')
     expect(mockPush).not.toHaveBeenCalled()
+  })
+})
+
+describe('Contribute page prefill handoff', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPush.mockReset()
+  })
+
+  it('fills row 0 with the source and row 1 with the target, keeping both editable', async () => {
+    const wrapper = mountPage(createPinia(), (pinia) => useContributePrefillStore(pinia).set(prefillPair))
+
+    const rows = (wrapper.vm as any).rows
+    expect(rows[0]).toMatchObject({ lang_code: 'yue', language_locale_code: 'yue-Hant-CN-x-hegusan', text: 'hello' })
+    expect(rows[1]).toMatchObject({ lang_code: 'cmn', language_locale_code: 'cmn-Hans', text: '你好' })
+
+    await wrapper.findAll('input.ex-text')[0].setValue('hi')
+    expect((wrapper.vm as any).rows[0].text).toBe('hi')
+  })
+
+  it('consumes the prefill so a remount without a new set falls back to empty rows', () => {
+    const pinia = createPinia()
+    const store = useContributePrefillStore(pinia)
+    store.set(prefillPair)
+    expect(store.prefill).not.toBeNull()
+
+    mountPage(pinia)
+    expect(store.prefill).toBeNull()
+
+    const remount = mountPage(pinia)
+    const rows = (remount.vm as any).rows
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({ lang_code: '', language_locale_code: '', text: '' })
+    expect(rows[1]).toMatchObject({ lang_code: '', language_locale_code: '', text: '' })
+  })
+
+  it('shows the AI-assisted notice only when the result was AI-assisted', () => {
+    const assisted = mountPage(createPinia(), (pinia) => useContributePrefillStore(pinia).set(prefillPair))
+    expect(assisted.get('.ai-notice').text()).toContain('AI-assisted')
+    expect(assisted.get('.ai-notice').text()).toContain('produced with AI assistance')
+
+    const exact = mountPage(createPinia(), (pinia) => useContributePrefillStore(pinia).set({ ...prefillPair, aiAssisted: false }))
+    expect(exact.find('.ai-notice').exists()).toBe(false)
+  })
+
+  it('never leaks source or translation text into the URL or query string', async () => {
+    const wrapper = mountPage(createPinia(), (pinia) => useContributePrefillStore(pinia).set(prefillPair))
+
+    await wrapper.get('[data-action="submit-contribution"]').trigger('click')
+    await flushPromises()
+
+    expect(mockPush).toHaveBeenCalledWith('/')
+    for (const call of mockPush.mock.calls) {
+      expect(String(call[0])).not.toContain('?')
+      expect(String(call[0])).not.toContain('hello')
+      expect(String(call[0])).not.toContain('你好')
+    }
+    expect(window.location.search).toBe('')
   })
 })
