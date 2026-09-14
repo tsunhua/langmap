@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const { t } = useI18n()
+
+// Only same-origin absolute paths are safe to bounce back to; reject protocol
+// relative (`//host`) and the auth page itself to avoid redirect loops.
+function safeReturnPath(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  if (!value.startsWith('/') || value.startsWith('//')) return null
+  if (value === '/auth' || value.startsWith('/auth/') || value.startsWith('/auth?')) return null
+  return value
+}
 
 const mode = ref<'login' | 'register'>('login')
 const username = ref('')
@@ -25,7 +35,12 @@ async function submit() {
     } else {
       await auth.register(username.value, email.value, password.value)
     }
-    router.push('/')
+    const returnPath = safeReturnPath(route.query.return)
+    if (returnPath) {
+      router.replace(returnPath)
+    } else {
+      router.push('/')
+    }
   } catch (e: any) {
     errorMsg.value = e.response?.data?.message || t('auth.operationFailed')
   } finally {

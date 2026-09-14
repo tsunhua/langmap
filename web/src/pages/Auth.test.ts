@@ -7,18 +7,23 @@ import Auth from './Auth.vue'
 
 vi.mock('@/api/client', () => ({ default: { post: vi.fn(), get: vi.fn() } }))
 
-async function mountPage() {
+async function mountPage(start = '/auth') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: { template: '<p>Home</p>' } },
       { path: '/auth', component: Auth },
+      { path: '/translate', component: { template: '<p>Translate</p>' } },
     ],
   })
-  await router.push('/auth')
+  await router.push(start)
   await router.isReady()
   const wrapper = mount(Auth, { global: { plugins: [createPinia(), router] } })
   return { wrapper, router }
+}
+
+function loginResponse() {
+  return { data: { data: { token: 'token', user: { id: 1, username: 'alice', role: 'user' } } } }
 }
 
 describe('Auth page', () => {
@@ -51,6 +56,30 @@ describe('Auth page', () => {
 
     resolveLogin?.({ data: { data: { token: 'token', user: { id: 1, username: 'alice', role: 'user' } } } })
     await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/')
+  })
+
+  it('returns to the safe internal path from the query after login', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce(loginResponse())
+    const { wrapper, router } = await mountPage('/auth?return=%2Ftranslate')
+    await wrapper.get('#auth-email').setValue('alice@example.com')
+    await wrapper.get('#auth-password').setValue('secret')
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/translate')
+  })
+
+  it('ignores an unsafe return target and goes home', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce(loginResponse())
+    const { wrapper, router } = await mountPage('/auth?return=%2F%2Fevil.example')
+    await wrapper.get('#auth-email').setValue('alice@example.com')
+    await wrapper.get('#auth-password').setValue('secret')
+
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
     expect(router.currentRoute.value.path).toBe('/')
   })
 
