@@ -14,6 +14,7 @@ export const en = {
     skipToContent: 'Skip to main content',
     languages: 'Languages',
     handbooks: 'Handbooks',
+    phraseTranslate: 'Translate',
     searchExpressions: 'Search expressions',
     submitSearch: 'Submit search',
     contribute: 'Contribute',

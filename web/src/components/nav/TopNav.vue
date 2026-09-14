@@ -153,6 +153,7 @@ watch(() => route.path, () => { menuOpen.value = false })
       <nav class="appnav" :aria-label="t('nav.menu')">
         <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
         <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
+        <router-link v-if="auth.user" to="/translate" :class="{ on: route.path === '/translate' }">{{ t('nav.phraseTranslate') }}</router-link>
       </nav>
     </div>
 
@@ -209,6 +210,7 @@ watch(() => route.path, () => { menuOpen.value = false })
         <nav class="drawer-nav" :aria-label="t('nav.menu')">
           <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
           <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
+          <router-link v-if="auth.user" to="/translate" :class="{ on: route.path === '/translate' }">{{ t('nav.phraseTranslate') }}</router-link>
         </nav>
         <div class="drawer-foot">
           <router-link to="/contribute" class="btn btn-primary">
