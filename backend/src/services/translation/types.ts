@@ -1,3 +1,7 @@
+// Single provider model shared by the planner (structured call) and the
+// generative stage, so provider code stays in one place per layer.
+export const TRANSLATION_MODEL = '@cf/zai-org/glm-4.7-flash';
+
 export interface TranslationRequest {
   text: string;
   source_lang_code: string | null;
@@ -118,6 +122,16 @@ export interface PlannerOutput {
   source_confidence: number;
   uncertain_spans: PlannerSpan[];
 }
+
+// Discriminated result of planTranslation; the Task 1.6 orchestrator consumes
+// it directly:
+//   ok                    -> source resolved (user-specified or auto-detected); proceed to retrieval
+//   confirmation_required -> auto-detect fell below the confidence threshold; ask the user, never guess
+//   unavailable           -> source cannot be determined safely; skip retrieval and go model-only
+export type PlannerResult =
+  | { status: 'ok'; output: PlannerOutput }
+  | { status: 'confirmation_required' }
+  | { status: 'unavailable' };
 
 export interface RetrievalOutput {
   items: TranslationEvidence[];
