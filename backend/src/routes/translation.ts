@@ -83,6 +83,13 @@ function payloadTooLarge(c: Context) {
   return c.json({ success: false, error: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' }, 413);
 }
 
+// Spec 8.1: every translation request/response is uncacheable, including the
+// 400/401/404/413 failures produced before the stream exists.
+translation.use('*', async (c, next) => {
+  c.header('Cache-Control', 'no-store');
+  await next();
+});
+
 translation.post('/', requireTranslationAuth, async (c) => {
   const body = await readBoundedBody(c, MAX_TRANSLATION_BODY_BYTES);
   if (!body.ok) return payloadTooLarge(c);
@@ -121,7 +128,9 @@ translation.post('/', requireTranslationAuth, async (c) => {
       }
       if (ENVELOPE_CODES.has(error.code)) return badRequest(c, error.code);
     }
-    return badRequest(c, 'VALIDATION_FAILED');
+    // Only the validators/resolvers are expected to throw TranslationValidationError;
+    // anything else (e.g. a D1 fault) is a server error, not a client error.
+    throw error;
   }
 
   const canonicalText = canonicalizeExpressionText(text);
@@ -165,15 +174,17 @@ translation.post('/', requireTranslationAuth, async (c) => {
     requestId,
   };
 
-  void runTranslation(c.env, request, { signal: controller.signal, emit }).finally(() => {
-    if (closed) return;
-    closed = true;
-    try {
-      streamController?.close();
-    } catch {
-      // Already closed by a client cancel.
-    }
-  });
+  void runTranslation(c.env, request, { signal: controller.signal, emit })
+    .catch(() => controller.abort())
+    .finally(() => {
+      if (closed) return;
+      closed = true;
+      try {
+        streamController?.close();
+      } catch {
+        // Already closed by a client cancel.
+      }
+    });
 
   c.header('Content-Type', 'application/x-ndjson; charset=utf-8');
   c.header('Cache-Control', 'no-store');

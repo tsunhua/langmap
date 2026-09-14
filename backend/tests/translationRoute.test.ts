@@ -105,6 +105,7 @@ describe('POST /translate auth', () => {
     const body = (await response.json()) as { error: string; data?: unknown };
     expect(body.error).toBe('AUTH_REQUIRED');
     expect(JSON.stringify(body)).not.toContain('不需要洩漏的文字');
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(runTranslationMock).not.toHaveBeenCalled();
   });
 });
@@ -157,6 +158,7 @@ describe('POST /translate validation mapping', () => {
     const response = await post({ body: JSON.stringify({ text: 'a'.repeat(501), target_locale_code: 'jpn-Jpan-JP' }) });
     expect(response.status).toBe(400);
     expect(await jsonError(response)).toBe('VALIDATION_FAILED');
+    expect(response.headers.get('cache-control')).toBe('no-store');
   });
 
   it('rejects HTML tags with PLAIN_TEXT_ONLY', async () => {
@@ -194,6 +196,21 @@ describe('POST /translate validation mapping', () => {
     const response = await post({ body: JSON.stringify({ text: '你好', target_locale_code: 'xxx-Yyy-ZZ' }) });
     expect(response.status).toBe(404);
     expect(await jsonError(response)).toBe('TARGET_LOCALE_NOT_FOUND');
+  });
+
+  it('does not mask a server-side fault as VALIDATION_FAILED', async () => {
+    const db = fakeD1({
+      [LANG_SQL]: () => {
+        throw new Error('D1 unavailable');
+      },
+    });
+    const response = await post({
+      db,
+      body: JSON.stringify({ text: '你好', source_lang_code: 'nan', target_locale_code: 'jpn-Jpan-JP' }),
+    });
+    expect(response.status).toBe(500);
+    expect(response.status).not.toBe(400);
+    expect(runTranslationMock).not.toHaveBeenCalled();
   });
 });
 
