@@ -381,3 +381,7 @@
 - [ ] **首個 `status` 事件改由 orchestrator 發送**：spec §9.1.4 與 plan Task 1.7 原述「route 送首個 status」，實作改由 orchestrator 依 exact/assisted 決定並送（避免 route 需先探測快徑）。行為仍滿足「首事件為 status 且盡早送出」，但需同步 spec/plan 敘述。
 - [ ] **整合測試（實機 worker）未於本環境執行**：AI binding 為 remote session，`wrangler dev` 在無 `CLOUDFLARE_API_TOKEN` 的非互動環境無法啟動，導致所有整合測試（含既有 auth/users smoke）無法跑；`translationIntegration.test.ts` 已撰寫但待在具 token 的環境執行。單元測試（含 route/orchestrator 等 143+）全數通過。
 - [ ] **次要清理**：`utils/response.ts` 的 `notFoundCode` 參數語意易誤用（跨路由既有問題）；`RELATION_MASK` 等常數在 `exactMatch.ts`/`retrieval.ts` 重複；orchestrator `RunTranslationRequest.sourceLocaleCode` 目前未被消費。
+- [ ] **精確匹配結果的貢獻按鈕**（前端，spec §6.3.5）：使用者裁示依 spec「預設不提供重複貢獻按鈕」實作，`resolution=exact_lookup` 時隱藏「送入貢獻」；spec 另一半「使用者改寫主要譯文後仍可進入貢獻流程」的可編輯譯文 UI 未實作，列為 follow-up（需在 `TranslationResult` 增加譯文編輯與 rewrite 狀態）。
+- [ ] **Contribute prefill 形狀擴充**：plan Task 2.7 原列 `{ source_locale_code?, lang_code, text, aiAssisted }` 僅一側端點，無法建立兩列 mapping；實作擴充為同時帶 source/target 兩端點的 `{ sourceLangCode, sourceLocaleCode, sourceText, targetLangCode, targetLocaleCode, targetText, aiAssisted }`。需回填 plan。
+- [ ] **前端施工順序調整**：Task 2.7（contribute prefill store）提前於 Task 2.5（頁面）執行，因頁面的「送入貢獻」需要該 store；Task 2.5 亦順帶修改 `Auth.vue` 支援登入後 `return` 回跳（plan Task 2.5 Files 未列但為 guard 所需）。
+- [ ] **手動 viewport 與鍵盤檢查**（spec §7.2、§13.2）：375/768/1024/1440 與完整鍵盤流程未由 agent 實機檢查，待人工驗收。

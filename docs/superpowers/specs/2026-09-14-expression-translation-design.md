@@ -348,3 +348,5 @@ Vitest/Worker runtime 測試至少覆蓋：
 - 首個 `status` 事件由 orchestrator 發送（§9.1.4 原述 route），行為仍滿足首事件為 status。
 - Quota（§9.6）本版未實作；route 保留計數點。
 - 整合測試（實機 worker）在無 `CLOUDFLARE_API_TOKEN` 的環境無法執行。
+- §6.3.5 精確匹配預設隱藏「送入貢獻」已實作；「使用者改寫主要譯文後仍可進入貢獻流程」的可編輯譯文 UI 未實作（follow-up）。
+- Task 2.7 的 contribute prefill 形狀擴充為同時帶來源與目標兩端點（plan 原形狀僅一側，無法建立 mapping）。
