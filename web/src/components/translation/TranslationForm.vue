@@ -32,11 +32,16 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const summary = ref<HTMLElement>()
-// Dirtiness gates the error summary so an untouched empty form stays quiet.
-const dirty = ref(false)
+const interacted = ref(false)
+// The summary is only announced after an invalid submit, so a live region does
+// not fire on every keystroke.
+const submitAttempted = ref(false)
+
+const textErrorId = 'translation-text-error'
+const targetErrorId = 'translation-target-error'
 
 function update(patch: Partial<TranslationFormValue>) {
-  dirty.value = true
+  interacted.value = true
   emit('update:modelValue', { ...props.modelValue, ...patch })
 }
 
@@ -56,7 +61,14 @@ const textInvalid = computed(() => textEmpty.value || textTooLong.value)
 const canSubmit = computed(() => !props.disabled && !textInvalid.value && !targetEmpty.value)
 
 const showSummary = computed(() =>
-  Boolean(props.error) || (dirty.value && (textInvalid.value || targetEmpty.value)),
+  Boolean(props.error) || (submitAttempted.value && (textInvalid.value || targetEmpty.value)),
+)
+const showTextError = computed(() =>
+  textTooLong.value || (textEmpty.value && (interacted.value || submitAttempted.value)),
+)
+const showTargetError = computed(() => targetEmpty.value && (interacted.value || submitAttempted.value))
+const textDescribedBy = computed(() =>
+  showTextError.value ? 'translation-text-count translation-text-error' : 'translation-text-count',
 )
 
 function onText(value: string) {
@@ -77,7 +89,7 @@ function focusSummary() {
 
 function onSubmit() {
   if (!canSubmit.value) {
-    dirty.value = true
+    submitAttempted.value = true
     focusSummary()
     return
   }
@@ -110,7 +122,13 @@ function onSubmit() {
         </button>
       </div>
 
-      <div class="field target-field">
+      <div
+        class="field target-field"
+        role="group"
+        :aria-label="t('phraseTranslate.targetLocale')"
+        :aria-invalid="targetEmpty"
+        :aria-describedby="showTargetError ? targetErrorId : undefined"
+      >
         <LanguageLocalePicker
           :model-value="targetLocale"
           :label="t('phraseTranslate.targetLocale')"
@@ -118,7 +136,7 @@ function onSubmit() {
           :allow-create="false"
           @update:model-value="onTargetLocale"
         />
-        <p v-if="dirty && targetEmpty" class="field-error" role="alert">
+        <p v-if="showTargetError" :id="targetErrorId" class="field-error">
           {{ t('phraseTranslate.errorTargetLocale') }}
         </p>
       </div>
@@ -132,19 +150,23 @@ function onSubmit() {
         :value="props.modelValue.text"
         :placeholder="t('phraseTranslate.textPlaceholder')"
         :aria-invalid="textInvalid"
-        aria-describedby="translation-text-count"
+        :aria-describedby="textDescribedBy"
         @input="onText(($event.target as HTMLTextAreaElement).value)"
       />
       <div class="text-meta">
-        <p
-          id="translation-text-count"
-          class="grapheme-count"
-          :class="{ over: textTooLong }"
-          aria-live="polite"
-        >
+        <p id="translation-text-count" class="grapheme-count" :class="{ over: textTooLong }">
           {{ t('phraseTranslate.graphemeCount', { count: graphemeCount, max: MAX_TRANSLATION_GRAPHEMES }) }}
         </p>
-        <p v-if="dirty && textInvalid" class="field-error" role="alert">
+        <p
+          v-if="textTooLong"
+          :id="textErrorId"
+          class="field-error"
+          role="status"
+          aria-live="polite"
+        >
+          {{ t('phraseTranslate.errorValidation') }}
+        </p>
+        <p v-else-if="showTextError" :id="textErrorId" class="field-error">
           {{ t('phraseTranslate.errorValidation') }}
         </p>
       </div>

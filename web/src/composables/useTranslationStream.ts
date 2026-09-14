@@ -28,6 +28,15 @@ export interface TranslationConfirmation {
   reason: string
 }
 
+// The evidence event carries truncation and degradation alongside the items so
+// the UI can surface them (spec 9.4.8). Keep the bundle nullable: no evidence
+// event has arrived yet.
+export interface TranslationEvidenceState {
+  items: TranslationEvidence[]
+  omittedCount: number
+  degraded: boolean
+}
+
 const STREAM_EVENT_TYPES = new Set<string>([
   'status',
   'source_language',
@@ -109,7 +118,7 @@ export function useTranslationStream() {
   const mode = ref<TranslationMode | null>(null)
   const sourceLanguage = ref<TranslationLanguageCandidate | null>(null)
   const confirmation = ref<TranslationConfirmation | null>(null)
-  const evidence = ref<TranslationEvidence[]>([])
+  const evidence = ref<TranslationEvidenceState | null>(null)
   const translation = ref('')
   const alternatives = ref<string[]>([])
   const result = ref<TranslationResult | null>(null)
@@ -127,7 +136,7 @@ export function useTranslationStream() {
     mode.value = null
     sourceLanguage.value = null
     confirmation.value = null
-    evidence.value = []
+    evidence.value = null
     translation.value = ''
     alternatives.value = []
     result.value = null
@@ -156,7 +165,11 @@ export function useTranslationStream() {
         confirmation.value = { candidates: event.candidates, reason: event.reason }
         return true
       case 'evidence':
-        evidence.value = event.items
+        evidence.value = {
+          items: event.items,
+          omittedCount: event.omitted_count ?? 0,
+          degraded: event.degraded ?? false,
+        }
         return false
       case 'translation_delta':
         translation.value += event.text

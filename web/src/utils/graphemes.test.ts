@@ -34,8 +34,10 @@ describe('graphemes', () => {
     expect(utf8ByteLength('👍')).toBe(4)
   })
 
-  it('exposes limits that mirror the backend', () => {
-    expect(MAX_TRANSLATION_GRAPHEMES).toBe(500)
-    expect(MAX_TRANSLATION_TEXT_BYTES).toBe(8192)
+  it('marks 500 graphemes and 8192 bytes as the limits', () => {
+    expect(MAX_TRANSLATION_GRAPHEMES).toBe(countGraphemes('a'.repeat(500)))
+    expect(countGraphemes('a'.repeat(501))).toBe(501)
+    expect(MAX_TRANSLATION_TEXT_BYTES).toBe(utf8ByteLength('a'.repeat(8192)))
+    expect(utf8ByteLength('a'.repeat(8193))).toBe(8193)
   })
 })

@@ -8,7 +8,6 @@ const props = defineProps<{
   translation: string
   result: TranslationResultData | null
   alternatives: string[]
-  isStreaming: boolean
 }>()
 
 const emit = defineEmits<{
@@ -21,11 +20,16 @@ const { t } = useI18n()
 const copied = ref(false)
 let copiedTimer: ReturnType<typeof setTimeout> | undefined
 
-const isExact = computed(() => props.result?.resolution === 'exact_lookup')
-const isModelOnly = computed(() => props.result?.model_only === true)
-const isAiAssisted = computed(() =>
-  props.result != null && !props.result.model_only && props.result.resolution === 'assisted',
-)
+type ResultStatus = 'exact' | 'model_only' | 'assisted'
+
+// One status per result: an exact lookup wins over a (contradictory) model_only
+// flag so the two badges can never render together.
+const status = computed<ResultStatus | null>(() => {
+  if (!props.result) return null
+  if (props.result.resolution === 'exact_lookup') return 'exact'
+  if (props.result.model_only) return 'model_only'
+  return 'assisted'
+})
 const shownAlternatives = computed(() => props.alternatives.slice(0, 2))
 
 async function copy() {
@@ -59,10 +63,10 @@ onUnmounted(() => {
     <h3 class="result-heading">{{ t('phraseTranslate.resultHeading') }}</h3>
     <p class="translation">{{ translation }}</p>
 
-    <p v-if="isExact || isModelOnly || isAiAssisted" class="result-status">
-      <span v-if="isExact" class="badge">{{ t('phraseTranslate.exactMatch') }}</span>
-      <span v-else-if="isModelOnly" class="badge">{{ t('phraseTranslate.modelOnly') }}</span>
-      <span v-if="isAiAssisted" class="badge badge-ai">{{ t('phraseTranslate.aiAssistedBadge') }}</span>
+    <p v-if="status" class="result-status">
+      <span v-if="status === 'exact'" class="badge">{{ t('phraseTranslate.exactMatch') }}</span>
+      <span v-else-if="status === 'model_only'" class="badge">{{ t('phraseTranslate.modelOnly') }}</span>
+      <span v-else class="badge badge-ai">{{ t('phraseTranslate.aiAssistedBadge') }}</span>
     </p>
 
     <div v-if="shownAlternatives.length" class="alternatives">

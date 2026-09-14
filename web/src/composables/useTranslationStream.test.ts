@@ -134,12 +134,23 @@ describe('useTranslationStream', () => {
     expect(stream.stage.value).toBe('generating')
     expect(stream.mode.value).toBe('assisted')
     expect(stream.sourceLanguage.value).toEqual({ code: 'nan', confidence: 0.87 })
-    expect(stream.evidence.value).toEqual([evidence])
+    expect(stream.evidence.value).toEqual({ items: [evidence], omittedCount: 0, degraded: false })
     expect(stream.translation.value).toBe('吃飯')
     expect(stream.result.value?.translation).toBe('吃飯')
     expect(stream.result.value?.resolution).toBe('assisted')
     expect(stream.error.value).toBeNull()
     expect(stream.isStreaming.value).toBe(false)
+  })
+
+  it('carries evidence truncation and degraded metadata', async () => {
+    stubFetch().mockResolvedValue(streamResponse([
+      line({ type: 'evidence', items: [evidence], omitted_count: 7, degraded: true }),
+    ]))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.evidence.value).toEqual({ items: [evidence], omittedCount: 7, degraded: true })
   })
 
   it('uses the result translation for exact lookups that stream no deltas', async () => {
@@ -393,7 +404,7 @@ describe('useTranslationStream', () => {
     expect(stream.translation.value).toBe('')
     expect(stream.result.value).toBeNull()
     expect(stream.error.value).toBeNull()
-    expect(stream.evidence.value).toEqual([])
+    expect(stream.evidence.value).toBeNull()
     expect(stream.stage.value).toBeNull()
     expect(stream.isStreaming.value).toBe(false)
   })

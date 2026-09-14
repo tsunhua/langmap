@@ -19,7 +19,7 @@ function makeResult(patch: Partial<TranslationResultData> = {}): TranslationResu
 
 function mountResult(overrides: Record<string, unknown> = {}) {
   return mount(TranslationResult, {
-    props: { translation: 'Hallo', result: null, alternatives: [], isStreaming: false, ...overrides },
+    props: { translation: 'Hallo', result: null, alternatives: [], ...overrides },
   })
 }
 
@@ -29,6 +29,13 @@ describe('TranslationResult', () => {
     expect(wrapper.text()).toContain('Exact match')
     expect(wrapper.text()).not.toContain('AI-assisted')
     expect(wrapper.text()).not.toContain('Model-generated only')
+  })
+
+  it('keeps exact and model-only status mutually exclusive', () => {
+    const wrapper = mountResult({ result: makeResult({ resolution: 'exact_lookup', model_only: true }) })
+    expect(wrapper.text()).toContain('Exact match')
+    expect(wrapper.text()).not.toContain('Model-generated only')
+    expect(wrapper.text()).not.toContain('AI-assisted')
   })
 
   it('shows the model-only status', () => {

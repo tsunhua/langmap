@@ -49,6 +49,14 @@ describe('EvidenceList', () => {
     expect(wrapper.text()).toContain('No references found')
   })
 
+  it('reports how many evidence items were omitted', () => {
+    const withOmitted = mount(EvidenceList, { props: { items: [direct], omittedCount: 3 } })
+    expect(withOmitted.text()).toContain('3 more not shown')
+
+    const noneOmitted = mount(EvidenceList, { props: { items: [direct], omittedCount: 0 } })
+    expect(noneOmitted.text()).not.toContain('more not shown')
+  })
+
   it('never renders internal integer identifiers', () => {
     const withIds = {
       ...direct,

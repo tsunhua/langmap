@@ -40,7 +40,7 @@ function stateOf(stage: TranslationStage): 'done' | 'active' | 'pending' {
   <div
     class="translation-progress"
     :role="error ? 'alert' : 'status'"
-    aria-live="polite"
+    :aria-live="error ? 'assertive' : 'polite'"
     :data-stage="stage ?? ''"
   >
     <p v-if="error" class="progress-error">{{ error.message || t('phraseTranslate.errorGeneric') }}</p>

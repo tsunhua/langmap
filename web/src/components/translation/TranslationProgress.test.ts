@@ -35,6 +35,8 @@ describe('TranslationProgress', () => {
   it('renders an alert when the stream fails', () => {
     const wrapper = mountProgress({ error: { message: 'Translation timed out.' } })
     expect(wrapper.find('[role="status"]').exists()).toBe(false)
-    expect(wrapper.get('[role="alert"]').text()).toContain('Translation timed out.')
+    const alert = wrapper.get('[role="alert"]')
+    expect(alert.text()).toContain('Translation timed out.')
+    expect(alert.attributes('aria-live')).toBe('assertive')
   })
 })

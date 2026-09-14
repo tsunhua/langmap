@@ -24,6 +24,9 @@ function pathLabel(item: TranslationEvidence): string {
     </summary>
 
     <p v-if="degraded" class="evidence-degraded">{{ t('phraseTranslate.evidenceDegraded') }}</p>
+    <p v-if="(omittedCount ?? 0) > 0" class="evidence-omitted">
+      {{ t('phraseTranslate.evidenceOmitted', { count: omittedCount }) }}
+    </p>
     <p v-if="!items.length" class="evidence-empty">{{ t('phraseTranslate.evidenceEmpty') }}</p>
 
     <ul v-else class="evidence-items">
@@ -92,6 +95,11 @@ function pathLabel(item: TranslationEvidence): string {
   color: var(--muted);
 }
 .evidence-empty {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.evidence-omitted {
   margin: 6px 0;
   font-size: 12px;
   color: var(--muted);

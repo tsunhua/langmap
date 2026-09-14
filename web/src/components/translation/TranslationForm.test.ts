@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import TranslationForm from './TranslationForm.vue'
+import { countGraphemes, utf8ByteLength } from '@/utils/graphemes'
 
 vi.mock('@/api/languageIdentity', () => ({
   listLanguages: vi.fn().mockResolvedValue({ items: [{ code: 'nan', name_en: 'Min Nan' }], total: 1 }),
@@ -18,6 +20,7 @@ function mountForm(overrides: Record<string, unknown> = {}) {
   return mount(TranslationForm, {
     props: { modelValue: { ...base }, ...overrides },
     global: { plugins: [createPinia()] },
+    attachTo: document.body,
   })
 }
 
@@ -38,11 +41,41 @@ describe('TranslationForm', () => {
     const wrapper = mountForm()
     await wrapper.get('textarea').setValue(long)
     await wrapper.setProps({ modelValue: { ...base, targetLocaleCode: 'nan-Hant-TW', text: long } })
+    await wrapper.get('form').trigger('submit')
+    await nextTick()
 
     expect(wrapper.get('[data-action="submit"]').attributes('disabled')).toBeDefined()
     const summary = wrapper.get('p[role="alert"]')
     expect(summary.text()).toContain('Check the highlighted fields')
     expect(summary.attributes('tabindex')).toBe('-1')
+  })
+
+  it('focuses the error summary on an invalid submit', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('form').trigger('submit')
+    await nextTick()
+    expect(document.activeElement).toBe(wrapper.get('p[role="alert"]').element)
+  })
+
+  it('blocks submit when UTF-8 bytes exceed the limit even under the grapheme cap', async () => {
+    const text = '👨‍👩‍👧‍👦'.repeat(400)
+    expect(countGraphemes(text)).toBeLessThanOrEqual(500)
+    expect(utf8ByteLength(text)).toBeGreaterThan(8192)
+
+    const wrapper = mountForm({ modelValue: { ...base, targetLocaleCode: 'nan-Hant-TW', text } })
+    expect(wrapper.get('[data-action="submit"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('form').trigger('submit')
+    expect(wrapper.emitted('submit')).toBeUndefined()
+  })
+
+  it('ties the target picker error to the control region', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('form').trigger('submit')
+    await nextTick()
+    const field = wrapper.get('.target-field')
+    expect(field.attributes('aria-invalid')).toBe('true')
+    expect(field.attributes('aria-describedby')).toBe('translation-target-error')
+    expect(wrapper.get('#translation-target-error').text()).toContain('target language')
   })
 
   it('blocks submit while the text is empty or the target locale is missing', () => {

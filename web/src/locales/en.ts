@@ -347,6 +347,7 @@ export const en = {
     sendToContribute: 'Send to contribute',
     evidenceHeading: 'Retrieval references',
     evidenceCount: '{count} reference | {count} references',
+    evidenceOmitted: '{count} more not shown',
     evidenceEmpty: 'No references found',
     evidenceDegraded: 'References could not be retrieved in time; the translation is model-generated only.',
     evidencePath: 'Path',
