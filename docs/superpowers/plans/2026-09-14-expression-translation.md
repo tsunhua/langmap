@@ -78,7 +78,7 @@
   - `TranslationResult`（exactMatch 與 generation 共用的主要結果形狀）與各服務的輸入輸出介面（`PlannerOutput`、`RetrievalOutput`、`GenerationOutput`）。
 - 此檔案是所有後端任務的上游契約；後續任務不得各自另立型別名稱。
 
-**驗證:** `cd backend && npx tsc --noEmit` 型別檢查通過（若 repo 有該 script 則以其為準）。
+**驗證:** backend 目前無 `tsconfig.json`/`typescript` dep，`npx tsc --noEmit` 不可行；以檔案語法正確、vitest 相關測試可跑為準（後續 1.x 任務的型別正確性由各任務測試覆蓋）。
 
 **Commit:** `feat: define translation pipeline types`
 
