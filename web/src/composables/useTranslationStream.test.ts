@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
+import { mount } from '@vue/test-utils'
 import type { TranslationEvidence, TranslationRequestInput } from '@/api/translation'
 import { useTranslationStream } from './useTranslationStream'
 
@@ -19,6 +21,18 @@ function streamResponse(chunks: string[]): Response {
     new ReadableStream<Uint8Array>({
       start(controller) {
         for (const chunk of chunks) controller.enqueue(encoder.encode(chunk))
+        controller.close()
+      },
+    }),
+    { status: 200, headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8' } },
+  )
+}
+
+function bytesResponse(chunks: Uint8Array[]): Response {
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(chunk)
         controller.close()
       },
     }),
@@ -160,6 +174,47 @@ describe('useTranslationStream', () => {
     expect(stream.translation.value).toBe('你好')
   })
 
+  it('stitches a multibyte UTF-8 character split across byte chunks', async () => {
+    const payload = encoder.encode(line({ type: 'translation_delta', text: '食飯' }))
+    const lead = payload.indexOf(0xe9)
+    expect(lead).toBeGreaterThanOrEqual(0)
+    const split = lead + 1
+    stubFetch().mockResolvedValue(bytesResponse([payload.slice(0, split), payload.slice(split)]))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.translation.value).toBe('食飯')
+  })
+
+  it('parses a trailing line that has no final newline', async () => {
+    const trailing = JSON.stringify({
+      success: true,
+      data: {
+        type: 'result',
+        translation: '尾',
+        alternatives: [],
+        source_lang_code: 'nan',
+        target_locale_code: 'cmn-Hant-TW',
+        evidence_present: false,
+        model_only: true,
+        resolution: 'assisted',
+        generation_skipped: false,
+        request_id: 'req-tail',
+      },
+    })
+    stubFetch().mockResolvedValue(streamResponse([
+      line({ type: 'translation_delta', text: '尾' }),
+      trailing,
+    ]))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.result.value?.translation).toBe('尾')
+    expect(stream.translation.value).toBe('尾')
+  })
+
   it('ignores events from a stream superseded by a newer submit', async () => {
     const first = controllableResponse()
     const second = controllableResponse()
@@ -203,15 +258,27 @@ describe('useTranslationStream', () => {
 
     expect(stream.translation.value).toBe('')
     expect(stream.result.value).toBeNull()
+    expect(stream.error.value).toBeNull()
   })
 
-  it('surfaces a streamed error envelope with reset_at', async () => {
+  it('does not surface an error when the request is aborted', async () => {
+    stubFetch().mockRejectedValue(new DOMException('Aborted', 'AbortError'))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.error.value).toBeNull()
+    expect(stream.isStreaming.value).toBe(false)
+  })
+
+  it('surfaces a streamed error envelope with retry hints', async () => {
     stubFetch().mockResolvedValue(streamResponse([
       line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-2' }),
       errorLine({
         error: 'AI_DAILY_QUOTA_EXHAUSTED',
         message: 'Workers AI daily quota exhausted.',
         retryable: false,
+        retry_after_seconds: 45,
         reset_at: '2026-09-15T00:00:00.000Z',
       }),
     ]))
@@ -223,8 +290,33 @@ describe('useTranslationStream', () => {
       code: 'AI_DAILY_QUOTA_EXHAUSTED',
       message: 'Workers AI daily quota exhausted.',
       retryable: false,
+      retryAfterSeconds: 45,
       resetAt: '2026-09-15T00:00:00.000Z',
     })
+    expect(stream.retryAfterSeconds.value).toBe(45)
+    expect(stream.resetAt.value).toBe('2026-09-15T00:00:00.000Z')
+    expect(stream.isStreaming.value).toBe(false)
+  })
+
+  it('surfaces an in-stream error event with retry hints', async () => {
+    stubFetch().mockResolvedValue(streamResponse([
+      line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-5' }),
+      line({
+        type: 'error',
+        code: 'TRANSLATION_TIMEOUT',
+        retryable: true,
+        retry_after_seconds: 30,
+        reset_at: '2026-09-15T00:00:00.000Z',
+      }),
+    ]))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.error.value?.code).toBe('TRANSLATION_TIMEOUT')
+    expect(stream.error.value?.retryable).toBe(true)
+    expect(stream.retryAfterSeconds.value).toBe(30)
+    expect(stream.resetAt.value).toBe('2026-09-15T00:00:00.000Z')
     expect(stream.isStreaming.value).toBe(false)
   })
 
@@ -304,5 +396,32 @@ describe('useTranslationStream', () => {
     expect(stream.evidence.value).toEqual([])
     expect(stream.stage.value).toBeNull()
     expect(stream.isStreaming.value).toBe(false)
+  })
+
+  it('aborts the active request when the component unmounts', async () => {
+    const active = controllableResponse()
+    const fetchMock = stubFetch()
+    fetchMock.mockResolvedValue(active.response)
+
+    let stream!: ReturnType<typeof useTranslationStream>
+    const wrapper = mount(defineComponent({
+      setup() {
+        stream = useTranslationStream()
+        return () => h('div')
+      },
+    }))
+
+    const run = stream.submit(input)
+    await flush()
+    const signal = fetchMock.mock.calls[0][1]?.signal as AbortSignal
+
+    wrapper.unmount()
+
+    expect(signal.aborted).toBe(true)
+    expect(stream.isStreaming.value).toBe(false)
+
+    active.close()
+    await run
+    expect(stream.error.value).toBeNull()
   })
 })

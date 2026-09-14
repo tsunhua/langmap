@@ -1,12 +1,17 @@
-import { ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import {
   postTranslation,
+  type TranslationErrorEnvelope,
+  type TranslationErrorEvent,
   type TranslationEvidence,
   type TranslationLanguageCandidate,
   type TranslationMode,
   type TranslationRequestInput,
   type TranslationResult,
+  type TranslationResultEvent,
   type TranslationStage,
+  type TranslationStreamEvent,
+  type TranslationSuccessEnvelope,
 } from '@/api/translation'
 import { useLatestRequest } from './useLatestRequest'
 
@@ -14,12 +19,8 @@ export interface TranslationStreamError {
   code: string
   message: string
   retryable: boolean
+  retryAfterSeconds?: number
   resetAt?: string
-}
-
-export interface TranslationSourceLanguage {
-  code: string
-  confidence: number
 }
 
 export interface TranslationConfirmation {
@@ -27,9 +28,17 @@ export interface TranslationConfirmation {
   reason: string
 }
 
-type JsonRecord = Record<string, unknown>
+const STREAM_EVENT_TYPES = new Set<string>([
+  'status',
+  'source_language',
+  'source_confirmation_required',
+  'evidence',
+  'translation_delta',
+  'result',
+  'error',
+])
 
-function isRecord(value: unknown): value is JsonRecord {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
@@ -37,77 +46,59 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
 }
 
-function asNumber(value: unknown, fallback = 0): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+function isTranslationStreamEvent(value: unknown): value is TranslationStreamEvent {
+  return isRecord(value) && typeof value.type === 'string' && STREAM_EVENT_TYPES.has(value.type)
 }
 
-function asStage(value: unknown): TranslationStage | null {
-  return value === 'analyzing' || value === 'retrieving' || value === 'generating' ? value : null
+function isTranslationErrorEnvelope(value: unknown): value is TranslationErrorEnvelope {
+  return isRecord(value) && value.success === false && typeof value.error === 'string'
 }
 
-function asMode(value: unknown): TranslationMode | null {
-  return value === 'exact_lookup' || value === 'assisted' ? value : null
+function isTranslationSuccessEnvelope(value: unknown): value is TranslationSuccessEnvelope {
+  return isRecord(value) && value.success === true && isTranslationStreamEvent(value.data)
 }
 
-function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  const out: string[] = []
-  for (const item of value as unknown[]) {
-    if (typeof item === 'string') out.push(item)
-  }
-  return out
+function isAbortError(cause: unknown): boolean {
+  return isRecord(cause) && cause.name === 'AbortError'
 }
 
-function asCandidates(value: unknown): TranslationLanguageCandidate[] {
-  if (!Array.isArray(value)) return []
-  return (value as unknown[]).filter(isRecord).map((item) => ({
-    code: asString(item.code),
-    confidence: asNumber(item.confidence),
-  }))
-}
-
-function asEvidenceItems(value: unknown): TranslationEvidence[] {
-  if (!Array.isArray(value)) return []
-  return (value as unknown[]).filter(isRecord).map((item) => {
-    const evidence: TranslationEvidence = {
-      source_text: asString(item.source_text),
-      target_text: asString(item.target_text),
-      target_locale_code: asString(item.target_locale_code),
-      path_type: item.path_type === 'two_hop' ? 'two_hop' : 'direct',
-      match_type: item.match_type === 'prefix' ? 'prefix' : 'exact',
-      source_markers: asStringArray(item.source_markers),
-    }
-    if (typeof item.pivot_lang_code === 'string') evidence.pivot_lang_code = item.pivot_lang_code
-    return evidence
-  })
-}
-
-function asResult(event: JsonRecord): TranslationResult {
-  return {
-    translation: asString(event.translation),
-    alternatives: asStringArray(event.alternatives),
-    source_lang_code: typeof event.source_lang_code === 'string' ? event.source_lang_code : null,
-    target_locale_code: asString(event.target_locale_code),
-    evidence_present: event.evidence_present === true,
-    model_only: event.model_only === true,
-    resolution: event.resolution === 'exact_lookup' ? 'exact_lookup' : 'assisted',
-    generation_skipped: event.generation_skipped === true,
-  }
-}
-
-function asError(event: JsonRecord): TranslationStreamError {
-  // The NDJSON error event carries `code`, but the shared envelope uses `error`.
+function errorFromEvent(event: TranslationErrorEvent): TranslationStreamError {
   const error: TranslationStreamError = {
-    code: asString(event.code, asString(event.error, 'TRANSLATION_FAILED')),
-    message: asString(event.message),
-    retryable: event.retryable === true,
+    code: event.code,
+    message: '',
+    retryable: event.retryable,
+  }
+  if (typeof event.retry_after_seconds === 'number') {
+    error.retryAfterSeconds = event.retry_after_seconds
   }
   if (typeof event.reset_at === 'string') error.resetAt = event.reset_at
   return error
 }
 
-function isAbortError(cause: unknown): boolean {
-  return isRecord(cause) && cause.name === 'AbortError'
+function errorFromEnvelope(envelope: TranslationErrorEnvelope): TranslationStreamError {
+  const error: TranslationStreamError = {
+    code: envelope.error,
+    message: asString(envelope.message),
+    retryable: envelope.retryable === true,
+  }
+  if (typeof envelope.retry_after_seconds === 'number') {
+    error.retryAfterSeconds = envelope.retry_after_seconds
+  }
+  if (typeof envelope.reset_at === 'string') error.resetAt = envelope.reset_at
+  return error
+}
+
+function resultFromEvent(event: TranslationResultEvent): TranslationResult {
+  return {
+    translation: event.translation,
+    alternatives: event.alternatives,
+    source_lang_code: event.source_lang_code,
+    target_locale_code: event.target_locale_code,
+    evidence_present: event.evidence_present,
+    model_only: event.model_only,
+    resolution: event.resolution,
+    generation_skipped: event.generation_skipped,
+  }
 }
 
 export function useTranslationStream() {
@@ -116,7 +107,7 @@ export function useTranslationStream() {
   const requestId = ref<string | null>(null)
   const stage = ref<TranslationStage | null>(null)
   const mode = ref<TranslationMode | null>(null)
-  const sourceLanguage = ref<TranslationSourceLanguage | null>(null)
+  const sourceLanguage = ref<TranslationLanguageCandidate | null>(null)
   const confirmation = ref<TranslationConfirmation | null>(null)
   const evidence = ref<TranslationEvidence[]>([])
   const translation = ref('')
@@ -124,6 +115,9 @@ export function useTranslationStream() {
   const result = ref<TranslationResult | null>(null)
   const error = ref<TranslationStreamError | null>(null)
   const isStreaming = ref(false)
+
+  const resetAt = computed(() => error.value?.resetAt ?? null)
+  const retryAfterSeconds = computed(() => error.value?.retryAfterSeconds ?? null)
 
   let activeController: AbortController | null = null
 
@@ -147,47 +141,36 @@ export function useTranslationStream() {
   }
 
   // Returns true when the event ends the stream (result, error, confirmation).
-  function applyEvent(event: JsonRecord): boolean {
-    switch (asString(event.type)) {
-      case 'status': {
-        const nextStage = asStage(event.stage)
-        const nextMode = asMode(event.mode)
-        if (nextStage) stage.value = nextStage
-        if (nextMode) mode.value = nextMode
-        if (typeof event.request_id === 'string') requestId.value = event.request_id
+  // Typing against the exported union makes exhaustiveness catch contract drift.
+  function applyEvent(event: TranslationStreamEvent): boolean {
+    switch (event.type) {
+      case 'status':
+        stage.value = event.stage
+        mode.value = event.mode
+        requestId.value = event.request_id
         return false
-      }
       case 'source_language':
-        sourceLanguage.value = {
-          code: asString(event.code),
-          confidence: asNumber(event.confidence),
-        }
+        sourceLanguage.value = { code: event.code, confidence: event.confidence }
         return false
       case 'source_confirmation_required':
-        confirmation.value = {
-          candidates: asCandidates(event.candidates),
-          reason: asString(event.reason),
-        }
+        confirmation.value = { candidates: event.candidates, reason: event.reason }
         return true
       case 'evidence':
-        evidence.value = asEvidenceItems(event.items)
+        evidence.value = event.items
         return false
       case 'translation_delta':
-        translation.value += asString(event.text)
+        translation.value += event.text
         return false
       case 'result': {
-        const completed = asResult(event)
+        const completed = resultFromEvent(event)
         result.value = completed
         translation.value = completed.translation
         alternatives.value = completed.alternatives
         return true
       }
       case 'error':
-        error.value = asError(event)
+        error.value = errorFromEvent(event)
         return true
-      default:
-        // Unknown types are ignored so newer server events cannot break old clients.
-        return false
     }
   }
 
@@ -200,13 +183,12 @@ export function useTranslationStream() {
     } catch {
       return false
     }
-    if (!isRecord(parsed)) return false
-    if (parsed.success === false) {
-      error.value = asError(parsed)
+    if (isTranslationErrorEnvelope(parsed)) {
+      error.value = errorFromEnvelope(parsed)
       return true
     }
-    if (parsed.success !== true) return false
-    return isRecord(parsed.data) ? applyEvent(parsed.data) : false
+    if (isTranslationSuccessEnvelope(parsed)) return applyEvent(parsed.data)
+    return false
   }
 
   async function readErrorEnvelope(response: Response): Promise<TranslationStreamError> {
@@ -216,7 +198,7 @@ export function useTranslationStream() {
     } catch {
       parsed = null
     }
-    if (isRecord(parsed) && parsed.success === false) return asError(parsed)
+    if (isTranslationErrorEnvelope(parsed)) return errorFromEnvelope(parsed)
     return {
       code: `HTTP_${response.status}`,
       message: response.statusText || 'Translation request failed.',
@@ -286,6 +268,7 @@ export function useTranslationStream() {
             newlineIndex = buffer.indexOf('\n')
           }
         }
+        // Flush a final line the server sent without a trailing newline.
         if (!terminated) {
           buffer += decoder.decode()
           if (buffer.trim()) terminated = applyEnvelope(buffer)
@@ -320,6 +303,13 @@ export function useTranslationStream() {
     isStreaming.value = false
   }
 
+  onUnmounted(() => {
+    abortActive()
+    isStreaming.value = false
+    // Cancel any in-flight generation so the server stops working after teardown.
+    latest.begin()
+  })
+
   return {
     requestId,
     stage,
@@ -331,6 +321,8 @@ export function useTranslationStream() {
     alternatives,
     result,
     error,
+    resetAt,
+    retryAfterSeconds,
     isStreaming,
     submit,
     cancel,
