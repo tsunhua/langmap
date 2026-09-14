@@ -32,10 +32,11 @@
 
 - SQL：release workspace 中產生的 `016-arabic-surface-20260914.split.sql`（不提交至 repository）
 - manifest：`scripts/db/state/backup/delta/016-arabic-surface-20260914.manifest.json`
-- delta SHA-256：`542fd92b490bb2072088381e43ccf2e05bbbc3b22d2513717d98ae4816195160`
-- delta bytes：`132,829,953`（source replace 先移除 source 16 assertion，再寫入自然鍵 rows）。
+- delta SHA-256：`dab9c714d5647a42755206ede8dcfd02d35f1b1912aef843e7b3341ab9a4c6d2`
+- delta bytes：`132,830,089`（source replace 先移除 source 16 assertion，再寫入自然鍵 rows）。
 - expected counts：`expressions=372,686`、`expression_sources=372,809`、`expression_edges=373,431`、`expression_edge_sources=373,431`、`expression_locale_links=372,809`、`expression_readings=101,796`、`language_locales=2`。
 - 生成選項：`--replace --reconcile-shared --remap-managed-handbook`；未匯出 production 全庫。
+- 高成本 reconcile DELETE／UPDATE 與首個 expression insert 以 `-- langmap:batch` 隔離，避免 D1 CPU slice 把多個掃描操作合併到同一個 remote command。
 
 SQL 由下列命令在發布工作區重建；發布前以 manifest 中的 SHA-256 驗證，不依賴 git checkout 中的資料副本：
 
@@ -53,7 +54,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts/dictionary python3 \
   --replace --reconcile-shared --remap-managed-handbook
 ```
 
-127 MB 的 full-replace SQL 是一次性發布產物，不是可審查的程式碼；repository 只保留可重建所需的 manifest、命令與品質證據。
+127 MB 的 full-replace SQL 是一次性發布產物，不是可審查的程式碼；repository 只保留可重建所需的 manifest、命令與品質證據。先前未分隔的版本在 production apply 時觸發 D1 CPU limit 並被 reset，未完成任何 data batch；新版本已增加 batch marker，須以新 SHA 建立新的 managed plan。
 
 ## Production release
 

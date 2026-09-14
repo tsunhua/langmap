@@ -225,15 +225,22 @@ def _write_replace_deletes(handle, *, source_type: str, source_name: str) -> Non
         f" WHERE e.expression_a_id IN {owned} OR e.expression_b_id IN {owned}"
     )
     handle.write("-- Replace mode: drop every row this source owns before re-inserting.\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_edge_sources WHERE source_id = {lookup};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_readings WHERE source_id = {lookup};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_locale_links WHERE expression_id IN {owned};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_edge_sources WHERE edge_id IN ({touching});\n")
+    handle.write("-- langmap:batch\n")
     handle.write(
         f"DELETE FROM expression_edges WHERE expression_a_id IN {owned}"
         f" OR expression_b_id IN {owned};\n"
     )
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_sources WHERE source_id = {lookup};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expressions WHERE source_id = {lookup};\n")
 
 
@@ -264,6 +271,7 @@ def _write_shared_safe_reconcile(
     # Keep an edge when another source attests it or a user vote protects it.
     # The source-edge subquery is evaluated before its source rows are removed.
     handle.write("-- Shared-safe reconcile: remove only this source's assertions.\n")
+    handle.write("-- langmap:batch\n")
     handle.write(
         "DELETE FROM expression_edges "
         f"WHERE id IN ({source_edges}) "
@@ -272,8 +280,11 @@ def _write_shared_safe_reconcile(
         "AND NOT EXISTS (SELECT 1 FROM edge_votes vote "
         "WHERE vote.edge_id=expression_edges.id);\n"
     )
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_edge_sources WHERE source_id = {lookup};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_readings WHERE source_id = {lookup};\n")
+    handle.write("-- langmap:batch\n")
     handle.write(f"DELETE FROM expression_sources WHERE source_id = {lookup};\n")
 
     # Drop locale links and expressions only after every source-owned claim has
@@ -304,14 +315,17 @@ def _write_shared_safe_reconcile(
         "WHERE item.expression_id=expressions.id)"
     )
     handle.write(
+        "-- langmap:batch\n"
         "DELETE FROM expression_locale_links WHERE expression_id IN "
         f"(SELECT e.id FROM expressions e WHERE {removable_subquery});\n"
     )
     handle.write(
+        "-- langmap:batch\n"
         "DELETE FROM expressions WHERE "
         f"{removable_delete};\n"
     )
     handle.write(
+        "-- langmap:batch\n"
         "UPDATE expressions SET source_id=NULL WHERE source_id = "
         f"{lookup};\n"
     )
@@ -549,6 +563,11 @@ def export_source_delta(
                     + f" FROM languages l WHERE l.code={_literal(locale[1])};\n"
                 )
 
+            # Keep the reconcile/delete commands out of the first expression
+            # insert batch.  Subsequent CTE batches can still be grouped by
+            # the managed runner's byte cap.
+            if replace:
+                handle.write("-- langmap:batch\n")
             _write_cte_batches(
                 handle,
                 ("language_code", "text", "homograph_index", "pos_mask", "created_at"),
