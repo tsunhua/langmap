@@ -72,7 +72,9 @@ export interface TranslationStreamDeltaEvent {
 export interface TranslationResult {
   translation: string;
   alternatives: string[];
-  source_lang_code: string;
+  // null when the assisted path cannot establish a source (planner unavailable)
+  // and falls back to model-only generation; never a fabricated code.
+  source_lang_code: string | null;
   target_locale_code: string;
   evidence_present: boolean;
   model_only: boolean;
