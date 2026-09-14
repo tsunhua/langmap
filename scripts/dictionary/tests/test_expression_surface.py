@@ -151,3 +151,4 @@ def test_reports_malformed_surface_and_reading_only_candidates():
     assert surface_errors("”地叫了起来") == ("leading_punctuation",)
     assert surface_errors("’") == ("punctuation_only",)
     assert surface_errors("¿Qué?") == ()
+    assert surface_errors("-backed") == ()

@@ -650,6 +650,14 @@ def surface_errors(value: str) -> tuple[str, ...]:
         and normalized
         and not normalized.startswith("_")
         and normalized[0] not in "¡¿"
+        # Dictionary forms such as ``-backed`` and ``-ish`` are lexical
+        # suffixes, not stray leading punctuation. Keep the marker when it is
+        # directly attached to an alphanumeric surface.
+        and not (
+            normalized[0] in "-‐‑‒–—―"
+            and len(normalized) > 1
+            and normalized[1].isalnum()
+        )
         and unicodedata.category(normalized[0]).startswith("P")
     ):
         errors.append("leading_punctuation")
