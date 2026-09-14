@@ -51,6 +51,8 @@ export async function resolveSourceLanguage(
   db: D1Database,
   input: Pick<TranslationRequest, 'source_lang_code' | 'source_locale_code'>,
 ): Promise<SourceLanguageResolution> {
+  if (input.source_lang_code !== null && typeof input.source_lang_code !== 'string') throw new TranslationValidationError('INVALID_LANG_CODE');
+  if (input.source_locale_code !== null && typeof input.source_locale_code !== 'string') throw new TranslationValidationError('INVALID_LANGUAGE_LOCALE_CODE');
   if (input.source_lang_code === null && input.source_locale_code === null) {
     return { source_lang_code: null, source_language_id: null };
   }
@@ -74,6 +76,7 @@ export interface TargetLocaleResolution {
 }
 
 export async function resolveTargetLocale(db: D1Database, target_locale_code: string): Promise<TargetLocaleResolution> {
+  if (typeof target_locale_code !== 'string') throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
   const locale = await db.prepare(LOCALE_SQL).bind(target_locale_code).first<{ id: number; language_id: number }>();
   if (!locale) throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
   return { locale_id: locale.id, language_id: locale.language_id };
