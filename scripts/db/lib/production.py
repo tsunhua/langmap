@@ -22,10 +22,13 @@ class ProductionInventoryError(RuntimeError):
     pass
 
 
-# Keep each remote SQL command well below D1's API statement-size ceiling. A
-# larger grouping can be accepted by Wrangler locally but rejected remotely as
-# ``SQLITE_TOOBIG`` before SQLite starts executing the transaction.
-SPLIT_SQL_BATCH_BYTES = 64 * 1024
+# D1 limits each individual SQL statement to 100 KB, while a remote command
+# may contain multiple statements.  Keep the generated statements below that
+# limit in the exporter, and group several of them per request to avoid one
+# network round trip per small statement.  The 512 KB request envelope remains
+# well below Wrangler/API payload limits and is still split at statement
+# boundaries.
+SPLIT_SQL_BATCH_BYTES = 512 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
     "sources",
