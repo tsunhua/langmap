@@ -259,6 +259,7 @@ def _write_shared_safe_reconcile(
     source_type: str,
     source_name: str,
     id_range_stop: int = RECONCILE_ID_RANGE_STOP,
+    preserve_reconciled_expressions: bool = False,
 ) -> None:
     """Remove one source's assertions without deleting shared graph data.
 
@@ -269,7 +270,11 @@ def _write_shared_safe_reconcile(
     source's ownership rows, deletes an edge only when this source was its sole
     source attestation (and no vote protects it), and leaves shared/orphaned
     expressions in place.  Fresh rows emitted later in the delta can then
-    re-attach the corrected source facts by natural key.
+    re-attach the corrected source facts by natural key.  The optional
+    ``preserve_reconciled_expressions`` mode keeps even removable parent rows
+    when a production D1 foreign-key scan would exceed its CPU budget; their
+    source claims and graph reachability are still removed, so a later indexed
+    orphan cleanup can delete them safely.
     """
 
     lookup = (
@@ -347,7 +352,8 @@ def _write_shared_safe_reconcile(
             "DELETE FROM expression_locale_links WHERE expression_id IN "
             f"(SELECT e.id FROM expressions e WHERE {removable_subquery});\n"
         )
-        handle.write(f"DELETE FROM expressions WHERE {removable_delete};\n")
+        if not preserve_reconciled_expressions:
+            handle.write(f"DELETE FROM expressions WHERE {removable_delete};\n")
         handle.write(
             "UPDATE expressions SET source_id=NULL "
             f"WHERE id >= {range_start} AND id < {range_end} "
@@ -368,6 +374,7 @@ def export_source_delta(
     replace: bool = False,
     reconcile_shared: bool = False,
     reconcile_id_range_stop: int = RECONCILE_ID_RANGE_STOP,
+    preserve_reconciled_expressions: bool = False,
     skip_edge_annotation_updates: bool = False,
     remap_managed_handbook: bool = False,
 ) -> dict[str, int]:
@@ -571,6 +578,7 @@ def export_source_delta(
                         source_type=source_type,
                         source_name=source_name,
                         id_range_stop=reconcile_id_range_stop,
+                        preserve_reconciled_expressions=preserve_reconciled_expressions,
                     )
                 else:
                     _write_replace_deletes(
@@ -715,6 +723,7 @@ def export_source_delta(
                 "replace": replace,
                 "reconcile_shared": reconcile_shared,
                 "reconcile_id_range_stop": reconcile_id_range_stop,
+                "preserve_reconciled_expressions": preserve_reconciled_expressions,
                 "skip_edge_annotation_updates": skip_edge_annotation_updates,
                 "delta_sha256": _sha256(output),
             }
@@ -754,6 +763,11 @@ def main(argv: list[str] | None = None) -> int:
         help="exclusive integer ID bound for bounded shared-reconcile deletes (default: 10000000)",
     )
     parser.add_argument(
+        "--preserve-reconciled-expressions",
+        action="store_true",
+        help="with shared reconcile, keep source-less parent expressions after child claims are removed; useful when D1 foreign-key scans exceed the CPU limit",
+    )
+    parser.add_argument(
         "--skip-edge-annotation-updates",
         action="store_true",
         help="omit source-scoped edge annotation UPDATE statements for a faster lexical repair release",
@@ -781,6 +795,7 @@ def main(argv: list[str] | None = None) -> int:
             replace=args.replace,
             reconcile_shared=args.reconcile_shared,
             reconcile_id_range_stop=args.reconcile_id_range_stop,
+            preserve_reconciled_expressions=args.preserve_reconciled_expressions,
             skip_edge_annotation_updates=args.skip_edge_annotation_updates,
             remap_managed_handbook=args.remap_managed_handbook,
         )
