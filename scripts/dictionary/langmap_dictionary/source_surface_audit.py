@@ -288,10 +288,15 @@ def compiled_audit_file(
         if not isinstance(entry, dict) or entry.get("record_type") != "entry":
             continue
         entry_key = str(entry.get("entry_key", ""))
+        documented_symbol_headword = (
+            "documented_symbol_headword" in entry.get("diagnostics", [])
+        )
         for field, value in _surface_values(entry):
             values += 1
             alternatives, _readings, _annotation = prepare_expression_value(value)
             raw_errors = surface_errors(value)
+            if documented_symbol_headword and field == "canonical_headword":
+                raw_errors = tuple(error for error in raw_errors if error != "punctuation_only")
             alternatives = tuple(alternative for alternative in alternatives if alternative.strip())
             if not alternatives:
                 filtered_values += 1
@@ -308,6 +313,8 @@ def compiled_audit_file(
             for alternative in alternatives:
                 compiled_alternatives += 1
                 errors = tuple(dict.fromkeys((*raw_errors, *surface_errors(alternative))))
+                if documented_symbol_headword and field == "canonical_headword":
+                    errors = tuple(error for error in errors if error != "punctuation_only")
                 if errors:
                     failed_alternatives += 1
                     value_failed = True

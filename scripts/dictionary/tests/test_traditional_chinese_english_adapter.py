@@ -264,6 +264,18 @@ def test_adapter_quarantines_punctuation_only_alternatives_after_splitting():
     ]
 
 
+def test_adapter_keeps_explicit_oxford_symbol_headword():
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.ODE", "e", "*", "*", None,
+        "eng-to-eng", "a" * 64,
+        raw={"diagnostics": ["documented_symbol_headword"]},
+        senses=(StagedSense("s", 1, equivalents=("asterisk",)),),
+    )
+    normalized = TraditionalChineseEnglishAdapter().normalize_entry(entry)
+    assert normalized.headword.canonical_text == "*"
+    assert normalized.headword.errors == ()
+
+
 def test_adapter_quarantines_reading_only_expression_surface():
     normalized = TraditionalChineseEnglishAdapter().normalize_entry(
         StagedEntry(

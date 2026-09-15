@@ -345,6 +345,14 @@ def _prepare_surface(entry: StagedEntry, value: str) -> tuple[tuple[str, ...], t
     )
 
 
+def _head_surface_errors(entry: StagedEntry, *values: str) -> tuple[str, ...]:
+    errors = tuple(error for value in values for error in surface_errors(value))
+    diagnostics = entry.raw.get("diagnostics", ()) if isinstance(entry.raw, dict) else ()
+    if "documented_symbol_headword" in diagnostics:
+        errors = tuple(error for error in errors if error != "punctuation_only")
+    return tuple(dict.fromkeys(errors))
+
+
 class TraditionalChineseEnglishAdapter:
     id = "traditional-chinese-english"
 
@@ -381,7 +389,7 @@ class TraditionalChineseEnglishAdapter:
         head_text = head_surfaces[0]
         head_hint = _side_hint(direction_hint, True)
         head_lang, head_locale, head_error = _language(head_text, head_hint)
-        head_errors = tuple(dict.fromkeys((*surface_errors(entry.canonical_headword), *((head_error,) if head_error else ()))))
+        head_errors = tuple(dict.fromkeys((*_head_surface_errors(entry, entry.canonical_headword), *((head_error,) if head_error else ()))))
         marker = entry.homograph_marker or "none"
         head_cluster = _claim("headword", entry.dictionary_key, entry.entry_key, marker)
         head = NormalizedOccurrence(
@@ -420,7 +428,7 @@ class TraditionalChineseEnglishAdapter:
                 entry.entry_key,
                 None,
                 {"homograph_marker": entry.homograph_marker, "surface_alternative_ordinal": alternative_index},
-                tuple(dict.fromkeys((*surface_errors(entry.canonical_headword), *surface_errors(alternative), *((error,) if error else ())))),
+                tuple(dict.fromkeys((*_head_surface_errors(entry, entry.canonical_headword, alternative), *((error,) if error else ())))),
             ))
         for reading_index, reading_value in enumerate(head_surface_readings, 1):
             extended_readings.append(_surface_reading(entry.entry_key, head.claim_key, reading_index, reading_value, head_locale))

@@ -92,12 +92,19 @@ def test_compiled_audit_ranks_publishable_alternatives_and_keeps_failures(tmp_pa
             "entry_key": "bad",
             "canonical_headword": "[]",
         })
+        + "\n"
+        + json.dumps({
+            "record_type": "entry",
+            "entry_key": "symbol",
+            "canonical_headword": "*",
+            "diagnostics": ["documented_symbol_headword"],
+        })
         + "\n",
         encoding="utf-8",
     )
     report = compiled_audit_file(path, sample_entries=100, sample_limit=3)
-    assert report["entries"] == 2
-    assert report["compiled_alternatives"] == 2
+    assert report["entries"] == 3
+    assert report["compiled_alternatives"] == 3
     assert report["failed_alternatives"] == 0
     assert report["filtered_values"] == 1
     assert report["correct_rate"] == 1.0
