@@ -31,7 +31,7 @@ from typing import Any, Iterable, Sequence
 # operate on a larger database can raise the stop value explicitly.  Keeping
 # the ranges on the leading primary-key columns avoids the unindexed
 # source_id scans that made the old set-based delete exceed D1's limit.
-RECONCILE_ID_RANGE_STEP = 250_000
+RECONCILE_ID_RANGE_STEP = 50_000
 RECONCILE_ID_RANGE_STOP = 10_000_000
 
 
