@@ -18,6 +18,7 @@ from .expression_surface import (
     extract_mapping_annotation,
     extract_reading_parentheses,
     normalize_expression_surface,
+    prepare_expression_value,
     split_expression_alternatives,
     surface_errors,
 )
@@ -258,4 +259,124 @@ def audit_directory(
     }
 
 
-__all__ = ["audit_directory", "audit_file"]
+def compiled_audit_file(
+    path: Path,
+    *,
+    sample_limit: int = 5,
+    sample_entries: int = 100,
+) -> dict[str, Any]:
+    """Audit the surfaces that the adapter would actually publish.
+
+    The raw surface audit is useful for finding source markup, but it can
+    overstate a problem when the normalizer removes a reading shell,
+    presentation wrapper, or empty placeholder.  This companion audit runs
+    the same ``prepare_expression_value`` and ``surface_errors`` boundary as
+    the dictionary adapter and ranks only the resulting alternatives.
+    """
+
+    path = Path(path)
+    with path.open("r", encoding="utf-8-sig") as handle:
+        header = _json.loads(handle.readline())
+    sampled_entries = _sample_entry_lines(path, sample_entries)
+    values = 0
+    compiled_alternatives = 0
+    failed_alternatives = 0
+    filtered_values = 0
+    failures: list[dict[str, Any]] = []
+    dictionary_key = str(header.get("dictionary_key", ""))
+    for entry in sampled_entries:
+        if not isinstance(entry, dict) or entry.get("record_type") != "entry":
+            continue
+        entry_key = str(entry.get("entry_key", ""))
+        for field, value in _surface_values(entry):
+            values += 1
+            alternatives, _readings, _annotation = prepare_expression_value(value)
+            raw_errors = surface_errors(value)
+            alternatives = tuple(alternative for alternative in alternatives if alternative.strip())
+            if not alternatives:
+                filtered_values += 1
+                if len(failures) < sample_limit:
+                    failures.append({
+                        "entry_key": entry_key,
+                        "field": field,
+                        "value": value,
+                        "alternative": None,
+                        "errors": ["no_publishable_alternative", *raw_errors],
+                    })
+                continue
+            value_failed = False
+            for alternative in alternatives:
+                compiled_alternatives += 1
+                errors = tuple(dict.fromkeys((*raw_errors, *surface_errors(alternative))))
+                if errors:
+                    failed_alternatives += 1
+                    value_failed = True
+                    if len(failures) < sample_limit:
+                        failures.append({
+                            "entry_key": entry_key,
+                            "field": field,
+                            "value": value,
+                            "alternative": alternative,
+                            "errors": list(errors),
+                        })
+            if value_failed:
+                filtered_values += 1
+    source_entry_count = header.get("entry_count")
+    return {
+        "file": path.name,
+        "dictionary_key": dictionary_key,
+        "source_entry_count": source_entry_count if isinstance(source_entry_count, int) else None,
+        "entries": len(sampled_entries),
+        "sampled": True,
+        "values": values,
+        "compiled_alternatives": compiled_alternatives,
+        "failed_alternatives": failed_alternatives,
+        "filtered_values": filtered_values,
+        "correct_rate": (
+            (compiled_alternatives - failed_alternatives) / compiled_alternatives
+            if compiled_alternatives
+            else 1.0
+        ),
+        "failures": failures,
+    }
+
+
+def compiled_audit_directory(
+    directory: Path,
+    *,
+    sample_limit: int = 5,
+    sample_entries: int = 100,
+    only: Iterable[str] = (),
+) -> dict[str, Any]:
+    """Rank bounded source samples by compiled surface correctness."""
+
+    wanted = tuple(str(item) for item in only)
+    reports = []
+    for path in sorted(Path(directory).glob("*.jsonl")):
+        if ".pre-" in path.stem:
+            continue
+        if wanted and not any(fragment in path.name for fragment in wanted):
+            continue
+        reports.append(
+            compiled_audit_file(
+                path,
+                sample_limit=sample_limit,
+                sample_entries=sample_entries,
+            )
+        )
+    if not reports:
+        raise ValueError(f"no Structured JSONL files found in {directory}")
+    reports.sort(key=lambda report: (-1 if report["correct_rate"] < 1 else 0, report["correct_rate"], report["dictionary_key"]))
+    return {
+        "directory": str(Path(directory)),
+        "sample_entries": sample_entries,
+        "files": reports,
+    }
+
+
+__all__ = [
+    "audit_directory",
+    "audit_file",
+    "compiled_audit_directory",
+    "compiled_audit_file",
+]
