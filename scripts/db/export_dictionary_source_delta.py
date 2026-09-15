@@ -26,6 +26,15 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
+# Source-repair deletes must stay below D1's per-command write/CPU budget.  The
+# production graph currently has integer IDs below ten million; callers that
+# operate on a larger database can raise the stop value explicitly.  Keeping
+# the ranges on the leading primary-key columns avoids the unindexed
+# source_id scans that made the old set-based delete exceed D1's limit.
+RECONCILE_ID_RANGE_STEP = 250_000
+RECONCILE_ID_RANGE_STOP = 10_000_000
+
+
 def _literal(value: object) -> str:
     if value is None:
         return "NULL"
@@ -245,7 +254,11 @@ def _write_replace_deletes(handle, *, source_type: str, source_name: str) -> Non
 
 
 def _write_shared_safe_reconcile(
-    handle, *, source_type: str, source_name: str
+    handle,
+    *,
+    source_type: str,
+    source_name: str,
+    id_range_stop: int = RECONCILE_ID_RANGE_STOP,
 ) -> None:
     """Remove one source's assertions without deleting shared graph data.
 
@@ -263,72 +276,83 @@ def _write_shared_safe_reconcile(
         f"(SELECT id FROM sources WHERE type={_literal(source_type)}"
         f" AND name={_literal(source_name)})"
     )
-    source_edges = (
-        "SELECT edge_id FROM expression_edge_sources "
-        f"WHERE source_id = {lookup}"
-    )
-    owned = f"(SELECT id FROM expressions WHERE source_id = {lookup})"
-    # Keep an edge when another source attests it or a user vote protects it.
-    # The source-edge subquery is evaluated before its source rows are removed.
-    handle.write("-- Shared-safe reconcile: remove only this source's assertions.\n")
-    handle.write("-- langmap:batch\n")
-    handle.write(
-        "DELETE FROM expression_edges "
-        f"WHERE id IN ({source_edges}) "
-        f"AND NOT EXISTS (SELECT 1 FROM expression_edge_sources other "
-        f"WHERE other.edge_id=expression_edges.id AND other.source_id <> {lookup}) "
-        "AND NOT EXISTS (SELECT 1 FROM edge_votes vote "
-        "WHERE vote.edge_id=expression_edges.id);\n"
-    )
-    handle.write("-- langmap:batch\n")
-    handle.write(f"DELETE FROM expression_edge_sources WHERE source_id = {lookup};\n")
-    handle.write("-- langmap:batch\n")
-    handle.write(f"DELETE FROM expression_readings WHERE source_id = {lookup};\n")
-    handle.write("-- langmap:batch\n")
-    handle.write(f"DELETE FROM expression_sources WHERE source_id = {lookup};\n")
+    if id_range_stop <= 0:
+        raise ValueError("reconcile id range stop must be positive")
 
-    # Drop locale links and expressions only after every source-owned claim has
-    # gone, and only when no graph, reading, handbook, or vote can still reach
-    # the expression.  Shared expressions are retained and their old source
-    # owner is cleared so a later INSERT OR IGNORE cannot inherit stale
-    # ownership metadata.
-    removable_subquery = (
-        f"e.source_id = {lookup} "
-        "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
-        "WHERE claim.expression_id=e.id) "
-        "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
-        "WHERE edge.expression_a_id=e.id OR edge.expression_b_id=e.id) "
-        "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
-        "WHERE reading.expression_id=e.id) "
-        "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
-        "WHERE item.expression_id=e.id)"
-    )
-    removable_delete = (
-        f"source_id = {lookup} "
-        "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
-        "WHERE claim.expression_id=expressions.id) "
-        "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
-        "WHERE edge.expression_a_id=expressions.id OR edge.expression_b_id=expressions.id) "
-        "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
-        "WHERE reading.expression_id=expressions.id) "
-        "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
-        "WHERE item.expression_id=expressions.id)"
-    )
-    handle.write(
-        "-- langmap:batch\n"
-        "DELETE FROM expression_locale_links WHERE expression_id IN "
-        f"(SELECT e.id FROM expressions e WHERE {removable_subquery});\n"
-    )
-    handle.write(
-        "-- langmap:batch\n"
-        "DELETE FROM expressions WHERE "
-        f"{removable_delete};\n"
-    )
-    handle.write(
-        "-- langmap:batch\n"
-        "UPDATE expressions SET source_id=NULL WHERE source_id = "
-        f"{lookup};\n"
-    )
+    # Keep an edge when another source attests it or a user vote protects it.
+    # Every statement is bounded by the leading integer primary key.  This is
+    # materially cheaper than selecting all source-owned IDs through the
+    # (edge_id, source_id, marker) index and then deleting almost a million
+    # rows in one D1 command.
+    handle.write("-- Shared-safe reconcile: remove only this source's assertions.\n")
+    for range_start in range(0, id_range_stop, RECONCILE_ID_RANGE_STEP):
+        range_end = min(range_start + RECONCILE_ID_RANGE_STEP, id_range_stop)
+        range_marker = f"-- ID range [{range_start}, {range_end})"
+        handle.write(f"-- langmap:batch\n{range_marker}\n")
+        handle.write(
+            "DELETE FROM expression_edges "
+            f"WHERE id >= {range_start} AND id < {range_end} "
+            f"AND EXISTS (SELECT 1 FROM expression_edge_sources own "
+            f"WHERE own.edge_id=expression_edges.id AND own.source_id={lookup}) "
+            f"AND NOT EXISTS (SELECT 1 FROM expression_edge_sources other "
+            f"WHERE other.edge_id=expression_edges.id AND other.source_id <> {lookup}) "
+            "AND NOT EXISTS (SELECT 1 FROM edge_votes vote "
+            "WHERE vote.edge_id=expression_edges.id);\n"
+        )
+        handle.write(
+            "DELETE FROM expression_edge_sources "
+            f"WHERE edge_id >= {range_start} AND edge_id < {range_end} "
+            f"AND source_id={lookup};\n"
+        )
+        handle.write(
+            "DELETE FROM expression_readings "
+            f"WHERE expression_id >= {range_start} AND expression_id < {range_end} "
+            f"AND source_id={lookup};\n"
+        )
+        handle.write(
+            "DELETE FROM expression_sources "
+            f"WHERE expression_id >= {range_start} AND expression_id < {range_end} "
+            f"AND source_id={lookup};\n"
+        )
+
+        # Drop locale links and expressions only after every source-owned claim
+        # has gone, and only when no graph, reading, handbook, or vote can still
+        # reach the expression. Shared expressions are retained and their old
+        # source owner is cleared below.
+        removable_subquery = (
+            f"e.id >= {range_start} AND e.id < {range_end} "
+            f"AND e.source_id = {lookup} "
+            "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
+            "WHERE claim.expression_id=e.id) "
+            "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
+            "WHERE edge.expression_a_id=e.id OR edge.expression_b_id=e.id) "
+            "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
+            "WHERE reading.expression_id=e.id) "
+            "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
+            "WHERE item.expression_id=e.id)"
+        )
+        removable_delete = (
+            f"id >= {range_start} AND id < {range_end} "
+            f"AND source_id = {lookup} "
+            "AND NOT EXISTS (SELECT 1 FROM expression_sources claim "
+            "WHERE claim.expression_id=expressions.id) "
+            "AND NOT EXISTS (SELECT 1 FROM expression_edges edge "
+            "WHERE edge.expression_a_id=expressions.id OR edge.expression_b_id=expressions.id) "
+            "AND NOT EXISTS (SELECT 1 FROM expression_readings reading "
+            "WHERE reading.expression_id=expressions.id) "
+            "AND NOT EXISTS (SELECT 1 FROM handbook_section_items item "
+            "WHERE item.expression_id=expressions.id)"
+        )
+        handle.write(
+            "DELETE FROM expression_locale_links WHERE expression_id IN "
+            f"(SELECT e.id FROM expressions e WHERE {removable_subquery});\n"
+        )
+        handle.write(f"DELETE FROM expressions WHERE {removable_delete};\n")
+        handle.write(
+            "UPDATE expressions SET source_id=NULL "
+            f"WHERE id >= {range_start} AND id < {range_end} "
+            f"AND source_id = {lookup};\n"
+        )
 
 
 def export_source_delta(
@@ -343,6 +367,7 @@ def export_source_delta(
     edge_rows_per_insert: int | None = None,
     replace: bool = False,
     reconcile_shared: bool = False,
+    reconcile_id_range_stop: int = RECONCILE_ID_RANGE_STOP,
     skip_edge_annotation_updates: bool = False,
     remap_managed_handbook: bool = False,
 ) -> dict[str, int]:
@@ -542,7 +567,10 @@ def export_source_delta(
             if replace:
                 if reconcile_shared:
                     _write_shared_safe_reconcile(
-                        handle, source_type=source_type, source_name=source_name
+                        handle,
+                        source_type=source_type,
+                        source_name=source_name,
+                        id_range_stop=reconcile_id_range_stop,
                     )
                 else:
                     _write_replace_deletes(
@@ -686,6 +714,7 @@ def export_source_delta(
                 "expected_counts": counts,
                 "replace": replace,
                 "reconcile_shared": reconcile_shared,
+                "reconcile_id_range_stop": reconcile_id_range_stop,
                 "skip_edge_annotation_updates": skip_edge_annotation_updates,
                 "delta_sha256": _sha256(output),
             }
@@ -719,6 +748,12 @@ def main(argv: list[str] | None = None) -> int:
         help="with --replace, remove only this source's assertions while preserving shared expressions and edges",
     )
     parser.add_argument(
+        "--reconcile-id-range-stop",
+        type=int,
+        default=RECONCILE_ID_RANGE_STOP,
+        help="exclusive integer ID bound for bounded shared-reconcile deletes (default: 10000000)",
+    )
+    parser.add_argument(
         "--skip-edge-annotation-updates",
         action="store_true",
         help="omit source-scoped edge annotation UPDATE statements for a faster lexical repair release",
@@ -745,6 +780,7 @@ def main(argv: list[str] | None = None) -> int:
         edge_rows_per_insert=args.edge_rows_per_insert,
             replace=args.replace,
             reconcile_shared=args.reconcile_shared,
+            reconcile_id_range_stop=args.reconcile_id_range_stop,
             skip_edge_annotation_updates=args.skip_edge_annotation_updates,
             remap_managed_handbook=args.remap_managed_handbook,
         )
