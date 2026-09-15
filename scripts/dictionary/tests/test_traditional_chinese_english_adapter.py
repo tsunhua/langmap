@@ -641,6 +641,34 @@ def test_adapter_keeps_english_ipa_reading_on_english_headword():
     assert [(r.scheme, r.locale_code, r.value) for r in published] == [("ipa", "eng-Latn-GB", "səˈpəʊzɪŋ")]
 
 
+def test_newace_keeps_parenthetical_glosses_out_of_readings():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.ko-en.NewAce", "e", "danke (schön)", "danke (schön)", None,
+        "eng-to-kor", "a" * 64,
+    )
+    normalized = adapter.normalize_entry(entry)
+    assert normalized.headword.canonical_text == "danke (schön)"
+    assert normalized.readings == ()
+
+
+def test_newace_hanja_form_stays_korean_instead_of_becoming_mandarin():
+    adapter = TraditionalChineseEnglishAdapter()
+    entry = StagedEntry(
+        "r", "com.apple.dictionary.ko-en.NewAce", "e", "개량", "개량", None,
+        "kor-to-eng", "a" * 64,
+        forms=({"value": "改良"},),
+        senses=(StagedSense("s", 1, equivalents=("improvement",)),),
+    )
+    normalized = adapter.normalize_entry(entry)
+    form = next(
+        occurrence
+        for occurrence in normalized.senses[0].occurrences
+        if occurrence.occurrence_kind == "form"
+    )
+    assert (form.lang_code, form.locale_code) == ("kor", "kor-Kore-KR")
+
+
 def test_adapter_quarantines_thai_respelling_mislabeled_as_english_ipa():
     adapter = TraditionalChineseEnglishAdapter()
     entry = StagedEntry(

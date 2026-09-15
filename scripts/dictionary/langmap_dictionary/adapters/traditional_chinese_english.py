@@ -121,6 +121,10 @@ _PROFILE_LOCALES = {
     "ind": ("ind", "ind-Latn"), "ita": ("ita", "ita-Latn"),
     "kan": ("kan", "kan-Knda"), "kaz": ("kaz", "kaz-Cyrl"),
     "kor": ("kor", "kor-Hang"), "mal": ("mal", "mal-Mlym"),
+    # NewAce stores Korean Hanja spellings as forms.  Kore (Hangul + Han) is
+    # the appropriate Korean locale; treating those Han characters as cmn
+    # would manufacture a false Mandarin layer.
+    "kor-Kore-KR": ("kor", "kor-Kore-KR"),
     "zsm": ("zsm", "zsm-Latn"), "nld": ("nld", "nld-Latn"),
     "nob": ("nob", "nob-Latn"), "pan": ("pan", "pan-Guru"),
     "pol": ("pol", "pol-Latn"), "por": ("por", "por-Latn"),
@@ -216,7 +220,13 @@ def _language(value: str, hint: str | None = None) -> tuple[str | None, str | No
     if detected is not None:
         language, locale = _PROFILE_LOCALES.get(detected, (detected, None))
         return language, locale or (_known_locale(detected)), None
-    if value and all(ord(char) < 0x2E80 or char.isspace() or char.isascii() for char in value):
+    if value and all(
+        ord(char) < 0x2E80
+        or char.isspace()
+        or char.isascii()
+        or unicodedata.category(char)[0] in {"P", "S"}
+        for char in value
+    ):
         return "eng", "eng-Latn-US", None
     return None, None, "unknown_locale"
 
@@ -317,6 +327,24 @@ def _surface_reading(
     )
 
 
+def _allow_plain_respelling(entry: StagedEntry) -> bool:
+    """NewAce stores many parenthetical glosses as part of the headword.
+
+    They are lexical text (``danke (schön)``, ``snáre (drùm)``), not
+    pronunciations.  Slash-delimited/IPA readings remain enabled; only the
+    ambiguous plain-respelling heuristic is disabled for this source.
+    """
+
+    return not str(entry.dictionary_key).endswith("ko-en.NewAce")
+
+
+def _prepare_surface(entry: StagedEntry, value: str) -> tuple[tuple[str, ...], tuple[str, ...], str | None]:
+    return prepare_expression_value(
+        value,
+        allow_plain_respelling=_allow_plain_respelling(entry),
+    )
+
+
 class TraditionalChineseEnglishAdapter:
     id = "traditional-chinese-english"
 
@@ -347,7 +375,7 @@ class TraditionalChineseEnglishAdapter:
                 direction_hint = "cmn-Hans-to-jpn"
 
         annotations: list[NormalizedAnnotation] = []
-        head_surfaces, head_surface_readings, head_annotation = prepare_expression_value(entry.canonical_headword)
+        head_surfaces, head_surface_readings, head_annotation = _prepare_surface(entry, entry.canonical_headword)
         if not head_surfaces:
             head_surfaces = (entry.canonical_headword,)
         head_text = head_surfaces[0]
@@ -408,10 +436,13 @@ class TraditionalChineseEnglishAdapter:
             if not isinstance(raw_value, str) or not raw_value.strip():
                 continue
             hint = item.get("language") or item.get("language_hint")
-            alternatives, surface_readings, annotation = prepare_expression_value(raw_value)
+            alternatives, surface_readings, annotation = _prepare_surface(entry, raw_value)
             for alternative_index, alternative in enumerate(alternatives, 1):
                 cleaned = canonicalize_text(alternative)
-                lang, locale, error = _language(cleaned, hint)
+                if not hint and head_lang == "kor" and _is_han(cleaned):
+                    lang, locale, error = "kor", "kor-Kore-KR", None
+                else:
+                    lang, locale, error = _language(cleaned, hint)
                 claim_ordinal = str(ordinal) if len(alternatives) == 1 else f"{ordinal}.{alternative_index}"
                 form_claim = _claim("entry", entry.entry_key, "form", claim_ordinal)
                 form_occurrences.append(NormalizedOccurrence(
@@ -479,7 +510,7 @@ class TraditionalChineseEnglishAdapter:
             if not isinstance(raw_value, str) or not raw_value.strip():
                 continue
             hint = item.get("language") or item.get("language_hint")
-            alternatives, surface_readings, annotation = prepare_expression_value(raw_value)
+            alternatives, surface_readings, annotation = _prepare_surface(entry, raw_value)
             for alternative_index, alternative in enumerate(alternatives, 1):
                 cleaned = canonicalize_text(alternative)
                 lang, locale, error = _language(cleaned, hint)
@@ -568,7 +599,7 @@ class TraditionalChineseEnglishAdapter:
                     surface_readings: tuple[str, ...] = ()
                     annotation: str | None = None
                 else:
-                    alternatives, surface_readings, annotation = prepare_expression_value(raw_value)
+                    alternatives, surface_readings, annotation = _prepare_surface(entry, raw_value)
                 for alternative_index, alternative in enumerate(alternatives, 1):
                     cleaned = canonicalize_text(alternative)
                     bullet = cleaned.startswith("•")
@@ -688,14 +719,18 @@ class TraditionalChineseEnglishAdapter:
                 text = item.get("text")
                 translation = item.get("translation")
                 paired_values = (
-                    prepare_paired_expression_values(text, translation)
+                    prepare_paired_expression_values(
+                        text,
+                        translation,
+                        allow_plain_respelling=_allow_plain_respelling(entry),
+                    )
                     if isinstance(text, str) and text.strip()
                     and isinstance(translation, str) and translation.strip()
                     else None
                 )
                 if isinstance(text, str) and text.strip():
                     if paired_values is None:
-                        alternatives, surface_readings, annotation = prepare_expression_value(text)
+                        alternatives, surface_readings, annotation = _prepare_surface(entry, text)
                     else:
                         alternatives, surface_readings, annotation = paired_values[:3]
                     for alternative_index, alternative in enumerate(alternatives, 1):
@@ -721,7 +756,7 @@ class TraditionalChineseEnglishAdapter:
                             ))
                 if isinstance(translation, str) and translation.strip():
                     if paired_values is None:
-                        alternatives, surface_readings, annotation = prepare_expression_value(translation)
+                        alternatives, surface_readings, annotation = _prepare_surface(entry, translation)
                     else:
                         alternatives, surface_readings, annotation = paired_values[3:]
                     for alternative_index, alternative in enumerate(alternatives, 1):

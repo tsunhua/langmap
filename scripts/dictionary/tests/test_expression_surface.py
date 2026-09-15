@@ -110,6 +110,15 @@ def test_removes_example_wrappers_and_leading_parenthetical_labels():
         (),
         "public",
     )
+
+
+def test_removes_long_leading_usage_groups_and_keeps_valid_alternatives():
+    value = "[inform＋〈목〉＋that절/inform＋wh-절/inform＋wh- to do] 〈남에게〉 〈…이라고〉 알리다, 통고하다"
+    assert prepare_expression_value(value)[0] == ("알리다, 통고하다",)
+    assert surface_errors("！是你！") == ()
+    assert surface_errors("B/-") == ()
+    assert surface_errors("－투성이") == ()
+    assert surface_errors("￠") == ()
     assert prepare_expression_value("(ال)كَثير من شَيْءٍ") == (
         ("كَثير من شَيْءٍ",),
         (),
@@ -205,6 +214,18 @@ def test_extracts_fullwidth_leading_notes_after_usage_groups():
     )
 
 
+def test_extracts_nested_newace_usage_groups_and_bracketed_surfaces():
+    assert extract_mapping_annotation("〈남을〉 〔…에(게)〕 향하게 하다〔to …〕") == (
+        "향하게 하다〔to …〕",
+        "남을；…에(게)",
+    )
+    assert extract_mapping_annotation("[You bet!] 《강한 긍정》 그렇고 말고") == (
+        "You bet!",
+        "강한 긍정；그렇고 말고",
+    )
+    assert surface_errors("[A of B] A분량의 B") == ()
+
+
 def test_keeps_lexical_parenthetical_complements_in_the_expression():
     assert extract_mapping_annotation("intimidated (by)") == (
         "intimidated (by)",
@@ -234,10 +255,12 @@ def test_does_not_guess_through_unbalanced_parentheses():
 def test_reports_malformed_surface_and_reading_only_candidates():
     assert surface_errors("Hello (only on the telephone") == ("malformed_surface",)
     assert surface_errors("/ˈbo.ɐ ˈtaɾ.dɨ/") == ("reading_in_expression",)
-    assert surface_errors("Push []") == ("placeholder_surface",)
+    # Empty slots are removed while the lexical payload remains publishable.
+    assert surface_errors("Push []") == ()
+    assert surface_errors("[]") == ("placeholder_surface", "punctuation_only")
     assert surface_errors("(心胸)寬廣") == ()
     assert surface_errors("• Two heads are better than one.") == ()
-    assert surface_errors("”地叫了起来") == ("leading_punctuation",)
+    assert surface_errors("”地叫了起来") == ()
     assert surface_errors("’") == ("punctuation_only",)
     assert surface_errors("¿Qué?") == ()
     assert surface_errors("-backed") == ()

@@ -13,6 +13,7 @@ import unicodedata
 
 
 _CJK = re.compile(r"[\u2e80-\u9fff\uf900-\ufaff]")
+_CJK_OR_KOREAN = re.compile(r"[\u2e80-\u9fff\uf900-\ufaff\uac00-\ud7af]")
 _IPA_MARKERS = re.compile(
     r"[ːˈˌɐ-ʯɶ-ʸəɪɔʊɑɛɜɞɡɣɲŋʃʒʔʦʧʤ]"
 )
@@ -37,6 +38,7 @@ _QUOTE_PAIRS.update({
 })
 _DIALOGUE_DASHES = "-‒–—―"
 _LIST_MARKERS = "•‣▪"
+_STANDALONE_SYMBOLS = frozenset("@&ⓒ©®$£€¥₩₹¢￠₦")
 _EMPTY_PLACEHOLDER = re.compile(r"(?<!\w)\[\s*\](?!\w)")
 _BRACKET_NOTATION_WORDS = re.compile(
     r"(?:bracket|parenthes|ngoặc|kurung|括弧|括號|方括号|方括號|大括号|大括號)",
@@ -403,7 +405,7 @@ def _split_sentence_boundaries(value: str) -> tuple[str, ...]:
         next_index = index + 1
         while next_index < len(value) and value[next_index].isspace():
             next_index += 1
-        if next_index < len(value) and value[next_index] not in _CLOSING + _OPENING + "'\"/":
+        if next_index < len(value) and value[next_index] not in _CLOSING + _OPENING + "'\"/&":
             boundaries.append(index + 1)
         index += 1
     if not boundaries:
@@ -512,6 +514,30 @@ def _terminal_parenthetical(value: str) -> tuple[str, str] | None:
     return None
 
 
+def _leading_parenthetical(value: str) -> tuple[str, str, bool] | None:
+    """Return a balanced leading parenthetical note and its remainder.
+
+    The simple regular expression used by older sources cannot handle nested
+    groups such as ``（카탈로그 (등)에） 표현``. A bounded depth walk keeps the
+    note parser deterministic while preserving compact CJK optional forms.
+    """
+
+    if not value or value[0] not in "(（":
+        return None
+    opener = value[0]
+    closer = ")" if opener == "(" else "）"
+    depth = 0
+    for index, character in enumerate(value):
+        if character == opener:
+            depth += 1
+        elif character == closer and depth:
+            depth -= 1
+            if depth == 0:
+                remainder = value[index + 1 :]
+                return value[1:index].strip(), remainder.lstrip(), bool(remainder and remainder[0].isspace())
+    return None
+
+
 def normalize_expression_surface(value: str) -> str:
     """Trim source residue while retaining semantic ``?``/``!`` punctuation."""
 
@@ -523,10 +549,18 @@ def normalize_expression_surface(value: str) -> str:
     # Keep this narrow: a dash without following whitespace/CJK remains
     # available for legitimate hyphenated or symbolic expressions.
     normalized = re.sub(
-        r"^[\u2012\u2013\u2014\u2015\u2212\u2500\u2501―-]+(?:[ \t]+|(?=[\u2e80-\u9fff]))",
+        r"^[\u2012\u2013\u2014\u2015\u2212\u2500\u2501―-]+(?:[ \t]+|(?=[\u2e80-\u9fff\uf900-\ufaff\uac00-\ud7af]))",
         "",
         normalized,
     )
+    # Double ASCII/full-width dashes are dialogue markers even when the
+    # exporter omitted the following space (``--I``/``--사실``/``－－神``).
+    # Keep a single leading hyphen available for legitimate suffix forms such
+    # as ``-fied``.
+    normalized = re.sub(r"^(?:--+|－－+)(?=\w|[\u2e80-\u9fff\uf900-\ufaff\uac00-\ud7af])", "", normalized)
+    # Full-width dashes are also used as a layout marker before a bracketed
+    # gloss; keep them when they are attached directly to a CJK morpheme.
+    normalized = re.sub(r"^－+(?:[ \t]+|(?=[\[({（［]))", "", normalized)
     if not _is_literal_bracket_notation(normalized):
         normalized = _EMPTY_PLACEHOLDER.sub("", normalized)
     # Apple examples occasionally encode a quoted possessive as ``'H''s``;
@@ -534,10 +568,26 @@ def normalize_expression_surface(value: str) -> str:
     normalized = re.sub(r"(?<=\w)''(?=\w)", "'", normalized)
     normalized = _strip_outer_wrappers(normalized)
     normalized = _strip_leading_quoted_span(normalized)
+    # A few Apple rows retain an orphan presentation wrapper after the
+    # exporter has already removed the matching half (for example ``{geo`` or
+    # ``「카르복시기``). Treat that edge marker as layout residue when its
+    # closer is absent; balanced wrappers are still handled above.
+    orphan_wrappers = {
+        "(": ")", "[": "]", "{": "}", "（": "）", "［": "］", "｛": "｝",
+        "「": "」", "『": "』", "《": "》", "〈": "〉", "〔": "〕",
+    }
+    while normalized and normalized[0] in orphan_wrappers:
+        opener = normalized[0]
+        if orphan_wrappers[opener] in normalized[1:]:
+            break
+        normalized = normalized[1:].lstrip()
     # A few source rows use a typographic quote as a one-sided layout marker
     # around an example. Remove only those orphan edge markers; ordinary
     # straight apostrophes remain available for contractions such as ``'ll``.
-    normalized = re.sub(r"^[‘’«]+(?=\w)", "", normalized)
+    normalized = re.sub(r"^[‘’“”«»「」『』《》〈〉〔〕]+(?=\w|[\u2e80-\u9fff])", "", normalized)
+    normalized = re.sub(r"^[,，;；:：、]+\s*", "", normalized)
+    normalized = re.sub(r"^[·・]+(?=\w|[\u2e80-\u9fff])", "", normalized)
+    normalized = re.sub(r"^\*(?=\w|[\u2e80-\u9fff])", "", normalized)
     if normalized not in {"'ll", "'d"}:
         normalized = re.sub(r'''^[\'"](?=\w)''', "", normalized)
     normalized = re.sub(r"(?<=[\w!?！？。])['‘’»]+$", "", normalized)
@@ -670,7 +720,11 @@ def split_expression_alternatives(value: str, *, _split_dialogue: bool = True) -
     return tuple(dict.fromkeys(parts)) or (original,)
 
 
-def extract_reading_parentheses(value: str) -> tuple[str, tuple[str, ...]]:
+def extract_reading_parentheses(
+    value: str,
+    *,
+    allow_plain_respelling: bool = True,
+) -> tuple[str, tuple[str, ...]]:
     """Remove terminal slash-delimited readings and return their values."""
 
     original = unicodedata.normalize("NFC", str(value)).strip()
@@ -689,7 +743,7 @@ def extract_reading_parentheses(value: str) -> tuple[str, tuple[str, ...]]:
         if spans and all(_reading_body(span) for span in spans):
             readings.extend(span.strip() for span in spans)
             candidate = prefix
-        elif _surface_reading_body(body):
+        elif allow_plain_respelling and _surface_reading_body(body):
             readings.append(body.strip())
             candidate = prefix
     # Also accept a reading shell directly after the expression.  This keeps
@@ -717,15 +771,41 @@ def _extract_leading_annotation_groups(value: str) -> tuple[str, tuple[str, ...]
     candidate = str(value).strip()
     annotations: list[str] = []
     pairs = _LEADING_ANNOTATION_PAIRS
+    # Annotation groups often contain ordinary nested parentheses or square
+    # brackets (for example ``〔…에(게)〕`` or ``〈[l]음이〉``).  Track those
+    # delimiters while locating the outer closer; otherwise the first nested
+    # ASCII closer would make a valid leading usage group look malformed.
+    nested_pairs = {
+        "(": ")", "[": "]", "{": "}", "（": "）", "［": "］", "｛": "｝",
+        **pairs,
+    }
     while candidate:
         if candidate[0] == "[":
             # ASCII square labels in Apple equivalents are short usage or
             # register markers (``[U]``, ``[정치]``).  Do not consume prose
             # wrappers such as ``[A sample sentence]`` as annotations.
-            match = re.match(r"^\[(?P<label>[^\[\]]{1,40})\](?P<gap>\s*)(?P<surface>.+)$", candidate)
-            if match is None:
+            depth = 0
+            closing_index: int | None = None
+            for index, character in enumerate(candidate):
+                if character == "[":
+                    depth += 1
+                elif character == "]" and depth:
+                    depth -= 1
+                    if depth == 0:
+                        closing_index = index
+                        break
+            if closing_index is None or closing_index > 160:
                 break
-            label = normalize_expression_surface(match.group("label"))
+            label = normalize_expression_surface(candidate[1:closing_index])
+            remainder = candidate[closing_index + 1 :].strip()
+            if not remainder:
+                # A complete ``[sentence]`` is a presentation wrapper, not a
+                # leading usage group. ``_strip_outer_wrappers`` handles it.
+                break
+            template_marker = bool(
+                re.search(r"\b[A-Z]\b", label)
+                and not label.startswith("A ")
+            ) or any(character in remainder for character in "＋/〈〉〔〕【】…")
             if not label or (
                 re.search(r"\s", label)
                 and not any(
@@ -733,24 +813,26 @@ def _extract_leading_annotation_groups(value: str) -> tuple[str, tuple[str, ...]
                     or "\uac00" <= character <= "\ud7af"
                     for character in label
                 )
+                and not any(character in label for character in "＋/〈〉〔〕【】…")
+                and not template_marker
             ):
                 break
             annotations.append(label)
-            candidate = match.group("surface").strip()
+            candidate = re.sub(r"^[,，;；:：、.．。]+\s*", "", remainder)
             continue
         if candidate[0] not in pairs:
             break
         stack: list[str] = []
         closing_index: int | None = None
         for index, character in enumerate(candidate):
-            if character in pairs:
-                stack.append(pairs[character])
+            if character in nested_pairs:
+                stack.append(nested_pairs[character])
             elif stack and character == stack[-1]:
                 stack.pop()
                 if not stack:
                     closing_index = index
                     break
-            elif character in _CLOSING:
+            elif character in _CLOSING or character in ")]}":
                 break
         if closing_index is None:
             break
@@ -760,11 +842,59 @@ def _extract_leading_annotation_groups(value: str) -> tuple[str, tuple[str, ...]
             annotations.append(re.sub(r"\s+", " ", content))
         if not remainder:
             return "", tuple(annotations)
-        candidate = remainder
+        candidate = re.sub(r"^[,，;；:：、.．。]+\s*", "", remainder)
     return candidate, tuple(annotations)
 
 
-def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
+def _leading_ascii_surface_group(value: str) -> tuple[str, str] | None:
+    """Return a bracketed lexical surface followed by source prose.
+
+    NewAce wraps many English equivalents in ``[surface]`` and then places a
+    Korean usage gloss after the closing bracket.  The bracket is presentation
+    markup in that shape, not part of the expression identity.  Restrict this
+    helper to a CJK/full-width prose remainder so ordinary ASCII notation such
+    as ``[a]one`` keeps using the established leading-annotation path.
+    """
+
+    candidate = str(value).strip()
+    if not candidate.startswith("["):
+        return None
+    depth = 0
+    closing_index: int | None = None
+    for index, character in enumerate(candidate):
+        if character == "[":
+            depth += 1
+        elif character == "]" and depth:
+            depth -= 1
+            if depth == 0:
+                closing_index = index
+                break
+    if closing_index is None or closing_index <= 1:
+        return None
+    label = candidate[1:closing_index].strip()
+    remainder = candidate[closing_index + 1 :].strip()
+    if not remainder or not any(character.isalnum() for character in label):
+        return None
+    if not re.search(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-ſ]", label):
+        return None
+    # Template-heavy labels are usage frames (``inform＋〈목〉...``), not a
+    # bracketed lexical surface. Let the regular leading-annotation parser
+    # consume those groups so the actual target phrase remains publishable.
+    if any(character in label for character in "＋〈〉〔〕【】"):
+        return None
+    if not (
+        _CJK_OR_KOREAN.search(remainder)
+        or remainder.startswith(tuple(_LEADING_ANNOTATION_PAIRS))
+    ):
+        return None
+    return label, remainder
+
+
+def extract_mapping_annotation(
+    value: str,
+    *,
+    allow_plain_respelling: bool = True,
+) -> tuple[str, str | None]:
     """Extract a bounded explanatory note from an expression value.
 
     Some bilingual dictionaries put a grammatical rewrite after an example,
@@ -776,35 +906,66 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     """
 
     original = unicodedata.normalize("NFC", str(value)).strip()
+    surface_wrapper = _leading_ascii_surface_group(original)
+    if surface_wrapper is not None:
+        label, remainder = surface_wrapper
+        remainder_surface, remainder_annotation = extract_mapping_annotation(
+            remainder,
+            allow_plain_respelling=allow_plain_respelling,
+        )
+        annotation_parts = [part for part in (remainder_annotation, remainder_surface) if part]
+        return normalize_expression_surface(label), "；".join(annotation_parts) or None
     surface, leading_annotations = _extract_leading_annotation_groups(original)
     if leading_annotations:
         if not surface:
             return "", "；".join(leading_annotations)
-        cleaned, nested_annotation = extract_mapping_annotation(surface)
+        cleaned, nested_annotation = extract_mapping_annotation(
+            surface,
+            allow_plain_respelling=allow_plain_respelling,
+        )
         annotations = [*leading_annotations]
         if nested_annotation:
             annotations.append(nested_annotation)
         return cleaned, "；".join(annotations)
-    surface, _ = extract_reading_parentheses(original)
+    surface, _ = extract_reading_parentheses(
+        original,
+        allow_plain_respelling=allow_plain_respelling,
+    )
     if not surface:
         return "", None
-    leading = re.match(
-        r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
-        surface,
-    )
+    # NewAce uses ``※``/``☞`` after a complete sentence for a usage note or a
+    # cross-reference.  Keep that material on the mapping annotation instead
+    # of creating a second expression whose surface starts with a symbol.
+    for marker in ("※", "☞"):
+        marker_index = surface.find(marker)
+        if marker_index <= 0:
+            continue
+        if not surface[marker_index - 1].isspace() and surface[marker_index - 1] not in _SENTENCE_END:
+            continue
+        expression = normalize_expression_surface(surface[:marker_index])
+        note = normalize_expression_surface(surface[marker_index + 1 :])
+        if expression and any(unicodedata.category(character)[0] in {"L", "N"} for character in expression):
+            return expression, (note or marker)
+    leading_group = _leading_parenthetical(surface)
     if (
-        leading is not None
-        and not (leading.group("opener") == "（" and not leading.group("gap"))
+        leading_group is not None
+        and not (surface.startswith("（") and not leading_group[2])
         and _expand_cjk_parenthetical(surface) is None
     ):
-        note = normalize_expression_surface(leading.group("note"))
-        expression = normalize_expression_surface(leading.group("expression"))
+        note, expression, _ = leading_group
+        note = normalize_expression_surface(note)
+        expression = normalize_expression_surface(expression)
         # Leading parentheticals in dictionary forms are labels or optional
         # grammatical material (``(public) health``, ``(the) least``), not
         # part of the expression surface. CJK optional forms are expanded
         # separately and must remain alternatives instead of annotations.
-        if expression and note and _expand_cjk_parenthetical(surface) is None:
-            return expression, note
+        if expression and note:
+            cleaned_expression, nested_annotation = extract_mapping_annotation(
+                expression,
+                allow_plain_respelling=allow_plain_respelling,
+            )
+            annotation = note if not nested_annotation else f"{note}；{nested_annotation}"
+            return cleaned_expression, annotation
     arrow_positions = [
         (surface.find(arrow), arrow)
         for arrow in _TRANSFORMATION_ARROWS
@@ -833,7 +994,9 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     # respelling, but it is still explanatory prose.  Use the stricter
     # respelling predicate here so known notes are moved to the mapping edge
     # instead of becoming part of the expression identity.
-    if not body or _CJK.fullmatch(body) or _surface_reading_body(body):
+    if not body or _CJK.fullmatch(body) or (
+        allow_plain_respelling and _surface_reading_body(body)
+    ):
         return normalize_expression_surface(surface), None
     # A compact CJK parenthetical is an alternative, not a prose annotation.
     if _expand_cjk_parenthetical(surface) is not None:
@@ -847,11 +1010,21 @@ def extract_mapping_annotation(value: str) -> tuple[str, str | None]:
     return expression, annotation
 
 
-def prepare_expression_value(value: str) -> tuple[tuple[str, ...], tuple[str, ...], str | None]:
+def prepare_expression_value(
+    value: str,
+    *,
+    allow_plain_respelling: bool = True,
+) -> tuple[tuple[str, ...], tuple[str, ...], str | None]:
     """Return expression alternatives, extracted readings and one annotation."""
 
-    surface, annotation = extract_mapping_annotation(value)
-    _, readings = extract_reading_parentheses(value)
+    surface, annotation = extract_mapping_annotation(
+        value,
+        allow_plain_respelling=allow_plain_respelling,
+    )
+    _, readings = extract_reading_parentheses(
+        value,
+        allow_plain_respelling=allow_plain_respelling,
+    )
     alternatives = split_expression_alternatives(surface) if surface or annotation is None else ()
     return alternatives, readings, annotation
 
@@ -859,6 +1032,8 @@ def prepare_expression_value(value: str) -> tuple[tuple[str, ...], tuple[str, ..
 def prepare_paired_expression_values(
     left: str,
     right: str,
+    *,
+    allow_plain_respelling: bool = True,
 ) -> tuple[
     tuple[str, ...],
     tuple[str, ...],
@@ -875,10 +1050,22 @@ def prepare_paired_expression_values(
     can silently connect unrelated sentences from a dialogue.
     """
 
-    left_surface, left_annotation = extract_mapping_annotation(left)
-    _, left_readings = extract_reading_parentheses(left)
-    right_surface, right_annotation = extract_mapping_annotation(right)
-    _, right_readings = extract_reading_parentheses(right)
+    left_surface, left_annotation = extract_mapping_annotation(
+        left,
+        allow_plain_respelling=allow_plain_respelling,
+    )
+    _, left_readings = extract_reading_parentheses(
+        left,
+        allow_plain_respelling=allow_plain_respelling,
+    )
+    right_surface, right_annotation = extract_mapping_annotation(
+        right,
+        allow_plain_respelling=allow_plain_respelling,
+    )
+    _, right_readings = extract_reading_parentheses(
+        right,
+        allow_plain_respelling=allow_plain_respelling,
+    )
     left_dialogue = _split_dialogue_segments(left_surface)
     right_dialogue = _split_dialogue_segments(right_surface)
     if len(left_dialogue) == len(right_dialogue) and len(left_dialogue) > 1:
@@ -921,10 +1108,13 @@ def surface_errors(value: str) -> tuple[str, ...]:
 
     original = unicodedata.normalize("NFC", str(value)).strip()
     errors: list[str] = []
-    if not _balanced(original):
+    normalized_original = normalize_expression_surface(original)
+    if not _balanced(original) and not _balanced(normalized_original):
         errors.append("malformed_surface")
-    if _EMPTY_PLACEHOLDER.search(original) and not _is_literal_bracket_notation(original):
-        errors.append("placeholder_surface")
+    has_placeholder = bool(
+        _EMPTY_PLACEHOLDER.search(original)
+        and not _is_literal_bracket_notation(original)
+    )
     if re.fullmatch(r"/[^/]+/", original) and _reading_body(original[1:-1]):
         errors.append("reading_in_expression")
     reading_only = bool(re.fullmatch(r"/[^/]+/", original) and _reading_body(original[1:-1]))
@@ -941,41 +1131,47 @@ def surface_errors(value: str) -> tuple[str, ...]:
     if quality_value.startswith(tuple(_LIST_MARKERS)):
         quality_value = quality_value[1:].lstrip()
     normalized = normalize_expression_surface(quality_value)
-    leading = re.match(
-        r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
-        normalized,
-    )
+    cleaned_surface, _ = extract_mapping_annotation(quality_value)
+    if cleaned_surface:
+        normalized = normalize_expression_surface(cleaned_surface)
+    leading_group = _leading_parenthetical(normalized)
     if (
-        leading is not None
-        and leading.group("note").strip()
-        and not (leading.group("opener") == "（" and not leading.group("gap"))
+        leading_group is not None
+        and leading_group[0]
+        and not (normalized.startswith("（") and not leading_group[2])
         and _expand_cjk_parenthetical(original) is None
     ):
-        normalized = normalize_expression_surface(leading.group("expression"))
+        normalized = normalize_expression_surface(leading_group[1])
     # Validate the cleaned alternatives as well as the raw shell. This catches
     # genuine punctuation-only rows while allowing quoted/bracketed examples
     # once their presentation wrappers have been removed.
     candidates = split_expression_alternatives(quality_value)
+    if normalized and normalized not in candidates:
+        candidates = (*candidates, normalized)
     if not candidates:
         candidates = (normalized,)
     candidate_values_list: list[str] = []
     for candidate in candidates:
         candidate_value = normalize_expression_surface(candidate)
-        candidate_leading = re.match(
-            r"^(?P<opener>[\(（])(?P<note>[^()（）]*)(?P<closer>[\)）])(?P<gap>\s*)(?P<expression>.+)$",
-            candidate_value,
-        )
+        candidate_leading = _leading_parenthetical(candidate_value)
         if (
             candidate_leading is not None
-            and candidate_leading.group("note").strip()
-            and not (candidate_leading.group("opener") == "（" and not candidate_leading.group("gap"))
+            and candidate_leading[0]
+            and not (candidate_value.startswith("（") and not candidate_leading[2])
             and _expand_cjk_parenthetical(candidate_value) is None
         ):
-            candidate_value = normalize_expression_surface(candidate_leading.group("expression"))
+            candidate_value = normalize_expression_surface(candidate_leading[1])
         candidate_values_list.append(candidate_value)
     candidate_values = tuple(candidate_values_list)
     has_lexical_character = any(
-        any(unicodedata.category(character)[0] in {"L", "N"} for character in candidate)
+        any(
+            unicodedata.category(character)[0] in {"L", "N"}
+            or unicodedata.category(character) == "Sc"
+            for character in candidate
+        )
+        for candidate in candidate_values
+    ) or any(
+        candidate.strip() and all(character in _STANDALONE_SYMBOLS for character in candidate.strip())
         for candidate in candidate_values
     )
     # A compact CJK optional form such as ``(心胸)寬廣`` is an input notation
@@ -983,6 +1179,8 @@ def surface_errors(value: str) -> tuple[str, ...]:
     # alternatives and should not quarantine the original notation merely
     # because its opening parenthesis is punctuation.
     cjk_optional = _expand_cjk_parentheticals(original) is not None
+    if has_placeholder and not has_lexical_character:
+        errors.append("placeholder_surface")
     if not has_lexical_character and not _is_literal_bracket_notation(original):
         errors.append("punctuation_only")
     elif (
@@ -993,10 +1191,20 @@ def surface_errors(value: str) -> tuple[str, ...]:
             and not candidate.startswith("_")
             and candidate[0] not in "¡¿"
             and not (
-                candidate[0] in "-‐‑‒–—―"
+                candidate[0] in "-‐‑‒–—―－−"
                 and len(candidate) > 1
-                and candidate[1].isalnum()
+                and (
+                    candidate[1].isalnum()
+                    or candidate[1] in "([{（［｛"
+                    or (
+                        unicodedata.category(candidate[1]).startswith("M")
+                        and len(candidate) > 2
+                        and candidate[2].isalnum()
+                    )
+                )
             )
+            and not (candidate[0] in "&@" and len(candidate) > 1 and candidate[1].isalnum())
+            and not all(character in _STANDALONE_SYMBOLS for character in candidate)
             and not (
                 candidate[0] == "#"
                 and len(candidate) > 1
@@ -1004,6 +1212,20 @@ def surface_errors(value: str) -> tuple[str, ...]:
             )
             and candidate not in {"'ll", "'d"}
             and unicodedata.category(candidate[0]).startswith("P")
+            for candidate in candidate_values
+        )
+        # A source row can contain a valid alternative next to an empty
+        # placeholder or a separator-only alternative (``Push []``, ``B/-``
+        # and ``！是你！``). The adapter publishes each alternative
+        # independently, so do not quarantine the valid one because of the
+        # discarded sibling.
+        and not any(
+            candidate
+            and any(unicodedata.category(character)[0] in {"L", "N"} for character in candidate)
+            and not (
+                candidate[0] not in "¡¿"
+                and unicodedata.category(candidate[0]).startswith("P")
+            )
             for candidate in candidate_values
         )
     ):

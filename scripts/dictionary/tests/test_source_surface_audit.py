@@ -18,7 +18,7 @@ def test_audit_file_counts_surface_issues_and_bounds_samples(tmp_path):
             "entry_key": "entry-1",
             "raw_headword": "Hello ,",
             "canonical_headword": "Hello ,",
-            "forms": ["Push []"],
+                "forms": ["[]"],
             "senses": [{"equivalents": ["Boa tarde (, /ˈbo.ɐ ˈtaɾ.dɨ/)"]}],
         })
         + "\n",
