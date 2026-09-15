@@ -29,7 +29,7 @@ class ProductionInventoryError(RuntimeError):
 # network round trip per small statement.  The request envelope stays below
 # D1 payload limits and is still split at statement boundaries. Long commands
 # are sent through a temporary file so macOS argv limits do not truncate them.
-SPLIT_SQL_BATCH_BYTES = 1024 * 1024
+SPLIT_SQL_BATCH_BYTES = 2 * 1024 * 1024
 MAX_COMMAND_ARG_BYTES = 200 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
