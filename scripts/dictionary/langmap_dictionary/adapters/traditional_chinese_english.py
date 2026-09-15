@@ -25,6 +25,7 @@ from ..expression_surface import (
     prepare_paired_expression_values,
     split_expression_alternatives,
     surface_errors,
+    is_documented_symbol_headword,
 )
 
 try:
@@ -348,7 +349,10 @@ def _prepare_surface(entry: StagedEntry, value: str) -> tuple[tuple[str, ...], t
 def _head_surface_errors(entry: StagedEntry, *values: str) -> tuple[str, ...]:
     errors = tuple(error for value in values for error in surface_errors(value))
     diagnostics = entry.raw.get("diagnostics", ()) if isinstance(entry.raw, dict) else ()
-    if "documented_symbol_headword" in diagnostics:
+    if (
+        "documented_symbol_headword" in diagnostics
+        or is_documented_symbol_headword(entry.dictionary_key, entry.canonical_headword)
+    ):
         errors = tuple(error for error in errors if error != "punctuation_only")
     return tuple(dict.fromkeys(errors))
 

@@ -21,6 +21,7 @@ from .expression_surface import (
     prepare_expression_value,
     split_expression_alternatives,
     surface_errors,
+    is_documented_symbol_headword,
 )
 
 try:  # ujson keeps the audit practical for multi-gigabyte corpora.
@@ -290,6 +291,7 @@ def compiled_audit_file(
         entry_key = str(entry.get("entry_key", ""))
         documented_symbol_headword = (
             "documented_symbol_headword" in entry.get("diagnostics", [])
+            or is_documented_symbol_headword(dictionary_key, str(entry.get("canonical_headword", "")))
         )
         for field, value in _surface_values(entry):
             values += 1

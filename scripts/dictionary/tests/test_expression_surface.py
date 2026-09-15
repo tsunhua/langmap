@@ -1,6 +1,7 @@
 from scripts.dictionary.langmap_dictionary.expression_surface import (
     extract_mapping_annotation,
     extract_reading_parentheses,
+    is_documented_symbol_headword,
     normalize_expression_surface,
     prepare_paired_expression_values,
     prepare_expression_value,
@@ -135,6 +136,12 @@ def test_does_not_treat_slash_glosses_or_apostrophe_forms_as_readings():
         "to drop one's 'H's",
     )
     assert surface_errors("#MeToo") == ()
+
+
+def test_documented_oxford_symbol_scope_does_not_allow_random_punctuation():
+    assert is_documented_symbol_headword("com.apple.dictionary.ODE", "*") is True
+    assert is_documented_symbol_headword("com.apple.dictionary.ODE", "?") is False
+    assert is_documented_symbol_headword("com.apple.dictionary.pt-en.oup", "*") is False
 
 
 def test_keeps_dotted_abbreviations_inside_sentence_surfaces():

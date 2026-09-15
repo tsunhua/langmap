@@ -39,6 +39,15 @@ _QUOTE_PAIRS.update({
 _DIALOGUE_DASHES = "-‒–—―"
 _LIST_MARKERS = "•‣▪"
 _STANDALONE_SYMBOLS = frozenset("@&ⓒ©®$£€¥₩₹¢￠₦")
+_DOCUMENTED_SYMBOL_HEADWORDS = frozenset({
+    "''", "@", "$", "*", "%", "=", "#", "§", "¶", "©", "®", "¢", "€",
+    "£", "¥", "≠", "°", "&", ">", "<", "†", "‡", "⁂", "∑", "√",
+    "∞", "∴", "∵", "≤", "≥", "♀", "♂", "♭", "♯",
+})
+_SYMBOL_DICTIONARY_KEYS = frozenset({
+    "com.apple.dictionary.ODE",
+    "com.apple.dictionary.NOAD",
+})
 _EMPTY_PLACEHOLDER = re.compile(r"(?<!\w)\[\s*\](?!\w)")
 _BRACKET_NOTATION_WORDS = re.compile(
     r"(?:bracket|parenthes|ngoặc|kurung|括弧|括號|方括号|方括號|大括号|大括號)",
@@ -69,6 +78,12 @@ _LEADING_ANNOTATION_PAIRS = {
     "［": "］",
     "『": "』",
 }
+
+
+def is_documented_symbol_headword(dictionary_key: str, value: str) -> bool:
+    """Allow only the explicit Oxford symbol vocabulary as standalone text."""
+
+    return dictionary_key in _SYMBOL_DICTIONARY_KEYS and value.strip() in _DOCUMENTED_SYMBOL_HEADWORDS
 
 
 def _quote_opening(value: str, index: int, quote_stack: list[tuple[str, int, bool]]) -> bool:
@@ -1236,6 +1251,7 @@ def surface_errors(value: str) -> tuple[str, ...]:
 __all__ = [
     "extract_mapping_annotation",
     "extract_reading_parentheses",
+    "is_documented_symbol_headword",
     "normalize_expression_surface",
     "prepare_paired_expression_values",
     "prepare_expression_value",
