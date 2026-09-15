@@ -25,10 +25,10 @@ class ProductionInventoryError(RuntimeError):
 # D1 limits each individual SQL statement to 100 KB, while a remote command
 # may contain multiple statements.  Keep the generated statements below that
 # limit in the exporter, and group several of them per request to avoid one
-# network round trip per small statement.  The 512 KB request envelope remains
-# well below Wrangler/API payload limits and is still split at statement
+# network round trip per small statement.  The 1 MB request envelope remains
+# conservative for Wrangler/API payloads and is still split at statement
 # boundaries.
-SPLIT_SQL_BATCH_BYTES = 512 * 1024
+SPLIT_SQL_BATCH_BYTES = 1024 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
     "sources",
