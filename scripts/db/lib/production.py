@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 import re
+import tempfile
 import time
 import uuid
 from collections.abc import Iterator
@@ -25,9 +26,11 @@ class ProductionInventoryError(RuntimeError):
 # D1 limits each individual SQL statement to 100 KB, while a remote command
 # may contain multiple statements.  Keep the generated statements below that
 # limit in the exporter, and group several of them per request to avoid one
-# network round trip per small statement.  The 512 KB request envelope stays
-# below macOS argument-size limits and is still split at statement boundaries.
-SPLIT_SQL_BATCH_BYTES = 512 * 1024
+# network round trip per small statement.  The request envelope stays below
+# D1 payload limits and is still split at statement boundaries. Long commands
+# are sent through a temporary file so macOS argv limits do not truncate them.
+SPLIT_SQL_BATCH_BYTES = 1024 * 1024
+MAX_COMMAND_ARG_BYTES = 200 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
     "sources",
@@ -81,10 +84,36 @@ class ProductionExecutor:
         )
 
     def mutate(self, args: list[str]) -> str:
+        command_file: Path | None = None
+        prepared_args = args
+        if "--command" in args:
+            command_index = args.index("--command")
+            if command_index + 1 >= len(args):
+                raise ProductionInventoryError("mutation command is missing SQL")
+            sql = args[command_index + 1]
+            if len(sql.encode("utf-8")) > MAX_COMMAND_ARG_BYTES:
+                with tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    prefix="langmap-d1-",
+                    suffix=".sql",
+                    delete=False,
+                ) as handle:
+                    handle.write(sql)
+                    command_file = Path(handle.name)
+                prepared_args = [
+                    *args[:command_index],
+                    "--file",
+                    str(command_file),
+                    *args[command_index + 2 :],
+                ]
         try:
-            result = self._command_with_retry([str(self.wrangler_bin), *args])
+            result = self._command_with_retry([str(self.wrangler_bin), *prepared_args])
         except CommandError as exc:
             raise ProductionInventoryError(str(exc)) from exc
+        finally:
+            if command_file is not None:
+                command_file.unlink(missing_ok=True)
         return result.stdout
 
     def _run(self, args: list[str]) -> Any:

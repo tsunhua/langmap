@@ -18,6 +18,39 @@ FAKE_WRANGLER = REPO_ROOT / "scripts" / "db" / "tests" / "fixtures" / "wrangler-
 
 
 class ProductionInventoryTests(unittest.TestCase):
+    def test_large_mutation_command_uses_temporary_file(self) -> None:
+        from lib.production import ProductionExecutor  # noqa: E402
+
+        executor = ProductionExecutor(
+            paths=mock.Mock(),
+            wrangler_bin=Path("/tmp/wrangler"),
+        )
+        captured: list[list[str]] = []
+
+        with mock.patch.object(
+            ProductionExecutor,
+            "_command_with_retry",
+            autospec=True,
+            side_effect=lambda _executor, args: captured.append(args)
+            or mock.Mock(stdout="ok"),
+        ):
+            result = executor.mutate(
+                [
+                    "d1",
+                    "execute",
+                    "langmap-v2",
+                    "--remote",
+                    "--command",
+                    "x" * (1024 * 1024),
+                ]
+            )
+
+        self.assertEqual(result, "ok")
+        self.assertEqual(len(captured), 1)
+        self.assertIn("--file", captured[0])
+        file_path = Path(captured[0][captured[0].index("--file") + 1])
+        self.assertFalse(file_path.exists())
+
     def test_column_inventory_uses_sqlite_identifiers_for_d1_compatibility(self) -> None:
         from lib.production import _build_column_inventory_sql  # noqa: E402
 
