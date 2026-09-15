@@ -285,17 +285,10 @@ def _write_shared_safe_reconcile(
     # (edge_id, source_id, marker) index and then deleting almost a million
     # rows in one D1 command.
     handle.write("-- Shared-safe reconcile: remove only this source's assertions.\n")
-    for range_index, range_start in enumerate(
-        range(0, id_range_stop, RECONCILE_ID_RANGE_STEP)
-    ):
+    for range_start in range(0, id_range_stop, RECONCILE_ID_RANGE_STEP):
         range_end = min(range_start + RECONCILE_ID_RANGE_STEP, id_range_stop)
         range_marker = f"-- ID range [{range_start}, {range_end})"
-        # Two adjacent windows share one remote command.  This keeps each
-        # command at roughly 100k IDs in the dense production ranges while
-        # halving network round trips; the SQL remains independently bounded.
-        if range_index % 2 == 0:
-            handle.write("-- langmap:batch\n")
-        handle.write(f"{range_marker}\n")
+        handle.write(f"-- langmap:batch\n{range_marker}\n")
         handle.write(
             "DELETE FROM expression_edges "
             f"WHERE id >= {range_start} AND id < {range_end} "
