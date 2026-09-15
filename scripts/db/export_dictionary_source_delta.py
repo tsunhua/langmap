@@ -50,11 +50,18 @@ def _write_cte_batches(
     statement: str,
     *,
     batch_size: int,
+    max_bytes: int = 90_000,
     force_batch: bool = False,
 ) -> None:
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    if max_bytes < 1:
+        raise ValueError("max_bytes must be positive")
     names = ", ".join(f'"{column}"' for column in columns)
-    for start in range(0, len(rows), batch_size):
-        batch = rows[start : start + batch_size]
+    prefix_bytes = len(f"WITH rows({names}) AS (VALUES\n  ".encode("utf-8"))
+    suffix_bytes = len(f"\n)\n{statement}\n".encode("utf-8"))
+
+    def write_batch(batch: Sequence[Sequence[object]]) -> None:
         if force_batch:
             # Keep hot edge natural-key joins in their own remote command.
             handle.write("-- langmap:batch\n")
@@ -63,6 +70,27 @@ def _write_cte_batches(
             for row in batch
         )
         handle.write(f"WITH rows({names}) AS (VALUES\n  {values}\n)\n{statement}\n")
+
+    batch: list[Sequence[object]] = []
+    batch_bytes = prefix_bytes + suffix_bytes
+    for row in rows:
+        rendered = "(" + ", ".join(_literal(value) for value in row) + ")"
+        rendered_bytes = len(rendered.encode("utf-8"))
+        separator_bytes = 0 if not batch else len(",\n  ".encode("utf-8"))
+        if batch and (
+            len(batch) >= batch_size
+            or batch_bytes + separator_bytes + rendered_bytes > max_bytes
+        ):
+            write_batch(batch)
+            batch = []
+            batch_bytes = prefix_bytes + suffix_bytes
+            separator_bytes = 0
+        if batch_bytes + separator_bytes + rendered_bytes > max_bytes:
+            raise ValueError("single CTE row exceeds max_bytes")
+        batch.append(row)
+        batch_bytes += separator_bytes + rendered_bytes
+    if batch:
+        write_batch(batch)
 
 
 def _rows(connection: sqlite3.Connection, sql: str, parameters: Iterable[object]) -> list[tuple[Any, ...]]:
