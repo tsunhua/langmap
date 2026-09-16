@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type OpenAI from 'openai';
-import { MAX_PLANNER_SPANS, PLANNER_TIMEOUT_MS } from '../src/utils/limits';
+import { MAX_PLANNER_SPANS, PLANNER_MAX_COMPLETION_TOKENS, PLANNER_TIMEOUT_MS } from '../src/utils/limits';
 import {
   DEFAULT_PLANNER_LIMITS,
   DEFAULT_SOURCE_CONFIDENCE_THRESHOLD,
@@ -80,6 +80,8 @@ describe('planTranslation — valid model output', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].model).toBe(TRANSLATION_MODEL);
     expect(calls[0].inputs.response_format).toEqual({ type: 'json_object' });
+    expect(calls[0].inputs.max_completion_tokens).toBe(PLANNER_MAX_COMPLETION_TOKENS);
+    expect(calls[0].inputs.reasoning_effort).toBe('low');
     expect(calls[0].options?.signal).toBeInstanceOf(AbortSignal);
   });
 
@@ -230,6 +232,25 @@ describe('planTranslation — malformed spans', () => {
     });
   });
 
+  it('repairs offsets when the model miscounts a CJK span but returns its exact text', async () => {
+    const text = '這裡天氣不好';
+    const { ai } = fakeAi(async () => asEnvelope(payload({
+      source_lang_code: 'cmn',
+      retrieval_spans: [
+        { start: 0, end: 5, text, reason: 'phrase', confidence: 0.9 },
+      ],
+    })));
+    const result = await planTranslation(ai, plannerInput({ text, sourceLangCode: 'cmn' }));
+    expect(result).toEqual({
+      status: 'ok',
+      output: {
+        source_lang_code: 'cmn',
+        source_confidence: 1,
+        retrieval_spans: [{ start: 0, end: 6, text, reason: 'phrase', confidence: 0.9 }],
+      },
+    });
+  });
+
   it('treats an entirely invalid payload as planner failure', async () => {
     const { ai, calls } = fakeAi(async () => ({ unexpected: true }));
     const result = await planTranslation(ai, plannerInput());
@@ -237,14 +258,46 @@ describe('planTranslation — malformed spans', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('falls back to the user-specified source with empty spans on an entirely invalid payload', async () => {
-    const { ai, calls } = fakeAi(async () => 'not json');
-    const result = await planTranslation(ai, plannerInput({ sourceLangCode: 'fra' }));
+  it('uses lexical spans when the planner response is truncated', async () => {
+    const { ai, calls } = fakeAi(async () => ({
+      choices: [{
+        message: { content: '{"source_lang_code":"cmn","source_confidence":1,"retrieval' },
+        finish_reason: 'length',
+      }],
+    }));
+    const result = await planTranslation(ai, plannerInput({ text: '這裡天氣不好', sourceLangCode: 'cmn' }));
     expect(result).toEqual({
       status: 'ok',
-      output: { source_lang_code: 'fra', source_confidence: 1, retrieval_spans: [] },
+      output: {
+        source_lang_code: 'cmn',
+        source_confidence: 1,
+        retrieval_spans: [
+          { start: 0, end: 2, text: '這裡', reason: 'keyword', confidence: 0.5 },
+          { start: 2, end: 4, text: '天氣', reason: 'keyword', confidence: 0.5 },
+          { start: 4, end: 6, text: '不好', reason: 'keyword', confidence: 0.5 },
+        ],
+      },
     });
     expect(calls).toHaveLength(1);
+  });
+
+  it('uses lexical spans when a valid planner payload contains no retrieval spans', async () => {
+    const { ai } = fakeAi(async () => asEnvelope({
+      source_lang_code: 'cmn',
+      source_confidence: 0.9,
+      retrieval_spans: [],
+    }));
+    const result = await planTranslation(ai, plannerInput({ text: '這裡天氣不好', sourceLangCode: 'cmn' }));
+    expect(result).toMatchObject({
+      status: 'ok',
+      output: {
+        retrieval_spans: [
+          { text: '這裡', start: 0, end: 2 },
+          { text: '天氣', start: 2, end: 4 },
+          { text: '不好', start: 4, end: 6 },
+        ],
+      },
+    });
   });
 });
 
@@ -291,7 +344,11 @@ describe('planTranslation — timeout, provider errors and abort', () => {
     const result = await planTranslation(ai, plannerInput({ sourceLangCode: 'cmn' }));
     expect(result).toEqual({
       status: 'ok',
-      output: { source_lang_code: 'cmn', source_confidence: 1, retrieval_spans: [] },
+      output: {
+        source_lang_code: 'cmn',
+        source_confidence: 1,
+        retrieval_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'keyword', confidence: 0.5 }],
+      },
     });
     expect(calls).toHaveLength(1);
   });

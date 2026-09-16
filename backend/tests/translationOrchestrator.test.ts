@@ -395,7 +395,10 @@ describe('runTranslation — assisted path', () => {
     ]);
     expect(parsed[0].data).toEqual({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' });
     expect(parsed[1].data).toEqual({ type: 'source_language', code: 'eng', confidence: 0.9 });
-    expect(parsed[2].data).toEqual({ type: 'segmentation', spans: [] });
+    expect(parsed[2].data).toEqual({
+      type: 'segmentation',
+      spans: [{ start: 0, end: 5, text: 'Hello', reason: 'keyword', confidence: 0.5 }],
+    });
     expect(parsed[3].data).toEqual({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' });
     expect(parsed[4].data).toMatchObject({
       type: 'evidence',
