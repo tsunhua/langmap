@@ -10,7 +10,8 @@ import {
 } from '../../utils/limits';
 import { canonicalizeExpressionText, expressionPrefixUpperBound } from '../expressionIdentity';
 import { edgePassesSql, hasPassingEdge } from './exactMatch';
-import { resolveTargetLocale, utf8ByteLength } from './validation';
+import { fetchExpressionLocaleCodes } from './localeMetadata';
+import { resolveTargetLocale, utf8ByteLength, type TargetLocaleResolution } from './validation';
 import type { PlannerSpan, RetrievalOutput, TranslationEvidence } from './types';
 
 // Translation edges are mappings; every currently valid relation bit stays
@@ -19,7 +20,18 @@ const RELATION_MASK = 1 | 2 | 4;
 // Marker summaries stay bounded per edge; the serialized evidence cap covers the rest.
 const MAX_MARKERS_PER_EDGE = 4;
 
-const DEGRADED: RetrievalOutput = { items: [], omitted_count: 0, degraded: true };
+const DEGRADED: RetrievalOutput = {
+  items: [],
+  omitted_count: 0,
+  degraded: true,
+  retrieval_status: 'failed',
+};
+const NO_MATCH: RetrievalOutput = {
+  items: [],
+  omitted_count: 0,
+  degraded: false,
+  retrieval_status: 'no_match',
+};
 
 export interface RetrievalLimits {
   maxPlannerSpans: number;
@@ -46,6 +58,9 @@ export interface RetrievalRequest {
   spans: PlannerSpan[];
   sourceLangCode: string;
   targetLocaleCode: string;
+  // The route already resolved this once. Reusing it avoids repeated locale
+  // lookups while the graph query itself remains language-level.
+  targetLocale?: TargetLocaleResolution;
   limits?: RetrievalLimits;
   signal?: AbortSignal;
 }
@@ -129,8 +144,8 @@ const DIRECT_SQL = `SELECT edge.id AS edge_id, edge.score AS score,
  FROM expressions e
  JOIN expression_edges edge ON (edge.expression_a_id = e.id OR edge.expression_b_id = e.id)
  JOIN expressions tgt ON tgt.id = CASE WHEN edge.expression_a_id = e.id THEN edge.expression_b_id ELSE edge.expression_a_id END
- JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?
  WHERE e.id = ?
+   AND tgt.language_id = ?
    AND tgt.id <> e.id
    AND (edge.relation_mask & ${RELATION_MASK}) <> 0
    AND ${edgePassesSql('edge')}
@@ -148,8 +163,8 @@ function twoHopSql(pivotMarks: string): string {
  JOIN languages pl ON pl.id = piv.language_id
  JOIN expression_edges edge2 ON (edge2.expression_a_id = piv.id OR edge2.expression_b_id = piv.id)
  JOIN expressions tgt ON tgt.id = CASE WHEN edge2.expression_a_id = piv.id THEN edge2.expression_b_id ELSE edge2.expression_a_id END
- JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?
  WHERE e.id = ?
+   AND tgt.language_id = ?
    AND pl.code IN (${pivotMarks})
    AND pl.code <> ?
    AND pl.code <> ?
@@ -211,12 +226,12 @@ async function findRootCandidates(
 async function queryDirect(
   db: D1Database,
   expressionId: number,
-  localeId: number,
+  targetLanguageId: number,
   limits: RetrievalLimits,
 ): Promise<DirectRow[]> {
   const { results } = await db
     .prepare(DIRECT_SQL)
-    .bind(localeId, expressionId, limits.maxPathsPerRoot)
+    .bind(expressionId, targetLanguageId, limits.maxPathsPerRoot)
     .all<DirectRow>();
   return results;
 }
@@ -224,7 +239,7 @@ async function queryDirect(
 async function queryTwoHop(
   db: D1Database,
   expressionId: number,
-  localeId: number,
+  targetLanguageId: number,
   targetLangCode: string,
   sourceLangCode: string,
   limits: RetrievalLimits,
@@ -233,7 +248,7 @@ async function queryTwoHop(
   const marks = pivots.map(() => '?').join(',');
   const { results } = await db
     .prepare(twoHopSql(marks))
-    .bind(localeId, expressionId, ...pivots, targetLangCode, sourceLangCode, limits.maxPathsPerRoot)
+    .bind(expressionId, targetLanguageId, ...pivots, targetLangCode, sourceLangCode, limits.maxPathsPerRoot)
     .all<TwoHopRow>();
   return results;
 }
@@ -343,6 +358,7 @@ function buildEvidence(
   hit: InternalHit,
   targetLocaleCode: string,
   markersByEdge: Map<number, string[]>,
+  localeCodesByExpression: Map<number, string[]>,
 ): TranslationEvidence {
   const sourceMarkers =
     hit.pathType === 'two_hop'
@@ -352,6 +368,7 @@ function buildEvidence(
     source_text: hit.sourceText,
     target_text: hit.targetText,
     target_locale_code: targetLocaleCode,
+    reference_locale_codes: localeCodesByExpression.get(hit.targetExprId) ?? [],
     path_type: hit.pathType,
     match_type: hit.matchType,
     source_markers: sourceMarkers,
@@ -400,8 +417,8 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
 
   try {
     if (callerSignal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
-    if (!sourceLangCode) return DEGRADED;
-    const locale = await resolveTargetLocale(db, input.targetLocaleCode);
+    if (!sourceLangCode) return NO_MATCH;
+    const locale = input.targetLocale ?? (await resolveTargetLocale(db, input.targetLocaleCode));
     if (interrupted()) return DEGRADED;
 
     const roots = buildRoots(input.fullText, input.spans ?? [], limits.maxPlannerSpans);
@@ -416,7 +433,7 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
       // two-hop query at all: their rows would only be discarded by the slice.
       const keptDirectKeys = new Set<string>();
       for (const candidate of candidates) {
-        const directRows = await queryDirect(db, candidate.id, locale.locale_id, limits);
+        const directRows = await queryDirect(db, candidate.id, locale.language_id, limits);
         if (interrupted()) return DEGRADED;
         const directHits = passingDirectHits(candidate, directRows);
         rootHits.push(...directHits);
@@ -425,7 +442,7 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
           const twoHopRows = await queryTwoHop(
             db,
             candidate.id,
-            locale.locale_id,
+            locale.language_id,
             locale.lang_code,
             sourceLangCode,
             limits,
@@ -441,15 +458,26 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
     const ranked = dedupeHits(allRootHits.sort(compareHits));
     const retained = ranked.slice(0, limits.maxEvidenceTotal);
     const omittedByCount = ranked.length - retained.length;
-    if (retained.length === 0) return DEGRADED;
+    if (retained.length === 0) return NO_MATCH;
 
     const markersByEdge = await fetchEdgeMarkers(db, uniqueEdgeIds(retained));
+    const localeCodesByExpression = await fetchExpressionLocaleCodes(
+      db,
+      retained.map((hit) => hit.targetExprId),
+    );
     if (interrupted()) return DEGRADED;
 
-    const evidence = retained.map((hit) => buildEvidence(hit, input.targetLocaleCode, markersByEdge));
+    const evidence = retained.map((hit) =>
+      buildEvidence(hit, input.targetLocaleCode, markersByEdge, localeCodesByExpression),
+    );
     const { selected, omitted: omittedByBytes } = capSerializedBytes(evidence, limits.maxEvidenceSerializedBytes);
-    if (selected.length === 0) return DEGRADED;
-    return { items: selected, omitted_count: omittedByCount + omittedByBytes, degraded: false };
+    if (selected.length === 0) return NO_MATCH;
+    return {
+      items: selected,
+      omitted_count: omittedByCount + omittedByBytes,
+      degraded: false,
+      retrieval_status: 'matched',
+    };
   } catch {
     // A caller abort must stop the request instead of degrading; every other
     // failure (deadline or a single failed query) degrades the search so the

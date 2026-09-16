@@ -7,6 +7,7 @@ const direct: TranslationEvidence = {
   source_text: '食飯',
   target_text: 'eat rice',
   target_locale_code: 'eng-Latn-US',
+  reference_locale_codes: ['eng-Latn-US'],
   path_type: 'direct',
   match_type: 'exact',
   source_markers: ['¹'],
@@ -16,6 +17,7 @@ const twoHop: TranslationEvidence = {
   source_text: '食飯',
   target_text: 'Essen',
   target_locale_code: 'deu-Latn-DE',
+  reference_locale_codes: ['deu-Latn-DE'],
   path_type: 'two_hop',
   pivot_lang_code: 'eng',
   match_type: 'prefix',
@@ -35,6 +37,10 @@ describe('EvidenceList', () => {
     ])
     expect(wrapper.findAll('.evidence-match').map((node) => node.text())).toEqual(['Exact', 'Prefix'])
     expect(wrapper.findAll('.evidence-markers').map((node) => node.text())).toEqual(['¹', '² · ³'])
+    expect(wrapper.findAll('.evidence-locales').map((node) => node.text())).toEqual([
+      'reference locale: eng-Latn-US',
+      'reference locale: deu-Latn-DE',
+    ])
     expect(wrapper.find('details').exists()).toBe(true)
   })
 

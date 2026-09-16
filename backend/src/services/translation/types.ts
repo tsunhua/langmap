@@ -1,6 +1,6 @@
 // Single provider model shared by the planner (structured call) and the
 // generative stage, so provider code stays in one place per layer.
-export const TRANSLATION_MODEL = '@cf/zai-org/glm-4.7-flash';
+export const TRANSLATION_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
 export interface TranslationRequest {
   text: string;
@@ -22,11 +22,15 @@ export interface SourceLanguageResult {
 
 export type EvidencePathType = 'direct' | 'two_hop';
 export type EvidenceMatchType = 'exact' | 'prefix';
+export type TranslationEvidenceRetrievalStatus = 'matched' | 'no_match' | 'failed' | 'skipped';
 
 export interface TranslationEvidence {
   source_text: string;
   target_text: string;
+  // The requested output locale. The reference rows themselves may have a
+  // different or missing locale link because retrieval is language-level.
   target_locale_code: string;
+  reference_locale_codes?: string[];
   path_type: EvidencePathType;
   pivot_lang_code?: string;
   match_type: EvidenceMatchType;
@@ -62,6 +66,7 @@ export interface TranslationStreamEvidenceEvent {
   items: TranslationEvidence[];
   omitted_count: number;
   degraded: boolean;
+  retrieval_status: TranslationEvidenceRetrievalStatus;
 }
 
 export interface TranslationStreamDeltaEvent {
@@ -139,6 +144,7 @@ export interface RetrievalOutput {
   items: TranslationEvidence[];
   omitted_count: number;
   degraded: boolean;
+  retrieval_status: Exclude<TranslationEvidenceRetrievalStatus, 'skipped'>;
 }
 
 export interface GenerationOutput {

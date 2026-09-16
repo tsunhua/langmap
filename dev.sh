@@ -113,6 +113,56 @@ stop_port_process() {
   done
 }
 
+trim_dotenv_value() {
+  local value="$1"
+
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  case "$value" in
+    \"*\") value="${value:1:${#value}-2}" ;;
+    \'*\') value="${value:1:${#value}-2}" ;;
+  esac
+  printf '%s' "$value"
+}
+
+load_cloudflare_credentials_from_dev_vars() {
+  local vars_file="$ROOT/backend/.dev.vars"
+  local line key value
+
+  [ -f "$vars_file" ] || return 0
+
+  # Wrangler loads .dev.vars for the Worker. Keep these credentials available
+  # to commands launched by this script as well, including non-interactive CLI
+  # invocations.
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    case "$line" in
+      ""|\#*) continue ;;
+    esac
+
+    case "$line" in
+      *[=]*) ;;
+      *) continue ;;
+    esac
+
+    key="${line%%=*}"
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    case "$key" in
+      CLOUDFLARE_API_TOKEN)
+        [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && continue
+        value="$(trim_dotenv_value "${line#*=}")"
+        [ -n "$value" ] && export CLOUDFLARE_API_TOKEN="$value"
+        ;;
+      CLOUDFLARE_ACCOUNT_ID)
+        [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] && continue
+        value="$(trim_dotenv_value "${line#*=}")"
+        [ -n "$value" ] && export CLOUDFLARE_ACCOUNT_ID="$value"
+        ;;
+    esac
+  done < "$vars_file"
+}
+
 cleanup() {
   if [ "$CLEANUP_DONE" -eq 1 ]; then
     return
@@ -170,6 +220,9 @@ if [ ! -f "$ROOT/backend/.dev.vars" ]; then
 else
   echo "  backend/.dev.vars 已存在，略過"
 fi
+
+step "載入 Wrangler 本地認證（若有 backend/.dev.vars）"
+load_cloudflare_credentials_from_dev_vars
 
 step "確保後端相依套件已安裝"
 cd "$ROOT/backend"

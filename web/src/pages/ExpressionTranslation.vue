@@ -188,6 +188,11 @@ async function sendToContribute() {
         :mode="mode"
         :is-streaming="isStreaming"
         :error="error"
+        :source-language="sourceLanguage"
+        :evidence="evidence"
+        :target-locale-code="form.targetLocaleCode"
+        :translation="translation"
+        :result="result"
       />
 
       <TranslationResult
@@ -207,6 +212,7 @@ async function sendToContribute() {
         :items="evidence.items"
         :omitted-count="evidence.omittedCount"
         :degraded="evidence.degraded"
+        :retrieval-status="evidence.retrievalStatus"
       />
     </div>
   </main>

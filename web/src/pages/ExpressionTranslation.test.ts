@@ -210,8 +210,8 @@ describe('ExpressionTranslation page', () => {
     await nextTick()
     expect(wrapper.findAll('.stage')).toHaveLength(3)
     expect(wrapper.get('.stage[data-state="active"]').text()).toContain('Analyzing')
-    expect(wrapper.get('.translation-progress').attributes('aria-live')).toBe('polite')
-    expect(wrapper.get('.translation-progress').attributes('role')).toBe('status')
+    expect(wrapper.get('.process-status').attributes('aria-live')).toBe('polite')
+    expect(wrapper.get('.process-status').attributes('role')).toBe('status')
 
     stream.send(line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }))
     await flush()
@@ -222,6 +222,30 @@ describe('ExpressionTranslation page', () => {
     await flush()
     await nextTick()
     expect(wrapper.get('.stage[data-state="active"]').text()).toContain('Generating')
+
+    stream.close()
+    await settle()
+  })
+
+  it('shows source, retrieval, and draft details while the stream is active', async () => {
+    const stream = controllableResponse()
+    vi.mocked(postTranslation).mockImplementation(() => Promise.resolve(stream.response))
+    const { wrapper } = await mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await flush()
+
+    stream.send(line({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' }))
+    stream.send(line({ type: 'source_language', code: 'cmn', confidence: 1 }))
+    stream.send(line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false }))
+    stream.send(line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' }))
+    stream.send(line({ type: 'translation_delta', text: '這个偌濟錢？' }))
+    await flush()
+    await nextTick()
+
+    expect(wrapper.get('.process-details').text()).toContain('cmn')
+    expect(wrapper.get('.process-evidence-source').text()).toBe('食飯')
+    expect(wrapper.get('.process-preview').text()).toBe('這个偌濟錢？')
 
     stream.close()
     await settle()
@@ -263,11 +287,11 @@ describe('ExpressionTranslation page', () => {
     expect(wrapper.get('.evidence-source').text()).toBe('食飯')
   })
 
-  it('shows a degraded, empty evidence panel for model-only results', async () => {
+  it('shows an empty evidence panel when reference lookup is skipped', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
       Promise.resolve(streamResponse([
         line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }),
-        line({ type: 'evidence', items: [], omitted_count: 0, degraded: true }),
+        line({ type: 'evidence', items: [], omitted_count: 0, degraded: false, retrieval_status: 'skipped' }),
         resultLine({ model_only: true }),
       ])),
     )
@@ -277,7 +301,7 @@ describe('ExpressionTranslation page', () => {
     await settle()
 
     expect(wrapper.findAll('.evidence-item')).toHaveLength(0)
-    expect(wrapper.find('.evidence-degraded').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Reference lookup was skipped')
     expect(wrapper.find('.evidence-empty').exists()).toBe(true)
   })
 
@@ -520,6 +544,6 @@ describe('ExpressionTranslation page', () => {
 
     const alert = wrapper.get('[role="alert"]')
     expect(alert.text()).toContain('Translation failed')
-    expect(wrapper.get('.translation-progress').attributes('aria-live')).toBe('assertive')
+    expect(wrapper.get('.progress-error').attributes('aria-live')).toBe('assertive')
   })
 })

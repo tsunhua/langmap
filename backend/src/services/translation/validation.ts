@@ -45,7 +45,8 @@ export interface SourceLanguageResolution {
 }
 
 const SOURCE_LANGUAGE_SQL = 'SELECT id FROM languages WHERE code=?';
-const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code
+const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code,
+ll.name AS locale_name, ll.name_en AS locale_name_en
 FROM language_locales ll
 JOIN languages l ON l.id = ll.language_id
 WHERE ll.code = ?`;
@@ -77,6 +78,8 @@ export interface TargetLocaleResolution {
   locale_id: number;
   language_id: number;
   lang_code: string;
+  name?: string;
+  nameEn?: string;
 }
 
 export async function resolveTargetLocale(db: D1Database, target_locale_code: string): Promise<TargetLocaleResolution> {
@@ -84,7 +87,20 @@ export async function resolveTargetLocale(db: D1Database, target_locale_code: st
   const locale = await db
     .prepare(LOCALE_SQL)
     .bind(target_locale_code)
-    .first<{ id: number; language_id: number; lang_code: string }>();
+    .first<{
+      id: number;
+      language_id: number;
+      lang_code: string;
+      locale_name?: string | null;
+      locale_name_en?: string | null;
+    }>();
   if (!locale) throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
-  return { locale_id: locale.id, language_id: locale.language_id, lang_code: locale.lang_code };
+  const result: TargetLocaleResolution = {
+    locale_id: locale.id,
+    language_id: locale.language_id,
+    lang_code: locale.lang_code,
+  };
+  if (locale.locale_name) result.name = locale.locale_name;
+  if (locale.locale_name_en) result.nameEn = locale.locale_name_en;
+  return result;
 }

@@ -15,9 +15,12 @@ export const MAX_EVIDENCE_TOTAL = 24;
 export const MAX_ALTERNATIVES = 2;
 export const MAX_EVIDENCE_SERIALIZED_BYTES = 32768;
 export const MAX_TRANSLATION_OUTPUT_TOKENS = 2048;
-export const PLANNER_TIMEOUT_MS = 2500;
+export const PLANNER_TIMEOUT_MS = 20000;
 export const RETRIEVAL_TIMEOUT_MS = 2000;
-export const GENERATION_TIMEOUT_MS = 9000;
+// Workers AI model latency can exceed the old 9s limit even when the request
+// is healthy; keep the deadline bounded while leaving room for a normal remote
+// inference response from the configured model.
+export const GENERATION_TIMEOUT_MS = 30000;
 export const GENERATE_STAGE_DEADLINE_MS = 6000;
 
 export const APPROVED_PIVOT_LANGUAGES = [

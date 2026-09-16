@@ -1,4 +1,5 @@
-import type { Ai, D1Database } from '@cloudflare/workers-types';
+import OpenAI from 'openai';
+import type { D1Database } from '@cloudflare/workers-types';
 import { MAX_ALTERNATIVES } from '../../utils/limits';
 import {
   DEFAULT_EXACT_MATCH_LIMITS,
@@ -50,7 +51,10 @@ export interface TranslationLimitsInput {
 
 export interface RunTranslationEnv {
   DB: D1Database;
-  AI: Ai;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_API_TOKEN?: string;
+  // Test seam only. Production constructs the official SDK client from env.
+  aiClient?: OpenAI;
 }
 
 // Input is already validated and resolved by the route (Task 1.7); this service
@@ -71,6 +75,11 @@ export interface RunTranslationRequest {
 export interface TranslationStreamContext {
   signal: AbortSignal;
   emit: (line: string) => void;
+}
+
+interface AssistedSeed {
+  sourceLangCode: string;
+  evidence: TranslationEvidence[];
 }
 
 export interface TranslationSuccessEnvelope {
@@ -233,14 +242,28 @@ async function runPipeline(
     canonicalText: request.canonicalText,
     sourceLangCode: request.sourceLangCode,
     targetLocaleCode: request.targetLocaleCode,
+    targetLocale: request.targetLocale,
     limits: limits.exactMatch,
   });
   if (ctx.signal.aborted) return;
 
   switch (exact.status) {
     case 'exact_match':
+      if (!exact.locale_compatible) {
+        await assistedPath(env, request, ctx, limits, {
+          sourceLangCode: exact.source.code,
+          evidence: exact.evidence,
+        });
+        return;
+      }
       emitEvent(ctx, statusEvent('retrieving', 'exact_lookup', request.requestId));
-      emitEvent(ctx, { type: 'evidence', items: exact.evidence, omitted_count: 0, degraded: false });
+      emitEvent(ctx, {
+        type: 'evidence',
+        items: exact.evidence,
+        omitted_count: 0,
+        degraded: false,
+        retrieval_status: 'matched',
+      });
       emitEvent(ctx, { type: 'result', ...exact.result, request_id: request.requestId });
       return;
     case 'ambiguous':
@@ -263,50 +286,83 @@ async function assistedPath(
   request: RunTranslationRequest,
   ctx: TranslationStreamContext,
   limits: OrchestratorLimits,
+  seed?: AssistedSeed,
 ): Promise<void> {
   emitEvent(ctx, statusEvent('analyzing', 'assisted', request.requestId));
 
-  let planner: PlannerResult;
+  let ai: OpenAI;
   try {
-    planner = await planTranslation(env.AI, {
-      text: request.text,
-      sourceLangCode: request.sourceLangCode,
-      limits: limits.planner,
-      signal: ctx.signal,
-    });
+    ai = env.aiClient ?? createTranslationClient(env);
   } catch {
-    // The planner only rethrows on a caller abort; any other rejection degrades
-    // to an unknown source rather than guessing a language.
-    if (ctx.signal.aborted) return;
-    planner = { status: 'unavailable' };
-  }
-  if (ctx.signal.aborted) return;
-
-  if (planner.status === 'confirmation_required') {
-    emitEvent(ctx, {
-      type: 'source_confirmation_required',
-      candidates: [],
-      reason: CONFIRMATION_REASON_LOW_CONFIDENCE,
-    });
+    emitEvent(ctx, errorEvent('AI_PROVIDER_FAILED', true));
     return;
   }
 
   let plannerOutput: PlannerOutput | null = null;
   let sourceLangCode: string | null = null;
-  if (planner.status === 'ok' && planner.output.source_lang_code) {
-    // The user's explicit choice always wins over auto-detection confidence 1.
-    sourceLangCode = request.sourceLangCode ?? planner.output.source_lang_code;
-    plannerOutput = planner.output;
+  if (seed) {
+    sourceLangCode = seed.sourceLangCode;
+    plannerOutput = {
+      source_lang_code: seed.sourceLangCode,
+      source_confidence: 1,
+      uncertain_spans: [],
+    };
     emitEvent(ctx, {
       type: 'source_language',
       code: sourceLangCode,
-      confidence: request.sourceLangCode ? 1 : planner.output.source_confidence,
+      confidence: 1,
     });
+  } else {
+    let planner: PlannerResult;
+    try {
+      planner = await planTranslation(ai, {
+        text: request.text,
+        sourceLangCode: request.sourceLangCode,
+        limits: limits.planner,
+        signal: ctx.signal,
+      });
+    } catch {
+      // The planner only rethrows on a caller abort; any other rejection degrades
+      // to an unknown source rather than guessing a language.
+      if (ctx.signal.aborted) return;
+      planner = { status: 'unavailable' };
+    }
+    if (ctx.signal.aborted) return;
+
+    if (planner.status === 'confirmation_required') {
+      emitEvent(ctx, {
+        type: 'source_confirmation_required',
+        candidates: [],
+        reason: CONFIRMATION_REASON_LOW_CONFIDENCE,
+      });
+      return;
+    }
+
+    if (planner.status === 'ok' && planner.output.source_lang_code) {
+      // The user's explicit choice always wins over auto-detection confidence 1.
+      sourceLangCode = request.sourceLangCode ?? planner.output.source_lang_code;
+      plannerOutput = planner.output;
+      emitEvent(ctx, {
+        type: 'source_language',
+        code: sourceLangCode,
+        confidence: request.sourceLangCode ? 1 : planner.output.source_confidence,
+      });
+    }
   }
   if (ctx.signal.aborted) return;
 
   let evidence: TranslationEvidence[] = [];
-  if (plannerOutput && sourceLangCode) {
+  if (seed) {
+    evidence = seed.evidence;
+    emitEvent(ctx, statusEvent('retrieving', 'assisted', request.requestId));
+    emitEvent(ctx, {
+      type: 'evidence',
+      items: evidence,
+      omitted_count: 0,
+      degraded: false,
+      retrieval_status: 'matched',
+    });
+  } else if (plannerOutput && sourceLangCode) {
     emitEvent(ctx, statusEvent('retrieving', 'assisted', request.requestId));
     let retrieval;
     try {
@@ -315,6 +371,7 @@ async function assistedPath(
         spans: plannerOutput.uncertain_spans,
         sourceLangCode,
         targetLocaleCode: request.targetLocaleCode,
+        targetLocale: request.targetLocale,
         limits: limits.retrieval,
         signal: ctx.signal,
       });
@@ -324,21 +381,34 @@ async function assistedPath(
     }
     if (ctx.signal.aborted) return;
 
-    if (!retrieval || retrieval.degraded || retrieval.items.length === 0) {
-      emitEvent(ctx, { type: 'evidence', items: [], omitted_count: 0, degraded: true });
+    if (!retrieval) {
+      emitEvent(ctx, {
+        type: 'evidence',
+        items: [],
+        omitted_count: 0,
+        degraded: true,
+        retrieval_status: 'failed',
+      });
     } else {
       evidence = retrieval.items;
       emitEvent(ctx, {
         type: 'evidence',
         items: retrieval.items,
         omitted_count: retrieval.omitted_count,
-        degraded: false,
+        degraded: retrieval.degraded,
+        retrieval_status: retrieval.retrieval_status,
       });
     }
   } else {
     // Source could not be determined safely: skip graph retrieval rather than
     // guess a language, and fall back to model-only generation.
-    emitEvent(ctx, { type: 'evidence', items: [], omitted_count: 0, degraded: true });
+    emitEvent(ctx, {
+      type: 'evidence',
+      items: [],
+      omitted_count: 0,
+      degraded: false,
+      retrieval_status: 'skipped',
+    });
   }
   if (ctx.signal.aborted) return;
 
@@ -346,10 +416,13 @@ async function assistedPath(
 
   let generation;
   try {
-    generation = await streamTranslation(env.AI, {
+    generation = await streamTranslation(ai, {
       text: request.text,
       sourceLangCode: sourceLangCode ?? '',
       targetLocaleCode: request.targetLocaleCode,
+      targetLanguageCode: request.targetLocale.lang_code,
+      targetLocaleName: request.targetLocale.name,
+      targetLocaleNameEn: request.targetLocale.nameEn,
       evidence,
       signal: ctx.signal,
       limits: limits.generation,
@@ -391,5 +464,19 @@ async function assistedPath(
     model_only: generation.model_only,
     resolution: 'assisted',
     generation_skipped: false,
+  });
+}
+
+function createTranslationClient(env: RunTranslationEnv): OpenAI {
+  if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_API_TOKEN) {
+    throw new Error('CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are required');
+  }
+
+  return new OpenAI({
+    apiKey: env.CLOUDFLARE_API_TOKEN,
+    baseURL: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`,
+    // Retry policy belongs to the translation pipeline; avoid the SDK's
+    // default retries extending a bounded stage unexpectedly.
+    maxRetries: 0,
   });
 }

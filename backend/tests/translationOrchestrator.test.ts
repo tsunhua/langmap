@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Ai, D1Database } from '@cloudflare/workers-types';
+import type OpenAI from 'openai';
+import type { D1Database } from '@cloudflare/workers-types';
 import {
   GENERATION_TIMEOUT_MS,
   MAX_ALTERNATIVES,
@@ -48,6 +49,7 @@ function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
 
 interface RouteSetup {
   locale?: Row | null;
+  targetLocales?: Row[];
   exactFixed?: { direct?: Row[]; twoHop?: Row[] };
   candidate?: Row[];
   retrieval?: { direct?: Row[] | ((args: unknown[]) => Row[] | Promise<Row[]>); twoHop?: Row[] };
@@ -61,6 +63,7 @@ const TARGET_LOCALE_RESOLUTION = { locale_id: 30, language_id: 7, lang_code: 'jp
 function route(setup: RouteSetup): Handler {
   return (sql, args) => {
     if (/FROM language_locales ll/.test(sql)) return setup.locale ? [setup.locale] : [];
+    if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
     const textRoot = /e\.text = \?/.test(sql);
     if (/JOIN expression_edges edge1 ON/.test(sql)) {
       return textRoot ? (setup.exactFixed?.twoHop ?? []) : (setup.retrieval?.twoHop ?? []);
@@ -143,24 +146,6 @@ function plannerEnvelope(code: string | null = 'eng', confidence = 0.9): Record<
   };
 }
 
-function sseChunk(text: string): string {
-  return `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n`;
-}
-
-function makeStream(chunks: string[]): ReadableStream {
-  let index = 0;
-  return new ReadableStream({
-    pull(controller) {
-      if (index < chunks.length) {
-        controller.enqueue(new TextEncoder().encode(sseChunk(chunks[index])));
-        index++;
-      } else {
-        controller.close();
-      }
-    },
-  });
-}
-
 function pendingUntilSignal(signal?: AbortSignal): Promise<never> {
   return new Promise((_resolve, reject) => {
     if (!signal) return;
@@ -174,25 +159,32 @@ function pendingUntilSignal(signal?: AbortSignal): Promise<never> {
 
 interface FakeAiConfig {
   planner?: (signal?: AbortSignal) => unknown | Promise<unknown>;
-  generation?: (signal?: AbortSignal) => ReadableStream | unknown | Promise<ReadableStream | unknown>;
+  generation?: (signal?: AbortSignal) => unknown | Promise<unknown>;
 }
 
-function fakeAi(config: FakeAiConfig = {}): { ai: Pick<Ai, 'run'>; calls: AiCall[] } {
+function completion(content: string): Record<string, unknown> {
+  return { choices: [{ message: { content } }] };
+}
+
+function fakeAi(config: FakeAiConfig = {}): { ai: OpenAI; calls: AiCall[] } {
   const calls: AiCall[] = [];
-  const run = async (
-    model: string,
+  const create = async (
     inputs: Record<string, unknown>,
-    options?: { signal?: unknown },
+    options?: Record<string, unknown>,
   ): Promise<unknown> => {
-    calls.push({ model, inputs, options });
+    calls.push({ model: String(inputs.model), inputs, options });
     const signal = options?.signal instanceof AbortSignal ? options.signal : undefined;
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    if (inputs.stream === true) {
-      return config.generation ? config.generation(signal) : makeStream([]);
+    if (inputs.response_format !== undefined) {
+      return config.planner ? config.planner(signal) : plannerEnvelope();
     }
-    return config.planner ? config.planner(signal) : plannerEnvelope();
+    const generated = config.generation ? await config.generation(signal) : '';
+    return typeof generated === 'string' ? completion(generated) : generated;
   };
-  return { ai: { run } as unknown as Pick<Ai, 'run'>, calls };
+  return {
+    ai: { chat: { completions: { create } } } as unknown as OpenAI,
+    calls,
+  };
 }
 
 function request(overrides: Partial<RunTranslationRequest> = {}): RunTranslationRequest {
@@ -210,7 +202,7 @@ function request(overrides: Partial<RunTranslationRequest> = {}): RunTranslation
 
 interface Harness {
   db: D1Database;
-  ai: Pick<Ai, 'run'>;
+  ai: OpenAI;
   aiCalls: AiCall[];
   controller: AbortController;
   collector: string[];
@@ -233,7 +225,7 @@ function harness(handler: Handler, aiConfig: FakeAiConfig = {}): Harness {
 }
 
 function runTranslationTest(h: Harness, req: RunTranslationRequest): Promise<void> {
-  return runTranslation({ DB: h.db, AI: h.ai }, req, h.ctx);
+  return runTranslation({ DB: h.db, aiClient: h.ai }, req, h.ctx);
 }
 
 interface ParsedLine {
@@ -275,6 +267,7 @@ describe('runTranslation — exact fast path', () => {
       type: 'evidence',
       omitted_count: 0,
       degraded: false,
+      retrieval_status: 'matched',
     });
     expect(parsed[1].data && 'items' in parsed[1].data).toBe(true);
     expect(parsed[2].data).toMatchObject({
@@ -309,6 +302,39 @@ describe('runTranslation — exact fast path', () => {
     });
     expect((parsed[1].data as { items: unknown[] }).items).toHaveLength(1);
     expect(h.aiCalls).toHaveLength(0);
+  });
+
+  it('regenerates language-level evidence when its script differs from the requested locale', async () => {
+    const h = harness(route({
+      locale: LOCALE_ROW,
+      targetLocales: [{ expression_id: 2, locale_code: 'jpn-Latn-JP' }],
+      markers: [markerRow(11)],
+      exactFixed: { direct: [exactDirectRow()], twoHop: [] },
+    }), {
+      generation: () => 'konnichiwa',
+    });
+    await runTranslationTest(h, request());
+
+    const parsed = parseLines(h.collector);
+    expect(eventTypes(parsed)).toEqual([
+      'status',
+      'source_language',
+      'status',
+      'evidence',
+      'status',
+      'translation_delta',
+      'result',
+    ]);
+    expect(parsed[0].data).toMatchObject({ type: 'status', stage: 'analyzing', mode: 'assisted' });
+    expect(parsed[3].data).toMatchObject({ type: 'evidence', retrieval_status: 'matched' });
+    expect(parsed[6].data).toMatchObject({
+      type: 'result',
+      translation: 'konnichiwa',
+      resolution: 'assisted',
+      model_only: false,
+      evidence_present: true,
+    });
+    expect(h.aiCalls).toHaveLength(1);
   });
 
   it('ambiguous exact results end with source_confirmation_required and no AI', async () => {
@@ -346,7 +372,7 @@ describe('runTranslation — assisted path', () => {
       markers: [markerRow(11)],
     }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['こんに', 'ちは']),
+      generation: () => 'こんにちは',
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
@@ -357,7 +383,6 @@ describe('runTranslation — assisted path', () => {
       'status',
       'evidence',
       'status',
-      'translation_delta',
       'translation_delta',
       'result',
     ]);
@@ -371,9 +396,8 @@ describe('runTranslation — assisted path', () => {
     });
     expect((parsed[3].data as { items: unknown[] }).items).toHaveLength(1);
     expect(parsed[4].data).toEqual({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' });
-    expect(parsed[5].data).toEqual({ type: 'translation_delta', text: 'こんに' });
-    expect(parsed[6].data).toEqual({ type: 'translation_delta', text: 'ちは' });
-    expect(parsed[7].data).toMatchObject({
+    expect(parsed[5].data).toEqual({ type: 'translation_delta', text: 'こんにちは' });
+    expect(parsed[6].data).toMatchObject({
       type: 'result',
       request_id: 'req-1',
       translation: 'こんにちは',
@@ -407,7 +431,7 @@ describe('runTranslation — assisted path', () => {
   it('goes model-only with degraded evidence when the planner is unavailable', async () => {
     const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), {
       planner: () => 'not json',
-      generation: () => makeStream(['Salut']),
+      generation: () => 'Salut',
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
@@ -419,7 +443,13 @@ describe('runTranslation — assisted path', () => {
       'translation_delta',
       'result',
     ]);
-    expect(parsed[1].data).toEqual({ type: 'evidence', items: [], omitted_count: 0, degraded: true });
+    expect(parsed[1].data).toEqual({
+      type: 'evidence',
+      items: [],
+      omitted_count: 0,
+      degraded: false,
+      retrieval_status: 'skipped',
+    });
     expect(parsed[3].data).toEqual({ type: 'translation_delta', text: 'Salut' });
     expect(parsed[4].data).toMatchObject({
       type: 'result',
@@ -441,7 +471,7 @@ describe('runTranslation — assisted path', () => {
       retrieval: { direct: [retrievalDirectRow({ target_text: 'Bonjour le monde' })] },
     }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['Bonjour le monde']),
+      generation: () => 'Bonjour le monde',
     });
     await runTranslationTest(h, request({ text: 'Bonjour', canonicalText: 'Bonjour', sourceLangCode: 'fra' }));
 
@@ -460,7 +490,7 @@ describe('runTranslation — assisted path', () => {
       retrieval: { direct: () => { throw new Error('D1 failure'); } },
     }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['Phew']),
+      generation: () => 'Phew',
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
@@ -474,7 +504,13 @@ describe('runTranslation — assisted path', () => {
       'translation_delta',
       'result',
     ]);
-    expect(parsed[3].data).toEqual({ type: 'evidence', items: [], omitted_count: 0, degraded: true });
+    expect(parsed[3].data).toEqual({
+      type: 'evidence',
+      items: [],
+      omitted_count: 0,
+      degraded: true,
+      retrieval_status: 'failed',
+    });
     expect(parsed[6].data).toMatchObject({
       type: 'result',
       resolution: 'assisted',
@@ -499,7 +535,7 @@ describe('runTranslation — assisted path', () => {
       markers: [markerRow(11), markerRow(12), markerRow(13), markerRow(14)],
     }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['best']),
+      generation: () => 'best',
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
@@ -586,7 +622,7 @@ describe('runTranslation — error mapping', () => {
   it('maps an oversized translation to TRANSLATION_OUTPUT_TOO_LARGE with no result', async () => {
     const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), {
       planner: () => plannerEnvelope('eng', 0.9),
-      generation: () => makeStream(['partial', 'X'.repeat(MAX_TRANSLATION_OUTPUT_TOKENS + 100)]),
+      generation: () => 'partial' + 'X'.repeat(MAX_TRANSLATION_OUTPUT_TOKENS + 100),
     });
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
@@ -597,13 +633,10 @@ describe('runTranslation — error mapping', () => {
       'status',
       'evidence',
       'status',
-      'translation_delta',
       'TRANSLATION_OUTPUT_TOO_LARGE',
     ]);
-    const deltaIndex = eventTypes(parsed).indexOf('translation_delta');
     const errorIndex = eventTypes(parsed).indexOf('TRANSLATION_OUTPUT_TOO_LARGE');
-    expect(deltaIndex).toBeGreaterThanOrEqual(0);
-    expect(deltaIndex).toBeLessThan(errorIndex);
+    expect(errorIndex).toBeGreaterThanOrEqual(0);
     expect(parsed.at(-1)).toMatchObject({ success: false, error: 'TRANSLATION_OUTPUT_TOO_LARGE', retryable: false });
     expect(parsed.some((entry) => entry.data?.type === 'result')).toBe(false);
   });
@@ -719,6 +752,7 @@ describe('writeEnvelope', () => {
       items: [],
       omitted_count: 0,
       degraded: true,
+      retrieval_status: 'failed',
     };
     expect(envelopeLine(event)).toBe(`${JSON.stringify({ success: true, data: event })}\n`);
   });

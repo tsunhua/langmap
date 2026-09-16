@@ -15,7 +15,8 @@ const runTranslationMock = vi.mocked(runTranslation);
 const SECRET_KEY = 'test-secret';
 const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
 const LANG_SQL = 'SELECT id FROM languages WHERE code=?';
-const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code
+const LOCALE_SQL = `SELECT ll.id AS id, ll.language_id AS language_id, l.code AS lang_code,
+ll.name AS locale_name, ll.name_en AS locale_name_en
 FROM language_locales ll
 JOIN languages l ON l.id = ll.language_id
 WHERE ll.code = ?`;
@@ -230,6 +231,7 @@ describe('POST /translate streaming', () => {
         }],
         omitted_count: 0,
         degraded: false,
+        retrieval_status: 'matched',
       }));
       ctx.emit(envelopeLine({
         type: 'result',

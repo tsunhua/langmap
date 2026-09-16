@@ -15,7 +15,10 @@ export interface TranslationLanguageCandidate {
 export interface TranslationEvidence {
   source_text: string
   target_text: string
+  // The requested locale is kept separately from the locale metadata attached
+  // to the stored reference expression.
   target_locale_code: string
+  reference_locale_codes?: string[]
   path_type: 'direct' | 'two_hop'
   pivot_lang_code?: string
   match_type: 'exact' | 'prefix'
@@ -25,6 +28,7 @@ export interface TranslationEvidence {
 export type TranslationStage = 'analyzing' | 'retrieving' | 'generating'
 export type TranslationMode = 'exact_lookup' | 'assisted'
 export type TranslationResolution = 'exact_lookup' | 'assisted'
+export type TranslationEvidenceRetrievalStatus = 'matched' | 'no_match' | 'failed' | 'skipped'
 
 export interface TranslationStatusEvent {
   type: 'status'
@@ -51,6 +55,7 @@ export interface TranslationEvidenceEvent {
   items: TranslationEvidence[]
   omitted_count: number
   degraded: boolean
+  retrieval_status: TranslationEvidenceRetrievalStatus
 }
 
 export interface TranslationDeltaEvent {

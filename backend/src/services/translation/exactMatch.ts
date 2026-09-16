@@ -1,6 +1,8 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { APPROVED_PIVOT_LANGUAGES, MAX_ALTERNATIVES, MAX_DIRECT_PATHS_PER_ROOT } from '../../utils/limits';
 import { canonicalizeExpressionText } from '../expressionIdentity';
+import { parseLanguageLocaleCode } from '../languageIdentity';
+import { fetchExpressionLocaleCodes } from './localeMetadata';
 import { resolveTargetLocale, type TargetLocaleResolution } from './validation';
 import type {
   SourceLanguageResult,
@@ -30,6 +32,7 @@ export interface ExactMatchInput {
   canonicalText: string;
   sourceLangCode?: string | null;
   targetLocaleCode: string;
+  targetLocale?: TargetLocaleResolution;
   limits: ExactMatchLimits;
 }
 
@@ -39,6 +42,7 @@ export type ExactMatchResult =
       source: SourceLanguageResult;
       evidence: TranslationEvidence[];
       result: TranslationResult;
+      locale_compatible: boolean;
     }
   | { status: 'ambiguous'; candidates: TranslationLanguageCandidate[] }
   | { status: 'no_match' };
@@ -115,8 +119,8 @@ function directSql(sourceLangCode: string | null): string {
  JOIN languages sl ON sl.id = e.language_id
  JOIN expression_edges edge ON (edge.expression_a_id = e.id OR edge.expression_b_id = e.id)
  JOIN expressions tgt ON tgt.id = CASE WHEN edge.expression_a_id = e.id THEN edge.expression_b_id ELSE edge.expression_a_id END
- JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?
  WHERE e.text = ?${sourceLangCode ? ' AND sl.code = ?' : ''}
+   AND tgt.language_id = ?
    AND tgt.id <> e.id
    AND (edge.relation_mask & ${RELATION_MASK}) <> 0
    AND ${edgePassesSql('edge')}
@@ -139,8 +143,8 @@ function twoHopSql(sourceLangCode: string | null, pivotMarks: string): string {
  JOIN languages pl ON pl.id = piv.language_id
  JOIN expression_edges edge2 ON (edge2.expression_a_id = piv.id OR edge2.expression_b_id = piv.id)
  JOIN expressions tgt ON tgt.id = CASE WHEN edge2.expression_a_id = piv.id THEN edge2.expression_b_id ELSE edge2.expression_a_id END
- JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?
  WHERE e.text = ?${sourceLangCode ? ' AND sl.code = ?' : ''}
+   AND tgt.language_id = ?
    AND pl.code IN (${pivotMarks})
    AND pl.code <> ?
    ${sourceLangCode ? 'AND pl.code <> ?' : ''}
@@ -161,11 +165,12 @@ async function queryDirect(
   db: D1Database,
   canonicalText: string,
   sourceLangCode: string | null,
-  localeId: number,
+  targetLanguageId: number,
   limits: ExactMatchLimits,
 ): Promise<DirectRow[]> {
-  const binds: unknown[] = [localeId, canonicalText];
+  const binds: unknown[] = [canonicalText];
   if (sourceLangCode) binds.push(sourceLangCode);
+  binds.push(targetLanguageId);
   binds.push(maxRows(limits));
   const { results } = await db.prepare(directSql(sourceLangCode)).bind(...binds).all<DirectRow>();
   return results;
@@ -175,14 +180,15 @@ async function queryTwoHop(
   db: D1Database,
   canonicalText: string,
   sourceLangCode: string | null,
-  locale: TargetLocaleResolution,
+  targetLanguageId: number,
+  targetLangCode: string,
   limits: ExactMatchLimits,
 ): Promise<TwoHopRow[]> {
   const pivotCodes = limits.approvedPivotLanguages;
   const marks = pivotCodes.map(() => '?').join(',');
-  const binds: unknown[] = [locale.locale_id, canonicalText];
+  const binds: unknown[] = [canonicalText];
   if (sourceLangCode) binds.push(sourceLangCode);
-  binds.push(...pivotCodes, locale.lang_code);
+  binds.push(targetLanguageId, ...pivotCodes, targetLangCode);
   if (sourceLangCode) binds.push(sourceLangCode);
   binds.push(maxRows(limits));
   const { results } = await db.prepare(twoHopSql(sourceLangCode, marks)).bind(...binds).all<TwoHopRow>();
@@ -289,13 +295,22 @@ async function fetchEdgeMarkers(db: D1Database, edgeIds: number[]): Promise<stri
   return markers;
 }
 
-async function buildEvidence(db: D1Database, hits: ExactHit[], targetLocaleCode: string): Promise<TranslationEvidence[]> {
+async function buildEvidence(
+  db: D1Database,
+  hits: ExactHit[],
+  targetLocaleCode: string,
+): Promise<TranslationEvidence[]> {
+  const localeCodesByExpression = await fetchExpressionLocaleCodes(
+    db,
+    hits.map((hit) => hit.targetExprId),
+  );
   const evidence: TranslationEvidence[] = [];
   for (const hit of hits) {
     evidence.push({
       source_text: hit.sourceText,
       target_text: hit.targetText,
       target_locale_code: targetLocaleCode,
+      reference_locale_codes: localeCodesByExpression.get(hit.targetExprId) ?? [],
       path_type: hit.pathType,
       pivot_lang_code: hit.pivotLangCode,
       match_type: 'exact',
@@ -303,6 +318,21 @@ async function buildEvidence(db: D1Database, hits: ExactHit[], targetLocaleCode:
     });
   }
   return evidence;
+}
+
+function localeShape(code: string): string | null {
+  const parsed = parseLanguageLocaleCode(code);
+  if (!parsed) return null;
+  return `${parsed.lang_code}:${parsed.script_code}:${parsed.orthography ?? ''}`;
+}
+
+function isLocaleCompatible(targetLocaleCode: string, evidence: TranslationEvidence[]): boolean {
+  const requestedShape = localeShape(targetLocaleCode);
+  const mainReferenceCodes = [...new Set(evidence[0]?.reference_locale_codes ?? [])];
+  // Missing locale metadata is an unknown, not proof of a mismatch. Preserve
+  // the fast path for older expressions that predate locale links.
+  if (!requestedShape || mainReferenceCodes.length === 0) return true;
+  return mainReferenceCodes.some((code) => localeShape(code) === requestedShape);
 }
 
 export async function findExactTranslation(
@@ -314,13 +344,20 @@ export async function findExactTranslation(
   // Callers pass the source code already lowercased; normalize defensively so
   // pivot comparisons stay stable.
   const sourceLangCode = input.sourceLangCode ? input.sourceLangCode.trim().toLowerCase() : null;
-  const locale = await resolveTargetLocale(db, input.targetLocaleCode);
+  const locale = input.targetLocale ?? (await resolveTargetLocale(db, input.targetLocaleCode));
 
-  const directRows = await queryDirect(db, canonicalText, sourceLangCode, locale.locale_id, input.limits);
+  const directRows = await queryDirect(db, canonicalText, sourceLangCode, locale.language_id, input.limits);
   let hits = directHits(directRows);
 
   if (hits.length === 0) {
-    const twoHopRows = await queryTwoHop(db, canonicalText, sourceLangCode, locale, input.limits);
+    const twoHopRows = await queryTwoHop(
+      db,
+      canonicalText,
+      sourceLangCode,
+      locale.language_id,
+      locale.lang_code,
+      input.limits,
+    );
     hits = twoHopHits(twoHopRows, sourceLangCode, locale.lang_code, input.limits);
   }
 
@@ -338,6 +375,7 @@ export async function findExactTranslation(
   const alternatives = chosen.slice(1, input.limits.maxAlternatives + 1);
 
   const source: SourceLanguageResult = { code: sourceLangCode ?? main.sourceLangCode, confidence: 1 };
+  const evidence = await buildEvidence(db, [main, ...alternatives], input.targetLocaleCode);
   const result: TranslationResult = {
     translation: main.targetText,
     alternatives: alternatives.map((hit) => hit.targetText),
@@ -351,7 +389,8 @@ export async function findExactTranslation(
   return {
     status: 'exact_match',
     source,
-    evidence: await buildEvidence(db, [main, ...alternatives], input.targetLocaleCode),
+    evidence,
     result,
+    locale_compatible: isLocaleCompatible(input.targetLocaleCode, evidence),
   };
 }

@@ -14,11 +14,12 @@
     "bcryptjs": "^3.0.3",
     "hono": "^4.0.0",
     "jose": "^6.2.4",
-    "wrangler": "^4.125.0",
+    "openai": "^7.15.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260724.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.132.0"
   }
 }

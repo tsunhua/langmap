@@ -120,7 +120,7 @@ describe('useTranslationStream', () => {
       line({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' }),
       line({ type: 'source_language', code: 'nan', confidence: 0.87 }),
       line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }),
-      line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false }),
+      line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false, retrieval_status: 'matched' }),
       line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' }),
       line({ type: 'translation_delta', text: '吃' }),
       line({ type: 'translation_delta', text: '飯' }),
@@ -134,7 +134,12 @@ describe('useTranslationStream', () => {
     expect(stream.stage.value).toBe('generating')
     expect(stream.mode.value).toBe('assisted')
     expect(stream.sourceLanguage.value).toEqual({ code: 'nan', confidence: 0.87 })
-    expect(stream.evidence.value).toEqual({ items: [evidence], omittedCount: 0, degraded: false })
+    expect(stream.evidence.value).toEqual({
+      items: [evidence],
+      omittedCount: 0,
+      degraded: false,
+      retrievalStatus: 'matched',
+    })
     expect(stream.translation.value).toBe('吃飯')
     expect(stream.result.value?.translation).toBe('吃飯')
     expect(stream.result.value?.resolution).toBe('assisted')
@@ -144,13 +149,18 @@ describe('useTranslationStream', () => {
 
   it('carries evidence truncation and degraded metadata', async () => {
     stubFetch().mockResolvedValue(streamResponse([
-      line({ type: 'evidence', items: [evidence], omitted_count: 7, degraded: true }),
+      line({ type: 'evidence', items: [evidence], omitted_count: 7, degraded: true, retrieval_status: 'failed' }),
     ]))
 
     const stream = useTranslationStream()
     await stream.submit(input)
 
-    expect(stream.evidence.value).toEqual({ items: [evidence], omittedCount: 7, degraded: true })
+    expect(stream.evidence.value).toEqual({
+      items: [evidence],
+      omittedCount: 7,
+      degraded: true,
+      retrievalStatus: 'failed',
+    })
   })
 
   it('uses the result translation for exact lookups that stream no deltas', async () => {

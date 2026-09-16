@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Ai } from '@cloudflare/workers-types';
+import type OpenAI from 'openai';
 import { MAX_PLANNER_SPANS, PLANNER_TIMEOUT_MS } from '../src/utils/limits';
 import {
   DEFAULT_PLANNER_LIMITS,
@@ -15,15 +15,18 @@ interface AiCall {
   options?: Record<string, unknown>;
 }
 
-function fakeAi(behavior: (signal?: AbortSignal) => Promise<unknown>): { ai: Pick<Ai, 'run'>; calls: AiCall[] } {
+function fakeAi(behavior: (signal?: AbortSignal) => Promise<unknown>): { ai: OpenAI; calls: AiCall[] } {
   const calls: AiCall[] = [];
-  const run = async (model: string, inputs: Record<string, unknown>, options?: Record<string, unknown>) => {
-    calls.push({ model, inputs, options });
+  const create = async (inputs: Record<string, unknown>, options?: Record<string, unknown>) => {
+    calls.push({ model: String(inputs.model), inputs, options });
     const signal = options?.signal instanceof AbortSignal ? options.signal : undefined;
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     return behavior(signal);
   };
-  return { ai: { run } as unknown as Pick<Ai, 'run'>, calls };
+  return {
+    ai: { chat: { completions: { create } } } as unknown as OpenAI,
+    calls,
+  };
 }
 
 function pendingUntilSignal(signal?: AbortSignal): Promise<unknown> {

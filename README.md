@@ -43,7 +43,7 @@ LangMap 是一個開源、社區驅動的語言地圖平臺，致力於收集世
 
 ### 環境準備
 
-- Node.js >= 18
+- Node.js >= 22
 - npm
 
 ### 前端開發
@@ -62,7 +62,8 @@ npm install
 npm run dev
 ```
 
-後端使用 `wrangler dev --remote` 連接遠程 D1 數據庫進行開發。
+後端使用本地 Wrangler 執行，D1 與 R2 使用本地模擬；翻譯透過 Worker
+服務端的官方 `openai` SDK 呼叫 Cloudflare Workers AI OpenAI-compatible API。
 
 ### 本地全棧開發
 
@@ -76,6 +77,22 @@ npm run dev
 - `./dev.sh --rebuild`：強制重建本地 D1 bootstrap。
 - `./dev.sh --no-rebuild`：禁止自動重建；若 fingerprint 不一致會直接失敗。
 - `./dev.sh --port=8790`：將本地 API 綁到指定埠，前端仍代理到該埠。
+
+翻譯需要在 `backend/.dev.vars` 中配置 Cloudflare 憑證（此檔案不提交）：
+
+```dotenv
+CLOUDFLARE_ACCOUNT_ID="your-account-id"
+CLOUDFLARE_API_TOKEN="your-workers-ai-token"
+```
+
+本地 Wrangler 會自動將 `.dev.vars` 載入 Worker；未加 `VITE_` 前綴的 token
+不會透過 Vite 的 `import.meta.env` 暴露給瀏覽器。部署到 Cloudflare 時，帳號 ID 已配置在 `backend/wrangler.jsonc`，
+API token 請設定為 Worker secret：
+
+```bash
+cd backend
+npx wrangler secret put CLOUDFLARE_API_TOKEN
+```
 
 ### 完整構建
 

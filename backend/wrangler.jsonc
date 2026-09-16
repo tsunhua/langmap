@@ -27,9 +27,6 @@
 			"database_id": "75c7dea7-f453-4ada-8527-d5ff481b54f3"
 		}
 	],
-	"ai": {
-		"binding": "AI"
-	},
 	"r2_buckets": [
 		{
 			"binding": "IMAGE_BUCKET",
@@ -51,6 +48,7 @@
 	},
 	"vars": {
 		"IMAGES_PUBLIC_URL": "https://images.langmap.io",
-		"R2_IMAGES_BUCKET": "langmap-images"
+		"R2_IMAGES_BUCKET": "langmap-images",
+		"CLOUDFLARE_ACCOUNT_ID": "0dd310069a11740f48708e490bb1aede"
 	}
 }

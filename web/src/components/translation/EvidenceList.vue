@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { TranslationEvidence } from '@/api/translation'
+import type { TranslationEvidence, TranslationEvidenceRetrievalStatus } from '@/api/translation'
 
 defineProps<{
   items: TranslationEvidence[]
   omittedCount?: number
   degraded?: boolean
+  retrievalStatus?: TranslationEvidenceRetrievalStatus
 }>()
 
 const { t } = useI18n()
@@ -23,7 +24,12 @@ function pathLabel(item: TranslationEvidence): string {
       <span class="evidence-count">{{ t('phraseTranslate.evidenceCount', { count: items.length }) }}</span>
     </summary>
 
-    <p v-if="degraded" class="evidence-degraded">{{ t('phraseTranslate.evidenceDegraded') }}</p>
+    <p v-if="retrievalStatus === 'failed' || degraded" class="evidence-degraded">
+      {{ t('phraseTranslate.evidenceDegraded') }}
+    </p>
+    <p v-else-if="retrievalStatus === 'skipped'" class="evidence-degraded">
+      {{ t('phraseTranslate.evidenceSkipped') }}
+    </p>
     <p v-if="(omittedCount ?? 0) > 0" class="evidence-omitted">
       {{ t('phraseTranslate.evidenceOmitted', { count: omittedCount }) }}
     </p>
@@ -57,6 +63,9 @@ function pathLabel(item: TranslationEvidence): string {
             :title="item.source_markers.join(', ')"
           >
             {{ item.source_markers.join(' · ') }}
+          </span>
+          <span v-if="item.reference_locale_codes?.length" class="evidence-locales">
+            {{ t('phraseTranslate.evidenceReferenceLocale') }}: {{ item.reference_locale_codes.join(' · ') }}
           </span>
         </p>
       </li>

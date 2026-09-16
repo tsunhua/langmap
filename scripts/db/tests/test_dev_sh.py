@@ -112,6 +112,16 @@ run_server() {
     echo "unexpected server start: $role $*" >&2
     exit 88
   fi
+  if [ "$role" = "backend" ]; then
+    if [ -n "${FAKE_EXPECT_API_TOKEN:-}" ] && [ "${CLOUDFLARE_API_TOKEN:-}" != "$FAKE_EXPECT_API_TOKEN" ]; then
+      echo "backend did not receive expected Cloudflare API token" >&2
+      exit 89
+    fi
+    if [ -n "${FAKE_EXPECT_ACCOUNT_ID:-}" ] && [ "${CLOUDFLARE_ACCOUNT_ID:-}" != "$FAKE_EXPECT_ACCOUNT_ID" ]; then
+      echo "backend did not receive expected Cloudflare account ID" >&2
+      exit 90
+    fi
+  fi
   record_ps "$@"
   printf 'server-start\\t%s\\t%s\\n' "$role" "$*" >> "${FAKE_EVENT_LOG:?}"
   trap 'printf "server-stop\\t%s\\n" "$role" >> "${FAKE_EVENT_LOG:?}"; exit 0' TERM INT
@@ -282,6 +292,73 @@ class DevShellTests(unittest.TestCase):
             assert_no_pkill_calls(self, log_lines)
             self.assertTrue(any(line.startswith("server-start\tbackend") for line in log_lines))
             self.assertTrue(any(line.startswith("server-start\tfrontend") for line in log_lines))
+
+    def test_cloudflare_credentials_from_dev_vars_reach_backend_process(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            build_fixture_repo(root)
+            (root / "backend" / ".dev.vars").write_text(
+                'SECRET_KEY="fixture"\n'
+                'CLOUDFLARE_API_TOKEN="token-from-dev-vars"\n'
+                'CLOUDFLARE_ACCOUNT_ID="account-from-dev-vars"\n',
+                encoding="utf-8",
+            )
+
+            process = self.start_dev(
+                root,
+                env_overrides={
+                    "CLOUDFLARE_API_TOKEN": "",
+                    "CLOUDFLARE_ACCOUNT_ID": "",
+                    "FAKE_EXPECT_API_TOKEN": "token-from-dev-vars",
+                    "FAKE_EXPECT_ACCOUNT_ID": "account-from-dev-vars",
+                    "FAKE_SERVER_MODE": "hold",
+                },
+            )
+            try:
+                wait_for(
+                    lambda: any(
+                        line.startswith("server-start\tfrontend")
+                        for line in read_log(root / "fake-events.log")
+                    )
+                )
+            finally:
+                process.send_signal(signal.SIGTERM)
+                stdout, stderr = process.communicate(timeout=10)
+
+            self.assertEqual(process.returncode, 0, msg=f"{stdout}\n{stderr}")
+
+    def test_explicit_cloudflare_environment_wins_over_dev_vars(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            build_fixture_repo(root)
+            (root / "backend" / ".dev.vars").write_text(
+                'CLOUDFLARE_API_TOKEN="token-from-file"\n'
+                'CLOUDFLARE_ACCOUNT_ID="account-from-file"\n',
+                encoding="utf-8",
+            )
+
+            process = self.start_dev(
+                root,
+                env_overrides={
+                    "CLOUDFLARE_API_TOKEN": "token-from-shell",
+                    "CLOUDFLARE_ACCOUNT_ID": "account-from-shell",
+                    "FAKE_EXPECT_API_TOKEN": "token-from-shell",
+                    "FAKE_EXPECT_ACCOUNT_ID": "account-from-shell",
+                    "FAKE_SERVER_MODE": "hold",
+                },
+            )
+            try:
+                wait_for(
+                    lambda: any(
+                        line.startswith("server-start\tfrontend")
+                        for line in read_log(root / "fake-events.log")
+                    )
+                )
+            finally:
+                process.send_signal(signal.SIGTERM)
+                stdout, stderr = process.communicate(timeout=10)
+
+            self.assertEqual(process.returncode, 0, msg=f"{stdout}\n{stderr}")
 
     def test_fingerprint_miss_rebuilds_before_starting_servers(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

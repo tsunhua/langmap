@@ -76,7 +76,7 @@ describe('translation pipeline limits', () => {
       retrieval: RETRIEVAL_TIMEOUT_MS,
       generation: GENERATION_TIMEOUT_MS,
       generateStageDeadline: GENERATE_STAGE_DEADLINE_MS,
-    }).toEqual({ planner: 2500, retrieval: 2000, generation: 9000, generateStageDeadline: 6000 });
+    }).toEqual({ planner: 20000, retrieval: 2000, generation: 30000, generateStageDeadline: 6000 });
   });
 
   it('keeps the approved pivot language allowlist explicit', () => {

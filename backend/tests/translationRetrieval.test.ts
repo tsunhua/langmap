@@ -44,6 +44,7 @@ function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
 
 interface RouteSetup {
   locale?: Row | null;
+  targetLocales?: Row[];
   exact?: Row[] | ((args: unknown[]) => Row[]);
   prefix?: Row[] | ((args: unknown[]) => Row[]);
   direct?: Row[] | ((args: unknown[]) => Row[]);
@@ -54,6 +55,7 @@ interface RouteSetup {
 function route(setup: RouteSetup): Handler {
   return (sql, args) => {
     if (/FROM language_locales ll/.test(sql)) return setup.locale ? [setup.locale] : [];
+    if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
     if (/JOIN expression_edges edge1 ON/.test(sql)) {
       return typeof setup.twoHop === 'function' ? setup.twoHop(args) : setup.twoHop ?? [];
     }
@@ -161,7 +163,7 @@ describe('retrieveEvidence — candidate resolution', () => {
       exact: [],
       prefix: [expr(1, 'Hello a'), expr(2, 'Hello b'), expr(3, 'Hello c'), expr(4, 'Hello d'), expr(5, 'Hello e')],
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         return [directRow({ edge_id: 100 + id, target_text: `T${id}` })];
       },
     }), log);
@@ -214,7 +216,7 @@ describe('retrieveEvidence — path shape', () => {
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello'), expr(2, 'Hello'), expr(3, 'Hello')],
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         if (id === 1) {
           return [
             directRow({ edge_id: 11, score: 3, target_text: 'A' }),
@@ -258,7 +260,8 @@ describe('retrieveEvidence — path shape', () => {
     expect(direct?.sql).toContain(edgePassesSql('edge'));
     expect(twoHop?.sql).toContain(edgePassesSql('edge1'));
     expect(twoHop?.sql).toContain(edgePassesSql('edge2'));
-    expect(twoHop?.sql).toContain('JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?');
+    expect(twoHop?.sql).toContain('tgt.language_id = ?');
+    expect(twoHop?.sql).not.toContain('JOIN expression_locale_links');
     expect(twoHop?.sql).not.toContain('ell.expression_id = piv.id');
   });
 });
@@ -288,7 +291,7 @@ describe('retrieveEvidence — pivot allowlist', () => {
 });
 
 describe('retrieveEvidence — language constraints', () => {
-  it('supports same-language locale conversion with an exact target locale link', async () => {
+  it('retrieves by target language id instead of requiring an exact target locale link', async () => {
     const log: StatementLog[] = [];
     const locale = { id: 40, language_id: 2, lang_code: 'cmn' };
     const db = fakeD1(route({
@@ -301,21 +304,41 @@ describe('retrieveEvidence — language constraints', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0].target_text).toBe('你哋好');
     const direct = log.find((entry) => /JOIN expression_edges edge ON/.test(entry.sql));
-    expect(direct?.args[0]).toBe(40);
+    expect(direct?.sql).toContain('tgt.language_id = ?');
+    expect(direct?.sql).not.toContain('expression_locale_links');
+    expect(direct?.args[1]).toBe(2);
   });
 
-  it('requires an exact expression_locale_links row on the target or yields nothing', async () => {
+  it('returns a language-level reference even when the target has no requested locale link', async () => {
     const log: StatementLog[] = [];
     const db = fakeD1(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
-      direct: [],
+      direct: [directRow({ target_text: '你好' })],
       twoHop: [],
     }), log);
     const result = await retrieveEvidence(db, input());
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result.degraded).toBe(false);
+    expect(result.items[0].target_text).toBe('你好');
     const direct = log.find((entry) => /JOIN expression_edges edge ON/.test(entry.sql));
-    expect(direct?.sql).toContain('JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?');
+    expect(direct?.sql).not.toContain('JOIN expression_locale_links');
+  });
+
+  it('reports the target expression locales separately from the requested locale', async () => {
+    const db = fakeD1(route({
+      locale: LOCALE_ROW,
+      exact: [expr(1, 'Hello')],
+      direct: [directRow({ target_expr_id: 999, target_text: '你好' })],
+      targetLocales: [
+        { expression_id: 999, locale_code: 'jpn-Jpan-JP' },
+        { expression_id: 999, locale_code: 'jpn-Latn-JP' },
+      ],
+    }));
+    const result = await retrieveEvidence(db, input());
+    expect(result.items[0]).toMatchObject({
+      target_locale_code: TARGET_LOCALE,
+      reference_locale_codes: ['jpn-Jpan-JP', 'jpn-Latn-JP'],
+    });
   });
 });
 
@@ -328,7 +351,7 @@ describe('retrieveEvidence — quality predicate', () => {
       direct: [directRow({ score: 0, marker_count: 0 })],
     }), log);
     const result = await retrieveEvidence(db, input());
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result).toEqual({ items: [], omitted_count: 0, degraded: false, retrieval_status: 'no_match' });
     const direct = log.find((entry) => /JOIN expression_edges edge ON/.test(entry.sql));
     expect(direct?.sql).toContain(edgePassesSql('edge'));
   });
@@ -354,7 +377,7 @@ describe('retrieveEvidence — quality predicate', () => {
       twoHop: [twoHopRow({ edge1_score: 5, edge1_markers: 1, edge2_score: 0, edge2_markers: 0 })],
     }), log);
     const result = await retrieveEvidence(db, input());
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result).toEqual({ items: [], omitted_count: 0, degraded: false, retrieval_status: 'no_match' });
     const twoHop = log.find((entry) => /JOIN expression_edges edge1 ON/.test(entry.sql));
     expect(twoHop?.sql).toContain(edgePassesSql('edge1'));
     expect(twoHop?.sql).toContain(edgePassesSql('edge2'));
@@ -384,6 +407,7 @@ describe('retrieveEvidence — cycles, dedupe and stable ordering', () => {
       source_text: 'Hello',
       target_text: 'X',
       target_locale_code: TARGET_LOCALE,
+      reference_locale_codes: [],
       path_type: 'direct',
       match_type: 'exact',
       source_markers: ['Cobuild#1'],
@@ -398,7 +422,7 @@ describe('retrieveEvidence — cycles, dedupe and stable ordering', () => {
       exact: (args) => (String(args[0]) === 'Hello' ? [expr(1, 'Hello')] : []),
       prefix: [expr(2, 'fragment a'), expr(3, 'fragment b')],
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         if (id === 1) return [directRow({ edge_id: 11, score: 1, target_text: 'A' })];
         if (id === 2) return [directRow({ edge_id: 30, score: 3, target_text: 'C' })];
         return [directRow({ edge_id: 40, score: 2, target_text: 'D' })];
@@ -423,7 +447,7 @@ describe('retrieveEvidence — request bounds', () => {
       exact: [],
       prefix: [expr(1, 'aa'), expr(2, 'bb'), expr(3, 'cc')],
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         return [1, 2, 3].map((k) => directRow({ edge_id: id * 10 + k, target_text: `d${id}-${k}` }));
       },
     }));
@@ -443,7 +467,7 @@ describe('retrieveEvidence — request bounds', () => {
         return index === undefined ? [] : [expr(10 + index, String(args[0]))];
       },
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         return [1, 2, 3].map((k) => directRow({ edge_id: id * 10 + k, target_expr_id: id * 10 + k, target_text: `t-${id}-${k}` }));
       },
     }));
@@ -465,7 +489,7 @@ describe('retrieveEvidence — request bounds', () => {
         return index === undefined ? [] : [expr(10 + index, String(args[0]))];
       },
       direct: (args) => {
-        const id = Number(args[1]);
+        const id = Number(args[0]);
         return [1, 2, 3].map((k) => directRow({ edge_id: id * 10 + k, target_text: `t-${longText}-${id}-${k}` }));
       },
     }));
@@ -482,17 +506,18 @@ describe('retrieveEvidence — degradation and abort', () => {
   it('degrades without throwing when a single D1 query fails', async () => {
     const db = fakeD1((sql) => {
       if (/FROM language_locales ll/.test(sql)) return [LOCALE_ROW];
+      if (/e\.text = \?/.test(sql)) return [expr(1, 'Hello')];
       if (/JOIN expression_edges edge ON/.test(sql)) throw new Error('D1 failure');
       return [];
     });
     const result = await retrieveEvidence(db, input());
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true, retrieval_status: 'failed' });
   });
 
   it('degrades when no candidate produces evidence', async () => {
     const db = fakeD1(route({ locale: LOCALE_ROW, exact: [], prefix: [] }));
     const result = await retrieveEvidence(db, input());
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result).toEqual({ items: [], omitted_count: 0, degraded: false, retrieval_status: 'no_match' });
   });
 
   it('degrades instead of throwing when the retrieval deadline passes', async () => {
@@ -506,7 +531,7 @@ describe('retrieveEvidence — degradation and abort', () => {
     });
     const limits = { ...DEFAULT_RETRIEVAL_LIMITS, timeoutMs: 5 };
     const result = await retrieveEvidence(db, input({}, limits));
-    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true });
+    expect(result).toEqual({ items: [], omitted_count: 0, degraded: true, retrieval_status: 'failed' });
   });
 
   it('throws AbortError without touching the database when the caller signal is already aborted', async () => {

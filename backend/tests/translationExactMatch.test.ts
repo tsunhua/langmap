@@ -13,6 +13,7 @@ type Row = Record<string, unknown>;
 
 interface FakeSetup {
   locale?: Row | null;
+  targetLocales?: Row[];
   direct?: Row[];
   twoHop?: Row[];
   markers?: Row[];
@@ -29,6 +30,7 @@ const LOCALE_ROW = { id: 30, language_id: 7, lang_code: 'jpn' };
 function fakeD1(setup: FakeSetup, log: StatementLogEntry[] = []): D1Database {
   const route = (sql: string): Row[] => {
     if (/FROM language_locales/.test(sql)) return setup.locale ? [setup.locale] : [];
+    if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
     if (/JOIN expression_edges edge1 ON/.test(sql)) return setup.twoHop ?? [];
     if (/JOIN expression_edges edge ON/.test(sql)) return setup.direct ?? [];
     if (/FROM expression_edge_sources es/.test(sql)) return setup.markers ?? [];
@@ -137,6 +139,7 @@ describe('findExactTranslation — direct match', () => {
     const log: StatementLogEntry[] = [];
     const db = fakeD1({
       locale: LOCALE_ROW,
+      targetLocales: [{ expression_id: 2, locale_code: 'jpn-Jpan-JP' }],
       direct: [{
         edge_id: 11,
         source_expr_id: 1,
@@ -159,6 +162,7 @@ describe('findExactTranslation — direct match', () => {
       source_text: 'Hello',
       target_text: 'こんにちは',
       target_locale_code: TARGET_LOCALE,
+      reference_locale_codes: ['jpn-Jpan-JP'],
       path_type: 'direct',
       match_type: 'exact',
       source_markers: ['Cobuild#1'],
@@ -174,7 +178,7 @@ describe('findExactTranslation — direct match', () => {
       generation_skipped: true,
     });
     expect(log.some((entry) => entry.sql.includes('JOIN expression_edges edge1 ON'))).toBe(false);
-    expect(log).toHaveLength(3); // locale + direct + edge markers
+    expect(log).toHaveLength(4); // locale + direct + target locales + edge markers
   });
 });
 
@@ -241,13 +245,27 @@ describe('findExactTranslation — non short-circuit cases', () => {
     expect(statements.every((e) => e.sql.includes('e.text = ?') && !/LIKE|PREFIX/i.test(e.sql))).toBe(true);
   });
 
-  it('does not admit a target without an exact locale link', async () => {
+  it('matches a target by language id without requiring an exact locale link', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeD1({
+      locale: LOCALE_ROW,
+      direct: [{
+        edge_id: 11,
+        source_expr_id: 1,
+        source_text: 'Hello',
+        source_lang_code: 'eng',
+        target_expr_id: 2,
+        target_text: '你好',
+        score: 1,
+        marker_count: 0,
+      }],
+      twoHop: [],
+    }, log);
     const result = await findExactTranslation(db, input());
-    expect(result).toEqual({ status: 'no_match' });
+    expect(result.status).toBe('exact_match');
     const directStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge ON'));
-    expect(directStatement?.sql).toContain('JOIN expression_locale_links ell ON ell.expression_id = tgt.id AND ell.locale_id = ?');
+    expect(directStatement?.sql).toContain('tgt.language_id = ?');
+    expect(directStatement?.sql).not.toContain('JOIN expression_locale_links');
   });
 
   it('discards edges that fail the quality predicate', async () => {
@@ -421,7 +439,7 @@ describe('findExactTranslation — pivot allowlist', () => {
     expect(twoHop?.sql).toContain('pl.code IN (');
     expect(twoHop?.sql).toContain('pl.code <> ?');
     expect(twoHop?.args).toEqual([
-      30, '你好', 'cmn',
+      '你好', 'cmn', 7,
       ...APPROVED_PIVOT_LANGUAGES,
       'jpn', 'cmn',
       9,

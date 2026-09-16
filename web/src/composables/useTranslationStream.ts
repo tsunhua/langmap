@@ -4,6 +4,7 @@ import {
   type TranslationErrorEnvelope,
   type TranslationErrorEvent,
   type TranslationEvidence,
+  type TranslationEvidenceRetrievalStatus,
   type TranslationLanguageCandidate,
   type TranslationMode,
   type TranslationRequestInput,
@@ -35,6 +36,7 @@ export interface TranslationEvidenceState {
   items: TranslationEvidence[]
   omittedCount: number
   degraded: boolean
+  retrievalStatus: TranslationEvidenceRetrievalStatus
 }
 
 const STREAM_EVENT_TYPES = new Set<string>([
@@ -169,6 +171,9 @@ export function useTranslationStream() {
           items: event.items,
           omittedCount: event.omitted_count ?? 0,
           degraded: event.degraded ?? false,
+          retrievalStatus:
+            event.retrieval_status ??
+            (event.degraded ? 'failed' : event.items.length > 0 ? 'matched' : 'no_match'),
         }
         return false
       case 'translation_delta':
