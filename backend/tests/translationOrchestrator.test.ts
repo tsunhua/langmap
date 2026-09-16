@@ -51,7 +51,7 @@ interface RouteSetup {
   locale?: Row | null;
   targetLocales?: Row[];
   exactFixed?: { direct?: Row[]; twoHop?: Row[] };
-  candidate?: Row[];
+  candidate?: Row[] | ((args: unknown[]) => Row[]);
   retrieval?: { direct?: Row[] | ((args: unknown[]) => Row[] | Promise<Row[]>); twoHop?: Row[] };
   markers?: Row[];
 }
@@ -74,7 +74,9 @@ function route(setup: RouteSetup): Handler {
       return typeof direct === 'function' ? direct(args) : (direct ?? []);
     }
     if (/FROM expression_edge_sources es/.test(sql)) return setup.markers ?? [];
-    if (/JOIN languages sl ON sl.id = e.language_id/.test(sql)) return setup.candidate ?? [];
+    if (/JOIN languages sl ON sl.id = e.language_id/.test(sql)) {
+      return typeof setup.candidate === 'function' ? setup.candidate(args) : setup.candidate ?? [];
+    }
     return [];
   };
 }
@@ -140,9 +142,13 @@ interface AiCall {
   options?: Record<string, unknown>;
 }
 
-function plannerEnvelope(code: string | null = 'eng', confidence = 0.9): Record<string, unknown> {
+function plannerEnvelope(
+  code: string | null = 'eng',
+  confidence = 0.9,
+  retrievalSpans: unknown[] = [],
+): Record<string, unknown> {
   return {
-    choices: [{ message: { content: JSON.stringify({ source_lang_code: code, source_confidence: confidence, uncertain_spans: [] }) } }],
+    choices: [{ message: { content: JSON.stringify({ source_lang_code: code, source_confidence: confidence, retrieval_spans: retrievalSpans }) } }],
   };
 }
 
@@ -411,6 +417,43 @@ describe('runTranslation — assisted path', () => {
     });
     expect(h.aiCalls).toHaveLength(2);
     expect(h.aiCalls.map((call) => call.model)).toEqual([TRANSLATION_MODEL, TRANSLATION_MODEL]);
+  });
+
+  it('uses planner keyword or phrase roots when the full sentence has no exact candidate', async () => {
+    const queriedRoots: string[] = [];
+    const h = harness(route({
+      locale: LOCALE_ROW,
+      ...EMPTY_EXACT,
+      candidate: (args) => {
+        const root = String(args[0]);
+        queriedRoots.push(root);
+        return root === '多少钱' ? [expr(1, '多少钱')] : [];
+      },
+      retrieval: { direct: [retrievalDirectRow({ target_text: '幾若錢' })] },
+    }), {
+      planner: () => plannerEnvelope('cmn', 0.9, [
+        { start: 2, end: 5, text: '多少钱', reason: 'phrase', confidence: 0.95 },
+      ]),
+      generation: () => '幾若錢',
+    });
+    await runTranslationTest(h, request({
+      text: '这个多少钱？',
+      canonicalText: '这个多少钱？',
+      sourceLangCode: null,
+    }));
+
+    expect(queriedRoots).toContain('这个多少钱？');
+    expect(queriedRoots).toContain('多少钱');
+    const parsed = parseLines(h.collector);
+    expect((parsed[3].data as { items: Array<{ source_text: string; match_type: string }> }).items).toEqual([
+      expect.objectContaining({ source_text: '多少钱', match_type: 'exact' }),
+    ]);
+    expect(parsed.at(-1)?.data).toMatchObject({
+      type: 'result',
+      source_lang_code: 'cmn',
+      evidence_present: true,
+      model_only: false,
+    });
   });
 
   it('emits source_confirmation_required when planner auto-detect is below threshold, then ends', async () => {

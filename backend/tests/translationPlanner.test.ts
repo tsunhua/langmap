@@ -44,7 +44,7 @@ function payload(overrides: Record<string, unknown> = {}): Record<string, unknow
   return {
     source_lang_code: 'eng',
     source_confidence: 0.9,
-    uncertain_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
+    retrieval_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
     ...overrides,
   };
 }
@@ -60,7 +60,7 @@ function plannerInput(overrides: Partial<PlannerInput> = {}): PlannerInput {
 describe('planTranslation — valid model output', () => {
   it('parses the json_object envelope and returns ok with the auto-detected source and span order preserved', async () => {
     const { ai, calls } = fakeAi(async () => asEnvelope(payload({
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.7 },
         { start: 6, end: 11, text: 'world', reason: 'unknown_term', confidence: 0.8 },
       ],
@@ -71,7 +71,7 @@ describe('planTranslation — valid model output', () => {
       output: {
         source_lang_code: 'eng',
         source_confidence: 0.9,
-        uncertain_spans: [
+        retrieval_spans: [
           { start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.7 },
           { start: 6, end: 11, text: 'world', reason: 'unknown_term', confidence: 0.8 },
         ],
@@ -91,10 +91,49 @@ describe('planTranslation — valid model output', () => {
       output: {
         source_lang_code: 'eng',
         source_confidence: 0.9,
-        uncertain_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
+        retrieval_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
       },
     });
     expect(calls).toHaveLength(1);
+  });
+
+  it('accepts keyword and phrase retrieval spans for a sentence that is not a dictionary headword', async () => {
+    const { ai } = fakeAi(async () => asEnvelope(payload({
+      source_lang_code: 'cmn',
+      retrieval_spans: [
+        { start: 0, end: 2, text: '这个', reason: 'keyword', confidence: 0.7 },
+        { start: 2, end: 5, text: '多少钱', reason: 'phrase', confidence: 0.95 },
+      ],
+    })));
+    const result = await planTranslation(ai, plannerInput({ text: '这个多少钱？' }));
+    expect(result).toEqual({
+      status: 'ok',
+      output: {
+        source_lang_code: 'cmn',
+        source_confidence: 0.9,
+        retrieval_spans: [
+          { start: 0, end: 2, text: '这个', reason: 'keyword', confidence: 0.7 },
+          { start: 2, end: 5, text: '多少钱', reason: 'phrase', confidence: 0.95 },
+        ],
+      },
+    });
+  });
+
+  it('maps the legacy uncertain_spans field to retrieval_spans', async () => {
+    const { ai } = fakeAi(async () => asEnvelope({
+      source_lang_code: 'eng',
+      source_confidence: 0.9,
+      uncertain_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
+    }));
+    const result = await planTranslation(ai, plannerInput());
+    expect(result).toEqual({
+      status: 'ok',
+      output: {
+        source_lang_code: 'eng',
+        source_confidence: 0.9,
+        retrieval_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'proper_noun', confidence: 0.8 }],
+      },
+    });
   });
 
   it('sends the source text as untrusted data inside a delimiter and matches the shared model', async () => {
@@ -103,13 +142,15 @@ describe('planTranslation — valid model output', () => {
     expect(calls[0].model).toBe(TRANSLATION_MODEL);
     const messages = calls[0].inputs.messages as Array<{ role: string; content: string }>;
     expect(messages[1].content).toBe('<source>Bonjour le monde</source>');
+    expect(messages[0].content).toContain('retrieval_spans');
+    expect(messages[0].content).toContain('keywords or phrases');
   });
 });
 
 describe('planTranslation — span merging and limits', () => {
   it('merges overlapping spans into the union range with an exact substring and max confidence', async () => {
     const { ai } = fakeAi(async () => payload({
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 6, text: 'Hello ', reason: 'unknown_term', confidence: 0.5 },
         { start: 4, end: 8, text: 'o wo', reason: 'idiom', confidence: 0.9 },
       ],
@@ -120,14 +161,14 @@ describe('planTranslation — span merging and limits', () => {
       output: {
         source_lang_code: 'eng',
         source_confidence: 0.9,
-        uncertain_spans: [{ start: 0, end: 8, text: 'Hello wo', reason: 'idiom', confidence: 0.9 }],
+        retrieval_spans: [{ start: 0, end: 8, text: 'Hello wo', reason: 'idiom', confidence: 0.9 }],
       },
     });
   });
 
   it('dedupes identical spans before merging', async () => {
     const { ai } = fakeAi(async () => payload({
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 },
         { start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 },
         { start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.3 },
@@ -136,26 +177,26 @@ describe('planTranslation — span merging and limits', () => {
     const result = await planTranslation(ai, plannerInput());
     expect(result.status).toBe('ok');
     if (result.status !== 'ok') return;
-    expect(result.output.uncertain_spans).toEqual([{ start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 }]);
+    expect(result.output.retrieval_spans).toEqual([{ start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 }]);
   });
 
   it('caps the merged span list at MAX_PLANNER_SPANS in input order', async () => {
     const max = MAX_PLANNER_SPANS;
     const text = Array.from({ length: max + 3 }, (_, i) => String.fromCharCode(97 + i)).join('');
-    const uncertain_spans = Array.from({ length: max + 3 }, (_, i) => ({
+    const retrieval_spans = Array.from({ length: max + 3 }, (_, i) => ({
       start: i,
       end: i + 1,
       text: text[i],
       reason: 'unknown_term',
       confidence: 0.6,
     }));
-    const { ai } = fakeAi(async () => payload({ uncertain_spans }));
+    const { ai } = fakeAi(async () => payload({ retrieval_spans }));
     const result = await planTranslation(ai, plannerInput({ text }));
     expect(result.status).toBe('ok');
     if (result.status !== 'ok') return;
-    expect(result.output.uncertain_spans).toHaveLength(max);
-    expect(result.output.uncertain_spans[0]).toEqual({ start: 0, end: 1, text: text[0], reason: 'unknown_term', confidence: 0.6 });
-    expect(result.output.uncertain_spans[max - 1]).toEqual({
+    expect(result.output.retrieval_spans).toHaveLength(max);
+    expect(result.output.retrieval_spans[0]).toEqual({ start: 0, end: 1, text: text[0], reason: 'unknown_term', confidence: 0.6 });
+    expect(result.output.retrieval_spans[max - 1]).toEqual({
       start: max - 1,
       end: max,
       text: text[max - 1],
@@ -168,7 +209,7 @@ describe('planTranslation — span merging and limits', () => {
 describe('planTranslation — malformed spans', () => {
   it('drops spans with mismatched text, inverted bounds, out-of-range offsets, bad reason or bad confidence', async () => {
     const { ai } = fakeAi(async () => payload({
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 5, text: 'Xello', reason: 'unknown_term', confidence: 0.8 }, // text mismatch
         { start: 3, end: 3, text: 'l', reason: 'unknown_term', confidence: 0.8 }, // start >= end
         { start: 0, end: 100, text: 'Hello', reason: 'unknown_term', confidence: 0.8 }, // out of range
@@ -184,7 +225,7 @@ describe('planTranslation — malformed spans', () => {
       output: {
         source_lang_code: 'eng',
         source_confidence: 0.9,
-        uncertain_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 }],
+        retrieval_spans: [{ start: 0, end: 5, text: 'Hello', reason: 'unknown_term', confidence: 0.8 }],
       },
     });
   });
@@ -201,7 +242,7 @@ describe('planTranslation — malformed spans', () => {
     const result = await planTranslation(ai, plannerInput({ sourceLangCode: 'fra' }));
     expect(result).toEqual({
       status: 'ok',
-      output: { source_lang_code: 'fra', source_confidence: 1, uncertain_spans: [] },
+      output: { source_lang_code: 'fra', source_confidence: 1, retrieval_spans: [] },
     });
     expect(calls).toHaveLength(1);
   });
@@ -250,7 +291,7 @@ describe('planTranslation — timeout, provider errors and abort', () => {
     const result = await planTranslation(ai, plannerInput({ sourceLangCode: 'cmn' }));
     expect(result).toEqual({
       status: 'ok',
-      output: { source_lang_code: 'cmn', source_confidence: 1, uncertain_spans: [] },
+      output: { source_lang_code: 'cmn', source_confidence: 1, retrieval_spans: [] },
     });
     expect(calls).toHaveLength(1);
   });
@@ -261,7 +302,7 @@ describe('planTranslation — source handling', () => {
     const { ai, calls } = fakeAi(async () => payload({
       source_lang_code: 'eng',
       source_confidence: 0.2,
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 7, text: 'Bonjour', reason: 'idiom', confidence: 0.75 },
         { start: 0, end: 7, text: 'Bonjour', reason: 'idiom', confidence: 0.75 }, // dup dropped
       ],
@@ -272,7 +313,7 @@ describe('planTranslation — source handling', () => {
       output: {
         source_lang_code: 'fra',
         source_confidence: 1,
-        uncertain_spans: [{ start: 0, end: 7, text: 'Bonjour', reason: 'idiom', confidence: 0.75 }],
+        retrieval_spans: [{ start: 0, end: 7, text: 'Bonjour', reason: 'idiom', confidence: 0.75 }],
       },
     });
     expect(calls).toHaveLength(1);
@@ -297,7 +338,7 @@ describe('planTranslation — source handling', () => {
     const { ai } = fakeAi(async () => payload({
       source_lang_code: null,
       source_confidence: 0.9,
-      uncertain_spans: [],
+      retrieval_spans: [],
     }));
     const result = await planTranslation(ai, plannerInput());
     expect(result).toEqual({ status: 'unavailable' });
@@ -317,7 +358,7 @@ describe('planTranslation — astral character safety', () => {
   it('validates span offsets as codepoint offsets around surrogate pairs', async () => {
     const text = '👋hi';
     const { ai } = fakeAi(async () => payload({
-      uncertain_spans: [
+      retrieval_spans: [
         { start: 0, end: 1, text: '👋', reason: 'idiom', confidence: 0.9 }, // one codepoint, two UTF-16 units
         { start: 0, end: 1, text: '\uD83D', reason: 'idiom', confidence: 0.9 }, // lone surrogate half: text mismatch
         { start: 1, end: 3, text: 'hi', reason: 'unknown_term', confidence: 0.8 }, // beyond the emoji pair
@@ -327,7 +368,7 @@ describe('planTranslation — astral character safety', () => {
     const result = await planTranslation(ai, plannerInput({ text }));
     expect(result.status).toBe('ok');
     if (result.status !== 'ok') return;
-    expect(result.output.uncertain_spans).toEqual([
+    expect(result.output.retrieval_spans).toEqual([
       { start: 0, end: 1, text: '👋', reason: 'idiom', confidence: 0.9 },
       { start: 1, end: 3, text: 'hi', reason: 'unknown_term', confidence: 0.8 },
     ]);

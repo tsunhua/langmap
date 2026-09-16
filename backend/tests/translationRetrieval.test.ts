@@ -191,6 +191,30 @@ describe('retrieveEvidence — candidate resolution', () => {
     expect(result.items).toHaveLength(1);
     expect(log.filter((entry) => /e\.text = \?/.test(entry.sql))).toHaveLength(1);
   });
+
+  it('queries planner keyword or phrase roots after the full sentence misses', async () => {
+    const queriedRoots: string[] = [];
+    const db = fakeD1(route({
+      locale: LOCALE_ROW,
+      exact: (args) => {
+        const root = String(args[0]);
+        queriedRoots.push(root);
+        return root === '多少钱' ? [expr(1, '多少钱')] : [];
+      },
+      direct: (args) => Number(args[0]) === 1 ? [directRow({ target_text: '幾若錢' })] : [],
+    }));
+    const result = await retrieveEvidence(db, input({
+      fullText: '这个多少钱？',
+      spans: [{ start: 2, end: 5, text: '多少钱', reason: 'phrase', confidence: 0.95 }],
+      sourceLangCode: 'cmn',
+    }));
+
+    expect(queriedRoots).toContain('这个多少钱？');
+    expect(queriedRoots).toContain('多少钱');
+    expect(result.items).toEqual([
+      expect.objectContaining({ source_text: '多少钱', target_text: '幾若錢', match_type: 'exact' }),
+    ]);
+  });
 });
 
 describe('retrieveEvidence — path shape', () => {

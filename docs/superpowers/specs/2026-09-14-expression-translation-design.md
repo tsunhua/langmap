@@ -194,14 +194,14 @@ Planner schema 的語意如下：
 ```text
 source_lang_code: ISO 639-3
 source_confidence: 0..1
-uncertain_spans: 0..8 items
+retrieval_spans: 0..8 items
   start/end: Unicode code-point offsets, start < end
   text: must equal the corresponding input substring
-  reason: unknown_term | idiom | proper_noun | domain_term | context_ambiguity
+  reason: keyword | phrase | unknown_term | idiom | proper_noun | domain_term | context_ambiguity
   confidence: 0..1
 ```
 
-只保留輸入中可驗證、互不重複且不超過八項的 span；重疊片段合併。`reason` 是固定分類，不保存或展示模型推理過程。
+`retrieval_spans` 是完整輸入 exact miss 後的詞典／圖譜檢索根；除了不確定詞，也應包含有檢索價值的關鍵詞、慣用語、專名、領域詞與多詞短語。只保留輸入中可驗證、互不重複且不超過八項的 span；重疊片段合併。`reason` 是固定分類，不保存或展示模型推理過程。
 
 - 使用者指定 source 時，planner 只負責 span，不可覆蓋 source code。
 - source 未指定且 confidence 低於設定門檻（初始 0.75，需以 benchmark 校準）時，送 `source_confirmation_required`，不猜測後繼檢索。

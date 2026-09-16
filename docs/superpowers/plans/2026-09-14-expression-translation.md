@@ -134,8 +134,8 @@
 - Test: `backend/tests/translationPlanner.test.ts`
 
 **WHAT:**
-- `planTranslation(ai, { text, sourceLangCode?, sourceConfidenceThreshold=0.75, limits })`：以 `env.AI.run(model, prompt, { schema-driven JSON })` 的一次非串流呼叫取得 `{ source_lang_code, source_confidence, uncertain_spans[] }`。
-- 回傳必須過手寫 type guard（不信任 JSON mode）：字串欄位型別、`uncertain_spans` 0–8 項、`start/end` 為 codepoint offset 且 `start<end`、`text` 等於輸入對應子字串、`reason ∈ {unknown_term, idiom, proper_noun, domain_term, context_ambiguity}`、`confidence ∈ 0..1`。重疊 span 合併、去重。
+- `planTranslation(ai, { text, sourceLangCode?, sourceConfidenceThreshold=0.75, limits })`：以 `env.AI.run(model, prompt, { schema-driven JSON })` 的一次非串流呼叫取得 `{ source_lang_code, source_confidence, retrieval_spans[] }`。
+- 回傳必須過手寫 type guard（不信任 JSON mode）：字串欄位型別、`retrieval_spans` 0–8 項、`start/end` 為 codepoint offset 且 `start<end`、`text` 等於輸入對應子字串、`reason ∈ {keyword, phrase, unknown_term, idiom, proper_noun, domain_term, context_ambiguity}`、`confidence ∈ 0..1`。重疊 span 合併、去重。
 - 使用者指定 source 時 planner 只產 span，不覆蓋 code；source 未指定且 confidence<門檻 → 回 `source_confirmation_required`。
 - invalid / timeout / parse error 不重試：source 已指定 → 回「僅完整輸入 root」fallback；source 也無法取得 → 標記 model-only（跳過檢索）。
 - 測試：valid / invalid / timeout / 重疊錯位 span / source override / 低 confidence confirmation；invalid 不重試且仍可 model-only。

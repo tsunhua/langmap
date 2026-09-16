@@ -305,7 +305,7 @@ async function assistedPath(
     plannerOutput = {
       source_lang_code: seed.sourceLangCode,
       source_confidence: 1,
-      uncertain_spans: [],
+      retrieval_spans: [],
     };
     emitEvent(ctx, {
       type: 'source_language',
@@ -368,7 +368,7 @@ async function assistedPath(
     try {
       retrieval = await retrieveEvidence(env.DB, {
         fullText: request.text,
-        spans: plannerOutput.uncertain_spans,
+        spans: plannerOutput.retrieval_spans,
         sourceLangCode,
         targetLocaleCode: request.targetLocaleCode,
         targetLocale: request.targetLocale,

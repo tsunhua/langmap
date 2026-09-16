@@ -110,6 +110,8 @@ export type TranslationStreamEvent =
   | TranslationStreamErrorEvent;
 
 export type PlannerUncertaintyReason =
+  | 'keyword'
+  | 'phrase'
   | 'unknown_term'
   | 'idiom'
   | 'proper_noun'
@@ -127,7 +129,7 @@ export interface PlannerSpan {
 export interface PlannerOutput {
   source_lang_code: string | null;
   source_confidence: number;
-  uncertain_spans: PlannerSpan[];
+  retrieval_spans: PlannerSpan[];
 }
 
 // Discriminated result of planTranslation; the Task 1.6 orchestrator consumes
