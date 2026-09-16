@@ -10,6 +10,7 @@ import languageRegistry from './languageRegistry';
 import localization from './localization';
 import morphology from './morphology';
 import preferences from './preferences';
+import translation from './translation';
 import users from './users';
 import images from './images';
 
@@ -25,6 +26,7 @@ api.route('/preferences', preferences);
 api.route('/contributions', contributions);
 api.route('/localization', localization);
 api.route('/morphological-features', morphology);
+api.route('/translate', translation);
 api.route('/users', users);
 api.route('/images', images);
 

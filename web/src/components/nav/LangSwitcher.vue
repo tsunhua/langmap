@@ -57,7 +57,7 @@ async function choose(code: string) {
   closeMenu()
   nextTick(() => triggerEl.value?.focus())
 }
-function openWorkbench() { closeMenu(); router.push('/translate') }
+function openWorkbench() { closeMenu(); router.push('/ui-translation') }
 
 function scrollActiveIntoView() {
   nextTick(() => {

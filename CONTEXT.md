@@ -34,6 +34,26 @@ LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔
 
 **來源（Source）**：可選的 provenance 列。expression 與 reading 只保留 `source_id` 整數引用；不為每一筆輸入複製來源文字。
 
+## 生成式翻譯
+
+**翻譯請求（Translation Request）**：登入使用者為取得目標 language locale 譯文而送出的暫態輸入，包含來源詞句、自動偵測或由使用者搜尋選定的來源語言，以及指定的目標 language locale。它不是詞句貢獻，也不因此建立 expression。
+_避免使用_：翻譯詞句、翻譯貢獻
+
+**翻譯結果（Translation Result）**：系統針對一筆翻譯請求生成的暫態譯文，可附帶 LangMap 檢索證據；沒有證據時須標明僅由模型生成。它不是 canonical expression 或 mapping；只有使用者明確提交後，才可另行進入既有社群貢獻流程。
+_避免使用_：正式譯文、AI mapping
+
+**精確匹配快徑（Exact Translation Fast Path）**：完整輸入經 expression identity 正規化後，命中既有 source expression，且有合格的 direct 或單一核准中介語言 two-hop path 解析到目標 locale expression。系統可直接回傳 canonical target text，不呼叫 planner 或 generation；片段命中與 prefix 命中不符合此定義。
+_避免使用_：無條件直譯、快取譯文
+
+**檢索證據（Retrieval Evidence）**：從 LangMap canonical expression graph 讀取、用來輔助生成翻譯結果的直接對照，或只經一個核准中介語言得到的兩跳對照資料。檢索證據不因被模型採用而建立新 expression、mapping 或來源。
+_避免使用_：AI 來源、生成式 mapping
+
+**核准中介語言（Approved Pivot Language）**：英語（`eng`）、普通話（`cmn`）、日語（`jpn`）、西班牙語（`spa`）、法語（`fra`）、德語（`deu`）、葡萄牙語（`por`）、韓語（`kor`）、俄語（`rus`）或現代標準阿拉伯語（`arb`）。只有這十種語言可在來源詞句與目標 language locale 之間作為兩跳檢索的中介；此限制不適用於來源語言或目標 language locale。
+_避免使用_：高資源語言、橋接語言
+
+**AI 輔助貢獻（AI-assisted Contribution）**：使用者從翻譯結果發起、經人工檢查與明確確認後送入既有社群貢獻流程的內容。確認畫面須說明譯文由 AI 輔助產生；提交後仍視為使用者貢獻，不永久保存 AI 輔助標示，也不得冒充詞典或其他權威來源。
+_避免使用_：AI mapping、自動貢獻
+
 ## 資料生命週期
 
 **canonical schema**：`backend/schema.sql` 描述乾淨重建時的資料庫。變更 schema 時，必須新增順序 migration、同步 schema 與 migration lock。

@@ -112,7 +112,7 @@ async function choose(next: string) {
       await addUiLocale(next)
       await refresh()
     }
-    await router.push(`/translate/${encodeURIComponent(next)}`)
+    await router.push(`/ui-translation/${encodeURIComponent(next)}`)
   } catch (cause) {
     actionError.value = errorMessage(cause, t('translate.localesFailed'))
   } finally {
@@ -154,7 +154,7 @@ onMounted(async () => {
   if (!code.value) {
     loading.value = false
     const first = locales.value.find((item) => item.status !== 'archived')
-    if (first) await router.replace(`/translate/${encodeURIComponent(first.language_locale_code)}`)
+    if (first) await router.replace(`/ui-translation/${encodeURIComponent(first.language_locale_code)}`)
     return
   }
   if (auth.isLoggedIn) {

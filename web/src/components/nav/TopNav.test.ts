@@ -24,6 +24,14 @@ const searchableLanguages = [
   contentLanguage('spa', 'Español', 5),
 ]
 
+// The auth store hydrates `user` by base64url-decoding the JWT payload, so a
+// token with an unsigned payload is enough to simulate a logged-in session.
+function fakeToken(username = 'lim') {
+  const encode = (value: object) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  return `${encode({ alg: 'none', typ: 'JWT' })}.${encode({ id: 1, username, role: 'user' })}.signature`
+}
+
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
 
@@ -50,6 +58,7 @@ async function mountNav() {
       { path: '/search', component: { template: '<p>Search</p>' } },
       { path: '/languages', component: { template: '<p>Languages</p>' } },
       { path: '/handbooks', component: { template: '<p>Handbooks</p>' } },
+      { path: '/translate', component: { template: '<p>Translate</p>' } },
       { path: '/contribute', component: { template: '<p>Contribute</p>' } },
       { path: '/auth', component: { template: '<p>Auth</p>' } },
     ],
@@ -96,6 +105,27 @@ describe('TopNav', () => {
 
     await wrapper.get('.menu-toggle').trigger('click')
     expect(wrapper.get('.drawer .expression-search-submit').text()).toBe('Search')
+  })
+
+  it('hides the phrase translate entry from anonymous visitors', async () => {
+    const { wrapper } = await mountNav()
+    await flushPromises()
+
+    expect(wrapper.find('.appnav a[href="/translate"]').exists()).toBe(false)
+
+    await wrapper.get('.menu-toggle').trigger('click')
+    expect(wrapper.find('.drawer-nav a[href="/translate"]').exists()).toBe(false)
+  })
+
+  it('shows the phrase translate entry in both navs for a logged-in user', async () => {
+    localStorage.setItem('token', fakeToken())
+    const { wrapper } = await mountNav()
+    await flushPromises()
+
+    expect(wrapper.find('.appnav a[href="/translate"]').exists()).toBe(true)
+
+    await wrapper.get('.menu-toggle').trigger('click')
+    expect(wrapper.find('.drawer-nav a[href="/translate"]').exists()).toBe(true)
   })
 
   it('keeps the current route, reports a missing language, and focuses the visible control', async () => {

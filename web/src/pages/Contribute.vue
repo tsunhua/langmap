@@ -7,6 +7,7 @@ import LanguageLocalePicker from '@/components/language/LanguageLocalePicker.vue
 import type { LanguageLocale } from '@/api/languageIdentity'
 import { X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { useContributePrefillStore } from '@/stores/contributePrefill'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -22,7 +23,16 @@ interface Row {
 
 let keySeq = 0
 const newRow = (): Row => ({ key: keySeq++, lang_code: '', language_locale_code: '', text: '' })
-const rows = ref<Row[]>([newRow(), newRow()])
+
+const prefillStore = useContributePrefillStore()
+const prefill = prefillStore.consume()
+const aiAssisted = prefill?.aiAssisted === true
+const rows = ref<Row[]>(prefill
+  ? [
+      { key: keySeq++, lang_code: prefill.sourceLangCode, language_locale_code: prefill.sourceLocaleCode, text: prefill.sourceText },
+      { key: keySeq++, lang_code: prefill.targetLangCode, language_locale_code: prefill.targetLocaleCode, text: prefill.targetText },
+    ]
+  : [newRow(), newRow()])
 
 const submitting = ref(false)
 const error = ref('')
@@ -128,6 +138,11 @@ async function submit() {
           <span class="tag">{{ t('contribute.completeGraph') }}</span>
         </div>
 
+        <p v-if="aiAssisted" class="ai-notice" role="status">
+          <span class="ai-badge">{{ t('phraseTranslate.aiAssistedBadge') }}</span>
+          {{ t('phraseTranslate.aiAssistedNotice') }}
+        </p>
+
         <p v-if="nodeCount < 2" class="hint" role="status">{{ t('contribute.minRows') }}</p>
 
         <p v-if="error" class="error" role="alert">{{ error }}</p>
@@ -216,6 +231,8 @@ async function submit() {
 .ex-counter.warn b { color: var(--down); }
 
 .ex-actions { display: flex; gap: 8px; }
+.ai-notice { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--space-xs) var(--space-sm); margin: 0 0 var(--space-sm); }
+.ai-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: var(--r); padding: 2px 6px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0 0 var(--space-sm); }
 .error { color: var(--down); font-size: 13px; margin: 0 0 var(--space-sm); }
 

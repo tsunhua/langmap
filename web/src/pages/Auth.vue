@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
+import { safeReturnPath } from '@/utils/safeReturnPath'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const { t } = useI18n()
 
@@ -25,7 +27,12 @@ async function submit() {
     } else {
       await auth.register(username.value, email.value, password.value)
     }
-    router.push('/')
+    const returnPath = safeReturnPath(route.query.return)
+    if (returnPath) {
+      router.replace(returnPath)
+    } else {
+      router.push('/')
+    }
   } catch (e: any) {
     errorMsg.value = e.response?.data?.message || t('auth.operationFailed')
   } finally {
