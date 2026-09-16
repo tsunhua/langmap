@@ -23,6 +23,7 @@ const {
   stage,
   mode,
   sourceLanguage,
+  segmentation,
   confirmation,
   evidence,
   translation,
@@ -56,7 +57,7 @@ watch(confirmation, (value) => {
 })
 
 const hasActivity = computed(() =>
-  Boolean(stage.value || isStreaming.value || error.value || result.value || translation.value),
+  Boolean(stage.value || segmentation.value || isStreaming.value || error.value || result.value || translation.value),
 )
 
 function buildInput(sourceLangCode: string | null): TranslationRequestInput {
@@ -189,6 +190,7 @@ async function sendToContribute() {
         :is-streaming="isStreaming"
         :error="error"
         :source-language="sourceLanguage"
+        :segmentation-spans="segmentation"
         :evidence="evidence"
         :target-locale-code="form.targetLocaleCode"
         :translation="translation"

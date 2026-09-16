@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
-import type { TranslationEvidence, TranslationRequestInput } from '@/api/translation'
+import type { TranslationEvidence, TranslationPlannerSpan, TranslationRequestInput } from '@/api/translation'
 import { useTranslationStream } from './useTranslationStream'
 
 type FetchMock = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
@@ -87,6 +87,14 @@ const evidence: TranslationEvidence = {
   source_markers: ['01'],
 }
 
+const segmentationSpan: TranslationPlannerSpan = {
+  start: 0,
+  end: 2,
+  text: '食飯',
+  reason: 'phrase',
+  confidence: 0.91,
+}
+
 function resultLine(overrides: Record<string, unknown> = {}): string {
   return line({
     type: 'result',
@@ -119,6 +127,7 @@ describe('useTranslationStream', () => {
     stubFetch().mockResolvedValue(streamResponse([
       line({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' }),
       line({ type: 'source_language', code: 'nan', confidence: 0.87 }),
+      line({ type: 'segmentation', spans: [segmentationSpan] }),
       line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }),
       line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false, retrieval_status: 'matched' }),
       line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' }),
@@ -134,6 +143,7 @@ describe('useTranslationStream', () => {
     expect(stream.stage.value).toBe('generating')
     expect(stream.mode.value).toBe('assisted')
     expect(stream.sourceLanguage.value).toEqual({ code: 'nan', confidence: 0.87 })
+    expect(stream.segmentation.value).toEqual([segmentationSpan])
     expect(stream.evidence.value).toEqual({
       items: [evidence],
       omittedCount: 0,
@@ -161,6 +171,17 @@ describe('useTranslationStream', () => {
       degraded: true,
       retrievalStatus: 'failed',
     })
+  })
+
+  it('carries an empty segmentation result when analysis finds no usable spans', async () => {
+    stubFetch().mockResolvedValue(streamResponse([
+      line({ type: 'segmentation', spans: [] }),
+    ]))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.segmentation.value).toEqual([])
   })
 
   it('uses the result translation for exact lookups that stream no deltas', async () => {
@@ -415,6 +436,7 @@ describe('useTranslationStream', () => {
     expect(stream.result.value).toBeNull()
     expect(stream.error.value).toBeNull()
     expect(stream.evidence.value).toBeNull()
+    expect(stream.segmentation.value).toBeNull()
     expect(stream.stage.value).toBeNull()
     expect(stream.isStreaming.value).toBe(false)
   })

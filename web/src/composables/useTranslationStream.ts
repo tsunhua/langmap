@@ -7,6 +7,7 @@ import {
   type TranslationEvidenceRetrievalStatus,
   type TranslationLanguageCandidate,
   type TranslationMode,
+  type TranslationPlannerSpan,
   type TranslationRequestInput,
   type TranslationResult,
   type TranslationResultEvent,
@@ -29,6 +30,10 @@ export interface TranslationConfirmation {
   reason: string
 }
 
+// Planner output is nullable until analysis completes. An empty array means
+// the planner completed but found no valid keyword or phrase roots.
+export type TranslationSegmentationState = TranslationPlannerSpan[]
+
 // The evidence event carries truncation and degradation alongside the items so
 // the UI can surface them (spec 9.4.8). Keep the bundle nullable: no evidence
 // event has arrived yet.
@@ -42,6 +47,7 @@ export interface TranslationEvidenceState {
 const STREAM_EVENT_TYPES = new Set<string>([
   'status',
   'source_language',
+  'segmentation',
   'source_confirmation_required',
   'evidence',
   'translation_delta',
@@ -119,6 +125,7 @@ export function useTranslationStream() {
   const stage = ref<TranslationStage | null>(null)
   const mode = ref<TranslationMode | null>(null)
   const sourceLanguage = ref<TranslationLanguageCandidate | null>(null)
+  const segmentation = ref<TranslationSegmentationState | null>(null)
   const confirmation = ref<TranslationConfirmation | null>(null)
   const evidence = ref<TranslationEvidenceState | null>(null)
   const translation = ref('')
@@ -137,6 +144,7 @@ export function useTranslationStream() {
     stage.value = null
     mode.value = null
     sourceLanguage.value = null
+    segmentation.value = null
     confirmation.value = null
     evidence.value = null
     translation.value = ''
@@ -162,6 +170,9 @@ export function useTranslationStream() {
         return false
       case 'source_language':
         sourceLanguage.value = { code: event.code, confidence: event.confidence }
+        return false
+      case 'segmentation':
+        segmentation.value = event.spans
         return false
       case 'source_confirmation_required':
         confirmation.value = { candidates: event.candidates, reason: event.reason }
@@ -333,6 +344,7 @@ export function useTranslationStream() {
     stage,
     mode,
     sourceLanguage,
+    segmentation,
     confirmation,
     evidence,
     translation,

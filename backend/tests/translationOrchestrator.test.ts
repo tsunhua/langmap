@@ -386,6 +386,7 @@ describe('runTranslation — assisted path', () => {
     expect(eventTypes(parsed)).toEqual([
       'status',
       'source_language',
+      'segmentation',
       'status',
       'evidence',
       'status',
@@ -394,16 +395,17 @@ describe('runTranslation — assisted path', () => {
     ]);
     expect(parsed[0].data).toEqual({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' });
     expect(parsed[1].data).toEqual({ type: 'source_language', code: 'eng', confidence: 0.9 });
-    expect(parsed[2].data).toEqual({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' });
-    expect(parsed[3].data).toMatchObject({
+    expect(parsed[2].data).toEqual({ type: 'segmentation', spans: [] });
+    expect(parsed[3].data).toEqual({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' });
+    expect(parsed[4].data).toMatchObject({
       type: 'evidence',
       omitted_count: 0,
       degraded: false,
     });
-    expect((parsed[3].data as { items: unknown[] }).items).toHaveLength(1);
-    expect(parsed[4].data).toEqual({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' });
-    expect(parsed[5].data).toEqual({ type: 'translation_delta', text: 'こんにちは' });
-    expect(parsed[6].data).toMatchObject({
+    expect((parsed[4].data as { items: unknown[] }).items).toHaveLength(1);
+    expect(parsed[5].data).toEqual({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' });
+    expect(parsed[6].data).toEqual({ type: 'translation_delta', text: 'こんにちは' });
+    expect(parsed[7].data).toMatchObject({
       type: 'result',
       request_id: 'req-1',
       translation: 'こんにちは',
@@ -445,7 +447,11 @@ describe('runTranslation — assisted path', () => {
     expect(queriedRoots).toContain('这个多少钱？');
     expect(queriedRoots).toContain('多少钱');
     const parsed = parseLines(h.collector);
-    expect((parsed[3].data as { items: Array<{ source_text: string; match_type: string }> }).items).toEqual([
+    expect(parsed[2].data).toMatchObject({
+      type: 'segmentation',
+      spans: [{ text: '多少钱', reason: 'phrase', confidence: 0.95 }],
+    });
+    expect((parsed[4].data as { items: Array<{ source_text: string; match_type: string }> }).items).toEqual([
       expect.objectContaining({ source_text: '多少钱', match_type: 'exact' }),
     ]);
     expect(parsed.at(-1)?.data).toMatchObject({
@@ -541,20 +547,21 @@ describe('runTranslation — assisted path', () => {
     expect(eventTypes(parsed)).toEqual([
       'status',
       'source_language',
+      'segmentation',
       'status',
       'evidence',
       'status',
       'translation_delta',
       'result',
     ]);
-    expect(parsed[3].data).toEqual({
+    expect(parsed[4].data).toEqual({
       type: 'evidence',
       items: [],
       omitted_count: 0,
       degraded: true,
       retrieval_status: 'failed',
     });
-    expect(parsed[6].data).toMatchObject({
+    expect(parsed[7].data).toMatchObject({
       type: 'result',
       resolution: 'assisted',
       model_only: true,
@@ -604,6 +611,7 @@ describe('runTranslation — error mapping', () => {
       expect(eventTypes(parsed)).toEqual([
         'status',
         'source_language',
+        'segmentation',
         'status',
         'evidence',
         'status',
@@ -629,6 +637,7 @@ describe('runTranslation — error mapping', () => {
     expect(eventTypes(parsed)).toEqual([
       'status',
       'source_language',
+      'segmentation',
       'status',
       'evidence',
       'status',
@@ -650,6 +659,7 @@ describe('runTranslation — error mapping', () => {
     expect(eventTypes(parsed)).toEqual([
       'status',
       'source_language',
+      'segmentation',
       'status',
       'evidence',
       'status',
@@ -673,6 +683,7 @@ describe('runTranslation — error mapping', () => {
     expect(eventTypes(parsed)).toEqual([
       'status',
       'source_language',
+      'segmentation',
       'status',
       'evidence',
       'status',

@@ -55,6 +55,11 @@ export interface TranslationStreamSourceLanguageEvent {
   candidates?: TranslationLanguageCandidate[];
 }
 
+export interface TranslationStreamSegmentationEvent {
+  type: 'segmentation';
+  spans: PlannerSpan[];
+}
+
 export interface TranslationStreamSourceConfirmationEvent {
   type: 'source_confirmation_required';
   candidates: TranslationLanguageCandidate[];
@@ -103,6 +108,7 @@ export interface TranslationStreamErrorEvent {
 export type TranslationStreamEvent =
   | TranslationStreamStatusEvent
   | TranslationStreamSourceLanguageEvent
+  | TranslationStreamSegmentationEvent
   | TranslationStreamSourceConfirmationEvent
   | TranslationStreamEvidenceEvent
   | TranslationStreamDeltaEvent

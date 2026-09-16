@@ -12,6 +12,23 @@ export interface TranslationLanguageCandidate {
   confidence: number
 }
 
+export type TranslationPlannerSpanReason =
+  | 'keyword'
+  | 'phrase'
+  | 'unknown_term'
+  | 'idiom'
+  | 'proper_noun'
+  | 'domain_term'
+  | 'context_ambiguity'
+
+export interface TranslationPlannerSpan {
+  start: number
+  end: number
+  text: string
+  reason: TranslationPlannerSpanReason
+  confidence: number
+}
+
 export interface TranslationEvidence {
   source_text: string
   target_text: string
@@ -42,6 +59,11 @@ export interface TranslationSourceLanguageEvent {
   code: string
   confidence: number
   candidates?: TranslationLanguageCandidate[]
+}
+
+export interface TranslationSegmentationEvent {
+  type: 'segmentation'
+  spans: TranslationPlannerSpan[]
 }
 
 export interface TranslationSourceConfirmationEvent {
@@ -90,6 +112,7 @@ export interface TranslationErrorEvent {
 export type TranslationStreamEvent =
   | TranslationStatusEvent
   | TranslationSourceLanguageEvent
+  | TranslationSegmentationEvent
   | TranslationSourceConfirmationEvent
   | TranslationEvidenceEvent
   | TranslationDeltaEvent

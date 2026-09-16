@@ -347,6 +347,10 @@ async function assistedPath(
         code: sourceLangCode,
         confidence: request.sourceLangCode ? 1 : planner.output.source_confidence,
       });
+      emitEvent(ctx, {
+        type: 'segmentation',
+        spans: planner.output.retrieval_spans,
+      });
     }
   }
   if (ctx.signal.aborted) return;

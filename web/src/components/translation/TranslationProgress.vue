@@ -7,16 +7,18 @@ import type {
   TranslationLanguageCandidate,
   TranslationEvidenceRetrievalStatus,
   TranslationMode,
+  TranslationPlannerSpan,
   TranslationResult,
   TranslationStage,
 } from '@/api/translation'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   stage: TranslationStage | null
   mode: TranslationMode | null
   isStreaming: boolean
   error: { message?: string } | null
   sourceLanguage: TranslationLanguageCandidate | null
+  segmentationSpans?: TranslationPlannerSpan[] | null
   evidence: {
     items: TranslationEvidence[]
     omittedCount: number
@@ -26,7 +28,9 @@ const props = defineProps<{
   targetLocaleCode: string
   translation: string
   result: TranslationResult | null
-}>()
+}>(), {
+  segmentationSpans: null,
+})
 
 const { t } = useI18n()
 const processOpen = ref(true)
@@ -42,6 +46,10 @@ const stageLabels = {
 const stages = computed<TranslationStage[]>(() =>
   props.mode === 'exact_lookup' ? ['retrieving'] : ['analyzing', 'retrieving', 'generating'],
 )
+
+function confidenceLabel(confidence: number): string {
+  return `${Math.round(Math.max(0, Math.min(1, confidence)) * 100)}%`
+}
 
 const currentLabel = computed(() => {
   if (props.error) return t('phraseTranslate.processFailed')
@@ -164,7 +172,7 @@ function stateOf(stage: TranslationStage): 'done' | 'active' | 'pending' {
           </li>
         </ol>
 
-        <dl v-if="sourceCode || targetCode || evidence" class="process-details">
+        <dl v-if="sourceCode || targetCode || segmentationSpans !== null || evidence" class="process-details">
           <div v-if="sourceCode" class="process-detail-row">
             <dt>{{ t('phraseTranslate.processSource') }}</dt>
             <dd>
@@ -189,25 +197,63 @@ function stateOf(stage: TranslationStage): 'done' | 'active' | 'pending' {
           </div>
         </dl>
 
+        <section
+          v-if="segmentationSpans !== null"
+          class="process-segmentation"
+          aria-labelledby="process-segmentation-heading"
+        >
+          <div class="process-section-heading">
+            <h3 id="process-segmentation-heading" class="process-label">
+              {{ t('phraseTranslate.processSegmentation') }}
+            </h3>
+            <span class="process-section-count">
+              {{ t('phraseTranslate.processSegmentationCount', { count: segmentationSpans.length }) }}
+            </span>
+          </div>
+          <ul v-if="segmentationSpans.length" class="segmentation-list">
+            <li
+              v-for="span in segmentationSpans"
+              :key="`${span.start}:${span.end}:${span.text}`"
+              class="segmentation-item"
+            >
+              <span class="segmentation-text">{{ span.text }}</span>
+              <span class="segmentation-meta">
+                <code class="segmentation-reason">{{ span.reason }}</code>
+                <span>{{ t('phraseTranslate.processConfidence', { confidence: confidenceLabel(span.confidence) }) }}</span>
+                <span>{{ t('phraseTranslate.processSpanOffset', { start: span.start, end: span.end }) }}</span>
+              </span>
+            </li>
+          </ul>
+          <p v-else class="process-empty">{{ t('phraseTranslate.processNoSegmentation') }}</p>
+        </section>
+
         <section v-if="translation" class="process-output" aria-labelledby="process-output-heading">
           <h3 id="process-output-heading" class="process-label">{{ t('phraseTranslate.processDraft') }}</h3>
           <p class="process-preview">{{ translation }}</p>
         </section>
 
-        <ul v-if="evidencePreview.length" class="process-evidence" :aria-label="t('phraseTranslate.evidenceHeading')">
-          <li
-            v-for="(item, index) in evidencePreview"
-            :key="`${item.source_text}:${item.target_text}:${item.path_type}:${index}`"
-            class="process-evidence-item"
-          >
-            <span class="process-evidence-source">{{ item.source_text }}</span>
-            <span class="process-evidence-arrow" aria-hidden="true">→</span>
-            <span class="process-evidence-target">{{ item.target_text }}</span>
-          </li>
-          <li v-if="evidenceRemaining > 0" class="process-evidence-more">
-            {{ t('phraseTranslate.processMoreEvidence', { count: evidenceRemaining }) }}
-          </li>
-        </ul>
+        <section v-if="evidencePreview.length" class="process-evidence-block" aria-labelledby="process-evidence-heading">
+          <div class="process-section-heading">
+            <h3 id="process-evidence-heading" class="process-label">{{ t('phraseTranslate.processRetrieval') }}</h3>
+            <span class="process-section-count">
+              {{ t('phraseTranslate.evidenceCount', { count: evidenceTotal }) }}
+            </span>
+          </div>
+          <ul class="process-evidence" :aria-label="t('phraseTranslate.evidenceHeading')">
+            <li
+              v-for="(item, index) in evidencePreview"
+              :key="`${item.source_text}:${item.target_text}:${item.path_type}:${index}`"
+              class="process-evidence-item"
+            >
+              <span class="process-evidence-source">{{ item.source_text }}</span>
+              <span class="process-evidence-arrow" aria-hidden="true">→</span>
+              <span class="process-evidence-target">{{ item.target_text }}</span>
+            </li>
+            <li v-if="evidenceRemaining > 0" class="process-evidence-more">
+              {{ t('phraseTranslate.processMoreEvidence', { count: evidenceRemaining }) }}
+            </li>
+          </ul>
+        </section>
 
         <p v-if="result" class="process-resolution">
           <span class="process-label">{{ t('phraseTranslate.processResolution') }}</span>
@@ -215,7 +261,7 @@ function stateOf(stage: TranslationStage): 'done' | 'active' | 'pending' {
         </p>
 
         <p
-          v-if="!sourceCode && !evidence && !translation && !result && !error"
+          v-if="!sourceCode && segmentationSpans === null && !evidence && !translation && !result && !error"
           class="process-empty"
         >
           {{ t('phraseTranslate.processWaiting') }}
@@ -335,6 +381,62 @@ function stateOf(stage: TranslationStage): 'done' | 'active' | 'pending' {
 .process-detail-row code {
   font-family: var(--mono);
   font-size: 11px;
+}
+.process-segmentation,
+.process-evidence-block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.process-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.process-section-heading h3 {
+  margin: 0;
+}
+.process-section-count {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+.segmentation-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.segmentation-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.segmentation-text {
+  min-width: 0;
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.segmentation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.segmentation-reason {
+  font-family: var(--mono);
+  color: var(--accent);
 }
 .process-output {
   display: grid;

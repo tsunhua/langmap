@@ -4,7 +4,7 @@ import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { LanguageLocale } from '@/api/languageIdentity'
-import type { TranslationEvidence } from '@/api/translation'
+import type { TranslationEvidence, TranslationPlannerSpan } from '@/api/translation'
 import { useContributePrefillStore } from '@/stores/contributePrefill'
 import ExpressionTranslation from './ExpressionTranslation.vue'
 
@@ -75,6 +75,14 @@ const evidence: TranslationEvidence = {
   path_type: 'direct',
   match_type: 'exact',
   source_markers: ['01'],
+}
+
+const segmentationSpan: TranslationPlannerSpan = {
+  start: 0,
+  end: 2,
+  text: '食飯',
+  reason: 'phrase',
+  confidence: 0.91,
 }
 
 function resultLine(overrides: Record<string, unknown> = {}): string {
@@ -237,6 +245,7 @@ describe('ExpressionTranslation page', () => {
 
     stream.send(line({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' }))
     stream.send(line({ type: 'source_language', code: 'cmn', confidence: 1 }))
+    stream.send(line({ type: 'segmentation', spans: [segmentationSpan] }))
     stream.send(line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false }))
     stream.send(line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' }))
     stream.send(line({ type: 'translation_delta', text: '這个偌濟錢？' }))
@@ -244,6 +253,9 @@ describe('ExpressionTranslation page', () => {
     await nextTick()
 
     expect(wrapper.get('.process-details').text()).toContain('cmn')
+    expect(wrapper.get('.segmentation-text').text()).toBe('食飯')
+    expect(wrapper.get('.segmentation-reason').text()).toBe('phrase')
+    expect(wrapper.get('.segmentation-meta').text()).toContain('91%')
     expect(wrapper.get('.process-evidence-source').text()).toBe('食飯')
     expect(wrapper.get('.process-preview').text()).toBe('這个偌濟錢？')
 
