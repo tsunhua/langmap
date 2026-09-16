@@ -149,6 +149,7 @@ def inventory_production(
     wrangler_bin: Path | None = None,
     env: Mapping[str, str] | None = None,
     report_path: Path | None = None,
+    include_integrity_checks: bool = True,
 ) -> dict[str, Any]:
     configured = load_production_identity(paths.backend_dir / "wrangler.jsonc")
     executor = ProductionExecutor(
@@ -176,9 +177,12 @@ def inventory_production(
             _build_column_inventory_sql(table_batch),
         )
         column_rows.extend(_annotate_column_rows(table_batch, column_results))
-    count_results = executor.select(configured["database_name"], INVENTORY_COUNTS_SQL)
+    count_rows = _inventory_count_rows(
+        executor,
+        configured["database_name"],
+        include_integrity_checks=include_integrity_checks,
+    )
     schema_rows.extend(column_rows)
-    count_rows = _flatten_rows(count_results)
     locked_migrations = migrations.sync_migration_lock(
         paths.migrations_dir,
         paths.migration_lock_path,
@@ -881,7 +885,14 @@ def apply_production(
                 },
             )
         current_stage = "verify"
-        verified = inventory_production(paths, wrangler_bin=executor.wrangler_bin, env=env)
+        verified = inventory_production(
+            paths,
+            wrangler_bin=executor.wrangler_bin,
+            env=env,
+            # Full orphan scans can exceed D1's per-request CPU limit on the
+            # production-sized graph. The release check remains source-scoped.
+            include_integrity_checks=False,
+        )
         if plan.get("pending_migrations"):
             check_target_schema(paths, verified)
         else:
@@ -1613,3 +1624,26 @@ SELECT 'orphan_ui_messages' AS metric, COUNT(*) FROM ui_messages m LEFT JOIN exp
 SELECT 'orphan_expression_edges' AS metric, COUNT(*) FROM expression_edges x LEFT JOIN expressions a ON a.id = x.expression_a_id LEFT JOIN expressions b ON b.id = x.expression_b_id WHERE a.id IS NULL OR b.id IS NULL;
 SELECT 'orphan_handbook_items' AS metric, COUNT(*) FROM handbook_section_items i LEFT JOIN expressions e ON e.id = i.expression_id WHERE e.id IS NULL;
 """.strip()
+
+
+def _inventory_count_rows(
+    executor: ProductionExecutor,
+    database_name: str,
+    *,
+    include_integrity_checks: bool = True,
+) -> list[dict[str, Any]]:
+    """Run inventory counts independently so D1 CPU limits reset per request."""
+
+    rows: list[dict[str, Any]] = []
+    for statement in INVENTORY_COUNTS_SQL.split(";\n"):
+        statement = statement.strip()
+        if statement:
+            metric = re.search(r"SELECT\s+'([^']+)'\s+AS\s+metric", statement, re.IGNORECASE)
+            if (
+                not include_integrity_checks
+                and metric is not None
+                and metric.group(1).startswith("orphan_")
+            ):
+                continue
+            rows.extend(_flatten_rows(executor.select(database_name, statement)))
+    return rows

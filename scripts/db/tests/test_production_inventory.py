@@ -110,7 +110,7 @@ class ProductionInventoryTests(unittest.TestCase):
             report_text = paths.production_inventory_report_path.read_text(encoding="utf-8")
             self.assertNotIn("SECRET", report_text)
             calls = log_path.read_text(encoding="utf-8").splitlines()
-            self.assertEqual(len(calls), 4)
+            self.assertGreaterEqual(len(calls), 4)
             self.assertNotIn("--remote", calls[0])
             self.assertTrue(all("--remote" in call for call in calls[1:]))
             self.assertTrue(
