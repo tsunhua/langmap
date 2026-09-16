@@ -1,6 +1,6 @@
 // Single provider model shared by the planner (structured call) and the
 // generative stage, so provider code stays in one place per layer.
-export const TRANSLATION_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+export const TRANSLATION_MODEL = '@cf/zai-org/glm-4.7-flash';
 
 export interface TranslationRequest {
   text: string;
