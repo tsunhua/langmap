@@ -71,7 +71,9 @@ const IMAGE_CACHE: CachePolicy = {
 };
 
 function matchesExpressionRead(pathname: string): boolean {
-  return pathname === '/api/v2/expressions/search' || /^\/api\/v2\/expressions\/[^/]+(?:\/mappings|\/edges|\/form-edges)?$/.test(pathname);
+  return pathname === '/api/v2/expressions/search'
+    || /^\/api\/v2\/expressions\/[^/]+(?:\/mappings|\/edges|\/form-edges)?$/.test(pathname)
+    || /^\/api\/v2\/expressions\/[^/]+\/[^/]+(?:\/mappings|\/edges|\/form-edges)?$/.test(pathname);
 }
 
 export function getCachePolicy(url: string): CachePolicy | null {
