@@ -24,9 +24,9 @@ const PROJECT_LANGUAGE_NAME_TRANSLATIONS = new Map(
   ),
 );
 
-const LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM json_each(?))';
-const LOCALE_SQL = 'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM json_each(?))';
-const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT value FROM json_each(?))';
+const LANGUAGE_SQL = 'SELECT code, name_expression_id, name_en, NULL AS name FROM languages WHERE code IN (SELECT value FROM jsonb_array_elements_text(?::jsonb))';
+const LOCALE_SQL = 'SELECT code, name_expression_id, name_en, name FROM language_locales WHERE code IN (SELECT value FROM jsonb_array_elements_text(?::jsonb))';
+const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT value::bigint FROM jsonb_array_elements_text(?::jsonb))';
 
 // A name is only translated through a direct semantic edge whose target is
 // attested in the requested full locale. The two UNION branches keep the
@@ -36,7 +36,7 @@ const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT va
 // registry names, not to the target language size. CROSS JOIN prevents SQLite
 // from reordering the scan back onto the (potentially huge) target language.
 export const CANDIDATE_SQL = `WITH candidate_rows AS (
-  SELECT value AS source_id FROM json_each(?)
+  SELECT value::bigint AS source_id FROM jsonb_array_elements_text(?::jsonb)
 )
 SELECT candidate_rows.source_id, t.id AS target_id, t.text AS target_text, e.score
 FROM candidate_rows

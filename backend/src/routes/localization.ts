@@ -59,7 +59,7 @@ localization.get('/projects/:projectId/workbench/:code', requireAuth, async (c) 
         FROM ui_messages m JOIN expression_edges e ON e.expression_b_id=m.source_expression_id JOIN expressions t ON t.id=e.expression_a_id
         WHERE m.project_id=? AND m.status='active' AND m.message_key IN (${marks}) AND t.language_id=(SELECT language_id FROM language_locales WHERE code=?)
           AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=t.id AND l.code=?)
-      ) ORDER BY key, score DESC, expression_id`,
+      ) AS candidates ORDER BY key, score DESC, expression_id`,
     ).bind(projectId, ...keys, code, code, projectId, ...keys, code, code).all();
     for (const row of rows.results) {
       const list = candidates.get(row.key) ?? [];
