@@ -43,7 +43,10 @@ API:       GET /expressions/{lang_code}/{text}~{N}
 
 - `lang_code` 为独立 path segment（registry code，字符集受限：字母数字连字符，如 `en`、`nan`、`x-image`）。
 - `text` 为单个 path segment，经 `encodeURIComponent` 编码；文字中的 `/` 编为 `%2F`。vue-router 与 Hono 均在 raw path 上匹配后才 decode，segment 不会被切开（实现时需以测试验证）。
-- **`~` 语义保留**：text 部分一律把 `~` 编为 `%7E`（合法 percent-encoding），因此尾端字面 `~N` 无歧义地表示 `homograph_index`。
+- **`~N` 后缀消歧规则**（修订）：Hono 与 vue-router 的 path param 都会自动 percent-decode，编码层无法区分字面 `~` 与后缀，因此不使用 `%7E` 逃逸，改用「最后一条 `~\d+$` 规则」：
+  - 解析：对 decode 后的 text 取最后一条 `~(\d+)$` 作为 `homograph_index`，其余为文本本体；无后缀即 `homograph_index = 1`。
+  - 构造：当 `homograph_index > 1` **或** 文本本体本身匹配 `~\d+$` 时，必须追加 `~{N}` 后缀；否则省略。
+  - 此规则下构造与解析互逆、无歧义：文本本体 `hello~2`（homograph 1）编码为 `hello~2~1`，解析还原为 (`hello~2`, 1)。
 - 长例句文字：URL 较长但功能正常，已确认为可接受。
 - 查找为精确匹配（stored text），不做查找时的文本规范化；创建路径的规范化维持现状。
 
