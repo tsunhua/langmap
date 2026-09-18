@@ -18,8 +18,8 @@ vi.mock('@/stores/languages', () => ({
     getName: (code: string) => ({ eng: 'English', nan: 'Taiwanese', jpn: 'Japanese' }[code] ?? code),
   }),
 }))
-const route = reactive<{ params: { id: string }; query: Record<string, string> }>({
-  params: { id: 'old' },
+const route = reactive<{ params: { lang?: string; text?: string; id?: string }; query: Record<string, string> }>({
+  params: { lang: 'eng', text: 'old' },
   query: {},
 })
 
@@ -60,9 +60,9 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
-function expression(id: string, text: string) {
+function expression(id: string, text: string, homographIndex = 1) {
   return {
-    expression: { id, text, lang_code: 'eng', source_type: 'user', source_name: null },
+    expression: { id, text, lang_code: 'eng', homograph_index: homographIndex, source_type: 'user', source_name: null },
     attestations: [],
     readings: [],
   }
@@ -73,7 +73,7 @@ function graph(id: string, requestedHops: 1 | 2 | 3 = 1) {
     root_id: id,
     requested_hops: requestedHops,
     resolved_hops: 0,
-    nodes: [{ expression_id: id, text: id, lang_code: 'eng', language_name: 'English', depth: 0 }],
+    nodes: [{ expression_id: id, text: id, lang_code: 'eng', language_name: 'English', depth: 0, homograph_index: 1 }],
     edges: [],
     layer_counts: { 0: 1 } as Record<number, number>,
     truncated: false,
@@ -84,9 +84,9 @@ function graph(id: string, requestedHops: 1 | 2 | 3 = 1) {
 function languageGraph(id: string, requestedHops: 1 | 2 | 3 = 2) {
   const value = graph(id, requestedHops)
   value.nodes.push(
-    { expression_id: 'nan-1', text: 'nan 1', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 },
-    { expression_id: 'nan-2', text: 'nan 2', lang_code: 'nan', language_name: 'Taiwanese', depth: 2 },
-    { expression_id: 'eng-1', text: 'eng 1', lang_code: 'eng', language_name: 'English', depth: 1 },
+    { expression_id: 'nan-1', text: 'nan 1', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 },
+    { expression_id: 'nan-2', text: 'nan 2', lang_code: 'nan', language_name: 'Taiwanese', depth: 2, homograph_index: 1 },
+    { expression_id: 'eng-1', text: 'eng 1', lang_code: 'eng', language_name: 'English', depth: 1, homograph_index: 1 },
   )
   value.layer_counts[1] = 2
   value.layer_counts[2] = 1
@@ -124,7 +124,7 @@ function signedInPinia() {
 describe('MappingDetail page state', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    route.params.id = 'old'
+    route.params = { lang: 'eng', text: 'old' }
     route.query = {}
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
@@ -137,7 +137,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('passes counted languages from the unfiltered graph to LanguageSelect', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     route.query = { hops: '2' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     mappingGraph.mockResolvedValue(languageGraph('anchor'))
@@ -152,7 +152,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('keeps the full option list when a filtered graph contains only the root', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     route.query = { target_language: 'eng' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     mappingGraph.mockImplementation((_id: string, _hops: number, _hints: unknown, target?: string) =>
@@ -163,19 +163,19 @@ describe('MappingDetail page state', () => {
 
     expect(wrapper.get('[data-testid="language-options"]').text()).toContain('nan')
     expect(wrapper.get('[data-testid="language-options"]').text()).toContain('eng')
-    expect(mappingGraph).toHaveBeenCalledWith('anchor', 1, expect.anything(), 'eng')
-    expect(mappingGraph).toHaveBeenCalledWith('anchor', 1, expect.anything())
+    expect(mappingGraph).toHaveBeenCalledWith({ lang_code: 'eng', text: 'anchor', homograph_index: 1 }, 1, expect.anything(), 'eng')
+    expect(mappingGraph).toHaveBeenCalledWith({ lang_code: 'eng', text: 'anchor', homograph_index: 1 }, 1, expect.anything())
   })
 
   it('keeps the newest route result when an older request finishes later', async () => {
     const oldDetail = deferred<ReturnType<typeof expression>>()
-    detail.mockImplementation((id: string) => id === 'old'
+    detail.mockImplementation((target: { text?: string }) => target?.text === 'old'
       ? oldDetail.promise
       : Promise.resolve(expression('new', 'Newest expression')))
-    mappingGraph.mockImplementation((id: string) => Promise.resolve(graph(id)))
+    mappingGraph.mockImplementation((target: { text?: string }) => Promise.resolve(graph(target?.text ?? 'anchor')))
 
     const wrapper = mountPage()
-    route.params.id = 'new'
+    route.params = { lang: 'eng', text: 'new' }
     await flushPromises()
     expect(wrapper.text()).toContain('Newest expression')
 
@@ -187,7 +187,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('keeps the newest hop result when hop requests finish out of order', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     const secondHop = deferred<ReturnType<typeof graph>>()
     const thirdHop = deferred<ReturnType<typeof graph>>()
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
@@ -195,7 +195,7 @@ describe('MappingDetail page state', () => {
       if (hops === 2) return secondHop.promise
       if (hops === 3) return thirdHop.promise
       const value = graph('anchor')
-      value.nodes.push({ expression_id: 'initial', text: 'Initial graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+      value.nodes.push({ expression_id: 'initial', text: 'Initial graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
       value.layer_counts[1] = 1
       return Promise.resolve(value)
     })
@@ -208,14 +208,14 @@ describe('MappingDetail page state', () => {
     hop3.click()
 
     const newest = graph('anchor')
-    newest.nodes.push({ expression_id: 'newest', text: 'Newest graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    newest.nodes.push({ expression_id: 'newest', text: 'Newest graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
     newest.layer_counts[1] = 1
     thirdHop.resolve(newest)
     await flushPromises()
     expect(wrapper.text()).toContain('Newest graph')
 
     const stale = graph('anchor')
-    stale.nodes.push({ expression_id: 'stale', text: 'Stale graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    stale.nodes.push({ expression_id: 'stale', text: 'Stale graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
     stale.layer_counts[1] = 1
     secondHop.resolve(stale)
     await flushPromises()
@@ -225,10 +225,10 @@ describe('MappingDetail page state', () => {
   })
 
   it('keeps the hop selector aligned with the loaded graph when a hop request fails', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     const initial = graph('anchor')
-    initial.nodes.push({ expression_id: 'initial', text: 'Initial graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    initial.nodes.push({ expression_id: 'initial', text: 'Initial graph', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
     initial.layer_counts[1] = 1
     mappingGraph.mockImplementation((_id: string, hops: number) => hops === 3
       ? Promise.reject(new Error('hop request failed'))
@@ -245,10 +245,10 @@ describe('MappingDetail page state', () => {
   })
 
   it('limits anonymous users to two hops', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     const value = graph('anchor')
-    value.nodes.push({ expression_id: 'related', text: 'Related', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    value.nodes.push({ expression_id: 'related', text: 'Related', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
     value.layer_counts[1] = 1
     mappingGraph.mockResolvedValue(value)
 
@@ -260,7 +260,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('downgrades a three-hop URL for anonymous users', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     route.query = { hops: '3' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     mappingGraph.mockResolvedValue(graph('anchor'))
@@ -268,15 +268,15 @@ describe('MappingDetail page state', () => {
     const wrapper = mountPage()
     await flushPromises()
 
-    expect(mappingGraph).toHaveBeenCalledWith('anchor', 2, expect.anything(), undefined)
+    expect(mappingGraph).toHaveBeenCalledWith({ lang_code: 'eng', text: 'anchor', homograph_index: 1 }, 2, expect.anything(), undefined)
     expect((wrapper.vm as any).hops).toBe(2)
   })
 
   it('does not show the no-mappings state when the graph has a related expression', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     const value = graph('anchor')
-    value.nodes.push({ expression_id: 'related', text: 'Related', lang_code: 'nan', language_name: 'Taiwanese', depth: 1 })
+    value.nodes.push({ expression_id: 'related', text: 'Related', lang_code: 'nan', language_name: 'Taiwanese', depth: 1, homograph_index: 1 })
     value.layer_counts[1] = 1
     mappingGraph.mockResolvedValue(value)
 
@@ -288,7 +288,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('sends signed-out users to /auth when adding a word-form link', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     mappingGraph.mockResolvedValue(graph('anchor'))
 
@@ -300,7 +300,7 @@ describe('MappingDetail page state', () => {
   })
 
   it('toggles the word-form form for signed-in users', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue(expression('anchor', 'Anchor'))
     mappingGraph.mockResolvedValue(graph('anchor'))
     const pinia = createPinia()
@@ -318,9 +318,9 @@ describe('MappingDetail page state', () => {
   })
 
   it('does not show the word-form action for non-word expressions', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue({
-      expression: { id: 'anchor', text: '🐈', lang_code: 'x-emoji', source_type: 'user', source_name: null },
+      expression: { id: 'anchor', text: '🐈', lang_code: 'x-emoji', homograph_index: 1, source_type: 'user', source_name: null },
       attestations: [],
       readings: [],
     })
@@ -333,9 +333,9 @@ describe('MappingDetail page state', () => {
   })
 
   it('shows the anchor expression readings under the title', async () => {
-    route.params.id = 'anchor'
+    route.params = { lang: 'eng', text: 'anchor' }
     detail.mockResolvedValue({
-      expression: { id: 'anchor', text: 'peg', lang_code: 'eng', source_type: 'user', source_name: null },
+      expression: { id: 'anchor', text: 'peg', lang_code: 'eng', homograph_index: 1, source_type: 'user', source_name: null },
       attestations: [],
       readings: [
         { language_locale_code: 'cmn-Hant-TW', locale_display_name: 'Mandarin', scheme: 'pinyin', value: 'nán tiě' },
