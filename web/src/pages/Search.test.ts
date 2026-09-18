@@ -25,7 +25,7 @@ const defaultLanguages = [
 ]
 
 function expression(id: string, text: string) {
-  return { id, text, lang_code: 'eng', mapping_count: 1 }
+  return { id, text, lang_code: 'eng', homograph_index: 1, mapping_count: 1 }
 }
 
 async function mountPage(query = '') {
@@ -52,13 +52,13 @@ describe('Search page', () => {
   it('searches with q/offset and shows the selected language', async () => {
     vi.mocked(api.get).mockImplementation((path: string, config?: { params?: Record<string, unknown> }) => {
       if (path === '/languages') return Promise.resolve(page(defaultLanguages))
-      if (path === '/expressions/search') return Promise.resolve(page([expression('eng:first', 'First')]))
+      if (path === '/expressions/search') return Promise.resolve(page([expression('1', 'First')]))
       throw new Error(`unexpected ${path} ${JSON.stringify(config)}`)
     })
     const wrapper = await mountPage('q=first&lang=eng')
     await flushPromises()
 
-    expect(wrapper.get('a[href="/mapping/eng:first"]').text()).toContain('eng')
+    expect(wrapper.get('a[href="/mapping/eng/first"]').text()).toContain('eng')
     expect(api.get).toHaveBeenLastCalledWith('/expressions/search', {
       params: { q: 'first', lang_code: 'eng', limit: 20, offset: 0, ui_locale: 'eng-Latn-US' },
     })
@@ -89,7 +89,7 @@ describe('Search page', () => {
   it('keeps existing results and exposes a load-more failure', async () => {
     vi.mocked(api.get).mockImplementation((path: string, config?: { params?: Record<string, unknown> }) => {
       if (path === '/languages') return Promise.resolve(page(defaultLanguages))
-      if (config?.params?.offset === 0) return Promise.resolve(page([expression('eng:first', 'First')], 2))
+      if (config?.params?.offset === 0) return Promise.resolve(page([expression('1', 'First')], 2))
       return Promise.reject({ response: { data: { message: 'More results unavailable' } } })
     })
     const wrapper = await mountPage('q=first&lang=eng')
@@ -125,7 +125,7 @@ describe('Search page', () => {
   it('reuses the last-selected language on the next visit', async () => {
     vi.mocked(api.get).mockImplementation((path: string) => {
       if (path === '/languages') return Promise.resolve(page(defaultLanguages))
-      if (path === '/expressions/search') return Promise.resolve(page([expression('eng:first', 'First')]))
+      if (path === '/expressions/search') return Promise.resolve(page([expression('1', 'First')]))
       throw new Error(`unexpected ${path}`)
     })
 

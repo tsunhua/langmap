@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeftRight } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { expressionPath } from '@/utils/expressionUrl'
 const { t } = useI18n()
 
 defineProps<{
@@ -10,6 +11,7 @@ defineProps<{
   type?: string
   a_text: string
   a_lang: string
+  a_homograph_index?: number
   b_text?: string
   b_lang?: string
   author?: string
@@ -29,9 +31,8 @@ function timeAgo(dateStr?: string): string {
 </script>
 
 <template>
-  <!-- /mapping/:id takes an expression id. Mapping rows carry an edge id, so
-       anchor on endpoint a_id; expression rows already use an expression id. -->
-  <router-link :to="`/mapping/${a_id || id}`" class="new-row">
+  <!-- Text keys address the a-side endpoint; edge ids are no longer link targets. -->
+  <router-link :to="expressionPath(a_lang, a_text, a_homograph_index ?? 1)" class="new-row">
     <span :class="['new-kind', { expr: type === 'expression' }]">
       {{ type === 'expression' ? t('components.expression') : t('components.mapping') }}
     </span>

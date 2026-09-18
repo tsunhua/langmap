@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { expressionPath } from '@/utils/expressionUrl'
+
 defineProps<{
   id: string
   a_id: string
   a_text: string
   a_lang: string
+  a_homograph_index?: number
   a_language_name?: string
   b_id: string
   b_text: string
@@ -22,8 +25,8 @@ function scoreClass(score: number) {
 </script>
 
 <template>
-  <!-- /mapping/:id takes an expression id, not an edge id; anchor on one endpoint. -->
-  <router-link :to="`/mapping/${a_id}`" class="map-card">
+  <!-- Text keys address the a-side endpoint; edge ids are no longer link targets. -->
+  <router-link :to="expressionPath(a_lang, a_text, a_homograph_index ?? 1)" class="map-card">
     <span class="mc-node">
       <span class="mc-tx">{{ a_text }}</span>
       <span class="mc-lc" :title="a_lang">{{ a_language_name || a_lang }}</span>
