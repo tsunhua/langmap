@@ -33,14 +33,13 @@ const EXPRESSIONS_SQL = 'SELECT id, text FROM expressions WHERE id IN (SELECT va
 // canonical expression usable regardless of its numeric edge orientation.
 // Driving from the source node ids (instead of the target language's
 // expression table) keeps cost proportional to the edges around the handful of
-// registry names, not to the target language size. CROSS JOIN prevents SQLite
-// from reordering the scan back onto the (potentially huge) target language.
+// registry names, not to the target language size.
 export const CANDIDATE_SQL = `WITH candidate_rows AS (
   SELECT value::bigint AS source_id FROM jsonb_array_elements_text(?::jsonb)
 )
 SELECT candidate_rows.source_id, t.id AS target_id, t.text AS target_text, e.score
 FROM candidate_rows
-CROSS JOIN expression_edges e ON e.expression_a_id = candidate_rows.source_id
+JOIN expression_edges e ON e.expression_a_id = candidate_rows.source_id
 JOIN expressions t ON t.id = e.expression_b_id
 WHERE e.score >= 0
   AND (e.relation_mask & 3) <> 0
@@ -49,7 +48,7 @@ WHERE e.score >= 0
 UNION ALL
 SELECT candidate_rows.source_id, t.id AS target_id, t.text AS target_text, e.score
 FROM candidate_rows
-CROSS JOIN expression_edges e ON e.expression_b_id = candidate_rows.source_id
+JOIN expression_edges e ON e.expression_b_id = candidate_rows.source_id
 JOIN expressions t ON t.id = e.expression_a_id
 WHERE e.score >= 0
   AND (e.relation_mask & 3) <> 0
