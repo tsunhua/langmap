@@ -24,7 +24,7 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
   const inserted = await db.prepare('INSERT INTO expressions(language_id,text,pos_mask,source_id,created_by) VALUES(?,?,?,?,?) RETURNING id').bind(language.id, text, posMask, sourceId, input.created_by).first<{ id: number }>();
   if (!inserted) throw new ExpressionError('EXPRESSION_CREATE_FAILED');
   try { await db.prepare(`INSERT INTO language_statistics(language_id, expression_count, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP)
-    ON CONFLICT(language_id) DO UPDATE SET expression_count=expression_count+1, updated_at=CURRENT_TIMESTAMP`).bind(language.id).run(); } catch (error) {
+    ON CONFLICT(language_id) DO UPDATE SET expression_count=language_statistics.expression_count+1, updated_at=CURRENT_TIMESTAMP`).bind(language.id).run(); } catch (error) {
     if (!String(error).toLowerCase().includes('language_statistics')) throw error;
   }
   if (locale) await db.prepare('INSERT INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)').bind(inserted.id, locale.id).run();
@@ -36,17 +36,21 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
 export async function getExpression(db: D1Database, id: number): Promise<{ expression: ExpressionRow; locales: ExpressionLocaleRow[]; readings: ReadingRow[]; parts_of_speech: ExpressionPartOfSpeech[]; sources: ExpressionSourceRow[] } | null> {
   const expression = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?`).bind(id).first<ExpressionRow>();
   if (!expression) return null;
-  const [localeResult, readingResult, posResult] = await Promise.all([
-    db.prepare('SELECT x.expression_id,x.locale_id,l.code AS language_locale_code,l.name AS locale_display_name FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code').bind(id).all<ExpressionLocaleRow>(),
-    db.prepare(`SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value`).bind(id).all<ReadingRow>(),
-    db.prepare('SELECT code,name_en FROM parts_of_speech WHERE (? & (1 << bit_index)) != 0 ORDER BY sort_order').bind(expression.pos_mask).all<ExpressionPartOfSpeech>(),
-  ]);
+  // A single pg Client is intentionally used per Worker request. node-postgres
+  // serializes queries on one client, so Promise.all only queues them and makes
+  // timeout/error attribution harder without adding database parallelism.
+  const localeResult = await db.prepare('SELECT x.expression_id,x.locale_id,l.code AS language_locale_code,l.name AS locale_display_name FROM expression_locale_links x JOIN language_locales l ON l.id=x.locale_id WHERE x.expression_id=? ORDER BY l.code').bind(id).all<ExpressionLocaleRow>();
+  const readingResult = await db.prepare(`SELECT ${READING_COLUMNS} FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value`).bind(id).all<ReadingRow>();
+  const posResult = await db.prepare('SELECT code,name_en FROM parts_of_speech WHERE (?::bigint & (1::bigint << bit_index::int)) != 0 ORDER BY sort_order').bind(expression.pos_mask).all<ExpressionPartOfSpeech>();
   let sources: ExpressionSourceRow[] = [];
   try {
     const sourceResult = await db.prepare('SELECT source_id,source_marker FROM expression_sources WHERE expression_id=? ORDER BY source_id,source_marker').bind(id).all<{ source_id:number; source_marker:string }>();
     sources = sourceResult.results.map((row) => ({ source_id: row.source_id, marker: row.source_marker || null }));
-  } catch {
-    // Expression provenance is optional: pre-migration databases return an empty list.
+  } catch (error) {
+    // Expression provenance is optional (pre-migration databases have no
+    // table), but log it — silent swallows masked real errors during the
+    // D1 → PG migration.
+    console.error('[getExpression] sources query failed', { expressionId: id, message: (error as { message?: string })?.message });
   }
   return {
     expression,

@@ -52,7 +52,7 @@ describe('feed API', () => {
     }
   });
 
-  it('orders hot rows by score and new rows by recency, both limited', async () => {
+  it('orders every feed flavor by newest mapping id, both limited', async () => {
     const capturedSql: string[] = [];
     const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
@@ -60,7 +60,7 @@ describe('feed API', () => {
     await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(capturedSql), SECRET_KEY: 'test' });
     await app.request('http://example.test/feed/new?limit=20', undefined, { DB: fakeDb(capturedSql), SECRET_KEY: 'test' });
 
-    const hot = capturedSql.find((sql) => sql.includes('ORDER BY e.score DESC,e.id ASC'));
+    const hot = capturedSql.find((sql) => sql.includes('ORDER BY e.id DESC'));
     const fresh = capturedSql.find((sql) => sql.includes('ORDER BY e.id DESC'));
     expect(hot).toBeDefined();
     expect(fresh).toBeDefined();

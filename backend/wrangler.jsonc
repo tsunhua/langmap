@@ -50,5 +50,11 @@
 		"IMAGES_PUBLIC_URL": "https://images.langmap.io",
 		"R2_IMAGES_BUCKET": "langmap-images",
 		"CLOUDFLARE_ACCOUNT_ID": "0dd310069a11740f48708e490bb1aede"
-	}
+	},
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "7520b40a5b25490abe155c54f223a8cd"
+    }
+  ]
 }

@@ -14,11 +14,11 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
   const base = `SELECT l.code,l.name_en,COALESCE(s.expression_count,0) AS expression_count,COALESCE(s.locale_count,0) AS locale_count,COALESCE(s.active_ui_locale_count,0) AS active_ui_locale_count FROM languages l LEFT JOIN language_statistics s ON s.language_id=l.id ${where}`;
   let count: { total: number } | null; let rows: { results: LanguageContentSummary[] };
   try {
-    count = await db.prepare(`SELECT COUNT(*) AS total FROM (${base})`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; rows = await db.prepare(`${base} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
+    count = await db.prepare(`SELECT COUNT(*) AS total FROM (${base}) AS sub`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; rows = await db.prepare(`${base} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
   } catch (error) {
     if (!String(error).toLowerCase().includes('language_statistics')) throw error;
     const legacy = `SELECT l.code,l.name_en,COUNT(DISTINCT e.id) AS expression_count,COUNT(DISTINCT ll.id) AS locale_count,COUNT(DISTINCT u.locale_id) AS active_ui_locale_count FROM languages l LEFT JOIN expressions e ON e.language_id=l.id LEFT JOIN language_locales ll ON ll.language_id=l.id LEFT JOIN ui_locales u ON u.locale_id=ll.id AND u.status='active' ${where} GROUP BY l.id`;
-    count = await db.prepare(`SELECT COUNT(*) AS total FROM (${legacy})`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; rows = await db.prepare(`${legacy} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
+    count = await db.prepare(`SELECT COUNT(*) AS total FROM (${legacy}) AS sub`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; rows = await db.prepare(`${legacy} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
   }
   const names = await resolveLanguageNames(db, rows.results.map((row) => row.code), parseLocaleHints(query.uiLocale, query.secondaryUiLocale));
   return { items: rows.results.map((row) => ({ ...row, name: names.get(row.code) ?? row.name_en })), total: count?.total ?? 0 };
