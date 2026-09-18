@@ -23,6 +23,7 @@ interface HandbookItem {
   id: string
   text: string
   lang_code: string
+  homograph_index?: number
   language_profile_code?: string | null
   language_name?: string | null
 }
@@ -271,6 +272,7 @@ async function selectExpression(item: HandbookItem) {
     id: item.id,
     text: item.text,
     lang_code: item.lang_code,
+    homograph_index: item.homograph_index,
     language_profile_code: item.language_profile_code,
     language_name: item.language_name,
   })
@@ -311,6 +313,7 @@ async function selectExpressionById(
       id: detailResult.value.expression.id,
       text: detailResult.value.expression.text,
       lang_code: detailResult.value.expression.lang_code,
+      homograph_index: detailResult.value.expression.homograph_index,
       language_profile_code: selectedProfile,
       language_name: selectedAttestation?.locale_display_name
         ?? selectedExpression.value?.language_name
@@ -338,6 +341,7 @@ function selectRelatedExpression(expressionId: string) {
     id: node.expression_id,
     text: node.text,
     lang_code: node.lang_code,
+    homograph_index: node.homograph_index,
     language_name: node.language_name,
     language_profile_code: node.language_profile_code,
   } : undefined)
