@@ -11,7 +11,7 @@ const ANNOTATIONS_PER_EDGE = 20;
 // edges, so every currently valid edge participates in the mapping graph.
 const MAPPING_RELATION_MASK = 1 | 2 | 4;
 interface EdgeRow { id:number; expression_a_id:number; expression_b_id:number; relation_mask:number; score:number; annotations_json?:string | null; }
-interface NodeRow { id:number; text:string; lang_code:string; language_name?:string; }
+interface NodeRow { id:number; text:string; lang_code:string; language_name?:string; homograph_index:number; }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -70,9 +70,9 @@ function parseTargetLanguages(value: string | undefined): Set<string> {
 export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 2 | 3, targetLanguage?: string): Promise<MappingGraphResponse | null> {
   // Filtering applies at every hop so traversal never hops through excluded languages.
   const targetLanguages = parseTargetLanguages(targetLanguage);
-  const root = await db.prepare('SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?').bind(rootId).first<NodeRow>();
+  const root = await db.prepare('SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?').bind(rootId).first<NodeRow>();
   if (!root) return null;
-  const nodes = new Map<number, MappingGraphNode>([[root.id, { expression_id: root.id, text: root.text, lang_code: root.lang_code, language_name: root.language_name ?? root.lang_code, depth: 0 }]]);
+  const nodes = new Map<number, MappingGraphNode>([[root.id, { expression_id: root.id, text: root.text, lang_code: root.lang_code, language_name: root.language_name ?? root.lang_code, depth: 0, homograph_index: root.homograph_index }]]);
   const edges = new Map<number, MappingGraphEdge>(); let frontier = [rootId]; let omitted = 0; let resolved: 0 | 1 | 2 | 3 = 0;
   for (let depth = 1 as 1 | 2 | 3; depth <= hops && frontier.length; depth = (depth + 1) as 1 | 2 | 3) {
     const edgeResults: EdgeRow[] = [];
@@ -88,7 +88,7 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     const nodeRows: { results: NodeRow[] } = { results: [] };
     for (let offset = 0; offset < unknown.length; offset += SQLITE_BIND_CHUNK) {
       const chunk = unknown.slice(offset, offset + SQLITE_BIND_CHUNK);
-      const rows = await db.prepare(`SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).all<NodeRow>();
+      const rows = await db.prepare(`SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).all<NodeRow>();
       nodeRows.results.push(...rows.results);
     }
     const next: number[] = [];
@@ -96,7 +96,7 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
       // The root anchor is kept regardless; every other hop must be in the filtered set.
       if (targetLanguages.size && !targetLanguages.has(row.lang_code)) continue;
       if (nodes.size >= NODE_LIMIT) { omitted++; continue; }
-      nodes.set(row.id, { expression_id: row.id, text: row.text, lang_code: row.lang_code, language_name: row.language_name ?? row.lang_code, depth }); next.push(row.id);
+      nodes.set(row.id, { expression_id: row.id, text: row.text, lang_code: row.lang_code, language_name: row.language_name ?? row.lang_code, depth, homograph_index: row.homograph_index }); next.push(row.id);
     }
     for (const edge of result.results) {
       const a = nodes.get(edge.expression_a_id); const b = nodes.get(edge.expression_b_id);

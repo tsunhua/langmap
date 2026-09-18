@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getMappingGraph } from '../src/services/mappingGraph';
 
 type Edge = { id: number; expression_a_id: number; expression_b_id: number; relation_mask: number; score: number };
-type NodeSeed = Record<number, { text: string; lang_code: string; language_name?: string }>;
+type NodeSeed = Record<number, { text: string; lang_code: string; language_name?: string; homograph_index?: number }>;
 
 /**
  * Emulates the three query shapes the service issues:
@@ -86,6 +86,21 @@ describe('getMappingGraph', () => {
       { expression_id: 1, text: '食', lang_code: 'nan', language_name: 'Min Nan Chinese', depth: 0 },
       { expression_id: 2, text: 'rice', lang_code: 'eng', language_name: 'English', depth: 1 },
     ]);
+  });
+
+  it('includes homograph_index on every graph node', async () => {
+    const nodes: NodeSeed = {
+      1: { text: '食', lang_code: 'nan', homograph_index: 1 },
+      2: { text: 'rice', lang_code: 'eng', homograph_index: 3 },
+    };
+    const edges: Edge[] = [
+      { id: 1, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 0 },
+    ];
+
+    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+
+    expect(graph?.nodes.every((node) => typeof node.homograph_index === 'number')).toBe(true);
+    expect(graph?.nodes.map((node) => node.homograph_index)).toEqual([1, 3]);
   });
 
   it('traverses standalone example translations as ordinary mappings', async () => {

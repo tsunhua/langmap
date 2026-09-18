@@ -22,6 +22,7 @@ export interface MappingGraphNode {
   lang_code: string;
   language_name: string;
   depth: number;
+  homograph_index: number;
 }
 
 export interface MappingGraphEdge {

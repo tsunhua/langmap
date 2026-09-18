@@ -108,8 +108,8 @@ describe('GET /expressions/:lang/:text', () => {
   it('resolves texts that collide with the graph sub-resource literal', async () => {
     const db = fakeD1({
       [KEY_SQL]: () => ({ ...row, text: 'graph' }),
-      'SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?':
-        () => ({ id: 7, text: 'graph', lang_code: 'en', language_name: 'English' }),
+      'SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?':
+        () => ({ id: 7, text: 'graph', lang_code: 'en', language_name: 'English', homograph_index: 1 }),
     });
     const response = await app(db).request('http://example.test/expressions/en/graph', undefined, { DB: db, SECRET_KEY: 'test' });
     expect(response.status).toBe(200);

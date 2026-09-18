@@ -30,7 +30,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Mock {
 
 const HANDBOOK_SQL = 'SELECT h.*,u.username AS author_username FROM handbooks h JOIN users u ON u.id=h.user_id WHERE h.id=?';
 const SECTIONS_SQL = 'SELECT id,title,position,parent_section_id FROM handbook_sections WHERE handbook_id=? ORDER BY position,id';
-const ITEMS_SQL = 'SELECT i.section_id,i.position,e.id,e.text,l.code AS lang_code FROM handbook_section_items i JOIN handbook_sections s ON s.id=i.section_id JOIN expressions e ON e.id=i.expression_id JOIN languages l ON l.id=e.language_id WHERE s.handbook_id=? ORDER BY i.section_id,i.position';
+const ITEMS_SQL = 'SELECT i.section_id,i.position,e.id,e.text,e.homograph_index,l.code AS lang_code FROM handbook_section_items i JOIN handbook_sections s ON s.id=i.section_id JOIN expressions e ON e.id=i.expression_id JOIN languages l ON l.id=e.language_id WHERE s.handbook_id=? ORDER BY i.section_id,i.position';
 
 describe('handbooks API', () => {
   it('reads a handbook with integer ids serialized and language names from lang codes', async () => {
@@ -41,7 +41,7 @@ describe('handbooks API', () => {
         author_username: 'editor',
       }),
       [SECTIONS_SQL]: () => ({ results: [{ id: 1, title: 'One', position: 0, parent_section_id: null }] }),
-      [ITEMS_SQL]: () => ({ results: [{ section_id: 1, position: 0, id: 101, text: '食', lang_code: 'nan' }] }),
+      [ITEMS_SQL]: () => ({ results: [{ section_id: 1, position: 0, id: 101, text: '食', homograph_index: 1, lang_code: 'nan' }] }),
     });
     const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
