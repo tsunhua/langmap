@@ -4,7 +4,7 @@ import { canonicalizeExpressionText, expressionPrefixUpperBound } from './expres
 import { resolveSource, type SourceInput } from './provenance';
 import { SourceError } from './sources';
 
-const EXPRESSION_COLUMNS = `e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at`;
+export const EXPRESSION_COLUMNS = `e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at`;
 const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id`;
 export class ExpressionError extends Error { constructor(public code: string) { super(code); this.name = 'ExpressionError'; } }
 
