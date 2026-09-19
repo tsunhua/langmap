@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate INSERT OR IGNORE seed SQL for morphological dimensions and features.
 
-Identity matches scripts/i18n/generate-i18n-sql.py (and runtime
+Identity matches the shared text identity helper (and runtime
 expressionIdentity.ts): NFC + trim + sentence case, SHA-256[:16], base32 alphabet
 abcdefghijklmnopqrstuvwxyz234567, id {lang}:{hash}.
 
