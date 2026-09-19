@@ -20,6 +20,14 @@ LOCALE_HEADER = re.compile(r"^LOCALE_(?P<code>[A-Za-z0-9][A-Za-z0-9_-]*)$")
 READING_HEADER = re.compile(
     r"^READING_(?P<locale>[A-Za-z0-9][A-Za-z0-9_-]*)_(?P<scheme>[A-Za-z0-9][A-Za-z0-9_-]*)$"
 )
+COMPACT_READING_HEADER = re.compile(
+    r"^READING_(?P<locale>[A-Za-z0-9]{2,8}-[A-Za-z]{4}_"
+    r"(?P<scheme>[A-Za-z0-9]+)-[A-Za-z0-9]{2,8}(?:_[A-Za-z0-9_]+)?)$"
+)
+COMPACT_READING_LOCALE = re.compile(
+    r"^(?P<language>[A-Za-z0-9]{2,8})-(?P<script>[A-Za-z]{4})_"
+    r"(?P<scheme>[A-Za-z0-9]+)-[A-Za-z0-9]{2,8}(?:_[A-Za-z0-9_]+)?$"
+)
 LOCALE_CODE = re.compile(
     r"^(?P<language>[a-z0-9]{2,8})"
     r"(?:-(?P<script>[A-Za-z]{4})(?:_(?P<orthography>[A-Za-z0-9]+))?)?"
@@ -65,6 +73,21 @@ class Row:
     notes: tuple[str, ...]
     cells: tuple[Cell, ...]
     readings: tuple[Reading, ...] = ()
+
+
+def _reading_header(locale: str, scheme: str) -> str:
+    compact_match = COMPACT_READING_LOCALE.fullmatch(locale)
+    if compact_match and compact_match.group("scheme") == scheme:
+        return f"READING_{locale}"
+    return f"READING_{locale}_{scheme}"
+
+
+def _reading_column(header: str) -> tuple[str, str] | None:
+    compact_match = COMPACT_READING_HEADER.fullmatch(header)
+    if compact_match:
+        return compact_match.group("locale"), compact_match.group("scheme")
+    match = READING_HEADER.fullmatch(header)
+    return (match.group("locale"), match.group("scheme")) if match else None
 
 
 def _sha256(path: Path) -> str:
@@ -138,22 +161,22 @@ def _read_csv(
         note_index = 1 if len(header) > 1 and header[1].strip() == "NOTE" else None
         locale_start = 2 if note_index is not None else 1
         locale_matches: list[re.Match[str]] = []
-        reading_matches: list[re.Match[str]] = []
+        reading_columns: list[tuple[str, str]] = []
         reading_started = False
         for value in header[locale_start:]:
             normalized = value.strip()
             locale_match = LOCALE_HEADER.fullmatch(normalized)
-            reading_match = READING_HEADER.fullmatch(normalized)
+            reading_column = _reading_column(normalized)
             if locale_match:
                 if reading_started:
                     raise CsvContractError("locale columns must precede reading columns")
                 locale_matches.append(locale_match)
-            elif reading_match:
+            elif reading_column:
                 reading_started = True
-                reading_matches.append(reading_match)
+                reading_columns.append(reading_column)
             else:
                 raise CsvContractError(
-                    "CSV columns must use LOCALE_<code> or READING_<locale>_<scheme>"
+                    "CSV columns must use LOCALE_<code>, READING_<locale>_<scheme>, or compact READING_<locale>"
                 )
         locale_codes = locale_matches
         if not locale_codes:
@@ -164,24 +187,17 @@ def _read_csv(
         if codes != sorted(codes, key=lambda value: value.encode("utf-8")):
             raise CsvContractError("CSV locale columns must be bytewise sorted")
         locales = [_locale(code, metadata) for code in codes]
-        reading_columns = [
-            (match.group("locale"), match.group("scheme")) for match in reading_matches
-        ]
         if len(reading_columns) != len(set(reading_columns)):
             raise CsvContractError("CSV reading columns must be unique")
         if reading_columns != sorted(
             reading_columns,
-            key=lambda item: f"READING_{item[0]}_{item[1]}".encode("utf-8"),
+            key=lambda item: _reading_header(*item).encode("utf-8"),
         ):
             raise CsvContractError("CSV reading columns must be bytewise sorted")
-        unknown_reading_locales = sorted(
-            {locale for locale, _scheme in reading_columns} - set(codes),
-            key=lambda value: value.encode("utf-8"),
-        )
-        if unknown_reading_locales:
-            raise CsvContractError(
-                "CSV reading columns reference unknown locale(s): " + ", ".join(unknown_reading_locales)
-            )
+        locale_by_code = {locale.code: locale for locale in locales}
+        for reading_locale, _scheme in reading_columns:
+            if reading_locale not in locale_by_code:
+                locale_by_code[reading_locale] = _locale(reading_locale, metadata)
         rows: list[Row] = []
         entry_ids: set[str] = set()
         for line_number, values in enumerate(reader, 2):
@@ -204,7 +220,7 @@ def _read_csv(
             readings: list[Reading] = []
             reading_start = locale_start + len(locales)
             for offset, (reading_locale, scheme) in enumerate(reading_columns, reading_start):
-                locale = next(item for item in locales if item.code == reading_locale)
+                locale = locale_by_code[reading_locale]
                 for raw in values[offset].split("|"):
                     value = _canonical(raw)
                     if value:
@@ -263,7 +279,7 @@ def _validate_manifest_contract(
                 for item in declared_reading_columns
                 if isinstance(item, dict)
             },
-            key=lambda item: f"READING_{item[0]}_{item[1]}".encode("utf-8"),
+            key=lambda item: _reading_header(*item).encode("utf-8"),
         )
         if declared != actual:
             raise CsvContractError("manifest.reading_columns does not match CSV reading columns")
@@ -447,11 +463,17 @@ def apply(manifest_path: Path, database_url: str) -> dict[str, Any]:
     summary = validate(manifest_path)
     manifest, csv_path = _manifest(manifest_path)
     metadata = manifest.get("locale_metadata", manifest.get("locales", {}))
-    locales, rows, _reading_columns = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
+    locales, rows, reading_columns = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
     source_key = str(manifest["source_key"])
     with _connect(database_url) as connection:
         with connection.cursor() as cur:
-            locale_ids = _ensure_registry(cur, locales)
+            metadata_map = metadata if isinstance(metadata, dict) else {}
+            reading_locale_objects = {
+                code: _locale(code, metadata_map)
+                for code, _scheme in reading_columns
+                if code not in {locale.code for locale in locales}
+            }
+            locale_ids = _ensure_registry(cur, (*locales, *reading_locale_objects.values()))
             source_type = str(manifest.get("source_type") or "dictionary")
             source_name = str(manifest.get("source_name") or source_key)
             cur.execute(

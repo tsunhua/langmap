@@ -106,3 +106,36 @@ def test_validate_reads_wide_reading_columns_and_source_identity(tmp_path):
 
     assert summary["readings"] == 2
     assert summary["edges"] == 1
+
+
+def test_validate_registers_compact_reading_locale_profile(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow([
+            "ENTRY_ID",
+            "NOTE",
+            "LOCALE_eng-Latn-US",
+            "LOCALE_yue-Hant-CN_Taishan",
+            "READING_yue-Latn_gps-CN_Taishan",
+        ])
+        writer.writerow(["entry-1", "", "word", "詞", "tsi"])
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "manifest_version": 1,
+        "source_key": "fixture:compact-reading",
+        "csv": "data.csv",
+        "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "entry_count": 1,
+        "reading_count": 1,
+        "reading_columns": [{
+            "locale": "yue-Latn_gps-CN_Taishan",
+            "scheme": "gps",
+        }],
+        "locales": ["eng-Latn-US", "yue-Hant-CN_Taishan"],
+        "locale_metadata": {},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    summary = validate(manifest)
+
+    assert summary["readings"] == 1
