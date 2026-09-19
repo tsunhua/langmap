@@ -42,6 +42,14 @@ SQL 從 SQLite 方言逐步改為原生 PostgreSQL（參數、UPSERT、JSON、ca
 
 舊文件不以大量逐行改寫假裝仍可用：現行入口文件改指向 PostgreSQL；歷史 ADR、已完成 spec／plan 可保留其歷史敘述。每個候選刪除項目須以 `rg` 確認沒有現行程式、指令、CI 或 runbook 使用；仍服務於 PG 的通用 registry／seed 工具必須先移出 `scripts/db/` 或改名，再刪除 D1 外殼。
 
+### `scripts/` 全量退役審計
+
+本次範圍包含 `scripts/` 中過時的所有檔案，不僅是可執行檔。先為每個頂層子目錄建立 keep／move／delete inventory，依據是目前 PG-only runtime、CSV contract、CI、或仍受支援的資料來源是否引用它。已淘汰流程的 README／操作說明、D1 SQL artifact、SQLite state／backup／import-state、fixture、gold set、snapshot、測試、shell wrapper 與只被淘汰工具引用的 Python module，必須與所屬流程一併刪除。
+
+`scripts/dictionary/README.md` 改為 CSV contract 與跨平台 importer 的唯一操作入口；`scripts/wikivoyage/README.md` 和 pipeline 若仍保留，必須改成輸出 canonical CSV + manifest。`scripts/i18n/`、`scripts/language-reference/`、`scripts/morphology/`、`scripts/wikivoyage/` 等非詞典目錄也要逐項確認，不因名稱無 D1／SQLite 字樣而豁免。它們若輸出 D1 SQL、呼叫被移除的詞典入口、或沒有現行產品責任，即整組刪除；若仍必要，改為 PG／CSV 介面並保留相應測試與最小 README。
+
+不得對 `scripts/` 進行未經 inventory 的廣泛刪除。每一個保留項目須在計劃中寫出使用者（runtime、CI 或 human command），每個刪除項目須列出已同步移除的引用；這可避免把仍被 registry seed 或 handbook 建置使用的工具誤刪。
+
 ## CSV 詞典契約
 
 ### 來源物與目錄
