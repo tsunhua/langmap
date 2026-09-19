@@ -188,7 +188,7 @@ git commit -m "chore: remove retired D1 and SQLite staging scripts"
 
 **Interfaces:**
 - The integration test runs only when `LANGMAP_TEST_DATABASE_URL` is set; it never falls back to an arbitrary production `DATABASE_URL`.
-- It writes a unique source snapshot containing `LOCALE_eng-Latn-US`, `LOCALE_jpn-Jpan-JP`, and `READING_jpn-Jpan-JP_kana`, runs `--check`, runs `--apply`, queries source-scoped expressions/edges/readings, then reapplies the same manifest to prove idempotency.
+- It writes a unique source snapshot containing `LOCALE_eng-Latn-US`, `LOCALE_jpn-Jpan-JP`, and `READING_jpn-Latn_hepburn-JP`, runs `--check`, runs `--apply`, queries source-scoped expressions/edges/readings, then reapplies the same manifest to prove idempotency.
 
 - [x] **Step 1: Write the opt-in integration test**
 

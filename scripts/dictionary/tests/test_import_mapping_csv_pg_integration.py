@@ -27,9 +27,9 @@ def _write_manifest(tmp_path: Path) -> tuple[Path, str]:
             "NOTE",
             "LOCALE_eng-Latn-US",
             "LOCALE_jpn-Jpan-JP",
-            "READING_jpn-Jpan-JP_kana",
+            "READING_jpn-Latn_hepburn-JP",
         ])
-        writer.writerow([f"entry-{suffix}", "integration", f"word-{suffix}", f"語-{suffix}", f"ご-{suffix}"])
+        writer.writerow([f"entry-{suffix}", "integration", f"word-{suffix}", f"語-{suffix}", f"go-{suffix}"])
     manifest = tmp_path / "manifest.json"
     manifest.write_text(
         json.dumps(
@@ -47,7 +47,7 @@ def _write_manifest(tmp_path: Path) -> tuple[Path, str]:
                     "jpn-Jpan-JP": {"name": "日本語", "name_en": "Japanese"},
                 },
                 "reading_count": 1,
-                "reading_columns": [{"locale": "jpn-Jpan-JP", "scheme": "kana"}],
+                "reading_columns": [{"locale": "jpn-Latn_hepburn-JP", "scheme": "hepburn"}],
             },
             ensure_ascii=False,
         ),

@@ -81,7 +81,7 @@ def test_validate_reads_wide_reading_columns_and_source_identity(tmp_path):
             "NOTE",
             "LOCALE_eng-Latn-US",
             "LOCALE_jpn-Jpan-JP",
-            "READING_jpn-Jpan-JP_hepburn",
+            "READING_jpn-Latn_hepburn-JP",
         ])
         writer.writerow(["oldid:1#basics/1", "formal", "hello", "こんにちは", "Konnichiwa|kon-nee-chee-wah"])
     manifest = tmp_path / "manifest.json"
@@ -95,7 +95,7 @@ def test_validate_reads_wide_reading_columns_and_source_identity(tmp_path):
         "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
         "entry_count": 1,
         "reading_count": 2,
-        "reading_columns": [{"locale": "jpn-Jpan-JP", "scheme": "hepburn"}],
+        "reading_columns": [{"locale": "jpn-Latn_hepburn-JP", "scheme": "hepburn"}],
         "locale_metadata": {
             "eng-Latn-US": {"name": "English", "name_en": "English (US)"},
             "jpn-Jpan-JP": {"name": "日本語", "name_en": "Japanese (Japan)"},
