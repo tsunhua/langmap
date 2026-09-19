@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { parseReferenceQuery, queryReferenceTable, escapeLike, buildLanguageLocaleCode, parseLanguageLocaleCode } from '../src/services/languageIdentity';
 
@@ -22,7 +23,7 @@ describe('escapeLike', () => {
 });
 
 describe('queryReferenceTable', () => {
-  function fakeD1(rows: Record<string, unknown>[], total: number) {
+  function fakeDatabase(rows: Record<string, unknown>[], total: number) {
     const prepare = (sql: string) => ({
       bind(..._args: unknown[]) {
         return {
@@ -35,11 +36,11 @@ describe('queryReferenceTable', () => {
         };
       },
     });
-    return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+    return { prepare } as unknown as import('../src/db/database').Database;
   }
 
-  it('returns items and total from D1', async () => {
-    const db = fakeD1([{ code: 'eng', name_en: 'English' }], 1);
+  it('returns items and total from the database', async () => {
+    const db = fakeDatabase([{ code: 'eng', name_en: 'English' }], 1);
     const result = await queryReferenceTable(db, 'languages', { q: '', limit: 20, offset: 0 });
     expect(result.total).toBe(1);
     expect(result.items[0]).toEqual({ code: 'eng', name_en: 'English' });

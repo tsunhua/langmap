@@ -1,9 +1,10 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { splitExpression } from '../src/services/splits';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const batchSql: Array<{ sql: string; args: unknown[] }>[] = [];
   const prepare = (sql: string) => {
     const handler = handlers[sql];
@@ -30,7 +31,7 @@ function fakeD1(handlers: Record<string, Handler>) {
       return [{ success: true }];
     },
     batchSql,
-  } as unknown as import('@cloudflare/workers-types').D1Database & { batchSql: Array<{ sql: string; args: unknown[] }[]> };
+  } as unknown as import('../src/db/database').Database & { batchSql: Array<{ sql: string; args: unknown[] }[]> };
 }
 
 function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
@@ -65,13 +66,13 @@ function successHandlers(edges: Array<{ id: number; expression_a_id: number; exp
 
 describe('splitExpression', () => {
   it('rejects empty edge_ids with EXPRESSION_SPLIT_EMPTY', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     expect(await captureAsyncCode(() => splitExpression(db, { source_expression_id: 1, edge_ids: [], created_by: 1 }))).toBe('EXPRESSION_SPLIT_EMPTY');
   });
 
   it('rejects an oversized edge_ids array before reading the database', async () => {
     let prepared = false;
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     const originalPrepare = db.prepare;
     db.prepare = ((sql: string) => { prepared = true; return originalPrepare.call(db, sql); }) as typeof db.prepare;
     expect(await captureAsyncCode(() => splitExpression(db, {
@@ -83,12 +84,12 @@ describe('splitExpression', () => {
   });
 
   it('rejects when source expression is missing with EXPRESSION_NOT_FOUND', async () => {
-    const db = fakeD1({ [SOURCE_SQL]: () => null });
+    const db = fakeDatabase({ [SOURCE_SQL]: () => null });
     expect(await captureAsyncCode(() => splitExpression(db, { source_expression_id: 999, edge_ids: [10], created_by: 1 }))).toBe('EXPRESSION_NOT_FOUND');
   });
 
   it('rejects when an edge does not touch the source expression with EXPRESSION_SPLIT_EDGE_NOT_ADJACENT', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [SOURCE_SQL]: () => sourceExpression,
       [edgeQuery([10])]: () => ({ results: [] }),
     });
@@ -96,7 +97,7 @@ describe('splitExpression', () => {
   });
 
   it('splits edges and creates a target expression with the next homograph index', async () => {
-    const db = fakeD1(successHandlers([{ id: 10, expression_a_id: 2, expression_b_id: 1 }]));
+    const db = fakeDatabase(successHandlers([{ id: 10, expression_a_id: 2, expression_b_id: 1 }]));
     const result = await splitExpression(db, { source_expression_id: 1, edge_ids: [10], created_by: 5 });
     expect(result.split_id).toBe(5);
     expect(result.target_expression_id).toBe(2);
@@ -106,7 +107,7 @@ describe('splitExpression', () => {
   });
 
   it('records a split move and re-points every moved edge at the target expression', async () => {
-    const db = fakeD1(successHandlers([
+    const db = fakeDatabase(successHandlers([
       { id: 10, expression_a_id: 2, expression_b_id: 1 },
       { id: 11, expression_a_id: 3, expression_b_id: 1 },
     ]));
@@ -121,8 +122,8 @@ describe('splitExpression', () => {
   });
 
   it('maps a UNIQUE constraint failure during the move to EXPRESSION_SPLIT_CONFLICT', async () => {
-    const db = fakeD1(successHandlers([{ id: 10, expression_a_id: 2, expression_b_id: 1 }]));
-    db.batch = async () => { throw new Error('D1_ERROR: UNIQUE constraint failed: expression_edges.id'); };
+    const db = fakeDatabase(successHandlers([{ id: 10, expression_a_id: 2, expression_b_id: 1 }]));
+    db.batch = async () => { throw Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' }); };
     expect(await captureAsyncCode(() => splitExpression(db, { source_expression_id: 1, edge_ids: [10], created_by: 5 }))).toBe('EXPRESSION_SPLIT_CONFLICT');
   });
 });

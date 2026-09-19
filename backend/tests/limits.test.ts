@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   APPROVED_PIVOT_LANGUAGES,
-  D1_WRITE_CHUNK_SIZE,
+  DATABASE_WRITE_CHUNK_SIZE,
   GENERATE_STAGE_DEADLINE_MS,
   GENERATION_TIMEOUT_MS,
   MAX_ALTERNATIVES,
@@ -33,7 +33,7 @@ describe('performance workload limits', () => {
       sections: MAX_HANDBOOK_SECTIONS,
       items: MAX_HANDBOOK_ITEMS,
       edges: MAX_SPLIT_EDGE_IDS,
-      chunk: D1_WRITE_CHUNK_SIZE,
+      chunk: DATABASE_WRITE_CHUNK_SIZE,
     }).toEqual({ contributions: 50, localization: 100, sections: 50, items: 500, edges: 100, chunk: 50 });
   });
 

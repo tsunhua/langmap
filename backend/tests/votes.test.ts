@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { SignJWT } from 'jose';
@@ -7,9 +8,9 @@ const SECRET_KEY = 'test-secret';
 
 type Handler = (args: unknown[]) => unknown;
 
-type D1Mock = import('@cloudflare/workers-types').D1Database & { batchSql: string[][] };
+type DatabaseMock = import('../src/db/database').Database & { batchSql: string[][] };
 
-function fakeD1(handlers: Record<string, Handler>): D1Mock {
+function fakeDatabase(handlers: Record<string, Handler>): DatabaseMock {
   const batchSql: string[][] = [];
   const prepare = (sql: string) => {
     const handler = handlers[sql];
@@ -38,7 +39,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Mock {
       });
     },
     batchSql,
-  } as unknown as D1Mock;
+  } as unknown as DatabaseMock;
 }
 
 const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
@@ -54,8 +55,8 @@ async function authenticate(): Promise<{ headers: { 'content-type': string; auth
   return { headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` } };
 }
 
-async function voteApp(db: D1Mock): Promise<Response> {
-  const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+async function voteApp(db: DatabaseMock): Promise<Response> {
+  const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
   app.route('/handbooks', handbooks);
   return app.request('http://example.test/handbooks/1/vote', {
     method: 'POST',
@@ -66,8 +67,8 @@ async function voteApp(db: D1Mock): Promise<Response> {
 
 describe('handbook vote endpoint', () => {
   it('rejects a vote value outside -1 and 1', async () => {
-    const db = fakeD1({ [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }) });
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const db = fakeDatabase({ [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }) });
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
     const response = await app.request('http://example.test/handbooks/1/vote', {
       method: 'POST',
@@ -79,7 +80,7 @@ describe('handbook vote endpoint', () => {
   });
 
   it('rejects a vote against a missing handbook', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
       [HANDBOOK_EXISTS_SQL]: () => null,
     });
@@ -90,7 +91,7 @@ describe('handbook vote endpoint', () => {
   });
 
   it('returns the recomputed score after upserting a vote', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
       [HANDBOOK_EXISTS_SQL]: () => ({ ok: 1 }),
       [UPSERT_VOTE_SQL]: () => ({ success: true }),
@@ -104,7 +105,7 @@ describe('handbook vote endpoint', () => {
   });
 
   it('updates the handbook score in the same batch as the vote', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [USER_SQL]: () => ({ id: 1, username: 'editor', role: 'admin' }),
       [HANDBOOK_EXISTS_SQL]: () => ({ ok: 1 }),
       [UPSERT_VOTE_SQL]: () => ({ success: true }),

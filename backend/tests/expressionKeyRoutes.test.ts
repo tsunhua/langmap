@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import expressions from '../src/routes/expressions';
@@ -5,9 +6,9 @@ import { splitExpression } from '../src/services/splits';
 
 type Handler = () => unknown;
 
-type D1Mock = import('@cloudflare/workers-types').D1Database & { sqlLog: string[] };
+type DatabaseMock = import('../src/db/database').Database & { sqlLog: string[] };
 
-function fakeD1(handlers: Record<string, Handler>): D1Mock {
+function fakeDatabase(handlers: Record<string, Handler>): DatabaseMock {
   const sqlLog: string[] = [];
   const prepare = (sql: string) => {
     sqlLog.push(sql);
@@ -29,7 +30,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Mock {
     };
   };
   const batch = async (statements: Array<{ run(): Promise<unknown> }>) => Promise.all(statements.map((statement) => statement.run()));
-  return { prepare, batch, sqlLog } as unknown as D1Mock;
+  return { prepare, batch, sqlLog } as unknown as DatabaseMock;
 }
 
 const EXPRESSION_COLUMNS = 'e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at';
@@ -41,7 +42,7 @@ const POS_SQL = 'SELECT code,name_en FROM parts_of_speech WHERE (? & (1 << bit_i
 const SOURCES_SQL = 'SELECT source_id,source_marker FROM expression_sources WHERE expression_id=? ORDER BY source_id,source_marker';
 
 function keyDb(row: unknown) {
-  return fakeD1({
+  return fakeDatabase({
     [KEY_SQL]: () => row,
     [GET_BY_ID]: () => row,
     [LOCALE_LINKS_SQL]: () => ({ results: [] }),
@@ -51,8 +52,8 @@ function keyDb(row: unknown) {
   });
 }
 
-function app(db: D1Mock) {
-  const application = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+function app(db: DatabaseMock) {
+  const application = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
   application.route('/expressions', expressions);
   return application;
 }
@@ -106,7 +107,7 @@ describe('GET /expressions/:lang/:text', () => {
   });
 
   it('resolves texts that collide with the graph sub-resource literal', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [KEY_SQL]: () => ({ ...row, text: 'graph' }),
       'SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?':
         () => ({ id: 7, text: 'graph', lang_code: 'en', language_name: 'English', homograph_index: 1 }),
@@ -120,7 +121,7 @@ describe('GET /expressions/:lang/:text', () => {
 
 describe('split target key fields', () => {
   it('returns the target expression natural key', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT e.language_id,e.text,e.homograph_index,e.pos_mask,e.source_id,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?':
         () => ({ language_id: 1, text: 'hello', homograph_index: 1, pos_mask: 0, source_id: null, lang_code: 'en' }),
       'SELECT id,expression_a_id,expression_b_id FROM expression_edges WHERE id IN (?)':

@@ -1,9 +1,10 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { getHandbookTranslations, HandbookTranslationError } from '../src/services/handbookTranslations';
 
 type Row = Record<string, unknown>;
 
-function fakeD1(options: {
+function fakeDatabase(options: {
   visibility?: string;
   userId?: number;
   edgeRows?: Row[];
@@ -41,13 +42,13 @@ function fakeD1(options: {
         },
       };
     },
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+  } as unknown as import('../src/db/database').Database;
   return { db, sql, bindCalls };
 }
 
 describe('handbook translations service', () => {
   it('returns deduplicated direct translations and locale readings in handbook order', async () => {
-    const { db, sql, bindCalls } = fakeD1();
+    const { db, sql, bindCalls } = fakeDatabase();
 
     const result = await getHandbookTranslations(db, 1, 'jpn-Jpan-JP');
 
@@ -93,7 +94,7 @@ describe('handbook translations service', () => {
   });
 
   it('caps translations per source expression and reports hidden candidates', async () => {
-    const { db } = fakeD1({
+    const { db } = fakeDatabase({
       edgeRows: [1, 2, 3, 4].map((id) => ({
         source_expression_id: 10,
         target_expression_id: 30 + id,
@@ -118,14 +119,14 @@ describe('handbook translations service', () => {
   });
 
   it('rejects an empty locale before issuing database queries', async () => {
-    const { db, sql } = fakeD1();
+    const { db, sql } = fakeDatabase();
 
     await expect(getHandbookTranslations(db, 1, ' ')).rejects.toMatchObject<HandbookTranslationError>({ code: 'INVALID_TARGET_LOCALE' });
     expect(sql).toHaveLength(0);
   });
 
   it('rejects a locale absent from the registry', async () => {
-    const { db } = fakeD1();
+    const { db } = fakeDatabase();
     const originalPrepare = db.prepare.bind(db);
     db.prepare = ((statement: string) => {
       const prepared = originalPrepare(statement);
@@ -144,10 +145,10 @@ describe('handbook translations service', () => {
   });
 
   it('keeps private handbooks private while allowing the owner to read them', async () => {
-    const { db: privateDb } = fakeD1({ visibility: 'private', userId: 7 });
+    const { db: privateDb } = fakeDatabase({ visibility: 'private', userId: 7 });
     await expect(getHandbookTranslations(privateDb, 1, 'jpn-Jpan-JP')).rejects.toMatchObject<HandbookTranslationError>({ code: 'HANDBOOK_PRIVATE' });
 
-    const { db: ownerDb } = fakeD1({ visibility: 'private', userId: 7 });
+    const { db: ownerDb } = fakeDatabase({ visibility: 'private', userId: 7 });
     const result = await getHandbookTranslations(ownerDb, 1, 'jpn-Jpan-JP', { viewerId: 7 });
     expect(result.target_locale).toBe('jpn-Jpan-JP');
   });

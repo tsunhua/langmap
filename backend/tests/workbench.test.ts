@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import localization from '../src/routes/localization';
@@ -5,7 +6,7 @@ import { CANDIDATE_SQL } from '../src/services/localizationDomain';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const prepare = (sql: string) => {
     const handler = handlers[sql];
     return {
@@ -22,7 +23,7 @@ function fakeD1(handlers: Record<string, Handler>) {
       },
     };
   };
-  return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+  return { prepare } as unknown as import('../src/db/database').Database;
 }
 
 const ACTIVE_MESSAGES_SQL = 'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC';
@@ -30,15 +31,15 @@ const LOCALE_STATUS_SQL = 'SELECT status FROM ui_locales WHERE project_id = ? AN
 
 type BundleEntry = { key: string; text: string; resolved_from: 'primary' | 'secondary' | 'source' };
 
-function fetchMessages(db: import('@cloudflare/workers-types').D1Database, query: string): Promise<Response> {
-  const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+function fetchMessages(db: import('../src/db/database').Database, query: string): Promise<Response> {
+  const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
   app.route('/localization', localization);
   return app.request(`http://example.test/localization/projects/langmap-web/messages${query}`, undefined, { DB: db, SECRET_KEY: 'test-secret' });
 }
 
 describe('localization messages endpoint (workbench)', () => {
   it('resolves a UI message from an active primary locale candidate', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [ACTIVE_MESSAGES_SQL]: () => ({ results: [{ message_key: 'greeting', source_text: 'Hello', placeholders_json: '[]' }] }),
       [LOCALE_STATUS_SQL]: () => ({ status: 'active' }),
       [CANDIDATE_SQL]: () => ({ results: [{ message_key: 'greeting', placeholders_json: '[]', target_id: 7, target_text: '你好', score: 1 }] }),
@@ -50,7 +51,7 @@ describe('localization messages endpoint (workbench)', () => {
   });
 
   it('falls back to the source text when the primary locale is not active', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [ACTIVE_MESSAGES_SQL]: () => ({ results: [{ message_key: 'greeting', source_text: 'Hello', placeholders_json: '[]' }] }),
       [LOCALE_STATUS_SQL]: () => ({ status: 'draft' }),
     });
@@ -61,7 +62,7 @@ describe('localization messages endpoint (workbench)', () => {
   });
 
   it('rejects an invalid locale code with INVALID_LANGUAGE_LOCALE_CODE', async () => {
-    const response = await fetchMessages(fakeD1({}), '?primary=not-a-locale');
+    const response = await fetchMessages(fakeDatabase({}), '?primary=not-a-locale');
     expect(response.status).toBe(400);
     expect((await response.json() as { error: string }).error).toBe('INVALID_LANGUAGE_LOCALE_CODE');
   });

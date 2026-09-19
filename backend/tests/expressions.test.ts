@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { SignJWT } from 'jose';
@@ -12,11 +13,11 @@ import type { ExpressionRow } from '../src/types/expression';
 
 type Handler = () => unknown;
 
-type D1Mock = import('@cloudflare/workers-types').D1Database & {
+type DatabaseMock = import('../src/db/database').Database & {
   sqlLog: string[];
 };
 
-function fakeD1(handlers: Record<string, Handler>): D1Mock {
+function fakeDatabase(handlers: Record<string, Handler>): DatabaseMock {
   const sqlLog: string[] = [];
   const prepare = (sql: string) => {
     sqlLog.push(sql);
@@ -38,7 +39,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Mock {
     };
   };
   const batch = async (statements: Array<{ run(): Promise<unknown> }>) => Promise.all(statements.map((statement) => statement.run()));
-  return { prepare, batch, sqlLog } as unknown as D1Mock;
+  return { prepare, batch, sqlLog } as unknown as DatabaseMock;
 }
 
 function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
@@ -70,7 +71,7 @@ describe('createExpression', () => {
   it('creates a new expression with the next integer id', async () => {
     const createdRow: ExpressionRow = { ...existingRow, id: 4 };
     const insertCalled: string[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM languages WHERE code=?': () => ({ id: 1 }),
       [GET_BY_TEXT]: () => null,
       'INSERT INTO expressions(language_id,text,pos_mask,source_id,created_by) VALUES(?,?,?,?,?) RETURNING id':
@@ -86,7 +87,7 @@ describe('createExpression', () => {
   });
 
   it('reuses an existing expression when the canonical text matches', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM languages WHERE code=?': () => ({ id: 1 }),
       [GET_BY_TEXT]: () => existingRow,
     });
@@ -97,11 +98,11 @@ describe('createExpression', () => {
 
   it('links the requested locale when reusing an expression', async () => {
     const inserted: string[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM languages WHERE code=?': () => ({ id: 1 }),
       'SELECT id FROM language_locales WHERE code=? AND language_id=?': () => ({ id: 2 }),
       [GET_BY_TEXT]: () => existingRow,
-      'INSERT OR IGNORE INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)':
+      'INSERT INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?) ON CONFLICT(expression_id, locale_id) DO NOTHING':
         () => { inserted.push('locale'); return { success: true }; },
     });
     const result = await createExpression(db, {
@@ -112,14 +113,14 @@ describe('createExpression', () => {
   });
 
   it('rejects an unknown lang_code with INVALID_LANG_CODE', async () => {
-    const db = fakeD1({ 'SELECT id FROM languages WHERE code=?': () => null });
+    const db = fakeDatabase({ 'SELECT id FROM languages WHERE code=?': () => null });
     expect(await captureAsyncCode(() => createExpression(db, { lang_code: 'zzz', text: '食', created_by: 1 }))).toBe(
       'INVALID_LANG_CODE',
     );
   });
 
   it('rejects an unknown language_locale_code with INVALID_LANGUAGE_LOCALE_CODE', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM languages WHERE code=?': () => ({ id: 1 }),
       'SELECT id FROM language_locales WHERE code=? AND language_id=?': () => null,
     });
@@ -129,7 +130,7 @@ describe('createExpression', () => {
   });
 
   it('rejects empty canonical text with VALIDATION_FAILED', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     expect(await captureAsyncCode(() => createExpression(db, { lang_code: 'nan', text: '   ', created_by: 1 }))).toBe(
       'VALIDATION_FAILED',
     );
@@ -142,7 +143,7 @@ describe('searchExpressions', () => {
       { ...existingRow, id: 1, text: '食' },
       { ...existingRow, id: 2, text: '食飯' },
     ];
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text>=? AND e.text<?':
         () => ({ total: 2 }),
       [SEARCH_BY_LANG_TERM]: () => ({ results: rows }),
@@ -153,7 +154,7 @@ describe('searchExpressions', () => {
   });
 
   it('filters by lang_code when provided', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=?':
         () => ({ total: 1 }),
       [SEARCH_BY_LANG]: () => ({ results: [] }),
@@ -165,7 +166,7 @@ describe('searchExpressions', () => {
 
   it('returns all items ordered by text when no filter is supplied', async () => {
     const rows = [{ ...existingRow, id: 1, text: '厝' }, { ...existingRow, id: 2, text: '家' }];
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id':
         () => ({ total: 2 }),
       [SEARCH_ALL]: () => ({ results: rows }),
@@ -179,7 +180,7 @@ describe('searchExpressions', () => {
 
 describe('getExpression', () => {
   it('returns the expression with sorted locales and integer ids', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [GET_BY_ID]: () => existingRow,
       [LOCALE_LINKS_SQL]: () => ({ results: [
         { expression_id: 1, locale_id: 1, language_locale_code: 'nan-Hant-CN' },
@@ -198,14 +199,14 @@ describe('getExpression', () => {
   });
 
   it('returns null for a missing expression', async () => {
-    const db = fakeD1({ [GET_BY_ID]: () => null });
+    const db = fakeDatabase({ [GET_BY_ID]: () => null });
     expect(await getExpression(db, 999)).toBeNull();
   });
 });
 
 describe('createLocaleLink', () => {
   it('creates a locale link and reports created=true', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM expressions WHERE id=?': () => ({ id: 1 }),
       'SELECT id FROM language_locales WHERE code=?': () => ({ id: 2 }),
       'SELECT 1 FROM expression_locale_links WHERE expression_id=? AND locale_id=?': () => null,
@@ -217,7 +218,7 @@ describe('createLocaleLink', () => {
   });
 
   it('reuses an existing link with created=false', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM expressions WHERE id=?': () => ({ id: 1 }),
       'SELECT id FROM language_locales WHERE code=?': () => ({ id: 2 }),
       'SELECT 1 FROM expression_locale_links WHERE expression_id=? AND locale_id=?': () => ({ ok: 1 }),
@@ -227,14 +228,14 @@ describe('createLocaleLink', () => {
   });
 
   it('throws EXPRESSION_NOT_FOUND for a missing expression', async () => {
-    const db = fakeD1({ 'SELECT id FROM expressions WHERE id=?': () => null });
+    const db = fakeDatabase({ 'SELECT id FROM expressions WHERE id=?': () => null });
     expect(await captureAsyncCode(() => createLocaleLink(db, { expression_id: 999, language_locale_code: 'nan-Hant-TW' }))).toBe(
       'EXPRESSION_NOT_FOUND',
     );
   });
 
   it('throws INVALID_LANGUAGE_LOCALE_CODE for an unknown locale', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM expressions WHERE id=?': () => ({ id: 1 }),
       'SELECT id FROM language_locales WHERE code=?': () => null,
     });
@@ -246,7 +247,7 @@ describe('createLocaleLink', () => {
 
 describe('expressions route GET /:id', () => {
   it('serializes integer ids in the detail response', async () => {
-    function fakeDb(): import('@cloudflare/workers-types').D1Database {
+    function fakeDb(): import('../src/db/database').Database {
       return {
         prepare(sql: string) {
           return {
@@ -275,10 +276,10 @@ describe('expressions route GET /:id', () => {
             },
           };
         },
-      } as unknown as import('@cloudflare/workers-types').D1Database;
+      } as unknown as import('../src/db/database').Database;
     }
 
-    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
     app.route('/expressions', expressions);
     const response = await app.request('http://example.test/expressions/1', undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
     expect(response.status).toBe(200);
@@ -294,7 +295,7 @@ describe('expressions route GET /:id/graph hop access', () => {
   const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
 
   function graphDb(includeUser: boolean) {
-    return fakeD1({
+    return fakeDatabase({
       ...(includeUser ? { [USER_SQL]: () => ({ id: 1, username: 'reader', role: 'user' }) } : {}),
       [ROOT_SQL]: () => ({ id: 1, text: 'root', lang_code: 'eng', homograph_index: 1 }),
     });
@@ -308,7 +309,7 @@ describe('expressions route GET /:id/graph hop access', () => {
   }
 
   it('rejects anonymous three-hop graph requests', async () => {
-    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
     app.route('/expressions', expressions);
 
     const response = await app.request('http://example.test/expressions/1/graph?hops=3', undefined, { DB: graphDb(false), SECRET_KEY: 'test' });
@@ -317,7 +318,7 @@ describe('expressions route GET /:id/graph hop access', () => {
   });
 
   it('keeps two-hop graphs available anonymously', async () => {
-    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
     app.route('/expressions', expressions);
 
     const response = await app.request('http://example.test/expressions/1/graph?hops=2', undefined, { DB: graphDb(false), SECRET_KEY: 'test' });
@@ -326,7 +327,7 @@ describe('expressions route GET /:id/graph hop access', () => {
   });
 
   it('allows three-hop graph requests for authenticated users', async () => {
-    const app = new Hono<{ Bindings: { DB: import('@cloudflare/workers-types').D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
     app.route('/expressions', expressions);
 
     const response = await app.request('http://example.test/expressions/1/graph?hops=3', { headers: await authenticatedHeaders() }, { DB: graphDb(true), SECRET_KEY: 'test' });

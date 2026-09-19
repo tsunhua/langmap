@@ -1,9 +1,10 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { getExpression } from '../src/services/expressions';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const queries: string[] = [];
   const prepare = (sql: string) => {
     queries.push(sql);
@@ -23,7 +24,7 @@ function fakeD1(handlers: Record<string, Handler>) {
       },
     };
   };
-  return { prepare, queries } as unknown as import('@cloudflare/workers-types').D1Database & { queries: string[] };
+  return { prepare, queries } as unknown as import('../src/db/database').Database & { queries: string[] };
 }
 
 const EXPRESSION_BY_ID = 'SELECT e.id, e.language_id, l.code AS lang_code, e.text, e.homograph_index, e.pos_mask, e.source_id, e.created_by, e.created_at FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
@@ -43,7 +44,7 @@ describe('getExpression', () => {
       { expression_id: 1, locale_id: 1, language_locale_code: 'nan-Hant-CN', scheme: 'poj', value: 'tsia̍h', source_id: null },
       { expression_id: 1, locale_id: 2, language_locale_code: 'nan-Hant-TW', scheme: 'poj', value: 'chia̍h', source_id: null },
     ];
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_BY_ID]: () => expressionRow,
       [LOCALE_LINKS_SQL]: () => ({ results: [] }),
       [READINGS_SQL]: () => ({ results: readingRows }),
@@ -59,7 +60,7 @@ describe('getExpression', () => {
   });
 
   it('maps expression sources to { source_id, marker } provenance pairs', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_BY_ID]: () => expressionRow,
       [LOCALE_LINKS_SQL]: () => ({ results: [] }),
       [READINGS_SQL]: () => ({ results: [] }),
@@ -72,7 +73,7 @@ describe('getExpression', () => {
   });
 
   it('returns null for a missing expression', async () => {
-    const db = fakeD1({ [EXPRESSION_BY_ID]: () => null });
+    const db = fakeDatabase({ [EXPRESSION_BY_ID]: () => null });
     expect(await getExpression(db, 999)).toBeNull();
   });
 });

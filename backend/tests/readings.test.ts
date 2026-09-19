@@ -1,10 +1,11 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { createReading, validateReadingScheme } from '../src/services/readings';
 import type { ReadingRow } from '../src/types/expression';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const prepare = (sql: string) => {
     const handler = handlers[sql] ?? Object.entries(handlers).find(
       ([registered]) => registered.replace(/\s+/g, ' ').trim() === sql.replace(/\s+/g, ' ').trim(),
@@ -24,7 +25,7 @@ function fakeD1(handlers: Record<string, Handler>) {
     };
   };
   const batch = async (statements: Array<{ run(): Promise<unknown> }>) => Promise.all(statements.map((statement) => statement.run()));
-  return { prepare, batch } as unknown as import('@cloudflare/workers-types').D1Database;
+  return { prepare, batch } as unknown as import('../src/db/database').Database;
 }
 
 function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
@@ -62,7 +63,7 @@ describe('validateReadingScheme', () => {
 describe('createReading', () => {
   it('creates a reading after ensuring the locale exists', async () => {
     let stored: ReadingRow | null = null;
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_SQL]: () => ({ id: 1 }),
       [LOCALE_SQL]: () => ({ id: 5 }),
       [FIND_READING_SQL]: () => stored,
@@ -77,7 +78,7 @@ describe('createReading', () => {
   });
 
   it('reuses an existing reading on duplicate', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_SQL]: () => ({ id: 1 }),
       [LOCALE_SQL]: () => ({ id: 5 }),
       [FIND_READING_SQL]: () => readingRow,
@@ -92,7 +93,7 @@ describe('createReading', () => {
 
   it('resolves an optional source to its integer id before storing', async () => {
     let stored: ReadingRow | null = null;
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_SQL]: () => ({ id: 1 }),
       [LOCALE_SQL]: () => ({ id: 5 }),
       [SOURCE_SQL]: () => ({ id: 3 }),
@@ -110,7 +111,7 @@ describe('createReading', () => {
   });
 
   it('rejects an invalid scheme with INVALID_READING_SCHEME', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     expect(await captureAsyncCode(() => createReading(db, {
       expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'Invalid', value: 'x', created_by: 1,
@@ -118,7 +119,7 @@ describe('createReading', () => {
   });
 
   it('rejects an empty value with VALIDATION_FAILED', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     expect(await captureAsyncCode(() => createReading(db, {
       expression_id: 1, language_locale_code: 'nan-Hant-TW',
       scheme: 'ipa', value: '  ', created_by: 1,
@@ -126,7 +127,7 @@ describe('createReading', () => {
   });
 
   it('rejects a missing expression with EXPRESSION_NOT_FOUND', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_SQL]: () => null,
       [LOCALE_SQL]: () => ({ id: 5 }),
     });
@@ -137,7 +138,7 @@ describe('createReading', () => {
   });
 
   it('rejects an unknown locale with INVALID_LANGUAGE_LOCALE_CODE', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [EXPRESSION_SQL]: () => ({ id: 1 }),
       [LOCALE_SQL]: () => null,
     });

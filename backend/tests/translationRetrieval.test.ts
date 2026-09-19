@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../src/db/database';
 import {
   APPROVED_PIVOT_LANGUAGES,
   MAX_DIRECT_PATHS_PER_ROOT,
@@ -22,7 +22,7 @@ interface StatementLog {
   args: unknown[];
 }
 
-function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
+function fakeDatabase(handler: Handler, log: StatementLog[] = []): Database {
   return {
     prepare(sql: string) {
       return {
@@ -39,7 +39,7 @@ function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
         },
       };
     },
-  } as unknown as D1Database;
+  } as unknown as Database;
 }
 
 interface RouteSetup {
@@ -136,7 +136,7 @@ function input(overrides: Partial<RetrievalRequest> = {}, limits?: RetrievalLimi
 describe('retrieveEvidence — candidate resolution', () => {
   it('prefers exact matches and never runs the prefix fallback when exact exists', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       prefix: [expr(2, 'Hello friend'), expr(3, 'Hellos')],
@@ -158,7 +158,7 @@ describe('retrieveEvidence — candidate resolution', () => {
 
   it('falls back to at most three prefix candidates per root and bounds every query', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [],
       prefix: [expr(1, 'Hello a'), expr(2, 'Hello b'), expr(3, 'Hello c'), expr(4, 'Hello d'), expr(5, 'Hello e')],
@@ -182,7 +182,7 @@ describe('retrieveEvidence — candidate resolution', () => {
 
   it('deduplicates roots by canonical text so a duplicate planner span is not re-queried', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [directRow({ target_text: 'X' })],
@@ -194,7 +194,7 @@ describe('retrieveEvidence — candidate resolution', () => {
 
   it('queries planner keyword or phrase roots after the full sentence misses', async () => {
     const queriedRoots: string[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: (args) => {
         const root = String(args[0]);
@@ -220,7 +220,7 @@ describe('retrieveEvidence — candidate resolution', () => {
 describe('retrieveEvidence — path shape', () => {
   it('prioritizes direct paths before two-hop and skips two-hop when direct already fills the quota', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [
@@ -236,7 +236,7 @@ describe('retrieveEvidence — path shape', () => {
 
   it('skips the two-hop query for later candidates once earlier direct hits fill the root quota', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello'), expr(2, 'Hello'), expr(3, 'Hello')],
       direct: (args) => {
@@ -262,7 +262,7 @@ describe('retrieveEvidence — path shape', () => {
 
   it('opens the two-hop query only when direct paths are insufficient, with direct ranked first', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, '你好')],
       direct: [directRow({ edge_id: 11, score: 1, target_text: 'A' })],
@@ -277,7 +277,7 @@ describe('retrieveEvidence — path shape', () => {
 
   it('writes the direct and two-hop queries against the shared quality predicate fragment', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({ locale: LOCALE_ROW, exact: [expr(1, 'Hello')] }), log);
+    const db = fakeDatabase(route({ locale: LOCALE_ROW, exact: [expr(1, 'Hello')] }), log);
     await retrieveEvidence(db, input());
     const direct = log.find((entry) => /JOIN expression_edges edge ON/.test(entry.sql));
     const twoHop = log.find((entry) => /JOIN expression_edges edge1 ON/.test(entry.sql));
@@ -293,7 +293,7 @@ describe('retrieveEvidence — path shape', () => {
 describe('retrieveEvidence — pivot allowlist', () => {
   it('only accepts approved pivots that differ from source and target language, asserted via SQL binds', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, '你好')],
       direct: [],
@@ -318,7 +318,7 @@ describe('retrieveEvidence — language constraints', () => {
   it('retrieves by target language id instead of requiring an exact target locale link', async () => {
     const log: StatementLog[] = [];
     const locale = { id: 40, language_id: 2, lang_code: 'cmn' };
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale,
       exact: [expr(1, '你好')],
       direct: [directRow({ target_text: '你哋好' })],
@@ -335,7 +335,7 @@ describe('retrieveEvidence — language constraints', () => {
 
   it('returns a language-level reference even when the target has no requested locale link', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [directRow({ target_text: '你好' })],
@@ -349,7 +349,7 @@ describe('retrieveEvidence — language constraints', () => {
   });
 
   it('reports the target expression locales separately from the requested locale', async () => {
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [directRow({ target_expr_id: 999, target_text: '你好' })],
@@ -369,7 +369,7 @@ describe('retrieveEvidence — language constraints', () => {
 describe('retrieveEvidence — quality predicate', () => {
   it('rejects an edge with zero score and no provenance markers', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [directRow({ score: 0, marker_count: 0 })],
@@ -381,7 +381,7 @@ describe('retrieveEvidence — quality predicate', () => {
   });
 
   it('accepts an edge whose marker summary alone satisfies the quality gate', async () => {
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [directRow({ score: 0, marker_count: 1 })],
@@ -395,7 +395,7 @@ describe('retrieveEvidence — quality predicate', () => {
 
   it('rejects a two-hop path where either edge fails the quality check', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       twoHop: [twoHopRow({ edge1_score: 5, edge1_markers: 1, edge2_score: 0, edge2_markers: 0 })],
@@ -411,7 +411,7 @@ describe('retrieveEvidence — quality predicate', () => {
 describe('retrieveEvidence — cycles, dedupe and stable ordering', () => {
   it('deduplicates identical source/target/path rows and expands a visited root node only once', async () => {
     const log: StatementLog[] = [];
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [expr(1, 'Hello')],
       direct: [
@@ -441,7 +441,7 @@ describe('retrieveEvidence — cycles, dedupe and stable ordering', () => {
   });
 
   it('orders evidence by exact, direct, score, marker count, text length and ids', async () => {
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: (args) => (String(args[0]) === 'Hello' ? [expr(1, 'Hello')] : []),
       prefix: [expr(2, 'fragment a'), expr(3, 'fragment b')],
@@ -466,7 +466,7 @@ describe('retrieveEvidence — cycles, dedupe and stable ordering', () => {
 
 describe('retrieveEvidence — request bounds', () => {
   it('keeps at most three evidence paths per root even when a root yields many candidates', async () => {
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: [],
       prefix: [expr(1, 'aa'), expr(2, 'bb'), expr(3, 'cc')],
@@ -484,7 +484,7 @@ describe('retrieveEvidence — request bounds', () => {
   it('caps total evidence at 24 and reports the omitted count', async () => {
     const rootTexts = rootTextsUpperCase();
     const indexById = new Map(rootTexts.map((text, index) => [text, index]));
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: (args) => {
         const index = indexById.get(String(args[0]));
@@ -506,7 +506,7 @@ describe('retrieveEvidence — request bounds', () => {
     const rootTexts = rootTextsUpperCase();
     const indexById = new Map(rootTexts.map((text, index) => [text, index]));
     const longText = 'X'.repeat(2000);
-    const db = fakeD1(route({
+    const db = fakeDatabase(route({
       locale: LOCALE_ROW,
       exact: (args) => {
         const index = indexById.get(String(args[0]));
@@ -527,11 +527,11 @@ describe('retrieveEvidence — request bounds', () => {
 });
 
 describe('retrieveEvidence — degradation and abort', () => {
-  it('degrades without throwing when a single D1 query fails', async () => {
-    const db = fakeD1((sql) => {
+  it('degrades without throwing when a single database query fails', async () => {
+    const db = fakeDatabase((sql) => {
       if (/FROM language_locales ll/.test(sql)) return [LOCALE_ROW];
       if (/e\.text = \?/.test(sql)) return [expr(1, 'Hello')];
-      if (/JOIN expression_edges edge ON/.test(sql)) throw new Error('D1 failure');
+      if (/JOIN expression_edges edge ON/.test(sql)) throw new Error('database failure');
       return [];
     });
     const result = await retrieveEvidence(db, input());
@@ -539,13 +539,13 @@ describe('retrieveEvidence — degradation and abort', () => {
   });
 
   it('degrades when no candidate produces evidence', async () => {
-    const db = fakeD1(route({ locale: LOCALE_ROW, exact: [], prefix: [] }));
+    const db = fakeDatabase(route({ locale: LOCALE_ROW, exact: [], prefix: [] }));
     const result = await retrieveEvidence(db, input());
     expect(result).toEqual({ items: [], omitted_count: 0, degraded: false, retrieval_status: 'no_match' });
   });
 
   it('degrades instead of throwing when the retrieval deadline passes', async () => {
-    const db = fakeD1((sql) => {
+    const db = fakeDatabase((sql) => {
       if (/FROM language_locales ll/.test(sql)) return [LOCALE_ROW];
       if (/e\.text = \?/.test(sql)) return [expr(1, 'Hello')];
       if (/JOIN expression_edges edge ON/.test(sql)) {
@@ -562,14 +562,14 @@ describe('retrieveEvidence — degradation and abort', () => {
     const controller = new AbortController();
     controller.abort();
     const log: StatementLog[] = [];
-    const db = fakeD1(route({ locale: LOCALE_ROW, exact: [expr(1, 'Hello')] }), log);
+    const db = fakeDatabase(route({ locale: LOCALE_ROW, exact: [expr(1, 'Hello')] }), log);
     await expect(retrieveEvidence(db, input({ signal: controller.signal })))
       .rejects.toMatchObject({ name: 'AbortError' });
     expect(log).toHaveLength(0);
   });
 
   it('propagates a caller abort that arrives while a query is in flight', async () => {
-    const db = fakeD1((sql) => {
+    const db = fakeDatabase((sql) => {
       if (/FROM language_locales ll/.test(sql)) return [LOCALE_ROW];
       if (/e\.text = \?/.test(sql)) return [expr(1, 'Hello')];
       if (/JOIN expression_edges edge ON/.test(sql)) {

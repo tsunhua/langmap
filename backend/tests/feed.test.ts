@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import feed from '../src/routes/feed';
@@ -36,12 +37,12 @@ function fakeDb(capturedSql: string[] = []) {
         },
       };
     },
-  } as unknown as D1Database;
+  } as unknown as Database;
 }
 
 describe('feed API', () => {
   it('returns stable hot and new rows with integer ids serialized to strings', async () => {
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
     for (const path of ['/feed/hot?limit=20', '/feed/new?limit=20']) {
       const response = await app.request(`http://example.test${path}`, undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
@@ -54,7 +55,7 @@ describe('feed API', () => {
 
   it('orders every feed flavor by newest mapping id, both limited', async () => {
     const capturedSql: string[] = [];
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
 
     await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(capturedSql), SECRET_KEY: 'test' });
@@ -70,7 +71,7 @@ describe('feed API', () => {
   });
 
   it('attaches language codes as language names to hot and new rows', async () => {
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/feed', feed);
 
     const hot = await app.request('http://example.test/feed/hot?limit=20', undefined, { DB: fakeDb(), SECRET_KEY: 'test' });

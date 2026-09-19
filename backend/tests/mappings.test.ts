@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import {
   MappingError,
@@ -34,7 +35,7 @@ describe('createEdge', () => {
           async run() { updates.push(args); return { success: true }; },
         }; } };
       },
-    } as unknown as D1Database;
+    } as unknown as Database;
 
     const result = await createEdge(db, {
       expression_a_id: 9,
@@ -62,7 +63,7 @@ describe('getExpressionMappings', () => {
           return { results: [{ edge_id: 11, neighbor_id: 1, neighbor_lang_code: 'cmn', neighbor_text: '鱈魚', relation_mask: 1, score: 0 }] };
         } }; } };
       },
-    } as unknown as D1Database;
+    } as unknown as Database;
 
     const result = await getExpressionMappings(db, 2, { limit: 2, cursor: null });
 
@@ -81,7 +82,7 @@ describe('getExpressionMappings', () => {
           return { results: [{ edge_id: 12, neighbor_id: 4, neighbor_lang_code: 'eng', neighbor_text: 'have you got enough?', relation_mask: 4, score: 0 }] };
         } }; } };
       },
-    } as unknown as D1Database;
+    } as unknown as Database;
 
     const result = await getExpressionMappings(db, 3, { limit: 20, cursor: null });
 

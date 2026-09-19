@@ -3,23 +3,18 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 BACKEND_PORT="8788"
-FORCE_REBUILD=0
-ALLOW_REBUILD=1
 
-LOCAL_D1_STATE="$ROOT/backend/.wrangler/state"
-DEV_RUNTIME_DIR="$ROOT/scripts/db/state/dev-runtime"
+DEV_RUNTIME_DIR="$ROOT/.dev-runtime"
 BACKEND_PIDFILE="$DEV_RUNTIME_DIR/backend.pid"
 FRONTEND_PIDFILE="$DEV_RUNTIME_DIR/frontend.pid"
-MANAGE_BIN="${LANGMAP_DB_MANAGER_BIN:-manage.sh}"
 BACKEND_PID=""
 FRONTEND_PID=""
 CLEANUP_DONE=0
 
-export PATH="$ROOT/scripts/db:$PATH"
 
 usage() {
   cat <<'EOF' >&2
-Usage: ./dev.sh [--rebuild | --no-rebuild] [--port=<backend-port>]
+Usage: ./dev.sh [--port=<backend-port>]
 EOF
 }
 
@@ -183,12 +178,6 @@ trap 'exit 0' INT TERM
 
 for arg in "$@"; do
   case "$arg" in
-    --rebuild)
-      FORCE_REBUILD=1
-      ;;
-    --no-rebuild)
-      ALLOW_REBUILD=0
-      ;;
     --port=*)
       BACKEND_PORT="${arg#--port=}"
       ;;
@@ -199,12 +188,6 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$FORCE_REBUILD" -eq 1 ] && [ "$ALLOW_REBUILD" -eq 0 ]; then
-  echo "不能同時指定 --rebuild 與 --no-rebuild" >&2
-  exit 2
-fi
-
-ensure_command "$MANAGE_BIN"
 mkdir -p "$DEV_RUNTIME_DIR"
 
 step "停止本 repo 殘留服務"
@@ -223,6 +206,10 @@ fi
 
 step "載入 Wrangler 本地認證（若有 backend/.dev.vars）"
 load_cloudflare_credentials_from_dev_vars
+if [ -z "${DATABASE_URL:-}" ] && ! grep -q "^DATABASE_URL=" "$ROOT/backend/.dev.vars"; then
+  echo "請在 backend/.dev.vars 或環境變數設定 DATABASE_URL" >&2
+  exit 1
+fi
 
 step "確保後端相依套件已安裝"
 cd "$ROOT/backend"
@@ -232,40 +219,10 @@ step "確保前端相依套件已安裝"
 cd "$ROOT/web"
 [ -d node_modules ] || npm install
 
-step "決定 local bootstrap 流程"
-cd "$ROOT"
-# if [ "$FORCE_REBUILD" -eq 1 ]; then
-#   step "依旗標強制重建 local D1"
-#   "$MANAGE_BIN" local rebuild
-# else
-#   status_json="$("$MANAGE_BIN" local status)"
-#   rebuild_required="$(
-#     printf '%s' "$status_json" | python3 -c 'import json, sys
-# payload = json.load(sys.stdin)
-# value = payload.get("rebuild_required")
-# if not isinstance(value, bool):
-#     raise SystemExit("status missing boolean rebuild_required")
-# print("true" if value else "false")'
-#   )"
-
-#   if [ "$rebuild_required" = "true" ]; then
-#     if [ "$ALLOW_REBUILD" -eq 0 ]; then
-#       echo "local D1 需要重建，但收到 --no-rebuild；請先執行 ./dev.sh --rebuild。" >&2
-#       exit 1
-#     fi
-#     step "fingerprint miss，重建 local D1"
-#     "$MANAGE_BIN" local rebuild
-#   else
-#     step "fingerprint hit，驗證 local D1"
-#     "$MANAGE_BIN" local verify
-#   fi
-# fi
-
 step "啟動後端 wrangler（port ${BACKEND_PORT}）"
 cd "$ROOT/backend"
 npx wrangler dev \
   --config "$ROOT/backend/wrangler.jsonc" \
-  --persist-to "$LOCAL_D1_STATE" \
   --port "$BACKEND_PORT" &
 BACKEND_PID=$!
 printf '%s\n' "$BACKEND_PID" > "$BACKEND_PIDFILE"
@@ -278,7 +235,7 @@ printf '%s\n' "$FRONTEND_PID" > "$FRONTEND_PIDFILE"
 
 echo ""
 echo "▶ v2: http://localhost:5173（前端 HMR + /api/v2 → localhost:${BACKEND_PORT}）"
-echo "▶ 本機帳號：dev@example.com / dev（僅 local D1）"
+echo "▶ 本機帳號：dev@example.com / dev（資料庫由 DATABASE_URL 指定）"
 echo "按 Ctrl+C 停止"
 
 wait "$BACKEND_PID" "$FRONTEND_PID"

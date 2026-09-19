@@ -1,12 +1,13 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import handbooks from '../src/routes/handbooks';
 
 type Handler = () => unknown;
 
-type D1Mock = import('@cloudflare/workers-types').D1Database & { sqlLog: string[] };
+type DatabaseMock = import('../src/db/database').Database & { sqlLog: string[] };
 
-function fakeD1(handlers: Record<string, Handler>): D1Mock {
+function fakeDatabase(handlers: Record<string, Handler>): DatabaseMock {
   const sqlLog: string[] = [];
   const prepare = (sql: string) => {
     sqlLog.push(sql);
@@ -25,7 +26,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Mock {
       },
     };
   };
-  return { prepare } as unknown as D1Mock;
+  return { prepare } as unknown as DatabaseMock;
 }
 
 const HANDBOOK_SQL = 'SELECT h.*,u.username AS author_username FROM handbooks h JOIN users u ON u.id=h.user_id WHERE h.id=?';
@@ -34,7 +35,7 @@ const ITEMS_SQL = 'SELECT i.section_id,i.position,e.id,e.text,e.homograph_index,
 
 describe('handbooks API', () => {
   it('reads a handbook with integer ids serialized and language names from lang codes', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [HANDBOOK_SQL]: () => ({
         id: 1, user_id: 1, title: 'Starter', visibility: 'public', status: 'published',
         score: 0, created_at: '2026-08-12 00:00:00', updated_at: '2026-08-12 00:00:00',
@@ -43,7 +44,7 @@ describe('handbooks API', () => {
       [SECTIONS_SQL]: () => ({ results: [{ id: 1, title: 'One', position: 0, parent_section_id: null }] }),
       [ITEMS_SQL]: () => ({ results: [{ section_id: 1, position: 0, id: 101, text: '食', homograph_index: 1, lang_code: 'nan' }] }),
     });
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
     const response = await app.request('http://example.test/handbooks/1', undefined, { DB: db, SECRET_KEY: 'test-secret' });
     expect(response.status).toBe(200);
@@ -53,7 +54,7 @@ describe('handbooks API', () => {
   });
 
   it('exposes managed handbooks as read-only capabilities', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [HANDBOOK_SQL]: () => ({
         id: 2, user_id: 1, title: 'Wikivoyage', visibility: 'public', status: 'published',
         managed_key: 'enwikivoyage-phrasebooks', score: 0,
@@ -62,7 +63,7 @@ describe('handbooks API', () => {
       [SECTIONS_SQL]: () => ({ results: [] }),
       [ITEMS_SQL]: () => ({ results: [] }),
     });
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
     const response = await app.request('http://example.test/handbooks/2', undefined, { DB: db, SECRET_KEY: 'test-secret' });
     expect(response.status).toBe(200);
@@ -70,14 +71,14 @@ describe('handbooks API', () => {
   });
 
   it('rejects a non-canonical id with INVALID_HANDBOOK_ID and a missing handbook with 404', async () => {
-    const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string } }>();
+    const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string } }>();
     app.route('/handbooks', handbooks);
 
-    const bad = await app.request('http://example.test/handbooks/01HANDBOOK', undefined, { DB: fakeD1({}), SECRET_KEY: 'test-secret' });
+    const bad = await app.request('http://example.test/handbooks/01HANDBOOK', undefined, { DB: fakeDatabase({}), SECRET_KEY: 'test-secret' });
     expect(bad.status).toBe(400);
     expect((await bad.json() as { error: string }).error).toBe('INVALID_HANDBOOK_ID');
 
-    const missing = await app.request('http://example.test/handbooks/999', undefined, { DB: fakeD1({ [HANDBOOK_SQL]: () => null }), SECRET_KEY: 'test-secret' });
+    const missing = await app.request('http://example.test/handbooks/999', undefined, { DB: fakeDatabase({ [HANDBOOK_SQL]: () => null }), SECRET_KEY: 'test-secret' });
     expect(missing.status).toBe(404);
   });
 });

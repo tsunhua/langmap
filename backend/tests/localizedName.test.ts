@@ -1,9 +1,10 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { CANDIDATE_SQL, parseLocaleHints, resolveLanguageNames, resolveLocaleNames, resolveNamesByExpressionIds } from '../src/services/localizedName';
 
 type Handler = (params: unknown[]) => unknown;
 
-function fakeD1(matchers: Array<{ sql: string; match?: (params: unknown[]) => boolean; handler: Handler }>) {
+function fakeDatabase(matchers: Array<{ sql: string; match?: (params: unknown[]) => boolean; handler: Handler }>) {
   return {
     prepare(sql: string) {
       const entries = matchers.filter((m) => sql.includes(m.sql));
@@ -17,7 +18,7 @@ function fakeD1(matchers: Array<{ sql: string; match?: (params: unknown[]) => bo
         },
       };
     },
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+  } as unknown as import('../src/db/database').Database;
 }
 
 const JPN_NAME = 101;
@@ -37,13 +38,13 @@ describe('parseLocaleHints', () => {
 
 describe('resolveLanguageNames / resolveLocaleNames', () => {
   it('returns empty maps for empty inputs', async () => {
-    const db = fakeD1([]);
+    const db = fakeDatabase([]);
     expect((await resolveLanguageNames(db, [], {})).size).toBe(0);
     expect((await resolveLocaleNames(db, [], {})).size).toBe(0);
   });
 
   it('resolves language names through name_expression_ids and falls back to name_en', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
         { code: 'jpn', name_expression_id: JPN_NAME, name_en: 'Japanese', name: null },
         { code: 'eng', name_expression_id: null, name_en: 'English', name: null },
@@ -57,7 +58,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
   });
 
   it('omits codes with no registry row so callers fall back to the code', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [] }) },
     ]);
     const langs = await resolveLanguageNames(db, ['zzz'], parseLocaleHints('cmn-Hans-CN'));
@@ -65,7 +66,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
   });
 
   it('keeps the registry English name when no locale is requested', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
         { code: 'cmn', name_expression_id: CMN_NAME, name_en: 'Mandarin Chinese', name: null },
       ] }) },
@@ -76,7 +77,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
   });
 
   it('resolves locale names through the self name or a localized candidate', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'FROM language_locales WHERE code IN', handler: () => ({ results: [
         { code: 'jpn-Jpan-JP', name_expression_id: null, name_en: 'Japanese (Japan)', name: '日本語' },
         { code: 'cmn-Hans-CN', name_expression_id: CMN_NAME, name_en: 'Simplified Chinese', name: '普通话' },
@@ -90,7 +91,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
   });
 
   it('batches distinct name_expression_ids into a single candidate query', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
         { code: 'jpn', name_expression_id: JPN_NAME, name_en: 'Japanese', name: null },
         { code: 'cmn', name_expression_id: CMN_NAME, name_en: 'Mandarin Chinese', name: null },
@@ -115,7 +116,7 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
 
 describe('resolveNamesByExpressionIds', () => {
   it('prefers the project name translation before querying mapping candidates', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: SPANISH_NAME, text: 'Spanish' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => { throw new Error('mapping candidates should not override project translations'); } },
     ]);
@@ -124,7 +125,7 @@ describe('resolveNamesByExpressionIds', () => {
   });
 
   it('resolves a known name_expression_id via the primary locale', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: PLURAL_EN, text: 'plural' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: PLURAL_EN, target_id: RIKYU, target_text: '复数', score: 0 }] }) },
     ]);
@@ -133,7 +134,7 @@ describe('resolveNamesByExpressionIds', () => {
   });
 
   it('falls back to the English expression text when no translation exists', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: PLURAL_EN, text: 'plural' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [] }) },
     ]);
@@ -142,7 +143,7 @@ describe('resolveNamesByExpressionIds', () => {
   });
 
   it('falls back to the secondary locale when the primary has no candidate', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: JPN_NAME, text: 'Japanese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: (params: unknown[]) => (params[1] === 'cmn-Hans-CN'
         ? { results: [] }
@@ -153,13 +154,13 @@ describe('resolveNamesByExpressionIds', () => {
   });
 
   it('ignores non-positive and non-integer ids without querying', async () => {
-    const db = fakeD1([]);
+    const db = fakeDatabase([]);
     const map = await resolveNamesByExpressionIds(db, [0, -1, 1.5, 'bad'], parseLocaleHints('cmn-Hans-CN'));
     expect(map.size).toBe(0);
   });
 
   it('skips missing expressions so the caller can fall back to the code', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [] }) },
     ]);
     const map = await resolveNamesByExpressionIds(db, [9999], parseLocaleHints('cmn-Hans-CN'));
@@ -176,7 +177,7 @@ describe('CANDIDATE_SQL contract', () => {
   });
 
   it('picks the stable winner (higher score, then lower target id) from ties', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: CMN_NAME, target_id: 220, target_text: '普通话B', score: 0 },
@@ -188,7 +189,7 @@ describe('CANDIDATE_SQL contract', () => {
   });
 
   it('prefers a higher-scoring candidate regardless of target id', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Mandarin Chinese (custom)' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [
         { source_id: CMN_NAME, target_id: 210, target_text: '低分', score: 0 },

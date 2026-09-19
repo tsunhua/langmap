@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import languageLocales from '../src/routes/languageLocales';
@@ -6,7 +7,7 @@ import type { Bindings } from '../src/types';
 
 type RowResult = { results?: unknown[] };
 
-function fakeD1(handlers: Array<[string, () => RowResult | { total: number } | Record<string, unknown> | null]>) {
+function fakeDatabase(handlers: Array<[string, () => RowResult | { total: number } | Record<string, unknown> | null]>) {
   const find = (sql: string) => {
     const hit = handlers.find(([key]) => sql.includes(key));
     return hit ? hit[1] : undefined;
@@ -30,10 +31,10 @@ function fakeD1(handlers: Array<[string, () => RowResult | { total: number } | R
         },
       };
     },
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+  } as unknown as import('../src/db/database').Database;
 }
 
-function makeApp(db: import('@cloudflare/workers-types').D1Database) {
+function makeApp(db: import('../src/db/database').Database) {
   const app = new Hono<{ Bindings: Bindings }>();
   app.route('/language-locales', languageLocales);
   app.route('/language-registry', languageRegistry);
@@ -42,7 +43,7 @@ function makeApp(db: import('@cloudflare/workers-types').D1Database) {
 
 describe('language registry routes', () => {
   it('returns language items with name defaulting to name_en', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['SELECT COUNT(*) as total FROM languages', () => ({ total: 2 })],
       ['SELECT code, name_en FROM languages', () => ({ results: [
         { code: 'cmn', name_en: 'Mandarin Chinese' },
@@ -60,7 +61,7 @@ describe('language registry routes', () => {
   });
 
   it('supports a LIKE search filter on registry items', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['SELECT COUNT(*) as total FROM languages', () => ({ total: 1 })],
       ['SELECT code, name_en FROM languages', () => ({ results: [{ code: 'cmn', name_en: 'Mandarin Chinese' }] })],
     ]);
@@ -70,7 +71,7 @@ describe('language registry routes', () => {
   });
 
   it('lists scripts and regions with name defaulting to name_en', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['SELECT COUNT(*) as total FROM scripts', () => ({ total: 2 })],
       ['SELECT code, name_en, direction FROM scripts', () => ({ results: [
         { code: 'Latn', name_en: 'Latin', direction: 'ltr' },
@@ -94,7 +95,7 @@ describe('language registry routes', () => {
   });
 
   it('handles a malformed ui_locale without erroring', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['SELECT COUNT(*) as total FROM languages', () => ({ total: 1 })],
       ['SELECT code, name_en FROM languages', () => ({ results: [{ code: 'eng', name_en: 'English' }] })],
     ]);
@@ -106,7 +107,7 @@ describe('language registry routes', () => {
 
 describe('language locales routes', () => {
   it('lists locale rows with code, self-name and name_en', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['SELECT COUNT(*) AS total FROM language_locales', () => ({ total: 2 })],
       ['FROM language_locales ll JOIN languages l', () => ({ results: [
         { id: 1, code: 'cmn-Hans-CN', lang_code: 'cmn', script_code: 'Hans', orthography: null, region_code: 'CN', place_path: '', name: '普通话', name_en: 'Simplified Chinese', latitude: null, longitude: null },
@@ -124,7 +125,7 @@ describe('language locales routes', () => {
   });
 
   it('returns a single locale detail with resolved coordinates', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       ['FROM language_locales ll JOIN languages l ON l.id=ll.language_id LEFT JOIN regions r', () => ({
         code: 'cmn-Hans-CN', lang_code: 'cmn', script_code: 'Hans', orthography: null, region_code: 'CN', place_path: '', name: '普通话', name_en: 'Simplified Chinese', latitude: null, longitude: null, resolved_latitude: 39.9, resolved_longitude: 116.4, coordinate_source: 'region',
       })],
@@ -140,7 +141,7 @@ describe('language locales routes', () => {
   });
 
   it('rejects an invalid locale code with INVALID_LANGUAGE_LOCALE_CODE', async () => {
-    const db = fakeD1([]);
+    const db = fakeDatabase([]);
     const request = makeApp(db);
     const res = await request('/language-locales/not-a-code');
     expect(res.status).toBe(400);

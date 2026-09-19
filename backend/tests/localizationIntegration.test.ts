@@ -38,45 +38,32 @@ async function registerToken(): Promise<string> {
   return (await register('tester')).token;
 }
 
-// The admin helper writes directly to the local D1 file the running worker
-// persists to, then issues a role=admin JWT with the same secret.
-async function workerDbFile(): Promise<string> {
-  const dir = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject';
-  const candidates = fs.readdirSync(dir).filter((f) => f.endsWith('.sqlite'));
-  const { DatabaseSync } = await import('node:sqlite');
-  for (const file of candidates) {
-    const db = new DatabaseSync(`${dir}/${file}`);
-    try {
-      db.exec('SELECT 1 FROM users LIMIT 1');
-      db.close();
-      return `${dir}/${file}`;
-    } catch {
-      db.close();
-    }
-  }
-  throw new Error('D1 sqlite with users table not found');
+async function promoteUser(userId: number): Promise<void> {
+  const { Client } = await import('pg');
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error('DATABASE_URL is required for integration tests');
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try { await client.query("UPDATE users SET role = 'admin' WHERE id = $1", [userId]); }
+  finally { await client.end(); }
 }
 
-// The local worker can serve a stale snapshot of the /locales list for a while
-// after a UI-locale write, so persisted status is verified straight from the D1
-// file instead of a read-back through the API.
 async function persistedLocaleRow(code: string): Promise<{ status: string; activation_source: string | null }> {
-  const { DatabaseSync } = await import('node:sqlite');
-  const db = new DatabaseSync(await workerDbFile());
-  const row = db.prepare(
-    "SELECT u.status, u.activation_source FROM ui_locales u JOIN language_locales ll ON ll.id = u.locale_id WHERE u.project_id = 'langmap-web' AND ll.code = ?",
-  ).get(code) as { status: string; activation_source: string | null } | undefined;
-  db.close();
-  if (!row) throw new Error(`ui_locale not found for ${code}`);
-  return row;
+  const { Client } = await import('pg');
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error('DATABASE_URL is required for integration tests');
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    const result = await client.query("SELECT u.status, u.activation_source FROM ui_locales u JOIN language_locales ll ON ll.id = u.locale_id WHERE u.project_id = 'langmap-web' AND ll.code = $1", [code]);
+    if (!result.rows[0]) throw new Error(`ui_locale not found for ${code}`);
+    return result.rows[0] as { status: string; activation_source: string | null };
+  } finally { await client.end(); }
 }
 
 async function getAdminToken(): Promise<string> {
   const user = await register('admin');
-  const { DatabaseSync } = await import('node:sqlite');
-  const db = new DatabaseSync(await workerDbFile());
-  db.exec(`UPDATE users SET role = 'admin' WHERE id = ${user.id}`);
-  db.close();
+  await promoteUser(user.id);
   const secretKey = process.env.SECRET_KEY
     ?? fs.readFileSync('.dev.vars', 'utf8').match(/SECRET_KEY="([^"]+)"/)?.[1]
     ?? 'dev-secret-change-me-before-deploy';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../src/db/database';
 import {
   MAX_TRANSLATION_BODY_BYTES,
   MAX_TRANSLATION_GRAPHEMES,
@@ -16,12 +16,12 @@ import {
 
 type Handler = (args: unknown[]) => unknown;
 
-function fakeD1(handlers: Record<string, Handler>): D1Database {
+function fakeDatabase(handlers: Record<string, Handler>): Database {
   const prepare = (sql: string) => ({
     bind: (...args: unknown[]) => {
       for (const arg of args) {
         if (!(arg === null || typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean' || arg instanceof ArrayBuffer)) {
-          throw new TypeError(`D1 bind: unsupported value type ${typeof arg}`);
+          throw new TypeError(`database bind: unsupported value type ${typeof arg}`);
         }
       }
       return {
@@ -31,7 +31,7 @@ function fakeD1(handlers: Record<string, Handler>): D1Database {
       };
     },
   });
-  return { prepare } as unknown as D1Database;
+  return { prepare } as unknown as Database;
 }
 
 const LANG_SQL = 'SELECT id FROM languages WHERE code=?';
@@ -158,26 +158,26 @@ describe('validateTranslationText', () => {
 
 describe('resolveSourceLanguage', () => {
   it('resolves an existing source language code', async () => {
-    const db = fakeD1({ [LANG_SQL]: () => ({ id: 7 }) });
+    const db = fakeDatabase({ [LANG_SQL]: () => ({ id: 7 }) });
     await expect(resolveSourceLanguage(db, { source_lang_code: 'cmn', source_locale_code: null }))
       .resolves.toEqual({ source_lang_code: 'cmn', source_language_id: 7 });
   });
 
   it('looks up the source language by lowercased code', async () => {
     let bound: unknown = null;
-    const db = fakeD1({ [LANG_SQL]: (args) => { bound = args[0]; return { id: 7 }; } });
+    const db = fakeDatabase({ [LANG_SQL]: (args) => { bound = args[0]; return { id: 7 }; } });
     await resolveSourceLanguage(db, { source_lang_code: 'CMN', source_locale_code: null });
     expect(bound).toBe('cmn');
   });
 
   it('rejects an unknown source language code', async () => {
-    const db = fakeD1({ [LANG_SQL]: () => null });
+    const db = fakeDatabase({ [LANG_SQL]: () => null });
     await expect(resolveSourceLanguage(db, { source_lang_code: 'zzz', source_locale_code: null }))
       .rejects.toMatchObject({ code: 'INVALID_LANG_CODE' });
   });
 
   it('rejects a non-string source language code', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     await expect(resolveSourceLanguage(db, { source_lang_code: 123 as unknown as string, source_locale_code: null }))
       .rejects.toMatchObject({ code: 'INVALID_LANG_CODE' });
     await expect(resolveSourceLanguage(db, { source_lang_code: { code: 'cmn' } as unknown as string, source_locale_code: null }))
@@ -185,13 +185,13 @@ describe('resolveSourceLanguage', () => {
   });
 
   it('returns a null resolution when the source is auto-detected', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     await expect(resolveSourceLanguage(db, { source_lang_code: null, source_locale_code: null }))
       .resolves.toEqual({ source_lang_code: null, source_language_id: null });
   });
 
   it('accepts a source locale whose language matches', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [LANG_SQL]: () => ({ id: 7 }),
       [LOCALE_SQL]: () => ({ id: 12, language_id: 7 }),
     });
@@ -200,7 +200,7 @@ describe('resolveSourceLanguage', () => {
   });
 
   it('rejects a source locale whose language differs from the source language', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [LANG_SQL]: () => ({ id: 7 }),
       [LOCALE_SQL]: () => ({ id: 12, language_id: 99 }),
     });
@@ -209,7 +209,7 @@ describe('resolveSourceLanguage', () => {
   });
 
   it('rejects a missing source locale', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [LANG_SQL]: () => ({ id: 7 }),
       [LOCALE_SQL]: () => null,
     });
@@ -218,7 +218,7 @@ describe('resolveSourceLanguage', () => {
   });
 
   it('rejects a non-string source locale code', async () => {
-    const db = fakeD1({ [LANG_SQL]: () => ({ id: 7 }) });
+    const db = fakeDatabase({ [LANG_SQL]: () => ({ id: 7 }) });
     await expect(resolveSourceLanguage(db, { source_lang_code: 'cmn', source_locale_code: 123 as unknown as string }))
       .rejects.toMatchObject({ code: 'INVALID_LANGUAGE_LOCALE_CODE' });
     await expect(resolveSourceLanguage(db, { source_lang_code: 'cmn', source_locale_code: {} as unknown as string }))
@@ -226,7 +226,7 @@ describe('resolveSourceLanguage', () => {
   });
 
   it('rejects a source locale without a source language', async () => {
-    const db = fakeD1({ [LOCALE_SQL]: () => ({ id: 12, language_id: 7 }) });
+    const db = fakeDatabase({ [LOCALE_SQL]: () => ({ id: 12, language_id: 7 }) });
     await expect(resolveSourceLanguage(db, { source_lang_code: null, source_locale_code: 'cmn-Hans-CN' }))
       .rejects.toMatchObject({ code: 'INVALID_LANGUAGE_LOCALE_CODE' });
   });
@@ -234,7 +234,7 @@ describe('resolveSourceLanguage', () => {
 
 describe('resolveTargetLocale', () => {
   it('resolves an existing target locale with its language id and code', async () => {
-    const db = fakeD1({ [LOCALE_SQL]: () => ({
+    const db = fakeDatabase({ [LOCALE_SQL]: () => ({
       id: 12,
       language_id: 7,
       lang_code: 'jpn',
@@ -253,18 +253,18 @@ describe('resolveTargetLocale', () => {
 
   it('looks up the target locale by exact code', async () => {
     let bound: unknown = null;
-    const db = fakeD1({ [LOCALE_SQL]: (args) => { bound = args[0]; return { id: 12, language_id: 7, lang_code: 'jpn' }; } });
+    const db = fakeDatabase({ [LOCALE_SQL]: (args) => { bound = args[0]; return { id: 12, language_id: 7, lang_code: 'jpn' }; } });
     await resolveTargetLocale(db, 'jpn-Jpan-JP');
     expect(bound).toBe('jpn-Jpan-JP');
   });
 
   it('rejects an unknown target locale', async () => {
-    const db = fakeD1({ [LOCALE_SQL]: () => null });
+    const db = fakeDatabase({ [LOCALE_SQL]: () => null });
     await expect(resolveTargetLocale(db, 'nope')).rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
   });
 
   it('rejects a non-string target locale code', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     await expect(resolveTargetLocale(db, 123 as unknown as string)).rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
     await expect(resolveTargetLocale(db, null as unknown as string)).rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
     await expect(resolveTargetLocale(db, {} as unknown as string)).rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });

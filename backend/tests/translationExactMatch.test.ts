@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../src/db/database';
 import { APPROVED_PIVOT_LANGUAGES } from '../src/utils/limits';
 import {
   DEFAULT_EXACT_MATCH_LIMITS,
@@ -27,7 +27,7 @@ interface StatementLogEntry {
 const TARGET_LOCALE = 'jpn-Jpan-JP';
 const LOCALE_ROW = { id: 30, language_id: 7, lang_code: 'jpn' };
 
-function fakeD1(setup: FakeSetup, log: StatementLogEntry[] = []): D1Database {
+function fakeDatabase(setup: FakeSetup, log: StatementLogEntry[] = []): Database {
   const route = (sql: string): Row[] => {
     if (/FROM language_locales/.test(sql)) return setup.locale ? [setup.locale] : [];
     if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
@@ -52,7 +52,7 @@ function fakeD1(setup: FakeSetup, log: StatementLogEntry[] = []): D1Database {
         },
       };
     },
-  } as unknown as D1Database;
+  } as unknown as Database;
 }
 
 function input(overrides: Partial<ExactMatchInput> = {}): ExactMatchInput {
@@ -76,7 +76,7 @@ describe('hasPassingEdge', () => {
 describe('findExactTranslation — input canonicalization', () => {
   it('resolves a case-variant input against the canonicalized stored expression', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [{
         edge_id: 11,
@@ -99,7 +99,7 @@ describe('findExactTranslation — input canonicalization', () => {
 
   it('normalizes a diacritic-decomposed input to the stored canonical form', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [{
         edge_id: 11,
@@ -124,7 +124,7 @@ describe('findExactTranslation — input canonicalization', () => {
 describe('findExactTranslation — quality predicate SQL', () => {
   it('derives the direct and two-hop predicates from the shared edgePassesSql fragment', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
     await findExactTranslation(db, input());
     const directStatement = log.find((e) => e.sql.includes('JOIN expression_edges edge ON'));
     expect(directStatement?.sql).toContain(edgePassesSql('edge'));
@@ -137,7 +137,7 @@ describe('findExactTranslation — quality predicate SQL', () => {
 describe('findExactTranslation — direct match', () => {
   it('short-circuits on a qualifying direct edge without invoking AI and with bounded queries', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       targetLocales: [{ expression_id: 2, locale_code: 'jpn-Jpan-JP' }],
       direct: [{
@@ -185,7 +185,7 @@ describe('findExactTranslation — direct match', () => {
 describe('findExactTranslation — two-hop match', () => {
   it('resolves through a pivot when no direct edge exists', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [],
       twoHop: [{
@@ -230,7 +230,7 @@ describe('findExactTranslation — two-hop match', () => {
 describe('findExactTranslation — non short-circuit cases', () => {
   it('does not short-circuit on a fragment exact match', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
     const result = await findExactTranslation(db, input({ canonicalText: 'Hello world' }));
     expect(result).toEqual({ status: 'no_match' });
     expect(log.filter((e) => e.sql.includes('JOIN expression_edges edge ON')).at(-1)?.sql).toContain('e.text = ?');
@@ -238,7 +238,7 @@ describe('findExactTranslation — non short-circuit cases', () => {
 
   it('does not short-circuit on a prefix match', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
     const result = await findExactTranslation(db, input());
     expect(result).toEqual({ status: 'no_match' });
     const statements = log.filter((e) => e.sql.includes('JOIN expression_edges edge ON'));
@@ -247,7 +247,7 @@ describe('findExactTranslation — non short-circuit cases', () => {
 
   it('matches a target by language id without requiring an exact locale link', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [{
         edge_id: 11,
@@ -270,7 +270,7 @@ describe('findExactTranslation — non short-circuit cases', () => {
 
   it('discards edges that fail the quality predicate', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [{
         edge_id: 5,
@@ -295,7 +295,7 @@ describe('findExactTranslation — non short-circuit cases', () => {
 describe('findExactTranslation — source resolution', () => {
   it('reports ambiguous candidates when an unspecified source spans multiple languages', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [
         {
@@ -319,7 +319,7 @@ describe('findExactTranslation — source resolution', () => {
   });
 
   it('resolves a single inferred source language with confidence 1', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [
         {
@@ -340,7 +340,7 @@ describe('findExactTranslation — source resolution', () => {
 
   it('propagates TARGET_LOCALE_NOT_FOUND for a missing or non-string target locale', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: null }, log);
+    const db = fakeDatabase({ locale: null }, log);
     await expect(findExactTranslation(db, input()))
       .rejects.toMatchObject({ code: 'TARGET_LOCALE_NOT_FOUND' });
     expect(log).toHaveLength(1);
@@ -350,7 +350,7 @@ describe('findExactTranslation — source resolution', () => {
 
   it('returns no_match for empty canonical text without querying', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
     const result = await findExactTranslation(db, input({ canonicalText: '   ' }));
     expect(result).toEqual({ status: 'no_match' });
     expect(log).toHaveLength(0);
@@ -359,7 +359,7 @@ describe('findExactTranslation — source resolution', () => {
 
 describe('findExactTranslation — ranking and limits', () => {
   it('ranks by score, marker count and text length, then exposes two alternatives', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [
         { edge_id: 2, source_expr_id: 1, source_text: 'Hello', source_lang_code: 'eng', target_expr_id: 2, target_text: 'A', score: 3, marker_count: 9 },
@@ -380,7 +380,7 @@ describe('findExactTranslation — ranking and limits', () => {
   });
 
   it('caps alternatives at two distinct target texts', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: ['W', 'X', 'Y', 'Z'].map((text, index) => ({
         edge_id: index + 1,
@@ -402,7 +402,7 @@ describe('findExactTranslation — ranking and limits', () => {
 
   it('bounds every candidate query with LIMIT', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [], twoHop: [] }, log);
     await findExactTranslation(db, input());
     for (const entry of log.filter((e) => e.sql.includes('JOIN expression_edges'))) {
       expect(entry.sql).toContain('LIMIT ?');
@@ -413,7 +413,7 @@ describe('findExactTranslation — ranking and limits', () => {
 describe('findExactTranslation — pivot allowlist', () => {
   it('ignores two-hop pivots outside the approved allowlist', async () => {
     const log: StatementLogEntry[] = [];
-    const db = fakeD1({
+    const db = fakeDatabase({
       locale: LOCALE_ROW,
       direct: [],
       twoHop: [{

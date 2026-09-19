@@ -25,23 +25,14 @@ async function createExpression(token: string, text: string, lang = 'nan'): Prom
   return body.data.expression.id;
 }
 
-// The admin helper writes directly to the local D1 file the running worker
-// persists to, then issues a role=admin JWT with the same secret.
-async function workerDbFile(): Promise<string> {
-  const dir = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject';
-  const candidates = fs.readdirSync(dir).filter((f) => f.endsWith('.sqlite'));
-  const { DatabaseSync } = await import('node:sqlite');
-  for (const file of candidates) {
-    const db = new DatabaseSync(`${dir}/${file}`);
-    try {
-      db.exec('SELECT 1 FROM users LIMIT 1');
-      db.close();
-      return `${dir}/${file}`;
-    } catch {
-      db.close();
-    }
-  }
-  throw new Error('D1 sqlite with users table not found');
+async function promoteUser(userId: number): Promise<void> {
+  const { Client } = await import('pg');
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error('DATABASE_URL is required for integration tests');
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try { await client.query("UPDATE users SET role = 'admin' WHERE id = $1", [userId]); }
+  finally { await client.end(); }
 }
 
 async function getAdminToken(): Promise<string> {
@@ -52,10 +43,7 @@ async function getAdminToken(): Promise<string> {
     body: JSON.stringify({ username, email: `${username}@example.com`, password: 'pass1234' }),
   });
   const body = (await res.json()) as { data: { token: string; user: { id: number; username: string } } };
-  const { DatabaseSync } = await import('node:sqlite');
-  const db = new DatabaseSync(await workerDbFile());
-  db.exec(`UPDATE users SET role = 'admin' WHERE id = ${body.data.user.id}`);
-  db.close();
+  await promoteUser(body.data.user.id);
   const secretKey = process.env.SECRET_KEY
     ?? fs.readFileSync('.dev.vars', 'utf8').match(/SECRET_KEY="([^"]+)"/)?.[1]
     ?? 'dev-secret-change-me-before-deploy';

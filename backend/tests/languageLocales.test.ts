@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import {
   LanguageLocaleError,
@@ -9,7 +10,7 @@ import { SourceError, findOrCreateSource } from '../src/services/sources';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const prepare = (sql: string) => {
     const handler = handlers[sql];
     return {
@@ -30,7 +31,7 @@ function fakeD1(handlers: Record<string, Handler>) {
       },
     };
   };
-  return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+  return { prepare } as unknown as import('../src/db/database').Database;
 }
 
 function captureCode(fn: () => void): string {
@@ -108,7 +109,7 @@ describe('buildLanguageLocaleCode', () => {
 
 describe('assertReferenceCodesExist', () => {
   it('resolves when all reference codes exist', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT 1 FROM languages WHERE code = ?': () => ({ ok: 1 }),
       'SELECT 1 FROM scripts WHERE code = ?': () => ({ ok: 1 }),
       'SELECT 1 FROM regions WHERE code = ?': () => ({ ok: 1 }),
@@ -117,7 +118,7 @@ describe('assertReferenceCodesExist', () => {
   });
 
   it('throws INVALID_LANG_CODE when the language is missing', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT 1 FROM languages WHERE code = ?': () => null,
       'SELECT 1 FROM scripts WHERE code = ?': () => ({ ok: 1 }),
       'SELECT 1 FROM regions WHERE code = ?': () => ({ ok: 1 }),
@@ -129,7 +130,7 @@ describe('assertReferenceCodesExist', () => {
 describe('findOrCreateSource', () => {
   it('returns the existing source id without inserting', async () => {
     let inserted = 0;
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM sources WHERE type = ? AND name = ?': () => ({ id: 12 }),
       'INSERT INTO sources (type, name) VALUES (?, ?) RETURNING id': () => {
         inserted += 1;
@@ -142,7 +143,7 @@ describe('findOrCreateSource', () => {
 
   it('creates a missing source and returns the new integer id', async () => {
     let created = 0;
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT id FROM sources WHERE type = ? AND name = ?': () => null,
       'INSERT INTO sources (type, name) VALUES (?, ?) RETURNING id': () => {
         created += 1;
@@ -155,7 +156,7 @@ describe('findOrCreateSource', () => {
   });
 
   it('rejects unknown type and empty name with INVALID_SOURCE', async () => {
-    const db = fakeD1({});
+    const db = fakeDatabase({});
     expect(await captureAsyncCode(() => findOrCreateSource(db, { type: 'wiki', name: 'x' }))).toBe('INVALID_SOURCE');
     expect(await captureAsyncCode(() => findOrCreateSource(db, { type: 'url', name: '   ' }))).toBe('INVALID_SOURCE');
   });

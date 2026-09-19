@@ -24,7 +24,7 @@ describe('canonicalizeExpressionText', () => {
 });
 
 describe('expressionPrefixUpperBound', () => {
-  it('returns the next SQLite BINARY text range boundary', () => {
+  it('returns the next bytewise text text range boundary', () => {
     expect(expressionPrefixUpperBound('ca')).toBe('cb');
     expect(expressionPrefixUpperBound('食')).toBe('飠');
     expect(expressionPrefixUpperBound('a\u{10ffff}')).toBe('b');

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const schema = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
+const schema = readFileSync(new URL('../postgres/schema.sql', import.meta.url), 'utf8');
 
 function explicitIndexes(): string[] {
   return [...schema.matchAll(/CREATE (?:UNIQUE )?INDEX (\w+)/g)].map((match) => match[1]);

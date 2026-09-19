@@ -1,9 +1,10 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { CANDIDATE_SQL, resolveBundle } from '../src/services/localizationDomain';
 
 type Handler = () => unknown;
 
-function fakeD1(handlers: Record<string, Handler>) {
+function fakeDatabase(handlers: Record<string, Handler>) {
   const prepare = (sql: string) => {
     const handler = handlers[sql];
     return {
@@ -20,12 +21,12 @@ function fakeD1(handlers: Record<string, Handler>) {
       },
     };
   };
-  return { prepare } as unknown as import('@cloudflare/workers-types').D1Database;
+  return { prepare } as unknown as import('../src/db/database').Database;
 }
 
 describe('resolveBundle', () => {
   it('uses an active primary locale candidate when its placeholders match', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC':
         () => ({ results: [{ message_key: 'greeting', source_text: 'Hello {name}', placeholders_json: '["name"]' }] }),
       'SELECT status FROM ui_locales WHERE project_id = ? AND locale_id = (SELECT id FROM language_locales WHERE code = ?)':
@@ -38,7 +39,7 @@ describe('resolveBundle', () => {
   });
 
   it('falls back to English source when no active locale matches', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       'SELECT message_key, source_text, placeholders_json FROM ui_messages WHERE project_id = ? AND status = ? ORDER BY message_key ASC':
         () => ({
           results: [

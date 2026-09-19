@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type OpenAI from 'openai';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../src/db/database';
 import {
   GENERATION_TIMEOUT_MS,
   MAX_ALTERNATIVES,
@@ -27,7 +27,7 @@ interface StatementLog {
   args: unknown[];
 }
 
-function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
+function fakeDatabase(handler: Handler, log: StatementLog[] = []): Database {
   return {
     prepare(sql: string) {
       return {
@@ -44,7 +44,7 @@ function fakeD1(handler: Handler, log: StatementLog[] = []): D1Database {
         },
       };
     },
-  } as unknown as D1Database;
+  } as unknown as Database;
 }
 
 interface RouteSetup {
@@ -207,7 +207,7 @@ function request(overrides: Partial<RunTranslationRequest> = {}): RunTranslation
 }
 
 interface Harness {
-  db: D1Database;
+  db: Database;
   ai: OpenAI;
   aiCalls: AiCall[];
   controller: AbortController;
@@ -216,7 +216,7 @@ interface Harness {
 }
 
 function harness(handler: Handler, aiConfig: FakeAiConfig = {}): Harness {
-  const db = fakeD1(handler);
+  const db = fakeDatabase(handler);
   const { ai, calls } = fakeAi(aiConfig);
   const collector: string[] = [];
   const controller = new AbortController();
@@ -539,7 +539,7 @@ describe('runTranslation — assisted path', () => {
       locale: LOCALE_ROW,
       ...EMPTY_EXACT,
       candidate: [expr(1, 'Hello')],
-      retrieval: { direct: () => { throw new Error('D1 failure'); } },
+      retrieval: { direct: () => { throw new Error('database failure'); } },
     }), {
       planner: () => plannerEnvelope('eng', 0.9),
       generation: () => 'Phew',

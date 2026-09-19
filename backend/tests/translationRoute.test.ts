@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { SignJWT } from 'jose';
-import type { Ai, D1Database } from '@cloudflare/workers-types';
+import type { Ai } from '@cloudflare/workers-types';
+import type { Database } from '../src/db/database';
 import translation from '../src/routes/translation';
 import { envelopeLine, runTranslation } from '../src/services/translation/orchestrator';
 
@@ -30,7 +31,7 @@ const LOCALES: Record<string, { id: number; language_id: number; lang_code: stri
   'yue-Hant-HK': { id: 12, language_id: 99, lang_code: 'yue' },
 };
 
-function fakeD1(overrides: Record<string, Handler> = {}): D1Database {
+function fakeDatabase(overrides: Record<string, Handler> = {}): Database {
   const handlers: Record<string, Handler> = {
     [USER_SQL]: () => ({ id: 1, username: 'tester', role: 'user' }),
     [LANG_SQL]: (args) => LANGUAGES[args[0] as string] ?? null,
@@ -50,7 +51,7 @@ function fakeD1(overrides: Record<string, Handler> = {}): D1Database {
       },
     }),
   });
-  return { prepare } as unknown as D1Database;
+  return { prepare } as unknown as Database;
 }
 
 const fakeAI = {} as Ai;
@@ -65,14 +66,14 @@ interface PostOptions {
   body?: BodyInit | null;
   token?: string | null;
   headers?: Record<string, string>;
-  db?: D1Database;
+  db?: Database;
   rawBody?: boolean;
 }
 
 async function post(options: PostOptions = {}): Promise<Response> {
-  const app = new Hono<{ Bindings: { DB: D1Database; SECRET_KEY: string; AI: Ai } }>();
+  const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string; AI: Ai } }>();
   app.route('/translate', translation);
-  const env = { DB: options.db ?? fakeD1(), SECRET_KEY, AI: fakeAI };
+  const env = { DB: options.db ?? fakeDatabase(), SECRET_KEY, AI: fakeAI };
   const token = options.token === undefined ? await authenticate() : options.token;
   const headers: Record<string, string> = { 'content-type': 'application/json', ...options.headers };
   if (token) headers.authorization = `Bearer ${token}`;
@@ -200,9 +201,9 @@ describe('POST /translate validation mapping', () => {
   });
 
   it('does not mask a server-side fault as VALIDATION_FAILED', async () => {
-    const db = fakeD1({
+    const db = fakeDatabase({
       [LANG_SQL]: () => {
-        throw new Error('D1 unavailable');
+        throw new Error('database unavailable');
       },
     });
     const response = await post({

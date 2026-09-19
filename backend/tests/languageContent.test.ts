@@ -1,10 +1,11 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { getLanguageDetail, listLanguageExpressions, listLanguagesWithContent } from '../src/services/languageContent';
 import { parseLocaleHints } from '../src/services/localizedName';
 
 type Handler = (params: unknown[]) => unknown;
 
-function fakeD1(matchers: Array<{ sql: string; handler: Handler }>) {
+function fakeDatabase(matchers: Array<{ sql: string; handler: Handler }>) {
   return {
     prepare(sql: string) {
       const entries = matchers.filter((m) => sql.includes(m.sql));
@@ -18,7 +19,7 @@ function fakeD1(matchers: Array<{ sql: string; handler: Handler }>) {
         },
       };
     },
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+  } as unknown as import('../src/db/database').Database;
 }
 
 const LANGUAGE_ROW_SQL = 'SELECT id,code,name_en FROM languages WHERE code=?';
@@ -28,12 +29,12 @@ const CANDIDATE_SQL = 'WITH candidate_rows AS';
 
 describe('getLanguageDetail', () => {
   it('returns null for an unknown language code', async () => {
-    const db = fakeD1([{ sql: LANGUAGE_ROW_SQL, handler: () => null }]);
+    const db = fakeDatabase([{ sql: LANGUAGE_ROW_SQL, handler: () => null }]);
     expect(await getLanguageDetail(db, 'zzz')).toBeNull();
   });
 
   it('labels locale, region and missing coordinates', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: LANGUAGE_ROW_SQL, handler: () => ({ id: 1, code: 'cmn', name_en: 'Mandarin Chinese' }) },
       { sql: 'SELECT 1 FROM expression_edges g', handler: () => ({ total: 4 }) },
       { sql: 'FROM expression_readings r', handler: () => ({ total: 2 }) },
@@ -77,7 +78,7 @@ describe('getLanguageDetail', () => {
           },
         };
       },
-    } as unknown as import('@cloudflare/workers-types').D1Database;
+    } as unknown as import('../src/db/database').Database;
 
     const filtered = await getLanguageDetail(db, 'cmn', {}, 'cmn-Hans-CN');
     expect(filtered?.expression_count).toBe(3);
@@ -90,7 +91,7 @@ describe('getLanguageDetail', () => {
 
 describe('listLanguagesWithContent', () => {
   it('returns paged summaries from language_statistics and resolves names by the UI locale', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'COUNT(*) AS total FROM (', handler: () => ({ total: 2 }) },
       { sql: 'JOIN language_statistics s', handler: () => ({ results: [
         { code: 'cmn', name_en: 'Mandarin Chinese', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
@@ -111,7 +112,7 @@ describe('listLanguagesWithContent', () => {
   });
 
   it('falls back to name_en when no locale translation exists', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'COUNT(*) AS total FROM (', handler: () => ({ total: 1 }) },
       { sql: 'JOIN language_statistics s', handler: () => ({ results: [
         { code: 'zzz', name_en: 'Some language', expression_count: 3, locale_count: 2, active_ui_locale_count: 1 },
@@ -128,7 +129,7 @@ describe('listLanguagesWithContent', () => {
 
   it('applies the LIKE filter when a search query is present', async () => {
     const sqls: string[] = [];
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'COUNT(*) AS total FROM (', handler: () => { sqls.push('count'); return { total: 0 }; } },
       { sql: 'l.name_en LIKE ?', handler: () => { sqls.push('filter'); return { results: [] }; } },
     ]);
@@ -140,7 +141,7 @@ describe('listLanguagesWithContent', () => {
 
 describe('listLanguageExpressions', () => {
   it('returns null when the language does not exist', async () => {
-    const db = fakeD1([{ sql: 'SELECT id FROM languages WHERE code=?', handler: () => null }]);
+    const db = fakeDatabase([{ sql: 'SELECT id FROM languages WHERE code=?', handler: () => null }]);
     expect(await listLanguageExpressions(db, 'zzz', { q: '', locale: '', sort: 'hot', limit: 20, offset: 0, uiLocale: '', secondaryUiLocale: '' })).toBeNull();
   });
 
@@ -154,7 +155,7 @@ describe('listLanguageExpressions', () => {
           async all() { return { results: [] }; },
         }; } };
       },
-    } as unknown as import('@cloudflare/workers-types').D1Database;
+    } as unknown as import('../src/db/database').Database;
 
     for (const sort of ['hot', 'new', 'alpha'] as const) {
       await listLanguageExpressions(db, 'nan', { q: '', locale: '', sort, limit: 20, offset: 0, uiLocale: '', secondaryUiLocale: '' });
@@ -167,7 +168,7 @@ describe('listLanguageExpressions', () => {
   });
 
   it('filters by text and locale and computes reading/mapping counts', async () => {
-    const db = fakeD1([
+    const db = fakeDatabase([
       { sql: 'SELECT id FROM languages WHERE code=?', handler: () => ({ id: 1 }) },
       { sql: 'SELECT COUNT(*) AS total FROM expressions e WHERE e.language_id=?', handler: () => ({ total: 1 }) },
       { sql: 'SELECT e.id,? AS lang_code', handler: () => ({ results: [

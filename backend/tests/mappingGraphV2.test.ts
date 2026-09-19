@@ -1,3 +1,4 @@
+import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
 import { getMappingGraph } from '../src/services/mappingGraph';
 
@@ -10,7 +11,7 @@ type NodeSeed = Record<number, { text: string; lang_code: string; language_name?
  * 2. edge lookup  SELECT ... FROM expression_edges WHERE ... IN (...) AND mapping relation mask
  * 3. node lookup  SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ... WHERE e.id IN (...)
  */
-function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
+function fakeDatabase(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
   return {
     prepare(sql: string) {
       return {
@@ -45,7 +46,7 @@ function fakeD1(nodes: NodeSeed, edges: Edge[], maxBindVariables?: number) {
         },
       };
     },
-  } as unknown as import('@cloudflare/workers-types').D1Database;
+  } as unknown as import('../src/db/database').Database;
 }
 
 describe('getMappingGraph', () => {
@@ -62,7 +63,7 @@ describe('getMappingGraph', () => {
       { id: 3, expression_a_id: 3, expression_b_id: 2, relation_mask: 1, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 3);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 3);
 
     expect(graph?.nodes.map((node) => node.expression_id)).toEqual([1, 2, 3]);
     expect(graph?.nodes.map((node) => node.depth)).toEqual([0, 1, 2]);
@@ -80,7 +81,7 @@ describe('getMappingGraph', () => {
       { id: 1, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 1);
 
     expect(graph?.nodes).toEqual([
       { expression_id: 1, text: '食', lang_code: 'nan', language_name: 'Min Nan Chinese', depth: 0 },
@@ -97,7 +98,7 @@ describe('getMappingGraph', () => {
       { id: 1, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 1);
 
     expect(graph?.nodes.every((node) => typeof node.homograph_index === 'number')).toBe(true);
     expect(graph?.nodes.map((node) => node.homograph_index)).toEqual([1, 3]);
@@ -115,7 +116,7 @@ describe('getMappingGraph', () => {
       { id: 2, expression_a_id: 3, expression_b_id: 4, relation_mask: 4, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 3, 1);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 3, 1);
 
     expect(graph?.nodes.map((node) => node.expression_id)).toEqual([3, 4]);
     expect(graph?.edges.map((edge) => edge.edge_id)).toEqual([2]);
@@ -137,7 +138,7 @@ describe('getMappingGraph', () => {
       { id: 4, expression_a_id: 3, expression_b_id: 5, relation_mask: 1, score: 0 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 2, 'eng');
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 2, 'eng');
 
     expect(graph?.nodes.map((node) => node.expression_id).sort()).toEqual([1, 2, 4]);
     expect(graph?.layer_counts).toEqual({ 0: 1, 1: 1, 2: 1, 3: 0 });
@@ -160,7 +161,7 @@ describe('getMappingGraph', () => {
       { id: 4, expression_a_id: 3, expression_b_id: 5, relation_mask: 1, score: 1 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 2, 'enG, rus');
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 2, 'enG, rus');
 
     expect(graph?.nodes.map((node) => node.expression_id).sort()).toEqual([1, 2, 3, 4, 5]);
     expect(graph?.nodes.map((node) => node.lang_code).sort()).toEqual(['eng', 'eng', 'rus', 'rus', 'ukr']);
@@ -175,7 +176,7 @@ describe('getMappingGraph', () => {
       { id: 1, expression_a_id: 1, expression_b_id: 2, relation_mask: 1, score: 2 },
     ];
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 2, 'zsm');
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 2, 'zsm');
 
     expect(graph?.nodes.map((node) => node.expression_id)).toEqual([1]);
     expect(graph?.edges).toEqual([]);
@@ -191,7 +192,7 @@ describe('getMappingGraph', () => {
       edges.push({ id: index + 1, expression_a_id: 1, expression_b_id: id, relation_mask: 1, score: 2 });
     }
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges), 1, 1);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges), 1, 1);
 
     // Root already counts toward the limit, so 199 of the 201 candidates fit.
     expect(graph).toMatchObject({ truncated: true, omitted_count: 2, layer_counts: { 0: 1, 1: 199, 2: 0, 3: 0 } });
@@ -201,7 +202,7 @@ describe('getMappingGraph', () => {
     )).toBe(true);
   });
 
-  it('keeps three-hop traversal within the D1 bind-variable limit', async () => {
+  it('keeps three-hop traversal within the database bind-variable limit', async () => {
     const nodes: NodeSeed = { 1: { text: 'root', lang_code: 'eng' } };
     const edges: Edge[] = [];
     for (let index = 0; index < 51; index += 1) {
@@ -215,7 +216,7 @@ describe('getMappingGraph', () => {
       );
     }
 
-    const graph = await getMappingGraph(fakeD1(nodes, edges, 100), 1, 3);
+    const graph = await getMappingGraph(fakeDatabase(nodes, edges, 100), 1, 3);
 
     expect(graph).toMatchObject({ resolved_hops: 3, truncated: false });
     expect(graph?.nodes).toHaveLength(103);
