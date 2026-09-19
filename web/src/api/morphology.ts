@@ -1,4 +1,6 @@
 import api from './client'
+import type { ExpressionTarget } from './expressions'
+import { targetPath } from './expressions'
 import type { LocaleHints } from './languageIdentity'
 
 export interface MorphologicalFeature {
@@ -24,6 +26,7 @@ export interface FormEdgeExpressionSummary {
   id: string
   text: string
   lang_code: string
+  homograph_index?: number
   language_name: string
 }
 
@@ -63,7 +66,7 @@ export interface CreateFormEdgeResult extends FormEdgeAsForm {
   created: boolean
 }
 
-const path = (id: string) => `/expressions/${encodeURIComponent(id)}`
+const path = (target: ExpressionTarget) => targetPath(target)
 const unwrap = <T>(result: { data: { data: T } }) => result.data.data
 
 function hintParams(hints?: LocaleHints): { ui_locale?: string; secondary_ui_locale?: string } {
@@ -83,23 +86,23 @@ export async function listMorphologicalFeatures(
 }
 
 export async function getExpressionFormEdges(
-  id: string,
+  target: ExpressionTarget,
   options: { limit?: number } & LocaleHints = {},
   signal?: AbortSignal,
 ): Promise<ExpressionFormEdges> {
   const { limit = 50, ...hints } = options
   return unwrap<ExpressionFormEdges>(
-    await api.get(`${path(id)}/form-edges`, { params: { limit, ...hintParams(hints) }, signal }),
+    await api.get(`${path(target)}/form-edges`, { params: { limit, ...hintParams(hints) }, signal }),
   )
 }
 
 export async function createFormEdge(
-  id: string,
+  target: ExpressionTarget,
   input: CreateFormEdgeInput,
   hints?: LocaleHints,
   signal?: AbortSignal,
 ): Promise<CreateFormEdgeResult> {
   return unwrap<CreateFormEdgeResult>(
-    await api.post(`${path(id)}/form-edges`, input, { params: hintParams(hints), signal }),
+    await api.post(`${path(target)}/form-edges`, input, { params: hintParams(hints), signal }),
   )
 }

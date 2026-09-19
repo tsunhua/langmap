@@ -109,7 +109,7 @@ export const en = {
     missing: 'Can’t find what you need?',
     contributeMapping: 'Contribute a mapping →',
   },
-  errors: { loadFailed: 'Unable to load', pageMissing: 'Page not found', home: 'Back home' },
+  errors: { loadFailed: 'Unable to load', pageMissing: 'Page not found', home: 'Back home', expressionLinkExpired: 'This link uses an outdated address. Search for the expression to find its current page.' },
   languageSwitcher: {
     recent: 'Recent languages',
     browserSuggested: 'Suggested by your browser',

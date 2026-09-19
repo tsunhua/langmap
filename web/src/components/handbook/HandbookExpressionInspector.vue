@@ -5,11 +5,13 @@ import HandbookRelationPreview from '@/components/handbook/HandbookRelationPrevi
 import ExpressionEvidenceList from '@/components/mapping/ExpressionEvidenceList.vue'
 import type { ExpressionReading, LocaleAttestation } from '@/api/expressions'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
+import { expressionPath } from '@/utils/expressionUrl'
 
 export interface HandbookExpressionDetail {
   id: string
   text: string
   lang_code: string
+  homograph_index?: number
   language_profile_code?: string | null
   language_name?: string | null
   region_name?: string | null
@@ -88,7 +90,7 @@ const { t } = useI18n()
         @select="$emit('selectExpression', $event)"
       />
 
-      <router-link :to="`/mapping/${expression.id}`" class="hi-detail-link">
+      <router-link :to="expressionPath(expression.lang_code, expression.text, expression.homograph_index ?? 1)" class="hi-detail-link">
         {{ t('handbook.viewFullGraph') }}
         <ArrowUpRight :size="15" aria-hidden="true" />
       </router-link>

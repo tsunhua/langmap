@@ -10,6 +10,16 @@ describe('API cache policy', () => {
     expect(getCachePolicy('https://langmap.io/api/v2/expressions/example/mappings')?.edgeSeconds).toBe(600);
   });
 
+  it('caches expression reads addressed by text keys like numeric ids', () => {
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/en/hello')).not.toBeNull();
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/en/hello~2')).not.toBeNull();
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/en/hello/edges')).not.toBeNull();
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/123')).not.toBeNull();
+    // Graphs and mutation sub-resources stay un-cached, matching the numeric form.
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/en/hello/graph')).toBeNull();
+    expect(getCachePolicy('https://langmap.io/api/v2/expressions/en/hello/readings')).toBeNull();
+  });
+
   it('uses short content TTLs for localization reads', () => {
     expect(getCachePolicy('https://langmap.io/api/v2/localization/projects/langmap-web/messages?primary=cmn-Hant-TW')?.edgeSeconds).toBe(60);
     expect(getCachePolicy('https://langmap.io/api/v2/language-locales')?.staleSeconds).toBe(0);

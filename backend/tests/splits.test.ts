@@ -40,14 +40,14 @@ function captureAsyncCode(fn: () => Promise<unknown>): Promise<string> {
   );
 }
 
-const SOURCE_SQL = 'SELECT language_id,text,homograph_index,pos_mask,source_id FROM expressions WHERE id=?';
+const SOURCE_SQL = 'SELECT e.language_id,e.text,e.homograph_index,e.pos_mask,e.source_id,l.code AS lang_code FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
 const MAX_IDX_SQL = 'SELECT MAX(homograph_index) AS max_idx FROM expressions WHERE language_id=? AND text=?';
 const TARGET_INSERT_SQL = 'INSERT INTO expressions(language_id,text,homograph_index,pos_mask,source_id,created_by) VALUES(?,?,?,?,?,?) RETURNING id';
 const SPLIT_INSERT_SQL = 'INSERT INTO expression_splits(source_expression_id,target_expression_id,created_by) VALUES(?,?,?) RETURNING id';
 const UPDATE_EDGE_SQL = 'UPDATE expression_edges SET expression_a_id=?,expression_b_id=? WHERE id=?';
 const MOVE_INSERT_SQL = 'INSERT INTO expression_split_moves(split_id,edge_id) VALUES(?,?)';
 
-const sourceExpression = { language_id: 1, text: '食', homograph_index: 1, pos_mask: 0, source_id: null };
+const sourceExpression = { language_id: 1, text: '食', homograph_index: 1, pos_mask: 0, source_id: null, lang_code: 'nan' };
 
 function edgeQuery(edgeIds: number[]): string {
   return `SELECT id,expression_a_id,expression_b_id FROM expression_edges WHERE id IN (${edgeIds.map(() => '?').join(',')})`;

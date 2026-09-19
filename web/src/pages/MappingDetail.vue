@@ -25,6 +25,7 @@ import { useLocaleParams } from '@/composables/useLocaleParams'
 import { useLocalizationStore } from '@/stores/localization'
 import { useLanguagesStore } from '@/stores/languages'
 import { readingSchemeLabel } from '@/utils/readingLabel'
+import { expressionPath, mapLensPath, parseExpressionTextSegment } from '@/utils/expressionUrl'
 import { groupReadings, hasMultipleReadingSchemes, uniqueReadingLocaleLabels, uniqueReadingLocaleCodes } from '@/utils/readingGroups'
 import type { ReadingGroup } from '@/utils/readingGroups'
 
@@ -32,7 +33,17 @@ const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const id = computed(() => decodeURIComponent(route.params.id as string))
+
+// Stable text key from the route; null on legacy numeric urls whose id could
+// not be canonicalized (the page then shows its link-expired state).
+const key = computed(() => {
+  const lang = route.params.lang
+  const text = route.params.text
+  if (typeof lang !== 'string' || typeof text !== 'string') return null
+  const parsed = parseExpressionTextSegment(text)
+  return { lang_code: lang, text: parsed.text, homograph_index: parsed.homograph_index }
+})
+const anchorId = computed(() => expr.value?.expression.id ?? null)
 
 const { detail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
@@ -124,15 +135,15 @@ function initFromUrl() {
     : []
 }
 
-async function loadGraphPair(requestedId: string, requestedHops: 1 | 2 | 3) {
+async function loadGraphPair(requestedKey: { lang_code: string; text: string; homograph_index: number }, requestedHops: 1 | 2 | 3) {
   const targetLanguage = targetLanguageCodes.value.join(',') || undefined
-  const displayPromise = mappingGraph(requestedId, requestedHops, localeParams.value, targetLanguage)
+  const displayPromise = mappingGraph(requestedKey, requestedHops, localeParams.value, targetLanguage)
   if (!targetLanguage) {
     const display = await displayPromise
     return { display, options: display }
   }
 
-  const optionPromise = mappingGraph(requestedId, requestedHops, localeParams.value)
+  const optionPromise = mappingGraph(requestedKey, requestedHops, localeParams.value)
   const [displayResult, optionResult] = await Promise.all([
     displayPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
     optionPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
@@ -150,8 +161,14 @@ function syncUrl() {
 }
 
 async function load() {
+  if (!key.value) {
+    expr.value = null
+    graph.value = null
+    loadError.value = t('errors.expressionLinkExpired')
+    return
+  }
   const request = ++loadRequest
-  const requestedId = id.value
+  const requestedKey = key.value
   const requestedHops = hops.value
   ++graphRequest
   expr.value = null
@@ -162,8 +179,8 @@ async function load() {
   loadError.value = ''
   try {
     const [nextExpression, nextGraph] = await Promise.all([
-      detail(requestedId, localeParams.value),
-      loadGraphPair(requestedId, requestedHops),
+      detail(requestedKey, localeParams.value),
+      loadGraphPair(requestedKey, requestedHops),
     ])
     if (request !== loadRequest) return
     expr.value = nextExpression
@@ -183,7 +200,7 @@ function trySelectNodeFromUrl() {
   if (!graph.value) return
   if (!n) {
     // Opening a mapping should inspect the expression represented by the URL.
-    selectedNodeId.value = id.value
+    selectedNodeId.value = anchorId.value
     return
   }
   const nodeId = typeof n === 'string' ? n : null
@@ -216,7 +233,7 @@ onUnmounted(() => {
   }
 })
 
-watch(id, () => {
+watch(key, () => {
   collapsedIds.value = new Set()
   selectedNodeId.value = null
   morphFormOpen.value = false
@@ -227,20 +244,21 @@ watch(id, () => {
 watch([() => localization.locale, () => localization.secondary], () => { load() })
 
 async function changeHops(h: number) {
+  if (!key.value) return
   const nextHops = Math.min(Math.max(Math.trunc(h), 1), maxHops.value) as 1 | 2 | 3
   const request = ++graphRequest
-  const requestedId = id.value
+  const requestedKey = key.value
   hops.value = nextHops
   loadError.value = ''
   updatingHops.value = true
   try {
-    const nextGraph = await loadGraphPair(requestedId, nextHops)
-    if (request !== graphRequest || requestedId !== id.value) return
+    const nextGraph = await loadGraphPair(requestedKey, nextHops)
+    if (request !== graphRequest || requestedKey !== key.value) return
     graph.value = nextGraph.display
     optionGraph.value = nextGraph.options
     trySelectNodeFromUrl()
   } catch (e: any) {
-    if (request !== graphRequest || requestedId !== id.value) return
+    if (request !== graphRequest || requestedKey !== key.value) return
     loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
     // Keep the selector and URL aligned with the graph still displayed.
     hops.value = graph.value?.requested_hops ?? 1
@@ -257,7 +275,7 @@ watch(targetLanguageCodes, () => { syncUrl(); if (graph.value) void changeHops(h
 watch(selectedNodeId, () => syncUrl())
 
 watch(selectedNodeId, async (nodeId) => {
-  if (!nodeId || nodeId === id.value) {
+  if (!nodeId || nodeId === anchorId.value) {
     selectedExpr.value = null
     return
   }
@@ -292,8 +310,9 @@ function toggleCollapse(nodeId: string) {
 }
 
 function navigateToNode(nodeId: string) {
-  if (nodeId === id.value) return
-  router.push(`/mapping/${nodeId}`)
+  if (nodeId === anchorId.value) return
+  const node = graph.value?.nodes.find((candidate) => candidate.expression_id === nodeId)
+  if (node) router.push(expressionPath(node.lang_code, node.text, node.homograph_index))
 }
 
 function selectNodeFromList(nodeId: string) {
@@ -335,13 +354,13 @@ async function submitQuickAdd() {
       text,
       lang_code: languageCode,
     })
-    const newId = (result as { expression?: { id?: string } }).expression?.id
+    const newExpression = result.expression
     closeQuickAdd()
     quickAddText.value = ''
     quickAddLang.value = ''
     quickAddRegion.value = ''
-    if (newId && newId !== id.value) {
-      router.push(`/mapping/${newId}`)
+    if (newExpression && !(newExpression.lang_code === key.value?.lang_code && newExpression.text === key.value?.text && newExpression.homograph_index === key.value?.homograph_index)) {
+      router.push(expressionPath(newExpression.lang_code, newExpression.text, newExpression.homograph_index))
     }
   } catch (e: any) {
     quickAddError.value = e.response?.data?.message || e.response?.data?.error || t('mappingDetail.addFailed')
@@ -353,7 +372,7 @@ async function submitQuickAdd() {
 async function openSplitDialog() {
   splitError.value = ''
   try {
-    splitEdges.value = (await getExpressionEdges(id.value)).items
+    splitEdges.value = (await getExpressionEdges(key.value!)).items
     showSplitDialog.value = true
   } catch (error: any) {
     splitError.value = error.response?.data?.error || t('mappingDetail.splitLoadFailed')
@@ -365,9 +384,9 @@ async function confirmSplit(edgeIds: string[]) {
   splitSubmitting.value = true
   splitError.value = ''
   try {
-    const result = await splitExpression(id.value, edgeIds)
+    const result = await splitExpression(key.value!, edgeIds)
     showSplitDialog.value = false
-    await router.push(`/mapping/${encodeURIComponent(result.target_expression_id)}`)
+    await router.push(expressionPath(result.target.lang_code, result.target.text, result.target.homograph_index))
   } catch (error: any) {
     splitError.value = error.response?.data?.error || t('mappingDetail.splitFailed')
   } finally {
@@ -392,7 +411,7 @@ const indirectCount = computed(() => (graph.value?.layer_counts[2] ?? 0) + (grap
 
 const hasMappings = computed(() => (graph.value?.nodes.length ?? 0) > 1)
 
-const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === id.value)?.language_name ?? '')
+const anchorLangName = computed(() => graph.value?.nodes.find((node) => node.expression_id === anchorId.value)?.language_name ?? '')
 
 const anchorImageUrl = computed(() => {
   if (expr.value?.expression.lang_code !== 'x-image') return null
@@ -435,7 +454,7 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
     <nav class="crumbs" :aria-label="t('mappingDetail.breadcrumb')">
       <router-link to="/">{{ t('mappingDetail.home') }}</router-link>
       <span class="sep">/</span>
-      <span v-if="anchorImageUrl" class="crumb-image-id">{{ expr.expression.id }}</span>
+      <span v-if="anchorImageUrl" class="crumb-image-id">{{ expr.expression.text }}</span>
       <span v-else>{{ expr.expression.text }}</span>
     </nav>
 
@@ -468,7 +487,7 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
       <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
         <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
       </button>
-      <router-link v-if="canViewMap" :to="`/map/${encodeURIComponent(expr.expression.id)}`" class="btn btn-sm">
+      <router-link v-if="canViewMap" :to="mapLensPath(expr.expression.lang_code, expr.expression.text, expr.expression.homograph_index)" class="btn btn-sm">
         <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
       </router-link>
       <button
@@ -516,9 +535,9 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
     <MorphologyPanel
       v-if="expr.expression.lang_code !== 'x-image' && expr.expression.lang_code !== 'x-emoji'"
       v-model:form-open="morphFormOpen"
-      :expression-id="id"
       :lang-code="expr.expression.lang_code"
       :text="expr.expression.text"
+      :homograph-index="expr.expression.homograph_index"
     />
 
     <div class="nb-head">

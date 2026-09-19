@@ -6,6 +6,7 @@ import { getLanguageDetail, type LanguageLocale } from '@/api/languageIdentity'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import { getPrimaryIncomingEdge } from '@/components/mapping/mappingGraphModel'
+import { expressionPath, parseExpressionTextSegment } from '@/utils/expressionUrl'
 import type { MappingGraphResponse } from '@/components/mapping/mappingGraphTypes'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -17,7 +18,16 @@ const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
-const id = computed(() => route.params.id as string)
+
+// Stable text key from the route; null on legacy numeric urls whose id could
+// not be canonicalized (the page then shows its link-expired state).
+const key = computed(() => {
+  const lang = route.params.lang
+  const text = route.params.text
+  if (typeof lang !== 'string' || typeof text !== 'string') return null
+  const parsed = parseExpressionTextSegment(text)
+  return { lang_code: lang, text: parsed.text, homograph_index: parsed.homograph_index }
+})
 
 const { detail: getExpressionDetail, mappingGraph } = useExpressions()
 const localeParams = useLocaleParams()
@@ -25,7 +35,7 @@ const localization = useLocalizationStore()
 
 const mapEl = ref<HTMLElement>()
 let map: L.Map | null = null
-const anchor = ref<{ id: string; lang_code: string; text: string } | null>(null)
+const anchor = ref<{ id: string; lang_code: string; text: string; homograph_index: number } | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const langMap = ref<Record<string, LanguageLocale>>({})
 const loading = ref(true)
@@ -37,6 +47,7 @@ interface Pin {
   expression_id: string
   text: string
   lang_code: string
+  homograph_index: number
   score: number
   lat: number
   lng: number
@@ -59,6 +70,7 @@ const pins = computed<Pin[]>(() => {
       expression_id: n.expression_id,
       text: n.text,
       lang_code: n.lang_code,
+      homograph_index: n.homograph_index,
       score,
       lat: lang.latitude,
       lng: lang.longitude,
@@ -86,7 +98,8 @@ const anchorLang = computed(() => anchor.value ? langMap.value[anchor.value.lang
 function sync(exprId: string | null) { activeId.value = exprId }
 
 function openMapping(exprId: string) {
-  router.push(`/mapping/${exprId}`)
+  const node = graph.value?.nodes.find((candidate) => candidate.expression_id === exprId)
+  if (node) router.push(expressionPath(node.lang_code, node.text, node.homograph_index))
 }
 
 function tierColor(tier: string) {
@@ -128,16 +141,21 @@ function addMarkers() {
 }
 
 async function load() {
+  if (!key.value) {
+    loading.value = false
+    loadError.value = t('errors.expressionLinkExpired')
+    return
+  }
   const request = ++loadRequest
-  const requestedId = id.value
+  const requestedKey = key.value
   loading.value = true
   loadError.value = ''
   anchor.value = null
   graph.value = null
   try {
     const [expressionDetail, g] = await Promise.all([
-      getExpressionDetail(requestedId, localeParams.value),
-      mappingGraph(requestedId, 2, localeParams.value),
+      getExpressionDetail(requestedKey, localeParams.value),
+      mappingGraph(requestedKey, 2, localeParams.value),
     ])
     if (request !== loadRequest) return
     const languageCodes = [...new Set([expressionDetail.expression.lang_code, ...g.nodes.map((node) => node.lang_code)])].sort()
@@ -187,7 +205,7 @@ function initMap() {
 }
 
 onMounted(load)
-watch(id, () => {
+watch(key, () => {
   if (map) { map.remove(); map = null }
   load()
 })
@@ -212,7 +230,7 @@ onUnmounted(cleanup)
 
     <template v-else-if="anchor">
       <div class="lens-head">
-        <router-link :to="`/mapping/${id}`" class="lens-back">← {{ t('mapLens.back') }}</router-link>
+        <router-link :to="expressionPath(anchor.lang_code, anchor.text, anchor.homograph_index)" class="lens-back">← {{ t('mapLens.back') }}</router-link>
         <h1>{{ t('mapLens.title') }}:<span class="anc">{{ anchor.text }}</span></h1>
         <span class="lens-meta">{{ t('mapLens.languages', { count: pins.length + 1 }) }} · {{ t('mapLens.regions', { count: regionCount }) }}</span>
       </div>
@@ -227,7 +245,7 @@ onUnmounted(cleanup)
         <aside class="lens-list">
           <div class="lens-list-head">{{ t('mapLens.members') }}</div>
           <router-link
-            :to="`/mapping/${id}`"
+            :to="expressionPath(anchor.lang_code, anchor.text, anchor.homograph_index)"
             :class="['lens-item', 'anchor', { active: activeId === anchor.id }]"
             @focus="sync(anchor.id)"
             @blur="sync(null)"
@@ -241,7 +259,7 @@ onUnmounted(cleanup)
           <router-link
             v-for="p in pins"
             :key="p.expression_id"
-            :to="`/mapping/${p.expression_id}`"
+            :to="expressionPath(p.lang_code, p.text, p.homograph_index)"
             :class="['lens-item', { active: activeId === p.expression_id }]"
             @focus="sync(p.expression_id)"
             @blur="sync(null)"

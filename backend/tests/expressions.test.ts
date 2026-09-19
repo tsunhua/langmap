@@ -290,13 +290,13 @@ describe('expressions route GET /:id', () => {
 });
 
 describe('expressions route GET /:id/graph hop access', () => {
-  const ROOT_SQL = 'SELECT e.id,e.text,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
+  const ROOT_SQL = 'SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?';
   const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
 
   function graphDb(includeUser: boolean) {
     return fakeD1({
       ...(includeUser ? { [USER_SQL]: () => ({ id: 1, username: 'reader', role: 'user' }) } : {}),
-      [ROOT_SQL]: () => ({ id: 1, text: 'root', lang_code: 'eng' }),
+      [ROOT_SQL]: () => ({ id: 1, text: 'root', lang_code: 'eng', homograph_index: 1 }),
     });
   }
 

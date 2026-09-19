@@ -6,14 +6,14 @@ import MappingDetail from './MappingDetail.vue'
 vi.mock('@/api/client', () => ({
   default: {
     get: vi.fn().mockResolvedValue({ data: { data: {} } }),
-    post: vi.fn().mockResolvedValue({ data: { data: { expression: { id: 'eng:new:1' } } } }),
+    post: vi.fn().mockResolvedValue({ data: { data: { expression: { id: '9', lang_code: 'eng', text: 'new', homograph_index: 1 } } } }),
   },
 }))
 
 const mockPush = vi.fn()
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    params: { id: '1' },
+    params: { lang: 'eng', text: 'hello' },
     query: {},
   }),
   useRouter: () => ({
@@ -24,12 +24,12 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/composables/useExpressions', () => ({
   useExpressions: () => ({
-    detail: vi.fn().mockResolvedValue({ expression: { id: 'eng:hello:1', text: 'hello', lang_code: 'eng', source_type: 'auth', source_name: null }, attestations: [], readings: [] }),
+    detail: vi.fn().mockResolvedValue({ expression: { id: '1', text: 'hello', lang_code: 'eng', homograph_index: 1, source_type: 'auth', source_name: null }, attestations: [], readings: [] }),
     mappingGraph: vi.fn().mockResolvedValue({
-      root_id: 'eng:hello:1',
+      root_id: '1',
       requested_hops: 1,
       resolved_hops: 1,
-      nodes: [{ expression_id: 'eng:hello:1', text: 'hello', lang_code: 'eng', language_name: 'English', depth: 0 }],
+      nodes: [{ expression_id: '1', text: 'hello', lang_code: 'eng', language_name: 'English', depth: 0, homograph_index: 1 }],
       edges: [],
       layer_counts: { 0: 1 },
       truncated: false,

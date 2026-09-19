@@ -19,7 +19,7 @@ vi.mock('@/composables/useExpressions', () => ({
 
 vi.mock('@/api/languageIdentity', () => ({ getLanguageDetail }))
 
-const route = reactive({ params: { id: 'eng:anchor' } })
+const route = reactive({ params: { lang: 'eng', text: 'anchor' } })
 vi.mock('vue-router', () => ({
   useRoute: () => route,
   useRouter: () => ({ push: vi.fn() }),
@@ -47,17 +47,17 @@ vi.mock('leaflet', () => {
 describe('MapLens', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    route.params.id = 'eng:anchor'
-    detail.mockResolvedValue({ expression: { id: 'eng:anchor', lang_code: 'eng', text: 'anchor' } })
+    route.params = { lang: 'eng', text: 'anchor' }
+    detail.mockResolvedValue({ expression: { id: '1', lang_code: 'eng', text: 'anchor', homograph_index: 1 } })
     mappingGraph.mockResolvedValue({
-      root_id: 'eng:anchor',
+      root_id: '1',
       requested_hops: 2,
       resolved_hops: 1,
       nodes: [
-        { expression_id: 'eng:anchor', text: 'anchor', lang_code: 'eng', language_name: 'English', depth: 0 },
-        { expression_id: 'twi:zero', text: 'zero', lang_code: 'twi', language_name: 'Twi', depth: 1 },
+        { expression_id: '1', text: 'anchor', lang_code: 'eng', language_name: 'English', depth: 0, homograph_index: 1 },
+        { expression_id: '2', text: 'zero', lang_code: 'twi', language_name: 'Twi', depth: 1, homograph_index: 1 },
       ],
-      edges: [{ edge_id: 'edge-1', source_id: 'eng:anchor', target_id: 'twi:zero', score: 3, depth: 1 }],
+      edges: [{ edge_id: 'edge-1', source_id: '1', target_id: '2', score: 3, depth: 1 }],
       layer_counts: { 0: 1, 1: 1 },
       truncated: false,
       omitted_count: 0,
@@ -113,18 +113,18 @@ describe('MapLens', () => {
   })
 
   it('keeps the newest route result when an older request finishes later', async () => {
-    let resolveOld!: (value: { expression: { id: string; lang_code: string; text: string } }) => void
-    const oldDetail = new Promise<{ expression: { id: string; lang_code: string; text: string } }>((resolve) => {
+    let resolveOld!: (value: { expression: { id: string; lang_code: string; text: string; homograph_index: number } }) => void
+    const oldDetail = new Promise<{ expression: { id: string; lang_code: string; text: string; homograph_index: number } }>((resolve) => {
       resolveOld = resolve
     })
-    detail.mockImplementation((id: string) => id === 'eng:anchor'
+    detail.mockImplementation((target: { text?: string }) => target?.text === 'anchor'
       ? oldDetail
-      : Promise.resolve({ expression: { id: 'eng:new', lang_code: 'eng', text: 'Newest anchor' } }))
-    mappingGraph.mockImplementation((id: string) => Promise.resolve({
-      root_id: id,
+      : Promise.resolve({ expression: { id: '9', lang_code: 'eng', text: 'Newest anchor', homograph_index: 1 } }))
+    mappingGraph.mockImplementation((target: { text?: string }) => Promise.resolve({
+      root_id: '9',
       requested_hops: 2,
       resolved_hops: 0,
-      nodes: [{ expression_id: id, text: id, lang_code: 'eng', language_name: 'English', depth: 0 }],
+      nodes: [{ expression_id: '9', text: target?.text ?? 'anchor', lang_code: 'eng', language_name: 'English', depth: 0, homograph_index: 1 }],
       edges: [],
       layer_counts: { 0: 1 },
       truncated: false,
@@ -134,11 +134,11 @@ describe('MapLens', () => {
     const wrapper = mount(MapLens, {
       global: { plugins: [createPinia()], stubs: { RouterLink: { props: ['to'], template: '<a><slot /></a>' } } },
     })
-    route.params.id = 'eng:new'
+    route.params = { lang: 'eng', text: 'new' }
     await flushPromises()
     expect(wrapper.text()).toContain('Newest anchor')
 
-    resolveOld({ expression: { id: 'eng:anchor', lang_code: 'eng', text: 'Stale anchor' } })
+    resolveOld({ expression: { id: '1', lang_code: 'eng', text: 'Stale anchor', homograph_index: 1 } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Newest anchor')

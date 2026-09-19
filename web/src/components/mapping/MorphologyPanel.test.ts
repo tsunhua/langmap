@@ -37,7 +37,7 @@ function mountPanel(text = 'gatas', formOpen = false) {
   const pinia = createPinia()
   setActivePinia(pinia)
   return mount(MorphologyPanel, {
-    props: { expressionId: 'spa:gatas', langCode: 'spa', text, formOpen },
+    props: { langCode: 'spa', text, formOpen },
     global: {
       plugins: [pinia],
       stubs: { RouterLink: RouterLinkStub },
@@ -56,7 +56,7 @@ describe('MorphologyPanel', () => {
     vi.mocked(getExpressionFormEdges).mockResolvedValue(formEdges({
       as_form: [{
         edge_id: 'e1',
-        lemma: { id: 'spa:gato', text: 'gato', lang_code: 'spa', language_name: 'Spanish' },
+        lemma: { id: '11', text: 'gato', lang_code: 'spa', homograph_index: 1, language_name: 'Spanish' },
         features: [
           { code: 'feminine', name: 'feminine', dimension_code: 'gender' },
           { code: 'plural', name: 'plural', dimension_code: 'number' },
@@ -68,13 +68,13 @@ describe('MorphologyPanel', () => {
     await flushPromises()
 
     const chip = wrapper.get('a.morph-form-chip')
-    expect(chip.attributes('href')).toBe('/mapping/spa:gato')
+    expect(chip.attributes('href')).toBe('/mapping/spa/gato')
     expect(chip.text()).toContain('Dictionary form：gato')
     expect(chip.text()).toContain('feminine plural')
     expect(wrapper.text()).not.toContain('Mappings of the dictionary form')
     expect(wrapper.text()).not.toContain('cat')
     expect(getExpressionFormEdges).toHaveBeenCalledWith(
-      'spa:gatas',
+      { lang_code: 'spa', text: 'gatas', homograph_index: undefined },
       expect.objectContaining({ limit: 50 }),
       expect.any(AbortSignal),
     )
@@ -85,12 +85,12 @@ describe('MorphologyPanel', () => {
       as_lemma: [
         {
           edge_id: 'e1',
-          form: { id: 'spa:gatas', text: 'gatas', lang_code: 'spa', language_name: 'Spanish' },
+          form: { id: '12', text: 'gatas', lang_code: 'spa', homograph_index: 1, language_name: 'Spanish' },
           features: [{ code: 'plural', name: 'plural', dimension_code: 'number' }],
         },
         {
           edge_id: 'e2',
-          form: { id: 'spa:gata', text: 'gata', lang_code: 'spa', language_name: 'Spanish' },
+          form: { id: '13', text: 'gata', lang_code: 'spa', homograph_index: 1, language_name: 'Spanish' },
           features: [{ code: 'feminine', name: 'feminine', dimension_code: 'gender' }],
         },
         {
@@ -113,7 +113,7 @@ describe('MorphologyPanel', () => {
     const chips = wrapper.findAll('a.morph-form-chip')
     expect(chips).toHaveLength(3)
     expect(chips[0].text()).toContain('plural：gatas')
-    expect(chips[0].attributes('href')).toBe('/mapping/spa:gatas')
+    expect(chips[0].attributes('href')).toBe('/mapping/spa/gatas')
     expect(chips[1].text()).toContain('feminine：gata')
     expect(chips[2].text()).toBe('gatito')
     expect(wrapper.text()).not.toContain('Mappings of the dictionary form')

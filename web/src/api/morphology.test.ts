@@ -17,18 +17,18 @@ describe('morphology API', () => {
       signal: undefined,
     })
 
-    await getExpressionFormEdges('spa:gatas', { limit: 50, ui_locale: 'eng-Latn-US' })
-    expect(api.get).toHaveBeenLastCalledWith('/expressions/spa%3Agatas/form-edges', {
+    await getExpressionFormEdges({ lang_code: 'spa', text: 'gatas' }, { limit: 50, ui_locale: 'eng-Latn-US' })
+    expect(api.get).toHaveBeenLastCalledWith('/expressions/spa/gatas/form-edges', {
       params: { limit: 50, ui_locale: 'eng-Latn-US' },
       signal: undefined,
     })
   })
 
   it('posts a form edge with optional features', async () => {
-    await createFormEdge('spa:gatas', { lemma_expression_id: 'spa:gato', features: ['plural'] })
+    await createFormEdge({ lang_code: 'spa', text: 'gatas' }, { lemma_expression_id: '123', features: ['plural'] })
     expect(api.post).toHaveBeenCalledWith(
-      '/expressions/spa%3Agatas/form-edges',
-      { lemma_expression_id: 'spa:gato', features: ['plural'] },
+      '/expressions/spa/gatas/form-edges',
+      { lemma_expression_id: '123', features: ['plural'] },
       { params: {}, signal: undefined },
     )
   })

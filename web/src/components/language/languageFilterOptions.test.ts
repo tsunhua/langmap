@@ -3,7 +3,7 @@ import { buildLanguageFilterOptions } from './languageFilterOptions'
 
 const graph = (nodes: Array<{ expression_id: string; lang_code: string; depth: number }>) => ({
   root_id: 'root', requested_hops: 3 as const, resolved_hops: 3 as const,
-  nodes: nodes.map((node) => ({ ...node, text: node.expression_id, language_name: node.lang_code })),
+  nodes: nodes.map((node) => ({ ...node, text: node.expression_id, language_name: node.lang_code, homograph_index: 1 })),
   edges: [], layer_counts: { 0: 1, 1: 0, 2: 0, 3: 0 }, truncated: false, omitted_count: 0,
 })
 

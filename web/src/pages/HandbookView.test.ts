@@ -19,9 +19,6 @@ vi.mock('@/composables/useExpressions', () => ({
 }))
 vi.mock('vue-router', () => ({ useRoute: () => route, useRouter: () => router }))
 vi.mock('@/components/mapping/VotePill.vue', () => ({ default: { template: '<div />' } }))
-vi.mock('@/components/handbook/HandbookExpressionInspector.vue', () => ({
-  default: { name: 'HandbookExpressionInspector', template: '<aside />' },
-}))
 vi.mock('@/components/handbook/HandbookTranslationPicker.vue', () => ({
   default: { name: 'HandbookTranslationPicker', props: ['modelValue'], template: '<button data-action="pick-locale">{{ modelValue }}</button>' },
 }))
@@ -71,7 +68,7 @@ describe('HandbookView', () => {
       ...handbook('managed-handbook', 'English phrasebook'),
       managed: true,
       can_edit: false,
-      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Where is the toilet?', lang_code: 'eng' }] }],
+      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Where is the toilet?', lang_code: 'eng', homograph_index: 1 }] }],
     })
     translations.mockResolvedValue({
       target_locale: 'jpn-Jpan-JP',
@@ -101,7 +98,7 @@ describe('HandbookView', () => {
     detail.mockResolvedValue({
       ...handbook('managed-handbook', 'English phrasebook'),
       managed: true,
-      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Where is the toilet?', lang_code: 'eng' }] }],
+      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Where is the toilet?', lang_code: 'eng', homograph_index: 1 }] }],
     })
     translations.mockResolvedValue({
       target_locale: 'jpn-Jpan-JP',
@@ -118,12 +115,48 @@ describe('HandbookView', () => {
     expect(wrapper.text()).not.toContain('舊翻譯')
   })
 
+  it('links the selected expression to its stable text-key mapping path', async () => {
+    detail.mockResolvedValue({
+      ...handbook('food-handbook', 'Food handbook'),
+      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '7', text: '食', lang_code: 'nan', homograph_index: 1 }] }],
+    })
+    expressionDetail.mockResolvedValue({
+      expression: { id: '7', text: '食', lang_code: 'nan', homograph_index: 1, source_type: null, source_name: null, language_name: null },
+      locales: [],
+      attestations: [],
+      readings: [],
+    })
+    mappingGraph.mockResolvedValue({
+      root_id: '7',
+      requested_hops: 1,
+      resolved_hops: 0,
+      nodes: [{ expression_id: '7', text: '食', lang_code: 'nan', homograph_index: 1, language_name: null, depth: 0 }],
+      edges: [],
+      layer_counts: { 0: 1, 1: 0 },
+      truncated: false,
+      omitted_count: 0,
+    })
+    route.params.id = 'food-handbook'
+
+    const wrapper = mount(HandbookView, {
+      global: {
+        plugins: [createPinia()],
+        stubs: { RouterLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('.hb-expr').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('a[href="/mapping/nan/%E9%A3%9F"]').exists()).toBe(true)
+  })
+
   it('does not render translation slots for an unmanaged handbook', async () => {
     route.params.id = 'user-handbook'
     route.query = { target_locale: 'jpn-Jpan-JP' }
     detail.mockResolvedValue({
       ...handbook('user-handbook', 'User handbook'),
-      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Hello', lang_code: 'eng' }] }],
+      sections: [{ id: 'section-1', title: 'Basics', items: [{ id: '10', text: 'Hello', lang_code: 'eng', homograph_index: 1 }] }],
     })
 
     const wrapper = mount(HandbookView, {

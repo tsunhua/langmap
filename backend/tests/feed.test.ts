@@ -9,15 +9,17 @@ type FeedRow = {
   a_id: number;
   a_text: string;
   a_lang: string;
+  a_homograph_index: number;
   b_id: number;
   b_text: string;
   b_lang: string;
+  b_homograph_index: number;
 };
 
 const SIMPLE_ROW: FeedRow = {
   id: 101, score: 2, relation_mask: 1,
-  a_id: 201, a_text: '食', a_lang: 'nan',
-  b_id: 202, b_text: 'eat', b_lang: 'eng',
+  a_id: 201, a_text: '食', a_lang: 'nan', a_homograph_index: 1,
+  b_id: 202, b_text: 'eat', b_lang: 'eng', b_homograph_index: 1,
 };
 
 function fakeDb(capturedSql: string[] = []) {
@@ -44,9 +46,9 @@ describe('feed API', () => {
     for (const path of ['/feed/hot?limit=20', '/feed/new?limit=20']) {
       const response = await app.request(`http://example.test${path}`, undefined, { DB: fakeDb(), SECRET_KEY: 'test' });
       expect(response.status).toBe(200);
-      const body = await response.json() as { success: boolean; data: Array<{ id: string; a_id: string; b_id: string }> };
+      const body = await response.json() as { success: boolean; data: Array<{ id: string; a_id: string; b_id: string; a_homograph_index: number; b_homograph_index: number }> };
       expect(body.success).toBe(true);
-      expect(body.data[0]).toMatchObject({ id: '101', a_id: '201', b_id: '202' });
+      expect(body.data[0]).toMatchObject({ id: '101', a_id: '201', b_id: '202', a_homograph_index: 1, b_homograph_index: 1 });
     }
   });
 

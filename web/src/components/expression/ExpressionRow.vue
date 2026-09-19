@@ -2,10 +2,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SearchFormOf } from '@/api/expressions'
+import { expressionPath } from '@/utils/expressionUrl'
 
 const props = withDefaults(defineProps<{
   id: string
   text: string
+  homograph_index?: number
   lang_code?: string
   language_profile_code?: string
   language_name?: string
@@ -48,7 +50,7 @@ const formSummaries = computed(() =>
 </script>
 
 <template>
-  <router-link :to="`/mapping/${id}`" :class="['ex-row', { 'ex-row--no-lang': !showLanguage }]">
+  <router-link :to="expressionPath(lang_code ?? '', text, homograph_index ?? 1)" :class="['ex-row', { 'ex-row--no-lang': !showLanguage }]">
     <span class="ex-main">
       <span v-if="imageUrl" class="ex-image-wrap">
         <img class="ex-image" :src="imageUrl" :alt="t('expression.imageAlt')" loading="lazy" tabindex="0" role="button" @click.stop.prevent="openImage" @keydown.enter.stop.prevent="openImage" @keydown.space.stop.prevent="openImage" />

@@ -10,7 +10,7 @@ const limitOf = (value: string | undefined) => Math.min(Math.max(Number.parseInt
 // mirror; every feed flavor returns the newest mappings instead.
 async function mappings(c: { env: Bindings; req: { query: (key: string) => string | undefined } }) {
   const limit = limitOf(c.req.query('limit')); const rows = await c.env.DB.prepare(
-    `SELECT e.id,e.score,e.relation_mask,a.id AS a_id,a.text AS a_text,la.code AS a_lang,b.id AS b_id,b.text AS b_text,lb.code AS b_lang
+    `SELECT e.id,e.score,e.relation_mask,a.id AS a_id,a.text AS a_text,la.code AS a_lang,a.homograph_index AS a_homograph_index,b.id AS b_id,b.text AS b_text,lb.code AS b_lang,b.homograph_index AS b_homograph_index
      FROM expression_edges e JOIN expressions a ON a.id=e.expression_a_id JOIN languages la ON la.id=a.language_id JOIN expressions b ON b.id=e.expression_b_id JOIN languages lb ON lb.id=b.language_id
      ORDER BY e.id DESC LIMIT ?`,
   ).bind(limit).all<Record<string, number | string>>();

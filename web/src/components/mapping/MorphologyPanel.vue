@@ -18,11 +18,12 @@ import {
   featureCodesForSelection,
   type MorphologyWordClass,
 } from '@/utils/morphologyFeatures'
+import { expressionPath } from '@/utils/expressionUrl'
 
 const props = defineProps<{
-  expressionId: string
   langCode: string
   text: string
+  homographIndex?: number
   formOpen: boolean
 }>()
 
@@ -32,6 +33,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const localeParams = useLocaleParams()
+
+const expressionKey = () => ({ lang_code: props.langCode, text: props.text, homograph_index: props.homographIndex })
 const localization = useLocalizationStore()
 const { search } = useExpressions()
 
@@ -139,7 +142,7 @@ async function loadEdges() {
   try {
     const hints = localeParams.value
     const [nextEdges, nextFeatures] = await Promise.all([
-      getExpressionFormEdges(props.expressionId, { limit: 50, ...hints }, controller.signal),
+      getExpressionFormEdges(expressionKey(), { limit: 50, ...hints }, controller.signal),
       listMorphologicalFeatures(hints, controller.signal).catch(() => ({ dimensions: [] as MorphologicalDimension[] })),
     ])
     if (request !== edgesRequest) return
@@ -175,7 +178,7 @@ async function searchLemma() {
     const data = await search(query, props.langCode, 8, localeParams.value)
     if (request !== lemmaSearchRequest) return
     const items = (data.items ?? []) as Array<{ id: string; text: string; lang_code: string }>
-    lemmaResults.value = items.filter((item) => item.id !== props.expressionId)
+    lemmaResults.value = items.filter((item) => !(item.text === props.text && item.lang_code === props.langCode))
   } catch (error: unknown) {
     if (request !== lemmaSearchRequest) return
     lemmaSearchError.value = apiErrorMessage(error, t('search.loadFailed'))
@@ -213,7 +216,7 @@ async function submitFormEdge() {
   submitError.value = ''
   try {
     await createFormEdge(
-      props.expressionId,
+      expressionKey(),
       {
         lemma_expression_id: selectedLemma.value.id,
         features: selectedFeatures.value,
@@ -237,7 +240,7 @@ async function submitFormEdge() {
 }
 
 watch(
-  () => [props.expressionId, localization.locale, localization.secondary] as const,
+  () => [props.langCode, props.text, props.homographIndex, localization.locale, localization.secondary] as const,
   () => { if (isSingleWord.value) void loadEdges() },
   { immediate: true },
 )
@@ -269,7 +272,7 @@ watch(
     <template v-else>
       <ul v-if="edges && edges.as_form.length" class="morph-chips">
         <li v-for="item in edges.as_form" :key="item.edge_id">
-          <router-link :to="`/mapping/${item.lemma.id}`" class="morph-form-chip">
+          <router-link :to="expressionPath(item.lemma.lang_code, item.lemma.text, item.lemma.homograph_index ?? 1)" class="morph-form-chip">
             <span class="morph-role">{{ t('morphology.dictionaryForm') }}：</span>
             <span>{{ item.lemma.text }}</span>
             <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}</span>
@@ -279,7 +282,7 @@ watch(
 
       <ul v-if="edges && orderedInflections.length" class="morph-chips">
         <li v-for="item in orderedInflections" :key="item.edge_id">
-          <router-link :to="`/mapping/${item.form.id}`" class="morph-form-chip">
+          <router-link :to="expressionPath(item.form.lang_code, item.form.text, item.form.homograph_index ?? 1)" class="morph-form-chip">
             <span v-if="featureLabel(item.features)" class="morph-feats">{{ featureLabel(item.features) }}：</span>
             <span>{{ item.form.text }}</span>
           </router-link>
