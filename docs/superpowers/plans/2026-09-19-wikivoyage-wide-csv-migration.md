@@ -19,16 +19,16 @@ SQLite／D1 staging、JSONL 中間產物及舊 `scripts/wikivoyage` pipeline。
 ## Checklist（按依賴執行）
 
 - [x] 更新設計規格，確認一方向一 CSV、Chinese split locale、無 JSONL/sidecar。
-- [ ] 在 dictionary 建立 Wikivoyage package，保留既有 parser/catalog/download 規則，
+- [x] 在 dictionary 建立 Wikivoyage package，保留既有 parser/catalog/download 規則，
       將 export/quality 改為寬表 CSV。
-- [ ] 擴充 dictionary 共用 CSV writer/manifest，加入 reading 欄位契約與 source metadata。
-- [ ] 為 Japanese、Cantonese、Chinese split locale 加入 exporter/manifest/no-JSONL 測試。
-- [ ] 擴充 `scripts/dictionary/import_mapping_csv_pg.py`：解析 `READING_*`、寫入與
+- [x] 擴充 dictionary 共用 CSV writer/manifest，加入 reading 欄位契約與 source metadata。
+- [x] 為 Japanese、Cantonese、Chinese split locale 加入 exporter/manifest/no-JSONL 測試。
+- [x] 擴充 `scripts/dictionary/import_mapping_csv_pg.py`：解析 `READING_*`、寫入與
       source-scoped 清理 `expression_readings`，並讀取 manifest source identity。
-- [ ] 加入 importer 的寬表 reading、同語言 edge、冪等、刪列與跨 source 測試。
-- [ ] 新增 PG-only handbook rebuild，使用 dictionary 的 section catalog，不連 SQLite/D1。
-- [ ] 移除 `scripts/wikivoyage` 舊 pipeline 與失效入口；更新 runbook、inventory、README。
-- [ ] 執行 dictionary/root 測試、`git diff --check`、`./build.sh`，並以本地 PostgreSQL
+- [x] 加入 importer 的寬表 reading、同語言 edge、冪等、刪列與跨 source 測試。
+- [x] 新增 PG-only handbook rebuild，使用 dictionary 的 section catalog，不連 SQLite/D1。
+- [x] 移除 `scripts/wikivoyage` 舊 pipeline 與失效入口；更新 runbook、inventory、README。
+- [x] 執行 dictionary/root 測試、`git diff --check`、`./build.sh`，並以本地 PostgreSQL
       做 `--check`/`--apply` smoke test；確認現有 `dev.sh` 服務仍可用。
 - [ ] 只提交本次 owned files；保留使用者既有未提交修改，不納入無關檔案。
 
