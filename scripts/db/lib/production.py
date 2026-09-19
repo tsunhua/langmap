@@ -30,6 +30,9 @@ class ProductionInventoryError(RuntimeError):
 # D1 payload limits and is still split at statement boundaries. Long commands
 # are sent through a temporary file so macOS argv limits do not truncate them.
 SPLIT_SQL_BATCH_BYTES = 2 * 1024 * 1024
+# D1 import fails server-side when one request carries too many small
+# statements; byte size alone lets concentrated tails overrun the limit.
+SPLIT_SQL_BATCH_STATEMENTS = 300
 MAX_COMMAND_ARG_BYTES = 200 * 1024
 
 DICTIONARY_POSTFLIGHT_TABLES = (
@@ -1042,11 +1045,12 @@ def _approved_sql_batches(
     path: Path,
     *,
     max_bytes: int = SPLIT_SQL_BATCH_BYTES,
+    max_statements: int = SPLIT_SQL_BATCH_STATEMENTS,
 ) -> Iterator[tuple[int, str]]:
     """Group standalone approved SQL statements into bounded remote commands."""
 
-    if max_bytes < 1:
-        raise ValueError("max_bytes must be positive")
+    if max_bytes < 1 or max_statements < 1:
+        raise ValueError("max_bytes and max_statements must be positive")
     statements: list[str] = []
     current_bytes = 0
     batch_index = 0
@@ -1058,6 +1062,7 @@ def _approved_sql_batches(
         separator_bytes = len("\n".encode("utf-8")) if statements else 0
         if statements and (
             force_batch
+            or len(statements) >= max_statements
             or current_bytes + separator_bytes + statement_bytes > max_bytes
         ):
             yield batch_index, "\n".join(statements)
