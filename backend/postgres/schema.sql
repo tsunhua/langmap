@@ -1,5 +1,5 @@
--- Canonical greenfield schema for PostgreSQL baseline.
--- The 0039 migration is intentionally destructive and has the same contract.
+-- Canonical greenfield schema for the PostgreSQL baseline.
+-- Incremental changes belong in backend/postgres/migrations/.
 
 
 CREATE TABLE users (
