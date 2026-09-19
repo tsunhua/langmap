@@ -16,13 +16,13 @@ app.onError((err, c) => {
   return c.json({ success: false, error: 'INTERNAL_SERVER_ERROR' }, 500);
 });
 
-// D1 → PostgreSQL cutover: DB now resolves to the Hyperdrive-backed pg adapter.
-// The cast keeps the D1-shaped type across the codebase; the real type will be
-// tightened once the migration is complete.
+// DB resolves to the Hyperdrive-backed PostgreSQL adapter.
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const db = createPgDatabase(env.HYPERDRIVE.connectionString);
-    const runtimeEnv = { ...env, DB: db } as unknown as Bindings;
+    const connectionString = (env as Env & { DATABASE_URL?: string }).DATABASE_URL ?? env.HYPERDRIVE?.connectionString;
+    if (!connectionString) throw new Error("DATABASE_URL or HYPERDRIVE connection is required");
+    const db = createPgDatabase(connectionString);
+    const runtimeEnv = { ...env, DB: db } as Bindings;
     return app.fetch(request, runtimeEnv, ctx);
   },
 };

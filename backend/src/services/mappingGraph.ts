@@ -1,10 +1,10 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { EdgeSourceMarker, MappingAnnotation, MappingGraphEdge, MappingGraphNode, MappingGraphResponse } from '../types/mapping';
 
 const NODE_LIMIT = 200;
-const SQLITE_BIND_CHUNK = 80;
+const QUERY_BIND_CHUNK = 80;
 // Edge adjacency uses the frontier twice in its OR predicate, so keep the
-// effective bind count below D1's SQLite variable limit.
+// query bind count within a conservative parameter budget.
 const EDGE_BIND_CHUNK = 40;
 const ANNOTATIONS_PER_EDGE = 20;
 // Examples are standalone expressions connected by ordinary translation
@@ -51,7 +51,7 @@ function parseAnnotations(value: string | null | undefined): MappingAnnotation[]
   return annotations;
 }
 
-async function loadEdges(db: D1Database, marks: string, chunk: number[]): Promise<EdgeRow[]> {
+async function loadEdges(db: Database, marks: string, chunk: number[]): Promise<EdgeRow[]> {
   try {
     const result = await db.prepare(`SELECT id,expression_a_id,expression_b_id,relation_mask,score,annotations_json FROM expression_edges WHERE (expression_a_id IN (${marks}) OR expression_b_id IN (${marks})) AND (relation_mask & ${MAPPING_RELATION_MASK}) <> 0 ORDER BY id`).bind(...chunk, ...chunk).all<EdgeRow>();
     return result.results;
@@ -67,7 +67,7 @@ function parseTargetLanguages(value: string | undefined): Set<string> {
   return new Set((value ?? '').split(',').map((code) => code.trim().toLowerCase()).filter(Boolean));
 }
 
-export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 2 | 3, targetLanguage?: string): Promise<MappingGraphResponse | null> {
+export async function getMappingGraph(db: Database, rootId: number, hops: 1 | 2 | 3, targetLanguage?: string): Promise<MappingGraphResponse | null> {
   // Filtering applies at every hop so traversal never hops through excluded languages.
   const targetLanguages = parseTargetLanguages(targetLanguage);
   const root = await db.prepare('SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?').bind(rootId).first<NodeRow>();
@@ -86,8 +86,8 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     const neighbors = new Set<number>(); for (const edge of result.results) { neighbors.add(edge.expression_a_id); neighbors.add(edge.expression_b_id); }
     const unknown = [...neighbors].filter((id) => !nodes.has(id));
     const nodeRows: { results: NodeRow[] } = { results: [] };
-    for (let offset = 0; offset < unknown.length; offset += SQLITE_BIND_CHUNK) {
-      const chunk = unknown.slice(offset, offset + SQLITE_BIND_CHUNK);
+    for (let offset = 0; offset < unknown.length; offset += QUERY_BIND_CHUNK) {
+      const chunk = unknown.slice(offset, offset + QUERY_BIND_CHUNK);
       const rows = await db.prepare(`SELECT e.id,e.text,e.homograph_index,l.code AS lang_code,l.name_en AS language_name FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id IN (${chunk.map(() => '?').join(',')})`).bind(...chunk).all<NodeRow>();
       nodeRows.results.push(...rows.results);
     }
@@ -109,8 +109,8 @@ export async function getMappingGraph(db: D1Database, rootId: number, hops: 1 | 
     // Edge provenance is optional: pre-migration databases keep an empty list instead of failing the whole graph.
     try {
       const markerRows: { edge_id:number; source_id:number; source_marker:string }[] = [];
-      for (let offset = 0; offset < edgeIds.length; offset += SQLITE_BIND_CHUNK) {
-        const chunk = edgeIds.slice(offset, offset + SQLITE_BIND_CHUNK);
+      for (let offset = 0; offset < edgeIds.length; offset += QUERY_BIND_CHUNK) {
+        const chunk = edgeIds.slice(offset, offset + QUERY_BIND_CHUNK);
         const rows = await db.prepare(`SELECT edge_id,source_id,source_marker FROM expression_edge_sources WHERE edge_id IN (${chunk.map(() => '?').join(',')}) ORDER BY edge_id,source_id,source_marker`).bind(...chunk).all<{ edge_id:number; source_id:number; source_marker:string }>();
         markerRows.push(...rows.results);
       }

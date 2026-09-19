@@ -14,7 +14,7 @@ describe('numeric API IDs', () => {
     }
   });
 
-  it('serializes safe positive D1 IDs without changing their value', () => {
+  it('serializes safe positive database IDs without changing their value', () => {
     expect(serializeIntegerId(2056)).toBe('2056');
     expect(() => serializeIntegerId(0)).toThrow('INVALID_INTEGER_ID');
     expect(() => serializeIntegerId(Number.MAX_SAFE_INTEGER + 1)).toThrow('INVALID_INTEGER_ID');

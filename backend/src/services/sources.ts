@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { SourceType } from '../types/language';
 
 const SOURCE_TYPES: readonly SourceType[] = ['publication', 'url', 'system'];
@@ -11,7 +11,7 @@ export class SourceError extends Error {
 }
 
 export async function findOrCreateSource(
-  db: D1Database,
+  db: Database,
   source: { type: string; name: string },
 ): Promise<number> {
   const type = source.type;

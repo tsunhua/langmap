@@ -20,13 +20,6 @@
 			"custom_domain": true
 		}
 	],
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "langmap-v2",
-			"database_id": "75c7dea7-f453-4ada-8527-d5ff481b54f3"
-		}
-	],
 	"r2_buckets": [
 		{
 			"binding": "IMAGE_BUCKET",

@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 
 export interface BundleEntry {
   key: string;
@@ -49,7 +49,7 @@ function placeholdersMatch(placeholdersJson: string, targetText: string): boolea
   }
 }
 
-async function loadCandidates(db: D1Database, projectId: string, localeCode: string): Promise<Map<string, string>> {
+async function loadCandidates(db: Database, projectId: string, localeCode: string): Promise<Map<string, string>> {
   const { results } = await db.prepare(CANDIDATE_SQL)
     .bind(projectId, 'active', localeCode, localeCode, projectId, 'active', localeCode, localeCode)
     .all<CandidateRow>();
@@ -62,7 +62,7 @@ async function loadCandidates(db: D1Database, projectId: string, localeCode: str
   return selected;
 }
 
-async function activeCandidates(db: D1Database, projectId: string, localeCode: string): Promise<Map<string, string>> {
+async function activeCandidates(db: Database, projectId: string, localeCode: string): Promise<Map<string, string>> {
   const locale = await db.prepare(
     'SELECT status FROM ui_locales WHERE project_id = ? AND locale_id = (SELECT id FROM language_locales WHERE code = ?)',
   ).bind(projectId, localeCode).first<{ status: string }>();
@@ -70,7 +70,7 @@ async function activeCandidates(db: D1Database, projectId: string, localeCode: s
 }
 
 export async function resolveBundle(
-  db: D1Database,
+  db: Database,
   projectId: string,
   primary?: string,
   secondary?: string,

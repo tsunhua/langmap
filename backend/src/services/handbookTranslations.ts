@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 
 const MAX_ITEMS = 5000;
 const MAX_TRANSLATIONS_PER_ITEM = 3;
@@ -123,7 +123,7 @@ const RANKED_TARGET_EDGES = `
     SELECT unique_edges.*,
            ROW_NUMBER() OVER (
              PARTITION BY source_expression_id
-             ORDER BY edge_score DESC, target_text COLLATE NOCASE, target_expression_id
+             ORDER BY edge_score DESC, LOWER(target_text), target_text, target_expression_id
            ) AS translation_rank,
            COUNT(*) OVER (PARTITION BY source_expression_id) AS translation_count
     FROM unique_edges
@@ -135,7 +135,7 @@ function readingKey(row: ReadingRow): string {
 }
 
 export async function getHandbookTranslations(
-  db: D1Database,
+  db: Database,
   handbookId: number,
   targetLocale: string,
   options: { allowPrivate?: boolean; viewerId?: number } = {},

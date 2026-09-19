@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import { escapeLike } from './languageIdentity';
 import { parseLocaleHints, resolveLanguageNames } from './localizedName';
 
@@ -7,7 +7,7 @@ export interface LanguageLocaleSummary { code: string; name: string; name_en: st
 export interface LanguageDetail { code: string; name_en: string; name: string; expression_count: number; reading_count: number; mapped_expression_count: number; locales: LanguageLocaleSummary[]; }
 export interface LanguageExpressionRow { id: number; lang_code: string; text: string; homograph_index: number; created_at: string; reading_count: number; mapping_count: number; language_name: string; }
 
-export async function listLanguagesWithContent(db: D1Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
+export async function listLanguagesWithContent(db: Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
   const q = query.q.trim(); const where = q ? "WHERE l.code LIKE ? ESCAPE '\\' OR l.name_en LIKE ? ESCAPE '\\'" : ''; const params = q ? [`%${escapeLike(q)}%`, `%${escapeLike(q)}%`] : [];
   // The language registry is the source of truth for this directory. Statistics
   // are optional because a newly registered language may not have content yet.
@@ -24,7 +24,7 @@ export async function listLanguagesWithContent(db: D1Database, query: { q: strin
   return { items: rows.results.map((row) => ({ ...row, name: names.get(row.code) ?? row.name_en })), total: count?.total ?? 0 };
 }
 
-export async function getLanguageDetail(db: D1Database, code: string, _hints = {}, locale = ''): Promise<LanguageDetail | null> {
+export async function getLanguageDetail(db: Database, code: string, _hints = {}, locale = ''): Promise<LanguageDetail | null> {
   const language = await db.prepare('SELECT id,code,name_en FROM languages WHERE code=?').bind(code).first<{ id:number;code:string;name_en:string }>(); if (!language) return null;
   const localeFilter = locale ? 'AND EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales ll ON ll.id=x.locale_id WHERE x.expression_id=e.id AND ll.code=?)' : ''; const args: Array<string|number> = [language.id]; if (locale) args.push(locale);
   const [expressions, readings, mapped, localeRows] = await Promise.all([
@@ -37,7 +37,7 @@ export async function getLanguageDetail(db: D1Database, code: string, _hints = {
   return { code: language.code, name_en: language.name_en, name: language.name_en, expression_count: expressions?.total ?? 0, reading_count: readings?.total ?? 0, mapped_expression_count: mapped?.total ?? 0, locales };
 }
 
-export async function listLanguageExpressions(db: D1Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
+export async function listLanguageExpressions(db: Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {
   const language = await db.prepare('SELECT id FROM languages WHERE code=?').bind(code).first<{id:number}>(); if (!language) return null;
   const where = ['e.language_id=?']; const args: Array<string|number>=[language.id]; if (query.q) { where.push("e.text LIKE ? ESCAPE '\\'"); args.push(`%${escapeLike(query.q)}%`); } if (query.locale) { where.push('EXISTS (SELECT 1 FROM expression_locale_links x JOIN language_locales ll ON ll.id=x.locale_id WHERE x.expression_id=e.id AND ll.code=?)');args.push(query.locale); }
   const filter=where.join(' AND '); const count=await db.prepare(`SELECT COUNT(*) AS total FROM expressions e WHERE ${filter}`).bind(...args).first<{total:number}>(); const select=`SELECT e.id,? AS lang_code,e.text,e.homograph_index,e.created_at,(SELECT COUNT(*) FROM expression_readings r WHERE r.expression_id=e.id) AS reading_count,(SELECT COUNT(*) FROM expression_edges g WHERE (g.expression_a_id=e.id OR g.expression_b_id=e.id) AND g.relation_mask > 0) AS mapping_count,? AS language_name FROM expressions e WHERE ${filter}`; const order=query.sort==='hot'?'mapping_count DESC,e.text,e.homograph_index,e.id':query.sort==='new'?'e.created_at DESC,e.id':'e.text,e.homograph_index,e.id'; const rows=await db.prepare(`${select} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(code,code,...args,query.limit,query.offset).all<LanguageExpressionRow>();

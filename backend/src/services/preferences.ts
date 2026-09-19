@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 
 const PREFERENCE_SCHEMAS: Record<string, z.ZodType> = {
   'language.locales': z
@@ -20,7 +20,7 @@ export class PreferenceError extends Error {
 }
 
 export async function getPreferences(
-  db: D1Database,
+  db: Database,
   userId: number,
 ): Promise<Record<string, unknown>> {
   const { results } = await db
@@ -39,7 +39,7 @@ export async function getPreferences(
 }
 
 export async function putPreference(
-  db: D1Database,
+  db: Database,
   userId: number,
   key: string,
   value: unknown,
@@ -62,7 +62,7 @@ export async function putPreference(
   const json = JSON.stringify(validated);
   await db
     .prepare(
-      'INSERT INTO user_preferences (user_id, preference_key, value_json) VALUES (?, ?, ?) ON CONFLICT(user_id, preference_key) DO UPDATE SET value_json = excluded.value_json, updated_at = CURRENT_TIMESTAMP',
+      'INSERT INTO user_preferences (user_id, preference_key, value_json) VALUES (?, ?, ?) ON CONFLICT(user_id, preference_key) DO UPDATE SET value_json = excluded.value_json, updated_at = (CURRENT_TIMESTAMP::text)',
     )
     .bind(userId, key, json)
     .run();

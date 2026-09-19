@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { ReadingRow } from '../types/expression';
 import { SourceError } from './sources';
 import { resolveSource, type SourceInput } from './provenance';
@@ -8,7 +8,7 @@ const SCHEME_RE = /^[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)?$/;
 export class ReadingError extends Error { constructor(public code: string) { super(code); this.name = 'ReadingError'; } }
 export function validateReadingScheme(scheme: string): boolean { return SCHEME_RE.test(scheme); }
 
-export async function createReading(db: D1Database, input: { expression_id: number; language_locale_code: string; scheme: string; value: string; source?: SourceInput; created_by: number }): Promise<{ reading: ReadingRow; created: boolean }> {
+export async function createReading(db: Database, input: { expression_id: number; language_locale_code: string; scheme: string; value: string; source?: SourceInput; created_by: number }): Promise<{ reading: ReadingRow; created: boolean }> {
   const value = input.value.trim();
   if (!value) throw new ReadingError('VALIDATION_FAILED');
   if (!validateReadingScheme(input.scheme)) throw new ReadingError('INVALID_READING_SCHEME');

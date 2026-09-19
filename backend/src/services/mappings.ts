@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { EdgeRow, EdgeWithNeighborRow } from '../types/mapping';
 
 const EDGE_COLUMNS = 'id, expression_a_id, expression_b_id, relation_mask, score, created_by';
@@ -43,7 +43,7 @@ function validateRelationMask(value: number): void {
 }
 
 export async function createEdge(
-  db: D1Database,
+  db: Database,
   input: { expression_a_id: number; expression_b_id: number; relation_mask?: number; created_by: number },
 ): Promise<{ edge: EdgeRow; created: boolean }> {
   const [lowId, highId] = canonicalizeEdgePair(input.expression_a_id, input.expression_b_id);
@@ -72,7 +72,7 @@ export async function createEdge(
 }
 
 export async function createEdgesBatch(
-  db: D1Database,
+  db: Database,
   input: { expression_ids: number[]; relation_mask?: number; created_by: number },
 ): Promise<{ edges: EdgeRow[]; created_count: number }> {
   const ids = [...new Set(input.expression_ids)];
@@ -95,7 +95,7 @@ export async function createEdgesBatch(
 }
 
 export async function createEdgesForPairs(
-  db: D1Database,
+  db: Database,
   input: { pairs: Array<[number, number]>; relation_mask?: number; created_by: number },
 ): Promise<Array<{ edge: EdgeRow; created: boolean }>> {
   const seen = new Set<string>();
@@ -134,7 +134,7 @@ const B_SIDE_SQL = `SELECT e.id AS edge_id, n.id AS neighbor_id, l.code AS neigh
  LIMIT ?`;
 
 export async function getExpressionMappings(
-  db: D1Database,
+  db: Database,
   expressionId: number,
   query: { limit: number; cursor?: string | null },
 ): Promise<{ items: EdgeWithNeighborRow[]; next_cursor: string | null; has_more: boolean }> {

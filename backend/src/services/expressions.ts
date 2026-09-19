@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { ExpressionLocaleRow, ExpressionPartOfSpeech, ExpressionRow, ExpressionSourceRow, ReadingRow } from '../types/expression';
 import { canonicalizeExpressionText, expressionPrefixUpperBound } from './expressionIdentity';
 import { resolveSource, type SourceInput } from './provenance';
@@ -8,7 +8,7 @@ export const EXPRESSION_COLUMNS = `e.id, e.language_id, l.code AS lang_code, e.t
 const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id`;
 export class ExpressionError extends Error { constructor(public code: string) { super(code); this.name = 'ExpressionError'; } }
 
-export async function createExpression(db: D1Database, input: { lang_code: string; text: string; language_locale_code?: string; pos_mask?: number; source?: SourceInput; created_by: number }): Promise<{ expression: ExpressionRow; created: boolean }> {
+export async function createExpression(db: Database, input: { lang_code: string; text: string; language_locale_code?: string; pos_mask?: number; source?: SourceInput; created_by: number }): Promise<{ expression: ExpressionRow; created: boolean }> {
   const text = canonicalizeExpressionText(input.text);
   if (!text) throw new ExpressionError('VALIDATION_FAILED');
   const language = await db.prepare('SELECT id FROM languages WHERE code=?').bind(input.lang_code.toLowerCase()).first<{ id: number }>();
@@ -20,11 +20,11 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
   let sourceId: number | null;
   try { sourceId = await resolveSource(db, input.source); } catch (error) { if (error instanceof SourceError) throw new ExpressionError(error.code); throw error; }
   const existing = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.language_id=? AND e.text=? AND e.homograph_index=1`).bind(language.id, text).first<ExpressionRow>();
-  if (existing) { if (locale) await db.prepare('INSERT OR IGNORE INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)').bind(existing.id, locale.id).run(); return { expression: existing, created: false }; }
+  if (existing) { if (locale) await db.prepare('INSERT INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?) ON CONFLICT(expression_id, locale_id) DO NOTHING').bind(existing.id, locale.id).run(); return { expression: existing, created: false }; }
   const inserted = await db.prepare('INSERT INTO expressions(language_id,text,pos_mask,source_id,created_by) VALUES(?,?,?,?,?) RETURNING id').bind(language.id, text, posMask, sourceId, input.created_by).first<{ id: number }>();
   if (!inserted) throw new ExpressionError('EXPRESSION_CREATE_FAILED');
-  try { await db.prepare(`INSERT INTO language_statistics(language_id, expression_count, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP)
-    ON CONFLICT(language_id) DO UPDATE SET expression_count=language_statistics.expression_count+1, updated_at=CURRENT_TIMESTAMP`).bind(language.id).run(); } catch (error) {
+  try { await db.prepare(`INSERT INTO language_statistics(language_id, expression_count, updated_at) VALUES (?, 1, (CURRENT_TIMESTAMP::text))
+    ON CONFLICT(language_id) DO UPDATE SET expression_count=language_statistics.expression_count+1, updated_at=(CURRENT_TIMESTAMP::text)`).bind(language.id).run(); } catch (error) {
     if (!String(error).toLowerCase().includes('language_statistics')) throw error;
   }
   if (locale) await db.prepare('INSERT INTO expression_locale_links(expression_id, locale_id) VALUES (?, ?)').bind(inserted.id, locale.id).run();
@@ -33,7 +33,7 @@ export async function createExpression(db: D1Database, input: { lang_code: strin
   return { expression, created: true };
 }
 
-export async function getExpression(db: D1Database, id: number): Promise<{ expression: ExpressionRow; locales: ExpressionLocaleRow[]; readings: ReadingRow[]; parts_of_speech: ExpressionPartOfSpeech[]; sources: ExpressionSourceRow[] } | null> {
+export async function getExpression(db: Database, id: number): Promise<{ expression: ExpressionRow; locales: ExpressionLocaleRow[]; readings: ReadingRow[]; parts_of_speech: ExpressionPartOfSpeech[]; sources: ExpressionSourceRow[] } | null> {
   const expression = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE e.id=?`).bind(id).first<ExpressionRow>();
   if (!expression) return null;
   // A single pg Client is intentionally used per Worker request. node-postgres
@@ -49,7 +49,7 @@ export async function getExpression(db: D1Database, id: number): Promise<{ expre
   } catch (error) {
     // Expression provenance is optional (pre-migration databases have no
     // table), but log it — silent swallows masked real errors during the
-    // D1 → PG migration.
+    // PostgreSQL compatibility boundary.
     console.error('[getExpression] sources query failed', { expressionId: id, message: (error as { message?: string })?.message });
   }
   return {
@@ -61,7 +61,7 @@ export async function getExpression(db: D1Database, id: number): Promise<{ expre
   };
 }
 
-export async function searchExpressions(db: D1Database, query: { q: string; lang_code?: string; limit: number; offset: number }): Promise<{ items: ExpressionRow[]; total: number }> {
+export async function searchExpressions(db: Database, query: { q: string; lang_code?: string; limit: number; offset: number }): Promise<{ items: ExpressionRow[]; total: number }> {
   const args: Array<string | number> = []; const where: string[] = [];
   if (query.lang_code) { where.push('l.code=?'); args.push(query.lang_code); }
   const q = canonicalizeExpressionText(query.q);
@@ -72,7 +72,7 @@ export async function searchExpressions(db: D1Database, query: { q: string; lang
   return { items: rows.results, total: count?.total ?? 0 };
 }
 
-export async function createLocaleLink(db: D1Database, input: { expression_id: number; language_locale_code: string }): Promise<{ locale: ExpressionLocaleRow; created: boolean }> {
+export async function createLocaleLink(db: Database, input: { expression_id: number; language_locale_code: string }): Promise<{ locale: ExpressionLocaleRow; created: boolean }> {
   const [expression, locale] = await Promise.all([db.prepare('SELECT id FROM expressions WHERE id=?').bind(input.expression_id).first(), db.prepare('SELECT id FROM language_locales WHERE code=?').bind(input.language_locale_code).first<{ id:number }>()]);
   if (!expression) throw new ExpressionError('EXPRESSION_NOT_FOUND'); if (!locale) throw new ExpressionError('INVALID_LANGUAGE_LOCALE_CODE');
   const existing = await db.prepare('SELECT 1 FROM expression_locale_links WHERE expression_id=? AND locale_id=?').bind(input.expression_id, locale.id).first();

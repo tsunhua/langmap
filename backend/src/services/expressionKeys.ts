@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import { EXPRESSION_COLUMNS } from './expressions';
 import type { ExpressionRow } from '../types/expression';
 
@@ -20,7 +20,7 @@ export function parseExpressionKey(lang: string, text: string): ExpressionKey | 
   return { lang_code: lang.toLowerCase(), text: match[1], homograph_index: homographIndex };
 }
 
-export async function resolveExpressionKey(db: D1Database, key: ExpressionKey): Promise<ExpressionRow | null> {
+export async function resolveExpressionKey(db: Database, key: ExpressionKey): Promise<ExpressionRow | null> {
   const row = await db.prepare(
     `SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text=? AND e.homograph_index=?`,
   ).bind(key.lang_code, key.text, key.homograph_index).first<ExpressionRow>();

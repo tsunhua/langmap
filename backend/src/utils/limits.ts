@@ -3,7 +3,7 @@ export const MAX_LOCALIZATION_MAPPINGS = 100;
 export const MAX_HANDBOOK_SECTIONS = 50;
 export const MAX_HANDBOOK_ITEMS = 500;
 export const MAX_SPLIT_EDGE_IDS = 100;
-export const D1_WRITE_CHUNK_SIZE = 50;
+export const DATABASE_WRITE_CHUNK_SIZE = 50;
 
 export const MAX_TRANSLATION_GRAPHEMES = 500;
 export const MAX_TRANSLATION_TEXT_BYTES = 8192;

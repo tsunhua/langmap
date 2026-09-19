@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../../db/database';
 
 interface ExpressionLocaleRow {
   expression_id: number;
@@ -17,7 +17,7 @@ ORDER BY ell.expression_id ASC, ll.code ASC`;
  * match itself.
  */
 export async function fetchExpressionLocaleCodes(
-  db: D1Database,
+  db: Database,
   expressionIds: readonly number[],
 ): Promise<Map<number, string[]>> {
   const ids = [...new Set(expressionIds)];

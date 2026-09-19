@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import nameTranslations from '../../../scripts/language-reference/overlays/name-translations.json';
 import languageNameTranslations from '../../../scripts/language-reference/overlays/language-name-translations.json';
 import { parseLanguageLocaleCode } from './languageIdentity';
@@ -82,7 +82,7 @@ function firstPartyLanguageName(code: string, hints: LocaleHints): string | unde
   return projectLanguageName(code, hints.primary) ?? projectLanguageName(code, hints.secondary);
 }
 
-async function candidates(db: D1Database, ids: readonly number[], locale?: string): Promise<Map<number, string>> {
+async function candidates(db: Database, ids: readonly number[], locale?: string): Promise<Map<number, string>> {
   if (!locale || ids.length === 0) return new Map();
   const json = JSON.stringify(ids);
   const { results } = await db.prepare(CANDIDATE_SQL).bind(json, locale, locale, locale, locale).all<CandidateRow>();
@@ -94,7 +94,7 @@ async function candidates(db: D1Database, ids: readonly number[], locale?: strin
   return new Map([...selected].map(([sourceId, row]) => [sourceId, row.target_text]));
 }
 
-export async function resolveNamesByExpressionIds(db: D1Database, ids: readonly number[], hints: LocaleHints): Promise<Map<number, { name: string; name_en: string }>> {
+export async function resolveNamesByExpressionIds(db: Database, ids: readonly number[], hints: LocaleHints): Promise<Map<number, { name: string; name_en: string }>> {
   const distinct = [...new Set(ids.filter((id) => Number.isInteger(id) && id > 0))];
   if (distinct.length === 0) return new Map();
   const { results } = await db.prepare(EXPRESSIONS_SQL).bind(JSON.stringify(distinct)).all<{ id: number; text: string }>();
@@ -109,7 +109,7 @@ export async function resolveNamesByExpressionIds(db: D1Database, ids: readonly 
   return new Map(results.map((row) => [row.id, { name: local.get(row.id) ?? primary.get(row.id) ?? secondary.get(row.id) ?? row.text, name_en: row.text }]));
 }
 
-export async function resolveLanguageNames(db: D1Database, codes: readonly string[], hints: LocaleHints): Promise<Map<string, string>> {
+export async function resolveLanguageNames(db: Database, codes: readonly string[], hints: LocaleHints): Promise<Map<string, string>> {
   const distinct = [...new Set(codes.filter(Boolean))];
   if (distinct.length === 0) return new Map();
   const { results } = await db.prepare(LANGUAGE_SQL).bind(JSON.stringify(distinct)).all<IdentityRow>();
@@ -122,7 +122,7 @@ export async function resolveLanguageNames(db: D1Database, codes: readonly strin
   }));
 }
 
-export async function resolveLocaleNames(db: D1Database, codes: readonly string[], hints: LocaleHints): Promise<Map<string, string>> {
+export async function resolveLocaleNames(db: Database, codes: readonly string[], hints: LocaleHints): Promise<Map<string, string>> {
   const distinct = [...new Set(codes.filter(Boolean))];
   if (distinct.length === 0) return new Map();
   const { results } = await db.prepare(LOCALE_SQL).bind(JSON.stringify(distinct)).all<IdentityRow>();

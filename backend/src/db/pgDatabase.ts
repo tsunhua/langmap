@@ -1,14 +1,15 @@
 import { Client, types, type QueryResult } from 'pg';
+import type { Database, PreparedStatement } from './database';
 
 // ── Normalize bigint → JS number (OID 20 = int8) ───────────────────────────
 types.setTypeParser(20, (v: string | null) => (v === null ? null : Number(v)));
 
 // ── Error normalization ──────────────────────────────────────────────────────
-// Services still match SQLite's "UNIQUE constraint failed" text.
+// Normalize unique violations for the application error contract.
 function normalizePgError(error: unknown): unknown {
   if (error && typeof error === 'object' && (error as { code?: string }).code === '23505') {
     const message = (error as { message?: string }).message ?? 'duplicate key value';
-    const wrapped = new Error(`${message} UNIQUE constraint failed`);
+    const wrapped = new Error(`${message} (unique violation)`);
     (wrapped as { code?: string }).code = '23505';
     return wrapped;
   }
@@ -16,11 +17,6 @@ function normalizePgError(error: unknown): unknown {
 }
 
 type QueryExecutor = (sql: string, params: unknown[]) => Promise<QueryResult>;
-
-export interface PgDatabaseHandle {
-  prepare(sql: string): ReturnType<typeof createStatement>;
-  batch(statements: { _sql: string; _params: () => unknown[] }[]): Promise<unknown[]>;
-}
 
 // Hyperdrive already pools origin connections. Cloudflare Workers must not keep
 // a pg Client/Pool in module-global state because I/O objects cannot be reused
@@ -151,37 +147,21 @@ function tokenize(sql: string): Segment[] {
 export function transformSql(sql: string): { pgSql: string; needsOnConflict: boolean } {
   const segs = tokenize(sql);
   let paramIdx = 1;
-  let needsOnConflict = false;
 
   for (const seg of segs) {
     if (!seg.code) continue;
-
-    // token replacements (order matters)
-    // INSERT OR IGNORE → INSERT + flag
-    if (/\bINSERT\s+OR\s+IGNORE\b/gi.test(seg.text)) {
-      needsOnConflict = true;
-      seg.text = seg.text.replace(/\bINSERT\s+OR\s+IGNORE\b/gi, 'INSERT');
-    }
-
-    seg.text = seg.text.replace(/\bCURRENT_TIMESTAMP\b/g, "to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS')");
-
-    // ? → $n  (outside strings/comments, already guaranteed by tokenizer)
+    // The application contract uses positional placeholders; translate them
+    // once at the adapter boundary so services stay database-agnostic.
     seg.text = seg.text.replace(/\?/g, () => `$${paramIdx++}`);
   }
 
   let pgSql = segs.map((s) => s.text).join('');
-
-  // post-conversion regex (safe: none of these appear inside strings)
-  pgSql = pgSql.replace(/LIKE (\$\d+)/g, 'ILIKE $1');
-  pgSql = pgSql.replace(/([A-Za-z_][A-Za-z0-9_.]*) = (\$\d+) COLLATE NOCASE/g, 'LOWER($1) = LOWER($2)');
-  pgSql = pgSql.replace(/([A-Za-z_][A-Za-z0-9_.]*)\s+COLLATE\s+NOCASE/gi, 'LOWER($1)');
-  pgSql = pgSql.replace(/\bCOLLATE\s+NOCASE\b/gi, '');
-
-  return { pgSql, needsOnConflict };
+  pgSql = pgSql.replace(/\bLIKE (\$\d+)/g, 'ILIKE $1');
+  return { pgSql, needsOnConflict: false };
 }
 
-// ── Statement wrapper (mirrors D1PreparedStatement subset) ───────────────────
-function createStatement(execute: QueryExecutor, originalSql: string) {
+// ── Statement wrapper (implements the application PreparedStatement contract) ───────────────────
+function createStatement(execute: QueryExecutor, originalSql: string): PreparedStatement {
   let params: unknown[] = [];
 
   const stmt = {
@@ -203,20 +183,9 @@ function createStatement(execute: QueryExecutor, originalSql: string) {
     },
 
     async run() {
-      const { pgSql, needsOnConflict } = transformSql(originalSql);
+      const { pgSql } = transformSql(originalSql);
       let finalSql = pgSql;
-      const isInsert = /^\s*INSERT\b/i.test(finalSql);
-      if (isInsert) {
-        if (needsOnConflict && !/\bON\s+CONFLICT\b/i.test(finalSql)) {
-          // Insert ON CONFLICT DO NOTHING before RETURNING (if present) or at end.
-          if (/\bRETURNING\b/i.test(finalSql)) {
-            finalSql = finalSql.replace(/\bRETURNING\b/i, (m) => `ON CONFLICT DO NOTHING ${m}`);
-          } else {
-            finalSql += ' ON CONFLICT DO NOTHING';
-          }
-        }
-        if (!/\bRETURNING\b/i.test(finalSql)) finalSql += ' RETURNING *';
-      }
+      if (/^\s*INSERT\b/i.test(finalSql) && !/\bRETURNING\b/i.test(finalSql)) finalSql += ' RETURNING *';
       const { rows, rowCount } = await execute(finalSql, params);
       const lastRowId =
         rows.length > 0 && typeof rows[0] === 'object' && 'id' in rows[0]
@@ -234,9 +203,9 @@ function createStatement(execute: QueryExecutor, originalSql: string) {
 }
 
 // ── Public factory ───────────────────────────────────────────────────────────
-// Returns an object shape-compatible with the D1Database subset used by
-// LangMap (prepare / batch). The underlying Client is request-scoped.
-export function createPgDatabase(connectionString: string): PgDatabaseHandle {
+// The underlying Client is request-scoped and PostgreSQL is the only runtime
+// database implementation.
+export function createPgDatabase(connectionString: string): Database {
   const requestClient = createRequestClient(connectionString);
 
   return {
@@ -244,22 +213,14 @@ export function createPgDatabase(connectionString: string): PgDatabaseHandle {
       return createStatement(requestClient.execute, sql);
     },
 
-    async batch(statements: { _sql: string; _params: () => unknown[] }[]) {
+    async batch(statements: PreparedStatement[]) {
       const client = await requestClient.getClient();
       try {
         await client.query('BEGIN');
         const results: unknown[] = [];
         for (const stmt of statements) {
-          const { pgSql, needsOnConflict } = transformSql(stmt._sql);
-          let finalSql = pgSql;
-          const isInsert = /^\s*INSERT\b/i.test(finalSql);
-          if (isInsert && needsOnConflict && !/\bON\s+CONFLICT\b/i.test(finalSql)) {
-            if (/\bRETURNING\b/i.test(finalSql)) {
-              finalSql = finalSql.replace(/\bRETURNING\b/i, (m) => `ON CONFLICT DO NOTHING ${m}`);
-            } else {
-              finalSql += ' ON CONFLICT DO NOTHING';
-            }
-          }
+          const { pgSql } = transformSql(stmt._sql);
+          const finalSql = pgSql;
           // Batch callers do not consume last_row_id, so do not append RETURNING.
           const { rows, rowCount } = await requestClient.execute(finalSql, stmt._params());
           results.push({ results: rows, meta: { changes: rowCount }, success: true });

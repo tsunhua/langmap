@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../../db/database';
 import {
   APPROVED_PIVOT_LANGUAGES,
   MAX_DIRECT_PATHS_PER_ROOT,
@@ -205,7 +205,7 @@ function buildRoots(fullText: string, spans: PlannerSpan[], maxPlannerSpans: num
 }
 
 async function findRootCandidates(
-  db: D1Database,
+  db: Database,
   canonical: string,
   sourceLangCode: string,
   limits: RetrievalLimits,
@@ -224,7 +224,7 @@ async function findRootCandidates(
 }
 
 async function queryDirect(
-  db: D1Database,
+  db: Database,
   expressionId: number,
   targetLanguageId: number,
   limits: RetrievalLimits,
@@ -237,7 +237,7 @@ async function queryDirect(
 }
 
 async function queryTwoHop(
-  db: D1Database,
+  db: Database,
   expressionId: number,
   targetLanguageId: number,
   targetLangCode: string,
@@ -336,11 +336,10 @@ function uniqueEdgeIds(hits: InternalHit[]): number[] {
   return [...new Set(hits.flatMap((hit) => [hit.firstEdgeId, hit.secondEdgeId]))];
 }
 
-async function fetchEdgeMarkers(db: D1Database, edgeIds: number[]): Promise<Map<number, string[]>> {
+async function fetchEdgeMarkers(db: Database, edgeIds: number[]): Promise<Map<number, string[]>> {
   const byEdge = new Map<number, string[]>();
   if (edgeIds.length === 0) return byEdge;
-  // At most MAX_EVIDENCE_TOTAL hits with two edges each stays well under D1's
-  // SQLite variable limit, so one batched query covers every evidence edge.
+  // The bounded evidence set fits one PostgreSQL query and keeps response size predictable.
   const marks = edgeIds.map(() => '?').join(',');
   const { results } = await db.prepare(edgeMarkersSql(marks)).bind(...edgeIds).all<EdgeMarkerRow>();
   for (const row of results) {
@@ -390,7 +389,7 @@ function capSerializedBytes(
   return { selected, omitted };
 }
 
-export async function retrieveEvidence(db: D1Database, input: RetrievalRequest): Promise<RetrievalOutput> {
+export async function retrieveEvidence(db: Database, input: RetrievalRequest): Promise<RetrievalOutput> {
   const limits: RetrievalLimits = { ...DEFAULT_RETRIEVAL_LIMITS, ...input.limits };
   const sourceLangCode = typeof input.sourceLangCode === 'string' ? input.sourceLangCode.trim().toLowerCase() : '';
 
@@ -402,7 +401,7 @@ export async function retrieveEvidence(db: D1Database, input: RetrievalRequest):
     if (callerSignal.aborted) onAbort();
     else callerSignal.addEventListener('abort', onAbort, { once: true });
   }
-  // D1 queries cannot be cancelled mid-flight, so the timeout only stops new
+  // PostgreSQL statement timeout is server-controlled, so the timeout only stops new
   // work between awaits; the finally block always releases timer and listener.
   const timer = setTimeout(() => {
     timedOut = true;

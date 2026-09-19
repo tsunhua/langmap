@@ -129,7 +129,7 @@ translation.post('/', requireTranslationAuth, async (c) => {
       if (ENVELOPE_CODES.has(error.code)) return badRequest(c, error.code);
     }
     // Only the validators/resolvers are expected to throw TranslationValidationError;
-    // anything else (e.g. a D1 fault) is a server error, not a client error.
+    // anything else (e.g. a database fault) is a server error, not a client error.
     throw error;
   }
 

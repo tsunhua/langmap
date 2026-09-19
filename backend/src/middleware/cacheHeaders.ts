@@ -44,7 +44,7 @@ const LANGUAGES_CACHE: CachePolicy = {
   authIndependent: true,
 };
 
-// Bump this when registry-backed names or counts change outside the D1 rows.
+// Bump this when registry-backed names or counts change outside the database rows.
 // The revision is part of the internal Cache API key so a deploy cannot keep
 // serving a pre-release language label until the long stale window expires.
 const LANGUAGES_CACHE_REVISION = '2026-09-12-cmn-hant-name-v2';

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../../db/database';
 import { MAX_ALTERNATIVES } from '../../utils/limits';
 import {
   DEFAULT_EXACT_MATCH_LIMITS,
@@ -50,7 +50,7 @@ export interface TranslationLimitsInput {
 }
 
 export interface RunTranslationEnv {
-  DB: D1Database;
+  DB: Database;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_API_TOKEN?: string;
   // Test seam only. Production constructs the official SDK client from env.

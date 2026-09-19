@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../db/database';
 import type { LanguageLocaleParts } from '../types/language';
 
 export type ReferenceTable = 'languages' | 'scripts' | 'regions';
@@ -43,7 +43,7 @@ export function escapeLike(value: string): string {
 }
 
 export async function queryReferenceTable(
-  db: D1Database,
+  db: Database,
   table: ReferenceTable,
   query: ReferenceQuery,
 ): Promise<ReferenceListResult> {
@@ -63,7 +63,7 @@ export async function queryReferenceTable(
   const total = countRow?.total ?? 0;
 
   const order = escapedQ
-    ? `ORDER BY CASE WHEN code = ? COLLATE NOCASE THEN 0 WHEN code LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END, code ASC LIMIT ? OFFSET ?`
+    ? `ORDER BY CASE WHEN LOWER(code) = LOWER(?) THEN 0 WHEN code LIKE ? ESCAPE '\\' THEN 1 ELSE 2 END, code ASC LIMIT ? OFFSET ?`
     : `ORDER BY code ASC LIMIT ? OFFSET ?`;
 
   const selectParams = [...baseParams];
@@ -137,7 +137,7 @@ export function parseLanguageLocaleCode(code: string): LanguageLocaleParts | nul
 }
 
 export async function assertReferenceCodesExist(
-  db: D1Database,
+  db: Database,
   langCode: string,
   scriptCode: string,
   regionCode: string,

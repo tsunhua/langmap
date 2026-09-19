@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../../db/database';
 import { MAX_TRANSLATION_GRAPHEMES, MAX_TRANSLATION_TEXT_BYTES } from '../../utils/limits';
 import type { TranslationRequest } from './types';
 
@@ -52,7 +52,7 @@ JOIN languages l ON l.id = ll.language_id
 WHERE ll.code = ?`;
 
 export async function resolveSourceLanguage(
-  db: D1Database,
+  db: Database,
   input: Pick<TranslationRequest, 'source_lang_code' | 'source_locale_code'>,
 ): Promise<SourceLanguageResolution> {
   if (input.source_lang_code !== null && typeof input.source_lang_code !== 'string') throw new TranslationValidationError('INVALID_LANG_CODE');
@@ -82,7 +82,7 @@ export interface TargetLocaleResolution {
   nameEn?: string;
 }
 
-export async function resolveTargetLocale(db: D1Database, target_locale_code: string): Promise<TargetLocaleResolution> {
+export async function resolveTargetLocale(db: Database, target_locale_code: string): Promise<TargetLocaleResolution> {
   if (typeof target_locale_code !== 'string') throw new TranslationValidationError('TARGET_LOCALE_NOT_FOUND');
   const locale = await db
     .prepare(LOCALE_SQL)

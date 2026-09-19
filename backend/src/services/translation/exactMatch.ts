@@ -1,4 +1,4 @@
-import type { D1Database } from '@cloudflare/workers-types';
+import type { Database } from '../../db/database';
 import { APPROVED_PIVOT_LANGUAGES, MAX_ALTERNATIVES, MAX_DIRECT_PATHS_PER_ROOT } from '../../utils/limits';
 import { canonicalizeExpressionText } from '../expressionIdentity';
 import { parseLanguageLocaleCode } from '../languageIdentity';
@@ -162,7 +162,7 @@ function twoHopSql(sourceLangCode: string | null, pivotMarks: string): string {
 }
 
 async function queryDirect(
-  db: D1Database,
+  db: Database,
   canonicalText: string,
   sourceLangCode: string | null,
   targetLanguageId: number,
@@ -177,7 +177,7 @@ async function queryDirect(
 }
 
 async function queryTwoHop(
-  db: D1Database,
+  db: Database,
   canonicalText: string,
   sourceLangCode: string | null,
   targetLanguageId: number,
@@ -284,7 +284,7 @@ function ambiguousCandidates(hits: ExactHit[]): TranslationLanguageCandidate[] {
     .sort((a, b) => b.confidence - a.confidence || a.code.localeCompare(b.code));
 }
 
-async function fetchEdgeMarkers(db: D1Database, edgeIds: number[]): Promise<string[]> {
+async function fetchEdgeMarkers(db: Database, edgeIds: number[]): Promise<string[]> {
   const markers: string[] = [];
   for (const edgeId of edgeIds) {
     const { results } = await db.prepare(EDGE_MARKERS_SQL).bind(edgeId, MAX_MARKERS_PER_EDGE).all<EdgeMarkerRow>();
@@ -296,7 +296,7 @@ async function fetchEdgeMarkers(db: D1Database, edgeIds: number[]): Promise<stri
 }
 
 async function buildEvidence(
-  db: D1Database,
+  db: Database,
   hits: ExactHit[],
   targetLocaleCode: string,
 ): Promise<TranslationEvidence[]> {
@@ -336,7 +336,7 @@ function isLocaleCompatible(targetLocaleCode: string, evidence: TranslationEvide
 }
 
 export async function findExactTranslation(
-  db: D1Database,
+  db: Database,
   input: ExactMatchInput,
 ): Promise<ExactMatchResult> {
   const canonicalText = canonicalizeExpressionText(input.canonicalText);
