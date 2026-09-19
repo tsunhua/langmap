@@ -36,7 +36,7 @@ LangMap 是一個開源、社區驅動的語言地圖平臺，致力於收集世
 |------|------|
 | 前端 | Vue 3 + Vite + Tailwind CSS + vue-i18n + Leaflet |
 | 後端 | Hono + TypeScript + Cloudflare Workers |
-| 數據庫 | Cloudflare D1（SQLite）+ R2（對象存儲） |
+| 數據庫 | PostgreSQL + R2（對象存儲） |
 | 部署 | Cloudflare Workers + Assets |
 
 ## 參與開發
@@ -62,7 +62,7 @@ npm install
 npm run dev
 ```
 
-後端使用本地 Wrangler 執行，D1 與 R2 使用本地模擬；翻譯透過 Worker
+後端使用本地 Wrangler 執行，透過 `DATABASE_URL` 連接本地或測試 PostgreSQL；R2 使用本地模擬。翻譯透過 Worker
 服務端的官方 `openai` SDK 呼叫 Cloudflare Workers AI OpenAI-compatible API。
 
 ### 本地全棧開發
@@ -71,12 +71,11 @@ npm run dev
 ./dev.sh
 ```
 
-`./dev.sh` 會先檢查本地 bootstrap fingerprint，再透過 `scripts/db/manage.sh local status|rebuild|verify`
-管理 repo 專屬的本地 D1 狀態，最後啟動後端 Wrangler 與前端 Vite。
+`./dev.sh` 啟動前端與 Worker，並檢查 `backend/.dev.vars` 或環境變數中的 `DATABASE_URL`。資料庫 schema／migration 由 `scripts/postgres/manage.py` 管理，不在 dev script 中重建或清除資料。
 
-- `./dev.sh --rebuild`：強制重建本地 D1 bootstrap。
-- `./dev.sh --no-rebuild`：禁止自動重建；若 fingerprint 不一致會直接失敗。
+- `./dev.sh`：啟動本地全棧服務。
 - `./dev.sh --port=8790`：將本地 API 綁到指定埠，前端仍代理到該埠。
+- macOS 可用 Homebrew 安裝 PostgreSQL；程式與 importer 不依賴 Homebrew 或 `psql`。
 
 翻譯需要在 `backend/.dev.vars` 中配置 Cloudflare 憑證（此檔案不提交）：
 
@@ -104,35 +103,30 @@ npx wrangler secret put CLOUDFLARE_API_TOKEN
 
 ### 數據庫配置
 
-在 `backend/wrangler.jsonc` 中配置 Cloudflare D1 綁定：
-
-```jsonc
-{
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "your-database-name",
-      "database_id": "your-database-id"
-    }
-  ]
-}
-```
-
-### 資料庫安全操作
-
-日常資料庫操作統一經過 `scripts/db/manage.sh`：
+建立空 PostgreSQL database 後，以 `DATABASE_URL` 初始化 baseline：
 
 ```bash
-./scripts/db/manage.sh local status
-./scripts/db/manage.sh local rebuild
-./scripts/db/manage.sh local verify
-./scripts/db/manage.sh production inventory
-./scripts/db/manage.sh production plan
+python3 scripts/postgres/manage.py init
+python3 scripts/postgres/manage.py migrate
 ```
 
-`production inventory`、`production plan` 只讀；`production apply` 與 `production restore`
-必須使用已審核的 plan、完整資料庫名稱與明確確認字串。它們不會自動 deploy。詳見
-[資料庫 runbooks](./docs/runbooks/)。不要直接使用 Wrangler remote migration 或 D1 SQL。
+macOS 可用 Homebrew 安裝並啟動本機 PostgreSQL：
+
+```bash
+brew install postgresql@17
+brew services start postgresql@17
+createdb langmap
+```
+
+本地 `.dev.vars` 最少需要：
+
+```dotenv
+DATABASE_URL="postgresql:///langmap"
+SECRET_KEY="local-development-secret"
+```
+
+詞典 canonical CSV 先以 `--check` 驗證，再以同一 `DATABASE_URL` 執行 `--apply`；入口與欄位契約記錄於
+[scripts inventory](./docs/runbooks/scripts-inventory.md)。
 
 ### 貢獻指南
 

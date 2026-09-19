@@ -1,3 +1,5 @@
+> Historical design record: this document describes the retired D1/SQLite architecture and is not an executable PostgreSQL procedure.
+
 # 數據庫設計
 
 ## System Reminder

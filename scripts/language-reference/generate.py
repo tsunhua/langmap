@@ -342,7 +342,7 @@ INSERT_BATCH = 500
 
 
 def _insert_blocks(table: str, columns: list[str], value_rows: list[str]) -> list[str]:
-    # D1/miniflare rejects oversized single statements (SQLITE_TOOBIG), so chunk
+    # the database rejects oversized single statements, so chunk
     # each table into multiple INSERT statements of at most INSERT_BATCH rows.
     cols = ", ".join(columns)
     out: list[str] = []

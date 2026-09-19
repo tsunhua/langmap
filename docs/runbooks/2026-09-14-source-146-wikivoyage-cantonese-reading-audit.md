@@ -1,3 +1,5 @@
+> Historical record: this runbook predates the PostgreSQL/canonical CSV cutover and is not an executable current procedure.
+
 # Source 146 英文 Wikivoyage 粵語 reading 修復紀錄
 
 ## 範圍

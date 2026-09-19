@@ -114,7 +114,7 @@ def stable_edge_id(a: str, b: str) -> str:
 def stable_attestation_id(locale_code: str, target_expression_id: str) -> str:
     """Deterministic expression_locale_attestations.id. The UNIQUE on
     (expression_id, language_locale_code, source_id, source_ref) cannot dedupe
-    NULL provenance (SQLite treats NULLs as distinct), so idempotent re-import
+    NULL provenance (PostgreSQL treats NULLs as distinct), so idempotent re-import
     relies on this deterministic PRIMARY KEY."""
     return f'ui-att:{locale_code}:{target_expression_id}'
 

@@ -1,3 +1,5 @@
+> Historical record: this SQLite/D1/JSONL handbook pipeline is retired and is not a current import entrypoint. It remains only until the scripts inventory receives explicit deletion approval.
+
 # 英文 Wikivoyage 會話手冊匯入
 
 這個目錄提供一條可重跑的離線流程：下載英文 Wikivoyage

@@ -1,3 +1,5 @@
+> Historical record: this D1/SQLite release procedure is retired. Do not execute it; use the PostgreSQL CSV importer and current migration runbook instead.
+
 # Production Data Release Runbook
 
 ## 前置條件

@@ -1,3 +1,5 @@
+> Historical record: this D1 production sync procedure is retired. Current PostgreSQL baseline and migration commands are documented in `docs/runbooks/database-migrations.md`.
+
 # Reference Data Sync Runbook
 
 ## 前置條件

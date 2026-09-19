@@ -1,3 +1,5 @@
+> Historical record: this SQL bundle generator is retained only for source audit; its D1/SQLite import wrapper was removed and the generated SQL is not a current PostgreSQL import entrypoint.
+
 # UI 翻譯 bundle
 
 受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
@@ -36,18 +38,18 @@ python3 scripts/i18n/generate-bundle.py \
 manifest 會記錄 schema version、project/scope、source checksums、locale/message/
 translation counts，以及輸出 SQL 的 SHA-256。生成失敗時不會替換既有 artifact。
 
-## Local compatibility wrapper
+## Historical local wrapper (retired)
 
-本地匯入改為先重建 bundle，再一次載入單一 SQL：
+舊流程曾以 wrapper 重建 bundle 並載入單一 SQL；wrapper 已移除，以下命令僅供歷史查閱，不可執行：
 
 ```bash
 scripts/i18n/import-all.sh --local
 ```
 
 `--remote` 已停用。production 寫入改由 production data manager 接手；此 wrapper
-不再直接對 remote D1 執行匯入。
+不再直接對 production database 執行匯入。
 
-production 只可先執行 `./scripts/db/manage.sh production inventory|plan`，經人工審核
+production 只可先執行 `./scripts/postgres/manage.py migrate`，經人工審核
 後再依 [production data release runbook](../../docs/runbooks/production-data-release.md)
 執行受保護的 apply。
 

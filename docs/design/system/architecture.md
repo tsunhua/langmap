@@ -16,7 +16,7 @@
 - Resend (郵件服務)
 
 ### 數據庫
-- Cloudflare D1 (SQLite 兼容邊緣數據庫)
+- PostgreSQL（透過 Worker request-scoped adapter／Hyperdrive 連線）
 - Cloudflare R2 (對象存儲，用於導出功能)
 - Cloudflare KV (緩存和會話存儲，可選)
 
@@ -184,7 +184,7 @@
 
 ### 已實現
 - 無服務器架構（Cloudflare Workers）
-- 邊緣數據庫（D1）
+- PostgreSQL 資料庫
 - 邊緣對象存儲（R2，用於導出）
 - JWT 認證
 - 前後端分離

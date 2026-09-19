@@ -1,42 +1,41 @@
-# Dev D1 Runbook
+# PostgreSQL development runbook
 
 ## 前置條件
 
 - Node.js、npm 與 backend dependencies 已安裝。
-- `backend/.dev.vars` 已設定；不把 secret 提交到 Git。
+- 已安裝 PostgreSQL（macOS 可選 Homebrew）；程式本身不依賴 Homebrew 或 `psql`。
+- `backend/.dev.vars` 設定 `DATABASE_URL` 與 `SECRET_KEY`，不把 secret 提交到 Git。
 
-## 操作
+## 建立與啟動
+
+macOS 可用 Homebrew 建立本機 PostgreSQL（程式與跨 OS importer 不依賴 Homebrew）：
 
 ```bash
-# 第一次啟動，或 schema／registry fingerprint 確實變更時
-./dev.sh
-./scripts/db/manage.sh local status
-./scripts/db/manage.sh local verify
+brew install postgresql@17
+brew services start postgresql@17
+createdb langmap
 ```
 
-`dev.sh` 預設依 fingerprint 判斷是否重建：fingerprint 命中時只做 verify，只有
-fingerprint 變更時才 rebuild。重建會使用 schema、locked migrations、language registry、
-system UI bundle 與本機開發帳號（`dev@example.com` / `dev`）建立 repo 專屬本地 D1，
-成功驗證後才替換 active state。此帳號不進入 production migration。
+再設定 `DATABASE_URL=postgresql:///langmap`，套用 baseline：
 
-### 只重啟服務
+```bash
+python3 scripts/postgres/manage.py init
+python3 scripts/postgres/manage.py migrate
+./dev.sh
+```
 
-若 local D1 與服務都已正常，只是要重啟 Web/API，不要為了重啟反覆執行 rebuild。
-保留現有服務即可；若確實需要重新啟動，執行一次 `./dev.sh`，讓 fingerprint 判斷
-是否需要 rebuild。`--rebuild` 只用於明確要求丟棄並重建 local D1 的情況；`--no-rebuild`
-是 CI／診斷用的 fail-closed 選項，不是繞過 schema 不一致的啟動模式。
+`dev.sh` 只檢查 `DATABASE_URL` 並啟動 Worker／Vite，不會清除或重建資料庫。若需隔離測試，請建立獨立 database，套用同一份
+`backend/postgres/schema.sql`，不要使用 production URL。
 
-詞典匯入後若要在本機查看，先完成一次 rebuild，再將 JSONL 匯入該 disposable local D1；
-不要因為匯入資料而重建。若 schema／registry 在匯入後變更，應先完成變更、重建一次，
-再重新匯入資料。
+## 詞典匯入
+
+```bash
+python3 scripts/dictionary/import_mapping_csv_pg.py --manifest /path/to/manifest.json --check
+DATABASE_URL='postgresql://...' python3 scripts/dictionary/import_mapping_csv_pg.py --manifest /path/to/manifest.json --apply
+```
+
+`--apply` 是單一 transaction；checksum、表頭、registry 與 source ownership 任一項失敗即 rollback。
 
 ## 失敗處理
 
-若 verify 失敗，保留 active state 不變；查看錯誤中的 temporary state，修正來源或
-artifact 後重新執行 rebuild。不要手動對 active D1 套用部分 SQL。
-
-## 禁止事項
-
-- 不刪除其他專案的 Wrangler state 或 process。
-- 不把 `.dev.vars`、`.wrangler/` 或 local report 提交。
-- 不以 `--remote` 取代 local rebuild。
+保留 PostgreSQL log 與 importer summary，修正來源 CSV／manifest 後以同一份 artifact 重跑。不要手動刪除 production rows，也不要把 `.dev.vars`、database dump 或 local runtime state 提交。

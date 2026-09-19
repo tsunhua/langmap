@@ -1,6 +1,6 @@
 # LangMap 術語表
 
-LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔案只定義目前資料模型仍使用的專案術語；表結構以 `backend/schema.sql` 為準。
+LangMap 是以詞句與直接對照關係為核心的多語對照平台。本檔案只定義目前資料模型仍使用的專案術語；表結構以 `backend/postgres/schema.sql` 為準。
 
 ## 身份與 locale
 
@@ -56,8 +56,8 @@ _避免使用_：AI mapping、自動貢獻
 
 ## 資料生命週期
 
-**canonical schema**：`backend/schema.sql` 描述乾淨重建時的資料庫。變更 schema 時，必須新增順序 migration、同步 schema 與 migration lock。
+**canonical schema**：`backend/postgres/schema.sql` 描述 PostgreSQL baseline。變更 schema 時，新增 checksum-locked migration 並同步 baseline。
 
 **language reference registry**：`scripts/language-reference/` 的固定輸入與 generator 產生的 seed。它建立 ISO registry、reference locale，以及名稱圖的 canonical expression、翻譯 edge 與 locale link。
 
-**v2 canonical import**：`scripts/db/import_v2_canonical.py` 從匯出的舊 v2 SQLite 產生可重跑 SQL，將適用資料寫入現行整數 schema。local rebuild 會清除結果，因此匯入必須保持可重跑。
+**v2 canonical import**：dictionary canonical CSV 由 `scripts/dictionary/import_mapping_csv_pg.py` 驗證並以 source snapshot 同步到 PostgreSQL；每次套用必須保持可重跑。

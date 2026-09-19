@@ -1,3 +1,5 @@
+> Historical record: this runbook predates the PostgreSQL/canonical CSV cutover and is not an executable current procedure.
+
 # 詞典發布的教訓與經驗
 
 > 整理截至 2026-09-12 的實際詞典與 Wikivoyage 發布經驗。本文是決策與檢查清單，

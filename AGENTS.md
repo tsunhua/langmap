@@ -9,7 +9,7 @@
 ## 當前主線
 
 - 前端：`web/`，Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS。
-- 後端：`backend/`，Hono + TypeScript + Cloudflare Workers + D1。
+- 後端：`backend/`，Hono + TypeScript + Cloudflare Workers + PostgreSQL。
 - API prefix：`/api/v2`，一般回應格式為 `{ success, data?, error?, message? }`。
 - `apple/` 是獨立 SwiftUI 客戶端，不要在 Web/API 任務中順手修改。
 
@@ -19,8 +19,8 @@
 web/src/          pages / components / composables / stores / api / assets
 backend/src/      index.tsx / routes / utils / types.ts
 backend/tests/    Vitest 整合測試
-backend/migrations/ D1 增量 migration
-backend/schema.sql  新資料庫完整 schema
+backend/postgres/migrations/ PostgreSQL 增量 migration
+backend/postgres/schema.sql  PostgreSQL 完整 schema
 docs/superpowers/    specs / plans
 scripts/             資料匯入與維護
 ```
@@ -34,7 +34,7 @@ cd web && npm run build
 cd backend && npm test
 ```
 
-- 後端整合測試依賴 `127.0.0.1:8788` 與本地 D1，執行前先啟動 Worker。
+- 後端整合測試依賴 `DATABASE_URL` 指向隔離 PostgreSQL；API smoke test 另需啟動 Worker。
 - `web/dist/`、`backend/public/`、`.wrangler/` 是生成或本地狀態，不要手動修改。
 
 ## 程式規範
@@ -67,31 +67,24 @@ cd backend && npm test
 - `expression`：單一語言中的詞或句，綁定 `language_id`；ID 為整數。詞典匯入將同一 `(language_id, text)` 合併為 `homograph_index = 1` 的單一列，不依來源增量配號。
 - `mapping` / `expression_edge`：兩個 expression 的直接對照關係；兩端可以是詞、短語或句子，端點採排序後的整數 ID。例句原句與譯句各自是獨立 expression，只在兩者之間建立普通 mapping，不與主詞頭關聯。
 - 來源標記（source marker）：詞典自己的 homograph 編號以 `(source_id, source_marker)` 保留在 `expression_sources`（expression 層）與 `expression_edge_sources`（edge 層）。同來源不同編號＝不同含義；跨來源編號不互宣稱相同，不建立 sense 實體。
-- 詞典匯入、合併身份、來源標記的變更集中在 `scripts/dictionary/langmap_dictionary/`；改動必須同步 `backend/schema.sql`、migration、pytest 與 mappingGraph 型別。
+- 詞典匯入、合併身份、來源標記的變更集中在 `scripts/dictionary/import_mapping_csv_pg.py` 與 dictionary repo；改動必須同步 `backend/postgres/schema.sql`、migration、pytest 與 mappingGraph 型別。
 - 語言、locale、script 與 region 的名稱本身也是 expression；registry 列僅保留其 canonical English expression 的整數引用，譯名透過 direct edge 加完整 locale link 解析。
 - `handbook`：學習手冊。
 - `/mapping/:id` 以 expression ID 為中心展示關係，不要混淆詞句節點與映射邊。
 
-## 本地 D1 與 registry
+## PostgreSQL 與 registry
 
-- `backend/schema.sql` 是 greenfield canonical schema；`scripts/language-reference/generate.py` 產生 language registry、reference locale 與名稱 expression/edge seed。
-- `./dev.sh --rebuild` 會重建本地 D1，並清除手動匯入的資料。需要保留 local 匯入時，先確認其可重跑的來源／腳本，再重建。
-- `scripts/db/import_v2_canonical.py` 是從 v2 SQLite 匯出產生可重跑 canonical 匯入 SQL 的工具；變更匯入範圍時優先修正它，而非手動補前端或資料庫例外。
-- production D1 依 `docs/runbooks/database-migrations.md` 的 plan/apply 流程操作；不得以直接 remote migration apply 取代該流程。
+- `backend/postgres/schema.sql` 是 PostgreSQL baseline；`scripts/postgres/manage.py` 執行 baseline、seed 與 checksum-locked migrations。
+- `scripts/language-reference/generate.py` 產生 language registry、reference locale 與名稱 expression／edge seed。
+- 本地服務從 `backend/.dev.vars` 或環境變數讀取 `DATABASE_URL`；`dev.sh` 不清除或重建資料庫。
+- dictionary repo 產生 `csv/<source-key>/data.csv` + `manifest.json`；`scripts/dictionary/import_mapping_csv_pg.py` 先 `--check` 再 `--apply`，同一 transaction 依 source snapshot 同步 claims。
 
-### production 詞典發布
+### 詞典發布
 
-- canonical schema（migration 0039 起）已移除 release/claim/packed 表；詞典逐部以 `import_with_progress.py` merge 進「mirror」，再以受管 `approved_data_migration` 發布。
-- **structured JSONL 由獨立 exporter 產出**：`/Users/lim/Documents/Code/tsunhua/dictionary`（`dictionary-jsonl-export`）把 Apple bundle CSV 轉成 `/Volumes/DATA/langmap-structured-jsonl/`。exporter 的 parser ／ profile 改變屬於該 repo，發布前抽查攔下的資料問題多半要回源到這裡修正並重新匯出，不是在 langmap 側硬編例外。
-- **不要求 production 資料基線**：本地 SQLite 只作 staging、品質檢查與 delta 產生，不要求與 production 全庫 counts 或整數 ID 空間一致，也不因 counts 不一致而全量 export。發布依據是 immutable source artifact、checksum-locked approved delta、production identity/schema preflight、bookmark 與來源範圍 postflight。
-- **自然鍵 delta**：以 `export_dictionary_source_delta.py` 按 source key 匯出可重跑 SQL；staging 整數 ID 只作包內暫存 join key，production 以 language code、expression identity、locale code、source name 與 edge endpoints 解析實際 ID。staging 全庫 manifest 不傳入 `--dictionary-postflight-manifest`。來源 artifact 修正改變了 identity（如 packed gloss 拆分）時，重發布加 `--replace`：delta 先刪該 source 擁有的 rows 再重插，工具會在其他 source 共用其 owned expressions 時拒絕。
-- 每部流程：staging import → 品質 gate → 產生並 checksum source delta → `manage.sh production plan --approved-data-migration <delta>` → `production apply`（先 bookmark）→ source-scoped verify。全量 export 只用於事故調查、restore 後製作離線副本或明確要求，不是發布前置條件。
-- **每次發布後須刷新 `language_statistics`**：delta 只寫 expressions/edges/readings，不會更新統計表；否則 `/languages` 與語言列表停滯在舊 counts。刷新語句（`INSERT OR REPLACE ... SELECT ... FROM languages l`）在 apply 後對 production 執行。
-- **發布前由 agent 抽查**：對即將發布的詞典抽樣 insight——逐一檢視 headword 語言、direction、equivalents、readings 是否合理；例句若成對，須確認原句與譯句各自是獨立 expression，且只建立兩者之間的 mapping，不得建立主詞頭與例句的關聯（如 Crown 假名被標 cmn-to-jpn 的錯誤即在抽查中攔下）。任何抽樣異常先回 source 修正，不帶病發布。修正 exporter 後**必須以 `dictionary-jsonl-export` 重新匯出該部 JSONL 再重新抽查**，確認 entry count 不變、readings 合理後才覆寫 `/Volumes/DATA/langmap-structured-jsonl/<部>.jsonl`（先複製 `.pre-tyfix` 備份）。
-- **established JSONL 的發音必須乾淨**：繁體常用詞等 bundle 以 `ty_pinyin`／`ty_jyutping`（及 `ty_IPA`）class 標記 headword 發音，exporter 依此輸出 `pinyin`／`jyutping` scheme，並忽略「案／隔／叮」這類同音字提示節點；多音字與雙語辭典的 readings 落在 sense 底層，抽查不得只數 total。發現 CJK 字元出現在 readings 即代表該用 homophone-hint 過濾。
-- `import_with_progress.py` 的 state 檔屬 dev D1，發布用 mirror 前要先清掉該檔的殘留「success」記錄，否則會跳過。
-- **大資料張力**：D1 單一 execute 有 CPU time limit。超過時把 DELETE 拆成 `.split.sql`（plan 帶 `mode=split`，逐語句 `--command` 執行）；超大 DELETE（十萬 rows 級）再分批（每批約 5 萬 rows）。混合 DELETE+INSERT 的巨型單檔不可靠，先拆。
-- **拼音是 reading，不是詞句**：Crown 等 bundle 把拼音混進 equivalents；adapter 對 `zhs-ja.Crown` 把拼音樣式值判為 headword 的 `pinyin` reading，不建 expression 節點。
+- 每列 canonical CSV 的 `LOCALE_<locale-code>` 欄位建立或解析 language、script、region、language_locale。
+- `(language, text)` 是 expression identity；`ENTRY_ID` 保留 source marker。每列所有不同詞面建立 pairwise mapping，同語言不同詞面也互連，不建立 self-edge。
+- source snapshot 只刪除該 source 的 claims／annotations，保留其他 source 共用的 expressions、edges 與 markers。
+- 發布前抽查 headword、direction、equivalents、readings 及例句 pairing；修正回 dictionary adapter 後重新產生 CSV 與 manifest。
 
 ## 文檔與安全
 

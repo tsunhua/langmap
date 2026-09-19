@@ -1,3 +1,5 @@
+> Historical record: this SQLite/D1/JSONL procedure is retired. Do not execute it; Wikivoyage remains pending the canonical CSV decision.
+
 # Wikivoyage 會話手冊發布 Runbook
 
 本流程把英文 Wikivoyage `Category:Phrasebooks` 轉成 LangMap 的一套英文 managed
