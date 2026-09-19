@@ -74,6 +74,16 @@ ENTRY_ID,NOTE,LOCALE_<locale-code>,LOCALE_<locale-code>,...
 
 所有有效 locale code 都以 manifest metadata 補足 registry：不存在的 language、script、region、locale 由 importer 在同一 transaction 建立；metadata 缺少建立所需欄位、code 不符合 grammar、或與既有 registry 定義衝突時 fail closed。不可把 locale code 直接當成使用者可見名稱。
 
+### `dictionary` exporter 重構
+
+`dictionary` 專案直接輸出上述 CSV + manifest；不再產生、保存、驗收或以 JSONL 作為中間格式。既有 JSONL exporter、JSONL fixture、JSONL contract、`structured-jsonl` output directory 和依賴它們的文件／測試，在每個 source 的 CSV 輸出通過驗收後一併刪除。
+
+重構後的共用層只負責與詞典無關的事項：canonical entry／cell model、locale metadata model、Unicode 與欄位正規化、CSV header／row serialization、manifest／checksum、deterministic ordering、通用 lint，以及可重用的 exporter test harness。它不得依賴個別 Apple bundle 名稱、HTML selector、語言例外或來源特有清洗規則。
+
+每部詞典的 parser、input discovery、metadata profile、headword／equivalent extraction、reading interpretation、來源特有 filtering 和已證實必要的 typo／markup correction，都放在 source-specific adapter 內。adapter 只將共用 canonical model 傳給 CSV writer；不可自行寫 CSV、繞過 lint 或跨 source 共享特例。新增詞典的常規工作應是增加 profile + adapter + fixture + golden CSV，而不是修改共用層；只有能由至少兩個 source 證明的規則才提升到共用層。
+
+每個 adapter 以原始輸入 fixture 驗證其 canonical records，再以 golden `data.csv` 和 manifest 驗證輸出。切換前以 entry count、locale columns、抽樣 headword／equivalent／reading 和 checksum 審查 CSV；確認後才刪除該 source 的 JSONL artifact。
+
 ## 匯入器
 
 LangMap 提供 `scripts/dictionary/import_mapping_csv_pg.py`，採 Python 與 `psycopg`，只需要 Python、套件相容的 PostgreSQL driver 和 `DATABASE_URL`，可在 macOS、Linux、Windows 執行。不得依賴 Homebrew、`psql`、shell script、D1 CLI 或 SQLite。
@@ -91,7 +101,7 @@ python scripts/dictionary/import_mapping_csv_pg.py --manifest <path>/manifest.js
 
 `--apply` 是 source snapshot synchronization：只替換 manifest `source_key` 擁有的 `expression_sources`、`expression_edge_sources` 與該 source 的 annotations；其他 source 的 ownership、marker、annotation 和共用 expression／edge 完整保留。完成後只刪除無來源 ownership 的孤兒 expression／edge。相同 snapshot 重跑必須冪等；CSV 刪除一列必須只撤回該 source 曾聲明的資料。
 
-## 退役 Structured JSONL 與 D1 詞典工具
+## 退役 JSONL、SQLite 與 D1 詞典工具
 
 CSV format 與 importer 驗收後，刪除或移出 LangMap 的 `manage.py` staging commands、`import_with_progress.py`、`incremental_import.py`、`release_dictionary.py`、`import_next.sh`、`import_structured_jsonl.py`，以及 `langmap_dictionary/` 中僅支援 SQLite staging、D1 local import、packed catalog、reconciliation release 與 SQL delta 的模組／測試。
 
@@ -102,9 +112,10 @@ CSV format 與 importer 驗收後，刪除或移出 LangMap 的 `manage.py` stag
 1. `rg` 對現行 runtime、scripts、CI、README 和 runbook（排除歷史 documents）找不到 D1 binding、Wrangler D1 command、SQLite connection 或 `.wrangler` state 依賴。
 2. Homebrew PostgreSQL 可依文件建立本機 database，`dev.sh` 能以 `DATABASE_URL` 啟動 Web 與 Worker；Worker 不要求 D1 binding。
 3. PostgreSQL integration suite 覆蓋 API 的 read/write transaction、constraint error、batch rollback、search case handling、JSON annotations 與 migration baseline。
-4. `dictionary` repo 每一個支援來源都有提交的 `data.csv` 和 checksum-locked manifest，並通過 header／checksum lint。
-5. CSV importer 的 integration tests 覆蓋 `--check` 零寫入、未知 registry 建立、metadata conflict rollback、同語言 pair、跨語言 pair、self-edge 去除、idempotent reapply、同 source 刪列同步，以及兩 source 共用 expression／edge／annotation。
-6. 以一個 source 在空 PG database 匯入，再刪除一列重跑；計數與 source ownership 符合 summary，且無不屬於該 source 的資料被刪。
+4. `dictionary` repo 每一個支援來源都有提交的 `data.csv` 和 checksum-locked manifest，並通過 header／checksum lint；不存在 JSONL output、fixture 或 exporter contract。
+5. 共用 exporter 層與 source-specific adapter 有獨立測試：source 特例不出現在共用層，且每部詞典以原始 fixture 對應 golden CSV。
+6. CSV importer 的 integration tests 覆蓋 `--check` 零寫入、未知 registry 建立、metadata conflict rollback、同語言 pair、跨語言 pair、self-edge 去除、idempotent reapply、同 source 刪列同步，以及兩 source 共用 expression／edge／annotation。
+7. 以一個 source 在空 PG database 匯入，再刪除一列重跑；計數與 source ownership 符合 summary，且無不屬於該 source 的資料被刪。
 
 ## 風險與回退
 
