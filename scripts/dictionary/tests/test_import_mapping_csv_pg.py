@@ -139,3 +139,33 @@ def test_validate_registers_compact_reading_locale_profile(tmp_path):
     summary = validate(manifest)
 
     assert summary["readings"] == 1
+
+
+def test_validate_compact_reading_profile_keeps_lowercase_scheme(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow([
+            "ENTRY_ID",
+            "NOTE",
+            "LOCALE_eng-Latn-US",
+            "LOCALE_nan-Hant-TW",
+            "READING_nan-Latn_Tailo-TW",
+        ])
+        writer.writerow(["entry-1", "", "word", "詞", "tsi"])
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "manifest_version": 1,
+        "source_key": "fixture:tailo-reading",
+        "csv": "data.csv",
+        "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "entry_count": 1,
+        "reading_count": 1,
+        "reading_columns": [{"locale": "nan-Latn_Tailo-TW", "scheme": "tailo"}],
+        "locales": ["eng-Latn-US", "nan-Hant-TW"],
+        "locale_metadata": {},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    summary = validate(manifest)
+
+    assert summary["readings"] == 1

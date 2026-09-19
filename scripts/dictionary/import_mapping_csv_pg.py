@@ -77,7 +77,7 @@ class Row:
 
 def _reading_header(locale: str, scheme: str) -> str:
     compact_match = COMPACT_READING_LOCALE.fullmatch(locale)
-    if compact_match and compact_match.group("scheme") == scheme:
+    if compact_match and compact_match.group("scheme").casefold() == scheme.casefold():
         return f"READING_{locale}"
     return f"READING_{locale}_{scheme}"
 
@@ -85,7 +85,7 @@ def _reading_header(locale: str, scheme: str) -> str:
 def _reading_column(header: str) -> tuple[str, str] | None:
     compact_match = COMPACT_READING_HEADER.fullmatch(header)
     if compact_match:
-        return compact_match.group("locale"), compact_match.group("scheme")
+        return compact_match.group("locale"), compact_match.group("scheme").casefold()
     match = READING_HEADER.fullmatch(header)
     return (match.group("locale"), match.group("scheme")) if match else None
 
