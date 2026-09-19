@@ -70,3 +70,39 @@ def test_validate_checks_manifest_entry_count(tmp_path):
         assert "entry_count" in str(exc)
     else:
         raise AssertionError("expected manifest entry_count mismatch")
+
+
+def test_validate_reads_wide_reading_columns_and_source_identity(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow([
+            "ENTRY_ID",
+            "NOTE",
+            "LOCALE_eng-Latn-US",
+            "LOCALE_jpn-Jpan-JP",
+            "READING_jpn-Jpan-JP_hepburn",
+        ])
+        writer.writerow(["oldid:1#basics/1", "formal", "hello", "こんにちは", "Konnichiwa|kon-nee-chee-wah"])
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "manifest_version": 2,
+        "source_key": "enwikivoyage:1:jpn-Jpan-JP",
+        "source_type": "url",
+        "source_name": "https://en.wikivoyage.org/wiki/Example#jpn-Jpan-JP",
+        "target_locale": "jpn-Jpan-JP",
+        "csv": "data.csv",
+        "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "entry_count": 1,
+        "reading_count": 2,
+        "reading_columns": [{"locale": "jpn-Jpan-JP", "scheme": "hepburn"}],
+        "locale_metadata": {
+            "eng-Latn-US": {"name": "English", "name_en": "English (US)"},
+            "jpn-Jpan-JP": {"name": "日本語", "name_en": "Japanese (Japan)"},
+        },
+    }, ensure_ascii=False), encoding="utf-8")
+
+    summary = validate(manifest)
+
+    assert summary["readings"] == 2
+    assert summary["edges"] == 1

@@ -11,7 +11,10 @@ csv/<source-key>/data.csv
 csv/<source-key>/manifest.json
 ```
 
-表頭固定為 `ENTRY_ID,NOTE,LOCALE_<locale-code>...`，locale 欄位按 UTF-8 bytewise 排序；一格內多個詞面以 `|` 分隔。`ENTRY_ID` 每列唯一，manifest 鎖定 CSV SHA-256、entry count 與 locale 清單。source-specific 的 parsing／reading 規則留在 dictionary repo，不在本 importer 寫例外。
+表頭固定為 `ENTRY_ID,NOTE,LOCALE_<locale-code>...`，locale 欄位按 UTF-8 bytewise 排序；其後可接
+`READING_<locale>_<scheme>` 欄位，所有欄位均 deterministic。每格多個詞面或 reading 以 `|`
+分隔；`ENTRY_ID` 每列唯一，manifest 鎖定 CSV SHA-256、entry／reading count 與 locale 清單。
+source-specific 的 parsing／reading 規則留在 dictionary repo，不在本 importer 寫例外。
 
 ## 驗證與套用
 
@@ -30,6 +33,7 @@ DATABASE_URL='postgresql://...' python3 scripts/dictionary/import_mapping_csv_pg
 1. 依每個 `LOCALE_<locale-code>` 欄位建立或解析 language、script、region、language_locale。
 2. 以 `(language, text)` 合併 expression，保留 `source_marker=ENTRY_ID`。
 3. 對同一列所有不同詞面建立 pairwise mapping；同語言不同詞面也會互連，不建立 self-edge。
-4. 只刪除／重建本 source 的 claims，保留其他 source 的 expressions、edges 與 markers。
+4. 將 `READING_*` 寫入 `expression_readings` metadata，不把 reading 當 mapping endpoint。
+5. 只刪除／重建本 source 的 claims、annotations 與 readings，保留其他 source 的 expressions、edges 與 markers。
 
 checksum、表頭、ENTRY_ID、locale metadata 或 PostgreSQL constraint 失敗會 rollback；重跑同一 manifest 應得到相同 summary。

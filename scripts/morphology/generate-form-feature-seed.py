@@ -25,7 +25,7 @@ PROJECT_ROOT = SCRIPT_DIR.parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text as _canonicalize_expression_text
+from scripts.dictionary.text_identity import canonicalize_expression_text as _canonicalize_expression_text
 
 _BASE32_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567'
 

@@ -23,7 +23,7 @@ try:
     from .export_dictionary_source_delta import _literal, _sha256, _write_cte_batches
 except ImportError:  # pragma: no cover - keeps direct script execution working
     from export_dictionary_source_delta import _literal, _sha256, _write_cte_batches
-from scripts.dictionary.langmap_dictionary.text_identity import canonicalize_expression_text
+from scripts.dictionary.text_identity import canonicalize_expression_text
 
 
 def _write_batch_marker(handle, enabled: bool) -> None:

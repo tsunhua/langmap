@@ -78,6 +78,8 @@ cd backend && npm test
 - `scripts/language-reference/generate.py` 產生 language registry、reference locale 與名稱 expression／edge seed。
 - 本地服務從 `backend/.dev.vars` 或環境變數讀取 `DATABASE_URL`；`dev.sh` 不清除或重建資料庫。
 - dictionary repo 產生 `csv/<source-key>/data.csv` + `manifest.json`；`scripts/dictionary/import_mapping_csv_pg.py` 先 `--check` 再 `--apply`，同一 transaction 依 source snapshot 同步 claims。
+- Wikivoyage 來源在 dictionary repo 以每個英語→目標 locale 一份寬表 CSV 發布；`READING_<locale>_<scheme>` 是同表 metadata 欄位，不再產生 JSONL 或 SQLite/D1 staging。
+- Wikivoyage handbook 只由 `scripts/postgres/build_wikivoyage_handbook.py` 以 PostgreSQL 重建，section catalog 從 dictionary adapter 取用。
 
 ### 詞典發布
 

@@ -17,6 +17,9 @@ from typing import Any, Iterable
 
 
 LOCALE_HEADER = re.compile(r"^LOCALE_(?P<code>[A-Za-z0-9][A-Za-z0-9_-]*)$")
+READING_HEADER = re.compile(
+    r"^READING_(?P<locale>[A-Za-z0-9][A-Za-z0-9_-]*)_(?P<scheme>[A-Za-z0-9][A-Za-z0-9_-]*)$"
+)
 LOCALE_CODE = re.compile(
     r"^(?P<language>[a-z0-9]{2,8})"
     r"(?:-(?P<script>[A-Za-z]{4})(?:_(?P<orthography>[A-Za-z0-9]+))?)?"
@@ -49,10 +52,19 @@ class Cell:
 
 
 @dataclass(frozen=True)
+class Reading:
+    entry_id: str
+    locale: Locale
+    scheme: str
+    value: str
+
+
+@dataclass(frozen=True)
 class Row:
     entry_id: str
     notes: tuple[str, ...]
     cells: tuple[Cell, ...]
+    readings: tuple[Reading, ...] = ()
 
 
 def _sha256(path: Path) -> str:
@@ -109,7 +121,10 @@ def _locale(code: str, metadata: dict[str, Any]) -> Locale:
     )
 
 
-def _read_csv(path: Path, metadata: dict[str, Any]) -> tuple[list[Locale], list[Row]]:
+def _read_csv(
+    path: Path,
+    metadata: dict[str, Any],
+) -> tuple[list[Locale], list[Row], tuple[tuple[str, str], ...]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.reader(handle)
         try:
@@ -122,15 +137,51 @@ def _read_csv(path: Path, metadata: dict[str, Any]) -> tuple[list[Locale], list[
             raise CsvContractError("second CSV column must be NOTE when present")
         note_index = 1 if len(header) > 1 and header[1].strip() == "NOTE" else None
         locale_start = 2 if note_index is not None else 1
-        locale_codes = [LOCALE_HEADER.fullmatch(value.strip()) for value in header[locale_start:]]
-        if not locale_codes or any(match is None for match in locale_codes):
+        locale_matches: list[re.Match[str]] = []
+        reading_matches: list[re.Match[str]] = []
+        reading_started = False
+        for value in header[locale_start:]:
+            normalized = value.strip()
+            locale_match = LOCALE_HEADER.fullmatch(normalized)
+            reading_match = READING_HEADER.fullmatch(normalized)
+            if locale_match:
+                if reading_started:
+                    raise CsvContractError("locale columns must precede reading columns")
+                locale_matches.append(locale_match)
+            elif reading_match:
+                reading_started = True
+                reading_matches.append(reading_match)
+            else:
+                raise CsvContractError(
+                    "CSV columns must use LOCALE_<code> or READING_<locale>_<scheme>"
+                )
+        locale_codes = locale_matches
+        if not locale_codes:
             raise CsvContractError("CSV needs at least two LOCALE_<code> columns")
-        codes = [match.group("code") for match in locale_codes if match]
+        codes = [match.group("code") for match in locale_codes]
         if len(codes) < 2 or len(codes) != len(set(codes)):
             raise CsvContractError("CSV locale columns must be unique and contain at least two locales")
-        if codes != sorted(codes):
+        if codes != sorted(codes, key=lambda value: value.encode("utf-8")):
             raise CsvContractError("CSV locale columns must be bytewise sorted")
         locales = [_locale(code, metadata) for code in codes]
+        reading_columns = [
+            (match.group("locale"), match.group("scheme")) for match in reading_matches
+        ]
+        if len(reading_columns) != len(set(reading_columns)):
+            raise CsvContractError("CSV reading columns must be unique")
+        if reading_columns != sorted(
+            reading_columns,
+            key=lambda item: f"READING_{item[0]}_{item[1]}".encode("utf-8"),
+        ):
+            raise CsvContractError("CSV reading columns must be bytewise sorted")
+        unknown_reading_locales = sorted(
+            {locale for locale, _scheme in reading_columns} - set(codes),
+            key=lambda value: value.encode("utf-8"),
+        )
+        if unknown_reading_locales:
+            raise CsvContractError(
+                "CSV reading columns reference unknown locale(s): " + ", ".join(unknown_reading_locales)
+            )
         rows: list[Row] = []
         entry_ids: set[str] = set()
         for line_number, values in enumerate(reader, 2):
@@ -150,11 +201,24 @@ def _read_csv(path: Path, metadata: dict[str, Any]) -> tuple[list[Locale], list[
             if len(cells) < 2:
                 raise CsvContractError(f"row {line_number}: at least two non-empty expressions are required")
             unique = {(cell.locale.code, cell.text): cell for cell in cells}
-            rows.append(Row(entry_id, notes, tuple(unique.values())))
-    return locales, rows
+            readings: list[Reading] = []
+            reading_start = locale_start + len(locales)
+            for offset, (reading_locale, scheme) in enumerate(reading_columns, reading_start):
+                locale = next(item for item in locales if item.code == reading_locale)
+                for raw in values[offset].split("|"):
+                    value = _canonical(raw)
+                    if value:
+                        readings.append(Reading(entry_id, locale, scheme, value))
+            rows.append(Row(entry_id, notes, tuple(unique.values()), tuple(dict.fromkeys(readings))))
+    return locales, rows, tuple(reading_columns)
 
 
-def _validate_manifest_contract(manifest: dict[str, Any], locales: list[Locale], rows: list[Row]) -> None:
+def _validate_manifest_contract(
+    manifest: dict[str, Any],
+    locales: list[Locale],
+    rows: list[Row],
+    reading_columns: tuple[tuple[str, str], ...] = (),
+) -> None:
     expected_count = manifest.get("entry_count")
     if expected_count is not None:
         if isinstance(expected_count, bool) or not isinstance(expected_count, int) or expected_count != len(rows):
@@ -170,13 +234,46 @@ def _validate_manifest_contract(manifest: dict[str, Any], locales: list[Locale],
         unknown = sorted(set(metadata) - {locale.code for locale in locales})
         if unknown:
             raise CsvContractError(f"manifest.locale_metadata has unknown locale(s): {', '.join(unknown)}")
+    source_type = manifest.get("source_type")
+    source_name = manifest.get("source_name")
+    if source_type is not None and (not isinstance(source_type, str) or not source_type.strip()):
+        raise CsvContractError("manifest.source_type must be a non-empty string when present")
+    if source_name is not None and (not isinstance(source_name, str) or not source_name.strip()):
+        raise CsvContractError("manifest.source_name must be a non-empty string when present")
+    if (source_type is None) != (source_name is None):
+        raise CsvContractError("manifest.source_type and source_name must be provided together")
+    target_locale = manifest.get("target_locale")
+    if target_locale is not None and target_locale not in {locale.code for locale in locales}:
+        raise CsvContractError("manifest.target_locale is not a CSV locale")
+    expected_readings = manifest.get("reading_count")
+    reading_count = sum(len(row.readings) for row in rows)
+    if expected_readings is not None:
+        if isinstance(expected_readings, bool) or not isinstance(expected_readings, int) or expected_readings != reading_count:
+            raise CsvContractError(
+                f"manifest.reading_count={expected_readings!r} does not match CSV readings={reading_count}"
+            )
+    declared_reading_columns = manifest.get("reading_columns")
+    if declared_reading_columns is not None:
+        actual = list(reading_columns)
+        if not isinstance(declared_reading_columns, list):
+            raise CsvContractError("manifest.reading_columns must be an array")
+        declared = sorted(
+            {
+                (str(item.get("locale")), str(item.get("scheme")))
+                for item in declared_reading_columns
+                if isinstance(item, dict)
+            },
+            key=lambda item: f"READING_{item[0]}_{item[1]}".encode("utf-8"),
+        )
+        if declared != actual:
+            raise CsvContractError("manifest.reading_columns does not match CSV reading columns")
 
 
 def validate(manifest_path: Path) -> dict[str, Any]:
     manifest, csv_path = _manifest(manifest_path)
     metadata = manifest.get("locale_metadata", manifest.get("locales", {}))
-    locales, rows = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
-    _validate_manifest_contract(manifest, locales, rows)
+    locales, rows, reading_columns = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
+    _validate_manifest_contract(manifest, locales, rows, reading_columns)
     expressions = {(cell.locale.language, cell.text) for row in rows for cell in row.cells}
     edges = {
         tuple(sorted(((a.locale.language, a.text), (b.locale.language, b.text))))
@@ -193,6 +290,7 @@ def validate(manifest_path: Path) -> dict[str, Any]:
         "locales": len(locales),
         "expressions": len(expressions),
         "edges": len(edges),
+        "readings": sum(len(row.readings) for row in rows),
     }
 
 
@@ -349,13 +447,18 @@ def apply(manifest_path: Path, database_url: str) -> dict[str, Any]:
     summary = validate(manifest_path)
     manifest, csv_path = _manifest(manifest_path)
     metadata = manifest.get("locale_metadata", manifest.get("locales", {}))
-    locales, rows = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
+    locales, rows, _reading_columns = _read_csv(csv_path, metadata if isinstance(metadata, dict) else {})
     source_key = str(manifest["source_key"])
     with _connect(database_url) as connection:
         with connection.cursor() as cur:
             locale_ids = _ensure_registry(cur, locales)
-            cur.execute("INSERT INTO sources(type,name) VALUES ('dictionary',%s) ON CONFLICT (type,name) DO NOTHING", (source_key,))
-            cur.execute("SELECT id FROM sources WHERE type='dictionary' AND name=%s", (source_key,))
+            source_type = str(manifest.get("source_type") or "dictionary")
+            source_name = str(manifest.get("source_name") or source_key)
+            cur.execute(
+                "INSERT INTO sources(type,name) VALUES (%s,%s) ON CONFLICT (type,name) DO NOTHING",
+                (source_type, source_name),
+            )
+            cur.execute("SELECT id FROM sources WHERE type=%s AND name=%s", (source_type, source_name))
             source_id = cur.fetchone()[0]
             owned_expression_ids, owned_edge_ids = _owned_ids(cur, source_id)
             affected_language_ids: set[int] = set()
@@ -369,6 +472,7 @@ def apply(manifest_path: Path, database_url: str) -> dict[str, Any]:
             _remove_source_annotations(cur, owned_edge_ids, source_key)
             cur.execute("DELETE FROM expression_edge_sources WHERE source_id=%s", (source_id,))
             cur.execute("DELETE FROM expression_sources WHERE source_id=%s", (source_id,))
+            cur.execute("DELETE FROM expression_readings WHERE source_id=%s", (source_id,))
             _cleanup_source_orphans(cur, owned_expression_ids, owned_edge_ids)
             for locale in locales:
                 cur.execute("SELECT language_id FROM language_locales WHERE id=%s", (locale_ids[locale.code],))
@@ -387,6 +491,18 @@ def apply(manifest_path: Path, database_url: str) -> dict[str, Any]:
                     expression_id = expression_ids[key]
                     cur.execute("INSERT INTO expression_locale_links(expression_id,locale_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (expression_id, locale_ids[cell.locale.code]))
                     cur.execute("INSERT INTO expression_sources(expression_id,source_id,source_marker) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING", (expression_id, source_id, row.entry_id))
+                for reading in row.readings:
+                    reading_expression_ids = {
+                        expression_ids[(cell.locale.language, cell.text)]
+                        for cell in row.cells
+                        if cell.locale.code == reading.locale.code
+                    }
+                    for expression_id in sorted(reading_expression_ids):
+                        cur.execute(
+                            """INSERT INTO expression_readings(expression_id,locale_id,scheme,value,source_id)
+                               VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
+                            (expression_id, locale_ids[reading.locale.code], reading.scheme, reading.value, source_id),
+                        )
             for row in sorted(rows, key=lambda item: item.entry_id):
                 ids = sorted({expression_ids[(cell.locale.language, cell.text)] for cell in row.cells})
                 for left_index, left_id in enumerate(ids):

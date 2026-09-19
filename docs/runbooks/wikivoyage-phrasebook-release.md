@@ -1,142 +1,79 @@
-> Historical record: this SQLite/D1/JSONL procedure is retired. Do not execute it; Wikivoyage remains pending the canonical CSV decision.
+# Wikivoyage 詞典發布 Runbook
 
-# Wikivoyage 會話手冊發布 Runbook
+本流程把固定 revision 的英文 Wikivoyage phrasebook 轉成 dictionary repo 的寬表 CSV，
+再以 LangMap PostgreSQL importer 匯入。每個英語→一個目標 locale 是一個 archive；同一頁
+的簡體與繁體中文必須分開。流程不使用 SQLite、D1 staging 或 JSONL。
 
-本流程把英文 Wikivoyage `Category:Phrasebooks` 轉成 LangMap 的一套英文 managed
-handbook。它只發布英文詞句、目標語言詞句與目標 reading；未審閱的頁面保持
-`blocked`，不以標題猜語言，也不以機器翻譯補列。所有命令先在外部 artifact 目錄與
-local SQLite 執行；production D1 的 plan／apply 需要另外核准。
+## 1. 下載與產生 dictionary archive
 
-## 固定輸入與 artifact
-
-每次 release 固定以下集合，完成後不得就地修改：
-
-- downloader `manifest.json` 與 `pages/<pageid>-<revision>.wikitext`；
-- `export-report.json`、`quality-report.json`、`source-catalog.json`；
-- JSONL 的 checksum、staging release、before snapshot 與自然鍵 delta；
-- 審核結論、Git commit 與本 runbook 的 operation 記錄。
-
-快照預設放在 `/Volumes/DATA/langmap-wikivoyage/`，JSONL 預設放在
-`/Volumes/DATA/langmap-wikivoyage-jsonl/`。不要把快照、`.wrangler/`、state 或 secret
-加入 Git。
-
-## 1. Download、catalog 與 quality gate
+來源端在 dictionary repo 執行：
 
 ```bash
-python3 scripts/wikivoyage/download.py \
+uv run python -m dictionary_export.wikivoyage.download \
   --output-dir /Volumes/DATA/langmap-wikivoyage
 
-python3 -m scripts.wikivoyage.export_phrasebooks \
+uv run dictionary-wikivoyage-export \
   --snapshot-dir /Volumes/DATA/langmap-wikivoyage \
-  --output-dir /Volumes/DATA/langmap-wikivoyage-jsonl \
-  --page-catalog scripts/wikivoyage/page-catalog.json \
-  --section-catalog scripts/wikivoyage/section-catalog.json \
-  --report /Volumes/DATA/langmap-wikivoyage-jsonl/export-report.json
+  --output-dir csv/wikivoyage
 
-python3 -m scripts.wikivoyage.quality \
-  --snapshot-dir /Volumes/DATA/langmap-wikivoyage \
-  --export-dir /Volumes/DATA/langmap-wikivoyage-jsonl \
-  --report /Volumes/DATA/langmap-wikivoyage-jsonl/export-report.json \
-  --output /Volumes/DATA/langmap-wikivoyage-jsonl/quality-report.json
+uv run python -m dictionary_export.wikivoyage.quality csv/wikivoyage
 ```
 
-Quality gate 必須通過以下條件：
+輸出結構為：
 
-- manifest 每個 pageid 恰好在 export report 出現一次，且 snapshot checksum 正確；
-- `included` page 與數字 JSONL 一一對應，header `entry_count` 與實際 entry 相同；
-- first／middle／last sample 都有英文 equivalent、目標 language／locale 與 provenance marker；
-- `review/quarantine.jsonl`、`review/removals.jsonl` 的數量已被人工檢視；
-- 無 `invalid_page_state`、`page_accounting_mismatch` 或 `jsonl_page_count_mismatch`。
+```text
+csv/wikivoyage/<pageid>-<target-locale>/data.csv
+csv/wikivoyage/<pageid>-<target-locale>/manifest.json
+```
 
-Parser 會省略詞句末尾句號，將詞句 `/` 替代輸出為獨立列，並將 reading 內的 `/` 拆成
-多個 reading；抽查時確認展開後仍保留完整上下文與來源 marker。括號備註及 IPA 記號的
-斜線不屬於詞句替代，不應強行拆開。
+`data.csv` 的欄位為 `ENTRY_ID,NOTE,LOCALE_*` 及可選的
+`READING_<locale>_<scheme>`。manifest 鎖定 CSV checksum、page revision、target locale、
+source URL 與 CC BY-SA 4.0 attribution。exporter 不覆寫已存在的 archive；變更後以新的
+輸出目錄重跑並抽查 headword、英文 equivalent、direction、reading、marker 與 entry count。
 
-`blocked` 不等於錯誤：它表示 page catalog 或 registry identity 尚未完成。要解鎖時先
-更新 language reference／locale seed，重新跑 registry report，再重做該頁 JSONL；不要在
-前端或 importer 寫例外。`quarantined`、reading script mismatch、反向列表方向或頁面
-結構 drift 則先回源頁與 parser fixture 修正。
+## 2. LangMap `--check` 與 `--apply`
 
-## 2. Staging 與 local mirror
-
-Quality gate 通過後，依每批約 20–30 個 JSONL 執行既有 incremental importer。可用
-`--only 16153.jsonl` 或 `--limit-files 25`，重跑時沿用同一 state；不要刪除 state 裏的
-成功紀錄來強行重播。
+先在 LangMap repo 對每個方向做 fail-closed 檢查，再使用隔離 PostgreSQL 套用：
 
 ```bash
-python3 scripts/dictionary/incremental_import.py \
-  --input-dir /Volumes/DATA/langmap-wikivoyage-jsonl \
-  --d1-database <local-canonical.sqlite> \
-  --state <state-dir>/wikivoyage-phrasebooks.json \
-  --staging-root /tmp/langmap-wikivoyage-staging \
-  --snapshot-root <state-dir>/snapshots \
-  --batch-size 5000 --commit-every 50000 --stop-on-error
+python3 scripts/dictionary/import_mapping_csv_pg.py \
+  --manifest /path/to/dictionary/csv/wikivoyage/16153-jpn-Jpan-JP/manifest.json \
+  --check
+
+DATABASE_URL='postgresql://...' \
+  python3 scripts/dictionary/import_mapping_csv_pg.py \
+  --manifest /path/to/dictionary/csv/wikivoyage/16153-jpn-Jpan-JP/manifest.json \
+  --apply
 ```
 
-每個 staging release 必須通過既有 normalization、cluster、reading quality gate。抽查
-至少包含日文 kana／romaji、中文簡繁／pinyin、粵語 jyutping，以及含括號、slash、placeholder
-的 row。核對：reading 是 `expression_readings`，不是 expression；例句沒有被掛到主詞頭；
-所有 edge 都是英文與目標詞句的 direct mapping。
+`--apply` 在一個 transaction 內建立或解析 locale registry、expression、pairwise mapping、
+source marker 與 reading。重跑只清理該 manifest source 的 claims、annotations、readings；
+共享 expression、edge 與其他 source 的 marker 保留。reading 是 `expression_readings` metadata，
+不會成為 mapping endpoint。
 
-## 3. 建立 managed handbook
+## 3. PG handbook rebuild（可選）
 
-確認 local mirror 具備 system user `langmap`、`eng-Latn-US`、所有待發布 language／locale，
-並已套用 `backend/migrations/0044_wikivoyage_handbook.sql`。然後執行：
+匯入所有需要的方向後，使用 dictionary repo 搬入的 section catalog 重建 managed handbook：
 
 ```bash
-python3 -m scripts.wikivoyage.build_handbook \
-  --database <local-canonical.sqlite> \
-  --section-catalog scripts/wikivoyage/section-catalog.json
+DATABASE_URL='postgresql://...' \
+  python3 scripts/postgres/build_wikivoyage_handbook.py \
+  --section-catalog /path/to/dictionary/src/dictionary_export/wikivoyage/data/section-catalog.json
 ```
 
-builder 以 `managed_key=enwikivoyage-phrasebooks` 重用同一 handbook row，只重建 sections
-與 items；重跑必須保持 handbook ID、section order 與 item identity 穩定。`GET /api/v2/handbooks/:id`
-應回傳 `managed=true`、`can_edit=false`；PUT／DELETE 應被 `403 MANAGED_HANDBOOK_READ_ONLY`
-拒絕。翻譯頁面只能呼叫一次
-`GET /api/v2/handbooks/:id/translations?target_locale=<exact-locale>`，不能逐 item 呼叫，
-也不能在線上計算 locale coverage。
+command 只使用 PostgreSQL，依 source marker 的 section／row 排序，維持
+`enwikivoyage-phrasebooks` managed key、casefold 去重與 sentence-case preference。未知或
+格式錯誤的 marker 會 fail closed；不會自行建立臨時 section。
 
-## 4. Production delta、plan／apply／verify
+## 4. 驗收與留存
 
-完成抽查後，使用既有 source-scoped natural-key delta 流程；不要把 staging 全庫 counts
-當 production 基線，也不要直接執行 remote migration：
+- 保留 snapshot manifest、每個 archive 的 manifest、quality report、審核結論與 dictionary
+  commit；不要提交 snapshot、secret、`.wrangler/` 或暫存資料。
+- 驗證每個 archive 的 checksum、entry／reading count、source marker、target locale、
+  reading scheme；確認沒有 `*.jsonl` 產物。
+- API smoke test 使用現行 `dev.sh` 與 PostgreSQL；不要重新建立或清除本地資料庫。
+- 若資料問題來自頁面解析，回 dictionary adapter／catalog 修正後重新產出 CSV；不要在
+  importer 或前端寫例外。
 
-Production 驗證採「小資料定點」策略：只按已知 `source_name`、page revision、section／row
-marker 或明確 expression ID 查詢，結果集固定加 `LIMIT`。不得為了比對 staging 而執行全表
-`COUNT(*)`、全庫 export、全量 mirror copy 或下載 production snapshot；delta 的身份解析由
-自然鍵與受管 plan 完成。若一次查詢的掃描量明顯超出定點資料範圍，立即停止並改用 source-scoped
-抽樣，不以增加 timeout 或分頁掩蓋全庫掃描。
-
-```bash
-python3 scripts/db/export_dictionary_source_delta.py \
-  --staging <staging.sqlite> \
-  --source-type url \
-  --source-name <page-url> \
-  --locale-code <locale-code> \
-  --output <delta.sql> \
-  --manifest <delta.source.json>
-
-LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
-  ./scripts/db/manage.sh production inventory
-LANGMAP_WRANGLER_BIN=./backend/node_modules/.bin/wrangler \
-  ./scripts/db/manage.sh production plan \
-  --approved-data-migration <delta.sql> \
-  --refresh-language-statistics
-```
-
-由 operator 審核 plan、delta checksum、identity preflight、source scope 與 bookmark 後，
-才依 `docs/runbooks/production-data-release.md` apply／verify。apply 後必須：
-
-1. 以 source URL、page revision、section／row marker 驗證 expressions、locale links、readings、edges；
-2. 重新執行 `build_handbook.py` 或受管發布 stage，驗證 handbook sections/items；
-3. 執行 language statistics refresh，確認 `/languages` 的 counts 已更新；
-4. 在 `TODO.md` 記錄 source key、delta sha256、operation ID、bookmark 與 source-scoped counts。
-
-失敗時停止並保留 manifest、delta、plan、operations journal 與 bookmark；不要手動刪除共享
-expression 或 reading，也不要以新 plan 重播已完成的 stage。
-
-## 授權與 UI attribution
-
-英文 Wikivoyage 內容依 Wikimedia CC BY-SA 4.0 使用。發布包與 managed handbook 必須保留
-頁面 URL、revision、抓取時間與 attribution 入口；UI 僅顯示來源聲明，不把 Wikivoyage
-reading 當作 LangMap 自己的發音保證。
+Wikivoyage 內容依 Wikimedia CC BY-SA 4.0 使用；發布與 UI attribution 保留 canonical URL
+及 revision。
