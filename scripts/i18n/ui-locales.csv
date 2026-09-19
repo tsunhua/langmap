@@ -1,0 +1,422 @@
+ENTRY_ID,NOTE,LOCALE_cmn-Hans-CN,LOCALE_cmn-Hant-TW,LOCALE_eng-Latn-US,LOCALE_jpn-Jpan-JP,LOCALE_spa-Latn-ES
+activity.expression,,添加了词句,新增了詞句,Added expression,表現を追加しました,Añadió una expresión
+activity.handbook,,创建了手册,建立了手冊,Created handbook,ハンドブックを作成しました,Creó un manual
+activity.mapping,,完成了映射,完成了對應,Mapped,対応付けを作成しました,Creó una correspondencia
+activity.voteDown,,反对了一条映射,反對了一條對應,Downvoted a mapping,対応付けに反対しました,Votó en contra de una correspondencia
+activity.voteUp,,赞成了一条映射,贊成了一條對應,Upvoted a mapping,対応付けに賛成しました,Votó a favor de una correspondencia
+auth.email,,邮箱,電子郵件,Email,メールアドレス,Correo electrónico
+auth.haveAccount,,已有账号？,已經有帳號了？,Already have an account?,すでにアカウントをお持ちですか？,¿Ya tienes cuenta?
+auth.login,,登录,登入,Sign in,ログイン,Iniciar sesión
+auth.noAccount,,还没有账号？,還沒有帳號？,Don't have an account?,アカウントをお持ちでないですか？,¿No tienes cuenta?
+auth.operationFailed,,操作失败,操作失敗,Operation failed,操作に失敗しました,Operación fallida
+auth.password,,密码,密碼,Password,パスワード,Contraseña
+auth.processing,,处理中…,處理中…,Processing…,処理中…,Procesando…
+auth.register,,创建账号,建立帳號,Create account,アカウント作成,Crear cuenta
+auth.username,,用户名,使用者名稱,Username,ユーザー名,Nombre de usuario
+autocomplete.noMatch,,无匹配结果,無符合項目,No match,一致する項目がありません,Sin coincidencias
+common.cancel,,取消,取消,Cancel,キャンセル,Cancelar
+common.close,,关闭,關閉,Close,閉じる,Cerrar
+common.language,,语言,語言,Language,言語,Idioma
+common.languages,,语言,語言,Languages,言語,Idiomas
+common.loading,,加载中…,載入中…,Loading…,読み込み中…,Cargando…
+common.search,,搜索,搜尋,Search,検索,Buscar
+common.submit,,提交,提交,Submit,送信,Enviar
+components.actualSize,,实际尺寸 100%,實際尺寸 100%,Actual size 100%,実際のサイズ 100%,Tamaño real 100%
+components.anonymous,,匿名,匿名,Anonymous,匿名,Anónimo
+components.avoidOverlap,,排列以避免重叠,排列以避免重疊,Arrange to avoid overlap,重なりを避けて配置,Organizar para evitar solapamientos
+components.childNodes,,{count} 个子节点；点击收起,{count} 個子節點；點選收合,{count} child nodes; click to collapse,{count} 個の子ノード；クリックして折りたたむ,{count} nodos hijos; haz clic para colapsar
+components.cliqueNote,,每条边皆为可投票的独立直接映射；低分映射自动收起,每條邊皆為可投票的獨立直接對應；低分對應自動收合,Each edge is an independent direct mapping that can be upvoted or downvoted; low-scoring mappings are collapsed.,各エッジは独立した直接関係で、賛成・反対の投票が可能です。低スコアの関係は自動的に折りたたまれます。,Cada arista es una relación directa independiente que se puede votar a favor o en contra; las relaciones con baja puntuación se colapsan.
+components.cliqueTitle,,待建立的映射图谱,待建立的對應圖譜,Mapping graph to be created,作成する関係グラフ,Grafo de relaciones a crear
+components.closeInfoPanel,,关闭信息面板,關閉資訊面板,Close information panel,情報パネルを閉じる,Cerrar panel de información
+components.collapse,,收起,收合,Collapse,折りたたむ,Colapsar
+components.collapseBranch,,收起子分支,收合子分支,Collapse child branch,子ノードを折りたたむ,Colapsar rama hija
+components.collapseToFirst,,收起至第一层,收合至第一層,Collapse to first hop,最初の階層に折りたたむ,Colapsar al primer nivel
+components.collapseToolbar,,收起图谱工具栏,收合圖譜工具列,Collapse graph toolbar,グラフツールバーを折りたたむ,Contraer la barra de herramientas del grafo
+components.daysAgo,,{count} 天前,{count} 天前,{count} days ago,{count} 日前,Hace {count} días
+components.depth,,深度 {depth},深度 {depth},Depth {depth},深さ {depth},Profundidad {depth}
+components.directMappingList,,直接映射词句,直接對應詞句,Directly mapped expressions,直接関係のある表現,Expresiones con relación directa
+components.downvote,,踩,倒讚,Downvote,反対,Votar en contra
+components.edgeCount,,{count} 条边,{count} 條邊,{count} edges,{count} エッジ,{count} aristas
+components.empty,,暂无数据,目前沒有資料,No data yet,データはまだありません,Aún no hay datos
+components.evidence,,证据,證據,Evidence,根拠,Evidencia
+components.exitFullscreen,,退出全屏,退出全螢幕,Exit fullscreen,全画面を終了,Salir de pantalla completa
+components.expand,,展开,展開,Expand,展開,Expandir
+components.expandAll,,全部展开,全部展開,Expand all,すべて展開,Expandir todo
+components.expandBranch,,展开子分支,展開子分支,Expand child branch,子ノードを展開,Expandir rama hija
+components.expandToolbar,,展开图谱工具栏,展開圖譜工具列,Expand graph toolbar,グラフツールバーを展開,Expandir la barra de herramientas del grafo
+components.expression,,词句,詞句,Expression,表現,Expresión
+components.filterLanguages,,筛选语言…,篩選語言…,Filter languages…,言語をフィルター…,Filtrar idiomas…
+components.fullscreen,,全屏,全螢幕,Fullscreen,全画面,Pantalla completa
+components.graphLabel,,词句映射图谱,詞句對應圖譜,Expression mapping graph,表現関係グラフ,Grafo de relaciones de expresiones
+components.graphLoading,,加载图谱…,載入圖譜…,Loading graph…,グラフを読み込み中…,Cargando grafo…
+components.graphMode,,图谱模式,圖譜模式,Graph mode,グラフモード,Modo grafo
+components.graphStats,,{nodes} 个映射节点 · {edges} 个关系,{nodes} 個對應節點 · {edges} 個關係,{nodes} mapped nodes · {edges} relations,{nodes} 個のマッピングノード · {edges} 件の関係,{nodes} nodos mapeados · {edges} relaciones
+components.graphToolbar,,图谱工具栏,圖譜工具列,Graph toolbar,グラフツールバー,Barra de herramientas del grafo
+components.hierarchyList,,映射层级列表,對應階層列表,Mapping hierarchy list,関係階層リスト,Lista jerárquica de relaciones
+components.hops,,跳数,跳數,Hops,ホップ数,Saltos
+components.hoursAgo,,{count} 小时前,{count} 小時前,{count} hours ago,{count} 時間前,Hace {count} horas
+components.justNow,,刚刚,剛剛,Just now,たった今,Ahora mismo
+components.languageLoadFailed,,无法加载语言,無法載入語言,Unable to load languages,言語を読み込めませんでした,No se pudieron cargar los idiomas
+components.listMode,,列表模式,列表模式,List mode,リストモード,Modo lista
+components.loadMore,,加载更多,載入更多,Load more,さらに読み込む,Cargar más
+components.loadingRelated,,加载相关词句中,載入相關詞句中,Loading related expressions,関連表現を読み込み中,Cargando expresiones relacionadas
+components.locale,,语言环境,語言環境,Locale,言語環境,Entorno lingüístico
+components.mapping,,映射,對應,Mapping,関係,Relación
+components.mappingScore,,映射评分,對應評分,Mapping score,関係スコア,Puntuación de la relación
+components.minutesAgo,,{count} 分钟前,{count} 分鐘前,{count} minutes ago,{count} 分前,Hace {count} minutos
+components.moreActions,,更多操作,更多操作,More actions,その他の操作,Más acciones
+components.moreMappings,,完整图谱中还有 {count} 个映射,完整圖譜中還有 {count} 個對應,{count} more mappings are available in the full graph.,完全なグラフにはさらに {count} 件の関係があります,{count} relaciones más disponibles en el grafo completo
+components.noDirectMappings,,暂无直接映射,尚無直接對應,No direct mappings yet.,直接関係はまだありません,Aún no hay relaciones directas
+components.noExpressions,,找不到相符词句,找不到相符詞句,No expressions found,表現が見つかりません,No se encontraron expresiones
+components.nodeCount,,{count} 个节点,{count} 個節點,{count} nodes,{count} ノード,{count} nodos
+components.nodeInfo,,节点信息,節點資訊,Node information,ノード情報,Información del nodo
+components.otherRelations,,其他关系,其他關係,Other relations,その他の関係,Otras relaciones
+components.reading,,读音,讀音,Reading,読み方,Lectura
+components.relatedExpressions,,相关词句,相關詞句,Related expressions,関連表現,Expresiones relacionadas
+components.relationCount,,{count} 个关系,{count} 個關係,{count} relations,{count} 件の関係,{count} relaciones
+components.removeLanguage,,移除 {code},移除 {code},Remove {code},{code} を削除,Eliminar {code}
+components.resetLayout,,重置布局,重設版面配置,Reset layout,レイアウトをリセット,Restablecer diseño
+components.rootNode,,根节点,根節點,Root node,ルートノード,Nodo raíz
+components.search,,搜索,搜尋,Search,検索,Buscar
+components.searchExpressions,,搜索词句…,搜尋詞句…,Search expressions…,表現を検索…,Buscar expresiones…
+components.searching,,搜索中…,搜尋中…,Searching…,検索中…,Buscando…
+components.selectNodeHint,,在图谱中选取节点以查看详情,在圖譜中選取節點以檢視詳情,Select a node in the graph to view details,グラフ内のノードを選択して詳細を表示,Selecciona un nodo en el grafo para ver detalles
+components.sourcePath,,来源路径,來源路徑,Source path,元の経路,Ruta de origen
+components.upvote,,赞,讚,Upvote,賛成,Votar a favor
+components.viewExpression,,查看词句详情,檢視詞句詳情,View expression details,表現の詳細を表示,Ver detalles de la expresión
+components.voteFailed,,投票失败，已撤销,投票失敗，已復原,Vote failed; reverted,投票に失敗しました。元に戻しました,Voto fallido; revertido
+components.zoomIn,,放大,放大,Zoom in,拡大,Acercar
+components.zoomOut,,缩小,縮小,Zoom out,縮小,Alejar
+contribute.addExpression,,+ 添加词句,+ 新增詞句,+ Add expression,+ 表現を追加,+ Añadir expresión
+contribute.chooseImage,,选择图片（最大 480px／100KB）,選擇圖片（最大 480px／100KB）,Choose image (max 480px / 100KB),画像を選択（最大 480px／100KB）,Elegir imagen (máx. 480 px / 100 KB)
+contribute.completeGraph,,完全图,完全圖,Complete graph,完全グラフ,Grafo completo
+contribute.delete,,删除,刪除,Delete,削除,Eliminar
+contribute.directMappingCount,,{count} 个直接映射,{count} 個直接對應,{count} direct mappings,{count} 件の直接関係,{count} relaciones directas
+contribute.expression,,词句,詞句,Expression,表現,Expresión
+contribute.expressionCount,,{count} 个词句,{count} 個詞句,{count} expressions,{count} 件の表現,{count} expresiones
+contribute.expressionPlaceholder,,输入词句…,輸入詞句…,Enter an expression…,表現を入力…,Introduce una expresión…
+contribute.imageTooLarge,,压缩后的图片不得超过 100KB,壓縮後的圖片不得超過 100KB,Compressed image must be no larger than 100KB,圧縮後の画像は 100KB 以下にしてください,La imagen comprimida no puede superar los 100 KB
+contribute.imageUploadFailed,,无法上传图片,無法上傳圖片,Unable to upload image,画像をアップロードできません,No se pudo subir la imagen
+contribute.imageUploading,,上传中…,上傳中…,Uploading…,アップロード中…,Subiendo…
+contribute.language,,语言,語言,Language,言語,Idioma
+contribute.lead,,提交含义相同的词句。系统会在每对之间创建直接映射。复数、过去式、敬体等词形变化请到词句映射页，不要在这里提交。,提交意義相同的詞句。系統會在每對之間建立直接對應。複數、過去式、敬體等詞形變化請到詞句對應頁，不要在這裡提交。,"Submit expressions that mean the same thing. The system creates a direct mapping between every pair. Inflected forms (plural, past, polite) belong on an expression’s mapping page, not here.",同じ意味の表現を送信します。システムは各ペアに直接関係を作ります。複数形・過去形・丁寧形などの語形変化は、表現の対応ページで追加してください。,"Envía expresiones que significan lo mismo. El sistema crea una relación directa entre cada par. Las formas flexionadas (plural, pasado, cortesía) se añaden en la página de correspondencias, no aquí."
+contribute.locale,,语言环境,語言環境,Locale,言語,Idioma
+contribute.minRows,,至少需要 2 行，每行需填写语言和词句,至少需要 2 行，每行需填寫語言和詞句,At least 2 rows with a language and expression are required,言語と表現を入力した行が少なくとも2行必要です,Se requieren al menos 2 filas con idioma y expresión
+contribute.submit,,提交,提交,Submit,送信,Enviar
+contribute.submitFailed,,提交失败,提交失敗,Submission failed,送信に失敗しました,Error al enviar
+contribute.submitting,,提交中…,提交中…,Submitting…,送信中…,Enviando…
+contribute.tags,,标签,標籤,Tags,タグ,Etiquetas
+contribute.title,,批量提交,批次提交,Batch contribution,一括投稿,Contribución por lotes
+errors.home,,返回首页,回首頁,Back home,ホームに戻る,Volver al inicio
+errors.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
+errors.pageMissing,,页面未找到,找不到頁面,Page not found,ページが見つかりません,Página no encontrada
+expression.imageAlt,,词句图片,詞句圖片,Expression image,表現の画像,Imagen de la expresión
+feed.all,,全部,全部,,すべて,Todo
+feed.contributeMapping,,提交映射 →,提交對應 →,Contribute a mapping →,関係を投稿する →,Contribuir una relación →
+feed.hot,,热门,熱門,,人気,Popular
+feed.mappingsAndExpressions,,映射 + 新词句,對應 + 新詞句,,関係 + 新しい表現,Relaciones + nuevas expresiones
+feed.missing,,找不到所需内容？,找不到所需內容？,Can’t find what you need?,必要なものが見つかりませんか？,¿No encuentras lo que buscas?
+feed.newContributions,,新贡献,新貢獻,,新しい貢献,Nuevas contribuciones
+feed.newest,,最新,最新,,最新,Más reciente
+feed.noActivity,,暂无动态,暫無動態,No activity yet,アクティビティはありません,No hay actividad
+feed.popularMappings,,热门映射,熱門對應,,人気の関係,Relaciones populares
+feed.ratedThisWeek,,按评分 · 本周,依評分 · 本週,,スコア順 · 今週,Por puntuación · esta semana
+feed.subtitle,,语义图的最新脉动——热门映射和新贡献。,語意圖的最新脈動——熱門對應與新貢獻。,The latest pulse of the semantic graph — new contributions.,意味グラフの最新情報 — 人気の関係と新しい貢献。,El pulso más reciente del grafo semántico: relaciones populares y nuevas contribuciones.
+feed.title,,动态,動態,Activity,アクティビティ,Actividad
+handbook.adaptedFromWikivoyage,,内容改编自英文维基导游（CC BY-SA 4.0）。,內容改編自英文維基導遊（CC BY-SA 4.0）。,Content adapted from English Wikivoyage (CC BY-SA 4.0).,内容は英語版ウィキボヤージュ（CC BY-SA 4.0）を元にしています。,Contenido adaptado de Wikiviajes en inglés (CC BY-SA 4.0).
+handbook.addExpression,,新增词句,新增詞句,Add expression,表現を追加,Añadir expresión
+handbook.addSection,,新增章节,新增章節,Add section,セクションを追加,Añadir sección
+handbook.back,,手册列表,手冊列表,Handbook list,ハンドブック一覧,Lista de manuales
+handbook.chapter,,第 {number} 章,第 {number} 章,Chapter {number},第 {number} 章,Capítulo {number}
+handbook.closeExpressionInfo,,关闭词句信息,關閉詞句資訊,Close expression information,表現情報を閉じる,Cerrar información de la expresión
+handbook.collapsePicker,,收起,收合,Collapse,折りたたむ,Colapsar
+handbook.deleteSection,,删除章节,刪除章節,Delete section,セクションを削除,Eliminar sección
+handbook.edit,,编辑手册,編輯手冊,Edit handbook,ハンドブックを編集,Editar manual
+handbook.expressionInfo,,词句信息,詞句資訊,Expression information,表現情報,Información de la expresión
+handbook.expressionInfoHint,,词句的语言、地区和来源将显示在此处。,詞句的語言、地區和來源將顯示在此處。,"The expression language, region, and source appear here.",表現の言語、地域、ソースがここに表示されます。,"El idioma, la región y la fuente de la expresión aparecerán aquí."
+handbook.helpful,,这本手册有帮助吗？,這本手冊有幫助嗎？,Was this handbook helpful?,このハンドブックは役に立ちましたか？,¿Te resultó útil este manual?
+handbook.inspectorFailed,,无法加载词句,無法載入詞句,Unable to load expression,表現を読み込めませんでした,No se pudo cargar la expresión
+handbook.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
+handbook.locale,,语言,語言,Language,言語,Idioma
+handbook.moveDown,,下移,下移,Move down,下に移動,Mover abajo
+handbook.moveSectionDown,,下移章节,下移章節,Move section down,セクションを下に移動,Mover sección abajo
+handbook.moveSectionUp,,上移章节,上移章節,Move section up,セクションを上に移動,Mover sección arriba
+handbook.moveUp,,上移,上移,Move up,上に移動,Mover arriba
+handbook.noTranslation,,此词句没有翻译,此詞句沒有翻譯,No translation for this expression,この表現の翻訳はありません,No hay traducción para esta expresión
+handbook.private,,私密,私密,Private,非公開,Privado
+handbook.public,,公开,公開,Public,公開,Público
+handbook.publish,,发布,發布,Publish,公開,Publicar
+handbook.reading,,读音,讀音,Reading,読み方,Lectura
+handbook.region,,地区,地區,Region,地域,Región
+handbook.relationsFailed,,无法加载相关词句,無法載入相關詞句,Unable to load related expressions,関連表現を読み込めませんでした,No se pudieron cargar las expresiones relacionadas
+handbook.removeExpression,,移除 {text},移除 {text},Remove {text},{text} を削除,Eliminar {text}
+handbook.saveDraft,,保存草稿,儲存草稿,Save draft,下書きを保存,Guardar borrador
+handbook.saving,,保存中…,儲存中…,Saving…,保存中…,Guardando…
+handbook.sectionTitle,,章节标题,章節標題,Section title,セクションタイトル,Título de la sección
+handbook.selectExpression,,选择词句,選擇詞句,Select an expression,表現を選択,Seleccionar una expresión
+handbook.source,,来源,來源,Source,ソース,Fuente
+handbook.sourceAi,,AI,AI,AI,AI,IA
+handbook.sourceAuthority,,权威,權威,Authority,権威,Autoridad
+handbook.sourceUser,,用户,使用者,User,ユーザー,Usuario
+handbook.titlePlaceholder,,手册标题,手冊標題,Handbook title,ハンドブックのタイトル,Título del manual
+handbook.toc,,目录,目錄,Contents,目次,Contenido
+handbook.translationLanguage,,翻译语言,翻譯語言,Show translations in,翻訳言語,Idioma de traducción
+handbook.translationLocalePlaceholder,,搜索语言环境…,搜尋語言環境…,Search language locales,言語環境を検索…,Buscar idiomas…
+handbook.translationsFailed,,无法加载翻译,無法載入翻譯,Unable to load translations,翻訳を読み込めませんでした,No se pudieron cargar las traducciones
+handbook.translationsLoading,,正在加载翻译…,載入翻譯中…,Loading translations,翻訳を読み込み中…,Cargando traducciones…
+handbook.viewFullGraph,,查看完整关系图,檢視完整關係圖,View full relation graph,完全な関係グラフを表示,Ver grafo completo de relaciones
+handbook.visibility,,可见性,可見性,Visibility,公開設定,Visibilidad
+handbooks.create,,新建手册,新增手冊,New handbook,新しいハンドブック,Nuevo manual
+handbooks.loadFailed,,加载手册失败,無法載入手冊,Unable to load handbooks,ハンドブックを読み込めませんでした,No se pudieron cargar los manuales
+handbooks.newest,,最新,最新,Latest,最新,Más reciente
+handbooks.noResults,,未找到手册,找不到手冊,No handbooks found,ハンドブックが見つかりません,No se encontraron manuales
+handbooks.popular,,热门,熱門,Popular,人気,Popular
+handbooks.searchPlaceholder,,搜索手册…,搜尋手冊…,Search handbooks…,ハンドブックを検索…,Buscar manuales…
+handbooks.sections,,章节,章節,sections,セクション,secciones
+handbooks.title,,手册,手冊,Handbooks,ハンドブック,Manuales
+languageCreate.back,,上一步,上一步,Back,戻る,Atrás
+languageCreate.cancel,,取消,取消,Cancel,キャンセル,Cancelar
+languageCreate.close,,关闭,關閉,Close,閉じる,Cerrar
+languageCreate.create,,创建语言,建立語言,Create language,言語を作成,Crear idioma
+languageCreate.createFailed,,语言创建失败,語言建立失敗,Language creation failed,言語の作成に失敗しました,Error al crear el idioma
+languageCreate.creating,,创建中…,建立中…,Creating…,作成中…,Creando…
+languageCreate.errorDescription,,请输入描述,請輸入描述,Enter a description,説明を入力してください,Introduce una descripción
+languageCreate.errorGlottolog,,请选择 Glottolog 匹配或选择「无匹配」,請選擇 Glottolog 比對或選擇「無比對」,"Choose a Glottolog match or select ""no match""",Glottolog の一致を選択するか、「一致なし」を選択,Elige una coincidencia Glottolog o selecciona «sin coincidencia»
+languageCreate.errorName,,请输入语言名称,請輸入語言名稱,Enter a language name,言語名を入力してください,Introduce un nombre de idioma
+languageCreate.errorReason,,请选择仅限社区创建的原因,請選擇僅限社群建立的原因,Select a reason for community-only creation,コミュニティのみ作成の理由を選択してください,Selecciona un motivo para la creación solo comunitaria
+languageCreate.errorTag,,请输入语言子标签以继续,請輸入語言子標籤以繼續,Enter a language subtag to continue,続行するには言語サブタグを入力してください,Introduce una subetiqueta de idioma para continuar
+languageCreate.glottologCandidates,,找到 {count} 个候选,找到 {count} 個候選,{count} candidate(s) found,{count} 件の候補が見つかりました,{count} candidato(s) encontrado(s)
+languageCreate.glottologChoose,,选择匹配或标明无合适条目,選擇比對或標示無合適條目,Choose a match or indicate no suitable entry,一致を選択するか、適切な項目がないことを指定,Elige una coincidencia o indica que no hay entrada adecuada
+languageCreate.glottologExactMatch,,匹配此候选,比對此候選,Match this candidate,この候補に一致,Elegir este candidato
+languageCreate.glottologLevelDialect,,方言,方言,dialect,方言,dialecto
+languageCreate.glottologLevelLanguage,,语言,語言,language,言語,idioma
+languageCreate.glottologNoMatch,,Glottolog 无合适条目,Glottolog 無合適條目,Glottolog has no suitable entry,Glottolog に適切な項目がありません,Glottolog no tiene una entrada adecuada
+languageCreate.glottologSearchPlaceholder,,搜索 Glottolog…,搜尋 Glottolog…,Search Glottolog…,Glottolog を検索…,Buscar en Glottolog…
+languageCreate.metadataDescription,,描述,描述,Description,説明,Descripción
+languageCreate.metadataDescriptionPlaceholder,,描述此语言或变体…,描述此語言或變體…,Describe this language or variety…,この言語または変種を説明…,Describe este idioma o variedad…
+languageCreate.metadataName,,名称,名稱,Name,名前,Nombre
+languageCreate.metadataNameEn,,英文名称,英文名稱,English name,英語名,Nombre en inglés
+languageCreate.metadataReason,,为何此语言未收录于 Glottolog？,為何此語言未收錄於 Glottolog？,Why is this language missing from Glottolog?,この言語が Glottolog にない理由は？,¿Por qué falta este idioma en Glottolog?
+languageCreate.metadataReasonCommunity,,社区特定用法,社群特定用法,Community-specific usage,コミュニティ固有の用法,Uso específico de la comunidad
+languageCreate.metadataReasonEmerging,,新兴变体,新興變體,Emerging variety,新しい変種,Variante emergente
+languageCreate.metadataReasonMissing,,Glottolog 未收录,Glottolog 未收錄,Missing from Glottolog,Glottolog に未収録,Falta en Glottolog
+languageCreate.metadataReasonOther,,其他,其他,Other,その他,Otro
+languageCreate.metadataReasonPlaceholder,,选择原因…,選擇原因…,Select a reason…,理由を選択…,Selecciona un motivo…
+languageCreate.next,,下一步,下一步,Next,次へ,Siguiente
+languageCreate.optional,,可选,可選,Optional,任意,Opcional
+languageCreate.previewCanonicalCode,,规范代码,標準代碼,Canonical code,正規コード,Código canónico
+languageCreate.previewExisting,,此语言已存在,此語言已存在,This language already exists,この言語はすでに存在します,Este idioma ya existe
+languageCreate.previewExistingAction,,使用现有语言,使用現有語言,Use existing language,既存の言語を使用,Usar idioma existente
+languageCreate.previewTitle,,创建语言,建立語言,Create language,言語を作成,Crear idioma
+languageCreate.previewWarnings,,警告,警告,Warnings,警告,Advertencias
+languageCreate.provisionalTag,,临时标签,暫時標籤,Provisional tag,暫定タグ,Etiqueta provisional
+languageCreate.requiredHint,,带 * 的字段为必填项,標有 * 的欄位為必填,* Required,* の項目は必須です,Los campos con * son obligatorios
+languageCreate.stepGlottolog,,Glottolog 匹配,Glottolog 比對,Glottolog match,Glottolog マッチ,Coincidencia Glottolog
+languageCreate.stepMetadata,,元数据,中繼資料,Metadata,メタデータ,Metadatos
+languageCreate.stepPreview,,预览并创建,預覽並建立,Preview & create,プレビューと作成,Vista previa y crear
+languageCreate.stepTag,,语言标签,語言標籤,Language tag,言語タグ,Etiqueta de idioma
+languageCreate.subtagLanguage,,语言,語言,Language,言語,Idioma
+languageCreate.subtagRegion,,地区,地區,Region,地域,Región
+languageCreate.subtagScript,,文字,文字,Script,文字,Escritura
+languageCreate.subtagSearch,,搜索子标签…,搜尋子標籤…,Search subtags…,サブタグを検索…,Buscar subetiquetas…
+languageCreate.subtagVariant,,变体,變體,Variant,変種,Variante
+languageCreate.variantRemoved,,已移除 1 个变体,已移除 1 個變體,1 variant removed,1 件の変種を削除,1 variante eliminada
+languageCreate.variantsRemoved,,已移除 {count} 个变体,已移除 {count} 個變體,{count} variant(s) removed,{count} 件の変種を削除,{count} variante(s) eliminada(s)
+languageDetail.allOthers,,全部,全部,All,すべて,Todos
+languageDetail.allVariants,,全部变体,全部變體,All scripts,すべての変種,Todas las variantes
+languageDetail.alphabetical,,按字母排序,依字母排序,Alphabetical,アルファベット順,Alfabético
+languageDetail.back,,语言,語言,Languages,言語,Idiomas
+languageDetail.expressions,,词句,詞句,Expressions,表現,Expresiones
+languageDetail.latest,,最新,最新,Latest,最新,Más reciente
+languageDetail.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
+languageDetail.mapped,,已映射,已對應,Mapped,マッピング済み,Mapeado
+languageDetail.noResults,,没有找到词句,找不到詞句,No expressions found,表現が見つかりません,No se encontraron expresiones
+languageDetail.otherLabel,,其他,其他,Other,その他,Otro
+languageDetail.popular,,热门,熱門,Popular,人気,Popular
+languageDetail.regionalForms,,地区形式,地區形式,Regional forms,地域別の形式,Formas regionales
+languageDetail.representativeCities,,代表城市,代表城市,Representative cities,代表的な都市,Ciudades representativas
+languageDetail.representativeCitiesNote,,这些城市仅供参考,這些城市僅供參考,Reference points for exploration; not the full language distribution.,これらの都市は参考情報です,Estas ciudades son solo orientativas
+languageDetail.scripts.Hans,,简体,简体,Simplified,簡体字,Chino simplificado
+languageDetail.scripts.Hant,,傳承體,傳承體,Traditional,繁体字,Chino tradicional
+languageDetail.scripts.Jpan,,日文,日文,Japanese,日本語,Japonés
+languageDetail.scripts.Latn,,拉丁,拉丁,Latin,ラテン文字,Latino
+languageDetail.searchPlaceholder,,搜索词句…,搜尋詞句…,Search expressions…,表現を検索…,Buscar expresiones…
+languageDetail.variantLabel,,文字,文字,Script,文字,Escritura
+languagePicker.clear,,清除选择,清除選擇,Clear selection,選択をクリア,Limpiar selección
+languagePicker.createLanguage,,创建新语言或变体,建立新語言或變體,Create new language or variety,新しい言語または変種を作成,Crear nuevo idioma o variedad
+languagePicker.noResults,,无匹配语言,無符合語言,No matching languages,一致する言語がありません,No hay idiomas coincidentes
+languagePicker.placeholder,,搜索语言…,搜尋語言…,Search languages…,言語を検索…,Buscar idiomas…
+languageSwitcher.browserSuggested,,浏览器推荐,瀏覽器推薦,Suggested by your browser,ブラウザの推奨,Sugerido por tu navegador
+languageSwitcher.helpTranslate,,协助翻译 LangMap,協助翻譯 LangMap,Help translate LangMap,LangMap の翻訳に協力する,Ayuda a traducir LangMap
+languageSwitcher.noResults,,无匹配的语言,無符合的語言,No matching languages,一致する言語がありません,No hay idiomas coincidentes
+languageSwitcher.recent,,最近使用的语言,最近使用的語言,Recent languages,最近使用した言語,Idiomas recientes
+languagesPage.addLanguage,,添加语言,新增語言,Add language,言語を追加,Añadir idioma
+languagesPage.expressionCount,,词句,詞句,Expressions,表現,Expresiones
+languagesPage.languageCount,,语言,語言,Languages,言語,Idiomas
+languagesPage.loadFailed,,无法加载语言,無法載入語言,Unable to load languages,言語を読み込めませんでした,No se pudieron cargar los idiomas
+languagesPage.noResults,,未找到语言,找不到語言,No languages found,言語が見つかりません,No se encontraron idiomas
+languagesPage.searchPlaceholder,,搜索语言…,搜尋語言…,Search languages…,言語を検索…,Buscar idiomas…
+languagesPage.sortAlphabetical,,A–Z,A–Z,A–Z,A–Z,A–Z
+languagesPage.sortCount,,按数量,依數量,Count,件数,Cantidad
+languagesPage.subtitle,,浏览所有语言的词句与映射,瀏覽所有語言的詞句與對應關係,Explore expressions and mappings across all languages,すべての言語の表現と関係を探索,Explorar expresiones y relaciones entre todos los idiomas
+languagesPage.title,,语言,語言,Languages,言語,Idiomas
+localeCreate.codePreviewEmpty,,填写必填字段以预览代码,填寫必填欄位以預覽代碼,Complete required fields to preview the code,必須項目を入力するとコードをプレビューできます,Completa los campos obligatorios para previsualizar el código
+localeCreate.create,,创建语言环境,建立語言環境,Create locale,ロケールを作成,Crear locale
+localeCreate.createFailed,,无法创建语言环境,無法建立語言環境,Unable to create language locale,ロケールを作成できませんでした,Error al crear el locale
+localeCreate.englishName,,英文名称,英文名稱,English name,英語名,Nombre en inglés
+localeCreate.heading,,创建语言环境,建立語言環境,Create language locale,言語ロケールを作成,Crear locale de idioma
+localeCreate.latitude,,纬度,緯度,Latitude,緯度,Latitud
+localeCreate.localName,,当地名称,當地名稱,Local name,現地名,Nombre local
+localeCreate.longitude,,经度,經度,Longitude,経度,Longitud
+localeCreate.place,,地名片段,地名片段,Place segments,地名セグメント,Segmentos de lugar
+localeCreate.placePlaceholder,,泉州_南安,泉州_南安,Quanzhou_Nanan,泉州_南安,Quanzhou_Nanan
+localeCreate.region,,地区,地區,Region,地域,Región
+localeCreate.regionPlaceholder,,ISO 3166-1 代码,ISO 3166-1 代碼,ISO 3166-1 code,ISO 3166-1 コード,Código ISO 3166-1
+localeCreate.script,,文字,文字,Script,文字,Escritura
+localeCreate.scriptPlaceholder,,ISO 15924 代码,ISO 15924 代碼,ISO 15924 code,ISO 15924 コード,Código ISO 15924
+mapLens.anchor,,锚点,錨點,Anchor,アンカー,Ancla
+mapLens.back,,返回映射,回到對應,Back to mapping,関係に戻る,Volver a la relación
+mapLens.languages,,{count} 种语言,{count} 種語言,{count} languages,{count} 言語,{count} idiomas
+mapLens.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
+mapLens.members,,映射成员,對應成員,Mapping members,関係メンバー,Miembros de la relación
+mapLens.noData,,此词句无地理分布数据,此詞句無地理分佈資料,No geographic distribution data for this expression,この詞句の地理的分布データはありません,No hay datos de distribución geográfica para esta expresión
+mapLens.regions,,{count} 个地区,{count} 個地區,{count} regions,{count} 地域,{count} regiones
+mapLens.title,,词句分布,詞句分佈,Expression distribution,詞句の分布,Distribución de la expresión
+mappingDetail.addAndMap,,新增并建立映射,新增並建立對應,Add and create mapping,追加して関係を作成,Añadir y crear relación
+mappingDetail.addExpression,,新增词句,新增詞句,Add expression,表現を追加,Añadir expresión
+mappingDetail.addFailed,,无法新增词句,無法新增詞句,Unable to add expression,表現を追加できませんでした,No se pudo añadir la expresión
+mappingDetail.adding,,新增中…,新增中…,Adding…,追加中…,Añadiendo…
+mappingDetail.allLanguages,,所有语言,所有語言,All languages,すべての言語,Todos los idiomas
+mappingDetail.authority,,权威,權威,Authority,権威,Autoridad
+mappingDetail.breadcrumb,,面包屑,麵包屑,Breadcrumb,パンくず,Ruta de navegación
+mappingDetail.closeQuickAdd,,关闭快速新增,關閉快速新增,Close quick add,クイック追加を閉じる,Cerrar adición rápida
+mappingDetail.contribute,,贡献映射,貢獻對應,Contribute mapping,関係を投稿,Contribuir relación
+mappingDetail.direct,,直接映射,直接對應,direct mappings,直接関係,relaciones directas
+mappingDetail.enterRequired,,请输入词句与语言代码,請輸入詞句與語言代碼,Enter expression and language code,表現と言語コードを入力してください,Introduce expresión y código de idioma
+mappingDetail.expression,,词句,詞句,Expression,表現,Expresión
+mappingDetail.expressionPlaceholder,,输入词句…,輸入詞句…,Enter expression…,表現を入力…,Introduce una expresión…
+mappingDetail.graph,,图谱,圖譜,Graph,グラフ,Grafo
+mappingDetail.graphTruncated,,图谱已截断；略过 {count} 个相关词句。,圖譜已截斷；略過 {count} 個相關詞句。,Graph truncated; {count} related expressions omitted.,グラフは省略されました。関連する表現 {count} 件を省略しています。,El grafo se ha truncado; se omitieron {count} expresiones relacionadas.
+mappingDetail.home,,首页,首頁,Home,ホーム,Inicio
+mappingDetail.hops,,跳数,跳數,hops,ホップ数,saltos
+mappingDetail.indirect,,间接,間接,indirect,間接,indirecta
+mappingDetail.languageCode,,语言代码,語言代碼,Language code,言語コード,Código de idioma
+mappingDetail.languageCodePlaceholder,,例如 en / cmn-Hant,例如 en / cmn-Hant,e.g. en / cmn-Hant,例：en / cmn-Hant,ej. en / cmn-Hant
+mappingDetail.list,,列表,列表,List,リスト,Lista
+mappingDetail.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
+mappingDetail.mappingSet,,映射集合,對應集合,Mapping set,関係セット,Conjunto de relaciones
+mappingDetail.noMappings,,尚无映射,尚無對應,No mappings yet,まだ関係がありません,Aún no hay relaciones
+mappingDetail.optional,,选填,選填,Optional,任意,Opcional
+mappingDetail.quickAdd,,快速新增词句,快速新增詞句,Quickly add expression,表現をすばやく追加,Añadir expresión rápidamente
+mappingDetail.quickAddLead,,新增词句并直接映射到当前词句。,新增詞句並直接對應到目前詞句。,Add an expression and map it directly to the current expression.,表現を追加し、現在の表現に直接マップします。,Añade una expresión y relaciónala directamente con la expresión actual.
+mappingDetail.region,,地区,地區,Region,地域,Región
+mappingDetail.splitExpression,,拆分词句,拆分詞句,Split expression,表現を分割,Dividir expresión
+mappingDetail.splitFailed,,无法拆分词句,無法拆分詞句,Unable to split expression,表現を分割できません,No se pudo dividir la expresión
+mappingDetail.splitLoadFailed,,无法加载要拆分的对应关系,無法載入要拆分的對應關係,Unable to load mappings for split,分割する対応関係を読み込めません,No se pudieron cargar las relaciones para dividir
+mappingDetail.targetLanguage,,目标语言,目標語言,Target language,対象言語,Idioma de destino
+mappingDetail.user,,用户,使用者,User,ユーザー,Usuario
+mappingDetail.viewMap,,在地图上查看此词句,在地圖上檢視此詞句,View this expression on map,この詞句を地図で表示,Ver esta expresión en el mapa
+morphology.addFormLink,,新增词形关联,新增詞形關聯,Add a word-form link,語形リンクを追加,Añadir enlace de forma
+morphology.class.adjective,,形容词,形容詞,Adjective,形容詞,Adjetivo
+morphology.class.noun,,名词,名詞,Noun,名詞,Sustantivo
+morphology.class.verb,,动词,動詞,Verb,動詞,Verbo
+morphology.dictionaryForm,,辞典形,辭書形,Dictionary form,辞書形,Forma de diccionario
+morphology.empty,,尚无词形关联,尚無詞形關聯,No word-form links yet,語形リンクはまだありません,Aún no hay enlaces de forma
+morphology.formOfAria,,{lemma} 的变化形：{features},{lemma} 的變化形：{features},Form of {lemma}: {features},{lemma} の変化形：{features},Forma de {lemma}: {features}
+morphology.hideForm,,收起表单,收起表單,Hide form,フォームを閉じる,Ocultar formulario
+morphology.loadFailed,,无法加载词形,無法載入詞形,Unable to load word forms,語形を読み込めませんでした,No se pudieron cargar las formas
+morphology.markAsForm,,标为某个词的变化形…,標為某個詞的變化形…,Mark as a form of…,ある語の変化形として記録…,Marcar como forma de…
+morphology.noLanguageFeatures,,这个词类没有预设特征。仍可先保存关联，或改显示全部特征。,這個詞類沒有預設特徵。仍可先儲存關聯，或改顯示全部特徵。,"No usual features for this class. You can still save the link, or show all features.",この品詞の既定特徴はありません。リンクだけ保存するか、すべての特徴を表示できます。,No hay rasgos habituales para esta clase. Puedes guardar el enlace o mostrar todos los rasgos.
+morphology.pickFeatures,,特征,特徵,Features,特徴,Rasgos
+morphology.pickFeaturesHint,,选填。只显示此语言、此词类常用的特征。,選填。只顯示此語言、此詞類常用的特徵。,Optional. Only features usual for this language and word class are shown.,任意。この言語・この品詞でよく使う特徴だけ表示します。,Opcional. Solo se muestran los rasgos habituales de este idioma y esta clase.
+morphology.saved,,已保存词形关联,已儲存詞形關聯,Word-form link saved,語形リンクを保存しました,Enlace de forma guardado
+morphology.saving,,保存中…,儲存中…,Saving…,保存中…,Guardando…
+morphology.searchLemma,,搜索同一语言的辞典形,搜尋同一語言的辭書形,Search a same-language dictionary form,同じ言語の辞書形を検索,Buscar una forma de diccionario en el mismo idioma
+morphology.searchLemmaLabel,,辞典形,辭書形,Dictionary form,辞書形,Forma de diccionario
+morphology.showAllFeatures,,显示全部特征,顯示全部特徵,Show all features,すべての特徴を表示,Mostrar todos los rasgos
+morphology.submit,,保存词形关联,儲存詞形關聯,Save form link,語形リンクを保存,Guardar enlace de forma
+morphology.submitFailed,,无法保存词形关联,無法儲存詞形關聯,Unable to save form link,語形リンクを保存できませんでした,No se pudo guardar el enlace de forma
+morphology.title,,词形变化,詞形變化,Word forms,語形変化,Formas de la palabra
+morphology.wordClass,,词类,詞類,Word class,品詞,Clase de palabra
+morphology.wordClassHint,,先选名词、动词或形容词，再显示对应特征。,先選名詞、動詞或形容詞，再顯示對應特徵。,"Choose noun, verb, or adjective first. Features depend on that.",先に名詞・動詞・形容詞を選ぶと、対応する特徴だけ出ます。,"Elige primero sustantivo, verbo o adjetivo. Los rasgos dependen de eso."
+nav.closeMenu,,关闭菜单,關閉選單,Close menu,メニューを閉じる,Cerrar menú
+nav.contribute,,贡献,貢獻,Contribute,貢献,Contribuir
+nav.handbooks,,手册,手冊,Handbooks,ハンドブック,Manuales
+nav.home,,首页,首頁,Home,ホーム,Inicio
+nav.languages,,语言,語言,Languages,言語,Idiomas
+nav.menu,,菜单,選單,Menu,メニュー,Menú
+nav.openMenu,,打开菜单,開啟選單,Open menu,メニューを開く,Abrir menú
+nav.searchExpressions,,搜索词句,搜尋詞句,Search expressions,表現を検索,Buscar expresiones
+nav.signIn,,登录,登入,Sign in,ログイン,Iniciar sesión
+nav.signOut,,退出登录,登出,Sign out,ログアウト,Cerrar sesión
+nav.skipToContent,,跳转到主要内容,跳至主要內容,Skip to main content,メインコンテンツへ移動,Ir al contenido principal
+nav.submitSearch,,提交搜索,送出搜尋,Submit search,検索を実行,Enviar búsqueda
+nav.switchLanguage,,切换界面语言,切換介面語言,Switch interface language,インターフェース言語を切り替え,Cambiar idioma de la interfaz
+profile.email,,邮箱,電子郵件,Email,メールアドレス,Correo electrónico
+profile.loadFailed,,无法加载个人资料,無法載入個人資料,Unable to load profile,プロフィールを読み込めませんでした,No se pudo cargar el perfil
+profile.memberSince,,加入时间,加入時間,Member since,登録日,Miembro desde
+profile.mustLogin,,请先登录,請先登入,Please sign in to view your profile,ログインしてください,Inicia sesión primero
+profile.noActivity,,暂无活动记录,暫無活動記錄,No activity yet,アクティビティはありません,No hay actividad
+profile.recentActivity,,最近活动,最近活動,Recent activity,最近のアクティビティ,Actividad reciente
+profile.role,,角色,角色,Role,役割,Rol
+profile.signOut,,退出登录,登出,Sign out,ログアウト,Cerrar sesión
+profile.title,,个人资料,個人資料,Profile,プロフィール,Perfil
+search.allLanguages,,所有语言,所有語言,All languages,すべての言語,Todos los idiomas
+search.alphabetical,,按字母顺序,依字母順序,Alphabetical,アルファベット順,Alfabético
+search.chooseLanguage,,选择语言,選擇語言,Choose a language,言語を選択,Elegir un idioma
+search.expressionsAvailable,,{count} 个词句,{count} 個詞句,{count} expressions,{count} 件の表現,{count} expresiones
+search.hint,,提示：目前搜索匹配词句原文。翻译（语义）搜索即将推出。,提示：目前搜尋比對詞句原文。語意搜尋即將推出。,Tip: search currently matches expression text. Translation (semantic) search is coming later.,ヒント：現在の検索は表現テキストに一致します。意味検索は後日提供予定です。,Consejo: la búsqueda actual coincide con el texto de la expresión. La búsqueda semántica llegará más adelante.
+search.languageRequired,,请选择要搜索的语言,請選擇要搜尋的語言,Select a language to search in,検索する言語を選択してください,Selecciona un idioma para buscar
+search.languagesLoadFailed,,无法加载可搜索语言,無法載入可搜尋語言,Unable to load searchable languages,検索可能な言語を読み込めませんでした,No se pudieron cargar los idiomas disponibles para buscar
+search.loadFailed,,搜索失败,搜尋失敗,Search failed,検索に失敗しました,Error al buscar
+search.loadMoreFailed,,无法加载更多结果,無法載入更多結果,Unable to load more results,続きの結果を読み込めませんでした,No se pudieron cargar más resultados
+search.newest,,最新,最新,Latest,最新,Más reciente
+search.noResults,,未找到结果,找不到結果,No results found,結果が見つかりません,Sin resultados
+search.placeholder,,搜索词句…,搜尋詞句…,Search expressions…,表現を検索…,Buscar expresiones…
+search.popular,,热门,熱門,Popular,人気,Popular
+search.recentLanguages,,最近使用,最近使用,Recent languages,最近使用した言語,Idiomas recientes
+search.results,,{count} 个结果,{count} 個結果,{count} result | {count} results,{count} 件の結果,{count} resultado | {count} resultados
+search.sort,,排序,排序,Sort,並び替え,Ordenar
+search.title,,搜索词句,搜尋詞句,Search expressions,表現を検索,Buscar expresiones
+splitDialog.score,,分数 {score},分數 {score},score {score},スコア {score},puntuación {score}
+splitDialog.selectMappings,,选择要移动的对应关系,選擇要移動的對應關係,Select mappings to move,移動する対応関係を選択,Selecciona las relaciones que moverás
+splitDialog.splitting,,拆分中…,拆分中…,Splitting…,分割中…,Dividiendo…
+splitDialog.title,,拆分词句,拆分詞句,Split expression,表現を分割,Dividir expresión
+splitDialog.warning,,读音、语言环境认证与手册项目不会被复制。,讀音、語言環境認證與手冊項目不會被複製。,"Readings, locale attestations and handbook items will not be copied.",読み、ロケールの証明、ハンドブック項目はコピーされません。,"No se copiarán las lecturas, las certificaciones de configuración regional ni los elementos del manual."
+translate.addLocale,,添加要翻译的语言,新增要翻譯的語言,Add a language to translate,翻訳する言語を追加,Añadir un idioma para traducir
+translate.batchSubmit,,提交 {count} 条翻译,提交 {count} 筆翻譯,Submit {count} translations,{count} 件の翻訳を送信,Enviar {count} traducciones
+translate.candidate,,当前翻译,目前翻譯,Current translation,現在の翻訳,Traducción actual
+translate.candidateScore,,分数 {score},分數 {score},score {score},スコア {score},puntuación {score}
+translate.chooseRegistryLanguage,,选择已注册的语言,選擇已註冊的語言,Choose a registered language,登録済みの言語を選択,Elige un idioma registrado
+translate.coverage,,翻译覆盖率,翻譯涵蓋率,Translation coverage,翻訳カバレッジ,Cobertura de traducción
+translate.displayed,,显示 {count} 条,顯示 {count} 筆,{count} shown,{count} 件表示,{count} mostrados
+translate.eyebrow,,社区本地化,社群本地化,COMMUNITY LOCALIZATION,コミュニティ翻訳,LOCALIZACIÓN COMUNITARIA
+translate.inputPlaceholder,,输入翻译…,輸入翻譯…,Enter translation…,翻訳を入力…,Introduce la traducción…
+translate.key,,消息键,訊息鍵,Message key,メッセージキー,Clave del mensaje
+translate.loadFailed,,无法加载翻译工作台,無法載入翻譯工作台,Unable to load translation workbench,翻訳ワークベンチを読み込めませんでした,No se pudo cargar el área de trabajo de traducción
+translate.loading,,加载中…,載入中…,Loading…,読み込み中…,Cargando…
+translate.locale,,目标语言,目標語言,Target language,対象言語,Idioma de destino
+translate.localesFailed,,无法加载语言列表,無法載入語言列表,Unable to load locale list,言語リストを読み込めませんでした,No se pudo cargar la lista de idiomas
+translate.loginNote,,登录后可提交翻译；候选翻译按映射分数排序，无正分候选时使用回退文本。,登入後可提交翻譯；候選翻譯依對應分數排序，無正分候選時使用備用文字。,Sign in to submit translations; candidates are selected by mapping score and fallback is used when no positive candidate exists.,ログインして翻訳を送信。候補は関係スコアで選択され、適切な候補がない場合はフォールバックが使用されます。,Inicia sesión para enviar traducciones; los candidatos se seleccionan por puntuación de relación y se usa el texto de respaldo cuando no hay un candidato positivo.
+translate.noResults,,未找到匹配文本。,找不到相符文字。,No matching copy found.,一致するテキストが見つかりません。,No se encontraron textos coincidentes.
+translate.pendingSubmit,,待提交,待提交,Pending submit,送信待ち,Pendiente de enviar
+translate.preview,,预览,預覽,Preview,プレビュー,Vista previa
+translate.reference,,参考语言,參考語言,Reference language,参照言語,Idioma de referencia
+translate.searchPlaceholder,,搜索键名或原文…,搜尋鍵名或原文…,Search key or source text…,キーまたは原文を検索…,Buscar clave o texto original…
+translate.selectLocale,,选择翻译语言,選擇翻譯語言,Choose translation language,翻訳言語を選択,Elegir idioma de traducción
+translate.source,,英文原文,英文原文,EN source,英語原文,Original en inglés
+translate.sourceAuto,,自动,自動,Auto,自動,Automático
+translate.sourceManual,,手动,手動,Manual,手動,Manual
+translate.sourceSystem,,系统,系統,System,システム,Sistema
+translate.start,,开始,開始,Start,開始,Comenzar
+translate.statusActive,,已启用,已啟用,Active,アクティブ,Activo
+translate.statusArchived,,已归档,已封存,Archived,アーカイブ済み,Archivado
+translate.statusDraft,,草稿,草稿,Draft,下書き,Borrador
+translate.submitFailed,,提交失败,提交失敗,Submission failed,送信に失敗しました,Error al enviar
+translate.submitMapping,,提交映射,提交對應,Submit mapping,関係を送信,Enviar relación
+translate.submitted,,已提交,已提交,Submitted,送信済み,Enviado
+translate.subtitle,,帮助让 LangMap 界面文本更自然、更实用。,幫助讓 LangMap 介面文字更自然、更實用。,Help make LangMap interface text natural and useful.,LangMap のインターフェース文言を自然で使いやすくするお手伝いをします。,Ayuda a que el texto de la interfaz de LangMap sea natural y útil.
+translate.title,,翻译工作台,翻譯工作台,Translation workbench,翻訳ワークベンチ,Área de trabajo de traducción
+translate.translateKey,,翻译 {key},翻譯 {key},Translate {key},{key} を翻訳,Traducir {key}
+translate.translated,,已翻译,已翻譯,translated,翻訳済み,traducido
+translate.translation,,翻译,翻譯,Translation,翻訳,Traducción

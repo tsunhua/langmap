@@ -54,6 +54,7 @@ node_modules/
 
 /scripts/004_opus_data/opus_download/
 /scripts/wikivoyage/artifacts/
+!/scripts/i18n/ui-locales.csv
 
 # Git worktrees
 .worktrees/
@@ -72,8 +73,9 @@ scripts/v2/v2-data.sql
 scripts/i18n/*-import.sql
 
 .opencode/
+# Legacy local D1/SQLite state is intentionally ignored while the tracked
+# staging toolchain is retired. Do not add new state files here.
 /scripts/db/state/*
-!/scripts/db/state/README.md
 
 # agent-kit:start
 .agent-kit/

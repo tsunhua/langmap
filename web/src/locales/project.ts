@@ -1,16 +1,9 @@
-import cmnHans from '../../../scripts/i18n/cmn-Hans-CN.json'
-import cmnHant from '../../../scripts/i18n/cmn-Hant-TW.json'
-import jpn from '../../../scripts/i18n/jpn-Jpan-JP.json'
-import spa from '../../../scripts/i18n/spa-Latn-ES.json'
+import systemUiCsv from '../../../scripts/i18n/ui-locales.csv?raw'
+import { parseTranslationWideCsv, type TranslationCatalog } from './csvCatalog'
 
-export type ProjectTranslationCatalog = Readonly<Record<string, string>>
+export type ProjectTranslationCatalog = TranslationCatalog
 
-const catalogs: Readonly<Record<string, ProjectTranslationCatalog>> = {
-  'cmn-Hans-CN': cmnHans,
-  'cmn-Hant-TW': cmnHant,
-  'jpn-Jpan-JP': jpn,
-  'spa-Latn-ES': spa,
-}
+const catalogs: Readonly<Record<string, ProjectTranslationCatalog>> = parseTranslationWideCsv(systemUiCsv)
 
 export function projectTranslations(locale: string | undefined): ProjectTranslationCatalog {
   if (!locale) return {}

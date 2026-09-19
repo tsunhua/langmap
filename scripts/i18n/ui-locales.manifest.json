@@ -1,0 +1,18 @@
+{
+  "csv": "ui-locales.csv",
+  "csv_sha256": "67b90f932f4b34deec7830a26c77d34ea9bd65a17c281df8ca056344bedd2641",
+  "entry_count": 421,
+  "exporter_version": "langmap-ui-wide-csv/1",
+  "locale_metadata": {},
+  "locales": [
+    "cmn-Hans-CN",
+    "cmn-Hant-TW",
+    "eng-Latn-US",
+    "jpn-Jpan-JP",
+    "spa-Latn-ES"
+  ],
+  "manifest_version": 1,
+  "source_key": "system-ui",
+  "source_name": "langmap-web",
+  "source_type": "ui"
+}

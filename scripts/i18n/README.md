@@ -1,74 +1,42 @@
-> Historical record: this SQL bundle generator is retained only for source audit; its D1/SQLite import wrapper was removed and the generated SQL is not a current PostgreSQL import entrypoint.
+# UI locale wide CSV
 
-# UI 翻譯 bundle
+前端 UI locale 與 PostgreSQL 匯入共用一張 canonical 寬表：
 
-受管理的 system UI 翻譯由版本控制的 source 生成單一 bundle。source catalog 是
-`web/src/locales/en.ts`（bundle code：`eng-Latn-US`），first-party locale JSON 目前包含：
+```text
+scripts/i18n/
+  ui-locales.csv
+  ui-locales.manifest.json
+```
 
-- `cmn-Hans-CN.json`（bundle code：`cmn-Hans-CN`）
-- `cmn-Hant-TW.json`（bundle code：`cmn-Hant-TW`）
-- `spa-Latn-ES.json`（bundle code：`spa-Latn-ES`）
-- `jpn-Jpan-JP.json`（bundle code：`jpn-Jpan-JP`）
+`ui-locales.csv` 的表頭是 `ENTRY_ID,NOTE,LOCALE_<locale>...`；每列的
+`ENTRY_ID` 是穩定的 UI message key，各 locale 是欄位，不再為每個 locale
+維護一份 JSON 或另一份 CSV。`ui-locales.manifest.json` 只保存 checksum、來源與欄位
+metadata，不保存詞句內容。
 
-翻譯鍵需對應 `web/src/locales/en.ts` 的巢狀路徑。
-
-## 生成 bundle
-
-產物固定寫到 `scripts/i18n/artifacts/system-ui/`：
-
-- `system-ui.sql`
-- `manifest.json`
+## 產生與驗證
 
 ```bash
-python3 scripts/i18n/generate-bundle.py
+python3 scripts/i18n/generate-ui-csv.py
+python3 scripts/dictionary/import_mapping_csv_pg.py \
+  --manifest scripts/i18n/ui-locales.manifest.json --check
 ```
 
-如需指定測試輸入或輸出目錄：
+`generate-ui-csv.py` 只會正規化 row 順序、檢查欄位與刷新 manifest；編輯
+UI locale 時直接修改 `data.csv`，不要新增 per-locale JSON／CSV。PG 匯入
+使用相同的 manifest 與 CSV：
 
 ```bash
-python3 scripts/i18n/generate-bundle.py \
-  --source-catalog /tmp/en.ts \
-  --locale cmn-Hant-TW=/tmp/cmn-Hant-TW.json \
-  --locale cmn-Hans-CN=/tmp/cmn-Hans-CN.json \
-  --locale spa-Latn-ES=/tmp/spa-Latn-ES.json \
-  --locale jpn-Jpan-JP=/tmp/jpn-Jpan-JP.json \
-  --output-dir /tmp/system-ui-bundle
+DATABASE_URL='postgresql://...' python3 scripts/dictionary/import_mapping_csv_pg.py \
+  --manifest scripts/i18n/ui-locales.manifest.json --apply
 ```
 
-manifest 會記錄 schema version、project/scope、source checksums、locale/message/
-translation counts，以及輸出 SQL 的 SHA-256。生成失敗時不會替換既有 artifact。
+Web 的 `web/src/locales/project.ts` 也直接載入這張寬表，再按 locale 欄位
+建立 Vue i18n catalog，因此 build 與資料庫不會各自維護一份翻譯來源。
 
-## Historical local wrapper (retired)
+## 規則
 
-舊流程曾以 wrapper 重建 bundle 並載入單一 SQL；wrapper 已移除，以下命令僅供歷史查閱，不可執行：
-
-```bash
-scripts/i18n/import-all.sh --local
-```
-
-`--remote` 已停用。production 寫入改由 production data manager 接手；此 wrapper
-不再直接對 production database 執行匯入。
-
-production 只可先執行 `./scripts/postgres/manage.py migrate`，經人工審核
-後再依 [production data release runbook](../../docs/runbooks/production-data-release.md)
-執行受保護的 apply。
-
-## 單語系 SQL
-
-若只需檢查單一 locale 的 SQL，既有 generator 仍可用：
-
-```json
-{
-  "nav.home": "首頁",
-  "common.search": "搜尋"
-}
-```
-
-```bash
-python3 scripts/i18n/generate-i18n-sql.py \
-  cmn-Hant-TW scripts/i18n/cmn-Hant-TW.json \
-  > /tmp/langmap-cmn-Hant-TW-import.sql
-```
-
-此 generator 會保留既有 deterministic `expression_id` / `stable_edge_id` 與
-SQL insert semantics，但未知 source key 會直接 fail，不再 warning/skip。
+- 至少兩個非空 locale 值的 row 才能進入 canonical CSV。
+- locale 欄位按 UTF-8 bytewise 排序；message value 使用 RFC 4180 quoting。
+- `manifest.json` 是 metadata，不是可直接編輯的詞句資料；CSV checksum 改變
+  時必須重新執行 generator。
+- 不產生 SQL、JSONL、SQLite mirror 或 D1 staging。
