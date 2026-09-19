@@ -42,8 +42,9 @@
 - `data/page-catalog.json`、`data/section-catalog.json` 與小型 fixture：隨 adapter
   版本控制，不帶入 LangMap runtime。
 
-公開入口為 `dictionary-wikivoyage-export`，支援既有 snapshot-only 與 optional
-`--download` 流程；輸出目錄可由參數指定，預設不覆寫既有 archive。
+公開入口為 `dictionary-wikivoyage-export`；下載由同 package 的
+`dictionary_export.wikivoyage.download` CLI 先行完成，export CLI 只接受固定 snapshot，
+輸出目錄可由參數指定，預設不覆寫既有 archive。
 
 ### LangMap repo：PG import 與 handbook rebuild
 
