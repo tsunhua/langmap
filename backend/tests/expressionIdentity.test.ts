@@ -1,10 +1,29 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalizeExpressionText,
+  ExpressionIdentityError,
   expressionPrefixUpperBound,
 } from '../src/services/expressionIdentity';
 
+type IdentityCase = { name: string; input: string; output?: string; error?: string };
+const sharedCases = JSON.parse(
+  readFileSync(new URL('../../scripts/dictionary/tests/fixtures/expression_identity_cases.json', import.meta.url), 'utf8'),
+) as IdentityCase[];
+
 describe('canonicalizeExpressionText', () => {
+  for (const testCase of sharedCases) {
+    it(`matches shared case: ${testCase.name}`, () => {
+      if (testCase.error) {
+        expect(() => canonicalizeExpressionText(testCase.input)).toThrowError(
+          expect.objectContaining({ code: testCase.error }),
+        );
+      } else {
+        expect(canonicalizeExpressionText(testCase.input)).toBe(testCase.output);
+      }
+    });
+  }
+
   it('trims surrounding whitespace', () => {
     expect(canonicalizeExpressionText('  食  ')).toBe('食');
   });
