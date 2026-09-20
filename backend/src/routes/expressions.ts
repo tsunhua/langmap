@@ -61,9 +61,14 @@ expressions.post('/', requireAuth, async (c) => {
 });
 
 expressions.get('/search', async (c) => {
-  const limit = Math.min(Math.max(Number(c.req.query('limit') ?? 20) || 20, 1), 50); const offset = Math.max(Number.parseInt(c.req.query('offset') ?? '0', 10) || 0, 0);
-  const result = await searchExpressions(c.env.DB, { q: c.req.query('q') ?? '', lang_code: c.req.query('lang_code')?.toLowerCase(), limit, offset });
-  return paginated(c, result.items.map(expressionDto), result.total, offset, limit);
+  try {
+    const limit = Math.min(Math.max(Number(c.req.query('limit') ?? 20) || 20, 1), 50); const offset = Math.max(Number.parseInt(c.req.query('offset') ?? '0', 10) || 0, 0);
+    const result = await searchExpressions(c.env.DB, { q: c.req.query('q') ?? '', lang_code: c.req.query('lang_code')?.toLowerCase(), limit, offset });
+    return paginated(c, result.items.map(expressionDto), result.total, offset, limit);
+  } catch (error) {
+    if (error instanceof ExpressionError) return badRequest(c, error.code);
+    throw error;
+  }
 });
 
 expressions.get('/:id', async (c) => {

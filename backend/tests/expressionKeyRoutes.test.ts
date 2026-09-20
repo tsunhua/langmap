@@ -73,6 +73,14 @@ describe('GET /expressions/:lang/:text', () => {
     expect(body.data.expression.homograph_index).toBe(1);
   });
 
+  it('keeps legacy punctuation text keys literal', async () => {
+    const db = keyDb({ ...row, text: '你好！' });
+    const response = await app(db).request('http://example.test/expressions/zh/%E4%BD%A0%E5%A5%BD%EF%BC%81', undefined, { DB: db, SECRET_KEY: 'test' });
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { expression: { text: string } } };
+    expect(body.data.expression.text).toBe('你好！');
+  });
+
   it('parses the homograph suffix', async () => {
     const db = keyDb({ ...row, id: 9, homograph_index: 2 });
     const response = await app(db).request('http://example.test/expressions/en/hello~2', undefined, { DB: db, SECRET_KEY: 'test' });

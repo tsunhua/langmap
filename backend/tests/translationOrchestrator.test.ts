@@ -443,11 +443,11 @@ describe('runTranslation — assisted path', () => {
     });
     await runTranslationTest(h, request({
       text: '这个多少钱？',
-      canonicalText: '这个多少钱？',
+      canonicalText: '这个多少钱',
       sourceLangCode: null,
     }));
 
-    expect(queriedRoots).toContain('这个多少钱？');
+    expect(queriedRoots).toContain('这个多少钱');
     expect(queriedRoots).toContain('多少钱');
     const parsed = parseLines(h.collector);
     expect(parsed[2].data).toMatchObject({

@@ -156,6 +156,13 @@ describe('POST /translate body limits', () => {
 });
 
 describe('POST /translate validation mapping', () => {
+  it('rejects an unbalanced expression delimiter before starting the stream', async () => {
+    const response = await post({ body: JSON.stringify({ text: '他說「你好', target_locale_code: 'jpn-Jpan-JP' }) });
+    expect(response.status).toBe(400);
+    expect(await jsonError(response)).toBe('VALIDATION_FAILED');
+    expect(runTranslationMock).not.toHaveBeenCalled();
+  });
+
   it('rejects more than 500 graphemes with VALIDATION_FAILED', async () => {
     const response = await post({ body: JSON.stringify({ text: 'a'.repeat(501), target_locale_code: 'jpn-Jpan-JP' }) });
     expect(response.status).toBe(400);

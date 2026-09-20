@@ -1,6 +1,6 @@
 import type { Database } from '../db/database';
 import type { ExpressionLocaleRow, ExpressionPartOfSpeech, ExpressionRow, ExpressionSourceRow, ReadingRow } from '../types/expression';
-import { canonicalizeExpressionText, expressionPrefixUpperBound } from './expressionIdentity';
+import { canonicalizeExpressionText, ExpressionIdentityError, expressionPrefixUpperBound } from './expressionIdentity';
 import { resolveSource, type SourceInput } from './provenance';
 import { SourceError } from './sources';
 
@@ -9,7 +9,8 @@ const READING_COLUMNS = `r.expression_id, r.locale_id, l.code AS language_locale
 export class ExpressionError extends Error { constructor(public code: string) { super(code); this.name = 'ExpressionError'; } }
 
 export async function createExpression(db: Database, input: { lang_code: string; text: string; language_locale_code?: string; pos_mask?: number; source?: SourceInput; created_by: number }): Promise<{ expression: ExpressionRow; created: boolean }> {
-  const text = canonicalizeExpressionText(input.text);
+  let text: string;
+  try { text = canonicalizeExpressionText(input.text); } catch (error) { if (error instanceof ExpressionIdentityError) throw new ExpressionError('VALIDATION_FAILED'); throw error; }
   if (!text) throw new ExpressionError('VALIDATION_FAILED');
   const language = await db.prepare('SELECT id FROM languages WHERE code=?').bind(input.lang_code.toLowerCase()).first<{ id: number }>();
   if (!language) throw new ExpressionError('INVALID_LANG_CODE');
@@ -64,7 +65,9 @@ export async function getExpression(db: Database, id: number): Promise<{ express
 export async function searchExpressions(db: Database, query: { q: string; lang_code?: string; limit: number; offset: number }): Promise<{ items: ExpressionRow[]; total: number }> {
   const args: Array<string | number> = []; const where: string[] = [];
   if (query.lang_code) { where.push('l.code=?'); args.push(query.lang_code); }
-  const q = canonicalizeExpressionText(query.q);
+  let q: string;
+  try { q = canonicalizeExpressionText(query.q); } catch (error) { if (error instanceof ExpressionIdentityError) throw new ExpressionError('VALIDATION_FAILED'); throw error; }
+  if (query.q.trim() && !q) throw new ExpressionError('VALIDATION_FAILED');
   if (q) { const upper = expressionPrefixUpperBound(q); if (upper) { where.push('e.text>=? AND e.text<?'); args.push(q, upper); } else { where.push('e.text>=?'); args.push(q); } }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const count = await db.prepare(`SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id ${clause}`).bind(...args).first<{ total: number }>();

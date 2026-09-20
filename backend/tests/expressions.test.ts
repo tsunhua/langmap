@@ -11,7 +11,7 @@ import {
 } from '../src/services/expressions';
 import type { ExpressionRow } from '../src/types/expression';
 
-type Handler = () => unknown;
+type Handler = (...args: unknown[]) => unknown;
 
 type DatabaseMock = import('../src/db/database').Database & {
   sqlLog: string[];
@@ -26,7 +26,7 @@ function fakeDatabase(handlers: Record<string, Handler>): DatabaseMock {
     )?.[1];
     return {
       bind(..._args: unknown[]) {
-        const run = async () => (handler ? handler() : { results: [] });
+        const run = async () => (handler ? handler(..._args) : { results: [] });
         return {
           async first<T>() { return (await run()) as T; },
           async run() { return handler ? await handler() : { success: true }; },
@@ -135,6 +135,13 @@ describe('createExpression', () => {
       'VALIDATION_FAILED',
     );
   });
+
+  it('rejects an expression with an unbalanced internal delimiter', async () => {
+    const db = fakeDatabase({});
+    expect(await captureAsyncCode(() => createExpression(db, { lang_code: 'nan', text: '他說「你好', created_by: 1 }))).toBe(
+      'VALIDATION_FAILED',
+    );
+  });
 });
 
 describe('searchExpressions', () => {
@@ -175,6 +182,39 @@ describe('searchExpressions', () => {
     expect(result.total).toBe(2);
     expect(result.items.map((item) => item.text)).toEqual(['厝', '家']);
     expect(db.sqlLog.some((sql) => normalize(sql) === normalize(SEARCH_ALL))).toBe(true);
+  });
+
+  it('uses canonical boundary punctuation when searching', async () => {
+    const bound: unknown[] = [];
+    const db = fakeDatabase({
+      'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text>=? AND e.text<?': (...args) => {
+        bound.push(...args);
+        return { total: 1 };
+      },
+      [SEARCH_BY_LANG_TERM]: (...args) => {
+        bound.push(...args);
+        return { results: [{ ...existingRow, text: '你好' }] };
+      },
+    });
+    const result = await searchExpressions(db, { q: '「你好！」', lang_code: 'nan', limit: 20, offset: 0 });
+    expect(result.items[0]?.text).toBe('你好');
+    expect(bound[0]).toBe('nan');
+    expect(bound[1]).toBe('你好');
+    expect(bound[2]).toEqual(expect.any(String));
+    expect(bound).not.toContain('「你好！」');
+  });
+});
+
+describe('expressions route search validation', () => {
+  it('rejects an unbalanced non-empty query instead of listing all expressions', async () => {
+    const app = new Hono<{ Bindings: { DB: import('../src/db/database').Database; SECRET_KEY: string } }>();
+    app.route('/expressions', expressions);
+    const response = await app.request('http://example.test/expressions/search?q=%E4%BB%96%E8%AA%AA%E3%80%8C%E4%BD%A0%E5%A5%BD', undefined, {
+      DB: fakeDatabase({}),
+      SECRET_KEY: 'test',
+    });
+    expect(response.status).toBe(400);
+    expect((await response.json() as { error: string }).error).toBe('VALIDATION_FAILED');
   });
 });
 

@@ -209,7 +209,7 @@ describe('retrieveEvidence — candidate resolution', () => {
       sourceLangCode: 'cmn',
     }));
 
-    expect(queriedRoots).toContain('这个多少钱？');
+    expect(queriedRoots).toContain('这个多少钱');
     expect(queriedRoots).toContain('多少钱');
     expect(result.items).toEqual([
       expect.objectContaining({ source_text: '多少钱', target_text: '幾若錢', match_type: 'exact' }),

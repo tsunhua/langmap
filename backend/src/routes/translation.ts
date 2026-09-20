@@ -3,7 +3,7 @@ import type { Context, Next } from 'hono';
 import { requireAuth } from '../middleware/auth';
 import { badRequest, notFoundCode, unauthorized } from '../utils/response';
 import { MAX_TRANSLATION_BODY_BYTES } from '../utils/limits';
-import { canonicalizeExpressionText } from '../services/expressionIdentity';
+import { canonicalizeExpressionText, ExpressionIdentityError } from '../services/expressionIdentity';
 import {
   runTranslation,
   type RunTranslationRequest,
@@ -133,7 +133,14 @@ translation.post('/', requireTranslationAuth, async (c) => {
     throw error;
   }
 
-  const canonicalText = canonicalizeExpressionText(text);
+  let canonicalText: string;
+  try {
+    canonicalText = canonicalizeExpressionText(text);
+  } catch (error) {
+    if (error instanceof ExpressionIdentityError) return badRequest(c, 'VALIDATION_FAILED');
+    throw error;
+  }
+  if (!canonicalText) return badRequest(c, 'VALIDATION_FAILED');
   const requestId = crypto.randomUUID();
   const controller = new AbortController();
 
