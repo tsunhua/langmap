@@ -2,6 +2,8 @@ import csv
 import hashlib
 import json
 
+import pytest
+
 from scripts.dictionary.import_mapping_csv_pg import CsvContractError, validate
 
 
@@ -34,6 +36,29 @@ def test_validate_counts_same_language_and_cross_language_pairs(tmp_path):
     assert summary["rows"] == 1
     assert summary["expressions"] == 3
     assert summary["edges"] == 3
+
+
+def test_validate_normalizes_expression_cells_and_deduplicates(tmp_path):
+    manifest = write_snapshot(tmp_path, [["entry-1", "", "「Hello！」|Hello", "「你好！」"]])
+
+    summary = validate(manifest)
+
+    assert summary["expressions"] == 2
+    assert summary["edges"] == 1
+
+
+def test_validate_rejects_unbalanced_expression_cell_with_location(tmp_path):
+    manifest = write_snapshot(tmp_path, [["entry-1", "", "他說「你好", "hello"]])
+
+    with pytest.raises(CsvContractError, match=r"row 2.*eng-Latn-US"):
+        validate(manifest)
+
+
+def test_validate_rejects_punctuation_only_expression_cell(tmp_path):
+    manifest = write_snapshot(tmp_path, [["entry-1", "", "！！！", "hello"]])
+
+    with pytest.raises(CsvContractError, match=r"row 2.*eng-Latn-US"):
+        validate(manifest)
 
 
 def test_validate_rejects_unsorted_locale_headers(tmp_path):

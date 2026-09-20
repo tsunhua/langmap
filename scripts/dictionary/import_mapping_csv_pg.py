@@ -15,6 +15,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from scripts.dictionary.text_identity import (
+    ExpressionTextIdentityError,
+    canonicalize_expression_text,
+)
+
 
 LOCALE_HEADER = re.compile(r"^LOCALE_(?P<code>[A-Za-z0-9][A-Za-z0-9_-]*)$")
 READING_HEADER = re.compile(
@@ -212,8 +217,19 @@ def _read_csv(
             for offset, locale in enumerate(locales, locale_start):
                 for raw in values[offset].split("|"):
                     text = _canonical(raw)
-                    if text:
-                        cells.append(Cell(entry_id, locale, text))
+                    if not text:
+                        continue
+                    try:
+                        canonical_text = canonicalize_expression_text(text)
+                    except ExpressionTextIdentityError as exc:
+                        raise CsvContractError(
+                            f"row {line_number} locale {locale.code}: {exc.code}"
+                        ) from exc
+                    if not canonical_text:
+                        raise CsvContractError(
+                            f"row {line_number} locale {locale.code}: expression is empty after normalization"
+                        )
+                    cells.append(Cell(entry_id, locale, canonical_text))
             if len(cells) < 2:
                 raise CsvContractError(f"row {line_number}: at least two non-empty expressions are required")
             unique = {(cell.locale.code, cell.text): cell for cell in cells}
