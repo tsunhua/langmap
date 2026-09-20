@@ -6,6 +6,7 @@
   {"name":"nested_wrappers","input":"。（「你好！」）。","output":"你好"},
   {"name":"halfwidth_and_fullwidth_marks","input":"，？！你好！！！。","output":"你好"},
   {"name":"internal_unbalanced_quote","input":"他說「你好","error":"UNBALANCED_DELIMITER"},
+  {"name":"nested_unbalanced_quote","input":"“他說「你好","error":"UNBALANCED_DELIMITER"},
   {"name":"internal_unbalanced_parenthesis","input":"函數(x","error":"UNBALANCED_DELIMITER"},
   {"name":"trailing_unmatched_parenthesis","input":"你好)","output":"你好"},
   {"name":"balanced_internal_quote","input":"他說「你好」","output":"他說「你好」"},

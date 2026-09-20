@@ -8385,8 +8385,6 @@ INSERT OR IGNORE INTO language_locales (id, code, language_id, script_code, orth
 -- LOCALIZED NAME EXPRESSIONS AND DIRECT MAPPING EDGES
 INSERT OR IGNORE INTO sources (type, name) VALUES ('system', 'LangMap canonical names seed');
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
-  (1818, '''Are''are', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, '''Auhelawa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, '(Small) seal', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'A''ou', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'A-pucikwar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -8748,6 +8746,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Archi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ardhamāgadhī prākrit', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Are', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Are''are', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Areba', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Arem', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Arequipa-la unión quechua', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -8831,6 +8830,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Attié', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Atzingo matlatzinca', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Au', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Auhelawa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Aulua', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Aurá', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Aushi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -9148,7 +9148,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Befang', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Beginci', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Beja', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Bekati''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Bekati', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Bekwarra', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Bekwel', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Belait', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -9183,7 +9183,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Bengkala sign language', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Benin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Bentong', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Benyadu''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Benyadu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Beothuk', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Bepour', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Berakou', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -9913,7 +9913,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Da''a kaili', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Daai chin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Daakaka', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Daantanai''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Daantanai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Daasanach', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Daatsʼíin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Daba', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -10416,7 +10416,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Fataleka', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Fataluku', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Fayu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Fe''fe''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Fe''fe', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Fembe', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Fernando po creole english', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Feroge', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -10540,7 +10540,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Garrwa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Garus', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Garza', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Gata''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Gata', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Gavak', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Gavar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Gavião do jiparaná', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -10601,7 +10601,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ghera', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ghodoberi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ghomara', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Ghomálá''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Ghomálá', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ghotuo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ghulfan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Giangan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -11301,7 +11301,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Jwira-pepesa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Jèrriais', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Júma', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'K''iche''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'K''iche', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kaamba', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kaan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kaang chin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -11623,7 +11623,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Kenzi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Keoru-ahia', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kepkiriwát', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Kepo''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Kepo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kera', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kerak', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kereho', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12049,7 +12049,6 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Kven finnish', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kw''adza', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kwa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Kwa''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kwaami', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kwadi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Kwaio', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12165,7 +12164,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Lamja-dengsa-tola', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lamkang', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lamma', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Lamnso''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Lamnso', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lamogai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lampung api', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lampung nyo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12391,9 +12390,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Loncong', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Long phuri naga', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Long wat', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Longgu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1818, 'Longgu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Longto', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
-  (1818, 'Longto', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Longuda', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Loniu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Lonwolwol', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12873,7 +12872,6 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Mbato', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbay', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbe', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Mbe''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbelime', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbere', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbesa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12892,10 +12890,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Mbugu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbugwe', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbuk', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Mbuko', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Mbuko', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbukushu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Mbula', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Mbula', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Mbula-bwazza', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbule', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mbulungish', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -12962,7 +12960,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Mesopotamian arabic', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mesqan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Messapic', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Meta''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Meta', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Metlatónoc mixtec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mewari', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Mewati', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -13393,15 +13391,15 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Nawathinehena', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nawdm', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nawuri', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Naxi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Naxi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Naxi dongba (na²¹ɕi³³ to³³ba²¹, nakhi tomba)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Naxi geba (na²¹ɕi³³ gʌ²¹ba²¹, ''na-''khi ²ggŏ-¹baw, nakhi geba)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Naxi geba (na²¹ɕi³³ gʌ²¹ba²¹, ''na-''khi ²ggŏ-¹baw, nakhi geba)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Nayi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nayini', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ncane', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nchumbulu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Nda''nda''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Nda''nda', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndaka', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ndali', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -13854,7 +13852,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Nüshu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Nǁng', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'N’ko', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'O''chi''chi''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'O''chi''chi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'O''du', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Obanliku', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Obispeño', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -13894,10 +13892,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Okolie', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Okolod', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Okpamheri', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Okpe (northwestern edo)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Okpe (northwestern edo)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Okpe (southwestern edo)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Oksapmin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Oksapmin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Oku', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ol chiki (ol cemet’, ol, santali)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ol onal', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14212,7 +14210,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Phake', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Phala', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Phalura', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Phana''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Phana', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Phangduwali', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Phende', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Philippine sign language', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14307,9 +14305,9 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ponosakan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pontic', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ponyo-gongwang naga', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Popti''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Popti', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Poqomam', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Poqomchi''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Poqomchi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Porohanon', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Port sandwich', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Port sorell tasmanian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14395,10 +14393,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Pémono', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pévé', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Pökoot', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Q''anjob''al', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Q''anjob''al', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qabiao', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Qaqet', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Qaqet', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Qashqa''i', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qatabanian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Qatar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14449,7 +14447,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Rapanui', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Rapoisi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Rapting', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Rara bakati''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Rara bakati', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Rarotongan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Rasawa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ratagnon', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -14896,10 +14894,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Shor', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shoshoni', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shua', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Shuadit', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Shuadit', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shuar', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Shubi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Shubi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Shughni', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shuhi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Shuishu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15311,7 +15309,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Tadaksahak', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tado', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tadyawan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Tae''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Tae', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tafi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tagabawa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tagakaulo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15383,7 +15381,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Talise', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Talodi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Taloki', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Talondo''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Talondo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Talossan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Talu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Talysh', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15397,10 +15395,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Tamazola mixtec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tambas', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tambora', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Tambotalo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Tambotalo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tami', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Tamil', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Tamil', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Tamki', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tamnim citak', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Tampias lobu', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15898,10 +15896,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ughele', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ugong', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Uhami', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Uighur', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Uighur', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Uisai', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Ujir', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Ujir', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ukaan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukhwejo', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ukit', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15919,7 +15917,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ulithian', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ullatan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ulukwumi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Ulumanda''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Ulumanda', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ulwa', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Uma', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Uma'' lasan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -15969,7 +15967,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Ura (papua new guinea)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Ura (vanuatu)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Uradhi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Urak lawoi''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Urak lawoi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Urali', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Urapmin', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Urarina', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -16067,7 +16065,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Vinza', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Virgin islands creole english', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Virgin islands, british', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Virgin islands, u.s.', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Virgin islands, u.s', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Vishavan', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Visible speech', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Vithkuqi', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -16399,10 +16397,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Wè northern', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Wè southern', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Wè western', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Xaasongaxango', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1818, 'Xaasongaxango', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xadani zapotec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Xakriabá', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Xakriabá', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Xamtanga', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xanaguía zapotec', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Xavánte', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -16479,7 +16477,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1818, 'Yanda dom dogon', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Yandjibara', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Yandruwandha', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1818, 'Yanesha''', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1818, 'Yanesha', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Yang zhuang', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Yangben', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1818, 'Yangkam', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -23423,8 +23421,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ジンバブエ手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ジンザ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ゾエ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '仆拉语?', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '僕拉語?', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '仆拉语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '僕拉語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '索羅亞斯德教達里文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ダリー語(ゾロアスター教)', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ゾウ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -23453,7 +23451,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ホアン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '宏语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'タア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='''Are''are' AND tgt.language_id=2777 AND tgt.text='アレアレ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Are''are' AND tgt.language_id=2777 AND tgt.text='アレアレ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='アレアレ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Aari' AND tgt.language_id=1303 AND tgt.text='阿里语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='阿里语';
@@ -26677,7 +26675,7 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='フェロー語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Fataluku' AND tgt.language_id=2777 AND tgt.text='ファタルク語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ファタルク語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Fe''fe''' AND tgt.language_id=2777 AND tgt.text='フェフェ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Fe''fe' AND tgt.language_id=2777 AND tgt.text='フェフェ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='フェフェ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Fiji' AND tgt.language_id=1303 AND tgt.text='斐济';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='斐济';
@@ -27009,11 +27007,11 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ゴドベリ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomara' AND tgt.language_id=2777 AND tgt.text='ゴマラ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ゴマラ語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá''' AND tgt.language_id=1303 AND tgt.text='戈马拉语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá' AND tgt.language_id=1303 AND tgt.text='戈马拉语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='戈马拉语';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá''' AND tgt.language_id=1303 AND tgt.text='戈馬拉文';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá' AND tgt.language_id=1303 AND tgt.text='戈馬拉文';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='戈馬拉文';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá''' AND tgt.language_id=2777 AND tgt.text='ゴーマラ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ghomálá' AND tgt.language_id=2777 AND tgt.text='ゴーマラ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ゴーマラ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Gibraltar' AND tgt.language_id=1303 AND tgt.text='直布罗陀';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='直布罗陀';
@@ -28275,11 +28273,11 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='諾曼語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jèrriais' AND tgt.language_id=2777 AND tgt.text='ノルマン語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ノルマン語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche''' AND tgt.language_id=1303 AND tgt.text='基切语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche' AND tgt.language_id=1303 AND tgt.text='基切语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='基切语';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche''' AND tgt.language_id=1303 AND tgt.text='基切文';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche' AND tgt.language_id=1303 AND tgt.text='基切文';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='基切文';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche''' AND tgt.language_id=2777 AND tgt.text='キチェ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='K''iche' AND tgt.language_id=2777 AND tgt.text='キチェ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='キチェ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Kabardian' AND tgt.language_id=1303 AND tgt.text='卡巴尔德语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='卡巴尔德语';
@@ -30703,11 +30701,11 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='梅薩比語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Messapic' AND tgt.language_id=2777 AND tgt.text='メッサピア語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='メッサピア語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta''' AND tgt.language_id=1303 AND tgt.text='梅塔语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta' AND tgt.language_id=1303 AND tgt.text='梅塔语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='梅塔语';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta''' AND tgt.language_id=1303 AND tgt.text='美塔文';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta' AND tgt.language_id=1303 AND tgt.text='美塔文';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='美塔文';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta''' AND tgt.language_id=2777 AND tgt.text='メタ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Meta' AND tgt.language_id=2777 AND tgt.text='メタ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='メタ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Mewari' AND tgt.language_id=1303 AND tgt.text='梅瓦尔语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='梅瓦尔语';
@@ -32975,11 +32973,11 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='旁狄希臘文';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Pontic' AND tgt.language_id=2777 AND tgt.text='ポントス・ギリシャ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ポントス・ギリシャ語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Popti''' AND tgt.language_id=2777 AND tgt.text='ハカルテク語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Popti' AND tgt.language_id=2777 AND tgt.text='ハカルテク語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ハカルテク語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Poqomam' AND tgt.language_id=2777 AND tgt.text='ポコマム語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ポコマム語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Poqomchi''' AND tgt.language_id=2777 AND tgt.text='ポコムチ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Poqomchi' AND tgt.language_id=2777 AND tgt.text='ポコムチ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ポコムチ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Port vato' AND tgt.language_id=2777 AND tgt.text='ポート・ヴァト語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ポート・ヴァト語';
@@ -34797,11 +34795,11 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='希爾哈文';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tachelhit' AND tgt.language_id=2777 AND tgt.text='タシルハイト語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='タシルハイト語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae''' AND tgt.language_id=1303 AND tgt.text='塔伊语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae' AND tgt.language_id=1303 AND tgt.text='塔伊语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='塔伊语';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae''' AND tgt.language_id=1303 AND tgt.text='塔伊語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae' AND tgt.language_id=1303 AND tgt.text='塔伊語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='塔伊語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae''' AND tgt.language_id=2777 AND tgt.text='タエ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tae' AND tgt.language_id=2777 AND tgt.text='タエ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='タエ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tagalog' AND tgt.language_id=1303 AND tgt.text='他加禄语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='他加禄语';
@@ -36031,9 +36029,9 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='英属维尔京群岛';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Virgin islands, british' AND tgt.language_id=1303 AND tgt.text='英屬維京群島';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='英屬維京群島';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Virgin islands, u.s.' AND tgt.language_id=1303 AND tgt.text='美属维尔京群岛';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Virgin islands, u.s' AND tgt.language_id=1303 AND tgt.text='美属维尔京群岛';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='美属维尔京群岛';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Virgin islands, u.s.' AND tgt.language_id=1303 AND tgt.text='美屬維京群島';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Virgin islands, u.s' AND tgt.language_id=1303 AND tgt.text='美屬維京群島';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='美屬維京群島';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Visible speech' AND tgt.language_id=1303 AND tgt.text='可见语言';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='可见语言';
@@ -36543,7 +36541,7 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='Yan-nhaŋu 手語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Yana' AND tgt.language_id=2777 AND tgt.text='ヤナ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ヤナ語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Yanesha''' AND tgt.language_id=2777 AND tgt.text='アムエシャ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Yanesha' AND tgt.language_id=2777 AND tgt.text='アムエシャ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='アムエシャ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Yang zhuang' AND tgt.language_id=1303 AND tgt.text='央壮语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='央壮语';
@@ -36857,10 +36855,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ジンザ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zo''é' AND tgt.language_id=2777 AND tgt.text='ゾエ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ゾエ語';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zokhuo' AND tgt.language_id=1303 AND tgt.text='仆拉语?';
-INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='仆拉语?';
-INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zokhuo' AND tgt.language_id=1303 AND tgt.text='僕拉語?';
-INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='僕拉語?';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zokhuo' AND tgt.language_id=1303 AND tgt.text='仆拉语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='仆拉语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zokhuo' AND tgt.language_id=1303 AND tgt.text='僕拉語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='僕拉語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zoroastrian dari' AND tgt.language_id=1303 AND tgt.text='索羅亞斯德教達里文';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='索羅亞斯德教達里文';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Zoroastrian dari' AND tgt.language_id=2777 AND tgt.text='ダリー語(ゾロアスター教)';
@@ -37150,7 +37148,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Alutor' LIMIT 1) WHERE code='alr';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tosk albanian' LIMIT 1) WHERE code='als';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Southern altai' LIMIT 1) WHERE code='alt';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='''Are''are' LIMIT 1) WHERE code='alu';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Are''are' LIMIT 1) WHERE code='alu';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Alaba-k’abeena' LIMIT 1) WHERE code='alw';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Amol' LIMIT 1) WHERE code='alx';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Alyawarr' LIMIT 1) WHERE code='aly';
@@ -37158,7 +37156,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Amanayé' LIMIT 1) WHERE code='ama';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ambo' LIMIT 1) WHERE code='amb';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Amahuaca' LIMIT 1) WHERE code='amc';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Yanesha''' LIMIT 1) WHERE code='ame';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Yanesha' LIMIT 1) WHERE code='ame';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Hamer-banna' LIMIT 1) WHERE code='amf';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Amurdak' LIMIT 1) WHERE code='amg';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Amharic' LIMIT 1) WHERE code='amh';
@@ -37451,7 +37449,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Barama' LIMIT 1) WHERE code='bbg';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bugan' LIMIT 1) WHERE code='bbh';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Barombi' LIMIT 1) WHERE code='bbi';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ghomálá''' LIMIT 1) WHERE code='bbj';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ghomálá' LIMIT 1) WHERE code='bbj';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Babanki' LIMIT 1) WHERE code='bbk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bats' LIMIT 1) WHERE code='bbl';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Babango' LIMIT 1) WHERE code='bbm';
@@ -37526,7 +37524,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Benabena' LIMIT 1) WHERE code='bef';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Belait' LIMIT 1) WHERE code='beg';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Biali' LIMIT 1) WHERE code='beh';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bekati''' LIMIT 1) WHERE code='bei';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bekati' LIMIT 1) WHERE code='bei';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Beja' LIMIT 1) WHERE code='bej';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bebeli' LIMIT 1) WHERE code='bek';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Belarusian' LIMIT 1) WHERE code='bel';
@@ -37674,7 +37672,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Berik' LIMIT 1) WHERE code='bkl';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kom (cameroon)' LIMIT 1) WHERE code='bkm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bukitan' LIMIT 1) WHERE code='bkn';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kwa''' LIMIT 1) WHERE code='bko';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kwa' LIMIT 1) WHERE code='bko';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Boko (democratic republic of congo)' LIMIT 1) WHERE code='bkp';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bakairí' LIMIT 1) WHERE code='bkq';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bakumpai' LIMIT 1) WHERE code='bkr';
@@ -38005,7 +38003,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Batak' LIMIT 1) WHERE code='bya';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bikya' LIMIT 1) WHERE code='byb';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ubaghara' LIMIT 1) WHERE code='byc';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Benyadu''' LIMIT 1) WHERE code='byd';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Benyadu' LIMIT 1) WHERE code='byd';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Pouye' LIMIT 1) WHERE code='bye';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Bete' LIMIT 1) WHERE code='byf';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Baygo' LIMIT 1) WHERE code='byg';
@@ -38840,7 +38838,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Flinders island' LIMIT 1) WHERE code='fln';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Fuliiru' LIMIT 1) WHERE code='flr';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Flaaitaal' LIMIT 1) WHERE code='fly';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Fe''fe''' LIMIT 1) WHERE code='fmp';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Fe''fe' LIMIT 1) WHERE code='fmp';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Far western muria' LIMIT 1) WHERE code='fmu';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Fanbak' LIMIT 1) WHERE code='fnb';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Fanagalo' LIMIT 1) WHERE code='fng';
@@ -38903,7 +38901,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Gan chinese' LIMIT 1) WHERE code='gan';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Gants' LIMIT 1) WHERE code='gao';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Gal' LIMIT 1) WHERE code='gap';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Gata''' LIMIT 1) WHERE code='gaq';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Gata' LIMIT 1) WHERE code='gaq';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Galeya' LIMIT 1) WHERE code='gar';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Adiwasi garasia' LIMIT 1) WHERE code='gas';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kenati' LIMIT 1) WHERE code='gat';
@@ -39590,7 +39588,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Izii' LIMIT 1) WHERE code='izz';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Jamamadí' LIMIT 1) WHERE code='jaa';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Hyam' LIMIT 1) WHERE code='jab';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Popti''' LIMIT 1) WHERE code='jac';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Popti' LIMIT 1) WHERE code='jac';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Jahanka' LIMIT 1) WHERE code='jad';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Yabem' LIMIT 1) WHERE code='jae';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Jara' LIMIT 1) WHERE code='jaf';
@@ -40217,14 +40215,14 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kuanyama' LIMIT 1) WHERE code='kua';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kutep' LIMIT 1) WHERE code='kub';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kwinsu' LIMIT 1) WHERE code='kuc';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='''Auhelawa' LIMIT 1) WHERE code='kud';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Auhelawa' LIMIT 1) WHERE code='kud';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kuman (papua new guinea)' LIMIT 1) WHERE code='kue';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Western katu' LIMIT 1) WHERE code='kuf';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kupa' LIMIT 1) WHERE code='kug';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kushi' LIMIT 1) WHERE code='kuh';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kuikúro-kalapálo' LIMIT 1) WHERE code='kui';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kuria' LIMIT 1) WHERE code='kuj';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kepo''' LIMIT 1) WHERE code='kuk';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kepo' LIMIT 1) WHERE code='kuk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kulere' LIMIT 1) WHERE code='kul';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kumyk' LIMIT 1) WHERE code='kum';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kunama' LIMIT 1) WHERE code='kun';
@@ -40577,12 +40575,12 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lundayeh' LIMIT 1) WHERE code='lnd';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Langobardic' LIMIT 1) WHERE code='lng';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lanoh' LIMIT 1) WHERE code='lnh';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Daantanai''' LIMIT 1) WHERE code='lni';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Daantanai' LIMIT 1) WHERE code='lni';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Leningitij' LIMIT 1) WHERE code='lnj';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='South central banda' LIMIT 1) WHERE code='lnl';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Langam' LIMIT 1) WHERE code='lnm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lorediakarkar' LIMIT 1) WHERE code='lnn';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lamnso''' LIMIT 1) WHERE code='lns';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lamnso' LIMIT 1) WHERE code='lns';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Longuda' LIMIT 1) WHERE code='lnu';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lanima' LIMIT 1) WHERE code='lnw';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lonzo' LIMIT 1) WHERE code='lnz';
@@ -40617,7 +40615,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lipo' LIMIT 1) WHERE code='lpo';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lopit' LIMIT 1) WHERE code='lpx';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Logir' LIMIT 1) WHERE code='lqr';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Rara bakati''' LIMIT 1) WHERE code='lra';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Rara bakati' LIMIT 1) WHERE code='lra';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Northern luri' LIMIT 1) WHERE code='lrc';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Laurentian' LIMIT 1) WHERE code='lre';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Laragia' LIMIT 1) WHERE code='lrg';
@@ -40868,7 +40866,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Maleu-kilenge' LIMIT 1) WHERE code='mgl';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mambae' LIMIT 1) WHERE code='mgm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mbangi' LIMIT 1) WHERE code='mgn';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Meta''' LIMIT 1) WHERE code='mgo';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Meta' LIMIT 1) WHERE code='mgo';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Eastern magar' LIMIT 1) WHERE code='mgp';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Malila' LIMIT 1) WHERE code='mgq';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mambwe-lungu' LIMIT 1) WHERE code='mgr';
@@ -41180,7 +41178,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Munggui' LIMIT 1) WHERE code='mth';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Maiwa (papua new guinea)' LIMIT 1) WHERE code='mti';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Moskona' LIMIT 1) WHERE code='mtj';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mbe''' LIMIT 1) WHERE code='mtk';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mbe' LIMIT 1) WHERE code='mtk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Montol' LIMIT 1) WHERE code='mtl';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Mator' LIMIT 1) WHERE code='mtm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Matagalpa' LIMIT 1) WHERE code='mtn';
@@ -41635,7 +41633,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nugunu (australia)' LIMIT 1) WHERE code='nnv';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Southern nuni' LIMIT 1) WHERE code='nnw';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nyangga' LIMIT 1) WHERE code='nny';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nda''nda''' LIMIT 1) WHERE code='nnz';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nda''nda' LIMIT 1) WHERE code='nnz';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Woun meu' LIMIT 1) WHERE code='noa';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Norwegian bokmål' LIMIT 1) WHERE code='nob';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nuk' LIMIT 1) WHERE code='noc';
@@ -42104,7 +42102,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phimbi' LIMIT 1) WHERE code='phm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phoenician' LIMIT 1) WHERE code='phn';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phunoi' LIMIT 1) WHERE code='pho';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phana''' LIMIT 1) WHERE code='phq';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phana' LIMIT 1) WHERE code='phq';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Pahari-potwari' LIMIT 1) WHERE code='phr';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phu thai' LIMIT 1) WHERE code='pht';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Phuan' LIMIT 1) WHERE code='phu';
@@ -42216,7 +42214,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='San juan atzingo popoloca' LIMIT 1) WHERE code='poe';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Poke' LIMIT 1) WHERE code='pof';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Potiguára' LIMIT 1) WHERE code='pog';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Poqomchi''' LIMIT 1) WHERE code='poh';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Poqomchi' LIMIT 1) WHERE code='poh';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Highland popoluca' LIMIT 1) WHERE code='poi';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Pokangá' LIMIT 1) WHERE code='pok';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Polish' LIMIT 1) WHERE code='pol';
@@ -42339,7 +42337,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Jejara naga' LIMIT 1) WHERE code='pzn';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Quapaw' LIMIT 1) WHERE code='qua';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Huallaga huánuco quechua' LIMIT 1) WHERE code='qub';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='K''iche''' LIMIT 1) WHERE code='quc';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='K''iche' LIMIT 1) WHERE code='quc';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Calderón highland quichua' LIMIT 1) WHERE code='qud';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Lambayeque quechua' LIMIT 1) WHERE code='quf';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Chimborazo highland quichua' LIMIT 1) WHERE code='qug';
@@ -42497,7 +42495,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Rongpo' LIMIT 1) WHERE code='rnp';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nari nari' LIMIT 1) WHERE code='rnr';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Rungwa' LIMIT 1) WHERE code='rnw';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tae''' LIMIT 1) WHERE code='rob';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tae' LIMIT 1) WHERE code='rob';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Cacgia roglai' LIMIT 1) WHERE code='roc';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Rogo' LIMIT 1) WHERE code='rod';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ronji' LIMIT 1) WHERE code='roe';
@@ -43300,7 +43298,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Taloki' LIMIT 1) WHERE code='tlk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tetela' LIMIT 1) WHERE code='tll';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tolomako' LIMIT 1) WHERE code='tlm';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Talondo''' LIMIT 1) WHERE code='tln';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Talondo' LIMIT 1) WHERE code='tln';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Talodi' LIMIT 1) WHERE code='tlo';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Filomena mata-coahuitlán totonac' LIMIT 1) WHERE code='tlp';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Tai loi' LIMIT 1) WHERE code='tlq';
@@ -43641,7 +43639,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ulithian' LIMIT 1) WHERE code='uli';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Meriam mir' LIMIT 1) WHERE code='ulk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ullatan' LIMIT 1) WHERE code='ull';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ulumanda''' LIMIT 1) WHERE code='ulm';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ulumanda' LIMIT 1) WHERE code='ulm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Unserdeutsch' LIMIT 1) WHERE code='uln';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Uma'' lung' LIMIT 1) WHERE code='ulu';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Ulwa' LIMIT 1) WHERE code='ulw';
@@ -43682,7 +43680,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urigina' LIMIT 1) WHERE code='urg';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urhobo' LIMIT 1) WHERE code='urh';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urim' LIMIT 1) WHERE code='uri';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urak lawoi''' LIMIT 1) WHERE code='urk';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urak lawoi' LIMIT 1) WHERE code='urk';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urali' LIMIT 1) WHERE code='url';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Urapmin' LIMIT 1) WHERE code='urm';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Uruangnirin' LIMIT 1) WHERE code='urn';
@@ -44220,7 +44218,7 @@ UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nukunul' LIMIT 1) WHERE code='xnu';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Nyiyaparli' LIMIT 1) WHERE code='xny';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kenzi' LIMIT 1) WHERE code='xnz';
-UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='O''chi''chi''' LIMIT 1) WHERE code='xoc';
+UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='O''chi''chi' LIMIT 1) WHERE code='xoc';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kokoda' LIMIT 1) WHERE code='xod';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Soga' LIMIT 1) WHERE code='xog';
 UPDATE languages SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Kominimung' LIMIT 1) WHERE code='xoi';
@@ -45263,7 +45261,7 @@ UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.la
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Saint vincent and the grenadines' LIMIT 1) WHERE code='VC';
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Venezuela, bolivarian republic of' LIMIT 1) WHERE code='VE';
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Virgin islands, british' LIMIT 1) WHERE code='VG';
-UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Virgin islands, u.s.' LIMIT 1) WHERE code='VI';
+UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Virgin islands, u.s' LIMIT 1) WHERE code='VI';
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Viet nam' LIMIT 1) WHERE code='VN';
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Vanuatu' LIMIT 1) WHERE code='VU';
 UPDATE regions SET name_expression_id=(SELECT e.id FROM expressions e WHERE e.language_id=1818 AND e.text='Wallis and futuna' LIMIT 1) WHERE code='WF';

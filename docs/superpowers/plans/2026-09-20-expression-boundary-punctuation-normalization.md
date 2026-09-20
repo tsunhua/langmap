@@ -88,7 +88,7 @@ class ExpressionTextIdentityError(ValueError):
     code = "UNBALANCED_DELIMITER"
 ```
 
-Implement explicit delimiter tables and a loop that NFC-normalizes and trims; treats apostrophes between alphanumeric characters as lexical; removes complete outer pairs; removes only unmatched delimiter characters at the first or last position when the delimiter-family count is odd; removes allowlisted boundary marks while protecting `…`, `……`, and ASCII runs of three or more periods; validates remaining non-lexical delimiters; returns `''` for punctuation-only output; then applies the existing sentence-case logic. Do not use a broad Unicode `P*` regex.
+Implement explicit delimiter tables and a loop that NFC-normalizes and trims; treats internal apostrophes with at least one adjacent alphanumeric character as lexical; removes complete outer pairs; removes only unmatched delimiter characters at the first or last position when the delimiter-family count is odd; removes allowlisted boundary marks while protecting `…`, `……`, and ASCII runs of three or more periods; validates remaining non-lexical delimiters; returns `''` for punctuation-only output; then applies the existing sentence-case logic. Do not use a broad Unicode `P*` regex.
 
 - [ ] **Step 4: Run the Python tests to verify pass**
 
