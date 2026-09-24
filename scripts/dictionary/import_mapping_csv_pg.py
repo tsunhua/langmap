@@ -28,6 +28,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
 
 
 LOCALE_HEADER = re.compile(r"^LOCALE_(?P<code>[A-Za-z0-9][A-Za-z0-9_-]*)$")
+POS_HEADER = re.compile(r"^POS_(?P<code>[A-Za-z0-9][A-Za-z0-9_-]*)$")
 READING_HEADER = re.compile(
     r"^READING_(?P<locale>[A-Za-z0-9][A-Za-z0-9_-]*)_(?P<scheme>[A-Za-z0-9][A-Za-z0-9_-]*)$"
 )
@@ -79,11 +80,19 @@ class Reading:
 
 
 @dataclass(frozen=True)
+class PartOfSpeech:
+    entry_id: str
+    locale: Locale
+    code: str
+
+
+@dataclass(frozen=True)
 class Row:
     entry_id: str
     notes: tuple[str, ...]
     cells: tuple[Cell, ...]
     readings: tuple[Reading, ...] = ()
+    pos: tuple[PartOfSpeech, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -94,6 +103,7 @@ class CsvLayout:
     note_index: int | None
     locale_start: int
     header_size: int
+    pos_columns: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -121,6 +131,15 @@ def _reading_column(header: str) -> tuple[str, str] | None:
         return compact_match.group("locale"), compact_match.group("scheme").casefold()
     match = READING_HEADER.fullmatch(header)
     return (match.group("locale"), match.group("scheme")) if match else None
+
+
+def _pos_header(code: str) -> str:
+    return f"POS_{code}"
+
+
+def _pos_column(header: str) -> str | None:
+    match = POS_HEADER.fullmatch(header)
+    return match.group("code") if match else None
 
 
 def _sha256(path: Path) -> str:
@@ -191,22 +210,31 @@ def _read_csv_layout(path: Path, metadata: dict[str, Any]) -> CsvLayout:
     note_index = 1 if len(header) > 1 and header[1].strip() == "NOTE" else None
     locale_start = 2 if note_index is not None else 1
     locale_matches: list[re.Match[str]] = []
+    pos_columns: list[str] = []
     reading_columns: list[tuple[str, str]] = []
     reading_started = False
+    pos_started = False
     for value in header[locale_start:]:
         normalized = value.strip()
         locale_match = LOCALE_HEADER.fullmatch(normalized)
+        pos_column = _pos_column(normalized)
         reading_column = _reading_column(normalized)
         if locale_match:
-            if reading_started:
-                raise CsvContractError("locale columns must precede reading columns")
+            if reading_started or pos_started:
+                raise CsvContractError("locale columns must precede POS and reading columns")
             locale_matches.append(locale_match)
+        elif pos_column:
+            if reading_started:
+                raise CsvContractError("POS columns must precede reading columns")
+            pos_started = True
+            pos_columns.append(pos_column)
         elif reading_column:
             reading_started = True
             reading_columns.append(reading_column)
         else:
             raise CsvContractError(
-                "CSV columns must use LOCALE_<code>, READING_<locale>_<scheme>, or compact READING_<locale>"
+                "CSV columns must use LOCALE_<code>, POS_<locale>, "
+                "READING_<locale>_<scheme>, or compact READING_<locale>"
             )
     if not locale_matches:
         raise CsvContractError("CSV needs at least two LOCALE_<code> columns")
@@ -216,6 +244,12 @@ def _read_csv_layout(path: Path, metadata: dict[str, Any]) -> CsvLayout:
     if codes != sorted(codes, key=lambda value: value.encode("utf-8")):
         raise CsvContractError("CSV locale columns must be bytewise sorted")
     locales = tuple(_locale(code, metadata) for code in codes)
+    if len(pos_columns) != len(set(pos_columns)):
+        raise CsvContractError("CSV POS columns must be unique")
+    if any(code not in codes for code in pos_columns):
+        raise CsvContractError("CSV POS columns must reference a LOCALE_<code> column")
+    if pos_columns != sorted(pos_columns, key=lambda value: _pos_header(value).encode("utf-8")):
+        raise CsvContractError("CSV POS columns must be bytewise sorted")
     if len(reading_columns) != len(set(reading_columns)):
         raise CsvContractError("CSV reading columns must be unique")
     if reading_columns != sorted(
@@ -236,6 +270,7 @@ def _read_csv_layout(path: Path, metadata: dict[str, Any]) -> CsvLayout:
         note_index=note_index,
         locale_start=locale_start,
         header_size=len(header),
+        pos_columns=tuple(pos_columns),
     )
 
 
@@ -283,15 +318,29 @@ def iter_rows(validated: ValidatedManifest) -> Iterator[Row]:
             if len(cells) < 2:
                 raise CsvContractError(f"row {line_number}: at least two non-empty expressions are required")
             unique = {(cell.locale.code, cell.text): cell for cell in cells}
+            pos_start = layout.locale_start + len(layout.locales)
+            pos_values: list[PartOfSpeech] = []
+            for offset, locale_code in enumerate(layout.pos_columns, pos_start):
+                locale = locale_by_code[locale_code]
+                for raw in values[offset].split("|"):
+                    code = _canonical(raw)
+                    if code:
+                        pos_values.append(PartOfSpeech(entry_id, locale, code))
             readings: list[Reading] = []
-            reading_start = layout.locale_start + len(layout.locales)
+            reading_start = pos_start + len(layout.pos_columns)
             for offset, (reading_locale, scheme) in enumerate(layout.reading_columns, reading_start):
                 locale = locale_by_code[reading_locale]
                 for raw in values[offset].split("|"):
                     value = _canonical(raw)
                     if value:
                         readings.append(Reading(entry_id, locale, scheme, value))
-            yield Row(entry_id, notes, tuple(unique.values()), tuple(dict.fromkeys(readings)))
+            yield Row(
+                entry_id,
+                notes,
+                tuple(unique.values()),
+                tuple(dict.fromkeys(readings)),
+                tuple(dict.fromkeys(pos_values)),
+            )
 
 
 def _validate_manifest_contract(
@@ -299,6 +348,8 @@ def _validate_manifest_contract(
     locales: tuple[Locale, ...],
     row_count: int,
     reading_count: int,
+    pos_count: int,
+    pos_columns: tuple[str, ...] = (),
     reading_columns: tuple[tuple[str, str], ...] = (),
 ) -> None:
     expected_count = manifest.get("entry_count")
@@ -327,6 +378,19 @@ def _validate_manifest_contract(
     target_locale = manifest.get("target_locale")
     if target_locale is not None and target_locale not in {locale.code for locale in locales}:
         raise CsvContractError("manifest.target_locale is not a CSV locale")
+    expected_pos = manifest.get("pos_count")
+    if expected_pos is not None:
+        if isinstance(expected_pos, bool) or not isinstance(expected_pos, int) or expected_pos != pos_count:
+            raise CsvContractError(
+                f"manifest.pos_count={expected_pos!r} does not match CSV POS claims={pos_count}"
+            )
+    declared_pos_columns = manifest.get("pos_columns")
+    if declared_pos_columns is not None:
+        if not isinstance(declared_pos_columns, list):
+            raise CsvContractError("manifest.pos_columns must be an array")
+        declared = tuple(sorted({str(item) for item in declared_pos_columns}, key=lambda value: _pos_header(value).encode("utf-8")))
+        if declared != tuple(pos_columns):
+            raise CsvContractError("manifest.pos_columns does not match CSV POS columns")
     expected_readings = manifest.get("reading_count")
     if expected_readings is not None:
         if isinstance(expected_readings, bool) or not isinstance(expected_readings, int) or expected_readings != reading_count:
@@ -354,6 +418,7 @@ def _validation_summary(
     validated: ValidatedManifest,
     row_count: int,
     reading_count: int,
+    pos_count: int,
     expression_claims: int,
     edge_claims: int,
 ) -> dict[str, Any]:
@@ -372,6 +437,8 @@ def _validation_summary(
         "edges": None,
         "distinct_counts": "deferred_to_postgresql",
         "readings": reading_count,
+        "pos_claims": pos_count,
+        "pos_columns": list(validated.layout.pos_columns),
         "expression_claims": expression_claims,
         "edge_claims": edge_claims,
     }
@@ -396,6 +463,7 @@ def _prepare_manifest(manifest_path: Path) -> ValidatedManifest:
     )
     row_count = 0
     reading_count = 0
+    pos_count = 0
     expression_claims = 0
     edge_claims = 0
     for row in iter_rows(prepared):
@@ -404,11 +472,14 @@ def _prepare_manifest(manifest_path: Path) -> ValidatedManifest:
         expression_claims += len(expression_keys)
         edge_claims += len(expression_keys) * (len(expression_keys) - 1) // 2
         reading_count += len(row.readings)
+        pos_count += len(row.pos)
     _validate_manifest_contract(
         manifest,
         layout.locales,
         row_count,
         reading_count,
+        pos_count,
+        layout.pos_columns,
         layout.reading_columns,
     )
     expected_checksum = str(manifest.get("csv_sha256") or manifest.get("data_sha256"))
@@ -418,6 +489,7 @@ def _prepare_manifest(manifest_path: Path) -> ValidatedManifest:
         prepared,
         row_count,
         reading_count,
+        pos_count,
         expression_claims,
         edge_claims,
     )
@@ -528,6 +600,12 @@ def _create_temp_tables(connection: Any) -> None:
                     note TEXT NOT NULL,
                     PRIMARY KEY (entry_id, note)
                 ) ON COMMIT DELETE ROWS;
+                CREATE TEMP TABLE IF NOT EXISTS _dictionary_pos (
+                    entry_id TEXT NOT NULL,
+                    locale_code TEXT NOT NULL,
+                    code TEXT NOT NULL,
+                    PRIMARY KEY (entry_id, locale_code, code)
+                ) ON COMMIT DELETE ROWS;
                 CREATE TEMP TABLE IF NOT EXISTS _dictionary_readings (
                     entry_id TEXT NOT NULL,
                     locale_code TEXT NOT NULL,
@@ -582,6 +660,7 @@ def _copy_source_rows(cur: Any, validated: ValidatedManifest) -> None:
         )
     cur.execute(
         "TRUNCATE _dictionary_cells, _dictionary_entry_ids, _dictionary_notes, _dictionary_readings, "
+        "_dictionary_pos, "
         "_dictionary_expression_ids, _dictionary_pairs, _dictionary_edge_pairs, "
         "_dictionary_current_expressions, _dictionary_current_edges"
     )
@@ -603,6 +682,25 @@ def _copy_source_rows(cur: Any, validated: ValidatedManifest) -> None:
         for row in iter_rows(validated):
             for note in row.notes:
                 copy.write_row((row.entry_id, note))
+    with cur.copy("COPY _dictionary_pos(entry_id, locale_code, code) FROM STDIN") as copy:
+        for row in iter_rows(validated):
+            for pos in row.pos:
+                copy.write_row((row.entry_id, pos.locale.code, pos.code))
+    cur.execute(
+        """
+        SELECT DISTINCT staged.code
+        FROM _dictionary_pos staged
+        LEFT JOIN parts_of_speech registry ON registry.code=staged.code
+        WHERE registry.code IS NULL
+        ORDER BY staged.code
+        """
+    )
+    unknown_pos = [str(row[0]) for row in cur.fetchall()]
+    if unknown_pos:
+        raise CsvContractError(
+            "CSV contains POS code(s) missing from parts_of_speech registry: "
+            + ", ".join(unknown_pos)
+        )
     with cur.copy(
         "COPY _dictionary_readings(entry_id, locale_code, language_code, scheme, value) FROM STDIN"
     ) as copy:
@@ -754,12 +852,38 @@ def _merge_staged_source(
     )
     cur.execute(
         """
-        INSERT INTO expression_sources(expression_id, source_id, source_marker)
-        SELECT DISTINCT expression_id, %s, entry_id
-        FROM _dictionary_expression_ids
+        INSERT INTO expression_sources(expression_id, source_id, source_marker, pos_mask)
+        SELECT ids.expression_id,
+               %s,
+               ids.entry_id,
+               COALESCE(bit_or(1::bigint << registry.bit_index::int), 0::bigint)
+        FROM _dictionary_expression_ids ids
+        LEFT JOIN _dictionary_pos staged
+          ON staged.entry_id=ids.entry_id
+         AND staged.locale_code=ids.locale_code
+        LEFT JOIN parts_of_speech registry ON registry.code=staged.code
+        GROUP BY ids.expression_id, ids.entry_id
         ON CONFLICT DO NOTHING
         """,
         (source_id,),
+    )
+    cur.execute(
+        """
+        UPDATE expressions expressions
+        SET pos_mask = COALESCE(
+            (
+                SELECT bit_or(sources.pos_mask)
+                FROM expression_sources sources
+                WHERE sources.expression_id=expressions.id
+            ),
+            0::bigint
+        )
+        WHERE expressions.id IN (
+            SELECT expression_id FROM _dictionary_current_expressions
+            UNION
+            SELECT expression_id FROM _dictionary_expression_ids
+        )
+        """
     )
     cur.execute(
         """

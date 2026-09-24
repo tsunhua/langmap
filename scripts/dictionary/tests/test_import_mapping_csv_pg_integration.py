@@ -26,6 +26,7 @@ def _write_manifest(
     values: tuple[str, str] | None = None,
     include_row: bool = True,
     duplicate_entry_id: bool = False,
+    pos: tuple[str, ...] | None = None,
 ) -> tuple[Path, str]:
     source_key = source_key or f"test:csv-import:{uuid4().hex}"
     tmp_path.mkdir(parents=True, exist_ok=True)
@@ -33,24 +34,33 @@ def _write_manifest(
     suffix = source_key.rsplit(":", 1)[-1][:12]
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, lineterminator="\n")
-        writer.writerow([
+        header = [
             "ENTRY_ID",
             "NOTE",
             "LOCALE_eng-Latn-US",
             "LOCALE_jpn-Jpan-JP",
             "READING_jpn-Latn_hepburn-JP",
-        ])
+        ]
+        if pos is not None:
+            header.insert(4, "POS_eng-Latn-US")
+        writer.writerow(header)
         if include_row:
             source_value, target_value = values or (f"word-{suffix}", f"語-{suffix}")
-            writer.writerow([f"entry-{suffix}", "integration", source_value, target_value, f"go-{suffix}"])
+            row = [f"entry-{suffix}", "integration", source_value, target_value, f"go-{suffix}"]
+            if pos is not None:
+                row.insert(4, "|".join(pos))
+            writer.writerow(row)
             if duplicate_entry_id:
-                writer.writerow([
+                duplicate = [
                     f"entry-{suffix}",
                     "integration-duplicate",
                     f"{source_value}-duplicate",
                     f"{target_value}-duplicate",
                     f"go-{suffix}-duplicate",
-                ])
+                ]
+                if pos is not None:
+                    duplicate.insert(4, "|".join(pos))
+                writer.writerow(duplicate)
     manifest = tmp_path / "manifest.json"
     manifest.write_text(
         json.dumps(
@@ -74,6 +84,11 @@ def _write_manifest(
         ),
         encoding="utf-8",
     )
+    if pos is not None:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+        payload["pos_columns"] = ["eng-Latn-US"]
+        payload["pos_count"] = len(pos) * (2 if duplicate_entry_id else (1 if include_row else 0))
+        manifest.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     return manifest, source_key
 
 
@@ -157,6 +172,49 @@ def test_apply_rejects_duplicate_entry_ids_in_postgres_staging(tmp_path: Path) -
     assert output["committed"] == []
     assert output["failed"][0]["source_key"] == source_key
     assert "duplicate key" in output["failed"][0]["error"]
+
+
+def test_apply_sets_and_replaces_source_pos_mask(tmp_path: Path) -> None:
+    database_url = os.environ.get("LANGMAP_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("set LANGMAP_TEST_DATABASE_URL to an isolated PostgreSQL database")
+
+    source_key = f"test:csv-pos:{uuid4().hex}"
+    manifest, source_name = _write_manifest(
+        tmp_path / "pos",
+        source_key=source_key,
+        pos=("noun", "verb"),
+    )
+    first = _run(manifest, database_url, "--apply")
+    assert first.returncode == 0, first.stderr + first.stdout
+
+    _write_manifest(
+        tmp_path / "pos",
+        source_key=source_key,
+        source_name=source_name,
+        pos=("adjective",),
+    )
+    second = _run(manifest, database_url, "--apply")
+    assert second.returncode == 0, second.stderr + second.stdout
+
+    import psycopg
+
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT expressions.pos_mask, expression_sources.pos_mask
+                FROM expressions
+                JOIN expression_sources ON expression_sources.expression_id=expressions.id
+                JOIN sources ON sources.id=expression_sources.source_id
+                WHERE sources.type=%s AND sources.name=%s AND expressions.text=%s
+                """,
+                ("test", source_name, canonicalize_expression_text("word-" + source_key.rsplit(":", 1)[-1][:12])),
+            )
+            pos_mask, source_pos_mask = cursor.fetchone()
+
+    assert pos_mask == 16
+    assert source_pos_mask == 16
 
 
 def test_batch_keeps_earlier_source_when_later_source_fails(tmp_path: Path) -> None:

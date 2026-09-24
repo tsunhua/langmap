@@ -19,6 +19,7 @@ describe('canonical integer schema contract', () => {
     expect(schema).not.toMatch(/CREATE TABLE expression_edge_annotations/);
     expect(schema).toMatch(/CREATE TABLE edge_votes[\s\S]*?PRIMARY KEY \(user_id, edge_id\)[\s\S]*?\);/s);
     expect(schema).toMatch(/CREATE TABLE handbook_votes[\s\S]*?PRIMARY KEY \(user_id, handbook_id\)[\s\S]*?\);/s);
+    expect(schema).toMatch(/CREATE TABLE expression_sources[\s\S]*?pos_mask BIGINT NOT NULL DEFAULT 0[\s\S]*?PRIMARY KEY \(expression_id, source_id, source_marker\)/s);
   });
 
   it('defines handbook, morphology, split and UI integer foreign keys', () => {

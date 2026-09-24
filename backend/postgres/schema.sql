@@ -137,6 +137,7 @@ CREATE TABLE expression_sources (
   expression_id BIGINT NOT NULL,
   source_id BIGINT NOT NULL,
   source_marker TEXT NOT NULL DEFAULT '',
+  pos_mask BIGINT NOT NULL DEFAULT 0 CHECK (pos_mask >= 0),
   PRIMARY KEY (expression_id, source_id, source_marker),
   FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE CASCADE,
   FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE SET NULL

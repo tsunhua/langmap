@@ -12,8 +12,10 @@ csv/<source-key>/manifest.json
 ```
 
 表頭固定為 `ENTRY_ID,NOTE,LOCALE_<locale-code>...`，locale 欄位按 UTF-8 bytewise 排序；其後可接
-`READING_<locale>_<scheme>` 欄位，所有欄位均 deterministic。每格多個詞面或 reading 以 `|`
-分隔；`ENTRY_ID` 每列應唯一，manifest 鎖定 CSV SHA-256、entry／reading count 與 locale 清單。
+`POS_<locale-code>` 及 `READING_<locale>_<scheme>` 欄位，所有欄位均 deterministic。POS 欄位
+只標記同 locale 的 expression，詞性 code 必須存在於 PostgreSQL `parts_of_speech` registry；每格
+多個詞面、POS 或 reading 以 `|` 分隔。`ENTRY_ID` 每列應唯一，manifest 鎖定 CSV SHA-256、
+entry／POS／reading count 與 locale 清單。
 source-specific 的 parsing／reading 規則留在 dictionary repo，不在本 importer 寫例外。
 
 ## 驗證與套用
@@ -48,11 +50,11 @@ python3 scripts/dictionary/import_mapping_csv_pg.py \
 每個 source 的匯入流程：
 
 1. 依每個 `LOCALE_<locale-code>` 欄位建立或解析 language、script、region、language_locale。
-2. 以 PostgreSQL `COPY FROM STDIN` 將 normalized cells、notes 與 readings 串流到 connection-scoped temporary staging tables。
+2. 以 PostgreSQL `COPY FROM STDIN` 將 normalized cells、notes、POS 與 readings 串流到 connection-scoped temporary staging tables。
 3. 以 `(language, text)` 合併 expression，保留 `source_marker=ENTRY_ID`。
 4. 對同一列所有不同詞面建立 pairwise mapping；同語言不同詞面也會互連，不建立 self-edge。
 5. 將 `READING_*` 寫入 `expression_readings` metadata，不把 reading 當 mapping endpoint；若 reading profile 沒有對應的 `LOCALE_*` 欄位，按同列同語言 expression 掛載，並保留 reading profile 的 `locale_id`。
-6. 只刪除／重建本 source 的 claims、annotations 與 readings，保留其他 source 的 expressions、edges 與 markers。
+6. 將每個 source marker 的 POS bitmask 存在 `expression_sources.pos_mask`，再由所有 source claims 重算 `expressions.pos_mask`；只刪除／重建本 source 的 claims、annotations、POS 與 readings，保留其他 source 的 expressions、edges 與 markers。
 7. 用 set-based SQL 驗證 source counts 後提交；所有 source 完成後才清理仍無 claim 的 orphan。
 
 checksum、表頭、ENTRY_ID、locale metadata 或 PostgreSQL constraint 失敗會 rollback 當前 source；重跑同一 manifest 應得到相同 source summary。`--rebuild-secondary-indexes` 是 apply-only 的明確 opt-in，會在每個 source transaction 內重建 allowlisted secondary indexes；多 source release 可能重複重建，因此小型或部分重跑通常不要加這個旗標。

@@ -160,6 +160,46 @@ def test_validate_reads_wide_reading_columns_and_source_identity(tmp_path):
     assert summary["edge_claims"] == 1
 
 
+def test_validate_reads_locale_specific_pos_columns(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow([
+            "ENTRY_ID",
+            "NOTE",
+            "LOCALE_eng-Latn-US",
+            "LOCALE_jpn-Jpan-JP",
+            "POS_eng-Latn-US",
+            "READING_jpn-Latn_hepburn-JP",
+        ])
+        writer.writerow(["entry-1", "", "word", "語", "noun|verb", "go"])
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "manifest_version": 1,
+        "source_key": "fixture:pos",
+        "csv": "data.csv",
+        "csv_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "entry_count": 1,
+        "pos_columns": ["eng-Latn-US"],
+        "pos_count": 2,
+        "reading_count": 1,
+        "reading_columns": [{"locale": "jpn-Latn_hepburn-JP", "scheme": "hepburn"}],
+        "locales": ["eng-Latn-US", "jpn-Jpan-JP"],
+        "locale_metadata": {},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    summary = validate(manifest)
+    prepared = validate_target(manifest)[0]
+    row = next(iter_rows(prepared))
+
+    assert summary["pos_claims"] == 2
+    assert summary["pos_columns"] == ["eng-Latn-US"]
+    assert tuple((item.locale.code, item.code) for item in row.pos) == (
+        ("eng-Latn-US", "noun"),
+        ("eng-Latn-US", "verb"),
+    )
+
+
 def test_validate_registers_compact_reading_locale_profile(tmp_path):
     csv_path = tmp_path / "data.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
