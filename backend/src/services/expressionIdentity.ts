@@ -47,17 +47,79 @@ function isAlphanumeric(character: string): boolean {
 
 function isLexicalApostrophe(characters: string[], index: number): boolean {
   const character = characters[index];
+  if (character === '‘') {
+    return index > 0 && index + 1 < characters.length && isAlphanumeric(characters[index - 1]) && isAlphanumeric(characters[index + 1]);
+  }
   if (character !== "'" && character !== '’') return false;
   if (index === 0 || index + 1 === characters.length) return false;
   return isAlphanumeric(characters[index - 1]) || isAlphanumeric(characters[index + 1]);
+}
+
+function isRtlCharacter(character: string): boolean {
+  return /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Adlam}\p{Script=Samaritan}\p{Script=Mandaic}]/u.test(character);
 }
 
 function scanDelimiters(characters: string[]): DelimiterScan {
   const stack: Array<[string, number]> = [];
   const matched: Array<[number, number, string]> = [];
   const unmatched: Array<[number, string]> = [];
+  const containsRtl = characters.some(isRtlCharacter);
+  const pairedAsciiQuoteCandidates = new Set<number>();
+  const pendingAsciiQuotes: number[] = [];
   characters.forEach((character, index) => {
+    if (character !== "'") return;
+    const previous = characters[index - 1] ?? '';
+    const following = characters[index + 1] ?? '';
+    const previousAlphanumeric = previous !== '' && isAlphanumeric(previous);
+    const followingAlphanumeric = following !== '' && isAlphanumeric(following);
+    if (previousAlphanumeric && followingAlphanumeric) return;
+    if (previous === '.' && followingAlphanumeric) return;
+    if (previousAlphanumeric && /^\s$/u.test(following) && pendingAsciiQuotes.length === 0) return;
+    if (pendingAsciiQuotes.length > 0) {
+      pairedAsciiQuoteCandidates.add(pendingAsciiQuotes.pop()!);
+      pairedAsciiQuoteCandidates.add(index);
+    } else if (!previousAlphanumeric) {
+      pendingAsciiQuotes.push(index);
+    }
+  });
+  characters.forEach((character, index) => {
+    if ((character === '‘' || character === '’') && containsRtl) {
+      const family = 'rtl_curly_single_quote';
+      if (stack.at(-1)?.[0] === family) {
+        const [, openingIndex] = stack.pop()!;
+        matched.push([openingIndex, index, family]);
+      } else {
+        stack.push([family, index]);
+      }
+      return;
+    }
+    if (character === "'" && pairedAsciiQuoteCandidates.has(index)) {
+      const family = 'ascii_apostrophe_quote';
+      if (stack.at(-1)?.[0] === family) {
+        const [, openingIndex] = stack.pop()!;
+        matched.push([openingIndex, index, family]);
+      } else {
+        stack.push([family, index]);
+      }
+      return;
+    }
+    if (character === "'" && containsRtl && !(index > 0 && index + 1 < characters.length && isAlphanumeric(characters[index - 1]) && isAlphanumeric(characters[index + 1]))) {
+      const family = 'rtl_ascii_single_quote';
+      if (stack.at(-1)?.[0] === family) {
+        const [, openingIndex] = stack.pop()!;
+        matched.push([openingIndex, index, family]);
+      } else {
+        stack.push([family, index]);
+      }
+      return;
+    }
+    if (character === '’' && stack.at(-1)?.[0] === 'curly_single_quote') {
+      const [, openingIndex] = stack.pop()!;
+      matched.push([openingIndex, index, 'curly_single_quote']);
+      return;
+    }
     if (isLexicalApostrophe(characters, index)) return;
+    if (character === '"' && index > 0 && /^\p{N}$/u.test(characters[index - 1]) && (index + 1 === characters.length || /^\s$/u.test(characters[index + 1]))) return;
     const symmetric = symmetricFamilies.get(character);
     if (symmetric) {
       if (stack.at(-1)?.[0] === symmetric.name) {

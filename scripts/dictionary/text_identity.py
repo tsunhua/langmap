@@ -68,12 +68,17 @@ def _is_alphanumeric(character: str) -> bool:
 
 def _is_lexical_apostrophe(characters: list[str], index: int) -> bool:
     if characters[index] not in {"'", "’"}:
-        return False
+        return (
+            characters[index] == "‘"
+            and index > 0
+            and index + 1 < len(characters)
+            and _is_alphanumeric(characters[index - 1])
+            and _is_alphanumeric(characters[index + 1])
+        )
     if index == 0 or index + 1 == len(characters):
         return False
-    return (
-        _is_alphanumeric(characters[index - 1])
-        or _is_alphanumeric(characters[index + 1])
+    return _is_alphanumeric(characters[index - 1]) or _is_alphanumeric(
+        characters[index + 1]
     )
 
 
@@ -81,8 +86,84 @@ def _scan_delimiters(characters: list[str]) -> _DelimiterScan:
     stack: list[tuple[str, int]] = []
     matched: list[tuple[int, int, str]] = []
     unmatched: list[tuple[int, str]] = []
+    contains_rtl = any(
+        unicodedata.bidirectional(character) in {"R", "AL"}
+        for character in characters
+    )
+    paired_ascii_quote_candidates: set[int] = set()
+    pending_ascii_quotes: list[int] = []
     for index, character in enumerate(characters):
+        if character != "'":
+            continue
+        previous = characters[index - 1] if index else ""
+        following = characters[index + 1] if index + 1 < len(characters) else ""
+        previous_alphanumeric = _is_alphanumeric(previous)
+        following_alphanumeric = _is_alphanumeric(following)
+        if previous_alphanumeric and following_alphanumeric:
+            continue
+        if previous == "." and following_alphanumeric:
+            continue
+        if previous_alphanumeric and following.isspace() and not pending_ascii_quotes:
+            continue
+        if pending_ascii_quotes:
+            paired_ascii_quote_candidates.add(pending_ascii_quotes.pop())
+            paired_ascii_quote_candidates.add(index)
+        elif not previous_alphanumeric:
+            pending_ascii_quotes.append(index)
+    for index, character in enumerate(characters):
+        if character in {"‘", "’"}:
+            if contains_rtl:
+                family = "rtl_curly_single_quote"
+                if stack and stack[-1][0] == family:
+                    _, opening_index = stack.pop()
+                    matched.append((opening_index, index, family))
+                else:
+                    stack.append((family, index))
+                continue
+            if character == "’" and stack and stack[-1][0] == "curly_single_quote":
+                _, opening_index = stack.pop()
+                matched.append((opening_index, index, "curly_single_quote"))
+                continue
+            if _is_lexical_apostrophe(characters, index):
+                continue
+            if character == "‘":
+                stack.append(("curly_single_quote", index))
+            else:
+                unmatched.append((index, "curly_single_quote"))
+            continue
+        if (
+            character == "'"
+            and contains_rtl
+            and not (
+                index > 0
+                and index + 1 < len(characters)
+                and _is_alphanumeric(characters[index - 1])
+                and _is_alphanumeric(characters[index + 1])
+            )
+        ):
+            family = "rtl_ascii_single_quote"
+            if stack and stack[-1][0] == family:
+                _, opening_index = stack.pop()
+                matched.append((opening_index, index, family))
+            else:
+                stack.append((family, index))
+            continue
+        if character == "'" and index in paired_ascii_quote_candidates:
+            family = "ascii_apostrophe_quote"
+            if stack and stack[-1][0] == family:
+                _, opening_index = stack.pop()
+                matched.append((opening_index, index, family))
+            else:
+                stack.append((family, index))
+            continue
         if _is_lexical_apostrophe(characters, index):
+            continue
+        if (
+            character == '"'
+            and index > 0
+            and characters[index - 1].isdigit()
+            and (index + 1 == len(characters) or characters[index + 1].isspace())
+        ):
             continue
         symmetric = _BY_SYMMETRIC.get(character)
         if symmetric is not None:
