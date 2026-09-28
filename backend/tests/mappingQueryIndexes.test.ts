@@ -11,7 +11,7 @@ describe('canonical query indexes', () => {
   it('has the required adjacency, identity and list indexes', () => {
     const indexes = explicitIndexes();
     for (const name of [
-      'idx_language_locales_identity', 'idx_expressions_language_created',
+      'idx_language_locales_identity', 'idx_expressions_language_created', 'idx_expressions_text_trgm',
       'idx_expression_locale_links_locale', 'idx_expression_edges_b_id',
       'idx_edge_votes_edge', 'idx_handbook_votes_handbook',
       'idx_handbooks_visibility_created', 'idx_handbooks_visibility_score',

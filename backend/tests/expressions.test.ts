@@ -58,7 +58,11 @@ const LOCALE_LINKS_SQL = 'SELECT x.expression_id,x.locale_id,l.code AS language_
 const READINGS_SQL = 'SELECT r.expression_id, r.locale_id, l.code AS language_locale_code, l.name AS locale_display_name, r.scheme, r.value, r.source_id FROM expression_readings r JOIN language_locales l ON l.id=r.locale_id WHERE r.expression_id=? ORDER BY l.code,r.scheme,r.value';
 const POS_SQL = 'SELECT code,name_en FROM parts_of_speech WHERE (?::bigint & (1::bigint << bit_index::int)) != 0 ORDER BY sort_order';
 const SEARCH_ORDER = 'ORDER BY e.text,e.homograph_index,e.id LIMIT ? OFFSET ?';
-const SEARCH_BY_LANG_TERM = `SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text>=? AND e.text<? ${SEARCH_ORDER}`;
+const SEARCH_TERM_ORDER = `ORDER BY CASE WHEN e.text ILIKE ? ESCAPE '\\' THEN 0
+  WHEN e.text ILIKE ? ESCAPE '\\' THEN 1 ELSE 2 END,
+  char_length(e.text),e.text,e.homograph_index,e.id LIMIT ? OFFSET ?`;
+const SEARCH_COUNT_BY_LANG_TERM = "SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text ILIKE ? ESCAPE '\\'";
+const SEARCH_BY_LANG_TERM = `SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text ILIKE ? ESCAPE '\\' ${SEARCH_TERM_ORDER}`;
 const SEARCH_BY_LANG = `SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? ${SEARCH_ORDER}`;
 const SEARCH_ALL = `SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id ${SEARCH_ORDER}`;
 
@@ -145,13 +149,13 @@ describe('createExpression', () => {
 });
 
 describe('searchExpressions', () => {
-  it('returns items ordered by text and a total', async () => {
+  it('returns matching items and a total', async () => {
     const rows = [
       { ...existingRow, id: 1, text: '食' },
       { ...existingRow, id: 2, text: '食飯' },
     ];
     const db = fakeDatabase({
-      'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text>=? AND e.text<?':
+      [SEARCH_COUNT_BY_LANG_TERM]:
         () => ({ total: 2 }),
       [SEARCH_BY_LANG_TERM]: () => ({ results: rows }),
     });
@@ -187,7 +191,7 @@ describe('searchExpressions', () => {
   it('uses canonical boundary punctuation when searching', async () => {
     const bound: unknown[] = [];
     const db = fakeDatabase({
-      'SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id WHERE l.code=? AND e.text>=? AND e.text<?': (...args) => {
+      [SEARCH_COUNT_BY_LANG_TERM]: (...args) => {
         bound.push(...args);
         return { total: 1 };
       },
@@ -199,8 +203,8 @@ describe('searchExpressions', () => {
     const result = await searchExpressions(db, { q: '「你好！」', lang_code: 'nan', limit: 20, offset: 0 });
     expect(result.items[0]?.text).toBe('你好');
     expect(bound[0]).toBe('nan');
-    expect(bound[1]).toBe('你好');
-    expect(bound[2]).toEqual(expect.any(String));
+    expect(bound[1]).toBe('%你好%');
+    expect(bound.slice(2)).toEqual(['nan', '%你好%', '你好', '你好%', 20, 0]);
     expect(bound).not.toContain('「你好！」');
   });
 });

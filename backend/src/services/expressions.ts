@@ -1,6 +1,6 @@
 import type { Database } from '../db/database';
 import type { ExpressionLocaleRow, ExpressionPartOfSpeech, ExpressionRow, ExpressionSourceRow, ReadingRow } from '../types/expression';
-import { canonicalizeExpressionText, ExpressionIdentityError, expressionPrefixUpperBound } from './expressionIdentity';
+import { canonicalizeExpressionText, ExpressionIdentityError } from './expressionIdentity';
 import { resolveSource, type SourceInput } from './provenance';
 import { SourceError } from './sources';
 
@@ -68,10 +68,21 @@ export async function searchExpressions(db: Database, query: { q: string; lang_c
   let q: string;
   try { q = canonicalizeExpressionText(query.q); } catch (error) { if (error instanceof ExpressionIdentityError) throw new ExpressionError('VALIDATION_FAILED'); throw error; }
   if (query.q.trim() && !q) throw new ExpressionError('VALIDATION_FAILED');
-  if (q) { const upper = expressionPrefixUpperBound(q); if (upper) { where.push('e.text>=? AND e.text<?'); args.push(q, upper); } else { where.push('e.text>=?'); args.push(q); } }
+  const orderArgs: string[] = [];
+  let order = 'e.text,e.homograph_index,e.id';
+  if (q) {
+    // Search terms are literal text, including SQL pattern metacharacters.
+    const escaped = q.replace(/[\\%_]/g, '\\$&');
+    where.push("e.text ILIKE ? ESCAPE '\\'");
+    args.push(`%${escaped}%`);
+    order = `CASE WHEN e.text ILIKE ? ESCAPE '\\' THEN 0
+      WHEN e.text ILIKE ? ESCAPE '\\' THEN 1 ELSE 2 END,
+      char_length(e.text),e.text,e.homograph_index,e.id`;
+    orderArgs.push(escaped, `${escaped}%`);
+  }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const count = await db.prepare(`SELECT COUNT(*) AS total FROM expressions e JOIN languages l ON l.id=e.language_id ${clause}`).bind(...args).first<{ total: number }>();
-  const rows = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id ${clause} ORDER BY e.text,e.homograph_index,e.id LIMIT ? OFFSET ?`).bind(...args, query.limit, query.offset).all<ExpressionRow>();
+  const rows = await db.prepare(`SELECT ${EXPRESSION_COLUMNS} FROM expressions e JOIN languages l ON l.id=e.language_id ${clause} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...args, ...orderArgs, query.limit, query.offset).all<ExpressionRow>();
   return { items: rows.results, total: count?.total ?? 0 };
 }
 

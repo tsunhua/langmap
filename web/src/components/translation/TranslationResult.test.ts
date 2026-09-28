@@ -19,6 +19,7 @@ function makeResult(patch: Partial<TranslationResultData> = {}): TranslationResu
 
 function mountResult(overrides: Record<string, unknown> = {}) {
   return mount(TranslationResult, {
+    attachTo: document.body,
     props: { translation: 'Hallo', result: null, alternatives: [], ...overrides },
   })
 }
@@ -49,11 +50,43 @@ describe('TranslationResult', () => {
   })
 
   it('renders at most two reference alternatives', () => {
-    const wrapper = mountResult({ alternatives: ['eins', 'zwei', 'drei'], result: makeResult() })
+    const wrapper = mountResult({ alternatives: ['eins', 'zwei', 'drei'], result: makeResult({ resolution: 'exact_lookup' }) })
     const items = wrapper.findAll('.alternatives li')
     expect(items).toHaveLength(2)
     expect(items.map((item) => item.text())).toEqual(['eins', 'zwei'])
     expect(wrapper.text()).toContain('Reference translations')
+  })
+
+  it('hides assisted snippets as whole-sentence alternatives', () => {
+    const wrapper = mountResult({ alternatives: ['word fragment'], result: makeResult() })
+    expect(wrapper.find('.alternatives').exists()).toBe(false)
+  })
+
+  it('selects the longest real evidence phrase, preserves the sentence, and closes with Escape', async () => {
+    const wrapper = mountResult({ translation: '😀 railway station\nstation', result: makeResult(), evidence: [
+      { source_text: '車站', target_text: 'railway station', target_locale_code: 'eng-Latn-US', reference_locale_codes: ['eng-Latn-GB'], path_type: 'direct', match_type: 'exact', source_markers: ['dictionary:1'] },
+      { source_text: '站', target_text: 'station', target_locale_code: 'eng-Latn-US', path_type: 'direct', match_type: 'exact', source_markers: ['dictionary:2'] },
+    ] })
+    expect(wrapper.get('.translation').text()).toBe('😀 railway station\nstation')
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+    await wrapper.get('[data-term="railway station"]').trigger('click')
+    expect(wrapper.get('.reference-panel').text()).toContain('車站')
+    expect(wrapper.get('.reference-panel').text()).not.toContain('dictionary:2')
+    expect(wrapper.get('.reference-panel').text()).toContain('eng-Latn-GB')
+    await wrapper.get('.translation-result').trigger('keydown', { key: 'Escape' })
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+    expect(document.activeElement).toBe(wrapper.get('[data-term="railway station"]').element)
+  })
+
+  it('keeps individual words selectable when exact evidence covers the complete sentence', () => {
+    const wrapper = mountResult({
+      translation: '最近的火車站在哪裡？',
+      result: makeResult({ resolution: 'exact_lookup', translation: '最近的火車站在哪裡？', target_locale_code: 'cmn-Hant-TW' }),
+      evidence: [{ source_text: 'Where is the nearest train station?', target_text: '最近的火車站在哪裡？', target_locale_code: 'cmn-Hant-TW', reference_locale_codes: ['cmn-Hant-TW'], path_type: 'direct', match_type: 'exact', source_markers: ['dictionary:1'] }],
+    })
+    expect(wrapper.find('[data-term="最近的火車站在哪裡？"]').exists()).toBe(false)
+    expect(wrapper.find('[data-term="火車站"]').exists()).toBe(true)
+    expect(wrapper.get('.translation').text()).toBe('最近的火車站在哪裡？')
   })
 
   it('copies the translation and reflects the copied state', async () => {

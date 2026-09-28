@@ -3,7 +3,6 @@ import type OpenAI from 'openai';
 import type { Database } from '../src/db/database';
 import {
   GENERATION_TIMEOUT_MS,
-  MAX_ALTERNATIVES,
   MAX_TRANSLATION_OUTPUT_TOKENS,
 } from '../src/utils/limits';
 import {
@@ -63,7 +62,9 @@ const TARGET_LOCALE_RESOLUTION = { locale_id: 30, language_id: 7, lang_code: 'jp
 function route(setup: RouteSetup): Handler {
   return (sql, args) => {
     if (/FROM language_locales ll/.test(sql)) return setup.locale ? [setup.locale] : [];
-    if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
+    if (/FROM expression_locale_links ell/.test(sql)) {
+      return setup.targetLocales ?? [...(setup.exactFixed?.direct ?? []), ...(setup.exactFixed?.twoHop ?? [])].map(row => ({ expression_id: row.target_expr_id, locale_code: TARGET_LOCALE }));
+    }
     const textRoot = /e\.text = \?/.test(sql);
     if (/JOIN expression_edges edge1 ON/.test(sql)) {
       return textRoot ? (setup.exactFixed?.twoHop ?? []) : (setup.retrieval?.twoHop ?? []);
@@ -86,7 +87,7 @@ function markerRow(edgeId: number, marker = '1'): Row {
 }
 
 function expr(id: number, text: string): Row {
-  return { expression_id: id, expression_text: text };
+  return { root_index: 0, expression_id: id, expression_text: text, match_type: 'exact', similarity: 1 };
 }
 
 function exactDirectRow(overrides: Row = {}): Row {
@@ -97,6 +98,7 @@ function exactDirectRow(overrides: Row = {}): Row {
     source_lang_code: 'eng',
     target_expr_id: 2,
     target_text: 'こんにちは',
+    locale_rank: 0,
     score: 5,
     marker_count: 1,
     ...overrides,
@@ -119,15 +121,24 @@ function exactTwoHopRow(overrides: Row = {}): Row {
     edge2_markers: 1,
     target_expr_id: 12,
     target_text: 'こんにちは',
+    locale_rank: 0,
     ...overrides,
   };
 }
 
 function retrievalDirectRow(overrides: Row = {}): Row {
   return {
-    edge_id: 11,
-    score: 1,
-    marker_count: 0,
+    root_index: 0,
+    source_text: 'Hello',
+    match_type: 'exact',
+    similarity: 1,
+    locale_rank: 0,
+    edge1_id: overrides.edge_id ?? 11,
+    edge1_score: 1,
+    edge1_markers: 0,
+    edge2_id: null,
+    edge2_score: 0,
+    edge2_markers: 0,
     target_expr_id: 999,
     target_text: 'こんにちは',
     ...overrides,
@@ -168,8 +179,9 @@ interface FakeAiConfig {
   generation?: (signal?: AbortSignal) => unknown | Promise<unknown>;
 }
 
-function completion(content: string): Record<string, unknown> {
-  return { choices: [{ message: { content } }] };
+async function* completion(content: string): AsyncGenerator<Record<string, unknown>> {
+  yield { choices: [{ delta: { content }, finish_reason: null }] };
+  yield { choices: [{ delta: {}, finish_reason: 'stop' }] };
 }
 
 function fakeAi(config: FakeAiConfig = {}): { ai: OpenAI; calls: AiCall[] } {
@@ -315,7 +327,7 @@ describe('runTranslation — exact fast path', () => {
       locale: LOCALE_ROW,
       targetLocales: [{ expression_id: 2, locale_code: 'jpn-Latn-JP' }],
       markers: [markerRow(11)],
-      exactFixed: { direct: [exactDirectRow()], twoHop: [] },
+      exactFixed: { direct: [exactDirectRow({ locale_rank: 3 })], twoHop: [] },
     }), {
       generation: () => 'konnichiwa',
     });
@@ -424,17 +436,21 @@ describe('runTranslation — assisted path', () => {
     expect(h.aiCalls.map((call) => call.model)).toEqual([TRANSLATION_MODEL, TRANSLATION_MODEL]);
   });
 
-  it('uses planner keyword or phrase roots when the full sentence has no exact candidate', async () => {
+  it('uses local phrase roots when the full sentence has no exact candidate', async () => {
     const queriedRoots: string[] = [];
     const h = harness(route({
       locale: LOCALE_ROW,
       ...EMPTY_EXACT,
       candidate: (args) => {
-        const root = String(args[0]);
-        queriedRoots.push(root);
-        return root === '多少钱' ? [expr(1, '多少钱')] : [];
+        const candidates: Row[] = [];
+        for (let index = 0; index < args.length - 1; index += 2) {
+          const root = String(args[index + 1]);
+          queriedRoots.push(root);
+          if (root === '多少钱') candidates.push({ ...expr(1, root), root_index: Number(args[index]) });
+        }
+        return candidates;
       },
-      retrieval: { direct: [retrievalDirectRow({ target_text: '幾若錢' })] },
+      retrieval: { direct: [retrievalDirectRow({ root_index: 2, source_text: '多少钱', target_text: '幾若錢' })] },
     }), {
       planner: () => plannerEnvelope('cmn', 0.9, [
         { start: 2, end: 5, text: '多少钱', reason: 'phrase', confidence: 0.95 },
@@ -452,7 +468,11 @@ describe('runTranslation — assisted path', () => {
     const parsed = parseLines(h.collector);
     expect(parsed[2].data).toMatchObject({
       type: 'segmentation',
-      spans: [{ text: '多少钱', reason: 'phrase', confidence: 0.95 }],
+      spans: [
+        { start: 0, end: 2, text: '这个', reason: 'keyword', confidence: 0.5 },
+        { start: 0, end: 5, text: '这个多少钱', reason: 'phrase', confidence: 0.5 },
+        { start: 2, end: 5, text: '多少钱', reason: 'keyword', confidence: 0.5 },
+      ],
     });
     expect((parsed[4].data as { items: Array<{ source_text: string; match_type: string }> }).items).toEqual([
       expect.objectContaining({ source_text: '多少钱', match_type: 'exact' }),
@@ -532,6 +552,9 @@ describe('runTranslation — assisted path', () => {
     const result = parsed.at(-1)?.data as { source_lang_code: string | null; model_only: boolean };
     expect(result.source_lang_code).toBe('fra');
     expect(result.model_only).toBe(false);
+    expect(h.aiCalls).toHaveLength(1);
+    expect(h.aiCalls[0].inputs.stream).toBe(true);
+    expect(h.aiCalls[0].inputs.response_format).toBeUndefined();
   });
 
   it('emits degraded evidence when retrieval fails, and still generates model-only', async () => {
@@ -572,7 +595,7 @@ describe('runTranslation — assisted path', () => {
     });
   });
 
-  it('builds up to two rank-ordered distinct alternatives from evidence', async () => {
+  it('keeps fragment evidence out of full-sentence alternatives', async () => {
     const h = harness(route({
       locale: LOCALE_ROW,
       ...EMPTY_EXACT,
@@ -593,8 +616,7 @@ describe('runTranslation — assisted path', () => {
     await runTranslationTest(h, request({ sourceLangCode: null }));
 
     const result = parseLines(h.collector).at(-1)?.data as { alternatives: string[] };
-    expect(result.alternatives).toEqual(['A', 'B']);
-    expect(result.alternatives.length).toBeLessThanOrEqual(MAX_ALTERNATIVES);
+    expect(result.alternatives).toEqual([]);
   });
 });
 
@@ -812,5 +834,73 @@ describe('writeEnvelope', () => {
       retrieval_status: 'failed',
     };
     expect(envelopeLine(event)).toBe(`${JSON.stringify({ success: true, data: event })}\n`);
+  });
+});
+
+describe('runTranslation — streamed terminal contract', () => {
+  it('emits content before generation completes, then returns the same concatenation', async () => {
+    let release!: () => void;
+    let received!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const firstDelta = new Promise<void>(resolve => { received = resolve; });
+    async function* chunks() {
+      yield { choices: [{ delta: { reasoning_content: 'private', role: 'assistant' }, finish_reason: null }] };
+      yield { choices: [{ delta: { content: 'こん' }, finish_reason: null }] };
+      await gate;
+      yield { choices: [{ delta: { content: 'にちは' }, finish_reason: 'stop' }] };
+    }
+    const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), { generation: () => chunks() });
+    h.ctx.emit = line => {
+      h.collector.push(line);
+      if ((JSON.parse(line) as ParsedLine).data?.type === 'translation_delta') received();
+    };
+    const pending = runTranslationTest(h, request());
+    await firstDelta;
+    const interim = parseLines(h.collector);
+    expect(interim.some(entry => entry.data?.type === 'result')).toBe(false);
+    expect(interim.at(-1)?.data).toEqual({ type: 'translation_delta', text: 'こん' });
+    release();
+    await pending;
+    const parsed = parseLines(h.collector);
+    expect(parsed.filter(entry => entry.data?.type === 'translation_delta').map(entry => (entry.data as { text: string }).text)).toEqual(['こん', 'にちは']);
+    expect(parsed.at(-1)?.data).toMatchObject({ type: 'result', translation: 'こんにちは', alternatives: [] });
+    expect(JSON.stringify(parsed)).not.toContain('private');
+    expect(h.aiCalls).toHaveLength(1);
+  });
+
+  it.each(['length', 'missing', 'provider_error'])('never emits a success result after partial stream %s', async terminal => {
+    async function* chunks() {
+      yield { choices: [{ delta: { content: 'partial' }, finish_reason: null }] };
+      if (terminal === 'provider_error') throw new Error('mid-stream failure');
+      if (terminal === 'length') yield { choices: [{ delta: {}, finish_reason: 'length' }] };
+    }
+    const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), { generation: () => chunks() });
+    await runTranslationTest(h, request());
+    const parsed = parseLines(h.collector);
+    expect(parsed.some(entry => entry.data?.type === 'result')).toBe(false);
+    expect(parsed.filter(entry => entry.data?.type === 'translation_delta').map(entry => (entry.data as { text: string }).text)).toEqual(['partial']);
+    expect(parsed.at(-1)).toMatchObject({
+      success: false,
+      error: terminal === 'length' ? 'TRANSLATION_OUTPUT_TOO_LARGE' : 'AI_PROVIDER_FAILED',
+      retryable: terminal !== 'length',
+    });
+    expect(h.aiCalls).toHaveLength(1);
+  });
+
+  it('closes silently after client cancellation of an already visible partial translation', async () => {
+    async function* chunks() {
+      yield { choices: [{ delta: { content: 'partial' }, finish_reason: null }] };
+      yield { choices: [{ delta: { content: ' unwanted' }, finish_reason: 'stop' }] };
+    }
+    const h = harness(route({ locale: LOCALE_ROW, ...EMPTY_EXACT }), { generation: () => chunks() });
+    h.ctx.emit = line => {
+      h.collector.push(line);
+      if ((JSON.parse(line) as ParsedLine).data?.type === 'translation_delta') h.controller.abort();
+    };
+    await runTranslationTest(h, request());
+    const parsed = parseLines(h.collector);
+    expect(parsed.at(-1)?.data).toEqual({ type: 'translation_delta', text: 'partial' });
+    expect(parsed.some(entry => !entry.success || entry.data?.type === 'result')).toBe(false);
+    expect(h.aiCalls).toHaveLength(1);
   });
 });

@@ -55,7 +55,7 @@ function pathLabel(item: TranslationEvidence): string {
         </p>
         <p class="evidence-meta">
           <span class="evidence-match">
-            {{ item.match_type === 'exact' ? t('phraseTranslate.matchExact') : t('phraseTranslate.matchPrefix') }}
+            {{ item.match_type === 'exact' ? t('phraseTranslate.matchExact') : item.match_type === 'fuzzy' ? t('phraseTranslate.matchFuzzy') : t('phraseTranslate.matchPrefix') }}
           </span>
           <span
             v-if="item.source_markers.length"

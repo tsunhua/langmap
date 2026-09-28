@@ -32,8 +32,8 @@ function fakeDatabase(setup: FakeSetup, log: StatementLogEntry[] = []): Database
     if (/FROM language_locales/.test(sql)) return setup.locale ? [setup.locale] : [];
     if (/FROM expression_locale_links ell/.test(sql)) return setup.targetLocales ?? [];
     if (/JOIN expression_edges edge1 ON/.test(sql)) return setup.twoHop ?? [];
-    if (/JOIN expression_edges edge ON/.test(sql)) return setup.direct ?? [];
-    if (/FROM expression_edge_sources es/.test(sql)) return setup.markers ?? [];
+    if (/JOIN expression_edges edge ON/.test(sql)) return (setup.direct ?? []).map((row) => ({ locale_rank: (setup.targetLocales ?? []).some((claim) => claim.expression_id === row.target_expr_id && claim.locale_code === TARGET_LOCALE) ? 0 : 3, ...row }));
+    if (/FROM expression_edge_sources es/.test(sql)) return (setup.markers ?? []).map((row) => ({ edge_id: setup.direct?.[0]?.edge_id ?? setup.twoHop?.[0]?.edge1_id, ...row }));
     return [];
   };
   return {
@@ -220,10 +220,9 @@ describe('findExactTranslation — two-hop match', () => {
       match_type: 'exact',
     });
     expect(result.result.translation).toBe('こんにちは');
-    const markerStatements = log.filter((entry) => /WHERE es\.edge_id = \?/.test(entry.sql));
-    expect(markerStatements).toHaveLength(2);
-    expect(markerStatements[0].args[0]).toBe(21);
-    expect(markerStatements[1].args[0]).toBe(22);
+    const markerStatements = log.filter((entry) => /WHERE es\.edge_id IN/.test(entry.sql));
+    expect(markerStatements).toHaveLength(1);
+    expect(markerStatements[0].args).toEqual([21, 22]);
   });
 });
 
@@ -439,10 +438,40 @@ describe('findExactTranslation — pivot allowlist', () => {
     expect(twoHop?.sql).toContain('pl.code IN (');
     expect(twoHop?.sql).toContain('pl.code <> ?');
     expect(twoHop?.args).toEqual([
-      '你好', 'cmn', 7,
+      '你好', 'cmn', 7, 30,
       ...APPROVED_PIVOT_LANGUAGES,
       'jpn', 'cmn',
       9,
     ]);
+  });
+});
+
+
+describe('findExactTranslation — requested locale preference', () => {
+  it('prefers a lower score requested locale before limiting alternatives', async () => {
+    const db = fakeDatabase({ locale: LOCALE_ROW, direct: [
+      { edge_id: 11, source_expr_id: 1, source_text: 'Hello', source_lang_code: 'eng', target_expr_id: 2, target_text: 'Other region', score: 100, marker_count: 1, locale_rank: 2 },
+      { edge_id: 12, source_expr_id: 1, source_text: 'Hello', source_lang_code: 'eng', target_expr_id: 3, target_text: 'Requested region', score: 1, marker_count: 1, locale_rank: 0 },
+    ], targetLocales: [
+      { expression_id: 2, locale_code: 'jpn-Jpan-US' },
+      { expression_id: 3, locale_code: TARGET_LOCALE },
+    ] });
+    const result = await findExactTranslation(db, input());
+    expect(result.status).toBe('exact_match');
+    if (result.status !== 'exact_match') return;
+    expect(result.result.translation).toBe('Requested region');
+    expect(result.locale_compatible).toBe(true);
+    expect(result.result.alternatives).not.toContain('Other region');
+  });
+
+  it('does not treat unknown or another region locale as a generation-free match', async () => {
+    for (const targetLocales of [[], [{ expression_id: 2, locale_code: 'jpn-Jpan-US' }]]) {
+      const db = fakeDatabase({ locale: LOCALE_ROW, direct: [
+        { edge_id: 11, source_expr_id: 1, source_text: 'Hello', source_lang_code: 'eng', target_expr_id: 2, target_text: 'Hello', score: 5, marker_count: 1 },
+      ], targetLocales });
+      const result = await findExactTranslation(db, input());
+      expect(result.status).toBe('exact_match');
+      if (result.status === 'exact_match') expect(result.locale_compatible).toBe(false);
+    }
   });
 });

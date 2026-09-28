@@ -15,8 +15,9 @@ interface AiCall {
   options?: Record<string, unknown>;
 }
 
-function completion(content: string): Record<string, unknown> {
-  return { choices: [{ message: { content } }] };
+async function* completion(content: string): AsyncGenerator<Record<string, unknown>> {
+  yield { choices: [{ delta: { content }, finish_reason: null }] };
+  yield { choices: [{ delta: {}, finish_reason: 'stop' }] };
 }
 
 function fakeCompletionAi(
@@ -26,7 +27,7 @@ function fakeCompletionAi(
   const create = async (
     inputs: Record<string, unknown>,
     options?: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> => {
+  ): Promise<AsyncIterable<Record<string, unknown>>> => {
     calls.push({ model: String(inputs.model), inputs, options });
     const signal = options?.signal instanceof AbortSignal ? options.signal : undefined;
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -55,7 +56,7 @@ function fakeBlockingAi(): { ai: OpenAI; calls: AiCall[] } {
   const create = async (
     inputs: Record<string, unknown>,
     options?: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> => {
+  ): Promise<AsyncIterable<Record<string, unknown>>> => {
     calls.push({ model: String(inputs.model), inputs, options });
     const signal = options?.signal instanceof AbortSignal ? options.signal : undefined;
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -109,7 +110,8 @@ describe('streamTranslation — happy path', () => {
     expect(result).toEqual({ translation: 'Hello world', alternatives: [], model_only: true });
     expect(calls).toHaveLength(1);
     expect(calls[0].model).toBe(TRANSLATION_MODEL);
-    expect(calls[0].inputs.stream).toBe(false);
+    expect(calls[0].inputs.stream).toBe(true);
+    expect(calls[0].inputs.chat_template_kwargs).toEqual({ enable_thinking: false });
   });
 
   it('delivers the complete SDK response via onDelta callback', async () => {
@@ -295,5 +297,120 @@ describe('streamTranslation — defaults', () => {
       timeoutMs: GENERATION_TIMEOUT_MS,
       maxOutputTokens: MAX_TRANSLATION_OUTPUT_TOKENS,
     });
+  });
+});
+
+function fakeStreamAi(chunks: AsyncIterable<Record<string, unknown>>): OpenAI {
+  return { chat: { completions: { create: async () => chunks } } } as unknown as OpenAI;
+}
+
+function streamChunk(content: string | null, finish: string | null = null): Record<string, unknown> {
+  return { choices: [{ delta: { content }, finish_reason: finish }] };
+}
+
+describe('streamTranslation — incremental stream contract', () => {
+  it('emits content before the provider finishes and ignores reasoning, role and usage', async () => {
+    let release!: () => void;
+    let firstDelta!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const delivered = new Promise<void>(resolve => { firstDelta = resolve; });
+    async function* chunks() {
+      yield { choices: [{ delta: { role: 'assistant', reasoning_content: 'private reasoning' }, finish_reason: null }] };
+      yield streamChunk('Hello');
+      await gate;
+      yield streamChunk(' world', 'stop');
+      yield { choices: [], usage: { completion_tokens: 2 } };
+    }
+    const deltas: string[] = [];
+    let completed = false;
+    const promise = streamTranslation(fakeStreamAi(chunks()), genRequest({
+      onDelta: chunk => { deltas.push(chunk); firstDelta(); },
+    })).then(result => { completed = true; return result; });
+    await delivered;
+    expect(deltas).toEqual(['Hello']);
+    expect(completed).toBe(false);
+    release();
+    expect((await promise).translation).toBe('Hello world');
+    expect(deltas).toEqual(['Hello', ' world']);
+  });
+
+  it.each(['length', 'content_filter', 'tool_calls', null])('does not succeed after terminal reason %s', async finish => {
+    async function* chunks() { yield streamChunk('partial', finish); }
+    await expect(streamTranslation(fakeStreamAi(chunks()), genRequest())).rejects.toThrow();
+  });
+
+  it('surfaces an iterator failure after partial output', async () => {
+    async function* chunks() { yield streamChunk('partial'); throw new Error('stream failed'); }
+    const deltas: string[] = [];
+    await expect(streamTranslation(fakeStreamAi(chunks()), genRequest({ onDelta: c => deltas.push(c) })))
+      .rejects.toThrow('stream failed');
+    expect(deltas).toEqual(['partial']);
+  });
+
+  it('does not emit chunks after caller cancellation', async () => {
+    const controller = new AbortController();
+    async function* chunks() {
+      yield streamChunk('partial');
+      yield streamChunk(' unwanted', 'stop');
+    }
+    const deltas: string[] = [];
+    await expect(streamTranslation(fakeStreamAi(chunks()), genRequest({
+      signal: controller.signal,
+      onDelta: c => { deltas.push(c); controller.abort(); },
+    }))).rejects.toMatchObject({ name: 'AbortError' });
+    expect(deltas).toEqual(['partial']);
+  });
+
+  it('checks the accumulated cap before forwarding the oversized chunk', async () => {
+    async function* chunks() { yield streamChunk('abc'); yield streamChunk('def', 'stop'); }
+    const deltas: string[] = [];
+    await expect(streamTranslation(fakeStreamAi(chunks()), genRequest({ limits: { maxOutputTokens: 5 }, onDelta: c => deltas.push(c) })))
+      .rejects.toMatchObject({ code: 'TRANSLATION_OUTPUT_TOO_LARGE' });
+    expect(deltas).toEqual(['abc']);
+  });
+
+  it('places exact locale evidence before cross-locale and unspecified fallback', async () => {
+    const { ai, calls } = fakeCompletionAi('車站');
+    await streamTranslation(ai, genRequest({
+      targetLocaleCode: 'cmn-Hant-TW',
+      evidence: [
+        evidence({ target_text: '站点', reference_locale_codes: ['cmn-Hans-CN'] }),
+        evidence({ target_text: '車站', reference_locale_codes: ['cmn-Hant-TW'] }),
+        evidence({ target_text: 'station' }),
+      ],
+    }));
+    const messages = calls[0].inputs.messages as Array<{ content: string }>;
+    expect(messages[0].content).toContain('Prefer applicable terms');
+    expect(messages[1].content).toContain('Requested locale references');
+    expect(messages[1].content).toContain('Fallback references');
+    expect(messages[1].content.indexOf('車站')).toBeLessThan(messages[1].content.indexOf('站点'));
+    expect(messages[1].content).not.toContain('must be your own');
+  });
+});
+
+describe('streamTranslation — terminal safety', () => {
+  it('keeps timeout active while awaiting the next streamed chunk', async () => {
+    vi.useFakeTimers();
+    try {
+      const create = async (_params: Record<string, unknown>, options: { signal: AbortSignal }) => {
+        async function* chunks() {
+          yield streamChunk('partial');
+          await pendingUntilSignal(options.signal);
+        }
+        return chunks();
+      };
+      const ai = { chat: { completions: { create } } } as unknown as OpenAI;
+      const deltas: string[] = [];
+      const promise = streamTranslation(ai, genRequest({ onDelta: chunk => deltas.push(chunk) }));
+      const rejected = expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+      await vi.advanceTimersByTimeAsync(GENERATION_TIMEOUT_MS + 1);
+      await rejected;
+      expect(deltas).toEqual(['partial']);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('does not accept whitespace-only content as a completed translation', async () => {
+    await expect(streamTranslation(fakeCompletionAi(' \n').ai, genRequest())).rejects.toThrow('AI returned no translation text');
   });
 });

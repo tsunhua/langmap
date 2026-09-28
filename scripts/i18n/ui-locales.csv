@@ -420,3 +420,13 @@ translate.title,,翻译工作台,翻譯工作台,Translation workbench,翻訳ワ
 translate.translateKey,,翻译 {key},翻譯 {key},Translate {key},{key} を翻訳,Traducir {key}
 translate.translated,,已翻译,已翻譯,translated,翻訳済み,traducido
 translate.translation,,翻译,翻譯,Translation,翻訳,Traducción
+phraseTranslate.processStopped,,已停止,已停止,Stopped,,
+phraseTranslate.outputPlaceholder,,译文,譯文,Translation,,
+phraseTranslate.lookupTerm,,查看“{term}”的词典参考,查閱「{term}」的詞典參考,Show references for {term},,
+phraseTranslate.termHint,,点击词语或短语，查看词典参考。,點選詞語或短語，查閱詞典參考。,Select a word or phrase to see dictionary references.,,
+phraseTranslate.closeReference,,关闭参考,關閉參考,Close references,,
+phraseTranslate.referenceLoading,,正在查看词典参考…,正在查閱詞典參考…,Looking up dictionary references…,,
+phraseTranslate.referenceFailed,,无法加载参考。请再次点击词语重试。,無法載入參考。請再次點選詞語重試。,Unable to load references. Select the word to try again.,,
+phraseTranslate.referenceLocaleUnknown,,未指定语言地区,未指定語言地區,Locale unspecified,,
+phraseTranslate.referenceNotice,,词典参考不代表译文已采用该词义。,詞典參考不代表譯文已採用該詞義。,Dictionary references do not confirm which meaning the translation used.,,
+phraseTranslate.matchFuzzy,,近似,近似,Approximate,,

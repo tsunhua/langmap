@@ -21,14 +21,14 @@ export interface SourceLanguageResult {
 }
 
 export type EvidencePathType = 'direct' | 'two_hop';
-export type EvidenceMatchType = 'exact' | 'prefix';
+export type EvidenceMatchType = 'exact' | 'prefix' | 'fuzzy';
 export type TranslationEvidenceRetrievalStatus = 'matched' | 'no_match' | 'failed' | 'skipped';
 
 export interface TranslationEvidence {
   source_text: string;
   target_text: string;
   // The requested output locale. The reference rows themselves may have a
-  // different or missing locale link because retrieval is language-level.
+  // different or missing locale link; exact locale candidates rank first.
   target_locale_code: string;
   reference_locale_codes?: string[];
   path_type: EvidencePathType;

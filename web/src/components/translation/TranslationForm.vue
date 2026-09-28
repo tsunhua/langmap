@@ -103,73 +103,79 @@ function onSubmit() {
       {{ props.error || t('phraseTranslate.validationSummary') }}
     </p>
 
-    <div class="language-controls">
-      <div class="field source-field">
-        <LanguagePicker
-          :model-value="sourceLang"
-          :label="t('phraseTranslate.sourceLanguage')"
-          @update:model-value="onSourceLang"
+    <div class="translation-workspace">
+      <section class="source-pane">
+        <div class="field source-field">
+          <LanguagePicker
+            :model-value="sourceLang"
+            :label="t('phraseTranslate.sourceLanguage')"
+            @update:model-value="onSourceLang"
+          />
+          <button
+            type="button"
+            class="btn btn-ghost auto-detect"
+            :aria-pressed="isAutoDetect"
+            data-action="source-auto"
+            @click="onSourceLang('')"
+          >
+            <Wand2 :size="16" aria-hidden="true" />
+            {{ t('phraseTranslate.sourceAuto') }}
+          </button>
+        </div>
+
+      <div class="field text-field">
+        <label for="translation-text" class="field-label">{{ t('phraseTranslate.text') }}</label>
+        <textarea
+          id="translation-text"
+          class="text-input"
+          :value="props.modelValue.text"
+          :placeholder="t('phraseTranslate.textPlaceholder')"
+          dir="auto"
+          :aria-invalid="textInvalid"
+          :aria-describedby="textDescribedBy"
+          @input="onText(($event.target as HTMLTextAreaElement).value)"
         />
-        <button
-          type="button"
-          class="btn btn-ghost auto-detect"
-          :aria-pressed="isAutoDetect"
-          data-action="source-auto"
-          @click="onSourceLang('')"
-        >
-          <Wand2 :size="16" aria-hidden="true" />
-          {{ t('phraseTranslate.sourceAuto') }}
-        </button>
+        <div class="text-meta">
+          <p id="translation-text-count" class="grapheme-count" :class="{ over: textTooLong }">
+            {{ t('phraseTranslate.graphemeCount', { count: graphemeCount, max: MAX_TRANSLATION_GRAPHEMES }) }}
+          </p>
+          <p
+            v-if="textTooLong"
+            :id="textErrorId"
+            class="field-error"
+            role="status"
+            aria-live="polite"
+          >
+            {{ t('phraseTranslate.errorValidation') }}
+          </p>
+          <p v-else-if="showTextError" :id="textErrorId" class="field-error">
+            {{ t('phraseTranslate.errorValidation') }}
+          </p>
+        </div>
       </div>
 
-      <div
-        class="field target-field"
-        role="group"
-        :aria-label="t('phraseTranslate.targetLocale')"
-        :aria-invalid="targetEmpty"
-        :aria-describedby="showTargetError ? targetErrorId : undefined"
-      >
-        <LanguageLocalePicker
-          :model-value="targetLocale"
-          :label="t('phraseTranslate.targetLocale')"
-          :placeholder="t('phraseTranslate.targetLocalePlaceholder')"
-          :allow-create="false"
-          @update:model-value="onTargetLocale"
-        />
-        <p v-if="showTargetError" :id="targetErrorId" class="field-error">
-          {{ t('phraseTranslate.errorTargetLocale') }}
-        </p>
-      </div>
-    </div>
-
-    <div class="field text-field">
-      <label for="translation-text" class="field-label">{{ t('phraseTranslate.text') }}</label>
-      <textarea
-        id="translation-text"
-        class="text-input"
-        :value="props.modelValue.text"
-        :placeholder="t('phraseTranslate.textPlaceholder')"
-        :aria-invalid="textInvalid"
-        :aria-describedby="textDescribedBy"
-        @input="onText(($event.target as HTMLTextAreaElement).value)"
-      />
-      <div class="text-meta">
-        <p id="translation-text-count" class="grapheme-count" :class="{ over: textTooLong }">
-          {{ t('phraseTranslate.graphemeCount', { count: graphemeCount, max: MAX_TRANSLATION_GRAPHEMES }) }}
-        </p>
-        <p
-          v-if="textTooLong"
-          :id="textErrorId"
-          class="field-error"
-          role="status"
-          aria-live="polite"
+      </section>
+      <section class="target-pane">
+        <div
+          class="field target-field"
+          role="group"
+          :aria-label="t('phraseTranslate.targetLocale')"
+          :aria-invalid="targetEmpty"
+          :aria-describedby="showTargetError ? targetErrorId : undefined"
         >
-          {{ t('phraseTranslate.errorValidation') }}
-        </p>
-        <p v-else-if="showTextError" :id="textErrorId" class="field-error">
-          {{ t('phraseTranslate.errorValidation') }}
-        </p>
-      </div>
+          <LanguageLocalePicker
+            :model-value="targetLocale"
+            :label="t('phraseTranslate.targetLocale')"
+            :placeholder="t('phraseTranslate.targetLocalePlaceholder')"
+            :allow-create="false"
+            @update:model-value="onTargetLocale"
+          />
+          <p v-if="showTargetError" :id="targetErrorId" class="field-error">
+            {{ t('phraseTranslate.errorTargetLocale') }}
+          </p>
+        </div>
+        <div class="target-output"><slot name="output" /></div>
+      </section>
     </div>
 
     <div class="actions">
@@ -208,12 +214,14 @@ function onSubmit() {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.language-controls {
+.translation-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-width: 0;
 }
+.source-pane, .target-pane { min-width: 0; display: grid; align-content: start; gap: 16px; }
+.target-output { min-width: 0; min-height: 220px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); }
 .field {
   display: flex;
   flex-direction: column;
@@ -236,7 +244,7 @@ function onSubmit() {
 .text-input {
   box-sizing: border-box;
   width: 100%;
-  min-height: 96px;
+  min-height: 220px;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--r);
@@ -285,7 +293,8 @@ function onSubmit() {
   padding: 0 18px;
 }
 @media (min-width: 720px) {
-  .language-controls {
+  .source-pane, .target-pane { grid-template-rows: minmax(128px, max-content) auto; }
+  .translation-workspace {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }

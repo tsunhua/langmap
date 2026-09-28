@@ -12,6 +12,8 @@ vi.mock('../src/services/translation/orchestrator', async (importOriginal) => {
 });
 
 const runTranslationMock = vi.mocked(runTranslation);
+const waitUntil = vi.fn();
+const executionContext = { waitUntil, passThroughOnException: vi.fn(), props: {} };
 
 const SECRET_KEY = 'test-secret';
 const USER_SQL = 'SELECT id, username, role FROM users WHERE id = ?';
@@ -86,9 +88,9 @@ async function post(options: PostOptions = {}): Promise<Response> {
       // Node's fetch requires duplex for a streamed body.
       duplex: 'half',
     } as RequestInit);
-    return app.request(request, undefined, env);
+    return app.request(request, undefined, env, executionContext);
   }
-  return app.request('http://example.test/translate', { method: 'POST', headers, body }, env);
+  return app.request('http://example.test/translate', { method: 'POST', headers, body }, env, executionContext);
 }
 
 async function jsonError(response: Response): Promise<string | undefined> {
@@ -98,6 +100,7 @@ async function jsonError(response: Response): Promise<string | undefined> {
 
 beforeEach(() => {
   runTranslationMock.mockReset();
+  waitUntil.mockClear();
 });
 
 describe('POST /translate auth', () => {
@@ -257,6 +260,7 @@ describe('POST /translate streaming', () => {
 
     const response = await post();
     expect(response.status).toBe(200);
+    expect(waitUntil).toHaveBeenCalledWith(expect.any(Promise));
     expect(response.headers.get('content-type')).toBe('application/x-ndjson; charset=utf-8');
     expect(response.headers.get('cache-control')).toBe('no-store');
 

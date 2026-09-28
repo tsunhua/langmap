@@ -10,7 +10,6 @@ import type { TranslationRequestInput } from '@/api/translation'
 import TranslationForm, { type TranslationFormValue } from '@/components/translation/TranslationForm.vue'
 import TranslationProgress from '@/components/translation/TranslationProgress.vue'
 import TranslationResult from '@/components/translation/TranslationResult.vue'
-import EvidenceList from '@/components/translation/EvidenceList.vue'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 
 const router = useRouter()
@@ -21,7 +20,6 @@ const stream = useTranslationStream()
 
 const {
   stage,
-  mode,
   sourceLanguage,
   segmentation,
   confirmation,
@@ -70,6 +68,11 @@ function buildInput(sourceLangCode: string | null): TranslationRequestInput {
 }
 
 function onFormUpdate(value: TranslationFormValue) {
+  if (value.text !== form.value.text || value.sourceLangCode !== form.value.sourceLangCode || value.targetLocaleCode !== form.value.targetLocaleCode) {
+    stream.reset()
+    lastInput.value = null
+    contributeError.value = ''
+  }
   form.value = value
 }
 
@@ -115,6 +118,7 @@ async function sendToContribute() {
     contributeError.value = t('phraseTranslate.sendToContributeFailed')
     return
   }
+  if (lastInput.value !== input || result.value !== completed) return
   prefillStore.set({
     // The exact fast path sends no source_language event, so the result is the
     // authoritative source when detection never streamed one.
@@ -143,11 +147,29 @@ async function sendToContribute() {
       <TranslationForm
         :model-value="form"
         :disabled="isStreaming"
-        :error="error?.message ?? ''"
         @update:model-value="onFormUpdate"
         @submit="submit"
         @cancel="stream.cancel()"
-      />
+      >
+        <template #output>
+          <div class="output-region">
+            <TranslationProgress v-if="hasActivity" :stage="stage" :is-streaming="isStreaming" :error="error" :result="result" />
+            <TranslationResult
+              v-if="translation || result"
+              :translation="translation"
+              :result="result"
+              :alternatives="alternatives"
+              :evidence="evidence?.items ?? []"
+              :source-lang-code="sourceLanguage?.code ?? form.sourceLangCode"
+              @retry="retry"
+              @edit="edit"
+              @send-to-contribute="sendToContribute"
+            />
+            <p v-else-if="!hasActivity" class="output-placeholder">{{ t('phraseTranslate.outputPlaceholder') }}</p>
+            <p v-if="contributeError" class="contribute-error" role="alert">{{ contributeError }}</p>
+          </div>
+        </template>
+      </TranslationForm>
     </div>
 
     <section
@@ -181,42 +203,7 @@ async function sendToContribute() {
       </button>
     </section>
 
-    <!-- A stable block keeps streaming deltas from shifting the main layout. -->
-    <div class="output-region" :class="{ 'has-activity': hasActivity }">
-      <TranslationProgress
-        v-if="hasActivity"
-        :stage="stage"
-        :mode="mode"
-        :is-streaming="isStreaming"
-        :error="error"
-        :source-language="sourceLanguage"
-        :segmentation-spans="segmentation"
-        :evidence="evidence"
-        :target-locale-code="form.targetLocaleCode"
-        :translation="translation"
-        :result="result"
-      />
 
-      <TranslationResult
-        v-if="translation || result"
-        :translation="translation"
-        :result="result"
-        :alternatives="alternatives"
-        @retry="retry"
-        @edit="edit"
-        @send-to-contribute="sendToContribute"
-      />
-
-      <p v-if="contributeError" class="contribute-error" role="alert">{{ contributeError }}</p>
-
-      <EvidenceList
-        v-if="evidence"
-        :items="evidence.items"
-        :omitted-count="evidence.omittedCount"
-        :degraded="evidence.degraded"
-        :retrieval-status="evidence.retrievalStatus"
-      />
-    </div>
   </main>
 </template>
 
@@ -224,7 +211,7 @@ async function sendToContribute() {
 .expression-translation {
   display: grid;
   gap: var(--space-md);
-  max-width: 920px;
+  max-width: 1120px;
   margin: auto;
   padding: var(--page-pad-top) 24px var(--page-pad-bottom);
   min-width: 0;
@@ -305,4 +292,8 @@ async function sendToContribute() {
     padding: var(--space-md) 16px var(--page-pad-bottom);
   }
 }
+</style>
+
+<style scoped>
+.output-placeholder { margin: 0; color: var(--faint); font-size: 20px; }
 </style>

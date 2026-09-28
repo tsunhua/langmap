@@ -205,7 +205,7 @@ describe('ExpressionTranslation page', () => {
     })
   })
 
-  it('advances the three-stage progress as the stream reports each stage', async () => {
+  it('updates one progress line as the stream reports each stage', async () => {
     const stream = controllableResponse()
     vi.mocked(postTranslation).mockImplementation(() => Promise.resolve(stream.response))
     const { wrapper } = await mountPage()
@@ -216,26 +216,26 @@ describe('ExpressionTranslation page', () => {
     stream.send(line({ type: 'status', stage: 'analyzing', mode: 'assisted', request_id: 'req-1' }))
     await flush()
     await nextTick()
-    expect(wrapper.findAll('.stage')).toHaveLength(3)
-    expect(wrapper.get('.stage[data-state="active"]').text()).toContain('Analyzing')
+    expect(wrapper.findAll('.process-status')).toHaveLength(1)
+    expect(wrapper.get('.process-status').text()).toContain('Analyzing')
     expect(wrapper.get('.process-status').attributes('aria-live')).toBe('polite')
     expect(wrapper.get('.process-status').attributes('role')).toBe('status')
 
     stream.send(line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }))
     await flush()
     await nextTick()
-    expect(wrapper.get('.stage[data-state="active"]').text()).toContain('Retrieving')
+    expect(wrapper.get('.process-status').text()).toContain('Retrieving')
 
     stream.send(line({ type: 'status', stage: 'generating', mode: 'assisted', request_id: 'req-1' }))
     await flush()
     await nextTick()
-    expect(wrapper.get('.stage[data-state="active"]').text()).toContain('Generating')
+    expect(wrapper.get('.process-status').text()).toContain('Generating')
 
     stream.close()
     await settle()
   })
 
-  it('shows source, retrieval, and draft details while the stream is active', async () => {
+  it('shows a single plain translation before generation finishes without retrieval clutter', async () => {
     const stream = controllableResponse()
     vi.mocked(postTranslation).mockImplementation(() => Promise.resolve(stream.response))
     const { wrapper } = await mountPage()
@@ -252,12 +252,12 @@ describe('ExpressionTranslation page', () => {
     await flush()
     await nextTick()
 
-    expect(wrapper.get('.process-details').text()).toContain('cmn')
-    expect(wrapper.get('.segmentation-text').text()).toBe('食飯')
-    expect(wrapper.get('.segmentation-reason').text()).toBe('phrase')
-    expect(wrapper.get('.segmentation-meta').text()).toContain('91%')
-    expect(wrapper.get('.process-evidence-source').text()).toBe('食飯')
-    expect(wrapper.get('.process-preview').text()).toBe('這个偌濟錢？')
+    expect(wrapper.findAll('.translation')).toHaveLength(1)
+    expect(wrapper.get('.translation').text()).toBe('這个偌濟錢？')
+    expect(wrapper.find('.translation-term').exists()).toBe(false)
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+    expect(wrapper.find('.segmentation-text').exists()).toBe(false)
+    expect(wrapper.find('.process-preview').exists()).toBe(false)
 
     stream.close()
     await settle()
@@ -276,13 +276,11 @@ describe('ExpressionTranslation page', () => {
     await wrapper.get('[data-action="submit"]').trigger('click')
     await settle()
 
-    const stages = wrapper.findAll('.stage')
-    expect(stages).toHaveLength(1)
-    expect(stages[0].text()).toContain('Retrieving')
+    expect(wrapper.get('.process-status').text()).toBe('Completed')
     expect(wrapper.text()).not.toContain('Analyzing the text')
   })
 
-  it('renders the evidence panel when references arrive', async () => {
+  it('opens references only after the matching translated phrase is selected', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
       Promise.resolve(streamResponse([
         line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }),
@@ -295,11 +293,13 @@ describe('ExpressionTranslation page', () => {
     await wrapper.get('[data-action="submit"]').trigger('click')
     await settle()
 
-    expect(wrapper.findAll('.evidence-item')).toHaveLength(1)
-    expect(wrapper.get('.evidence-source').text()).toBe('食飯')
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+    await wrapper.get('[data-term="吃飯"]').trigger('click')
+    expect(wrapper.get('.reference-panel').text()).toContain('食飯 → 吃飯')
+    expect(wrapper.findAll('.translation')).toHaveLength(1)
   })
 
-  it('shows an empty evidence panel when reference lookup is skipped', async () => {
+  it('keeps empty retrieval details hidden when reference lookup is skipped', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
       Promise.resolve(streamResponse([
         line({ type: 'status', stage: 'retrieving', mode: 'assisted', request_id: 'req-1' }),
@@ -313,13 +313,13 @@ describe('ExpressionTranslation page', () => {
     await settle()
 
     expect(wrapper.findAll('.evidence-item')).toHaveLength(0)
-    expect(wrapper.text()).toContain('Reference lookup was skipped')
-    expect(wrapper.find('.evidence-empty').exists()).toBe(true)
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Model-generated only')
   })
 
-  it('shows at most two reference alternatives', async () => {
+  it('shows at most two whole-sentence exact alternatives in collapsed details', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
-      Promise.resolve(streamResponse([resultLine({ alternatives: ['一', '二', '三'] })])),
+      Promise.resolve(streamResponse([resultLine({ alternatives: ['一', '二', '三'], resolution: 'exact_lookup' })])),
     )
     const { wrapper } = await mountPage()
     await fillValidForm(wrapper)
@@ -329,6 +329,40 @@ describe('ExpressionTranslation page', () => {
     const alternatives = wrapper.findAll('.alternatives li')
     expect(alternatives).toHaveLength(2)
     expect(alternatives.map((item) => item.text())).toEqual(['一', '二'])
+    expect(wrapper.get('details.alternatives').attributes('open')).toBeUndefined()
+  })
+
+  it('clears the old result and selection when the input changes', async () => {
+    vi.mocked(postTranslation).mockImplementation(() => Promise.resolve(streamResponse([
+      line({ type: 'evidence', items: [evidence], omitted_count: 0, degraded: false }), resultLine(),
+    ])))
+    const { wrapper } = await mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+    await wrapper.get('[data-term="吃飯"]').trigger('click')
+    expect(wrapper.find('.reference-panel').exists()).toBe(true)
+    await wrapper.get('#translation-text').setValue('新原文')
+    expect(wrapper.find('.translation').exists()).toBe(false)
+    expect(wrapper.find('.reference-panel').exists()).toBe(false)
+  })
+
+  it('aborts generation when the locale changes and ignores late output', async () => {
+    const stream = controllableResponse()
+    vi.mocked(postTranslation).mockResolvedValue(stream.response)
+    const { wrapper } = await mountPage()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+    const signal = vi.mocked(postTranslation).mock.calls[0][1]?.signal
+    const formComponent = wrapper.findComponent({ name: 'TranslationForm' })
+    formComponent.vm.$emit('update:modelValue', { text: '食飯', sourceLangCode: null, targetLocaleCode: 'eng-Latn-US' })
+    await nextTick()
+    expect(signal?.aborted).toBe(true)
+    stream.send(line({ type: 'translation_delta', text: 'OLD' }))
+    stream.close()
+    await settle()
+    expect(wrapper.find('.translation').exists()).toBe(false)
   })
 
   it('offers copy handled by the result component', async () => {

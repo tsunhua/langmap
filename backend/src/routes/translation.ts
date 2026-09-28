@@ -181,7 +181,7 @@ translation.post('/', requireTranslationAuth, async (c) => {
     requestId,
   };
 
-  void runTranslation(c.env, request, { signal: controller.signal, emit })
+  const pipeline = runTranslation(c.env, request, { signal: controller.signal, emit })
     .catch(() => controller.abort())
     .finally(() => {
       if (closed) return;
@@ -192,6 +192,7 @@ translation.post('/', requireTranslationAuth, async (c) => {
         // Already closed by a client cancel.
       }
     });
+  c.executionCtx.waitUntil(pipeline);
 
   c.header('Content-Type', 'application/x-ndjson; charset=utf-8');
   c.header('Cache-Control', 'no-store');

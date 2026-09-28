@@ -38,7 +38,7 @@ export interface TranslationEvidence {
   reference_locale_codes?: string[]
   path_type: 'direct' | 'two_hop'
   pivot_lang_code?: string
-  match_type: 'exact' | 'prefix'
+  match_type: 'exact' | 'prefix' | 'fuzzy'
   source_markers: string[]
 }
 

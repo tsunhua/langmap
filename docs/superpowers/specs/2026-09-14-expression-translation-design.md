@@ -2,9 +2,20 @@
 
 > 日期：2026-09-14
 >
-> 狀態：需求已確認；待施工
+> 狀態：初版已實作；2026-09-28 重構契約以新版規格為準
 >
 > 關聯：[CONTEXT.md](../../../CONTEXT.md)、[ADR 0006](../../adr/0006-generated-translation-boundary.md)
+
+## 2026-09-28 契約更新（已實作）
+
+以下原始設計保留初版背景；流程、畫面與 API 行為以[翻譯重構規格](2026-09-28-translation-refactor-design.md)取代相應章節：
+
+- 完整精確且完整指定 locale link 才免 AI；locale 排名在 SQL LIMIT 前生效，跨 locale 或未知 metadata 僅供生成參考。
+- 明確來源使用本地有界分詞，只有自動來源需要 AI detector。使用 OpenAI 相容 SDK，generation 真串流，detector／generation 關閉已驗證支援的 thinking。
+- 精確 roots 優先，短片段有限 prefix／trigram fallback；`match_type` 新增 `fuzzy`，不把整句字面相似度當主要檢索。
+- 譯文只顯示一次，完成後點詞才顯示參考，其他詞復用自然鍵 detail 與一跳 graph；沒有逐詞對齊宣稱。
+- assisted `alternatives=[]`；exact alternatives 只含同一指定 locale 的完整譯文，按需展開，不把片段譯詞當整句替代。
+- pipeline 綁定 Worker `waitUntil`，取消與錯誤不產生成功 result；生成結果的暫態／貢獻邊界維持 ADR 0006。
 
 ## 1. 摘要
 

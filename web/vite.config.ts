@@ -12,6 +12,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    fs: {
+      // The shared locale catalog lives alongside web, inside the repository.
+      allow: [fileURLToPath(new URL('..', import.meta.url))],
+    },
     proxy: {
       '/api/v2': 'http://localhost:8788',
     },

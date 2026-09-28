@@ -125,6 +125,88 @@ describe('expressions API', () => {
     expect(keys).toEqual([...keys].sort());
   });
 
+  it('ranks exact, prefix and contained matches before paginating within a language', async () => {
+    const token = await registerToken();
+    const q = `站${crypto.randomUUID().replaceAll('-', '')}`;
+    const expected = [q, `${q}乙`, `${q}甲`, `${q}甲乙`, `甲${q}`, `丙${q}甲`, `甲${q}乙`];
+    for (const text of [...expected].reverse()) await createExpression(token, text);
+    await createExpression(token, q, 'eng');
+
+    const items: Array<{ id: string; text: string; lang_code: string }> = [];
+    for (const offset of [0, 3, 6]) {
+      const params = new URLSearchParams({ q, lang_code: 'nan', limit: '3', offset: String(offset) });
+      const response = await fetch(`${BASE_URL}/api/v2/expressions/search?${params}`);
+      expect(response.status).toBe(200);
+      const body = await response.json() as {
+        data: { items: typeof items; total: number; hasMore: boolean };
+      };
+      expect(body.data.total).toBe(expected.length);
+      expect(body.data.hasMore).toBe(offset + 3 < expected.length);
+      expect(body.data.items).toHaveLength(Math.min(3, expected.length - offset));
+      items.push(...body.data.items);
+    }
+    expect(items.map((item) => item.text)).toEqual(expected.map(canonicalizeExpressionText));
+    expect(items.every((item) => item.lang_code === 'nan')).toBe(true);
+    expect(new Set(items.map((item) => item.id)).size).toBe(expected.length);
+  });
+
+  it('finds case-insensitive substrings in the middle of Latin text', async () => {
+    const token = await registerToken();
+    const q = `needle${crypto.randomUUID().replaceAll('-', '')}`;
+    const text = `Before ${q.toUpperCase()} after`;
+    const id = await createExpression(token, text, 'eng');
+    const params = new URLSearchParams({ q: q.toLowerCase(), lang_code: 'eng' });
+    const response = await fetch(`${BASE_URL}/api/v2/expressions/search?${params}`);
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { items: Array<{ id: string; text: string }>; total: number } };
+    expect(body.data.total).toBe(1);
+    expect(body.data.items).toEqual([expect.objectContaining({ id, text: canonicalizeExpressionText(text) })]);
+  });
+
+  it('finds one- and two-character Chinese substrings', async () => {
+    const token = await registerToken();
+    const id = await createExpression(token, `附近有車站${crypto.randomUUID().slice(0, 8)}`);
+    for (const q of ['車站', '站']) {
+      const params = new URLSearchParams({ q, lang_code: 'nan', limit: '50' });
+      const response = await fetch(`${BASE_URL}/api/v2/expressions/search?${params}`);
+      expect(response.status).toBe(200);
+      const body = await response.json() as { data: { items: Array<{ id: string }> } };
+      expect(body.data.items.some((item) => item.id === id)).toBe(true);
+    }
+  });
+
+  it.each(['%', '_', '\\'])('treats %s as a literal character rather than a pattern', async (character) => {
+    const token = await registerToken();
+    const marker = crypto.randomUUID().replaceAll('-', '');
+    const q = `針${character}線${marker}`;
+    const id = await createExpression(token, `前${q}後`);
+    await createExpression(token, `前針X線${marker}後`);
+    await createExpression(token, `前針線${marker}後`);
+    const params = new URLSearchParams({ q, lang_code: 'nan' });
+    const response = await fetch(`${BASE_URL}/api/v2/expressions/search?${params}`);
+    expect(response.status).toBe(200);
+    const body = await response.json() as { data: { items: Array<{ id: string }>; total: number } };
+    expect(body.data.total).toBe(1);
+    expect(body.data.items.map((item) => item.id)).toEqual([id]);
+  });
+
+  it('uses ids to break equal-text ties across languages without a language filter', async () => {
+    const token = await registerToken();
+    const q = `同詞${crypto.randomUUID().replaceAll('-', '')}`;
+    const first = await createExpression(token, q, 'eng');
+    const second = await createExpression(token, q);
+    const ids: string[] = [];
+    for (const offset of [0, 1]) {
+      const params = new URLSearchParams({ q, limit: '1', offset: String(offset) });
+      const response = await fetch(`${BASE_URL}/api/v2/expressions/search?${params}`);
+      expect(response.status).toBe(200);
+      const body = await response.json() as { data: { items: Array<{ id: string }>; total: number } };
+      expect(body.data.total).toBe(2);
+      ids.push(...body.data.items.map((item) => item.id));
+    }
+    expect(ids).toEqual([first, second]);
+  });
+
   it('returns 404 for a missing expression', async () => {
     const res = await fetch(`${BASE_URL}/api/v2/expressions/999999999999`);
     expect(res.status).toBe(404);

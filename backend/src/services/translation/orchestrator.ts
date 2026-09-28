@@ -198,18 +198,6 @@ function emitEvent(ctx: TranslationStreamContext, event: TranslationStreamEvent)
   ctx.emit(envelopeLine(event));
 }
 
-function distinctTargetTexts(items: TranslationEvidence[], mainTranslation: string, max: number): string[] {
-  const seen = new Set<string>([mainTranslation]);
-  const out: string[] = [];
-  for (const item of items) {
-    if (seen.has(item.target_text)) continue;
-    seen.add(item.target_text);
-    out.push(item.target_text);
-    if (out.length >= max) break;
-  }
-  return out;
-}
-
 export async function runTranslation(
   env: RunTranslationEnv,
   request: RunTranslationRequest,
@@ -461,7 +449,7 @@ async function assistedPath(
     type: 'result',
     request_id: request.requestId,
     translation: generation.translation,
-    alternatives: distinctTargetTexts(evidence, generation.translation, limits.maxAlternatives),
+    alternatives: [],
     source_lang_code: sourceLangCode,
     target_locale_code: request.targetLocaleCode,
     evidence_present: evidence.length > 0,
