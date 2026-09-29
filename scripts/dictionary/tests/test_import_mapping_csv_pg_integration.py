@@ -27,6 +27,8 @@ def _write_manifest(
     include_row: bool = True,
     duplicate_entry_id: bool = False,
     pos: tuple[str, ...] | None = None,
+    reading_value: str | None = None,
+    note: str | None = None,
 ) -> tuple[Path, str]:
     source_key = source_key or f"test:csv-import:{uuid4().hex}"
     tmp_path.mkdir(parents=True, exist_ok=True)
@@ -46,7 +48,8 @@ def _write_manifest(
         writer.writerow(header)
         if include_row:
             source_value, target_value = values or (f"word-{suffix}", f"語-{suffix}")
-            row = [f"entry-{suffix}", "integration", source_value, target_value, f"go-{suffix}"]
+            reading = reading_value or f"go-{suffix}"
+            row = [f"entry-{suffix}", note or "integration", source_value, target_value, reading]
             if pos is not None:
                 row.insert(4, "|".join(pos))
             writer.writerow(row)
@@ -56,7 +59,7 @@ def _write_manifest(
                     "integration-duplicate",
                     f"{source_value}-duplicate",
                     f"{target_value}-duplicate",
-                    f"go-{suffix}-duplicate",
+                    f"{reading}-duplicate",
                 ]
                 if pos is not None:
                     duplicate.insert(4, "|".join(pos))
@@ -153,6 +156,85 @@ def test_csv_import_is_idempotent_against_isolated_postgres(tmp_path: Path) -> N
         "edges": 1,
         "readings": 1,
     }
+
+
+def test_two_sources_may_assert_the_same_reading(tmp_path: Path) -> None:
+    database_url = os.environ.get("LANGMAP_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("set LANGMAP_TEST_DATABASE_URL to an isolated PostgreSQL database")
+
+    tag = uuid4().hex[:6]
+    shared = (f"shared-{tag}", f"共有-{tag}")
+    reader_a, _ = _write_manifest(
+        tmp_path / "reader-a",
+        source_key=f"test:reading-owner:a{tag}",
+        source_name="reader-a",
+        values=shared,
+        reading_value=f"go-{tag}",
+    )
+    reader_b, _ = _write_manifest(
+        tmp_path / "reader-b",
+        source_key=f"test:reading-owner:b{tag}",
+        source_name="reader-b",
+        values=shared,
+        reading_value=f"go-{tag}",
+    )
+
+    first = _run(reader_a, database_url, "--apply")
+    assert first.returncode == 0, first.stderr
+    second = _run(reader_b, database_url, "--apply")
+    assert second.returncode == 0, second.stderr
+
+    import psycopg
+
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT s.name FROM expression_readings readings "
+                "JOIN sources s ON s.id=readings.source_id WHERE readings.value=%s",
+                (f"go-{tag}",),
+            )
+            owners = [row[0] for row in cursor.fetchall()]
+
+    assert owners == ["reader-a"]
+
+
+def test_apply_accepts_notes_and_readings_longer_than_a_btree_page(tmp_path: Path) -> None:
+    database_url = os.environ.get("LANGMAP_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("set LANGMAP_TEST_DATABASE_URL to an isolated PostgreSQL database")
+
+    # Staging tables must not rely on a btree over unbounded text: PostgreSQL
+    # refuses index rows larger than ~2704 bytes.
+    # Deterministic high-entropy text: repetitive text compresses below the
+    # btree size limit and would not reproduce the failure.
+    long_note = "".join(hashlib.sha256(str(i).encode()).hexdigest() for i in range(120))
+    source_name = "long-note-reader"
+    manifest, _ = _write_manifest(
+        tmp_path / "long-note",
+        source_name=source_name,
+        note=long_note,
+        reading_value="go-kou",
+    )
+
+    result = _run(manifest, database_url, "--apply")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    output = json.loads(result.stdout)
+    assert output["success"] is True
+
+    import psycopg
+
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT count(*) FROM expression_edges edges "
+                "JOIN expression_edge_sources sources ON sources.edge_id=edges.id "
+                "JOIN sources s ON s.id=sources.source_id WHERE s.name=%s "
+                "AND edges.annotations_json LIKE %s",
+                (source_name, "%" + long_note + "%"),
+            )
+            assert cursor.fetchone()[0] == 1
 
 
 def test_apply_rejects_duplicate_entry_ids_in_postgres_staging(tmp_path: Path) -> None:

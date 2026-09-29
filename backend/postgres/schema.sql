@@ -209,12 +209,14 @@ CREATE INDEX idx_handbook_sections_parent ON handbook_sections(handbook_id, pare
 CREATE TABLE handbook_section_items (
   section_id BIGINT NOT NULL,
   position BIGINT NOT NULL,
-  expression_id BIGINT NOT NULL,
+  language_locale_id BIGINT NOT NULL,
+  text TEXT NOT NULL,
   PRIMARY KEY (section_id, position),
-  UNIQUE (section_id, expression_id),
+  UNIQUE (section_id, language_locale_id, text),
   FOREIGN KEY (section_id) REFERENCES handbook_sections(id) ON DELETE CASCADE,
-  FOREIGN KEY (expression_id) REFERENCES expressions(id) ON DELETE RESTRICT
+  FOREIGN KEY (language_locale_id) REFERENCES language_locales(id) ON DELETE RESTRICT
 );
+CREATE INDEX idx_handbook_section_items_locale_text ON handbook_section_items(language_locale_id, text);
 
 CREATE TABLE morphological_dimensions (
   code TEXT PRIMARY KEY,

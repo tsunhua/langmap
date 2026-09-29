@@ -597,9 +597,13 @@ def _create_temp_tables(connection: Any) -> None:
                 ) ON COMMIT DELETE ROWS;
                 CREATE TEMP TABLE IF NOT EXISTS _dictionary_notes (
                     entry_id TEXT NOT NULL,
-                    note TEXT NOT NULL,
-                    PRIMARY KEY (entry_id, note)
+                    note TEXT NOT NULL
                 ) ON COMMIT DELETE ROWS;
+                -- Notes, readings and expression texts are unbounded, so the
+                -- identity is enforced over an md5 digest; a btree over the raw
+                -- text rejects any value larger than about 2704 bytes.
+                CREATE UNIQUE INDEX IF NOT EXISTS _dictionary_notes_identity
+                    ON _dictionary_notes (entry_id, md5(note));
                 CREATE TEMP TABLE IF NOT EXISTS _dictionary_pos (
                     entry_id TEXT NOT NULL,
                     locale_code TEXT NOT NULL,
@@ -611,16 +615,18 @@ def _create_temp_tables(connection: Any) -> None:
                     locale_code TEXT NOT NULL,
                     language_code TEXT NOT NULL,
                     scheme TEXT NOT NULL,
-                    value TEXT NOT NULL,
-                    PRIMARY KEY (entry_id, locale_code, scheme, value)
+                    value TEXT NOT NULL
                 ) ON COMMIT DELETE ROWS;
+                CREATE UNIQUE INDEX IF NOT EXISTS _dictionary_readings_identity
+                    ON _dictionary_readings (entry_id, locale_code, scheme, md5(value));
                 CREATE TEMP TABLE IF NOT EXISTS _dictionary_expression_ids (
                     entry_id TEXT NOT NULL,
                     locale_code TEXT NOT NULL,
                     expression_text TEXT NOT NULL,
-                    expression_id BIGINT NOT NULL,
-                    PRIMARY KEY (entry_id, locale_code, expression_text)
+                    expression_id BIGINT NOT NULL
                 ) ON COMMIT DELETE ROWS;
+                CREATE UNIQUE INDEX IF NOT EXISTS _dictionary_expression_ids_identity
+                    ON _dictionary_expression_ids (entry_id, locale_code, md5(expression_text));
                 CREATE TEMP TABLE IF NOT EXISTS _dictionary_pairs (
                     entry_id TEXT NOT NULL,
                     expression_a_id BIGINT NOT NULL,
@@ -1029,6 +1035,42 @@ def _source_counts(cur: Any, source_id: int) -> dict[str, int]:
         """
     )
     expected_readings = int(cur.fetchone()[0])
+    # A reading key may already be owned by an earlier source when two
+    # dictionaries assert the identical (expression, locale, scheme, value).
+    # Those rows are kept and attributed to whoever imported first, so the
+    # invariant checks that every staged key landed rather than that this
+    # source owns all of them.
+    cur.execute(
+        """
+        SELECT COUNT(*)
+        FROM (
+            SELECT DISTINCT ids.expression_id, ll.id, readings.scheme, readings.value
+            FROM _dictionary_readings readings
+            JOIN _dictionary_expression_ids ids
+              ON ids.entry_id=readings.entry_id
+            JOIN expressions expression_rows ON expression_rows.id=ids.expression_id
+            JOIN language_locales ll ON ll.code=readings.locale_code
+            WHERE (
+                ids.locale_code=readings.locale_code
+                OR (
+                    expression_rows.language_id=ll.language_id
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM _dictionary_expression_ids exact_ids
+                        WHERE exact_ids.entry_id=readings.entry_id
+                          AND exact_ids.locale_code=readings.locale_code
+                    )
+                )
+            )
+        ) expected
+        JOIN expression_readings stored
+          ON stored.expression_id=expected.expression_id
+         AND stored.locale_id=expected.id
+         AND stored.scheme=expected.scheme
+         AND stored.value=expected.value
+        """
+    )
+    present_readings = int(cur.fetchone()[0])
     cur.execute("SELECT COUNT(*) FROM expression_readings WHERE source_id=%s", (source_id,))
     readings = int(cur.fetchone()[0])
     return {
@@ -1038,6 +1080,7 @@ def _source_counts(cur: Any, source_id: int) -> dict[str, int]:
         "expression_claims": expression_claims,
         "edge_claims": edge_claims,
         "expected_readings": expected_readings,
+        "present_readings": present_readings,
     }
 
 
@@ -1079,7 +1122,7 @@ def _assert_source_counts(cur: Any, validated: ValidatedManifest, source_id: int
         "edges": (actual["edges"], staged["edges"]),
         "expression_claims": (actual["expression_claims"], staged["expression_claims"]),
         "edge_claims": (actual["edge_claims"], staged["edge_claims"]),
-        "readings": (actual["readings"], actual["expected_readings"]),
+        "readings": (actual["present_readings"], actual["expected_readings"]),
     }
     streaming_checks = {
         "expression_claims": (
@@ -1228,7 +1271,8 @@ def _cleanup_candidates(cur: Any) -> None:
           )
           AND NOT EXISTS (
               SELECT 1 FROM handbook_section_items items
-              WHERE items.expression_id=expressions.id
+              JOIN expression_locale_links links ON links.locale_id=items.language_locale_id
+              WHERE links.expression_id=expressions.id AND items.text=expressions.text
           )
           AND NOT EXISTS (
               SELECT 1 FROM ui_messages messages
@@ -1326,6 +1370,7 @@ def apply_target(
     backup_dir: Path | None = None,
     backup_enabled: bool = True,
     rebuild_secondary_indexes: bool = False,
+    suspend_secondary_indexes: bool = False,
 ) -> dict[str, Any]:
     prepared = validate_target(target)
     backup_path: Path | None = None
@@ -1346,22 +1391,28 @@ def apply_target(
     }
     with _connect(database_url) as connection:
         _create_temp_tables(connection)
-        for index, validated in enumerate(prepared):
-            try:
-                counts = _apply_one_source(connection, validated, rebuild_secondary_indexes)
-            except Exception as exc:
-                result["failed"].append(
-                    {"source_key": validated.source_key, "error": str(exc)}
-                )
-                result["not_attempted"] = [
-                    item.source_key for item in prepared[index + 1 :]
-                ]
-                result["cleanup"] = {"status": "skipped", "reason": "source_failed"}
-                return result
-            result["committed"].append(
-                {"source_key": validated.source_key, "summary": counts}
-            )
+        suspended: list[tuple[str, str, str]] = []
+        if suspend_secondary_indexes:
+            with connection.transaction():
+                with connection.cursor() as cur:
+                    suspended = _capture_secondary_indexes(cur)
+                    _drop_secondary_indexes(cur, suspended)
         try:
+            for index, validated in enumerate(prepared):
+                try:
+                    counts = _apply_one_source(connection, validated, rebuild_secondary_indexes)
+                except Exception as exc:
+                    result["failed"].append(
+                        {"source_key": validated.source_key, "error": str(exc)}
+                    )
+                    result["not_attempted"] = [
+                        item.source_key for item in prepared[index + 1 :]
+                    ]
+                    result["cleanup"] = {"status": "skipped", "reason": "source_failed"}
+                    return result
+                result["committed"].append(
+                    {"source_key": validated.source_key, "summary": counts}
+                )
             with connection.transaction():
                 with connection.cursor() as cur:
                     _cleanup_candidates(cur)
@@ -1370,6 +1421,13 @@ def apply_target(
         except Exception as exc:
             result["cleanup"] = {"status": "failed", "error": str(exc)}
             return result
+        finally:
+            if suspended:
+                # Restored even when a source failed, so the target is never
+                # left without its allowlisted secondary indexes.
+                with connection.transaction():
+                    with connection.cursor() as cur:
+                        _recreate_secondary_indexes(cur, suspended)
     result["success"] = True
     return result
 
@@ -1381,6 +1439,7 @@ def apply(
     backup_dir: Path | None = None,
     backup_enabled: bool = True,
     rebuild_secondary_indexes: bool = False,
+    suspend_secondary_indexes: bool = False,
 ) -> dict[str, Any]:
     result = apply_target(
         manifest_path,
@@ -1388,6 +1447,7 @@ def apply(
         backup_dir=backup_dir,
         backup_enabled=backup_enabled,
         rebuild_secondary_indexes=rebuild_secondary_indexes,
+        suspend_secondary_indexes=suspend_secondary_indexes,
     )
     if result["success"] and len(result["committed"]) == 1:
         return result["committed"][0]["summary"]
@@ -1405,10 +1465,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--backup-dir", type=Path)
     parser.add_argument("--no-pre-release-backup", action="store_true")
     parser.add_argument("--rebuild-secondary-indexes", action="store_true")
+    parser.add_argument("--suspend-secondary-indexes", action="store_true")
     args = parser.parse_args(argv)
     try:
         if args.rebuild_secondary_indexes and args.check:
             raise CsvContractError("--rebuild-secondary-indexes requires --apply")
+        if args.suspend_secondary_indexes and args.check:
+            raise CsvContractError("--suspend-secondary-indexes requires --apply")
+        if args.suspend_secondary_indexes and args.rebuild_secondary_indexes:
+            raise CsvContractError(
+                "--suspend-secondary-indexes cannot be combined with --rebuild-secondary-indexes"
+            )
         if args.no_pre_release_backup and args.backup_dir is not None:
             raise CsvContractError("--backup-dir cannot be combined with --no-pre-release-backup")
         target_path = args.manifest or args.input_dir
@@ -1442,6 +1509,7 @@ def main(argv: list[str] | None = None) -> int:
             backup_dir=backup_dir,
             backup_enabled=not args.no_pre_release_backup,
             rebuild_secondary_indexes=args.rebuild_secondary_indexes,
+            suspend_secondary_indexes=args.suspend_secondary_indexes,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0 if result["success"] else 2

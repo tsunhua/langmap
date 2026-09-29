@@ -82,7 +82,11 @@ ENTRY_ID,NOTE,LOCALE_eng-Latn-US,LOCALE_<target-locale>,READING_<locale>_<scheme
 `READING_*` 欄位。每個 parser entry 產生一列：
 
 - `ENTRY_ID`：`oldid:<revision>#<section-key>/<row-number>`，保留 revision、section 與
-  原始 row provenance；同一 archive 內唯一。
+  原始 row provenance；同一 archive 內唯一。單一 Wikivoyage row 展開成多個 lexical
+  pair 時（例如 Chinese 的 measure-word/vehicle 公式），在逗號後附加變體鍵組成
+  `oldid:<revision>#<section-key>/<row-number>/<variant-key>`（如
+  `.../numbers/347/measure-word-1-cmn-Hans-CN`）；`build_wikivoyage_handbook.py`
+  同時接受兩種形式。
 - `NOTE`：保留 parser 判定的 target annotation；section 與 revision 不另猜測，
   以 `ENTRY_ID`／manifest 為準。
 - `LOCALE_eng-Latn-US`：該 entry 的 English equivalent；同列多個等價物以 `|`

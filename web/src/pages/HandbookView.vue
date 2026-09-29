@@ -268,6 +268,7 @@ async function load() {
 }
 
 async function selectExpression(item: HandbookItem) {
+  if (!item.id) return
   await selectExpressionById(item.id, {
     id: item.id,
     text: item.text,
@@ -450,7 +451,7 @@ watch([() => localization.locale, () => localization.secondary], () => {
           <component :is="sectionDepth(sec, hb.sections) > 0 ? 'h3' : 'h2'">{{ sec.title || t('handbook.chapter', { number: sectionNumber(sec, hb.sections) }) }}</component>
         </div>
         <ol v-if="sec.items?.length" class="hb-expr-list">
-          <li v-for="(expr, j) in sec.items" :key="expr.id">
+          <li v-for="(expr, j) in sec.items" :key="expr.id ?? `handbook-row-${j}`">
             <button
               type="button"
               class="hb-expr"

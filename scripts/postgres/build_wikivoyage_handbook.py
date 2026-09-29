@@ -14,7 +14,7 @@ from typing import Any
 
 MANAGED_KEY = "enwikivoyage-phrasebooks"
 DEFAULT_TITLE = "English phrasebook"
-_MARKER = re.compile(r"^oldid:(?P<revision>[^#]+)#(?P<section>[^/]+)/(?P<row>\d+)$")
+_MARKER = re.compile(r"^oldid:(?P<revision>[^#]+)#(?P<section>[^/]+)/(?P<row>\d+)(?:/[^/]+)?$")
 
 
 @dataclass(frozen=True)
@@ -142,6 +142,7 @@ def build_managed_handbook(
     locale = connection.execute("SELECT id FROM language_locales WHERE code='eng-Latn-US' LIMIT 1").fetchone()
     if locale is None:
         raise ValueError("eng-Latn-US locale is required")
+    locale_id = int(locale[0])
     section_items = _section_rows(connection, section_catalog)
     with connection.transaction():
         existing = connection.execute("SELECT id FROM handbooks WHERE managed_key=%s", (managed_key,)).fetchone()
@@ -188,12 +189,19 @@ def build_managed_handbook(
                 earliest_row = min(candidate[0] for candidate in variants)
                 canonical = min(variants, key=lambda candidate: (_case_style_rank(candidate[2]), candidate[2], candidate[1]))
                 deduplicated.append((earliest_row, canonical[1], canonical[2]))
-            for item_position, (_row_number, expression_id, _text) in enumerate(
-                sorted(deduplicated, key=lambda item: (item[0], item[2], item[1])), 1
+            final_items: list[tuple[int, int, str]] = []
+            final_texts: set[str] = set()
+            for candidate in deduplicated:
+                if candidate[2] in final_texts:
+                    continue
+                final_texts.add(candidate[2])
+                final_items.append(candidate)
+            for item_position, (_row_number, _expression_id, text) in enumerate(
+                sorted(final_items, key=lambda item: (item[0], item[2], item[1])), 1
             ):
                 connection.execute(
-                    "INSERT INTO handbook_section_items(section_id,position,expression_id) VALUES(%s,%s,%s)",
-                    (section_id, item_position, expression_id),
+                    "INSERT INTO handbook_section_items(section_id,position,language_locale_id,text) VALUES(%s,%s,%s,%s)",
+                    (section_id, item_position, locale_id, text),
                 )
                 total_items += 1
         check_sections = int(connection.execute("SELECT COUNT(*) FROM handbook_sections WHERE handbook_id=%s", (handbook_id,)).fetchone()[0])
