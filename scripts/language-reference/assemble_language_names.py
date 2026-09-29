@@ -80,11 +80,21 @@ CLDR_ALIASES = {
     "yue": "yue",
 }
 
+# Macro-language labels visible in imported locale profiles. These codes are
+# intentionally absent from the individual-language registry, so keep their
+# names in the code-keyed runtime catalog without adding canonical name edges.
+CODE_KEYED_ONLY_LANGUAGE_CODES = {"ara", "pus"}
+
 # These are deliberately narrow, reviewable product choices for languages
 # already visible in the application or whose external sources disagree.
 # They also ensure that the first local rollout fixes the names the user can
 # currently see on /languages.
 CURATED = {
+    "ara": {
+        "cmn-Hans-CN": "阿拉伯语",
+        "cmn-Hant-TW": "阿拉伯語",
+        "jpn-Jpan-JP": "アラビア語",
+    },
     "arb": {
         "cmn-Hans-CN": "标准阿拉伯语",
         "cmn-Hant-TW": "標準阿拉伯語",
@@ -120,6 +130,11 @@ CURATED = {
         "cmn-Hant-TW": "日語",
         "jpn-Jpan-JP": "日本語",
     },
+    "khk": {
+        "cmn-Hans-CN": "喀尔喀蒙古语",
+        "cmn-Hant-TW": "喀爾喀蒙古語",
+        "jpn-Jpan-JP": "ハルハ・モンゴル語",
+    },
     "kor": {
         "cmn-Hans-CN": "韩语",
         "cmn-Hant-TW": "韓語",
@@ -134,6 +149,11 @@ CURATED = {
         "cmn-Hans-CN": "拉尔特语",
         "cmn-Hant-TW": "拉爾特語",
         "jpn-Jpan-JP": "ラルテー語",
+    },
+    "pus": {
+        "cmn-Hans-CN": "普什图语",
+        "cmn-Hant-TW": "普什圖語",
+        "jpn-Jpan-JP": "パシュトー語",
     },
     "rus": {
         "cmn-Hans-CN": "俄语",
@@ -170,6 +190,11 @@ CURATED = {
         "cmn-Hant-TW": "央壯語",
         "jpn-Jpan-JP": "徳靖チワン語",
     },
+    "zsm": {
+        "cmn-Hans-CN": "标准马来语",
+        "cmn-Hant-TW": "標準馬來語",
+        "jpn-Jpan-JP": "標準マレー語",
+    },
     "x-emoji": {
         "cmn-Hans-CN": "表情符号",
         "cmn-Hant-TW": "表情符號",
@@ -205,7 +230,7 @@ def read_language_codes(path: Path) -> set[str]:
         for row in csv.DictReader(handle, delimiter="\t"):
             if row.get("Scope") == "I" and row.get("Id"):
                 codes.add(row["Id"].strip().lower())
-    codes.update({"x-emoji", "x-image"})
+    codes.update(CODE_KEYED_ONLY_LANGUAGE_CODES | {"x-emoji", "x-image"})
     return codes
 
 

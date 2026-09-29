@@ -44,7 +44,10 @@ languages.get('/:code', async (c) => {
   const detail = await getLanguageDetail(
     c.env.DB,
     (c.req.param('code') ?? '').toLowerCase(),
-    {},
+    {
+      uiLocale: c.req.query('ui_locale') ?? '',
+      secondaryUiLocale: c.req.query('secondary_ui_locale') ?? '',
+    },
     c.req.query('locale') ?? '',
   );
   if (!detail) return notFound(c, 'Language');

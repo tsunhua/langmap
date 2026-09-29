@@ -17586,6 +17586,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '加拿大', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '加拿大', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カネラ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '粤语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '粵語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '山泽语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '山澤語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カオラン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -17704,16 +17706,18 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'カルデア現代アラム語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャリ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '占文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '占文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '查马拉尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'チャマラル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+  (1303, '占文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
 INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '查马拉尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, 'チャマラル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャミクロ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '查莫罗语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '查莫羅語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャモロ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '昌聂语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャネ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '潮州闽南语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '潮州閩南語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャウラ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '查瓦卡諾語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'チャバカノ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18203,12 +18207,12 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'エコイ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '艾卡朱克语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '艾卡朱克文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'エカジュク語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, 'エカジュク語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'エカリ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '萨尔瓦多', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '薩爾瓦多', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '埃兰语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '埃兰语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '埃蘭文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'エラム語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '爱尔巴桑文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18237,6 +18241,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '英语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '英語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '英語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '英语（英国）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '英語（英國）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '英语（美国）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '英語（美國）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '古典マヤ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '赤道几内亚', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '赤道幾內亞', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18657,6 +18665,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (4427, '客語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (5958, 'Hakka', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '喀尔喀蒙古语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '喀爾喀蒙古語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハルハ・モンゴル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハリア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '哈尔魁梅林语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18699,7 +18708,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '哈桑語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'アラビア語ハッサニア方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '哈特兰文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '哈特拉文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '哈特拉文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '哈梯语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハッティ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '豪萨语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -18708,8 +18718,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '豪萨手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '豪薩手語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハウサ手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'ハヴェケ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'ハヴェケ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '夏威夷克里奥尔英语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ハワイ・クレオール英語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '夏威夷手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19069,6 +19078,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '嘉絨語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ギャロン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ジブ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '靖西壮语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '靖西壯語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '晋语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '晉語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '晋語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19198,7 +19209,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'カミ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カミ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '卡莫罗语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '卡莫羅語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '卡莫羅語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '卡姆维里方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カンヴィリ方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '卡那卡那富语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19209,8 +19221,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '卡瑙杰語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '卡瑙傑語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カナウジ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'カンダス語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'カンダス語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '加涅姆布语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '卡念布文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'カネンブ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19699,7 +19710,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ランブヤ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ラモガイ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '楠榜语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '楠榜語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '楠榜語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ランプン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '楠榜語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ランプン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19710,8 +19722,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ランゴ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '伦巴底语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ロンゴバルド語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'ワロン手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'ワロン手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '老挝文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '寮文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ラーオ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -19932,6 +19943,10 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ルバ・ルルア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '呂迪語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'リュード語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '陆丰甲子话', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '陸豐甲子話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '陆丰甲子话（拉丁字）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '陸豐甲子話（拉丁字）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ルグバラ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ルグル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '鲁胡语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -20196,7 +20211,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'マルギ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'マリ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'マリ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'マリア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, 'マリア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '馬里科帕語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'マリコパ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '马林德语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -20211,8 +20227,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '马鲁西尼语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '马绍尔群岛', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '馬紹爾群島', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '马绍尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '马绍尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '馬紹爾語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'マーシャル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '马尔西语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -20415,7 +20430,13 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, '閩東語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '闽南语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '閩南語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '闽南语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '閩南語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '閩南語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '闽南语（白话字）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '閩南語（白話字）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '闽南语（台罗）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '閩南語（臺羅）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '闽中语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '閩中語 漢語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '閩中語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -20691,7 +20712,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '东部方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '東部方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '纳斯卡皮语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'ナスカピ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, 'ナスカピ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ナタンズ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ナチェズ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ナウカン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -20712,8 +20734,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'Ndambomo語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ンダサ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '恩道方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'ンダウ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'ンダウ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ンドム語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '恩东加语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '恩敦加語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -21192,7 +21213,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'オロ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'オマハ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '阿曼', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '阿曼', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '阿曼', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'アラビア語オマーン方言', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ンバンバ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'Ombo語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -21213,8 +21235,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'オロ・ウィン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '奥罗奇语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '奧羅奇語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'オロチ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'オロチ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '鄂罗克语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '鄂羅克語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウィルタ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -21240,6 +21261,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'オスマントルコ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ロトゥゴ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'オワ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '白话字', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '白話字', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'パディ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'パオ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '巴哼语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -21691,7 +21714,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '留尼旺', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '留尼汪克里奥尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '留尼汪克里奧爾語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'レユニオン・クレオール語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, 'レユニオン・クレオール語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ラジフ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'スゴー語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'サ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -21714,8 +21738,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '石语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '石語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '石語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '萨霍语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '萨霍语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '薩霍文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'サホ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'サフ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22020,6 +22043,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '锡默卢语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '錫默盧語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'シムル語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '简体中文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '簡體中文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西瑙高罗语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西瑙高羅語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'シナゴロ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22190,7 +22215,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '南普什图语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '南部パシュトー語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '桂南平话中文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, '桂南平話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (2777, '桂南平話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, '南ポモ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '南卢舒特种子语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '南盧紹錫德語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22215,8 +22241,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '南塔穹語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '南部トゥショーニ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '南乌兹别克语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '南烏茲別克語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '南烏茲別克語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '南尤卡吉尔语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'コリマ・ユカギール語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '南西グバヤ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22237,6 +22262,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '西班牙语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西班牙語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'スペイン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '西班牙语（西班牙）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '西班牙語（西班牙）', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西班牙手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西班牙手語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'スペイン手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22257,6 +22284,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '标准爱沙尼亚语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ラトビア語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '标准马来语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '標準馬來語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '標準マレー語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '标准摩洛哥塔马塞特语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '標準摩洛哥塔馬塞特文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22437,6 +22465,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '傣雅语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '傣雅語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'タヤプ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '台罗', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '臺羅', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '泰诺语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '泰諾語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'タイノ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22448,11 +22478,17 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '大武垅语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '大武壠語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'タイボアン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '台湾华语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '臺灣華語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '台湾手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '臺灣手語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '台湾手話', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '台湾', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '臺灣', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '台湾闽南语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '臺灣閩南語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '台州吴语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '台州吳語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '塔吉克语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '塔吉克語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'タジク語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22680,7 +22716,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '托克劳', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '托克勞群島', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'トケラウ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '焉耆语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '焉耆语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'トカラ語A', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '龟兹语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'クチャ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -22716,8 +22753,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'トラジャ＝サダン語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'トラウ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '梅安语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '托爾訥芬蘭文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (1303, '托爾訥芬蘭文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'トルネダール・フィンランド語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'トロモナ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'トロナ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -23112,6 +23148,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '威爾士語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウェールズ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウェールズ・ロマ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '温州吴语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '溫州吳語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '西アルバイ・ビコール語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '西孟加拉手语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '中西部バンダ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -23179,7 +23217,8 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'ウィピ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウィラドゥリ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウィヨット語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (1303, '瓦拉莫语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
+  (1303, '瓦拉莫语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
+INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (1303, '瓦拉莫文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, 'ウォライタ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '沃莱艾文', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -23217,8 +23256,7 @@ INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
   (2777, 'シェタ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '科萨语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '科薩語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
-  (2777, 'コサ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed'));
-INSERT OR IGNORE INTO expressions (language_id, text, source_id) VALUES
+  (2777, 'コサ語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '湘语', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (1303, '湘語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
   (2777, '湘語', (SELECT id FROM sources WHERE type='system' AND name='LangMap canonical names seed')),
@@ -25209,6 +25247,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='加拿大';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Canela' AND tgt.language_id=2777 AND tgt.text='カネラ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='カネラ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Cantonese' AND tgt.language_id=1303 AND tgt.text='粤语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='粤语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Cantonese' AND tgt.language_id=1303 AND tgt.text='粵語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='粵語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Cao lan' AND tgt.language_id=1303 AND tgt.text='山泽语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='山泽语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Cao lan' AND tgt.language_id=1303 AND tgt.text='山澤語';
@@ -25463,6 +25505,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='昌聂语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Chané' AND tgt.language_id=2777 AND tgt.text='チャネ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='チャネ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Chaozhou hokkien' AND tgt.language_id=1303 AND tgt.text='潮州闽南语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='潮州闽南语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Chaozhou hokkien' AND tgt.language_id=1303 AND tgt.text='潮州閩南語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='潮州閩南語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Chaura' AND tgt.language_id=2777 AND tgt.text='チャウラ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='チャウラ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Chavacano' AND tgt.language_id=1303 AND tgt.text='查瓦卡諾語';
@@ -26507,6 +26553,14 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='英語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='English' AND tgt.language_id=2777 AND tgt.text='英語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='英語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='English (uk)' AND tgt.language_id=1303 AND tgt.text='英语（英国）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='英语（英国）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='English (uk)' AND tgt.language_id=1303 AND tgt.text='英語（英國）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='英語（英國）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='English (us)' AND tgt.language_id=1303 AND tgt.text='英语（美国）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='英语（美国）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='English (us)' AND tgt.language_id=1303 AND tgt.text='英語（美國）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='英語（美國）';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Epigraphic mayan' AND tgt.language_id=2777 AND tgt.text='古典マヤ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='古典マヤ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Equatorial guinea' AND tgt.language_id=1303 AND tgt.text='赤道几内亚';
@@ -27347,6 +27401,8 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='spa-Latn-ES' WHERE e.language_id=5958 AND e.text='Hakka';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Halh mongolian' AND tgt.language_id=1303 AND tgt.text='喀尔喀蒙古语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='喀尔喀蒙古语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Halh mongolian' AND tgt.language_id=1303 AND tgt.text='喀爾喀蒙古語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='喀爾喀蒙古語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Halh mongolian' AND tgt.language_id=2777 AND tgt.text='ハルハ・モンゴル語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ハルハ・モンゴル語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Halia' AND tgt.language_id=2777 AND tgt.text='ハリア語';
@@ -28169,6 +28225,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ギャロン語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jibu' AND tgt.language_id=2777 AND tgt.text='ジブ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ジブ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jingxi zhuang' AND tgt.language_id=1303 AND tgt.text='靖西壮语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='靖西壮语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jingxi zhuang' AND tgt.language_id=1303 AND tgt.text='靖西壯語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='靖西壯語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jinyu chinese' AND tgt.language_id=1303 AND tgt.text='晋语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='晋语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Jinyu chinese' AND tgt.language_id=1303 AND tgt.text='晉語';
@@ -29891,6 +29951,14 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='呂迪語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Ludian' AND tgt.language_id=2777 AND tgt.text='リュード語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='リュード語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Lufeng jiazi hokkien' AND tgt.language_id=1303 AND tgt.text='陆丰甲子话';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='陆丰甲子话';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Lufeng jiazi hokkien' AND tgt.language_id=1303 AND tgt.text='陸豐甲子話';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='陸豐甲子話';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Lufeng jiazi hokkien (latin)' AND tgt.language_id=1303 AND tgt.text='陆丰甲子话（拉丁字）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='陆丰甲子话（拉丁字）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Lufeng jiazi hokkien (latin)' AND tgt.language_id=1303 AND tgt.text='陸豐甲子話（拉丁字）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='陸豐甲子話（拉丁字）';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Lugbara' AND tgt.language_id=2777 AND tgt.text='ルグバラ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ルグバラ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Luguru' AND tgt.language_id=2777 AND tgt.text='ルグル語';
@@ -30851,12 +30919,24 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='閩東語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min dong chinese' AND tgt.language_id=2777 AND tgt.text='閩東語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='閩東語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese' AND tgt.language_id=1303 AND tgt.text='闽南语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='闽南语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese' AND tgt.language_id=1303 AND tgt.text='閩南語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='閩南語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (hokkien)' AND tgt.language_id=1303 AND tgt.text='闽南语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='闽南语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (hokkien)' AND tgt.language_id=1303 AND tgt.text='閩南語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='閩南語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (hokkien)' AND tgt.language_id=2777 AND tgt.text='閩南語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='閩南語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (poj)' AND tgt.language_id=1303 AND tgt.text='闽南语（白话字）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='闽南语（白话字）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (poj)' AND tgt.language_id=1303 AND tgt.text='閩南語（白話字）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='閩南語（白話字）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (tailo)' AND tgt.language_id=1303 AND tgt.text='闽南语（台罗）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='闽南语（台罗）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min nan chinese (tailo)' AND tgt.language_id=1303 AND tgt.text='閩南語（臺羅）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='閩南語（臺羅）';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min zhong chinese' AND tgt.language_id=1303 AND tgt.text='闽中语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='闽中语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Min zhong chinese' AND tgt.language_id=1303 AND tgt.text='閩中語 漢語';
@@ -32501,6 +32581,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ロトゥゴ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Owa' AND tgt.language_id=2777 AND tgt.text='オワ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='オワ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='POJ' AND tgt.language_id=1303 AND tgt.text='白话字';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='白话字';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='POJ' AND tgt.language_id=1303 AND tgt.text='白話字';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='白話字';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Pa di' AND tgt.language_id=2777 AND tgt.text='パディ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='パディ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Pa''o karen' AND tgt.language_id=2777 AND tgt.text='パオ語';
@@ -34059,6 +34143,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='錫默盧語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Simeulue' AND tgt.language_id=2777 AND tgt.text='シムル語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='シムル語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Simplified chinese' AND tgt.language_id=1303 AND tgt.text='简体中文';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='简体中文';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Simplified chinese' AND tgt.language_id=1303 AND tgt.text='簡體中文';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='簡體中文';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Sinaugoro' AND tgt.language_id=1303 AND tgt.text='西瑙高罗语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='西瑙高罗语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Sinaugoro' AND tgt.language_id=1303 AND tgt.text='西瑙高羅語';
@@ -34491,6 +34579,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='西班牙語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Spanish' AND tgt.language_id=2777 AND tgt.text='スペイン語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='スペイン語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Spanish (spain)' AND tgt.language_id=1303 AND tgt.text='西班牙语（西班牙）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='西班牙语（西班牙）';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Spanish (spain)' AND tgt.language_id=1303 AND tgt.text='西班牙語（西班牙）';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='西班牙語（西班牙）';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Spanish sign language' AND tgt.language_id=1303 AND tgt.text='西班牙手语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='西班牙手语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Spanish sign language' AND tgt.language_id=1303 AND tgt.text='西班牙手語';
@@ -34531,6 +34623,8 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ラトビア語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Standard malay' AND tgt.language_id=1303 AND tgt.text='标准马来语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='标准马来语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Standard malay' AND tgt.language_id=1303 AND tgt.text='標準馬來語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='標準馬來語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Standard malay' AND tgt.language_id=2777 AND tgt.text='標準マレー語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='標準マレー語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Standard moroccan tamazight' AND tgt.language_id=1303 AND tgt.text='标准摩洛哥塔马塞特语';
@@ -34891,6 +34985,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='傣雅語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiap' AND tgt.language_id=2777 AND tgt.text='タヤプ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='タヤプ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tailo' AND tgt.language_id=1303 AND tgt.text='台罗';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台罗';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tailo' AND tgt.language_id=1303 AND tgt.text='臺羅';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='臺羅';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taino' AND tgt.language_id=1303 AND tgt.text='泰诺语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='泰诺语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taino' AND tgt.language_id=1303 AND tgt.text='泰諾語';
@@ -34913,6 +35011,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='大武壠語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taivoan' AND tgt.language_id=2777 AND tgt.text='タイボアン語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='タイボアン語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwan mandarin' AND tgt.language_id=1303 AND tgt.text='台湾华语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台湾华语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwan mandarin' AND tgt.language_id=1303 AND tgt.text='臺灣華語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='臺灣華語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwan sign language' AND tgt.language_id=1303 AND tgt.text='台湾手语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台湾手语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwan sign language' AND tgt.language_id=1303 AND tgt.text='臺灣手語';
@@ -34923,6 +35025,14 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台湾';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwan, province of china' AND tgt.language_id=1303 AND tgt.text='臺灣';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='臺灣';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwanese hokkien' AND tgt.language_id=1303 AND tgt.text='台湾闽南语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台湾闽南语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taiwanese hokkien' AND tgt.language_id=1303 AND tgt.text='臺灣閩南語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='臺灣閩南語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taizhou wu' AND tgt.language_id=1303 AND tgt.text='台州吴语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='台州吴语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Taizhou wu' AND tgt.language_id=1303 AND tgt.text='台州吳語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='台州吳語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tajik' AND tgt.language_id=1303 AND tgt.text='塔吉克语';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='塔吉克语';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Tajik' AND tgt.language_id=1303 AND tgt.text='塔吉克語';
@@ -36239,6 +36349,10 @@ INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relati
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ウェールズ語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Welsh romani' AND tgt.language_id=2777 AND tgt.text='ウェールズ・ロマ語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='ウェールズ・ロマ語';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Wenzhou wu' AND tgt.language_id=1303 AND tgt.text='温州吴语';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hans-CN' WHERE e.language_id=1303 AND e.text='温州吴语';
+INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='Wenzhou wu' AND tgt.language_id=1303 AND tgt.text='溫州吳語';
+INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='cmn-Hant-TW' WHERE e.language_id=1303 AND e.text='溫州吳語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='West albay bikol' AND tgt.language_id=2777 AND tgt.text='西アルバイ・ビコール語';
 INSERT OR IGNORE INTO expression_locale_links (expression_id, locale_id) SELECT e.id, l.id FROM expressions e JOIN language_locales l ON l.code='jpn-Jpan-JP' WHERE e.language_id=2777 AND e.text='西アルバイ・ビコール語';
 INSERT OR IGNORE INTO expression_edges (expression_a_id, expression_b_id, relation_mask, score) SELECT min(src.id, tgt.id), max(src.id, tgt.id), 1, 0 FROM expressions src JOIN expressions tgt WHERE src.language_id=1818 AND src.text='West bengal sign language' AND tgt.language_id=1303 AND tgt.text='西孟加拉手语';

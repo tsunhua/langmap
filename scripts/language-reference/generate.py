@@ -36,6 +36,11 @@ SYSTEM_CONTENT_LANGUAGES = (
     ('x-emoji', 'Emoji'),
 )
 
+# Visible imported profiles may use ISO 639-3 macro-language codes. Their
+# labels belong in the code-keyed runtime catalog, but there is no individual
+# language registry row to anchor canonical expression edges.
+CODE_KEYED_ONLY_LANGUAGE_CODES = {'ara', 'pus'}
+
 # Canonical locales used by the application and dictionary adapters. Locale IDs
 # are pinned below so adding a profile never renumbers existing registry rows.
 REFERENCE_LOCALES = (
@@ -316,6 +321,8 @@ def merge_language_name_catalog(
     merged = list(translations)
     for item in language_catalog:
         code = item["language_code"]
+        if code in CODE_KEYED_ONLY_LANGUAGE_CODES:
+            continue
         if code not in language_ids:
             raise ValueError(f"language-name catalog references unknown language {code!r}")
         canonical = canonical_by_code[code]
