@@ -36,7 +36,10 @@ function fakeDatabase(options: {
               if (statement.includes('SELECT *') && statement.includes('FROM ranked_edges')) {
                 return { results: (options.edgeRows ?? defaultEdgeRows) as T[] };
               }
-              return { results: (options.readingRows ?? defaultReadingRows) as T[] };
+              if (statement.includes('FROM expression_readings')) {
+                return { results: (options.readingRows ?? defaultReadingRows) as T[] };
+              }
+              return { results: [] as T[] };
             },
           };
         },
@@ -88,9 +91,16 @@ describe('handbook translations service', () => {
     expect(edgeQuery).toContain('ROW_NUMBER() OVER');
     expect(edgeQuery).toContain('translation_rank <= ?');
     expect(edgeQuery).not.toMatch(/expression_a_id\s*=.*\sOR\s+expression_b_id\s*=/i);
-    expect(sql.filter((statement) => statement.includes('FROM expression_readings'))).toHaveLength(1);
+    expect(edgeQuery).toContain('DISTINCT ON (resolved.expression_id)');
+    expect(edgeQuery).toContain('source_language_id');
+    expect(edgeQuery).not.toContain("source_language.code='eng'");
+    expect(edgeQuery).toContain('target_language.id <> source_items.source_language_id');
+    const readingQuery = sql.find((statement) => statement.includes('FROM expression_readings')) ?? '';
+    expect(readingQuery).toContain('expression_id = ANY(?::bigint[])');
+    expect(readingQuery).not.toContain('ranked_edges');
     expect(bindCalls.find(({ statement }) => statement === edgeQuery)?.args).toHaveLength(7);
-    expect(bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'))?.args).toHaveLength(8);
+    expect(bindCalls.find(({ statement }) => statement === readingQuery)?.args).toEqual([[20, 21], 5, 15000]);
+    expect(sql).toHaveLength(4);
   });
 
   it('caps translations per source expression and reports hidden candidates', async () => {
@@ -116,6 +126,69 @@ describe('handbook translations service', () => {
     expect(result.items[0].translations.map((translation) => translation.id)).toEqual([31, 32, 33]);
     expect(result.items[0].total_translation_count).toBe(4);
     expect(result.items[0].hidden_translation_count).toBe(1);
+  });
+
+  it('loads readings only for the unique translations returned after the per-source cap', async () => {
+    const { db, bindCalls } = fakeDatabase({
+      edgeRows: [
+        [10, 20, 1], [10, 21, 2], [10, 22, 3], [10, 23, 4],
+        [11, 20, 1],
+      ].map(([source_expression_id, target_expression_id, translation_rank]) => ({
+        source_expression_id,
+        target_expression_id,
+        target_text: `譯詞${target_expression_id}`,
+        target_lang_code: 'jpn',
+        target_language_name: 'Japanese',
+        target_locale_code: 'jpn-Jpan-JP',
+        edge_score: 1,
+        translation_rank,
+        translation_count: source_expression_id === 10 ? 4 : 1,
+        section_position: 1,
+        item_position: source_expression_id - 9,
+      })),
+    });
+
+    const result = await getHandbookTranslations(db, 1, 'jpn-Jpan-JP');
+
+    const readingCall = bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'));
+    expect(readingCall?.args).toEqual([[20, 21, 22], 5, 15000]);
+    expect(result.items[0].hidden_translation_count).toBe(1);
+  });
+
+  it('skips the readings query when there are no eligible translations', async () => {
+    const { db, sql } = fakeDatabase({ edgeRows: [] });
+
+    const result = await getHandbookTranslations(db, 1, 'jpn-Jpan-JP');
+
+    expect(result.items).toEqual([]);
+    expect(sql).toHaveLength(3);
+    expect(sql.some((statement) => statement.includes('FROM expression_readings'))).toBe(false);
+  });
+
+  it('returns only the first 5000 sources and reads only their target IDs', async () => {
+    const edgeRows = Array.from({ length: 5001 }, (_, index) => ({
+      source_expression_id: index + 1,
+      target_expression_id: index + 10001,
+      target_text: `譯詞${index}`,
+      target_lang_code: 'jpn',
+      target_language_name: 'Japanese',
+      target_locale_code: 'jpn-Jpan-JP',
+      edge_score: 1,
+      translation_rank: 1,
+      translation_count: 1,
+      section_position: 1,
+      item_position: index + 1,
+    }));
+    const { db, bindCalls } = fakeDatabase({ edgeRows, readingRows: [] });
+
+    const result = await getHandbookTranslations(db, 1, 'jpn-Jpan-JP');
+
+    expect(result.items).toHaveLength(5000);
+    expect(result.items[0].source_expression_id).toBe(1);
+    expect(result.items[result.items.length - 1]?.source_expression_id).toBe(5000);
+    const readingCall = bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'));
+    expect(readingCall?.args[0]).toHaveLength(5000);
+    expect(readingCall?.args[0]).not.toContain(15001);
   });
 
   it('rejects an empty locale before issuing database queries', async () => {

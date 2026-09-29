@@ -2,7 +2,7 @@
 
 > 日期：2026-09-29
 >
-> 狀態：規格已審閱修訂，待實作與驗收。
+> 狀態：程式已實作；真 PostgreSQL 與效能驗收待隔離資料庫。
 
 ## 問題與現況
 
@@ -11,7 +11,7 @@
 1. `SOURCE_ITEMS` 以 `source_language.code='eng'` 限制來源，因此非英語來源的 handbook 不會產生來源項目；中文來源呼叫 translations endpoint 會得到空的 `items`。
 2. `getHandbookTranslations` 先執行 `edgeSql`，再執行 `readingSql`。兩個獨立 SQL statement 都包含 `source_items`、`candidate_edges`、`unique_edges` 與 `ranked_edges`，讀音查詢因此重算整個候選邊圖。
 
-本輪僅核對程式與 schema，未重新量測先前回報的每條 SQL 約 5 秒；該數字是歷史量測，不是目前基準。
+設計審閱僅核對程式與 schema，未重新量測先前回報的每條 SQL 約 5 秒；該數字是歷史量測，不是目前基準。本次實作加入了隔離 PostgreSQL 測試，但目前沒有設定 `TRANSLATION_TEST_DATABASE_URL`，真資料庫案例及效能基準尚未執行。
 
 審閱另確認三個接入缺口：瀏覽器 session cache 可能保留舊版非英語來源的空結果；expression inspector 同時供來源、譯詞及關聯節點使用，不能一律套用目標語篩選；來源去重分別取 `MIN(s.position)` 與 `MIN(i.position)`，可能拼出不屬於任何一次出現的位置。
 

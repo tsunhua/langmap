@@ -3,6 +3,7 @@ import type { Database } from '../db/database';
 const MAX_ITEMS = 5000;
 const MAX_TRANSLATIONS_PER_ITEM = 3;
 const MAX_TRANSLATION_ROWS = MAX_ITEMS * MAX_TRANSLATIONS_PER_ITEM;
+const MAX_READING_ROWS = MAX_TRANSLATION_ROWS;
 
 export interface HandbookTranslationReading {
   scheme: string;
@@ -53,22 +54,24 @@ interface EdgeTranslationRow {
 interface ReadingRow { expression_id: number; scheme: string; value: string }
 
 const SOURCE_ITEMS = `
-  SELECT resolved.expression_id, MIN(s.position) AS section_position, MIN(i.position) AS item_position
+  SELECT DISTINCT ON (resolved.expression_id)
+         resolved.expression_id,
+         resolved.source_language_id,
+         s.position AS section_position,
+         i.position AS item_position
   FROM handbook_section_items i
-  JOIN handbook_sections s ON s.id=i.section_id
+  JOIN handbook_sections s ON s.id = i.section_id
+  JOIN language_locales source_locale ON source_locale.id = i.language_locale_id
   JOIN LATERAL (
-    SELECT link.expression_id
+    SELECT ex.id AS expression_id, ex.language_id AS source_language_id
     FROM expressions ex
-    JOIN expression_locale_links link ON link.expression_id=ex.id AND link.locale_id=i.language_locale_id
-    WHERE ex.language_id=(SELECT language_id FROM language_locales WHERE id=i.language_locale_id)
-      AND ex.text=i.text
-    ORDER BY link.expression_id
+    JOIN expression_locale_links link ON link.expression_id = ex.id AND link.locale_id = i.language_locale_id
+    WHERE ex.language_id = source_locale.language_id AND ex.text = i.text
+    ORDER BY ex.id
     LIMIT 1
   ) resolved ON TRUE
-  JOIN expressions source_expression ON source_expression.id=resolved.expression_id
-  JOIN languages source_language ON source_language.id=source_expression.language_id
-  WHERE s.handbook_id=? AND source_language.code='eng'
-  GROUP BY resolved.expression_id
+  WHERE s.handbook_id = ?
+  ORDER BY resolved.expression_id, s.position, i.position
 `;
 
 const LOCALE_LINK_TO_EXPRESSIONS = `
@@ -87,14 +90,14 @@ const TARGET_EDGES = `
          source_items.item_position
   FROM source_items
   JOIN expression_edges edge ON edge.expression_a_id=source_items.expression_id
-    AND edge.score>=0
+    AND edge.score >= 0
     AND edge.expression_b_id IN ${LOCALE_LINK_TO_EXPRESSIONS}
   JOIN expressions target_expression ON target_expression.id=edge.expression_b_id
   JOIN languages target_language ON target_language.id=target_expression.language_id
   JOIN expression_locale_links target_link ON target_link.expression_id=target_expression.id
-    AND target_link.locale_id=?
+    AND target_link.locale_id = ?
   JOIN language_locales target_locale ON target_locale.id=target_link.locale_id
-  WHERE target_language.code<>'eng'
+  WHERE target_language.id <> source_items.source_language_id
 `;
 
 const TARGET_EDGES_REVERSE = `
@@ -109,14 +112,14 @@ const TARGET_EDGES_REVERSE = `
          source_items.item_position
   FROM source_items
   JOIN expression_edges edge ON edge.expression_b_id=source_items.expression_id
-    AND edge.score>=0
+    AND edge.score >= 0
     AND edge.expression_a_id IN ${LOCALE_LINK_TO_EXPRESSIONS}
   JOIN expressions target_expression ON target_expression.id=edge.expression_a_id
   JOIN languages target_language ON target_language.id=target_expression.language_id
   JOIN expression_locale_links target_link ON target_link.expression_id=target_expression.id
-    AND target_link.locale_id=?
+    AND target_link.locale_id = ?
   JOIN language_locales target_locale ON target_locale.id=target_link.locale_id
-  WHERE target_language.code<>'eng'
+  WHERE target_language.id <> source_items.source_language_id
 `;
 
 const RANKED_TARGET_EDGES = `
@@ -149,10 +152,6 @@ const RANKED_TARGET_EDGES = `
   )
 `;
 
-function readingKey(row: ReadingRow): string {
-  return `${row.expression_id}\u0000${row.scheme}\u0000${row.value}`;
-}
-
 export async function getHandbookTranslations(
   db: Database,
   handbookId: number,
@@ -182,29 +181,6 @@ export async function getHandbookTranslations(
     handbookId, locale.id, locale.id, locale.id, locale.id,
     MAX_TRANSLATIONS_PER_ITEM, MAX_TRANSLATION_ROWS,
   ).all<EdgeTranslationRow>();
-
-  const readingSql = `${sourceItems}, ${RANKED_TARGET_EDGES}
-    SELECT DISTINCT readings.expression_id, readings.scheme, readings.value
-    FROM expression_readings readings
-    JOIN ranked_edges targets ON targets.target_expression_id=readings.expression_id
-      AND targets.translation_rank <= ?
-    JOIN language_locales reading_locale ON reading_locale.id=readings.locale_id AND reading_locale.id=?
-    ORDER BY readings.expression_id, readings.scheme, readings.value
-    LIMIT ?`;
-  const readingRows = await db.prepare(readingSql).bind(
-    handbookId, locale.id, locale.id, locale.id, locale.id,
-    MAX_TRANSLATIONS_PER_ITEM, locale.id, MAX_TRANSLATION_ROWS,
-  ).all<ReadingRow>();
-
-  const readingsByExpression = new Map<number, HandbookTranslationReading[]>();
-  const seenReadings = new Set<string>();
-  for (const row of readingRows.results) {
-    if (seenReadings.has(readingKey(row))) continue;
-    seenReadings.add(readingKey(row));
-    const values = readingsByExpression.get(row.expression_id) ?? [];
-    values.push({ scheme: row.scheme, value: row.value });
-    readingsByExpression.set(row.expression_id, values);
-  }
   const itemsBySource = new Map<number, HandbookTranslationItem>();
   for (const row of edgeRows.results) {
     let item = itemsBySource.get(row.source_expression_id);
@@ -215,7 +191,7 @@ export async function getHandbookTranslations(
         source_expression_id: row.source_expression_id,
         translations: [],
         total_translation_count: totalTranslationCount,
-        hidden_translation_count: Math.max(0, totalTranslationCount - MAX_TRANSLATIONS_PER_ITEM),
+        hidden_translation_count: 0,
       };
       itemsBySource.set(row.source_expression_id, item);
     }
@@ -227,8 +203,37 @@ export async function getHandbookTranslations(
       lang_code: row.target_lang_code,
       language_locale_code: row.target_locale_code,
       language_name: row.target_language_name,
-      readings: readingsByExpression.get(row.target_expression_id) ?? [],
+      readings: [],
     });
   }
+
+  for (const item of itemsBySource.values()) {
+    item.hidden_translation_count = Math.max(0, item.total_translation_count - item.translations.length);
+  }
+
+  const targetIds = [...new Set(
+    [...itemsBySource.values()].flatMap((item) => item.translations.map((translation) => translation.id)),
+  )].sort((a, b) => a - b);
+  if (targetIds.length) {
+    const readingSql = `
+      SELECT expression_id, scheme, value
+      FROM expression_readings
+      WHERE expression_id = ANY(?::bigint[]) AND locale_id = ?
+      ORDER BY expression_id, scheme, value
+      LIMIT ?`;
+    const readingRows = await db.prepare(readingSql).bind(targetIds, locale.id, MAX_READING_ROWS).all<ReadingRow>();
+    const readingsByExpression = new Map<number, HandbookTranslationReading[]>();
+    for (const row of readingRows.results) {
+      const values = readingsByExpression.get(row.expression_id) ?? [];
+      values.push({ scheme: row.scheme, value: row.value });
+      readingsByExpression.set(row.expression_id, values);
+    }
+    for (const item of itemsBySource.values()) {
+      for (const translation of item.translations) {
+        translation.readings = readingsByExpression.get(translation.id) ?? [];
+      }
+    }
+  }
+
   return { target_locale: normalizedLocale, items: [...itemsBySource.values()] };
 }

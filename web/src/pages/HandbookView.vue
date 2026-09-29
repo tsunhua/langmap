@@ -97,7 +97,7 @@ function sourceExpressionFingerprint(handbook: HandbookDetail | null): string {
 }
 
 function cacheKey(handbookId: string, locale: string, sourceFingerprint: string): string {
-  return `handbook:${handbookId}:translations:${locale}:${sourceFingerprint}`
+  return `handbook:${handbookId}:translations:v2:${locale}:${sourceFingerprint}`
 }
 
 function readTranslationCache(handbookId: string, locale: string, sourceFingerprint: string): HandbookTranslations | null {
@@ -105,7 +105,7 @@ function readTranslationCache(handbookId: string, locale: string, sourceFingerpr
     const raw = window.sessionStorage.getItem(cacheKey(handbookId, locale, sourceFingerprint))
     if (!raw) return null
     const parsed = JSON.parse(raw) as HandbookTranslations
-    return parsed && Array.isArray(parsed.items) ? parsed : null
+    return parsed && parsed.target_locale === locale && Array.isArray(parsed.items) ? parsed : null
   } catch {
     return null
   }
@@ -291,16 +291,19 @@ async function selectExpressionById(
   relationLoading.value = true
   relationError.value = ''
 
+  const selectedLanguageCode = optimisticExpression?.id === expressionId
+    ? optimisticExpression.lang_code
+    : selectedExpression.value?.id === expressionId
+      ? selectedExpression.value.lang_code
+      : undefined
+  const graphTargetLanguage = hb.value?.managed && targetLanguageCode.value && selectedLanguageCode
+    && selectedLanguageCode !== targetLanguageCode.value
+    ? targetLanguageCode.value
+    : undefined
+
   const [detailResult, graphResult] = await Promise.allSettled([
     expressionDetail(expressionId, localeParams.value),
-    mappingGraph(
-      expressionId,
-      1,
-      localeParams.value,
-      hb.value?.managed && (optimisticExpression?.lang_code ?? selectedExpression.value?.lang_code) === 'eng'
-        ? targetLanguageCode.value
-        : undefined,
-    ),
+    mappingGraph(expressionId, 1, localeParams.value, graphTargetLanguage),
   ])
   if (request !== selectionRequest) return
 
