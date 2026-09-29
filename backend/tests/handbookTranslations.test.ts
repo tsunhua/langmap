@@ -29,7 +29,7 @@ function fakeDatabase(options: {
               if (statement === 'SELECT visibility,user_id FROM handbooks WHERE id=?') {
                 return { visibility: options.visibility ?? 'public', user_id: options.userId ?? 1 } as T;
               }
-              if (statement === 'SELECT code FROM language_locales WHERE code=?') return { code: 'jpn-Jpan-JP' } as T;
+              if (statement === 'SELECT id, code FROM language_locales WHERE code=?') return { code: 'jpn-Jpan-JP', id: 5 } as T;
               return null as T;
             },
             async all<T>() {
@@ -89,8 +89,8 @@ describe('handbook translations service', () => {
     expect(edgeQuery).toContain('translation_rank <= ?');
     expect(edgeQuery).not.toMatch(/expression_a_id\s*=.*\sOR\s+expression_b_id\s*=/i);
     expect(sql.filter((statement) => statement.includes('FROM expression_readings'))).toHaveLength(1);
-    expect(bindCalls.find(({ statement }) => statement === edgeQuery)?.args).toHaveLength(5);
-    expect(bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'))?.args).toHaveLength(6);
+    expect(bindCalls.find(({ statement }) => statement === edgeQuery)?.args).toHaveLength(7);
+    expect(bindCalls.find(({ statement }) => statement.includes('FROM expression_readings'))?.args).toHaveLength(8);
   });
 
   it('caps translations per source expression and reports hidden candidates', async () => {
@@ -130,7 +130,7 @@ describe('handbook translations service', () => {
     const originalPrepare = db.prepare.bind(db);
     db.prepare = ((statement: string) => {
       const prepared = originalPrepare(statement);
-      if (statement === 'SELECT code FROM language_locales WHERE code=?') {
+      if (statement === 'SELECT id, code FROM language_locales WHERE code=?') {
         return {
           ...prepared,
           bind(..._args: unknown[]) {

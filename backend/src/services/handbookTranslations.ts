@@ -53,13 +53,26 @@ interface EdgeTranslationRow {
 interface ReadingRow { expression_id: number; scheme: string; value: string }
 
 const SOURCE_ITEMS = `
-  SELECT i.expression_id, MIN(s.position) AS section_position, MIN(i.position) AS item_position
+  SELECT resolved.expression_id, MIN(s.position) AS section_position, MIN(i.position) AS item_position
   FROM handbook_section_items i
   JOIN handbook_sections s ON s.id=i.section_id
-  JOIN expressions source_expression ON source_expression.id=i.expression_id
+  JOIN LATERAL (
+    SELECT link.expression_id
+    FROM expressions ex
+    JOIN expression_locale_links link ON link.expression_id=ex.id AND link.locale_id=i.language_locale_id
+    WHERE ex.language_id=(SELECT language_id FROM language_locales WHERE id=i.language_locale_id)
+      AND ex.text=i.text
+    ORDER BY link.expression_id
+    LIMIT 1
+  ) resolved ON TRUE
+  JOIN expressions source_expression ON source_expression.id=resolved.expression_id
   JOIN languages source_language ON source_language.id=source_expression.language_id
   WHERE s.handbook_id=? AND source_language.code='eng'
-  GROUP BY i.expression_id
+  GROUP BY resolved.expression_id
+`;
+
+const LOCALE_LINK_TO_EXPRESSIONS = `
+  (SELECT expression_id FROM expression_locale_links WHERE locale_id = ?)
 `;
 
 const TARGET_EDGES = `
@@ -74,11 +87,14 @@ const TARGET_EDGES = `
          source_items.item_position
   FROM source_items
   JOIN expression_edges edge ON edge.expression_a_id=source_items.expression_id
+    AND edge.score>=0
+    AND edge.expression_b_id IN ${LOCALE_LINK_TO_EXPRESSIONS}
   JOIN expressions target_expression ON target_expression.id=edge.expression_b_id
   JOIN languages target_language ON target_language.id=target_expression.language_id
   JOIN expression_locale_links target_link ON target_link.expression_id=target_expression.id
+    AND target_link.locale_id=?
   JOIN language_locales target_locale ON target_locale.id=target_link.locale_id
-  WHERE target_language.code<>'eng' AND edge.score>=0 AND target_locale.code=?
+  WHERE target_language.code<>'eng'
 `;
 
 const TARGET_EDGES_REVERSE = `
@@ -93,11 +109,14 @@ const TARGET_EDGES_REVERSE = `
          source_items.item_position
   FROM source_items
   JOIN expression_edges edge ON edge.expression_b_id=source_items.expression_id
+    AND edge.score>=0
+    AND edge.expression_a_id IN ${LOCALE_LINK_TO_EXPRESSIONS}
   JOIN expressions target_expression ON target_expression.id=edge.expression_a_id
   JOIN languages target_language ON target_language.id=target_expression.language_id
   JOIN expression_locale_links target_link ON target_link.expression_id=target_expression.id
+    AND target_link.locale_id=?
   JOIN language_locales target_locale ON target_locale.id=target_link.locale_id
-  WHERE target_language.code<>'eng' AND edge.score>=0 AND target_locale.code=?
+  WHERE target_language.code<>'eng'
 `;
 
 const RANKED_TARGET_EDGES = `
@@ -149,7 +168,7 @@ export async function getHandbookTranslations(
   if (handbook.visibility === 'private' && !options.allowPrivate && handbook.user_id !== options.viewerId) {
     throw new HandbookTranslationError('HANDBOOK_PRIVATE');
   }
-  const locale = await db.prepare('SELECT code FROM language_locales WHERE code=?').bind(normalizedLocale).first<{ code: string }>();
+  const locale = await db.prepare('SELECT id, code FROM language_locales WHERE code=?').bind(normalizedLocale).first<{ id: number; code: string }>();
   if (!locale) throw new HandbookTranslationError('INVALID_TARGET_LOCALE');
 
   const sourceItems = `WITH source_items AS (${SOURCE_ITEMS})`;
@@ -159,17 +178,23 @@ export async function getHandbookTranslations(
     WHERE translation_rank <= ?
     ORDER BY section_position,item_position,source_expression_id,translation_rank
     LIMIT ?`;
-  const edgeRows = await db.prepare(edgeSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS_PER_ITEM, MAX_TRANSLATION_ROWS).all<EdgeTranslationRow>();
+  const edgeRows = await db.prepare(edgeSql).bind(
+    handbookId, locale.id, locale.id, locale.id, locale.id,
+    MAX_TRANSLATIONS_PER_ITEM, MAX_TRANSLATION_ROWS,
+  ).all<EdgeTranslationRow>();
 
   const readingSql = `${sourceItems}, ${RANKED_TARGET_EDGES}
     SELECT DISTINCT readings.expression_id, readings.scheme, readings.value
     FROM expression_readings readings
     JOIN ranked_edges targets ON targets.target_expression_id=readings.expression_id
       AND targets.translation_rank <= ?
-    JOIN language_locales reading_locale ON reading_locale.id=readings.locale_id AND reading_locale.code=?
+    JOIN language_locales reading_locale ON reading_locale.id=readings.locale_id AND reading_locale.id=?
     ORDER BY readings.expression_id, readings.scheme, readings.value
     LIMIT ?`;
-  const readingRows = await db.prepare(readingSql).bind(handbookId, normalizedLocale, normalizedLocale, MAX_TRANSLATIONS_PER_ITEM, normalizedLocale, MAX_TRANSLATION_ROWS).all<ReadingRow>();
+  const readingRows = await db.prepare(readingSql).bind(
+    handbookId, locale.id, locale.id, locale.id, locale.id,
+    MAX_TRANSLATIONS_PER_ITEM, locale.id, MAX_TRANSLATION_ROWS,
+  ).all<ReadingRow>();
 
   const readingsByExpression = new Map<number, HandbookTranslationReading[]>();
   const seenReadings = new Set<string>();
