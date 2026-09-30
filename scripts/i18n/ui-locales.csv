@@ -124,8 +124,8 @@ feed.newest,,最新,最新,,最新,Más reciente
 feed.noActivity,,暂无动态,暫無動態,No activity yet,アクティビティはありません,No hay actividad
 feed.popularMappings,,热门映射,熱門對應,,人気の関係,Relaciones populares
 feed.ratedThisWeek,,按评分 · 本周,依評分 · 本週,,スコア順 · 今週,Por puntuación · esta semana
-feed.subtitle,,语义图的最新脉动——热门映射和新贡献。,語意圖的最新脈動——熱門對應與新貢獻。,The latest pulse of the semantic graph — new contributions.,意味グラフの最新情報 — 人気の関係と新しい貢献。,El pulso más reciente del grafo semántico: relaciones populares y nuevas contribuciones.
-feed.title,,动态,動態,Activity,アクティビティ,Actividad
+feed.subtitle,,社群近期新增的詞句與對應關係。,社群近期新增的詞句與對應關係。,Expressions and mappings recently added by the community.,コミュニティで最近追加された表現と関係。,Expresiones y relaciones añadidas recientemente por la comunidad.
+feed.title,,最近动态,最近動態,Recent activity,最近のアクティビティ,Actividad reciente
 handbook.adaptedFromWikivoyage,,内容改编自英文维基导游（CC BY-SA 4.0）。,內容改編自英文維基導遊（CC BY-SA 4.0）。,Content adapted from English Wikivoyage (CC BY-SA 4.0).,内容は英語版ウィキボヤージュ（CC BY-SA 4.0）を元にしています。,Contenido adaptado de Wikiviajes en inglés (CC BY-SA 4.0).
 handbook.addExpression,,新增词句,新增詞句,Add expression,表現を追加,Añadir expresión
 handbook.addSection,,新增章节,新增章節,Add section,セクションを追加,Añadir sección
@@ -178,6 +178,11 @@ handbooks.popular,,热门,熱門,Popular,人気,Popular
 handbooks.searchPlaceholder,,搜索手册…,搜尋手冊…,Search handbooks…,ハンドブックを検索…,Buscar manuales…
 handbooks.sections,,章节,章節,sections,セクション,secciones
 handbooks.title,,手册,手冊,Handbooks,ハンドブック,Manuales
+home.expressionLabel,,搜索词句,搜尋詞句,Search expressions,表現を検索,Buscar expresiones
+home.expressionPlaceholder,,输入词语、短语或句子…,輸入詞語、片語或句子…,"Enter a word, phrase, or sentence…",単語、フレーズ、または文を入力…,"Escribe una palabra, frase u oración…"
+home.heroSubtitle,,探索不同语言中的词语与句子。,探索不同語言中的詞語與句子。,Explore words and sentences across languages,言語を越えて、単語や文を探そう。,Explora palabras y oraciones de distintos idiomas.
+home.heroTitle,,连接每一种语言。,連結每一種語言。,Connect every language.,すべての言語をつなぐ。,Conecta todos los idiomas.
+home.languageLabel,,语言,語言,Language,言語,Idioma
 home.search,,查询词句,查詢詞句,Search expressions,表現を検索,Buscar expresiones
 home.searchHint,,选择语言，输入词或短句，查看相关表达。,選擇語言，輸入詞或短句，查看相關表達。,"Choose a language, enter a word or phrase, and explore related expressions.",言語を選び、単語やフレーズを入力して関連表現を探します。,"Elige un idioma, escribe una palabra o frase y explora expresiones relacionadas."
 home.title,,LangMap,LangMap,LangMap,LangMap,LangMap
@@ -307,6 +312,7 @@ mappingDetail.direct,,直接映射,直接對應,direct mappings,直接関係,rel
 mappingDetail.enterRequired,,请输入词句与语言代码,請輸入詞句與語言代碼,Enter expression and language code,表現と言語コードを入力してください,Introduce expresión y código de idioma
 mappingDetail.expression,,词句,詞句,Expression,表現,Expresión
 mappingDetail.expressionPlaceholder,,输入词句…,輸入詞句…,Enter expression…,表現を入力…,Introduce una expresión…
+mappingDetail.filteredGraphTruncated,,筛选前图谱已截断；可能遗漏部分匹配结果。,篩選前圖譜已截斷；可能遺漏部分符合條件的結果。,Graph truncated before filtering; some matches may be missing.,絞り込み前にグラフが省略されたため、一致項目が一部表示されない場合があります。,El grafo se truncó antes del filtrado; podrían faltar algunos resultados coincidentes.
 mappingDetail.graph,,图谱,圖譜,Graph,グラフ,Grafo
 mappingDetail.graphTruncated,,图谱已截断；略过 {count} 个相关词句。,圖譜已截斷；略過 {count} 個相關詞句。,Graph truncated; {count} related expressions omitted.,グラフは省略されました。関連する表現 {count} 件を省略しています。,El grafo se ha truncado; se omitieron {count} expresiones relacionadas.
 mappingDetail.home,,首页,首頁,Home,ホーム,Inicio
@@ -314,19 +320,26 @@ mappingDetail.hops,,跳数,跳數,hops,ホップ数,saltos
 mappingDetail.indirect,,间接,間接,indirect,間接,indirecta
 mappingDetail.languageCode,,语言代码,語言代碼,Language code,言語コード,Código de idioma
 mappingDetail.languageCodePlaceholder,,例如 en / cmn-Hant,例如 en / cmn-Hant,e.g. en / cmn-Hant,例：en / cmn-Hant,ej. en / cmn-Hant
+mappingDetail.linkCopied,,已复制词句链接。,已複製詞句連結。,Expression link copied.,表現のリンクをコピーしました。,Se copió el enlace de la expresión.
 mappingDetail.list,,列表,列表,List,リスト,Lista
 mappingDetail.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
 mappingDetail.mappingSet,,映射集合,對應集合,Mapping set,関係セット,Conjunto de relaciones
+mappingDetail.mobileGraphPreview,,图表预览显示 {shown} 个，共 {total} 个已加载词句。,圖表預覽顯示 {shown} 個，共 {total} 個已載入詞句。,Graph preview shows {shown} of {total} loaded expressions.,グラフには読み込み済みの表現 {total} 件中 {shown} 件を表示しています。,La vista previa muestra {shown} de {total} expresiones cargadas.
 mappingDetail.noMappings,,尚无映射,尚無對應,No mappings yet,まだ関係がありません,Aún no hay relaciones
 mappingDetail.optional,,选填,選填,Optional,任意,Opcional
 mappingDetail.quickAdd,,快速新增词句,快速新增詞句,Quickly add expression,表現をすばやく追加,Añadir expresión rápidamente
 mappingDetail.quickAddLead,,新增词句并直接映射到当前词句。,新增詞句並直接對應到目前詞句。,Add an expression and map it directly to the current expression.,表現を追加し、現在の表現に直接マップします。,Añade una expresión y relaciónala directamente con la expresión actual.
+mappingDetail.readingsByLocale,,按 locale 显示标音,依 locale 顯示標音,Readings by locale,locale別の読み方,Lecturas por locale
 mappingDetail.region,,地区,地區,Region,地域,Región
+mappingDetail.share,,分享,分享,Share,共有,Compartir
+mappingDetail.shareFailed,,无法分享链接，请重试。,無法分享連結，請重試。,Unable to share the link. Try again.,リンクを共有できませんでした。もう一度お試しください。,No se pudo compartir el enlace. Inténtalo de nuevo.
 mappingDetail.splitExpression,,拆分词句,拆分詞句,Split expression,表現を分割,Dividir expresión
 mappingDetail.splitFailed,,无法拆分词句,無法拆分詞句,Unable to split expression,表現を分割できません,No se pudo dividir la expresión
 mappingDetail.splitLoadFailed,,无法加载要拆分的对应关系,無法載入要拆分的對應關係,Unable to load mappings for split,分割する対応関係を読み込めません,No se pudieron cargar las relaciones para dividir
+mappingDetail.subtitle,,探索这个词句在不同语言间的联系。,探索這個詞句在不同語言間的連結。,Explore how this expression connects across languages.,この表現が言語間でどうつながるかを見てみましょう。,Explora cómo se conecta esta expresión entre idiomas.
 mappingDetail.targetLanguage,,目标语言,目標語言,Target language,対象言語,Idioma de destino
 mappingDetail.user,,用户,使用者,User,ユーザー,Usuario
+mappingDetail.viewFullList,,在列表中查看全部,在清單中查看全部,View the full list,すべての表現をリストで見る,Ver la lista completa
 mappingDetail.viewMap,,在地图上查看此词句,在地圖上檢視此詞句,View this expression on map,この詞句を地図で表示,Ver esta expresión en el mapa
 morphology.addFormLink,,新增词形关联,新增詞形關聯,Add a word-form link,語形リンクを追加,Añadir enlace de forma
 morphology.class.adjective,,形容词,形容詞,Adjective,形容詞,Adjetivo

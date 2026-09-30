@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { readingSchemeLabel } from '@/utils/readingLabel'
-import { groupReadings, hasMultipleReadingSchemes, uniqueReadingLocaleLabels, uniqueReadingLocaleCodes } from '@/utils/readingGroups'
+import { groupReadings, uniqueReadingLocaleLabels, uniqueReadingLocaleCodes } from '@/utils/readingGroups'
 import type { ExpressionLocale, ExpressionReading } from '@/api/expressions'
 
 const props = defineProps<{ locales?: ExpressionLocale[]; attestations?: ExpressionLocale[]; readings: ExpressionReading[] }>()
@@ -12,7 +12,6 @@ const locales = computed(() => [...(props.locales ?? props.attestations ?? [])].
   a.language_locale_code.localeCompare(b.language_locale_code),
 ))
 const readingGroups = computed(() => groupReadings(props.readings))
-const showReadingScheme = computed(() => hasMultipleReadingSchemes(readingGroups.value))
 
 function readingLocalesLabel(readings: ExpressionReading[]) {
   return uniqueReadingLocaleLabels(readings).join(', ')
@@ -32,14 +31,15 @@ function readingLocalesTitle(readings: ExpressionReading[]) {
       </li>
       <li
         v-for="group in readingGroups"
-        :key="`${group.scheme}:${group.value}`"
+        :key="JSON.stringify([group.readings[0].language_locale_code, group.scheme, group.value])"
         :data-evidence-code="`${group.scheme} / ${group.value}`"
+        :data-locale-code="group.readings[0].language_locale_code"
         class="rx-item"
       >
         <span class="evidence-kind rx-kind">{{ t('components.reading') }}</span>
         <span class="rx-value">{{ group.value }}</span>
         <span class="rx-meta" :title="readingLocalesTitle(group.readings)">
-          <span v-if="showReadingScheme" class="rx-scheme">{{ readingSchemeLabel(group.scheme) }} · </span>
+          <span class="rx-scheme">{{ readingSchemeLabel(group.scheme) }} · </span>
           <span class="rx-locales">({{ readingLocalesLabel(group.readings) }})</span>
         </span>
       </li>

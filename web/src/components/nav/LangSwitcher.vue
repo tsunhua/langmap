@@ -160,8 +160,9 @@ onUnmounted(() => {
 .lang-empty { display: block; padding: 12px 8px; color: var(--muted); }
 .translate-link { display:flex; align-items:center; gap:6px; width:100%; min-height:36px; margin-top:6px; padding:6px 8px; border:0; border-top:1px solid var(--border); background:transparent; color:var(--accent); cursor:pointer; font-size:13px; text-align:left; }
 .translate-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-@media (max-width: 768px) {
+@media (max-width: 1120px) {
   .lang-switch { height: 44px; padding: 0 12px; }
+  .lang-search { min-height: 44px; }
   .lang-option, .lang-variety-head { min-height: 44px; }
   .lang-script { min-height: 44px; padding: 6px 16px; }
   .translate-link { min-height: 44px; }

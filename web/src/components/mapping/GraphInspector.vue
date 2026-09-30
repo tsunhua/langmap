@@ -203,6 +203,21 @@ const crossEdgeCount = computed(() => relatedCrossEdges.value.length)
   padding: 0 2px;
   line-height: 1;
 }
+@media (max-width: 900px) {
+  .graph-inspector {
+    min-height: 0;
+    padding: 16px 0 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  .gi-close {
+    min-width: 44px;
+    min-height: 44px;
+    margin: -8px -8px 0 0;
+  }
+}
 .gi-close:hover { color: var(--fg); }
 .gi-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 .gi-meta {

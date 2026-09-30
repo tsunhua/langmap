@@ -21,6 +21,7 @@ const props = defineProps<{
   currentHops?: number
   maxHops?: number
   isFullscreen?: boolean
+  showHopsControl?: boolean
 }>()
 const { t } = useI18n()
 
@@ -344,6 +345,7 @@ const layerStats = computed(() => {
       :current-hops="props.currentHops ?? 1"
       :max-hops="props.maxHops ?? 1"
       :is-fullscreen="graphFullscreen"
+      :show-hops-control="props.showHopsControl"
       @zoom-in="viewport.zoomIn"
       @zoom-out="viewport.zoomOut"
       @fit="viewport.fit"

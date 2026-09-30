@@ -74,7 +74,7 @@ onUnmounted(() => { feedRequest++ })
 
 <style scoped>
 .home-feed {
-  max-width: 760px;
+  max-width: 822px;
   margin: clamp(40px, 7vh, 64px) auto var(--page-pad-bottom);
   padding-top: var(--space-lg);
   border-top: 1px solid var(--border);

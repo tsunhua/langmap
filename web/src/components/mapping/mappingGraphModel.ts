@@ -172,6 +172,32 @@ export function getPathToRoot(
   return path
 }
 
+export function filterMappingGraphByTargetLanguages(
+  graph: MappingGraphResponse,
+  targetLanguageCodes: readonly string[],
+): MappingGraphResponse {
+  const targetLanguages = new Set(
+    targetLanguageCodes.map((code) => code.trim().toLowerCase()).filter(Boolean),
+  )
+  if (!targetLanguages.size) return graph
+
+  const tree = buildDisplayTree(graph)
+  const retainedIds = new Set<string>([graph.root_id])
+  for (const node of graph.nodes) {
+    if (node.depth < 1 || !targetLanguages.has(node.lang_code.toLowerCase())) continue
+    for (const id of getPathToRoot(node.expression_id, tree)) retainedIds.add(id)
+  }
+
+  const nodes = graph.nodes.filter((node) => retainedIds.has(node.expression_id))
+  const edges = graph.edges.filter((edge) => retainedIds.has(edge.source_id) && retainedIds.has(edge.target_id))
+  const layer_counts: Record<number, number> = { 0: 1, 1: 0, 2: 0, 3: 0 }
+  for (const node of nodes) {
+    if (node.depth > 0) layer_counts[node.depth] = (layer_counts[node.depth] ?? 0) + 1
+  }
+
+  return { ...graph, nodes, edges, layer_counts }
+}
+
 export function getRelatedCrossEdges(
   nodeId: string,
   tree: DisplayTree,

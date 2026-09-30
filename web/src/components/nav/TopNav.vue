@@ -2,7 +2,7 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Menu, X, Plus } from 'lucide-vue-next'
+import { Menu, X, Plus, Search } from 'lucide-vue-next'
 import LangSwitcher from './LangSwitcher.vue'
 import ExpressionSearchControls from '@/components/search/ExpressionSearchControls.vue'
 import { useLocaleParams } from '@/composables/useLocaleParams'
@@ -18,52 +18,21 @@ const searchQuery = ref('')
 const searchLanguage = ref('')
 const searchLanguageMissing = ref(false)
 const menuOpen = ref(false)
+const mobileSearchOpen = ref(false)
 const drawerEl = ref<HTMLElement | null>(null)
 const toggleEl = ref<HTMLElement | null>(null)
+const mobileSearchToggleEl = ref<HTMLElement | null>(null)
 const desktopSearchControls = ref<InstanceType<typeof ExpressionSearchControls> | null>(null)
-const drawerSearchControls = ref<InstanceType<typeof ExpressionSearchControls> | null>(null)
+const mobileSearchControls = ref<InstanceType<typeof ExpressionSearchControls> | null>(null)
 const localeParams = useLocaleParams()
 const searchLanguages = useSearchLanguages()
 
 function applyRememberedSearchLanguage() {
-  if (route.path === '/search' && typeof route.query.lang === 'string') {
-    syncRouteSearchLanguage()
-    return
-  }
   const resolved = searchLanguages.resolveSearchLanguage(searchLanguage.value)
   if (resolved) {
     searchLanguage.value = resolved
     searchLanguageMissing.value = false
   }
-}
-
-function syncRouteSearchLanguage() {
-  if (route.path !== '/search') return
-  const q = typeof route.query.q === 'string' ? route.query.q : ''
-  const requested = typeof route.query.lang === 'string' ? route.query.lang : ''
-  if (!requested) {
-    searchLanguage.value = searchLanguages.resolveSearchLanguage()
-    searchLanguageMissing.value = Boolean(q && !searchLanguage.value && !searchLanguages.loading.value)
-    return
-  }
-  if (searchLanguages.isSearchLanguageAvailable(requested)) {
-    searchLanguage.value = requested
-    searchLanguageMissing.value = false
-    return
-  }
-  if (searchLanguages.loading.value) {
-    searchLanguage.value = requested
-    searchLanguageMissing.value = false
-    return
-  }
-  searchLanguage.value = ''
-  searchLanguageMissing.value = Boolean(q)
-}
-
-function syncRouteSearch() {
-  if (route.path !== '/search') return
-  searchQuery.value = typeof route.query.q === 'string' ? route.query.q : ''
-  syncRouteSearchLanguage()
 }
 
 function onSearchLanguageUpdate(value: string) {
@@ -73,7 +42,7 @@ function onSearchLanguageUpdate(value: string) {
 
 function controlsHost(control: InstanceType<typeof ExpressionSearchControls>): HTMLElement | null {
   const root = control.$el as HTMLElement | null
-  return root?.closest('.search-center, .drawer-search') as HTMLElement | null
+  return root?.closest('.search-center, .mobile-search-panel') as HTMLElement | null
 }
 
 function isControlsVisible(control: InstanceType<typeof ExpressionSearchControls>): boolean {
@@ -84,19 +53,19 @@ function isControlsVisible(control: InstanceType<typeof ExpressionSearchControls
   // jsdom does not calculate layout boxes. In a real browser, a mounted
   // control with no box is hidden; retain a permissive fallback for tests.
   if (host.getClientRects().length > 0 || host.offsetParent !== null) return true
-  if (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 960px)').matches) return false
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 1120px)').matches) return false
   return true
 }
 
 function visibleSearchControls() {
-  if (menuOpen.value && drawerSearchControls.value && isControlsVisible(drawerSearchControls.value)) {
-    return drawerSearchControls.value
+  if (mobileSearchOpen.value && mobileSearchControls.value && isControlsVisible(mobileSearchControls.value)) {
+    return mobileSearchControls.value
   }
   if (desktopSearchControls.value && isControlsVisible(desktopSearchControls.value)) {
     return desktopSearchControls.value
   }
-  if (drawerSearchControls.value && isControlsVisible(drawerSearchControls.value)) {
-    return drawerSearchControls.value
+  if (mobileSearchControls.value && isControlsVisible(mobileSearchControls.value)) {
+    return mobileSearchControls.value
   }
   return null
 }
@@ -111,6 +80,7 @@ function onSearch() {
   }
   router.push({ path: '/search', query: { q, lang: searchLanguage.value } })
   menuOpen.value = false
+  mobileSearchOpen.value = false
 }
 
 function firstFocusable(): HTMLElement | null {
@@ -123,6 +93,7 @@ function lastFocusable(): HTMLElement | null {
 }
 
 function openMenu() {
+  mobileSearchOpen.value = false
   menuOpen.value = true
   nextTick(() => firstFocusable()?.focus())
 }
@@ -132,6 +103,19 @@ function closeMenu() {
 }
 function toggleMenu() {
   menuOpen.value ? closeMenu() : openMenu()
+}
+
+function openSearch() {
+  menuOpen.value = false
+  mobileSearchOpen.value = true
+  void nextTick(() => mobileSearchControls.value?.focusSearch())
+}
+function closeMobileSearch() {
+  mobileSearchOpen.value = false
+  mobileSearchToggleEl.value?.focus()
+}
+function toggleMobileSearch() {
+  mobileSearchOpen.value ? closeMobileSearch() : openSearch()
 }
 
 function isTyping() {
@@ -150,6 +134,12 @@ function onKeydown(e: KeyboardEvent) {
     controls.focusSearch()
     return
   }
+  if (e.defaultPrevented) return
+  if (e.key === 'Escape' && mobileSearchOpen.value) {
+    e.preventDefault()
+    closeMobileSearch()
+    return
+  }
   if (!menuOpen.value) return
   if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return }
   if (e.key === 'Tab' && drawerEl.value) {
@@ -165,7 +155,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 watch(searchLanguages.languages, applyRememberedSearchLanguage, { immediate: true })
 watch(() => searchLanguages.loading.value, applyRememberedSearchLanguage)
-watch(() => [route.path, route.query.q, route.query.lang], syncRouteSearch, { immediate: true })
 watch(
   () => [localeParams.value.ui_locale, localeParams.value.secondary_ui_locale],
   () => {
@@ -176,7 +165,7 @@ watch(
 )
 
 // Close the mobile drawer whenever the route changes.
-watch(() => route.path, () => { menuOpen.value = false })
+watch(() => route.path, () => { menuOpen.value = false; mobileSearchOpen.value = false })
 </script>
 
 <template>
@@ -188,12 +177,12 @@ watch(() => route.path, () => { menuOpen.value = false })
 
       <nav class="appnav" :aria-label="t('nav.menu')">
         <router-link to="/" :class="{ on: route.path === '/' }" :aria-current="route.path === '/' ? 'page' : undefined">{{ t('nav.home') }}</router-link>
-        <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
-        <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
+        <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }" :aria-current="route.path.startsWith('/language') ? 'page' : undefined">{{ t('nav.languages') }}</router-link>
+        <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }" :aria-current="route.path.startsWith('/handbook') ? 'page' : undefined">{{ t('nav.handbooks') }}</router-link>
       </nav>
     </div>
 
-    <div v-if="route.path !== '/'" class="search-center">
+    <div v-if="route.path !== '/' && route.path !== '/search'" class="search-center">
       <form class="top-search" role="search" @submit.prevent="onSearch">
         <ExpressionSearchControls
           ref="desktopSearchControls"
@@ -219,6 +208,20 @@ watch(() => route.path, () => { menuOpen.value = false })
     </div>
 
     <button
+      v-if="route.path !== '/' && route.path !== '/search'"
+      ref="mobileSearchToggleEl"
+      type="button"
+      class="mobile-search-toggle"
+      :aria-label="mobileSearchOpen ? t('common.close') : t('nav.searchExpressions')"
+      aria-controls="mobile-search-panel"
+      :aria-expanded="mobileSearchOpen"
+      @click="toggleMobileSearch"
+    >
+      <X v-if="mobileSearchOpen" :size="20" aria-hidden="true" />
+      <Search v-else :size="20" aria-hidden="true" />
+    </button>
+
+    <button
       ref="toggleEl"
       class="menu-toggle"
       :class="{ on: menuOpen }"
@@ -231,10 +234,10 @@ watch(() => route.path, () => { menuOpen.value = false })
     </button>
 
     <transition name="drawer">
-      <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" :aria-label="t('nav.menu')">
-        <form v-if="route.path !== '/' && route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
+      <div v-if="mobileSearchOpen && route.path !== '/' && route.path !== '/search'" id="mobile-search-panel" class="mobile-search-panel">
+        <form class="mobile-search-form" role="search" @submit.prevent="onSearch">
           <ExpressionSearchControls
-            ref="drawerSearchControls"
+            ref="mobileSearchControls"
             v-model:query="searchQuery"
             v-model:language="searchLanguage"
             show-submit
@@ -243,10 +246,15 @@ watch(() => route.path, () => { menuOpen.value = false })
             @submit="onSearch"
           />
         </form>
+      </div>
+    </transition>
+
+    <transition name="drawer">
+      <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" :aria-label="t('nav.menu')">
         <nav class="drawer-nav" :aria-label="t('nav.menu')">
           <router-link to="/" :class="{ on: route.path === '/' }" :aria-current="route.path === '/' ? 'page' : undefined">{{ t('nav.home') }}</router-link>
-          <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
-          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
+          <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }" :aria-current="route.path.startsWith('/language') ? 'page' : undefined">{{ t('nav.languages') }}</router-link>
+          <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }" :aria-current="route.path.startsWith('/handbook') ? 'page' : undefined">{{ t('nav.handbooks') }}</router-link>
         </nav>
         <div class="drawer-foot">
           <router-link to="/contribute" class="btn btn-primary">
@@ -264,7 +272,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 <style scoped>
 .appbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(420px, 560px) minmax(0, 1fr);
+  grid-template-columns: max-content minmax(320px, 1fr) max-content;
   align-items: center;
 }
 
@@ -321,6 +329,7 @@ watch(() => route.path, () => { menuOpen.value = false })
   grid-column: 2;
   width: 100%;
   min-width: 0;
+  max-width: 560px;
   justify-self: center;
 }
 .top-search {
@@ -369,9 +378,25 @@ a.user-badge:hover {
   padding: 0; border: 1px solid var(--border); border-radius: var(--r);
   background: transparent; cursor: pointer; color: var(--fg);
 }
+.mobile-search-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+.mobile-search-toggle:hover { background: var(--surface-2); }
+.mobile-search-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* Mobile drawer */
-.drawer {
+/* Mobile overlays */
+.drawer,
+.mobile-search-panel {
   position: absolute;
   top: 100%; left: 0; right: 0;
   padding: 12px 20px 16px;
@@ -380,10 +405,11 @@ a.user-badge:hover {
   border-bottom: 1px solid var(--border);
   box-shadow: 0 8px 20px oklch(0 0 0 / 0.08);
 }
-.drawer-search {
+.mobile-search-panel { z-index: 21; }
+.mobile-search-form {
   width: 100%;
   min-width: 0;
-  margin-bottom: 12px;
+  margin: 0;
 }
 .drawer-nav { display: flex; flex-direction: column; }
 .drawer-nav a {
@@ -407,14 +433,14 @@ a.user-badge:hover {
 
 @media (max-width: 1180px) {
   .appbar {
-    grid-template-columns: auto minmax(320px, 1fr) auto;
+    grid-template-columns: max-content minmax(320px, 1fr) max-content;
   }
   .search-center {
     max-width: 440px;
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
   .appbar {
     display: flex;
   }
@@ -424,41 +450,43 @@ a.user-badge:hover {
   .lang-inline {
     display: none;
   }
+  .mobile-search-toggle { display: inline-flex; margin-left: auto; }
+  .mobile-search-toggle + .menu-toggle { margin-left: 0; }
   .menu-toggle { display: inline-flex; width: 44px; height: 44px; }
 
-  .drawer-search :deep(.expression-search) {
+  .mobile-search-form :deep(.expression-search) {
     grid-template-columns: 1fr;
     height: auto;
     gap: 8px;
     border: 0;
     background: transparent;
   }
-  .drawer-search :deep(.expression-search.has-submit) {
+  .mobile-search-form :deep(.expression-search.has-submit) {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .drawer-search :deep(.expression-search-language-wrap) {
+  .mobile-search-form :deep(.expression-search-language-wrap) {
     border: 0;
   }
-  .drawer-search :deep(.expression-search.has-submit .expression-search-language-wrap) {
+  .mobile-search-form :deep(.expression-search.has-submit .expression-search-language-wrap) {
     grid-column: 1 / -1;
   }
-  .drawer-search :deep(.expression-search-language),
-  .drawer-search :deep(.expression-search-query) {
+  .mobile-search-form :deep(.expression-search-language),
+  .mobile-search-form :deep(.expression-search-query) {
     min-height: 44px;
     border: 1px solid var(--border);
     border-radius: var(--r);
     background: var(--surface);
   }
-  .drawer-search :deep(.expression-search-language) {
+  .mobile-search-form :deep(.expression-search-language) {
     height: 44px;
   }
-  .drawer-search :deep(.expression-search-query) {
+  .mobile-search-form :deep(.expression-search-query) {
     padding: 0 12px;
   }
-  .drawer-search :deep(.expression-search.has-submit .expression-search-query) {
+  .mobile-search-form :deep(.expression-search.has-submit .expression-search-query) {
     grid-column: 1;
   }
-  .drawer-search :deep(.expression-search.has-submit .expression-search-submit) {
+  .mobile-search-form :deep(.expression-search.has-submit .expression-search-submit) {
     grid-column: 2;
     min-width: 72px;
     min-height: 44px;
@@ -467,10 +495,10 @@ a.user-badge:hover {
     border-left: 0;
     border-radius: var(--r);
   }
-  .drawer-search :deep(.expression-search-input) {
+  .mobile-search-form :deep(.expression-search-input) {
     min-height: 44px;
   }
-  .drawer-search :deep(.expression-search-dropdown) {
+  .mobile-search-form :deep(.expression-search-dropdown) {
     width: 100%;
     max-width: none;
   }

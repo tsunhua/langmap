@@ -294,9 +294,6 @@ onUnmounted(() => {
 .se-more { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .se-more-error { color: var(--down); }
 .se-hint { font-family: var(--mono); font-size: 13px; text-align: center; padding: var(--space-xl); color: var(--faint); }
-@media (min-width: 961px) {
-  .se-search-form { display: none; }
-}
 @media (max-width: 768px) {
   .se-page { padding-left: 20px; padding-right: 20px; }
 }

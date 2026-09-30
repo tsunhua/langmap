@@ -29,7 +29,11 @@ export function groupReadings(readings: readonly ExpressionReading[]): ReadingGr
   )
 
   for (const reading of sorted) {
-    const groupKey = `${reading.scheme}\u0000${comparableReadingValue(reading.value)}`
+    const groupKey = [
+      reading.language_locale_code,
+      reading.scheme,
+      comparableReadingValue(reading.value),
+    ].join('\u0000')
     const group = groups.get(groupKey)
     if (group) {
       if (whitespaceCount(reading.value) > whitespaceCount(group.value)) {

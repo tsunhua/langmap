@@ -12,10 +12,15 @@ const props = withDefaults(defineProps<{
   variant?: 'compact' | 'page'
   languageRequired?: boolean
   showSubmit?: boolean
+  showFieldLabels?: boolean
+  languageLabel?: string
+  queryLabel?: string
+  queryPlaceholder?: string
 }>(), {
   variant: 'compact',
   languageRequired: false,
   showSubmit: false,
+  showFieldLabels: false,
 })
 
 const emit = defineEmits<{
@@ -313,10 +318,13 @@ onUnmounted(() => {
     <div
       ref="root"
       class="expression-search"
-      :class="[`variant-${variant}`, { 'has-submit': props.showSubmit }]"
+      :class="[`variant-${variant}`, { 'has-submit': props.showSubmit, 'has-field-labels': props.showFieldLabels }]"
       @focusout="onFocusOut"
     >
       <div class="expression-search-language-wrap">
+        <span v-if="props.showFieldLabels" class="expression-search-field-label">
+          {{ props.languageLabel || t('search.chooseLanguage') }}
+        </span>
         <button
           ref="languageButton"
           type="button"
@@ -439,18 +447,23 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <label class="expression-search-query">
-        <Search :size="16" aria-hidden="true" class="expression-search-icon" />
-        <input
-          ref="searchInput"
-          type="search"
-          class="expression-search-input"
-          :value="props.query"
-          :placeholder="t('search.placeholder')"
-          :aria-label="t('search.title')"
-          @input="emit('update:query', ($event.target as HTMLInputElement).value)"
-          @keydown="onQueryKeydown"
-        />
+      <label class="expression-search-query" :class="{ 'has-field-label': props.showFieldLabels }">
+        <span v-if="props.showFieldLabels" class="expression-search-field-label">
+          {{ props.queryLabel || t('search.title') }}
+        </span>
+        <span class="expression-search-input-wrap">
+          <Search :size="16" aria-hidden="true" class="expression-search-icon" />
+          <input
+            ref="searchInput"
+            type="search"
+            class="expression-search-input"
+            :value="props.query"
+            :placeholder="props.queryPlaceholder || t('search.placeholder')"
+            :aria-label="props.queryLabel || t('search.title')"
+            @input="emit('update:query', ($event.target as HTMLInputElement).value)"
+            @keydown="onQueryKeydown"
+          />
+        </span>
       </label>
 
       <button v-if="props.showSubmit" type="submit" class="expression-search-submit">
@@ -492,6 +505,58 @@ onUnmounted(() => {
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+
+.expression-search.has-field-labels {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.expression-search-field-label {
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.expression-search.has-field-labels .expression-search-language-wrap {
+  display: grid;
+  gap: 8px;
+  border: 0;
+}
+
+.expression-search.has-field-labels .expression-search-language {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.expression-search.has-field-labels .expression-search-query {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.expression-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.expression-search.has-field-labels .expression-search-input-wrap {
+  min-height: 56px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
 }
 
 .expression-search.has-submit {
@@ -585,6 +650,15 @@ onUnmounted(() => {
   border-radius: var(--r);
 }
 
+.expression-search.has-field-labels.has-submit .expression-search-submit {
+  justify-self: stretch;
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  border-radius: var(--r);
+  font-weight: 600;
+}
+
 .expression-search-submit:hover { filter: brightness(1.06); }
 .expression-search-submit:active { filter: brightness(0.96); }
 .expression-search-submit:focus-visible {
@@ -644,7 +718,7 @@ onUnmounted(() => {
   color: var(--muted);
 }
 
-.expression-search.variant-page .expression-search-query {
+.expression-search.variant-page:not(.has-field-labels) .expression-search-query {
   min-height: 56px;
   padding: 0 12px;
   border: 1px solid var(--border);

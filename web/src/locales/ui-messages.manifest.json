@@ -1,7 +1,7 @@
 {
   "project_id": "langmap-web",
   "source_locale": "en-US",
-  "generated_at": "2026-09-29T23:18:37.194Z",
+  "generated_at": "2026-09-30T07:54:17.303Z",
   "messages": [
     {
       "key": "activity.expression",
@@ -740,13 +740,13 @@
     },
     {
       "key": "feed.subtitle",
-      "message": "The latest pulse of the semantic graph — new contributions.",
+      "message": "Expressions and mappings recently added by the community.",
       "placeholders": [],
       "plural_forms": 1
     },
     {
       "key": "feed.title",
-      "message": "Activity",
+      "message": "Recent activity",
       "placeholders": [],
       "plural_forms": 1
     },
@@ -1065,6 +1065,36 @@
     {
       "key": "handbooks.title",
       "message": "Handbooks",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.expressionLabel",
+      "message": "Search expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.expressionPlaceholder",
+      "message": "Enter a word, phrase, or sentence…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.heroSubtitle",
+      "message": "Explore words and sentences across languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.heroTitle",
+      "message": "Connect every language.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.languageLabel",
+      "message": "Language",
       "placeholders": [],
       "plural_forms": 1
     },
@@ -1851,6 +1881,12 @@
       "plural_forms": 1
     },
     {
+      "key": "mappingDetail.filteredGraphTruncated",
+      "message": "Graph truncated before filtering; some matches may be missing.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
       "key": "mappingDetail.graph",
       "message": "Graph",
       "placeholders": [],
@@ -1895,6 +1931,12 @@
       "plural_forms": 1
     },
     {
+      "key": "mappingDetail.linkCopied",
+      "message": "Expression link copied.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
       "key": "mappingDetail.list",
       "message": "List",
       "placeholders": [],
@@ -1910,6 +1952,15 @@
       "key": "mappingDetail.mappingSet",
       "message": "Mapping set",
       "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.mobileGraphPreview",
+      "message": "Graph preview shows {shown} of {total} loaded expressions.",
+      "placeholders": [
+        "shown",
+        "total"
+      ],
       "plural_forms": 1
     },
     {
@@ -1937,8 +1988,26 @@
       "plural_forms": 1
     },
     {
+      "key": "mappingDetail.readingsByLocale",
+      "message": "Readings by locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
       "key": "mappingDetail.region",
       "message": "Region",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.share",
+      "message": "Share",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.shareFailed",
+      "message": "Unable to share the link. Try again.",
       "placeholders": [],
       "plural_forms": 1
     },
@@ -1961,6 +2030,12 @@
       "plural_forms": 1
     },
     {
+      "key": "mappingDetail.subtitle",
+      "message": "Explore how this expression connects across languages.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
       "key": "mappingDetail.targetLanguage",
       "message": "Target language",
       "placeholders": [],
@@ -1969,6 +2044,12 @@
     {
       "key": "mappingDetail.user",
       "message": "User",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.viewFullList",
+      "message": "View the full list",
       "placeholders": [],
       "plural_forms": 1
     },

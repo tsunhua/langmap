@@ -1,7 +1,7 @@
 {
   "csv": "ui-locales.csv",
-  "csv_sha256": "dcbb0d9e9ae0596fff2f30f72af975dad638e02cc25aba47199ca405325f2502",
-  "entry_count": 531,
+  "csv_sha256": "17f84163b165ad33c7a7cada194a34f5ceb96a1fff90cd30a230286ce4ebae68",
+  "entry_count": 544,
   "exporter_version": "langmap-ui-wide-csv/1",
   "locale_metadata": {},
   "locales": [

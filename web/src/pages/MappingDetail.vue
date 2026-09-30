@@ -7,16 +7,15 @@ import MappingGraph from '@/components/mapping/MappingGraph.vue'
 import MappingGraphSkeleton from '@/components/mapping/MappingGraphSkeleton.vue'
 import MappingHierarchyList from '@/components/mapping/MappingHierarchyList.vue'
 import GraphInspector from '@/components/mapping/GraphInspector.vue'
-import GraphMobileInspector from '@/components/mapping/GraphMobileInspector.vue'
 import ExpressionSplitDialog from '@/components/mapping/ExpressionSplitDialog.vue'
 import MorphologyPanel from '@/components/mapping/MorphologyPanel.vue'
-import { buildDisplayTree } from '@/components/mapping/mappingGraphModel'
+import { buildDisplayTree, filterMappingGraphByTargetLanguages, getPathToRoot } from '@/components/mapping/mappingGraphModel'
 import type { MappingGraphResponse, DisplayTree } from '@/components/mapping/mappingGraphTypes'
 import { buildLanguageFilterOptions } from '@/components/language/languageFilterOptions'
 import LangBadge from '@/components/expression/LangBadge.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
-import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split, Filter } from 'lucide-vue-next'
+import { ArrowUpRight, Plus, ChevronRight, Share2, List, X, Split, Filter, MoreHorizontal } from 'lucide-vue-next'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import LanguageSelect from '@/components/language/LanguageSelect.vue'
 import { useI18n } from 'vue-i18n'
@@ -53,7 +52,7 @@ const languageStore = useLanguagesStore()
 const expr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const graph = ref<MappingGraphResponse | null>(null)
 const optionGraph = ref<MappingGraphResponse | null>(null)
-const hops = ref<1 | 2 | 3>(1)
+const hops = ref<1 | 2 | 3>(2)
 const targetLanguageCodes = ref<string[]>([])
 const loading = ref(true)
 const updatingHops = ref(false)
@@ -62,8 +61,9 @@ const selectedNodeId = ref<string | null>(null)
 const selectedExpr = ref<Awaited<ReturnType<typeof detail>> | null>(null)
 const collapsedIds = ref<Set<string>>(new Set())
 const graphRef = ref<{ centerOnNodeById: (id: string) => void } | null>(null)
-const mobileMode = ref<'graph' | 'list'>('graph')
+const viewMode = ref<'graph' | 'list'>('graph')
 const isMobile = ref(false)
+const shareStatus = ref('')
 
 const isFullscreen = ref(false)
 const MAX_HOPS = 3
@@ -118,13 +118,14 @@ let mql: MediaQueryList | null = null
 let mqlListener: ((e: MediaQueryListEvent) => void) | null = null
 
 function parseHops(value: unknown, maximum: 2 | 3 = MAX_HOPS): 1 | 2 | 3 {
-  const n = typeof value === 'string' ? parseInt(value) : NaN
-  if (n === 2) return 2
-  if (n === 3) return maximum === 3 ? 3 : 2
-  return 1
+  if (value === '1') return 1
+  if (value === '2') return 2
+  if (value === '3') return maximum === 3 ? 3 : 2
+  return 2
 }
 
 function initFromUrl() {
+  hops.value = 2
   const h = route.query.hops
   if (h) hops.value = parseHops(h, maxHops.value)
   const nodeId = typeof route.query.node === 'string' ? route.query.node : null
@@ -136,25 +137,16 @@ function initFromUrl() {
 }
 
 async function loadGraphPair(requestedKey: { lang_code: string; text: string; homograph_index: number }, requestedHops: 1 | 2 | 3) {
-  const targetLanguage = targetLanguageCodes.value.join(',') || undefined
-  const displayPromise = mappingGraph(requestedKey, requestedHops, localeParams.value, targetLanguage)
-  if (!targetLanguage) {
-    const display = await displayPromise
-    return { display, options: display }
+  const source = await mappingGraph(requestedKey, requestedHops, localeParams.value)
+  return {
+    display: filterMappingGraphByTargetLanguages(source, targetLanguageCodes.value),
+    options: source,
   }
-
-  const optionPromise = mappingGraph(requestedKey, requestedHops, localeParams.value)
-  const [displayResult, optionResult] = await Promise.all([
-    displayPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
-    optionPromise.then((value) => ({ ok: true as const, value }), (reason: unknown) => ({ ok: false as const, reason })),
-  ])
-  if (!displayResult.ok) throw displayResult.reason
-  return { display: displayResult.value, options: optionResult.ok ? optionResult.value : null }
 }
 
 function syncUrl() {
   const query: Record<string, string> = {}
-  if (hops.value > 1) query.hops = String(hops.value)
+  if (hops.value !== 2) query.hops = String(hops.value)
   if (selectedNodeId.value) query.node = selectedNodeId.value
   if (targetLanguageCodes.value.length) query.target_language = targetLanguageCodes.value.join(',')
   router.replace({ query })
@@ -210,7 +202,7 @@ function trySelectNodeFromUrl() {
     selectedNodeId.value = nodeId
   } else {
     selectedNodeId.value = null
-    router.replace({ query: { hops: hops.value > 1 ? String(hops.value) : undefined } })
+    syncUrl()
   }
 }
 
@@ -222,7 +214,6 @@ onMounted(() => {
   isMobile.value = mql.matches
   mqlListener = (e: MediaQueryListEvent) => {
     isMobile.value = e.matches
-    if (!e.matches) mobileMode.value = 'list'
   }
   mql.addEventListener('change', mqlListener)
 })
@@ -261,7 +252,7 @@ async function changeHops(h: number) {
     if (request !== graphRequest || requestedKey !== key.value) return
     loadError.value = e.response?.data?.error || t('mappingDetail.loadFailed')
     // Keep the selector and URL aligned with the graph still displayed.
-    hops.value = graph.value?.requested_hops ?? 1
+    hops.value = graph.value?.requested_hops ?? 2
   } finally {
     if (request === graphRequest) updatingHops.value = false
   }
@@ -318,11 +309,13 @@ function navigateToNode(nodeId: string) {
 function selectNodeFromList(nodeId: string) {
   selectedNodeId.value = nodeId
   graphRef.value?.centerOnNodeById(nodeId)
-  if (isMobile.value) mobileMode.value = 'graph'
+  if (isMobile.value) setViewMode('graph')
 }
 
-function toggleMobileMode() {
-  mobileMode.value = mobileMode.value === 'graph' ? 'list' : 'graph'
+function setViewMode(next: 'graph' | 'list') {
+  if (viewMode.value === next) return
+  if (next === 'list' && isFullscreen.value) toggleFullscreen()
+  viewMode.value = next
 }
 
 function openQuickAdd() {
@@ -428,6 +421,80 @@ const displayTree = computed<DisplayTree>(() => {
   return buildDisplayTree(graph.value)
 })
 
+const mobilePreviewGraph = computed<MappingGraphResponse | null>(() => {
+  const source = graph.value
+  if (!source) return null
+  const limit = 8
+  if (!isMobile.value || source.nodes.length <= limit) return source
+
+  const nodesById = new Map(source.nodes.map((node) => [node.expression_id, node]))
+  const orderedNodes = [...source.nodes].sort((a, b) => {
+    if (a.depth !== b.depth) return a.depth - b.depth
+    const languageOrder = (a.language_name || a.lang_code).localeCompare(b.language_name || b.lang_code)
+    if (languageOrder !== 0) return languageOrder
+    const textOrder = a.text.localeCompare(b.text)
+    return textOrder || a.expression_id.localeCompare(b.expression_id)
+  })
+  const selected = new Set<string>([source.root_id])
+  const selectedPath = selectedNodeId.value
+    ? getPathToRoot(selectedNodeId.value, displayTree.value).reverse()
+    : []
+  for (const id of selectedPath) {
+    if (selected.size >= limit) break
+    if (nodesById.has(id)) selected.add(id)
+  }
+
+  const languages = new Set<string>()
+  for (const id of selectedPath) {
+    const node = nodesById.get(id)
+    if (node?.depth === 1) languages.add(node.lang_code)
+  }
+  for (const node of orderedNodes.filter((item) => item.depth === 1)) {
+    if (selected.size >= limit) break
+    if (languages.has(node.lang_code)) continue
+    selected.add(node.expression_id)
+    languages.add(node.lang_code)
+  }
+  for (const node of orderedNodes) {
+    if (selected.size >= limit) break
+    const path = getPathToRoot(node.expression_id, displayTree.value).reverse()
+    const additions = path.filter((id) => !selected.has(id))
+    if (selected.size + additions.length > limit) continue
+    for (const id of additions) selected.add(id)
+  }
+
+  const nodes = source.nodes.filter((node) => selected.has(node.expression_id))
+  const edges = source.edges.filter((edge) => selected.has(edge.source_id) && selected.has(edge.target_id))
+  const layerCounts: Record<number, number> = {}
+  for (const node of nodes) {
+    if (node.depth > 0) layerCounts[node.depth] = (layerCounts[node.depth] ?? 0) + 1
+  }
+  return { ...source, nodes, edges, layer_counts: layerCounts }
+})
+
+async function shareExpression() {
+  const expression = expr.value?.expression
+  if (!expression) return
+  const url = new URL(expressionPath(expression.lang_code, expression.text, expression.homograph_index), window.location.origin).href
+  shareStatus.value = ''
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: expression.text, url })
+      return
+    }
+    await navigator.clipboard.writeText(url)
+    shareStatus.value = t('mappingDetail.linkCopied')
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return
+    try {
+      await navigator.clipboard.writeText(url)
+      shareStatus.value = t('mappingDetail.linkCopied')
+    } catch {
+      shareStatus.value = t('mappingDetail.shareFailed')
+    }
+  }
+}
+
 const coords = computed(() => {
   return null
 })
@@ -467,16 +534,19 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
     </div>
 
     <div v-if="anchorReadingGroups.length" class="anchor-readings">
-      <span
-        v-for="group in anchorReadingGroups"
-        :key="`${group.scheme}:${group.value}`"
-        class="anchor-reading"
-        :title="anchorReadingLocalesTitle(group.readings)"
-      >
-        <span class="anchor-reading-value">[{{ group.value }}]</span>
-        <span v-if="showAnchorReadingScheme" class="anchor-reading-scheme">{{ readingSchemeLabel(group.scheme) }} · </span>
-        <span class="anchor-reading-locale">({{ anchorReadingLocalesLabel(group.readings) }})</span>
-      </span>
+      <span class="anchor-readings-label">{{ t('mappingDetail.readingsByLocale') }}</span>
+      <div class="anchor-reading-list">
+        <span
+          v-for="group in anchorReadingGroups"
+          :key="`${group.scheme}:${group.value}`"
+          class="anchor-reading"
+          :title="anchorReadingLocalesTitle(group.readings)"
+        >
+          <span class="anchor-reading-locale">{{ anchorReadingLocalesLabel(group.readings) }}</span>
+          <span class="anchor-reading-value">[{{ group.value }}]</span>
+          <span v-if="showAnchorReadingScheme" class="anchor-reading-scheme">· {{ readingSchemeLabel(group.scheme) }}</span>
+        </span>
+      </div>
     </div>
 
     <div class="anchor-meta">
@@ -484,26 +554,38 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
     </div>
 
     <div class="anchor-acts">
-      <button class="btn btn-primary btn-sm" type="button" @click="openQuickAdd">
-        <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
+      <button class="btn btn-sm" type="button" @click="shareExpression">
+        <Share2 :size="14" aria-hidden="true" /> {{ t('mappingDetail.share') }}
       </button>
-      <router-link v-if="canViewMap" :to="mapLensPath(expr.expression.lang_code, expr.expression.text, expr.expression.homograph_index)" class="btn btn-sm">
-        <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
+      <router-link to="/contribute" class="btn btn-primary btn-sm">
+        <Plus :size="14" aria-hidden="true" /> {{ t('nav.contribute') }}
       </router-link>
-      <button
-        v-if="isMorphWord"
-        class="btn btn-sm"
-        type="button"
-        :aria-expanded="morphFormOpen"
-        aria-controls="morph-form"
-        @click="toggleMorphForm"
-      >
-        <Plus :size="14" aria-hidden="true" /> {{ morphFormOpen ? t('morphology.hideForm') : t('morphology.addFormLink') }}
-      </button>
-      <button v-if="isAdmin" class="btn btn-sm" type="button" @click="openSplitDialog">
-        <Split :size="14" aria-hidden="true" /> {{ t('mappingDetail.splitExpression') }}
-      </button>
+      <details class="anchor-more">
+        <summary class="btn btn-sm"><MoreHorizontal :size="16" aria-hidden="true" /> {{ t('components.moreActions') }}</summary>
+        <div class="anchor-more-menu">
+          <button class="anchor-more-item" type="button" @click="openQuickAdd">
+            <Plus :size="14" aria-hidden="true" /> {{ t('mappingDetail.addExpression') }}
+          </button>
+          <router-link v-if="canViewMap" :to="mapLensPath(expr.expression.lang_code, expr.expression.text, expr.expression.homograph_index)" class="anchor-more-item">
+            <ArrowUpRight :size="14" aria-hidden="true" /> {{ t('mappingDetail.viewMap') }}
+          </router-link>
+          <button
+            v-if="isMorphWord"
+            class="anchor-more-item"
+            type="button"
+            :aria-expanded="morphFormOpen"
+            aria-controls="morph-form"
+            @click="toggleMorphForm"
+          >
+            <Plus :size="14" aria-hidden="true" /> {{ morphFormOpen ? t('morphology.hideForm') : t('morphology.addFormLink') }}
+          </button>
+          <button v-if="isAdmin" class="anchor-more-item" type="button" @click="openSplitDialog">
+            <Split :size="14" aria-hidden="true" /> {{ t('mappingDetail.splitExpression') }}
+          </button>
+        </div>
+      </details>
     </div>
+    <p v-if="shareStatus" class="share-status" role="status">{{ shareStatus }}</p>
 
     <section v-if="showQuickAdd" class="quick-add" :aria-label="t('mappingDetail.quickAdd')">
       <div class="qa-head">
@@ -540,66 +622,90 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
       :homograph-index="expr.expression.homograph_index"
     />
 
-    <div class="nb-head">
+    <div class="nb-heading">
       <h2>{{ t('mappingDetail.mappingSet') }}</h2>
+      <p>{{ t('mappingDetail.subtitle') }}</p>
       <span class="nb-meta">
         <b>{{ directCount }}</b> {{ t('mappingDetail.direct') }}<template v-if="indirectCount"> · <b>{{ indirectCount }}</b> {{ t('mappingDetail.indirect') }}</template>
-        · <b>{{ hops }}</b> {{ t('mappingDetail.hops') }}
       </span>
-      <div class="target-language-filter">
-        <div class="target-language-filter__label"><Filter :size="14" aria-hidden="true" /><span class="sr-only">{{ t('mappingDetail.targetLanguage') }}</span></div>
-        <LanguageSelect v-model="targetLanguageCodes" :options="languageFilterOptions" />
-      </div>
     </div>
     <p v-if="loadError && graph" class="md-graph-error" role="alert">{{ loadError }}</p>
-    <p v-if="graph?.truncated" class="md-truncated" role="status">
-      {{ t('mappingDetail.graphTruncated', { count: graph.omitted_count }) }}
-    </p>
 
     <template v-if="hasMappings">
-      <div v-if="isMobile" class="md-mobile-bar">
-        <button
-          class="md-mode-btn"
-          :class="{ active: mobileMode === 'graph' }"
-          :aria-label="t('mappingDetail.graph')"
-          @click="toggleMobileMode"
-        >
-          <Share2 :size="14" aria-hidden="true" /> {{ t('mappingDetail.graph') }}
-        </button>
-        <button
-          class="md-mode-btn"
-          :class="{ active: mobileMode === 'list' }"
-          :aria-label="t('mappingDetail.list')"
-          @click="toggleMobileMode"
-        >
-          <List :size="14" aria-hidden="true" /> {{ t('mappingDetail.list') }}
-        </button>
+      <div class="md-view-controls">
+        <div class="target-language-filter">
+          <div class="target-language-filter__label"><Filter :size="14" aria-hidden="true" /><span class="sr-only">{{ t('mappingDetail.targetLanguage') }}</span></div>
+          <LanguageSelect v-model="targetLanguageCodes" :options="languageFilterOptions" />
+        </div>
+        <div class="md-view-switch" role="group" :aria-label="t('mappingDetail.mappingSet')">
+          <button
+            class="md-mode-btn"
+            :class="{ active: viewMode === 'graph' }"
+            data-view="graph"
+            type="button"
+            :aria-pressed="viewMode === 'graph'"
+            @click="setViewMode('graph')"
+          >
+            <Share2 :size="14" aria-hidden="true" /> {{ t('mappingDetail.graph') }}
+          </button>
+          <button
+            class="md-mode-btn"
+            :class="{ active: viewMode === 'list' }"
+            data-view="list"
+            type="button"
+            :aria-pressed="viewMode === 'list'"
+            @click="setViewMode('list')"
+          >
+            <List :size="14" aria-hidden="true" /> {{ t('mappingDetail.list') }}
+          </button>
+        </div>
       </div>
+      <div v-if="maxHops > 1" class="md-hops-controls" role="group" :aria-label="t('components.hops')">
+        <span class="md-hops-label">{{ t('components.hops') }}</span>
+        <button
+          v-for="hop in maxHops"
+          :key="hop"
+          type="button"
+          class="md-hop-btn"
+          :class="{ active: hops === hop }"
+          :aria-label="`${hop} ${t('components.hops')}`"
+          :aria-pressed="hops === hop"
+          :disabled="loading || updatingHops"
+          @click="changeHops(hop)"
+        >{{ hop }}</button>
+      </div>
+      <p v-if="graph?.truncated" class="md-truncated" role="status">
+        {{ targetLanguageCodes.length
+          ? t('mappingDetail.filteredGraphTruncated')
+          : t('mappingDetail.graphTruncated', { count: graph.omitted_count }) }}
+      </p>
 
-      <div class="md-graph-area">
+      <div v-if="viewMode === 'graph'" class="md-graph-area">
         <div class="md-graph-cell" :class="{ 'is-fullscreen': isFullscreen }">
           <template v-if="loading || updatingHops">
             <MappingGraphSkeleton />
           </template>
-          <template v-else-if="!isMobile || mobileMode === 'graph'">
-            <MappingGraph ref="graphRef"
-              :graph="graph!"
-              :selected-node-id="selectedNodeId"
-              :collapsed-ids="collapsedIds"
-              :current-hops="hops"
-              :max-hops="maxHops"
-              :is-fullscreen="isFullscreen"
-              @select="selectNode"
-              @navigate="navigateToNode"
-              @clear-selection="clearSelection"
-              @toggle-collapse="toggleCollapse"
-              @change-hops="changeHops"
-              @toggle-fullscreen="toggleFullscreen"
-            />
-          </template>
+          <MappingGraph v-else ref="graphRef"
+            :graph="mobilePreviewGraph!"
+            :selected-node-id="selectedNodeId"
+            :collapsed-ids="collapsedIds"
+            :current-hops="hops"
+            :max-hops="maxHops"
+            :show-hops-control="false"
+            :is-fullscreen="isFullscreen"
+            @select="selectNode"
+            @navigate="navigateToNode"
+            @clear-selection="clearSelection"
+            @toggle-collapse="toggleCollapse"
+            @change-hops="changeHops"
+            @toggle-fullscreen="toggleFullscreen"
+          />
+          <p v-if="isMobile && mobilePreviewGraph && graph && mobilePreviewGraph.nodes.length < graph.nodes.length" class="md-preview-note" role="status">
+            {{ t('mappingDetail.mobileGraphPreview', { shown: mobilePreviewGraph.nodes.length, total: graph.nodes.length }) }}
+            <button type="button" class="md-preview-link" @click="setViewMode('list')">{{ t('mappingDetail.viewFullList') }}</button>
+          </p>
         </div>
         <GraphInspector
-          v-if="!isMobile"
           :selected-node-id="selectedNodeId"
           :graph="graph!"
           :display-tree="displayTree"
@@ -613,7 +719,7 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
         />
       </div>
 
-      <div v-if="!isMobile || mobileMode === 'list'" class="md-list-section">
+      <div v-else class="md-list-section">
         <MappingHierarchyList
           :tree="displayTree"
           :graph="graph!"
@@ -624,19 +730,6 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
         />
       </div>
 
-      <GraphMobileInspector
-        v-if="isMobile"
-        :selected-node-id="selectedNodeId"
-        :graph="graph!"
-        :display-tree="displayTree"
-        :anchor-text="expr.expression.text"
-        :collapsed-ids="collapsedIds"
-        :locales="inspectorLocales"
-        :readings="inspectorReadings"
-        @close="clearSelection"
-        @navigate="navigateToNode"
-        @toggle-collapse="toggleCollapse"
-      />
     </template>
 
     <div v-else class="md-empty">
@@ -684,38 +777,6 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
     padding-right: 16px;
   }
 }
-.md-mobile-bar {
-  display: flex;
-  gap: 0;
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow: hidden;
-  width: fit-content;
-}
-.md-mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-}
-.md-mode-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
-.md-mode-btn:not(.active):hover {
-  color: var(--accent);
-}
-.md-mode-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
 .md-list-section {
   margin-top: 16px;
 }
@@ -746,15 +807,41 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
 .anchor-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .anchor-meta .coords { font-size: 11px; }
 .anchor-readings {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+.anchor-readings-label {
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.anchor-reading-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 2px 0 0;
+  gap: 6px;
+  min-width: 0;
+}
+.anchor-reading {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.anchor-reading-list .anchor-reading {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 12px;
   color: var(--fg);
 }
-.anchor-reading { min-width: 0; overflow-wrap: anywhere; display: inline-flex; align-items: baseline; gap: 6px; }
 .anchor-reading-value {
   color: var(--fg);
   font-weight: 600;
@@ -766,17 +853,51 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
 }
 .anchor-reading-locale {
   color: var(--accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 .anchor-acts { display: flex; gap: 8px; margin-top: var(--space-base); flex-wrap: wrap; }
+.anchor-more { position: relative; }
+.anchor-more > summary { list-style: none; cursor: pointer; }
+.anchor-more > summary::-webkit-details-marker { display: none; }
+.anchor-more-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  min-width: 200px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.anchor-more-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: calc(var(--r) - 2px);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.anchor-more-item:hover { background: var(--surface-2); }
+.anchor-more-item:focus-visible,
+.anchor-more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.share-status { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .target-language-filter {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
-  min-width: min(240px, 100%);
+  min-width: 0;
 }
 .target-language-filter__label { display: inline-flex; color: var(--muted); }
 .target-language-filter :deep(.lang-select) { flex: 1; min-width: 160px; }
@@ -849,10 +970,73 @@ function anchorReadingLocalesTitle(readings: ReadingGroup['readings']) {
 
 .md-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; }
 
+.nb-heading { display: grid; gap: 5px; margin: 22px 0 16px; }
+.nb-heading h2 { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.25; }
+.nb-heading p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.nb-meta { color: var(--muted); font-size: 12px; }
+.md-view-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.md-view-controls .target-language-filter { flex: 1 1 220px; max-width: 420px; }
+.md-view-controls .target-language-filter :deep(.lang-select) { min-width: 0; }
+.md-view-switch {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.md-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.md-mode-btn.active { background: var(--accent); color: #fff; }
+.md-mode-btn:not(.active):hover { color: var(--accent); }
+.md-mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.md-hops-controls { display: flex; align-items: center; gap: 6px; margin: 0 0 12px; }
+.md-hops-label {
+  margin-right: 4px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.md-hop-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.md-hop-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.md-hop-btn:disabled { opacity: 0.6; cursor: wait; }
+.md-hop-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.md-preview-note { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.md-preview-link { min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--accent); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.md-preview-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 @media (max-width: 700px) {
   .qa-grid { grid-template-columns: 1fr; }
-  .nb-head { flex-wrap: wrap; }
-  .target-language-filter { margin-left: 0; width: 100%; }
-  .target-language-filter :deep(.lang-select) { min-width: 0; }
+  .nb-heading { margin-top: 20px; }
+  .md-view-controls { align-items: stretch; gap: 8px; }
+  .md-view-controls .target-language-filter { flex-basis: 0; }
+  .md-view-controls .target-language-filter__label { display: none; }
+  .md-mode-btn { gap: 4px; padding: 0 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-mode-btn { transition: none; }
 }
 </style>

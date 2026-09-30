@@ -10,6 +10,7 @@ const props = defineProps<{
   maxHops: number
   mobileMode?: 'graph' | 'list'
   isFullscreen?: boolean
+  showHopsControl?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -173,7 +174,7 @@ function toggleMore() {
       </div>
     </div>
     <div v-if="showMore" class="tb-overlay" @click="showMore = false" />
-    <div v-if="maxHops > 1" class="tb-group">
+    <div v-if="props.showHopsControl !== false && maxHops > 1" class="tb-group">
       <span class="tb-label">{{ t('components.hops') }}</span>
       <button
         v-for="h in hopsOptions"
@@ -352,5 +353,20 @@ function toggleMore() {
     width: 36px;
     height: 36px;
   }
+}
+@media (max-width: 767px) {
+  .tb-btn,
+  .tb-mode-btn,
+  .tb-hop {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+  .tb-more-item { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tb-btn,
+  .tb-hop { transition: none; }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ChevronRight, ChevronDown } from 'lucide-vue-next'
 import type { DisplayTree, MappingGraphResponse } from './mappingGraphTypes'
@@ -70,8 +70,93 @@ function flattenTree(): Array<{ id: string; depth: number; parent: string | null
 }
 
 const listRef = ref<HTMLElement>()
+const focusedNodeId = ref<string | null>(null)
 
 const flatList = computed(() => flattenTree())
+const rovingNodeId = computed(() => {
+  if (focusedNodeId.value && flatList.value.some((item) => item.id === focusedNodeId.value)) {
+    return focusedNodeId.value
+  }
+  if (props.selectedNodeId && flatList.value.some((item) => item.id === props.selectedNodeId)) {
+    return props.selectedNodeId
+  }
+  return flatList.value[0]?.id ?? null
+})
+
+function focusTreeitem(id: string) {
+  focusedNodeId.value = id
+  void nextTick(() => {
+    const row = Array.from(listRef.value?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [])
+      .find((item) => item.dataset.nodeId === id)
+    row?.focus()
+  })
+}
+
+function selectTreeitem(id: string) {
+  focusTreeitem(id)
+  emit('select', id)
+}
+
+watch(flatList, () => {
+  if (!focusedNodeId.value || flatList.value.some((item) => item.id === focusedNodeId.value)) return
+  const fallback = props.selectedNodeId && flatList.value.some((item) => item.id === props.selectedNodeId)
+    ? props.selectedNodeId
+    : flatList.value[0]?.id
+  focusedNodeId.value = fallback ?? null
+  if (fallback) void nextTick(() => focusTreeitem(fallback))
+}, { flush: 'post' })
+
+function onTreeitemKeydown(event: KeyboardEvent, id: string) {
+  const rows = flatList.value
+  const index = rows.findIndex((item) => item.id === id)
+  if (index < 0) return
+
+  if (event.key === 'Enter' || event.key === ' ') {
+    if (event.target !== event.currentTarget) return
+    event.preventDefault()
+    emit('select', id)
+    return
+  }
+
+  let targetId: string | undefined
+  switch (event.key) {
+    case 'ArrowDown':
+      targetId = rows[index + 1]?.id
+      break
+    case 'ArrowUp':
+      targetId = rows[index - 1]?.id
+      break
+    case 'Home':
+      targetId = rows[0]?.id
+      break
+    case 'End':
+      targetId = rows[rows.length - 1]?.id
+      break
+    case 'ArrowRight': {
+      if (hasChildren(id) && props.collapsedIds.has(id)) {
+        event.preventDefault()
+        emit('toggleCollapse', id)
+        return
+      }
+      targetId = rows.find((item) => item.parent === id)?.id
+      break
+    }
+    case 'ArrowLeft': {
+      if (hasChildren(id) && !props.collapsedIds.has(id)) {
+        event.preventDefault()
+        emit('toggleCollapse', id)
+        return
+      }
+      targetId = rows[index]?.parent ?? undefined
+      break
+    }
+    default:
+      return
+  }
+
+  event.preventDefault()
+  if (targetId) focusTreeitem(targetId)
+}
 </script>
 
 <template>
@@ -89,14 +174,17 @@ const flatList = computed(() => flattenTree())
       role="treeitem"
       :aria-selected="item.id === selectedNodeId"
       :aria-expanded="hasChildren(item.id) ? !collapsedIds.has(item.id) : undefined"
-      tabindex="0"
-      @click="emit('select', item.id)"
-      @keydown.enter="emit('select', item.id)"
-      @keydown.space.prevent="emit('select', item.id)"
+      :aria-level="item.depth + 1"
+      :tabindex="item.id === rovingNodeId ? 0 : -1"
+      @click="selectTreeitem(item.id)"
+      @focusin="focusedNodeId = item.id"
+      @keydown="onTreeitemKeydown($event, item.id)"
     >
       <button
         v-if="hasChildren(item.id)"
+        type="button"
         class="hl-toggle"
+        tabindex="-1"
         :aria-label="collapsedIds.has(item.id) ? t('components.expand') : t('components.collapse')"
         @click.stop="emit('toggleCollapse', item.id)"
       >
@@ -182,5 +270,13 @@ const flatList = computed(() => flattenTree())
   font-size: 10px;
   color: var(--muted);
   flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .hl-row { min-height: 44px; }
+  .hl-toggle,
+  .hl-spacer { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hl-row { transition: none; }
 }
 </style>
