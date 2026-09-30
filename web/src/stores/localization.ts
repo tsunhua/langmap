@@ -6,8 +6,39 @@ import { projectTranslations } from '@/locales/project'
 import { getUiMessages, listUiLocales, type UiLocale } from '@/api/localization'
 import { getPreferences, putLanguageLocalePreference, type LanguageLocalePreference } from '@/api/preferences'
 import { useAuthStore } from '@/stores/auth'
+import { resolveBrowserUiLocale } from '@/utils/browserUiLocale'
 
 const KEY = 'langmap.language-locales'
+function parseLanguageLocalePreference(value: unknown): LanguageLocalePreference | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const preference = value as Record<string, unknown>
+  if (typeof preference.primary !== 'string' || !preference.primary) return undefined
+  if (preference.secondary != null && typeof preference.secondary !== 'string') return undefined
+  return {
+    primary: preference.primary,
+    ...(typeof preference.secondary === 'string' ? { secondary: preference.secondary } : {}),
+  }
+}
+function readLocalPreferences(): LanguageLocalePreference | undefined {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(KEY) || '')
+    return parseLanguageLocalePreference(value)
+  } catch {
+    return undefined
+  }
+}
+function saveLocalPreferences(value: LanguageLocalePreference) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(value))
+  } catch {
+    // Keep the current locale usable when browser storage is unavailable.
+  }
+}
+function browserLanguages(): string[] {
+  if (typeof navigator === 'undefined') return []
+  const preferences = navigator.languages.length ? navigator.languages : [navigator.language]
+  return [...new Set(preferences.filter(Boolean))]
+}
 function nested(messages: Array<{ key: string; text: string }>) { const out: Record<string, unknown> = {}; for (const { key, text } of messages) { let target = out; const parts = key.split('.'); for (const part of parts.slice(0, -1)) target = (target[part] ??= {}) as Record<string, unknown>; target[parts[parts.length - 1]] = text } return out }
 function flatten(messages: unknown, prefix = ''): Array<{ key: string; text: string }> {
   if (typeof messages === 'string') return prefix ? [{ key: prefix, text: messages }] : []
@@ -41,15 +72,41 @@ export const useLocalizationStore = defineStore('localization', () => {
   let loaded = false
   let loadingPromise: Promise<void> | undefined
   async function loadBundle() { const messages = await getUiMessages({ primary: primary.value, secondary: secondary.value }); global.setLocaleMessage(primary.value, nested(mergeMessages(messages, primary.value, secondary.value))); global.locale.value = primary.value; document.documentElement.lang = primary.value.split('_')[0]; document.documentElement.dir = locales.value.find((item) => item.language_locale_code === primary.value)?.direction ?? 'ltr' }
-  async function setPreferences(value: LanguageLocalePreference) { if (!value.primary || value.primary === value.secondary) throw new Error('INVALID_LANGUAGE_PREFERENCE'); const auth = useAuthStore(); if (auth.isLoggedIn) await putLanguageLocalePreference(value); else localStorage.setItem(KEY, JSON.stringify(value)); primary.value = value.primary; secondary.value = value.secondary; await loadBundle() }
-  async function loadPreferences() { const auth = useAuthStore(); let value: LanguageLocalePreference | undefined; if (auth.isLoggedIn) value = (await getPreferences())['language.locales'] as LanguageLocalePreference | undefined; else { try { value = JSON.parse(localStorage.getItem(KEY) || '') } catch {} } if (value?.primary) { primary.value = value.primary; secondary.value = value.secondary } }
+  async function setPreferences(value: LanguageLocalePreference) {
+    if (!value.primary || value.primary === value.secondary) throw new Error('INVALID_LANGUAGE_PREFERENCE')
+    const auth = useAuthStore()
+    if (auth.isLoggedIn) await putLanguageLocalePreference(value)
+    saveLocalPreferences(value)
+    primary.value = value.primary
+    secondary.value = value.secondary
+    await loadBundle()
+  }
+  async function loadPreferences(): Promise<boolean> {
+    const auth = useAuthStore()
+    const accountPreferences = auth.isLoggedIn ? await getPreferences() : undefined
+    const accountValue = parseLanguageLocalePreference(accountPreferences?.['language.locales'])
+    const value = accountValue ?? readLocalPreferences()
+    if (!value) return false
+    primary.value = value.primary
+    secondary.value = value.secondary
+    if (accountValue) saveLocalPreferences(accountValue)
+    return true
+  }
   async function loadLocales() {
     if (loaded) return
     if (loadingPromise) return loadingPromise
     loading.value = true
     loadingPromise = (async () => {
       locales.value = await listUiLocales()
-      await loadPreferences()
+      const hasSavedPreference = await loadPreferences()
+      if (!hasSavedPreference) {
+        const detected = resolveBrowserUiLocale(browserLanguages(), locales.value)
+        if (detected) {
+          primary.value = detected
+          secondary.value = undefined
+          saveLocalPreferences({ primary: detected })
+        }
+      }
       await loadBundle()
       loaded = true
     })()
