@@ -238,6 +238,13 @@ def read_language_name_translations() -> list[dict[str, str]]:
     translations = data.get("translations")
     if not isinstance(translations, dict):
         raise ValueError("language-name-translations.json has no translations object")
+    canonical_english_names = data.get("canonical_english_names")
+    if not isinstance(canonical_english_names, dict):
+        raise ValueError("language-name-translations.json has no canonical English names")
+    if set(canonical_english_names) != CODE_KEYED_ONLY_LANGUAGE_CODES:
+        raise ValueError("canonical English names must cover all code-keyed-only languages")
+    if any(not isinstance(name, str) or not name.strip() for name in canonical_english_names.values()):
+        raise ValueError("canonical English language names must be non-empty strings")
     allowed_locales = {"cmn-Hans-CN", "cmn-Hant-TW", "jpn-Jpan-JP"}
     rows: list[dict[str, str]] = []
     seen: set[tuple[str, str]] = set()

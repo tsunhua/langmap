@@ -24,7 +24,7 @@ function translate(token: string | null, body: BodyInit | null): Promise<Respons
   return fetch(`${BASE_URL}/api/v2/translate`, { method: 'POST', headers, body });
 }
 
-// Every case below fails validation or auth before the pipeline can call Workers AI.
+// Every case below fails validation before the pipeline can call Workers AI.
 describe('POST /api/v2/translate integration (non-AI paths)', () => {
   let token: string;
 
@@ -32,10 +32,11 @@ describe('POST /api/v2/translate integration (non-AI paths)', () => {
     token = await registerToken();
   });
 
-  it('requires authentication', async () => {
-    const response = await translate(null, JSON.stringify({ text: '你好', target_locale_code: KNOWN_TARGET_LOCALE }));
-    expect(response.status).toBe(401);
-    expect(((await response.json()) as { error: string }).error).toBe('AUTH_REQUIRED');
+  it('allows a guest request to reach translation validation', async () => {
+    const response = await translate(null, '');
+    expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: string }).error).toBe('VALIDATION_FAILED');
+    expect(response.headers.get('cache-control')).toBe('no-store');
   });
 
   it('rejects an empty body', async () => {

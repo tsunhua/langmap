@@ -9,10 +9,22 @@ from scripts.dictionary.import_mapping_csv_pg import (
     CsvContractError,
     create_pre_release_backup,
     iter_rows,
+    _locale,
+    _canonical_language_name_en,
     main,
     validate,
     validate_target,
 )
+
+
+def test_code_keyed_macro_languages_use_iso_canonical_english_names():
+    arabic = _locale("ara-Arab-EG", {"ara-Arab-EG": {"name_en": "ara-Arab-EG"}})
+    pushto = _locale("pus-Arab-AF", {"pus-Arab-AF": {"name_en": "pus-Arab-AF"}})
+
+    assert arabic.name_en == "ara-Arab-EG"
+    assert pushto.name_en == "pus-Arab-AF"
+    assert _canonical_language_name_en(arabic.language, arabic.name_en) == "Arabic"
+    assert _canonical_language_name_en(pushto.language, pushto.name_en) == "Pushto"
 
 
 def write_snapshot(

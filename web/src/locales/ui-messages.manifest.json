@@ -1,0 +1,3235 @@
+{
+  "project_id": "langmap-web",
+  "source_locale": "en-US",
+  "generated_at": "2026-09-29T23:18:37.194Z",
+  "messages": [
+    {
+      "key": "activity.expression",
+      "message": "Added expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "activity.handbook",
+      "message": "Created handbook",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "activity.mapping",
+      "message": "Mapped",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "activity.voteDown",
+      "message": "Downvoted a mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "activity.voteUp",
+      "message": "Upvoted a mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.email",
+      "message": "Email",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.haveAccount",
+      "message": "Already have an account?",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.login",
+      "message": "Sign in",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.noAccount",
+      "message": "Don't have an account?",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.operationFailed",
+      "message": "Operation failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.password",
+      "message": "Password",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.processing",
+      "message": "Processing…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.register",
+      "message": "Create account",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "auth.username",
+      "message": "Username",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "autocomplete.noMatch",
+      "message": "No match",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.cancel",
+      "message": "Cancel",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.close",
+      "message": "Close",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.language",
+      "message": "Language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.languages",
+      "message": "Languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.loading",
+      "message": "Loading…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.search",
+      "message": "Search",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "common.submit",
+      "message": "Submit",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.actualSize",
+      "message": "Actual size 100%",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.anonymous",
+      "message": "Anonymous",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.avoidOverlap",
+      "message": "Arrange to avoid overlap",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.childNodes",
+      "message": "{count} child nodes; click to collapse",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.cliqueNote",
+      "message": "Each edge is an independent direct mapping that can be upvoted or downvoted; low-scoring mappings are collapsed.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.cliqueTitle",
+      "message": "Mapping graph to be created",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.closeInfoPanel",
+      "message": "Close information panel",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.collapse",
+      "message": "Collapse",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.collapseBranch",
+      "message": "Collapse child branch",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.collapseToFirst",
+      "message": "Collapse to first hop",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.collapseToolbar",
+      "message": "Collapse graph toolbar",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.daysAgo",
+      "message": "{count} days ago",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.depth",
+      "message": "Depth {depth}",
+      "placeholders": [
+        "depth"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.directMappingList",
+      "message": "Directly mapped expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.downvote",
+      "message": "Downvote",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.edgeCount",
+      "message": "{count} edges",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.edgeSources",
+      "message": "Source markers",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.empty",
+      "message": "No data yet",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.evidence",
+      "message": "Evidence",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.exitFullscreen",
+      "message": "Exit fullscreen",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.expand",
+      "message": "Expand",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.expandAll",
+      "message": "Expand all",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.expandBranch",
+      "message": "Expand child branch",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.expandToolbar",
+      "message": "Expand graph toolbar",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.expression",
+      "message": "Expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.filterLanguages",
+      "message": "Filter languages…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.fullscreen",
+      "message": "Fullscreen",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.graphLabel",
+      "message": "Expression mapping graph",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.graphLoading",
+      "message": "Loading graph…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.graphMode",
+      "message": "Graph mode",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.graphStats",
+      "message": "{nodes} mapped nodes · {edges} relations",
+      "placeholders": [
+        "edges",
+        "nodes"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.graphToolbar",
+      "message": "Graph toolbar",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.hierarchyList",
+      "message": "Mapping hierarchy list",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.hops",
+      "message": "Hops",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.hoursAgo",
+      "message": "{count} hours ago",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.justNow",
+      "message": "Just now",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.languageLoadFailed",
+      "message": "Unable to load languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.listMode",
+      "message": "List mode",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.loadingRelated",
+      "message": "Loading related expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.loadMore",
+      "message": "Load more",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.locale",
+      "message": "Locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.mapping",
+      "message": "Mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.mappingAnnotations",
+      "message": "Mapping notes",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.mappingScore",
+      "message": "Mapping score",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.minutesAgo",
+      "message": "{count} minutes ago",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.moreActions",
+      "message": "More actions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.moreMappings",
+      "message": "{count} more mappings are available in the full graph.",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.nodeCount",
+      "message": "{count} nodes",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.nodeInfo",
+      "message": "Node information",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.noDirectMappings",
+      "message": "No direct mappings yet.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.noExpressions",
+      "message": "No expressions found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.otherRelations",
+      "message": "Other relations",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.reading",
+      "message": "Reading",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.relatedExpressions",
+      "message": "Related expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.relationCount",
+      "message": "{count} relations",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.removeLanguage",
+      "message": "Remove {code}",
+      "placeholders": [
+        "code"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.resetLayout",
+      "message": "Reset layout",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.rootNode",
+      "message": "Root node",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.search",
+      "message": "Search",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.searchExpressions",
+      "message": "Search expressions…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.searching",
+      "message": "Searching…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.selectNodeHint",
+      "message": "Select a node in the graph to view details",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.sourcePath",
+      "message": "Source path",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.upvote",
+      "message": "Upvote",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.viewExpression",
+      "message": "View expression details",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.voteFailed",
+      "message": "Vote failed; reverted",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.zoomIn",
+      "message": "Zoom in",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "components.zoomOut",
+      "message": "Zoom out",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.addExpression",
+      "message": "+ Add expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.chooseImage",
+      "message": "Choose image (max 480px / 100KB)",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.completeGraph",
+      "message": "Complete graph",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.delete",
+      "message": "Delete",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.directMappingCount",
+      "message": "{count} direct mappings",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.expression",
+      "message": "Expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.expressionCount",
+      "message": "{count} expressions",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.expressionPlaceholder",
+      "message": "Enter an expression…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.imageTooLarge",
+      "message": "Compressed image must be no larger than 100KB",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.imageUploadFailed",
+      "message": "Unable to upload image",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.imageUploading",
+      "message": "Uploading…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.language",
+      "message": "Language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.lead",
+      "message": "Submit expressions that mean the same thing. The system creates a direct mapping between every pair. Inflected forms (plural, past, polite) belong on an expression’s mapping page, not here.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.locale",
+      "message": "Locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.minRows",
+      "message": "At least 2 rows with a language and expression are required",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.submit",
+      "message": "Submit",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.submitFailed",
+      "message": "Submission failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.submitting",
+      "message": "Submitting…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.tags",
+      "message": "Tags",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "contribute.title",
+      "message": "Batch contribution",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "errors.expressionLinkExpired",
+      "message": "This link uses an outdated address. Search for the expression to find its current page.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "errors.home",
+      "message": "Back home",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "errors.loadFailed",
+      "message": "Unable to load",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "errors.pageMissing",
+      "message": "Page not found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "expression.imageAlt",
+      "message": "Expression image",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "feed.contributeMapping",
+      "message": "Contribute a mapping →",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "feed.missing",
+      "message": "Can’t find what you need?",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "feed.noActivity",
+      "message": "No activity yet",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "feed.subtitle",
+      "message": "The latest pulse of the semantic graph — new contributions.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "feed.title",
+      "message": "Activity",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.adaptedFromWikivoyage",
+      "message": "Content adapted from English Wikivoyage (CC BY-SA 4.0).",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.addExpression",
+      "message": "Add expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.addSection",
+      "message": "Add section",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.back",
+      "message": "Handbook list",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.chapter",
+      "message": "Chapter {number}",
+      "placeholders": [
+        "number"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.closeExpressionInfo",
+      "message": "Close expression information",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.collapsePicker",
+      "message": "Collapse",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.deleteSection",
+      "message": "Delete section",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.edit",
+      "message": "Edit handbook",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.expressionInfo",
+      "message": "Expression information",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.expressionInfoHint",
+      "message": "The expression language, region, and source appear here.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.helpful",
+      "message": "Was this handbook helpful?",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.inspectorFailed",
+      "message": "Unable to load expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.loadFailed",
+      "message": "Unable to load",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.locale",
+      "message": "Language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.moreTranslations",
+      "message": "{count} more translations hidden",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.moveDown",
+      "message": "Move down",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.moveSectionDown",
+      "message": "Move section down",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.moveSectionUp",
+      "message": "Move section up",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.moveUp",
+      "message": "Move up",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.noTranslation",
+      "message": "No translation for this expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.private",
+      "message": "Private",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.public",
+      "message": "Public",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.publish",
+      "message": "Publish",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.reading",
+      "message": "Reading",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.region",
+      "message": "Region",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.relationsFailed",
+      "message": "Unable to load related expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.removeExpression",
+      "message": "Remove {text}",
+      "placeholders": [
+        "text"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.saveDraft",
+      "message": "Save draft",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.saving",
+      "message": "Saving…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.sectionTitle",
+      "message": "Section title",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.selectExpression",
+      "message": "Select an expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.source",
+      "message": "Source",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.sourceAi",
+      "message": "AI",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.sourceAuthority",
+      "message": "Authority",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.sourceUser",
+      "message": "User",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.titlePlaceholder",
+      "message": "Handbook title",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.toc",
+      "message": "Contents",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.translationLanguage",
+      "message": "Show translations in",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.translationLocalePlaceholder",
+      "message": "Search language locales",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.translationsFailed",
+      "message": "Unable to load translations",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.translationsLoading",
+      "message": "Loading translations",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.viewFullGraph",
+      "message": "View full relation graph",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbook.visibility",
+      "message": "Visibility",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.create",
+      "message": "New handbook",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.loadFailed",
+      "message": "Unable to load handbooks",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.newest",
+      "message": "Latest",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.noResults",
+      "message": "No handbooks found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.popular",
+      "message": "Popular",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.searchPlaceholder",
+      "message": "Search handbooks…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.sections",
+      "message": "sections",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "handbooks.title",
+      "message": "Handbooks",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.search",
+      "message": "Search expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.searchHint",
+      "message": "Choose a language, enter a word or phrase, and explore related expressions.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "home.title",
+      "message": "LangMap",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.back",
+      "message": "Back",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.cancel",
+      "message": "Cancel",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.close",
+      "message": "Close",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.create",
+      "message": "Create language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.createFailed",
+      "message": "Language creation failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.creating",
+      "message": "Creating…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.errorDescription",
+      "message": "Enter a description",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.errorGlottolog",
+      "message": "Choose a Glottolog match or select \"no match\"",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.errorName",
+      "message": "Enter a language name",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.errorReason",
+      "message": "Select a reason for community-only creation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.errorTag",
+      "message": "Enter a language subtag to continue",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologCandidates",
+      "message": "{count} candidate(s) found",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologChoose",
+      "message": "Choose a match or indicate no suitable entry",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologExactMatch",
+      "message": "Match this candidate",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologLevelDialect",
+      "message": "dialect",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologLevelLanguage",
+      "message": "language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologNoMatch",
+      "message": "Glottolog has no suitable entry",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.glottologSearchPlaceholder",
+      "message": "Search Glottolog…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataDescription",
+      "message": "Description",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataDescriptionPlaceholder",
+      "message": "Describe this language or variety…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataName",
+      "message": "Name",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataNameEn",
+      "message": "English name",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReason",
+      "message": "Why is this language missing from Glottolog?",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReasonCommunity",
+      "message": "Community-specific usage",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReasonEmerging",
+      "message": "Emerging variety",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReasonMissing",
+      "message": "Missing from Glottolog",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReasonOther",
+      "message": "Other",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.metadataReasonPlaceholder",
+      "message": "Select a reason…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.next",
+      "message": "Next",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.optional",
+      "message": "Optional",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.previewCanonicalCode",
+      "message": "Canonical code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.previewExisting",
+      "message": "This language already exists",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.previewExistingAction",
+      "message": "Use existing language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.previewTitle",
+      "message": "Create language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.previewWarnings",
+      "message": "Warnings",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.provisionalTag",
+      "message": "Provisional tag",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.requiredHint",
+      "message": "* Required",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.stepGlottolog",
+      "message": "Glottolog match",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.stepMetadata",
+      "message": "Metadata",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.stepPreview",
+      "message": "Preview & create",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.stepTag",
+      "message": "Language tag",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.subtagLanguage",
+      "message": "Language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.subtagRegion",
+      "message": "Region",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.subtagScript",
+      "message": "Script",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.subtagSearch",
+      "message": "Search subtags…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.subtagVariant",
+      "message": "Variant",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.variantRemoved",
+      "message": "1 variant removed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageCreate.variantsRemoved",
+      "message": "{count} variant(s) removed",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.allOthers",
+      "message": "All",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.allVariants",
+      "message": "All scripts",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.alphabetical",
+      "message": "Alphabetical",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.back",
+      "message": "Languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.expressions",
+      "message": "Expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.latest",
+      "message": "Latest",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.loadFailed",
+      "message": "Unable to load",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.mapped",
+      "message": "Mapped",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.noResults",
+      "message": "No expressions found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.otherLabel",
+      "message": "Other",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.popular",
+      "message": "Popular",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.regionalForms",
+      "message": "Regional forms",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.representativeCities",
+      "message": "Representative cities",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.representativeCitiesNote",
+      "message": "Reference points for exploration; not the full language distribution.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.scripts.Hans",
+      "message": "Simplified",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.scripts.Hant",
+      "message": "Traditional",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.scripts.Jpan",
+      "message": "Japanese",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.scripts.Latn",
+      "message": "Latin",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.searchPlaceholder",
+      "message": "Search expressions…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageDetail.variantLabel",
+      "message": "Script",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagePicker.clear",
+      "message": "Clear selection",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagePicker.createLanguage",
+      "message": "Create new language or variety",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagePicker.noResults",
+      "message": "No matching languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagePicker.placeholder",
+      "message": "Search languages…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.addLanguage",
+      "message": "Add language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.directionLeftToRight",
+      "message": "Left to right",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.directionRightToLeft",
+      "message": "Right to left",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.expressionCount",
+      "message": "Expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.languageCount",
+      "message": "Languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.loadFailed",
+      "message": "Unable to load languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.noResults",
+      "message": "No languages found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.searchPlaceholder",
+      "message": "Search languages…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.sortAlphabetical",
+      "message": "A–Z",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.sortCount",
+      "message": "Count",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.subtitle",
+      "message": "Explore expressions and mappings across all languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languagesPage.title",
+      "message": "Languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageSwitcher.browserSuggested",
+      "message": "Suggested by your browser",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageSwitcher.helpTranslate",
+      "message": "Help translate LangMap",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageSwitcher.noResults",
+      "message": "No matching languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "languageSwitcher.recent",
+      "message": "Recent languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.codePreviewEmpty",
+      "message": "Complete required fields to preview the code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.create",
+      "message": "Create locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.createFailed",
+      "message": "Unable to create language locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.englishName",
+      "message": "English name",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.heading",
+      "message": "Create language locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.languageCodePlaceholder",
+      "message": "ISO 639-3 code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.latitude",
+      "message": "Latitude",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.localName",
+      "message": "Local name",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.longitude",
+      "message": "Longitude",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.noResults",
+      "message": "No locale found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.place",
+      "message": "Place segments",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.placePlaceholder",
+      "message": "Quanzhou_Nanan",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.region",
+      "message": "Region",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.regionPlaceholder",
+      "message": "ISO 3166-1 code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.script",
+      "message": "Script",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.scriptPlaceholder",
+      "message": "ISO 15924 code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "localeCreate.searchPlaceholder",
+      "message": "Search language locales…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.anchor",
+      "message": "Anchor",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.back",
+      "message": "Back to mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.languages",
+      "message": "{count} languages",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.loadFailed",
+      "message": "Unable to load",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.members",
+      "message": "Mapping members",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.noData",
+      "message": "No geographic distribution data for this expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.regions",
+      "message": "{count} regions",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "mapLens.title",
+      "message": "Expression distribution",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.addAndMap",
+      "message": "Add and create mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.addExpression",
+      "message": "Add expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.addFailed",
+      "message": "Unable to add expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.adding",
+      "message": "Adding…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.allLanguages",
+      "message": "All languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.authority",
+      "message": "Authority",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.breadcrumb",
+      "message": "Breadcrumb",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.closeQuickAdd",
+      "message": "Close quick add",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.contribute",
+      "message": "Contribute mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.direct",
+      "message": "direct mappings",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.enterRequired",
+      "message": "Enter expression and language code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.expression",
+      "message": "Expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.expressionPlaceholder",
+      "message": "Enter expression…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.graph",
+      "message": "Graph",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.graphTruncated",
+      "message": "Graph truncated; {count} related expressions omitted.",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.home",
+      "message": "Home",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.hops",
+      "message": "hops",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.indirect",
+      "message": "indirect",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.languageCode",
+      "message": "Language code",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.languageCodePlaceholder",
+      "message": "e.g. en / cmn-Hant",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.list",
+      "message": "List",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.loadFailed",
+      "message": "Unable to load",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.mappingSet",
+      "message": "Mapping set",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.noMappings",
+      "message": "No mappings yet",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.optional",
+      "message": "Optional",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.quickAdd",
+      "message": "Quickly add expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.quickAddLead",
+      "message": "Add an expression and map it directly to the current expression.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.region",
+      "message": "Region",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.splitExpression",
+      "message": "Split expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.splitFailed",
+      "message": "Unable to split expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.splitLoadFailed",
+      "message": "Unable to load mappings for split",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.targetLanguage",
+      "message": "Target language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.user",
+      "message": "User",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "mappingDetail.viewMap",
+      "message": "View this expression on map",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.addFormLink",
+      "message": "Add a word-form link",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.class.adjective",
+      "message": "Adjective",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.class.noun",
+      "message": "Noun",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.class.verb",
+      "message": "Verb",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.dictionaryForm",
+      "message": "Dictionary form",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.empty",
+      "message": "No word-form links yet",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.formOfAria",
+      "message": "Form of {lemma}: {features}",
+      "placeholders": [
+        "features",
+        "lemma"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.hideForm",
+      "message": "Hide form",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.loadFailed",
+      "message": "Unable to load word forms",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.markAsForm",
+      "message": "Mark as a form of…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.noLanguageFeatures",
+      "message": "No usual features for this class. You can still save the link, or show all features.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.pickFeatures",
+      "message": "Features",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.pickFeaturesHint",
+      "message": "Optional. Only features usual for this language and word class are shown.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.saved",
+      "message": "Word-form link saved",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.saving",
+      "message": "Saving…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.searchLemma",
+      "message": "Search a same-language dictionary form",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.searchLemmaLabel",
+      "message": "Dictionary form",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.showAllFeatures",
+      "message": "Show all features",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.submit",
+      "message": "Save form link",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.submitFailed",
+      "message": "Unable to save form link",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.title",
+      "message": "Word forms",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.wordClass",
+      "message": "Word class",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "morphology.wordClassHint",
+      "message": "Choose noun, verb, or adjective first. Features depend on that.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.closeMenu",
+      "message": "Close menu",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.contribute",
+      "message": "Contribute",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.handbooks",
+      "message": "Handbooks",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.home",
+      "message": "Home",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.languages",
+      "message": "Languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.menu",
+      "message": "Menu",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.openMenu",
+      "message": "Open menu",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.phraseTranslate",
+      "message": "Translate",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.searchExpressions",
+      "message": "Search expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.signIn",
+      "message": "Sign in",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.signOut",
+      "message": "Sign out",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.skipToContent",
+      "message": "Skip to main content",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.submitSearch",
+      "message": "Submit search",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "nav.switchLanguage",
+      "message": "Switch interface language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.aiAssistedBadge",
+      "message": "AI-assisted",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.aiAssistedNotice",
+      "message": "This translation was produced with AI assistance. Review and edit it before contributing.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.cancel",
+      "message": "Cancel",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.clearText",
+      "message": "Clear text",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.closeReference",
+      "message": "Close references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.copied",
+      "message": "Copied",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.copy",
+      "message": "Copy",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.edit",
+      "message": "Edit",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorGeneric",
+      "message": "Translation failed.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorNetwork",
+      "message": "Network request failed. Check your connection and try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorOutputTooLarge",
+      "message": "The translation was too long to finish. Try shorter text.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorPlainText",
+      "message": "Only plain text is supported. Remove HTML or Markdown and try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorProvider",
+      "message": "The translation service failed. Try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorQuota",
+      "message": "The daily translation quota is used up. Try again after it resets.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorRateLimited",
+      "message": "Too many requests. Try again shortly.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorSourceLanguage",
+      "message": "The source language is not recognized.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorTargetLocale",
+      "message": "The target language is not available.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorTimeout",
+      "message": "Translation timed out. Try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.errorValidation",
+      "message": "The request could not be processed. Check the text and try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceCount",
+      "message": "{count} reference | {count} references",
+      "placeholders": [
+        "count",
+        "count"
+      ],
+      "plural_forms": 2
+    },
+    {
+      "key": "phraseTranslate.evidenceDegraded",
+      "message": "References could not be retrieved in time; the translation is model-generated only.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceDirect",
+      "message": "Direct",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceEmpty",
+      "message": "No related mappings found.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceHeading",
+      "message": "Retrieval references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceOmitted",
+      "message": "{count} more not shown",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidencePath",
+      "message": "Path",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceReferenceLocale",
+      "message": "reference locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceSkipped",
+      "message": "Reference lookup was skipped",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.evidenceTwoHop",
+      "message": "Via pivot",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.exactMatch",
+      "message": "Exact match",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.eyebrow",
+      "message": "PHRASE TRANSLATION",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.graphemeCount",
+      "message": "{count} / {max}",
+      "placeholders": [
+        "count",
+        "max"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.loadLanguagesFailed",
+      "message": "Unable to load languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.loadLocalesFailed",
+      "message": "Unable to load language locales",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.lookupTerm",
+      "message": "Show related mappings for {term}",
+      "placeholders": [
+        "term"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.matchExact",
+      "message": "Exact",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.matchFuzzy",
+      "message": "Approximate",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.matchPrefix",
+      "message": "Prefix",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.modelOnly",
+      "message": "Model-generated only",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.outputPlaceholder",
+      "message": "Translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processCompleted",
+      "message": "Completed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processConfidence",
+      "message": "{confidence} confidence",
+      "placeholders": [
+        "confidence"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processDraft",
+      "message": "Current translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processEvidence",
+      "message": "Retrieved references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processEvidenceDegraded",
+      "message": "reference lookup degraded",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processEvidenceFailed",
+      "message": "reference lookup failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processEvidenceNoMatch",
+      "message": "no references for this language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processEvidenceSkipped",
+      "message": "reference lookup skipped",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processFailed",
+      "message": "Translation failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processHeading",
+      "message": "Translation process",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processMoreEvidence",
+      "message": "{count} more reference | {count} more references",
+      "placeholders": [
+        "count",
+        "count"
+      ],
+      "plural_forms": 2
+    },
+    {
+      "key": "phraseTranslate.processNoSegmentation",
+      "message": "No valid keyword or phrase segments were returned.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processReferenceLocale",
+      "message": "Reference locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processResolution",
+      "message": "Resolution",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processResolutionAssisted",
+      "message": "Generated with retrieved references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processResolutionExact",
+      "message": "Returned from an exact mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processResolutionModelOnly",
+      "message": "Generated without retrieved references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processRetrieval",
+      "message": "Retrieved snippets",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processSegmentation",
+      "message": "Detected keywords and phrases",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processSegmentationCount",
+      "message": "{count} segment | {count} segments",
+      "placeholders": [
+        "count",
+        "count"
+      ],
+      "plural_forms": 2
+    },
+    {
+      "key": "phraseTranslate.processSource",
+      "message": "Source language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processSpanOffset",
+      "message": "characters {start}–{end}",
+      "placeholders": [
+        "end",
+        "start"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processStarting",
+      "message": "Starting translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processStopped",
+      "message": "Stopped",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processTarget",
+      "message": "Target locale",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.processWaiting",
+      "message": "Waiting for stage details…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.rateLimited",
+      "message": "Too many requests. Try again in {seconds} seconds.",
+      "placeholders": [
+        "seconds"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.referenceFailed",
+      "message": "Unable to load mappings. Select the word to try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.referenceLoading",
+      "message": "Looking up related mappings…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.referenceLocaleUnknown",
+      "message": "Locale unspecified",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.referenceNotice",
+      "message": "Dictionary references do not confirm which meaning the translation used.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.referenceTranslations",
+      "message": "Reference translations",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.resultHeading",
+      "message": "Translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.retry",
+      "message": "Retry",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sendToContribute",
+      "message": "Send to contribute",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sendToContributeFailed",
+      "message": "Unable to prepare this translation for contribution. Try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.signInRequired",
+      "message": "Sign in to use phrase translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceAuto",
+      "message": "Detect automatically",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceConfirmHeading",
+      "message": "Confirm the source language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceConfirmHint",
+      "message": "Automatic detection was not confident enough. Choose the source language and submit again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceConfirmSubmit",
+      "message": "Use this language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceLanguage",
+      "message": "Source language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceLanguagePlaceholder",
+      "message": "Search for a source language…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.sourceRequired",
+      "message": "Choose a source language.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.stageAnalyzing",
+      "message": "Analyzing the text",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.stageGenerating",
+      "message": "Generating the translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.stageRetrieving",
+      "message": "Retrieving references",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.submit",
+      "message": "Translate",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.subtitle",
+      "message": "Choose source and target languages, enter text, then translate.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.targetLocale",
+      "message": "Target language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.targetLocalePlaceholder",
+      "message": "Search target languages or regions…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.termHint",
+      "message": "Select a word or phrase in the translation to see related mappings.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.text",
+      "message": "Text",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.textPlaceholder",
+      "message": "Type or paste a word or sentence…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.title",
+      "message": "Phrase translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.unavailable",
+      "message": "Translation is temporarily unavailable. Please try again shortly.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "phraseTranslate.validationSummary",
+      "message": "Check the highlighted fields and try again.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.email",
+      "message": "Email",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.loadFailed",
+      "message": "Unable to load profile",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.memberSince",
+      "message": "Member since",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.mustLogin",
+      "message": "Please sign in to view your profile",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.noActivity",
+      "message": "No activity yet",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.recentActivity",
+      "message": "Recent activity",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.role",
+      "message": "Role",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.signOut",
+      "message": "Sign out",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "profile.title",
+      "message": "Profile",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.allLanguages",
+      "message": "All languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.alphabetical",
+      "message": "Alphabetical",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.chooseLanguage",
+      "message": "Choose a language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.expressionsAvailable",
+      "message": "{count} expressions",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.hint",
+      "message": "Tip: search currently matches expression text. Translation (semantic) search is coming later.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.languageRequired",
+      "message": "Select a language to search in",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.languagesLoadFailed",
+      "message": "Unable to load searchable languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.loadFailed",
+      "message": "Search failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.loadMoreFailed",
+      "message": "Unable to load more results",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.newest",
+      "message": "Latest",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.noResults",
+      "message": "No results found",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.placeholder",
+      "message": "Search expressions…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.popular",
+      "message": "Popular",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.recentLanguages",
+      "message": "Recent languages",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.results",
+      "message": "{count} result | {count} results",
+      "placeholders": [
+        "count",
+        "count"
+      ],
+      "plural_forms": 2
+    },
+    {
+      "key": "search.sort",
+      "message": "Sort",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "search.title",
+      "message": "Search expressions",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "splitDialog.score",
+      "message": "score {score}",
+      "placeholders": [
+        "score"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "splitDialog.selectMappings",
+      "message": "Select mappings to move",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "splitDialog.splitting",
+      "message": "Splitting…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "splitDialog.title",
+      "message": "Split expression",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "splitDialog.warning",
+      "message": "Readings, locale attestations and handbook items will not be copied.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.addLocale",
+      "message": "Add a language to translate",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.batchSubmit",
+      "message": "Submit {count} translations",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.candidate",
+      "message": "Current translation",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.candidateScore",
+      "message": "score {score}",
+      "placeholders": [
+        "score"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.chooseRegistryLanguage",
+      "message": "Choose a registered language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.coverage",
+      "message": "Translation coverage",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.displayed",
+      "message": "{count} shown",
+      "placeholders": [
+        "count"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.eyebrow",
+      "message": "COMMUNITY LOCALIZATION",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.inputPlaceholder",
+      "message": "Enter translation…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.key",
+      "message": "Message key",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.loadFailed",
+      "message": "Unable to load translation workbench",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.loading",
+      "message": "Loading…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.locale",
+      "message": "Target language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.localesFailed",
+      "message": "Unable to load locale list",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.loginNote",
+      "message": "Sign in to submit translations; candidates are selected by mapping score and fallback is used when no positive candidate exists.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.noResults",
+      "message": "No matching copy found.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.pendingSubmit",
+      "message": "Pending submit",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.preview",
+      "message": "Preview",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.reference",
+      "message": "Reference language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.searchPlaceholder",
+      "message": "Search key or source text…",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.selectLocale",
+      "message": "Choose translation language",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.source",
+      "message": "EN source",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.sourceAuto",
+      "message": "Auto",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.sourceManual",
+      "message": "Manual",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.sourceSystem",
+      "message": "System",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.start",
+      "message": "Start",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.statusActive",
+      "message": "Active",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.statusArchived",
+      "message": "Archived",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.statusDraft",
+      "message": "Draft",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.submitFailed",
+      "message": "Submission failed",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.submitMapping",
+      "message": "Submit mapping",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.submitted",
+      "message": "Submitted",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.subtitle",
+      "message": "Help make LangMap interface text natural and useful.",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.title",
+      "message": "Translation workbench",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.translated",
+      "message": "translated",
+      "placeholders": [],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.translateKey",
+      "message": "Translate {key}",
+      "placeholders": [
+        "key"
+      ],
+      "plural_forms": 1
+    },
+    {
+      "key": "translate.translation",
+      "message": "Translation",
+      "placeholders": [],
+      "plural_forms": 1
+    }
+  ]
+}

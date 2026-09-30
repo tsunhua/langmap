@@ -24,14 +24,6 @@ const searchableLanguages = [
   contentLanguage('spa', 'Español', 5),
 ]
 
-// The auth store hydrates `user` by base64url-decoding the JWT payload, so a
-// token with an unsigned payload is enough to simulate a logged-in session.
-function fakeToken(username = 'lim') {
-  const encode = (value: object) =>
-    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-  return `${encode({ alg: 'none', typ: 'JWT' })}.${encode({ id: 1, username, role: 'user' })}.signature`
-}
-
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
 
@@ -54,6 +46,7 @@ async function mountNav() {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      { path: '/', component: { template: '<p>Home</p>' } },
       { path: '/mapping/:id', component: { template: '<p>Mapping</p>' } },
       { path: '/search', component: { template: '<p>Search</p>' } },
       { path: '/languages', component: { template: '<p>Languages</p>' } },
@@ -107,25 +100,32 @@ describe('TopNav', () => {
     expect(wrapper.get('.drawer .expression-search-submit').text()).toBe('Search')
   })
 
-  it('hides the phrase translate entry from anonymous visitors', async () => {
+  it('shows the Home tab and hides the global search on the home route', async () => {
     const { wrapper } = await mountNav()
     await flushPromises()
 
-    expect(wrapper.find('.appnav a[href="/translate"]').exists()).toBe(false)
+    await wrapper.get('.appnav a[href="/"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.search-center').exists()).toBe(false)
+    expect(wrapper.get('.appnav a[href="/"]').attributes('aria-current')).toBe('page')
 
     await wrapper.get('.menu-toggle').trigger('click')
-    expect(wrapper.find('.drawer-nav a[href="/translate"]').exists()).toBe(false)
+    expect(wrapper.get('.drawer-nav a[href="/"]').attributes('aria-current')).toBe('page')
+    expect(wrapper.find('.drawer-search').exists()).toBe(false)
   })
 
-  it('shows the phrase translate entry in both navs for a logged-in user', async () => {
-    localStorage.setItem('token', fakeToken())
-    const { wrapper } = await mountNav()
+  it('shows the top search on Search and synchronizes its query and language from the URL', async () => {
+    const { wrapper, router } = await mountNav()
+    await flushPromises()
+    await router.push({ path: '/search', query: { q: 'star', lang: 'spa' } })
     await flushPromises()
 
-    expect(wrapper.find('.appnav a[href="/translate"]').exists()).toBe(true)
+    expect(wrapper.find('.search-center').exists()).toBe(true)
+    expect((wrapper.get('.search-center .expression-search-input').element as HTMLInputElement).value).toBe('star')
+    expect(wrapper.get('.search-center [role="combobox"]').text()).toContain('Español')
 
     await wrapper.get('.menu-toggle').trigger('click')
-    expect(wrapper.find('.drawer-nav a[href="/translate"]').exists()).toBe(true)
+    expect(wrapper.find('.drawer-search').exists()).toBe(false)
   })
 
   it('keeps the current route, reports a missing language, and focuses the visible control', async () => {

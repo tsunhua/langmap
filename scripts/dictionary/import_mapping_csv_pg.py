@@ -46,6 +46,15 @@ LOCALE_CODE = re.compile(
     r"(?:-(?P<region>[A-Za-z0-9]{2,8})(?:_(?P<place>[A-Za-z0-9_]+))?)?$"
 )
 REQUIRED_PREFIX = ("ENTRY_ID",)
+LANGUAGE_NAME_CATALOG_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "language-reference"
+    / "overlays"
+    / "language-name-translations.json"
+)
+CANONICAL_ENGLISH_LANGUAGE_NAMES = json.loads(
+    LANGUAGE_NAME_CATALOG_PATH.read_text(encoding="utf-8")
+).get("canonical_english_names", {})
 
 
 class CsvContractError(ValueError):
@@ -194,6 +203,10 @@ def _locale(code: str, metadata: dict[str, Any]) -> Locale:
         name=str(item.get("name") or code),
         name_en=str(item.get("name_en") or code),
     )
+
+
+def _canonical_language_name_en(language_code: str, fallback: str) -> str:
+    return str(CANONICAL_ENGLISH_LANGUAGE_NAMES.get(language_code.lower()) or fallback)
 
 
 def _read_csv_layout(path: Path, metadata: dict[str, Any]) -> CsvLayout:
@@ -554,7 +567,11 @@ def _connect(url: str):
 def _ensure_registry(cur, locales: Iterable[Locale]) -> dict[str, int]:
     result: dict[str, int] = {}
     for locale in locales:
-        cur.execute("INSERT INTO languages(code,name_en) VALUES (%s,%s) ON CONFLICT (code) DO NOTHING", (locale.language, locale.name_en))
+        language_name_en = _canonical_language_name_en(locale.language, locale.name_en)
+        cur.execute(
+            "INSERT INTO languages(code,name_en) VALUES (%s,%s) ON CONFLICT (code) DO NOTHING",
+            (locale.language, language_name_en),
+        )
         if locale.script:
             cur.execute("INSERT INTO scripts(code,name_en,direction) VALUES (%s,%s,'ltr') ON CONFLICT (code) DO NOTHING", (locale.script, locale.script))
         if locale.region:

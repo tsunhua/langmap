@@ -78,6 +78,13 @@ describe('TranslationForm', () => {
     expect(wrapper.get('#translation-target-error').text()).toContain('target language')
   })
 
+  it('does not style untouched required fields as errors', () => {
+    const wrapper = mountForm()
+    expect(wrapper.get('#translation-text').attributes('aria-invalid')).toBe('false')
+    expect(wrapper.get('.target-field').attributes('aria-invalid')).toBe('false')
+    expect(wrapper.find('.form-summary').exists()).toBe(false)
+  })
+
   it('blocks submit while the text is empty or the target locale is missing', () => {
     const noTarget = mountForm({ modelValue: { ...base, text: 'hello' } })
     expect(noTarget.get('[data-action="submit"]').attributes('disabled')).toBeDefined()
@@ -93,6 +100,38 @@ describe('TranslationForm', () => {
     expect(wrapper.emitted('submit')).toHaveLength(1)
   })
 
+  it('allows dictionary search without a target locale or within translation limits', async () => {
+    const text = 'a'.repeat(501)
+    const wrapper = mountForm({ modelValue: { ...base, text } })
+    expect(wrapper.get('[data-action="submit"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('[data-action="search"]').attributes('disabled')).toBeUndefined()
+
+    await wrapper.get('[data-action="search"]').trigger('click')
+
+    expect(wrapper.emitted('search')).toHaveLength(1)
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('#translation-target-error').exists()).toBe(false)
+  })
+
+  it('can hide the dictionary search action when embedded in the homepage translate tab', () => {
+    const wrapper = mountForm({ showSearchAction: false })
+
+    expect(wrapper.find('[data-action="search"]').exists()).toBe(false)
+    expect(wrapper.find('[data-action="clear-text"]').exists()).toBe(true)
+  })
+
+  it('clears only the text and returns focus to the source textarea', async () => {
+    const wrapper = mountForm({
+      modelValue: { sourceLangCode: 'nan', targetLocaleCode: 'nan-Hant-TW', text: '食飯' },
+    })
+
+    await wrapper.get('[data-action="clear-text"]').trigger('click')
+    await nextTick()
+
+    expect(lastChange(wrapper)).toEqual({ sourceLangCode: 'nan', targetLocaleCode: 'nan-Hant-TW', text: '' })
+    expect(document.activeElement).toBe(wrapper.get('#translation-text').element)
+  })
+
   it('shows a cancel action that emits while a request is in progress', async () => {
     const wrapper = mountForm({ disabled: true, modelValue: { ...base, targetLocaleCode: 'nan-Hant-TW', text: '你好' } })
     expect(wrapper.find('[data-action="submit"]').exists()).toBe(false)
@@ -102,7 +141,7 @@ describe('TranslationForm', () => {
 
   it('lets the source picker set a language code and the auto action clear it', async () => {
     const wrapper = mountForm()
-    const sourceInput = wrapper.get('input[placeholder="Search ISO 639-3 languages"]')
+    const sourceInput = wrapper.get('input[placeholder="Search languages…"]')
     await sourceInput.trigger('focus')
     await sourceInput.setValue('nan')
     await flushPromises()

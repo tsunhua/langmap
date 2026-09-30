@@ -6,7 +6,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import type { LanguageLocale } from '@/api/languageIdentity'
 import type { TranslationEvidence, TranslationPlannerSpan } from '@/api/translation'
 import { useContributePrefillStore } from '@/stores/contributePrefill'
-import ExpressionTranslation from './ExpressionTranslation.vue'
+import TranslationWorkbench from './TranslationWorkbench.vue'
 
 vi.mock('@/api/translation', () => ({ postTranslation: vi.fn() }))
 vi.mock('@/api/languageIdentity', () => ({
@@ -111,10 +111,14 @@ const LanguagePickerStub = {
 
 const LanguageLocalePickerStub = {
   name: 'LanguageLocalePicker',
-  props: { modelValue: { type: String, default: '' }, label: { type: String, default: '' } },
+  props: {
+    modelValue: { type: String, default: '' },
+    label: { type: String, default: '' },
+    allowCreate: { type: Boolean, default: true },
+  },
   emits: ['update:modelValue'],
   template:
-    '<div class="locale-picker-stub"><button type="button" class="pick-target" @click="$emit(\'update:modelValue\', \'cmn-Hant-TW\')">{{ label }}</button></div>',
+    '<div class="locale-picker-stub"><button type="button" class="pick-target" @click="$emit(\'update:modelValue\', \'cmn-Hant-TW\')">{{ label }}</button><button v-if="allowCreate" data-action="create-locale">Create locale</button></div>',
 }
 
 function tokenFor(payload: Record<string, unknown>): string {
@@ -145,7 +149,7 @@ async function mountPage(options: { loggedIn?: boolean } = {}): Promise<MountRes
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: { template: '<p>Home</p>' } },
-      { path: '/translate', component: ExpressionTranslation },
+      { path: '/translate', component: TranslationWorkbench },
       { path: '/auth', component: { template: '<p>Auth</p>' } },
       { path: '/contribute', component: { template: '<p>Contribute</p>' } },
     ],
@@ -153,7 +157,7 @@ async function mountPage(options: { loggedIn?: boolean } = {}): Promise<MountRes
   await router.push('/translate')
   await router.isReady()
 
-  const wrapper = mount(ExpressionTranslation, {
+  const wrapper = mount(TranslationWorkbench, {
     global: {
       plugins: [pinia, router],
       stubs: {
@@ -171,20 +175,25 @@ async function fillValidForm(wrapper: VueWrapper) {
   await wrapper.get('#translation-text').setValue('食飯')
 }
 
-describe('ExpressionTranslation page', () => {
+describe('TranslationWorkbench', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
   })
 
-  it('redirects anonymous visitors to auth with the return path and renders no form', async () => {
+  it('allows anonymous visitors to translate without showing contribution actions', async () => {
+    vi.mocked(postTranslation).mockImplementation(() => Promise.resolve(streamResponse([resultLine()])))
     const { wrapper, router } = await mountPage({ loggedIn: false })
     await settle()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
 
-    expect(router.currentRoute.value.path).toBe('/auth')
-    expect(router.currentRoute.value.query.return).toBe('/translate')
-    expect(wrapper.find('form').exists()).toBe(false)
-    expect(router.currentRoute.value.fullPath).not.toContain('食飯')
+    expect(router.currentRoute.value.path).toBe('/translate')
+    expect(postTranslation).toHaveBeenCalledOnce()
+    expect(wrapper.get('.translation').text()).toBe('吃飯')
+    expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(false)
+    expect(wrapper.find('[data-action="create-locale"]').exists()).toBe(false)
   })
 
   it('renders the form when logged in and sends the picked source/target and text', async () => {
@@ -203,6 +212,42 @@ describe('ExpressionTranslation page', () => {
       source_locale_code: null,
       target_locale_code: 'cmn-Hant-TW',
     })
+  })
+
+  it('emits a search event without requiring a target locale or calling translation', async () => {
+    const { wrapper } = await mountPage()
+    await wrapper.get('#translation-text').setValue('  hello  ')
+    await wrapper.get('[data-action="search"]').trigger('click')
+
+    expect(wrapper.emitted('search')).toEqual([[{
+      sourceLangCode: null,
+      targetLocaleCode: '',
+      text: '  hello  ',
+    }]])
+    expect(postTranslation).not.toHaveBeenCalled()
+  })
+
+  it('shows a retry delay for guest rate limits and keeps the input for manual retry', async () => {
+    vi.mocked(postTranslation)
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        success: false,
+        error: 'RATE_LIMITED',
+        message: 'Please try again in 60 seconds.',
+        retryable: true,
+      }), { status: 429, headers: { 'content-type': 'application/json', 'Retry-After': '17' } }))
+      .mockImplementationOnce(() => Promise.resolve(streamResponse([resultLine()])))
+    const { wrapper } = await mountPage({ loggedIn: false })
+    await settle()
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+
+    expect(wrapper.text()).toContain('Too many requests. Try again in 17 seconds.')
+    expect((wrapper.get('#translation-text').element as HTMLTextAreaElement).value).toBe('食飯')
+    await wrapper.get('[data-action="retry-error"]').trigger('click')
+    await settle()
+    expect(postTranslation).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('.translation').text()).toBe('吃飯')
   })
 
   it('updates one progress line as the stream reports each stage', async () => {
@@ -576,6 +621,42 @@ describe('ExpressionTranslation page', () => {
     expect(wrapper.get('.contribute-error').text()).toContain('Unable to prepare this translation')
   })
 
+  it('localizes validation errors instead of displaying server text', async () => {
+    vi.mocked(postTranslation).mockResolvedValueOnce(new Response(JSON.stringify({
+      success: false,
+      error: 'PLAIN_TEXT_ONLY',
+      message: 'Backend-only error wording',
+    }), { status: 400, headers: { 'content-type': 'application/json' } }))
+    const { wrapper } = await mountPage({ loggedIn: false })
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+
+    expect(wrapper.get('.progress-error').text()).toContain('Only plain text is supported')
+    expect(wrapper.text()).not.toContain('Backend-only error wording')
+  })
+
+  it('localizes streamed provider and timeout errors', async () => {
+    vi.mocked(postTranslation)
+      .mockImplementationOnce(() => Promise.resolve(streamResponse([
+        line({ type: 'error', code: 'AI_PROVIDER_FAILED', retryable: true }),
+      ])))
+      .mockImplementationOnce(() => Promise.resolve(streamResponse([
+        line({ type: 'error', code: 'TRANSLATION_TIMEOUT', retryable: true }),
+      ])))
+    const { wrapper } = await mountPage({ loggedIn: false })
+    await fillValidForm(wrapper)
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+    expect(wrapper.get('.progress-error').text()).toContain('translation service failed')
+
+    await wrapper.get('#translation-text').setValue('食飯 again')
+    await wrapper.get('#translation-text').setValue('食飯')
+    await wrapper.get('[data-action="submit"]').trigger('click')
+    await settle()
+    expect(wrapper.get('.progress-error').text()).toContain('Translation timed out')
+  })
+
   it('exposes an alert for errors and a polite live region for progress', async () => {
     vi.mocked(postTranslation).mockImplementation(() =>
       Promise.resolve(streamResponse([
@@ -589,7 +670,7 @@ describe('ExpressionTranslation page', () => {
     await settle()
 
     const alert = wrapper.get('[role="alert"]')
-    expect(alert.text()).toContain('Translation failed')
+    expect(alert.text()).toContain('Translation timed out')
     expect(wrapper.get('.progress-error').attributes('aria-live')).toBe('assertive')
   })
 })

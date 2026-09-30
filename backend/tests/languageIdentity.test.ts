@@ -1,6 +1,6 @@
 import type { Database } from '../src/db/database';
 import { describe, expect, it } from 'vitest';
-import { parseReferenceQuery, queryReferenceTable, escapeLike, buildLanguageLocaleCode, parseLanguageLocaleCode } from '../src/services/languageIdentity';
+import { canonicalEnglishLanguageName, parseReferenceQuery, queryReferenceTable, escapeLike, buildLanguageLocaleCode, parseLanguageLocaleCode } from '../src/services/languageIdentity';
 
 describe('parseReferenceQuery', () => {
   it('clamps limit into [1,50] and offsets to >=0', () => {
@@ -44,6 +44,32 @@ describe('queryReferenceTable', () => {
     const result = await queryReferenceTable(db, 'languages', { q: '', limit: 20, offset: 0 });
     expect(result.total).toBe(1);
     expect(result.items[0]).toEqual({ code: 'eng', name_en: 'English' });
+  });
+
+  it('normalizes macro-language names and matches searches against canonical English names', async () => {
+    const sqls: string[] = [];
+    const db = {
+      prepare(sql: string) {
+        sqls.push(sql);
+        return {
+          bind(..._args: unknown[]) {
+            return {
+              async first<T>() { return { total: 1 } as unknown as T; },
+              async all<T>() { return { results: [{ code: 'ara', name_en: 'ara-Arab-EG' }] as unknown as T[] }; },
+            };
+          },
+        };
+      },
+    } as unknown as import('../src/db/database').Database;
+
+    const result = await queryReferenceTable(db, 'languages', { q: 'Arabic', limit: 20, offset: 0 });
+
+    expect(result.items[0]).toEqual({ code: 'ara', name_en: 'Arabic' });
+    expect(sqls.some((sql) => sql.includes('code IN (?)'))).toBe(true);
+  });
+
+  it('keeps the input name when no canonical English override exists', () => {
+    expect(canonicalEnglishLanguageName('jpn', 'Japanese')).toBe('Japanese');
   });
 });
 

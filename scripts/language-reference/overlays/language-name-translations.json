@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "target_locales": [
     "cmn-Hans-CN",
     "cmn-Hant-TW",
@@ -6038,6 +6038,10 @@
       "zyn": "邕南チワン語",
       "zzj": "左江チワン語"
     }
+  },
+  "canonical_english_names": {
+    "ara": "Arabic",
+    "pus": "Pushto"
   },
   "provenance": {
     "cmn-Hans-CN": {

@@ -227,12 +227,22 @@ export function useTranslationStream() {
     } catch {
       parsed = null
     }
-    if (isTranslationErrorEnvelope(parsed)) return errorFromEnvelope(parsed)
-    return {
-      code: `HTTP_${response.status}`,
-      message: response.statusText || 'Translation request failed.',
-      retryable: response.status >= 500,
+    const error: TranslationStreamError = isTranslationErrorEnvelope(parsed)
+      ? errorFromEnvelope(parsed)
+      : {
+          code: `HTTP_${response.status}`,
+          message: response.statusText || 'Translation request failed.',
+          retryable: response.status >= 500,
+        }
+    if (error.retryAfterSeconds === undefined) {
+      const retryAfter = response.headers.get('Retry-After')?.trim()
+      if (retryAfter && /^\d+$/.test(retryAfter)) {
+        const seconds = Number(retryAfter)
+        if (Number.isSafeInteger(seconds)) error.retryAfterSeconds = seconds
+      }
     }
+    if (response.status === 429 || error.code === 'RATE_LIMITED') error.retryable = true
+    return error
   }
 
   async function submit(input: TranslationRequestInput): Promise<void> {

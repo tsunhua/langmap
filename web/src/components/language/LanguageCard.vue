@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps<{
   code: string
   name?: string
@@ -21,8 +25,8 @@ defineProps<{
     <span class="lg-geo">
       <span v-if="script_code" class="lg-script">{{ script_code }}</span>
       <template v-if="direction">
-        <span v-if="direction === 'rtl'" class="lg-dir lg-rtl" title="right-to-left">rtl</span>
-        <span v-else class="lg-dir">ltr</span>
+        <span v-if="direction === 'rtl'" class="lg-dir lg-rtl" :title="t('languagesPage.directionRightToLeft')" :aria-label="t('languagesPage.directionRightToLeft')">rtl</span>
+        <span v-else class="lg-dir" :title="t('languagesPage.directionLeftToRight')" :aria-label="t('languagesPage.directionLeftToRight')">ltr</span>
       </template>
     </span>
     <span class="lg-count">{{ expression_count.toLocaleString() }}</span>

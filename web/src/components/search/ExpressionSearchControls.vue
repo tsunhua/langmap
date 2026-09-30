@@ -117,6 +117,7 @@ function openMenu() {
   menuOpen.value = true
   activeIndex.value = activeIndexForSelection()
   void ensureLanguagesLoaded('')
+  void nextTick(() => languageSearchInput.value?.focus())
 }
 
 function toggleMenu() {
@@ -205,6 +206,18 @@ function onLanguageQueryKeydown(event: KeyboardEvent) {
     closeMenu()
     languageButton.value?.focus()
     event.preventDefault()
+  } else if (event.key === 'ArrowDown' && options.value.length > 0) {
+    activeIndex.value = (activeIndex.value + 1) % options.value.length
+    event.preventDefault()
+  } else if (event.key === 'ArrowUp' && options.value.length > 0) {
+    activeIndex.value = activeIndex.value <= 0 ? options.value.length - 1 : activeIndex.value - 1
+    event.preventDefault()
+  } else if (event.key === 'Enter' && activeIndex.value >= 0) {
+    const item = options.value[activeIndex.value]
+    if (item) selectLanguage(item.code)
+    event.preventDefault()
+  } else if (event.key === 'Tab') {
+    closeMenu()
   } else if (event.key === 'Enter') {
     event.preventDefault()
   }
@@ -309,7 +322,7 @@ onUnmounted(() => {
           type="button"
           role="combobox"
           class="expression-search-language"
-          :aria-label="props.language ? `${t('search.chooseLanguage')}: ${selectedName}` : t('search.chooseLanguage')"
+          :aria-label="props.language ? `${t('search.chooseLanguage')}: ${selectedName}, ${props.language}` : t('search.chooseLanguage')"
           :aria-expanded="menuOpen"
           :aria-controls="listId"
           aria-haspopup="listbox"
@@ -349,6 +362,7 @@ onUnmounted(() => {
               v-model="languageQuery"
               type="search"
               class="expression-search-language-filter-input"
+              :aria-activedescendant="activeDescendant"
               :placeholder="t('languagesPage.searchPlaceholder')"
               :aria-label="t('languagesPage.searchPlaceholder')"
               autocomplete="off"
@@ -472,11 +486,20 @@ onUnmounted(() => {
 }
 
 .expression-search.variant-page {
-  height: 48px;
+  height: auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .expression-search.has-submit {
   grid-template-columns: minmax(138px, 0.42fr) minmax(180px, 1fr) auto;
+}
+
+.expression-search.variant-page.has-submit {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .expression-search-language-wrap {
@@ -503,8 +526,17 @@ onUnmounted(() => {
   font: inherit;
 }
 
+.expression-search.variant-page .expression-search-language-wrap {
+  border: 0;
+}
+
 .expression-search.variant-page .expression-search-language {
+  height: 48px;
   min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
 }
 
 .expression-search-language:focus-visible {
@@ -541,6 +573,16 @@ onUnmounted(() => {
   font-size: 14px;
   font-weight: 500;
   transition: filter 0.15s;
+}
+
+.expression-search.variant-page.has-submit .expression-search-submit {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 168px;
+  height: 48px;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--r);
 }
 
 .expression-search-submit:hover { filter: brightness(1.06); }
@@ -602,6 +644,14 @@ onUnmounted(() => {
   color: var(--muted);
 }
 
+.expression-search.variant-page .expression-search-query {
+  min-height: 56px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
 .expression-search-icon {
   flex: 0 0 auto;
 }
@@ -641,6 +691,11 @@ onUnmounted(() => {
   border-radius: var(--r);
   background: var(--surface);
   box-shadow: 0 6px 18px oklch(0 0 0 / 0.12);
+}
+
+.expression-search.variant-page .expression-search-dropdown {
+  width: 100%;
+  max-width: none;
 }
 
 .expression-search-language-filter {

@@ -41,9 +41,9 @@ onUnmounted(() => { feedRequest++ })
 </script>
 
 <template>
-  <div class="feed-page">
+  <section class="home-feed" aria-labelledby="home-feed-title">
     <div class="feed-hero">
-      <h1>{{ t('feed.title') }}</h1>
+      <h2 id="home-feed-title">{{ t('feed.title') }}</h2>
       <p>{{ t('feed.subtitle') }}</p>
     </div>
 
@@ -69,28 +69,29 @@ onUnmounted(() => { feedRequest++ })
         </div>
       </section>
     </template>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-  .feed-page { max-width: 760px; margin: 0 auto; padding: var(--page-pad-top) 28px var(--page-pad-bottom); }
-  .feed-hero { margin-bottom: var(--space-md); }
-.feed-hero h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
-.feed-hero p { font-size: 16px; color: var(--muted); margin-bottom: var(--space-lg); }
-  .feed-sec { margin-bottom: var(--space-lg); }
+.home-feed {
+  max-width: 760px;
+  margin: clamp(40px, 7vh, 64px) auto var(--page-pad-bottom);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+.feed-hero { margin-bottom: var(--space-base); }
+.feed-hero h2 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+.feed-hero p { margin: 0; color: var(--muted); font-size: 14px; }
+.feed-sec { margin-bottom: var(--space-lg); }
   .new-list { display: flex; flex-direction: column; gap: 8px; }
 .feed-cta {
   margin-top: var(--space-xs); padding: var(--space-base);
-  border: 1px dashed var(--border); border-radius: 8px;
+  border: 1px dashed var(--border); border-radius: var(--r);
   text-align: center; color: var(--muted); font-size: 16px;
 }
 .feed-cta a { color: var(--accent); font-weight: 500; }
 .feed-cta a:hover { filter: brightness(1.08); }
-@media (max-width: 768px) {
-  .feed-page { padding-left: 20px; padding-right: 20px; }
-}
 @media (max-width: 640px) {
-  .feed-page { padding-left: 16px; padding-right: 16px; }
-  .feed-hero { margin-bottom: var(--space-md); }
+  .home-feed { margin-top: 40px; }
 }
 </style>

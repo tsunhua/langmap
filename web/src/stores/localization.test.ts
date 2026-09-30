@@ -19,7 +19,7 @@ describe('localization store', () => {
     expect(document.documentElement.lang).toBe('nan-Hant-TW')
   })
 
-  it('prefers project JSON translations and falls back to API messages per key', async () => {
+  it('prefers complete project locale copy over server candidates', async () => {
     localStorage.setItem('langmap.language-locales', JSON.stringify({ primary: 'cmn-Hant-TW' }))
     vi.mocked(getUiMessages).mockResolvedValueOnce([
       { key: 'common.cancel', text: 'API 取消', resolved_from: 'primary' },
@@ -28,7 +28,15 @@ describe('localization store', () => {
     const store = useLocalizationStore()
     await store.loadLocales()
     expect(i18n.global.t('common.cancel')).toBe('取消')
-    expect(i18n.global.t('components.edgeSources')).toBe('API source markers')
+    expect(i18n.global.t('components.edgeSources')).toBe('來源標記')
+  })
+
+  it('uses API messages when the selected locale has no project catalog', async () => {
+    const store = useLocalizationStore()
+    await store.setPreferences({ primary: 'nan-Hant-TW' })
+
+    expect(i18n.global.t('common.ok')).toBe('好')
+    expect(i18n.global.t('common.cancel')).toBe('Cancel')
   })
 
   it('keeps built-in English messages when the API bundle is missing a key', async () => {

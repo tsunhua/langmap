@@ -26,11 +26,44 @@ const localeParams = useLocaleParams()
 const searchLanguages = useSearchLanguages()
 
 function applyRememberedSearchLanguage() {
+  if (route.path === '/search' && typeof route.query.lang === 'string') {
+    syncRouteSearchLanguage()
+    return
+  }
   const resolved = searchLanguages.resolveSearchLanguage(searchLanguage.value)
   if (resolved) {
     searchLanguage.value = resolved
     searchLanguageMissing.value = false
   }
+}
+
+function syncRouteSearchLanguage() {
+  if (route.path !== '/search') return
+  const q = typeof route.query.q === 'string' ? route.query.q : ''
+  const requested = typeof route.query.lang === 'string' ? route.query.lang : ''
+  if (!requested) {
+    searchLanguage.value = searchLanguages.resolveSearchLanguage()
+    searchLanguageMissing.value = Boolean(q && !searchLanguage.value && !searchLanguages.loading.value)
+    return
+  }
+  if (searchLanguages.isSearchLanguageAvailable(requested)) {
+    searchLanguage.value = requested
+    searchLanguageMissing.value = false
+    return
+  }
+  if (searchLanguages.loading.value) {
+    searchLanguage.value = requested
+    searchLanguageMissing.value = false
+    return
+  }
+  searchLanguage.value = ''
+  searchLanguageMissing.value = Boolean(q)
+}
+
+function syncRouteSearch() {
+  if (route.path !== '/search') return
+  searchQuery.value = typeof route.query.q === 'string' ? route.query.q : ''
+  syncRouteSearchLanguage()
 }
 
 function onSearchLanguageUpdate(value: string) {
@@ -131,11 +164,14 @@ onMounted(() => document.addEventListener('keydown', onKeydown))
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 watch(searchLanguages.languages, applyRememberedSearchLanguage, { immediate: true })
+watch(() => searchLanguages.loading.value, applyRememberedSearchLanguage)
+watch(() => [route.path, route.query.q, route.query.lang], syncRouteSearch, { immediate: true })
 watch(
   () => [localeParams.value.ui_locale, localeParams.value.secondary_ui_locale],
   () => {
     searchLanguage.value = ''
     searchLanguageMissing.value = false
+    applyRememberedSearchLanguage()
   },
 )
 
@@ -144,20 +180,20 @@ watch(() => route.path, () => { menuOpen.value = false })
 </script>
 
 <template>
-  <header class="appbar">
+  <header class="appbar" :class="{ 'home-route': route.path === '/' }">
     <div class="left-group">
       <router-link to="/" class="brand" :aria-label="`${t('nav.home')} LangMap`">
         Lang<span class="em">Map</span>
       </router-link>
 
       <nav class="appnav" :aria-label="t('nav.menu')">
+        <router-link to="/" :class="{ on: route.path === '/' }" :aria-current="route.path === '/' ? 'page' : undefined">{{ t('nav.home') }}</router-link>
         <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
         <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
-        <router-link v-if="auth.user" to="/translate" :class="{ on: route.path === '/translate' }">{{ t('nav.phraseTranslate') }}</router-link>
       </nav>
     </div>
 
-    <div v-if="route.path !== '/search'" class="search-center">
+    <div v-if="route.path !== '/'" class="search-center">
       <form class="top-search" role="search" @submit.prevent="onSearch">
         <ExpressionSearchControls
           ref="desktopSearchControls"
@@ -196,7 +232,7 @@ watch(() => route.path, () => { menuOpen.value = false })
 
     <transition name="drawer">
       <div v-if="menuOpen" ref="drawerEl" class="drawer" role="dialog" :aria-label="t('nav.menu')">
-        <form v-if="route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
+        <form v-if="route.path !== '/' && route.path !== '/search'" class="drawer-search" role="search" @submit.prevent="onSearch">
           <ExpressionSearchControls
             ref="drawerSearchControls"
             v-model:query="searchQuery"
@@ -208,9 +244,9 @@ watch(() => route.path, () => { menuOpen.value = false })
           />
         </form>
         <nav class="drawer-nav" :aria-label="t('nav.menu')">
+          <router-link to="/" :class="{ on: route.path === '/' }" :aria-current="route.path === '/' ? 'page' : undefined">{{ t('nav.home') }}</router-link>
           <router-link to="/languages" :class="{ on: route.path.startsWith('/language') }">{{ t('nav.languages') }}</router-link>
           <router-link to="/handbooks" :class="{ on: route.path.startsWith('/handbook') }">{{ t('nav.handbooks') }}</router-link>
-          <router-link v-if="auth.user" to="/translate" :class="{ on: route.path === '/translate' }">{{ t('nav.phraseTranslate') }}</router-link>
         </nav>
         <div class="drawer-foot">
           <router-link to="/contribute" class="btn btn-primary">
@@ -257,6 +293,8 @@ watch(() => route.path, () => { menuOpen.value = false })
 .brand:hover {
   border-color: var(--muted);
 }
+.appbar.home-route { grid-template-columns: minmax(0, 1fr) auto; }
+.appbar.home-route .right-group { grid-column: 2; }
 .left-group {
   min-width: 0;
   display: flex;

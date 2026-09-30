@@ -6,7 +6,7 @@
     "deploy": "wrangler deploy",
     "test": "vitest run",
     "test:integration": "vitest run --no-file-parallelism --testTimeout=20000",
-    "types:check": "wrangler types worker-configuration.d.ts --include-runtime=false --check"
+    "types:check": "wrangler types worker-configuration.d.ts --check"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

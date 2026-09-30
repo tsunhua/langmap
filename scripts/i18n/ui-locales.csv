@@ -37,6 +37,7 @@ components.depth,,深度 {depth},深度 {depth},Depth {depth},深さ {depth},Pro
 components.directMappingList,,直接映射词句,直接對應詞句,Directly mapped expressions,直接関係のある表現,Expresiones con relación directa
 components.downvote,,踩,倒讚,Downvote,反対,Votar en contra
 components.edgeCount,,{count} 条边,{count} 條邊,{count} edges,{count} エッジ,{count} aristas
+components.edgeSources,,来源标记,來源標記,Source markers,出典マーカー,Marcadores de fuente
 components.empty,,暂无数据,目前沒有資料,No data yet,データはまだありません,Aún no hay datos
 components.evidence,,证据,證據,Evidence,根拠,Evidencia
 components.exitFullscreen,,退出全屏,退出全螢幕,Exit fullscreen,全画面を終了,Salir de pantalla completa
@@ -62,6 +63,7 @@ components.loadMore,,加载更多,載入更多,Load more,さらに読み込む,C
 components.loadingRelated,,加载相关词句中,載入相關詞句中,Loading related expressions,関連表現を読み込み中,Cargando expresiones relacionadas
 components.locale,,语言环境,語言環境,Locale,言語環境,Entorno lingüístico
 components.mapping,,映射,對應,Mapping,関係,Relación
+components.mappingAnnotations,,映射备注,對應註記,Mapping notes,関係の注記,Notas de relación
 components.mappingScore,,映射评分,對應評分,Mapping score,関係スコア,Puntuación de la relación
 components.minutesAgo,,{count} 分钟前,{count} 分鐘前,{count} minutes ago,{count} 分前,Hace {count} minutos
 components.moreActions,,更多操作,更多操作,More actions,その他の操作,Más acciones
@@ -107,6 +109,7 @@ contribute.submitFailed,,提交失败,提交失敗,Submission failed,送信に�
 contribute.submitting,,提交中…,提交中…,Submitting…,送信中…,Enviando…
 contribute.tags,,标签,標籤,Tags,タグ,Etiquetas
 contribute.title,,批量提交,批次提交,Batch contribution,一括投稿,Contribución por lotes
+errors.expressionLinkExpired,,此链接使用了旧地址。请搜索该词句，查找当前页面。,此連結使用了舊網址。請搜尋該詞句，查找目前頁面。,This link uses an outdated address. Search for the expression to find its current page.,このリンクのアドレスは古くなっています。表現を検索して現在のページを開いてください。,Este enlace usa una dirección antigua. Busca la expresión para encontrar su página actual.
 errors.home,,返回首页,回首頁,Back home,ホームに戻る,Volver al inicio
 errors.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
 errors.pageMissing,,页面未找到,找不到頁面,Page not found,ページが見つかりません,Página no encontrada
@@ -138,6 +141,7 @@ handbook.helpful,,这本手册有帮助吗？,這本手冊有幫助嗎？,Was th
 handbook.inspectorFailed,,无法加载词句,無法載入詞句,Unable to load expression,表現を読み込めませんでした,No se pudo cargar la expresión
 handbook.loadFailed,,无法加载,無法載入,Unable to load,読み込めませんでした,No se pudo cargar
 handbook.locale,,语言,語言,Language,言語,Idioma
+handbook.moreTranslations,,{count} 条翻译已隐藏,{count} 筆譯文已隱藏,{count} more translations hidden,ほか {count} 件の翻訳は非表示です,{count} traducciones más ocultas
 handbook.moveDown,,下移,下移,Move down,下に移動,Mover abajo
 handbook.moveSectionDown,,下移章节,下移章節,Move section down,セクションを下に移動,Mover sección abajo
 handbook.moveSectionUp,,上移章节,上移章節,Move section up,セクションを上に移動,Mover sección arriba
@@ -174,6 +178,9 @@ handbooks.popular,,热门,熱門,Popular,人気,Popular
 handbooks.searchPlaceholder,,搜索手册…,搜尋手冊…,Search handbooks…,ハンドブックを検索…,Buscar manuales…
 handbooks.sections,,章节,章節,sections,セクション,secciones
 handbooks.title,,手册,手冊,Handbooks,ハンドブック,Manuales
+home.search,,查询词句,查詢詞句,Search expressions,表現を検索,Buscar expresiones
+home.searchHint,,选择语言，输入词或短句，查看相关表达。,選擇語言，輸入詞或短句，查看相關表達。,"Choose a language, enter a word or phrase, and explore related expressions.",言語を選び、単語やフレーズを入力して関連表現を探します。,"Elige un idioma, escribe una palabra o frase y explora expresiones relacionadas."
+home.title,,LangMap,LangMap,LangMap,LangMap,LangMap
 languageCreate.back,,上一步,上一步,Back,戻る,Atrás
 languageCreate.cancel,,取消,取消,Cancel,キャンセル,Cancelar
 languageCreate.close,,关闭,關閉,Close,閉じる,Cerrar
@@ -251,6 +258,8 @@ languageSwitcher.helpTranslate,,协助翻译 LangMap,協助翻譯 LangMap,Help t
 languageSwitcher.noResults,,无匹配的语言,無符合的語言,No matching languages,一致する言語がありません,No hay idiomas coincidentes
 languageSwitcher.recent,,最近使用的语言,最近使用的語言,Recent languages,最近使用した言語,Idiomas recientes
 languagesPage.addLanguage,,添加语言,新增語言,Add language,言語を追加,Añadir idioma
+languagesPage.directionLeftToRight,,从左向右,由左至右,Left to right,左から右,De izquierda a derecha
+languagesPage.directionRightToLeft,,从右向左,由右至左,Right to left,右から左,De derecha a izquierda
 languagesPage.expressionCount,,词句,詞句,Expressions,表現,Expresiones
 languagesPage.languageCount,,语言,語言,Languages,言語,Idiomas
 languagesPage.loadFailed,,无法加载语言,無法載入語言,Unable to load languages,言語を読み込めませんでした,No se pudieron cargar los idiomas
@@ -265,15 +274,18 @@ localeCreate.create,,创建语言环境,建立語言環境,Create locale,ロケ�
 localeCreate.createFailed,,无法创建语言环境,無法建立語言環境,Unable to create language locale,ロケールを作成できませんでした,Error al crear el locale
 localeCreate.englishName,,英文名称,英文名稱,English name,英語名,Nombre en inglés
 localeCreate.heading,,创建语言环境,建立語言環境,Create language locale,言語ロケールを作成,Crear locale de idioma
+localeCreate.languageCodePlaceholder,,ISO 639-3 语言代码,ISO 639-3 語言代碼,ISO 639-3 code,ISO 639-3 言語コード,Código ISO 639-3
 localeCreate.latitude,,纬度,緯度,Latitude,緯度,Latitud
 localeCreate.localName,,当地名称,當地名稱,Local name,現地名,Nombre local
 localeCreate.longitude,,经度,經度,Longitude,経度,Longitud
+localeCreate.noResults,,找不到符合的语言环境,找不到符合的語言環境,No locale found,該当する言語ロケールが見つかりません,No se encontró ningún locale
 localeCreate.place,,地名片段,地名片段,Place segments,地名セグメント,Segmentos de lugar
 localeCreate.placePlaceholder,,泉州_南安,泉州_南安,Quanzhou_Nanan,泉州_南安,Quanzhou_Nanan
 localeCreate.region,,地区,地區,Region,地域,Región
 localeCreate.regionPlaceholder,,ISO 3166-1 代码,ISO 3166-1 代碼,ISO 3166-1 code,ISO 3166-1 コード,Código ISO 3166-1
 localeCreate.script,,文字,文字,Script,文字,Escritura
 localeCreate.scriptPlaceholder,,ISO 15924 代码,ISO 15924 代碼,ISO 15924 code,ISO 15924 コード,Código ISO 15924
+localeCreate.searchPlaceholder,,搜索语言环境…,搜尋語言環境…,Search language locales…,言語ロケールを検索…,Buscar locales de idioma…
 mapLens.anchor,,锚点,錨點,Anchor,アンカー,Ancla
 mapLens.back,,返回映射,回到對應,Back to mapping,関係に戻る,Volver a la relación
 mapLens.languages,,{count} 种语言,{count} 種語言,{count} languages,{count} 言語,{count} idiomas
@@ -346,12 +358,110 @@ nav.home,,首页,首頁,Home,ホーム,Inicio
 nav.languages,,语言,語言,Languages,言語,Idiomas
 nav.menu,,菜单,選單,Menu,メニュー,Menú
 nav.openMenu,,打开菜单,開啟選單,Open menu,メニューを開く,Abrir menú
+nav.phraseTranslate,,翻译,翻譯,Translate,翻訳,Traducir
 nav.searchExpressions,,搜索词句,搜尋詞句,Search expressions,表現を検索,Buscar expresiones
 nav.signIn,,登录,登入,Sign in,ログイン,Iniciar sesión
 nav.signOut,,退出登录,登出,Sign out,ログアウト,Cerrar sesión
 nav.skipToContent,,跳转到主要内容,跳至主要內容,Skip to main content,メインコンテンツへ移動,Ir al contenido principal
 nav.submitSearch,,提交搜索,送出搜尋,Submit search,検索を実行,Enviar búsqueda
 nav.switchLanguage,,切换界面语言,切換介面語言,Switch interface language,インターフェース言語を切り替え,Cambiar idioma de la interfaz
+phraseTranslate.aiAssistedBadge,,AI 协助,AI 協助,AI-assisted,AI 支援,Con asistencia de IA
+phraseTranslate.aiAssistedNotice,,此译文由 AI 协助生成。提交前请先检查并编辑。,此譯文由 AI 協助生成。投稿前請先檢查並編輯。,This translation was produced with AI assistance. Review and edit it before contributing.,この翻訳はAIの支援で生成されました。投稿前に内容を確認し、必要に応じて編集してください。,Esta traducción se generó con ayuda de IA. Revísala y edítala antes de contribuir.
+phraseTranslate.cancel,,取消,取消,Cancel,キャンセル,Cancelar
+phraseTranslate.clearText,,清除文字,清除文字,Clear text,テキストを消去,Borrar texto
+phraseTranslate.closeReference,,关闭参考,關閉參考,Close references,参考情報を閉じる,Cerrar referencias
+phraseTranslate.copied,,已复制,已複製,Copied,コピーしました,Copiado
+phraseTranslate.copy,,复制,複製,Copy,コピー,Copiar
+phraseTranslate.edit,,编辑,編輯,Edit,編集,Editar
+phraseTranslate.errorGeneric,,翻译失败。,翻譯失敗。,Translation failed.,翻訳に失敗しました。,Error al traducir.
+phraseTranslate.errorNetwork,,网络请求失败。请检查连接后重试。,網路要求失敗。請檢查連線後再試。,Network request failed. Check your connection and try again.,ネットワークリクエストに失敗しました。接続を確認して再試行してください。,La solicitud de red falló. Comprueba tu conexión e inténtalo de nuevo.
+phraseTranslate.errorOutputTooLarge,,译文过长，无法完成。请缩短原文后重试。,譯文過長，無法完成。請縮短原文後再試。,The translation was too long to finish. Try shorter text.,翻訳が長すぎて完了できませんでした。短い文章で再試行してください。,La traducción es demasiado larga para completarse. Prueba con un texto más corto.
+phraseTranslate.errorPlainText,,仅支持纯文本。请移除 HTML 或 Markdown 后重试。,僅支援純文字。請移除 HTML 或 Markdown 後再試。,Only plain text is supported. Remove HTML or Markdown and try again.,プレーンテキストのみ対応しています。HTMLやMarkdownを削除して再試行してください。,Solo se admite texto sin formato. Elimina el HTML o Markdown e inténtalo de nuevo.
+phraseTranslate.errorProvider,,翻译服务出错，请重试。,翻譯服務發生錯誤，請再試一次。,The translation service failed. Try again.,翻訳サービスでエラーが発生しました。再試行してください。,El servicio de traducción ha fallado. Inténtalo de nuevo.
+phraseTranslate.errorQuota,,今日的翻译额度已用完，请在额度重置后再试。,今天的翻譯額度已用完，請在額度重設後再試。,The daily translation quota is used up. Try again after it resets.,本日の翻訳上限に達しました。上限がリセットされた後に再試行してください。,Se agotó la cuota diaria de traducción. Vuelve a intentarlo cuando se restablezca.
+phraseTranslate.errorRateLimited,,请求过多，请稍后再试。,要求過多，請稍後再試。,Too many requests. Try again shortly.,リクエストが多すぎます。しばらくしてから再試行してください。,Hay demasiadas solicitudes. Inténtalo de nuevo más tarde.
+phraseTranslate.errorSourceLanguage,,无法识别源语言。,無法辨識來源語言。,The source language is not recognized.,入力言語を認識できません。,No se reconoce el idioma de origen.
+phraseTranslate.errorTargetLocale,,目标语言暂不可用。,目標語言目前無法使用。,The target language is not available.,翻訳先の言語を利用できません。,El idioma de destino no está disponible.
+phraseTranslate.errorTimeout,,翻译超时，请重试。,翻譯逾時，請再試一次。,Translation timed out. Try again.,翻訳がタイムアウトしました。再試行してください。,La traducción ha agotado el tiempo de espera. Inténtalo de nuevo.
+phraseTranslate.errorValidation,,请求无法处理。请检查文本后重试。,要求無法處理。請檢查文字後再試。,The request could not be processed. Check the text and try again.,リクエストを処理できませんでした。テキストを確認して再試行してください。,No se pudo procesar la solicitud. Revisa el texto e inténtalo de nuevo.
+phraseTranslate.evidenceCount,,{count} 条参考 | {count} 条参考,{count} 筆參考 | {count} 筆參考,{count} reference | {count} references,{count} 件の参照 | {count} 件の参照,{count} referencia | {count} referencias
+phraseTranslate.evidenceDegraded,,未能及时检索参考资料；本次译文仅由模型生成。,未能及時檢索參考資料；本次譯文僅由模型產生。,References could not be retrieved in time; the translation is model-generated only.,参照情報を時間内に取得できなかったため、翻訳はモデルのみで生成されています。,No se pudieron recuperar las referencias a tiempo; la traducción fue generada solo por el modelo.
+phraseTranslate.evidenceDirect,,直接,直接,Direct,直接,Directa
+phraseTranslate.evidenceEmpty,,未找到相关映射,找不到相關對應詞句,No related mappings found.,関連する対応語が見つかりません,No se encontraron equivalencias relacionadas.
+phraseTranslate.evidenceHeading,,检索参考资料,檢索參考資料,Retrieval references,検索した参考情報,Referencias recuperadas
+phraseTranslate.evidenceOmitted,,{count} 条未显示,{count} 筆未顯示,{count} more not shown,ほか {count} 件は非表示,{count} más no mostradas
+phraseTranslate.evidencePath,,路径,路徑,Path,経路,Ruta
+phraseTranslate.evidenceReferenceLocale,,参考资料语言环境,參考資料語言環境,reference locale,参照ロケール,locale de referencia
+phraseTranslate.evidenceSkipped,,已跳过参考资料检索,已略過參考資料檢索,Reference lookup was skipped,参考情報の検索をスキップしました,Se omitió la búsqueda de referencias
+phraseTranslate.evidenceTwoHop,,经中间词,經中介詞,Via pivot,中継語経由,A través de un término intermedio
+phraseTranslate.exactMatch,,精确匹配,精確比對,Exact match,完全一致,Coincidencia exacta
+phraseTranslate.eyebrow,,词句翻译,詞句翻譯,PHRASE TRANSLATION,フレーズ翻訳,TRADUCCIÓN DE FRASES
+phraseTranslate.graphemeCount,,{count} / {max},{count} / {max},{count} / {max},{count} / {max},{count} / {max}
+phraseTranslate.loadLanguagesFailed,,无法加载语言,無法載入語言,Unable to load languages,言語を読み込めませんでした,No se pudieron cargar los idiomas
+phraseTranslate.loadLocalesFailed,,无法加载语言环境,無法載入語言環境,Unable to load language locales,言語ロケールを読み込めませんでした,No se pudieron cargar los locales de idioma
+phraseTranslate.lookupTerm,,查看“{term}”的相关映射,查看「{term}」的相關對應詞句,Show related mappings for {term},{term} の関連する対応語を表示,Mostrar equivalencias relacionadas para {term}
+phraseTranslate.matchExact,,精确,精確,Exact,完全一致,Exacta
+phraseTranslate.matchFuzzy,,近似,近似,Approximate,類似,Aproximada
+phraseTranslate.matchPrefix,,前缀匹配,前綴比對,Prefix,前方一致,Coincidencia por prefijo
+phraseTranslate.modelOnly,,仅由模型生成,僅由模型產生,Model-generated only,モデルのみで生成,Solo generado por el modelo
+phraseTranslate.outputPlaceholder,,译文,譯文,Translation,翻訳,Traducción
+phraseTranslate.processCompleted,,已完成,已完成,Completed,完了,Completado
+phraseTranslate.processConfidence,,置信度：{confidence},信心度：{confidence},{confidence} confidence,確度: {confidence},confianza {confidence}
+phraseTranslate.processDraft,,当前译文,目前譯文,Current translation,現在の翻訳,Traducción actual
+phraseTranslate.processEvidence,,检索到的参考资料,檢索到的參考資料,Retrieved references,取得した参照情報,Referencias recuperadas
+phraseTranslate.processEvidenceDegraded,,参考资料检索已降级,參考資料檢索功能受限,reference lookup degraded,参照情報の検索機能が制限されています,búsqueda de referencias degradada
+phraseTranslate.processEvidenceFailed,,参考资料检索失败,參考資料檢索失敗,reference lookup failed,参照情報の検索に失敗しました,fallo en la búsqueda de referencias
+phraseTranslate.processEvidenceNoMatch,,该语言没有参考资料,此語言沒有參考資料,no references for this language,この言語の参照情報はありません,no hay referencias para este idioma
+phraseTranslate.processEvidenceSkipped,,参考资料检索已跳过,參考資料檢索已略過,reference lookup skipped,参照情報の検索をスキップしました,búsqueda de referencias omitida
+phraseTranslate.processFailed,,翻译失败,翻譯失敗,Translation failed,翻訳に失敗しました,Traducción fallida
+phraseTranslate.processHeading,,翻译进度,翻譯進度,Translation process,翻訳の進行状況,Progreso de la traducción
+phraseTranslate.processMoreEvidence,,{count} 条更多参考 | {count} 条更多参考,{count} 筆其他參考 | {count} 筆其他參考,{count} more reference | {count} more references,ほか {count} 件の参照 | ほか {count} 件の参照,{count} referencia más | {count} referencias más
+phraseTranslate.processNoSegmentation,,未返回有效的关键词或短语片段。,未傳回有效的關鍵詞或片語片段。,No valid keyword or phrase segments were returned.,有効なキーワードやフレーズが検出されませんでした。,No se detectaron segmentos válidos de palabras clave o frases.
+phraseTranslate.processReferenceLocale,,参考语言环境,參考語言環境,Reference locale,参照ロケール,Locale de referencia
+phraseTranslate.processResolution,,处理方式,處理方式,Resolution,解決方法,Resolución
+phraseTranslate.processResolutionAssisted,,根据检索到的参考资料生成,根據檢索到的參考資料生成,Generated with retrieved references,取得した参照情報をもとに生成,Generada con referencias recuperadas
+phraseTranslate.processResolutionExact,,来自精确映射,來自精確對應,Returned from an exact mapping,完全一致する対応関係から取得,Obtenida de una equivalencia exacta
+phraseTranslate.processResolutionModelOnly,,未使用检索参考资料生成,未使用檢索參考資料生成,Generated without retrieved references,参照情報を使わずにモデルで生成,Generada sin referencias recuperadas
+phraseTranslate.processRetrieval,,检索到的片段,檢索到的片段,Retrieved snippets,取得したスニペット,Fragmentos recuperados
+phraseTranslate.processSegmentation,,识别到的关键词和短语,辨識到的關鍵詞與片語,Detected keywords and phrases,検出されたキーワードとフレーズ,Palabras clave y frases detectadas
+phraseTranslate.processSegmentationCount,,{count} 个片段 | {count} 个片段,{count} 個片段 | {count} 個片段,{count} segment | {count} segments,{count} 個のセグメント | {count} 個のセグメント,{count} segmento | {count} segmentos
+phraseTranslate.processSource,,源语言,來源語言,Source language,入力言語,Idioma de origen
+phraseTranslate.processSpanOffset,,{start}–{end} 个字符,{start}–{end} 個字元,characters {start}–{end},{start}～{end} 文字目,caracteres {start}–{end}
+phraseTranslate.processStarting,,正在开始翻译,正在開始翻譯,Starting translation,翻訳を開始しています,Iniciando traducción
+phraseTranslate.processStopped,,已停止,已停止,Stopped,停止しました,Detenido
+phraseTranslate.processTarget,,目标语言环境,目標語言環境,Target locale,翻訳先ロケール,Locale de destino
+phraseTranslate.processWaiting,,正在等待阶段详情…,正在等待階段詳細資訊…,Waiting for stage details…,処理の詳細を待っています…,Esperando detalles de la etapa…
+phraseTranslate.rateLimited,,请求过多，请在 {seconds} 秒后重试。,請在 {seconds} 秒後再試。,Too many requests. Try again in {seconds} seconds.,{seconds} 秒後に再試行してください。,Vuelve a intentarlo dentro de {seconds} segundos.
+phraseTranslate.referenceFailed,,无法加载映射。请再次点击词语重试。,無法載入對應詞句。請再次點選詞語重試。,Unable to load mappings. Select the word to try again.,対応語を読み込めませんでした。単語を選択して再試行してください。,No se pudieron cargar las equivalencias. Selecciona la palabra para volver a intentarlo.
+phraseTranslate.referenceLoading,,正在查找相关映射…,正在查找相關對應詞句…,Looking up related mappings…,関連する対応語を検索しています…,Buscando equivalencias relacionadas…
+phraseTranslate.referenceLocaleUnknown,,未指定语言地区,未指定語言地區,Locale unspecified,ロケール未指定,Locale sin especificar
+phraseTranslate.referenceNotice,,词典参考不代表译文已采用该词义。,詞典參考不代表譯文已採用該詞義。,Dictionary references do not confirm which meaning the translation used.,辞書の参考情報は、翻訳でその語義が使われたことを示すものではありません。,Las referencias del diccionario no confirman qué significado se usó en la traducción.
+phraseTranslate.referenceTranslations,,参考译文,參考譯文,Reference translations,参考訳,Traducciones de referencia
+phraseTranslate.resultHeading,,译文,譯文,Translation,翻訳,Traducción
+phraseTranslate.retry,,重试,重試,Retry,再試行,Reintentar
+phraseTranslate.sendToContribute,,提交到贡献,送出貢獻,Send to contribute,投稿する,Enviar como contribución
+phraseTranslate.sendToContributeFailed,,无法准备此译文以供贡献，请重试。,無法準備此譯文以供投稿，請再試一次。,Unable to prepare this translation for contribution. Try again.,この翻訳を投稿用に準備できませんでした。再試行してください。,No se pudo preparar esta traducción para contribuir. Inténtalo de nuevo.
+phraseTranslate.signInRequired,,请登录后使用词句翻译,請登入後使用詞句翻譯,Sign in to use phrase translation,フレーズ翻訳を使うにはログインしてください,Inicia sesión para traducir frases
+phraseTranslate.sourceAuto,,自动检测,自動偵測,Detect automatically,自動検出,Detectar automáticamente
+phraseTranslate.sourceConfirmHeading,,确认源语言,確認來源語言,Confirm the source language,入力言語を確認してください,Confirma el idioma de origen
+phraseTranslate.sourceConfirmHint,,自动检测结果不够可靠。请选择源语言后重新提交。,自動偵測結果不夠可靠。請選擇來源語言後重新送出。,Automatic detection was not confident enough. Choose the source language and submit again.,自動検出の確度が十分ではありません。入力言語を選んで再送信してください。,La detección automática no es suficientemente fiable. Elige el idioma de origen y vuelve a enviar.
+phraseTranslate.sourceConfirmSubmit,,使用此语言,使用此語言,Use this language,この言語を使う,Usar este idioma
+phraseTranslate.sourceLanguage,,源语言,來源語言,Source language,入力言語,Idioma de origen
+phraseTranslate.sourceLanguagePlaceholder,,搜索源语言…,搜尋來源語言…,Search for a source language…,入力元の言語を検索…,Busca el idioma de origen…
+phraseTranslate.sourceRequired,,请选择源语言。,請選擇來源語言。,Choose a source language.,入力言語を選択してください。,Elige un idioma de origen.
+phraseTranslate.stageAnalyzing,,正在分析文本,正在分析文字,Analyzing the text,テキストを分析しています,Analizando el texto
+phraseTranslate.stageGenerating,,正在生成译文,正在產生譯文,Generating the translation,翻訳を生成しています,Generando la traducción
+phraseTranslate.stageRetrieving,,正在检索参考资料,正在檢索參考資料,Retrieving references,参考情報を検索しています,Buscando referencias
+phraseTranslate.submit,,翻译,翻譯,Translate,翻訳,Traducir
+phraseTranslate.subtitle,,选择来源与目标语言，输入文字后点击翻译。,選擇來源與目標語言，輸入文字後點選翻譯。,"Choose source and target languages, enter text, then translate.",入力言語と翻訳先を選び、テキストを入力して翻訳します。,"Elige los idiomas de origen y destino, escribe el texto y tradúcelo."
+phraseTranslate.targetLocale,,目标语言,目標語言,Target language,翻訳先の言語,Idioma de destino
+phraseTranslate.targetLocalePlaceholder,,搜索目标语言或地区…,搜尋目標語言或地區…,Search target languages or regions…,翻訳先の言語や地域を検索…,Busca idiomas o regiones de destino…
+phraseTranslate.termHint,,点击译文中的词语或短语，查看相关映射。,點選譯文中的詞語或片語，查看相關對應詞句。,Select a word or phrase in the translation to see related mappings.,翻訳内の単語やフレーズを選択すると、関連する対応語を確認できます。,Selecciona una palabra o frase de la traducción para ver equivalencias relacionadas.
+phraseTranslate.text,,文本,文字,Text,テキスト,Texto
+phraseTranslate.textPlaceholder,,输入或粘贴词或句子…,輸入或貼上詞或句子…,Type or paste a word or sentence…,単語や文を入力または貼り付け…,Escribe o pega una palabra o una oración…
+phraseTranslate.title,,词句翻译,詞句翻譯,Phrase translation,フレーズ翻訳,Traducción de frases
+phraseTranslate.unavailable,,翻译服务暂时无法使用，请稍后再试。,翻譯服務暫時無法使用，請稍後再試。,Translation is temporarily unavailable. Please try again shortly.,翻訳サービスは一時的に利用できません。しばらくしてからもう一度お試しください。,El servicio de traducción no está disponible temporalmente. Vuelve a intentarlo en unos instantes.
+phraseTranslate.validationSummary,,请检查标出的字段，然后重试。,請檢查標示的欄位，然後再試一次。,Check the highlighted fields and try again.,強調表示された項目を確認して、再試行してください。,Revisa los campos resaltados e inténtalo de nuevo.
 profile.email,,邮箱,電子郵件,Email,メールアドレス,Correo electrónico
 profile.loadFailed,,无法加载个人资料,無法載入個人資料,Unable to load profile,プロフィールを読み込めませんでした,No se pudo cargar el perfil
 profile.memberSince,,加入时间,加入時間,Member since,登録日,Miembro desde
@@ -420,13 +530,3 @@ translate.title,,翻译工作台,翻譯工作台,Translation workbench,翻訳ワ
 translate.translateKey,,翻译 {key},翻譯 {key},Translate {key},{key} を翻訳,Traducir {key}
 translate.translated,,已翻译,已翻譯,translated,翻訳済み,traducido
 translate.translation,,翻译,翻譯,Translation,翻訳,Traducción
-phraseTranslate.processStopped,,已停止,已停止,Stopped,,
-phraseTranslate.outputPlaceholder,,译文,譯文,Translation,,
-phraseTranslate.lookupTerm,,查看“{term}”的词典参考,查閱「{term}」的詞典參考,Show references for {term},,
-phraseTranslate.termHint,,点击词语或短语，查看词典参考。,點選詞語或短語，查閱詞典參考。,Select a word or phrase to see dictionary references.,,
-phraseTranslate.closeReference,,关闭参考,關閉參考,Close references,,
-phraseTranslate.referenceLoading,,正在查看词典参考…,正在查閱詞典參考…,Looking up dictionary references…,,
-phraseTranslate.referenceFailed,,无法加载参考。请再次点击词语重试。,無法載入參考。請再次點選詞語重試。,Unable to load references. Select the word to try again.,,
-phraseTranslate.referenceLocaleUnknown,,未指定语言地区,未指定語言地區,Locale unspecified,,
-phraseTranslate.referenceNotice,,词典参考不代表译文已采用该词义。,詞典參考不代表譯文已採用該詞義。,Dictionary references do not confirm which meaning the translation used.,,
-phraseTranslate.matchFuzzy,,近似,近似,Approximate,,

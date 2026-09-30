@@ -35,11 +35,11 @@ const router = createRouter({
     return false
   },
   routes: [
-    { path: '/',                  component: () => import('./pages/HomeFeed.vue') },
+    { path: '/',                  component: () => import('./pages/HomeView.vue') },
     { path: '/mapping/:lang/:text(.+)', component: () => import('./pages/MappingDetail.vue') },
     { path: '/mapping/:id',       component: () => import('./pages/MappingDetail.vue'), beforeEnter: legacyIdRedirect('mapping') },
     { path: '/contribute',        component: () => import('./pages/Contribute.vue') },
-    { path: '/translate',         component: () => import('./pages/ExpressionTranslation.vue') },
+    { path: '/translate',         redirect: { path: '/', query: {} } },
     { path: '/ui-translation',    component: () => import('./pages/UiTranslationWorkbench.vue') },
     { path: '/ui-translation/:code', component: () => import('./pages/UiTranslationWorkbench.vue') },
     { path: '/handbooks',         component: () => import('./pages/HandbookList.vue') },

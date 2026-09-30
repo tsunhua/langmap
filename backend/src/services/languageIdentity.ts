@@ -1,5 +1,6 @@
 import type { Database } from '../db/database';
 import type { LanguageLocaleParts } from '../types/language';
+import languageNameTranslations from '../../../scripts/language-reference/overlays/language-name-translations.json';
 
 export type ReferenceTable = 'languages' | 'scripts' | 'regions';
 
@@ -12,6 +13,23 @@ export interface ReferenceQuery {
 export interface ReferenceListResult {
   items: Record<string, unknown>[];
   total: number;
+}
+
+const CANONICAL_ENGLISH_LANGUAGE_NAMES = new Map(
+  Object.entries((languageNameTranslations as { canonical_english_names: Record<string, string> }).canonical_english_names)
+    .map(([code, name]) => [code.toLowerCase(), name] as const),
+);
+
+export function canonicalEnglishLanguageName(code: string, fallback: string): string {
+  return CANONICAL_ENGLISH_LANGUAGE_NAMES.get(code.toLowerCase()) ?? fallback;
+}
+
+export function canonicalEnglishLanguageMatches(query: string): string[] {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
+  return [...CANONICAL_ENGLISH_LANGUAGE_NAMES]
+    .filter(([, name]) => name.toLowerCase().includes(normalized))
+    .map(([code]) => code);
 }
 
 const COLUMNS: Record<ReferenceTable, readonly string[]> = {
@@ -49,11 +67,15 @@ export async function queryReferenceTable(
 ): Promise<ReferenceListResult> {
   const cols = COLUMNS[table].join(', ');
   const escapedQ = escapeLike(query.q);
+  const canonicalMatches = table === 'languages' ? canonicalEnglishLanguageMatches(query.q) : [];
+  const canonicalMatchSql = canonicalMatches.length
+    ? ` OR code IN (${canonicalMatches.map(() => '?').join(', ')})`
+    : '';
   const where = escapedQ
-    ? `WHERE code LIKE ? ESCAPE '\\' OR name_en LIKE ? ESCAPE '\\'`
+    ? `WHERE code LIKE ? ESCAPE '\\' OR name_en LIKE ? ESCAPE '\\'${canonicalMatchSql}`
     : '';
   const baseParams: (string | number)[] = escapedQ
-    ? [`%${escapedQ}%`, `%${escapedQ}%`]
+    ? [`%${escapedQ}%`, `%${escapedQ}%`, ...canonicalMatches]
     : [];
 
   const countRow = await db
@@ -74,7 +96,15 @@ export async function queryReferenceTable(
     .prepare(`SELECT ${cols} FROM ${table} ${where} ${order}`)
     .bind(...selectParams)
     .all();
-  return { items: results as Record<string, unknown>[], total };
+  const items = results as Record<string, unknown>[];
+  if (table !== 'languages') return { items, total };
+  return {
+    items: items.map((item) => ({
+      ...item,
+      name_en: canonicalEnglishLanguageName(String(item.code), String(item.name_en ?? item.code)),
+    })),
+    total,
+  };
 }
 
 const LANG_CODE_RE = /^(?:[a-z]{3}|x-(?:image|emoji))$/;

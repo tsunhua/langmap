@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Wand2 } from 'lucide-vue-next'
 import LanguagePicker from '@/components/language/LanguagePicker.vue'
 import LanguageLocalePicker from '@/components/language/LanguageLocalePicker.vue'
 import {
@@ -20,28 +19,22 @@ export interface TranslationFormValue {
 const props = withDefaults(defineProps<{
   modelValue: TranslationFormValue
   disabled?: boolean
-  error?: string
-}>(), { disabled: false, error: '' })
+}>(), { disabled: false })
 
 const emit = defineEmits<{
   'update:modelValue': [value: TranslationFormValue]
   submit: []
-  cancel: []
 }>()
 
 const { t } = useI18n()
-
 const summary = ref<HTMLElement>()
-const interacted = ref(false)
-// The summary is only announced after an invalid submit, so a live region does
-// not fire on every keystroke.
 const submitAttempted = ref(false)
 
-const textErrorId = 'translation-text-error'
+const sourceErrorId = 'translation-source-error'
 const targetErrorId = 'translation-target-error'
+const textErrorId = 'translation-text-error'
 
 function update(patch: Partial<TranslationFormValue>) {
-  interacted.value = true
   emit('update:modelValue', { ...props.modelValue, ...patch })
 }
 
@@ -49,26 +42,22 @@ const sourceLang = computed(() => props.modelValue.sourceLangCode ?? '')
 const targetLocale = computed(() => props.modelValue.targetLocaleCode)
 const graphemeCount = computed(() => countGraphemes(props.modelValue.text))
 const byteLength = computed(() => utf8ByteLength(props.modelValue.text))
-
+const sourceEmpty = computed(() => !sourceLang.value.trim())
+const targetEmpty = computed(() => !targetLocale.value.trim())
 const textEmpty = computed(() => props.modelValue.text.trim().length === 0)
 const textTooLong = computed(() =>
   graphemeCount.value > MAX_TRANSLATION_GRAPHEMES || byteLength.value > MAX_TRANSLATION_TEXT_BYTES,
 )
-const targetEmpty = computed(() => targetLocale.value.trim().length === 0)
-const isAutoDetect = computed(() => sourceLang.value === '')
-
-const textInvalid = computed(() => textEmpty.value || textTooLong.value)
-const canSubmit = computed(() => !props.disabled && !textInvalid.value && !targetEmpty.value)
-
-const showSummary = computed(() =>
-  Boolean(props.error) || (submitAttempted.value && (textInvalid.value || targetEmpty.value)),
-)
+const invalid = computed(() => sourceEmpty.value || targetEmpty.value || textEmpty.value || textTooLong.value)
+const canSubmit = computed(() => !props.disabled)
+const showSummary = computed(() => submitAttempted.value && invalid.value)
+const showSourceError = computed(() => submitAttempted.value && sourceEmpty.value)
+const showTargetError = computed(() => submitAttempted.value && targetEmpty.value)
 const showTextError = computed(() =>
-  textTooLong.value || (textEmpty.value && (interacted.value || submitAttempted.value)),
+  textTooLong.value || (textEmpty.value && submitAttempted.value),
 )
-const showTargetError = computed(() => targetEmpty.value && (interacted.value || submitAttempted.value))
 const textDescribedBy = computed(() =>
-  showTextError.value ? 'translation-text-count translation-text-error' : 'translation-text-count',
+  showTextError.value ? `translation-text-count ${textErrorId}` : 'translation-text-count',
 )
 
 function onText(value: string) {
@@ -76,7 +65,7 @@ function onText(value: string) {
 }
 
 function onSourceLang(value: string) {
-  update({ sourceLangCode: value === '' ? null : value })
+  update({ sourceLangCode: value || null })
 }
 
 function onTargetLocale(value: string) {
@@ -88,7 +77,7 @@ function focusSummary() {
 }
 
 function onSubmit() {
-  if (!canSubmit.value) {
+  if (invalid.value) {
     submitAttempted.value = true
     focusSummary()
     return
@@ -100,98 +89,81 @@ function onSubmit() {
 <template>
   <form class="translation-form" novalidate @submit.prevent="onSubmit">
     <p v-if="showSummary" ref="summary" class="form-summary" role="alert" tabindex="-1">
-      {{ props.error || t('phraseTranslate.validationSummary') }}
+      {{ t('phraseTranslate.validationSummary') }}
     </p>
 
-    <div class="translation-workspace">
-      <section class="source-pane">
-        <div class="field source-field">
-          <LanguagePicker
-            :model-value="sourceLang"
-            :label="t('phraseTranslate.sourceLanguage')"
-            @update:model-value="onSourceLang"
-          />
-          <button
-            type="button"
-            class="btn btn-ghost auto-detect"
-            :aria-pressed="isAutoDetect"
-            data-action="source-auto"
-            @click="onSourceLang('')"
-          >
-            <Wand2 :size="16" aria-hidden="true" />
-            {{ t('phraseTranslate.sourceAuto') }}
-          </button>
-        </div>
-
-      <div class="field text-field">
-        <label for="translation-text" class="field-label">{{ t('phraseTranslate.text') }}</label>
-        <textarea
-          id="translation-text"
-          class="text-input"
-          :value="props.modelValue.text"
-          :placeholder="t('phraseTranslate.textPlaceholder')"
-          dir="auto"
-          :aria-invalid="textInvalid"
-          :aria-describedby="textDescribedBy"
-          @input="onText(($event.target as HTMLTextAreaElement).value)"
+    <div class="language-fields">
+      <div class="field">
+        <LanguagePicker
+          :model-value="sourceLang"
+          :label="t('phraseTranslate.sourceLanguage')"
+          :placeholder="t('phraseTranslate.sourceLanguagePlaceholder')"
+          variant="search"
+          :invalid="showSourceError"
+          :described-by="showSourceError ? sourceErrorId : undefined"
+          @update:model-value="onSourceLang"
         />
-        <div class="text-meta">
-          <p id="translation-text-count" class="grapheme-count" :class="{ over: textTooLong }">
-            {{ t('phraseTranslate.graphemeCount', { count: graphemeCount, max: MAX_TRANSLATION_GRAPHEMES }) }}
-          </p>
-          <p
-            v-if="textTooLong"
-            :id="textErrorId"
-            class="field-error"
-            role="status"
-            aria-live="polite"
-          >
-            {{ t('phraseTranslate.errorValidation') }}
-          </p>
-          <p v-else-if="showTextError" :id="textErrorId" class="field-error">
-            {{ t('phraseTranslate.errorValidation') }}
-          </p>
-        </div>
+        <p v-if="showSourceError" :id="sourceErrorId" class="field-error">
+          {{ t('phraseTranslate.sourceRequired') }}
+        </p>
       </div>
 
-      </section>
-      <section class="target-pane">
-        <div
-          class="field target-field"
-          role="group"
-          :aria-label="t('phraseTranslate.targetLocale')"
-          :aria-invalid="targetEmpty"
-          :aria-describedby="showTargetError ? targetErrorId : undefined"
-        >
-          <LanguageLocalePicker
-            :model-value="targetLocale"
-            :label="t('phraseTranslate.targetLocale')"
-            :placeholder="t('phraseTranslate.targetLocalePlaceholder')"
-            :allow-create="false"
-            @update:model-value="onTargetLocale"
-          />
-          <p v-if="showTargetError" :id="targetErrorId" class="field-error">
-            {{ t('phraseTranslate.errorTargetLocale') }}
-          </p>
-        </div>
-        <div class="target-output"><slot name="output" /></div>
-      </section>
+      <div class="field">
+        <LanguageLocalePicker
+          :model-value="targetLocale"
+          :label="t('phraseTranslate.targetLocale')"
+          :placeholder="t('phraseTranslate.targetLocalePlaceholder')"
+          variant="search"
+          :allow-create="false"
+          :invalid="showTargetError"
+          :described-by="showTargetError ? targetErrorId : undefined"
+          @update:model-value="onTargetLocale"
+        />
+        <p v-if="showTargetError" :id="targetErrorId" class="field-error">
+          {{ t('phraseTranslate.errorTargetLocale') }}
+        </p>
+      </div>
     </div>
 
-    <div class="actions">
-      <button
-        v-if="!disabled"
-        type="submit"
-        class="btn btn-primary"
-        :disabled="!canSubmit"
-        data-action="submit"
-      >
-        {{ t('phraseTranslate.submit') }}
-      </button>
-      <button v-else type="button" class="btn" data-action="cancel" @click="emit('cancel')">
-        {{ t('phraseTranslate.cancel') }}
-      </button>
+    <div class="field text-field">
+      <label for="translation-text" class="field-label">{{ t('phraseTranslate.text') }}</label>
+      <textarea
+        id="translation-text"
+        class="text-input"
+        :value="props.modelValue.text"
+        :placeholder="t('phraseTranslate.textPlaceholder')"
+        dir="auto"
+        :aria-invalid="showTextError"
+        :aria-describedby="textDescribedBy"
+        @input="onText(($event.target as HTMLTextAreaElement).value)"
+      />
+      <div class="text-meta">
+        <p id="translation-text-count" class="grapheme-count" :class="{ over: textTooLong }">
+          {{ t('phraseTranslate.graphemeCount', { count: graphemeCount, max: MAX_TRANSLATION_GRAPHEMES }) }}
+        </p>
+        <p
+          v-if="textTooLong"
+          :id="textErrorId"
+          class="field-error"
+          role="status"
+          aria-live="polite"
+        >
+          {{ t('phraseTranslate.errorValidation') }}
+        </p>
+        <p v-else-if="showTextError" :id="textErrorId" class="field-error">
+          {{ t('phraseTranslate.errorValidation') }}
+        </p>
+      </div>
     </div>
+
+    <button
+      type="submit"
+      class="btn btn-primary translate-submit"
+      :disabled="!canSubmit"
+      data-action="submit"
+    >
+      {{ t('phraseTranslate.submit') }}
+    </button>
   </form>
 </template>
 
@@ -214,14 +186,12 @@ function onSubmit() {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.translation-workspace {
+.language-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   min-width: 0;
 }
-.source-pane, .target-pane { min-width: 0; display: grid; align-content: start; gap: 16px; }
-.target-output { min-width: 0; min-height: 220px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-2); }
 .field {
   display: flex;
   flex-direction: column;
@@ -233,25 +203,18 @@ function onSubmit() {
   font-weight: 600;
   color: var(--muted);
 }
-.auto-detect {
-  align-self: flex-start;
-  min-height: 44px;
-}
-.auto-detect[aria-pressed="true"] {
-  border-color: var(--accent);
-  color: var(--accent);
-}
 .text-input {
   box-sizing: border-box;
   width: 100%;
-  min-height: 220px;
-  padding: 10px 12px;
+  min-height: 152px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--r);
   background: var(--surface);
   color: var(--fg);
   font-family: var(--font);
   font-size: var(--text-body);
+  line-height: 1.5;
   resize: vertical;
 }
 .text-input:focus {
@@ -261,6 +224,12 @@ function onSubmit() {
 }
 .text-input[aria-invalid="true"] {
   border-color: var(--down);
+}
+.translation-form :deep(.identity-picker input),
+.translation-form :deep(.identity-picker .picker-selected),
+.translation-form :deep(.locale-picker .input-wrap input),
+.translation-form :deep(.locale-picker .selected) {
+  background: var(--surface);
 }
 .text-meta {
   display: flex;
@@ -283,19 +252,21 @@ function onSubmit() {
   color: var(--down);
   font-size: 12px;
 }
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-.actions .btn {
-  min-height: 44px;
+.translate-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  min-width: 168px;
+  min-height: 48px;
   padding: 0 18px;
 }
-@media (min-width: 720px) {
-  .source-pane, .target-pane { grid-template-rows: minmax(128px, max-content) auto; }
-  .translation-workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+@media (max-width: 640px) {
+  .language-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .translate-submit {
+    width: 100%;
   }
 }
 </style>

@@ -50,6 +50,7 @@ let searchRequest = 0
 let initialized = false
 let skipNextQueryWatch = false
 let skipNextLanguageWatch = false
+let routeSyncRequest = 0
 let expectedRoute: { q: string; lang: string } | null = null
 
 function syncUrl() {
@@ -168,8 +169,9 @@ watch(language, () => {
 })
 
 // Sync state back when the URL changes externally (back/forward, typed URL).
-watch(() => route.query, (next) => {
+watch(() => route.query, async (next) => {
   if (!initialized) return
+  const request = ++routeSyncRequest
   const urlQ = typeof next.q === 'string' ? next.q : ''
   const urlLang = typeof next.lang === 'string' ? next.lang : ''
   if (expectedRoute && expectedRoute.q === urlQ && expectedRoute.lang === urlLang) {
@@ -177,7 +179,17 @@ watch(() => route.query, (next) => {
     return
   }
   expectedRoute = null
-  const resolvedLanguage = urlLang || searchLanguages.resolveSearchLanguage()
+  let resolvedLanguage = ''
+  if (urlLang) {
+    try {
+      resolvedLanguage = (await loadSearchLanguage(urlLang, localeParams.value))?.code ?? ''
+    } catch {
+      resolvedLanguage = ''
+    }
+  } else {
+    resolvedLanguage = searchLanguages.resolveSearchLanguage()
+  }
+  if (request !== routeSyncRequest) return
   const queryChanged = urlQ !== query.value
   const languageChanged = resolvedLanguage !== language.value
   if (!queryChanged && !languageChanged) return
@@ -217,6 +229,7 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   searchRequest += 1
+  routeSyncRequest += 1
   if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
@@ -281,6 +294,9 @@ onUnmounted(() => {
 .se-more { text-align: center; padding: 10px; font-size: 14px; color: var(--muted); }
 .se-more-error { color: var(--down); }
 .se-hint { font-family: var(--mono); font-size: 13px; text-align: center; padding: var(--space-xl); color: var(--faint); }
+@media (min-width: 961px) {
+  .se-search-form { display: none; }
+}
 @media (max-width: 768px) {
   .se-page { padding-left: 20px; padding-right: 20px; }
 }

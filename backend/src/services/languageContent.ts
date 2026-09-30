@@ -1,5 +1,5 @@
 import type { Database } from '../db/database';
-import { escapeLike } from './languageIdentity';
+import { canonicalEnglishLanguageMatches, canonicalEnglishLanguageName, escapeLike, parseLanguageLocaleCode } from './languageIdentity';
 import { parseLocaleHints, resolveLanguageNames, resolveLocaleNames } from './localizedName';
 
 export interface LanguageContentSummary { code: string; name_en: string; name: string; expression_count: number; locale_count: number; active_ui_locale_count: number; }
@@ -8,7 +8,11 @@ export interface LanguageDetail { code: string; name_en: string; name: string; e
 export interface LanguageExpressionRow { id: number; lang_code: string; text: string; homograph_index: number; created_at: string; reading_count: number; mapping_count: number; language_name: string; }
 
 export async function listLanguagesWithContent(db: Database, query: { q: string; sort: 'count' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageContentSummary[]; total: number }> {
-  const q = query.q.trim(); const where = q ? "WHERE l.code LIKE ? ESCAPE '\\' OR l.name_en LIKE ? ESCAPE '\\'" : ''; const params = q ? [`%${escapeLike(q)}%`, `%${escapeLike(q)}%`] : [];
+  const q = query.q.trim();
+  const canonicalMatches = canonicalEnglishLanguageMatches(q);
+  const canonicalMatchSql = canonicalMatches.length ? ` OR l.code IN (${canonicalMatches.map(() => '?').join(', ')})` : '';
+  const where = q ? `WHERE l.code LIKE ? ESCAPE '\\' OR l.name_en LIKE ? ESCAPE '\\'${canonicalMatchSql}` : '';
+  const params = q ? [`%${escapeLike(q)}%`, `%${escapeLike(q)}%`, ...canonicalMatches] : [];
   // The language registry is the source of truth for this directory. Statistics
   // are optional because a newly registered language may not have content yet.
   const base = `SELECT l.code,l.name_en,COALESCE(s.expression_count,0) AS expression_count,COALESCE(s.locale_count,0) AS locale_count,COALESCE(s.active_ui_locale_count,0) AS active_ui_locale_count FROM languages l LEFT JOIN language_statistics s ON s.language_id=l.id ${where}`;
@@ -21,7 +25,10 @@ export async function listLanguagesWithContent(db: Database, query: { q: string;
     count = await db.prepare(`SELECT COUNT(*) AS total FROM (${legacy}) AS sub`).bind(...params).first<{ total: number }>(); const order = query.sort === 'alpha' ? 'l.name_en,l.code' : 'expression_count DESC,l.code'; rows = await db.prepare(`${legacy} ORDER BY ${order} LIMIT ? OFFSET ?`).bind(...params, query.limit, query.offset).all<LanguageContentSummary>();
   }
   const names = await resolveLanguageNames(db, rows.results.map((row) => row.code), parseLocaleHints(query.uiLocale, query.secondaryUiLocale));
-  return { items: rows.results.map((row) => ({ ...row, name: names.get(row.code) ?? row.name_en })), total: count?.total ?? 0 };
+  return { items: rows.results.map((row) => {
+    const name_en = canonicalEnglishLanguageName(row.code, row.name_en);
+    return { ...row, name_en, name: names.get(row.code) ?? name_en };
+  }), total: count?.total ?? 0 };
 }
 
 export async function getLanguageDetail(db: Database, code: string, uiLocales: { uiLocale?: string; secondaryUiLocale?: string } = {}, locale = ''): Promise<LanguageDetail | null> {
@@ -37,8 +44,13 @@ export async function getLanguageDetail(db: Database, code: string, uiLocales: {
     db.prepare('SELECT ll.code,ll.name,ll.name_en,ll.script_code,ll.region_code,ll.place_path,ll.latitude AS locale_latitude,ll.longitude AS locale_longitude,r.latitude AS region_latitude,r.longitude AS region_longitude FROM language_locales ll LEFT JOIN regions r ON r.code=ll.region_code WHERE ll.language_id=? ORDER BY ll.code').bind(language.id).all<any>(),
   ]);
   const localeNames = hasLocaleHints ? await resolveLocaleNames(db, localeRows.results.map((row) => row.code), hints) : new Map<string, string>();
-  const locales = localeRows.results.map((row) => ({ code: row.code, name: row.name, name_en: row.name_en, display_name: localeNames.get(row.code) ?? row.name ?? row.name_en, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, latitude: row.locale_latitude ?? row.region_latitude, longitude: row.locale_longitude ?? row.region_longitude, coordinate_source: row.locale_latitude !== null ? 'locale' : row.region_latitude !== null ? 'region' : null }));
-  return { code: language.code, name_en: language.name_en, name: languageNames.get(language.code) ?? language.name_en, expression_count: expressions?.total ?? 0, reading_count: readings?.total ?? 0, mapped_expression_count: mapped?.total ?? 0, locales };
+  const locales = localeRows.results.map((row) => {
+    const languageCode = parseLanguageLocaleCode(row.code)?.lang_code ?? '';
+    const name_en = canonicalEnglishLanguageName(languageCode, row.name_en);
+    return { code: row.code, name: row.name, name_en, display_name: localeNames.get(row.code) ?? row.name ?? name_en, script_code: row.script_code, region_code: row.region_code, place_path: row.place_path, latitude: row.locale_latitude ?? row.region_latitude, longitude: row.locale_longitude ?? row.region_longitude, coordinate_source: row.locale_latitude !== null ? 'locale' : row.region_latitude !== null ? 'region' : null };
+  });
+  const name_en = canonicalEnglishLanguageName(language.code, language.name_en);
+  return { code: language.code, name_en, name: languageNames.get(language.code) ?? name_en, expression_count: expressions?.total ?? 0, reading_count: readings?.total ?? 0, mapped_expression_count: mapped?.total ?? 0, locales };
 }
 
 export async function listLanguageExpressions(db: Database, code: string, query: { q: string; locale: string; sort: 'hot' | 'new' | 'alpha'; limit: number; offset: number; uiLocale: string; secondaryUiLocale: string }): Promise<{ items: LanguageExpressionRow[]; total: number } | null> {

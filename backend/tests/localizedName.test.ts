@@ -76,18 +76,65 @@ describe('resolveLanguageNames / resolveLocaleNames', () => {
     expect(langs.get('cmn')).toBe('Mandarin Chinese');
   });
 
+  it('uses canonical English names instead of homonym mappings in English UI locales', async () => {
+    const db = fakeDatabase([
+      { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
+        { code: 'eng', name_expression_id: CMN_NAME, name_en: 'English', name: null },
+        { code: 'jpn', name_expression_id: JPN_NAME, name_en: 'Japanese', name: null },
+      ] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [
+        { id: CMN_NAME, text: 'English' },
+        { id: JPN_NAME, text: 'Japanese' },
+      ] }) },
+      { sql: 'WITH candidate_rows AS', handler: () => { throw new Error('English canonical names should not be resolved through mapping candidates'); } },
+    ]);
+
+    const langs = await resolveLanguageNames(db, ['eng', 'jpn'], parseLocaleHints('eng-Latn-US'));
+
+    expect(langs.get('eng')).toBe('English');
+    expect(langs.get('jpn')).toBe('Japanese');
+  });
+
+  it('uses canonical ISO English names for code-keyed macro languages', async () => {
+    const db = fakeDatabase([
+      { sql: 'FROM languages WHERE code IN', handler: () => ({ results: [
+        { code: 'ara', name_expression_id: null, name_en: 'ara-Arab-EG', name: null },
+        { code: 'pus', name_expression_id: null, name_en: 'pus-Arab-AF', name: null },
+      ] }) },
+    ]);
+
+    const langs = await resolveLanguageNames(db, ['ara', 'pus'], parseLocaleHints('eng-Latn-US'));
+
+    expect(langs.get('ara')).toBe('Arabic');
+    expect(langs.get('pus')).toBe('Pushto');
+  });
+
   it('resolves locale names through the self name or a localized candidate', async () => {
     const db = fakeDatabase([
       { sql: 'FROM language_locales WHERE code IN', handler: () => ({ results: [
         { code: 'jpn-Jpan-JP', name_expression_id: null, name_en: 'Japanese (Japan)', name: '日本語' },
         { code: 'cmn-Hans-CN', name_expression_id: CMN_NAME, name_en: 'Simplified Chinese', name: '普通话' },
       ] }) },
-      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Simplified Chinese' }] }) },
+      { sql: 'SELECT id, text FROM expressions WHERE id IN', handler: () => ({ results: [{ id: CMN_NAME, text: 'Simplified Chinese profile' }] }) },
       { sql: 'WITH candidate_rows AS', handler: () => ({ results: [{ source_id: CMN_NAME, target_id: KYUGO, target_text: '簡化字', score: 0 }] }) },
     ]);
     const locales = await resolveLocaleNames(db, ['jpn-Jpan-JP', 'cmn-Hans-CN'], parseLocaleHints('cmn-Hant-TW'));
     expect(locales.get('jpn-Jpan-JP')).toBe('日語（日本）');
     expect(locales.get('cmn-Hans-CN')).toBe('簡化字');
+  });
+
+  it('uses language catalog names when imported locale labels contain only a language code', async () => {
+    const db = fakeDatabase([
+      { sql: 'FROM language_locales WHERE code IN', handler: () => ({ results: [
+        { code: 'ara-Arab-EG', name_expression_id: null, name_en: 'ara-Arab-EG', name: null },
+      ] }) },
+    ]);
+
+    const english = await resolveLocaleNames(db, ['ara-Arab-EG'], parseLocaleHints('eng-Latn-US'));
+    const traditionalChinese = await resolveLocaleNames(db, ['ara-Arab-EG'], parseLocaleHints('cmn-Hant-TW'));
+
+    expect(english.get('ara-Arab-EG')).toBe('Arabic');
+    expect(traditionalChinese.get('ara-Arab-EG')).toBe('阿拉伯語');
   });
 
   it('batches distinct name_expression_ids into a single candidate query', async () => {

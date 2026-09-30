@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import router from './router'
-import ExpressionTranslation from './pages/ExpressionTranslation.vue'
+import HomeView from './pages/HomeView.vue'
 import UiTranslationWorkbench from './pages/UiTranslationWorkbench.vue'
 
 vi.mock('./api/expressions', () => ({
@@ -43,8 +43,9 @@ describe('router', () => {
     expect(router.resolve('/translate/nan-Hant-CN').matched[0].path).toBe('/:pathMatch(.*)*')
   })
 
-  it('maps each translation route to its own page component', async () => {
-    expect(await resolvedComponent('/translate')).toBe(ExpressionTranslation)
+  it('uses the homepage for phrase translation and keeps UI translation separate', async () => {
+    expect(await resolvedComponent('/')).toBe(HomeView)
+    expect(router.resolve('/translate').matched[0].redirect).toEqual({ path: '/', query: {} })
     expect(await resolvedComponent('/ui-translation')).toBe(UiTranslationWorkbench)
     expect(await resolvedComponent('/ui-translation/nan-Hant-CN')).toBe(UiTranslationWorkbench)
   })

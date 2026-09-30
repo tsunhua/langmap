@@ -100,13 +100,18 @@ describe('TranslationResult', () => {
   })
 
   it('hides send-to-contribute for exact matches and never emits it', async () => {
-    const wrapper = mountResult({ result: makeResult({ resolution: 'exact_lookup', generation_skipped: true }) })
+    const wrapper = mountResult({ allowContribute: true, result: makeResult({ resolution: 'exact_lookup', generation_skipped: true }) })
     expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(false)
     expect(wrapper.emitted('send-to-contribute')).toBeUndefined()
   })
 
-  it('offers send-to-contribute for assisted results', () => {
+  it('hides send-to-contribute for an anonymous assisted result', () => {
     const wrapper = mountResult({ result: makeResult({ resolution: 'assisted' }) })
+    expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(false)
+  })
+
+  it('offers send-to-contribute for assisted results', () => {
+    const wrapper = mountResult({ allowContribute: true, result: makeResult({ resolution: 'assisted' }) })
     expect(wrapper.find('[data-action="send-to-contribute"]').exists()).toBe(true)
   })
 
@@ -119,7 +124,7 @@ describe('TranslationResult', () => {
     expect(noResult.emitted('edit')).toHaveLength(1)
     expect(noResult.emitted('send-to-contribute')).toBeUndefined()
 
-    const withResult = mountResult({ result: makeResult() })
+    const withResult = mountResult({ allowContribute: true, result: makeResult() })
     await withResult.get('[data-action="send-to-contribute"]').trigger('click')
     expect(withResult.emitted('send-to-contribute')).toHaveLength(1)
   })

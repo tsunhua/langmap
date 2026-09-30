@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import type { Context, Next } from 'hono';
-import { requireAuth } from '../middleware/auth';
-import { badRequest, notFoundCode, unauthorized } from '../utils/response';
+import type { Context } from 'hono';
+import { optionalAuth } from '../middleware/auth';
+import { badRequest, notFoundCode, tooManyRequests } from '../utils/response';
 import { MAX_TRANSLATION_BODY_BYTES } from '../utils/limits';
 import { canonicalizeExpressionText, ExpressionIdentityError } from '../services/expressionIdentity';
 import {
@@ -27,15 +27,6 @@ const ENVELOPE_CODES = new Set([
   'INVALID_LANG_CODE',
   'INVALID_LANGUAGE_LOCALE_CODE',
 ]);
-
-// requireAuth emits the generic "Unauthorized" envelope; the translation
-// contract exposes AUTH_REQUIRED, so translate the middleware outcome here
-// without changing the shared auth middleware.
-async function requireTranslationAuth(c: Context, next: Next): Promise<Response | void> {
-  await requireAuth(c, async () => {});
-  if (!c.get('user')) return unauthorized(c, 'AUTH_REQUIRED');
-  await next();
-}
 
 type BoundedBody = { ok: true; text: string } | { ok: false; tooLarge: true };
 
@@ -90,7 +81,26 @@ translation.use('*', async (c, next) => {
   await next();
 });
 
-translation.post('/', requireTranslationAuth, async (c) => {
+translation.post('/', optionalAuth, async (c) => {
+  if (!c.get('user')) {
+    const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+    try {
+      const { success: allowed } = await c.env.TRANSLATION_GUEST_LIMITER.limit({
+        key: `translate:guest:${ip}`,
+      });
+      if (!allowed) {
+        return tooManyRequests(c, 'RATE_LIMITED', 'Please try again in 60 seconds.', 60);
+      }
+    } catch {
+      return c.json({
+        success: false,
+        error: 'TRANSLATION_UNAVAILABLE',
+        message: 'Translation is temporarily unavailable.',
+        retryable: true,
+      }, 503);
+    }
+  }
+
   const body = await readBoundedBody(c, MAX_TRANSLATION_BODY_BYTES);
   if (!body.ok) return payloadTooLarge(c);
 

@@ -70,12 +70,22 @@ interface PostOptions {
   headers?: Record<string, string>;
   db?: Database;
   rawBody?: boolean;
+  limiter?: RateLimit | null;
+  omitLimiter?: boolean;
 }
 
 async function post(options: PostOptions = {}): Promise<Response> {
-  const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string; AI: Ai } }>();
+  const app = new Hono<{ Bindings: { DB: Database; SECRET_KEY: string; AI: Ai; TRANSLATION_GUEST_LIMITER?: RateLimit } }>();
   app.route('/translate', translation);
-  const env = { DB: options.db ?? fakeDatabase(), SECRET_KEY, AI: fakeAI };
+  const env: { DB: Database; SECRET_KEY: string; AI: Ai; TRANSLATION_GUEST_LIMITER?: RateLimit } = {
+    DB: options.db ?? fakeDatabase(),
+    SECRET_KEY,
+    AI: fakeAI,
+    TRANSLATION_GUEST_LIMITER: options.limiter === undefined
+      ? { limit: async () => ({ success: true }) }
+      : options.limiter ?? undefined,
+  };
+  if (options.omitLimiter) delete env.TRANSLATION_GUEST_LIMITER;
   const token = options.token === undefined ? await authenticate() : options.token;
   const headers: Record<string, string> = { 'content-type': 'application/json', ...options.headers };
   if (token) headers.authorization = `Bearer ${token}`;
@@ -104,14 +114,52 @@ beforeEach(() => {
 });
 
 describe('POST /translate auth', () => {
-  it('rejects unauthenticated requests with AUTH_REQUIRED and leaks no text', async () => {
-    const response = await post({ token: null, body: JSON.stringify({ text: '不需要洩漏的文字', target_locale_code: 'jpn-Jpan-JP' }) });
-    expect(response.status).toBe(401);
-    const body = (await response.json()) as { error: string; data?: unknown };
-    expect(body.error).toBe('AUTH_REQUIRED');
-    expect(JSON.stringify(body)).not.toContain('不需要洩漏的文字');
+  it('treats an invalid bearer token as a guest and continues through request validation', async () => {
+    const limit = vi.fn(async () => ({ success: true }));
+    const response = await post({ token: 'invalid', limiter: { limit }, body: '' });
+    expect(response.status).toBe(400);
+    expect(await jsonError(response)).toBe('VALIDATION_FAILED');
+    expect(limit).toHaveBeenCalledOnce();
+    expect(limit).toHaveBeenCalledWith({ key: 'translate:guest:unknown' });
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(runTranslationMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks a guest before reading or translating a rate-limited request', async () => {
+    const limit = vi.fn(async () => ({ success: false }));
+    const response = await post({
+      token: null,
+      limiter: { limit },
+      headers: { 'CF-Connecting-IP': '192.0.2.1' },
+      body: JSON.stringify({ text: 'private source text', target_locale_code: 'jpn-Jpan-JP' }),
+    });
+    const body = await response.json() as { error: string; message: string };
+    expect(response.status).toBe(429);
+    expect(body.error).toBe('RATE_LIMITED');
+    expect(JSON.stringify(body)).not.toContain('private source text');
+    expect(response.headers.get('Retry-After')).toBe('60');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(limit).toHaveBeenCalledWith({ key: 'translate:guest:192.0.2.1' });
+    expect(runTranslationMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a limiter error', { limiter: { limit: async () => { throw new Error('binding unavailable'); } } }],
+    ['a missing limiter binding', { omitLimiter: true }],
+  ] as const)('fails closed on %s', async (_description, options) => {
+    const response = await post({ token: null, ...options });
+    const body = await response.json() as { error: string; retryable: boolean };
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ error: 'TRANSLATION_UNAVAILABLE', retryable: true });
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(runTranslationMock).not.toHaveBeenCalled();
+  });
+
+  it('does not consume guest capacity for authenticated requests', async () => {
+    const limit = vi.fn(async () => ({ success: true }));
+    const response = await post({ limiter: { limit }, body: '' });
+    expect(response.status).toBe(400);
+    expect(limit).not.toHaveBeenCalled();
   });
 });
 
@@ -227,7 +275,7 @@ describe('POST /translate validation mapping', () => {
 });
 
 describe('POST /translate streaming', () => {
-  it('streams NDJSON envelopes produced by the orchestrator without emitting its own status', async () => {
+  it.each(['guest', 'authenticated'] as const)('streams NDJSON envelopes for %s requests without emitting its own status', async (identity) => {
     runTranslationMock.mockImplementation(async (_env, request, ctx) => {
       ctx.emit(envelopeLine({ type: 'status', stage: 'retrieving', mode: 'exact_lookup', request_id: request.requestId }));
       ctx.emit(envelopeLine({
@@ -258,8 +306,10 @@ describe('POST /translate streaming', () => {
       }));
     });
 
-    const response = await post();
+    const limit = vi.fn(async () => ({ success: true }));
+    const response = await post({ ...(identity === 'guest' ? { token: null } : {}), limiter: { limit } });
     expect(response.status).toBe(200);
+    expect(limit).toHaveBeenCalledTimes(identity === 'guest' ? 1 : 0);
     expect(waitUntil).toHaveBeenCalledWith(expect.any(Promise));
     expect(response.headers.get('content-type')).toBe('application/x-ndjson; charset=utf-8');
     expect(response.headers.get('cache-control')).toBe('no-store');

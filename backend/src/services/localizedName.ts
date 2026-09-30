@@ -1,7 +1,7 @@
 import type { Database } from '../db/database';
 import nameTranslations from '../../../scripts/language-reference/overlays/name-translations.json';
 import languageNameTranslations from '../../../scripts/language-reference/overlays/language-name-translations.json';
-import { parseLanguageLocaleCode } from './languageIdentity';
+import { canonicalEnglishLanguageName, parseLanguageLocaleCode } from './languageIdentity';
 
 export interface LocaleHints { primary?: string; secondary?: string; }
 
@@ -83,7 +83,10 @@ function firstPartyLanguageName(code: string, hints: LocaleHints): string | unde
 }
 
 async function candidates(db: Database, ids: readonly number[], locale?: string): Promise<Map<number, string>> {
-  if (!locale || ids.length === 0) return new Map();
+  // Registry names are stored as canonical English expressions. Resolving an
+  // English target through ordinary expression edges can select homonyms such
+  // as "Day" for "Japanese", so keep their canonical text as the fallback.
+  if (!locale || locale.startsWith('eng-') || ids.length === 0) return new Map();
   const json = JSON.stringify(ids);
   const { results } = await db.prepare(CANDIDATE_SQL).bind(json, locale, locale, locale, locale).all<CandidateRow>();
   const selected = new Map<number, CandidateRow>();
@@ -117,7 +120,8 @@ export async function resolveLanguageNames(db: Database, codes: readonly string[
   const resolved = await resolveNamesByExpressionIds(db, results.flatMap((row) => row.name_expression_id ?? []), hints);
   return new Map(results.map((row) => {
     const codeName = firstPartyLanguageName(row.code, hints);
-    const fallback = firstPartyName(row.name_en, hints) ?? row.name_en;
+    const canonicalEnglishName = canonicalEnglishLanguageName(row.code, row.name_en);
+    const fallback = firstPartyName(canonicalEnglishName, hints) ?? canonicalEnglishName;
     return [row.code, codeName ?? (hasLocaleHint && row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback)];
   }));
 }
@@ -128,7 +132,22 @@ export async function resolveLocaleNames(db: Database, codes: readonly string[],
   const { results } = await db.prepare(LOCALE_SQL).bind(JSON.stringify(distinct)).all<IdentityRow>();
   const resolved = await resolveNamesByExpressionIds(db, results.flatMap((row) => row.name_expression_id ?? []), hints);
   return new Map(results.map((row) => {
-    const fallback = firstPartyName(row.name_en, hints) ?? row.name ?? row.name_en;
-    return [row.code, row.name_expression_id ? (resolved.get(row.name_expression_id)?.name ?? fallback) : fallback];
+    const languageCode = parseLanguageLocaleCode(row.code)?.lang_code;
+    const languageName = languageCode ? firstPartyLanguageName(languageCode, hints) : undefined;
+    const canonicalEnglishName = languageCode ? canonicalEnglishLanguageName(languageCode, row.name_en) : row.name_en;
+    const isUsefulName = (name?: string | null) => {
+      const value = name?.trim();
+      return value && value !== row.code && value !== languageCode ? value : undefined;
+    };
+    const fallback = firstPartyName(row.name_en, hints)
+      ?? firstPartyName(canonicalEnglishName, hints)
+      ?? languageName
+      ?? isUsefulName(row.name_en)
+      ?? isUsefulName(row.name)
+      ?? canonicalEnglishName;
+    const resolvedName = row.name_expression_id
+      ? isUsefulName(resolved.get(row.name_expression_id)?.name)
+      : undefined;
+    return [row.code, resolvedName ?? fallback];
   }));
 }

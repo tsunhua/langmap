@@ -234,6 +234,21 @@ def read_language_codes(path: Path) -> set[str]:
     return codes
 
 
+def read_canonical_english_names(path: Path) -> dict[str, str]:
+    """Read canonical English names for macro-language profiles from ISO 639-3."""
+    names: dict[str, str] = {}
+    with path.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle, delimiter="\t"):
+            code = (row.get("Id") or "").strip().lower()
+            name = (row.get("Ref_Name") or "").strip()
+            if code in CODE_KEYED_ONLY_LANGUAGE_CODES and name:
+                names[code] = unicodedata.normalize("NFC", name)
+    missing = CODE_KEYED_ONLY_LANGUAGE_CODES - names.keys()
+    if missing:
+        raise ValueError(f"ISO 639-3 is missing canonical names for {sorted(missing)}")
+    return dict(sorted(names.items()))
+
+
 def _po_value(block: list[str], index: int, prefix: str) -> str:
     values = []
     first = block[index][len(prefix) :].strip()
@@ -340,6 +355,7 @@ def assemble(
     wikidata_path: Path,
 ) -> dict[str, Any]:
     language_codes = read_language_codes(iso639_path)
+    canonical_english_names = read_canonical_english_names(iso639_path)
     cldr = {
         "cmn-Hans-CN": read_cldr(cldr_zh_path),
         "cmn-Hant-TW": read_cldr(cldr_zh_hant_path),
@@ -396,7 +412,7 @@ def assemble(
             source_counts[locale][source] += 1
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "target_locales": list(TARGETS),
         "source_precedence": ["curated", "cldr", "wikidata", "iso-codes"],
         "wikidata_query": WIKIDATA_QUERY,
@@ -449,6 +465,7 @@ def assemble(
         "translations": {
             locale: dict(sorted(values.items())) for locale, values in translations.items()
         },
+        "canonical_english_names": canonical_english_names,
         "provenance": {
             locale: dict(sorted(values.items())) for locale, values in provenance.items()
         },

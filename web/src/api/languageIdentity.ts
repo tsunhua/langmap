@@ -131,8 +131,8 @@ export async function listLanguageLocales(filters: LocaleFilters = {}, signal?: 
   return page<LanguageLocale>(data)
 }
 
-export async function getLanguageLocale(code: string | number, signal?: AbortSignal): Promise<LanguageLocale> {
-  const { data } = await api.get(`/language-locales/${encodeURIComponent(String(code))}`, { signal })
+export async function getLanguageLocale(code: string | number, signal?: AbortSignal, hints?: LocaleHints): Promise<LanguageLocale> {
+  const { data } = await api.get(`/language-locales/${encodeURIComponent(String(code))}`, { params: hintParams(hints), signal })
   return (data as { data: LanguageLocale }).data
 }
 

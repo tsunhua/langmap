@@ -379,6 +379,47 @@ describe('useTranslationStream', () => {
     expect(stream.isStreaming.value).toBe(false)
   })
 
+  it('uses the Retry-After header for a retryable rate-limit response', async () => {
+    stubFetch().mockResolvedValue(new Response(
+      JSON.stringify({ success: false, error: 'RATE_LIMITED', message: 'Please retry.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } },
+    ))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.error.value).toMatchObject({
+      code: 'RATE_LIMITED',
+      retryable: true,
+      retryAfterSeconds: 60,
+    })
+  })
+
+  it('prefers a valid Retry-After JSON value and ignores malformed header values', async () => {
+    stubFetch().mockResolvedValue(new Response(
+      JSON.stringify({ success: false, error: 'RATE_LIMITED', retry_after_seconds: 12 }),
+      { status: 429, headers: { 'Retry-After': 'not-seconds' } },
+    ))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.error.value?.retryAfterSeconds).toBe(12)
+    expect(stream.error.value?.retryable).toBe(true)
+  })
+
+  it('keeps retryable service-unavailable envelopes retryable', async () => {
+    stubFetch().mockResolvedValue(new Response(
+      JSON.stringify({ success: false, error: 'TRANSLATION_UNAVAILABLE', retryable: true }),
+      { status: 503 },
+    ))
+
+    const stream = useTranslationStream()
+    await stream.submit(input)
+
+    expect(stream.error.value).toMatchObject({ code: 'TRANSLATION_UNAVAILABLE', retryable: true })
+  })
+
   it('ends streaming when the source language needs confirmation', async () => {
     stubFetch().mockResolvedValue(streamResponse([
       line({ type: 'status', stage: 'retrieving', mode: 'exact_lookup', request_id: 'req-3' }),
